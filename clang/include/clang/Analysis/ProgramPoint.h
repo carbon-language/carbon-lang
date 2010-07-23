@@ -323,8 +323,9 @@ public:
     return static_cast<const Stmt *>(getData1());
   }
 
-  const AnalysisContext *getCalleeContext() const {
-    return static_cast<const AnalysisContext *>(getData2());
+  AnalysisContext *getCalleeContext() const {
+    return const_cast<AnalysisContext *>(
+                              static_cast<const AnalysisContext *>(getData2()));
   }
 
   static bool classof(const ProgramPoint *Location) {

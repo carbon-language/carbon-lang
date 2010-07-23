@@ -1445,7 +1445,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 
 void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
   const StackFrameContext *LocCtx 
-    = AMgr.getStackFrame(const_cast<AnalysisContext *>(B.getCalleeContext()),
+    = AMgr.getStackFrame(B.getCalleeContext(),
                          B.getLocationContext(),
                          B.getCallExpr(),
                          B.getBlock(),
