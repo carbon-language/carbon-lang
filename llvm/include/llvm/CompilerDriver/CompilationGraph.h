@@ -36,7 +36,7 @@ namespace llvmc {
   public:
 
     /// GetLanguage -  Find the language name corresponding to a given file.
-    const std::string& GetLanguage(const llvm::sys::Path&) const;
+    const std::string* GetLanguage(const llvm::sys::Path&) const;
   };
 
   /// Edge - Represents an edge of the compilation graph.
@@ -133,7 +133,7 @@ namespace llvmc {
 
     /// insertEdge - Insert a new edge into the graph. Takes ownership
     /// of the Edge object.
-    void insertEdge(const std::string& A, Edge* E);
+    int insertEdge(const std::string& A, Edge* E);
 
     /// Build - Build target(s) from the input file set. Command-line
     /// options are passed implicitly as global variables.
@@ -146,8 +146,8 @@ namespace llvmc {
 
     /// getNode - Return a reference to the node correponding to the
     /// given tool name. Throws std::runtime_error.
-    Node& getNode(const std::string& ToolName);
-    const Node& getNode(const std::string& ToolName) const;
+    Node* getNode(const std::string& ToolName);
+    const Node* getNode(const std::string& ToolName) const;
 
     /// viewGraph - This function is meant for use from the debugger.
     /// You can just say 'call G->viewGraph()' and a ghostview window
@@ -157,7 +157,7 @@ namespace llvmc {
     void viewGraph();
 
     /// writeGraph - Write Graphviz .dot source file to the current direcotry.
-    void writeGraph(const std::string& OutputFilename);
+    int writeGraph(const std::string& OutputFilename);
 
     // GraphTraits support.
     friend NodesIterator GraphBegin(CompilationGraph*);
@@ -169,14 +169,14 @@ namespace llvmc {
     /// getToolsVector - Return a reference to the list of tool names
     /// corresponding to the given language name. Throws
     /// std::runtime_error.
-    const tools_vector_type& getToolsVector(const std::string& LangName) const;
+    const tools_vector_type* getToolsVector(const std::string& LangName) const;
 
     /// PassThroughGraph - Pass the input file through the toolchain
     /// starting at StartNode.
-    void PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
-                           const InputLanguagesSet& InLangs,
-                           const llvm::sys::Path& TempDir,
-                           const LanguageMap& LangMap) const;
+    int PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
+                          const InputLanguagesSet& InLangs,
+                          const llvm::sys::Path& TempDir,
+                          const LanguageMap& LangMap) const;
 
     /// FindToolChain - Find head of the toolchain corresponding to
     /// the given file.
@@ -186,15 +186,15 @@ namespace llvmc {
                               const LanguageMap& LangMap) const;
 
     /// BuildInitial - Traverse the initial parts of the toolchains.
-    void BuildInitial(InputLanguagesSet& InLangs,
-                      const llvm::sys::Path& TempDir,
-                      const LanguageMap& LangMap);
+    int BuildInitial(InputLanguagesSet& InLangs,
+                     const llvm::sys::Path& TempDir,
+                     const LanguageMap& LangMap);
 
     /// TopologicalSort - Sort the nodes in topological order.
-    void TopologicalSort(std::vector<const Node*>& Out);
+    int TopologicalSort(std::vector<const Node*>& Out);
     /// TopologicalSortFilterJoinNodes - Call TopologicalSort and
     /// filter the resulting list to include only Join nodes.
-    void TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out);
+    int TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out);
 
     // Functions used to implement Check().
 
@@ -270,7 +270,7 @@ namespace llvmc {
     }
 
     inline pointer operator*() const {
-      return &OwningGraph->getNode((*EdgeIter)->ToolName());
+      return OwningGraph->getNode((*EdgeIter)->ToolName());
     }
     inline pointer operator->() const {
       return this->operator*();
@@ -301,7 +301,7 @@ namespace llvm {
     typedef llvmc::NodeChildIterator ChildIteratorType;
 
     static NodeType* getEntryNode(GraphType* G) {
-      return &G->getNode("root");
+      return G->getNode("root");
     }
 
     static ChildIteratorType child_begin(NodeType* N) {

@@ -1957,10 +1957,10 @@ struct ActionHandlingCallbackBase
                   unsigned IndentLevel, raw_ostream& O) const
   {
     O.indent(IndentLevel)
-      << "throw std::runtime_error(\"" <<
-      (d.getNumArgs() >= 1 ? InitPtrToString(d.getArg(0))
-       : "Unknown error!")
+      << "PrintError(\""
+      << (d.getNumArgs() >= 1 ? InitPtrToString(d.getArg(0)) : "Unknown error!")
       << "\");\n";
+    O.indent(IndentLevel) << "return -1;\n";
   }
 
   void onWarningDag(const DagInit& d,
@@ -2154,25 +2154,32 @@ class EmitActionHandlersCallback :
 };
 
 void EmitGenerateActionMethodHeader(const ToolDescription& D,
-                                    bool IsJoin, raw_ostream& O)
+                                    bool IsJoin, bool Naked,
+                                    raw_ostream& O)
 {
-  if (IsJoin)
-    O.indent(Indent1) << "Action GenerateAction(const PathVector& inFiles,\n";
-  else
-    O.indent(Indent1) << "Action GenerateAction(const sys::Path& inFile,\n";
+  O.indent(Indent1) << "int GenerateAction(Action& Out,\n";
 
-  O.indent(Indent2) << "bool HasChildren,\n";
+  if (IsJoin)
+    O.indent(Indent2) << "const PathVector& inFiles,\n";
+  else
+    O.indent(Indent2) << "const sys::Path& inFile,\n";
+
+  O.indent(Indent2) << "const bool HasChildren,\n";
   O.indent(Indent2) << "const llvm::sys::Path& TempDir,\n";
   O.indent(Indent2) << "const InputLanguagesSet& InLangs,\n";
   O.indent(Indent2) << "const LanguageMap& LangMap) const\n";
   O.indent(Indent1) << "{\n";
-  O.indent(Indent2) << "std::string cmd;\n";
-  O.indent(Indent2) << "std::string out_file;\n";
-  O.indent(Indent2) << "std::vector<std::pair<unsigned, std::string> > vec;\n";
-  O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
-  O.indent(Indent2) << "bool no_out_file = false;\n";
-  O.indent(Indent2) << "const char* output_suffix = \""
-                    << D.OutputSuffix << "\";\n";
+
+  if (!Naked) {
+    O.indent(Indent2) << "std::string cmd;\n";
+    O.indent(Indent2) << "std::string out_file;\n";
+    O.indent(Indent2)
+      << "std::vector<std::pair<unsigned, std::string> > vec;\n";
+    O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
+    O.indent(Indent2) << "bool no_out_file = false;\n";
+    O.indent(Indent2) << "const char* output_suffix = \""
+                      << D.OutputSuffix << "\";\n";
+  }
 }
 
 // EmitGenerateActionMethod - Emit either a normal or a "join" version of the
@@ -2181,7 +2188,7 @@ void EmitGenerateActionMethod (const ToolDescription& D,
                                const OptionDescriptions& OptDescs,
                                bool IsJoin, raw_ostream& O) {
 
-  EmitGenerateActionMethodHeader(D, IsJoin, O);
+  EmitGenerateActionMethodHeader(D, IsJoin, /* Naked = */ false, O);
 
   if (!D.CmdLine)
     throw "Tool " + D.Name + " has no cmd_line property!";
@@ -2245,8 +2252,9 @@ void EmitGenerateActionMethod (const ToolDescription& D,
     O.indent(Indent2) << "}\n";
   }
 
-  O.indent(Indent2) << "return Action(cmd, this->SortArgs(vec), "
+  O.indent(Indent2) << "Out.Construct(cmd, this->SortArgs(vec), "
                     << "stop_compilation, out_file);\n";
+  O.indent(Indent2) << "return 0;\n";
   O.indent(Indent1) << "}\n\n";
 }
 
@@ -2256,14 +2264,11 @@ void EmitGenerateActionMethods (const ToolDescription& ToolDesc,
                                 const OptionDescriptions& OptDescs,
                                 raw_ostream& O) {
   if (!ToolDesc.isJoin()) {
-    O.indent(Indent1) << "Action GenerateAction(const PathVector& inFiles,\n";
-    O.indent(Indent2) << "bool HasChildren,\n";
-    O.indent(Indent2) << "const llvm::sys::Path& TempDir,\n";
-    O.indent(Indent2) << "const InputLanguagesSet& InLangs,\n";
-    O.indent(Indent2) << "const LanguageMap& LangMap) const\n";
-    O.indent(Indent1) << "{\n";
-    O.indent(Indent2) << "throw std::runtime_error(\"" << ToolDesc.Name
+    EmitGenerateActionMethodHeader(ToolDesc, /* IsJoin = */ true,
+                                   /* Naked = */ true, O);
+    O.indent(Indent2) << "PrintError(\"" << ToolDesc.Name
                       << " is not a Join tool!\");\n";
+    O.indent(Indent2) << "return -1;\n";
     O.indent(Indent1) << "}\n\n";
   }
   else {
@@ -2627,7 +2632,7 @@ public:
 void EmitPreprocessOptions (const RecordKeeper& Records,
                             const OptionDescriptions& OptDecs, raw_ostream& O)
 {
-  O << "void PreprocessOptionsLocal() {\n";
+  O << "int PreprocessOptionsLocal() {\n";
 
   const RecordVector& OptionPreprocessors =
     Records.getAllDerivedDefinitions("OptionPreprocessor");
@@ -2640,13 +2645,15 @@ void EmitPreprocessOptions (const RecordKeeper& Records,
                              false, OptDecs, O);
   }
 
+  O << '\n';
+  O.indent(Indent1) << "return 0;\n";
   O << "}\n\n";
 }
 
 /// EmitPopulateLanguageMap - Emit the PopulateLanguageMapLocal() function.
 void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
-  O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
+  O << "int PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
 
   // Get the relevant field out of RecordKeeper
   const Record* LangMapRecord = Records.getDef("LanguageMap");
@@ -2671,6 +2678,8 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
     }
   }
 
+  O << '\n';
+  O.indent(Indent1) << "return 0;\n";
   O << "}\n\n";
 }
 
@@ -2688,10 +2697,12 @@ void IncDecWeight (const Init* i, unsigned IndentLevel,
     O.indent(IndentLevel) << "ret -= ";
   }
   else if (OpName == "error") {
+    // TODO: fix this
     CheckNumberOfArguments(d, 1);
-    O.indent(IndentLevel) << "throw std::runtime_error(\""
+    O.indent(IndentLevel) << "PrintError(\""
                           << InitPtrToString(d.getArg(0))
                           << "\");\n";
+    O.indent(IndentLevel) << "return -1;\n";
     return;
   }
   else {
@@ -2752,7 +2763,7 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
                                    const ToolDescriptions& ToolDescs,
                                    raw_ostream& O)
 {
-  O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
+  O << "int PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
          E = ToolDescs.end(); B != E; ++B)
@@ -2770,17 +2781,21 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
     const std::string& NodeB = Edge->getValueAsString("b");
     DagInit& Weight = *Edge->getValueAsDag("weight");
 
-    O.indent(Indent1) << "G.insertEdge(\"" << NodeA << "\", ";
+    O.indent(Indent1) << "if (int ret = G.insertEdge(\"" << NodeA << "\", ";
 
     if (IsDagEmpty(Weight))
       O << "new SimpleEdge(\"" << NodeB << "\")";
     else
       O << "new Edge" << i << "()";
 
-    O << ");\n";
+    O << "))\n";
+    O.indent(Indent2) << "return ret;\n";
+
     ++i;
   }
 
+  O << '\n';
+  O.indent(Indent1) << "return 0;\n";
   O << "}\n\n";
 }
 
@@ -2963,13 +2978,13 @@ void EmitRegisterPlugin(int Priority, raw_ostream& O) {
   O << "struct Plugin : public llvmc::BasePlugin {\n\n";
   O.indent(Indent1) << "int Priority() const { return "
                     << Priority << "; }\n\n";
-  O.indent(Indent1) << "void PreprocessOptions() const\n";
-  O.indent(Indent1) << "{ PreprocessOptionsLocal(); }\n\n";
-  O.indent(Indent1) << "void PopulateLanguageMap(LanguageMap& langMap) const\n";
-  O.indent(Indent1) << "{ PopulateLanguageMapLocal(langMap); }\n\n";
+  O.indent(Indent1) << "int PreprocessOptions() const\n";
+  O.indent(Indent1) << "{ return PreprocessOptionsLocal(); }\n\n";
+  O.indent(Indent1) << "int PopulateLanguageMap(LanguageMap& langMap) const\n";
+  O.indent(Indent1) << "{ return PopulateLanguageMapLocal(langMap); }\n\n";
   O.indent(Indent1)
-    << "void PopulateCompilationGraph(CompilationGraph& graph) const\n";
-  O.indent(Indent1) << "{ PopulateCompilationGraphLocal(graph); }\n"
+    << "int PopulateCompilationGraph(CompilationGraph& graph) const\n";
+  O.indent(Indent1) << "{ return PopulateCompilationGraphLocal(graph); }\n"
                     << "};\n\n"
                     << "static llvmc::RegisterPlugin<Plugin> RP;\n\n";
 }
@@ -2979,6 +2994,7 @@ void EmitRegisterPlugin(int Priority, raw_ostream& O) {
 void EmitIncludes(raw_ostream& O) {
   O << "#include \"llvm/CompilerDriver/BuiltinOptions.h\"\n"
     << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
+    << "#include \"llvm/CompilerDriver/Error.h\"\n"
     << "#include \"llvm/CompilerDriver/ForceLinkageMacros.h\"\n"
     << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
     << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"

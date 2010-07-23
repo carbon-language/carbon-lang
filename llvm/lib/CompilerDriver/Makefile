@@ -21,9 +21,6 @@ else
   LINK_COMPONENTS = support system
 endif
 
-REQUIRES_EH := 1
-REQUIRES_RTTI := 1
-
 include $(LEVEL)/Makefile.common
 
 ifeq ($(ENABLE_LLVMC_DYNAMIC_PLUGINS), 1)
