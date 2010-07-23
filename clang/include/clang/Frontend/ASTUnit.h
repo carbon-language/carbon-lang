@@ -45,14 +45,6 @@ class SourceManager;
 class TargetInfo;
 
 using namespace idx;
-
-class PrecompiledPreamble {
-  llvm::sys::Path PreambleFile;
-  
-public:
-  ~PrecompiledPreamble();
-  
-};
   
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
@@ -125,6 +117,17 @@ private:
   unsigned int ConcurrencyCheckValue;
   static const unsigned int CheckLocked = 28573289;
   static const unsigned int CheckUnlocked = 9803453;
+
+  /// \brief The file in which the precompiled preamble is stored.
+  llvm::sys::Path PreambleFile;
+  
+  /// \brief The contents of the preamble that has been precompiled to
+  /// \c PreambleFile.
+  std::vector<char> Preamble;
+
+  /// \brief The size of the source buffer that we've reserved for the main 
+  /// file within the precompiled preamble.
+  unsigned PreambleReservedSize;
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
@@ -133,7 +136,12 @@ private:
 
   void CleanTemporaryFiles();
   bool Parse();
-  void BuildPrecompiledPreamble();
+  
+  std::pair<llvm::MemoryBuffer *, unsigned> ComputePreamble(
+                                                CompilerInvocation &Invocation,
+                                                          bool &CreatedBuffer);
+  
+  std::pair<llvm::MemoryBuffer *, bool> BuildPrecompiledPreamble();
   
 public:
   class ConcurrencyCheck {

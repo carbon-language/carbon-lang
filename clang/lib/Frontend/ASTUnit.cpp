@@ -37,10 +37,6 @@
 #include <cstdio>
 using namespace clang;
 
-PrecompiledPreamble::~PrecompiledPreamble() {
-  PreambleFile.eraseFromDisk();
-}
-
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
     ConcurrencyCheckValue(CheckUnlocked) { }
@@ -48,6 +44,8 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
 ASTUnit::~ASTUnit() {
   ConcurrencyCheckValue = CheckLocked;
   CleanTemporaryFiles();
+  if (!PreambleFile.empty())
+    PreambleFile.eraseFromDisk();
 }
 
 void ASTUnit::CleanTemporaryFiles() {
@@ -427,35 +425,41 @@ static std::string GetPreamblePCHPath() {
   return P.str();
 }
 
-void ASTUnit::BuildPrecompiledPreamble() {
-  CompilerInvocation PreambleInvocation(*Invocation);
-  FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
+/// \brief Compute the preamble for the main file, providing
+std::pair<llvm::MemoryBuffer *, unsigned> 
+ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
+  FrontendOptions &FrontendOpts = Invocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
-    = PreambleInvocation.getPreprocessorOpts();
-
+    = Invocation.getPreprocessorOpts();
+  CreatedBuffer = false;
+  
   // Try to determine if the main file has been remapped, either from the 
   // command line (to another file) or directly through the compiler invocation
   // (to a memory buffer).
-  llvm::MemoryBuffer *Buffer = 0;  
+  llvm::MemoryBuffer *Buffer = 0;
   llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].second);
   if (const llvm::sys::FileStatus *MainFileStatus = MainFilePath.getFileStatus()) {
     // Check whether there is a file-file remapping of the main file
     for (PreprocessorOptions::remapped_file_iterator
-           M = PreprocessorOpts.remapped_file_begin(),
-           E = PreprocessorOpts.remapped_file_end();
+          M = PreprocessorOpts.remapped_file_begin(),
+          E = PreprocessorOpts.remapped_file_end();
          M != E;
          ++M) {
       llvm::sys::PathWithStatus MPath(M->first);    
       if (const llvm::sys::FileStatus *MStatus = MPath.getFileStatus()) {
         if (MainFileStatus->uniqueID == MStatus->uniqueID) {
           // We found a remapping. Try to load the resulting, remapped source.
-          if (Buffer)
+          if (CreatedBuffer) {
             delete Buffer;
+            CreatedBuffer = false;
+          }
+          
           Buffer = llvm::MemoryBuffer::getFile(M->second);
           if (!Buffer)
-            return;
+            return std::make_pair((llvm::MemoryBuffer*)0, 0);
+          CreatedBuffer = true;
           
-          // Remove the file-file remapping.
+          // Remove this remapping. We've captured the buffer already.
           M = PreprocessorOpts.eraseRemappedFile(M);
           E = PreprocessorOpts.remapped_file_end();
         }
@@ -473,58 +477,135 @@ void ASTUnit::BuildPrecompiledPreamble() {
       if (const llvm::sys::FileStatus *MStatus = MPath.getFileStatus()) {
         if (MainFileStatus->uniqueID == MStatus->uniqueID) {
           // We found a remapping. 
-          if (Buffer)
+          if (CreatedBuffer) {
             delete Buffer;
-          Buffer = const_cast<llvm::MemoryBuffer *>(M->second);
+            CreatedBuffer = false;
+          }
           
-          // Remove the file-buffer remapping.
+          Buffer = const_cast<llvm::MemoryBuffer *>(M->second);
+
+          // Remove this remapping. We've captured the buffer already.
           M = PreprocessorOpts.eraseRemappedFile(M);
           E = PreprocessorOpts.remapped_file_buffer_end();
         }
       }
-    }    
+    }
   }
   
   // If the main source file was not remapped, load it now.
   if (!Buffer) {
     Buffer = llvm::MemoryBuffer::getFile(FrontendOpts.Inputs[0].second);
     if (!Buffer)
-      return;
+      return std::make_pair((llvm::MemoryBuffer*)0, 0);    
+    
+    CreatedBuffer = true;
   }
   
-  // Try to compute the preamble.
-  unsigned PreambleLength = Lexer::ComputePreamble(Buffer);
-  if (PreambleLength == 0)
-    return;
+  return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer));
+}
+
+/// \brief Attempt to build or re-use a precompiled preamble when (re-)parsing
+/// the source file.
+///
+/// This routine will compute the preamble of the main source file. If a
+/// non-trivial preamble is found, it will precompile that preamble into a 
+/// precompiled header so that the precompiled preamble can be used to reduce
+/// reparsing time. If a precompiled preamble has already been constructed,
+/// this routine will determine if it is still valid and, if so, avoid 
+/// rebuilding the precompiled preamble.
+///
+/// \returns A pair of (main-buffer, created), where main-buffer is the buffer
+/// containing the contents of the main file and "created" is a boolean flag 
+/// that is true if the buffer was created by this routine (and, therefore,
+/// should be destroyed by the caller). The buffer will only be non-NULL when
+/// a precompiled preamble has been generated.
+std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
+  typedef std::pair<llvm::MemoryBuffer *, bool> Result;
+  
+  CompilerInvocation PreambleInvocation(*Invocation);
+  FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
+  PreprocessorOptions &PreprocessorOpts
+    = PreambleInvocation.getPreprocessorOpts();
+
+  bool CreatedPreambleBuffer = false;
+  std::pair<llvm::MemoryBuffer *, unsigned> NewPreamble 
+    = ComputePreamble(PreambleInvocation, CreatedPreambleBuffer);
+
+  if (!NewPreamble.second) {
+    // We couldn't find a preamble in the main source. Clear out the current
+    // preamble, if we have one. It's obviously no good any more.
+    Preamble.clear();
+    if (!PreambleFile.empty()) {
+      PreambleFile.eraseFromDisk();
+      PreambleFile.clear();
+    }
+    if (CreatedPreambleBuffer)
+      delete NewPreamble.first;
+    
+    return Result(0, false);
+  }
+  
+  if (!Preamble.empty()) {
+    // We've previously computed a preamble. Check whether we have the same
+    // preamble now that we did before, and that there's enough space in
+    // the main-file buffer within the precompiled preamble to fit the
+    // new main file.
+    if (Preamble.size() == NewPreamble.second &&
+        NewPreamble.first->getBufferSize() < PreambleReservedSize &&
+        memcmp(&Preamble[0], NewPreamble.first->getBufferStart(),
+               NewPreamble.second) == 0) {
+      // The preamble has not changed. We may be able to re-use the precompiled
+      // preamble.
+      // FIXME: Check that none of the files used by the preamble have changed.
+          
+          
+      // Okay! Re-use the precompiled preamble.
+      return Result(NewPreamble.first, CreatedPreambleBuffer);
+    }
+    
+    // We can't reuse the previously-computed preamble. Build a new one.
+    Preamble.clear();
+    PreambleFile.eraseFromDisk();
+  } 
+    
+  // We did not previously compute a preamble, or it can't be reused anyway.
   
   // Create a new buffer that stores the preamble. The buffer also contains
   // extra space for the original contents of the file (which will be present
   // when we actually parse the file) along with more room in case the file
-  // grows.
-  unsigned PreambleBufferSize = Buffer->getBufferSize();
-  if (PreambleBufferSize < 4096)
-    PreambleBufferSize = 8192;
+  // grows.  
+  PreambleReservedSize = NewPreamble.first->getBufferSize();
+  if (PreambleReservedSize < 4096)
+    PreambleReservedSize = 8192;
   else
-    PreambleBufferSize *= 2;
-  
+    PreambleReservedSize *= 2;
+
   llvm::MemoryBuffer *PreambleBuffer
-    = llvm::MemoryBuffer::getNewUninitMemBuffer(PreambleBufferSize,
+    = llvm::MemoryBuffer::getNewUninitMemBuffer(PreambleReservedSize,
                                                 FrontendOpts.Inputs[0].second);
   memcpy(const_cast<char*>(PreambleBuffer->getBufferStart()), 
-         Buffer->getBufferStart(), PreambleLength);
-  memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + PreambleLength, 
-         ' ', PreambleBufferSize - PreambleLength - 1);
+         NewPreamble.first->getBufferStart(), Preamble.size());
+  memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + Preamble.size(), 
+         ' ', PreambleReservedSize - Preamble.size() - 1);
   const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = 0;
-  delete Buffer;
+  
+  // Save the preamble text for later; we'll need to compare against it for
+  // subsequent reparses.
+  Preamble.assign(NewPreamble.first->getBufferStart(), 
+                  NewPreamble.first->getBufferStart() + Preamble.size());
   
   // Remap the main source file to the preamble buffer.
+  llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].second);
   PreprocessorOpts.addRemappedFile(MainFilePath.str(), PreambleBuffer);
   
   // Tell the compiler invocation to generate a temporary precompiled header.
   FrontendOpts.ProgramAction = frontend::GeneratePCH;
   // FIXME: Set ChainedPCH, once it is ready.
   // FIXME: Generate the precompiled header into memory?
-  FrontendOpts.OutputFile = GetPreamblePCHPath();
+  if (PreambleFile.isEmpty())
+    FrontendOpts.OutputFile = GetPreamblePCHPath();
+  else
+    FrontendOpts.OutputFile = PreambleFile.str();
   
   // Create the compiler instance to use for building the precompiled preamble.
   CompilerInstance Clang;
@@ -540,7 +621,12 @@ void ASTUnit::BuildPrecompiledPreamble() {
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
     Clang.takeDiagnosticClient();
-    return;
+    llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
+    Preamble.clear();
+    if (CreatedPreambleBuffer)
+      delete NewPreamble.first;
+
+    return Result(0, false);
   }
   
   // Inform the target of the language options.
@@ -577,7 +663,12 @@ void ASTUnit::BuildPrecompiledPreamble() {
                             Clang.getFrontendOpts().Inputs[0].first)) {
     Clang.takeDiagnosticClient();
     Clang.takeInvocation();
-    return;
+    llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
+    Preamble.clear();
+    if (CreatedPreambleBuffer)
+      delete NewPreamble.first;
+    
+    return Result(0, false);
   }
   
   Act->Execute();
@@ -585,8 +676,22 @@ void ASTUnit::BuildPrecompiledPreamble() {
   Clang.takeDiagnosticClient();
   Clang.takeInvocation();
   
-  // FIXME: Keep track of the actual preamble header we created!
+  if (Diagnostics->getNumErrors() > 0) {
+    // There were errors parsing the preamble, so no precompiled header was
+    // generated. Forget that we even tried.
+    // FIXME: Should we leave a note for ourselves to try again?
+    llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
+    Preamble.clear();
+    if (CreatedPreambleBuffer)
+      delete NewPreamble.first;
+    
+    return Result(0, false);
+  }
+  
+  // Keep track of the preamble we precompiled.
+  PreambleFile = FrontendOpts.OutputFile;
   fprintf(stderr, "Preamble PCH: %s\n", FrontendOpts.OutputFile.c_str());
+  return Result(NewPreamble.first, CreatedPreambleBuffer);
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
@@ -609,11 +714,16 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->Invocation.reset(CI);
   
+  std::pair<llvm::MemoryBuffer *, bool> PrecompiledPreamble;
+  
   if (PrecompilePreamble)
-    AST->BuildPrecompiledPreamble();
+    PrecompiledPreamble = AST->BuildPrecompiledPreamble();
   
   if (!AST->Parse())
     return AST.take();
+  
+  if (PrecompiledPreamble.second)
+    delete PrecompiledPreamble.first;
   
   return 0;
 }
@@ -694,6 +804,12 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   if (!Invocation.get())
     return true;
   
+  // If we have a preamble file lying around, build or reuse the precompiled
+  // preamble.
+  std::pair<llvm::MemoryBuffer *, bool> PrecompiledPreamble(0, false);
+  if (!PreambleFile.empty())
+    PrecompiledPreamble = BuildPrecompiledPreamble();
+    
   // Clear out the diagnostics state.
   getDiagnostics().Reset();
   
@@ -701,7 +817,13 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   Invocation->getPreprocessorOpts().clearRemappedFiles();
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                                       RemappedFiles[I].second);
+                                                      RemappedFiles[I].second);
+
+  // Parse the sources
+  bool Result = Parse();
   
-  return Parse();
+  if (PrecompiledPreamble.second)
+    delete PrecompiledPreamble.first;
+
+  return Result;
 }
