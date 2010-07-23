@@ -323,6 +323,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // constant pool users.
   InitialFunctionScan(MF, CPEMIs);
   CPEMIs.clear();
+  DEBUG(dumpBBs());
+
 
   /// Remove dead constant pool entries.
   RemoveUnusedCPEntries();
@@ -513,9 +515,10 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           // be right, functions containing these must be 4-byte aligned.
           // tBR_JTr expands to a mov pc followed by .align 2 and then the jump
           // table entries. So this code checks whether offset of tBR_JTr + 2
-          // is aligned.
+          // is aligned.  That is held in Offset+MBBSize, which already has
+          // 2 added in for the size of the mov pc instruction.
           MF.EnsureAlignment(2U);
-          if ((Offset+MBBSize+2)%4 != 0 || HasInlineAsm)
+          if ((Offset+MBBSize)%4 != 0 || HasInlineAsm)
             // FIXME: Add a pseudo ALIGN instruction instead.
             MBBSize += 2;           // padding
           continue;   // Does not get an entry in ImmBranches
@@ -773,28 +776,54 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
     WaterList.insert(IP, OrigBB);
   NewWaterList.insert(OrigBB);
 
-  // Figure out how large the first NewMBB is.  (It cannot
-  // contain a constpool_entry or tablejump.)
-  unsigned NewBBSize = 0;
-  for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
-       I != E; ++I)
-    NewBBSize += TII->GetInstSizeInBytes(I);
-
   unsigned OrigBBI = OrigBB->getNumber();
   unsigned NewBBI = NewBB->getNumber();
-  // Set the size of NewBB in BBSizes.
-  BBSizes[NewBBI] = NewBBSize;
 
-  // We removed instructions from UserMBB, subtract that off from its size.
-  // Add 2 or 4 to the block to count the unconditional branch we added to it.
   int delta = isThumb1 ? 2 : 4;
-  BBSizes[OrigBBI] -= NewBBSize - delta;
+
+  // Figure out how large the OrigBB is.  As the first half of the original
+  // block, it cannot contain a tablejump.  The size includes
+  // the new jump we added.  (It should be possible to do this without
+  // recounting everything, but it's very confusing, and this is rarely
+  // executed.)
+  unsigned OrigBBSize = 0;
+  for (MachineBasicBlock::iterator I = OrigBB->begin(), E = OrigBB->end();
+       I != E; ++I)
+    OrigBBSize += TII->GetInstSizeInBytes(I);
+  BBSizes[OrigBBI] = OrigBBSize;
 
   // ...and adjust BBOffsets for NewBB accordingly.
   BBOffsets[NewBBI] = BBOffsets[OrigBBI] + BBSizes[OrigBBI];
 
+  // Figure out how large the NewMBB is.  As the second half of the original
+  // block, it may contain a tablejump.
+  unsigned NewBBSize = 0;
+  for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
+       I != E; ++I)
+    NewBBSize += TII->GetInstSizeInBytes(I);
+  // Set the size of NewBB in BBSizes.  It does not include any padding now.
+  BBSizes[NewBBI] = NewBBSize;
+
+  MachineInstr* ThumbJTMI = prior(NewBB->end());
+  if (ThumbJTMI->getOpcode() == ARM::tBR_JTr) {
+    // We've added another 2-byte instruction before this tablejump, which
+    // means we will always need padding if we didn't before, and vice versa.
+
+    // The original offset of the jump instruction was:
+    unsigned OrigOffset = BBOffsets[OrigBBI] + BBSizes[OrigBBI] - delta;
+    if (OrigOffset%4 == 0) {
+      // We had padding before and now we don't.  No net change in code size.
+      delta = 0;
+    } else {
+      // We didn't have padding before and now we do.
+      BBSizes[NewBBI] += 2;
+      delta = 4;
+    }
+  }
+
   // All BBOffsets following these blocks must be modified.
-  AdjustBBOffsetsAfter(NewBB, delta);
+  if (delta)
+    AdjustBBOffsetsAfter(NewBB, delta);
 
   return NewBB;
 }
@@ -921,11 +950,12 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
       // Thumb1 jump tables require padding.  They should be at the end;
       // following unconditional branches are removed by AnalyzeBranch.
       // tBR_JTr expands to a mov pc followed by .align 2 and then the jump
-      // table entries. So this code checks whether offset of tBR_JTr + 2
-      // is aligned.
+      // table entries. So this code checks whether offset of tBR_JTr
+      // is aligned; if it is, the offset of the jump table following the
+      // instruction will not be aligned, and we need padding.
       MachineInstr *ThumbJTMI = prior(MBB->end());
       if (ThumbJTMI->getOpcode() == ARM::tBR_JTr) {
-        unsigned NewMIOffset = GetOffsetOf(ThumbJTMI) + 2;
+        unsigned NewMIOffset = GetOffsetOf(ThumbJTMI);
         unsigned OldMIOffset = NewMIOffset - delta;
         if ((OldMIOffset%4) == 0 && (NewMIOffset%4) != 0) {
           // remove existing padding
