@@ -1260,6 +1260,20 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
     SDValue ValToCopy = OutVals[i];
+    EVT ValVT = ValToCopy.getValueType();
+
+    // If this is x86-64, and we disabled SSE, we can't return FP values
+    if ((ValVT == MVT::f32 || ValVT == MVT::f64) &&
+        (Subtarget->is64Bit() && !Subtarget->hasSSE1())) {
+      report_fatal_error("SSE register return with SSE disabled");
+    }
+    // Likewise we can't return F64 values with SSE1 only.  gcc does so, but
+    // llvm-gcc has never done it right and no one has noticed, so this
+    // should be OK for now.
+    if (ValVT == MVT::f64 &&
+        (Subtarget->is64Bit() && !Subtarget->hasSSE2())) {
+      report_fatal_error("SSE2 register return with SSE2 disabled");
+    }
 
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
     // the RET instruction and handled by the FP Stackifier.
@@ -1277,7 +1291,6 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     // 64-bit vector (MMX) values are returned in XMM0 / XMM1 except for v1i64
     // which is returned in RAX / RDX.
     if (Subtarget->is64Bit()) {
-      EVT ValVT = ValToCopy.getValueType();
       if (ValVT.isVector() && ValVT.getSizeInBits() == 64) {
         ValToCopy = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, ValToCopy);
         if (VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1)
