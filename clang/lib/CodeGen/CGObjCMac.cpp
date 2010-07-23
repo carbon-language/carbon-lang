@@ -2953,11 +2953,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Pop the cleanup.
   CGF.PopCleanupBlock();
-  CGF.EmitBlock(FinallyEnd.Block);
+  CGF.EmitBlock(FinallyEnd.getBlock());
 
   // Emit the rethrow block.
   CGF.Builder.ClearInsertionPoint();
-  CGF.EmitBlock(FinallyRethrow.Block, true);
+  CGF.EmitBlock(FinallyRethrow.getBlock(), true);
   if (CGF.HaveInsertPoint()) {
     CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(),
                            CGF.Builder.CreateLoad(RethrowPtr))
@@ -2965,7 +2965,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateUnreachable();
   }
 
-  CGF.Builder.SetInsertPoint(FinallyEnd.Block);
+  CGF.Builder.SetInsertPoint(FinallyEnd.getBlock());
 }
 
 void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
@@ -5895,8 +5895,8 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   if (S.getFinallyStmt())
     CGF.ExitFinallyBlock(FinallyInfo);
 
-  if (Cont.Block)
-    CGF.EmitBlock(Cont.Block);
+  if (Cont.isValid())
+    CGF.EmitBlock(Cont.getBlock());
 }
 
 /// EmitThrowStmt - Generate code for a throw statement.

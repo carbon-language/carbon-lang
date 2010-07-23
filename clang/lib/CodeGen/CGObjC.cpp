@@ -793,7 +793,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   BreakContinueStack.pop_back();
 
-  EmitBlock(AfterBody.Block);
+  EmitBlock(AfterBody.getBlock());
 
   llvm::BasicBlock *FetchMore = createBasicBlock("fetchmore");
 
@@ -829,7 +829,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                         LV.getAddress());
   }
 
-  EmitBlock(LoopEnd.Block);
+  EmitBlock(LoopEnd.getBlock());
 }
 
 void CodeGenFunction::EmitObjCAtTryStmt(const ObjCAtTryStmt &S) {

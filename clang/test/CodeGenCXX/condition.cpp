@@ -105,12 +105,12 @@ void while_destruct(int z) {
     // CHECK-NEXT: br i1 [[COND]]
 
     // Loop-exit staging block.
-    // CHECK: store i32 1, i32* [[CLEANUPDEST]]
+    // CHECK: store i32 3, i32* [[CLEANUPDEST]]
     // CHECK-NEXT: br
 
     // While body.
     // CHECK: store i32 21, i32* [[Z]]
-    // CHECK: store i32 2, i32* [[CLEANUPDEST]]
+    // CHECK: store i32 0, i32* [[CLEANUPDEST]]
     // CHECK-NEXT: br
     z = 21;
 
@@ -138,7 +138,7 @@ void while_destruct(int z) {
 // CHECK: define void @_Z12for_destructi(
 void for_destruct(int z) {
   // CHECK: [[Z:%.*]] = alloca i32
-  // CHECK: [[XDEST:%.*]] = alloca i32
+  // CHECK: [[CLEANUPDEST:%.*]] = alloca i32
   // CHECK: [[I:%.*]] = alloca i32
   // CHECK: call void @_ZN1YC1Ev
   // CHECK-NEXT: br
@@ -152,7 +152,7 @@ void for_destruct(int z) {
     // -> %for.body, %for.cond.cleanup
 
     // %for.cond.cleanup: Exit cleanup staging.
-    // CHECK: store i32 1, i32* [[XDEST]]
+    // CHECK: store i32 2, i32* [[CLEANUPDEST]]
     // CHECK-NEXT: br
     // -> %cleanup
 
@@ -166,21 +166,21 @@ void for_destruct(int z) {
     // CHECK: [[TMP:%.*]] = load i32* [[Z]]
     // CHECK-NEXT: [[INC:%.*]] = add nsw i32 [[TMP]], 1
     // CHECK-NEXT: store i32 [[INC]], i32* [[Z]]
-    // CHECK-NEXT: store i32 2, i32* [[XDEST]]
+    // CHECK-NEXT: store i32 0, i32* [[CLEANUPDEST]]
     // CHECK-NEXT: br
     // -> %cleanup
 
     // %cleanup:  Destroys X.
     // CHECK: call void @_ZN1XD1Ev
-    // CHECK-NEXT: [[YDESTTMP:%.*]] = load i32* [[XDEST]]
+    // CHECK-NEXT: [[YDESTTMP:%.*]] = load i32* [[CLEANUPDEST]]
     // CHECK-NEXT: switch i32 [[YDESTTMP]]
-    // 1 -> %cleanup4, 2 -> %cleanup.cont
+    // 0 -> %cleanup.cont, default -> %cleanup1
 
     // %cleanup.cont:  (eliminable)
     // CHECK: br
     // -> %for.cond
 
-    // %cleanup4: Destroys Y.
+    // %cleanup1: Destroys Y.
     // CHECK: call void @_ZN1YD1Ev(
     // CHECK-NEXT: br
     // -> %for.end

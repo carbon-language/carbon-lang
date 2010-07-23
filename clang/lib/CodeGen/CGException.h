@@ -100,15 +100,13 @@ public:
     /// The catch handler for this type.
     llvm::BasicBlock *Block;
 
-    static Handler make(llvm::Value *Type, llvm::BasicBlock *Block) {
-      Handler Temp;
-      Temp.Type = Type;
-      Temp.Block = Block;
-      return Temp;
-    }
+    /// The unwind destination index for this handler.
+    unsigned Index;
   };
 
 private:
+  friend class EHScopeStack;
+
   Handler *getHandlers() {
     return reinterpret_cast<Handler*>(this+1);
   }
@@ -136,7 +134,8 @@ public:
 
   void setHandler(unsigned I, llvm::Value *Type, llvm::BasicBlock *Block) {
     assert(I < getNumHandlers());
-    getHandlers()[I] = Handler::make(Type, Block);
+    getHandlers()[I].Type = Type;
+    getHandlers()[I].Block = Block;
   }
 
   const Handler &getHandler(unsigned I) const {
@@ -184,6 +183,39 @@ class EHCleanupScope : public EHScope {
   /// created if needed before the cleanup is popped.
   llvm::BasicBlock *EHBlock;
 
+  /// Extra information required for cleanups that have resolved
+  /// branches through them.  This has to be allocated on the side
+  /// because everything on the cleanup stack has be trivially
+  /// movable.
+  struct ExtInfo {
+    /// The destinations of normal branch-afters and branch-throughs.
+    llvm::SmallPtrSet<llvm::BasicBlock*, 4> Branches;
+
+    /// Normal branch-afters.
+    llvm::SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
+      BranchAfters;
+
+    /// The destinations of EH branch-afters and branch-throughs.
+    /// TODO: optimize for the extremely common case of a single
+    /// branch-through.
+    llvm::SmallPtrSet<llvm::BasicBlock*, 4> EHBranches;
+
+    /// EH branch-afters.
+    llvm::SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
+    EHBranchAfters;
+  };
+  mutable struct ExtInfo *ExtInfo;
+
+  struct ExtInfo &getExtInfo() {
+    if (!ExtInfo) ExtInfo = new struct ExtInfo();
+    return *ExtInfo;
+  }
+
+  const struct ExtInfo &getExtInfo() const {
+    if (!ExtInfo) ExtInfo = new struct ExtInfo();
+    return *ExtInfo;
+  }
+
 public:
   /// Gets the size required for a lazy cleanup scope with the given
   /// cleanup-data requirements.
@@ -203,8 +235,14 @@ public:
       IsNormalCleanup(IsNormal), IsEHCleanup(IsEH),
       CleanupSize(CleanupSize), FixupDepth(FixupDepth),
       EnclosingNormal(EnclosingNormal), EnclosingEH(EnclosingEH),
-      NormalBlock(0), EHBlock(0)
-  {}
+      NormalBlock(0), EHBlock(0), ExtInfo(0)
+  {
+    assert(this->CleanupSize == CleanupSize && "cleanup size overflow");
+  }
+
+  ~EHCleanupScope() {
+    delete ExtInfo;
+  }
 
   bool isNormalCleanup() const { return IsNormalCleanup; }
   llvm::BasicBlock *getNormalBlock() const { return NormalBlock; }
@@ -227,6 +265,102 @@ public:
 
   EHScopeStack::Cleanup *getCleanup() {
     return reinterpret_cast<EHScopeStack::Cleanup*>(getCleanupBuffer());
+  }
+
+  /// True if this cleanup scope has any branch-afters or branch-throughs.
+  bool hasBranches() const { return ExtInfo && !ExtInfo->Branches.empty(); }
+
+  /// Add a branch-after to this cleanup scope.  A branch-after is a
+  /// branch from a point protected by this (normal) cleanup to a
+  /// point in the normal cleanup scope immediately containing it.
+  /// For example,
+  ///   for (;;) { A a; break; }
+  /// contains a branch-after.
+  ///
+  /// Branch-afters each have their own destination out of the
+  /// cleanup, guaranteed distinct from anything else threaded through
+  /// it.  Therefore branch-afters usually force a switch after the
+  /// cleanup.
+  void addBranchAfter(llvm::ConstantInt *Index,
+                      llvm::BasicBlock *Block) {
+    struct ExtInfo &ExtInfo = getExtInfo();
+    if (ExtInfo.Branches.insert(Block))
+      ExtInfo.BranchAfters.push_back(std::make_pair(Block, Index));
+  }
+
+  /// Return the number of unique branch-afters on this scope.
+  unsigned getNumBranchAfters() const {
+    return ExtInfo ? ExtInfo->BranchAfters.size() : 0;
+  }
+
+  llvm::BasicBlock *getBranchAfterBlock(unsigned I) const {
+    assert(I < getNumBranchAfters());
+    return ExtInfo->BranchAfters[I].first;
+  }
+
+  llvm::ConstantInt *getBranchAfterIndex(unsigned I) const {
+    assert(I < getNumBranchAfters());
+    return ExtInfo->BranchAfters[I].second;
+  }
+
+  /// Add a branch-through to this cleanup scope.  A branch-through is
+  /// a branch from a scope protected by this (normal) cleanup to an
+  /// enclosing scope other than the immediately-enclosing normal
+  /// cleanup scope.
+  ///
+  /// In the following example, the branch through B's scope is a
+  /// branch-through, while the branch through A's scope is a
+  /// branch-after:
+  ///   for (;;) { A a; B b; break; }
+  ///
+  /// All branch-throughs have a common destination out of the
+  /// cleanup, one possibly shared with the fall-through.  Therefore
+  /// branch-throughs usually don't force a switch after the cleanup.
+  ///
+  /// \return true if the branch-through was new to this scope
+  bool addBranchThrough(llvm::BasicBlock *Block) {
+    return getExtInfo().Branches.insert(Block);
+  }
+
+  /// Determines if this cleanup scope has any branch throughs.
+  bool hasBranchThroughs() const {
+    if (!ExtInfo) return false;
+    return (ExtInfo->BranchAfters.size() != ExtInfo->Branches.size());
+  }
+
+  // Same stuff, only for EH branches instead of normal branches.
+  // It's quite possible that we could find a better representation
+  // for this.
+
+  bool hasEHBranches() const { return ExtInfo && !ExtInfo->EHBranches.empty(); }
+  void addEHBranchAfter(llvm::ConstantInt *Index,
+                        llvm::BasicBlock *Block) {
+    struct ExtInfo &ExtInfo = getExtInfo();
+    if (ExtInfo.EHBranches.insert(Block))
+      ExtInfo.EHBranchAfters.push_back(std::make_pair(Block, Index));
+  }
+
+  unsigned getNumEHBranchAfters() const {
+    return ExtInfo ? ExtInfo->EHBranchAfters.size() : 0;
+  }
+
+  llvm::BasicBlock *getEHBranchAfterBlock(unsigned I) const {
+    assert(I < getNumEHBranchAfters());
+    return ExtInfo->EHBranchAfters[I].first;
+  }
+
+  llvm::ConstantInt *getEHBranchAfterIndex(unsigned I) const {
+    assert(I < getNumEHBranchAfters());
+    return ExtInfo->EHBranchAfters[I].second;
+  }
+
+  bool addEHBranchThrough(llvm::BasicBlock *Block) {
+    return getExtInfo().EHBranches.insert(Block);
+  }
+
+  bool hasEHBranchThroughs() const {
+    if (!ExtInfo) return false;
+    return (ExtInfo->EHBranchAfters.size() != ExtInfo->EHBranches.size());
   }
 
   static bool classof(const EHScope *Scope) {
@@ -281,9 +415,12 @@ public:
 /// An exceptions scope which calls std::terminate if any exception
 /// reaches it.
 class EHTerminateScope : public EHScope {
+  unsigned DestIndex : BitsRemaining;
 public:
-  EHTerminateScope() : EHScope(Terminate) {}
+  EHTerminateScope(unsigned Index) : EHScope(Terminate), DestIndex(Index) {}
   static size_t getSize() { return sizeof(EHTerminateScope); }
+
+  unsigned getDestIndex() const { return DestIndex; }
 
   static bool classof(const EHScope *Scope) {
     return Scope->getKind() == Terminate;
@@ -344,6 +481,9 @@ public:
     return copy;
   }
 
+  bool encloses(iterator other) const { return Ptr >= other.Ptr; }
+  bool strictlyEncloses(iterator other) const { return Ptr > other.Ptr; }
+
   bool operator==(iterator other) const { return Ptr == other.Ptr; }
   bool operator!=(iterator other) const { return Ptr != other.Ptr; }
 };
@@ -363,6 +503,8 @@ inline void EHScopeStack::popCatch() {
   StartOfData += EHCatchScope::getSizeForNumHandlers(
                           cast<EHCatchScope>(*begin()).getNumHandlers());
 
+  if (empty()) NextEHDestIndex = FirstEHDestIndex;
+
   assert(CatchDepth > 0 && "mismatched catch/terminate push/pop");
   CatchDepth--;
 }
@@ -372,6 +514,8 @@ inline void EHScopeStack::popTerminate() {
 
   assert(isa<EHTerminateScope>(*begin()));
   StartOfData += EHTerminateScope::getSize();
+
+  if (empty()) NextEHDestIndex = FirstEHDestIndex;
 
   assert(CatchDepth > 0 && "mismatched catch/terminate push/pop");
   CatchDepth--;

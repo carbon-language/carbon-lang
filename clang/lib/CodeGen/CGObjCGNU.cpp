@@ -2016,13 +2016,11 @@ void CGObjCGNU::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   if (S.getFinallyStmt())
     CGF.ExitFinallyBlock(FinallyInfo);
 
-  if (Cont.Block) {
-    if (Cont.Block->use_empty())
-      delete Cont.Block;
-    else {
-      CGF.EmitBranch(Cont.Block);
-      CGF.EmitBlock(Cont.Block);
-    }
+  if (Cont.isValid()) {
+    if (Cont.getBlock()->use_empty())
+      delete Cont.getBlock();
+    else
+      CGF.EmitBlock(Cont.getBlock());
   }
 }
 

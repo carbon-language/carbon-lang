@@ -77,22 +77,22 @@ namespace CodeGen {
 /// the innermost cleanup.  When a (normal) cleanup is popped, any
 /// unresolved fixups in that scope are threaded through the cleanup.
 struct BranchFixup {
-  /// The origin of the branch.  Any switch-index stores required by
-  /// cleanup threading are added before this instruction.
-  llvm::Instruction *Origin;
+  /// The block containing the terminator which needs to be modified
+  /// into a switch if this fixup is resolved into the current scope.
+  /// If null, LatestBranch points directly to the destination.
+  llvm::BasicBlock *OptimisticBranchBlock;
 
-  /// The destination of the branch.
+  /// The ultimate destination of the branch.
   ///
   /// This can be set to null to indicate that this fixup was
   /// successfully resolved.
   llvm::BasicBlock *Destination;
 
-  /// The last branch of the fixup.  It is an invariant that
-  /// LatestBranch->getSuccessor(LatestBranchIndex) == Destination.
-  ///
-  /// The branch is always either a BranchInst or a SwitchInst.
-  llvm::TerminatorInst *LatestBranch;
-  unsigned LatestBranchIndex;
+  /// The destination index value.
+  unsigned DestinationIndex;
+
+  /// The initial branch of the fixup.
+  llvm::BranchInst *InitialBranch;
 };
 
 enum CleanupKind { NormalAndEHCleanup, EHCleanup, NormalCleanup };
@@ -117,9 +117,8 @@ public:
 
     bool isValid() const { return Size >= 0; }
 
-    /// \return true if this scope is (non-strictly) nested within the
-    ///   given scope, assuming they're both valid
-    bool isWithin(stable_iterator I) const { return Size <= I.Size; }
+    bool encloses(stable_iterator I) const { return Size <= I.Size; }
+    bool strictlyEncloses(stable_iterator I) const { return Size < I.Size; }
 
     friend bool operator==(stable_iterator A, stable_iterator B) {
       return A.Size == B.Size;
@@ -182,6 +181,11 @@ private:
   /// The number of catches on the stack.
   unsigned CatchDepth;
 
+  /// The current EH destination index.  Reset to FirstCatchIndex
+  /// whenever the last EH cleanup is popped.
+  unsigned NextEHDestIndex;
+  enum { FirstEHDestIndex = 1 };
+
   /// The current set of branch fixups.  A branch fixup is a jump to
   /// an as-yet unemitted label, i.e. a label for which we don't yet
   /// know the EH stack depth.  Whenever we pop a cleanup, we have
@@ -203,15 +207,13 @@ private:
 
   char *allocate(size_t Size);
 
-  void popNullFixups();
-
   void *pushCleanup(CleanupKind K, size_t DataSize);
 
 public:
   EHScopeStack() : StartOfBuffer(0), EndOfBuffer(0), StartOfData(0),
                    InnermostNormalCleanup(stable_end()),
                    InnermostEHCleanup(stable_end()),
-                   CatchDepth(0) {}
+                   CatchDepth(0), NextEHDestIndex(FirstEHDestIndex) {}
   ~EHScopeStack() { delete[] StartOfBuffer; }
 
   // Variadic templates would make this not terrible.
@@ -366,8 +368,17 @@ public:
     return BranchFixups[I];
   }
 
-  /// Mark any branch fixups leading to the given block as resolved.
-  void resolveBranchFixups(llvm::BasicBlock *Dest);
+  /// Pops lazily-removed fixups from the end of the list.  This
+  /// should only be called by procedures which have just popped a
+  /// cleanup or resolved one or more fixups.
+  void popNullFixups();
+
+  /// Clears the branch-fixups list.  This should only be called by
+  /// CodeGenFunction::ResolveAllBranchFixups.
+  void clearFixups() { BranchFixups.clear(); }
+
+  /// Gets the next EH destination index.
+  unsigned getNextEHDestIndex() { return NextEHDestIndex++; }
 };
 
 /// CodeGenFunction - This class organizes the per-function state that is used
@@ -376,16 +387,44 @@ class CodeGenFunction : public BlockFunction {
   CodeGenFunction(const CodeGenFunction&); // DO NOT IMPLEMENT
   void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
 public:
-  /// A jump destination is a pair of a basic block and a cleanup
-  /// depth.  They are used to implement direct jumps across cleanup
-  /// scopes, e.g. goto, break, continue, and return.
+  /// A jump destination is an abstract label, branching to which may
+  /// require a jump out through normal cleanups.
   struct JumpDest {
-    JumpDest() : Block(0), ScopeDepth() {}
-    JumpDest(llvm::BasicBlock *Block, EHScopeStack::stable_iterator Depth)
-      : Block(Block), ScopeDepth(Depth) {}
+    JumpDest() : Block(0), ScopeDepth(), Index(0) {}
+    JumpDest(llvm::BasicBlock *Block,
+             EHScopeStack::stable_iterator Depth,
+             unsigned Index)
+      : Block(Block), ScopeDepth(Depth), Index(Index) {}
+
+    bool isValid() const { return Block != 0; }
+    llvm::BasicBlock *getBlock() const { return Block; }
+    EHScopeStack::stable_iterator getScopeDepth() const { return ScopeDepth; }
+    unsigned getDestIndex() const { return Index; }
     
+  private:
     llvm::BasicBlock *Block;
     EHScopeStack::stable_iterator ScopeDepth;
+    unsigned Index;
+  };
+
+  /// An unwind destination is an abstract label, branching to which
+  /// may require a jump out through EH cleanups.
+  struct UnwindDest {
+    UnwindDest() : Block(0), ScopeDepth(), Index(0) {}
+    UnwindDest(llvm::BasicBlock *Block,
+               EHScopeStack::stable_iterator Depth,
+               unsigned Index)
+      : Block(Block), ScopeDepth(Depth), Index(Index) {}
+
+    bool isValid() const { return Block != 0; }
+    llvm::BasicBlock *getBlock() const { return Block; }
+    EHScopeStack::stable_iterator getScopeDepth() const { return ScopeDepth; }
+    unsigned getDestIndex() const { return Index; }
+
+  private:
+    llvm::BasicBlock *Block;
+    EHScopeStack::stable_iterator ScopeDepth;
+    unsigned Index;
   };
 
   CodeGenModule &CGM;  // Per-module state.
@@ -413,6 +452,9 @@ public:
   /// iff the function has no return value.
   llvm::Value *ReturnValue;
 
+  /// RethrowBlock - Unified rethrow block.
+  UnwindDest RethrowBlock;
+
   /// AllocaInsertPoint - This is an instruction in the entry block before which
   /// we prefer to insert allocas.
   llvm::AssertingVH<llvm::Instruction> AllocaInsertPt;
@@ -429,6 +471,12 @@ public:
   llvm::DenseMap<const VarDecl *, llvm::Value *> NRVOFlags;
 
   EHScopeStack EHStack;
+
+  /// i32s containing the indexes of the cleanup destinations.
+  llvm::AllocaInst *NormalCleanupDest;
+  llvm::AllocaInst *EHCleanupDest;
+
+  unsigned NextCleanupDestIndex;
 
   /// The exception slot.  All landing pads write the current
   /// exception pointer into this alloca.
@@ -469,7 +517,7 @@ public:
 
   /// PopCleanupBlock - Will pop the cleanup entry on the stack and
   /// process all branch fixups.
-  void PopCleanupBlock();
+  void PopCleanupBlock(bool FallThroughIsBranchThrough = false);
 
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
@@ -520,18 +568,21 @@ public:
   /// the cleanup blocks that have been added.
   void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize);
 
+  void ResolveAllBranchFixups(llvm::SwitchInst *Switch);
+  void ResolveBranchFixups(llvm::BasicBlock *Target);
+
   /// The given basic block lies in the current EH scope, but may be a
   /// target of a potentially scope-crossing jump; get a stable handle
   /// to which we can perform this jump later.
-  JumpDest getJumpDestInCurrentScope(llvm::BasicBlock *Target) const {
-    return JumpDest(Target, EHStack.stable_begin());
+  JumpDest getJumpDestInCurrentScope(llvm::BasicBlock *Target) {
+    return JumpDest(Target, EHStack.stable_begin(), NextCleanupDestIndex++);
   }
 
   /// The given basic block lies in the current EH scope, but may be a
   /// target of a potentially scope-crossing jump; get a stable handle
   /// to which we can perform this jump later.
   JumpDest getJumpDestInCurrentScope(const char *Name = 0) {
-    return JumpDest(createBasicBlock(Name), EHStack.stable_begin());
+    return getJumpDestInCurrentScope(createBasicBlock(Name));
   }
 
   /// EmitBranchThroughCleanup - Emit a branch from the current insert
@@ -542,7 +593,11 @@ public:
   /// EmitBranchThroughEHCleanup - Emit a branch from the current
   /// insert block through the EH cleanup handling code (if any) and
   /// then on to \arg Dest.
-  void EmitBranchThroughEHCleanup(JumpDest Dest);
+  void EmitBranchThroughEHCleanup(UnwindDest Dest);
+
+  /// getRethrowDest - Returns the unified outermost-scope rethrow
+  /// destination.
+  UnwindDest getRethrowDest();
 
   /// BeginConditionalBranch - Should be called before a conditional part of an
   /// expression is emitted. For example, before the RHS of the expression below
@@ -600,10 +655,6 @@ private:
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
-  /// InvokeDest - This is the nearest exception target for calls
-  /// which can unwind, when exceptions are being used.
-  llvm::BasicBlock *InvokeDest;
-
   // VLASizeMap - This keeps track of the associated size for each VLA type.
   // We track this by the size expression rather than the type itself because
   // in certain situations, like a const qualifier applied to an VLA typedef,
@@ -659,6 +710,9 @@ public:
   /// Returns a pointer to the function's exception object slot, which
   /// is assigned in every landing pad.
   llvm::Value *getExceptionSlot();
+
+  llvm::Value *getNormalCleanupDestSlot();
+  llvm::Value *getEHCleanupDestSlot();
 
   llvm::BasicBlock *getUnreachableBlock() {
     if (!UnreachableBlock) {

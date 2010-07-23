@@ -248,32 +248,35 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
 CodeGenFunction::JumpDest
 CodeGenFunction::getJumpDestForLabel(const LabelStmt *S) {
   JumpDest &Dest = LabelMap[S];
-  if (Dest.Block) return Dest;
+  if (Dest.isValid()) return Dest;
 
   // Create, but don't insert, the new block.
-  Dest.Block = createBasicBlock(S->getName());
-  Dest.ScopeDepth = EHScopeStack::stable_iterator::invalid();
+  Dest = JumpDest(createBasicBlock(S->getName()),
+                  EHScopeStack::stable_iterator::invalid(),
+                  NextCleanupDestIndex++);
   return Dest;
 }
 
 void CodeGenFunction::EmitLabel(const LabelStmt &S) {
   JumpDest &Dest = LabelMap[&S];
 
-  // If we didn't needed a forward reference to this label, just go
+  // If we didn't need a forward reference to this label, just go
   // ahead and create a destination at the current scope.
-  if (!Dest.Block) {
+  if (!Dest.isValid()) {
     Dest = getJumpDestInCurrentScope(S.getName());
 
   // Otherwise, we need to give this label a target depth and remove
   // it from the branch-fixups list.
   } else {
-    assert(!Dest.ScopeDepth.isValid() && "already emitted label!");
-    Dest.ScopeDepth = EHStack.stable_begin();
+    assert(!Dest.getScopeDepth().isValid() && "already emitted label!");
+    Dest = JumpDest(Dest.getBlock(),
+                    EHStack.stable_begin(),
+                    Dest.getDestIndex());
 
-    EHStack.resolveBranchFixups(Dest.Block);
+    ResolveBranchFixups(Dest.getBlock());
   }
 
-  EmitBlock(Dest.Block);
+  EmitBlock(Dest.getBlock());
 }
 
 
@@ -373,7 +376,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // Emit the header for the loop, which will also become
   // the continue target.
   JumpDest LoopHeader = getJumpDestInCurrentScope("while.cond");
-  EmitBlock(LoopHeader.Block);
+  EmitBlock(LoopHeader.getBlock());
 
   // Create an exit block for when the condition fails, which will
   // also become the break target.
@@ -409,13 +412,13 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // As long as the condition is true, go to the loop body.
   llvm::BasicBlock *LoopBody = createBasicBlock("while.body");
   if (EmitBoolCondBranch) {
-    llvm::BasicBlock *ExitBlock = LoopExit.Block;
+    llvm::BasicBlock *ExitBlock = LoopExit.getBlock();
     if (ConditionScope.requiresCleanups())
       ExitBlock = createBasicBlock("while.exit");
 
     Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
 
-    if (ExitBlock != LoopExit.Block) {
+    if (ExitBlock != LoopExit.getBlock()) {
       EmitBlock(ExitBlock);
       EmitBranchThroughCleanup(LoopExit);
     }
@@ -435,15 +438,15 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   ConditionScope.ForceCleanup();
 
   // Branch to the loop header again.
-  EmitBranch(LoopHeader.Block);
+  EmitBranch(LoopHeader.getBlock());
 
   // Emit the exit block.
-  EmitBlock(LoopExit.Block, true);
+  EmitBlock(LoopExit.getBlock(), true);
 
   // The LoopHeader typically is just a branch if we skipped emitting
   // a branch, try to erase it.
   if (!EmitBoolCondBranch)
-    SimplifyForwardingBlocks(LoopHeader.Block);
+    SimplifyForwardingBlocks(LoopHeader.getBlock());
 }
 
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
@@ -463,7 +466,7 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 
   BreakContinueStack.pop_back();
 
-  EmitBlock(LoopCond.Block);
+  EmitBlock(LoopCond.getBlock());
 
   // C99 6.8.5.2: "The evaluation of the controlling expression takes place
   // after each execution of the loop body."
@@ -482,15 +485,15 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 
   // As long as the condition is true, iterate the loop.
   if (EmitBoolCondBranch)
-    Builder.CreateCondBr(BoolCondVal, LoopBody, LoopExit.Block);
+    Builder.CreateCondBr(BoolCondVal, LoopBody, LoopExit.getBlock());
 
   // Emit the exit block.
-  EmitBlock(LoopExit.Block);
+  EmitBlock(LoopExit.getBlock());
 
   // The DoCond block typically is just a branch if we skipped
   // emitting a branch, try to erase it.
   if (!EmitBoolCondBranch)
-    SimplifyForwardingBlocks(LoopCond.Block);
+    SimplifyForwardingBlocks(LoopCond.getBlock());
 }
 
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
@@ -506,7 +509,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // If there's an increment, the continue scope will be overwritten
   // later.
   JumpDest Continue = getJumpDestInCurrentScope("for.cond");
-  llvm::BasicBlock *CondBlock = Continue.Block;
+  llvm::BasicBlock *CondBlock = Continue.getBlock();
   EmitBlock(CondBlock);
 
   // Create a cleanup scope for the condition variable cleanups.
@@ -516,7 +519,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   if (S.getCond()) {
     // If the for statement has a condition scope, emit the local variable
     // declaration.
-    llvm::BasicBlock *ExitBlock = LoopExit.Block;
+    llvm::BasicBlock *ExitBlock = LoopExit.getBlock();
     if (S.getConditionVariable()) {
       EmitLocalBlockVarDecl(*S.getConditionVariable());
     }
@@ -534,7 +537,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     BoolCondVal = EvaluateExprAsBool(S.getCond());
     Builder.CreateCondBr(BoolCondVal, ForBody, ExitBlock);
 
-    if (ExitBlock != LoopExit.Block) {
+    if (ExitBlock != LoopExit.getBlock()) {
       EmitBlock(ExitBlock);
       EmitBranchThroughCleanup(LoopExit);
     }
@@ -570,7 +573,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   // If there is an increment, emit it next.
   if (S.getInc()) {
-    EmitBlock(Continue.Block);
+    EmitBlock(Continue.getBlock());
     EmitStmt(S.getInc());
   }
 
@@ -587,7 +590,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   }
 
   // Emit the fall-through block.
-  EmitBlock(LoopExit.Block, true);
+  EmitBlock(LoopExit.getBlock(), true);
 }
 
 void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
@@ -840,13 +843,15 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
     // Otherwise, just forward the default block to the switch end.
     } else {
-      DefaultBlock->replaceAllUsesWith(SwitchExit.Block);
+      DefaultBlock->replaceAllUsesWith(SwitchExit.getBlock());
       delete DefaultBlock;
     }
   }
 
+  ConditionScope.ForceCleanup();
+
   // Emit continuation.
-  EmitBlock(SwitchExit.Block, true);
+  EmitBlock(SwitchExit.getBlock(), true);
 
   SwitchInsn = SavedSwitchInsn;
   CaseRangeBlock = SavedCRBlock;
