@@ -63,7 +63,7 @@ public:
         task_t task_port;
         lldb::tid_t thread_port;
         exception_type_t exc_type;
-        std::vector<mach_exception_data_type_t> exc_data;
+        std::vector<lldb::addr_t> exc_data;
         Data() :
             task_port(TASK_NULL),
             thread_port(THREAD_NULL),
@@ -125,7 +125,7 @@ public:
 
         typedef std::vector<Message>        collection;
         typedef collection::iterator        iterator;
-        typedef collection::const_iterator    const_iterator;
+        typedef collection::const_iterator  const_iterator;
     };
 
     enum

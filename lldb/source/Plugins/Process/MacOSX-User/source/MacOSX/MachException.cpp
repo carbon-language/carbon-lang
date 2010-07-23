@@ -209,42 +209,9 @@ MachException::Data::GetStopInfo(Thread::StopInfo *stop_info) const
         return true;
     // We always stop with a mach exceptions
     const size_t exc_data_count = exc_data.size();
-    stop_info->SetStopReasonWithException(exc_type, exc_data_count);
-
-    // Fill in a text description
-    const char * exc_name = MachException::Name(exc_type);
-    StreamString sstr;
-    if (exc_name)
-        sstr.PutCString(exc_name);
-    else
-        sstr.Printf ("%i", exc_type);
-
-    int signal = SoftSignal();
-    if (signal > 0)
-    {
-        const char *sig_str = Host::GetSignalAsCString(signal);
-        if (sig_str)
-            sstr.Printf (" EXC_SOFT_SIGNAL(%s)", sig_str);
-        else
-            sstr.Printf (" EXC_SOFT_SIGNAL(%i)", signal);
-    }
-    else
-    {
-        // No special disassembly for exception data, just
-        sstr.Printf (" data[%zu] = {", exc_data_count);
-
-        for (size_t idx = 0; idx < exc_data_count; ++idx)
-            sstr.Printf (MACH_EXCEPTION_DATA_FMT_MINHEX "%s", exc_data[idx], ((idx + 1 == exc_data_count) ? "" : ","));
-
-        sstr.PutChar('}');
-    }
-
-    stop_info->SetStopDescription (sstr.GetData());
-
-    // Copy the exception data
-    size_t i;
-    for (i=0; i<exc_data_count; i++)
-        stop_info->SetExceptionDataAtIndex(i, exc_data[i]);
+    stop_info->SetStopReasonWithMachException (exc_type, 
+                                               exc_data_count, 
+                                               exc_data_count ? &exc_data[0] : NULL);
 
     return true;
 }

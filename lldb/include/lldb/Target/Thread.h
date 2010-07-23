@@ -68,7 +68,7 @@ public:
         SetStopReasonToTrace ();
 
         void
-        SetStopReasonWithException (uint32_t exc_type, size_t exc_data_count);
+        SetStopReasonWithGenericException (uint32_t exc_type, size_t exc_data_count);
 
         void
         SetStopReasonWithPlan (lldb::ThreadPlanSP &plan);
@@ -81,6 +81,11 @@ public:
 
         void
         SetStopDescription(const char *desc);
+        
+        void
+        SetStopReasonWithMachException (uint32_t exc_type, 
+                                        size_t exc_data_count, 
+                                        const lldb::addr_t *exc_data);
 
         lldb::user_id_t
         GetBreakpointSiteID() const;
