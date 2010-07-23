@@ -495,9 +495,9 @@ namespace {
   /// than the complexity of the RHS.  This comparator is used to canonicalize
   /// expressions.
   class SCEVComplexityCompare {
-    LoopInfo *LI;
+    const LoopInfo *LI;
   public:
-    explicit SCEVComplexityCompare(LoopInfo *li) : LI(li) {}
+    explicit SCEVComplexityCompare(const LoopInfo *li) : LI(li) {}
 
     bool operator()(const SCEV *LHS, const SCEV *RHS) const {
       // Fast-path: SCEVs are uniqued so we can do a quick equality check.
