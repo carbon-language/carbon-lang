@@ -63,7 +63,7 @@ namespace llvmc {
   }
 
   int PluginLoader::RunInitialization(LanguageMap& langMap,
-                                       CompilationGraph& graph) const
+                                      CompilationGraph& graph) const
   {
     llvm::sys::SmartScopedLock<true> Lock(*PluginMutex);
     for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
