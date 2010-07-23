@@ -397,7 +397,6 @@ void MachineFunction::viewCFGOnly() const
 /// create a corresponding virtual register for it.
 unsigned MachineFunction::addLiveIn(unsigned PReg,
                                     const TargetRegisterClass *RC) {
-  assert(RC->contains(PReg) && "Not the correct regclass!");
   MachineRegisterInfo &MRI = getRegInfo();
   unsigned VReg = MRI.getLiveInVirtReg(PReg);
   if (VReg) {
