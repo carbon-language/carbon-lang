@@ -357,6 +357,7 @@ def HasSSE41     : Predicate<"Subtarget->hasSSE41()">;
 def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
 def HasSSE4A     : Predicate<"Subtarget->hasSSE4A()">;
 def HasAVX       : Predicate<"Subtarget->hasAVX()">;
+def HasCLMUL     : Predicate<"Subtarget->hasCLMUL()">;
 def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;

@@ -74,6 +74,9 @@ protected:
   /// HasAES - Target has AES instructions
   bool HasAES;
 
+  /// HasCLMUL - Target has carry-less multiplication
+  bool HasCLMUL;
+
   /// HasFMA3 - Target has 3-operand fused multiply-add
   bool HasFMA3;
 
@@ -149,6 +152,7 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasAVX() const { return HasAVX; }
   bool hasAES() const { return HasAES; }
+  bool hasCLMUL() const { return HasCLMUL; }
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
   bool isBTMemSlow() const { return IsBTMemSlow; }

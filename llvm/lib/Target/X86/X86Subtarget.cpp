@@ -260,9 +260,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
 
-  HasFMA3 = IsIntel && ((ECX >> 12) & 0x1);
-  HasAVX = ((ECX >> 28) & 0x1);
-  HasAES = IsIntel && ((ECX >> 25) & 0x1);
+  HasCLMUL = IsIntel && ((ECX >> 1) & 0x1);
+  HasFMA3  = IsIntel && ((ECX >> 12) & 0x1);
+  HasAVX   = ((ECX >> 28) & 0x1);
+  HasAES   = IsIntel && ((ECX >> 25) & 0x1);
 
   if (IsIntel || IsAMD) {
     // Determine if bit test memory instructions are slow.
@@ -291,6 +292,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   , HasSSE4A(false)
   , HasAVX(false)
   , HasAES(false)
+  , HasCLMUL(false)
   , HasFMA3(false)
   , HasFMA4(false)
   , IsBTMemSlow(false)
