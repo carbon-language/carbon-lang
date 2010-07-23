@@ -24,7 +24,7 @@ using namespace clang;
 namespace {
 
 struct StreamState {
-  enum Kind { Opened, Closed, OpenFailed } K;
+  enum Kind { Opened, Closed, OpenFailed, Escaped } K;
   const Stmt *S;
 
   StreamState(Kind k, const Stmt *s) : K(k), S(s) {}
@@ -32,6 +32,7 @@ struct StreamState {
   bool isOpened() const { return K == Opened; }
   bool isClosed() const { return K == Closed; }
   bool isOpenFailed() const { return K == OpenFailed; }
+  bool isEscaped() const { return K == Escaped; }
 
   bool operator==(const StreamState &X) const {
     return K == X.K && S == X.S;
@@ -41,6 +42,9 @@ struct StreamState {
   static StreamState getClosed(const Stmt *s) { return StreamState(Closed, s); }
   static StreamState getOpenFailed(const Stmt *s) { 
     return StreamState(OpenFailed, s); 
+  }
+  static StreamState getEscaped(const Stmt *s) {
+    return StreamState(Escaped, s);
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -53,14 +57,15 @@ class StreamChecker : public CheckerVisitor<StreamChecker> {
   IdentifierInfo *II_fopen, *II_tmpfile, *II_fclose, *II_fread, *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
-  BuiltinBug *BT_nullfp, *BT_illegalwhence, *BT_doubleclose;
+  BuiltinBug *BT_nullfp, *BT_illegalwhence, *BT_doubleclose, *BT_ResourceLeak;
 
 public:
   StreamChecker() 
     : II_fopen(0), II_tmpfile(0) ,II_fclose(0), II_fread(0), II_fwrite(0), 
       II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
       II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0), 
-      BT_nullfp(0), BT_illegalwhence(0), BT_doubleclose(0) {}
+      BT_nullfp(0), BT_illegalwhence(0), BT_doubleclose(0), 
+      BT_ResourceLeak(0) {}
 
   static void *getTag() {
     static int x;
@@ -68,6 +73,9 @@ public:
   }
 
   virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
+  void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
+  void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
 
 private:
   void Fopen(CheckerContext &C, const CallExpr *CE);
@@ -385,4 +393,71 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
   
   // Close the File Descriptor.
   return state->set<StreamState>(Sym, StreamState::getClosed(CE));
+}
+
+void StreamChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+	 E = SymReaper.dead_end(); I != E; ++I) {
+    SymbolRef Sym = *I;
+    const GRState *state = C.getState();
+    const StreamState *SS = state->get<StreamState>(Sym);
+    if (!SS)
+      return;
+
+    if (SS->isOpened()) {
+      ExplodedNode *N = C.GenerateSink();
+      if (N) {
+	if (!BT_ResourceLeak)
+	  BT_ResourceLeak = new BuiltinBug("Resource Leak", 
+			  "Opened File never closed. Potential Resource leak.");
+	BugReport *R = new BugReport(*BT_ResourceLeak, 
+				     BT_ResourceLeak->getDescription(), N);
+	C.EmitReport(R);
+      }
+    }
+  }
+}
+
+void StreamChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
+				GRExprEngine &Eng) {
+  SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
+  const GRState *state = B.getState();
+  typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
+  SymMap M = state->get<StreamState>();
+  
+  for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    StreamState SS = I->second;
+    if (SS.isOpened()) {
+      ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+      if (N) {
+        if (!BT_ResourceLeak)
+          BT_ResourceLeak = new BuiltinBug("Resource Leak", 
+			  "Opened File never closed. Potential Resource leak.");
+        BugReport *R = new BugReport(*BT_ResourceLeak, 
+				     BT_ResourceLeak->getDescription(), N);
+        Eng.getBugReporter().EmitReport(R);
+      }
+    }
+  }
+}
+
+void StreamChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
+  const Expr *RetE = S->getRetValue();
+  if (!RetE)
+    return;
+  
+  const GRState *state = C.getState();
+  SymbolRef Sym = state->getSVal(RetE).getAsSymbol();
+  
+  if (!Sym)
+    return;
+  
+  const StreamState *SS = state->get<StreamState>(Sym);
+  if(!SS)
+    return;
+
+  if (SS->isOpened())
+    state = state->set<StreamState>(Sym, StreamState::getEscaped(S));
+
+  C.addTransition(state);
 }

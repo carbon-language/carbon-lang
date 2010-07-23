@@ -17,21 +17,25 @@ void f1(void) {
   FILE *p = fopen("foo", "r");
   char buf[1024];
   fread(buf, 1, 1, p); // expected-warning {{Stream pointer might be NULL.}}
+  fclose(p);
 }
 
 void f2(void) {
   FILE *p = fopen("foo", "r");
   fseek(p, 1, SEEK_SET); // expected-warning {{Stream pointer might be NULL.}}
+  fclose(p);
 }
 
 void f3(void) {
   FILE *p = fopen("foo", "r");
   ftell(p); // expected-warning {{Stream pointer might be NULL.}}
+  fclose(p);
 }
 
 void f4(void) {
   FILE *p = fopen("foo", "r");
   rewind(p); // expected-warning {{Stream pointer might be NULL.}}
+  fclose(p);
 }
 
 void f5(void) {
@@ -40,6 +44,7 @@ void f5(void) {
     return;
   fseek(p, 1, SEEK_SET); // no-warning
   fseek(p, 1, 3); // expected-warning {{The whence argument to fseek() should be SEEK_SET, SEEK_END, or SEEK_CUR.}}
+  fclose(p);
 }
 
 void f6(void) {
@@ -51,4 +56,20 @@ void f6(void) {
 void f7(void) {
   FILE *p = tmpfile();
   ftell(p); // expected-warning {{Stream pointer might be NULL.}}
+  fclose(p);
+}
+
+void f8(int c) {
+  FILE *p = fopen("foo.c", "r");
+  if(c)
+    return; // expected-warning {{Opened File never closed. Potential Resource leak.}}
+  fclose(p);
+}
+
+FILE *f9(void) {
+  FILE *p = fopen("foo.c", "r");
+  if (p)
+    return p; // no-warning
+  else
+    return 0;
 }
