@@ -79,10 +79,10 @@ namespace llvm {
                   (const unsigned char *)Buffer->getBufferEnd())) {
       std::string ErrMsg;
       Module *M = ParseBitcodeFile(Buffer, Context, &ErrMsg);
-      // ParseBitcodeFile does not take ownership of the Buffer.
-      delete Buffer;
       if (M == 0)
         Err = SMDiagnostic(Buffer->getBufferIdentifier(), ErrMsg);
+      // ParseBitcodeFile does not take ownership of the Buffer.
+      delete Buffer;
       return M;
     }
 
