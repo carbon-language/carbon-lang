@@ -1856,6 +1856,8 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
   // string.
 
   Decl *currentDecl = getCurFunctionOrMethodDecl();
+  if (!currentDecl && getCurBlock())
+    currentDecl = getCurBlock()->TheDecl;
   if (!currentDecl) {
     Diag(Loc, diag::ext_predef_outside_function);
     currentDecl = Context.getTranslationUnitDecl();

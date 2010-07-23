@@ -221,3 +221,8 @@ void test21() {
     (void)b[1]; // expected-error {{cannot refer to declaration with an array type inside block}}
   }();
 }
+
+// rdar ://8218839
+const char * (^func)(void) = ^{ return __func__; };
+const char * (^function)(void) = ^{ return __FUNCTION__; };
+const char * (^pretty)(void) = ^{ return __PRETTY_FUNCTION__; };
