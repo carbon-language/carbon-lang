@@ -1367,9 +1367,29 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         }
       }      
       
-      if (SimplifyDemandedBits(Op.getOperand(0), NewMask.lshr(ShAmt),
+      if (SimplifyDemandedBits(InOp, NewMask.lshr(ShAmt),
                                KnownZero, KnownOne, TLO, Depth+1))
         return true;
+
+      // Convert (shl (anyext x, c)) to (anyext (shl x, c)) if the high bits
+      // are not demanded. This will likely allow the anyext to be folded away.
+      if (InOp.getNode()->getOpcode() == ISD::ANY_EXTEND) {
+        SDValue InnerOp = InOp.getNode()->getOperand(0);
+        EVT InnerVT = InnerOp.getValueType();
+        if ((APInt::getHighBitsSet(BitWidth,
+                                   BitWidth - InnerVT.getSizeInBits()) &
+               DemandedMask) == 0 &&
+            isTypeDesirableForOp(ISD::SHL, InnerVT)) {
+          SDValue NarrowShl =
+            TLO.DAG.getNode(ISD::SHL, dl, InnerVT, InnerOp,
+                            TLO.DAG.getConstant(ShAmt, InnerVT));
+          return
+            TLO.CombineTo(Op,
+                          TLO.DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(),
+                                          NarrowShl));
+        }
+      }
+
       KnownZero <<= SA->getZExtValue();
       KnownOne  <<= SA->getZExtValue();
       // low bits known zero.
