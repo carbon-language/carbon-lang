@@ -47,15 +47,6 @@
 #include "ThreadGDBRemote.h"
 #include "MacOSXLibunwindCallbacks.h"
 
-#if defined (__i386__) || defined (__x86_64__)
-#define MACH_EXC_DATA0_SOFTWARE_BREAKPOINT EXC_I386_BPT
-#define MACH_EXC_DATA0_TRACE EXC_I386_SGL
-#elif defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)
-#define MACH_EXC_DATA0_SOFTWARE_BREAKPOINT EXC_PPC_BREAKPOINT
-#elif defined (__arm__)
-#define MACH_EXC_DATA0_SOFTWARE_BREAKPOINT EXC_ARM_BREAKPOINT
-#endif
-
 
 #define DEBUGSERVER_BASENAME    "debugserver"
 using namespace lldb;
@@ -1020,49 +1011,236 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 gdb_thread->SetStopInfoStopID (GetStopID());
                 if (exc_type != 0)
                 {
-                    if (exc_type == EXC_SOFTWARE && exc_data.size() == 2 && exc_data[0] == EXC_SOFT_SIGNAL)
+                    bool exc_translated = false;
+                    const char *exc_desc = NULL;
+                    const char *code_label = "code";
+                    const char *code_desc = NULL;
+                    const char *subcode_label = "subcode";
+                    const char *subcode_desc = NULL;
+                    switch (exc_type)
                     {
-                        stop_info.SetStopReasonWithSignal(exc_data[1]);
-                    }
-#if defined (MACH_EXC_DATA0_SOFTWARE_BREAKPOINT)
-                    else if (exc_type == EXC_BREAKPOINT && exc_data[0] == MACH_EXC_DATA0_SOFTWARE_BREAKPOINT)
-                    {
-                        addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
-                        lldb::BreakpointSiteSP bp_site_sp = GetBreakpointSiteList().FindByAddress(pc);
-                        if (!bp_site_sp)
-                        {
-                            //log->Printf("got EXC_BREAKPOINT at 0x%llx but didn't find a breakpoint site.\n", pc);
-                            stop_info.SetStopReasonWithException(exc_type, exc_data.size());
-                            for (uint32_t i=0; i<exc_data.size(); ++i)
-                                stop_info.SetExceptionDataAtIndex(i, exc_data[i]);
-                        }
-                        else
-                        {
-                            if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                    case 1: // EXC_BAD_ACCESS
+                        exc_desc = "EXC_BAD_ACCESS";
+                        subcode_label = "address";
+                        switch (GetArchSpec().GetGenericCPUType())
+                        {                        
+                        case ArchSpec::eCPU_arm:
+                            switch (exc_data[0])
                             {
-                                stop_info.Clear ();
-                                stop_info.SetStopReasonWithBreakpointSiteID (bp_site_sp->GetID());
+                            case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
+                            case 0x102: code_desc = "EXC_ARM_DA_DEBUG"; break;
                             }
-                            else
+                            break;
+
+                        case ArchSpec::eCPU_ppc:
+                        case ArchSpec::eCPU_ppc64:
+                            switch (exc_data[0])
                             {
-                                stop_info.Clear ();
-                                stop_info.SetStopReasonToNone();
+                            case 0x101: code_desc = "EXC_PPC_VM_PROT_READ"; break;
+                            case 0x102: code_desc = "EXC_PPC_BADSPACE";     break;
+                            case 0x103: code_desc = "EXC_PPC_UNALIGNED";    break;
+                            }
+                            break;
+
+                        default:
+                            break;
+                        }
+                        break;
+
+                    case 2: // EXC_BAD_INSTRUCTION
+                        exc_desc = "EXC_BAD_INSTRUCTION";
+                        switch (GetArchSpec().GetGenericCPUType())
+                        {
+                        case ArchSpec::eCPU_i386:
+                        case ArchSpec::eCPU_x86_64:
+                            if (exc_data[0] == 1)
+                                code_desc = "EXC_I386_INVOP";
+                            break;
+
+                        case ArchSpec::eCPU_ppc:
+                        case ArchSpec::eCPU_ppc64:
+                            switch (exc_data[0])
+                            {
+                            case 1: code_desc = "EXC_PPC_INVALID_SYSCALL"; break; 
+                            case 2: code_desc = "EXC_PPC_UNIPL_INST"; break; 
+                            case 3: code_desc = "EXC_PPC_PRIVINST"; break; 
+                            case 4: code_desc = "EXC_PPC_PRIVREG"; break; 
+                            case 5: // EXC_PPC_TRACE
+                                stop_info.SetStopReasonToTrace();
+                                exc_translated = true;
+                                break;
+                            case 6: code_desc = "EXC_PPC_PERFMON"; break; 
+                            }
+                            break;
+
+                        case ArchSpec::eCPU_arm:
+                            if (exc_data[0] == 1)
+                                code_desc = "EXC_ARM_UNDEFINED";
+                            break;
+
+                        default:
+                            break;
+                        }
+                        break;
+
+                    case 3: // EXC_ARITHMETIC
+                        exc_desc = "EXC_ARITHMETIC";
+                        switch (GetArchSpec().GetGenericCPUType())
+                        {
+                        case ArchSpec::eCPU_i386:
+                        case ArchSpec::eCPU_x86_64:
+                            switch (exc_data[0])
+                            {
+                            case 1: code_desc = "EXC_I386_DIV"; break;
+                            case 2: code_desc = "EXC_I386_INTO"; break;
+                            case 3: code_desc = "EXC_I386_NOEXT"; break;
+                            case 4: code_desc = "EXC_I386_EXTOVR"; break;
+                            case 5: code_desc = "EXC_I386_EXTERR"; break;
+                            case 6: code_desc = "EXC_I386_EMERR"; break;
+                            case 7: code_desc = "EXC_I386_BOUND"; break;
+                            case 8: code_desc = "EXC_I386_SSEEXTERR"; break;
+                            }
+                            break;
+
+                        case ArchSpec::eCPU_ppc:
+                        case ArchSpec::eCPU_ppc64:
+                            switch (exc_data[0])
+                            {
+                            case 1: code_desc = "EXC_PPC_OVERFLOW"; break;
+                            case 2: code_desc = "EXC_PPC_ZERO_DIVIDE"; break;
+                            case 3: code_desc = "EXC_PPC_FLT_INEXACT"; break;
+                            case 4: code_desc = "EXC_PPC_FLT_ZERO_DIVIDE"; break;
+                            case 5: code_desc = "EXC_PPC_FLT_UNDERFLOW"; break;
+                            case 6: code_desc = "EXC_PPC_FLT_OVERFLOW"; break;
+                            case 7: code_desc = "EXC_PPC_FLT_NOT_A_NUMBER"; break;
+                            }
+                            break;
+
+                        default:
+                            break;
+                        }
+                        break;
+
+                    case 4: // EXC_EMULATION
+                        exc_desc = "EXC_EMULATION";
+                        break;
+
+
+                    case 5: // EXC_SOFTWARE
+                        exc_desc = "EXC_SOFTWARE";
+                        if (exc_data[0] == EXC_SOFT_SIGNAL && exc_data.size() == 2)
+                        {
+                            stop_info.SetStopReasonWithSignal(exc_data[1]);
+                            exc_translated = true;
+                        }
+                        break;
+                    
+                    case 6:
+                        {
+                            exc_desc = "EXC_SOFTWARE";
+                            bool is_software_breakpoint = false;
+                            switch (GetArchSpec().GetGenericCPUType())
+                            {
+                            case ArchSpec::eCPU_i386:
+                            case ArchSpec::eCPU_x86_64:
+                                if (exc_data[0] == 1) // EXC_I386_SGL
+                                {
+                                    exc_translated = true;
+                                    stop_info.SetStopReasonToTrace ();
+                                }
+                                else if (exc_data[0] == 2) // EXC_I386_BPT
+                                {
+                                    is_software_breakpoint = true;
+                                }
+                                break;
+
+                            case ArchSpec::eCPU_ppc:
+                            case ArchSpec::eCPU_ppc64:
+                                is_software_breakpoint = exc_data[0] == 1; // EXC_PPC_BREAKPOINT
+                                break;
+                            
+                            case ArchSpec::eCPU_arm:
+                                is_software_breakpoint = exc_data[0] == 1; // EXC_ARM_BREAKPOINT
+                                break;
+
+                            default:
+                                break;
                             }
 
+                            if (is_software_breakpoint)
+                            {
+                                addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
+                                lldb::BreakpointSiteSP bp_site_sp = GetBreakpointSiteList().FindByAddress(pc);
+                                if (bp_site_sp)
+                                {
+                                    exc_translated = true;
+                                    if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                                    {
+                                        stop_info.Clear ();
+                                        stop_info.SetStopReasonWithBreakpointSiteID (bp_site_sp->GetID());
+                                    }
+                                    else
+                                    {
+                                        stop_info.Clear ();
+                                        stop_info.SetStopReasonToNone();
+                                    }
+
+                                }
+                            }
                         }
+                        break;
+
+                    case 7:
+                        exc_desc = "EXC_SYSCALL";
+                        break;
+
+                    case 8:
+                        exc_desc = "EXC_MACH_SYSCALL";
+                        break;
+
+                    case 9:
+                        exc_desc = "EXC_RPC_ALERT";
+                        break;
+
+                    case 10:
+                        exc_desc = "EXC_CRASH";
+                        break;
                     }
-#endif
-#if defined (MACH_EXC_DATA0_TRACE)
-                    else if (exc_type == EXC_BREAKPOINT && exc_data[0] == MACH_EXC_DATA0_TRACE)
-                    {
-                        stop_info.SetStopReasonToTrace ();
-                    }
-#endif
-                    else
+                    
+                    if (!exc_translated)
                     {
                         stop_info.SetStopReasonWithException(exc_type, exc_data.size());
                         for (uint32_t i=0; i<exc_data.size(); ++i)
                             stop_info.SetExceptionDataAtIndex(i, exc_data[i]);
+
+    
+                        StreamString desc_strm;
+
+                        if (exc_desc)
+                            desc_strm.PutCString(exc_desc);
+                        else
+                            desc_strm.Printf("EXC_??? (%u)", exc_type);
+
+                        if (exc_data.size() >= 1)
+                        {
+                            if (code_desc)
+                                desc_strm.Printf(" (%s=%s", code_label, code_desc);
+                            else
+                                desc_strm.Printf(" (%s=%llu", code_label, exc_data[0]);
+                        }
+
+                        if (exc_data.size() >= 2)
+                        {
+                            if (subcode_desc)
+                                desc_strm.Printf(", %s=%s", subcode_label, subcode_desc);
+                            else
+                                desc_strm.Printf(", %s=0x%llx", subcode_label, exc_data[1]);
+                        }
+                        
+                        if (exc_data.empty() == false)
+                            desc_strm.PutChar(')');
+                        
+                        stop_info.SetStopDescription(desc_strm.GetString().c_str());
                     }
                 }
                 else if (signo)
