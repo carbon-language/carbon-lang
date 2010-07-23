@@ -1380,9 +1380,12 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                                    BitWidth - InnerVT.getSizeInBits()) &
                DemandedMask) == 0 &&
             isTypeDesirableForOp(ISD::SHL, InnerVT)) {
+          EVT ShTy = getShiftAmountTy();
+          if (!APInt(BitWidth, ShAmt).isIntN(ShTy.getSizeInBits()))
+            ShTy = InnerVT;
           SDValue NarrowShl =
             TLO.DAG.getNode(ISD::SHL, dl, InnerVT, InnerOp,
-                            TLO.DAG.getConstant(ShAmt, InnerVT));
+                            TLO.DAG.getConstant(ShAmt, ShTy));
           return
             TLO.CombineTo(Op,
                           TLO.DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(),
