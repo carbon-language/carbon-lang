@@ -34,6 +34,7 @@
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include <cstdlib>
+#include <cstdio>
 using namespace clang;
 
 PrecompiledPreamble::~PrecompiledPreamble() {
