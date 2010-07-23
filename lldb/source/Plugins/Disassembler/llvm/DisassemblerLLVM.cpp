@@ -140,14 +140,18 @@ DisassemblerLLVM::Instruction::Dump
     int currentOpIndex = -1;
 
     lldb_private::Process *process = exe_ctx.process;
-    addr_t base_addr = LLDB_INVALID_ADDRESS;
-    if (process && process->IsAlive())
-        base_addr = inst_addr_ptr->GetLoadAddress (process);
-    if (base_addr == LLDB_INVALID_ADDRESS)
-        base_addr = inst_addr_ptr->GetFileAddress ();
-
-    RegisterReaderArg rra(base_addr + EDInstByteSize(m_inst), m_disassembler);
-
+    std::auto_ptr<RegisterReaderArg> rra;
+    
+    if (!raw)
+    {
+        addr_t base_addr = LLDB_INVALID_ADDRESS;
+        if (process && process->IsAlive())
+            base_addr = inst_addr_ptr->GetLoadAddress (process);
+        if (base_addr == LLDB_INVALID_ADDRESS)
+            base_addr = inst_addr_ptr->GetFileAddress ();
+        
+        rra.reset(new RegisterReaderArg(base_addr + EDInstByteSize(m_inst), m_disassembler));
+    }
 
     bool printTokenized = false;
 
@@ -228,7 +232,7 @@ DisassemblerLLVM::Instruction::Dump
                                 {
                                     uint64_t operand_value;
 
-                                    if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, &rra))
+                                    if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, rra.get()))
                                     {
                                         if (EDInstIsBranch(m_inst))
                                         {

@@ -56,6 +56,8 @@
 // Project includes
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Disassembler.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangResultSynthesizer.h"
@@ -66,6 +68,7 @@
 #include "lldb/Expression/RecordingMemoryManager.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Mutex.h"
@@ -611,6 +614,128 @@ ClangExpression::GetFunctionAddress (const char *name)
             return (*pos).m_remote_addr;
     }
     return LLDB_INVALID_ADDRESS;
+}
+
+Error
+ClangExpression::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx, const char *name)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+    Error ret;
+    
+    ret.Clear();
+    
+    lldb::addr_t func_local_addr = LLDB_INVALID_ADDRESS;
+    lldb::addr_t func_remote_addr = LLDB_INVALID_ADDRESS;
+    
+    std::vector<JittedFunction>::iterator pos, end = m_jitted_functions.end();
+    
+    for (pos = m_jitted_functions.begin(); pos < end; pos++)
+    {
+        if (strcmp(pos->m_name.c_str(), name) == 0)
+        {
+            func_local_addr = pos->m_local_addr;
+            func_remote_addr = pos->m_remote_addr;
+        }
+    }
+    
+    if (func_local_addr == LLDB_INVALID_ADDRESS)
+    {
+        ret.SetErrorToGenericError();
+        ret.SetErrorStringWithFormat("Couldn't find function %s for disassembly", name);
+        return ret;
+    }
+    
+    if(log)
+        log->Printf("Found function, has local address 0x%llx and remote address 0x%llx", (uint64_t)func_local_addr, (uint64_t)func_remote_addr);
+        
+    std::pair <lldb::addr_t, lldb::addr_t> func_range;
+    
+    func_range = m_jit_mm_ptr->GetRemoteRangeForLocal(func_local_addr);
+    
+    if (func_range.first == 0 && func_range.second == 0)
+    {
+        ret.SetErrorToGenericError();
+        ret.SetErrorStringWithFormat("Couldn't find code range for function %s", name);
+        return ret;
+    }
+    
+    if(log)
+        log->Printf("Function's code range is [0x%llx-0x%llx]", func_range.first, func_range.second);
+    
+    if (!exe_ctx.target)
+    {
+        ret.SetErrorToGenericError();
+        ret.SetErrorString("Couldn't find the target");
+    }
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second - func_range.first, 0));
+        
+    Error err;
+    exe_ctx.process->ReadMemory(func_range.first, buffer_sp->GetBytes(), buffer_sp->GetByteSize(), err);
+    
+    if (!err.Success())
+    {
+        ret.SetErrorToGenericError();
+        ret.SetErrorStringWithFormat("Couldn't read from process: %s", err.AsCString("unknown error"));
+        return ret;
+    }
+    
+    ArchSpec arch(exe_ctx.target->GetArchitecture());
+    
+    Disassembler *disassembler = Disassembler::FindPlugin(arch);
+    
+    if (disassembler == NULL)
+    {
+        ret.SetErrorToGenericError();
+        ret.SetErrorStringWithFormat("Unable to find disassembler plug-in for %s architecture.", arch.AsCString());
+        return ret;
+    }
+    
+    if (!exe_ctx.process)
+    {
+        ret.SetErrorToGenericError();
+        ret.SetErrorString("Couldn't find the process");
+        return ret;
+    }
+    
+    DataExtractor extractor(buffer_sp, 
+                            exe_ctx.process->GetByteOrder(),
+                            32);
+    
+    if(log)
+    {
+        log->Printf("Function data has contents:");
+        extractor.PutToLog (log,
+                            0,
+                            extractor.GetByteSize(),
+                            func_range.first,
+                            16,
+                            DataExtractor::TypeUInt8);
+    }
+            
+    disassembler->DecodeInstructions(extractor, 0, UINT32_MAX);
+    
+    Disassembler::InstructionList &instruction_list = disassembler->GetInstructionList();
+    
+    uint32_t bytes_offset = 0;
+    
+    for (uint32_t instruction_index = 0, num_instructions = instruction_list.GetSize(); 
+         instruction_index < num_instructions; 
+         ++instruction_index)
+    {
+        Disassembler::Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index);
+        instruction->Dump (&stream,
+                           NULL,
+                           &extractor, 
+                           bytes_offset, 
+                           exe_ctx, 
+                           true);
+        stream.PutChar('\n');
+        bytes_offset += instruction->GetByteSize();
+    }
+    
+    return ret;
 }
 
 unsigned

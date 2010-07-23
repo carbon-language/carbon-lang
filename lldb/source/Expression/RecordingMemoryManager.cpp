@@ -122,6 +122,25 @@ RecordingMemoryManager::GetRemoteAddressForLocal (lldb::addr_t local_address)
     return LLDB_INVALID_ADDRESS;
 }
 
+std::pair <lldb::addr_t, lldb::addr_t>
+RecordingMemoryManager::GetRemoteRangeForLocal (lldb::addr_t local_address)
+{
+    std::vector<LocalToRemoteAddressRange>::iterator pos, end = m_address_map.end();
+    
+    for (pos = m_address_map.begin(); pos < end; ++pos)
+    {
+        lldb::addr_t lstart = pos->m_local_start;
+        lldb::addr_t lend = lstart + pos->m_size;
+        
+        if (local_address >= lstart && local_address < lend)
+        {
+            return std::pair <lldb::addr_t, lldb::addr_t> (pos->m_remote_start, pos->m_remote_start + pos->m_size);
+        }
+    }
+    
+    return std::pair <lldb::addr_t, lldb::addr_t> (0, 0);
+}
+
 void
 RecordingMemoryManager::AddToLocalToRemoteMap (lldb::addr_t lstart, size_t size, lldb::addr_t rstart)
 {

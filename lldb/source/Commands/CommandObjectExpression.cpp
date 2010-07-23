@@ -321,8 +321,21 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
             {
                 log->Printf("Function address  : 0x%llx", (uint64_t)function_address);
                 log->Printf("Structure address : 0x%llx", (uint64_t)struct_address);
-            }
                 
+                StreamString insns;
+
+                Error err = clang_expr.DisassembleFunction(insns, m_exe_ctx, "___clang_expr");
+                
+                if (!err.Success())
+                {
+                    log->Printf("Couldn't disassemble function : %s", err.AsCString("unknown error"));
+                }
+                else
+                {
+                    log->Printf("Function disassembly:\n%s", insns.GetData());
+                }
+            }
+                        
             ClangFunction::ExecutionResults execution_result = 
                 ClangFunction::ExecuteFunction (m_exe_ctx, function_address, struct_address, true, true, 10000, error_stream);
             

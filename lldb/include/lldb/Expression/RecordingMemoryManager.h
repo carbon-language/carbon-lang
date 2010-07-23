@@ -113,6 +113,9 @@ public:
 
     lldb::addr_t
     GetRemoteAddressForLocal (lldb::addr_t local_address);
+    
+    std::pair <lldb::addr_t, lldb::addr_t>
+    GetRemoteRangeForLocal (lldb::addr_t local_address);
 
     bool
     WriteJITRegions (const ExecutionContext &exc_context);

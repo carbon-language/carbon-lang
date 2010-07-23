@@ -78,6 +78,9 @@ public:
 
     lldb::addr_t
     GetFunctionAddress (const char *name);
+    
+    Error
+    DisassembleFunction (Stream &stream, ExecutionContext &exc_context, const char *name);
 
     clang::CompilerInstance *
     GetCompilerInstance ()
