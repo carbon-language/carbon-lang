@@ -234,8 +234,9 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_PAIR(SDNode *N) {
   // The pair element type may be legal, or may not promote to the same type as
   // the result, for example i14 = BUILD_PAIR (i7, i7).  Handle all cases.
   return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(),
-                     TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)),
-                     JoinIntegers(N->getOperand(0), N->getOperand(1)));
+                     TLI.getTypeToTransformTo(*DAG.getContext(),
+                     N->getValueType(0)), JoinIntegers(N->getOperand(0),
+                     N->getOperand(1)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_Constant(SDNode *N) {
@@ -245,7 +246,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Constant(SDNode *N) {
   // Zero extend things like i1, sign extend everything else.  It shouldn't
   // matter in theory which one we pick, but this tends to give better code?
   unsigned Opc = VT.isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-  SDValue Result = DAG.getNode(Opc, dl, TLI.getTypeToTransformTo(*DAG.getContext(), VT),
+  SDValue Result = DAG.getNode(Opc, dl,
+                               TLI.getTypeToTransformTo(*DAG.getContext(), VT),
                                SDValue(N, 0));
   assert(isa<ConstantSDNode>(Result) && "Didn't constant fold ext?");
   return Result;
@@ -310,8 +312,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
 
   // If we're promoting a UINT to a larger size and the larger FP_TO_UINT is
   // not Legal, check to see if we can use FP_TO_SINT instead.  (If both UINT
-  // and SINT conversions are Custom, there is no way to tell which is preferable.
-  // We choose SINT because that's the right thing on PPC.)
+  // and SINT conversions are Custom, there is no way to tell which is
+  // preferable. We choose SINT because that's the right thing on PPC.)
   if (N->getOpcode() == ISD::FP_TO_UINT &&
       !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
       TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NVT))
@@ -1030,7 +1032,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       Hi = InL;
     } else if (Amt == 1 &&
                TLI.isOperationLegalOrCustom(ISD::ADDC,
-                                            TLI.getTypeToExpandTo(*DAG.getContext(), NVT))) {
+                              TLI.getTypeToExpandTo(*DAG.getContext(), NVT))) {
       // Emit this X << 1 as X+X.
       SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
       SDValue LoOps[2] = { InL, InL };
@@ -1926,7 +1928,8 @@ ExpandIntRes_SIGN_EXTEND_INREG(SDNode *N, SDValue &Lo, SDValue &Hi) {
     unsigned ExcessBits =
       EVT.getSizeInBits() - Lo.getValueType().getSizeInBits();
     Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Hi.getValueType(), Hi,
-                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(), ExcessBits)));
+                     DAG.getValueType(EVT::getIntegerVT(*DAG.getContext(),
+                                                        ExcessBits)));
   }
 }
 
@@ -2046,7 +2049,8 @@ void DAGTypeLegalizer::ExpandIntRes_ZERO_EXTEND(SDNode *N,
     unsigned ExcessBits =
       Op.getValueType().getSizeInBits() - NVT.getSizeInBits();
     Hi = DAG.getZeroExtendInReg(Hi, dl,
-                                EVT::getIntegerVT(*DAG.getContext(), ExcessBits));
+                                EVT::getIntegerVT(*DAG.getContext(),
+                                                  ExcessBits));
   }
 }
 
