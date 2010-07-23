@@ -301,7 +301,7 @@ public:
     /// considered to be a 'virtual' register, which is part of the SSA
     /// namespace.  This must be the same for all targets, which means that each
     /// target is limited to this fixed number of registers.
-    FirstVirtualRegister = 16384
+    FirstVirtualRegister = 1024
   };
 
   /// isPhysicalRegister - Return true if the specified register number is in
