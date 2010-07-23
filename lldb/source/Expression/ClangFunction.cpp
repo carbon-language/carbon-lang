@@ -32,6 +32,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
@@ -385,7 +386,7 @@ ClangFunction::InsertFunction (ExecutionContext &exc_context, lldb::addr_t &args
 }
 
 ThreadPlan *
-ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error)
+ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb::addr_t func_addr, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error)
 {
     // FIXME: Use the errors Stream for better error reporting.
 
@@ -399,7 +400,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb:
 
     // Okay, now run the function:
 
-    Address wrapper_address (NULL, m_wrapper_function_addr);
+    Address wrapper_address (NULL, func_addr);
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*exc_context.thread, 
                                           wrapper_address,
                                           args_addr,
@@ -473,86 +474,68 @@ ClangFunction::ExecuteFunction(
     return ExecuteFunction (exc_context, NULL, errors, true, single_thread_timeout_usec, try_all_threads, results);
 }
 
-ClangFunction::ExecutionResults
-ClangFunction::ExecuteFunction(
+// This is the static function
+ClangFunction::ExecutionResults 
+ClangFunction::ExecuteFunction (
         ExecutionContext &exc_context, 
-        lldb::addr_t *args_addr_ptr, 
-        Stream &errors, 
-        bool stop_others, 
-        uint32_t single_thread_timeout_usec, 
-        bool try_all_threads, 
-        Value &results)
+        lldb::addr_t function_address, 
+        lldb::addr_t &void_arg,
+        bool stop_others,
+        bool try_all_threads,
+        uint32_t single_thread_timeout_usec,
+        Stream &errors)
 {
-    using namespace clang;
-    ExecutionResults return_value = eExecutionSetupError;
-    Process *process = exc_context.process;
+    ClangFunction::ExecutionResults return_value = eExecutionSetupError;
     
-    lldb::addr_t args_addr;
-    
-    if (args_addr_ptr != NULL)
-        args_addr = *args_addr_ptr;
-    else
-        args_addr = LLDB_INVALID_ADDRESS;
-        
-    if (CompileFunction(errors) != 0)
-        return eExecutionSetupError;
-    
-    if (args_addr == LLDB_INVALID_ADDRESS)
-    {
-        if (!InsertFunction(exc_context, args_addr, errors))
-            return eExecutionSetupError;
-    }
-    
-    
-    lldb::ThreadPlanSP call_plan_sp(GetThreadPlanToCallFunction(exc_context, args_addr, errors, stop_others, false));
+    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exc_context, function_address, void_arg, errors, stop_others, false));
     
     ThreadPlanCallFunction *call_plan_ptr = static_cast<ThreadPlanCallFunction *> (call_plan_sp.get());
     
-    if (args_addr_ptr != NULL)
-        *args_addr_ptr = args_addr;
-    
     if (call_plan_sp == NULL)
-        return return_value;
-
+        return eExecutionSetupError;
+    
     call_plan_sp->SetPrivate(true);
     exc_context.thread->QueueThreadPlan(call_plan_sp, true);
-
+    
     // We need to call the function synchronously, so spin waiting for it to return.
     // If we get interrupted while executing, we're going to lose our context, and
     // won't be able to gather the result at this point.
-
+    
     TimeValue* timeout_ptr = NULL;
     TimeValue real_timeout;
+    
     if (single_thread_timeout_usec != 0)
     {
         real_timeout = TimeValue::Now();
         real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
         timeout_ptr = &real_timeout;
     }
-    process->Resume ();
-
+    
+    exc_context.process->Resume ();
+    
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
     
     while (1)
     {
         lldb::EventSP event_sp;
-
+        
         // Now wait for the process to stop again:
         // FIXME: Probably want a time out.
-        lldb::StateType stop_state =  process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+        lldb::StateType stop_state =  exc_context.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+        
         if (stop_state == lldb::eStateInvalid && timeout_ptr != NULL)
         {
             // Right now this is the only way to tell we've timed out...
             // We should interrupt the process here...
             // Not really sure what to do if Halt fails here...
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
             if (log)
                 log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.", single_thread_timeout_usec);
-
-            if (process->Halt().Success())
+            
+            if (exc_context.process->Halt().Success())
             {
                 timeout_ptr = NULL;
                 
-                stop_state =  process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+                stop_state = exc_context.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
                 if (stop_state == lldb::eStateInvalid)
                 {
                     errors.Printf ("Got an invalid stop state after halt.");
@@ -574,10 +557,9 @@ ClangFunction::ExecuteFunction(
                         return_value = eExecutionCompleted;
                         break;
                     }
-                
-
+                    
                     call_plan_ptr->SetStopOthers (false);
-                    process->Resume();
+                    exc_context.process->Resume();
                     continue;
                 }
                 else
@@ -586,7 +568,7 @@ ClangFunction::ExecuteFunction(
         }
         if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
             continue;
-
+        
         if (exc_context.thread->IsThreadPlanDone (call_plan_sp.get()))
         {
             return_value = eExecutionCompleted;
@@ -599,12 +581,114 @@ ClangFunction::ExecuteFunction(
         }
         else
         {
+            if (log)
+            {
+                StreamString s;
+                event_sp->Dump (&s);
+                StreamString ts;
+
+                const char *event_explanation;                
+                
+                do 
+                {
+                    const Process::ProcessEventData *event_data = Process::ProcessEventData::GetEventDataFromEvent (event_sp.get());
+
+                    if (!event_data)
+                    {
+                        event_explanation = "<no event data>";
+                        break;
+                    }
+                    
+                    Process *process = event_data->GetProcessSP().get();
+
+                    if (!process)
+                    {
+                        event_explanation = "<no process>";
+                        break;
+                    }
+                    
+                    ThreadList &thread_list = process->GetThreadList();
+                    
+                    uint32_t num_threads = thread_list.GetSize();
+                    uint32_t thread_index;
+                    
+                    ts.Printf("<%u threads> ", num_threads);
+                    
+                    for (thread_index = 0;
+                         thread_index < num_threads;
+                         ++thread_index)
+                    {
+                        Thread *thread = thread_list.GetThreadAtIndex(thread_index).get();
+                        
+                        if (!thread)
+                        {
+                            ts.Printf("<?> ");
+                            continue;
+                        }
+                        
+                        Thread::StopInfo stop_info;
+                        thread->GetStopInfo(&stop_info);
+                        
+                        ts.Printf("<");
+                        RegisterContext *register_context = thread->GetRegisterContext();
+                        
+                        if (register_context)
+                            ts.Printf("[ip 0x%llx] ", register_context->GetPC());
+                        else
+                            ts.Printf("[ip unknown] ");
+                        
+                        stop_info.Dump(&ts);
+                        ts.Printf(">");
+                    }
+                    
+                    event_explanation = ts.GetData();
+                } while (0);
+                
+                log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
+            }
+            
             return_value = eExecutionInterrupted;
             break;
         }
-
     }
+    
+    return return_value;
+}  
 
+ClangFunction::ExecutionResults
+ClangFunction::ExecuteFunction(
+        ExecutionContext &exc_context, 
+        lldb::addr_t *args_addr_ptr, 
+        Stream &errors, 
+        bool stop_others, 
+        uint32_t single_thread_timeout_usec, 
+        bool try_all_threads, 
+        Value &results)
+{
+    using namespace clang;
+    ExecutionResults return_value = eExecutionSetupError;
+    
+    lldb::addr_t args_addr;
+    
+    if (args_addr_ptr != NULL)
+        args_addr = *args_addr_ptr;
+    else
+        args_addr = LLDB_INVALID_ADDRESS;
+        
+    if (CompileFunction(errors) != 0)
+        return eExecutionSetupError;
+    
+    if (args_addr == LLDB_INVALID_ADDRESS)
+    {
+        if (!InsertFunction(exc_context, args_addr, errors))
+            return eExecutionSetupError;
+    }
+    
+    return_value = ClangFunction::ExecuteFunction(exc_context, m_wrapper_function_addr, args_addr, stop_others, try_all_threads, single_thread_timeout_usec, errors);
+
+    if (args_addr_ptr != NULL)
+        *args_addr_ptr = args_addr;
+    
     if (return_value != eExecutionCompleted)
         return return_value;
 

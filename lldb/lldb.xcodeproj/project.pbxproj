@@ -331,6 +331,7 @@
 		49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */ = {isa = PBXBuildFile; fileRef = 49307AB111DEA4F20081F992 /* IRForTarget.h */; };
 		49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */; };
 		49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */; };
+		49BB309611F79450001A4197 /* TaggedASTType.h in Headers */ = {isa = PBXBuildFile; fileRef = 49BB309511F79450001A4197 /* TaggedASTType.h */; };
 		49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7072611B5AD03001AD875 /* ClangASTSource.h */; };
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
 		49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */; };
@@ -906,6 +907,7 @@
 		499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectArgs.cpp; path = source/Commands/CommandObjectArgs.cpp; sourceTree = "<group>"; };
 		49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangResultSynthesizer.cpp; path = source/Expression/ClangResultSynthesizer.cpp; sourceTree = "<group>"; };
 		49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangResultSynthesizer.h; path = include/lldb/Expression/ClangResultSynthesizer.h; sourceTree = "<group>"; };
+		49BB309511F79450001A4197 /* TaggedASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaggedASTType.h; path = include/lldb/Symbol/TaggedASTType.h; sourceTree = "<group>"; };
 		49BF48DC11ADF356008863BD /* ObjCObjectPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjCObjectPrinter.cpp; path = source/Target/ObjCObjectPrinter.cpp; sourceTree = "<group>"; };
 		49BF48E011ADF37D008863BD /* ObjCObjectPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjCObjectPrinter.h; path = include/lldb/Target/ObjCObjectPrinter.h; sourceTree = "<group>"; };
 		49D7072611B5AD03001AD875 /* ClangASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTSource.h; path = include/lldb/Expression/ClangASTSource.h; sourceTree = "<group>"; };
@@ -1700,6 +1702,7 @@
 				26BC7C6310F1B6E900F91463 /* SymbolVendor.h */,
 				26BC7C6410F1B6E900F91463 /* Symtab.h */,
 				26BC7F1F10F1B8EC00F91463 /* Symtab.cpp */,
+				49BB309511F79450001A4197 /* TaggedASTType.h */,
 				26BC7C6510F1B6E900F91463 /* Type.h */,
 				26BC7F2010F1B8EC00F91463 /* Type.cpp */,
 				26BC7C6610F1B6E900F91463 /* TypeList.h */,
@@ -2202,6 +2205,7 @@
 				4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */,
 				26D27CA011ED3A4E0024D721 /* ELFHeader.h in Headers */,
 				49E45FAA11F660DC008F7B28 /* ClangASTType.h in Headers */,
+				49BB309611F79450001A4197 /* TaggedASTType.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2764,7 +2768,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
@@ -2817,7 +2821,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
@@ -2927,7 +2931,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(DERIVED_FILE_DIR)/llvm.build";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",

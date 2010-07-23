@@ -91,6 +91,9 @@ public:
     // This variant writes down function_address and arg_value.
     bool WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr_t &args_addr_ref, Address function_address, ValueList &arg_values, Stream &errors);
 
+    // Run a function at a particular address, with a given address passed on the stack.
+    static ExecutionResults ExecuteFunction (ExecutionContext &exe_ctx, lldb::addr_t function_address, lldb::addr_t &void_arg, bool stop_others, bool try_all_threads, uint32_t single_thread_timeout_usec, Stream &errors);
+    
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
     ///
@@ -198,7 +201,14 @@ public:
     ExecutionResults ExecuteFunction(ExecutionContext &context, lldb::addr_t *args_addr_ptr, Stream &errors, bool stop_others, uint32_t single_thread_timeout_usec, bool try_all_threads, Value &results);
     ExecutionResults ExecuteFunctionWithABI(ExecutionContext &context, Stream &errors, Value &results);
 
-    ThreadPlan *GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb::addr_t &args_addr_ref, Stream &errors, bool stop_others, bool discard_on_error = true);
+    static ThreadPlan *
+    GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb::addr_t func_addr, lldb::addr_t &args_addr_ref, Stream &errors, bool stop_others, bool discard_on_error = true);
+    
+    ThreadPlan *
+    GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb::addr_t &args_addr_ref, Stream &errors, bool stop_others, bool discard_on_error = true)
+    {
+        return ClangFunction::GetThreadPlanToCallFunction (exc_context, m_wrapper_function_addr, args_addr_ref, errors, stop_others, discard_on_error);
+    }
     bool FetchFunctionResults (ExecutionContext &exc_context, lldb::addr_t args_addr, Value &ret_value);
     void DeallocateFunctionResults (ExecutionContext &exc_context, lldb::addr_t args_addr);
         

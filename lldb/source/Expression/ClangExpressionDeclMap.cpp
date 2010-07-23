@@ -295,8 +295,10 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
                                                                    iter->m_parser_type.GetOpaqueQualType()),
                                          context);
                 
-                result_value->SetContext(Value::eContextTypeOpaqueClangQualType, 
-                                         copied_type.GetOpaqueQualType());
+                result_value->SetContext(Value::eContextTypeOpaqueClangQualType, copied_type.GetOpaqueQualType());
+                
+                result_value->SetValueType(Value::eValueTypeLoadAddress);
+                result_value->GetScalar() = (uintptr_t)m_materialized_location + iter->m_offset;
             }
             
             continue;
@@ -330,10 +332,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
         return false;
     }
     
-    log->Printf("%s %s with type %p", 
-                (dematerialize ? "Dematerializing" : "Materializing"), 
-                name, 
-                type.GetOpaqueQualType());
+    if (log)
+        log->Printf("%s %s with type %p", (dematerialize ? "Dematerializing" : "Materializing"), name, type.GetOpaqueQualType());
     
     std::auto_ptr<lldb_private::Value> location_value(GetVariableValue(exe_ctx,
                                                                        var,
@@ -349,8 +349,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
     {
         lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
         
-        size_t bit_size = ClangASTContext::GetTypeBitSize (type.GetASTContext(), 
-                                                           type.GetOpaqueQualType());
+        size_t bit_size = ClangASTContext::GetTypeBitSize(type.GetASTContext(), type.GetOpaqueQualType());
         size_t byte_size = bit_size % 8 ? ((bit_size + 8) / 8) : (bit_size / 8);
         
         DataBufferHeap data;
@@ -493,9 +492,7 @@ ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
         
         if (type->GetASTContext() == var->GetType()->GetClangAST())
         {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), 
-                                               type->GetOpaqueQualType(), 
-                                               var->GetType()->GetOpaqueClangQualType()))
+            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetOpaqueClangQualType()))
                 return NULL;
         }
         else
