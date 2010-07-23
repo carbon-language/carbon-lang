@@ -28,6 +28,16 @@ char *basename(const char* path)
 extern char *basename(const char *);
 #endif
 
+/// \brief Return the default parsing options.
+static unsigned getDefaultParsingOptions() {
+  unsigned options = CXTranslationUnit_DetailedPreprocessingRecord;
+
+  if (getenv("CINDEXTEST_EDITING"))
+    options |= CXTranslationUnit_Editing;
+  
+  return options;
+}
+
 static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
                         unsigned end_line, unsigned end_column) {
   fprintf(out, "[%d:%d - %d:%d]", begin_line, begin_column,
@@ -613,11 +623,12 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
     return -1;
   }
   
-  TU = clang_createTranslationUnitFromSourceFile(Idx, 0,
-                                                 argc - num_unsaved_files,
-                                                 argv + num_unsaved_files,
-                                                 num_unsaved_files,
-                                                 unsaved_files);
+  TU = clang_parseTranslationUnit(Idx, 0,
+                                  argv + num_unsaved_files,
+                                  argc - num_unsaved_files,
+                                  unsaved_files,
+                                  num_unsaved_files,
+                                  getDefaultParsingOptions());
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     free_remapped_files(unsaved_files, num_unsaved_files);

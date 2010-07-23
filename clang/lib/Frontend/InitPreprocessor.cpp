@@ -477,7 +477,7 @@ static void InitializeFileRemapping(Diagnostic &Diags,
                                     FileManager &FileMgr,
                                     const PreprocessorOptions &InitOpts) {
   // Remap files in the source manager (with buffers).
-  for (PreprocessorOptions::remapped_file_buffer_iterator
+  for (PreprocessorOptions::const_remapped_file_buffer_iterator
          Remap = InitOpts.remapped_file_buffer_begin(),
          RemapEnd = InitOpts.remapped_file_buffer_end();
        Remap != RemapEnd;
@@ -499,9 +499,9 @@ static void InitializeFileRemapping(Diagnostic &Diags,
   }
 
   // Remap files in the source manager (with other files).
-  for (PreprocessorOptions::remapped_file_iterator
-       Remap = InitOpts.remapped_file_begin(),
-       RemapEnd = InitOpts.remapped_file_end();
+  for (PreprocessorOptions::const_remapped_file_iterator
+         Remap = InitOpts.remapped_file_begin(),
+         RemapEnd = InitOpts.remapped_file_end();
        Remap != RemapEnd;
        ++Remap) {
     // Find the file that we're mapping to.

@@ -62,21 +62,37 @@ public:
   std::vector<std::pair<std::string, const llvm::MemoryBuffer *> > 
     RemappedFileBuffers;
   
-  typedef std::vector<std::pair<std::string, std::string> >::const_iterator
+  typedef std::vector<std::pair<std::string, std::string> >::iterator
     remapped_file_iterator;
-  remapped_file_iterator remapped_file_begin() const { 
+  typedef std::vector<std::pair<std::string, std::string> >::const_iterator
+    const_remapped_file_iterator;
+  remapped_file_iterator remapped_file_begin() { 
     return RemappedFiles.begin();
   }
-  remapped_file_iterator remapped_file_end() const { 
+  const_remapped_file_iterator remapped_file_begin() const {
+    return RemappedFiles.begin();
+  }
+  remapped_file_iterator remapped_file_end() { 
+    return RemappedFiles.end();
+  }
+  const_remapped_file_iterator remapped_file_end() const { 
     return RemappedFiles.end();
   }
 
   typedef std::vector<std::pair<std::string, const llvm::MemoryBuffer *> >::
-                                  const_iterator remapped_file_buffer_iterator;
-  remapped_file_buffer_iterator remapped_file_buffer_begin() const {
+                                  iterator remapped_file_buffer_iterator;
+  typedef std::vector<std::pair<std::string, const llvm::MemoryBuffer *> >::
+                            const_iterator const_remapped_file_buffer_iterator;
+  remapped_file_buffer_iterator remapped_file_buffer_begin() {
     return RemappedFileBuffers.begin();
   }
-  remapped_file_buffer_iterator remapped_file_buffer_end() const {
+  const_remapped_file_buffer_iterator remapped_file_buffer_begin() const {
+    return RemappedFileBuffers.begin();
+  }
+  remapped_file_buffer_iterator remapped_file_buffer_end() {
+    return RemappedFileBuffers.end();
+  }
+  const_remapped_file_buffer_iterator remapped_file_buffer_end() const {
     return RemappedFileBuffers.end();
   }
   
@@ -92,9 +108,20 @@ public:
   void addRemappedFile(llvm::StringRef From, llvm::StringRef To) {
     RemappedFiles.push_back(std::make_pair(From, To));
   }
+  
+  remapped_file_iterator eraseRemappedFile(remapped_file_iterator Remapped) {
+    return RemappedFiles.erase(Remapped);
+  }
+  
   void addRemappedFile(llvm::StringRef From, const llvm::MemoryBuffer * To) {
     RemappedFileBuffers.push_back(std::make_pair(From, To));
   }
+  
+  remapped_file_buffer_iterator
+  eraseRemappedFile(remapped_file_buffer_iterator Remapped) {
+    return RemappedFileBuffers.erase(Remapped);
+  }
+  
   void clearRemappedFiles() {
     RemappedFiles.clear();
     RemappedFileBuffers.clear();

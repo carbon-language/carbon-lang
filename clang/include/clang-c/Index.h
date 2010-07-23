@@ -634,13 +634,13 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex,
                                              const char *ast_filename);
 
-  /**
-   * \brief Flags that control the creation of translation units.
-   *
-   * The enumerators in this enumeration type are meant to be bitwise
-   * ORed together to specify which options should be used when
-   * constructing the translation unit.
-   */
+/**
+ * \brief Flags that control the creation of translation units.
+ *
+ * The enumerators in this enumeration type are meant to be bitwise
+ * ORed together to specify which options should be used when
+ * constructing the translation unit.
+ */
 enum CXTranslationUnit_Flags {
   /**
    * \brief Used to indicate that no special translation-unit options are
@@ -658,7 +658,35 @@ enum CXTranslationUnit_Flags {
    * applications that require more detailed information about the
    * behavior of the preprocessor.
    */
-  CXTranslationUnit_DetailedPreprocessingRecord = 0x01
+  CXTranslationUnit_DetailedPreprocessingRecord = 0x01,
+
+  /**
+   * \brief A flag that indicates that the intent of parsing the
+   * given translation unit is for live editing of the file.
+   *
+   * This flag is essentially a meta-flag that callers can use to indicate
+   * that the translation unit is being edited and, therefore, is likely to
+   * be reparsed many times. It enables an unspecified set of optimizations
+   * (e.g., the precompiled preamble) geared toward improving the performance
+   * of \c clang_reparseTranslationUnit().
+   */
+  CXTranslationUnit_Editing = 0x02,
+  
+  /**
+   * \brief Used to indicate that the translation unit should be built with an 
+   * implicit precompiled header for the preamble.
+   *
+   * An implicit precompiled header is used as an optimization when a
+   * particular translation unit is likely to be reparsed many times
+   * when the sources aren't changing that often. In this case, an
+   * implicit precompiled header will be built containing all of the
+   * initial includes at the top of the main file (what we refer to as
+   * the "preamble" of the file). In subsequent parses, if the
+   * preamble or the files in it have not changed, \c
+   * clang_reparseTranslationUnit() will re-use the implicit
+   * precompiled header to improve parsing performance.
+   */
+  CXTranslationUnit_PrecompiledPreamble = 0x04
 };
 
 /**

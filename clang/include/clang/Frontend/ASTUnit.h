@@ -46,6 +46,14 @@ class TargetInfo;
 
 using namespace idx;
 
+class PrecompiledPreamble {
+  llvm::sys::Path PreambleFile;
+  
+public:
+  ~PrecompiledPreamble();
+  
+};
+  
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
 class ASTUnit {
@@ -125,6 +133,7 @@ private:
 
   void CleanTemporaryFiles();
   bool Parse();
+  void BuildPrecompiledPreamble();
   
 public:
   class ConcurrencyCheck {
@@ -241,7 +250,8 @@ public:
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
                                      llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls = false,
-                                             bool CaptureDiagnostics = false);
+                                             bool CaptureDiagnostics = false,
+                                             bool PrecompilePreamble = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -264,7 +274,8 @@ public:
                                       bool OnlyLocalDecls = false,
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
-                                      bool CaptureDiagnostics = false);
+                                      bool CaptureDiagnostics = false,
+                                      bool PrecompilePreamble = false);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.

@@ -1176,6 +1176,11 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
+  // The "editing" option implies other options.
+  if (options & CXTranslationUnit_Editing)
+    options |= CXTranslationUnit_PrecompiledPreamble;
+  bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
+  
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
@@ -1210,10 +1215,12 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
 
+    // Do we need the detailed preprocessing record?
     if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
       Args.push_back("-Xclang");
       Args.push_back("-detailed-preprocessing-record");
     }
+    
     unsigned NumErrors = Diags->getNumErrors();
 
 #ifdef USE_CRASHTRACER
@@ -1227,7 +1234,8 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                    CXXIdx->getOnlyLocalDecls(),
                                    RemappedFiles.data(),
                                    RemappedFiles.size(),
-                                   /*CaptureDiagnostics=*/true));
+                                   /*CaptureDiagnostics=*/true,
+                                   PrecompilePreamble));
 
     if (NumErrors != Diags->getNumErrors()) {
       // Make sure to check that 'Unit' is non-NULL.
@@ -1317,9 +1325,12 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   TemporaryFiles.push_back(DiagnosticsFile);
   argv.push_back("-fdiagnostics-binary");
 
-  argv.push_back("-Xclang");
-  argv.push_back("-detailed-preprocessing-record");
-
+  // Do we need the detailed preprocessing record?
+  if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
+    argv.push_back("-Xclang");
+    argv.push_back("-detailed-preprocessing-record");
+  }
+  
   // Add the null terminator.
   argv.push_back(NULL);
 

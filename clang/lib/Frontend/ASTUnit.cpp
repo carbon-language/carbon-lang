@@ -33,7 +33,12 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
+#include <cstdlib>
 using namespace clang;
+
+PrecompiledPreamble::~PrecompiledPreamble() {
+  PreambleFile.eraseFromDisk();
+}
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
@@ -399,11 +404,195 @@ error:
   return true;
 }
 
+/// \brief Simple function to retrieve a path for a preamble precompiled header.
+static std::string GetPreamblePCHPath() {
+  // FIXME: This is lame; sys::Path should provide this function (in particular,
+  // it should know how to find the temporary files dir).
+  // FIXME: This is really lame. I copied this code from the Driver!
+  std::string Error;
+  const char *TmpDir = ::getenv("TMPDIR");
+  if (!TmpDir)
+    TmpDir = ::getenv("TEMP");
+  if (!TmpDir)
+    TmpDir = ::getenv("TMP");
+  if (!TmpDir)
+    TmpDir = "/tmp";
+  llvm::sys::Path P(TmpDir);
+  P.appendComponent("preamble");
+  if (P.createTemporaryFileOnDisk())
+    return std::string();
+  
+  P.appendSuffix("pch");
+  return P.str();
+}
+
+void ASTUnit::BuildPrecompiledPreamble() {
+  CompilerInvocation PreambleInvocation(*Invocation);
+  FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
+  PreprocessorOptions &PreprocessorOpts
+    = PreambleInvocation.getPreprocessorOpts();
+
+  // Try to determine if the main file has been remapped, either from the 
+  // command line (to another file) or directly through the compiler invocation
+  // (to a memory buffer).
+  llvm::MemoryBuffer *Buffer = 0;  
+  llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].second);
+  if (const llvm::sys::FileStatus *MainFileStatus = MainFilePath.getFileStatus()) {
+    // Check whether there is a file-file remapping of the main file
+    for (PreprocessorOptions::remapped_file_iterator
+           M = PreprocessorOpts.remapped_file_begin(),
+           E = PreprocessorOpts.remapped_file_end();
+         M != E;
+         ++M) {
+      llvm::sys::PathWithStatus MPath(M->first);    
+      if (const llvm::sys::FileStatus *MStatus = MPath.getFileStatus()) {
+        if (MainFileStatus->uniqueID == MStatus->uniqueID) {
+          // We found a remapping. Try to load the resulting, remapped source.
+          if (Buffer)
+            delete Buffer;
+          Buffer = llvm::MemoryBuffer::getFile(M->second);
+          if (!Buffer)
+            return;
+          
+          // Remove the file-file remapping.
+          M = PreprocessorOpts.eraseRemappedFile(M);
+          E = PreprocessorOpts.remapped_file_end();
+        }
+      }
+    }
+    
+    // Check whether there is a file-buffer remapping. It supercedes the
+    // file-file remapping.
+    for (PreprocessorOptions::remapped_file_buffer_iterator
+           M = PreprocessorOpts.remapped_file_buffer_begin(),
+           E = PreprocessorOpts.remapped_file_buffer_end();
+         M != E;
+         ++M) {
+      llvm::sys::PathWithStatus MPath(M->first);    
+      if (const llvm::sys::FileStatus *MStatus = MPath.getFileStatus()) {
+        if (MainFileStatus->uniqueID == MStatus->uniqueID) {
+          // We found a remapping. 
+          if (Buffer)
+            delete Buffer;
+          Buffer = const_cast<llvm::MemoryBuffer *>(M->second);
+          
+          // Remove the file-buffer remapping.
+          M = PreprocessorOpts.eraseRemappedFile(M);
+          E = PreprocessorOpts.remapped_file_buffer_end();
+        }
+      }
+    }    
+  }
+  
+  // If the main source file was not remapped, load it now.
+  if (!Buffer) {
+    Buffer = llvm::MemoryBuffer::getFile(FrontendOpts.Inputs[0].second);
+    if (!Buffer)
+      return;
+  }
+  
+  // Try to compute the preamble.
+  unsigned PreambleLength = Lexer::ComputePreamble(Buffer);
+  if (PreambleLength == 0)
+    return;
+  
+  // Create a new buffer that stores the preamble. The buffer also contains
+  // extra space for the original contents of the file (which will be present
+  // when we actually parse the file) along with more room in case the file
+  // grows.
+  unsigned PreambleBufferSize = Buffer->getBufferSize();
+  if (PreambleBufferSize < 4096)
+    PreambleBufferSize = 8192;
+  else
+    PreambleBufferSize *= 2;
+  
+  llvm::MemoryBuffer *PreambleBuffer
+    = llvm::MemoryBuffer::getNewUninitMemBuffer(PreambleBufferSize,
+                                                FrontendOpts.Inputs[0].second);
+  memcpy(const_cast<char*>(PreambleBuffer->getBufferStart()), 
+         Buffer->getBufferStart(), PreambleLength);
+  memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + PreambleLength, 
+         ' ', PreambleBufferSize - PreambleLength - 1);
+  const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = 0;
+  delete Buffer;
+  
+  // Remap the main source file to the preamble buffer.
+  PreprocessorOpts.addRemappedFile(MainFilePath.str(), PreambleBuffer);
+  
+  // Tell the compiler invocation to generate a temporary precompiled header.
+  FrontendOpts.ProgramAction = frontend::GeneratePCH;
+  // FIXME: Set ChainedPCH, once it is ready.
+  // FIXME: Generate the precompiled header into memory?
+  FrontendOpts.OutputFile = GetPreamblePCHPath();
+  
+  // Create the compiler instance to use for building the precompiled preamble.
+  CompilerInstance Clang;
+  Clang.setInvocation(&PreambleInvocation);
+  OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+  
+  // Set up diagnostics.
+  Clang.setDiagnostics(&getDiagnostics());
+  Clang.setDiagnosticClient(getDiagnostics().getClient());
+  
+  // Create the target instance.
+  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
+                                               Clang.getTargetOpts()));
+  if (!Clang.hasTarget()) {
+    Clang.takeDiagnosticClient();
+    return;
+  }
+  
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
+  
+  assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
+         "Invocation must have exactly one source file!");
+  assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
+         "FIXME: AST inputs not yet supported here!");
+  assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+         "IR inputs not support here!");
+  
+  // Clear out old caches and data.
+  StoredDiagnostics.clear();
+  
+  // Capture any diagnostics that would otherwise be dropped.
+  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
+                                    Clang.getDiagnostics(),
+                                    StoredDiagnostics);
+  
+  // Create a file manager object to provide access to and cache the filesystem.
+  Clang.setFileManager(new FileManager);
+  
+  // Create the source manager.
+  Clang.setSourceManager(new SourceManager(getDiagnostics()));
+  
+  // FIXME: Eventually, we'll have to track top-level declarations here, too.
+  llvm::OwningPtr<GeneratePCHAction> Act;
+  Act.reset(new GeneratePCHAction);
+  if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
+                            Clang.getFrontendOpts().Inputs[0].first)) {
+    Clang.takeDiagnosticClient();
+    Clang.takeInvocation();
+    return;
+  }
+  
+  Act->Execute();
+  Act->EndSourceFile();
+  Clang.takeDiagnosticClient();
+  Clang.takeInvocation();
+  
+  // FIXME: Keep track of the actual preamble header we created!
+  fprintf(stderr, "Preamble PCH: %s\n", FrontendOpts.OutputFile.c_str());
+}
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls,
-                                             bool CaptureDiagnostics) {
+                                             bool CaptureDiagnostics,
+                                             bool PrecompilePreamble) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -419,6 +608,9 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->Invocation.reset(CI);
   
+  if (PrecompilePreamble)
+    AST->BuildPrecompiledPreamble();
+  
   if (!AST->Parse())
     return AST.take();
   
@@ -432,7 +624,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool OnlyLocalDecls,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles,
-                                      bool CaptureDiagnostics) {
+                                      bool CaptureDiagnostics,
+                                      bool PrecompilePreamble) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -480,7 +673,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CompilerInvocation::CreateFromArgs(*CI,
                                      const_cast<const char **>(CCArgs.data()),
                                      const_cast<const char **>(CCArgs.data()) +
-                                       CCArgs.size(),
+                                     CCArgs.size(),
                                      *Diags);
 
   // Override any files that need remapping
@@ -493,7 +686,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
   CI->getFrontendOpts().DisableFree = true;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
-                                    CaptureDiagnostics);
+                                    CaptureDiagnostics, PrecompilePreamble);
 }
 
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
