@@ -5399,9 +5399,6 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   // The form of initialization (using parentheses or '=') is generally
   // insignificant, but does matter when the entity being initialized has a
   // class type.
-  QualType DeclInitType = VDecl->getType();
-  if (const ArrayType *Array = Context.getAsArrayType(DeclInitType))
-    DeclInitType = Context.getBaseElementType(Array);
 
   if (!VDecl->getType()->isDependentType() &&
       RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
