@@ -3714,7 +3714,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
       const Type* ArgTy = ArgList[i].V->getType();
       if (!FunctionType::isValidArgumentType(ArgTy))
         return Error(ArgList[i].Loc, "Invalid argument type for LLVM function");
-      ParamTypes.push_back(ArgList[i].V->getType());
+      ParamTypes.push_back(ArgTy);
     }
 
     if (!FunctionType::isValidReturnType(RetType))
