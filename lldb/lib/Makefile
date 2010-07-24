@@ -65,7 +65,7 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginObjectFileMachO.a \
               lldbPluginProcessGDBRemote.a \
               lldbPluginUtility.a \
-              lldbPluginSymbolVendorMaxOSX.a
+              lldbPluginSymbolVendorMacOSX.a
 endif
 
 ifeq ($(HOST_OS),Linux)
