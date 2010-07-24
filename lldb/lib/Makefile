@@ -33,7 +33,6 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
-	lldbPluginSymbolVendorMacOSX.a \
 	lldbSymbol.a \
 	lldbTarget.a \
 	lldbUtility.a \
@@ -65,11 +64,13 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginObjectContainerUniversalMachO.a \
               lldbPluginObjectFileMachO.a \
               lldbPluginProcessGDBRemote.a \
-              lldbPluginUtility.a
+              lldbPluginUtility.a \
+              lldbSymbolVendorMaxOSX.a
 endif
 
 ifeq ($(HOST_OS),Linux)
-  USEDLIBS += lldbHostLinux.a
+  USEDLIBS += lldbHostLinux.a \
+              lldbPluginProcessLinux.a
 endif
 
 include $(LEVEL)/Makefile.common

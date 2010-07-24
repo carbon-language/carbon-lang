@@ -22,6 +22,7 @@
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
+
 #ifdef __APPLE__
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
@@ -30,6 +31,10 @@
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "Plugins/Process/MacOSX-User/source/ProcessMacOSX.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
+#endif
+
+#ifdef __linux__
+#include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
 using namespace lldb_private;
@@ -55,10 +60,10 @@ lldb_private::Initialize ()
         DisassemblerLLVM::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
-        SymbolVendorMacOSX::Initialize();
         SymbolFileDWARF::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         SymbolFileSymtab::Initialize();
+
 #ifdef __APPLE__
         ABIMacOSX_i386::Initialize();
         ABISysV_x86_64::Initialize();
@@ -66,7 +71,12 @@ lldb_private::Initialize ()
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
         ProcessGDBRemote::Initialize();
-//      ProcessMacOSX::Initialize();
+        ProcessMacOSX::Initialize();
+        SymbolVendorMacOSX::Initialize();
+#endif
+
+#ifdef __linux__
+        ProcessLinux::Initialize();
 #endif
     }
 }
@@ -84,16 +94,21 @@ lldb_private::Terminate ()
     DisassemblerLLVM::Terminate();
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
-    SymbolVendorMacOSX::Terminate();
     SymbolFileDWARF::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     SymbolFileSymtab::Terminate();
+
 #ifdef __APPLE__
     DynamicLoaderMacOSXDYLD::Terminate();
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
     ProcessGDBRemote::Terminate();
-//  ProcessMacOSX::Terminate();
+    ProcessMacOSX::Terminate();
+    SymbolVendorMacOSX::Terminate();
+#endif
+
+#ifdef __linux__
+    ProcessLinux::Terminate();
 #endif
 }
 

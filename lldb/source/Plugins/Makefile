@@ -12,10 +12,17 @@ LLDB_LEVEL := ../..
 include $(LLDB_LEVEL)/../../Makefile.config
 
 
-DIRS := ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm  ObjectContainer/BSD-Archive ObjectFile/ELF  SymbolFile/DWARF SymbolFile/Symtab
+DIRS := ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm  \
+	ObjectContainer/BSD-Archive ObjectFile/ELF SymbolFile/DWARF \
+	SymbolFile/Symtab
 
 ifeq ($(HOST_OS),Darwin)
-	DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O ObjectFile/Mach-O Process/gdb-remote Process/Utility SymbolVendor/MacOSX
+DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
+	ObjectFile/Mach-O Process/gdb-remote Process/Utility SymbolVendor/MacOSX
+endif
+
+ifeq ($(HOST_OS),Linux)
+DIRS += Process/Linux
 endif
 
 include $(LLDB_LEVEL)/Makefile
