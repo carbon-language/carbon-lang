@@ -193,6 +193,12 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   case X86::DR7:
     return 7;
 
+  // Pseudo index registers are equivalent to a "none"
+  // scaled index (See Intel Manual 2A, table 2-3)
+  case X86::EIZ:
+  case X86::RIZ:
+    return 4;
+
   default:
     assert(isVirtualRegister(RegNo) && "Unknown physical register!");
     llvm_unreachable("Register allocator hasn't allocated reg correctly yet!");

@@ -10047,3 +10047,23 @@
 // CHECK:  encoding: [0xde,0x1d,0xed,0x7e,0x00,0x00]
           ficomps 32493
 
+// CHECK: movl  57005(,%eiz), %ebx
+// CHECK: encoding: [0x8b,0x1c,0x25,0xad,0xde,0x00,0x00]
+          movl  57005(,%eiz), %ebx
+
+// CHECK: movl  48879(,%eiz), %eax
+// CHECK: encoding: [0x8b,0x04,0x25,0xef,0xbe,0x00,0x00]
+          movl  48879(,%eiz), %eax
+
+// CHECK: movl  -4(,%eiz,8), %eax
+// CHECK: encoding: [0x8b,0x04,0xe5,0xfc,0xff,0xff,0xff]
+          movl  -4(,%eiz,8), %eax
+
+// CHECK: movl  (%ecx,%eiz), %eax
+// CHECK: encoding: [0x8b,0x04,0x21]
+          movl  (%ecx,%eiz), %eax
+
+// CHECK: movl  (%ecx,%eiz,8), %eax
+// CHECK: encoding: [0x8b,0x04,0xe1]
+          movl  (%ecx,%eiz,8), %eax
+

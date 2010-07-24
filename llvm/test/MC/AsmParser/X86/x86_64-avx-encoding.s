@@ -3312,3 +3312,7 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0xf9,0xd7,0xcc]
           vpmovmskb  %xmm4, %rcx
 
+// CHECK: vblendvpd  %ymm11, 57005(%rax,%riz), %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x63,0x1d,0x4b,0xac,0x20,0xad,0xde,0x00,0x00,0xb0]
+          vblendvpd  %ymm11, 0xdead(%rax,%riz), %ymm12, %ymm13
+

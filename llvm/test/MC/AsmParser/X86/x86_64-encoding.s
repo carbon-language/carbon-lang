@@ -120,3 +120,23 @@ movd %mm1, %edx
 // CHECK:  fixup A - offset: 5, value: CPI1_0-4
 pshufb	CPI1_0(%rip), %xmm1
 
+// CHECK: movq  57005(,%riz), %rbx
+// CHECK: encoding: [0x48,0x8b,0x1c,0x25,0xad,0xde,0x00,0x00]
+          movq  57005(,%riz), %rbx
+
+// CHECK: movq  48879(,%riz), %rax
+// CHECK: encoding: [0x48,0x8b,0x04,0x25,0xef,0xbe,0x00,0x00]
+          movq  48879(,%riz), %rax
+
+// CHECK: movq  -4(,%riz,8), %rax
+// CHECK: encoding: [0x48,0x8b,0x04,0xe5,0xfc,0xff,0xff,0xff]
+          movq  -4(,%riz,8), %rax
+
+// CHECK: movq  (%rcx,%riz), %rax
+// CHECK: encoding: [0x48,0x8b,0x04,0x21]
+          movq  (%rcx,%riz), %rax
+
+// CHECK: movq  (%rcx,%riz,8), %rax
+// CHECK: encoding: [0x48,0x8b,0x04,0xe1]
+          movq  (%rcx,%riz,8), %rax
+

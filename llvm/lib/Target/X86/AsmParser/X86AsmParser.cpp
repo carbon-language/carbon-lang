@@ -384,6 +384,12 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // validation later, so maybe there is no need for this here.
   RegNo = MatchRegisterName(Tok.getString());
 
+  // FIXME: This should be done using Requires<In32BitMode> and
+  // Requires<In64BitMode> so "eiz" usage in 64-bit instructions
+  // can be also checked.
+  if (RegNo == X86::RIZ && !Is64Bit)
+    return Error(Tok.getLoc(), "riz register in 64-bit mode only");
+
   // Parse %st(1) and "%st" as "%st(0)"
   if (RegNo == 0 && Tok.getString() == "st") {
     RegNo = X86::ST0;
@@ -459,6 +465,10 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
     unsigned RegNo;
     SMLoc Start, End;
     if (ParseRegister(RegNo, Start, End)) return 0;
+    if (RegNo == X86::EIZ || RegNo == X86::RIZ) {
+      Error(Start, "eiz and riz can only be used as index registers");
+      return 0;
+    }
 
     // If this is a segment register followed by a ':', then this is the start
     // of a memory reference, otherwise this is a normal register reference.
@@ -542,6 +552,10 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
   if (getLexer().is(AsmToken::Percent)) {
     SMLoc L;
     if (ParseRegister(BaseReg, L, L)) return 0;
+    if (BaseReg == X86::EIZ || BaseReg == X86::RIZ) {
+      Error(L, "eiz and riz can only be used as index registers");
+      return 0;
+    }
   }
 
   if (getLexer().is(AsmToken::Comma)) {
@@ -552,7 +566,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
     // correctly.
     //
     // Not that even though it would be completely consistent to support syntax
-    // like "1(%eax,,1)", the assembler doesn't.
+    // like "1(%eax,,1)", the assembler doesn't. Use "eiz" or "riz" for this.
     if (getLexer().is(AsmToken::Percent)) {
       SMLoc L;
       if (ParseRegister(IndexReg, L, L)) return 0;

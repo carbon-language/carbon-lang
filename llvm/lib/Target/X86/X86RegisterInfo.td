@@ -241,6 +241,10 @@ let Namespace = "X86" in {
   def CR6 : Register<"cr6">;
   def CR7 : Register<"cr7">;
   def CR8 : Register<"cr8">;
+
+  // Pseudo index registers
+  def EIZ : Register<"eiz">;
+  def RIZ : Register<"riz">;
 }
 
 
