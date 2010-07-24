@@ -135,13 +135,13 @@ private:
   explicit ASTUnit(bool MainFileIsAST);
 
   void CleanTemporaryFiles();
-  bool Parse();
+  bool Parse(llvm::MemoryBuffer *OverrideMainBuffer);
   
   std::pair<llvm::MemoryBuffer *, unsigned> ComputePreamble(
                                                 CompilerInvocation &Invocation,
                                                           bool &CreatedBuffer);
   
-  std::pair<llvm::MemoryBuffer *, bool> BuildPrecompiledPreamble();
+  llvm::MemoryBuffer *BuildPrecompiledPreamble();
   
 public:
   class ConcurrencyCheck {

@@ -314,7 +314,7 @@ public:
 ///
 /// \returns True if a failure occurred that causes the ASTUnit not to
 /// contain any translation-unit information, false otherwise.
-bool ASTUnit::Parse() {
+bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   if (!Invocation.get())
     return true;
   
@@ -504,6 +504,24 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
   return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer));
 }
 
+static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
+                                                      bool DeleteOld,
+                                                      unsigned NewSize,
+                                                      llvm::StringRef NewName) {
+  llvm::MemoryBuffer *Result
+    = llvm::MemoryBuffer::getNewUninitMemBuffer(NewSize, NewName);
+  memcpy(const_cast<char*>(Result->getBufferStart()), 
+         Old->getBufferStart(), Old->getBufferSize());
+  memset(const_cast<char*>(Result->getBufferStart()) + Old->getBufferSize(), 
+         ' ', NewSize - Old->getBufferSize() - 1);
+  const_cast<char*>(Result->getBufferEnd())[-1] = 0;  
+  
+  if (DeleteOld)
+    delete Old;
+  
+  return Result;
+}
+
 /// \brief Attempt to build or re-use a precompiled preamble when (re-)parsing
 /// the source file.
 ///
@@ -514,14 +532,10 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
 /// this routine will determine if it is still valid and, if so, avoid 
 /// rebuilding the precompiled preamble.
 ///
-/// \returns A pair of (main-buffer, created), where main-buffer is the buffer
-/// containing the contents of the main file and "created" is a boolean flag 
-/// that is true if the buffer was created by this routine (and, therefore,
-/// should be destroyed by the caller). The buffer will only be non-NULL when
-/// a precompiled preamble has been generated.
-std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
-  typedef std::pair<llvm::MemoryBuffer *, bool> Result;
-  
+/// \returns If the precompiled preamble can be used, returns a newly-allocated
+/// buffer that should be used in place of the main file when doing so.
+/// Otherwise, returns a NULL pointer.
+llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   CompilerInvocation PreambleInvocation(*Invocation);
   FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
@@ -542,7 +556,7 @@ std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
     
-    return Result(0, false);
+    return 0;
   }
   
   if (!Preamble.empty()) {
@@ -558,9 +572,12 @@ std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
       // preamble.
       // FIXME: Check that none of the files used by the preamble have changed.
           
-          
+        
       // Okay! Re-use the precompiled preamble.
-      return Result(NewPreamble.first, CreatedPreambleBuffer);
+      return CreatePaddedMainFileBuffer(NewPreamble.first, 
+                                        CreatedPreambleBuffer,
+                                        PreambleReservedSize,
+                                        FrontendOpts.Inputs[0].second);
     }
     
     // We can't reuse the previously-computed preamble. Build a new one.
@@ -592,7 +609,7 @@ std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
   // Save the preamble text for later; we'll need to compare against it for
   // subsequent reparses.
   Preamble.assign(NewPreamble.first->getBufferStart(), 
-                  NewPreamble.first->getBufferStart() + Preamble.size());
+                  NewPreamble.first->getBufferStart() + NewPreamble.second);
   
   // Remap the main source file to the preamble buffer.
   llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].second);
@@ -626,7 +643,7 @@ std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
 
-    return Result(0, false);
+    return 0;
   }
   
   // Inform the target of the language options.
@@ -668,7 +685,7 @@ std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
     
-    return Result(0, false);
+    return 0;
   }
   
   Act->Execute();
@@ -685,13 +702,16 @@ std::pair<llvm::MemoryBuffer *, bool> ASTUnit::BuildPrecompiledPreamble() {
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
     
-    return Result(0, false);
+    return 0;
   }
   
   // Keep track of the preamble we precompiled.
   PreambleFile = FrontendOpts.OutputFile;
   fprintf(stderr, "Preamble PCH: %s\n", FrontendOpts.OutputFile.c_str());
-  return Result(NewPreamble.first, CreatedPreambleBuffer);
+  return CreatePaddedMainFileBuffer(NewPreamble.first, 
+                                    CreatedPreambleBuffer,
+                                    PreambleReservedSize,
+                                    FrontendOpts.Inputs[0].second);
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
@@ -714,17 +734,14 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->Invocation.reset(CI);
   
-  std::pair<llvm::MemoryBuffer *, bool> PrecompiledPreamble;
-  
+  llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (PrecompilePreamble)
-    PrecompiledPreamble = AST->BuildPrecompiledPreamble();
+    OverrideMainBuffer = AST->BuildPrecompiledPreamble();
   
-  if (!AST->Parse())
+  if (!AST->Parse(OverrideMainBuffer))
     return AST.take();
   
-  if (PrecompiledPreamble.second)
-    delete PrecompiledPreamble.first;
-  
+  delete OverrideMainBuffer;
   return 0;
 }
 
@@ -806,9 +823,9 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   
   // If we have a preamble file lying around, build or reuse the precompiled
   // preamble.
-  std::pair<llvm::MemoryBuffer *, bool> PrecompiledPreamble(0, false);
+  llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (!PreambleFile.empty())
-    PrecompiledPreamble = BuildPrecompiledPreamble();
+    OverrideMainBuffer = BuildPrecompiledPreamble();
     
   // Clear out the diagnostics state.
   getDiagnostics().Reset();
@@ -820,10 +837,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
                                                       RemappedFiles[I].second);
 
   // Parse the sources
-  bool Result = Parse();
-  
-  if (PrecompiledPreamble.second)
-    delete PrecompiledPreamble.first;
-
+  bool Result = Parse(OverrideMainBuffer);  
+  delete OverrideMainBuffer;
   return Result;
 }
