@@ -719,7 +719,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     return -1;
   }
 
-  std::vector<const char *> ProgramArgs;
+  std::vector<const char*> ProgramArgs;
 
   // Declared here so that the destructor only runs after
   // ProgramArgs is used.
