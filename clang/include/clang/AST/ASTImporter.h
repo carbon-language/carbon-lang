@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_AST_ASTIMPORTER_H
 #define LLVM_CLANG_AST_ASTIMPORTER_H
 
-#include "clang/AST/Type.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
