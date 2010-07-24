@@ -3710,12 +3710,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
       !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
     // Pull out the types of all of the arguments...
     std::vector<const Type*> ParamTypes;
-    for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
-      const Type* ArgTy = ArgList[i].V->getType();
-      if (!FunctionType::isValidArgumentType(ArgTy))
-        return Error(ArgList[i].Loc, "Invalid argument type for LLVM function");
-      ParamTypes.push_back(ArgTy);
-    }
+    for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
+      ParamTypes.push_back(ArgList[i].V->getType());
 
     if (!FunctionType::isValidReturnType(RetType))
       return Error(RetTypeLoc, "Invalid result type for LLVM function");
