@@ -167,6 +167,7 @@ public:
                                    bool lval = false);
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
       *Method);
+  virtual llvm::Constant *GetEHType(QualType T);
 
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
                                          const ObjCContainerDecl *CD);
@@ -401,6 +402,11 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
   TypedSelectors[Selector] = Sel;
 
   return Builder.CreateLoad(Sel);
+}
+
+llvm::Constant *CGObjCGNU::GetEHType(QualType T) {
+  llvm_unreachable("asking for catch type for ObjC type in GNU runtime");
+  return 0;
 }
 
 llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,

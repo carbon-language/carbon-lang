@@ -5983,6 +5983,27 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
                              AbstractVariableType))
     Invalid = true;
 
+  // Only the non-fragile NeXT runtime currently supports C++ catches
+  // of ObjC types, and no runtime supports catching ObjC types by value.
+  if (!Invalid && getLangOptions().ObjC1) {
+    QualType T = ExDeclType;
+    if (const ReferenceType *RT = T->getAs<ReferenceType>())
+      T = RT->getPointeeType();
+
+    if (T->isObjCObjectType()) {
+      Diag(Loc, diag::err_objc_object_catch);
+      Invalid = true;
+    } else if (T->isObjCObjectPointerType()) {
+      if (!getLangOptions().NeXTRuntime) {
+        Diag(Loc, diag::err_objc_pointer_cxx_catch_gnu);
+        Invalid = true;
+      } else if (!getLangOptions().ObjCNonFragileABI) {
+        Diag(Loc, diag::err_objc_pointer_cxx_catch_fragile);
+        Invalid = true;
+      }
+    }
+  }
+
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc,
                                     Name, ExDeclType, TInfo, VarDecl::None,
                                     VarDecl::None);

@@ -1184,6 +1184,8 @@ public:
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
                                    const ObjCMethodDecl *Method);
 
+  virtual llvm::Constant *GetEHType(QualType T);
+
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
@@ -1354,7 +1356,7 @@ private:
 
   /// GetInterfaceEHType - Get the cached ehtype for the given Objective-C
   /// interface. The return value has type EHTypePtrTy.
-  llvm::Value *GetInterfaceEHType(const ObjCInterfaceDecl *ID,
+  llvm::Constant *GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                   bool ForDefinition);
 
   const char *getMetaclassSymbolPrefix() const {
@@ -1428,6 +1430,8 @@ public:
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
+
+  virtual llvm::Constant *GetEHType(QualType T);
 
   virtual llvm::Constant *GetPropertyGetFunction() {
     return ObjCTypes.getGetPropertyFn();
@@ -1525,6 +1529,11 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel,
 llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
                                     *Method) {
   return EmitSelector(Builder, Method->getSelector());
+}
+
+llvm::Constant *CGObjCMac::GetEHType(QualType T) {
+  llvm_unreachable("asking for catch type for ObjC type in fragile runtime");
+  return 0;
 }
 
 /// Generate a constant CFString object.
@@ -5777,6 +5786,31 @@ namespace {
   };
 }
 
+llvm::Constant *
+CGObjCNonFragileABIMac::GetEHType(QualType T) {
+  // There's a particular fixed type info for 'id'.
+  if (T->isObjCIdType() ||
+      T->isObjCQualifiedIdType()) {
+    llvm::Constant *IDEHType =
+      CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
+    if (!IDEHType)
+      IDEHType =
+        new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy,
+                                 false,
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0, "OBJC_EHTYPE_id");
+    return IDEHType;
+  }
+
+  // All other types should be Objective-C interface pointer types.
+  const ObjCObjectPointerType *PT =
+    T->getAs<ObjCObjectPointerType>();
+  assert(PT && "Invalid @catch type.");
+  const ObjCInterfaceType *IT = PT->getInterfaceType();
+  assert(IT && "Invalid @catch type.");
+  return GetInterfaceEHType(IT->getDecl(), false);
+}                                                  
+
 void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                                          const ObjCAtTryStmt &S) {
   // Jump destination for falling out of catch bodies.
@@ -5812,27 +5846,7 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         break;
       }
 
-      // There's a particular fixed type info for 'id'.
-      if (CatchDecl->getType()->isObjCIdType() ||
-          CatchDecl->getType()->isObjCQualifiedIdType()) {
-        llvm::Value *IDEHType =
-          CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
-        if (!IDEHType)
-          IDEHType =
-            new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy,
-                                     false,
-                                     llvm::GlobalValue::ExternalLinkage,
-                                     0, "OBJC_EHTYPE_id");
-        Handler.TypeInfo = IDEHType;
-      } else {
-        // All other types should be Objective-C interface pointer types.
-        const ObjCObjectPointerType *PT =
-          CatchDecl->getType()->getAs<ObjCObjectPointerType>();
-        assert(PT && "Invalid @catch type.");
-        const ObjCInterfaceType *IT = PT->getInterfaceType();
-        assert(IT && "Invalid @catch type.");
-        Handler.TypeInfo = GetInterfaceEHType(IT->getDecl(), false);
-      }
+      Handler.TypeInfo = GetEHType(CatchDecl->getType());
     }
 
     EHCatchScope *Catch = CGF.EHStack.pushCatch(Handlers.size());
@@ -5931,7 +5945,7 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.ClearInsertionPoint();
 }
 
-llvm::Value *
+llvm::Constant *
 CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                            bool ForDefinition) {
   llvm::GlobalVariable * &Entry = EHTypeReferences[ID->getIdentifier()];

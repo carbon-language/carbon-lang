@@ -16,6 +16,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
 
+#include "CGObjCRuntime.h"
 #include "CodeGenFunction.h"
 #include "CGException.h"
 #include "TargetInfo.h"
@@ -617,7 +618,12 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       //   http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#388
       QualType CaughtType = C->getCaughtType();
       CaughtType = CaughtType.getNonReferenceType().getUnqualifiedType();
-      llvm::Value *TypeInfo = CGM.GetAddrOfRTTIDescriptor(CaughtType, true);
+
+      llvm::Value *TypeInfo = 0;
+      if (CaughtType->isObjCObjectPointerType())
+        TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
+      else
+        TypeInfo = CGM.GetAddrOfRTTIDescriptor(CaughtType, true);
       CatchScope->setHandler(I, TypeInfo, Handler);
     } else {
       // No exception decl indicates '...', a catch-all.

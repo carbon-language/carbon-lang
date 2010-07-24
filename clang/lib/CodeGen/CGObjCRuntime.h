@@ -103,6 +103,12 @@ public:
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
                                    const ObjCMethodDecl *Method) = 0;
 
+  /// Get the type constant to catch for the given ObjC pointer type.
+  /// This is used externally to implement catching ObjC types in C++.
+  /// Runtimes which don't support this should add the appropriate
+  /// error to Sema.
+  virtual llvm::Constant *GetEHType(QualType T) = 0;
+
   /// Generate a constant string object.
   virtual llvm::Constant *GenerateConstantString(const StringLiteral *) = 0;
 
