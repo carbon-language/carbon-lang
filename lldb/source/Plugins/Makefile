@@ -18,7 +18,8 @@ DIRS := ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm  \
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
-	ObjectFile/Mach-O Process/gdb-remote Process/Utility SymbolVendor/MacOSX
+	ObjectFile/Mach-O Process/gdb-remote Process/Utility \
+	SymbolVendor/MacOSX Process/MacOSX-User
 endif
 
 ifeq ($(HOST_OS),Linux)
