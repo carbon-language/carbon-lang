@@ -513,7 +513,8 @@ static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
   memcpy(const_cast<char*>(Result->getBufferStart()), 
          Old->getBufferStart(), Old->getBufferSize());
   memset(const_cast<char*>(Result->getBufferStart()) + Old->getBufferSize(), 
-         ' ', NewSize - Old->getBufferSize() - 1);
+         ' ', NewSize - Old->getBufferSize() - 2);
+  const_cast<char*>(Result->getBufferEnd())[-2] = '\n';  
   const_cast<char*>(Result->getBufferEnd())[-1] = 0;  
   
   if (DeleteOld)
@@ -565,7 +566,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     // the main-file buffer within the precompiled preamble to fit the
     // new main file.
     if (Preamble.size() == NewPreamble.second &&
-        NewPreamble.first->getBufferSize() < PreambleReservedSize &&
+        NewPreamble.first->getBufferSize() < PreambleReservedSize-2 &&
         memcmp(&Preamble[0], NewPreamble.first->getBufferStart(),
                NewPreamble.second) == 0) {
       // The preamble has not changed. We may be able to re-use the precompiled
@@ -603,9 +604,10 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   memcpy(const_cast<char*>(PreambleBuffer->getBufferStart()), 
          NewPreamble.first->getBufferStart(), Preamble.size());
   memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + Preamble.size(), 
-         ' ', PreambleReservedSize - Preamble.size() - 1);
+         ' ', PreambleReservedSize - Preamble.size() - 2);
   const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = 0;
-  
+  const_cast<char*>(PreambleBuffer->getBufferEnd())[-2] = '\n';  
+
   // Save the preamble text for later; we'll need to compare against it for
   // subsequent reparses.
   Preamble.assign(NewPreamble.first->getBufferStart(), 
