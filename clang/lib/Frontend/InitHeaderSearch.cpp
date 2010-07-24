@@ -1,4 +1,4 @@
-//===--- InitHeaderSearch.cpp - Initialize header search paths ----------*-===//
+//===--- InitHeaderSearch.cpp - Initialize header search paths --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -716,6 +716,11 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     AddGnuCPlusPlusIncludePaths(
         "/usr/lib/gcc/x86_64-pc-linux-gnu/4.4.3/include/g++-v4",
         "x86_64-pc-linux-gnu", "32", "", triple);
+
+    // Gentoo amd64 llvm-gcc trunk
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/llvm-gcc-4.2-9999/include/c++/4.2.1",
+        "x86_64-pc-linux-gnu", "", "", triple);
     
     break;
   case llvm::Triple::FreeBSD:
