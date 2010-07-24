@@ -85,9 +85,15 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
     TSInfo(*this) {
 }
 
-
-
 // Pass Pipeline Configuration
+bool ARMBaseTargetMachine::addPreISel(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel) {
+  if (OptLevel != CodeGenOpt::None)
+    PM.add(createARMGlobalMergePass(getTargetLowering()));
+
+  return false;
+}
+
 bool ARMBaseTargetMachine::addInstSelector(PassManagerBase &PM,
                                            CodeGenOpt::Level OptLevel) {
   PM.add(createARMISelDag(*this, OptLevel));

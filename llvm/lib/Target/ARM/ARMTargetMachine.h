@@ -50,6 +50,7 @@ public:
   }
 
   // Pass Pipeline Configuration
+  virtual bool addPreISel(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreSched2(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

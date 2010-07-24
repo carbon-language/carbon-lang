@@ -263,6 +263,10 @@ namespace llvm {
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
+    /// getMaximalGlobalOffset - Returns the maximal possible offset which can
+    /// be used for loads / stores from the global.
+    virtual unsigned getMaximalGlobalOffset() const;
+
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
     virtual FastISel *createFastISel(FunctionLoweringInfo &funcInfo) const;

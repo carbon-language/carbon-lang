@@ -703,6 +703,12 @@ unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
   return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 1 : 2;
 }
 
+/// getMaximalGlobalOffset - Returns the maximal possible offset which can
+/// be used for loads / stores from the global.
+unsigned ARMTargetLowering::getMaximalGlobalOffset() const {
+  return (Subtarget->isThumb1Only() ? 127 : 4095);
+}
+
 Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   unsigned NumVals = N->getNumValues();
   if (!NumVals)

@@ -792,6 +792,12 @@ public:
     return false;
   }
 
+  /// getMaximalGlobalOffset - Returns the maximal possible offset which can be
+  /// used for loads / stores from the global.
+  virtual unsigned getMaximalGlobalOffset() const {
+    return 0;
+  }
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //
