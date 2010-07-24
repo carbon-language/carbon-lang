@@ -572,7 +572,7 @@ void CodeGenFunction::EmitObjCSuperPropertySet(const Expr *Exp,
   Args.push_back(std::make_pair(Src, Exp->getType()));
   CGM.getObjCRuntime().GenerateMessageSendSuper(*this,
                                                 ReturnValueSlot(),
-                                                Exp->getType(),
+                                                getContext().VoidTy,
                                                 S,
                                                 OMD->getClassInterface(),
                                                 isCategoryImpl,
