@@ -488,10 +488,15 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
   ValueHandleBase *Entry = pImpl->ValueHandles[V];
   assert(Entry && "Value bit set but no entries exist");
 
-  // We use a local ValueHandleBase as an iterator so that
-  // ValueHandles can add and remove themselves from the list without
-  // breaking our iteration.  This is not really an AssertingVH; we
-  // just have to give ValueHandleBase some kind.
+  // We use a local ValueHandleBase as an iterator so that ValueHandles can add
+  // and remove themselves from the list without breaking our iteration.  This
+  // is not really an AssertingVH; we just have to give ValueHandleBase a kind.
+  // Note that we deliberately do not the support the case when dropping a value
+  // handle results in a new value handle being permanently added to the list
+  // (as might occur in theory for CallbackVH's): the new value handle will not
+  // be processed and the checking code will meet out righteous punishment if
+  // the handle is still present once we have finished processing all the other
+  // value handles (it is fine to momentarily add then remove a value handle).
   for (ValueHandleBase Iterator(Assert, *Entry); Entry; Entry = Iterator.Next) {
     Iterator.RemoveFromUseList();
     Iterator.AddToExistingUseListAfter(Entry);
