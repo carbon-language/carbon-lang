@@ -2245,7 +2245,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   // If this has an identifier and is not an invalid redeclaration or 
   // function template specialization, add it to the scope stack.
-  if (Name && !(Redeclaration && New->isInvalidDecl()))
+  if (New->getDeclName() && !(Redeclaration && New->isInvalidDecl()))
     PushOnScopeChains(New, S);
 
   return DeclPtrTy::make(New);
