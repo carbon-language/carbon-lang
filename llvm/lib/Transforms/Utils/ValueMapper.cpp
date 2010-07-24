@@ -27,9 +27,10 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
   // NOTE: VMSlot can be invalidated by any reference to VM, which can grow the
   // DenseMap.  This includes any recursive calls to MapValue.
 
-  // Global values do not need to be seeded into the VM if they are using
-  // the identity mapping.
-  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V))
+  // Global values and non-function-local metadata do not need to be seeded into
+  // the VM if they are using the identity mapping.
+  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
+      (isa<MDNode>(V) && !cast<MDNode>(V)->isFunctionLocal()))
     return VMSlot = const_cast<Value*>(V);
 
   if (const MDNode *MD = dyn_cast<MDNode>(V)) {
