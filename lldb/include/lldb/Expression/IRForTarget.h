@@ -42,6 +42,8 @@ private:
                              bool Store);
     bool runOnBasicBlock(llvm::Module &M,
                          llvm::BasicBlock &BB);
+    bool removeGuards(llvm::Module &M,
+                      llvm::BasicBlock &BB);
     bool replaceVariables(llvm::Module &M,
                           llvm::Function *F);
     

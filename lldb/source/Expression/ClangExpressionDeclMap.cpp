@@ -300,6 +300,12 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
         return LLDB_INVALID_ADDRESS;
     }
     
+    if (!exe_ctx->frame)
+    {
+        err.SetErrorString("Received null execution frame");
+        return LLDB_INVALID_ADDRESS;
+    }
+    
     const SymbolContext &sym_ctx(exe_ctx->frame->GetSymbolContext(lldb::eSymbolContextEverything));
     
     if (!dematerialize)

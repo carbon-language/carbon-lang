@@ -147,9 +147,7 @@ ClangResultSynthesizer::SynthesizeResult (ASTContext &Ctx,
     }
     
     IdentifierInfo &result_id = Ctx.Idents.get("___clang_expr_result");
-    
-    DeclContext *decl_context = function_decl->getDeclContext();
-    
+        
     clang::VarDecl *result_decl = VarDecl::Create(Ctx, 
                                                   function_decl, 
                                                   SourceLocation(), 
@@ -189,87 +187,11 @@ ClangResultSynthesizer::SynthesizeResult (ASTContext &Ctx,
                                                                                        SourceLocation(),
                                                                                        SourceLocation()));
     
-    
-    ///////////////////////////////////////////////
-    // Synthesize external void pointer variable
-    //
-    
-    IdentifierInfo &result_ptr_id = Ctx.Idents.get("___clang_expr_result_ptr");
-    
-    clang::VarDecl *result_ptr_decl = VarDecl::Create(Ctx,
-                                                      decl_context,
-                                                      SourceLocation(),
-                                                      &result_ptr_id,
-                                                      Ctx.VoidPtrTy,
-                                                      NULL,
-                                                      VarDecl::Extern,
-                                                      VarDecl::Extern);
-    
-    /////////////////////////////////////////////
-    // Build a DeclRef for the result variable
-    //
-    
-    DeclRefExpr *result_decl_ref_expr = DeclRefExpr::Create(Ctx,
-                                                            NULL,
-                                                            SourceRange(),
-                                                            result_decl,
-                                                            SourceLocation(),
-                                                            expr_qual_type);
-    
-    ///////////////////////
-    // call ActOnUnaryOp
-    //
-    
-    Scope my_scope(NULL, (Scope::BlockScope | Scope::FnScope | Scope::DeclScope));
-    
-    Parser::DeclPtrTy result_ptr_decl_ptr;
-    result_ptr_decl_ptr.set(result_ptr_decl);
-        
-    Parser::OwningExprResult addressof_expr_result(m_action->ActOnUnaryOp(&my_scope,
-                                                                          SourceLocation(),
-                                                                          tok::amp,
-                                                                          Parser::ExprArg(*m_action, result_decl_ref_expr)));
-    
-    ////////////////////////////////////////////
-    // Build a DeclRef for the result pointer
-    //
-    
-    DeclRefExpr *result_ptr_decl_ref_expr = DeclRefExpr::Create(Ctx,
-                                                                NULL,
-                                                                SourceRange(),
-                                                                result_ptr_decl,
-                                                                SourceLocation(),
-                                                                Ctx.VoidPtrTy);
-    
-    ////////////////////////
-    // call ActOnBinaryOp
-    //
-    
-    Parser::OwningExprResult assignment_expr_result(m_action->ActOnBinOp(&my_scope,
-                                                                         SourceLocation(),
-                                                                         tok::equal,
-                                                                         Parser::ExprArg(*m_action, result_ptr_decl_ref_expr),
-                                                                         Parser::ExprArg(*m_action, addressof_expr_result.take())));
-    
-    ////////////////////////////
-    // call ActOnCompoundStmt
-    //
-    
-    void *stmts[2];
-    
-    stmts[0] = result_initialization_stmt_result.take();
-    stmts[1] = assignment_expr_result.take();
-    
-    Parser::OwningStmtResult compound_stmt_result(m_action->ActOnCompoundStmt(SourceLocation(), 
-                                                                              SourceLocation(), 
-                                                                              Parser::MultiStmtArg(*m_action, stmts, 2), 
-                                                                              false));
-    
     ////////////////////////////////////////////////
     // replace the old statement with the new one
     //
     
-    *last_stmt_ptr = reinterpret_cast<Stmt*>(compound_stmt_result.take());
+    *last_stmt_ptr = reinterpret_cast<Stmt*>(result_initialization_stmt_result.take());
 
     if (log)
     {

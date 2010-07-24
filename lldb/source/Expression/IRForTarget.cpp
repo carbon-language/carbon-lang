@@ -162,6 +162,85 @@ PrintValue(llvm::Value *V, bool truncate = false)
     return s;
 }
 
+static bool isGuardVariableRef(llvm::Value *V)
+{
+    ConstantExpr *C = dyn_cast<ConstantExpr>(V);
+    
+    if (!C || C->getOpcode() != Instruction::BitCast)
+        return false;
+    
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(C->getOperand(0));
+    
+    if (!GV || !GV->hasName() || !GV->getName().startswith("_ZGV"))
+        return false;
+    
+    return true;
+}
+
+static void TurnGuardLoadIntoZero(Instruction* guard_load, Module &M)
+{
+    Constant* zero(ConstantInt::get(Type::getInt8Ty(M.getContext()), 0, true));
+
+    Value::use_iterator ui;
+    
+    for (ui = guard_load->use_begin();
+         ui != guard_load->use_end();
+         ++ui)
+        ui->replaceUsesOfWith(guard_load, zero);
+    
+    guard_load->eraseFromParent();
+}
+
+static void ExciseGuardStore(Instruction* guard_store)
+{
+    guard_store->eraseFromParent();
+}
+
+bool
+IRForTarget::removeGuards(Module &M, BasicBlock &BB)
+{        
+    ///////////////////////////////////////////////////////
+    // Eliminate any reference to guard variables found.
+    //
+    
+    llvm::BasicBlock::iterator ii;
+    
+    typedef llvm::SmallVector <Instruction*, 2> InstrList;
+    typedef InstrList::iterator InstrIterator;
+    
+    InstrList guard_loads;
+    InstrList guard_stores;
+    
+    for (ii = BB.begin();
+         ii != BB.end();
+         ++ii)
+    {
+        Instruction &inst = *ii;
+        
+        if (LoadInst *load = dyn_cast<LoadInst>(&inst))
+            if (isGuardVariableRef(load->getPointerOperand()))
+                guard_loads.push_back(&inst);                
+        
+        if (StoreInst *store = dyn_cast<StoreInst>(&inst))            
+            if (isGuardVariableRef(store->getPointerOperand()))
+                guard_stores.push_back(&inst);
+    }
+    
+    InstrIterator iter;
+    
+    for (iter = guard_loads.begin();
+         iter != guard_loads.end();
+         ++iter)
+        TurnGuardLoadIntoZero(*iter, M);
+    
+    for (iter = guard_stores.begin();
+         iter != guard_stores.end();
+         ++iter)
+        ExciseGuardStore(*iter);
+    
+    return true;
+}
+
 // UnfoldConstant operates on a constant [C] which has just been replaced with a value
 // [new_value].  We assume that new_value has been properly placed early in the function,
 // most likely somewhere in front of the first instruction in the entry basic block 
@@ -362,6 +441,9 @@ IRForTarget::runOnModule(Module &M)
          ++bbi)
     {
         if (!runOnBasicBlock(M, *bbi))
+            return false;
+        
+        if (!removeGuards(M, *bbi))
             return false;
     }
     
