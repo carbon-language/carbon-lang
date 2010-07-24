@@ -455,8 +455,8 @@ const PointerType *Type::getInt64PtrTy(LLVMContext &C, unsigned AS) {
 /// isValidReturnType - Return true if the specified type is valid as a return
 /// type.
 bool FunctionType::isValidReturnType(const Type *RetTy) {
-  return RetTy->getTypeID() != LabelTyID &&
-         RetTy->getTypeID() != MetadataTyID;
+  return !RetTy->isFunctionTy() && !RetTy->isLabelTy() &&
+         !RetTy->isMetadataTy();
 }
 
 /// isValidArgumentType - Return true if the specified type is valid as an
