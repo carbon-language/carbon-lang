@@ -8,8 +8,7 @@ void test() {
   }
 
   int n = 3;
-  switch (n && 1) { // expected-warning {{bool}} \
-                    // expected-warning {{use of logical && with constant operand}}
+  switch (n && 1) { // expected-warning {{bool}}
     case 1:
       break;
   }
