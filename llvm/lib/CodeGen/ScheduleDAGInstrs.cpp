@@ -32,7 +32,8 @@ using namespace llvm;
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo &mli,
                                      const MachineDominatorTree &mdt)
-  : ScheduleDAG(mf), MLI(mli), MDT(mdt), LoopRegs(MLI, MDT) {
+  : ScheduleDAG(mf), MLI(mli), MDT(mdt), Defs(TRI->getNumRegs()),
+    Uses(TRI->getNumRegs()), LoopRegs(MLI, MDT) {
   MFI = mf.getFrameInfo();
   DbgValueVec.clear();
 }

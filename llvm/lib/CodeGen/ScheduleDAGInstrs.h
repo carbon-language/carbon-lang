@@ -106,8 +106,8 @@ namespace llvm {
     /// are as we iterate upward through the instructions. This is allocated
     /// here instead of inside BuildSchedGraph to avoid the need for it to be
     /// initialized and destructed for each block.
-    std::vector<SUnit *> Defs[TargetRegisterInfo::FirstVirtualRegister];
-    std::vector<SUnit *> Uses[TargetRegisterInfo::FirstVirtualRegister];
+    std::vector<std::vector<SUnit *> > Defs;
+    std::vector<std::vector<SUnit *> > Uses;
  
     /// DbgValueVec - Remember DBG_VALUEs that refer to a particular
     /// register.
