@@ -57,3 +57,12 @@ template<typename T, typename U>
 struct X0 : T::template apply<U> {
   X0(int i) : T::template apply<U>(i) { }
 };
+
+// PR7698
+namespace PR7698 {
+  template<typename Type>
+  class A {
+    char mA[sizeof(Type *)];
+    A(): mA() {}
+  };
+}
