@@ -78,12 +78,19 @@ ScheduleDAGSDNodes *createTDRRListDAGScheduler(SelectionDAGISel *IS,
 ScheduleDAGSDNodes *createSourceListDAGScheduler(SelectionDAGISel *IS,
                                                  CodeGenOpt::Level OptLevel);
 
-/// createHybridListDAGScheduler - This creates a bottom up hybrid register
-/// usage reduction list scheduler that make use of latency information to
-/// avoid stalls for long latency instructions.
+/// createHybridListDAGScheduler - This creates a bottom up register pressure
+/// aware list scheduler that make use of latency information to avoid stalls
+/// for long latency instructions in low register pressure mode. In high
+/// register pressure mode it schedules to reduce register pressure.
 ScheduleDAGSDNodes *createHybridListDAGScheduler(SelectionDAGISel *IS,
                                                  CodeGenOpt::Level);
 
+/// createILPListDAGScheduler - This creates a bottom up register pressure
+/// aware list scheduler that tries to increase instruction level parallelism
+/// in low register pressure mode. In high register pressure mode it schedules
+/// to reduce register pressure.
+ScheduleDAGSDNodes *createILPListDAGScheduler(SelectionDAGISel *IS,
+                                              CodeGenOpt::Level);
 /// createTDListDAGScheduler - This creates a top-down list scheduler with
 /// a hazard recognizer.
 ScheduleDAGSDNodes *createTDListDAGScheduler(SelectionDAGISel *IS,

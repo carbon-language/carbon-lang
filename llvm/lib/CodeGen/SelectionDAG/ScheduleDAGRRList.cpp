@@ -55,9 +55,15 @@ static RegisterScheduler
 
 static RegisterScheduler
   hybridListDAGScheduler("list-hybrid",
-                         "Bottom-up rr list scheduling which avoid stalls for "
-                         "long latency instructions",
+                         "Bottom-up register pressure aware list scheduling "
+                         "which tries to balance latency and register pressure",
                          createHybridListDAGScheduler);
+
+static RegisterScheduler
+  ILPListDAGScheduler("list-ilp",
+                      "Bottom-up register pressure aware list scheduling "
+                      "which tries to balance ILP and register pressure",
+                      createILPListDAGScheduler);
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -995,6 +1001,16 @@ namespace {
 
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
+
+  struct ilp_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+    RegReductionPriorityQueue<ilp_ls_rr_sort> *SPQ;
+    ilp_ls_rr_sort(RegReductionPriorityQueue<ilp_ls_rr_sort> *spq)
+      : SPQ(spq) {}
+    ilp_ls_rr_sort(const ilp_ls_rr_sort &RHS)
+      : SPQ(RHS.SPQ) {}
+
+    bool operator()(const SUnit* left, const SUnit* right) const;
+  };
 }  // end anonymous namespace
 
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
@@ -1323,14 +1339,15 @@ namespace {
       if (!N->isMachineOpcode()) {
         if (N->getOpcode() != ISD::CopyToReg)
           return;
+      } else {
+        unsigned Opc = N->getMachineOpcode();
+        if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+            Opc == TargetOpcode::INSERT_SUBREG ||
+            Opc == TargetOpcode::SUBREG_TO_REG ||
+            Opc == TargetOpcode::REG_SEQUENCE ||
+            Opc == TargetOpcode::IMPLICIT_DEF)
+          return;
       }
-      unsigned Opc = N->getMachineOpcode();
-      if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-          Opc == TargetOpcode::INSERT_SUBREG ||
-          Opc == TargetOpcode::SUBREG_TO_REG ||
-          Opc == TargetOpcode::REG_SEQUENCE ||
-          Opc == TargetOpcode::IMPLICIT_DEF)
-        return;
 
       for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
            I != E; ++I) {
@@ -1427,6 +1444,9 @@ namespace {
 
   typedef RegReductionPriorityQueue<hybrid_ls_rr_sort>
     HybridBURRPriorityQueue;
+
+  typedef RegReductionPriorityQueue<ilp_ls_rr_sort>
+    ILPBURRPriorityQueue;
 }
 
 /// closestSucc - Returns the scheduled cycle of the successor which is
@@ -1529,6 +1549,8 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
   unsigned LExcess, RExcess;
   bool LHigh = SPQ->HighRegPressure(left, LExcess);
   bool RHigh = SPQ->HighRegPressure(right, RExcess);
+  // Avoid causing spills. If register pressure is high, schedule for
+  // register pressure reduction.
   if (LHigh && !RHigh)
     return true;
   else if (!LHigh && RHigh)
@@ -1538,7 +1560,6 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
       return true;
     else if (LExcess < RExcess)
       return false;
-    // Otherwise schedule for register pressure reduction.
   } else {
     // Low register pressure situation, schedule for latency if possible.
     bool LStall = left->SchedulingPref == Sched::Latency &&
@@ -1566,6 +1587,33 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
       if (left->Latency != right->Latency)
         return left->Latency > right->Latency;
     }
+  }
+
+  return BURRSort(left, right, SPQ);
+}
+
+bool ilp_ls_rr_sort::operator()(const SUnit *left,
+                                const SUnit *right) const {
+  unsigned LExcess, RExcess;
+  bool LHigh = SPQ->HighRegPressure(left, LExcess);
+  bool RHigh = SPQ->HighRegPressure(right, RExcess);
+  // Avoid causing spills. If register pressure is high, schedule for
+  // register pressure reduction.
+  if (LHigh && !RHigh)
+    return true;
+  else if (!LHigh && RHigh)
+    return false;
+  else if (LHigh && RHigh) {
+    if (LExcess > RExcess)
+      return true;
+    else if (LExcess < RExcess)
+      return false;    
+  } else {
+    // Low register pressure situation, schedule for ILP.
+    if (left->NumPreds > right->NumPreds)
+      return false;
+    else if (left->NumPreds < right->NumPreds)
+      return false;
   }
 
   return BURRSort(left, right, SPQ);
@@ -1959,6 +2007,20 @@ llvm::createHybridListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   
   HybridBURRPriorityQueue *PQ =
     new HybridBURRPriorityQueue(*IS->MF, true, TII, TRI, TLI);
+  ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, true, PQ);
+  PQ->setScheduleDAG(SD);
+  return SD;  
+}
+
+llvm::ScheduleDAGSDNodes *
+llvm::createILPListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
+  const TargetMachine &TM = IS->TM;
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetLowering *TLI = &IS->getTargetLowering();
+  
+  ILPBURRPriorityQueue *PQ =
+    new ILPBURRPriorityQueue(*IS->MF, true, TII, TRI, TLI);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, true, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  

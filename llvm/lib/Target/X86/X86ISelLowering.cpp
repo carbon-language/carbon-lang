@@ -1190,6 +1190,24 @@ unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
   return F->hasFnAttr(Attribute::OptimizeForSize) ? 0 : 4;
 }
 
+unsigned
+X86TargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
+                                       MachineFunction &MF) const {
+  unsigned FPDiff = RegInfo->hasFP(MF) ? 1 : 0;
+  switch (RC->getID()) {
+  default:
+    return 0;
+  case X86::GR32RegClassID:
+    return 4 - FPDiff;
+  case X86::GR64RegClassID:
+    return 8 - FPDiff;
+  case X86::VR128RegClassID:
+    return Subtarget->is64Bit() ? 10 : 4;
+  case X86::VR64RegClassID:
+    return 4;
+  }
+}
+
 bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
                                                unsigned &Offset) const {
   if (!Subtarget->isTargetLinux())
