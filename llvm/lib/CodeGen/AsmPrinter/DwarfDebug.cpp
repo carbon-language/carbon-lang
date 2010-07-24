@@ -1753,6 +1753,11 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
 /// maps as well.
 unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName){
   unsigned DId;
+  if (DirName.empty()) {
+    llvm::sys::Path CWD = llvm::sys::Path::GetCurrentDirectory();
+    DirName = StringRef(CWD.c_str(), CWD.size());
+  }
+
   StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
   if (DI != DirectoryIdMap.end()) {
     DId = DI->getValue();
