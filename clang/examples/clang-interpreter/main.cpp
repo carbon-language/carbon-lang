@@ -69,8 +69,7 @@ int main(int argc, const char **argv, char * const *envp) {
   TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
 
   Diagnostic Diags(&DiagClient);
-  Driver TheDriver(Path.getBasename(), Path.getDirname(),
-                   llvm::sys::getHostTriple(),
+  Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
                    "a.out", /*IsProduction=*/false, /*CXXIsProduction=*/false,
                    Diags);
   TheDriver.setTitle("clang interpreter");
