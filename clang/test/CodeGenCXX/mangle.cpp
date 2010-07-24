@@ -518,3 +518,14 @@ namespace test14 {
     int S::a() { return S::x; }
   }
 }
+
+// rdar://problem/8204122
+namespace test15 {
+  enum E { e = 3 };
+  template <int I> struct S {};
+
+  template <int I> void f(S<I + e>) {}
+
+  // CHECK: define weak_odr void @_ZN6test151fILi7EEEvNS_1SIXplT_LNS_1EE3EEEE(
+  template void f<7>(S<7 + e>);
+}

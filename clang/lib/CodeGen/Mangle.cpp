@@ -1873,6 +1873,12 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
       Out << 'E';
       break;
 
+    case Decl::EnumConstant: {
+      const EnumConstantDecl *ED = cast<EnumConstantDecl>(D);
+      mangleIntegerLiteral(ED->getType(), ED->getInitVal());
+      break;
+    }
+
     case Decl::NonTypeTemplateParm: {
       const NonTypeTemplateParmDecl *PD = cast<NonTypeTemplateParmDecl>(D);
       mangleTemplateParameter(PD->getIndex());
