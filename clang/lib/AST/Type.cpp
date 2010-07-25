@@ -33,6 +33,8 @@ bool QualType::isConstant(QualType T, ASTContext &Ctx) {
   return false;
 }
 
+Type::~Type() { }
+
 void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
                                       ASTContext &Context,
                                       QualType ET,

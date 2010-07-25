@@ -807,7 +807,7 @@ protected:
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
       TC(tc), Dependent(dependent), LinkageKnown(false), 
       CachedLinkage(NoLinkage), FromPCH(false) {}
-  virtual ~Type() {}
+  virtual ~Type();
   friend class ASTContext;
 
 public:
