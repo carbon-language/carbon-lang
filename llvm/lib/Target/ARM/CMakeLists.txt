@@ -22,6 +22,7 @@ add_llvm_target(ARMCodeGen
   ARMConstantPoolValue.cpp
   ARMExpandPseudoInsts.cpp
   ARMFastISel.cpp
+  ARMGlobalMerge.cpp
   ARMISelDAGToDAG.cpp
   ARMISelLowering.cpp
   ARMInstrInfo.cpp
