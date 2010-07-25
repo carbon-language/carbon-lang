@@ -965,7 +965,8 @@ namespace {
   template<class SF>
   class RegReductionPriorityQueue;
   
-  /// Sorting functions for the Available queue.
+  /// bu_ls_rr_sort - Priority function for bottom up register pressure
+  // reduction scheduler.
   struct bu_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     RegReductionPriorityQueue<bu_ls_rr_sort> *SPQ;
     bu_ls_rr_sort(RegReductionPriorityQueue<bu_ls_rr_sort> *spq) : SPQ(spq) {}
@@ -974,6 +975,8 @@ namespace {
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
+  // td_ls_rr_sort - Priority function for top down register pressure reduction
+  // scheduler.
   struct td_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     RegReductionPriorityQueue<td_ls_rr_sort> *SPQ;
     td_ls_rr_sort(RegReductionPriorityQueue<td_ls_rr_sort> *spq) : SPQ(spq) {}
@@ -982,6 +985,7 @@ namespace {
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
+  // src_ls_rr_sort - Priority function for source order scheduler.
   struct src_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     RegReductionPriorityQueue<src_ls_rr_sort> *SPQ;
     src_ls_rr_sort(RegReductionPriorityQueue<src_ls_rr_sort> *spq)
@@ -992,6 +996,7 @@ namespace {
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
+  // hybrid_ls_rr_sort - Priority function for hybrid scheduler.
   struct hybrid_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     RegReductionPriorityQueue<hybrid_ls_rr_sort> *SPQ;
     hybrid_ls_rr_sort(RegReductionPriorityQueue<hybrid_ls_rr_sort> *spq)
@@ -1002,6 +1007,8 @@ namespace {
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
+  // ilp_ls_rr_sort - Priority function for ILP (instruction level parallelism)
+  // scheduler.
   struct ilp_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     RegReductionPriorityQueue<ilp_ls_rr_sort> *SPQ;
     ilp_ls_rr_sort(RegReductionPriorityQueue<ilp_ls_rr_sort> *spq)
@@ -1313,7 +1320,9 @@ namespace {
         }
       }
 
-      if (SU->NumSuccs && N->getOpcode() != ISD::CopyToReg) {
+      // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
+      // may transfer data dependencies to CopyToReg.
+      if (SU->NumSuccs && N->isMachineOpcode()) {
         unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
           EVT VT = N->getValueType(i);
@@ -1394,7 +1403,9 @@ namespace {
         }
       }
 
-      if (SU->NumSuccs && N->getOpcode() != ISD::CopyToReg) {
+      // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
+      // may transfer data dependencies to CopyToReg.
+      if (SU->NumSuccs && N->isMachineOpcode()) {
         unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
         for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
           EVT VT = N->getValueType(i);
@@ -1609,7 +1620,8 @@ bool ilp_ls_rr_sort::operator()(const SUnit *left,
     else if (LExcess < RExcess)
       return false;    
   } else {
-    // Low register pressure situation, schedule for ILP.
+    // Low register pressure situation, schedule to maximize instruction level
+    // parallelism.
     if (left->NumPreds > right->NumPreds)
       return false;
     else if (left->NumPreds < right->NumPreds)
