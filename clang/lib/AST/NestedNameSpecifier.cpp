@@ -176,11 +176,6 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
   OS << "::";
 }
 
-void NestedNameSpecifier::Destroy(ASTContext &Context) {
-  this->~NestedNameSpecifier();
-  Context.Deallocate((void *)this);
-}
-
 void NestedNameSpecifier::dump(const LangOptions &LO) {
   print(llvm::errs(), PrintingPolicy(LO));
 }

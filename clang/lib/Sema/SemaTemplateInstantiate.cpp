@@ -1417,12 +1417,6 @@ Sema::InstantiateClassTemplateSpecialization(
                                  TSK,
                                  Complain);
 
-  for (unsigned I = 0, N = Matched.size(); I != N; ++I) {
-    // FIXME: Implement TemplateArgumentList::Destroy!
-    //    if (Matched[I].first != Pattern)
-    //      Matched[I].second->Destroy(Context);
-  }
-
   return Result;
 }
 

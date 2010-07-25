@@ -181,8 +181,6 @@ public:
     ID.AddPointer(Specifier);
   }
 
-  void Destroy(ASTContext &Context);
-
   /// \brief Dump the nested name specifier to standard output to aid
   /// in debugging.
   void dump(const LangOptions &LO);
