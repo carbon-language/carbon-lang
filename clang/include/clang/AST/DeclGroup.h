@@ -34,7 +34,6 @@ private:
 
 public:
   static DeclGroup *Create(ASTContext &C, Decl **Decls, unsigned NumDecls);
-  void Destroy(ASTContext& C);
 
   unsigned size() const { return NumDecls; }
 

@@ -49,6 +49,8 @@ private:
   bool Inherited : 1;
 
 protected:
+  virtual ~Attr();
+  
   void* operator new(size_t bytes) throw() {
     assert(0 && "Attrs cannot be allocated with regular 'new'.");
     return 0;
@@ -59,11 +61,8 @@ protected:
 
 protected:
   Attr(attr::Kind AK) : Next(0), AttrKind(AK), Inherited(false) {}
-  virtual ~Attr() {
-    assert(Next == 0 && "Destroy didn't work");
-  }
+  
 public:
-  virtual void Destroy(ASTContext &C);
 
   /// \brief Whether this attribute should be merged to new
   /// declarations.
@@ -110,8 +109,6 @@ protected:
   AttrWithString(attr::Kind AK, ASTContext &C, llvm::StringRef s);
   llvm::StringRef getString() const { return llvm::StringRef(Str, StrLen); }
   void ReplaceString(ASTContext &C, llvm::StringRef newS);
-public:
-  virtual void Destroy(ASTContext &C);
 };
 
 #define DEF_SIMPLE_ATTR(ATTR)                                           \
@@ -357,8 +354,6 @@ class NonNullAttr : public Attr {
 public:
   NonNullAttr(ASTContext &C, unsigned* arg_nums = 0, unsigned size = 0);
 
-  virtual void Destroy(ASTContext &C);
-
   typedef const unsigned *iterator;
   iterator begin() const { return ArgNums; }
   iterator end() const { return ArgNums + Size; }
@@ -544,8 +539,6 @@ class InitPriorityAttr : public Attr {
 public:
   InitPriorityAttr(unsigned priority) 
     : Attr(attr::InitPriority),  Priority(priority) {}
-    
-  virtual void Destroy(ASTContext &C) { Attr::Destroy(C); }
     
   unsigned getPriority() const { return Priority; }
     

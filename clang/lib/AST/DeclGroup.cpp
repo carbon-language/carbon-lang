@@ -30,9 +30,3 @@ DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) : NumDecls(numdecls) {
   assert(decls);
   memcpy(this+1, decls, numdecls * sizeof(*decls));
 }
-
-void DeclGroup::Destroy(ASTContext& C) {
-  // Decls are destroyed by the DeclContext.
-  this->~DeclGroup();
-  C.Deallocate((void*) this);
-}

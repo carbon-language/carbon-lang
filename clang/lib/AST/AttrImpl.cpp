@@ -15,14 +15,7 @@
 #include "clang/AST/ASTContext.h"
 using namespace clang;
 
-void Attr::Destroy(ASTContext &C) {
-  if (Next) {
-    Next->Destroy(C);
-    Next = 0;
-  }
-  this->~Attr();
-  C.Deallocate((void*)this);
-}
+Attr::~Attr() { }
 
 AttrWithString::AttrWithString(attr::Kind AK, ASTContext &C, llvm::StringRef s)
   : Attr(AK) {
@@ -30,11 +23,6 @@ AttrWithString::AttrWithString(attr::Kind AK, ASTContext &C, llvm::StringRef s)
   StrLen = s.size();
   Str = new (C) char[StrLen];
   memcpy(const_cast<char*>(Str), s.data(), StrLen);
-}
-
-void AttrWithString::Destroy(ASTContext &C) {
-  C.Deallocate(const_cast<char*>(Str));  
-  Attr::Destroy(C);
 }
 
 void AttrWithString::ReplaceString(ASTContext &C, llvm::StringRef newS) {
@@ -58,12 +46,6 @@ NonNullAttr::NonNullAttr(ASTContext &C, unsigned* arg_nums, unsigned size)
   ArgNums = new (C) unsigned[size];
   Size = size;
   memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
-}
-
-void NonNullAttr::Destroy(ASTContext &C) {
-  if (ArgNums)
-    C.Deallocate(ArgNums);
-  Attr::Destroy(C);
 }
 
 #define DEF_SIMPLE_ATTR_CLONE(ATTR)                                     \
