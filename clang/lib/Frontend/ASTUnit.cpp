@@ -255,7 +255,6 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                 PP.getIdentifierTable(),
                                 PP.getSelectorTable(),
                                 PP.getBuiltinInfo(),
-                                /* FreeMemory = */ false,
                                 /* size_reserve = */0));
   ASTContext &Context = *AST->Ctx.get();
 

@@ -245,7 +245,6 @@ void CompilerInstance::createASTContext() {
   Context.reset(new ASTContext(getLangOpts(), PP.getSourceManager(),
                                getTarget(), PP.getIdentifierTable(),
                                PP.getSelectorTable(), PP.getBuiltinInfo(),
-                               /*FreeMemory=*/ !getFrontendOpts().DisableFree,
                                /*size_reserve=*/ 0));
 }
 

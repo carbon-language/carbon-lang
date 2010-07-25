@@ -404,26 +404,6 @@ DeclarationNameTable::~DeclarationNameTable() {
     = static_cast<llvm::FoldingSet<CXXLiteralOperatorIdName>*>
         (CXXLiteralOperatorNames);
 
-  if (Ctx.FreeMemory) {
-    llvm::FoldingSetIterator<CXXSpecialName>
-      SI = SpecialNames->begin(), SE = SpecialNames->end();
-
-    while (SI != SE) {
-      CXXSpecialName *n = &*SI++;
-      Ctx.Deallocate(n);
-    }
-
-    llvm::FoldingSetIterator<CXXLiteralOperatorIdName>
-      LI = LiteralNames->begin(), LE = LiteralNames->end();
-
-    while (LI != LE) {
-      CXXLiteralOperatorIdName *n = &*LI++;
-      Ctx.Deallocate(n);
-    }
-
-    Ctx.Deallocate(CXXOperatorNames);
-  }
-
   delete SpecialNames;
   delete LiteralNames;
 }

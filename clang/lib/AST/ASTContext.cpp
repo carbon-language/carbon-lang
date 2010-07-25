@@ -138,7 +138,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        const TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
                        Builtin::Context &builtins,
-                       bool FreeMem, unsigned size_reserve) :
+                       unsigned size_reserve) :
   TemplateSpecializationTypes(this_()),
   DependentTemplateSpecializationTypes(this_()),
   GlobalNestedNameSpecifier(0), IsInt128Installed(false),
@@ -146,7 +146,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
   sigjmp_bufDecl(0), BlockDescriptorType(0), BlockDescriptorExtendedType(0),
   NullTypeSourceInfo(QualType()),
-  SourceMgr(SM), LangOpts(LOpts), FreeMemory(FreeMem), Target(t),
+  SourceMgr(SM), LangOpts(LOpts), Target(t),
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins),
   DeclarationNames(*this),
@@ -155,7 +155,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   UniqueBlockByRefTypeID(0), UniqueBlockParmTypeID(0) {
   ObjCIdRedefinitionType = QualType();
   ObjCClassRedefinitionType = QualType();
-  ObjCSelRedefinitionType = QualType();
+  ObjCSelRedefinitionType = QualType();    
   if (size_reserve > 0) Types.reserve(size_reserve);
   TUDecl = TranslationUnitDecl::Create(*this);
   InitBuiltinTypes();
@@ -166,11 +166,9 @@ ASTContext::~ASTContext() {
   // FIXME: Is this the ideal solution?
   ReleaseDeclContextMaps();
 
-  if (!FreeMemory) {
-    // Call all of the deallocation functions.
-    for (unsigned I = 0, N = Deallocations.size(); I != N; ++I)
-      Deallocations[I].first(Deallocations[I].second);
-  }
+  // Call all of the deallocation functions.
+  for (unsigned I = 0, N = Deallocations.size(); I != N; ++I)
+    Deallocations[I].first(Deallocations[I].second);
   
   // Release all of the memory associated with overridden C++ methods.
   for (llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::iterator 
@@ -178,52 +176,22 @@ ASTContext::~ASTContext() {
        OM != OMEnd; ++OM)
     OM->second.Destroy();
   
-  if (FreeMemory) {
-    // Deallocate all the types.
-    while (!Types.empty()) {
-      Types.back()->Destroy(*this);
-      Types.pop_back();
-    }
-
-    for (llvm::FoldingSet<ExtQuals>::iterator
-         I = ExtQualNodes.begin(), E = ExtQualNodes.end(); I != E; ) {
-      // Increment in loop to prevent using deallocated memory.
-      Deallocate(&*I++);
-    }
-
-    for (llvm::DenseMap<const ObjCContainerDecl*,
-         const ASTRecordLayout*>::iterator
-         I = ObjCLayouts.begin(), E = ObjCLayouts.end(); I != E; ) {
-      // Increment in loop to prevent using deallocated memory.
-      if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
-        R->Destroy(*this);
-    }
-  }
-
   // ASTRecordLayout objects in ASTRecordLayouts must always be destroyed
-  // even when using the BumpPtrAllocator because they can contain
-  // DenseMaps.
+  // because they can contain DenseMaps.
+  for (llvm::DenseMap<const ObjCContainerDecl*,
+       const ASTRecordLayout*>::iterator
+       I = ObjCLayouts.begin(), E = ObjCLayouts.end(); I != E; )
+    // Increment in loop to prevent using deallocated memory.
+    if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
+      R->Destroy(*this);
+
   for (llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
        I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end(); I != E; ) {
     // Increment in loop to prevent using deallocated memory.
     if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
       R->Destroy(*this);
   }
-
-  // Destroy nested-name-specifiers.
-  for (llvm::FoldingSet<NestedNameSpecifier>::iterator
-         NNS = NestedNameSpecifiers.begin(),
-         NNSEnd = NestedNameSpecifiers.end();
-       NNS != NNSEnd; ) {
-    // Increment in loop to prevent using deallocated memory.
-    (*NNS++).Destroy(*this);
   }
-
-  if (GlobalNestedNameSpecifier)
-    GlobalNestedNameSpecifier->Destroy(*this);
-
-  TUDecl->Destroy(*this);
-}
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
   Deallocations.push_back(std::make_pair(Callback, Data));
@@ -275,16 +243,12 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "  %u/%u implicit destructors created\n",
           NumImplicitDestructorsDeclared, NumImplicitDestructors);
   
-  if (!FreeMemory)
-    BumpAlloc.PrintStats();
-    
   if (ExternalSource.get()) {
     fprintf(stderr, "\n");
     ExternalSource->PrintStats();
   }
   
-  if (!FreeMemory)
-    BumpAlloc.PrintStats();
+  BumpAlloc.PrintStats();
 }
 
 

@@ -275,9 +275,10 @@ class ASTContext {
   ///  this ASTContext object.
   LangOptions LangOpts;
 
-  /// MallocAlloc/BumpAlloc - The allocator objects used to create AST objects.
-  bool FreeMemory;
-  llvm::MallocAllocator MallocAlloc;
+  /// \brief The allocator used to create AST objects.
+  ///
+  /// AST objects are never destructed; rather, all memory associated with the
+  /// AST objects will be released when the ASTContext itself is destroyed.
   llvm::BumpPtrAllocator BumpAlloc;
 
   /// \brief Allocator for partial diagnostics.
@@ -301,13 +302,9 @@ public:
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }
   void *Allocate(unsigned Size, unsigned Align = 8) {
-    return FreeMemory ? MallocAlloc.Allocate(Size, Align) :
-                        BumpAlloc.Allocate(Size, Align);
+    return BumpAlloc.Allocate(Size, Align);
   }
-  void Deallocate(void *Ptr) {
-    if (FreeMemory)
-      MallocAlloc.Deallocate(Ptr);
-  }
+  void Deallocate(void *Ptr) { }
   
   PartialDiagnostic::StorageAllocator &getDiagAllocator() {
     return DiagAllocator;
@@ -393,7 +390,7 @@ public:
   ASTContext(const LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
              Builtin::Context &builtins,
-             bool FreeMemory = true, unsigned size_reserve=0);
+             unsigned size_reserve);
 
   ~ASTContext();
 
