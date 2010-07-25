@@ -65,9 +65,6 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, EmptyShell Empty) {
                                SourceLocation());
 }
 
-CXXRecordDecl::~CXXRecordDecl() {
-}
-
 void
 CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
                         unsigned NumBases) {
@@ -1044,9 +1041,6 @@ StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L, Expr *AssertExpr,
                                            StringLiteral *Message) {
   return new (C) StaticAssertDecl(DC, L, AssertExpr, Message);
-}
-
-StaticAssertDecl::~StaticAssertDecl() {
 }
 
 static const char *getAccessName(AccessSpecifier AS) {

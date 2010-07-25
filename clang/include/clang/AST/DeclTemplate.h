@@ -193,8 +193,6 @@ public:
 
   TemplateArgumentList() : NumFlatArguments(0), NumStructuredArguments(0) { }
 
-  ~TemplateArgumentList();
-  
   /// \brief Copies the template arguments into a locally new[]'d array.
   void init(ASTContext &Context,
             const TemplateArgument *Args, unsigned NumArgs);
@@ -250,8 +248,6 @@ protected:
     : NamedDecl(DK, DC, L, Name), TemplatedDecl(Decl),
       TemplateParams(Params) { }
 public:
-  ~TemplateDecl();
-
   /// Get the list of template parameters
   TemplateParameterList *getTemplateParameters() const {
     return TemplateParams;

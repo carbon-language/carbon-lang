@@ -84,13 +84,6 @@ unsigned TemplateParameterList::getDepth() const {
 }
 
 //===----------------------------------------------------------------------===//
-// TemplateDecl Implementation
-//===----------------------------------------------------------------------===//
-
-TemplateDecl::~TemplateDecl() {
-}
-
-//===----------------------------------------------------------------------===//
 // FunctionTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -461,8 +454,6 @@ FlatArguments.setInt(1); // Owns the pointer.
 StructuredArguments.setPointer(NewArgs);    
 StructuredArguments.setInt(0); // Doesn't own the pointer.
 }
-
-TemplateArgumentList::~TemplateArgumentList() {}
 
 //===----------------------------------------------------------------------===//
 // ClassTemplateSpecializationDecl Implementation

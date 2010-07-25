@@ -531,8 +531,6 @@ static SourceLocation getTemplateOrInnerLocStart(const DeclT *decl) {
     return decl->getInnerLocStart();
 }
 
-DeclaratorDecl::~DeclaratorDecl() {}
-
 SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
   TypeSourceInfo *TSI = getTypeSourceInfo();
   if (TSI) return TSI->getTypeLoc().getBeginLoc();
@@ -619,9 +617,6 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S, StorageClass SCAsWritten) {
   return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S, SCAsWritten);
-}
-
-VarDecl::~VarDecl() {
 }
 
 SourceLocation VarDecl::getInnerLocStart() const {
@@ -1664,9 +1659,6 @@ RecordDecl *RecordDecl::Create(ASTContext &C, EmptyShell Empty) {
                             SourceLocation());
 }
 
-RecordDecl::~RecordDecl() {
-}
-
 bool RecordDecl::isInjectedClassName() const {
   return isImplicit() && getDeclName() && getDeclContext()->isRecord() &&
     cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
@@ -1693,9 +1685,6 @@ ValueDecl *RecordDecl::getAnonymousStructOrUnionObject() {
 //===----------------------------------------------------------------------===//
 // BlockDecl Implementation
 //===----------------------------------------------------------------------===//
-
-BlockDecl::~BlockDecl() {
-}
 
 void BlockDecl::setParams(ParmVarDecl **NewParamInfo,
                           unsigned NParms) {
@@ -1761,9 +1750,6 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  TypeSourceInfo *TInfo) {
   return new (C) TypedefDecl(DC, L, Id, TInfo);
 }
-
-// Anchor TypedefDecl's vtable here.
-TypedefDecl::~TypedefDecl() {}
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,

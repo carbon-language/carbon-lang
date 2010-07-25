@@ -417,8 +417,6 @@ protected:
     : ValueDecl(DK, DC, L, N, T), DeclInfo(TInfo) {}
 
 public:
-  virtual ~DeclaratorDecl();
-
   TypeSourceInfo *getTypeSourceInfo() const {
     return hasExtInfo()
       ? getExtInfo()->TInfo
@@ -603,8 +601,6 @@ public:
                          SourceLocation L, IdentifierInfo *Id,
                          QualType T, TypeSourceInfo *TInfo, StorageClass S,
                          StorageClass SCAsWritten);
-
-  virtual ~VarDecl();
 
   virtual SourceLocation getInnerLocStart() const;
   virtual SourceRange getSourceRange() const;
@@ -1187,8 +1183,6 @@ protected:
       HasImplicitReturnZero(false),
       EndRangeLoc(L), TemplateOrSpecialization() {}
 
-  virtual ~FunctionDecl() {}
-
   typedef Redeclarable<FunctionDecl> redeclarable_base;
   virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
@@ -1698,7 +1692,6 @@ protected:
                    const llvm::APSInt &V)
     : ValueDecl(EnumConstant, DC, L, Id, T), Init((Stmt*)E), Val(V) {}
 
-  virtual ~EnumConstantDecl() {}
 public:
 
   static EnumConstantDecl *Create(ASTContext &C, EnumDecl *DC,
@@ -1760,8 +1753,6 @@ class TypedefDecl : public TypeDecl, public Redeclarable<TypedefDecl> {
   TypedefDecl(DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, TypeSourceInfo *TInfo)
     : TypeDecl(Typedef, DC, L, Id), TInfo(TInfo) {}
-
-  virtual ~TypedefDecl();
 
 protected:
   typedef Redeclarable<TypedefDecl> redeclarable_base;
@@ -2156,7 +2147,6 @@ protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
              SourceLocation L, IdentifierInfo *Id,
              RecordDecl *PrevDecl, SourceLocation TKL);
-  virtual ~RecordDecl();
 
 public:
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -2293,8 +2283,6 @@ protected:
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
       IsVariadic(false), ParamInfo(0), NumParams(0), Body(0),
       SignatureAsWritten(0) {}
-
-  virtual ~BlockDecl();
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);

@@ -400,8 +400,6 @@ protected:
                 CXXRecordDecl *PrevDecl,
                 SourceLocation TKL = SourceLocation());
 
-  ~CXXRecordDecl();
-
 public:
   /// base_class_iterator - Iterator that traverses the base classes
   /// of a class.
@@ -2236,8 +2234,6 @@ public:
 
   StringLiteral *getMessage() { return Message; }
   const StringLiteral *getMessage() const { return Message; }
-
-  virtual ~StaticAssertDecl();
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(StaticAssertDecl *D) { return true; }

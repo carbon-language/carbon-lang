@@ -470,12 +470,7 @@ bool DeclContext::classof(const Decl *D) {
   }
 }
 
-DeclContext::~DeclContext() {
-  // FIXME: Currently ~ASTContext will delete the StoredDeclsMaps because
-  // ~DeclContext() is not guaranteed to be called when ASTContext uses
-  // a BumpPtrAllocator.
-  // delete LookupPtr;
-}
+DeclContext::~DeclContext() { }
 
 /// \brief Find the parent context of this context that will be
 /// used for unqualified name lookup.

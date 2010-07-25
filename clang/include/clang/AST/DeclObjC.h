@@ -41,9 +41,6 @@ protected:
 
 public:
   ObjCListBase() : List(0), NumElts(0) {}
-  ~ObjCListBase() {
-  }
-
   unsigned size() const { return NumElts; }
   bool empty() const { return NumElts == 0; }
 
@@ -182,8 +179,6 @@ private:
     NumSelectorArgs(numSelectorArgs), MethodDeclType(T), 
     ResultTInfo(ResultTInfo),
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
-
-  virtual ~ObjCMethodDecl() {}
 
   /// \brief A definition will return its interface declaration.
   /// An interface declaration will return its definition.
@@ -356,8 +351,6 @@ public:
                     IdentifierInfo *Id)
     : NamedDecl(DK, DC, L, Id), DeclContext(DK) {}
 
-  virtual ~ObjCContainerDecl() {}
-
   // Iterator access to properties.
   typedef specific_decl_iterator<ObjCPropertyDecl> prop_iterator;
   prop_iterator prop_begin() const {
@@ -482,8 +475,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
 
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal);
-
-  virtual ~ObjCInterfaceDecl() {}
 
 public:
   static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
@@ -746,8 +737,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
       isForwardProtoDecl(true) {
   }
 
-  virtual ~ObjCProtocolDecl() {}
-
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                   SourceLocation L, IdentifierInfo *Id);
@@ -820,7 +809,6 @@ private:
   ObjCClassDecl(DeclContext *DC, SourceLocation L,
                 ObjCInterfaceDecl *const *Elts, const SourceLocation *Locs,                
                 unsigned nElts, ASTContext &C);
-  virtual ~ObjCClassDecl() {}
 public:
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                                ObjCInterfaceDecl *const *Elts = 0,
@@ -854,7 +842,6 @@ class ObjCForwardProtocolDecl : public Decl {
   ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
                           ObjCProtocolDecl *const *Elts, unsigned nElts,
                           const SourceLocation *Locs, ASTContext &C);
-  virtual ~ObjCForwardProtocolDecl() {}
 
 public:
   static ObjCForwardProtocolDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1023,8 +1010,6 @@ protected:
       ClassInterface(classInterface) {}
 
 public:
-  virtual ~ObjCImplDecl() {}
-
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IFace);
