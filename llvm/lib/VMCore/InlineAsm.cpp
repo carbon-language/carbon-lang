@@ -164,7 +164,7 @@ InlineAsm::ParseConstraints(StringRef Constraints) {
     StringRef::iterator ConstraintEnd = std::find(I, E, ',');
 
     if (ConstraintEnd == I ||  // Empty constraint like ",,"
-        Info.Parse(std::string(I, ConstraintEnd), Result)) {
+        Info.Parse(StringRef(I, ConstraintEnd-I), Result)) {
       Result.clear();          // Erroneous constraint?
       break;
     }
