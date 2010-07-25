@@ -213,8 +213,24 @@ private:
   /// when the mapping was established as a user mapping.  If the high bit is
   /// clear, then the low bits are set to the default value, and should be
   /// mapped with -pedantic, -Werror, etc.
+  class DiagMappings {
+    unsigned char Values[diag::DIAG_UPPER_LIMIT/2];
 
-  typedef std::vector<unsigned char> DiagMappings;
+  public:
+    DiagMappings() {
+      memset(Values, 0, diag::DIAG_UPPER_LIMIT/2);
+    }
+
+    void setMapping(diag::kind Diag, unsigned Map) {
+      size_t Shift = (Diag & 1)*4;
+      Values[Diag/2] = (Values[Diag/2] & ~(15 << Shift)) | (Map << Shift);
+    }
+
+    diag::Mapping getMapping(diag::kind Diag) const {
+      return (diag::Mapping)((Values[Diag/2] >> (Diag & 1)*4) & 15);
+    }
+  };
+
   mutable std::vector<DiagMappings> DiagMappingsStack;
 
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
@@ -539,17 +555,13 @@ private:
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
   /// if the field is completely uninitialized.
   diag::Mapping getDiagnosticMappingInfo(diag::kind Diag) const {
-    const DiagMappings &currentMappings = DiagMappingsStack.back();
-    return (diag::Mapping)((currentMappings[Diag/2] >> (Diag & 1)*4) & 15);
+    return DiagMappingsStack.back().getMapping(Diag);
   }
 
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
                                     bool isUser) const {
     if (isUser) Map |= 8;  // Set the high bit for user mappings.
-    unsigned char &Slot = DiagMappingsStack.back()[DiagId/2];
-    unsigned Shift = (DiagId & 1)*4;
-    Slot &= ~(15 << Shift);
-    Slot |= Map << Shift;
+    DiagMappingsStack.back().setMapping((diag::kind)DiagId, Map);
   }
 
   /// getDiagnosticLevel - This is an internal implementation helper used when

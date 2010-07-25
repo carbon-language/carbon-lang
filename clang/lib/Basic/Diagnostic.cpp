@@ -334,11 +334,8 @@ void Diagnostic::Reset() {
   DelayedDiagID = 0;
 
   // Set all mappings to 'unset'.
-  while (!DiagMappingsStack.empty())
-    DiagMappingsStack.pop_back();
-  
-  DiagMappings BlankDiags(diag::DIAG_UPPER_LIMIT/2, 0);
-  DiagMappingsStack.push_back(BlankDiags);
+  DiagMappingsStack.clear();
+  DiagMappingsStack.push_back(DiagMappings());
 }
 
 /// getDescription - Given a diagnostic ID, return a description of the
