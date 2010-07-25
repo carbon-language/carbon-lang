@@ -1313,7 +1313,7 @@ namespace {
         }
       }
 
-      if (SU->NumSuccs) {
+      if (SU->NumSuccs && N->getOpcode() != ISD::CopyToReg) {
         unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
           EVT VT = N->getValueType(i);
@@ -1394,7 +1394,7 @@ namespace {
         }
       }
 
-      if (SU->NumSuccs) {
+      if (SU->NumSuccs && N->getOpcode() != ISD::CopyToReg) {
         unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
         for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
           EVT VT = N->getValueType(i);
