@@ -96,7 +96,7 @@ namespace {
       const TargetData *TD;
 
       GlobalCmp(const TargetData *td):
-        TD(td) { };
+        TD(td) { }
 
       bool operator() (const GlobalVariable* GV1,
                        const GlobalVariable* GV2) {
