@@ -618,7 +618,7 @@ ifndef KEEP_SYMBOLS
 endif
 
 # Adjust linker flags for building an executable
-ifneq ($(HOST_OS),Darwin)
+ifneq ($(HOST_OS), $(filter $(HOST_OS), Darwin Cygwin MingW))
 ifdef TOOLNAME
   LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
   ifdef EXAMPLE_TOOL
