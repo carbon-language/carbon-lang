@@ -1,4 +1,4 @@
-//===--- InitHeaderSearch.cpp - Initialize header search paths --*- C++ -*-===//
+//===--- InitHeaderSearch.cpp - Initialize header search paths ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
