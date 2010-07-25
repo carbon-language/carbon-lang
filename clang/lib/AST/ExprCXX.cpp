@@ -566,8 +566,6 @@ CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C,
   return new (C) CXXExprWithTemporaries(C, SubExpr, Temps, NumTemps);
 }
 
-CXXExprWithTemporaries::~CXXExprWithTemporaries() {}
-
 // CXXBindTemporaryExpr
 Stmt::child_iterator CXXBindTemporaryExpr::child_begin() {
   return &SubExpr;

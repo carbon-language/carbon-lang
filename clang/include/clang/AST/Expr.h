@@ -1485,8 +1485,6 @@ public:
   /// \brief Build an empty call expression.
   CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty);
 
-  ~CallExpr() {}
-
   const Expr *getCallee() const { return cast<Expr>(SubExprs[FN]); }
   Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
   void setCallee(Expr *F) { SubExprs[FN] = F; }
@@ -2583,8 +2581,6 @@ public:
   }
   static bool classof(const ShuffleVectorExpr *) { return true; }
 
-  ~ShuffleVectorExpr() {}
-
   /// getNumSubExprs - Return the size of the SubExprs array.  This includes the
   /// constant expression, the actual arguments passed in, and the function
   /// pointers.
@@ -3232,8 +3228,6 @@ class ParenListExpr : public Expr {
 public:
   ParenListExpr(ASTContext& C, SourceLocation lparenloc, Expr **exprs,
                 unsigned numexprs, SourceLocation rparenloc);
-
-  ~ParenListExpr() {}
 
   /// \brief Build an empty paren list.
   explicit ParenListExpr(EmptyShell Empty) : Expr(ParenListExprClass, Empty) { }

@@ -543,7 +543,6 @@ class CXXTemporary {
 
   CXXTemporary(const CXXDestructorDecl *destructor)
     : Destructor(destructor) { }
-  ~CXXTemporary() { }
 
 public:
   static CXXTemporary *Create(ASTContext &C,
@@ -574,7 +573,6 @@ class CXXBindTemporaryExpr : public Expr {
   CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr)
    : Expr(CXXBindTemporaryExprClass, subexpr->getType(), false, false),
      Temp(temp), SubExpr(subexpr) { }
-  ~CXXBindTemporaryExpr() { }
 
 public:
   CXXBindTemporaryExpr(EmptyShell Empty)
@@ -631,7 +629,6 @@ class CXXBindReferenceExpr : public Expr {
   : Expr(CXXBindReferenceExprClass, subexpr->getType(), false, false),
     SubExpr(subexpr), ExtendsLifetime(ExtendsLifetime), 
     RequiresTemporaryCopy(RequiresTemporaryCopy) { }
-  ~CXXBindReferenceExpr() { }
 
 public:
   static CXXBindReferenceExpr *Create(ASTContext &C, Expr *SubExpr,
@@ -696,7 +693,6 @@ protected:
                    Expr **args, unsigned numargs,
                    bool ZeroInitialization = false,
                    ConstructionKind ConstructKind = CK_Complete);
-  ~CXXConstructExpr() { }
 
   /// \brief Construct an empty C++ construction expression.
   CXXConstructExpr(StmtClass SC, EmptyShell Empty)
@@ -845,8 +841,6 @@ public:
                          bool ZeroInitialization = false);
   explicit CXXTemporaryObjectExpr(EmptyShell Empty)
     : CXXConstructExpr(CXXTemporaryObjectExprClass, Empty) { }
-
-  ~CXXTemporaryObjectExpr() { }
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -1762,7 +1756,6 @@ class CXXExprWithTemporaries : public Expr {
 
   CXXExprWithTemporaries(ASTContext &C, Expr *SubExpr, CXXTemporary **Temps,
                          unsigned NumTemps);
-  ~CXXExprWithTemporaries();
 
 public:
   CXXExprWithTemporaries(EmptyShell Empty)
