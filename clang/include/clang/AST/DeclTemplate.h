@@ -193,11 +193,6 @@ public:
 
   TemplateArgumentList() : NumFlatArguments(0), NumStructuredArguments(0) { }
 
-  /// Used to release the memory associated with a TemplateArgumentList
-  ///  object.  FIXME: This is currently not called anywhere, but the
-  ///  memory will still be freed when using a BumpPtrAllocator.
-  void Destroy(ASTContext &C);
-
   ~TemplateArgumentList();
   
   /// \brief Copies the template arguments into a locally new[]'d array.
@@ -542,8 +537,6 @@ protected:
       CommonOrPrev((Common*)0) { }
 
 public:
-  void Destroy(ASTContext &C);
-
   /// Get the underlying function declaration of the template.
   FunctionDecl *getTemplatedDecl() const {
     return static_cast<FunctionDecl*>(TemplatedDecl);
@@ -1003,8 +996,6 @@ public:
          ClassTemplateSpecializationDecl *PrevDecl);
   static ClassTemplateSpecializationDecl *
   Create(ASTContext &Context, EmptyShell Empty);
-
-  virtual void Destroy(ASTContext& C);
 
   virtual void getNameForDiagnostic(std::string &S,
                                     const PrintingPolicy &Policy,
@@ -1608,8 +1599,6 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ClassTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ClassTemplate; }
-
-  virtual void Destroy(ASTContext& C);
 
   friend class PCHDeclReader;
   friend class PCHDeclWriter;

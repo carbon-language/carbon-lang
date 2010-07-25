@@ -205,10 +205,8 @@ ImplicitCastExpr::ResultCategory Sema::CastCategory(Expr *E) {
 }
 
 void Sema::DeleteExpr(ExprTy *E) {
-  if (E) static_cast<Expr*>(E)->Destroy(Context);
 }
 void Sema::DeleteStmt(StmtTy *S) {
-  if (S) static_cast<Stmt*>(S)->Destroy(Context);
 }
 
 /// ActOnEndOfTranslationUnit - This is called at the very end of the

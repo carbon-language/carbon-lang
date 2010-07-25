@@ -118,14 +118,6 @@ void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
 }
 
 
-void CXXNewExpr::DoDestroy(ASTContext &C) {
-  DestroyChildren(C);
-  if (SubExprs)
-    C.Deallocate(SubExprs);
-  this->~CXXNewExpr();
-  C.Deallocate((void*)this);
-}
-
 Stmt::child_iterator CXXNewExpr::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator CXXNewExpr::child_end() {
   return &SubExprs[0] + Array + getNumPlacementArgs() + getNumConstructorArgs();
@@ -476,21 +468,9 @@ CXXDefaultArgExpr::Create(ASTContext &C, SourceLocation Loc,
                                      SubExpr);
 }
 
-void CXXDefaultArgExpr::DoDestroy(ASTContext &C) {
-  if (Param.getInt())
-    getExpr()->Destroy(C);
-  this->~CXXDefaultArgExpr();
-  C.Deallocate(this);
-}
-
 CXXTemporary *CXXTemporary::Create(ASTContext &C,
                                    const CXXDestructorDecl *Destructor) {
   return new (C) CXXTemporary(Destructor);
-}
-
-void CXXTemporary::Destroy(ASTContext &Ctx) {
-  this->~CXXTemporary();
-  Ctx.Deallocate(this);
 }
 
 CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
@@ -502,23 +482,12 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
 
-void CXXBindTemporaryExpr::DoDestroy(ASTContext &C) {
-  Temp->Destroy(C);
-  this->~CXXBindTemporaryExpr();
-  C.Deallocate(this);
-}
-
 CXXBindReferenceExpr *CXXBindReferenceExpr::Create(ASTContext &C, Expr *SubExpr,
                                                    bool ExtendsLifetime, 
                                                    bool RequiresTemporaryCopy) {
   return new (C) CXXBindReferenceExpr(SubExpr, 
                                       ExtendsLifetime,
                                       RequiresTemporaryCopy);
-}
-
-void CXXBindReferenceExpr::DoDestroy(ASTContext &C) {
-  this->~CXXBindReferenceExpr();
-  C.Deallocate(this);
 }
 
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
@@ -569,14 +538,6 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
   }
 }
 
-void CXXConstructExpr::DoDestroy(ASTContext &C) {
-  DestroyChildren(C);
-  if (Args)
-    C.Deallocate(Args);
-  this->~CXXConstructExpr();
-  C.Deallocate(this);
-}
-
 CXXExprWithTemporaries::CXXExprWithTemporaries(ASTContext &C,
                                                Expr *subexpr,
                                                CXXTemporary **temps,
@@ -603,14 +564,6 @@ CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C,
                                                        CXXTemporary **Temps,
                                                        unsigned NumTemps) {
   return new (C) CXXExprWithTemporaries(C, SubExpr, Temps, NumTemps);
-}
-
-void CXXExprWithTemporaries::DoDestroy(ASTContext &C) {
-  DestroyChildren(C);
-  if (Temps)
-    C.Deallocate(Temps);
-  this->~CXXExprWithTemporaries();
-  C.Deallocate(this);
 }
 
 CXXExprWithTemporaries::~CXXExprWithTemporaries() {}

@@ -280,7 +280,6 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context);
     CheckForwardProtocolDeclarationForCircularDependency(
       ProtocolName, ProtocolLoc, PDecl->getLocation(), PList);
-    PList.Destroy(Context);
 
     // Make sure the cached decl gets a valid start location.
     PDecl->setLocation(AtProtoInterfaceLoc);

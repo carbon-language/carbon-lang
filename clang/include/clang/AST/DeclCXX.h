@@ -449,8 +449,6 @@ public:
                                bool DelayTypeCreation = false);
   static CXXRecordDecl *Create(ASTContext &C, EmptyShell Empty);
 
-  virtual void Destroy(ASTContext& C);
-
   bool isDynamicClass() const {
     return data().Polymorphic || data().NumVBases != 0;
   }
@@ -1249,9 +1247,6 @@ public:
                                             VarDecl **Indices,
                                             unsigned NumIndices);
   
-  /// \brief Destroy the base or member initializer.
-  void Destroy(ASTContext &Context);
-
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
   bool isBaseInitializer() const { return BaseOrMember.is<TypeSourceInfo*>(); }
@@ -1404,7 +1399,6 @@ class CXXConstructorDecl : public CXXMethodDecl {
       BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) {
     setImplicit(isImplicitlyDeclared);
   }
-  virtual void Destroy(ASTContext& C);
 
 public:
   static CXXConstructorDecl *Create(ASTContext &C, EmptyShell Empty);
@@ -2244,7 +2238,6 @@ public:
   const StringLiteral *getMessage() const { return Message; }
 
   virtual ~StaticAssertDecl();
-  virtual void Destroy(ASTContext& C);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(StaticAssertDecl *D) { return true; }

@@ -197,7 +197,6 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
         !(Val == 0 || Val.isPowerOf2()) ||
         Val.getZExtValue() > 16) {
       Diag(PragmaLoc, diag::warn_pragma_pack_invalid_alignment);
-      Alignment->Destroy(Context);
       return; // Ignore
     }
 

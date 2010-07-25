@@ -4116,20 +4116,14 @@ TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
                                             ExceptionDecl->getLocation(),
                                             /*FIXME: Inaccurate*/
                                     SourceRange(ExceptionDecl->getLocation()));
-    if (!Var || Var->isInvalidDecl()) {
-      if (Var)
-        Var->Destroy(SemaRef.Context);
+    if (!Var || Var->isInvalidDecl())
       return SemaRef.StmtError();
-    }
   }
 
   // Transform the actual exception handler.
   OwningStmtResult Handler = getDerived().TransformStmt(S->getHandlerBlock());
-  if (Handler.isInvalid()) {
-    if (Var)
-      Var->Destroy(SemaRef.Context);
+  if (Handler.isInvalid())
     return SemaRef.StmtError();
-  }
 
   if (!getDerived().AlwaysRebuild() &&
       !Var &&

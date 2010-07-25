@@ -888,9 +888,6 @@ class StringLiteral : public Expr {
 
   StringLiteral(QualType Ty) : Expr(StringLiteralClass, Ty, false, false) {}
 
-protected:
-  virtual void DoDestroy(ASTContext &C);
-
 public:
   /// This is the "fully general" constructor that allows representation of
   /// strings formed from multiple concatenated tokens.
@@ -1309,9 +1306,6 @@ class SizeOfAlignOfExpr : public Expr {
   } Argument;
   SourceLocation OpLoc, RParenLoc;
 
-protected:
-  virtual void DoDestroy(ASTContext& C);
-
 public:
   SizeOfAlignOfExpr(bool issizeof, TypeSourceInfo *TInfo,
                     QualType resultType, SourceLocation op,
@@ -1483,8 +1477,6 @@ protected:
   // This version of the constructor is for derived classes.
   CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args, unsigned numargs,
            QualType t, SourceLocation rparenloc);
-
-  virtual void DoDestroy(ASTContext& C);
 
 public:
   CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs, QualType t,
@@ -2003,8 +1995,6 @@ protected:
   /// \brief Construct an empty cast.
   CastExpr(StmtClass SC, EmptyShell Empty)
     : Expr(SC, Empty) { }
-
-  virtual void DoDestroy(ASTContext &C);
 
 public:
   CastKind getCastKind() const { return Kind; }
@@ -2561,9 +2551,6 @@ class ShuffleVectorExpr : public Expr {
   Stmt **SubExprs;
   unsigned NumExprs;
 
-protected:
-  virtual void DoDestroy(ASTContext &C);
-
 public:
   // FIXME: Can a shufflevector be value-dependent?  Does type-dependence need
   // to be computed differently?
@@ -2975,11 +2962,6 @@ private:
     : Expr(DesignatedInitExprClass, EmptyShell()),
       NumDesignators(0), Designators(0), NumSubExprs(NumSubExprs) { }
 
-protected:
-  virtual void DoDestroy(ASTContext &C);
-
-  void DestroyDesignators(ASTContext &C);
-  
 public:
   /// A field designator, e.g., ".x".
   struct FieldDesignator {
@@ -3246,9 +3228,6 @@ class ParenListExpr : public Expr {
   Stmt **Exprs;
   unsigned NumExprs;
   SourceLocation LParenLoc, RParenLoc;
-
-protected:
-  virtual void DoDestroy(ASTContext& C);
 
 public:
   ParenListExpr(ASTContext& C, SourceLocation lparenloc, Expr **exprs,

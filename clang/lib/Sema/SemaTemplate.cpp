@@ -1102,7 +1102,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
           DiagnoseDefaultTemplateArgument(*this, TPC, 
                                           NewNonTypeParm->getLocation(), 
                     NewNonTypeParm->getDefaultArgument()->getSourceRange())) {
-        NewNonTypeParm->getDefaultArgument()->Destroy(Context);
         NewNonTypeParm->removeDefaultArgument();
       }
 
@@ -3660,7 +3659,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                diag::err_default_arg_in_partial_spec)
             << DefArg->getSourceRange();
           NTTP->removeDefaultArgument();
-          DefArg->Destroy(Context);
         }
       } else {
         TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(Param);

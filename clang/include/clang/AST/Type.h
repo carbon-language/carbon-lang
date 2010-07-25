@@ -808,7 +808,6 @@ protected:
       TC(tc), Dependent(dependent), LinkageKnown(false), 
       CachedLinkage(NoLinkage), FromPCH(false) {}
   virtual ~Type() {}
-  virtual void Destroy(ASTContext& C);
   friend class ASTContext;
 
 public:
@@ -1545,7 +1544,6 @@ class VariableArrayType : public ArrayType {
     : ArrayType(VariableArray, et, can, sm, tq),
       SizeExpr((Stmt*) e), Brackets(brackets) {}
   friend class ASTContext;  // ASTContext creates these.
-  virtual void Destroy(ASTContext& C);
 
 public:
   Expr *getSizeExpr() const {
@@ -1604,7 +1602,6 @@ class DependentSizedArrayType : public ArrayType {
     : ArrayType(DependentSizedArray, et, can, sm, tq),
       Context(Context), SizeExpr((Stmt*) e), Brackets(brackets) {}
   friend class ASTContext;  // ASTContext creates these.
-  virtual void Destroy(ASTContext& C);
 
 public:
   Expr *getSizeExpr() const {
@@ -1658,7 +1655,6 @@ class DependentSizedExtVectorType : public Type, public llvm::FoldingSetNode {
       Context(Context), SizeExpr(SizeExpr), ElementType(ElementType),
       loc(loc) {}
   friend class ASTContext;
-  virtual void Destroy(ASTContext& C);
 
 public:
   Expr *getSizeExpr() const { return SizeExpr; }
@@ -2480,8 +2476,6 @@ class TemplateSpecializationType
                              const TemplateArgument *Args,
                              unsigned NumArgs, QualType Canon);
 
-  virtual void Destroy(ASTContext& C);
-
   friend class ASTContext;  // ASTContext creates these
 
 public:
@@ -2848,8 +2842,6 @@ class DependentTemplateSpecializationType :
                                       const TemplateArgument *Args,
                                       QualType Canon);
 
-  virtual void Destroy(ASTContext& C);
-
   friend class ASTContext;  // ASTContext creates these
 
 public:
@@ -3026,8 +3018,6 @@ class ObjCObjectTypeImpl : public ObjCObjectType, public llvm::FoldingSetNode {
     : ObjCObjectType(Canonical, Base, Protocols, NumProtocols) {}
 
 public:
-  void Destroy(ASTContext& C); // key function
-
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID,
                       QualType Base,
@@ -3061,8 +3051,6 @@ class ObjCInterfaceType : public ObjCObjectType {
       Decl(const_cast<ObjCInterfaceDecl*>(D)) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-  void Destroy(ASTContext& C); // key function
-
   /// getDecl - Get the declaration of this interface.
   ObjCInterfaceDecl *getDecl() const { return Decl; }
 
@@ -3115,8 +3103,6 @@ protected:
   virtual Linkage getLinkageImpl() const;
   
 public:
-  void Destroy(ASTContext& C);
-
   /// getPointeeType - Gets the type pointed to by this ObjC pointer.
   /// The result will always be an ObjCObjectType or sugar thereof.
   QualType getPointeeType() const { return PointeeType; }

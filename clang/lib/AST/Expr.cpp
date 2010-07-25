@@ -390,15 +390,7 @@ StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
   return SL;
 }
 
-void StringLiteral::DoDestroy(ASTContext &C) {
-  C.Deallocate(const_cast<char*>(StrData));
-  Expr::DoDestroy(C);
-}
-
 void StringLiteral::setString(ASTContext &C, llvm::StringRef Str) {
-  if (StrData)
-    C.Deallocate(const_cast<char*>(StrData));
-
   char *AStrData = new (C, 1) char[Str.size()];
   memcpy(AStrData, Str.data(), Str.size());
   StrData = AStrData;
@@ -496,13 +488,6 @@ CallExpr::CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty)
   SubExprs = new (C) Stmt*[1];
 }
 
-void CallExpr::DoDestroy(ASTContext& C) {
-  DestroyChildren(C);
-  if (SubExprs) C.Deallocate(SubExprs);
-  this->~CallExpr();
-  C.Deallocate(this);
-}
-
 Decl *CallExpr::getCalleeDecl() {
   Expr *CEE = getCallee()->IgnoreParenCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE))
@@ -526,8 +511,6 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
 
   // If shrinking # arguments, just delete the extras and forgot them.
   if (NumArgs < getNumArgs()) {
-    for (unsigned i = NumArgs, e = getNumArgs(); i != e; ++i)
-      getArg(i)->Destroy(C);
     this->NumArgs = NumArgs;
     return;
   }
@@ -740,12 +723,6 @@ const char *CastExpr::getCastKindName() const {
   return 0;
 }
 
-void CastExpr::DoDestroy(ASTContext &C)
-{
-  BasePath.Destroy();
-  Expr::DoDestroy(C);
-}
-
 Expr *CastExpr::getSubExprAsWritten() {
   Expr *SubExpr = 0;
   CastExpr *E = this;
@@ -897,9 +874,6 @@ void InitListExpr::reserveInits(ASTContext &C, unsigned NumInits) {
 }
 
 void InitListExpr::resizeInits(ASTContext &C, unsigned NumInits) {
-  for (unsigned Idx = NumInits, LastIdx = InitExprs.size();
-       Idx < LastIdx; ++Idx)
-    InitExprs[Idx]->Destroy(C);
   InitExprs.resize(C, NumInits, 0);
 }
 
@@ -1775,27 +1749,6 @@ void ShuffleVectorExpr::setExprs(ASTContext &C, Expr ** Exprs,
   memcpy(SubExprs, Exprs, sizeof(Expr *) * NumExprs);
 }
 
-void ShuffleVectorExpr::DoDestroy(ASTContext& C) {
-  DestroyChildren(C);
-  if (SubExprs) C.Deallocate(SubExprs);
-  this->~ShuffleVectorExpr();
-  C.Deallocate(this);
-}
-
-void SizeOfAlignOfExpr::DoDestroy(ASTContext& C) {
-  // Override default behavior of traversing children. If this has a type
-  // operand and the type is a variable-length array, the child iteration
-  // will iterate over the size expression. However, this expression belongs
-  // to the type, not to this, so we don't want to delete it.
-  // We still want to delete this expression.
-  if (isArgumentType()) {
-    this->~SizeOfAlignOfExpr();
-    C.Deallocate(this);
-  }
-  else
-    Expr::DoDestroy(C);
-}
-
 //===----------------------------------------------------------------------===//
 //  DesignatedInitExpr
 //===----------------------------------------------------------------------===//
@@ -1880,8 +1833,6 @@ DesignatedInitExpr *DesignatedInitExpr::CreateEmpty(ASTContext &C,
 void DesignatedInitExpr::setDesignators(ASTContext &C,
                                         const Designator *Desigs,
                                         unsigned NumDesigs) {
-  DestroyDesignators(C);
-
   Designators = new (C) Designator[NumDesigs];
   NumDesignators = NumDesigs;
   for (unsigned I = 0; I != NumDesigs; ++I)
@@ -1952,21 +1903,8 @@ void DesignatedInitExpr::ExpandDesignator(ASTContext &C, unsigned Idx,
   std::copy(First, Last, NewDesignators + Idx);
   std::copy(Designators + Idx + 1, Designators + NumDesignators,
             NewDesignators + Idx + NumNewDesignators);
-  DestroyDesignators(C);
   Designators = NewDesignators;
   NumDesignators = NumDesignators - 1 + NumNewDesignators;
-}
-
-void DesignatedInitExpr::DoDestroy(ASTContext &C) {
-  DestroyDesignators(C);
-  Expr::DoDestroy(C);
-}
-
-void DesignatedInitExpr::DestroyDesignators(ASTContext &C) {
-  for (unsigned I = 0; I != NumDesignators; ++I)
-    Designators[I].~Designator();
-  C.Deallocate(Designators);
-  Designators = 0;
 }
 
 ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,
@@ -1980,13 +1918,6 @@ ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,
   Exprs = new (C) Stmt*[nexprs];
   for (unsigned i = 0; i != nexprs; ++i)
     Exprs[i] = exprs[i];
-}
-
-void ParenListExpr::DoDestroy(ASTContext& C) {
-  DestroyChildren(C);
-  if (Exprs) C.Deallocate(Exprs);
-  this->~ParenListExpr();
-  C.Deallocate(this);
 }
 
 //===----------------------------------------------------------------------===//

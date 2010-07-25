@@ -412,8 +412,6 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
     for (p = 0; p <= LastMissingDefaultArg; ++p) {
       ParmVarDecl *Param = FD->getParamDecl(p);
       if (Param->hasDefaultArg()) {
-        if (!Param->hasUnparsedDefaultArg())
-          Param->getDefaultArg()->Destroy(Context);
         Param->setDefaultArg(0);
       }
     }
@@ -4584,10 +4582,8 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                 ArrayTy->getElementType(),
                                                 move(To), move(From), 
                                                 CopyingBaseSubobject, Depth+1);
-  if (Copy.isInvalid()) {
-    InitStmt->Destroy(S.Context);
+  if (Copy.isInvalid())
     return S.StmtError();
-  }
   
   // Construct the loop that copies all elements of this array.
   return S.ActOnForStmt(Loc, Loc, S.Owned(InitStmt), 

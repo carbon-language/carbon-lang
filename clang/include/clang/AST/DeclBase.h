@@ -572,9 +572,6 @@ public:
   static DeclContext *castToDeclContext(const Decl *);
   static Decl *castFromDeclContext(const DeclContext *);
 
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
-
   void print(llvm::raw_ostream &Out, unsigned Indentation = 0) const;
   void print(llvm::raw_ostream &Out, const PrintingPolicy &Policy,
              unsigned Indentation = 0) const;
@@ -653,8 +650,6 @@ protected:
      : DeclKind(K), ExternalLexicalStorage(false),
        ExternalVisibleStorage(false), LookupPtr(0), FirstDecl(0),
        LastDecl(0) { }
-
-  void DestroyDecls(ASTContext &C);
 
 public:
   ~DeclContext();

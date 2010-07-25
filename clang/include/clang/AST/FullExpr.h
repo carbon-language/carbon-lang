@@ -47,7 +47,6 @@ class FullExpr {
 public:
   static FullExpr Create(ASTContext &Context, Expr *SubExpr, 
                          CXXTemporary **Temps, unsigned NumTemps);
-  void Destroy(ASTContext &Context);
   
   Expr *getExpr() {
     if (Expr *E = SubExpr.dyn_cast<Expr *>())

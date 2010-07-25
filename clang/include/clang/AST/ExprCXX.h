@@ -479,9 +479,6 @@ class CXXDefaultArgExpr : public Expr {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
   
-protected:
-  virtual void DoDestroy(ASTContext &C);
-  
 public:
   CXXDefaultArgExpr(EmptyShell Empty) : Expr(CXXDefaultArgExprClass, Empty) {}
 
@@ -552,8 +549,6 @@ public:
   static CXXTemporary *Create(ASTContext &C,
                               const CXXDestructorDecl *Destructor);
 
-  void Destroy(ASTContext &Ctx);
-
   const CXXDestructorDecl *getDestructor() const { return Destructor; }
 };
 
@@ -580,9 +575,6 @@ class CXXBindTemporaryExpr : public Expr {
    : Expr(CXXBindTemporaryExprClass, subexpr->getType(), false, false),
      Temp(temp), SubExpr(subexpr) { }
   ~CXXBindTemporaryExpr() { }
-
-protected:
-  virtual void DoDestroy(ASTContext &C);
 
 public:
   CXXBindTemporaryExpr(EmptyShell Empty)
@@ -640,9 +632,6 @@ class CXXBindReferenceExpr : public Expr {
     SubExpr(subexpr), ExtendsLifetime(ExtendsLifetime), 
     RequiresTemporaryCopy(RequiresTemporaryCopy) { }
   ~CXXBindReferenceExpr() { }
-
-protected:
-  virtual void DoDestroy(ASTContext &C);
 
 public:
   static CXXBindReferenceExpr *Create(ASTContext &C, Expr *SubExpr,
@@ -713,8 +702,6 @@ protected:
   CXXConstructExpr(StmtClass SC, EmptyShell Empty)
     : Expr(SC, Empty), Constructor(0), Elidable(0), ZeroInitialization(0),
       ConstructKind(0), Args(0), NumArgs(0) { }
-
-  virtual void DoDestroy(ASTContext &C);
 
 public:
   /// \brief Construct an empty C++ construction expression.
@@ -967,8 +954,6 @@ public:
   void AllocateArgsArray(ASTContext &C, bool isArray, unsigned numPlaceArgs,
                          unsigned numConsArgs);
   
-  virtual void DoDestroy(ASTContext &C);
-
   QualType getAllocatedType() const {
     assert(getType()->isPointerType());
     return getType()->getAs<PointerType>()->getPointeeType();
@@ -1778,9 +1763,6 @@ class CXXExprWithTemporaries : public Expr {
   CXXExprWithTemporaries(ASTContext &C, Expr *SubExpr, CXXTemporary **Temps,
                          unsigned NumTemps);
   ~CXXExprWithTemporaries();
-
-protected:
-  virtual void DoDestroy(ASTContext &C);
 
 public:
   CXXExprWithTemporaries(EmptyShell Empty)

@@ -1491,10 +1491,8 @@ Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
   Expr *Condition = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
                                         ConditionVar->getLocation(), 
                                  ConditionVar->getType().getNonReferenceType());
-  if (ConvertToBoolean && CheckBooleanCondition(Condition, StmtLoc)) {
-    Condition->Destroy(Context);
+  if (ConvertToBoolean && CheckBooleanCondition(Condition, StmtLoc))
     return ExprError();
-  }
   
   return Owned(Condition);
 }

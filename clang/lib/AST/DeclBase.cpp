@@ -157,9 +157,7 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 //===----------------------------------------------------------------------===//
 
 // Out-of-line virtual method providing a home for Decl.
-Decl::~Decl() {
-  assert(!HasAttrs && "attributes should have been freed by Destroy");
-}
+Decl::~Decl() { }
 
 void Decl::setDeclContext(DeclContext *DC) {
   if (isOutOfSemaDC())
@@ -372,40 +370,6 @@ void Decl::swapAttrs(Decl *RHS) {
   RHS->HasAttrs = true;
 }
 
-void Decl::Destroy(ASTContext &C) {
-  // Free attributes for this decl.
-  if (HasAttrs) {
-    C.getDeclAttrs(this)->Destroy(C);
-    invalidateAttrs();
-    HasAttrs = false;
-  }
-
-#if 0
-  // FIXME: Once ownership is fully understood, we can enable this code
-  if (DeclContext *DC = dyn_cast<DeclContext>(this))
-    DC->decls_begin()->Destroy(C);
-
-  // Observe the unrolled recursion.  By setting N->NextDeclInContext = 0x0
-  // within the loop, only the Destroy method for the first Decl
-  // will deallocate all of the Decls in a chain.
-
-  Decl* N = getNextDeclInContext();
-
-  while (N) {
-    Decl* Tmp = N->getNextDeclInContext();
-    N->NextDeclInContext = 0;
-    N->Destroy(C);
-    N = Tmp;
-  }
-
-  if (isOutOfSemaDC())
-    delete (C) getMultipleDC();
-  
-  this->~Decl();
-  C.Deallocate((void *)this);
-#endif  
-}
-
 Decl *Decl::castFromDeclContext (const DeclContext *D) {
   Decl::Kind DK = D->getDeclKind();
   switch(DK) {
@@ -511,11 +475,6 @@ DeclContext::~DeclContext() {
   // ~DeclContext() is not guaranteed to be called when ASTContext uses
   // a BumpPtrAllocator.
   // delete LookupPtr;
-}
-
-void DeclContext::DestroyDecls(ASTContext &C) {
-  for (decl_iterator D = decls_begin(); D != decls_end(); )
-    (*D++)->Destroy(C);
 }
 
 /// \brief Find the parent context of this context that will be
@@ -1073,7 +1032,6 @@ void ASTContext::ReleaseDeclContextMaps() {
   // It's okay to delete DependentStoredDeclsMaps via a StoredDeclsMap
   // pointer because the subclass doesn't add anything that needs to
   // be deleted.
-  
   StoredDeclsMap::DestroyAll(LastSDM.getPointer(), LastSDM.getInt());
 }
 

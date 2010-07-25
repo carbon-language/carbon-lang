@@ -1718,13 +1718,8 @@ TemplateDeclInstantiator::SubstTemplateParams(TemplateParameterList *L) {
   }
 
   // Clean up if we had an error.
-  if (Invalid) {
-    for (ParamVector::iterator PI = Params.begin(), PE = Params.end();
-         PI != PE; ++PI)
-      if (*PI)
-        (*PI)->Destroy(SemaRef.Context);
+  if (Invalid)
     return NULL;
-  }
 
   TemplateParameterList *InstL
     = TemplateParameterList::Create(SemaRef.Context, L->getTemplateLoc(),

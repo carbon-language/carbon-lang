@@ -33,26 +33,6 @@ bool QualType::isConstant(QualType T, ASTContext &Ctx) {
   return false;
 }
 
-void Type::Destroy(ASTContext& C) {
-  this->~Type();
-  C.Deallocate(this);
-}
-
-void VariableArrayType::Destroy(ASTContext& C) {
-  if (SizeExpr)
-    SizeExpr->Destroy(C);
-  this->~VariableArrayType();
-  C.Deallocate(this);
-}
-
-void DependentSizedArrayType::Destroy(ASTContext& C) {
-  // FIXME: Resource contention like in ConstantArrayWithExprType ?
-  // May crash, depending on platform or a particular build.
-  // SizeExpr->Destroy(C);
-  this->~DependentSizedArrayType();
-  C.Deallocate(this);
-}
-
 void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
                                       ASTContext &Context,
                                       QualType ET,
@@ -71,14 +51,6 @@ DependentSizedExtVectorType::Profile(llvm::FoldingSetNodeID &ID,
                                      QualType ElementType, Expr *SizeExpr) {
   ID.AddPointer(ElementType.getAsOpaquePtr());
   SizeExpr->Profile(ID, Context, true);
-}
-
-void DependentSizedExtVectorType::Destroy(ASTContext& C) {
-  // FIXME: Deallocate size expression, once we're cloning properly.
-//  if (SizeExpr)
-//    SizeExpr->Destroy(C);
-  this->~DependentSizedExtVectorType();
-  C.Deallocate(this);
 }
 
 /// getArrayElementTypeNoTypeQual - If this is an array type, return the
@@ -348,11 +320,6 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
-void ObjCInterfaceType::Destroy(ASTContext& C) {
-  this->~ObjCInterfaceType();
-  C.Deallocate(this);
-}
-
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                ObjCProtocolDecl * const *Protocols,
                                unsigned NumProtocols)
@@ -364,11 +331,6 @@ ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
   if (NumProtocols)
     memcpy(getProtocolStorage(), Protocols,
            NumProtocols * sizeof(ObjCProtocolDecl*));
-}
-
-void ObjCObjectTypeImpl::Destroy(ASTContext& C) {
-  this->~ObjCObjectTypeImpl();
-  C.Deallocate(this);
 }
 
 const ObjCObjectType *Type::getAsObjCQualifiedInterfaceType() const {
@@ -383,11 +345,6 @@ const ObjCObjectType *Type::getAsObjCQualifiedInterfaceType() const {
 
 bool Type::isObjCQualifiedInterfaceType() const {
   return getAsObjCQualifiedInterfaceType() != 0;
-}
-
-void ObjCObjectPointerType::Destroy(ASTContext& C) {
-  this->~ObjCObjectPointerType();
-  C.Deallocate(this);
 }
 
 const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
@@ -907,15 +864,6 @@ ElaboratedType::~ElaboratedType() {}
 DependentNameType::~DependentNameType() {}
 DependentTemplateSpecializationType::~DependentTemplateSpecializationType() {}
 
-void DependentTemplateSpecializationType::Destroy(ASTContext &C) {
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    // FIXME: Not all expressions get cloned, so we can't yet perform
-    // this destruction.
-    //    if (Expr *E = getArg(Arg).getAsExpr())
-    //      E->Destroy(C);
-  }
-}
-
 DependentTemplateSpecializationType::DependentTemplateSpecializationType(
                          ElaboratedTypeKeyword Keyword,
                          NestedNameSpecifier *NNS, const IdentifierInfo *Name,
@@ -1207,15 +1155,6 @@ TemplateSpecializationType(TemplateName T,
     = reinterpret_cast<TemplateArgument *>(this + 1);
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
-}
-
-void TemplateSpecializationType::Destroy(ASTContext& C) {
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    // FIXME: Not all expressions get cloned, so we can't yet perform
-    // this destruction.
-    //    if (Expr *E = getArg(Arg).getAsExpr())
-    //      E->Destroy(C);
-  }
 }
 
 void

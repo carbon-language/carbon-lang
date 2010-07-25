@@ -68,15 +68,6 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, EmptyShell Empty) {
 CXXRecordDecl::~CXXRecordDecl() {
 }
 
-void CXXRecordDecl::Destroy(ASTContext &C) {
-  if (data().Definition == this) {
-    C.Deallocate(data().Bases);
-    C.Deallocate(data().VBases);
-    C.Deallocate(&data());
-  }
-  this->RecordDecl::Destroy(C);
-}
-
 void
 CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
                         unsigned NumBases) {
@@ -796,13 +787,6 @@ CXXBaseOrMemberInitializer::Create(ASTContext &Context,
                                               L, Init, R, Indices, NumIndices);
 }
 
-void CXXBaseOrMemberInitializer::Destroy(ASTContext &Context) {
-  if (Init)
-    Init->Destroy(Context);
-  // FIXME: Destroy indices
-  this->~CXXBaseOrMemberInitializer();
-}
-
 TypeLoc CXXBaseOrMemberInitializer::getBaseClassLoc() const {
   if (isBaseInitializer())
     return BaseOrMember.get<TypeSourceInfo*>()->getTypeLoc();
@@ -959,12 +943,6 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXDestructorDecl(RD, L, N, T, isInline, isImplicitlyDeclared);
 }
 
-void
-CXXConstructorDecl::Destroy(ASTContext& C) {
-  C.Deallocate(BaseOrMemberInitializers);
-  CXXMethodDecl::Destroy(C);
-}
-
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXConversionDecl(0, SourceLocation(), DeclarationName(),
@@ -1066,12 +1044,6 @@ StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L, Expr *AssertExpr,
                                            StringLiteral *Message) {
   return new (C) StaticAssertDecl(DC, L, AssertExpr, Message);
-}
-
-void StaticAssertDecl::Destroy(ASTContext& C) {
-  AssertExpr->Destroy(C);
-  Message->Destroy(C);
-  Decl::Destroy(C);
 }
 
 StaticAssertDecl::~StaticAssertDecl() {

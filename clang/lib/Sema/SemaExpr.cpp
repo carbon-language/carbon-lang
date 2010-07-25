@@ -553,7 +553,6 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   if (BaseObject) {
     // BaseObject is an anonymous struct/union variable (and is,
     // therefore, not part of another non-anonymous record).
-    if (BaseObjectExpr) BaseObjectExpr->Destroy(Context);
     MarkDeclarationReferenced(Loc, BaseObject);
     BaseObjectExpr = new (Context) DeclRefExpr(BaseObject,BaseObject->getType(),
                                                SourceLocation());
@@ -3581,9 +3580,6 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
           << FixItHint::CreateRemoval(
                                     SourceRange(Args[0]->getLocStart(),
                                                 Args[NumArgs-1]->getLocEnd()));
-
-        for (unsigned I = 0; I != NumArgs; ++I)
-          Args[I]->Destroy(Context);
 
         NumArgs = 0;
       }
@@ -7042,11 +7038,9 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       if (OC.isBrackets) {
         // Offset of an array sub-field.  TODO: Should we allow vector elements?
         const ArrayType *AT = Context.getAsArrayType(Res->getType());
-        if (!AT) {
-          Res->Destroy(Context);
+        if (!AT)
           return ExprError(Diag(OC.LocEnd, diag::err_offsetof_array_type)
                            << Res->getType());
-        }
         
         // FIXME: C++: Verify that operator[] isn't overloaded.
         
@@ -7068,11 +7062,9 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       }
       
       const RecordType *RC = Res->getType()->getAs<RecordType>();
-      if (!RC) {
-        Res->Destroy(Context);
+      if (!RC)
         return ExprError(Diag(OC.LocEnd, diag::err_offsetof_record_type)
                          << Res->getType());
-      }
       
       // Get the decl corresponding to this.
       RecordDecl *RD = RC->getDecl();
@@ -7986,10 +7978,8 @@ Sema::OwningExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
   if (!Sub)
     return ExprError();
   
-  if (CheckBooleanCondition(Sub, Loc)) {
-    Sub->Destroy(Context);
+  if (CheckBooleanCondition(Sub, Loc))
     return ExprError();
-  }
   
   return Owned(Sub);
 }

@@ -43,16 +43,3 @@ FullExpr FullExpr::Create(ASTContext &Context, Expr *SubExpr,
   return E;
 }
 
-void FullExpr::Destroy(ASTContext &Context) {
-  if (Expr *E = SubExpr.dyn_cast<Expr *>()) {
-    E->Destroy(Context);
-    return;
-  }
-  
-  ExprAndTemporaries *ET = SubExpr.get<ExprAndTemporaries *>();
-  for (ExprAndTemporaries::temps_iterator i = ET->temps_begin(), 
-       e = ET->temps_end(); i != e; ++i)
-    (*i)->Destroy(Context);
-
-  Context.Deallocate(ET);
-}

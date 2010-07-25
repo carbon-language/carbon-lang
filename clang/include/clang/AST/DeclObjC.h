@@ -42,10 +42,7 @@ protected:
 public:
   ObjCListBase() : List(0), NumElts(0) {}
   ~ObjCListBase() {
-    assert(List == 0 && "Destroy should have been called before dtor");
   }
-
-  void Destroy(ASTContext &Ctx);
 
   unsigned size() const { return NumElts; }
   bool empty() const { return NumElts == 0; }
@@ -92,7 +89,6 @@ public:
 
   void set(ObjCProtocolDecl* const* InList, unsigned Elts, 
            const SourceLocation *Locs, ASTContext &Ctx);
-  void Destroy(ASTContext &Ctx);
 };
 
 
@@ -195,10 +191,6 @@ private:
   virtual ObjCMethodDecl *getNextRedeclaration();
 
 public:
-
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
-
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc,
                                 SourceLocation endLoc, Selector SelInfo,
@@ -494,10 +486,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   virtual ~ObjCInterfaceDecl() {}
 
 public:
-
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
-
   static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
                                    IdentifierInfo *Id,
@@ -715,8 +703,6 @@ public:
                                      IdentifierInfo *Id, QualType T,
                                      Expr *BW);
 
-  virtual void Destroy(ASTContext& C);
-
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCAtDefsFieldDecl *D) { return true; }
@@ -765,9 +751,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                   SourceLocation L, IdentifierInfo *Id);
-
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
 
   const ObjCProtocolList &getReferencedProtocols() const {
     return ReferencedProtocols;
@@ -839,10 +822,6 @@ private:
                 unsigned nElts, ASTContext &C);
   virtual ~ObjCClassDecl() {}
 public:
-
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
-
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                                ObjCInterfaceDecl *const *Elts = 0,
                                const SourceLocation *Locs = 0,
@@ -888,9 +867,6 @@ public:
                                          SourceLocation L) {
     return Create(C, DC, L, 0, 0, 0);
   }
-
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
 
   typedef ObjCProtocolList::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}

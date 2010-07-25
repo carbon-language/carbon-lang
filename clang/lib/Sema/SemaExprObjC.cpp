@@ -55,9 +55,6 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
 
       // Get the locations of the string tokens.
       StrLocs.append(S->tokloc_begin(), S->tokloc_end());
-
-      // Free the temporary string.
-      S->Destroy(Context);
     }
 
     // Create the aggregate string with the appropriate content and location
@@ -762,11 +759,8 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   unsigned NumArgs = ArgsIn.size();
   Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
   if (CheckMessageArgumentTypes(Args, NumArgs, Sel, Method, true,
-                                LBracLoc, RBracLoc, ReturnType)) {
-    for (unsigned I = 0; I != NumArgs; ++I)
-      Args[I]->Destroy(Context);
+                                LBracLoc, RBracLoc, ReturnType))
     return ExprError();
-  }
 
   // Construct the appropriate ObjCMessageExpr.
   Expr *Result;

@@ -672,7 +672,6 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       !ArraySize->getType()->isIntegerType()) {
     Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
       << ArraySize->getType() << ArraySize->getSourceRange();
-    ArraySize->Destroy(Context);
     return QualType();
   }
   llvm::APSInt ConstVal(32);

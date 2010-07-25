@@ -264,8 +264,6 @@ public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id);
 
-  virtual void Destroy(ASTContext& C);
-
   // \brief Returns true if this is an anonymous namespace declaration.
   //
   // For example:
@@ -392,8 +390,6 @@ struct QualifierInfo {
                                      unsigned NumTPLists,
                                      TemplateParameterList **TPLists);
   
-  void Destroy(ASTContext &Context);
-  
 private:
   // Copy constructor and copy assignment are disabled.
   QualifierInfo(const QualifierInfo&);
@@ -422,7 +418,6 @@ protected:
 
 public:
   virtual ~DeclaratorDecl();
-  virtual void Destroy(ASTContext &C);
 
   TypeSourceInfo *getTypeSourceInfo() const {
     return hasExtInfo()
@@ -609,7 +604,6 @@ public:
                          QualType T, TypeSourceInfo *TInfo, StorageClass S,
                          StorageClass SCAsWritten);
 
-  virtual void Destroy(ASTContext& C);
   virtual ~VarDecl();
 
   virtual SourceLocation getInnerLocStart() const;
@@ -1194,7 +1188,6 @@ protected:
       EndRangeLoc(L), TemplateOrSpecialization() {}
 
   virtual ~FunctionDecl() {}
-  virtual void Destroy(ASTContext& C);
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
   virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
@@ -1713,8 +1706,6 @@ public:
                                   QualType T, Expr *E,
                                   const llvm::APSInt &V);
 
-  virtual void Destroy(ASTContext& C);
-
   const Expr *getInitExpr() const { return (const Expr*) Init; }
   Expr *getInitExpr() { return (Expr*) Init; }
   const llvm::APSInt &getInitVal() const { return Val; }
@@ -1881,8 +1872,6 @@ protected:
   virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
 public:
-  void Destroy(ASTContext &C);
-
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
     return redeclarable_base::redecls_begin();
@@ -2060,8 +2049,6 @@ public:
                           SourceLocation TKL, EnumDecl *PrevDecl);
   static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
 
-  virtual void Destroy(ASTContext& C);
-
   /// completeDefinition - When created, the EnumDecl corresponds to a
   /// forward-declared enum. This method is used to mark the
   /// declaration as being defined; it's enumerators have already been
@@ -2184,8 +2171,6 @@ public:
   RecordDecl *getPreviousDeclaration() {
     return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());
   }
-
-  virtual void Destroy(ASTContext& C);
 
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
@@ -2310,7 +2295,6 @@ protected:
       SignatureAsWritten(0) {}
 
   virtual ~BlockDecl();
-  virtual void Destroy(ASTContext& C);
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);

@@ -2578,9 +2578,6 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
 
   FinishFunction();
 
-  // Destroy the 'this' declaration.
-  CXXThisDecl->Destroy(getContext());
-  
   // Set the right linkage.
   CGM.setFunctionLinkage(MD, Fn);
   

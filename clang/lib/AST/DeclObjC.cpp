@@ -21,14 +21,8 @@ using namespace clang;
 // ObjCListBase
 //===----------------------------------------------------------------------===//
 
-void ObjCListBase::Destroy(ASTContext &Ctx) {
-  Ctx.Deallocate(List);
-  NumElts = 0;
-  List = 0;
-}
-
 void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
-  assert(List == 0 && "Elements already set!");
+  List = 0;
   if (Elts == 0) return;  // Setting to an empty list is a noop.
 
 
@@ -45,12 +39,6 @@ void ObjCProtocolList::set(ObjCProtocolDecl* const* InList, unsigned Elts,
   Locations = new (Ctx) SourceLocation[Elts];
   memcpy(Locations, Locs, sizeof(SourceLocation) * Elts);
   set(InList, Elts, Ctx);
-}
-
-void ObjCProtocolList::Destroy(ASTContext &Ctx) {
-  Ctx.Deallocate(Locations);
-  Locations = 0;
-  ObjCList<ObjCProtocolDecl>::Destroy(Ctx);
 }
 
 //===----------------------------------------------------------------------===//
@@ -218,7 +206,6 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
     ProtocolRefs.push_back(*p);
     ProtocolLocs.push_back(*pl);
   }
-  ReferencedProtocols.Destroy(C);
   unsigned NumProtoRefs = ProtocolRefs.size();
   setProtocolList(ProtocolRefs.data(), NumProtoRefs, ProtocolLocs.data(), C);
 }
@@ -350,18 +337,6 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                 numSelectorArgs);
 }
 
-void ObjCMethodDecl::Destroy(ASTContext &C) {
-  if (Body) Body->Destroy(C);
-  if (SelfDecl) SelfDecl->Destroy(C);
-
-  for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
-    if (*I) (*I)->Destroy(C);
-
-  ParamInfo.Destroy(C);
-
-  Decl::Destroy(C);
-}
-
 /// \brief A definition will return its interface declaration.
 /// An interface declaration will return its definition.
 /// Otherwise it will return itself.
@@ -469,18 +444,6 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
     TypeForDecl(0), SuperClass(0),
     CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal),
     ClassLoc(CLoc) {
-}
-
-void ObjCInterfaceDecl::Destroy(ASTContext &C) {
-  for (ivar_iterator I = ivar_begin(), E = ivar_end(); I != E; ++I)
-    if (*I) (*I)->Destroy(C);
-
-  // FIXME: CategoryList?
-
-  // FIXME: Because there is no clear ownership
-  //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
-  //  reference, we destroy ObjCPropertyDecls in ~TranslationUnit.
-  Decl::Destroy(C);
 }
 
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {
@@ -633,11 +596,6 @@ ObjCAtDefsFieldDecl
   return new (C) ObjCAtDefsFieldDecl(DC, L, Id, T, BW);
 }
 
-void ObjCAtDefsFieldDecl::Destroy(ASTContext& C) {
-  this->~ObjCAtDefsFieldDecl();
-  C.Deallocate((void *)this);
-}
-
 //===----------------------------------------------------------------------===//
 // ObjCProtocolDecl
 //===----------------------------------------------------------------------===//
@@ -646,11 +604,6 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,
                                            IdentifierInfo *Id) {
   return new (C) ObjCProtocolDecl(DC, L, Id);
-}
-
-void ObjCProtocolDecl::Destroy(ASTContext &C) {
-  ReferencedProtocols.Destroy(C);
-  ObjCContainerDecl::Destroy(C);
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
@@ -712,23 +665,6 @@ ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCClassDecl(DC, L, Elts, Locs, nElts, C);
 }
 
-void ObjCClassDecl::Destroy(ASTContext &C) {
-  // ObjCInterfaceDecls registered with a DeclContext will get destroyed
-  // when the DeclContext is destroyed.  For those created only by a forward
-  // declaration, the first @class that created the ObjCInterfaceDecl gets
-  // to destroy it.
-  // FIXME: Note that this ownership role is very brittle; a better
-  // polict is surely need in the future.
-  for (iterator I = begin(), E = end(); I !=E ; ++I) {
-    ObjCInterfaceDecl *ID = I->getInterface();
-    if (ID->isForwardDecl() && ID->getLocStart() == getLocStart())
-      ID->Destroy(C);
-  }
-  
-  C.Deallocate(ForwardDecls);
-  Decl::Destroy(C);
-}
-
 SourceRange ObjCClassDecl::getSourceRange() const {
   // FIXME: We should include the semicolon
   assert(NumDecls);
@@ -755,11 +691,6 @@ ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                 unsigned NumElts,
                                 const SourceLocation *Locs) {
   return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts, Locs, C);
-}
-
-void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {
-  ReferencedProtocols.Destroy(C);
-  Decl::Destroy(C);
 }
 
 //===----------------------------------------------------------------------===//

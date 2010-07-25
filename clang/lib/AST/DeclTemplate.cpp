@@ -107,18 +107,6 @@ FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C,
   return new (C) FunctionTemplateDecl(DC, L, Name, Params, Decl);
 }
 
-void FunctionTemplateDecl::Destroy(ASTContext &C) {
-  if (Common *CommonPtr = CommonOrPrev.dyn_cast<Common*>()) {
-    for (llvm::FoldingSet<FunctionTemplateSpecializationInfo>::iterator
-              Spec = CommonPtr->Specializations.begin(),
-           SpecEnd = CommonPtr->Specializations.end();
-         Spec != SpecEnd; ++Spec)
-      C.Deallocate(&*Spec);
-  }
-
-  Decl::Destroy(C);
-}
-
 FunctionDecl *
 FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
                                          unsigned NumArgs, void *&InsertPos) {
@@ -175,10 +163,6 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
   ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
   New->setPreviousDeclaration(PrevDecl);
   return New;
-}
-
-void ClassTemplateDecl::Destroy(ASTContext& C) {
-  Decl::Destroy(C);
 }
 
 ClassTemplateSpecializationDecl *
@@ -478,13 +462,6 @@ StructuredArguments.setPointer(NewArgs);
 StructuredArguments.setInt(0); // Doesn't own the pointer.
 }
 
-void TemplateArgumentList::Destroy(ASTContext &C) {
-  if (FlatArguments.getInt())
-    C.Deallocate((void*)FlatArguments.getPointer());
-  if (StructuredArguments.getInt())
-    C.Deallocate((void*)StructuredArguments.getPointer());
-}
-
 TemplateArgumentList::~TemplateArgumentList() {}
 
 //===----------------------------------------------------------------------===//
@@ -532,16 +509,6 @@ ClassTemplateSpecializationDecl *
 ClassTemplateSpecializationDecl::Create(ASTContext &Context, EmptyShell Empty) {
   return
     new (Context)ClassTemplateSpecializationDecl(ClassTemplateSpecialization);
-}
-
-void ClassTemplateSpecializationDecl::Destroy(ASTContext &C) {
-  delete ExplicitInfo;
-
-  if (SpecializedPartialSpecialization *PartialSpec
-        = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
-    C.Deallocate(PartialSpec);
-
-  CXXRecordDecl::Destroy(C);
 }
 
 void

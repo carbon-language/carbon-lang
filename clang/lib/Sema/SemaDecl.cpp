@@ -4731,7 +4731,6 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     if (!MD->isInvalidDecl())
       DiagnoseUnusedParameters(MD->param_begin(), MD->param_end());
   } else {
-    Body->Destroy(Context);
     return DeclPtrTy();
   }
 
@@ -4755,8 +4754,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     // the function body so that they aren't leaked and that the AST is well
     // formed.
     if (Body == 0) {
-      // The whole function wasn't parsed correctly, just delete this.
-      L->Destroy(Context);
+      // The whole function wasn't parsed correctly.
       continue;
     }
 
@@ -6576,7 +6574,6 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
       else
         Diag(IdLoc, diag::err_redefinition) << Id;
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      if (Val) Val->Destroy(Context);
       return DeclPtrTy();
     }
   }

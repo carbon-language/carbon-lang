@@ -369,14 +369,6 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
 
   // Emit the standard function epilogue.
   FinishFunction(BodyRange.getEnd());
-
-  // Destroy the 'this' declaration.
-  if (CXXThisDecl)
-    CXXThisDecl->Destroy(getContext());
-  
-  // Destroy the VTT declaration.
-  if (CXXVTTDecl)
-    CXXVTTDecl->Destroy(getContext());
 }
 
 /// ContainsLabel - Return true if the statement contains a label in it.  If

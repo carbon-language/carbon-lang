@@ -530,7 +530,6 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
       Arg = ICE->getSubExpr();
       ICE->setSubExpr(0);
-      ICE->Destroy(Context);
       TheCall->setArg(i+1, Arg);
     }
 
@@ -736,7 +735,6 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
       assert(Cast->getType()->isSpecificBuiltinType(BuiltinType::Double) &&
              "promotion from float to double is the only expected cast here");
       Cast->setSubExpr(0);
-      Cast->Destroy(Context);
       TheCall->setArg(NumArgs-1, CastArg);
       OrigArg = CastArg;
     }

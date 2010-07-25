@@ -6407,14 +6407,6 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                          PartialOverloading);  
 }
 
-static Sema::OwningExprResult Destroy(Sema &SemaRef, Expr *Fn,
-                                      Expr **Args, unsigned NumArgs) {
-  Fn->Destroy(SemaRef.Context);
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-    Args[Arg]->Destroy(SemaRef.Context);
-  return SemaRef.ExprError();
-}
-
 /// Attempts to recover from a call where no functions were found.
 ///
 /// Returns true if new candidates were found.
@@ -6442,7 +6434,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
   if (SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression))
-    return Destroy(SemaRef, Fn, Args, NumArgs);
+    return SemaRef.ExprError();
 
   assert(!R.empty() && "lookup results empty despite recovery");
 
@@ -6457,9 +6449,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
     NewFn = SemaRef.BuildDeclarationNameExpr(SS, R, false);
 
   if (NewFn.isInvalid())
-    return Destroy(SemaRef, Fn, Args, NumArgs);
-
-  Fn->Destroy(SemaRef.Context);
+    return SemaRef.ExprError();
 
   // This shouldn't cause an infinite loop because we're giving it
   // an expression with non-empty lookup results, which should never
@@ -6545,11 +6535,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     break;
   }
 
-  // Overload resolution failed. Destroy all of the subexpressions and
-  // return NULL.
-  Fn->Destroy(Context);
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-    Args[Arg]->Destroy(Context);
+  // Overload resolution failed.
   return ExprError();
 }
 
@@ -7374,14 +7360,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     break;
   }
 
-  if (Best == CandidateSet.end()) {
-    // We had an error; delete all of the subexpressions and return
-    // the error.
-    Object->Destroy(Context);
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
-      Args[ArgIdx]->Destroy(Context);
+  if (Best == CandidateSet.end())
     return true;
-  }
 
   if (Best->Function == 0) {
     // Since there is no function declaration, this is one of the

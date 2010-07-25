@@ -532,11 +532,6 @@ static SourceLocation getTemplateOrInnerLocStart(const DeclT *decl) {
 }
 
 DeclaratorDecl::~DeclaratorDecl() {}
-void DeclaratorDecl::Destroy(ASTContext &C) {
-  if (hasExtInfo())
-    C.Deallocate(getExtInfo());
-  ValueDecl::Destroy(C);
-}
 
 SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
   TypeSourceInfo *TSI = getTypeSourceInfo();
@@ -602,12 +597,6 @@ QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
   }
 }
 
-void QualifierInfo::Destroy(ASTContext &Context) {
-  // FIXME: Deallocate template parameter lists themselves!
-  if (TemplParamLists)
-    Context.Deallocate(TemplParamLists);
-}
-
 //===----------------------------------------------------------------------===//
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -630,19 +619,6 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S, StorageClass SCAsWritten) {
   return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S, SCAsWritten);
-}
-
-void VarDecl::Destroy(ASTContext& C) {
-  Expr *Init = getInit();
-  if (Init) {
-    Init->Destroy(C);
-    if (EvaluatedStmt *Eval = this->Init.dyn_cast<EvaluatedStmt *>()) {
-      Eval->~EvaluatedStmt();
-      C.Deallocate(Eval);
-    }
-  }
-  this->~VarDecl();
-  DeclaratorDecl::Destroy(C);
 }
 
 VarDecl::~VarDecl() {
@@ -911,28 +887,6 @@ SourceRange ParmVarDecl::getDefaultArgRange() const {
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
-
-void FunctionDecl::Destroy(ASTContext& C) {
-  if (Body && Body.isOffset())
-    Body.get(C.getExternalSource())->Destroy(C);
-
-  for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
-    (*I)->Destroy(C);
-
-  FunctionTemplateSpecializationInfo *FTSInfo
-    = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
-  if (FTSInfo)
-    C.Deallocate(FTSInfo);
-  
-  MemberSpecializationInfo *MSInfo
-    = TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>();
-  if (MSInfo)
-    C.Deallocate(MSInfo);
-  
-  C.Deallocate(ParamInfo);
-
-  DeclaratorDecl::Destroy(C);
-}
 
 void FunctionDecl::getNameForDiagnostic(std::string &S,
                                         const PrintingPolicy &Policy,
@@ -1565,12 +1519,6 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
-void TagDecl::Destroy(ASTContext &C) {
-  if (hasExtInfo())
-    C.Deallocate(getExtInfo());
-  TypeDecl::Destroy(C);
-}
-
 SourceLocation TagDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);
 }
@@ -1676,10 +1624,6 @@ EnumDecl *EnumDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) EnumDecl(0, SourceLocation(), 0, 0, SourceLocation());
 }
 
-void EnumDecl::Destroy(ASTContext& C) {
-  TagDecl::Destroy(C);
-}
-
 void EnumDecl::completeDefinition(QualType NewType,
                                   QualType NewPromotionType,
                                   unsigned NumPositiveBits,
@@ -1723,10 +1667,6 @@ RecordDecl *RecordDecl::Create(ASTContext &C, EmptyShell Empty) {
 RecordDecl::~RecordDecl() {
 }
 
-void RecordDecl::Destroy(ASTContext& C) {
-  TagDecl::Destroy(C);
-}
-
 bool RecordDecl::isInjectedClassName() const {
   return isImplicit() && getDeclName() && getDeclContext()->isRecord() &&
     cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
@@ -1755,17 +1695,6 @@ ValueDecl *RecordDecl::getAnonymousStructOrUnionObject() {
 //===----------------------------------------------------------------------===//
 
 BlockDecl::~BlockDecl() {
-}
-
-void BlockDecl::Destroy(ASTContext& C) {
-  if (Body)
-    Body->Destroy(C);
-
-  for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
-    (*I)->Destroy(C);
-
-  C.Deallocate(ParamInfo);
-  Decl::Destroy(C);
 }
 
 void BlockDecl::setParams(ParmVarDecl **NewParamInfo,
@@ -1799,15 +1728,6 @@ NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) NamespaceDecl(DC, L, Id);
 }
 
-void NamespaceDecl::Destroy(ASTContext& C) {
-  // NamespaceDecl uses "NextDeclarator" to chain namespace declarations
-  // together. They are all top-level Decls.
-
-  this->~NamespaceDecl();
-  Decl::Destroy(C);
-}
-
-
 ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
     SourceLocation L, IdentifierInfo *Id, QualType T) {
   return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
@@ -1834,11 +1754,6 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            IdentifierInfo *Id, QualType T,
                                            Expr *E, const llvm::APSInt &V) {
   return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
-}
-
-void EnumConstantDecl::Destroy(ASTContext& C) {
-  if (Init) Init->Destroy(C);
-  ValueDecl::Destroy(C);
 }
 
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,

@@ -458,10 +458,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   SS->setBody(BodyStmt, SwitchLoc);
   getSwitchStack().pop_back();
 
-  if (SS->getCond() == 0) {
-    SS->Destroy(Context);
+  if (SS->getCond() == 0)
     return StmtError();
-  }
     
   Expr *CondExpr = SS->getCond();
   Expr *CondExprBeforePromotion = CondExpr;
@@ -1086,7 +1084,6 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   if (CurBlock->ReturnType->isVoidType()) {
     if (RetValExp) {
       Diag(ReturnLoc, diag::err_return_block_has_expr);
-      RetValExp->Destroy(Context);
       RetValExp = 0;
     }
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, 0);
