@@ -28,7 +28,7 @@ char *basename(const char* path)
 extern char *basename(const char *);
 #endif
 
-/// \brief Return the default parsing options.
+/** \brief Return the default parsing options. */
 static unsigned getDefaultParsingOptions() {
   unsigned options = CXTranslationUnit_DetailedPreprocessingRecord;
 

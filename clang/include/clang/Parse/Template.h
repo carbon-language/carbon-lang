@@ -161,18 +161,6 @@ namespace clang {
     void Destroy() { free(this); }
   };
   
-#if !defined(DISABLE_SMART_POINTERS)
-  inline void ASTTemplateArgsPtr::destroy() {
-    if (!Count)
-      return;
-    
-    for (unsigned I = 0; I != Count; ++I)
-      if (Args[I].getKind() == ParsedTemplateArgument::NonType)
-        Actions.DeleteExpr(Args[I].getAsExpr());
-    
-    Count = 0;
-  }
-#endif
   
   inline const ParsedTemplateArgument &
   ASTTemplateArgsPtr::operator[](unsigned Arg) const { 

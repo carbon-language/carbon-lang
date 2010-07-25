@@ -104,13 +104,8 @@ public:
   // is complete.
 
   /// Single expressions or statements as arguments.
-#if !defined(DISABLE_SMART_POINTERS)
-  typedef ASTOwningResult<&ActionBase::DeleteExpr> ExprArg;
-  typedef ASTOwningResult<&ActionBase::DeleteStmt> StmtArg;
-#else
   typedef ASTOwningPtr<&ActionBase::DeleteExpr> ExprArg;
   typedef ASTOwningPtr<&ActionBase::DeleteStmt> StmtArg;
-#endif
 
   /// Multiple expressions or statements as arguments.
   typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
