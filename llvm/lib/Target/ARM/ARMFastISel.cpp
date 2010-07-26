@@ -66,6 +66,7 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
 
 namespace llvm {
   llvm::FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
-    return new ARMFastISel(funcInfo);
+    // Turn it off for now. It's not quite ready.
+    return 0;
   }
 }
