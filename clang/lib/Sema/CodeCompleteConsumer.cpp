@@ -234,8 +234,7 @@ std::string CodeCompletionString::getAsString() const {
     default: OS << C->Text; break;
     }
   }
-  OS.flush();
-  return Result;
+  return OS.str();
 }
 
 const char *CodeCompletionString::getTypedText() const {
