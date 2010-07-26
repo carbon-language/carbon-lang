@@ -41,8 +41,6 @@ CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
 }
 
 void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
-  Classes.clear();
-
   const unsigned BBSize = BB->size();
   for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i) {
     // Clear out the register class data.
