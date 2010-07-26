@@ -348,14 +348,19 @@ def tls32addr : ComplexPattern<i32, 5, "SelectTLSADDRAddr",
 // X86 Instruction Predicate Definitions.
 def HasCMov      : Predicate<"Subtarget->hasCMov()">;
 def NoCMov       : Predicate<"!Subtarget->hasCMov()">;
-def HasMMX       : Predicate<"Subtarget->hasMMX()">;
-def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
-def HasSSE2      : Predicate<"Subtarget->hasSSE2()">;
-def HasSSE3      : Predicate<"Subtarget->hasSSE3()">;
-def HasSSSE3     : Predicate<"Subtarget->hasSSSE3()">;
-def HasSSE41     : Predicate<"Subtarget->hasSSE41()">;
-def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
-def HasSSE4A     : Predicate<"Subtarget->hasSSE4A()">;
+
+// FIXME: temporary hack to let codegen assert or generate poor code in case
+// no AVX version of the desired intructions is present, this is better for
+// incremental dev (without fallbacks it's easier to spot what's missing)
+def HasMMX       : Predicate<"Subtarget->hasMMX() & !Subtarget->hasAVX()">;
+def HasSSE1      : Predicate<"Subtarget->hasSSE1() & !Subtarget->hasAVX()">;
+def HasSSE2      : Predicate<"Subtarget->hasSSE2() & !Subtarget->hasAVX()">;
+def HasSSE3      : Predicate<"Subtarget->hasSSE3() & !Subtarget->hasAVX()">;
+def HasSSSE3     : Predicate<"Subtarget->hasSSSE3() & !Subtarget->hasAVX()">;
+def HasSSE41     : Predicate<"Subtarget->hasSSE41() & !Subtarget->hasAVX()">;
+def HasSSE42     : Predicate<"Subtarget->hasSSE42() & !Subtarget->hasAVX()">;
+def HasSSE4A     : Predicate<"Subtarget->hasSSE4A() & !Subtarget->hasAVX()">;
+
 def HasAVX       : Predicate<"Subtarget->hasAVX()">;
 def HasCLMUL     : Predicate<"Subtarget->hasCLMUL()">;
 def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
