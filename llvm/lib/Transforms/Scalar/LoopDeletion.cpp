@@ -38,9 +38,9 @@ namespace {
                     bool &Changed, BasicBlock *Preheader);
 
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
-      AU.addRequired<ScalarEvolution>();
       AU.addRequired<DominatorTree>();
       AU.addRequired<LoopInfo>();
+      AU.addRequired<ScalarEvolution>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       

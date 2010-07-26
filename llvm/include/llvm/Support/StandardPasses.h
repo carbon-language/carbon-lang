@@ -20,6 +20,7 @@
 #define LLVM_SUPPORT_STANDARDPASSES_H
 
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Scalar.h"
@@ -128,6 +129,8 @@ namespace llvm {
     PM->add(createTailCallEliminationPass());   // Eliminate tail calls
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createReassociatePass());           // Reassociate expressions
+    // Explicitly schedule this to ensure that it runs before any loop pass.
+    PM->add(new DominanceFrontier());           // Calculate Dominance Frontiers
     PM->add(createLoopRotatePass());            // Rotate Loop
     PM->add(createLICMPass());                  // Hoist loop invariants
     PM->add(createLoopUnswitchPass(OptimizeSize || OptimizationLevel < 3));

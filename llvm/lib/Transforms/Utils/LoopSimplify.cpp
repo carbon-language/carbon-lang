@@ -77,22 +77,17 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // We need loop information to identify the loops...
-      AU.addRequiredTransitive<DominatorTree>();
+      AU.addRequired<DominatorTree>();
       AU.addPreserved<DominatorTree>();
 
-      // Request DominanceFrontier now, even though LoopSimplify does
-      // not use it. This allows Pass Manager to schedule Dominance
-      // Frontier early enough such that one LPPassManager can handle
-      // multiple loop transformation passes.
-      AU.addRequired<DominanceFrontier>();
-      AU.addPreserved<DominanceFrontier>();
-
-      AU.addRequiredTransitive<LoopInfo>();
+      AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
 
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
+      AU.addPreserved<DominanceFrontier>();
+      AU.addPreservedID(LCSSAID);
     }
 
     /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.

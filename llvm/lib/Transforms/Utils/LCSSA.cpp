@@ -64,17 +64,12 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
 
-      AU.addRequiredTransitive<DominatorTree>();
+      AU.addRequired<DominatorTree>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
-      AU.addRequiredTransitive<LoopInfo>();
+      AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
-
-      // LCSSA doesn't actually require LoopSimplify, but the PassManager
-      // doesn't know how to schedule LoopSimplify by itself.
-      AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
-
       AU.addPreserved<ScalarEvolution>();
     }
   private:
