@@ -309,7 +309,7 @@ void WinCOFFObjectWriter::InitCOFFEntity(COFFSection &S) {
     if (StringTableEntry > 999999)
       report_fatal_error("COFF string table is greater than 999999 bytes.");
 
-    sprintf(S.Header.Name, "/%d", StringTableEntry);
+    sprintf(S.Header.Name, "/%d", (unsigned)StringTableEntry);
   } else
     memcpy(S.Header.Name, S.Name.c_str(), S.Name.size());
 }
