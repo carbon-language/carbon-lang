@@ -1314,6 +1314,9 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
         << ", across block:\n    "
         << *BB << "\n");
   
+  if (LVI)
+    LVI->threadEdge(PredBB, BB, SuccBB);
+  
   // We are going to have to map operands from the original BB block to the new
   // copy of the block 'NewBB'.  If there are PHI nodes in BB, evaluate them to
   // account for entry from PredBB.

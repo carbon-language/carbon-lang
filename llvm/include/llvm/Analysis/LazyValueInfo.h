@@ -57,6 +57,10 @@ public:
   /// constant on the specified edge.  Return null if not.
   Constant *getConstantOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB);
   
+  /// threadEdge - Inform the analysis cache that we have threaded an edge from
+  /// PredBB to OldSucc to be from PredBB to NewSucc instead.
+  void threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc, BasicBlock *NewSucc);
+  
   
   // Implementation boilerplate.
   
