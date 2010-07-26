@@ -651,7 +651,7 @@ currently llvm-gcc generates something like this (nice branchless code I'd say):
        tst     r0, #255
        moveq   r0, #0
        streq   r0, [r2]
-       bx      lr
+       bx      lr
 
 Note that both "tst" and "moveq" are redundant.
 
