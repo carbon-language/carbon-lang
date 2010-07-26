@@ -1125,12 +1125,12 @@ SharedLibKindMessage := "Shared Library"
 endif
 $(LibName.SO): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) $(SharedLibKindMessage) \
-	  $(LIBRARYNAME)$(SHLIBEXT)
+	  $(notdir $@)
 	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO) \
 	  $(ProjLibsOptions) $(LLVMLibsOptions) $(LIBS)
 else
 $(LibName.SO): $(ObjectsO) $(LibDir)/.dir
-	$(Echo) Linking $(BuildMode) Shared Library $(basename $@)
+	$(Echo) Linking $(BuildMode) Shared Library $(notdir $@)
 	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO)
 endif
 
