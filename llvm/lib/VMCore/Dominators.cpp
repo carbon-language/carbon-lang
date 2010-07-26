@@ -123,8 +123,8 @@ void DominanceFrontier::verifyAnalysis() const {
 // NewBB is split and now it has one successor. Update dominance frontier to
 // reflect this change.
 void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
-  assert(NewBB->getTerminator()->getNumSuccessors() == 1
-         && "NewBB should have a single successor!");
+  assert(NewBB->getTerminator()->getNumSuccessors() == 1 &&
+         "NewBB should have a single successor!");
   BasicBlock *NewBBSucc = NewBB->getTerminator()->getSuccessor(0);
 
   SmallVector<BasicBlock*, 8> PredBlocks;
