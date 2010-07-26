@@ -2397,7 +2397,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     Category = ImplicitCastExpr::LValue;
   else if (const RValueReferenceType *RRef = T2->getAs<RValueReferenceType>())
     Category = RRef->getPointeeType()->isFunctionType() ?
-        ImplicitCastExpr::LValue : ImplicitCastExpr::RValue;
+        ImplicitCastExpr::LValue : ImplicitCastExpr::XValue;
 
   bool NewDerivedToBase = false;
   Sema::ReferenceCompareResult NewRefRelationship
@@ -2555,6 +2555,7 @@ static void TryReferenceInitialization(Sema &S,
 
   //       - [If T1 is not a function type], if T2 is a class type and
   if (!T1Function && T2->isRecordType()) {
+    bool isXValue = InitCategory.isXValue();
     //       - the initializer expression is an rvalue and "cv1 T1" is 
     //         reference-compatible with "cv2 T2", or
     if (InitCategory.isRValue() && 
@@ -2574,10 +2575,13 @@ static void TryReferenceInitialization(Sema &S,
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
                          S.Context.getQualifiedType(T1, T2Quals), 
-                         ImplicitCastExpr::RValue);
+                         isXValue ? ImplicitCastExpr::XValue
+                                  : ImplicitCastExpr::RValue);
       if (T1Quals != T2Quals)
-        Sequence.AddQualificationConversionStep(cv1T1,ImplicitCastExpr::RValue);
-      Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/true);
+        Sequence.AddQualificationConversionStep(cv1T1,
+                     isXValue ? ImplicitCastExpr::XValue
+                              : ImplicitCastExpr::RValue);
+      Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/!isXValue);
       return;
     }
 
