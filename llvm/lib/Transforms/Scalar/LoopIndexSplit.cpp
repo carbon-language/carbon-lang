@@ -677,7 +677,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
       for(pred_iterator PI = pred_begin(FrontierBB), PE = pred_end(FrontierBB);
           PI != PE; ++PI) {
         BasicBlock *P = *PI;
-        if (P == DeadBB || DT->dominates(DeadBB, P))
+        if (DT->dominates(DeadBB, P))
           PredBlocks.push_back(P);
       }
 
