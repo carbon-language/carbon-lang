@@ -1191,13 +1191,10 @@ namespace {
       SU->NodeQueueId = 0;
     }
 
-    bool HighRegPressure(const SUnit *SU, unsigned &Excess) const {
-      Excess = 0;
-
+    bool HighRegPressure(const SUnit *SU) const {
       if (!TLI)
         return false;
 
-      bool High = false;
       for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
            I != E; ++I) {
         if (I->isCtrl())
@@ -1209,10 +1206,8 @@ namespace {
             EVT VT = PN->getValueType(0);
             unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
             unsigned Cost = TLI->getRepRegClassCostFor(VT);
-            if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
-              High = true;
-              Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
-            }
+            if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+              return true;
           }
           continue;
         }
@@ -1225,10 +1220,8 @@ namespace {
           unsigned Cost = TLI->getRepRegClassCostFor(VT);
           // Check if this increases register pressure of the specific register
           // class to the point where it would cause spills.
-          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
-            High = true;
-            Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
-          }
+          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+            return true;
           continue;            
         } else if (POpc == TargetOpcode::INSERT_SUBREG ||
                    POpc == TargetOpcode::SUBREG_TO_REG) {
@@ -1237,29 +1230,27 @@ namespace {
           unsigned Cost = TLI->getRepRegClassCostFor(VT);
           // Check if this increases register pressure of the specific register
           // class to the point where it would cause spills.
-          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
-            High = true;
-            Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
-          }
+          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+            return true;
           continue;
         }
         unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
           EVT VT = PN->getValueType(i);
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          if (RegPressure[RCId] >= RegLimit[RCId])
+            return true; // Reg pressure already high.
+          unsigned Cost = TLI->getRepRegClassCostFor(VT);
           if (!PN->hasAnyUseOfValue(i))
             continue;
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          unsigned Cost = TLI->getRepRegClassCostFor(VT);
           // Check if this increases register pressure of the specific register
           // class to the point where it would cause spills.
-          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
-            High = true;
-            Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
-          }
+          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+            return true;
         }
       }
 
-      return High;
+      return false;
     }
 
     void ScheduledNode(SUnit *SU) {
@@ -1558,21 +1549,15 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 }
 
 bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
-  unsigned LExcess, RExcess;
-  bool LHigh = SPQ->HighRegPressure(left, LExcess);
-  bool RHigh = SPQ->HighRegPressure(right, RExcess);
+  bool LHigh = SPQ->HighRegPressure(left);
+  bool RHigh = SPQ->HighRegPressure(right);
   // Avoid causing spills. If register pressure is high, schedule for
   // register pressure reduction.
   if (LHigh && !RHigh)
     return true;
   else if (!LHigh && RHigh)
     return false;
-  else if (LHigh && RHigh) {
-    if (LExcess > RExcess)
-      return true;
-    else if (LExcess < RExcess)
-      return false;
-  } else {
+  else if (!LHigh && !RHigh) {
     // Low register pressure situation, schedule for latency if possible.
     bool LStall = left->SchedulingPref == Sched::Latency &&
       SPQ->getCurCycle() < left->getHeight();
@@ -1606,21 +1591,15 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
 
 bool ilp_ls_rr_sort::operator()(const SUnit *left,
                                 const SUnit *right) const {
-  unsigned LExcess, RExcess;
-  bool LHigh = SPQ->HighRegPressure(left, LExcess);
-  bool RHigh = SPQ->HighRegPressure(right, RExcess);
+  bool LHigh = SPQ->HighRegPressure(left);
+  bool RHigh = SPQ->HighRegPressure(right);
   // Avoid causing spills. If register pressure is high, schedule for
   // register pressure reduction.
   if (LHigh && !RHigh)
     return true;
   else if (!LHigh && RHigh)
     return false;
-  else if (LHigh && RHigh) {
-    if (LExcess > RExcess)
-      return true;
-    else if (LExcess < RExcess)
-      return false;    
-  } else {
+  else if (!LHigh && !RHigh) {
     // Low register pressure situation, schedule to maximize instruction level
     // parallelism.
     if (left->NumPreds > right->NumPreds)
