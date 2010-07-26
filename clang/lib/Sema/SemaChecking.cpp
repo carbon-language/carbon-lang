@@ -1169,6 +1169,11 @@ protected:
   SourceLocation getLocationOfByte(const char *x);
 
   const Expr *getDataArg(unsigned i) const;
+  
+  bool CheckNumArgs(const analyze_format_string::FormatSpecifier &FS,
+                    const analyze_format_string::ConversionSpecifier &CS,
+                    const char *startSpecifier, unsigned specifierLen,
+                    unsigned argIndex);
 };
 }
 
@@ -1268,6 +1273,30 @@ CheckFormatHandler::HandleInvalidConversionSpecifier(unsigned argIndex,
     << getSpecifierRange(startSpec, specifierLen);
   
   return keepGoing;
+}
+
+bool
+CheckFormatHandler::CheckNumArgs(
+  const analyze_format_string::FormatSpecifier &FS,
+  const analyze_format_string::ConversionSpecifier &CS,
+  const char *startSpecifier, unsigned specifierLen, unsigned argIndex) {
+
+  if (argIndex >= NumDataArgs) {
+    if (FS.usesPositionalArg())  {
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_printf_positional_arg_exceeds_data_args)
+      << (argIndex+1) << NumDataArgs
+      << getSpecifierRange(startSpecifier, specifierLen);
+    }
+    else {
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_printf_insufficient_data_args)
+      << getSpecifierRange(startSpecifier, specifierLen);
+    }
+    
+    return false;
+  }
+  return true;
 }
 
 //===--- CHECK: Printf format string checking ------------------------------===//
@@ -1538,22 +1567,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   if (HasVAListArg)
     return true;
 
-  if (argIndex >= NumDataArgs) {
-    if (FS.usesPositionalArg())  {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_positional_arg_exceeds_data_args)
-        << (argIndex+1) << NumDataArgs
-        << getSpecifierRange(startSpecifier, specifierLen);
-    }
-    else {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_insufficient_data_args)
-        << getSpecifierRange(startSpecifier, specifierLen);
-    }
-
-    // Don't do any more checking.
+  if (!CheckNumArgs(FS, CS, startSpecifier, specifierLen, argIndex))
     return false;
-  }
 
   // Now type check the data expression that matches the
   // format specifier.
@@ -1714,22 +1729,8 @@ bool CheckScanfHandler::HandleScanfSpecifier(
   if (HasVAListArg)
     return true;
   
-  if (argIndex >= NumDataArgs) {
-    if (FS.usesPositionalArg())  {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_positional_arg_exceeds_data_args)
-      << (argIndex+1) << NumDataArgs
-      << getSpecifierRange(startSpecifier, specifierLen);
-    }
-    else {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_insufficient_data_args)
-      << getSpecifierRange(startSpecifier, specifierLen);
-    }
-    
-    // Don't do any more checking.
+  if (!CheckNumArgs(FS, CS, startSpecifier, specifierLen, argIndex))
     return false;
-  }
   
   // FIXME: Check that the argument type matches the format specifier.
   
