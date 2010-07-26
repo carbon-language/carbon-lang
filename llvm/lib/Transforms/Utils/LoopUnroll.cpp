@@ -24,6 +24,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -126,6 +127,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
              "  Can't unroll; loop not terminated by a conditional branch.\n");
     return false;
   }
+
+  // Notify ScalarEvolution that the loop will be substantially changed,
+  // if not outright eliminated.
+  if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>())
+    SE->forgetLoop(L);
 
   // Find trip count
   unsigned TripCount = L->getSmallConstantTripCount();
