@@ -1190,6 +1190,32 @@ unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
   return F->hasFnAttr(Attribute::OptimizeForSize) ? 0 : 4;
 }
 
+std::pair<const TargetRegisterClass*, uint8_t>
+X86TargetLowering::findRepresentativeClass(EVT VT) const{
+  const TargetRegisterClass *RRC = 0;
+  uint8_t Cost = 1;
+  switch (VT.getSimpleVT().SimpleTy) {
+  default:
+    return TargetLowering::findRepresentativeClass(VT);
+  case MVT::i8: case MVT::i16: case MVT::i32: case MVT::i64:
+    RRC = (Subtarget->is64Bit()
+           ? X86::GR64RegisterClass : X86::GR32RegisterClass);
+    break;
+  case MVT::v8i8: case MVT::v4i16:
+  case MVT::v2i32: case MVT::v1i64: 
+    RRC = X86::VR64RegisterClass;
+    break;
+  case MVT::f32: case MVT::f64:
+  case MVT::v16i8: case MVT::v8i16: case MVT::v4i32: case MVT::v2i64:
+  case MVT::v4f32: case MVT::v2f64:
+  case MVT::v32i8: case MVT::v8i32: case MVT::v4i64: case MVT::v8f32:
+  case MVT::v4f64:
+    RRC = X86::VR128RegisterClass;
+    break;
+  }
+  return std::make_pair(RRC, Cost);
+}
+
 unsigned
 X86TargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
                                        MachineFunction &MF) const {

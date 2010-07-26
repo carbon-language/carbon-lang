@@ -599,6 +599,10 @@ namespace llvm {
     /// appropriate.
     virtual bool getStackCookieLocation(unsigned &AddressSpace, unsigned &Offset) const;
 
+  protected:
+    std::pair<const TargetRegisterClass*, uint8_t>
+    findRepresentativeClass(EVT VT) const;
+
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
