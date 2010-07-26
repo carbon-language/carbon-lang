@@ -161,8 +161,10 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
         bool DominatesPred = false;
         for (pred_iterator PI = pred_begin(*SetI), E = pred_end(*SetI);
              PI != E; ++PI)
-          if (DT.dominates(NewBB, *PI))
+          if (DT.dominates(NewBB, *PI)) {
             DominatesPred = true;
+            break;
+          }
         if (!DominatesPred)
           Set.erase(SetI++);
         else
