@@ -365,6 +365,18 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   UFE->ModTime = ModificationTime;
   UFE->Dir     = DirInfo;
   UFE->UID     = NextFileUID++;
+  
+  // If this virtual file resolves to a file, also map that file to the 
+  // newly-created file entry.
+  const char *InterndFileName = NamedFileEnt.getKeyData();
+  struct stat StatBuf;
+  if (!stat_cached(InterndFileName, &StatBuf) &&
+      !S_ISDIR(StatBuf.st_mode)) {
+    llvm::sys::Path FilePath(InterndFileName);
+    FilePath.makeAbsolute();
+    FileEntries[FilePath.str()] = UFE;
+  }
+  
   return UFE;
 }
 
