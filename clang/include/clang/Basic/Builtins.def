@@ -324,7 +324,7 @@ BUILTIN(__builtin_vsprintf, "ic*cC*a", "nFP:1:")
 BUILTIN(__builtin_vsnprintf, "ic*zcC*a", "nFP:2:")
 
 // GCC exception builtins
-BUILTIN(__builtin_eh_return, "vzv*", "") // FIXME: Takes intptr_t, not size_t!
+BUILTIN(__builtin_eh_return, "vzv*", "r") // FIXME: Takes intptr_t, not size_t!
 BUILTIN(__builtin_frob_return_addr, "v*v*", "n")
 BUILTIN(__builtin_dwarf_cfa, "v*", "n")
 BUILTIN(__builtin_init_dwarf_reg_size_table, "vv*", "n")

@@ -80,3 +80,7 @@ void test12(void) {
 void test_unknown_builtin(int a, int b) {
   __builtin_foo(a, b); // expected-error{{use of unknown builtin}}
 }
+
+int test13() {
+  __builtin_eh_return(0, 0); // no warning, eh_return never returns.
+}
