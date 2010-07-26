@@ -247,9 +247,9 @@ ClangFunction::CompileFunction (Stream &errors)
 }
 
 bool
-ClangFunction::WriteFunctionWrapper (ExecutionContext &exc_context, Stream &errors)
+ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
 {
-    Process *process = exc_context.process;
+    Process *process = exe_ctx.process;
 
     if (process == NULL)
         return false;
@@ -257,10 +257,10 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exc_context, Stream &erro
     if (!m_JITted)
     {
         // Next we should JIT it and insert the result into the target program.
-        if (!JITFunction (exc_context, m_wrapper_function_name.c_str()))
+        if (!JITFunction (exe_ctx, m_wrapper_function_name.c_str()))
             return false;
 
-        if (!WriteJITCode (exc_context))
+        if (!WriteJITCode (exe_ctx))
             return false;
 
         m_JITted = true;
@@ -275,15 +275,15 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exc_context, Stream &erro
 }
 
 bool
-ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr_t &args_addr_ref, Stream &errors)
+ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &args_addr_ref, Stream &errors)
 {
-    return WriteFunctionArguments(exc_context, args_addr_ref, m_function_addr, m_arg_values, errors);    
+    return WriteFunctionArguments(exe_ctx, args_addr_ref, m_function_addr, m_arg_values, errors);    
 }
 
 // FIXME: Assure that the ValueList we were passed in is consistent with the one that defined this function.
 
 bool
-ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr_t &args_addr_ref, Address function_address, ValueList &arg_values, Stream &errors)
+ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &args_addr_ref, Address function_address, ValueList &arg_values, Stream &errors)
 {
     // Otherwise, allocate space for the argument passing struct, and write it.
     // We use the information in the expression parser AST to
@@ -295,7 +295,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr
     using namespace clang;
     ExecutionResults return_value = eExecutionSetupError;
 
-    Process *process = exc_context.process;
+    Process *process = exe_ctx.process;
 
     if (process == NULL)
         return return_value;
@@ -321,7 +321,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr
     // FIXME: This is fake, and just assumes that it matches that architecture.
     // Make a data extractor and put the address into the right byte order & size.
 
-    uint64_t fun_addr = function_address.GetLoadAddress(exc_context.process);
+    uint64_t fun_addr = function_address.GetLoadAddress(exe_ctx.process);
     int first_offset = m_struct_layout->getFieldOffset(0)/8;
     process->WriteMemory(args_addr_ref + first_offset, &fun_addr, 8, error);
 
@@ -352,7 +352,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr
             ClangASTContext::IsPointerType(arg_value->GetValueOpaqueClangQualType()))
             continue;
         
-        const Scalar &arg_scalar = arg_value->ResolveValue(&exc_context, m_clang_ast_context->getASTContext());
+        const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx, m_clang_ast_context->getASTContext());
 
         int byte_size = arg_scalar.GetByteSize();
         std::vector<uint8_t> buffer;
@@ -367,15 +367,15 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr
 }
 
 bool
-ClangFunction::InsertFunction (ExecutionContext &exc_context, lldb::addr_t &args_addr_ref, Stream &errors)
+ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_addr_ref, Stream &errors)
 {
     using namespace clang;
     
     if (CompileFunction(errors) != 0)
         return false;
-    if (!WriteFunctionWrapper(exc_context, errors))
+    if (!WriteFunctionWrapper(exe_ctx, errors))
         return false;
-    if (!WriteFunctionArguments(exc_context, args_addr_ref, errors))
+    if (!WriteFunctionArguments(exe_ctx, args_addr_ref, errors))
         return false;
 
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
@@ -386,11 +386,11 @@ ClangFunction::InsertFunction (ExecutionContext &exc_context, lldb::addr_t &args
 }
 
 ThreadPlan *
-ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb::addr_t func_addr, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error)
+ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, lldb::addr_t func_addr, lldb::addr_t &args_addr, Stream &errors, bool stop_others, bool discard_on_error)
 {
     // FIXME: Use the errors Stream for better error reporting.
 
-    Process *process = exc_context.process;
+    Process *process = exe_ctx.process;
 
     if (process == NULL)
     {
@@ -401,7 +401,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb:
     // Okay, now run the function:
 
     Address wrapper_address (NULL, func_addr);
-    ThreadPlan *new_plan = new ThreadPlanCallFunction (*exc_context.thread, 
+    ThreadPlan *new_plan = new ThreadPlanCallFunction (*exe_ctx.thread, 
                                           wrapper_address,
                                           args_addr,
                                           stop_others, discard_on_error);
@@ -409,14 +409,14 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb:
 }
 
 bool
-ClangFunction::FetchFunctionResults (ExecutionContext &exc_context, lldb::addr_t args_addr, Value &ret_value)
+ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t args_addr, Value &ret_value)
 {
     // Read the return value - it is the last field in the struct:
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     
     std::vector<uint8_t> data_buffer;
     data_buffer.resize(m_return_size);
-    Process *process = exc_context.process;
+    Process *process = exe_ctx.process;
     Error error;
     size_t bytes_read = process->ReadMemory(args_addr + m_return_offset/8, &data_buffer.front(), m_return_size, error);
 
@@ -441,43 +441,43 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exc_context, lldb::addr_t
 }
 
 void
-ClangFunction::DeallocateFunctionResults (ExecutionContext &exc_context, lldb::addr_t args_addr)
+ClangFunction::DeallocateFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t args_addr)
 {
     std::list<lldb::addr_t>::iterator pos;
     pos = std::find(m_wrapper_args_addrs.begin(), m_wrapper_args_addrs.end(), args_addr);
     if (pos != m_wrapper_args_addrs.end())
         m_wrapper_args_addrs.erase(pos);
     
-    exc_context.process->DeallocateMemory(args_addr);
+    exe_ctx.process->DeallocateMemory(args_addr);
 }
 
 ClangFunction::ExecutionResults
-ClangFunction::ExecuteFunction(ExecutionContext &exc_context, Stream &errors, Value &results)
+ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, Value &results)
 {
-    return ExecuteFunction (exc_context, errors, 1000, true, results);
+    return ExecuteFunction (exe_ctx, errors, 1000, true, results);
 }
 
 ClangFunction::ExecutionResults
-ClangFunction::ExecuteFunction(ExecutionContext &exc_context, Stream &errors, bool stop_others, Value &results)
+ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool stop_others, Value &results)
 {
-    return ExecuteFunction (exc_context, NULL, errors, stop_others, NULL, false, results);
+    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, NULL, false, results);
 }
 
 ClangFunction::ExecutionResults
 ClangFunction::ExecuteFunction(
-        ExecutionContext &exc_context, 
+        ExecutionContext &exe_ctx, 
         Stream &errors, 
         uint32_t single_thread_timeout_usec, 
         bool try_all_threads, 
         Value &results)
 {
-    return ExecuteFunction (exc_context, NULL, errors, true, single_thread_timeout_usec, try_all_threads, results);
+    return ExecuteFunction (exe_ctx, NULL, errors, true, single_thread_timeout_usec, try_all_threads, results);
 }
 
 // This is the static function
 ClangFunction::ExecutionResults 
 ClangFunction::ExecuteFunction (
-        ExecutionContext &exc_context, 
+        ExecutionContext &exe_ctx, 
         lldb::addr_t function_address, 
         lldb::addr_t &void_arg,
         bool stop_others,
@@ -485,9 +485,12 @@ ClangFunction::ExecuteFunction (
         uint32_t single_thread_timeout_usec,
         Stream &errors)
 {
+    // Save this value for restoration of the execution context after we run
+    uint32_t tid = exe_ctx.thread->GetID();
+    
     ClangFunction::ExecutionResults return_value = eExecutionSetupError;
     
-    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exc_context, function_address, void_arg, errors, stop_others, false));
+    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, errors, stop_others, false));
     
     ThreadPlanCallFunction *call_plan_ptr = static_cast<ThreadPlanCallFunction *> (call_plan_sp.get());
     
@@ -495,7 +498,7 @@ ClangFunction::ExecuteFunction (
         return eExecutionSetupError;
     
     call_plan_sp->SetPrivate(true);
-    exc_context.thread->QueueThreadPlan(call_plan_sp, true);
+    exe_ctx.thread->QueueThreadPlan(call_plan_sp, true);
     
     // We need to call the function synchronously, so spin waiting for it to return.
     // If we get interrupted while executing, we're going to lose our context, and
@@ -511,7 +514,7 @@ ClangFunction::ExecuteFunction (
         timeout_ptr = &real_timeout;
     }
     
-    exc_context.process->Resume ();
+    exe_ctx.process->Resume ();
     
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
     
@@ -521,7 +524,7 @@ ClangFunction::ExecuteFunction (
         
         // Now wait for the process to stop again:
         // FIXME: Probably want a time out.
-        lldb::StateType stop_state =  exc_context.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+        lldb::StateType stop_state =  exe_ctx.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
         
         if (stop_state == lldb::eStateInvalid && timeout_ptr != NULL)
         {
@@ -531,11 +534,11 @@ ClangFunction::ExecuteFunction (
             if (log)
                 log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.", single_thread_timeout_usec);
             
-            if (exc_context.process->Halt().Success())
+            if (exe_ctx.process->Halt().Success())
             {
                 timeout_ptr = NULL;
                 
-                stop_state = exc_context.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+                stop_state = exe_ctx.process->WaitForStateChangedEvents (timeout_ptr, event_sp);
                 if (stop_state == lldb::eStateInvalid)
                 {
                     errors.Printf ("Got an invalid stop state after halt.");
@@ -552,14 +555,14 @@ ClangFunction::ExecuteFunction (
                 {
                     // Between the time that we got the timeout and the time we halted, but target
                     // might have actually completed the plan.  If so, we're done.
-                    if (exc_context.thread->IsThreadPlanDone (call_plan_sp.get()))
+                    if (exe_ctx.thread->IsThreadPlanDone (call_plan_sp.get()))
                     {
                         return_value = eExecutionCompleted;
                         break;
                     }
                     
                     call_plan_ptr->SetStopOthers (false);
-                    exc_context.process->Resume();
+                    exe_ctx.process->Resume();
                     continue;
                 }
                 else
@@ -569,12 +572,12 @@ ClangFunction::ExecuteFunction (
         if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
             continue;
         
-        if (exc_context.thread->IsThreadPlanDone (call_plan_sp.get()))
+        if (exe_ctx.thread->IsThreadPlanDone (call_plan_sp.get()))
         {
             return_value = eExecutionCompleted;
             break;
         }
-        else if (exc_context.thread->WasThreadPlanDiscarded (call_plan_sp.get()))
+        else if (exe_ctx.thread->WasThreadPlanDiscarded (call_plan_sp.get()))
         {
             return_value = eExecutionDiscarded;
             break;
@@ -652,12 +655,17 @@ ClangFunction::ExecuteFunction (
         }
     }
     
+    // Thread we ran the function in may have gone away because we ran the target
+    // Check that it's still there.
+    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByID(tid, true).get();
+    exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
+    
     return return_value;
 }  
 
 ClangFunction::ExecutionResults
 ClangFunction::ExecuteFunction(
-        ExecutionContext &exc_context, 
+        ExecutionContext &exe_ctx, 
         lldb::addr_t *args_addr_ptr, 
         Stream &errors, 
         bool stop_others, 
@@ -680,11 +688,11 @@ ClangFunction::ExecuteFunction(
     
     if (args_addr == LLDB_INVALID_ADDRESS)
     {
-        if (!InsertFunction(exc_context, args_addr, errors))
+        if (!InsertFunction(exe_ctx, args_addr, errors))
             return eExecutionSetupError;
     }
     
-    return_value = ClangFunction::ExecuteFunction(exc_context, m_wrapper_function_addr, args_addr, stop_others, try_all_threads, single_thread_timeout_usec, errors);
+    return_value = ClangFunction::ExecuteFunction(exe_ctx, m_wrapper_function_addr, args_addr, stop_others, try_all_threads, single_thread_timeout_usec, errors);
 
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;
@@ -692,22 +700,22 @@ ClangFunction::ExecuteFunction(
     if (return_value != eExecutionCompleted)
         return return_value;
 
-    FetchFunctionResults(exc_context, args_addr, results);
+    FetchFunctionResults(exe_ctx, args_addr, results);
     
     if (args_addr_ptr == NULL)
-        DeallocateFunctionResults(exc_context, args_addr);
+        DeallocateFunctionResults(exe_ctx, args_addr);
         
     return eExecutionCompleted;
 }
 
 ClangFunction::ExecutionResults
-ClangFunction::ExecuteFunctionWithABI(ExecutionContext &exc_context, Stream &errors, Value &results)
+ClangFunction::ExecuteFunctionWithABI(ExecutionContext &exe_ctx, Stream &errors, Value &results)
 {
     // FIXME: Use the errors Stream for better error reporting. 
     using namespace clang;
     ExecutionResults return_value = eExecutionSetupError;
     
-    Process *process = exc_context.process;
+    Process *process = exe_ctx.process;
     
     if (process == NULL)
     {
@@ -719,9 +727,9 @@ ClangFunction::ExecuteFunctionWithABI(ExecutionContext &exc_context, Stream &err
     //unsigned int arg_index;
     
     //for (arg_index = 0; arg_index < num_args; ++arg_index)
-    //    m_arg_values.GetValueAtIndex(arg_index)->ResolveValue(&exc_context, GetASTContext());
+    //    m_arg_values.GetValueAtIndex(arg_index)->ResolveValue(&exe_ctx, GetASTContext());
     
-    ThreadPlan *call_plan = exc_context.thread->QueueThreadPlanForCallFunction (false,
+    ThreadPlan *call_plan = exe_ctx.thread->QueueThreadPlanForCallFunction (false,
                                                                                 m_function_addr,
                                                                                 m_arg_values,
                                                                                 true);
@@ -746,12 +754,12 @@ ClangFunction::ExecuteFunctionWithABI(ExecutionContext &exc_context, Stream &err
         if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
             continue;
         
-        if (exc_context.thread->IsThreadPlanDone (call_plan))
+        if (exe_ctx.thread->IsThreadPlanDone (call_plan))
         {
             return_value = eExecutionCompleted;
             break;
         }
-        else if (exc_context.thread->WasThreadPlanDiscarded (call_plan))
+        else if (exe_ctx.thread->WasThreadPlanDiscarded (call_plan))
         {
             return_value = eExecutionDiscarded;
             break;
