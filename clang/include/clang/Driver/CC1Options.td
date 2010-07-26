@@ -505,6 +505,9 @@ def include_pch : Separate<"-include-pch">, MetaVarName<"<file>">,
   HelpText<"Include precompiled header file">;
 def include_pth : Separate<"-include-pth">, MetaVarName<"<file>">,
   HelpText<"Include file before parsing">;
+def use_preamble_EQ : Joined<"-use-preamble=">,
+  HelpText<"Assume that the precompiled header is a precompiled preamble "
+           "covering the first N bytes of the main file">;
 def token_cache : Separate<"-token-cache">, MetaVarName<"<path>">,
   HelpText<"Use specified token cache file">;
 def U : JoinedOrSeparate<"-U">, MetaVarName<"<macro>">,

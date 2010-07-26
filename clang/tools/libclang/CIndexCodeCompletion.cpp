@@ -22,6 +22,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
+#include <cstdlib>
+#include <cstdio>
 
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #include "clang/Basic/Version.h"
@@ -273,6 +275,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
 #endif
 #endif
 
+  bool EnableLogging = getenv("LIBCLANG_CODE_COMPLETION_LOGGING") != 0;
+  
   // The indexer, which is mainly used to determine where diagnostics go.
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
@@ -348,6 +352,15 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
       argv.push_back(arg);
     }
 
+  if (EnableLogging) {
+    std::string Log = ClangPath.str();
+    for (unsigned I = 0, N = argv.size(); I != N; ++I) {
+      Log += ' ';
+      Log += argv[I];
+    }
+    fprintf(stderr, "libclang (Code Completion): %s\n", Log.c_str());
+  }
+  
   // Add the null terminator.
   argv.push_back(NULL);
 
@@ -363,6 +376,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
   TemporaryFiles.push_back(DiagnosticsFile);
 
+  
+  
   // Invoke 'clang'.
   llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
                            // on Unix or NUL (Windows).
