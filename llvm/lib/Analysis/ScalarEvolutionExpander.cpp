@@ -1112,21 +1112,13 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
                                 SE.getUnknown(expand(Rest))));
   }
 
-  // {0,+,1} --> Insert a canonical induction variable into the loop!
-  if (S->isAffine() && S->getOperand(1)->isOne()) {
-    // If there's a canonical IV, just use it.
-    if (CanonicalIV) {
-      assert(Ty == SE.getEffectiveSCEVType(CanonicalIV->getType()) &&
-             "IVs with types different from the canonical IV should "
-             "already have been handled!");
-      return CanonicalIV;
-    }
-
+  // If we don't yet have a canonical IV, create one.
+  if (!CanonicalIV) {
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
     BasicBlock *Header = L->getHeader();
-    PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
-    rememberInstruction(PN);
+    CanonicalIV = PHINode::Create(Ty, "indvar", Header->begin());
+    rememberInstruction(CanonicalIV);
 
     Constant *One = ConstantInt::get(Ty, 1);
     for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
@@ -1135,40 +1127,45 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
       if (L->contains(HP)) {
         // Insert a unit add instruction right before the terminator
         // corresponding to the back-edge.
-        Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
-                                                           HP->getTerminator());
+        Instruction *Add = BinaryOperator::CreateAdd(CanonicalIV, One,
+                                                     "indvar.next",
+                                                     HP->getTerminator());
         rememberInstruction(Add);
-        PN->addIncoming(Add, HP);
+        CanonicalIV->addIncoming(Add, HP);
       } else {
-        PN->addIncoming(Constant::getNullValue(Ty), HP);
+        CanonicalIV->addIncoming(Constant::getNullValue(Ty), HP);
       }
     }
   }
 
+  // {0,+,1} --> Insert a canonical induction variable into the loop!
+  if (S->isAffine() && S->getOperand(1)->isOne()) {
+    assert(Ty == SE.getEffectiveSCEVType(CanonicalIV->getType()) &&
+           "IVs with types different from the canonical IV should "
+           "already have been handled!");
+    return CanonicalIV;
+  }
+
   // {0,+,F} --> {0,+,1} * F
-  // Get the canonical induction variable I for this loop.
-  Value *I = CanonicalIV ?
-             CanonicalIV :
-             getOrInsertCanonicalInductionVariable(L, Ty);
 
   // If this is a simple linear addrec, emit it now as a special case.
   if (S->isAffine())    // {0,+,F} --> i*F
     return
       expand(SE.getTruncateOrNoop(
-        SE.getMulExpr(SE.getUnknown(I),
+        SE.getMulExpr(SE.getUnknown(CanonicalIV),
                       SE.getNoopOrAnyExtend(S->getOperand(1),
-                                            I->getType())),
+                                            CanonicalIV->getType())),
         Ty));
 
   // If this is a chain of recurrences, turn it into a closed form, using the
   // folders, then expandCodeFor the closed form.  This allows the folders to
   // simplify the expression without having to build a bunch of special code
   // into this folder.
-  const SCEV *IH = SE.getUnknown(I);   // Get I as a "symbolic" SCEV.
+  const SCEV *IH = SE.getUnknown(CanonicalIV);   // Get I as a "symbolic" SCEV.
 
   // Promote S up to the canonical IV type, if the cast is foldable.
   const SCEV *NewS = S;
-  const SCEV *Ext = SE.getNoopOrAnyExtend(S, I->getType());
+  const SCEV *Ext = SE.getNoopOrAnyExtend(S, CanonicalIV->getType());
   if (isa<SCEVAddRecExpr>(Ext))
     NewS = Ext;
 
