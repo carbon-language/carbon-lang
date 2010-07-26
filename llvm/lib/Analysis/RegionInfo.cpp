@@ -356,7 +356,7 @@ bool RegionInfo::isRegion(BasicBlock *entry, BasicBlock *exit) const {
   // Do not allow edges pointing into the region.
   for (DST::iterator SI = exitSuccs->begin(), SE = exitSuccs->end();
        SI != SE; ++SI)
-    if (DT->dominates(entry, *SI) && *SI != entry && *SI != exit)
+    if (DT->properlyDominates(entry, *SI) && *SI != exit)
       return false;
 
 
