@@ -166,6 +166,20 @@ bool LiveInterval::overlaps(SlotIndex Start, SlotIndex End) const {
   return I != begin() && (--I)->end > Start;
 }
 
+
+/// ValNo is dead, remove it.  If it is the largest value number, just nuke it
+/// (and any other deleted values neighboring it), otherwise mark it as ~1U so
+/// it can be nuked later.
+void LiveInterval::markValNoForDeletion(VNInfo *ValNo) {
+  if (ValNo->id == getNumValNums()-1) {
+    do {
+      valnos.pop_back();
+    } while (!valnos.empty() && valnos.back()->isUnused());
+  } else {
+    ValNo->setIsUnused(true);
+  }
+}
+
 /// extendIntervalEndTo - This method is used when we want to extend the range
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is
@@ -314,16 +328,8 @@ void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
             break;
           }
         if (isDead) {
-          // Now that ValNo is dead, remove it.  If it is the largest value
-          // number, just nuke it (and any other deleted values neighboring it),
-          // otherwise mark it as ~1U so it can be nuked later.
-          if (ValNo->id == getNumValNums()-1) {
-            do {
-              valnos.pop_back();
-            } while (!valnos.empty() && valnos.back()->isUnused());
-          } else {
-            ValNo->setIsUnused(true);
-          }
+          // Now that ValNo is dead, remove it.
+          markValNoForDeletion(ValNo);
         }
       }
 
@@ -359,16 +365,8 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
     if (I->valno == ValNo)
       ranges.erase(I);
   } while (I != E);
-  // Now that ValNo is dead, remove it.  If it is the largest value
-  // number, just nuke it (and any other deleted values neighboring it),
-  // otherwise mark it as ~1U so it can be nuked later.
-  if (ValNo->id == getNumValNums()-1) {
-    do {
-      valnos.pop_back();
-    } while (!valnos.empty() && valnos.back()->isUnused());
-  } else {
-    ValNo->setIsUnused(true);
-  }
+  // Now that ValNo is dead, remove it.
+  markValNoForDeletion(ValNo);
 }
 
 /// getLiveRangeContaining - Return the live range that contains the
@@ -586,16 +584,8 @@ void LiveInterval::MergeValueInAsValue(
           break;
         }          
       if (isDead) {
-        // Now that V1 is dead, remove it.  If it is the largest value number,
-        // just nuke it (and any other deleted values neighboring it), otherwise
-        // mark it as ~1U so it can be nuked later.
-        if (V1->id == getNumValNums()-1) {
-          do {
-            valnos.pop_back();
-          } while (!valnos.empty() && valnos.back()->isUnused());
-        } else {
-          V1->setIsUnused(true);
-        }
+        // Now that V1 is dead, remove it.
+        markValNoForDeletion(V1);
       }
     }
   }
@@ -753,16 +743,8 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
     }
   }
   
-  // Now that V1 is dead, remove it.  If it is the largest value number, just
-  // nuke it (and any other deleted values neighboring it), otherwise mark it as
-  // ~1U so it can be nuked later.
-  if (V1->id == getNumValNums()-1) {
-    do {
-      valnos.pop_back();
-    } while (valnos.back()->isUnused());
-  } else {
-    V1->setIsUnused(true);
-  }
+  // Now that V1 is dead, remove it.
+  markValNoForDeletion(V1);
   
   return V2;
 }

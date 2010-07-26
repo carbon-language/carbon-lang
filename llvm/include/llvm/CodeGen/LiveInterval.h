@@ -545,6 +545,7 @@ namespace llvm {
     Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
     void extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd);
     Ranges::iterator extendIntervalStartTo(Ranges::iterator I, SlotIndex NewStr);
+    void markValNoForDeletion(VNInfo *V);
 
     LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
 
