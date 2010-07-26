@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -parse-noop %s 
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 
 int main() {
  SEL s = @selector(retain);

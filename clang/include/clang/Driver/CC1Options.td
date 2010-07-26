@@ -294,16 +294,12 @@ def dump_tokens : Flag<"-dump-tokens">,
   HelpText<"Run preprocessor, dump internal rep of tokens">;
 def init_only : Flag<"-init-only">,
   HelpText<"Only execute frontend initialization">;
-def parse_noop : Flag<"-parse-noop">,
-  HelpText<"Run parser with noop callbacks (for timings)">;
 def fsyntax_only : Flag<"-fsyntax-only">,
   HelpText<"Run parser and perform semantic analysis">;
 def fixit : Flag<"-fixit">,
   HelpText<"Apply fix-it advice to the input source">;
 def fixit_EQ : Joined<"-fixit=">,
   HelpText<"Apply fix-it advice creating a file with the given suffix">;
-def parse_print_callbacks : Flag<"-parse-print-callbacks">,
-  HelpText<"Run parser and print each callback invoked">;
 def print_preamble : Flag<"-print-preamble">,
   HelpText<"Print the \"preamble\" of a file, which is a candidate for implicit"
            " precompiled headers.">;

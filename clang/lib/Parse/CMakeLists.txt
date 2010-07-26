@@ -1,9 +1,9 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangParse
+  Action.cpp
   AttributeList.cpp
   DeclSpec.cpp
-  MinimalAction.cpp
   ParseCXXInlineMethods.cpp
   ParseDecl.cpp
   ParseDeclCXX.cpp

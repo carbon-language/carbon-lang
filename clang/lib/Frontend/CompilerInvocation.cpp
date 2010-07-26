@@ -327,8 +327,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::GeneratePCH:            return "-emit-pch";
   case frontend::GeneratePTH:            return "-emit-pth";
   case frontend::InitOnly:               return "-init-only";
-  case frontend::ParseNoop:              return "-parse-noop";
-  case frontend::ParsePrintCallbacks:    return "-parse-print-callbacks";
   case frontend::ParseSyntaxOnly:        return "-fsyntax-only";
   case frontend::PrintDeclContext:       return "-print-decl-contexts";
   case frontend::PrintPreamble:          return "-print-preamble";
@@ -982,10 +980,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::GeneratePTH; break;
     case OPT_init_only:
       Opts.ProgramAction = frontend::InitOnly; break;
-    case OPT_parse_noop:
-      Opts.ProgramAction = frontend::ParseNoop; break;
-    case OPT_parse_print_callbacks:
-      Opts.ProgramAction = frontend::ParsePrintCallbacks; break;
     case OPT_fsyntax_only:
       Opts.ProgramAction = frontend::ParseSyntaxOnly; break;
     case OPT_print_decl_contexts:

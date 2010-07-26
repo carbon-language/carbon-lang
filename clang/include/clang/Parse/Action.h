@@ -61,8 +61,7 @@ namespace clang {
 ///
 /// All of the methods here are optional except getTypeName() and
 /// isCurrentClassName(), which must be specified in order for the
-/// parse to complete accurately.  The MinimalAction class does this
-/// bare-minimum of tracking to implement this functionality.
+/// parse to complete accurately.
 class Action : public ActionBase {
   /// \brief The parser's current scope.
   ///
@@ -3182,90 +3181,6 @@ public:
   //@}
 };
 
-/// MinimalAction - Minimal actions are used by light-weight clients of the
-/// parser that do not need name resolution or significant semantic analysis to
-/// be performed.  The actions implemented here are in the form of unresolved
-/// identifiers.  By using a simpler interface than the SemanticAction class,
-/// the parser doesn't have to build complex data structures and thus runs more
-/// quickly.
-class MinimalAction : public Action {
-  /// Translation Unit Scope - useful to Objective-C actions that need
-  /// to lookup file scope declarations in the "ordinary" C decl namespace.
-  /// For example, user-defined classes, built-in "id" type, etc.
-  Scope *TUScope;
-  IdentifierTable &Idents;
-  Preprocessor &PP;
-  void *TypeNameInfoTablePtr;
-public:
-  MinimalAction(Preprocessor &pp);
-  ~MinimalAction();
-
-  /// getTypeName - This looks at the IdentifierInfo::FETokenInfo field to
-  /// determine whether the name is a typedef or not in this scope.
-  ///
-  /// \param II the identifier for which we are performing name lookup
-  ///
-  /// \param NameLoc the location of the identifier
-  ///
-  /// \param S the scope in which this name lookup occurs
-  ///
-  /// \param SS if non-NULL, the C++ scope specifier that precedes the
-  /// identifier
-  ///
-  /// \param isClassName whether this is a C++ class-name production, in
-  /// which we can end up referring to a member of an unknown specialization
-  /// that we know (from the grammar) is supposed to be a type. For example,
-  /// this occurs when deriving from "std::vector<T>::allocator_type", where T
-  /// is a template parameter.
-  ///
-  /// \returns the type referred to by this identifier, or NULL if the type
-  /// does not name an identifier.
-  virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, CXXScopeSpec *SS,
-                              bool isClassName = false,
-                              TypeTy *ObjectType = 0);
-
-  /// isCurrentClassName - Always returns false, because MinimalAction
-  /// does not support C++ classes with constructors.
-  virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
-                                  const CXXScopeSpec *SS);
-
-  virtual TemplateNameKind isTemplateName(Scope *S,
-                                          CXXScopeSpec &SS,
-                                          UnqualifiedId &Name,
-                                          TypeTy *ObjectType,
-                                          bool EnteringContext,
-                                          TemplateTy &Template,
-                                          bool &MemberOfUnknownSpecialization);
-
-  
-  /// ActOnDeclarator - If this is a typedef declarator, we modify the
-  /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
-  /// popped.
-  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D);
-
-  /// ActOnPopScope - When a scope is popped, if any typedefs are now
-  /// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.
-  virtual void ActOnPopScope(SourceLocation Loc, Scope *S);
-  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S);
-
-  virtual DeclPtrTy ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
-                                                 IdentifierInfo **IdentList,
-                                                 SourceLocation *SLocs,
-                                                 unsigned NumElts);
-
-  virtual DeclPtrTy ActOnStartClassInterface(SourceLocation interLoc,
-                                             IdentifierInfo *ClassName,
-                                             SourceLocation ClassLoc,
-                                             IdentifierInfo *SuperName,
-                                             SourceLocation SuperLoc,
-                                             const DeclPtrTy *ProtoRefs,
-                                             unsigned NumProtoRefs,
-                                             const SourceLocation *ProtoLocs,
-                                             SourceLocation EndProtoLoc,
-                                             AttributeList *AttrList);
-};
-
 /// PrettyStackTraceActionsDecl - If a crash occurs in the parser while parsing
 /// something related to a virtualized decl, include that virtualized decl in
 /// the stack trace.
@@ -3275,11 +3190,12 @@ class PrettyStackTraceActionsDecl : public llvm::PrettyStackTraceEntry {
   Action &Actions;
   SourceManager &SM;
   const char *Message;
+  
 public:
   PrettyStackTraceActionsDecl(Action::DeclPtrTy Decl, SourceLocation L,
                               Action &actions, SourceManager &sm,
                               const char *Msg)
-  : TheDecl(Decl), Loc(L), Actions(actions), SM(sm), Message(Msg) {}
+    : TheDecl(Decl), Loc(L), Actions(actions), SM(sm), Message(Msg) {}
 
   virtual void print(llvm::raw_ostream &OS) const;
 };
@@ -3291,7 +3207,7 @@ class EnterExpressionEvaluationContext {
 
 public:
   EnterExpressionEvaluationContext(Action &Actions,
-                              Action::ExpressionEvaluationContext NewContext)
+                                   Action::ExpressionEvaluationContext NewContext)
     : Actions(Actions) {
     Actions.PushExpressionEvaluationContext(NewContext);
   }
@@ -3300,6 +3216,7 @@ public:
     Actions.PopExpressionEvaluationContext();
   }
 };
+
 
 }  // end namespace clang
 

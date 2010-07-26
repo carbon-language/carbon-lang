@@ -25,7 +25,6 @@ add_clang_library(clangFrontend
   PCHWriter.cpp
   PCHWriterDecl.cpp
   PCHWriterStmt.cpp
-  PrintParserCallbacks.cpp
   PrintPreprocessedOutput.cpp
   StmtXML.cpp
   TextDiagnosticBuffer.cpp

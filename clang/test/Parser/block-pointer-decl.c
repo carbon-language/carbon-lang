@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -parse-noop -fblocks %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+
+int printf(char const *, ...);
 
 struct blockStruct {
   int (^a)(float, int);

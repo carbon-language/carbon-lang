@@ -90,8 +90,7 @@ class Parser {
   unsigned short ParenCount, BracketCount, BraceCount;
 
   /// Actions - These are the callbacks we invoke as we parse various constructs
-  /// in the file.  This refers to the common base class between MinimalActions
-  /// and SemaActions for those uses that don't matter.
+  /// in the file. 
   Action &Actions;
 
   Diagnostic &Diags;

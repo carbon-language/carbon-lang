@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -parse-noop %s
-#if 0
+// RUN: %clang_cc1 -fsyntax-only -fblocks -verify %s
 int printf(const char *, ...);
 void _Block_byref_release(void*src){}
 
@@ -16,4 +15,3 @@ int main() {
 
    return X;
 }
-#endif

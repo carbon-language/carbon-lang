@@ -39,8 +39,6 @@ namespace frontend {
     GeneratePTH,            ///< Generate pre-tokenized header.
     InheritanceView,        ///< View C++ inheritance for a specified class.
     InitOnly,               ///< Only execute frontend initialization.
-    ParseNoop,              ///< Parse with noop callbacks.
-    ParsePrintCallbacks,    ///< Parse and print each callback.
     ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
     PluginAction,           ///< Run a plugin action, \see ActionName.
     PrintDeclContext,       ///< Print DeclContext and their Decls.

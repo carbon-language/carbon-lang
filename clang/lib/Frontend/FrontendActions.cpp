@@ -147,15 +147,6 @@ void GeneratePTHAction::ExecuteAction() {
   CacheTokens(CI.getPreprocessor(), OS);
 }
 
-void ParseOnlyAction::ExecuteAction() {
-  Preprocessor &PP = getCompilerInstance().getPreprocessor();
-  llvm::OwningPtr<Action> PA(new MinimalAction(PP));
-
-  Parser P(PP, *PA);
-  PP.EnterMainSourceFile();
-  P.ParseTranslationUnit();
-}
-
 void PreprocessOnlyAction::ExecuteAction() {
   Preprocessor &PP = getCompilerInstance().getPreprocessor();
 
@@ -168,19 +159,6 @@ void PreprocessOnlyAction::ExecuteAction() {
   do {
     PP.Lex(Tok);
   } while (Tok.isNot(tok::eof));
-}
-
-void PrintParseAction::ExecuteAction() {
-  CompilerInstance &CI = getCompilerInstance();
-  Preprocessor &PP = getCompilerInstance().getPreprocessor();
-  llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
-  if (!OS) return;
-
-  llvm::OwningPtr<Action> PA(CreatePrintParserActionsAction(PP, OS));
-
-  Parser P(PP, *PA);
-  PP.EnterMainSourceFile();
-  P.ParseTranslationUnit();
 }
 
 void PrintPreprocessedAction::ExecuteAction() {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -parse-noop
+// RUN: %clang_cc1 %s -fsyntax-only
 @interface MyObject 
 - (void) bycopy  : (int) woodo, ... ;
 - (void) break  : (int) woodo, ... ;

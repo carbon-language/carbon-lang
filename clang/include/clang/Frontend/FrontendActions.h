@@ -163,17 +163,7 @@ protected:
   void ExecuteAction();
 };
 
-class ParseOnlyAction : public PreprocessorFrontendAction {
-protected:
-  void ExecuteAction();
-};
-
 class PreprocessOnlyAction : public PreprocessorFrontendAction {
-protected:
-  void ExecuteAction();
-};
-
-class PrintParseAction : public PreprocessorFrontendAction {
 protected:
   void ExecuteAction();
 };
