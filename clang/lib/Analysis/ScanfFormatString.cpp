@@ -22,6 +22,7 @@ using clang::analyze_format_string::OptionalAmount;
 using clang::analyze_format_string::ConversionSpecifier;
 using clang::analyze_scanf::ScanfConversionSpecifier;
 using clang::analyze_scanf::ScanfSpecifier;
+using clang::UpdateOnReturn;
 
 typedef clang::analyze_format_string::SpecifierResult<ScanfSpecifier>
         ScanfSpecifierResult;

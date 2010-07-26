@@ -6,6 +6,8 @@
 #include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
 
+namespace clang {
+
 template <typename T>
 class UpdateOnReturn {
   T &ValueToUpdate;
@@ -19,7 +21,6 @@ public:
   }
 };
 
-namespace clang {
 namespace analyze_format_string {
   
 OptionalAmount ParseAmount(const char *&Beg, const char *E);

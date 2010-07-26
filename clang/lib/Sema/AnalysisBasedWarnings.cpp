@@ -197,6 +197,8 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
   return AlwaysFallThrough;
 }
 
+namespace {
+
 struct CheckFallThroughDiagnostics {
   unsigned diag_MaybeFallThrough_HasNoReturn;
   unsigned diag_MaybeFallThrough_ReturnsNonVoid;
@@ -265,6 +267,8 @@ struct CheckFallThroughDiagnostics {
                 == Diagnostic::Ignored || !ReturnsVoid);
   }
 };
+
+}
 
 /// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
 /// function that should return a value.  Check that we don't fall off the end

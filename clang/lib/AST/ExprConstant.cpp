@@ -2321,6 +2321,8 @@ APSInt Expr::EvaluateAsInt(ASTContext &Ctx) const {
 //    the comma operator in C99 mode.
 // 2: This expression is not an ICE, and is not a legal subexpression for one.
 
+namespace {
+
 struct ICEDiag {
   unsigned Val;
   SourceLocation Loc;
@@ -2330,7 +2332,9 @@ struct ICEDiag {
   ICEDiag() : Val(0) {}
 };
 
-ICEDiag NoDiag() { return ICEDiag(); }
+}
+
+static ICEDiag NoDiag() { return ICEDiag(); }
 
 static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
   Expr::EvalResult EVResult;

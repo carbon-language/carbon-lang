@@ -929,6 +929,8 @@ static void MergeAttributes(Decl *New, Decl *Old, ASTContext &C) {
   }
 }
 
+namespace {
+
 /// Used in MergeFunctionDecl to keep track of function parameters in
 /// C.
 struct GNUCompatibleParamWarning {
@@ -937,6 +939,7 @@ struct GNUCompatibleParamWarning {
   QualType PromotedType;
 };
 
+}
 
 /// getSpecialMember - get the special member enum for a method.
 Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {

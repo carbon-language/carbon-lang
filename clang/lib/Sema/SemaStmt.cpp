@@ -1577,6 +1577,8 @@ Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclPtrTy ExDecl,
                                           HandlerBlock.takeAs<Stmt>()));
 }
 
+namespace {
+
 class TypeWithHandler {
   QualType t;
   CXXCatchStmt *stmt;
@@ -1605,6 +1607,8 @@ public:
     return stmt->getExceptionDecl()->getTypeSpecStartLoc();
   }
 };
+
+}
 
 /// ActOnCXXTryBlock - Takes a try compound-statement and a number of
 /// handlers and creates a try statement from them.

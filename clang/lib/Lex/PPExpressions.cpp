@@ -24,6 +24,8 @@
 #include "llvm/ADT/APSInt.h"
 using namespace clang;
 
+namespace {
+
 /// PPValue - Represents the value of a subexpression of a preprocessor
 /// conditional and the source range covered by it.
 class PPValue {
@@ -46,6 +48,8 @@ public:
   void setBegin(SourceLocation L) { Range.setBegin(L); }
   void setEnd(SourceLocation L) { Range.setEnd(L); }
 };
+
+}
 
 static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
                                      Token &PeekTok, bool ValueLive,

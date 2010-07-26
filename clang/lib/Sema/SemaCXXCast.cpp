@@ -197,7 +197,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 /// the same kind of pointer (plain or to-member). Unlike the Sema function,
 /// this one doesn't care if the two pointers-to-member don't point into the
 /// same class. This is because CastsAwayConstness doesn't care.
-bool UnwrapDissimilarPointerTypes(QualType& T1, QualType& T2) {
+static bool UnwrapDissimilarPointerTypes(QualType& T1, QualType& T2) {
   const PointerType *T1PtrType = T1->getAs<PointerType>(),
                     *T2PtrType = T2->getAs<PointerType>();
   if (T1PtrType && T2PtrType) {

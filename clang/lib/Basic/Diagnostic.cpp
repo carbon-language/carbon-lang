@@ -38,6 +38,8 @@ using namespace clang;
 // Builtin Diagnostic information
 //===----------------------------------------------------------------------===//
 
+namespace {
+
 // Diagnostic classes.
 enum {
   CLASS_NOTE       = 0x01,
@@ -63,6 +65,8 @@ struct StaticDiagInfoRec {
     return DiagID > RHS.DiagID;
   }
 };
+
+}
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,SFINAE, CATEGORY)    \
