@@ -48,7 +48,7 @@ static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
                                       CXTranslationUnit *TU) {
 
   *TU = clang_createTranslationUnit(Idx, file);
-  if (!TU) {
+  if (!*TU) {
     fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
     return 0;
   }
