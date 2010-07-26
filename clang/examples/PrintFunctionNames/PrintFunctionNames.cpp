@@ -53,5 +53,5 @@ protected:
 
 }
 
-FrontendPluginRegistry::Add<PrintFunctionNamesAction>
+static FrontendPluginRegistry::Add<PrintFunctionNamesAction>
 X("print-fns", "print function names");
