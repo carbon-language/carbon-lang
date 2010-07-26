@@ -530,6 +530,10 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
                                       FunctionLoweringInfo &FuncInfo,
                                       DebugLoc dl,
                                       SDValue &Chain, SDValue *Flag) const {
+  // A Value with type {} or [0 x %t] needs no registers.
+  if (ValueVTs.empty())
+    return SDValue();
+
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Assemble the legal parts into the final values.
