@@ -53,7 +53,6 @@ public:
 
   virtual void EndOfMainFile() {
     OutputDependencyFile();
-    OS->flush();
     delete OS;
     OS = 0;
   }

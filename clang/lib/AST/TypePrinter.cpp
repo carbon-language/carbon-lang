@@ -463,7 +463,6 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
     }
     
     OS << '>';
-    OS.flush();
   }
 
   // If this is a class template specialization, print the template

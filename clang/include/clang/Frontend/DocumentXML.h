@@ -150,7 +150,6 @@ inline void DocumentXML::addAttribute(const char* pName, const T& value) {
   {
     llvm::raw_string_ostream buf(repr);
     buf << value;
-    buf.flush();
   }
   
   Out << ' ' << pName << "=\"" 
