@@ -799,7 +799,7 @@ void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
   // the dominance frontiers.
   for (Loop::block_iterator I = LP->block_begin(), E = LP->block_end();
        I != E; ++I) {
-    if (*I == CondBB || !DT->dominates(CondBB, *I)) continue;
+    if (!DT->properlyDominates(CondBB, *I)) continue;
     DominanceFrontier::iterator BBDF = DF->find(*I);
     DominanceFrontier::DomSetType::iterator DomSetI = BBDF->second.begin();
     DominanceFrontier::DomSetType::iterator DomSetE = BBDF->second.end();
