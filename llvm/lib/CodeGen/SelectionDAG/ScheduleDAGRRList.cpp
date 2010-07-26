@@ -1192,11 +1192,12 @@ namespace {
     }
 
     bool HighRegPressure(const SUnit *SU, unsigned &Excess) const {
+      Excess = 0;
+
       if (!TLI)
         return false;
 
       bool High = false;
-      Excess = 0;
       for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
            I != E; ++I) {
         if (I->isCtrl())
