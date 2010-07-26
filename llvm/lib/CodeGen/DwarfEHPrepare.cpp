@@ -338,7 +338,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     for (SmallPtrSet<InvokeInst*, 32>::iterator
            UI = URoRInvokes.begin(), UE = URoRInvokes.end(); UI != UE; ++UI) {
       const BasicBlock *URoRBB = (*UI)->getParent();
-      if (SelBB == URoRBB || DT->dominates(SelBB, URoRBB)) {
+      if (DT->dominates(SelBB, URoRBB)) {
         SelsToConvert.insert(*SI);
         break;
       }
