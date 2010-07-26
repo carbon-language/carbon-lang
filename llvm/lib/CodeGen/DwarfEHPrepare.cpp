@@ -86,7 +86,7 @@ namespace {
     }
 
     /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still
-    /// use the ".llvm.eh.catch.all.value" call need to convert to using its
+    /// use the "llvm.eh.catch.all.value" call need to convert to using its
     /// initializer instead.
     bool CleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels);
 
@@ -231,7 +231,7 @@ FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes) {
 }
 
 /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still use
-/// the ".llvm.eh.catch.all.value" call need to convert to using its
+/// the "llvm.eh.catch.all.value" call need to convert to using its
 /// initializer instead.
 bool DwarfEHPrepare::CleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
   if (!EHCatchAllValue) return false;
@@ -247,7 +247,7 @@ bool DwarfEHPrepare::CleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
          I = Sels.begin(), E = Sels.end(); I != E; ++I) {
     IntrinsicInst *Sel = *I;
 
-    // Index of the ".llvm.eh.catch.all.value" variable.
+    // Index of the "llvm.eh.catch.all.value" variable.
     unsigned OpIdx = Sel->getNumArgOperands() - 1;
     GlobalVariable *GV = dyn_cast<GlobalVariable>(Sel->getArgOperand(OpIdx));
     if (GV != EHCatchAllValue) continue;
@@ -304,7 +304,7 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
 bool DwarfEHPrepare::HandleURoRInvokes() {
   if (!EHCatchAllValue) {
     EHCatchAllValue =
-      F->getParent()->getNamedGlobal(".llvm.eh.catch.all.value");
+      F->getParent()->getNamedGlobal("llvm.eh.catch.all.value");
     if (!EHCatchAllValue) return false;
   }
 
