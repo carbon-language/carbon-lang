@@ -645,13 +645,13 @@ void foo(unsigned char *a, unsigned char *b, int *c) {
 
 currently llvm-gcc generates something like this (nice branchless code I'd say):
 
-       ldrb    r0, [r0]
-       ldrb    r1, [r1]
-       orr     r0, r1, r0
-       tst     r0, #255
-       moveq   r0, #0
-       streq   r0, [r2]
-       bx      lr
+       ldrb    r0, [r0]
+       ldrb    r1, [r1]
+       orr     r0, r1, r0
+       tst     r0, #255
+       moveq   r0, #0
+       streq   r0, [r2]
+       bx      lr
 
 Note that both "tst" and "moveq" are redundant.
 
