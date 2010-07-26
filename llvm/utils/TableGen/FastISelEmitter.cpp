@@ -208,7 +208,8 @@ class FastISelMap {
   typedef std::map<MVT::SimpleValueType, PredMap> RetPredMap;
   typedef std::map<MVT::SimpleValueType, RetPredMap> TypeRetPredMap;
   typedef std::map<std::string, TypeRetPredMap> OpcodeTypeRetPredMap;
-  typedef std::map<OperandsSignature, OpcodeTypeRetPredMap> OperandsOpcodeTypeRetPredMap;
+  typedef std::map<OperandsSignature, OpcodeTypeRetPredMap> 
+            OperandsOpcodeTypeRetPredMap;
 
   OperandsOpcodeTypeRetPredMap SimplePatterns;
 
@@ -375,7 +376,8 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
       SubRegNo,
       PhysRegInputs
     };
-    assert(!SimplePatterns[Operands][OpcodeName][VT][RetVT].count(PredicateCheck) &&
+    assert(!SimplePatterns[Operands][OpcodeName][VT][RetVT]
+            .count(PredicateCheck) &&
            "Duplicate pattern!");
     SimplePatterns[Operands][OpcodeName][VT][RetVT][PredicateCheck] = Memo;
   }
