@@ -216,6 +216,9 @@ bb61:
 
 ; PR5698
 define void @test7(i32 %x) {
+entry:
+  br label %tailrecurse
+
 tailrecurse:
   switch i32 %x, label %return [
     i32 2, label %bb2
