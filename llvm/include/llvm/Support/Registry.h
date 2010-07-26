@@ -203,6 +203,8 @@ namespace llvm {
 
   };
 
+  // Since these are defined in a header file, plugins must be sure to export
+  // these symbols.
 
   template <typename T, typename U>
   typename Registry<T,U>::node *Registry<T,U>::Head;
