@@ -830,7 +830,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
     // If we have exactly one branch-after and no branch-throughs, we
     // can dispatch it without a switch.
-    if (!Scope.hasBranchThroughs() &&
+    if (!Scope.hasEHBranchThroughs() &&
         Scope.getNumEHBranchAfters() == 1) {
       assert(!EHBranchThroughDest);
 

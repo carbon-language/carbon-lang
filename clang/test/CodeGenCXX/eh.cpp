@@ -361,3 +361,21 @@ namespace test13 {
     } catch (int x) {}
   }
 }
+
+// rdar://problem/8231514
+namespace test14 {
+  struct A { ~A(); };
+  struct B { ~B(); };
+
+  B b();
+  void opaque();
+
+  void foo() {
+    A a;
+    try {
+      B str = b();
+      opaque();
+    } catch (int x) {
+    }
+  }
+}
