@@ -238,8 +238,10 @@ public:
   /// \param Buffer The memory buffer containing the file's contents.
   ///
   /// \returns The offset into the file where the preamble ends and the rest
-  /// of the file begins.
-  static unsigned ComputePreamble(const llvm::MemoryBuffer *Buffer);
+  /// of the file begins along with a boolean value indicating whether 
+  /// the preamble ends at the beginning of a new line.
+  static std::pair<unsigned, bool>
+  ComputePreamble(const llvm::MemoryBuffer *Buffer);
                                         
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.
@@ -383,6 +385,8 @@ private:
   //===--------------------------------------------------------------------===//
   // Other lexer functions.
 
+  void SkipBytes(unsigned Bytes, bool StartOfLine);
+  
   // Helper functions to lex the remainder of a token of the specific type.
   void LexIdentifier         (Token &Result, const char *CurPtr);
   void LexNumericConstant    (Token &Result, const char *CurPtr);

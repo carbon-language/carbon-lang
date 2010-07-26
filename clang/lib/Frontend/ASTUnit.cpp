@@ -46,6 +46,20 @@ ASTUnit::~ASTUnit() {
   CleanTemporaryFiles();
   if (!PreambleFile.empty())
     PreambleFile.eraseFromDisk();
+  
+  // Free the buffers associated with remapped files. We are required to
+  // perform this operation here because we explicitly request that the
+  // compiler instance *not* free these buffers for each invocation of the
+  // parser.
+  if (Invocation.get()) {
+    PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
+    for (PreprocessorOptions::remapped_file_buffer_iterator
+           FB = PPOpts.remapped_file_buffer_begin(),
+           FBEnd = PPOpts.remapped_file_buffer_end();
+         FB != FBEnd;
+         ++FB)
+      delete FB->second;
+  }
 }
 
 void ASTUnit::CleanTemporaryFiles() {
@@ -371,6 +385,17 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // Create the source manager.
   Clang.setSourceManager(&getSourceManager());
   
+  // If the main file has been overridden due to the use of a preamble,
+  // make that override happen and introduce the preamble.
+  PreprocessorOptions &PreprocessorOpts = Clang.getPreprocessorOpts();
+  if (OverrideMainBuffer) {
+    PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
+    PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
+    PreprocessorOpts.PrecompiledPreambleBytes.second
+                                                    = PreambleEndsAtStartOfLine;
+    PreprocessorOpts.ImplicitPCHInclude = PreambleFile.str();
+  }
+  
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
   Act.reset(new TopLevelDeclTrackerAction(*this));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
@@ -388,6 +413,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Target.reset(Clang.takeTarget());
   
   Act->EndSourceFile();
+
+  // Remove the overridden buffer we used for the preamble.
+  if (OverrideMainBuffer)
+    PreprocessorOpts.eraseRemappedFile(
+                               PreprocessorOpts.remapped_file_buffer_end() - 1);
   
   Clang.takeDiagnosticClient();
   
@@ -395,6 +425,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   return false;
   
 error:
+  // Remove the overridden buffer we used for the preamble.
+  if (OverrideMainBuffer)
+    PreprocessorOpts.eraseRemappedFile(
+                               PreprocessorOpts.remapped_file_buffer_end() - 1);
+  
   Clang.takeSourceManager();
   Clang.takeFileManager();
   Clang.takeDiagnosticClient();
@@ -424,8 +459,10 @@ static std::string GetPreamblePCHPath() {
   return P.str();
 }
 
-/// \brief Compute the preamble for the main file, providing
-std::pair<llvm::MemoryBuffer *, unsigned> 
+/// \brief Compute the preamble for the main file, providing the source buffer
+/// that corresponds to the main file along with a pair (bytes, start-of-line)
+/// that describes the preamble.
+std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> > 
 ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
   FrontendOptions &FrontendOpts = Invocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
@@ -455,7 +492,8 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
           
           Buffer = llvm::MemoryBuffer::getFile(M->second);
           if (!Buffer)
-            return std::make_pair((llvm::MemoryBuffer*)0, 0);
+            return std::make_pair((llvm::MemoryBuffer*)0, 
+                                  std::make_pair(0, true));
           CreatedBuffer = true;
           
           // Remove this remapping. We've captured the buffer already.
@@ -495,7 +533,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
   if (!Buffer) {
     Buffer = llvm::MemoryBuffer::getFile(FrontendOpts.Inputs[0].second);
     if (!Buffer)
-      return std::make_pair((llvm::MemoryBuffer*)0, 0);    
+      return std::make_pair((llvm::MemoryBuffer*)0, std::make_pair(0, true));    
     
     CreatedBuffer = true;
   }
@@ -512,9 +550,8 @@ static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
   memcpy(const_cast<char*>(Result->getBufferStart()), 
          Old->getBufferStart(), Old->getBufferSize());
   memset(const_cast<char*>(Result->getBufferStart()) + Old->getBufferSize(), 
-         ' ', NewSize - Old->getBufferSize() - 2);
-  const_cast<char*>(Result->getBufferEnd())[-2] = '\n';  
-  const_cast<char*>(Result->getBufferEnd())[-1] = 0;  
+         ' ', NewSize - Old->getBufferSize() - 1);
+  const_cast<char*>(Result->getBufferEnd())[-1] = '\n';  
   
   if (DeleteOld)
     delete Old;
@@ -542,10 +579,10 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     = PreambleInvocation.getPreprocessorOpts();
 
   bool CreatedPreambleBuffer = false;
-  std::pair<llvm::MemoryBuffer *, unsigned> NewPreamble 
+  std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> > NewPreamble 
     = ComputePreamble(PreambleInvocation, CreatedPreambleBuffer);
 
-  if (!NewPreamble.second) {
+  if (!NewPreamble.second.first) {
     // We couldn't find a preamble in the main source. Clear out the current
     // preamble, if we have one. It's obviously no good any more.
     Preamble.clear();
@@ -564,10 +601,11 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     // preamble now that we did before, and that there's enough space in
     // the main-file buffer within the precompiled preamble to fit the
     // new main file.
-    if (Preamble.size() == NewPreamble.second &&
+    if (Preamble.size() == NewPreamble.second.first &&
+        PreambleEndsAtStartOfLine == NewPreamble.second.second &&
         NewPreamble.first->getBufferSize() < PreambleReservedSize-2 &&
         memcmp(&Preamble[0], NewPreamble.first->getBufferStart(),
-               NewPreamble.second) == 0) {
+               NewPreamble.second.first) == 0) {
       // The preamble has not changed. We may be able to re-use the precompiled
       // preamble.
       // FIXME: Check that none of the files used by the preamble have changed.
@@ -593,7 +631,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   // grows.  
   PreambleReservedSize = NewPreamble.first->getBufferSize();
   if (PreambleReservedSize < 4096)
-    PreambleReservedSize = 8192;
+    PreambleReservedSize = 8191;
   else
     PreambleReservedSize *= 2;
 
@@ -603,14 +641,15 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   memcpy(const_cast<char*>(PreambleBuffer->getBufferStart()), 
          NewPreamble.first->getBufferStart(), Preamble.size());
   memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + Preamble.size(), 
-         ' ', PreambleReservedSize - Preamble.size() - 2);
-  const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = 0;
-  const_cast<char*>(PreambleBuffer->getBufferEnd())[-2] = '\n';  
+         ' ', PreambleReservedSize - Preamble.size() - 1);
+  const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = '\n';  
 
   // Save the preamble text for later; we'll need to compare against it for
   // subsequent reparses.
   Preamble.assign(NewPreamble.first->getBufferStart(), 
-                  NewPreamble.first->getBufferStart() + NewPreamble.second);
+                  NewPreamble.first->getBufferStart() 
+                                                  + NewPreamble.second.first);
+  PreambleEndsAtStartOfLine = NewPreamble.second.second;
   
   // Remap the main source file to the preamble buffer.
   llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].second);
@@ -734,6 +773,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->Invocation.reset(CI);
+  CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (PrecompilePreamble)

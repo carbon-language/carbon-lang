@@ -310,7 +310,8 @@ namespace {
   };
 }
 
-unsigned Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
+std::pair<unsigned, bool>
+Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
   // Create a lexer starting at the beginning of the file. Note that we use a
   // "fake" file source location at offset 1 so that the lexer will track our
   // position within the file.
@@ -422,7 +423,9 @@ unsigned Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
   } while (true);
   
   SourceLocation End = IfCount? IfStartTok.getLocation() : TheTok.getLocation();
-  return End.getRawEncoding() - StartLoc.getRawEncoding();
+  return std::make_pair(End.getRawEncoding() - StartLoc.getRawEncoding(),
+                        IfCount? IfStartTok.isAtStartOfLine()
+                               : TheTok.isAtStartOfLine());
 }
 
 //===----------------------------------------------------------------------===//
@@ -824,6 +827,14 @@ Slash:
 //===----------------------------------------------------------------------===//
 // Helper methods for lexing.
 //===----------------------------------------------------------------------===//
+
+/// \brief Routine that indiscriminately skips bytes in the source file.
+void Lexer::SkipBytes(unsigned Bytes, bool StartOfLine) {
+  BufferPtr += Bytes;
+  if (BufferPtr > BufferEnd)
+    BufferPtr = BufferEnd;
+  IsAtStartOfLine = StartOfLine;
+}
 
 void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]

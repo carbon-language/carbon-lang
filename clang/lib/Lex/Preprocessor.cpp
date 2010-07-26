@@ -54,7 +54,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
     Identifiers(opts, IILookup), BuiltinInfo(Target), CodeCompletionFile(0),
-    CurPPLexer(0), CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0) {
+    SkipMainFilePreamble(0, true), CurPPLexer(0), CurDirLookup(0), Callbacks(0), 
+    MacroArgCache(0), Record(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -508,6 +509,12 @@ void Preprocessor::EnterMainSourceFile() {
   // Enter the main file source buffer.
   EnterSourceFile(MainFileID, 0, SourceLocation());
 
+  // If we've been asked to skip bytes in the main file (e.g., as part of a
+  // precompiled preamble), do so now.
+  if (SkipMainFilePreamble.first > 0)
+    CurLexer->SkipBytes(SkipMainFilePreamble.first, 
+                        SkipMainFilePreamble.second);
+  
   // Tell the header info that the main file was entered.  If the file is later
   // #imported, it won't be re-entered.
   if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))

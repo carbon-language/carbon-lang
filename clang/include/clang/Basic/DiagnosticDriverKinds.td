@@ -68,6 +68,8 @@ def err_drv_invalid_gcc_output_type : Error<
     "invalid output type '%0' for use with gcc tool">;
 def err_drv_cc_print_options_failure : Error<
     "unable to open CC_PRINT_OPTIONS file: %0">;
+def err_drv_preamble_format : Error<
+    "incorrect format for -preamble-bytes=N,END">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;

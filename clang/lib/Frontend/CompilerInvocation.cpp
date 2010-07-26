@@ -1353,6 +1353,23 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
     Opts.TokenCache = Opts.ImplicitPTHInclude;
   Opts.UsePredefines = !Args.hasArg(OPT_undef);
   Opts.DetailedRecord = Args.hasArg(OPT_detailed_preprocessing_record);
+  
+  if (const Arg *A = Args.getLastArg(OPT_preamble_bytes_EQ)) {
+    llvm::StringRef Value(A->getValue(Args));
+    size_t Comma = Value.find(',');
+    unsigned Bytes = 0;
+    unsigned EndOfLine = 0;
+    
+    if (Comma == llvm::StringRef::npos ||
+        Value.substr(0, Comma).getAsInteger(10, Bytes) ||
+        Value.substr(Comma + 1).getAsInteger(10, EndOfLine))
+      Diags.Report(diag::err_drv_preamble_format);
+    else {
+      Opts.PrecompiledPreambleBytes.first = Bytes;
+      Opts.PrecompiledPreambleBytes.second = (EndOfLine != 0);
+    }
+  }
+    
   // Add macros from the command line.
   for (arg_iterator it = Args.filtered_begin(OPT_D, OPT_U),
          ie = Args.filtered_end(); it != ie; ++it) {

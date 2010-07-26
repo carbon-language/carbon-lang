@@ -134,6 +134,12 @@ class Preprocessor {
   /// \brief The file that we're performing code-completion for, if any.
   const FileEntry *CodeCompletionFile;
 
+  /// \brief The number of bytes that we will initially skip when entering the
+  /// main file, which is used when loading a precompiled preamble, along
+  /// with a flag that indicates whether skipping this number of bytes will
+  /// place the lexer at the start of a line.
+  std::pair<unsigned, bool> SkipMainFilePreamble;
+  
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro and we are lexing directly from source code.
   ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
@@ -556,6 +562,18 @@ public:
   /// for which we are performing code completion.
   bool isCodeCompletionFile(SourceLocation FileLoc) const;
 
+  /// \brief Instruct the preprocessor to skip part of the main
+  /// the main source file.
+  ///
+  /// \brief Bytes The number of bytes in the preamble to skip.
+  ///
+  /// \brief StartOfLine Whether skipping these bytes puts the lexer at the
+  /// start of a line.
+  void setSkipMainFilePreamble(unsigned Bytes, bool StartOfLine) { 
+    SkipMainFilePreamble.first = Bytes;
+    SkipMainFilePreamble.second = StartOfLine;
+  }
+  
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.

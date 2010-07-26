@@ -125,6 +125,12 @@ private:
   /// \c PreambleFile.
   std::vector<char> Preamble;
 
+  /// \brief Whether the preamble ends at the start of a new line.
+  /// 
+  /// Used to inform the lexer as to whether it's starting at the beginning of
+  /// a line after skipping the preamble.
+  bool PreambleEndsAtStartOfLine;
+  
   /// \brief The size of the source buffer that we've reserved for the main 
   /// file within the precompiled preamble.
   unsigned PreambleReservedSize;
@@ -137,9 +143,8 @@ private:
   void CleanTemporaryFiles();
   bool Parse(llvm::MemoryBuffer *OverrideMainBuffer);
   
-  std::pair<llvm::MemoryBuffer *, unsigned> ComputePreamble(
-                                                CompilerInvocation &Invocation,
-                                                          bool &CreatedBuffer);
+  std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> >
+  ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer);
   
   llvm::MemoryBuffer *BuildPrecompiledPreamble();
   

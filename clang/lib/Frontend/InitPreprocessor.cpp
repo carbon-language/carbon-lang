@@ -489,13 +489,15 @@ static void InitializeFileRemapping(Diagnostic &Diags,
     if (!FromFile) {
       Diags.Report(diag::err_fe_remap_missing_from_file)
         << Remap->first;
-      delete Remap->second;
+      if (!InitOpts.RetainRemappedFileBuffers)
+        delete Remap->second;
       continue;
     }
 
     // Override the contents of the "from" file with the contents of
     // the "to" file.
-    SourceMgr.overrideFileContents(FromFile, Remap->second);
+    SourceMgr.overrideFileContents(FromFile, Remap->second,
+                                   InitOpts.RetainRemappedFileBuffers);
   }
 
   // Remap files in the source manager (with other files).
@@ -596,6 +598,10 @@ void clang::InitializePreprocessor(Preprocessor &PP,
   if (!PP.getLangOptions().AsmPreprocessor)
     Builder.append("# 1 \"<built-in>\" 2");
 
+  // Instruct the preprocessor to skip the preamble.
+  PP.setSkipMainFilePreamble(InitOpts.PrecompiledPreambleBytes.first,
+                             InitOpts.PrecompiledPreambleBytes.second);
+                          
   // Copy PredefinedBuffer into the Preprocessor.
   PP.setPredefines(Predefines.str());
 

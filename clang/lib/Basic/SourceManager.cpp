@@ -32,7 +32,8 @@ using llvm::MemoryBuffer;
 //===----------------------------------------------------------------------===//
 
 ContentCache::~ContentCache() {
-  delete Buffer.getPointer();
+  if (shouldFreeBuffer())
+    delete Buffer.getPointer();
 }
 
 /// getSizeBytesMapped - Returns the number of bytes actually mapped for
@@ -51,12 +52,14 @@ unsigned ContentCache::getSize() const {
                              : (unsigned) Entry->getSize();
 }
 
-void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
+void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B,
+                                 bool DoNotFree) {
   assert(B != Buffer.getPointer());
   
-  delete Buffer.getPointer();
+  if (shouldFreeBuffer())
+    delete Buffer.getPointer();
   Buffer.setPointer(B);
-  Buffer.setInt(false);
+  Buffer.setInt(DoNotFree? DoNotFreeFlag : 0);
 }
 
 const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
@@ -72,7 +75,6 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
     struct stat FileInfo;
     Buffer.setPointer(MemoryBuffer::getFile(Entry->getName(), &ErrorStr,
                                             Entry->getSize(), &FileInfo));
-    Buffer.setInt(false);
     
     // If we were unable to open the file, then we are in an inconsistent
     // situation where the content cache referenced a file which no longer
@@ -99,7 +101,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         Diag.Report(FullSourceLoc(Loc, SM), diag::err_cannot_open_file)
           << Entry->getName() << ErrorStr;
 
-      Buffer.setInt(true);
+      Buffer.setInt(Buffer.getInt() | InvalidFlag);
 
     // FIXME: This conditionalization is horrible, but we see spurious failures
     // in the test suite due to this warning and no one has had time to hunt it
@@ -119,14 +121,14 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         Diag.Report(FullSourceLoc(Loc, SM), diag::err_file_modified)
           << Entry->getName();
 
-      Buffer.setInt(true);
+      Buffer.setInt(Buffer.getInt() | InvalidFlag);
 #endif
     }
     
     // If the buffer is valid, check to see if it has a UTF Byte Order Mark
     // (BOM).  We only support UTF-8 without a BOM right now.  See
     // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
-    if (!Buffer.getInt()) {
+    if (!isBufferInvalid()) {
       llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
       const char *BOM = 0;
       if (BufStr.startswith("\xFE\xBB\xBF"))
@@ -161,7 +163,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   }
   
   if (Invalid)
-    *Invalid = Buffer.getInt();
+    *Invalid = isBufferInvalid();
   
   return Buffer.getPointer();
 }
@@ -521,12 +523,13 @@ SourceManager::getMemoryBufferForFile(const FileEntry *File,
 }
 
 bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
-                                         const llvm::MemoryBuffer *Buffer) {
+                                         const llvm::MemoryBuffer *Buffer,
+                                         bool DoNotFree) {
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
   if (IR == 0)
     return true;
 
-  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer);
+  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer, DoNotFree);
   return false;
 }
 

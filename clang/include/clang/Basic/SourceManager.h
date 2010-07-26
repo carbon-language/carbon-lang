@@ -53,10 +53,17 @@ namespace SrcMgr {
   /// ContentCache - Once instance of this struct is kept for every file
   /// loaded or used.  This object owns the MemoryBuffer object.
   class ContentCache {
+    enum CCFlags {
+      /// \brief Whether the buffer is invalid.
+      InvalidFlag = 0x01,
+      /// \brief Whether the buffer should not be freed on destruction.
+      DoNotFreeFlag = 0x02
+    };
+    
     /// Buffer - The actual buffer containing the characters from the input
     /// file.  This is owned by the ContentCache object.
-    /// The bit indicates whether the buffer is invalid.
-    mutable llvm::PointerIntPair<const llvm::MemoryBuffer *, 1, bool> Buffer;
+    /// The bits indicate indicates whether the buffer is invalid.
+    mutable llvm::PointerIntPair<const llvm::MemoryBuffer *, 2> Buffer;
 
   public:
     /// Reference to the file entry.  This reference does not own
@@ -106,8 +113,18 @@ namespace SrcMgr {
 
     /// \brief Replace the existing buffer (which will be deleted)
     /// with the given buffer.
-    void replaceBuffer(const llvm::MemoryBuffer *B);
+    void replaceBuffer(const llvm::MemoryBuffer *B, bool DoNotFree = false);
 
+    /// \brief Determine whether the buffer itself is invalid.
+    bool isBufferInvalid() const {
+      return Buffer.getInt() & InvalidFlag;
+    }
+    
+    /// \brief Determine whether the buffer should be freed.
+    bool shouldFreeBuffer() const {
+      return (Buffer.getInt() & DoNotFreeFlag) == 0;
+    }
+    
     ContentCache(const FileEntry *Ent = 0)
       : Buffer(0, false), Entry(Ent), SourceLineCache(0), NumLines(0) {}
 
@@ -490,9 +507,13 @@ public:
   /// \param Buffer the memory buffer whose contents will be used as the
   /// data in the given source file.
   ///
+  /// \param DoNotFree If true, then the buffer will not be freed when the
+  /// source manager is destroyed.
+  ///
   /// \returns true if an error occurred, false otherwise.
   bool overrideFileContents(const FileEntry *SourceFile,
-                            const llvm::MemoryBuffer *Buffer);
+                            const llvm::MemoryBuffer *Buffer,
+                            bool DoNotFree = false);
 
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.

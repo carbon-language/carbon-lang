@@ -43,6 +43,13 @@ public:
   /// The implicit PCH included at the start of the translation unit, or empty.
   std::string ImplicitPCHInclude;
 
+  /// \brief If non-zero, the implicit PCH include is actually a precompiled
+  /// preamble that covers this number of bytes in the main source file.
+  ///
+  /// The boolean indicates whether the preamble ends at the start of a new
+  /// line.
+  std::pair<unsigned, bool> PrecompiledPreambleBytes;
+  
   /// The implicit PTH input included at the start of the translation unit, or
   /// empty.
   std::string ImplicitPTHInclude;
@@ -61,6 +68,14 @@ public:
   /// of the specified memory buffer (the second part of each pair).
   std::vector<std::pair<std::string, const llvm::MemoryBuffer *> > 
     RemappedFileBuffers;
+  
+  /// \brief Whether the compiler instance should retain (i.e., not free)
+  /// the buffers associated with remapped files.
+  ///
+  /// This flag defaults to false; it can be set true only through direct
+  /// manipulation of the compiler invocation object, in cases where the 
+  /// compiler invocation and its buffers will be reused.
+  bool RetainRemappedFileBuffers;
   
   typedef std::vector<std::pair<std::string, std::string> >::iterator
     remapped_file_iterator;
@@ -97,7 +112,9 @@ public:
   }
   
 public:
-  PreprocessorOptions() : UsePredefines(true), DetailedRecord(false) {}
+  PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
+                          PrecompiledPreambleBytes(0, true),
+                          RetainRemappedFileBuffers(false) { }
 
   void addMacroDef(llvm::StringRef Name) {
     Macros.push_back(std::make_pair(Name, false));
