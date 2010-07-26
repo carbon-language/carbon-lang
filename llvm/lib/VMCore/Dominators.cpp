@@ -127,17 +127,6 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
          "NewBB should have a single successor!");
   BasicBlock *NewBBSucc = NewBB->getTerminator()->getSuccessor(0);
 
-  SmallVector<BasicBlock*, 8> PredBlocks;
-  for (pred_iterator PI = pred_begin(NewBB), PE = pred_end(NewBB);
-       PI != PE; ++PI)
-    PredBlocks.push_back(*PI);  
-
-  if (PredBlocks.empty())
-    // If NewBB does not have any predecessors then it is a entry block.
-    // In this case, NewBB and its successor NewBBSucc dominates all
-    // other blocks.
-    return;
-
   // NewBBSucc inherits original NewBB frontier.
   DominanceFrontier::iterator NewBBI = find(NewBB);
   if (NewBBI != end())
@@ -147,7 +136,9 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
   // DF(NewBBSucc) without the stuff that the new block does not dominate
   // a predecessor of.
   DominatorTree &DT = getAnalysis<DominatorTree>();
-  if (DT.dominates(NewBB, NewBBSucc)) {
+  DomTreeNode *NewBBNode = DT.getNode(NewBB);
+  DomTreeNode *NewBBSuccNode = DT.getNode(NewBBSucc);
+  if (DT.dominates(NewBBNode, NewBBSuccNode)) {
     DominanceFrontier::iterator DFI = find(NewBBSucc);
     if (DFI != end()) {
       DominanceFrontier::DomSetType Set = DFI->second;
@@ -157,7 +148,7 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
         bool DominatesPred = false;
         for (pred_iterator PI = pred_begin(*SetI), E = pred_end(*SetI);
              PI != E; ++PI)
-          if (DT.dominates(NewBB, *PI)) {
+          if (DT.dominates(NewBBNode, DT.getNode(*PI))) {
             DominatesPred = true;
             break;
           }
@@ -185,50 +176,71 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
     NewDFSet.insert(NewBBSucc);
     addBasicBlock(NewBB, NewDFSet);
   }
-  
-  // Now we must loop over all of the dominance frontiers in the function,
-  // replacing occurrences of NewBBSucc with NewBB in some cases.  All
-  // blocks that dominate a block in PredBlocks and contained NewBBSucc in
-  // their dominance frontier must be updated to contain NewBB instead.
-  //
-  for (Function::iterator FI = NewBB->getParent()->begin(),
-         FE = NewBB->getParent()->end(); FI != FE; ++FI) {
-    DominanceFrontier::iterator DFI = find(FI);
-    if (DFI == end()) continue;  // unreachable block.
-    
-    // Only consider nodes that have NewBBSucc in their dominator frontier.
-    if (!DFI->second.count(NewBBSucc)) continue;
 
-    // Verify whether this block dominates a block in predblocks.  If not, do
-    // not update it.
-    bool BlockDominatesAny = false;
-    for (SmallVectorImpl<BasicBlock*>::const_iterator BI = PredBlocks.begin(), 
-           BE = PredBlocks.end(); BI != BE; ++BI) {
-      if (DT.dominates(FI, *BI)) {
-        BlockDominatesAny = true;
+  // Now update dominance frontiers which either used to contain NewBBSucc
+  // or which now need to include NewBB.
+
+  // Collect the set of blocks which dominate a predecessor of NewBB or
+  // NewSuccBB and which don't dominate both. This is an initial
+  // approximation of the blocks whose dominance frontiers will need updates.
+  SmallVector<DomTreeNode *, 16> AllPredDoms;
+
+  // Compute the block which dominates both NewBBSucc and NewBB. This is
+  // the immediate dominator of NewBBSucc unless NewBB dominates NewBBSucc.
+  // The code below which climbs dominator trees will stop at this point,
+  // because from this point up, dominance frontiers are unaffected.
+  DomTreeNode *DominatesBoth = 0;
+  if (NewBBSuccNode) {
+    DominatesBoth = NewBBSuccNode->getIDom();
+    if (DominatesBoth == NewBBNode)
+      DominatesBoth = NewBBNode->getIDom();
+  }
+
+  // Collect the set of all blocks which dominate a predecessor of NewBB.
+  SmallPtrSet<DomTreeNode *, 8> NewBBPredDoms;
+  for (pred_iterator PI = pred_begin(NewBB), E = pred_end(NewBB); PI != E; ++PI)
+    for (DomTreeNode *DTN = DT.getNode(*PI); DTN; DTN = DTN->getIDom()) {
+      if (DTN == DominatesBoth)
         break;
-      }
+      if (!NewBBPredDoms.insert(DTN))
+        break;
+      AllPredDoms.push_back(DTN);
     }
 
-    // If NewBBSucc should not stay in our dominator frontier, remove it.
-    // We remove it unless there is a predecessor of NewBBSucc that we
-    // dominate, but we don't strictly dominate NewBBSucc.
-    bool ShouldRemove = true;
-    if ((BasicBlock*)FI == NewBBSucc || !DT.dominates(FI, NewBBSucc)) {
-      // Okay, we know that PredDom does not strictly dominate NewBBSucc.
-      // Check to see if it dominates any predecessors of NewBBSucc.
-      for (pred_iterator PI = pred_begin(NewBBSucc),
-           E = pred_end(NewBBSucc); PI != E; ++PI)
-        if (DT.dominates(FI, *PI)) {
-          ShouldRemove = false;
-          break;
-        }
+  // Collect the set of all blocks which dominate a predecessor of NewSuccBB.
+  SmallPtrSet<DomTreeNode *, 8> NewBBSuccPredDoms;
+  for (pred_iterator PI = pred_begin(NewBBSucc),
+       E = pred_end(NewBBSucc); PI != E; ++PI)
+    for (DomTreeNode *DTN = DT.getNode(*PI); DTN; DTN = DTN->getIDom()) {
+      if (DTN == DominatesBoth)
+        break;
+      if (!NewBBSuccPredDoms.insert(DTN))
+        break;
+      if (!NewBBPredDoms.count(DTN))
+        AllPredDoms.push_back(DTN);
     }
-    
-    if (ShouldRemove)
-      removeFromFrontier(DFI, NewBBSucc);
-    if (BlockDominatesAny && (&*FI == NewBB || !DT.dominates(FI, NewBB)))
+
+  // Visit all relevant dominance frontiers and make any needed updates.
+  for (SmallVectorImpl<DomTreeNode *>::const_iterator I = AllPredDoms.begin(),
+       E = AllPredDoms.end(); I != E; ++I) {
+    DomTreeNode *DTN = *I;
+    iterator DFI = find((*I)->getBlock());
+
+    // Only consider nodes that have NewBBSucc in their dominator frontier.
+    if (DFI == end() || !DFI->second.count(NewBBSucc)) continue;
+
+    // If the block dominates a predecessor of NewBB but does not properly
+    // dominate NewBB itself, add NewBB to its dominance frontier.
+    if (NewBBPredDoms.count(DTN) &&
+        !DT.properlyDominates(DTN, NewBBNode))
       addToFrontier(DFI, NewBB);
+
+    // If the block does not dominate a predecessor of NewBBSucc or
+    // properly dominates NewBBSucc itself, remove NewBBSucc from its
+    // dominance frontier.
+    if (!NewBBSuccPredDoms.count(DTN) ||
+        DT.properlyDominates(DTN, NewBBSuccNode))
+      removeFromFrontier(DFI, NewBBSucc);
   }
 }
 
