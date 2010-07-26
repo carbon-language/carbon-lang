@@ -1174,6 +1174,11 @@ protected:
                     const analyze_format_string::ConversionSpecifier &CS,
                     const char *startSpecifier, unsigned specifierLen,
                     unsigned argIndex);
+  
+  void CheckArgType(const analyze_format_string::FormatSpecifier &FS,
+                    const analyze_format_string::ConversionSpecifier &CS,
+                    const char *startSpecifier, unsigned specifierLen,
+                    unsigned argIndex);
 };
 }
 
@@ -1297,6 +1302,52 @@ CheckFormatHandler::CheckNumArgs(
     return false;
   }
   return true;
+}
+
+void CheckFormatHandler::CheckArgType(
+  const analyze_format_string::FormatSpecifier &FS,
+  const analyze_format_string::ConversionSpecifier &CS,
+  const char *startSpecifier, unsigned specifierLen, unsigned argIndex) {
+  
+  const Expr *Ex = getDataArg(argIndex);
+  const analyze_format_string::ArgTypeResult &ATR = FS.getArgType(S.Context);
+
+  if (ATR.isValid() && !ATR.matchesType(S.Context, Ex->getType())) {
+    // Check if we didn't match because of an implicit cast from a 'char'
+    // or 'short' to an 'int'.  This is done because scanf/printf are varargs
+    // functions.
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex))
+      if (ICE->getType() == S.Context.IntTy)
+        if (ATR.matchesType(S.Context, ICE->getSubExpr()->getType()))
+          return;
+    
+    if (const analyze_printf::PrintfSpecifier *PFS =
+        dyn_cast<analyze_printf::PrintfSpecifier>(&FS)) {
+      // We may be able to offer a FixItHint if it is a supported type.
+      analyze_printf::PrintfSpecifier fixedFS(*PFS);
+      if (fixedFS.fixType(Ex->getType())) {
+        // Get the fix string from the fixed format specifier
+        llvm::SmallString<128> buf;
+        llvm::raw_svector_ostream os(buf);
+        fixedFS.toString(os);
+      
+        S.Diag(getLocationOfByte(CS.getStart()),
+               diag::warn_printf_conversion_argument_type_mismatch)
+          << ATR.getRepresentativeType(S.Context) << Ex->getType()
+          << getSpecifierRange(startSpecifier, specifierLen)
+        << Ex->getSourceRange()
+        << FixItHint::CreateReplacement(
+                getSpecifierRange(startSpecifier, specifierLen), os.str());
+      }
+      else {
+        S.Diag(getLocationOfByte(CS.getStart()),
+               diag::warn_printf_conversion_argument_type_mismatch)
+          << ATR.getRepresentativeType(S.Context) << Ex->getType()
+          << getSpecifierRange(startSpecifier, specifierLen)
+          << Ex->getSourceRange();
+      }
+    }
+  }
 }
 
 //===--- CHECK: Printf format string checking ------------------------------===//
@@ -1570,47 +1621,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   if (!CheckNumArgs(FS, CS, startSpecifier, specifierLen, argIndex))
     return false;
 
-  // Now type check the data expression that matches the
-  // format specifier.
-  const Expr *Ex = getDataArg(argIndex);
-  const analyze_printf::ArgTypeResult &ATR = FS.getArgType(S.Context);
-  if (ATR.isValid() && !ATR.matchesType(S.Context, Ex->getType())) {
-    // Check if we didn't match because of an implicit cast from a 'char'
-    // or 'short' to an 'int'.  This is done because printf is a varargs
-    // function.
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex))
-      if (ICE->getType() == S.Context.IntTy)
-        if (ATR.matchesType(S.Context, ICE->getSubExpr()->getType()))
-          return true;
-
-    // We may be able to offer a FixItHint if it is a supported type.
-    PrintfSpecifier fixedFS = FS;
-    bool success = fixedFS.fixType(Ex->getType());
-
-    if (success) {
-      // Get the fix string from the fixed format specifier
-      llvm::SmallString<128> buf;
-      llvm::raw_svector_ostream os(buf);
-      fixedFS.toString(os);
-
-      S.Diag(getLocationOfByte(CS.getStart()),
-          diag::warn_printf_conversion_argument_type_mismatch)
-        << ATR.getRepresentativeType(S.Context) << Ex->getType()
-        << getSpecifierRange(startSpecifier, specifierLen)
-        << Ex->getSourceRange()
-        << FixItHint::CreateReplacement(
-            getSpecifierRange(startSpecifier, specifierLen),
-            os.str());
-    }
-    else {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_conversion_argument_type_mismatch)
-        << ATR.getRepresentativeType(S.Context) << Ex->getType()
-        << getSpecifierRange(startSpecifier, specifierLen)
-        << Ex->getSourceRange();
-    }
-  }
-
+  CheckArgType(FS, CS, startSpecifier, specifierLen, argIndex);
+  
   return true;
 }
 

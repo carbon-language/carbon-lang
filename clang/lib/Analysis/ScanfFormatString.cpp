@@ -217,4 +217,10 @@ bool clang::analyze_format_string::ParseScanfString(FormatStringHandler &H,
   return false;
 }
 
+ArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
+  // FIXME: Fill in.
+  return ArgTypeResult();
+}
+
+
 

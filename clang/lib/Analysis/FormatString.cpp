@@ -379,8 +379,10 @@ void OptionalAmount::toString(llvm::raw_ostream &os) const {
 }
 
 //===----------------------------------------------------------------------===//
-// Methods on ConversionSpecifier.
+// Methods on FormatSpecifier.
 //===----------------------------------------------------------------------===//
+
+FormatSpecifier::~FormatSpecifier() {}
 
 bool FormatSpecifier::hasValidLengthModifier() const {
   switch (LM.getKind()) {

@@ -305,6 +305,8 @@ protected:
 public:
   FormatSpecifier(bool isPrintf)
     : CS(isPrintf), UsesPositionalArg(false), argIndex(0) {}
+  
+  virtual ~FormatSpecifier();
 
   void setLengthModifier(LengthModifier lm) {
     LM = lm;
@@ -339,6 +341,17 @@ public:
   bool usesPositionalArg() const { return UsesPositionalArg; }
   
   bool hasValidLengthModifier() const;
+  
+  /// \brief Returns the type that a data argument
+  /// paired with this format specifier should have.  This method
+  /// will an invalid ArgTypeResult if the format specifier does not have
+  /// a matching data argument or the matching argument matches
+  /// more than one type.
+  virtual ArgTypeResult getArgType(ASTContext &Ctx) const = 0;
+  
+  const ConversionSpecifier &getConversionSpecifier() const {
+    return CS;
+  }
 };
 
 } // end analyze_format_string namespace
@@ -438,9 +451,9 @@ public:
     return getConversionSpecifier().consumesDataArgument();
   }
 
-  /// \brief Returns the builtin type that a data argument
+  /// \brief Returns the type that a data argument
   /// paired with this format specifier should have.  This method
-  /// will return null if the format specifier does not have
+  /// will an invalid ArgTypeResult if the format specifier does not have
   /// a matching data argument or the matching argument matches
   /// more than one type.
   ArgTypeResult getArgType(ASTContext &Ctx) const;
@@ -468,6 +481,11 @@ public:
 
   bool hasValidPrecision() const;
   bool hasValidFieldWidth() const;
+  
+  static bool classof(const analyze_format_string::FormatSpecifier *FS) {
+    return FS->getConversionSpecifier().isPrintfKind();
+  }
+  
 };
 }  // end analyze_printf namespace
 
@@ -492,6 +510,7 @@ public:
   }      
 };
 
+using analyze_format_string::ArgTypeResult;
 using analyze_format_string::LengthModifier;
 using analyze_format_string::OptionalAmount;
 using analyze_format_string::OptionalFlag;
@@ -523,6 +542,13 @@ public:
   bool consumesDataArgument() const {
     return CS.consumesDataArgument() && !SuppressAssignment;
   }
+  
+  /// \brief Returns the type that a data argument
+  /// paired with this format specifier should have.  This method
+  /// will an invalid ArgTypeResult if the format specifier does not have
+  /// a matching data argument or the matching argument matches
+  /// more than one type.
+  ArgTypeResult getArgType(ASTContext &Ctx) const;
 
   static ScanfSpecifier Parse(const char *beg, const char *end);
 };
