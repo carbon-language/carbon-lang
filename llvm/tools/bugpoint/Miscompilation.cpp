@@ -198,7 +198,7 @@ namespace {
       return NoFailure;
     }
 
-    int TestFuncs(const std::vector<Function*> &Prefix, std::string &Error);
+    bool TestFuncs(const std::vector<Function*> &Prefix, std::string &Error);
   };
 }
 
@@ -239,8 +239,8 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
 /// under consideration for miscompilation vs. those that are not, and test
 /// accordingly. Each group of functions becomes a separate Module.
 ///
-int ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
-                                           std::string &Error) {
+bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
+                                            std::string &Error) {
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
   outs() << "Checking to see if the program is misoptimized when "
@@ -250,14 +250,35 @@ int ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   PrintFunctionList(Funcs);
   outs() << '\n';
 
-  // Split the module into the two halves of the program we want.
+  // Create a clone for two reasons:
+  // * If the optimization passes delete any function, the deleted function
+  //   will be in the clone and Funcs will still point to valid memory
+  // * If the optimization passes use interprocedural information to break
+  //   a function, we want to continue with the original function. Otherwise
+  //   we can conclude that a function triggers the bug when in fact one
+  //   needs a larger set of original functions to do so.
   ValueMap<const Value*, Value*> VMap;
+  Module *Clone = CloneModule(BD.getProgram(), VMap);
+  Module *Orig = BD.swapProgramIn(Clone);
+
+  std::vector<Function*> FuncsOnClone;
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
+    Function *F = cast<Function>(VMap[Funcs[i]]);
+    FuncsOnClone.push_back(F);
+  }
+
+  // Split the module into the two halves of the program we want.
+  VMap.clear();
   Module *ToNotOptimize = CloneModule(BD.getProgram(), VMap);
-  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, Funcs,
+  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, FuncsOnClone,
                                                  VMap);
 
   // Run the predicate, note that the predicate will delete both input modules.
-  return TestFn(BD, ToOptimize, ToNotOptimize, Error);
+  bool Broken = TestFn(BD, ToOptimize, ToNotOptimize, Error);
+
+  delete BD.swapProgramIn(Orig);
+
+  return Broken;
 }
 
 /// DisambiguateGlobalSymbols - Give anonymous global values names.
