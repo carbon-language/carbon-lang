@@ -178,6 +178,11 @@ bool ARMGlobalMerge::doInitialization(Module& M) {
     if (I->getAlignment() != 0)
       continue;
 
+    // Ignore all 'special' globals.
+    if (I->getName().startswith("llvm.") ||
+        I->getName().startswith(".llvm."))
+      continue;
+
     if (TD->getTypeAllocSize(I->getType()) < MaxOffset) {
       if (I->isConstant())
         ConstGlobals.push_back(I);
@@ -188,8 +193,12 @@ bool ARMGlobalMerge::doInitialization(Module& M) {
 
   if (Globals.size() > 1)
     Changed |= doMerge(Globals, M, false);
-  if (ConstGlobals.size() > 1)
-    Changed |= doMerge(ConstGlobals, M, true);
+  // FIXME: This currently breaks the EH processing due to way how the 
+  // typeinfo detection works. We might want to detect the TIs and ignore 
+  // them in the future.
+  
+  // if (ConstGlobals.size() > 1)
+  //  Changed |= doMerge(ConstGlobals, M, true);
 
   return Changed;
 }
