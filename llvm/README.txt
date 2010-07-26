@@ -1,4 +1,4 @@
-Low Level Virtual Machine (LLVM)
+\Low Level Virtual Machine (LLVM)
 ================================
 
 This directory and its subdirectories contain source code for the Low Level
@@ -13,4 +13,3 @@ assistance with LLVM.
 
 If you're writing a package for LLVM, see docs/Packaging.html for our
 suggestions.
-
