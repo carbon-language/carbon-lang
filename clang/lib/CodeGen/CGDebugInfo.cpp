@@ -148,8 +148,13 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
       return llvm::DIFile(cast<llvm::MDNode>(it->second));
   }
 
-  llvm::DIFile F = DebugFactory.CreateFile(PLoc.getFilename(),
-                                           getCurrentDirname(), TheCU);
+  // FIXME: We shouldn't even need to call 'makeAbsolute()' in the cases
+  // where we can consult the FileEntry.
+  llvm::sys::Path AbsFileName(PLoc.getFilename());
+  AbsFileName.makeAbsolute();
+
+  llvm::DIFile F = DebugFactory.CreateFile(AbsFileName.getLast(),
+                                           AbsFileName.getDirname(), TheCU);
 
   DIFileCache[fname] = F;
   return F;
@@ -174,25 +179,6 @@ unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
   return PLoc.getColumn();
 }
 
-llvm::StringRef CGDebugInfo::getCurrentDirname() {
-  if (!CWDName.empty())
-    return CWDName;
-  char *CompDirnamePtr = NULL;
-  llvm::sys::Path CWD = llvm::sys::Path::GetCurrentDirectory();
-  CompDirnamePtr = DebugInfoNames.Allocate<char>(CWD.size());
-  memcpy(CompDirnamePtr, CWD.c_str(), CWD.size());
-  return CWDName = llvm::StringRef(CompDirnamePtr, CWD.size());
-}
-
-/// getCompDirname -  AT_comp_dir is empty if filename is absulte otherwise 
-/// it points to compilation directory.
-llvm::StringRef CGDebugInfo::getCompDirname(llvm::StringRef Filename) {
-  llvm::sys::Path FilePath(Filename);
-  if (FilePath.isAbsolute())
-    return llvm::StringRef();
-  return getCurrentDirname();
-}
-
 /// CreateCompileUnit - Create new compile unit.
 void CGDebugInfo::CreateCompileUnit() {
 
@@ -202,22 +188,19 @@ void CGDebugInfo::CreateCompileUnit() {
   if (MainFileName.empty())
     MainFileName = "<unknown>";
 
+  llvm::sys::Path AbsFileName(MainFileName);
+  AbsFileName.makeAbsolute();
+
   // The main file name provided via the "-main-file-name" option contains just
   // the file name itself with no path information. This file name may have had
   // a relative path, so we look into the actual file entry for the main
   // file to determine the real absolute path for the file.
   std::string MainFileDir;
-  if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
+  if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID()))
     MainFileDir = MainFile->getDir()->getName();
-    if (MainFileDir != ".")
-      MainFileName = MainFileDir + "/" + MainFileName;
-  }
+  else
+    MainFileDir = AbsFileName.getDirname();
 
-  // Save filename string.
-  char *FilenamePtr = DebugInfoNames.Allocate<char>(MainFileName.length());
-  memcpy(FilenamePtr, MainFileName.c_str(), MainFileName.length());
-  llvm::StringRef Filename(FilenamePtr, MainFileName.length());
-  
   unsigned LangTag;
   const LangOptions &LO = CGM.getLangOptions();
   if (LO.CPlusPlus) {
@@ -246,8 +229,7 @@ void CGDebugInfo::CreateCompileUnit() {
 
   // Create new compile unit.
   TheCU = DebugFactory.CreateCompileUnit(
-    LangTag, Filename, getCompDirname(Filename),
-    Producer, true,
+    LangTag, AbsFileName.getLast(), MainFileDir, Producer, true,
     LO.Optimize, CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
 }
 

@@ -70,7 +70,6 @@ class CGDebugInfo {
   /// DebugInfoNames - This is a storage for names that are
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
   llvm::BumpPtrAllocator DebugInfoNames;
-  llvm::StringRef CWDName;
 
   llvm::DenseMap<const char *, llvm::WeakVH> DIFileCache;
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
@@ -198,13 +197,6 @@ private:
   /// getContextDescriptor - Get context info for the decl.
   llvm::DIDescriptor getContextDescriptor(const Decl *Decl,
                                           llvm::DIDescriptor &CU);
-
-  /// getCompDirname -  AT_comp_dir is empty if filename is absulte otherwise 
-  /// it points to compilation directory.
-  llvm::StringRef getCompDirname(llvm::StringRef Filename);
-
-  /// getCurrentDirname - Return current directory name.
-  llvm::StringRef getCurrentDirname();
 
   /// CreateCompileUnit - Create new compile unit.
   void CreateCompileUnit();
