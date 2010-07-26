@@ -110,8 +110,8 @@ bool InlineSpiller::split() {
   splitAnalysis_.analyze(li_);
 
   if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
-    if (splitAroundLoop(splitAnalysis_, loop))
-      return true;
+    SplitEditor(splitAnalysis_, lis_, vrm_).splitAroundLoop(loop);
+    return true;
   }
   return false;
 }

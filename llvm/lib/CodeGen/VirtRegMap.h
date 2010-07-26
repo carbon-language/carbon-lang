@@ -152,6 +152,11 @@ namespace llvm {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
+    MachineFunction &getMachineFunction() const {
+      assert(MF && "getMachineFunction called before runOnMAchineFunction");
+      return *MF;
+    }
+
     void grow();
 
     /// @brief returns true if the specified virtual register is
