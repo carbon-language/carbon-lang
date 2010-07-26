@@ -447,8 +447,9 @@ CXXBaseSpecifier *
 Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
                          SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
-                         QualType BaseType,
-                         SourceLocation BaseLoc) {
+                         TypeSourceInfo *TInfo) {
+  QualType BaseType = TInfo->getType();
+
   // C++ [class.union]p1:
   //   A union shall not have base classes.
   if (Class->isUnion()) {
@@ -459,8 +460,10 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 
   if (BaseType->isDependentType())
     return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
-                                Class->getTagKind() == TTK_Class,
-                                Access, BaseType);
+                                          Class->getTagKind() == TTK_Class,
+                                          Access, TInfo);
+
+  SourceLocation BaseLoc = TInfo->getTypeLoc().getBeginLoc();
 
   // Base specifiers must be record types.
   if (!BaseType->isRecordType()) {
@@ -503,8 +506,8 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   
   // Create the base specifier.
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
-                              Class->getTagKind() == TTK_Class,
-                              Access, BaseType);
+                                        Class->getTagKind() == TTK_Class,
+                                        Access, TInfo);
 }
 
 void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
@@ -591,10 +594,10 @@ Sema::ActOnBaseSpecifier(DeclPtrTy classdecl, SourceRange SpecifierRange,
   if (!Class)
     return true;
 
-  QualType BaseType = GetTypeFromParser(basetype);
+  TypeSourceInfo *TInfo = 0;
+  GetTypeFromParser(basetype, &TInfo);
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
-                                                      Virtual, Access,
-                                                      BaseType, BaseLoc))
+                                                      Virtual, Access, TInfo))
     return BaseSpec;
 
   return true;

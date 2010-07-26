@@ -2790,7 +2790,7 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   Record.push_back(Base.isVirtual());
   Record.push_back(Base.isBaseOfClass());
   Record.push_back(Base.getAccessSpecifierAsWritten());
-  AddTypeRef(Base.getType(), Record);
+  AddTypeSourceInfo(Base.getTypeSourceInfo(), Record);
   AddSourceRange(Base.getSourceRange(), Record);
 }
 
@@ -2805,4 +2805,3 @@ void PCHWriter::TypeRead(pch::TypeID ID, QualType T) {
 void PCHWriter::DeclRead(pch::DeclID ID, const Decl *D) {
   DeclIDs[D] = ID;
 }
-

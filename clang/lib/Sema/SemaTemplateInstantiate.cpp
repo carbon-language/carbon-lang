@@ -1101,11 +1101,11 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       continue;
     }
 
-    QualType BaseType = SubstType(Base->getType(),
-                                  TemplateArgs,
-                                  Base->getSourceRange().getBegin(),
-                                  DeclarationName());
-    if (BaseType.isNull()) {
+    TypeSourceInfo *BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
+                                            TemplateArgs,
+                                            Base->getSourceRange().getBegin(),
+                                            DeclarationName());
+    if (!BaseTypeLoc) {
       Invalid = true;
       continue;
     }
@@ -1115,9 +1115,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                                Base->getSourceRange(),
                                Base->isVirtual(),
                                Base->getAccessSpecifierAsWritten(),
-                               BaseType,
-                               /*FIXME: Not totally accurate */
-                               Base->getSourceRange().getBegin()))
+                               BaseTypeLoc))
       InstantiatedBases.push_back(InstantiatedBase);
     else
       Invalid = true;

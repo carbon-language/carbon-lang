@@ -121,19 +121,19 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   data().VBases = new (C) CXXBaseSpecifier[VBases.size()];
   data().NumVBases = VBases.size();
   for (int I = 0, E = VBases.size(); I != E; ++I) {
-    QualType VBaseType = VBases[I]->getType();
-    
+    TypeSourceInfo *VBaseTypeInfo = VBases[I]->getTypeSourceInfo();
+
     // Skip dependent types; we can't do any checking on them now.
-    if (VBaseType->isDependentType())
+    if (VBaseTypeInfo->getType()->isDependentType())
       continue;
 
-    CXXRecordDecl *VBaseClassDecl
-      = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
+    CXXRecordDecl *VBaseClassDecl = cast<CXXRecordDecl>(
+      VBaseTypeInfo->getType()->getAs<RecordType>()->getDecl());
 
     data().VBases[I] =
       CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
                        VBaseClassDecl->getTagKind() == TTK_Class,
-                       VBases[I]->getAccessSpecifier(), VBaseType);
+                       VBases[I]->getAccessSpecifier(), VBaseTypeInfo);
   }
 }
 
@@ -1062,5 +1062,3 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
                                            AccessSpecifier AS) {
   return DB << getAccessName(AS);
 }
-
-

@@ -17,6 +17,7 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -159,7 +160,6 @@ class CXXBaseSpecifier {
   /// Range - The source code range that covers the full base
   /// specifier, including the "virtual" (if present) and access
   /// specifier (if present).
-  // FIXME: Move over to a TypeLoc!
   SourceRange Range;
 
   /// Virtual - Whether this is a virtual base class or not.
@@ -177,15 +177,17 @@ class CXXBaseSpecifier {
   /// VC++ bug.
   unsigned Access : 2;
 
-  /// BaseType - The type of the base class. This will be a class or
-  /// struct (or a typedef of such).
-  QualType BaseType;
+  /// BaseTypeInfo - The type of the base class. This will be a class or struct
+  /// (or a typedef of such). The source code range does not include the
+  /// "virtual" or access specifier.
+  TypeSourceInfo *BaseTypeInfo;
 
 public:
   CXXBaseSpecifier() { }
 
-  CXXBaseSpecifier(SourceRange R, bool V, bool BC, AccessSpecifier A, QualType T)
-    : Range(R), Virtual(V), BaseOfClass(BC), Access(A), BaseType(T) { }
+  CXXBaseSpecifier(SourceRange R, bool V, bool BC, AccessSpecifier A,
+                   TypeSourceInfo *TInfo)
+    : Range(R), Virtual(V), BaseOfClass(BC), Access(A), BaseTypeInfo(TInfo) { }
 
   /// getSourceRange - Retrieves the source range that contains the
   /// entire base specifier.
@@ -195,7 +197,7 @@ public:
   /// class (or not).
   bool isVirtual() const { return Virtual; }
 
-  /// \brief Determine whether this base class if a base of a class declared
+  /// \brief Determine whether this base class is a base of a class declared
   /// with the 'class' keyword (vs. one declared with the 'struct' keyword).
   bool isBaseOfClass() const { return BaseOfClass; }
   
@@ -221,7 +223,10 @@ public:
 
   /// getType - Retrieves the type of the base class. This type will
   /// always be an unqualified class type.
-  QualType getType() const { return BaseType; }
+  QualType getType() const { return BaseTypeInfo->getType(); }
+
+  /// getTypeLoc - Retrieves the type and source location of the base class.
+  TypeSourceInfo *getTypeSourceInfo() const { return BaseTypeInfo; }
 };
 
 /// CXXRecordDecl - Represents a C++ struct/union/class.

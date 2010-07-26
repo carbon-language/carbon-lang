@@ -562,9 +562,8 @@ void PCHStmtReader::VisitCastExpr(CastExpr *E) {
   CXXBaseSpecifierArray &BasePath = E->getBasePath();
   unsigned NumBaseSpecs = Record[Idx++];
   while (NumBaseSpecs--) {
-    // FIXME: These gets leaked.
     CXXBaseSpecifier *BaseSpec = new (*Reader.getContext()) CXXBaseSpecifier;
-    *BaseSpec = Reader.ReadCXXBaseSpecifier(Record, Idx);
+    *BaseSpec = Reader.ReadCXXBaseSpecifier(DeclsCursor, Record, Idx);
     BasePath.push_back(BaseSpec);
   }
 }

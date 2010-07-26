@@ -19,7 +19,6 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -1752,7 +1751,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                  Base1->isVirtual(),
                                  Base1->isBaseOfClass(),
                                  Base1->getAccessSpecifierAsWritten(),
-                                 T));
+                                 Importer.Import(Base1->getTypeSourceInfo())));
       }
       if (!Bases.empty())
         D2CXX->setBases(Bases.data(), Bases.size());
@@ -2965,8 +2964,7 @@ TypeSourceInfo *ASTImporter::Import(TypeSourceInfo *FromTSI) {
     return FromTSI;
 
   // FIXME: For now we just create a "trivial" type source info based
-  // on the type and a seingle location. Implement a real version of
-  // this.
+  // on the type and a single location. Implement a real version of this.
   QualType T = Import(FromTSI->getType());
   if (T.isNull())
     return 0;

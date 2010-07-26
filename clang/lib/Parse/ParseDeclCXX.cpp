@@ -550,7 +550,19 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
 
   // Consume the identifier.
   EndLocation = IdLoc;
-  return Type;
+
+  // Fake up a Declarator to use with ActOnTypeName.
+  DeclSpec DS;
+  DS.SetRangeStart(IdLoc);
+  DS.SetRangeEnd(EndLocation);
+  DS.getTypeSpecScope() = *SS;
+
+  const char *PrevSpec = 0;
+  unsigned DiagID;
+  DS.SetTypeSpecType(TST_typename, IdLoc, PrevSpec, DiagID, Type);
+
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
 }
 
 /// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
@@ -2052,8 +2064,7 @@ Parser::OwningExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
     SourceLocation TypeLoc = Tok.getLocation();
     TypeTy *Ty = ParseTypeName().get();
     SourceRange TypeRange(Start, Tok.getLocation());
-    return Actions.ActOnSizeOfAlignOfExpr(TypeLoc, false, true, Ty,
-                                              TypeRange);
+    return Actions.ActOnSizeOfAlignOfExpr(TypeLoc, false, true, Ty, TypeRange);
   } else
     return ParseConstantExpression();
 }

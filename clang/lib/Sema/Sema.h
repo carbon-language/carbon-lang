@@ -2747,8 +2747,7 @@ public:
   CXXBaseSpecifier *CheckBaseSpecifier(CXXRecordDecl *Class,
                                        SourceRange SpecifierRange,
                                        bool Virtual, AccessSpecifier Access,
-                                       QualType BaseType,
-                                       SourceLocation BaseLoc);
+                                       TypeSourceInfo *TInfo);
 
   /// SetClassDeclAttributesFromBase - Copies class decl traits
   /// (such as whether the class has a trivial constructor,
