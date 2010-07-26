@@ -202,13 +202,65 @@ namespace COFF {
     IMAGE_REL_I386_REL32    = 0x0014
   };
 
-  enum {
+  enum COMDATType {
     IMAGE_COMDAT_SELECT_NODUPLICATES = 1,
     IMAGE_COMDAT_SELECT_ANY,
     IMAGE_COMDAT_SELECT_SAME_SIZE,
     IMAGE_COMDAT_SELECT_EXACT_MATCH,
     IMAGE_COMDAT_SELECT_ASSOCIATIVE,
     IMAGE_COMDAT_SELECT_LARGEST
+  };
+
+  // Auxiliary Symbol Formats
+  struct AuxiliaryFunctionDefinition {
+    uint32_t TagIndex;
+    uint32_t TotalSize;
+    uint32_t PointerToLinenumber;
+    uint32_t PointerToNextFunction;
+    uint8_t  unused[2];
+  };
+
+  struct AuxiliarybfAndefSymbol {
+    uint8_t  unused1[4];
+    uint16_t Linenumber;
+    uint8_t  unused2[6];
+    uint32_t PointerToNextFunction;
+    uint8_t  unused3[2];
+  };
+
+  struct AuxiliaryWeakExternal {
+    uint32_t TagIndex;
+    uint32_t Characteristics;
+    uint8_t  unused[10];
+  };
+
+  /// These are not documented in the spec, but are located in WinNT.h.
+  enum WeakExternalCharacteristics {
+    IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY = 1,
+    IMAGE_WEAK_EXTERN_SEARCH_LIBRARY   = 2,
+    IMAGE_WEAK_EXTERN_SEARCH_ALIAS     = 3
+  };
+
+  struct AuxiliaryFile {
+    uint8_t FileName[18];
+  };
+
+  struct AuxiliarySectionDefinition {
+    uint32_t Length;
+    uint16_t NumberOfRelocations;
+    uint16_t NumberOfLinenumbers;
+    uint32_t CheckSum;
+    uint16_t Number;
+    uint8_t  Selection;
+    uint8_t  unused[3];
+  };
+
+  union Auxiliary {
+    AuxiliaryFunctionDefinition FunctionDefinition;
+    AuxiliarybfAndefSymbol      bfAndefSymbol;
+    AuxiliaryWeakExternal       WeakExternal;
+    AuxiliaryFile               File;
+    AuxiliarySectionDefinition  SectionDefinition;
   };
 
 } // End namespace llvm.
