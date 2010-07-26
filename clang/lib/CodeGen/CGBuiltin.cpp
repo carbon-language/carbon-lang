@@ -284,9 +284,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                      "cast");
     return RValue::get(Result);
   }
-  case Builtin::BI__builtin_expect:
+  case Builtin::BI__builtin_expect: {
     // FIXME: pass expect through to LLVM
+    if (E->getArg(1)->HasSideEffects(getContext()))
+      (void)EmitScalarExpr(E->getArg(1));
     return RValue::get(EmitScalarExpr(E->getArg(0)));
+  }
   case Builtin::BI__builtin_bswap32:
   case Builtin::BI__builtin_bswap64: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
