@@ -318,6 +318,11 @@ expose new optimization opportunities:</p>
   To be portable across releases, resort to <tt>CallSite</tt> and the
   high-level accessors, such as <tt>getCalledValue</tt> and <tt>setUnwindDest</tt>.
 </li>
+<li>
+  You can no longer pass use_iterators directly to cast<> (and similar), because
+  these routines tend to perform costly dereference operations more than once. You
+  have to dereference the iterators yourself and pass them in.
+</li>
 
 </ul>
 
