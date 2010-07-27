@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -211,7 +212,7 @@ namespace {
     /// ValueCacheEntryTy - This is all of the cached block information for
     /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
-    typedef std::vector<BlockCacheEntryTy> ValueCacheEntryTy;
+    typedef DenseMap<BasicBlock*, LVILatticeVal> ValueCacheEntryTy;
 
   private:
     /// ValueCache - This is all of the cached information for all values,
@@ -221,7 +222,7 @@ namespace {
     /// OverDefinedCache - This tracks, on a per-block basis, the set of 
     /// values that are over-defined at the end of that block.  This is required
     /// for cache updating.
-    DenseMap<BasicBlock*, std::set<Value*> > OverDefinedCache;
+    DenseSet<std::pair<BasicBlock*, Value*> > OverDefinedCache;
   public:
     
     /// getValueInBlock - This is the query interface to determine the lattice
@@ -281,15 +282,15 @@ namespace {
     ValueCacheEntryTy &Cache;
     
     /// This tracks, for each block, what values are overdefined.
-    DenseMap<BasicBlock*, std::set<Value*> > &OverDefinedCache;
+    DenseSet<std::pair<BasicBlock*, Value*> > &OverDefinedCache;
     
     ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
     /// added to cache but that are not in sorted order.
-    DenseMap<BasicBlock*, LVILatticeVal> NewBlockInfo;
+    DenseSet<BasicBlock*> NewBlockInfo;
   public:
     
     LVIQuery(Value *V, ValueCacheEntryTy &VC,
-             DenseMap<BasicBlock*, std::set<Value*> > &ODC)
+             DenseSet<std::pair<BasicBlock*, Value*> > &ODC)
       : Val(V), Cache(VC), OverDefinedCache(ODC) {
     }
 
@@ -297,34 +298,11 @@ namespace {
       // When the query is done, insert the newly discovered facts into the
       // cache in sorted order.
       if (NewBlockInfo.empty()) return;
-
-      // Grow the cache to exactly fit the new data.
-      Cache.reserve(Cache.size() + NewBlockInfo.size());
       
-      // If we only have one new entry, insert it instead of doing a full-on
-      // sort.
-      if (NewBlockInfo.size() == 1) {
-        BlockCacheEntryTy Entry = *NewBlockInfo.begin();
-        ValueCacheEntryTy::iterator I =
-          std::lower_bound(Cache.begin(), Cache.end(), Entry,
-                           BlockCacheEntryComparator());
-        assert((I == Cache.end() || I->first != Entry.first) &&
-               "Entry already in map!");
-        
-        Cache.insert(I, Entry);
-        return;
-      }
-      
-      // TODO: If we only have two new elements, INSERT them both.
-      
-      Cache.insert(Cache.end(), NewBlockInfo.begin(), NewBlockInfo.end());
-      array_pod_sort(Cache.begin(), Cache.end(),
-                     BlockCacheEntryComparator::Compare);
-      
-      for (DenseMap<BasicBlock*, LVILatticeVal>::iterator
-           I = NewBlockInfo.begin(), E = NewBlockInfo.end(); I != E; ++I) {
-        if (I->second.isOverdefined())
-          OverDefinedCache[I->first].insert(Val);
+      for (DenseSet<BasicBlock*>::iterator I = NewBlockInfo.begin(),
+           E = NewBlockInfo.end(); I != E; ++I) {
+        if (Cache[*I].isOverdefined())
+          OverDefinedCache.insert(std::make_pair(*I, Val));
       }
     }
 
@@ -337,23 +315,10 @@ namespace {
 } // end anonymous namespace
 
 /// getCachedEntryForBlock - See if we already have a value for this block.  If
-/// so, return it, otherwise create a new entry in the NewBlockInfo map to use.
+/// so, return it, otherwise create a new entry in the Cache map to use.
 LVILatticeVal &LVIQuery::getCachedEntryForBlock(BasicBlock *BB) {
-  
-  // Do a binary search to see if we already have an entry for this block in
-  // the cache set.  If so, find it.
-  if (!Cache.empty()) {
-    ValueCacheEntryTy::iterator Entry =
-      std::lower_bound(Cache.begin(), Cache.end(),
-                       BlockCacheEntryTy(BB, LVILatticeVal()),
-                       BlockCacheEntryComparator());
-    if (Entry != Cache.end() && Entry->first == BB)
-      return Entry->second;
-  }
-  
-  // Otherwise, check to see if it's in NewBlockInfo or create a new entry if
-  // not.
-  return NewBlockInfo[BB];
+  NewBlockInfo.insert(BB);
+  return Cache[BB];
 }
 
 LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
@@ -534,9 +499,12 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   std::vector<BasicBlock*> worklist;
   worklist.push_back(OldSucc);
   
-  std::set<Value*> ClearSet = OverDefinedCache[OldSucc];
-  LVILatticeVal OverDef;
-  OverDef.markOverdefined();
+  DenseSet<Value*> ClearSet;
+  for (DenseSet<std::pair<BasicBlock*, Value*> >::iterator
+       I = OverDefinedCache.begin(), E = OverDefinedCache.end(); I != E; ++I) {
+    if (I->first == OldSucc)
+      ClearSet.insert(I->second);
+  }
   
   // Use a worklist to perform a depth-first search of OldSucc's successors.
   // NOTE: We do not need a visited list since any blocks we have already
@@ -550,26 +518,24 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     if (ToUpdate == NewSucc) continue;
     
     bool changed = false;
-    std::set<Value*> &CurrentSet = OverDefinedCache[ToUpdate];
-    for (std::set<Value*>::iterator I = ClearSet.begin(),E = ClearSet.end();
+    for (DenseSet<Value*>::iterator I = ClearSet.begin(),E = ClearSet.end();
          I != E; ++I) {
       // If a value was marked overdefined in OldSucc, and is here too...
-      if (CurrentSet.count(*I)) {
-        // Remove it from the caches.
-        ValueCacheEntryTy &Entry = ValueCache[*I];
-        ValueCacheEntryTy::iterator CI =
-          std::lower_bound(Entry.begin(), Entry.end(),
-                           std::make_pair(ToUpdate, OverDef),
-                           BlockCacheEntryComparator());
-        assert(CI != Entry.end() && "Couldn't find entry to update?");
-        Entry.erase(CI);
+      DenseSet<std::pair<BasicBlock*, Value*> >::iterator OI =
+        OverDefinedCache.find(std::make_pair(ToUpdate, *I));
+      if (OI == OverDefinedCache.end()) continue;
 
-        CurrentSet.erase(*I);
+      // Remove it from the caches.
+      ValueCacheEntryTy &Entry = ValueCache[*I];
+      ValueCacheEntryTy::iterator CI = Entry.find(ToUpdate);
+        
+      assert(CI != Entry.end() && "Couldn't find entry to update?");
+      Entry.erase(CI);
+      OverDefinedCache.erase(OI);
 
-        // If we removed anything, then we potentially need to update 
-        // blocks successors too.
-        changed = true;
-      }
+      // If we removed anything, then we potentially need to update 
+      // blocks successors too.
+      changed = true;
     }
         
     if (!changed) continue;
