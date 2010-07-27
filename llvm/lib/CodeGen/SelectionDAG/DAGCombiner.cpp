@@ -4489,6 +4489,16 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
   // If this is a conversion of N elements of one type to N elements of another
   // type, convert each element.  This handles FP<->INT cases.
   if (SrcBitSize == DstBitSize) {
+    EVT VT = EVT::getVectorVT(*DAG.getContext(), DstEltVT,
+                              BV->getValueType(0).getVectorNumElements());
+
+    // Due to the FP element handling below calling this routine recursively,
+    // we can end up with a scalar-to-vector node here.
+    if (BV->getOpcode() == ISD::SCALAR_TO_VECTOR)
+      return DAG.getNode(ISD::SCALAR_TO_VECTOR, BV->getDebugLoc(), VT, 
+                         DAG.getNode(ISD::BIT_CONVERT, BV->getDebugLoc(),
+                                     DstEltVT, BV->getOperand(0)));
+      
     SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
       SDValue Op = BV->getOperand(i);
@@ -4500,8 +4510,6 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
                                 DstEltVT, Op));
       AddToWorkList(Ops.back().getNode());
     }
-    EVT VT = EVT::getVectorVT(*DAG.getContext(), DstEltVT,
-                              BV->getValueType(0).getVectorNumElements());
     return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
                        &Ops[0], Ops.size());
   }
