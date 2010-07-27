@@ -53,3 +53,9 @@ void test5(const char *c) {
   }
 }
 
+void test6(const char *c) {
+  if (c) return;
+  if (!c) return;
+  __builtin_unreachable(); // no-warning
+}
+

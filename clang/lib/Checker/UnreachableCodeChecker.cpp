@@ -10,7 +10,7 @@
 // path-sensitive analysis. We mark any path visited, and then walk the CFG as a
 // post-analysis to determine what was never visited.
 //
-// A similar flow-sensitive only check exists in Analysis/UnreachableCode.cpp
+// A similar flow-sensitive only check exists in Analysis/ReachableCode.cpp
 //===----------------------------------------------------------------------===//
 
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
@@ -19,6 +19,7 @@
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "GRExprEngineExperimentalChecks.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Basic/Builtins.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 // The number of CFGBlock pointers we want to reserve memory for. This is used
@@ -79,6 +80,8 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
   if (!C)
     return;
 
+  ASTContext &Ctx = B.getContext();
+
   // Find CFGBlocks that were not covered by any node
   for (CFG::const_iterator I = C->begin(); I != C->end(); ++I) {
     const CFGBlock *CB = *I;
@@ -96,6 +99,18 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
       if (S.getBegin().isMacroID() || S.getEnd().isMacroID() || S.isInvalid()
           || SL.isInvalid())
         continue;
+
+      // Special case for __builtin_unreachable.
+      // FIXME: This should be extended to include other unreachable markers,
+      // such as llvm_unreachable.
+      if (!CB->empty()) {
+        const Stmt *First = CB->front();
+        if (const CallExpr *CE = dyn_cast<CallExpr>(First)) {
+          if (CE->isBuiltinCall(Ctx) == Builtin::BI__builtin_unreachable)
+            continue;
+        }
+      }
+
       B.EmitBasicReport("Unreachable code", "This statement is never executed",
           SL, S);
     }
