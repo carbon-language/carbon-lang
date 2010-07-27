@@ -838,6 +838,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
 
+    // Can turn SHL into an integer multiply.
+    setOperationAction(ISD::SHL,                MVT::v4i32, Custom);
+
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
     // custom since the immediate controlling the insert encodes additional
@@ -7498,6 +7501,35 @@ SDValue X86TargetLowering::LowerMUL_V2I64(SDValue Op, SelectionDAG &DAG) const {
   return Res;
 }
 
+SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue R = Op.getOperand(0);
+
+  assert(Subtarget->hasSSE41() && "Cannot lower SHL without SSE4.1 or later");
+  assert(VT == MVT::v4i32 && "Only know how to lower v4i32");
+  
+  Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                   DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
+                   Op.getOperand(1), DAG.getConstant(23, MVT::i32));
+
+  std::vector<Constant*> CV;
+  LLVMContext *Context = DAG.getContext();
+  CV.push_back(ConstantInt::get(*Context, APInt(32, 0x3f800000U)));
+  CV.push_back(ConstantInt::get(*Context, APInt(32, 0x3f800000U)));
+  CV.push_back(ConstantInt::get(*Context, APInt(32, 0x3f800000U)));
+  CV.push_back(ConstantInt::get(*Context, APInt(32, 0x3f800000U)));
+  Constant *C = ConstantVector::get(CV);
+  SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
+  SDValue Addend = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
+                               PseudoSourceValue::getConstantPool(), 0,
+                               false, false, 16);
+
+  Op = DAG.getNode(ISD::ADD, dl, VT, Op, Addend);
+  Op = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4f32, Op);
+  Op = DAG.getNode(ISD::FP_TO_SINT, dl, VT, Op);
+  return DAG.getNode(ISD::MUL, dl, VT, Op, R);
+}
 
 SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
   // Lower the "add/sub/mul with overflow" instruction into a regular ins plus
@@ -7730,6 +7762,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
   case ISD::MUL:                return LowerMUL_V2I64(Op, DAG);
+  case ISD::SHL:                return LowerSHL(Op, DAG);
   case ISD::SADDO:
   case ISD::UADDO:
   case ISD::SSUBO:
