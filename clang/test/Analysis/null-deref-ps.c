@@ -280,7 +280,7 @@ void f12(HF12ITEM i, char *q) {
 // Test handling of translating between integer "pointers" and back.
 void f13() {
   int *x = 0;
-  if (((((int) x) << 2) + 1) >> 1) *x = 1; // expected-warning{{idempotent operation}}
+  if (((((int) x) << 2) + 1) >> 1) *x = 1; // expected-warning{{he left operand to '<<' is always 0}}
 }
 
 // PR 4759 - Attribute non-null checking by the analyzer was not correctly

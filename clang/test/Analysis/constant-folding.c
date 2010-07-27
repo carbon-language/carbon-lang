@@ -18,10 +18,10 @@ void testComparisons (int a) {
 }
 
 void testSelfOperations (int a) {
-  if ((a|a) != a) WARN; // expected-warning{{idempotent operation}}
-  if ((a&a) != a) WARN; // expected-warning{{idempotent operation}}
-  if ((a^a) != 0) WARN; // expected-warning{{idempotent operation}}
-  if ((a-a) != 0) WARN; // expected-warning{{idempotent operation}}
+  if ((a|a) != a) WARN; // expected-warning{{Both operands to '|' always have the same value}}
+  if ((a&a) != a) WARN; // expected-warning{{Both operands to '&' always have the same value}}
+  if ((a^a) != 0) WARN; // expected-warning{{Both operands to '^' always have the same value}}
+  if ((a-a) != 0) WARN; // expected-warning{{Both operands to '-' always have the same value}}
 }
 
 void testIdempotent (int a) {
@@ -68,5 +68,5 @@ void testLocations (char *a) {
   if (b!=a) WARN;
   if (b>a) WARN;
   if (b<a) WARN;
-  if (b-a) WARN; // expected-warning{{idempotent operation}}
+  if (b-a) WARN; // expected-warning{{Both operands to '-' always have the same value}}
 }

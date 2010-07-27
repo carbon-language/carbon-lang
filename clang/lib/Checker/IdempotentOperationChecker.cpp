@@ -310,7 +310,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
 }
 
 void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
-                                                  BugReporter &B,
+                                                  BugReporter &BR,
                                                   bool hasWorkRemaining) {
   // If there is any work remaining we cannot be 100% sure about our warnings
   if (hasWorkRemaining)
@@ -322,22 +322,29 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       hash.begin(); i != hash.end(); ++i) {
     if (i->second != Impossible) {
       // Select the error message.
-      const char *msg = 0;
+      const BinaryOperator *B = i->first;
+      llvm::SmallString<128> buf;
+      llvm::raw_svector_ostream os(buf);
+
       switch (i->second) {
       case Equal:
-        msg = "idempotent operation; both operands are always equal in value";
+        if (B->getOpcode() == BinaryOperator::Assign)
+          os << "Assigned value is always the same as the existing value";
+        else
+          os << "Both operands to '" << B->getOpcodeStr()
+             << "' always have the same value";
         break;
       case LHSis1:
-        msg = "idempotent operation; the left operand is always 1";
+        os << "The left operand to '" << B->getOpcodeStr() << "' is always 1";
         break;
       case RHSis1:
-        msg = "idempotent operation; the right operand is always 1";
+        os << "The right operand to '" << B->getOpcodeStr() << "' is always 1";
         break;
       case LHSis0:
-        msg = "idempotent operation; the left operand is always 0";
+        os << "The left operand to '" << B->getOpcodeStr() << "' is always 0";
         break;
       case RHSis0:
-        msg = "idempotent operation; the right operand is always 0";
+        os << "The right operand to '" << B->getOpcodeStr() << "' is always 0";
         break;
       case Possible:
         llvm_unreachable("Operation was never marked with an assumption");
@@ -348,9 +355,8 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       // Create the SourceRange Arrays
       SourceRange S[2] = { i->first->getLHS()->getSourceRange(),
                            i->first->getRHS()->getSourceRange() };
-      B.EmitBasicReport("Idempotent operation", "Dead code",
-                        msg, i->first->getOperatorLoc(),
-          S, 2);
+      BR.EmitBasicReport("Idempotent operation", "Dead code",
+                         os.str(), i->first->getOperatorLoc(), S, 2);
     }
   }
 }

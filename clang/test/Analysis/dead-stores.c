@@ -158,7 +158,7 @@ int f16(int x) {
 // Self-assignments should not be flagged as dead stores.
 void f17() {
   int x = 1;
-  x = x; // expected-warning{{idempotent operation}}
+  x = x; // expected-warning{{Assigned value is always the same as the existing value}}
 }
 
 // <rdar://problem/6506065>
@@ -458,7 +458,7 @@ void rdar8014335() {
     // Note that the next value stored to 'i' is never executed
     // because the next statement to be executed is the 'break'
     // in the increment code of the first loop.
-    i = i * 3; // expected-warning{{Value stored to 'i' is never read}} expected-warning{{idempotent operation}}
+    i = i * 3; // expected-warning{{Value stored to 'i' is never read}} expected-warning{{The left operand to '*' is always 1}}
   }
 }
 
