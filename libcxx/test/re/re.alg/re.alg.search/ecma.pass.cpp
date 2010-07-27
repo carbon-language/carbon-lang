@@ -16,6 +16,8 @@
 //                  const basic_regex<charT, traits>& e,
 //                  regex_constants::match_flag_type flags = regex_constants::match_default);
 
+#include <iostream>
+
 #include <regex>
 #include <cassert>
 
@@ -756,6 +758,36 @@ int main()
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
+    {
+        std::cmatch m;
+        const char s[] = "Jeff Jeffs ";
+        assert(std::regex_search(s, m, std::regex("Jeff(?=s\\b)")));
+        assert(m.size() == 1);
+        assert(m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == s + std::char_traits<char>::length(s));
+        assert(m.length(0) == 4);
+        assert(m.position(0) == 5);
+        assert(m.str(0) == "Jeff");
+    }
+    {
+        std::cmatch m;
+        const char s[] = "Jeffs Jeff";
+        assert(std::regex_search(s, m, std::regex("Jeff(?!s\\b)")));
+        assert(m.size() == 1);
+        assert(m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == s + std::char_traits<char>::length(s));
+        assert(m.length(0) == 4);
+        assert(m.position(0) == 6);
+        assert(m.str(0) == "Jeff");
+    }
 
     {
         std::wcmatch m;
@@ -1489,5 +1521,35 @@ int main()
         assert(m.length(0) == 4);
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
+    }
+    {
+        std::wcmatch m;
+        const wchar_t s[] = L"Jeff Jeffs ";
+        assert(std::regex_search(s, m, std::wregex(L"Jeff(?=s\\b)")));
+        assert(m.size() == 1);
+        assert(m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == s + std::char_traits<wchar_t>::length(s));
+        assert(m.length(0) == 4);
+        assert(m.position(0) == 5);
+        assert(m.str(0) == L"Jeff");
+    }
+    {
+        std::wcmatch m;
+        const wchar_t s[] = L"Jeffs Jeff";
+        assert(std::regex_search(s, m, std::wregex(L"Jeff(?!s\\b)")));
+        assert(m.size() == 1);
+        assert(m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == s + std::char_traits<wchar_t>::length(s));
+        assert(m.length(0) == 4);
+        assert(m.position(0) == 6);
+        assert(m.str(0) == L"Jeff");
     }
 }
