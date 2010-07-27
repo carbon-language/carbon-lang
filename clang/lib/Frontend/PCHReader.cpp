@@ -414,13 +414,14 @@ void PCHValidator::ReadCounter(unsigned Value) {
 //===----------------------------------------------------------------------===//
 
 PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
-                     const char *isysroot)
+                     const char *isysroot, bool DisableValidation)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
     Consumer(0), MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0),  isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
+    TotalNumSelectors(0),  isysroot(isysroot), 
+    DisableValidation(DisableValidation), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
     NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
@@ -430,12 +431,14 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
 }
 
 PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
-                     Diagnostic &Diags, const char *isysroot)
+                     Diagnostic &Diags, const char *isysroot,
+                     bool DisableValidation)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
+    TotalNumSelectors(0), isysroot(isysroot), 
+    DisableValidation(DisableValidation), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
     NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
@@ -1019,14 +1022,15 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
-    if ((off_t)Record[4] != File->getSize()
+    if (!DisableValidation &&
+        ((off_t)Record[4] != File->getSize()
 #if !defined(LLVM_ON_WIN32)
         // In our regression testing, the Windows file system seems to
         // have inconsistent modification times that sometimes
         // erroneously trigger this error-handling path.
-        || (time_t)Record[5] != File->getModificationTime()
+         || (time_t)Record[5] != File->getModificationTime()
 #endif
-        ) {
+        )) {
       Diag(diag::err_fe_pch_file_modified)
         << Filename;
       return Failure;
@@ -1481,7 +1485,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::METADATA: {
-      if (Record[0] != pch::VERSION_MAJOR) {
+      if (Record[0] != pch::VERSION_MAJOR && !DisableValidation) {
         Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
                                            : diag::warn_pch_version_too_new);
         return IgnorePCH;
@@ -1501,7 +1505,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
         Error("CHAINED_METADATA is not first record in block");
         return Failure;
       }
-      if (Record[0] != pch::VERSION_MAJOR) {
+      if (Record[0] != pch::VERSION_MAJOR && !DisableValidation) {
         Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
                                            : diag::warn_pch_version_too_new);
         return IgnorePCH;
@@ -1536,7 +1540,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::LANGUAGE_OPTIONS:
-      if (ParseLanguageOptions(Record))
+      if (ParseLanguageOptions(Record) && !DisableValidation)
         return IgnorePCH;
       break;
 
@@ -1704,7 +1708,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
     case pch::VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
       llvm::StringRef PCHBranch(BlobStart, BlobLen);
-      if (llvm::StringRef(CurBranch) != PCHBranch) {
+      if (llvm::StringRef(CurBranch) != PCHBranch && !DisableValidation) {
         Diag(diag::warn_pch_different_branch) << PCHBranch << CurBranch;
         return IgnorePCH;
       }
@@ -1759,7 +1763,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }
 
   // Check the predefines buffers.
-  if (CheckPredefinesBuffers())
+  if (!DisableValidation && CheckPredefinesBuffers())
     return IgnorePCH;
 
   if (PP) {

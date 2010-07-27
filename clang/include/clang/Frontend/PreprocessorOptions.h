@@ -43,6 +43,10 @@ public:
   /// The implicit PCH included at the start of the translation unit, or empty.
   std::string ImplicitPCHInclude;
 
+  /// \brief When true, disables most of the normal validation performed on
+  /// precompiled headers.
+  bool DisablePCHValidation;
+  
   /// \brief If non-zero, the implicit PCH include is actually a precompiled
   /// preamble that covers this number of bytes in the main source file.
   ///
@@ -113,6 +117,7 @@ public:
   
 public:
   PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
+                          DisablePCHValidation(false),
                           PrecompiledPreambleBytes(0, true),
                           RetainRemappedFileBuffers(false) { }
 

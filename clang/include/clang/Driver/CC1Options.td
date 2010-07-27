@@ -441,6 +441,8 @@ def fpascal_strings : Flag<"-fpascal-strings">,
   HelpText<"Recognize and construct Pascal-style string literals">;
 def fno_rtti : Flag<"-fno-rtti">,
   HelpText<"Disable generation of rtti information">;
+def fno_validate_pch : Flag<"-fno-validate-pch">,
+  HelpText<"Disable validation of precompiled headers">;
 def fshort_wchar : Flag<"-fshort-wchar">,
   HelpText<"Force wchar_t to be a short unsigned int">;
 def static_define : Flag<"-static-define">,

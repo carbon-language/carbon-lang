@@ -502,13 +502,15 @@ public:
 
   /// Create an external AST source to read a PCH file and attach it to the AST
   /// context.
-  void createPCHExternalASTSource(llvm::StringRef Path);
+  void createPCHExternalASTSource(llvm::StringRef Path,
+                                  bool DisablePCHValidation);
 
   /// Create an external AST source to read a PCH file.
   ///
   /// \return - The new object on success, or null on failure.
   static ExternalASTSource *
   createPCHExternalASTSource(llvm::StringRef Path, const std::string &Sysroot,
+                             bool DisablePCHValidation,
                              Preprocessor &PP, ASTContext &Context);
 
   /// Get the PCH reader, if any.

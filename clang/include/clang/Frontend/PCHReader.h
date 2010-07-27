@@ -409,6 +409,10 @@ private:
   /// precompiled header.
   const char *isysroot;
 
+  /// \brief Whether to disable the normal validation performed on precompiled
+  /// headers when they are loaded.
+  bool DisableValidation;
+      
   /// \brief Mapping from switch-case IDs in the PCH file to
   /// switch-case statements.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
@@ -599,7 +603,12 @@ public:
   /// \param isysroot If non-NULL, the system include path specified by the
   /// user. This is only used with relocatable PCH files. If non-NULL,
   /// a relocatable PCH file will use the default path "/".
-  PCHReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0);
+  ///
+  /// \param DisableValidation If true, the PCH reader will suppress most
+  /// of its regular consistency checking, allowing the use of precompiled
+  /// headers that cannot be determined to be compatible.
+  PCHReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0,
+            bool DisableValidation = false);
 
   /// \brief Load the PCH file without using any pre-initialized Preprocessor.
   ///
@@ -618,8 +627,13 @@ public:
   /// \param isysroot If non-NULL, the system include path specified by the
   /// user. This is only used with relocatable PCH files. If non-NULL,
   /// a relocatable PCH file will use the default path "/".
-  PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
-            Diagnostic &Diags, const char *isysroot = 0);
+  ///
+  /// \param DisableValidation If true, the PCH reader will suppress most
+  /// of its regular consistency checking, allowing the use of precompiled
+  /// headers that cannot be determined to be compatible.
+      PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
+            Diagnostic &Diags, const char *isysroot = 0,
+            bool DisableValidation = false);
   ~PCHReader();
 
   /// \brief Load the precompiled header designated by the given file

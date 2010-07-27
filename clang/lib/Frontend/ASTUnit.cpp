@@ -394,6 +394,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     PreprocessorOpts.PrecompiledPreambleBytes.second
                                                     = PreambleEndsAtStartOfLine;
     PreprocessorOpts.ImplicitPCHInclude = PreambleFile.str();
+    PreprocessorOpts.DisablePCHValidation = true;
   }
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
@@ -415,9 +416,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Act->EndSourceFile();
 
   // Remove the overridden buffer we used for the preamble.
-  if (OverrideMainBuffer)
+  if (OverrideMainBuffer) {
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
+    PreprocessorOpts.DisablePCHValidation = true;
+  }
   
   Clang.takeDiagnosticClient();
   
@@ -426,9 +429,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
 error:
   // Remove the overridden buffer we used for the preamble.
-  if (OverrideMainBuffer)
+  if (OverrideMainBuffer) {
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
+    PreprocessorOpts.DisablePCHValidation = true;
+  }
   
   Clang.takeSourceManager();
   Clang.takeFileManager();

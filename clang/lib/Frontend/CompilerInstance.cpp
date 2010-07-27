@@ -250,9 +250,11 @@ void CompilerInstance::createASTContext() {
 
 // ExternalASTSource
 
-void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path) {
+void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
+                                                  bool DisablePCHValidation) {
   llvm::OwningPtr<ExternalASTSource> Source;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
+                                          DisablePCHValidation,
                                           getPreprocessor(), getASTContext()));
   // Remember the PCHReader, but in a non-owning way.
   Reader = static_cast<PCHReader*>(Source.get());
@@ -262,11 +264,13 @@ void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path) {
 ExternalASTSource *
 CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                              const std::string &Sysroot,
+                                             bool DisablePCHValidation,
                                              Preprocessor &PP,
                                              ASTContext &Context) {
   llvm::OwningPtr<PCHReader> Reader;
   Reader.reset(new PCHReader(PP, &Context,
-                             Sysroot.empty() ? 0 : Sysroot.c_str()));
+                             Sysroot.empty() ? 0 : Sysroot.c_str(),
+                             DisablePCHValidation));
 
   switch (Reader->ReadPCH(Path)) {
   case PCHReader::Success:
