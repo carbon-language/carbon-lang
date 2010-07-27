@@ -21,10 +21,10 @@ using namespace clang;
 
 namespace {
 class CStringChecker : public CheckerVisitor<CStringChecker> {
-  BugType *BT_Null, *BT_Bounds, *BT_Overlap;
+  BugType *BT_Null, *BT_Bounds, *BT_Overlap, *BT_NotCString;
 public:
   CStringChecker()
-  : BT_Null(0), BT_Bounds(0), BT_Overlap(0) {}
+  : BT_Null(0), BT_Bounds(0), BT_Overlap(0), BT_NotCString(0) {}
   static void *getTag() { static int tag; return &tag; }
 
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
@@ -40,10 +40,19 @@ public:
 
   void EvalMemcmp(CheckerContext &C, const CallExpr *CE);
 
+  void EvalStrlen(CheckerContext &C, const CallExpr *CE);
+
   // Utility methods
   std::pair<const GRState*, const GRState*>
   AssumeZero(CheckerContext &C, const GRState *state, SVal V, QualType Ty);
 
+  SVal GetCStringLength(CheckerContext &C, const GRState *state,
+                        const Expr *Ex, SVal Buf);
+
+  bool SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
+                       const MemRegion *MR);
+
+  // Re-usable checks
   const GRState *CheckNonNull(CheckerContext &C, const GRState *state,
                                const Expr *S, SVal l);
   const GRState *CheckLocation(CheckerContext &C, const GRState *state,
@@ -369,6 +378,162 @@ void CStringChecker::EmitOverlapBug(CheckerContext &C, const GRState *state,
   C.EmitReport(report);
 }
 
+SVal CStringChecker::GetCStringLength(CheckerContext &C, const GRState *state,
+                                      const Expr *Ex, SVal Buf) {
+  const MemRegion *MR = Buf.getAsRegion();
+  if (!MR) {
+    // If we can't get a region, see if it's something we /know/ isn't a
+    // C string. In the context of locations, the only time we can issue such
+    // a warning is for labels.
+    if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&Buf)) {
+      ExplodedNode *N = C.GenerateSink(state);
+      if (N) {
+        if (!BT_NotCString)
+          BT_NotCString = new BuiltinBug("API",
+            "Argument is not a null-terminated string.");
+
+        llvm::SmallString<120> buf;
+        llvm::raw_svector_ostream os(buf);
+        os << "Argument to byte string function is the address of the label '"
+           << Label->getLabel()->getID()->getName()
+           << "', which is not a null-terminated string";
+
+        // Generate a report for this bug.
+        EnhancedBugReport *report = new EnhancedBugReport(*BT_NotCString,
+                                                          os.str(), N);
+
+        report->addRange(Ex->getSourceRange());
+        C.EmitReport(report);        
+      }
+
+      return UndefinedVal();
+    }
+
+    // If it's not a region and not a label, it may be a constant location,
+    // or it may be unknown. Just conjure a value as usual (see end of method).
+
+  } else {
+    // If we have a region, strip casts from it and see if we can figure out
+    // its length. For anything we can't figure out, just conjure a value as
+    // usual (see end of method).
+    MR = MR->StripCasts();
+
+    switch (MR->getKind()) {
+    case MemRegion::StringRegionKind: {
+      ValueManager &ValMgr = C.getValueManager();
+      ASTContext &Ctx = ValMgr.getContext();
+      const StringLiteral *Str = cast<StringRegion>(MR)->getStringLiteral();
+
+      // Non-constant string literals may have been changed, so only return a
+      // known value if we know the literal is constant.
+      if (Str->getType().isConstant(Ctx)) {
+        QualType SizeTy = Ctx.getSizeType();
+        return ValMgr.makeIntVal(Str->getByteLength(), SizeTy);        
+      }
+
+      // FIXME: Handle the non-constant case. For now, just treat it like any
+      // other initialized region.
+      // FALL-THROUGH
+    }
+    case MemRegion::SymbolicRegionKind:
+    case MemRegion::AllocaRegionKind:
+    case MemRegion::VarRegionKind:
+    case MemRegion::FieldRegionKind:
+    case MemRegion::ObjCIvarRegionKind:
+      // FIXME: These need to be tracked!
+      break;
+    case MemRegion::CompoundLiteralRegionKind:
+      // FIXME: Can we track this? Is it necessary?
+      break;
+    case MemRegion::ElementRegionKind:
+      // FIXME: How can we handle this? It's not good enough to subtract the
+      // offset from the base string length; consider "123\x00567" and &a[5].
+      break;
+    default: {
+      // Other regions (mostly non-data) can't have a reliable C string length.
+      // In this case, an error is emitted and UndefinedVal is returned.
+      // The caller should always be prepared to handle this case.
+      ExplodedNode *N = C.GenerateSink(state);
+      if (N) {
+        if (!BT_NotCString)
+          BT_NotCString = new BuiltinBug("API",
+            "Argument is not a null-terminated string.");
+
+        llvm::SmallString<120> buf;
+        llvm::raw_svector_ostream os(buf);
+
+        os << "Argument to byte string function is ";
+
+        if (SummarizeRegion(os, C.getASTContext(), MR)) {
+          os << ", which is not a null-terminated string";
+        } else {
+          os << "not a null-terminated string";
+        }
+
+        // Generate a report for this bug.
+        EnhancedBugReport *report = new EnhancedBugReport(*BT_NotCString,
+                                                          os.str(), N);
+
+        report->addRange(Ex->getSourceRange());
+        C.EmitReport(report);        
+      }
+
+      return UndefinedVal();
+    }
+    }
+  }
+
+  // If we can't track a certain region's C string length, or if we can't get a
+  // region from the SVal, conjure a value, for use in later constraints.
+  unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+  ValueManager &ValMgr = C.getValueManager();
+  QualType SizeTy = ValMgr.getContext().getSizeType();
+  return ValMgr.getConjuredSymbolVal(getTag(), Ex, SizeTy, Count);
+}
+
+bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
+                                     const MemRegion *MR) {
+  const TypedRegion *TR = dyn_cast<TypedRegion>(MR);
+  if (!TR)
+    return false;
+
+  switch (TR->getKind()) {
+  case MemRegion::FunctionTextRegionKind: {
+    const FunctionDecl *FD = cast<FunctionTextRegion>(TR)->getDecl();
+    if (FD)
+      os << "the address of the function '" << FD << "'";
+    else
+      os << "the address of a function";
+    return true;
+  }
+  case MemRegion::BlockTextRegionKind:
+    os << "block text";
+    return true;
+  case MemRegion::BlockDataRegionKind:
+    os << "a block";
+    return true;
+  case MemRegion::CXXThisRegionKind:
+  case MemRegion::CXXObjectRegionKind:
+    os << "a C++ object of type "
+       << TR->getValueType(Ctx).getAsString();
+    return true;
+  case MemRegion::VarRegionKind:
+    os << "a variable of type"
+       << TR->getValueType(Ctx).getAsString();
+    return true;
+  case MemRegion::FieldRegionKind:
+    os << "a field of type "
+       << TR->getValueType(Ctx).getAsString();
+    return true;
+  case MemRegion::ObjCIvarRegionKind:
+    os << "an instance variable of type "
+       << TR->getValueType(Ctx).getAsString();
+    return true;
+  default:
+    return false;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Evaluation of individual function calls.
 //===----------------------------------------------------------------------===//
@@ -489,6 +654,27 @@ void CStringChecker::EvalMemcmp(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
+void CStringChecker::EvalStrlen(CheckerContext &C, const CallExpr *CE) {
+  // size_t strlen(const char *s);
+  const GRState *state = C.getState();
+  const Expr *Arg = CE->getArg(0);
+  SVal ArgVal = state->getSVal(Arg);
+
+  // Check that the argument is non-null.
+  state = CheckNonNull(C, state, Arg, ArgVal);
+
+  if (state) {
+    // Figure out what the length is, making sure the argument is a C string
+    // (or something similar to a C string). If the argument is valid, the
+    // length will be defined, and we can then set the return value.
+    SVal StrLen = GetCStringLength(C, state, Arg, ArgVal);
+    if (!StrLen.isUndef()) {
+      state = state->BindExpr(CE, StrLen);
+      C.addTransition(state);
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // The driver method.
 //===----------------------------------------------------------------------===//
@@ -512,6 +698,7 @@ bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     .Cases("memcpy", "__memcpy_chk", &CStringChecker::EvalMemcpy)
     .Cases("memcmp", "bcmp", &CStringChecker::EvalMemcmp)
     .Cases("memmove", "__memmove_chk", &CStringChecker::EvalMemmove)
+    .Case("strlen", &CStringChecker::EvalStrlen)
     .Case("bcopy", &CStringChecker::EvalBcopy)
     .Default(NULL);
 
