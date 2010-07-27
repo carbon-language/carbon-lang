@@ -18,6 +18,7 @@
 #include "llvm/Analysis/ScalarEvolutionNormalization.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TargetFolder.h"
+#include "llvm/Support/ValueHandle.h"
 #include <set>
 
 namespace llvm {
@@ -31,8 +32,8 @@ namespace llvm {
     ScalarEvolution &SE;
     std::map<std::pair<const SCEV *, Instruction *>, AssertingVH<Value> >
       InsertedExpressions;
-    std::set<Value*> InsertedValues;
-    std::set<Value*> InsertedPostIncValues;
+    std::set<AssertingVH<Value> > InsertedValues;
+    std::set<AssertingVH<Value> > InsertedPostIncValues;
 
     /// PostIncLoops - Addrecs referring to any of the given loops are expanded
     /// in post-inc mode. For example, expanding {1,+,1}<L> in post-inc mode
@@ -70,7 +71,11 @@ namespace llvm {
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or
     /// different places within the same BasicBlock can do so.
-    void clear() { InsertedExpressions.clear(); }
+    void clear() {
+      InsertedExpressions.clear();
+      InsertedValues.clear();
+      InsertedPostIncValues.clear();
+    }
 
     /// getOrInsertCanonicalInductionVariable - This method returns the
     /// canonical induction variable of the specified type for the specified
