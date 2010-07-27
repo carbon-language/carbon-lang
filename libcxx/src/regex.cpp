@@ -252,4 +252,62 @@ __get_classname(const char* s, bool __icase)
     return r;
 }
 
+template <>
+void
+__match_any_but_newline<char>::__exec(__state& __s) const
+{
+    if (__s.__current_ != __s.__last_)
+    {
+        switch (*__s.__current_)
+        {
+        case '\r':
+        case '\n':
+            __s.__do_ = __state::__reject;
+            __s.__node_ = nullptr;
+            break;
+        default:
+            __s.__do_ = __state::__accept_and_consume;
+            ++__s.__current_;
+            __s.__node_ = this->first();
+            break;
+        }
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
+template <>
+void
+__match_any_but_newline<wchar_t>::__exec(__state& __s) const
+{
+    if (__s.__current_ != __s.__last_)
+    {
+        switch (*__s.__current_)
+        {
+        case '\r':
+        case '\n':
+        case 0x2028:
+        case 0x2029:
+            __s.__do_ = __state::__reject;
+            __s.__node_ = nullptr;
+            break;
+        default:
+            __s.__do_ = __state::__accept_and_consume;
+            ++__s.__current_;
+            __s.__node_ = this->first();
+            break;
+        }
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
+
+
 _LIBCPP_END_NAMESPACE_STD

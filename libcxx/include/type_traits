@@ -1464,22 +1464,23 @@ struct __is_constructible_void_check<true, _Tp, _Args...>
     : public false_type
     {};
 
-template <class ..._Args> struct __constains_void;
+template <class ..._Args> struct __contains_void;
 
-template <> struct __constains_void<> : false_type {};
+template <> struct __contains_void<> : false_type {};
 
 template <class _A0, class ..._Args>
-struct __constains_void<_A0, _Args...>
+struct __contains_void<_A0, _Args...>
 {
     static const bool value = is_void<_A0>::value ||
-                              __constains_void<_Args...>::value;
+                              __contains_void<_Args...>::value;
 };
 
 //      is_constructible entry point
 
 template <class _Tp, class... _Args>
 struct is_constructible
-    : public __is_constructible_void_check<__constains_void<_Tp, _Args...>::value,
+    : public __is_constructible_void_check<__contains_void<_Tp, _Args...>::value
+                                        || is_abstract<_Tp>::value,
                                            _Tp, _Args...>
     {};
 
