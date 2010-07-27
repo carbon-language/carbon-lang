@@ -256,6 +256,7 @@ private:
   void WriteAttributeRecord(const Attr *Attr);
 
   unsigned ParmVarDeclAbbrev;
+  unsigned DeclContextLexicalAbbrev;
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
 
@@ -344,6 +345,9 @@ public:
 
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordData &Record);
+
+  /// \brief Force a declaration to be emitted and get its ID.
+  pch::DeclID GetDeclRef(const Decl *D);
 
   /// \brief Determine the declaration ID of an already-emitted
   /// declaration.

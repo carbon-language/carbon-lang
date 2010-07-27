@@ -715,6 +715,14 @@ void ExternalASTSource::SetExternalVisibleDecls(const DeclContext *DC,
   }
 }
 
+DeclContext::decl_iterator DeclContext::noload_decls_begin() const {
+  return decl_iterator(FirstDecl);
+}
+
+DeclContext::decl_iterator DeclContext::noload_decls_end() const {
+  return decl_iterator();
+}
+
 DeclContext::decl_iterator DeclContext::decls_begin() const {
   if (hasExternalLexicalStorage())
     LoadLexicalDeclsFromExternalStorage();

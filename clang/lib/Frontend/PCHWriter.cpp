@@ -1391,11 +1391,12 @@ void PCHWriter::WriteType(QualType T) {
     ID = NextTypeID++;
 
   // Record the offset for this type.
-  if (TypeOffsets.size() == ID - pch::NUM_PREDEF_TYPE_IDS)
+  unsigned Index = ID - FirstTypeID;
+  if (TypeOffsets.size() == Index)
     TypeOffsets.push_back(Stream.GetCurrentBitNo());
-  else if (TypeOffsets.size() < ID - pch::NUM_PREDEF_TYPE_IDS) {
-    TypeOffsets.resize(ID + 1 - pch::NUM_PREDEF_TYPE_IDS);
-    TypeOffsets[ID - pch::NUM_PREDEF_TYPE_IDS] = Stream.GetCurrentBitNo();
+  else if (TypeOffsets.size() < Index) {
+    TypeOffsets.resize(Index + 1);
+    TypeOffsets[Index] = Stream.GetCurrentBitNo();
   }
 
   RecordData Record;
@@ -1442,12 +1443,15 @@ uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
 
   uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
+  Record.push_back(pch::DECL_CONTEXT_LEXICAL);
+  llvm::SmallVector<pch::DeclID, 64> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
          D != DEnd; ++D)
-    AddDeclRef(*D, Record);
+    Decls.push_back(GetDeclRef(*D));
 
   ++NumLexicalDeclContexts;
-  Stream.EmitRecord(pch::DECL_CONTEXT_LEXICAL, Record);
+  Stream.EmitRecordWithBlob(DeclContextLexicalAbbrev, Record,
+     reinterpret_cast<char*>(Decls.data()), Decls.size() * sizeof(pch::DeclID));
   return Offset;
 }
 
@@ -2332,7 +2336,6 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
-  (void)PP;
 
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
@@ -2351,16 +2354,15 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // The TU was loaded before we managed to register ourselves as a listener.
   // Thus we need to add it manually.
   DeclIDs[TU] = 1;
-  // FIXME: We don't want to iterate over everything here, because it needlessly
-  // deserializes the entire original PCH. Instead we only want to iterate over
-  // the stuff that's already there.
-  // All in good time, though.
-  for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
+  Record.clear();
+  for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
+                                  E = TU->noload_decls_end();
        I != E; ++I) {
     if ((*I)->getPCHLevel() == 0) {
-      DeclTypesToEmit.push(*I);
+      AddDeclRef(*I, Record);
     }
   }
+  // We also need to write a lexical updates block for the TU.
 
   Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
   WriteDeclsBlockAbbrevs();
@@ -2584,9 +2586,12 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
 }
 
 void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
+  Record.push_back(GetDeclRef(D));
+}
+
+pch::DeclID PCHWriter::GetDeclRef(const Decl *D) {
   if (D == 0) {
-    Record.push_back(0);
-    return;
+    return 0;
   }
 
   pch::DeclID &ID = DeclIDs[D];
@@ -2597,7 +2602,7 @@ void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
     DeclTypesToEmit.push(const_cast<Decl *>(D));
   }
 
-  Record.push_back(ID);
+  return ID;
 }
 
 pch::DeclID PCHWriter::getDeclID(const Decl *D) {

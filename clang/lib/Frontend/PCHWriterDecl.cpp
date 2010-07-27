@@ -1059,6 +1059,11 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                   // HasUninstantiatedDefaultArg
 
   ParmVarDeclAbbrev = Stream.EmitAbbrev(Abv);
+
+  Abv = new BitCodeAbbrev();
+  Abv->Add(BitCodeAbbrevOp(pch::DECL_CONTEXT_LEXICAL));
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  DeclContextLexicalAbbrev = Stream.EmitAbbrev(Abv);
 }
 
 /// isRequiredDecl - Check if this is a "required" Decl, which must be seen by

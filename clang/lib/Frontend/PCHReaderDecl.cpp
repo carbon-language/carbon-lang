@@ -1517,11 +1517,9 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
     if (Offsets.first || Offsets.second) {
       DC->setHasExternalLexicalStorage(Offsets.first != 0);
       DC->setHasExternalVisibleStorage(Offsets.second != 0);
-      PCHReader::DeclContextInfo Info = {
-        Loc.first,
-        Offsets.first,
-        Offsets.second
-      };
+      DeclContextInfo Info;
+      if (ReadDeclContextStorage(DeclsCursor, Offsets, Info))
+        return 0;
       DeclContextOffsets[DC].push_back(Info);
     }
   }
@@ -1535,4 +1533,36 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
     InterestingDecls.push_back(D);
 
   return D;
+}
+
+bool PCHReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
+                                   const std::pair<uint64_t, uint64_t> &Offsets,
+                                       DeclContextInfo &Info) {
+  SavedStreamPosition SavedPosition(Cursor);
+  // First the lexical decls.
+  if (Offsets.first != 0) {
+    Cursor.JumpToBit(Offsets.first);
+
+    RecordData Record;
+    const char *Blob;
+    unsigned BlobLen;
+    unsigned Code = Cursor.ReadCode();
+    unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
+    if (RecCode != pch::DECL_CONTEXT_LEXICAL) {
+      Error("Expected lexical block");
+      return true;
+    }
+
+    Info.LexicalDecls = reinterpret_cast<const pch::DeclID*>(Blob);
+    Info.NumLexicalDecls = BlobLen / sizeof(pch::DeclID);
+  } else {
+    Info.LexicalDecls = 0;
+    Info.NumLexicalDecls = 0;
+  }
+
+  // Now the visible decls.
+  Info.Stream = &Cursor;
+  Info.OffsetToVisibleDecls = Offsets.second;
+
+  return false;
 }

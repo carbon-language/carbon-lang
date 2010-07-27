@@ -307,8 +307,9 @@ private:
   /// \brief Information about the contents of a DeclContext.
   struct DeclContextInfo {
     llvm::BitstreamCursor *Stream;
-    uint64_t OffsetToLexicalDecls;
     uint64_t OffsetToVisibleDecls;
+    const pch::DeclID *LexicalDecls;
+    unsigned NumLexicalDecls;
   };
   typedef llvm::SmallVector<DeclContextInfo, 1> DeclContextInfos;
   typedef llvm::DenseMap<const DeclContext *, DeclContextInfos>
@@ -317,6 +318,11 @@ private:
   /// \brief Offsets of the lexical and visible declarations for each
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
+
+  /// \brief Read the records that describe the contents of declcontexts.
+  bool ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
+                              const std::pair<uint64_t, uint64_t> &Offsets,
+                              DeclContextInfo &Info);
 
   /// \brief A vector containing identifiers that have already been
   /// loaded.

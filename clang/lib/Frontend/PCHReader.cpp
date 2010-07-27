@@ -1634,8 +1634,8 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       unsigned int numEl = Record[0]*2;
       for (unsigned int i = 1; i <= numEl; i++)
         F.ReferencedSelectorsData.push_back(Record[i]);
-    }
       break;
+    }
 
     case pch::PP_COUNTER_VALUE:
       if (!Record.empty() && Listener)
@@ -2896,30 +2896,15 @@ bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
   DeclContextInfos &Infos = DeclContextOffsets[DC];
   for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
        I != E; ++I) {
-    uint64_t Offset = I->OffsetToLexicalDecls;
-    // Offset can be 0 if this file only contains visible decls.
-    if (Offset == 0)
+    // IDs can be 0 if this context doesn't contain declarations.
+    if (!I->LexicalDecls)
       continue;
-    llvm::BitstreamCursor &DeclsCursor = *I->Stream;
-
-    // Keep track of where we are in the stream, then jump back there
-    // after reading this context.
-    SavedStreamPosition SavedPosition(DeclsCursor);
-
-    // Load the record containing all of the declarations lexically in
-    // this context.
-    DeclsCursor.JumpToBit(Offset);
-    RecordData Record;
-    unsigned Code = DeclsCursor.ReadCode();
-    unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-    if (RecCode != pch::DECL_CONTEXT_LEXICAL) {
-      Error("Expected lexical block");
-      return true;
-    }
 
     // Load all of the declaration IDs
-    for (RecordData::iterator J = Record.begin(), F = Record.end(); J != F; ++J)
-      Decls.push_back(GetDecl(*J));
+    for (const pch::DeclID *ID = I->LexicalDecls,
+                           *IDE = ID + I->NumLexicalDecls;
+         ID != IDE; ++ID)
+      Decls.push_back(GetDecl(*ID));
   }
 
   ++NumLexicalDeclContextsRead;

@@ -840,6 +840,12 @@ public:
   decl_iterator decls_end() const;
   bool decls_empty() const;
 
+  /// noload_decls_begin/end - Iterate over the declarations stored in this
+  /// context that are currently loaded; don't attempt to retrieve anything
+  /// from an external source.
+  decl_iterator noload_decls_begin() const;
+  decl_iterator noload_decls_end() const;
+
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that
   /// are of type SpecificDecl (or a class derived from it). This

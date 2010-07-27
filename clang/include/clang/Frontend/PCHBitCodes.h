@@ -238,7 +238,7 @@ namespace clang {
       /// PCH version and the name of the PCH this is chained to.
       CHAINED_METADATA = 26,
       
-      /// \brief Record  code for referenced selector pool.
+      /// \brief Record code for referenced selector pool.
       REFERENCED_SELECTOR_POOL = 27
     };
 
@@ -547,8 +547,8 @@ namespace clang {
       /// \brief A record that stores the set of declarations that are
       /// lexically stored within a given DeclContext.
       ///
-      /// The record itself is an array of declaration IDs, in the
-      /// order in which those declarations were added to the
+      /// The record itself is a blob that is an array of declaration IDs,
+      /// in the order in which those declarations were added to the
       /// declaration context. This data is used when iterating over
       /// the contents of a DeclContext, e.g., via
       /// DeclContext::decls_begin()/DeclContext::decls_end().
