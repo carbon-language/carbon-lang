@@ -152,14 +152,14 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
     if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
       if (isa<DbgInfoIntrinsic>(II))
         continue;  // Debug intrinsics don't count as size.
-      
-      CallSite CS = CallSite::get(const_cast<Instruction*>(&*II));
-      
+
+      ImmutableCallSite CS(cast<Instruction>(II));
+
       // If this function contains a call to setjmp or _setjmp, never inline
       // it.  This is a hack because we depend on the user marking their local
       // variables as volatile if they are live across a setjmp call, and they
       // probably won't do this in callers.
-      if (Function *F = CS.getCalledFunction()) {
+      if (const Function *F = CS.getCalledFunction()) {
         if (F->isDeclaration() && 
             (F->getName() == "setjmp" || F->getName() == "_setjmp"))
           callsSetJmp = true;
