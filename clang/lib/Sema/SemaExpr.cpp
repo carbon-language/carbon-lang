@@ -2628,12 +2628,12 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
       return false;
 
     // Note that we use the DC of the decl, not the underlying decl.
-    CXXRecordDecl *RecordD = cast<CXXRecordDecl>((*I)->getDeclContext());
-    while (RecordD->isAnonymousStructOrUnion())
-      RecordD = cast<CXXRecordDecl>(RecordD->getParent());
+    DeclContext *DC = (*I)->getDeclContext();
+    while (DC->isTransparentContext())
+      DC = DC->getParent();
 
     llvm::SmallPtrSet<CXXRecordDecl*,4> MemberRecord;
-    MemberRecord.insert(RecordD->getCanonicalDecl());
+    MemberRecord.insert(cast<CXXRecordDecl>(DC)->getCanonicalDecl());
 
     if (!IsProvablyNotDerivedFrom(*this, BaseRecord, MemberRecord))
       return false;
