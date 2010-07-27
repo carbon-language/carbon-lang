@@ -38,7 +38,7 @@ int main()
     assert(std::regex_constants::nosubs != 0);
     assert(std::regex_constants::optimize != 0);
     assert(std::regex_constants::collate != 0);
-    assert(std::regex_constants::ECMAScript != 0);
+    assert(std::regex_constants::ECMAScript == 0);
     assert(std::regex_constants::basic != 0);
     assert(std::regex_constants::extended != 0);
     assert(std::regex_constants::awk != 0);

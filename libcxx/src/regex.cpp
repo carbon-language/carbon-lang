@@ -50,6 +50,10 @@ make_error_type_string(regex_constants::error_type ecode)
     case regex_constants::error_stack:
         return "There was insufficient memory to determine whether the regular "
                "expression could match the specified character sequence.";
+    case regex_constants::__re_err_grammar:
+        return "An invalid regex grammar has been requested.";
+    case regex_constants::__re_err_empty:
+        return "An empty regex is not allowed in the POSIX grammar.";
     default:
         break;
     }

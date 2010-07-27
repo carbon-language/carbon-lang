@@ -747,12 +747,12 @@ enum syntax_option_type
     nosubs     = 1 << 1,
     optimize   = 1 << 2,
     collate    = 1 << 3,
-    ECMAScript = 1 << 4,
-    basic      = 1 << 5,
-    extended   = 1 << 6,
-    awk        = 1 << 7,
-    grep       = 1 << 8,
-    egrep      = 1 << 9
+    ECMAScript = 0,
+    basic      = 1 << 4,
+    extended   = 1 << 5,
+    awk        = 1 << 6,
+    grep       = 1 << 7,
+    egrep      = 1 << 8
 };
 
 inline
@@ -907,7 +907,9 @@ enum error_type
     error_badrepeat,
     error_complexity,
     error_stack,
-    error_temp
+    __re_err_grammar,
+    __re_err_empty,
+    __re_err_unknown
 };
 
 }  // regex_constants
@@ -1538,8 +1540,17 @@ __loop<_CharT>::__exec(__state& __s) const
     }
     else
     {
-        if (__max_ > 0)
+        __s.__loop_data_[__loop_id_].first = 0;
+        bool __do_repeat = 0 < __max_;
+        bool __do_alt = 0 >= __min_;
+        if (__do_repeat && __do_alt)
             __s.__do_ = __state::__split;
+        else if (__do_repeat)
+        {
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__node_ = this->first();
+            __init_repeat(__s);
+        }
         else
         {
             __s.__do_ = __state::__accept_but_not_consume;
@@ -2727,7 +2738,6 @@ private:
         bool
         __match_at_start(const _CharT* __first, const _CharT* __last,
                  match_results<const _CharT*, _Allocator>& __m,
-                 vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
     template <class _Allocator>
         bool
@@ -2738,13 +2748,11 @@ private:
         bool
         __match_at_start_posix_nosubs(const _CharT* __first, const _CharT* __last,
                  match_results<const _CharT*, _Allocator>& __m,
-                 vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
     template <class _Allocator>
         bool
         __match_at_start_posix_subs(const _CharT* __first, const _CharT* __last,
                  match_results<const _CharT*, _Allocator>& __m,
-                 vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
 
     template <class _B, class _A, class _C, class _T>
@@ -2810,7 +2818,7 @@ basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
         __h.release();
         __end_ = __start_.get();
     }
-    switch (__flags_ & 0x3F0)
+    switch (__flags_ & 0x1F0)
     {
     case ECMAScript:
         __parse_ecma_exp(__first, __last);
@@ -2828,7 +2836,7 @@ basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
     case egrep:
         break;
     default:
-        throw regex_error(regex_constants::error_temp);
+        throw regex_error(regex_constants::__re_err_grammar);
     }
 }
 
@@ -2859,7 +2867,7 @@ basic_regex<_CharT, _Traits>::__parse_basic_reg_exp(_ForwardIterator __first,
             }
         }
         if (__first != __last)
-            throw regex_error(regex_constants::error_temp);
+            throw regex_error(regex_constants::__re_err_empty);
     }
     return __first;
 }
@@ -2873,14 +2881,14 @@ basic_regex<_CharT, _Traits>::__parse_extended_reg_exp(_ForwardIterator __first,
     __owns_one_state<_CharT>* __sa = __end_;
     _ForwardIterator __temp = __parse_ERE_branch(__first, __last);
     if (__temp == __first)
-        throw regex_error(regex_constants::error_temp);
+        throw regex_error(regex_constants::__re_err_empty);
     __first = __temp;
     while (__first != __last && *__first == '|')
     {
         __owns_one_state<_CharT>* __sb = __end_;
         __temp = __parse_ERE_branch(++__first, __last);
         if (__temp == __first)
-            throw regex_error(regex_constants::error_temp);
+            throw regex_error(regex_constants::__re_err_empty);
         __push_alternation(__sa, __sb);
         __first = __temp;
     }
@@ -2895,7 +2903,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_branch(_ForwardIterator __first,
 {
     _ForwardIterator __temp = __parse_ERE_expression(__first, __last);
     if (__temp == __first)
-        throw regex_error(regex_constants::error_temp);
+        throw regex_error(regex_constants::__re_err_empty);
     do
     {
         __first = __temp;
@@ -4879,7 +4887,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
                 __states.pop_back();
                 break;
             default:
-                throw regex_error(regex_constants::error_temp);
+                throw regex_error(regex_constants::__re_err_unknown);
                 break;
             }
         } while (!__states.empty());
@@ -4893,7 +4901,6 @@ bool
 basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
         const _CharT* __first, const _CharT* __last,
         match_results<const _CharT*, _Allocator>& __m,
-        vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
     deque<__state> __states;
@@ -4919,11 +4926,9 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
             switch (__s.__do_)
             {
             case __state::__end_state:
-                if (__highest_j < __s.__current_ - __s.__first_)
-                {
+                if (!__matched || __highest_j < __s.__current_ - __s.__first_)
                     __highest_j = __s.__current_ - __s.__first_;
-                    __matched = true;
-                }
+                __matched = true;
                 if (__highest_j == _N)
                     __states.clear();
                 else
@@ -4950,7 +4955,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
                 __states.pop_back();
                 break;
             default:
-                throw regex_error(regex_constants::error_temp);
+                throw regex_error(regex_constants::__re_err_unknown);
                 break;
             }
         } while (!__states.empty());
@@ -4971,7 +4976,6 @@ bool
 basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
         const _CharT* __first, const _CharT* __last,
         match_results<const _CharT*, _Allocator>& __m,
-        vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
     vector<__state> __states;
@@ -5001,16 +5005,16 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
             switch (__s.__do_)
             {
             case __state::__end_state:
-                if (__j == 0 || __highest_j < __j)
+                if (!__matched || __highest_j < __s.__current_ - __s.__first_)
                 {
-                    __matched = true;
-                    __highest_j = __j;
+                    __highest_j = __s.__current_ - __s.__first_;
                     __best_state = __s;
-                    if (__highest_j == _N || __highest_j == 0)
-                        __states.clear();
-                    else
-                        __states.pop_back();
                 }
+                __matched = true;
+                if (__highest_j == _N)
+                    __states.clear();
+                else
+                    __states.pop_back();
                 break;
             case __state::__accept_and_consume:
                 __j += __s.__current_ - __current;
@@ -5031,7 +5035,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
                 __states.pop_back();
                 break;
             default:
-                throw regex_error(regex_constants::error_temp);
+                throw regex_error(regex_constants::__re_err_unknown);
                 break;
             }
         } while (!__states.empty());
@@ -5054,14 +5058,13 @@ bool
 basic_regex<_CharT, _Traits>::__match_at_start(
         const _CharT* __first, const _CharT* __last,
         match_results<const _CharT*, _Allocator>& __m,
-        vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
-    if (__flags_ & ECMAScript)
+    if ((__flags_ & 0x1F0) == ECMAScript)
         return __match_at_start_ecma(__first, __last, __m, __flags);
     if (mark_count() == 0)
-        return __match_at_start_posix_nosubs(__first, __last, __m, __lc, __flags);
-    return __match_at_start_posix_subs(__first, __last, __m, __lc, __flags);
+        return __match_at_start_posix_nosubs(__first, __last, __m, __flags);
+    return __match_at_start_posix_subs(__first, __last, __m, __flags);
 }
 
 template <class _CharT, class _Traits>
@@ -5075,8 +5078,7 @@ basic_regex<_CharT, _Traits>::__search(
     if (__left_anchor_)
         __flags |= regex_constants::match_continuous;
     __m.__init(1 + mark_count(), __first, __last);
-    vector<size_t> __lc(__loop_count());
-    if (__match_at_start(__first, __last, __m, __lc, __flags))
+    if (__match_at_start(__first, __last, __m, __flags))
     {
         __m.__prefix_.second = __m[0].first;
         __m.__prefix_.matched = __m.__prefix_.first != __m.__prefix_.second;
@@ -5089,7 +5091,7 @@ basic_regex<_CharT, _Traits>::__search(
         __m.__matches_.assign(__m.size(), __m.__unmatched_);
         for (++__first; __first != __last; ++__first)
         {
-            if (__match_at_start(__first, __last, __m, __lc, __flags))
+            if (__match_at_start(__first, __last, __m, __flags))
             {
                 __m.__prefix_.second = __m[0].first;
                 __m.__prefix_.matched = __m.__prefix_.first != __m.__prefix_.second;
