@@ -88,6 +88,8 @@ public:
                            off_t &offset,
                            uint32_t index);
     
+    uint64_t GetFunctionAddress (const clang::NamedDecl *decl);
+    
     // Interface for DwarfExpression
     Value *GetValueForIndex (uint32_t index);
     

@@ -182,6 +182,24 @@ ClangExpressionDeclMap::GetStructElement (const clang::NamedDecl *&decl,
     return true;
 }
 
+uint64_t
+ClangExpressionDeclMap::GetFunctionAddress (const clang::NamedDecl *decl)
+{
+    TupleIterator iter;
+    
+    for (iter = m_tuples.begin();
+         iter != m_tuples.end();
+         ++iter)
+    {
+        if (decl == iter->m_decl)
+        {
+            return iter->m_value->GetScalar().ULongLong();
+        }
+    }
+    
+    return 0;
+}
+
 // Interface for DwarfExpression
 lldb_private::Value 
 *ClangExpressionDeclMap::GetValueForIndex (uint32_t index)

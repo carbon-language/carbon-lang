@@ -14,6 +14,7 @@
 
 namespace llvm {
     class BasicBlock;
+    class CallInst;
     class Function;
     class Module;
     class TargetData;
@@ -37,14 +38,17 @@ public:
     llvm::PassManagerType getPotentialPassManagerType() const;
 private:
     bool MaybeHandleVariable(llvm::Module &M, 
-                             lldb_private::ClangExpressionDeclMap *DM,
                              llvm::Value *V,
                              bool Store);
+    bool MaybeHandleCall(llvm::Module &M,
+                         llvm::CallInst *C);
     bool runOnBasicBlock(llvm::Module &M,
                          llvm::BasicBlock &BB);
     bool removeGuards(llvm::Module &M,
                       llvm::BasicBlock &BB);
     bool replaceVariables(llvm::Module &M,
+                          llvm::Function *F);
+    bool replaceFunctions(llvm::Module &M,
                           llvm::Function *F);
     
     lldb_private::ClangExpressionDeclMap *m_decl_map;

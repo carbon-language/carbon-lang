@@ -82,7 +82,6 @@ DeclForGlobalValue(llvm::Module &module,
 
 bool 
 IRForTarget::MaybeHandleVariable(Module &M, 
-                                 lldb_private::ClangExpressionDeclMap *DM,
                                  llvm::Value *V,
                                  bool Store)
 {
@@ -110,15 +109,50 @@ IRForTarget::MaybeHandleVariable(Module &M,
         size_t value_size = m_target_data->getTypeStoreSize(value_type);
         off_t value_alignment = m_target_data->getPrefTypeAlignment(value_type);
         
-        if (named_decl && !DM->AddValueToStruct(V, 
-                                                named_decl,
-                                                name,
-                                                qual_type,
-                                                ast_context,
-                                                value_size, 
-                                                value_alignment))
+        if (named_decl && !m_decl_map->AddValueToStruct(V, 
+                                                        named_decl,
+                                                        name,
+                                                        qual_type,
+                                                        ast_context,
+                                                        value_size, 
+                                                        value_alignment))
             return false;
     }
+    
+    return true;
+}
+
+bool
+IRForTarget::MaybeHandleCall(Module &M,
+                             CallInst *C)
+{
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+    llvm::Function *fun = C->getCalledFunction();
+    
+    if (fun == NULL)
+        return true;
+    
+    clang::NamedDecl *fun_decl = DeclForGlobalValue(M, fun);
+    
+    if (!fun_decl)
+    {
+        if (log)
+            log->Printf("Function %s wasn't in the metadata", fun->getName().str().c_str());
+        return false;
+    }
+    
+    uint64_t fun_addr = m_decl_map->GetFunctionAddress(fun_decl);
+    
+    if (fun_addr == 0)
+    {
+        if (log)
+            log->Printf("Function %s had no address", fun_decl->getNameAsCString());
+        return false;
+    }
+        
+    if (log)
+        log->Printf("Found %s at %llx", fun_decl->getNameAsCString(), fun_addr);
     
     return true;
 }
@@ -139,11 +173,15 @@ IRForTarget::runOnBasicBlock(Module &M, BasicBlock &BB)
         Instruction &inst = *ii;
         
         if (LoadInst *load = dyn_cast<LoadInst>(&inst))
-            if (!MaybeHandleVariable(M, m_decl_map, load->getPointerOperand(), false))
+            if (!MaybeHandleVariable(M, load->getPointerOperand(), false))
                 return false;
         
         if (StoreInst *store = dyn_cast<StoreInst>(&inst))
-            if (!MaybeHandleVariable(M, m_decl_map, store->getPointerOperand(), false))
+            if (!MaybeHandleVariable(M, store->getPointerOperand(), true))
+                return false;
+        
+        if (CallInst *call = dyn_cast<CallInst>(&inst))
+            if (!MaybeHandleCall(M, call))
                 return false;
     }
     
