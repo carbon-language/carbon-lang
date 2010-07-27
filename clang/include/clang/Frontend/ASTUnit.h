@@ -135,6 +135,11 @@ private:
   /// file within the precompiled preamble.
   unsigned PreambleReservedSize;
   
+  /// \brief When non-NULL, this is the buffer used to store the contents of
+  /// the main file when it has been padded for use with the precompiled
+  /// preamble.
+  llvm::MemoryBuffer *SavedMainFileBuffer;
+  
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
   

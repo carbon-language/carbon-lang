@@ -39,7 +39,7 @@ using namespace clang;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
-    ConcurrencyCheckValue(CheckUnlocked) { }
+    ConcurrencyCheckValue(CheckUnlocked), SavedMainFileBuffer(0) { }
 
 ASTUnit::~ASTUnit() {
   ConcurrencyCheckValue = CheckLocked;
@@ -60,6 +60,8 @@ ASTUnit::~ASTUnit() {
          ++FB)
       delete FB->second;
   }
+  
+  delete SavedMainFileBuffer;
 }
 
 void ASTUnit::CleanTemporaryFiles() {
@@ -328,6 +330,9 @@ public:
 /// \returns True if a failure occurred that causes the ASTUnit not to
 /// contain any translation-unit information, false otherwise.
 bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
+  delete SavedMainFileBuffer;
+  SavedMainFileBuffer = 0;
+  
   if (!Invocation.get())
     return true;
   
@@ -395,6 +400,9 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
                                                     = PreambleEndsAtStartOfLine;
     PreprocessorOpts.ImplicitPCHInclude = PreambleFile.str();
     PreprocessorOpts.DisablePCHValidation = true;
+    
+    // Keep track of the override buffer;
+    SavedMainFileBuffer = OverrideMainBuffer;
   }
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
@@ -787,7 +795,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   if (!AST->Parse(OverrideMainBuffer))
     return AST.take();
   
-  delete OverrideMainBuffer;
   return 0;
 }
 
@@ -884,6 +891,5 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
 
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  
-  delete OverrideMainBuffer;
   return Result;
 }
