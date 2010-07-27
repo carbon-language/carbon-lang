@@ -348,7 +348,8 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       // Create the SourceRange Arrays
       SourceRange S[2] = { i->first->getLHS()->getSourceRange(),
                            i->first->getRHS()->getSourceRange() };
-      B.EmitBasicReport("Idempotent operation", msg, i->first->getOperatorLoc(),
+      B.EmitBasicReport("Idempotent operation", "Dead code",
+                        msg, i->first->getOperatorLoc(),
           S, 2);
     }
   }
