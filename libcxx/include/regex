@@ -2701,6 +2701,12 @@ private:
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_pattern_character(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_grep(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_egrep(_ForwardIterator __first, _ForwardIterator __last);
 
     void __push_l_anchor() {__left_anchor_ = true;}
     void __push_r_anchor();
@@ -2832,8 +2838,10 @@ basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
     case awk:
         break;
     case grep:
+        __parse_grep(__first, __last);
         break;
     case egrep:
+        __parse_egrep(__first, __last);
         break;
     default:
         throw regex_error(regex_constants::__re_err_grammar);
@@ -4104,6 +4112,68 @@ basic_regex<_CharT, _Traits>::__parse_pattern_character(_ForwardIterator __first
             ++__first;
             break;
         }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_grep(_ForwardIterator __first,
+                                           _ForwardIterator __last)
+{
+    __owns_one_state<_CharT>* __sa = __end_;
+    _ForwardIterator __t1 = _STD::find(__first, __last, _CharT('\n'));
+    if (__t1 != __first)
+        __parse_basic_reg_exp(__first, __t1);
+    else
+        __push_empty();
+    __first = __t1;
+    if (__first != __last)
+        ++__first;
+    while (__first != __last)
+    {
+        __t1 = _STD::find(__first, __last, _CharT('\n'));
+        __owns_one_state<_CharT>* __sb = __end_;
+        if (__t1 != __first)
+            __parse_basic_reg_exp(__first, __t1);
+        else
+            __push_empty();
+        __push_alternation(__sa, __sb);
+        __first = __t1;
+        if (__first != __last)
+            ++__first;
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_egrep(_ForwardIterator __first,
+                                            _ForwardIterator __last)
+{
+    __owns_one_state<_CharT>* __sa = __end_;
+    _ForwardIterator __t1 = _STD::find(__first, __last, _CharT('\n'));
+    if (__t1 != __first)
+        __parse_extended_reg_exp(__first, __t1);
+    else
+        __push_empty();
+    __first = __t1;
+    if (__first != __last)
+        ++__first;
+    while (__first != __last)
+    {
+        __t1 = _STD::find(__first, __last, _CharT('\n'));
+        __owns_one_state<_CharT>* __sb = __end_;
+        if (__t1 != __first)
+            __parse_extended_reg_exp(__first, __t1);
+        else
+            __push_empty();
+        __push_alternation(__sa, __sb);
+        __first = __t1;
+        if (__first != __last)
+            ++__first;
     }
     return __first;
 }
