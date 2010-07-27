@@ -7,11 +7,11 @@ import unittest
 import lldb
 import lldbtest
 
-class TestClassTypes(lldbtest.TestBase):
+class TestLoadUnload(lldbtest.TestBase):
 
     mydir = "load_unload"
 
-    def test_dead_strip(self):
+    def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")

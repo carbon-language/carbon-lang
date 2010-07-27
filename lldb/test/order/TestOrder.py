@@ -8,7 +8,7 @@ import unittest
 import lldb
 import lldbtest
 
-class TestClassTypes(lldbtest.TestBase):
+class TestOrder(lldbtest.TestBase):
 
     mydir = "order"
 

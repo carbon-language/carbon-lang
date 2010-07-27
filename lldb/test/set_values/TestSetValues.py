@@ -5,11 +5,11 @@ import unittest
 import lldb
 import lldbtest
 
-class TestClassTypes(lldbtest.TestBase):
+class TestSetValues(lldbtest.TestBase):
 
     mydir = "set_values"
 
-    def test_class_types(self):
+    def test_set_values(self):
         """Test settings and readings of program variables."""
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
