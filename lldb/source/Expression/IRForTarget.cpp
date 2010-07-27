@@ -186,7 +186,16 @@ static void TurnGuardLoadIntoZero(Instruction* guard_load, Module &M)
     for (ui = guard_load->use_begin();
          ui != guard_load->use_end();
          ++ui)
-        ui->replaceUsesOfWith(guard_load, zero);
+    {
+        if (isa<Constant>(ui))
+        {
+            // do nothing for the moment
+        }
+        else
+        {
+            ui->replaceUsesOfWith(guard_load, zero);
+        }
+    }
     
     guard_load->eraseFromParent();
 }
