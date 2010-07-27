@@ -250,12 +250,6 @@ public:
   }
 };
 
-  
-template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
-struct isPodLike<ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT> > {
-  static const bool value = true;
-};
-
 template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
 struct DenseMapInfo<ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT> > {
   typedef ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT> VH;
