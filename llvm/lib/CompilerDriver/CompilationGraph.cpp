@@ -355,6 +355,7 @@ TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
 int CompilationGraph::Build (const sys::Path& TempDir,
                              const LanguageMap& LangMap) {
   InputLanguagesSet InLangs;
+  bool WasSomeActionGenerated = !InputFilenames.empty();
 
   // Traverse initial parts of the toolchains and fill in InLangs.
   if (int ret = BuildInitial(InLangs, TempDir, LangMap))
@@ -375,6 +376,7 @@ int CompilationGraph::Build (const sys::Path& TempDir,
     if (JT->JoinListEmpty() && !(JT->WorksOnEmpty() && InputFilenames.empty()))
       continue;
 
+    WasSomeActionGenerated = true;
     Action CurAction;
     if (int ret = JT->GenerateAction(CurAction, CurNode->HasChildren(),
                                      TempDir, InLangs, LangMap)) {
@@ -399,6 +401,11 @@ int CompilationGraph::Build (const sys::Path& TempDir,
                                    InLangs, TempDir, LangMap)) {
       return ret;
     }
+  }
+
+  if (!WasSomeActionGenerated) {
+    PrintError("no input files");
+    return 1;
   }
 
   return 0;
