@@ -1114,6 +1114,14 @@ static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
   } else {
     const VarDecl *VD = cast<VarDecl>(D);
 
+    // Structs that have non-trivial constructors or destructors must be seen.
+    if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
+      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+        if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor())
+          return true;
+      }
+    }
+
     // In C++, this doesn't need to be seen if it is marked "extern".
     if (Context.getLangOptions().CPlusPlus && !VD->getInit() &&
         (VD->getStorageClass() == VarDecl::Extern ||
