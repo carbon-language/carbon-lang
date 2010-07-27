@@ -61,7 +61,7 @@ void eq_ne (unsigned a) {
   if (a+1 != 0)
     return; // no-warning
   if (a-1 != UINT_MAX-1)
-    return; // expected-warning{{never executed}}
+    return; // no-warning
   free(b);
 }
 
@@ -72,7 +72,7 @@ void ne_eq (unsigned a) {
   if (a+1 == 0)
     return; // no-warning
   if (a-1 == UINT_MAX-1)
-    return; // expected-warning{{never executed}}
+    return; // no-warning
   free(b);
 }
 
@@ -177,7 +177,7 @@ void adjustedLE (unsigned a) {
 void tautologyGT (unsigned a) {
   char* b = malloc(1);
   if (a > UINT_MAX)
-    return; // expected-warning{{never executed}}
+    return; // no-warning
   free(b);
 }
 

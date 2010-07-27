@@ -35,13 +35,13 @@ size_t strlen(const char *s);
 
 void strlen_constant0() {
   if (strlen("123") != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+    (void)*(char*)0;
 }
 
 void strlen_constant1() {
   const char *a = "123";
   if (strlen(a) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+    (void)*(char*)0;
 }
 
 void strlen_constant2(char x) {
