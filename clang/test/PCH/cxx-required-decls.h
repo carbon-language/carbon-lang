@@ -5,6 +5,3 @@ struct S {
 };
 
 static S globS;
-
-extern int ext_foo;
-static int bar = ++ext_foo;
