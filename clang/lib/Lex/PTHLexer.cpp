@@ -101,16 +101,15 @@ LexNextToken:
     // Save the end-of-file token.
     EofToken = Tok;
 
+    // Save 'PP' to 'PPCache' as LexEndOfFile can delete 'this'.
     Preprocessor *PPCache = PP;
 
     assert(!ParsingPreprocessorDirective);
     assert(!LexingRawMode);
-
-    // FIXME: Issue diagnostics similar to Lexer.
-    if (PP->HandleEndOfFile(Tok, false))
+    
+    if (LexEndOfFile(Tok))
       return;
 
-    assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
     return PPCache->Lex(Tok);
   }
 
@@ -132,6 +131,28 @@ LexNextToken:
   }
 
   MIOpt.ReadToken();
+}
+
+bool PTHLexer::LexEndOfFile(Token &Result) {
+  // If we hit the end of the file while parsing a preprocessor directive,
+  // end the preprocessor directive first.  The next token returned will
+  // then be the end of file.
+  if (ParsingPreprocessorDirective) {
+    ParsingPreprocessorDirective = false; // Done parsing the "line".
+    return true;  // Have a token.
+  }
+  
+  assert(!LexingRawMode);
+
+  // If we are in a #if directive, emit an error.
+  while (!ConditionalStack.empty()) {
+    PP->Diag(ConditionalStack.back().IfLoc,
+             diag::err_pp_unterminated_conditional);
+    ConditionalStack.pop_back();
+  }
+
+  // Finally, let the preprocessor handle this.
+  return PP->HandleEndOfFile(Result);
 }
 
 // FIXME: We can just grab the last token instead of storing a copy

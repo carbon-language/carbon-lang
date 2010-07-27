@@ -50,6 +50,8 @@ class PTHLexer : public PreprocessorLexer {
 
   /// ReadToken - Used by PTHLexer to read tokens TokBuf.
   void ReadToken(Token& T);
+  
+  bool LexEndOfFile(Token &Result);
 
   /// PTHMgr - The PTHManager object that created this PTHLexer.
   PTHManager& PTHMgr;
