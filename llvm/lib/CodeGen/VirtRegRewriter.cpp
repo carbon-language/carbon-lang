@@ -1864,7 +1864,7 @@ bool LocalRewriter::InsertSpills(MachineInstr *MI) {
 
 
 /// rewriteMBB - Keep track of which spills are available even after the
-/// register allocator is done with them.  If possible, avid reloading vregs.
+/// register allocator is done with them.  If possible, avoid reloading vregs.
 void
 LocalRewriter::RewriteMBB(LiveIntervals *LIs,
                           AvailableSpills &Spills, BitVector &RegKills,
