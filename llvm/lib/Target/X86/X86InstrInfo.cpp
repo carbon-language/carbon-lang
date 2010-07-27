@@ -787,7 +787,7 @@ static bool isFrameStoreOpcode(int Opcode) {
 unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI, 
                                            int &FrameIndex) const {
   if (isFrameLoadOpcode(MI->getOpcode()))
-    if (isFrameOperand(MI, 1, FrameIndex))
+    if (MI->getOperand(0).getSubReg() == 0 && isFrameOperand(MI, 1, FrameIndex))
       return MI->getOperand(0).getReg();
   return 0;
 }
@@ -826,7 +826,8 @@ bool X86InstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
 unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const {
   if (isFrameStoreOpcode(MI->getOpcode()))
-    if (isFrameOperand(MI, 0, FrameIndex))
+    if (MI->getOperand(X86::AddrNumOperands).getSubReg() == 0 &&
+        isFrameOperand(MI, 0, FrameIndex))
       return MI->getOperand(X86::AddrNumOperands).getReg();
   return 0;
 }
