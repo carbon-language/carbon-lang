@@ -1520,7 +1520,11 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
       DeclContextInfo Info;
       if (ReadDeclContextStorage(DeclsCursor, Offsets, Info))
         return 0;
-      DeclContextOffsets[DC].push_back(Info);
+      DeclContextInfos &Infos = DeclContextOffsets[DC];
+      // Reading the TU will happen after reading its update blocks, so we need
+      // to make sure we insert in front. For all other contexts, the vector
+      // is empty here anyway, so there's no loss in efficiency.
+      Infos.insert(Infos.begin(), Info);
     }
   }
   assert(Idx == Record.size());

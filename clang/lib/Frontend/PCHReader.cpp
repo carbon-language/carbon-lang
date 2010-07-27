@@ -1539,6 +1539,16 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       F.LocalNumDecls = Record[0];
       break;
 
+    case pch::TU_UPDATE_LEXICAL: {
+      DeclContextInfo Info = {
+        /* No visible information */ 0, 0,
+        reinterpret_cast<const pch::DeclID *>(BlobStart),
+        BlobLen / sizeof(pch::DeclID)
+      };
+      DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
+      break;
+    }
+
     case pch::LANGUAGE_OPTIONS:
       if (ParseLanguageOptions(Record) && !DisableValidation)
         return IgnorePCH;

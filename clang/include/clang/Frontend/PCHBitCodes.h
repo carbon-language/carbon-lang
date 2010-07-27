@@ -237,9 +237,13 @@ namespace clang {
       /// \brief Record code for the chained PCH metadata, including the
       /// PCH version and the name of the PCH this is chained to.
       CHAINED_METADATA = 26,
-      
+
       /// \brief Record code for referenced selector pool.
-      REFERENCED_SELECTOR_POOL = 27
+      REFERENCED_SELECTOR_POOL = 27,
+
+      /// \brief Record code for an update to the TU's lexically contained
+      /// declarations.
+      TU_UPDATE_LEXICAL = 28
     };
 
     /// \brief Record types used within a source manager block.

@@ -2354,15 +2354,23 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // The TU was loaded before we managed to register ourselves as a listener.
   // Thus we need to add it manually.
   DeclIDs[TU] = 1;
-  Record.clear();
+  llvm::SmallVector<pch::DeclID, 64> NewGlobalDecls;
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
                                   E = TU->noload_decls_end();
        I != E; ++I) {
-    if ((*I)->getPCHLevel() == 0) {
-      AddDeclRef(*I, Record);
-    }
+    if ((*I)->getPCHLevel() == 0)
+      NewGlobalDecls.push_back(GetDeclRef(*I));
   }
   // We also need to write a lexical updates block for the TU.
+  llvm::BitCodeAbbrev *Abv = new llvm::BitCodeAbbrev();
+  Abv->Add(llvm::BitCodeAbbrevOp(pch::TU_UPDATE_LEXICAL));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
+  unsigned TuUpdateLexicalAbbrev = Stream.EmitAbbrev(Abv);
+  Record.clear();
+  Record.push_back(pch::TU_UPDATE_LEXICAL);
+  Stream.EmitRecordWithBlob(TuUpdateLexicalAbbrev, Record,
+                          reinterpret_cast<const char*>(NewGlobalDecls.data()),
+                          NewGlobalDecls.size() * sizeof(pch::DeclID));
 
   Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
   WriteDeclsBlockAbbrevs();
