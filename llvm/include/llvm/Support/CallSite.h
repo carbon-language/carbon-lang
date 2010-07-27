@@ -55,6 +55,7 @@ public:
   CallSiteBase(InstrTy *II) {
     assert(II && "Null instruction given?");
     *this = get(II);
+    assert(I.getPointer() && "Not a call?");
   }
 
   /// CallSiteBase::get - This static method is sort of like a constructor.  It
@@ -293,6 +294,7 @@ class CallSite : public CallSiteBase<Function, Value, User, Instruction,
 public:
   CallSite() {}
   CallSite(Base B) : Base(B) {}
+  CallSite(Value* V) : Base(V) {}
   CallSite(CallInst *CI) : Base(CI) {}
   CallSite(InvokeInst *II) : Base(II) {}
   CallSite(Instruction *II) : Base(II) {}

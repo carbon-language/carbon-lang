@@ -120,7 +120,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       Pointer = CI->getArgOperand(0);
       // calls to free() erase the entire structure
       PointerSize = ~0ULL;
-    } else if (CallSite InstCS = Inst) {
+    } else if (CallSite InstCS = cast<Value>(Inst)) {
       // Debug intrinsics don't cause dependences.
       if (isa<DbgInfoIntrinsic>(Inst)) continue;
       // If these two calls do not interfere, look past it.
