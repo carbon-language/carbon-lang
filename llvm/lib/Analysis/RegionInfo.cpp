@@ -17,6 +17,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Analysis/LoopInfo.h"
 
 #define DEBUG_TYPE "region"
 #include "llvm/Support/Debug.h"
@@ -81,6 +82,44 @@ bool Region::contains(const BasicBlock *B) const {
     && !(DT->dominates(exit, BB) && DT->dominates(entry, exit)));
 }
 
+bool Region::contains(const Loop *L) const {
+  // BBs that are not part of any loop are element of the Loop
+  // described by the NULL pointer. This loop is not part of any region,
+  // except if the region describes the whole function.
+  if (L == 0)
+    return getExit() == 0;
+
+  if (!contains(L->getHeader()))
+    return false;
+
+  SmallVector<BasicBlock *, 8> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
+
+  for (SmallVectorImpl<BasicBlock*>::iterator BI = ExitingBlocks.begin(),
+       BE = ExitingBlocks.end(); BI != BE; ++BI)
+    if (!contains(*BI))
+      return false;
+
+  return true;
+}
+
+Loop *Region::outermostLoopInRegion(Loop *L) const {
+  if (!contains(L))
+    return 0;
+
+  while (L && contains(L->getParentLoop())) {
+    L = L->getParentLoop();
+  }
+
+  return L;
+}
+
+Loop *Region::outermostLoopInRegion(LoopInfo *LI, BasicBlock* BB) const {
+  assert(LI && BB && "LI and BB cannot be null!");
+  Loop *L = LI->getLoopFor(BB);
+  return outermostLoopInRegion(L);
+}
+
 bool Region::isSimple() const {
   bool isSimple = true;
   bool found = false;
@@ -114,6 +153,32 @@ bool Region::isSimple() const {
     }
 
   return isSimple;
+}
+
+std::string Region::getNameStr() const {
+  std::string exitName;
+  std::string entryName;
+
+  if (getEntry()->getName().empty()) {
+    raw_string_ostream OS(entryName);
+
+    WriteAsOperand(OS, getEntry(), false);
+    entryName = OS.str();
+  } else
+    entryName = getEntry()->getNameStr();
+
+  if (getExit()) {
+    if (getExit()->getName().empty()) {
+      raw_string_ostream OS(exitName);
+
+      WriteAsOperand(OS, getExit(), false);
+      exitName = OS.str();
+    } else
+      exitName = getExit()->getNameStr();
+  } else
+    exitName = "<Function Return>";
+
+  return entryName + " => " + exitName;
 }
 
 void Region::verifyBBInRegion(BasicBlock *BB) const {

@@ -37,6 +37,8 @@ namespace llvm {
 class Region;
 class RegionInfo;
 class raw_ostream;
+class Loop;
+class LoopInfo;
 
 /// @brief Marker class to iterate over the elements of a Region in flat mode.
 ///
@@ -287,16 +289,7 @@ public:
 
   /// @brief Returns the name of the Region.
   /// @return The Name of the Region.
-  std::string getNameStr() const {
-    std::string exitName;
-
-    if (getExit())
-      exitName = getExit()->getNameStr();
-    else
-      exitName = "<Function Return>";
-
-    return getEntry()->getNameStr() + " => " + exitName;
-  }
+  std::string getNameStr() const;
 
   /// @brief Return the RegionInfo object, that belongs to this Region.
   RegionInfo *getRegionInfo() const {
@@ -339,6 +332,36 @@ public:
   bool contains(const Instruction *Inst) const {
     return contains(Inst->getParent());
   }
+
+  /// @brief Check if the region contains a loop.
+  ///
+  /// @param L The loop that might be contained in this region.
+  /// @return True if the loop is contained in the region otherwise false.
+  ///         In case a NULL pointer is passed to this function the result
+  ///         is false, except for the region that describes the whole function.
+  ///         In that case true is returned.
+  bool contains(const Loop *L) const;
+
+  /// @brief Get the outermost loop in the region that contains a loop.
+  ///
+  /// Find for a Loop L the outermost loop OuterL that is a parent loop of L
+  /// and is itself contained in the region.
+  ///
+  /// @param L The loop the lookup is started.
+  /// @return The outermost loop in the region, NULL if such a loop does not
+  ///         exist or if the region describes the whole function.
+  Loop *outermostLoopInRegion(Loop *L) const;
+
+  /// @brief Get the outermost loop in the region that contains a basic block.
+  ///
+  /// Find for a basic block BB the outermost loop L that contains BB and is
+  /// itself contained in the region.
+  ///
+  /// @param LI A pointer to a LoopInfo analysis.
+  /// @param BB The basic block surrounded by the loop.
+  /// @return The outermost loop in the region, NULL if such a loop does not
+  ///         exist or if the region describes the whole function.
+  Loop *outermostLoopInRegion(LoopInfo *LI, BasicBlock* BB) const;
 
   /// @brief Get the subregion that starts at a BasicBlock
   ///
