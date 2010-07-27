@@ -49,13 +49,12 @@ protected:
   PointerIntPair<InstrTy*, 1, bool> I;
 public:
   CallSiteBase() : I(0, false) {}
-  CallSiteBase(CallTy *CI) : I(reinterpret_cast<InstrTy*>(CI), true) {}
-  CallSiteBase(InvokeTy *II) : I(reinterpret_cast<InstrTy*>(II), false) {}
+  CallSiteBase(CallTy *CI) : I(CI, true) { /*assert(CI);*/ }
+  CallSiteBase(InvokeTy *II) : I(II, false) { /*assert(II);*/ }
   CallSiteBase(ValTy *II) { *this = get(II); }
   CallSiteBase(InstrTy *II) {
     assert(II && "Null instruction given?");
     *this = get(II);
-    assert(I.getPointer());
   }
 
   /// CallSiteBase::get - This static method is sort of like a constructor.  It
@@ -66,9 +65,9 @@ public:
   static CallSiteBase get(ValTy *V) {
     if (InstrTy *II = dyn_cast<InstrTy>(V)) {
       if (II->getOpcode() == Instruction::Call)
-        return CallSiteBase(reinterpret_cast<CallTy*>(II));
+        return CallSiteBase(static_cast<CallTy*>(II));
       else if (II->getOpcode() == Instruction::Invoke)
-        return CallSiteBase(reinterpret_cast<InvokeTy*>(II));
+        return CallSiteBase(static_cast<InvokeTy*>(II));
     }
     return CallSiteBase();
   }
