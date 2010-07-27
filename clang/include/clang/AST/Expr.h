@@ -2244,6 +2244,8 @@ public:
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
 
+  const char *getOpcodeStr() const { return getOpcodeStr(Opc); }
+
   /// \brief Retrieve the binary opcode that corresponds to the given
   /// overloaded operator.
   static Opcode getOverloadedOpcode(OverloadedOperatorKind OO);
