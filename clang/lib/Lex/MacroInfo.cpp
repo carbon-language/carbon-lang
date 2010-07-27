@@ -20,6 +20,7 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsC99Varargs = false;
   IsGNUVarargs = false;
   IsBuiltinMacro = false;
+  IsFromPCH = false;
   IsDisabled = false;
   IsUsed = true;
 

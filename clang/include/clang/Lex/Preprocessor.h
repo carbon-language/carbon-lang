@@ -117,7 +117,7 @@ class Preprocessor {
   /// conceptually similar the IdentifierTable. In addition, the current control
   /// flow (in clang::ParseAST()), make it convenient to put here.
   /// FIXME: Make sure the lifetime of Identifiers/Selectors *isn't* tied to
-  /// the lifetime fo the preprocessor.
+  /// the lifetime of the preprocessor.
   SelectorTable Selectors;
 
   /// BuiltinInfo - Information about builtins.

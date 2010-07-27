@@ -1262,7 +1262,8 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
 
     // Don't emit builtin macros like __LINE__ to the PCH file unless they have
     // been redefined by the header (in which case they are not isBuiltinMacro).
-    if (MI->isBuiltinMacro())
+    // Also skip macros from a PCH file if we're chaining.
+    if (MI->isBuiltinMacro() || (Chain && MI->isFromPCH()))
       continue;
 
     AddIdentifierRef(I->first, Record);
@@ -2372,6 +2373,42 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                           reinterpret_cast<const char*>(NewGlobalDecls.data()),
                           NewGlobalDecls.size() * sizeof(pch::DeclID));
 
+  // Build a record containing all of the new tentative definitions in this
+  // file, in TentativeDefinitions order.
+  RecordData TentativeDefinitions;
+  for (unsigned i = 0, e = SemaRef.TentativeDefinitions.size(); i != e; ++i) {
+    if (SemaRef.TentativeDefinitions[i]->getPCHLevel() == 0)
+      AddDeclRef(SemaRef.TentativeDefinitions[i], TentativeDefinitions);
+  }
+
+  // Build a record containing all of the static unused functions in this file.
+  RecordData UnusedStaticFuncs;
+  for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i) {
+    if (SemaRef.UnusedStaticFuncs[i]->getPCHLevel() == 0)
+      AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
+  }
+
+  // Build a record containing all of the locally-scoped external
+  // declarations in this header file. Generally, this record will be
+  // empty.
+  RecordData LocallyScopedExternalDecls;
+  // FIXME: This is filling in the PCH file in densemap order which is
+  // nondeterminstic!
+  for (llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
+         TD = SemaRef.LocallyScopedExternalDecls.begin(),
+         TDEnd = SemaRef.LocallyScopedExternalDecls.end();
+       TD != TDEnd; ++TD) {
+    if (TD->second->getPCHLevel() == 0)
+      AddDeclRef(TD->second, LocallyScopedExternalDecls);
+  }
+
+  // Build a record containing all of the ext_vector declarations.
+  RecordData ExtVectorDecls;
+  for (unsigned I = 0, N = SemaRef.ExtVectorDecls.size(); I != N; ++I) {
+    if (SemaRef.ExtVectorDecls[I]->getPCHLevel() == 0)
+      AddDeclRef(SemaRef.ExtVectorDecls[I], ExtVectorDecls);
+  }
+
   Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
   WriteDeclsBlockAbbrevs();
   while (!DeclTypesToEmit.empty()) {
@@ -2384,17 +2421,41 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   }
   Stream.ExitBlock();
 
-  // FIXME: Preprocessor
+  WritePreprocessor(PP);
   // FIXME: Method pool
   WriteIdentifierTable(PP);
   WriteTypeDeclOffsets();
-  // FIXME: External unnamed definitions
-  // FIXME: Tentative definitions
-  // FIXME: Unused static functions
-  // FIXME: Locally-scoped external definitions
-  // FIXME: ext_vector type names
+
+  // Write the record containing external, unnamed definitions.
+  if (!ExternalDefinitions.empty())
+    Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
+
+  // Write the record containing tentative definitions.
+  if (!TentativeDefinitions.empty())
+    Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
+
+  // Write the record containing unused static functions.
+  if (!UnusedStaticFuncs.empty())
+    Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
+
+  // Write the record containing locally-scoped external definitions.
+  if (!LocallyScopedExternalDecls.empty())
+    Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS,
+                      LocallyScopedExternalDecls);
+
+  // Write the record containing ext_vector type names.
+  if (!ExtVectorDecls.empty())
+    Stream.EmitRecord(pch::EXT_VECTOR_DECLS, ExtVectorDecls);
+
+  // FIXME: Vtable uses
   // FIXME: Dynamic classes declarations
-  // FIXME: Statistics
+
+  Record.clear();
+  Record.push_back(NumStatements);
+  Record.push_back(NumMacros);
+  Record.push_back(NumLexicalDeclContexts);
+  Record.push_back(NumVisibleDeclContexts);
+  Stream.EmitRecord(pch::STATISTICS, Record);
   Stream.ExitBlock();
 }
 

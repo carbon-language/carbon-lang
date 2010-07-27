@@ -633,7 +633,7 @@ public:
     ID = ID >> 1;
 
     if (!IsInteresting) {
-      // For unintersting identifiers, just build the IdentifierInfo
+      // For uninteresting identifiers, just build the IdentifierInfo
       // and associate it with the persistent ID.
       IdentifierInfo *II = KnownII;
       if (!II)
@@ -1176,6 +1176,7 @@ void PCHReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
 
       MacroInfo *MI = PP->AllocateMacroInfo(Loc);
       MI->setIsUsed(isUsed);
+      MI->setIsFromPCH();
 
       unsigned NextIndex = 3;
       if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {

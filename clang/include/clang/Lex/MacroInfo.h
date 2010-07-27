@@ -62,6 +62,9 @@ class MacroInfo {
   /// it has not yet been redefined or undefined.
   bool IsBuiltinMacro : 1;
 
+  /// IsFromPCH - True if this macro was loaded from a PCH file.
+  bool IsFromPCH : 1;
+
 private:
   //===--------------------------------------------------------------------===//
   // State that changes as the macro is used.
@@ -171,6 +174,12 @@ public:
   /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
   /// __LINE__, which requires processing before expansion.
   bool isBuiltinMacro() const { return IsBuiltinMacro; }
+
+  /// isFromPCH - Return true if this macro was loaded from a PCH file.
+  bool isFromPCH() const { return IsFromPCH; }
+
+  /// setIsFromPCH - Set whether this macro was loaded from a PCH file.
+  void setIsFromPCH(bool FromPCH = true) { IsFromPCH = FromPCH; }
 
   /// isUsed - Return false if this macro is defined in the main file and has
   /// not yet been used.
