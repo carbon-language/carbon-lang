@@ -8,11 +8,11 @@ import unittest
 import lldb
 import lldbtest
 
-class TestOrder(lldbtest.TestBase):
+class TestOrderFile(lldbtest.TestBase):
 
     mydir = "order"
 
-    def test_order(self):
+    def test_order_file(self):
         """Test debug symbols follow the correct order by the order file."""
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
