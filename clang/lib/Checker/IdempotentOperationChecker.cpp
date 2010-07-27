@@ -50,6 +50,7 @@
 
 #include "GRExprEngineInternalChecks.h"
 #include "clang/Checker/BugReporter/BugType.h"
+#include "clang/Checker/PathSensitive/CheckerHelpers.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "clang/AST/Stmt.h"
@@ -76,27 +77,11 @@ class IdempotentOperationChecker
 
     /// contains* - Useful recursive methods to see if a statement contains an
     ///   element somewhere. Used in static analysis to reduce false positives.
-    static bool containsMacro(const Stmt *S);
-    static bool containsEnum(const Stmt *S);
-    static bool containsStaticLocal(const Stmt *S);
     static bool isParameterSelfAssign(const Expr *LHS, const Expr *RHS);
     static bool isTruncationExtensionAssignment(const Expr *LHS,
                                                 const Expr *RHS);
-    static bool containsBuiltinOffsetOf(const Stmt *S);
     static bool containsZeroConstant(const Stmt *S);
     static bool containsOneConstant(const Stmt *S);
-    template <class T> static bool containsStmt(const Stmt *S) {
-      if (isa<T>(S))
-          return true;
-
-      for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-          ++I)
-        if (const Stmt *child = *I)
-          if (containsStmt<T>(child))
-            return true;
-
-        return false;
-    }
 
     // Hash table
     typedef llvm::DenseMap<const BinaryOperator *, Assumption> AssumptionMap;
@@ -313,8 +298,8 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
                                                   bool hasWorkRemaining) {
   // If there is any work remaining we cannot be 100% sure about our warnings
-  if (hasWorkRemaining)
-    return;
+//  if (hasWorkRemaining)
+//    return;
 
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
@@ -384,57 +369,6 @@ inline void IdempotentOperationChecker::UpdateAssumption(Assumption &A,
   }
 }
 
-// Recursively find any substatements containing macros
-bool IdempotentOperationChecker::containsMacro(const Stmt *S) {
-  if (S->getLocStart().isMacroID())
-    return true;
-
-  if (S->getLocEnd().isMacroID())
-    return true;
-
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsMacro(child))
-        return true;
-
-  return false;
-}
-
-// Recursively find any substatements containing enum constants
-bool IdempotentOperationChecker::containsEnum(const Stmt *S) {
-  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
-
-  if (DR && isa<EnumConstantDecl>(DR->getDecl()))
-    return true;
-
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsEnum(child))
-        return true;
-
-  return false;
-}
-
-// Recursively find any substatements containing static vars
-bool IdempotentOperationChecker::containsStaticLocal(const Stmt *S) {
-  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
-
-  if (DR)
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
-      if (VD->isStaticLocal())
-        return true;
-
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsStaticLocal(child))
-        return true;
-
-  return false;
-}
-
 // Check for a statement were a parameter is self assigned (to avoid an unused
 // variable warning)
 bool IdempotentOperationChecker::isParameterSelfAssign(const Expr *LHS,
@@ -478,23 +412,6 @@ bool IdempotentOperationChecker::isTruncationExtensionAssignment(
      return false;
 
   return dyn_cast<DeclRefExpr>(RHS->IgnoreParens()) == NULL;
-}
-
-
-// Recursively find any substatements containing __builtin_offset_of
-bool IdempotentOperationChecker::containsBuiltinOffsetOf(const Stmt *S) {
-  const UnaryOperator *UO = dyn_cast<UnaryOperator>(S);
-
-  if (UO && UO->getOpcode() == UnaryOperator::OffsetOf)
-    return true;
-
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsBuiltinOffsetOf(child))
-        return true;
-
-  return false;
 }
 
 // Check for a integer or float constant of 0
