@@ -255,9 +255,9 @@ namespace {
                             SmallVector<LiveInterval*, 8> &SpillIntervals);
 
     /// attemptTrivialCoalescing - If a simple interval is defined by a copy,
-    /// try allocate the definition the same register as the source register
-    /// if the register is not defined during live time of the interval. This
-    /// eliminate a copy. This is used to coalesce copies which were not
+    /// try to allocate the definition to the same register as the source,
+    /// if the register is not defined during the life time of the interval.
+    /// This eliminates a copy, and is used to coalesce copies which were not
     /// coalesced away before allocation either due to dest and src being in
     /// different register classes or because the coalescer was overly
     /// conservative.
