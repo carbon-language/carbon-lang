@@ -5815,7 +5815,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   // bitwise one.  We do this when the LHS is a non-bool integer and the RHS
   // is a constant.
   if (lex->getType()->isIntegerType() && !lex->getType()->isBooleanType() &&
-      rex->getType()->isIntegerType() &&
+      rex->getType()->isIntegerType() && !rex->isValueDependent() &&
       // Don't warn in macros.
       !Loc.isMacroID()) {
     // If the RHS can be constant folded, and if it constant folds to something

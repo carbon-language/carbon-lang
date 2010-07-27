@@ -40,3 +40,8 @@ namespace PR7198 {
     }
   };
 }
+
+namespace PR7724 {
+  template<typename OT> int myMethod()
+  { return 2 && sizeof(OT); }
+}
