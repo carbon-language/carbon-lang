@@ -373,7 +373,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       // If the call is readnone, ignore it, otherwise bail out.  We don't even
       // allow readonly here because we don't want something like:
       // A[1] = 2; strlen(A); A[2] = 2; -> memcpy(A, ...); strlen(A).
-      if (AA.getModRefBehavior(CallSite::get(BI)) ==
+      if (AA.getModRefBehavior(CallSite(BI)) ==
             AliasAnalysis::DoesNotAccessMemory)
         continue;
       
