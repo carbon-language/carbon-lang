@@ -494,7 +494,7 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
   // Note that we deliberately do not the support the case when dropping a value
   // handle results in a new value handle being permanently added to the list
   // (as might occur in theory for CallbackVH's): the new value handle will not
-  // be processed and the checking code will meet out righteous punishment if
+  // be processed and the checking code will mete out righteous punishment if
   // the handle is still present once we have finished processing all the other
   // value handles (it is fine to momentarily add then remove a value handle).
   for (ValueHandleBase Iterator(Assert, *Entry); Entry; Entry = Iterator.Next) {
@@ -577,6 +577,24 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
       break;
     }
   }
+
+#ifndef NDEBUG
+  // If any new tracking or weak value handles were added while processing the
+  // list, then complain about it now.
+  if (Old->HasValueHandle)
+    for (Entry = pImpl->ValueHandles[Old]; Entry; Entry = Entry->Next)
+      switch (Entry->getKind()) {
+      case Tracking:
+      case Weak:
+        dbgs() << "After RAUW from " << *Old->getType() << " %"
+          << Old->getNameStr() << " to " << *New->getType() << " %"
+          << New->getNameStr() << "\n";
+        llvm_unreachable("A tracking or weak value handle still pointed to the"
+                         " old value!\n");
+      default:
+        break;
+      }
+#endif
 }
 
 /// ~CallbackVH. Empty, but defined here to avoid emitting the vtable
