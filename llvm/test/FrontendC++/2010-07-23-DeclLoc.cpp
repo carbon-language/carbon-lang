@@ -63,13 +63,13 @@ public:
     _TEXT_text_section(0, 0, __null), _dsym_path(__null), _dylib_current_version(0), _dylib_compatibility_version(0) {}
 };
 template <typename SIZE_AND_ENDIANNESS> class TExtendedMachOHeader {};
-# 16 "/decl_should_be_here.hpp"
+# 16 "decl_should_be_here.hpp"
 template <typename SIZE_AND_ENDIANNESS> void extract_dwarf_data_from_header(TExtendedMachOHeader<SIZE_AND_ENDIANNESS>& header,
                                                                             TRawSymbolOwnerData<typename SIZE_AND_ENDIANNESS::SIZE>& symbol_owner_data,
                                                                             TAddressRelocator<typename SIZE_AND_ENDIANNESS::SIZE>* address_relocator) {}
 struct CSCppSymbolOwnerHashFunctor {
   size_t operator()(const CSCppSymbolOwner& symbol_owner) const {
-# 97 "/wrong_place_for_decl.cpp"
+# 97 "wrong_place_for_decl.cpp"
   }
 };
 template <typename SIZE_AND_ENDIANNESS> CSCppSymbolOwnerData* create_symbol_owner_data_arch_specific(CSCppSymbolOwner* symbol_owner, const char* dsym_path) {
