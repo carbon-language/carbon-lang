@@ -182,8 +182,10 @@ ClangExpressionDeclMap::GetStructElement (const clang::NamedDecl *&decl,
     return true;
 }
 
-uint64_t
-ClangExpressionDeclMap::GetFunctionAddress (const clang::NamedDecl *decl)
+bool
+ClangExpressionDeclMap::GetFunctionInfo (const clang::NamedDecl *decl, 
+                                         llvm::Value**& value, 
+                                         uint64_t &ptr)
 {
     TupleIterator iter;
     
@@ -193,11 +195,13 @@ ClangExpressionDeclMap::GetFunctionAddress (const clang::NamedDecl *decl)
     {
         if (decl == iter->m_decl)
         {
-            return iter->m_value->GetScalar().ULongLong();
+            value = &iter->m_llvm_value;
+            ptr = iter->m_value->GetScalar().ULongLong();
+            return true;
         }
     }
     
-    return 0;
+    return false;
 }
 
 // Interface for DwarfExpression
@@ -769,6 +773,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     tuple.m_value       = var_location;
     tuple.m_user_type   = ut;
     tuple.m_parser_type = pt;
+    tuple.m_llvm_value  = NULL;
     
     m_tuples.push_back(tuple);
     
@@ -841,6 +846,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     tuple.m_decl        = fun_decl;
     tuple.m_value       = fun_location.release();
     tuple.m_user_type   = TypeFromUser(fun_opaque_type, fun_ast_context);
+    tuple.m_llvm_value  = NULL;
     
     m_tuples.push_back(tuple);
     

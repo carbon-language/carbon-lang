@@ -29,7 +29,7 @@ using namespace llvm;
 
 IRForTarget::IRForTarget(const void *pid,
                          lldb_private::ClangExpressionDeclMap *decl_map,
-                         const llvm::TargetData *target_data) :
+                         const TargetData *target_data) :
     ModulePass(pid),
     m_decl_map(decl_map),
     m_target_data(target_data)
@@ -41,8 +41,8 @@ IRForTarget::~IRForTarget()
 }
 
 static clang::NamedDecl *
-DeclForGlobalValue(llvm::Module &module,
-                   llvm::GlobalValue *global_value)
+DeclForGlobalValue(Module &module,
+                   GlobalValue *global_value)
 {
     NamedMDNode *named_metadata = module.getNamedMetadata("clang.global.decl.ptrs");
     
@@ -82,7 +82,7 @@ DeclForGlobalValue(llvm::Module &module,
 
 bool 
 IRForTarget::MaybeHandleVariable(Module &M, 
-                                 llvm::Value *V,
+                                 Value *V,
                                  bool Store)
 {
     if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(V))
@@ -104,7 +104,7 @@ IRForTarget::MaybeHandleVariable(Module &M,
             return false;
         }
             
-        const llvm::Type *value_type = global_variable->getType();
+        const Type *value_type = global_variable->getType();
         
         size_t value_size = m_target_data->getTypeStoreSize(value_type);
         off_t value_alignment = m_target_data->getPrefTypeAlignment(value_type);
@@ -128,7 +128,7 @@ IRForTarget::MaybeHandleCall(Module &M,
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
-    llvm::Function *fun = C->getCalledFunction();
+    Function *fun = C->getCalledFunction();
     
     if (fun == NULL)
         return true;
@@ -142,9 +142,10 @@ IRForTarget::MaybeHandleCall(Module &M,
         return false;
     }
     
-    uint64_t fun_addr = m_decl_map->GetFunctionAddress(fun_decl);
+    uint64_t fun_addr;
+    Value **fun_value_ptr;
     
-    if (fun_addr == 0)
+    if (!m_decl_map->GetFunctionInfo(fun_decl, fun_value_ptr, fun_addr)) 
     {
         if (log)
             log->Printf("Function %s had no address", fun_decl->getNameAsCString());
@@ -153,6 +154,22 @@ IRForTarget::MaybeHandleCall(Module &M,
         
     if (log)
         log->Printf("Found %s at %llx", fun_decl->getNameAsCString(), fun_addr);
+    
+    if (!*fun_value_ptr)
+    {
+        std::vector<const Type*> params;
+        
+        const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
+                                                       (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
+        
+        FunctionType *fun_ty = FunctionType::get(intptr_ty, params, true);
+        PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
+        Constant *fun_addr_int = ConstantInt::get(intptr_ty, fun_addr, false);
+        Constant *fun_addr_ptr = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
+        *fun_value_ptr = fun_addr_ptr;
+    }
+    
+    C->setCalledFunction(*fun_value_ptr);
     
     return true;
 }
@@ -164,7 +181,7 @@ IRForTarget::runOnBasicBlock(Module &M, BasicBlock &BB)
     // Prepare the current basic block for execution in the remote process
     //
     
-    llvm::BasicBlock::iterator ii;
+    BasicBlock::iterator ii;
 
     for (ii = BB.begin();
          ii != BB.end();
@@ -189,7 +206,7 @@ IRForTarget::runOnBasicBlock(Module &M, BasicBlock &BB)
 }
 
 static std::string 
-PrintValue(llvm::Value *V, bool truncate = false)
+PrintValue(Value *V, bool truncate = false)
 {
     std::string s;
     raw_string_ostream rso(s);
@@ -200,7 +217,7 @@ PrintValue(llvm::Value *V, bool truncate = false)
     return s;
 }
 
-static bool isGuardVariableRef(llvm::Value *V)
+static bool isGuardVariableRef(Value *V)
 {
     ConstantExpr *C = dyn_cast<ConstantExpr>(V);
     
@@ -250,9 +267,9 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
     // Eliminate any reference to guard variables found.
     //
     
-    llvm::BasicBlock::iterator ii;
+    BasicBlock::iterator ii;
     
-    typedef llvm::SmallVector <Instruction*, 2> InstrList;
+    typedef SmallVector <Instruction*, 2> InstrList;
     typedef InstrList::iterator InstrIterator;
     
     InstrList guard_loads;
@@ -300,7 +317,7 @@ IRForTarget::removeGuards(Module &M, BasicBlock &BB)
 // for those.
 
 static bool
-UnfoldConstant(llvm::Constant *C, llvm::Value *new_value, llvm::Instruction *first_entry_instruction)
+UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instruction)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
@@ -415,7 +432,7 @@ IRForTarget::replaceVariables(Module &M, Function *F)
     if (iter == F->getArgumentList().end())
         return false;
     
-    llvm::Argument *argument = iter;
+    Argument *argument = iter;
     
     if (!argument->getName().equals("___clang_arg"))
         return false;
@@ -423,8 +440,8 @@ IRForTarget::replaceVariables(Module &M, Function *F)
     if (log)
         log->Printf("Arg: %s", PrintValue(argument).c_str());
     
-    llvm::BasicBlock &entry_block(F->getEntryBlock());
-    llvm::Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
+    BasicBlock &entry_block(F->getEntryBlock());
+    Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
     
     if (!first_entry_instruction)
         return false;
@@ -438,7 +455,7 @@ IRForTarget::replaceVariables(Module &M, Function *F)
     for (element_index = 0; element_index < num_elements; ++element_index)
     {
         const clang::NamedDecl *decl;
-        llvm::Value *value;
+        Value *value;
         off_t offset;
         
         if (!m_decl_map->GetStructElement (decl, value, offset, element_index))
@@ -471,7 +488,7 @@ IRForTarget::runOnModule(Module &M)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
-    llvm::Function* function = M.getFunction(StringRef("___clang_expr"));
+    Function* function = M.getFunction(StringRef("___clang_expr"));
     
     if (!function)
     {
@@ -481,7 +498,7 @@ IRForTarget::runOnModule(Module &M)
         return false;
     }
         
-    llvm::Function::iterator bbi;
+    Function::iterator bbi;
     
     for (bbi = function->begin();
          bbi != function->end();

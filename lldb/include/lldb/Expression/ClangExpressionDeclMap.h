@@ -88,7 +88,9 @@ public:
                            off_t &offset,
                            uint32_t index);
     
-    uint64_t GetFunctionAddress (const clang::NamedDecl *decl);
+    bool GetFunctionInfo (const clang::NamedDecl *decl, 
+                          llvm::Value**& value, 
+                          uint64_t &ptr);
     
     // Interface for DwarfExpression
     Value *GetValueForIndex (uint32_t index);
@@ -119,6 +121,7 @@ private:
         TypeFromParser          m_parser_type;
         TypeFromUser            m_user_type;
         lldb_private::Value     *m_value; /* owned by ClangExpressionDeclMap */
+        llvm::Value             *m_llvm_value;
     };
     
     struct StructMember
