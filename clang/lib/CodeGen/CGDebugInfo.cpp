@@ -184,15 +184,6 @@ llvm::StringRef CGDebugInfo::getCurrentDirname() {
   return CWDName = llvm::StringRef(CompDirnamePtr, CWD.size());
 }
 
-/// getCompDirname -  AT_comp_dir is empty if filename is absulte otherwise 
-/// it points to compilation directory.
-llvm::StringRef CGDebugInfo::getCompDirname(llvm::StringRef Filename) {
-  llvm::sys::Path FilePath(Filename);
-  if (FilePath.isAbsolute())
-    return llvm::StringRef();
-  return getCurrentDirname();
-}
-
 /// CreateCompileUnit - Create new compile unit.
 void CGDebugInfo::CreateCompileUnit() {
 
@@ -246,7 +237,7 @@ void CGDebugInfo::CreateCompileUnit() {
 
   // Create new compile unit.
   TheCU = DebugFactory.CreateCompileUnit(
-    LangTag, Filename, getCompDirname(Filename),
+    LangTag, Filename, getCurrentDirname(),
     Producer, true,
     LO.Optimize, CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
 }

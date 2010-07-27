@@ -199,10 +199,6 @@ private:
   llvm::DIDescriptor getContextDescriptor(const Decl *Decl,
                                           llvm::DIDescriptor &CU);
 
-  /// getCompDirname -  AT_comp_dir is empty if filename is absulte otherwise 
-  /// it points to compilation directory.
-  llvm::StringRef getCompDirname(llvm::StringRef Filename);
-
   /// getCurrentDirname - Return current directory name.
   llvm::StringRef getCurrentDirname();
 
