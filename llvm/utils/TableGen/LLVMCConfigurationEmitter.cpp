@@ -1960,7 +1960,7 @@ struct ActionHandlingCallbackBase
       << "PrintError(\""
       << (d.getNumArgs() >= 1 ? InitPtrToString(d.getArg(0)) : "Unknown error!")
       << "\");\n";
-    O.indent(IndentLevel) << "return -1;\n";
+    O.indent(IndentLevel) << "return 1;\n";
   }
 
   void onWarningDag(const DagInit& d,

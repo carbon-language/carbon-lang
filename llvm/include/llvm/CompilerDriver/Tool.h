@@ -38,6 +38,8 @@ namespace llvmc {
 
     virtual ~Tool() {}
 
+    /// GenerateAction - Generate an Action given particular command-line
+    /// options. Returns non-zero value on error.
     virtual int GenerateAction (Action& Out,
                                 const PathVector& inFiles,
                                 const bool HasChildren,
@@ -45,6 +47,8 @@ namespace llvmc {
                                 const InputLanguagesSet& InLangs,
                                 const LanguageMap& LangMap) const = 0;
 
+    /// GenerateAction - Generate an Action given particular command-line
+    /// options. Returns non-zero value on error.
     virtual int GenerateAction (Action& Out,
                                 const llvm::sys::Path& inFile,
                                 const bool HasChildren,

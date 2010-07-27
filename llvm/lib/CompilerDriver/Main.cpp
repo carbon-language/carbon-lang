@@ -30,7 +30,9 @@ namespace {
 
   std::stringstream* GlobalTimeLog;
 
-  int getTempDir(sys::Path& tempDir) {
+  /// GetTempDir - Get the temporary directory location. Returns non-zero value
+  /// on error.
+  int GetTempDir(sys::Path& tempDir) {
     // The --temp-dir option.
     if (!TempDirname.empty()) {
       tempDir = TempDirname;
@@ -53,20 +55,20 @@ namespace {
       std::string ErrMsg;
       if (tempDir.createDirectoryOnDisk(true, &ErrMsg)) {
         PrintError(ErrMsg);
-        return -1;
+        return 1;
       }
     }
 
     return 0;
   }
 
-  /// BuildTargets - A small wrapper for CompilationGraph::Build.
+  /// BuildTargets - A small wrapper for CompilationGraph::Build. Returns non-zero value
   int BuildTargets(CompilationGraph& graph, const LanguageMap& langMap) {
     int ret;
     sys::Path tempDir;
     bool toDelete = (SaveTemps == SaveTempsEnum::Unset);
 
-    if (int ret = getTempDir(tempDir))
+    if (int ret = GetTempDir(tempDir))
       return ret;
 
     ret = graph.Build(tempDir, langMap);

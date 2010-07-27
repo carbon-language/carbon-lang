@@ -43,7 +43,7 @@ namespace llvmc {
     }
     bool IsConstructed () { return (Command_.size() != 0);}
 
-    /// Execute - Executes the represented action.
+    /// Execute - Executes the command. Returns -1 on error.
     int Execute () const;
     bool StopCompilation () const { return StopCompilation_; }
     const std::string& OutFile() { return OutFile_; }

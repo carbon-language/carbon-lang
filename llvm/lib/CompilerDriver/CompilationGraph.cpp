@@ -139,7 +139,7 @@ void CompilationGraph::insertNode(Tool* V) {
 int CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
   Node* B = getNode(Edg->ToolName());
   if (B == 0)
-    return -1;
+    return 1;
 
   if (A == "root") {
     const char** InLangs = B->ToolPtr->InputLanguages();
@@ -150,7 +150,7 @@ int CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
   else {
     Node* N = getNode(A);
     if (N == 0)
-      return -1;
+      return 1;
 
     N->AddEdge(Edg);
   }
@@ -193,11 +193,11 @@ int CompilationGraph::PassThroughGraph (const sys::Path& InFile,
 
     const Edge* Edg = ChooseEdge(CurNode->OutEdges, InLangs, CurNode->Name());
     if (Edg == 0)
-      return -1;
+      return 1;
 
     CurNode = getNode(Edg->ToolName());
     if (CurNode == 0)
-      return -1;
+      return 1;
 
     In = CurAction.OutFile();
   }
@@ -295,7 +295,7 @@ int CompilationGraph::BuildInitial (InputLanguagesSet& InLangs,
     // Find the toolchain corresponding to this file.
     const Node* N = FindToolChain(In, xLanguage, InLangs, LangMap);
     if (N == 0)
-      return -1;
+      return 1;
     // Pass file through the chain starting at head.
     if (int ret = PassThroughGraph(In, N, InLangs, TempDir, LangMap))
       return ret;
@@ -310,7 +310,7 @@ int CompilationGraph::TopologicalSort(std::vector<const Node*>& Out) {
 
   Node* Root = getNode("root");
   if (Root == 0)
-    return -1;
+    return 1;
 
   Q.push(Root);
 
@@ -322,7 +322,7 @@ int CompilationGraph::TopologicalSort(std::vector<const Node*>& Out) {
          EB != EE; ++EB) {
       Node* B = getNode((*EB)->ToolName());
       if (B == 0)
-        return -1;
+        return 1;
 
       B->DecrInEdges();
       if (B->HasNoInEdges())
@@ -389,11 +389,11 @@ int CompilationGraph::Build (const sys::Path& TempDir,
 
     const Edge* Edg = ChooseEdge(CurNode->OutEdges, InLangs, CurNode->Name());
     if (Edg == 0)
-      return -1;
+      return 1;
 
     const Node* NextNode = getNode(Edg->ToolName());
     if (NextNode == 0)
-      return -1;
+      return 1;
 
     if (int ret = PassThroughGraph(sys::Path(CurAction.OutFile()), NextNode,
                                    InLangs, TempDir, LangMap)) {
@@ -417,7 +417,7 @@ int CompilationGraph::CheckLanguageNames() const {
            EB != EE; ++EB) {
         const Node* N2 = this->getNode((*EB)->ToolName());
         if (N2 == 0)
-          return -1;
+          return 1;
 
         if (!N2->ToolPtr) {
           ++ret;
@@ -497,7 +497,7 @@ int CompilationGraph::CheckCycles() {
 
   Node* Root = getNode("root");
   if (Root == 0)
-    return -1;
+    return 1;
 
   Q.push(Root);
 
@@ -513,7 +513,7 @@ int CompilationGraph::CheckCycles() {
          EB != EE; ++EB) {
       Node* B = getNode((*EB)->ToolName());
       if (B == 0)
-        return -1;
+        return 1;
 
       B->DecrInEdges();
       if (B->HasNoInEdges())
@@ -539,19 +539,19 @@ int CompilationGraph::Check () {
   // Check that output/input language names match.
   ret = this->CheckLanguageNames();
   if (ret < 0)
-    return -1;
+    return 1;
   errs += ret;
 
   // Check for multiple default edges.
   ret = this->CheckMultipleDefaultEdges();
   if (ret < 0)
-    return -1;
+    return 1;
   errs += ret;
 
   // Check for cycles.
   ret = this->CheckCycles();
   if (ret < 0)
-    return -1;
+    return 1;
   errs += ret;
 
   return errs;
@@ -617,7 +617,7 @@ int CompilationGraph::writeGraph(const std::string& OutputFilename) {
   }
   else {
     PrintError("Error opening file '" + OutputFilename + "' for writing!");
-    return -1;
+    return 1;
   }
 
   return 0;
