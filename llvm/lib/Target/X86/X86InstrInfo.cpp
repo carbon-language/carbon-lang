@@ -1998,6 +1998,8 @@ void X86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
   const MachineFunction &MF = *MBB.getParent();
+  assert(MF.getFrameInfo()->getObjectSize(FrameIdx) >= RC->getSize() &&
+         "Stack slot too small for store");
   bool isAligned = (RI.getStackAlignment() >= 16) || RI.canRealignStack(MF);
   unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, TM);
   DebugLoc DL = MBB.findDebugLoc(MI);
@@ -2030,6 +2032,8 @@ void X86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI) const {
   const MachineFunction &MF = *MBB.getParent();
+  assert(MF.getFrameInfo()->getObjectSize(FrameIdx) >= RC->getSize() &&
+         "Stack slot too small for load");
   bool isAligned = (RI.getStackAlignment() >= 16) || RI.canRealignStack(MF);
   unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, TM);
   DebugLoc DL = MBB.findDebugLoc(MI);
