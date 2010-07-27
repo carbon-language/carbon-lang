@@ -572,6 +572,12 @@ public:
   /// region containing BB.
   Region *operator[](BasicBlock *BB) const;
 
+  /// @brief Return the exit of the maximal refined region, that starts at a
+  /// BasicBlock.
+  ///
+  /// @param BB The BasicBlock the refined region starts.
+  BasicBlock *getMaxRegionExit(BasicBlock *BB) const;
+
   /// @brief Find the smallest region that contains two regions.
   ///
   /// @param A The first region.
