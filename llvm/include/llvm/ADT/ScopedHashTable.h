@@ -139,7 +139,12 @@ public:
   }
 
   V lookup(const K &Key) {
-    return TopLevelMap[Key]->getValue();
+    typename DenseMap<K, ScopedHashTableVal<K, V, KInfo>*, KInfo>::iterator
+      I = TopLevelMap.find(Key);
+    if (I != TopLevelMap.end())
+      return I->second->getValue();
+      
+    return V();
   }
 
   void insert(const K &Key, const V &Val) {
