@@ -311,14 +311,19 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       // the next token.
       assert(!ParsingPreprocessorDirective);
       Offset HashOff = (Offset) Out.tell();
-      EmitToken(Tok);
 
       // Get the next token.
-      L.LexFromRawLexer(Tok);
+      Token NextTok;
+      L.LexFromRawLexer(NextTok);
 
-      // If we see the start of line, then we had a null directive "#".
-      if (Tok.isAtStartOfLine())
+      // If we see the start of line, then we had a null directive "#".  In
+      // this case, discard both tokens.
+      if (NextTok.isAtStartOfLine())
         goto NextToken;
+      
+      // The token is the start of a directive.  Emit it.
+      EmitToken(Tok);
+      Tok = NextTok;
 
       // Did we see 'include'/'import'/'include_next'?
       if (Tok.isNot(tok::identifier)) {
