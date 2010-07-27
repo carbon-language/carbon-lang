@@ -215,12 +215,12 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
     if (I->second->getFunction() == 0)
       if (Function *F = CallSite(NewCall).getCalledFunction()) {
         // Indirect call site resolved to direct call.
-        CallerNode->addCalledFunction(CallSite::get(NewCall), CG[F]);
-        
+        CallerNode->addCalledFunction(CallSite(NewCall), CG[F]);
+
         continue;
       }
-    
-    CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
+
+    CallerNode->addCalledFunction(CallSite(NewCall), I->second);
   }
   
   // Update the call graph by deleting the edge from Callee to Caller.  We must
