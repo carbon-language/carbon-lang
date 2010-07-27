@@ -146,3 +146,19 @@ clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
     
     return Decl;
 }
+
+clang::NamedDecl *NameSearchContext::AddGenericFunDecl()
+{
+    QualType generic_function_type(ASTSource.Context.getFunctionType(ASTSource.Context.getSizeType(),   // result
+                                                                     NULL,                              // argument types
+                                                                     0,                                 // number of arguments
+                                                                     true,                              // variadic?
+                                                                     0,                                 // type qualifiers
+                                                                     false,                             // has exception specification?
+                                                                     false,                             // has any exception specification?
+                                                                     0,                                 // number of exceptions
+                                                                     NULL,                              // exceptions
+                                                                     FunctionType::ExtInfo()));         // defaults for noreturn, regparm, calling convention
+
+    return AddFunDecl(generic_function_type.getAsOpaquePtr());
+}

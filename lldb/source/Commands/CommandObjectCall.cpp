@@ -169,9 +169,20 @@ CommandObjectCall::Execute
         //const char *return_type = command.GetArgumentAtIndex(0);
         const char *function_name = command.GetArgumentAtIndex(1);
         // Look up the called function:
+        
+        Function *target_fn = NULL;
+        
+        SymbolContextList sc_list;
+        
+        exe_ctx.frame->GetSymbolContext(eSymbolContextEverything).FindFunctionsByName(ConstString(function_name), false, sc_list);
 
-        Function *target_fn = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything).FindFunctionByName (function_name);
-
+        if (sc_list.GetSize() > 0)
+        {
+            SymbolContext sc;
+            sc_list.GetContextAtIndex(0, sc);
+            target_fn = sc.function;
+        }
+        
         // FIXME: If target_fn is NULL, we should look up the name as a symbol and use it and the provided
         // return type.
 

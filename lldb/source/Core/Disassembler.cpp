@@ -115,7 +115,8 @@ Disassembler::Disassemble
     else 
     {
         if (exe_ctx.target->GetImages().FindFunctions (name, 
-                                                       eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
+                                                       eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector,
+                                                       false,
                                                        sc_list))
         {
             return Disassemble (debugger, arch, exe_ctx, sc_list, num_mixed_context_lines, show_bytes, strm);

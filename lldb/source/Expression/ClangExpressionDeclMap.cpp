@@ -603,12 +603,23 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     }
     
     ConstString name_cs(name);
+    SymbolContextList sym_ctxs;
     
-    Function *fn = m_sym_ctx->FindFunctionByName(name_cs.GetCString());
+    m_sym_ctx->FindFunctionsByName(name_cs, false, sym_ctxs);
     
-    if (fn)
-        AddOneFunction(context, fn);
-
+    for (uint32_t index = 0, num_indices = sym_ctxs.GetSize();
+         index < num_indices;
+         ++index)
+    {
+        SymbolContext sym_ctx;
+        sym_ctxs.GetContextAtIndex(index, sym_ctx);
+        
+        if (sym_ctx.function)
+            AddOneFunction(context, sym_ctx.function, NULL);
+        else if(sym_ctx.symbol)
+            AddOneFunction(context, NULL, sym_ctx.symbol);
+    }
+    
     Variable *var = FindVariableInScope(*m_sym_ctx, name);
     
     if (var)
@@ -749,40 +760,63 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
 
 void
 ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
-                                       Function* fun)
+                                       Function* fun,
+                                       Symbol* symbol)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-
-    Type *fun_type = fun->GetType();
     
-    if (!fun_type) 
-    {
-        if (log)
-            log->PutCString("Skipped a function because it has no type");
-        return;
-    }
-    
-    void *fun_opaque_type = fun_type->GetOpaqueClangQualType();
-    
-    if (!fun_opaque_type)
-    {
-        if (log)
-            log->PutCString("Skipped a function because it has no Clang type");
-        return;
-    }
-    
+    NamedDecl *fun_decl;
     std::auto_ptr<Value> fun_location(new Value);
+    const Address *fun_address;
     
-    const Address &fun_address = fun->GetAddressRange().GetBaseAddress();
-    lldb::addr_t load_addr = fun_address.GetLoadAddress(m_exe_ctx->process);
+    // only valid for Functions, not for Symbols
+    void *fun_opaque_type = NULL;
+    clang::ASTContext *fun_ast_context = NULL;
+    
+    if (fun)
+    {
+        Type *fun_type = fun->GetType();
+        
+        if (!fun_type) 
+        {
+            if (log)
+                log->PutCString("Skipped a function because it has no type");
+            return;
+        }
+        
+        fun_opaque_type = fun_type->GetOpaqueClangQualType();
+        
+        if (!fun_opaque_type)
+        {
+            if (log)
+                log->PutCString("Skipped a function because it has no Clang type");
+            return;
+        }
+        
+        fun_address = &fun->GetAddressRange().GetBaseAddress();
+        
+        TypeList *type_list = fun_type->GetTypeList();
+        fun_ast_context = type_list->GetClangASTContext().getASTContext();
+        void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
+        
+        fun_decl = context.AddFunDecl(copied_type);
+    }
+    else if (symbol)
+    {
+        fun_address = &symbol->GetAddressRangeRef().GetBaseAddress();
+        
+        fun_decl = context.AddGenericFunDecl();
+    }
+    else
+    {
+        if (log)
+            log->PutCString("AddOneFunction called with no function and no symbol");
+        return;
+    }
+    
+    lldb::addr_t load_addr = fun_address->GetLoadAddress(m_exe_ctx->process);
     fun_location->SetValueType(Value::eValueTypeLoadAddress);
     fun_location->GetScalar() = load_addr;
-    
-    TypeList *type_list = fun_type->GetTypeList();
-    clang::ASTContext *fun_ast_context = type_list->GetClangASTContext().getASTContext();
-    void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
-    
-    NamedDecl *fun_decl = context.AddFunDecl(copied_type);
     
     Tuple tuple;
     

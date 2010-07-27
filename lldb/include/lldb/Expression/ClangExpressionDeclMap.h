@@ -157,7 +157,7 @@ private:
                             TypeFromParser *parser_type = NULL);
     
     void AddOneVariable(NameSearchContext &context, Variable *var);
-    void AddOneFunction(NameSearchContext &context, Function *fun);
+    void AddOneFunction(NameSearchContext &context, Function *fun, Symbol *sym);
     
     bool DoMaterialize (bool dematerialize,
                         ExecutionContext *exe_ctx,

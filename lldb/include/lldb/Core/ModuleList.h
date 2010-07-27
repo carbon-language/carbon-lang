@@ -160,6 +160,7 @@ public:
     size_t
     FindFunctions (const ConstString &name,
                    uint32_t name_type_mask,
+                   bool append,
                    SymbolContextList &sc_list);
 
     //------------------------------------------------------------------

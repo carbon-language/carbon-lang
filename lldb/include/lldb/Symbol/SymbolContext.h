@@ -195,10 +195,12 @@ public:
     /// symbol context.
     ///
     /// @return
-    ///     A shared pointer to the function found.
+    ///     The number of symbol contexts found.
     //------------------------------------------------------------------
-    Function *
-    FindFunctionByName (const char *name) const;
+    size_t
+    FindFunctionsByName (const ConstString &name, 
+                         bool append, 
+                         SymbolContextList &sc_list) const;
 
     //------------------------------------------------------------------
     /// Find a variable matching the given name, working out from this

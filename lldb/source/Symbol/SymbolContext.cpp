@@ -354,17 +354,18 @@ SymbolContext::GetAddressRange (uint32_t scope, AddressRange &range) const
 }
 
 
-Function *
-SymbolContext::FindFunctionByName (const char *name) const
-{
-    ConstString name_const_str (name);
+size_t
+SymbolContext::FindFunctionsByName (const ConstString &name, bool append, SymbolContextList &sc_list) const
+{    
+    if (!append)
+        sc_list.Clear();
+    
     if (function != NULL)
     {
         // FIXME: Look in the class of the current function, if it exists,
         // for methods matching name.
     }
 
-    //
     if (comp_unit != NULL)
     {
         // Make sure we've read in all the functions.  We should be able to check and see
@@ -374,33 +375,24 @@ SymbolContext::FindFunctionByName (const char *name) const
         lldb::FunctionSP func_sp;
         for (func_idx = 0; (func_sp = comp_unit->GetFunctionAtIndex(func_idx)) != NULL; ++func_idx)
         {
-            if (func_sp->GetMangled().GetName() == name_const_str)
-                return func_sp.get();
+            if (func_sp->GetMangled().GetName() == name)
+            {
+                SymbolContext sym_ctx(target_sp,
+                                      module_sp,
+                                      comp_unit,
+                                      func_sp.get());
+                sc_list.Append(sym_ctx);
+            }
         }
     }
+    
     if (module_sp != NULL)
-    {
-        SymbolContextList sc_matches;
-        if (module_sp->FindFunctions (name_const_str, eFunctionNameTypeBase | eFunctionNameTypeFull, false, sc_matches) > 0)
-        {
-            SymbolContext sc;
-            sc_matches.GetContextAtIndex (0, sc);
-            return sc.function;
-        }
-    }
+        module_sp->FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, true, sc_list);
 
     if (target_sp)
-    {
-        SymbolContextList sc_matches;
-        if (target_sp->GetImages().FindFunctions (name_const_str, eFunctionNameTypeBase | eFunctionNameTypeFull, sc_matches) > 0)
-        {
-            SymbolContext sc;
-            sc_matches.GetContextAtIndex (0, sc);
-            return sc.function;
-        }
-    }
+        target_sp->GetImages().FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, true, sc_list);
 
-    return NULL;
+    return sc_list.GetSize();
 }
 
 lldb::VariableSP
