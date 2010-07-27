@@ -120,10 +120,9 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       Pointer = CI->getArgOperand(0);
       // calls to free() erase the entire structure
       PointerSize = ~0ULL;
-    } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
+    } else if (CallSite InstCS = Inst) {
       // Debug intrinsics don't cause dependences.
       if (isa<DbgInfoIntrinsic>(Inst)) continue;
-      CallSite InstCS = CallSite::get(Inst);
       // If these two calls do not interfere, look past it.
       switch (AA->getModRefInfo(CS, InstCS)) {
       case AliasAnalysis::NoModRef:
@@ -387,7 +386,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       MemSize = cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
       break;
     default:
-      CallSite QueryCS = CallSite::get(QueryInst);
+      CallSite QueryCS(QueryInst);
       bool isReadOnly = AA->onlyReadsMemory(QueryCS);
       LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
                                              QueryParent);
