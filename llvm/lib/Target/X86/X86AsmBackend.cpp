@@ -14,6 +14,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
@@ -212,6 +213,24 @@ public:
     : ELFX86AsmBackend(T) {}
 };
 
+class WindowsX86AsmBackend : public X86AsmBackend {
+public:
+  WindowsX86AsmBackend(const Target &T)
+    : X86AsmBackend(T) {
+    HasAbsolutizedSet = true;
+    HasScatteredSymbols = true;
+  }
+
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    return createWinCOFFObjectWriter (OS);
+  }
+
+  bool isVirtualSection(const MCSection &Section) const {
+    const MCSectionCOFF &SE = static_cast<const MCSectionCOFF&>(Section);
+    return SE.getCharacteristics() & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  }
+};
+
 class DarwinX86AsmBackend : public X86AsmBackend {
 public:
   DarwinX86AsmBackend(const Target &T)
@@ -290,6 +309,8 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   switch (Triple(TT).getOS()) {
   case Triple::Darwin:
     return new DarwinX86_32AsmBackend(T);
+  case Triple::Win32:
+    return new WindowsX86AsmBackend(T);
   default:
     return new ELFX86_32AsmBackend(T);
   }
