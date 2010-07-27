@@ -58,6 +58,7 @@ public:
 
   class Iterator {
     typename MapTy::iterator I;
+    friend class DenseSet;
   public:
     typedef typename MapTy::iterator::difference_type difference_type;
     typedef ValueT value_type;
@@ -77,6 +78,7 @@ public:
 
   class ConstIterator {
     typename MapTy::const_iterator I;
+    friend class DenseSet;
   public:
     typedef typename MapTy::const_iterator::difference_type difference_type;
     typedef ValueT value_type;
@@ -102,6 +104,10 @@ public:
 
   const_iterator begin() const { return ConstIterator(TheMap.begin()); }
   const_iterator end() const { return ConstIterator(TheMap.end()); }
+
+  iterator find(const ValueT &V) { return Iterator(TheMap.find(V)); }
+  bool erase(Iterator I) { return TheMap.erase(I.I); }
+  bool erase(ConstIterator CI) { return TheMap.erase(CI.I); }
 
   std::pair<iterator, bool> insert(const ValueT &V) {
     return TheMap.insert(std::make_pair(V, 0));
