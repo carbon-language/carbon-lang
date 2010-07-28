@@ -28,11 +28,10 @@ namespace clang {
     class CodeGenFunction;
   }
 
-  /* FIXME: All of this stuff should be part of the target interface
-     somehow. It is currently here because it is not clear how to factor
-     the targets to support this, since the Targets currently live in a
-     layer below types n'stuff.
-  */
+  // FIXME: All of this stuff should be part of the target interface
+  // somehow. It is currently here because it is not clear how to factor
+  // the targets to support this, since the Targets currently live in a
+  // layer below types n'stuff.
 
   /// ABIArgInfo - Helper class to encapsulate information about how a
   /// specific C type should be passed to or returned from a function.

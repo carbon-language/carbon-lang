@@ -729,11 +729,10 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::Extend:
-   if (RetTy->hasSignedIntegerRepresentation()) {
+   if (RetTy->hasSignedIntegerRepresentation())
      RetAttrs |= llvm::Attribute::SExt;
-   } else if (RetTy->hasUnsignedIntegerRepresentation()) {
+   else if (RetTy->hasUnsignedIntegerRepresentation())
      RetAttrs |= llvm::Attribute::ZExt;
-   }
    // FALLTHROUGH
   case ABIArgInfo::Direct:
     break;
@@ -795,11 +794,10 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       break;
 
     case ABIArgInfo::Extend:
-     if (ParamType->isSignedIntegerType()) {
-       Attributes |= llvm::Attribute::SExt;
-     } else if (ParamType->isUnsignedIntegerType()) {
-       Attributes |= llvm::Attribute::ZExt;
-     }
+      if (ParamType->isSignedIntegerType())
+        Attributes |= llvm::Attribute::SExt;
+      else if (ParamType->isUnsignedIntegerType())
+        Attributes |= llvm::Attribute::ZExt;
      // FALLS THROUGH
     case ABIArgInfo::Direct:
       if (RegParm > 0 &&
