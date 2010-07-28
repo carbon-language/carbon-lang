@@ -523,6 +523,8 @@ namespace llvm {
   class SCEVUnknown : public SCEV {
     friend class ScalarEvolution;
 
+    // This should be an AssertingVH, however SCEVUnknowns are allocated in a
+    // BumpPtrAllocator so their destructors are never called.
     Value *V;
     SCEVUnknown(const FoldingSetNodeIDRef ID, Value *v) :
       SCEV(ID, scUnknown), V(v) {}
