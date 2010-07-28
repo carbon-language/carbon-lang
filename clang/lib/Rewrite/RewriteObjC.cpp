@@ -4309,7 +4309,41 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
       S += FieldName + "; // by ref\n";
     }
     // Finish writing the constructor.
-    Constructor += ", int flags=0) {\n";
+    Constructor += ", int flags=0)";
+    // Initialize all "by copy" arguments.
+    bool firsTime = true;
+    for (llvm::SmallVector<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(),
+         E = BlockByCopyDecls.end(); I != E; ++I) {
+      std::string Name = (*I)->getNameAsString();
+        if (firsTime) {
+          Constructor += " : ";
+          firsTime = false;
+        }
+        else
+          Constructor += ", ";
+        if (isTopLevelBlockPointerType((*I)->getType()))
+          Constructor += Name + "((struct __block_impl *)_" + Name + ")";
+        else
+          Constructor += Name + "(_" + Name + ")";
+    }
+    // Initialize all "by ref" arguments.
+    for (llvm::SmallVector<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(),
+         E = BlockByRefDecls.end(); I != E; ++I) {
+      std::string Name = (*I)->getNameAsString();
+      if (firsTime) {
+        Constructor += " : ";
+        firsTime = false;
+      }
+      else
+        Constructor += ", ";
+      if (isTopLevelBlockPointerType((*I)->getType()))
+        Constructor += Name + "((struct __block_impl *)_" 
+                        + Name + "->__forwarding)";
+      else
+        Constructor += Name + "(_" + Name + "->__forwarding)";
+    }
+    
+    Constructor += " {\n";
     if (GlobalVarDecl)
       Constructor += "    impl.isa = &_NSConcreteGlobalBlock;\n";
     else
@@ -4317,29 +4351,6 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
     Constructor += "    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
 
     Constructor += "    Desc = desc;\n";
-
-    // Initialize all "by copy" arguments.
-    for (llvm::SmallVector<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(),
-         E = BlockByCopyDecls.end(); I != E; ++I) {
-      std::string Name = (*I)->getNameAsString();
-      Constructor += "    ";
-      if (isTopLevelBlockPointerType((*I)->getType()))
-        Constructor += Name + " = (struct __block_impl *)_";
-      else
-        Constructor += Name + " = _";
-      Constructor += Name + ";\n";
-    }
-    // Initialize all "by ref" arguments.
-    for (llvm::SmallVector<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(),
-         E = BlockByRefDecls.end(); I != E; ++I) {
-      std::string Name = (*I)->getNameAsString();
-      Constructor += "    ";
-      if (isTopLevelBlockPointerType((*I)->getType()))
-        Constructor += Name + " = (struct __block_impl *)_";
-      else
-        Constructor += Name + " = _";
-      Constructor += Name + "->__forwarding;\n";
-    }
   } else {
     // Finish writing the constructor.
     Constructor += ", int flags=0) {\n";
