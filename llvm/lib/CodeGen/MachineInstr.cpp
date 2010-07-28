@@ -1236,11 +1236,17 @@ static void printDebugLoc(DebugLoc DL, const MachineFunction *MF,
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   // We can be a bit tidier if we know the TargetMachine and/or MachineFunction.
   const MachineFunction *MF = 0;
+  const MachineRegisterInfo *MRI = 0;
   if (const MachineBasicBlock *MBB = getParent()) {
     MF = MBB->getParent();
     if (!TM && MF)
       TM = &MF->getTarget();
+    if (MF)
+      MRI = &MF->getRegInfo();
   }
+
+  // Save a list of virtual registers.
+  SmallVector<unsigned, 8> VirtRegs;
 
   // Print explicitly defined operands on the left of an assignment syntax.
   unsigned StartOp = 0, e = getNumOperands();
@@ -1250,6 +1256,9 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
        ++StartOp) {
     if (StartOp != 0) OS << ", ";
     getOperand(StartOp).print(OS, TM);
+    unsigned Reg = getOperand(StartOp).getReg();
+    if (Reg && TargetRegisterInfo::isVirtualRegister(Reg))
+      VirtRegs.push_back(Reg);
   }
 
   if (StartOp != 0)
@@ -1263,6 +1272,10 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   bool FirstOp = true;
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
+
+    if (MO.isReg() && MO.getReg() &&
+        TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+      VirtRegs.push_back(MO.getReg());
 
     // Omit call-clobbered registers which aren't used anywhere. This makes
     // call instructions much less noisy on targets where calls clobber lots
@@ -1327,6 +1340,24 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
       OS << **i;
       if (next(i) != e)
         OS << " ";
+    }
+  }
+
+  // Print the regclass of any virtual registers encountered.
+  if (MRI && !VirtRegs.empty()) {
+    if (!HaveSemi) OS << ";"; HaveSemi = true;
+    for (unsigned i = 0; i != VirtRegs.size(); ++i) {
+      const TargetRegisterClass *RC = MRI->getRegClass(VirtRegs[i]);
+      OS << " " << RC->getName() << ":%reg" << VirtRegs[i];
+      for (unsigned j = i+1; j != VirtRegs.size();) {
+        if (MRI->getRegClass(VirtRegs[j]) != RC) {
+          ++j;
+          continue;
+        }
+        if (VirtRegs[i] != VirtRegs[j])
+          OS << "," << VirtRegs[j];
+        VirtRegs.erase(VirtRegs.begin()+j);
+      }
     }
   }
 
