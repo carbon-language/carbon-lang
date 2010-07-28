@@ -582,6 +582,33 @@ struct PragmaDependencyHandler : public PragmaHandler {
   }
 };
 
+struct PragmaDebugHandler : public PragmaHandler {
+  PragmaDebugHandler() : PragmaHandler("__debug") {}
+  virtual void HandlePragma(Preprocessor &PP, Token &DepToken) {
+    Token Tok;
+    PP.LexUnexpandedToken(Tok);
+    if (Tok.isNot(tok::identifier)) {
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_clang_invalid);
+      return;
+    }
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+
+    if (II->isStr("overflow_stack")) {
+      DebugOverflowStack();
+    } else if (II->isStr("crash")) {
+      DebugCrash();
+    }
+  }
+
+  void DebugOverflowStack() {
+    DebugOverflowStack();
+  }
+
+  void DebugCrash() {
+    abort();
+  }
+};
+
 /// PragmaDiagnosticHandler - e.g. '#pragma GCC diagnostic ignored "-Wformat"'
 /// Since clang's diagnostic supports extended functionality beyond GCC's
 /// the constructor takes a clangMode flag to tell it whether or not to allow
@@ -789,6 +816,7 @@ void Preprocessor::RegisterBuiltinPragmas() {
   // #pragma clang ...
   AddPragmaHandler("clang", new PragmaPoisonHandler());
   AddPragmaHandler("clang", new PragmaSystemHeaderHandler());
+  AddPragmaHandler("clang", new PragmaDebugHandler());
   AddPragmaHandler("clang", new PragmaDependencyHandler());
   AddPragmaHandler("clang", new PragmaDiagnosticHandler(true));
 
