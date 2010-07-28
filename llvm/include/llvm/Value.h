@@ -401,6 +401,10 @@ public:
   enum { NumLowBitsAvailable = 2 };
 };
 
+/// MaximumAlignment - This is the greatest alignment value supported by
+/// load, store, and alloca instructions, and global values.
+static const unsigned MaximumAlignment = 1u << 29;
+
 } // End llvm namespace
 
 #endif
