@@ -5699,7 +5699,6 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
   SmallVector<User *, 16> Worklist;
   SmallPtrSet<User *, 8> Visited;
   Value *Old = getValPtr();
-  bool DeleteOld = false;
   for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
        UI != UE; ++UI)
     Worklist.push_back(*UI);
@@ -5707,10 +5706,8 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
     User *U = Worklist.pop_back_val();
     // Deleting the Old value will cause this to dangle. Postpone
     // that until everything else is done.
-    if (U == Old) {
-      DeleteOld = true;
+    if (U == Old)
       continue;
-    }
     if (!Visited.insert(U))
       continue;
     if (PHINode *PN = dyn_cast<PHINode>(U))
@@ -5720,14 +5717,11 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
          UI != UE; ++UI)
       Worklist.push_back(*UI);
   }
-  // Delete the Old value if it (indirectly) references itself.
-  if (DeleteOld) {
-    if (PHINode *PN = dyn_cast<PHINode>(Old))
-      SE->ConstantEvolutionLoopExitValue.erase(PN);
-    SE->Scalars.erase(Old);
-    // this now dangles!
-  }
-  // this may dangle!
+  // Delete the Old value.
+  if (PHINode *PN = dyn_cast<PHINode>(Old))
+    SE->ConstantEvolutionLoopExitValue.erase(PN);
+  SE->Scalars.erase(Old);
+  // this now dangles!
 }
 
 ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
