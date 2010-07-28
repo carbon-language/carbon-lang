@@ -1153,7 +1153,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
         char path[PATH_MAX];
         init_file.GetPath(path, sizeof(path));
         StreamString source_command;
-        source_command.Printf ("source '%s'", path);
+        source_command.Printf ("command source '%s'", path);
         HandleCommand (source_command.GetData(), false, result);
     }
     else

@@ -1137,7 +1137,7 @@ Driver::MainLoop ()
                 for (size_t i=0; i < num_source_command_files; ++i)
                 {
                     const char *command_file = GetSourceCommandFileAtIndex(i);
-                    ::snprintf (command_string, sizeof(command_string), "source '%s'", command_file);
+                    ::snprintf (command_string, sizeof(command_string), "command source '%s'", command_file);
                     m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, false);
                     if (GetDebugMode())
                     {
