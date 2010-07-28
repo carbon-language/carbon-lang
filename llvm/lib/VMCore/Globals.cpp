@@ -102,7 +102,14 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setVisibility(Src->getVisibility());
 }
 
-
+void GlobalValue::setAlignment(unsigned Align) {
+  assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
+  assert(Align <= MaximumAlignment &&
+         "Alignment is greater than MaximumAlignment!");
+  Alignment = Log2_32(Align) + 1;
+  assert(getAlignment() == Align && "Alignment representation error!");
+}
+  
 //===----------------------------------------------------------------------===//
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//

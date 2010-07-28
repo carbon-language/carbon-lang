@@ -74,11 +74,10 @@ public:
     removeDeadConstantUsers();   // remove any dead constants using this.
   }
 
-  unsigned getAlignment() const { return Alignment; }
-  void setAlignment(unsigned Align) {
-    assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-    Alignment = Align;
+  unsigned getAlignment() const {
+    return (1u << Alignment) >> 1;
   }
+  void setAlignment(unsigned Align);
 
   VisibilityTypes getVisibility() const { return VisibilityTypes(Visibility); }
   bool hasDefaultVisibility() const { return Visibility == DefaultVisibility; }
