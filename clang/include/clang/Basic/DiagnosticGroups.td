@@ -50,6 +50,7 @@ def FormatZeroLength : DiagGroup<"format-zero-length">;
 def CXXHexFloats : DiagGroup<"c++-hex-floats">;
 
 def : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
+def : DiagGroup<"effc++">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def : DiagGroup<"idiomatic-parentheses">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
@@ -75,6 +76,7 @@ def InitializerOverrides : DiagGroup<"initializer-overrides">;
 def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"non-virtual-dtor">;
+def : DiagGroup<"old-style-cast">;
 def : DiagGroup<"old-style-definition">;
 def OutOfLineDeclaration : DiagGroup<"out-of-line-declaration">;
 def : DiagGroup<"overflow">;
@@ -93,6 +95,8 @@ def Shadow : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
 def : DiagGroup<"sign-promo">;
 def SignCompare : DiagGroup<"sign-compare">;
+def : DiagGroup<"stack-protector">;
+def : DiagGroup<"switch-default">;
 def : DiagGroup<"synth">;
 
 // Preprocessor warnings.
