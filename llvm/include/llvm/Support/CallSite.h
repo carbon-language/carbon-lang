@@ -49,8 +49,8 @@ protected:
   PointerIntPair<InstrTy*, 1, bool> I;
 public:
   CallSiteBase() : I(0, false) {}
-  CallSiteBase(CallTy *CI) : I(CI, true) { /*assert(CI);*/ }
-  CallSiteBase(InvokeTy *II) : I(II, false) { /*assert(II);*/ }
+  CallSiteBase(CallTy *CI) : I(CI, true) { assert(CI); }
+  CallSiteBase(InvokeTy *II) : I(II, false) { assert(II); }
   CallSiteBase(ValTy *II) { *this = get(II); }
   CallSiteBase(InstrTy *II) {
     assert(II && "Null instruction given?");
