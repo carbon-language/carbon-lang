@@ -87,6 +87,7 @@ protected:
 public:
   // Only for sentinel.
   MCFragment();
+  virtual ~MCFragment();
 
   FragmentType getKind() const { return Kind; }
 

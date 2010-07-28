@@ -178,6 +178,9 @@ uint64_t MCAsmLayout::getSectionSize(const MCSectionData *SD) const {
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 }
 
+MCFragment::~MCFragment() {
+}
+
 MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
   : Kind(_Kind), Parent(_Parent), Atom(0), EffectiveSize(~UINT64_C(0))
 {
