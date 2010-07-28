@@ -424,9 +424,12 @@ void SourceManager::PreallocateSLocEntries(ExternalSLocEntrySource *Source,
                                            unsigned NextOffset) {
   ExternalSLocEntries = Source;
   this->NextOffset = NextOffset;
+  unsigned CurPrealloc = SLocEntryLoaded.size();
+  // If we've ever preallocated, we must not count the dummy entry.
+  if (CurPrealloc) --CurPrealloc;
   SLocEntryLoaded.resize(NumSLocEntries + 1);
   SLocEntryLoaded[0] = true;
-  SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries);
+  SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries - CurPrealloc);
 }
 
 void SourceManager::ClearPreallocatedSLocEntries() {
