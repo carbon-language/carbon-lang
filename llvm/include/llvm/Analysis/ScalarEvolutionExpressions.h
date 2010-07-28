@@ -522,6 +522,7 @@ namespace llvm {
   ///
   class SCEVUnknown : public SCEV {
     friend class ScalarEvolution;
+    friend class ScalarEvolution::SCEVCallbackVH;
 
     // This should be an AssertingVH, however SCEVUnknowns are allocated in a
     // BumpPtrAllocator so their destructors are never called.

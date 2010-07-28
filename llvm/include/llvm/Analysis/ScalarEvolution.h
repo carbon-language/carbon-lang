@@ -44,6 +44,7 @@ namespace llvm {
   class Loop;
   class LoopInfo;
   class Operator;
+  class SCEVUnknown;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with
@@ -175,6 +176,7 @@ namespace llvm {
 
     friend class SCEVCallbackVH;
     friend class SCEVExpander;
+    friend class SCEVUnknown;
 
     /// F - The function we are analyzing.
     ///
