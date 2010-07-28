@@ -1329,6 +1329,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     // TODO: Do invokes ever occur in C code?  If so, we should handle them too.
     llvm::Value::use_iterator I = UI++; // Increment before the CI is erased.
     llvm::CallInst *CI = dyn_cast<llvm::CallInst>(*I);
+    if (!CI) continue; // FIXME: when we allow Invoke, just do CallSite CS(*I)
     llvm::CallSite CS(CI);
     if (!CI || !CS.isCallee(I)) continue;
 
