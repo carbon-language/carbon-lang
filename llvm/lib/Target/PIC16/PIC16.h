@@ -58,13 +58,10 @@ namespace PIC16CC {
     ESNames() {}
     public:
     ~ESNames() {
-      std::vector<char*>::iterator it = stk.end();
-      it--;
-      while(stk.end() != stk.begin())
+      while (!stk.empty())
         {
-        char* p = *it;
+        char* p = stk.back();
         delete [] p;
-        it--;
         stk.pop_back();
         }
     }
