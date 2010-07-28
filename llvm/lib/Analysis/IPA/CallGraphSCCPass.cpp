@@ -209,7 +209,7 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
           // If the call edge is not from a call or invoke, then the function
           // pass RAUW'd a call with another value.  This can happen when
           // constant folding happens of well known functions etc.
-          CallSite::get(I->first).getInstruction() == 0) {
+          !CallSite(I->first)) {
         assert(!CheckingMode &&
                "CallGraphSCCPass did not update the CallGraph correctly!");
         
@@ -245,8 +245,8 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
     
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-        CallSite CS = CallSite::get(I);
-        if (!CS.getInstruction() || isa<DbgInfoIntrinsic>(I)) continue;
+          CallSite CS(cast<Value>(I));
+        if (!CS || isa<DbgInfoIntrinsic>(I)) continue;
         
         // If this call site already existed in the callgraph, just verify it
         // matches up to expectations and remove it from CallSites.
