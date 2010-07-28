@@ -2617,7 +2617,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   SetNestedNameSpecifier(NewVD, D);
 
-  if (NumMatchedTemplateParamLists > 0) {
+  if (NumMatchedTemplateParamLists > 0 && D.getCXXScopeSpec().isSet()) {
     NewVD->setTemplateParameterListsInfo(Context,
                                          NumMatchedTemplateParamLists,
                         (TemplateParameterList**)TemplateParamLists.release());
@@ -3216,7 +3216,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
-  if (NumMatchedTemplateParamLists > 0) {
+  if (NumMatchedTemplateParamLists > 0 && D.getCXXScopeSpec().isSet()) {
     NewFD->setTemplateParameterListsInfo(Context,
                                          NumMatchedTemplateParamLists,
                         (TemplateParameterList**)TemplateParamLists.release());

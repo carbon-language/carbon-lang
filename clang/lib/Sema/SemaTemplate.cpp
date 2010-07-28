@@ -3819,7 +3819,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                        PrevPartial,
                                                        SequenceNumber);
     SetNestedNameSpecifier(Partial, SS);
-    if (NumMatchedTemplateParamLists > 0) {
+    if (NumMatchedTemplateParamLists > 0 && SS.isSet()) {
       Partial->setTemplateParameterListsInfo(Context,
                                              NumMatchedTemplateParamLists,
                     (TemplateParameterList**) TemplateParameterLists.release());
@@ -3877,7 +3877,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                 Converted,
                                                 PrevDecl);
     SetNestedNameSpecifier(Specialization, SS);
-    if (NumMatchedTemplateParamLists > 0) {
+    if (NumMatchedTemplateParamLists > 0 && SS.isSet()) {
       Specialization->setTemplateParameterListsInfo(Context,
                                                   NumMatchedTemplateParamLists,
                     (TemplateParameterList**) TemplateParameterLists.release());
