@@ -184,6 +184,21 @@ static void AllocateAllBlockDeclRefs(CodeGenFunction &CGF, CGBlockInfo &Info) {
   }
 }
 
+static unsigned computeBlockFlag(CodeGenModule &CGM,
+                                 const BlockExpr *BE, unsigned flags) {
+  QualType BPT = BE->getType();
+  const FunctionType *ftype = BPT->getPointeeType()->getAs<FunctionType>();
+  QualType ResultType = ftype->getResultType();
+  
+  CallArgList Args;
+  CodeGenTypes &Types = CGM.getTypes();
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, Args,
+                                                       FunctionType::ExtInfo());
+  if (CGM.ReturnTypeUsesSRet(FnInfo))
+    flags |= CodeGenFunction::BLOCK_USE_STRET;
+  return flags;
+}
+
 // FIXME: Push most into CGM, passing down a few bits, like current function
 // name.
 llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
@@ -230,18 +245,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     Elts[0] = C;
 
     // __flags
-    {
-      QualType BPT = BE->getType();
-      const FunctionType *ftype = BPT->getPointeeType()->getAs<FunctionType>();
-      QualType ResultType = ftype->getResultType();
-    
-      CallArgList Args;
-      CodeGenTypes &Types = CGM.getTypes();
-      const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, Args,
-                                                       FunctionType::ExtInfo());
-      if (CGM.ReturnTypeUsesSRet(FnInfo))
-        flags |= BLOCK_USE_STRET;
-    }
+    flags = computeBlockFlag(CGM, BE, flags);
     const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
       CGM.getTypes().ConvertType(CGM.getContext().IntTy));
     C = llvm::ConstantInt::get(IntTy, flags);
@@ -681,16 +685,19 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   CGBlockInfo Info(n);
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
   llvm::Function *Fn
-    = CodeGenFunction(CGM).GenerateBlockFunction(GlobalDecl(), BE, Info, 0, LocalDeclMap);
+    = CodeGenFunction(CGM).GenerateBlockFunction(GlobalDecl(), BE, 
+                                                 Info, 0, LocalDeclMap);
   assert(Info.BlockSize == BlockLiteralSize
          && "no imports allowed for global block");
 
   // isa
   LiteralFields[0] = CGM.getNSConcreteGlobalBlock();
 
-  // Flags
+  // __flags
+  unsigned flags = computeBlockFlag(CGM, BE,
+                                    (BLOCK_IS_GLOBAL | BLOCK_HAS_SIGNATURE));
   LiteralFields[1] =
-    llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_SIGNATURE);
+    llvm::ConstantInt::get(IntTy, flags);
 
   // Reserved
   LiteralFields[2] = llvm::Constant::getNullValue(IntTy);

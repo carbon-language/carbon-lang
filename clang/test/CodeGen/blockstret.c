@@ -98,8 +98,8 @@ int main(int argc, char *argv[]) {
 /*
 desired global flags: 1879048192
 desired stack flags: 1610612736
-should be non-zero: 0
-should be non-zero: 0
+should be non-zero: 1
+should be non-zero: 1
 should be non-zero: 1
 should be zero: 0
 
