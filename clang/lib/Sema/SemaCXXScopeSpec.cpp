@@ -416,7 +416,17 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
 
       ObjectTypeSearchedInScope = true;
     }
-  } else if (isDependent) {
+  } else if (!isDependent) {
+    // Perform unqualified name lookup in the current scope.
+    LookupName(Found, S);
+  }
+
+  // If we performed lookup into a dependent context and did not find anything,
+  // that's fine: just build a dependent nested-name-specifier.
+  if (Found.empty() && isDependent &&
+      !(LookupCtx && LookupCtx->isRecord() &&
+        (!cast<CXXRecordDecl>(LookupCtx)->hasDefinition() ||
+         !cast<CXXRecordDecl>(LookupCtx)->hasAnyDependentBases()))) {
     // Don't speculate if we're just trying to improve error recovery.
     if (ErrorRecoveryLookup)
       return 0;
@@ -429,11 +439,8 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       return NestedNameSpecifier::Create(Context, &II);
 
     return NestedNameSpecifier::Create(Context, Prefix, &II);
-  } else {
-    // Perform unqualified name lookup in the current scope.
-    LookupName(Found, S);
-  }
-
+  } 
+  
   // FIXME: Deal with ambiguities cleanly.
 
   if (Found.empty() && !ErrorRecoveryLookup) {

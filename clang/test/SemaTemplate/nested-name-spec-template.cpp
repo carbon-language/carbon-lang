@@ -88,3 +88,14 @@ namespace PR7385 {
 
   has_xxx0<int>::type t; // expected-note{{instantiation of}}
 }
+
+namespace PR7725 {
+  template<class ignored> struct TypedefProvider;
+  template<typename T>
+  struct TemplateClass : public TypedefProvider<T>
+  {
+    void PrintSelf() {
+      TemplateClass::Test::PrintSelf();
+    }
+  };
+}
