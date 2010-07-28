@@ -1128,19 +1128,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     if (Ty->isIntegralOrEnumerationType())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-    
-    // FIXME: Zap this.
-    
-    // If this is a 8/16/32-bit structure that is passed as an int64, then it
-    // will be passed in the low 8/16/32-bits of a 64-bit GPR, which is the same
-    // as how an i8/i16/i32 is passed.  Coerce to a i8/i16/i32 instead of a i64.
-    switch (Context.getTypeSizeInChars(Ty).getQuantity()) {
-    default: break;
-    case 1: CoerceTo = llvm::Type::getInt8Ty(CoerceTo->getContext()); break;
-    case 2: CoerceTo = llvm::Type::getInt16Ty(CoerceTo->getContext()); break;
-    case 4: CoerceTo = llvm::Type::getInt32Ty(CoerceTo->getContext()); break;
-    }
-    
+     
   } else if (CoerceTo->isDoubleTy()) {
     assert(Ty.isCanonical() && "should always have a canonical type here");
     assert(!Ty.hasQualifiers() && "should never have a qualified type here");
@@ -1289,12 +1277,14 @@ classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
     // available SSE register of the sequence %xmm0, %xmm1 is used.
   case SSE:
-    ResType = llvm::Type::getDoubleTy(VMContext); break;
+    ResType = llvm::Type::getDoubleTy(VMContext);
+    break;
 
     // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
     // returned on the X87 stack in %st0 as 80-bit x87 number.
   case X87:
-    ResType = llvm::Type::getX86_FP80Ty(VMContext); break;
+    ResType = llvm::Type::getX86_FP80Ty(VMContext);
+    break;
 
     // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
     // part of the value is returned in %st0 and the imaginary part in
@@ -1316,7 +1306,8 @@ classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
     assert(0 && "Invalid classification for hi word.");
 
   case ComplexX87: // Previously handled.
-  case NoClass: break;
+  case NoClass:
+    break;
 
   case Integer: {
     const llvm::Type *HiType = 
