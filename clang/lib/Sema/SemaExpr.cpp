@@ -2632,6 +2632,9 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
     while (DC->isTransparentContext())
       DC = DC->getParent();
 
+    if (!DC->isRecord())
+      continue;
+    
     llvm::SmallPtrSet<CXXRecordDecl*,4> MemberRecord;
     MemberRecord.insert(cast<CXXRecordDecl>(DC)->getCanonicalDecl());
 
