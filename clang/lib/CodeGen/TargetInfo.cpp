@@ -1198,103 +1198,6 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   return ABIArgInfo::getIndirect(0);
 }
 
-ABIArgInfo X86_64ABIInfo::
-classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
-  // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
-  // classification algorithm.
-  X86_64ABIInfo::Class Lo, Hi;
-  classify(RetTy, 0, Lo, Hi);
-
-  // Check some invariants.
-  assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
-  assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
-  assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
-
-  const llvm::Type *ResType = 0;
-  switch (Lo) {
-  case NoClass:
-    return ABIArgInfo::getIgnore();
-
-  case SSEUp:
-  case X87Up:
-    assert(0 && "Invalid classification for lo word.");
-
-    // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
-    // hidden argument.
-  case Memory:
-    return getIndirectReturnResult(RetTy);
-
-    // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
-    // available register of the sequence %rax, %rdx is used.
-  case Integer:
-    ResType = llvm::Type::getInt64Ty(VMContext); break;
-
-    // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
-    // available SSE register of the sequence %xmm0, %xmm1 is used.
-  case SSE:
-    ResType = llvm::Type::getDoubleTy(VMContext); break;
-
-    // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
-    // returned on the X87 stack in %st0 as 80-bit x87 number.
-  case X87:
-    ResType = llvm::Type::getX86_FP80Ty(VMContext); break;
-
-    // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
-    // part of the value is returned in %st0 and the imaginary part in
-    // %st1.
-  case ComplexX87:
-    assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
-    ResType = llvm::StructType::get(VMContext,
-                                    llvm::Type::getX86_FP80Ty(VMContext),
-                                    llvm::Type::getX86_FP80Ty(VMContext),
-                                    NULL);
-    break;
-  }
-
-  switch (Hi) {
-    // Memory was handled previously and X87 should
-    // never occur as a hi class.
-  case Memory:
-  case X87:
-    assert(0 && "Invalid classification for hi word.");
-
-  case ComplexX87: // Previously handled.
-  case NoClass: break;
-
-  case Integer:
-    ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::getInt64Ty(VMContext), NULL);
-    break;
-  case SSE:
-    ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::getDoubleTy(VMContext), NULL);
-    break;
-
-    // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
-    // is passed in the upper half of the last used SSE register.
-    //
-    // SSEUP should always be preceeded by SSE, just widen.
-  case SSEUp:
-    assert(Lo == SSE && "Unexpected SSEUp classification.");
-    ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(VMContext), 2);
-    break;
-
-    // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
-    // returned together with the previous X87 value in %st0.
-  case X87Up:
-    // If X87Up is preceeded by X87, we don't need to do
-    // anything. However, in some cases with unions it may not be
-    // preceeded by X87. In such situations we follow gcc and pass the
-    // extra bits in an SSE reg.
-    if (Lo != X87)
-      ResType = llvm::StructType::get(VMContext, ResType,
-                                      llvm::Type::getDoubleTy(VMContext), NULL);
-    break;
-  }
-
-  return getCoerceResult(RetTy, ResType);
-}
-
 /// Get8ByteTypeAtOffset - The ABI specifies that a value should be passed in an
 /// 8-byte GPR.  This means that we either have a scalar or we are talking about
 /// the high or low part of an up-to-16-byte struct.  This routine picks the
@@ -1349,6 +1252,106 @@ static const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
   case 4:  return llvm::Type::getInt32Ty(VMContext);
   default: return llvm::Type::getInt64Ty(VMContext);
   }  
+}
+
+ABIArgInfo X86_64ABIInfo::
+classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
+  // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
+  // classification algorithm.
+  X86_64ABIInfo::Class Lo, Hi;
+  classify(RetTy, 0, Lo, Hi);
+
+  // Check some invariants.
+  assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
+  assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
+  assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
+
+  const llvm::Type *ResType = 0;
+  switch (Lo) {
+  case NoClass:
+    return ABIArgInfo::getIgnore();
+
+  case SSEUp:
+  case X87Up:
+    assert(0 && "Invalid classification for lo word.");
+
+    // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
+    // hidden argument.
+  case Memory:
+    return getIndirectReturnResult(RetTy);
+
+    // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
+    // available register of the sequence %rax, %rdx is used.
+  case Integer:
+    ResType = Get8ByteTypeAtOffset(0, 0, RetTy, 0, TD, VMContext, Context);
+    break;
+
+    // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
+    // available SSE register of the sequence %xmm0, %xmm1 is used.
+  case SSE:
+    ResType = llvm::Type::getDoubleTy(VMContext); break;
+
+    // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
+    // returned on the X87 stack in %st0 as 80-bit x87 number.
+  case X87:
+    ResType = llvm::Type::getX86_FP80Ty(VMContext); break;
+
+    // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
+    // part of the value is returned in %st0 and the imaginary part in
+    // %st1.
+  case ComplexX87:
+    assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
+    ResType = llvm::StructType::get(VMContext,
+                                    llvm::Type::getX86_FP80Ty(VMContext),
+                                    llvm::Type::getX86_FP80Ty(VMContext),
+                                    NULL);
+    break;
+  }
+
+  switch (Hi) {
+    // Memory was handled previously and X87 should
+    // never occur as a hi class.
+  case Memory:
+  case X87:
+    assert(0 && "Invalid classification for hi word.");
+
+  case ComplexX87: // Previously handled.
+  case NoClass: break;
+
+  case Integer: {
+    const llvm::Type *HiType = 
+      Get8ByteTypeAtOffset(0, 8, RetTy, 8, TD, VMContext, Context);
+    ResType = llvm::StructType::get(VMContext, ResType, HiType, NULL);
+    break;
+  }
+  case SSE:
+    ResType = llvm::StructType::get(VMContext, ResType,
+                                    llvm::Type::getDoubleTy(VMContext), NULL);
+    break;
+
+    // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
+    // is passed in the upper half of the last used SSE register.
+    //
+    // SSEUP should always be preceeded by SSE, just widen.
+  case SSEUp:
+    assert(Lo == SSE && "Unexpected SSEUp classification.");
+    ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(VMContext), 2);
+    break;
+
+    // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
+    // returned together with the previous X87 value in %st0.
+  case X87Up:
+    // If X87Up is preceeded by X87, we don't need to do
+    // anything. However, in some cases with unions it may not be
+    // preceeded by X87. In such situations we follow gcc and pass the
+    // extra bits in an SSE reg.
+    if (Lo != X87)
+      ResType = llvm::StructType::get(VMContext, ResType,
+                                      llvm::Type::getDoubleTy(VMContext), NULL);
+    break;
+  }
+
+  return getCoerceResult(RetTy, ResType);
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,

@@ -139,9 +139,16 @@ struct f23S {
   int f2;
 };
 
+
 void f23(int A, struct f23S B) {
   // CHECK: define void @f23(i32 %A, i64 %B.coerce0, i32 %B.coerce1)
 }
 
+struct f24s { long a; int b; };
 
+struct f23S f24(struct f23S *X, struct f24s *P2) {
+  return *X;
+  
+  // CHECK: define %struct.f24s @f24(%struct.f23S* %X, %struct.f24s* %P2)
+}
 
