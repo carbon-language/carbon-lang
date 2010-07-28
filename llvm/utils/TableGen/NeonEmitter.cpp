@@ -1016,6 +1016,8 @@ static unsigned RangeFromType(StringRef typestr) {
       throw "unhandled type!";
       break;
   }
+  assert(0 && "unreachable");
+  return 0;
 }
 
 /// runHeader - Emit a file with sections defining:
