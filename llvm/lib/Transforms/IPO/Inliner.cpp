@@ -238,11 +238,11 @@ bool Inliner::shouldInline(CallSite CS) {
     bool someOuterCallWouldNotBeInlined = false;
     for (Value::use_iterator I = Caller->use_begin(), E =Caller->use_end(); 
          I != E; ++I) {
-      CallSite CS2 = CallSite::get(*I);
+      CallSite CS2(*I);
 
       // If this isn't a call to Caller (it could be some other sort
       // of reference) skip it.
-      if (CS2.getInstruction() == 0 || CS2.getCalledFunction() != Caller)
+      if (!CS2 || CS2.getCalledFunction() != Caller)
         continue;
 
       InlineCost IC2 = getInlineCost(CS2);
@@ -334,10 +334,10 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
     
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-        CallSite CS = CallSite::get(I);
+        CallSite CS(cast<Value>(I));
         // If this isn't a call, or it is a call to an intrinsic, it can
         // never be inlined.
-        if (CS.getInstruction() == 0 || isa<IntrinsicInst>(I))
+        if (!CS || isa<IntrinsicInst>(I))
           continue;
         
         // If this is a direct call to an external function, we can never inline

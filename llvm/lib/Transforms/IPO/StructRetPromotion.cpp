@@ -156,7 +156,7 @@ bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
        FnUseI != FnUseE; ++FnUseI) {
     // The function is passed in as an argument to (possibly) another function,
     // we can't change it!
-    CallSite CS = CallSite::get(*FnUseI);
+    CallSite CS(*FnUseI);
     Instruction *Call = CS.getInstruction();
     // The function is used by something else than a call or invoke instruction,
     // we can't change it!
@@ -271,7 +271,7 @@ CallGraphNode *SRETPromotion::updateCallSites(Function *F, Function *NF) {
   CallGraphNode *NF_CGN = CG.getOrInsertFunction(NF);
 
   while (!F->use_empty()) {
-    CallSite CS = CallSite::get(*F->use_begin());
+    CallSite CS(*F->use_begin());
     Instruction *Call = CS.getInstruction();
 
     const AttrListPtr &PAL = F->getAttributes();

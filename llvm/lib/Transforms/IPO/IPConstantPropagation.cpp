@@ -94,7 +94,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
     if (!isa<CallInst>(U) && !isa<InvokeInst>(U))
       return false;
     
-    CallSite CS = CallSite::get(cast<Instruction>(U));
+    CallSite CS(cast<Instruction>(U));
     if (!CS.isCallee(UI))
       return false;
 
@@ -219,7 +219,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   // constant.
   bool MadeChange = false;
   for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
-    CallSite CS = CallSite::get(*UI);
+    CallSite CS(*UI);
     Instruction* Call = CS.getInstruction();
 
     // Not a call instruction or a call instruction that's not calling F

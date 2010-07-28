@@ -508,10 +508,10 @@ private:
   void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (CallInst &I) {
-    visitCallSite(CallSite::get(&I));
+    visitCallSite(&I);
   }
   void visitInvokeInst    (InvokeInst &II) {
-    visitCallSite(CallSite::get(&II));
+    visitCallSite(&II);
     visitTerminatorInst(II);
   }
   void visitCallSite      (CallSite CS);

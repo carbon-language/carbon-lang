@@ -208,8 +208,8 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
   // have direct callees.
   for (Value::use_iterator UI = Callee->use_begin(), E = Callee->use_end();
        UI != E; ++UI) {
-    CallSite CS = CallSite::get(*UI);
-    assert(CS.getInstruction() && "Should only have direct calls!");
+    CallSite CS(*UI);
+    assert(CS && "Should only have direct calls!");
 
     if (!IsAlwaysValidPointer(CS.getArgument(ArgNo)))
       return false;
@@ -619,14 +619,13 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   
   // Get a new callgraph node for NF.
   CallGraphNode *NF_CGN = CG.getOrInsertFunction(NF);
-  
 
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in the loaded pointers.
   //
   SmallVector<Value*, 16> Args;
   while (!F->use_empty()) {
-    CallSite CS = CallSite::get(F->use_back());
+    CallSite CS(F->use_back());
     assert(CS.getCalledFunction() == F);
     Instruction *Call = CS.getInstruction();
     const AttrListPtr &CallPAL = CS.getAttributes();

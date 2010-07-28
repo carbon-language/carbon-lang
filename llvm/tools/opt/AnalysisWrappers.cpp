@@ -42,8 +42,8 @@ namespace {
           Instruction *User = dyn_cast<Instruction>(*UI);
           if (!User) continue;
           
-          CallSite CS = CallSite::get(User);
-          if (!CS.getInstruction()) continue;
+          CallSite CS(cast<Value>(User));
+          if (!CS) continue;
           
           for (CallSite::arg_iterator AI = CS.arg_begin(),
                E = CS.arg_end(); AI != E; ++AI) {
