@@ -1355,6 +1355,9 @@ fi
 
 dnl atomic builtins are required for threading support.
 AC_MSG_CHECKING(for GCC atomic builtins)
+dnl Since we'll be using these atomic builtins in C++ files we should test
+dnl the C++ compiler.
+AC_LANG_PUSH([C++])
 AC_LINK_IFELSE(
   AC_LANG_SOURCE(
     [[int main() {
@@ -1366,6 +1369,7 @@ AC_LINK_IFELSE(
         return 0;
       }
     ]]),
+  AC_LANG_POP([C++])
   AC_MSG_RESULT(yes)
   AC_DEFINE(LLVM_MULTITHREADED, 1, Build multithreading support into LLVM),
   AC_MSG_RESULT(no)
