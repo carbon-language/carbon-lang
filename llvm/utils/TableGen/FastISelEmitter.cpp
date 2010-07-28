@@ -54,6 +54,7 @@ struct OperandsSignature {
   bool initialize(TreePatternNode *InstPatNode,
                   const CodeGenTarget &Target,
                   MVT::SimpleValueType VT) {
+
     if (!InstPatNode->isLeaf()) {
       if (InstPatNode->getOperator()->getName() == "imm") {
         Operands.push_back("i");
@@ -69,6 +70,7 @@ struct OperandsSignature {
     
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
+      
       // For now, filter out any operand with a predicate.
       // For now, filter out any operand with multiple values.
       if (!Op->getPredicateFns().empty() ||
@@ -105,6 +107,7 @@ struct OperandsSignature {
         RC = Target.getRegisterClassForRegister(OpLeafRec);
       else
         return false;
+        
       // For now, require the register operands' register classes to all
       // be the same.
       if (!RC)
@@ -262,6 +265,15 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     if (II.OperandList.empty())
       continue;
 
+    // For now ignore instructions that have predicate operands.
+    bool HasPredicate = false;
+    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
+      if(II.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
+        HasPredicate = true;
+    }
+    if (HasPredicate)
+      continue;
+      
     // For now, ignore multi-instruction patterns.
     bool MultiInsts = false;
     for (unsigned i = 0, e = Dst->getNumChildren(); i != e; ++i) {
