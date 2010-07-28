@@ -205,10 +205,11 @@ public:
                    bool RemoveBitcode = false,
                    std::string *Error = 0);
 
-  /// EmitProgressBitcode - This function is used to output the current Program
-  /// to a file named "bugpoint-ID.bc".
+  /// EmitProgressBitcode - This function is used to output M to a file named
+  /// "bugpoint-ID.bc".
   ///
-  void EmitProgressBitcode(const std::string &ID, bool NoFlyer = false);
+  void EmitProgressBitcode(const Module *M, const std::string &ID,
+                           bool NoFlyer = false);
 
   /// deleteInstructionFromProgram - This method clones the current Program and
   /// deletes the specified instruction from the cloned module.  It then runs a
@@ -274,7 +275,7 @@ public:
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bitcode file.  If an error occurs, true is returned.
   ///
-  bool writeProgramToFile(const std::string &Filename, Module *M = 0) const;
+  bool writeProgramToFile(const std::string &Filename, const Module *M) const;
 
 private:
   /// runPasses - Just like the method above, but this just returns true or

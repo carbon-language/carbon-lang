@@ -143,11 +143,9 @@ Module *BugDriver::ExtractLoop(Module *M) {
 
   Module *NewM = runPassesOn(M, LoopExtractPasses);
   if (NewM == 0) {
-    Module *Old = swapProgramIn(M);
     outs() << "*** Loop extraction failed: ";
-    EmitProgressBitcode("loopextraction", true);
+    EmitProgressBitcode(M, "loopextraction", true);
     outs() << "*** Sorry. :(  Please report a bug!\n";
-    swapProgramIn(Old);
     return 0;
   }
 
@@ -327,9 +325,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
     outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error creating temporary file: " << ErrMsg << "\n";
-    M = swapProgramIn(M);
-    EmitProgressBitcode("basicblockextractfail", true);
-    swapProgramIn(M);
+    EmitProgressBitcode(M, "basicblockextractfail", true);
     return 0;
   }
   sys::RemoveFileOnSignal(uniqueFilename);
@@ -340,9 +336,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error writing list of blocks to not extract: " << ErrorInfo
            << "\n";
-    M = swapProgramIn(M);
-    EmitProgressBitcode("basicblockextractfail", true);
-    swapProgramIn(M);
+    EmitProgressBitcode(M, "basicblockextractfail", true);
     return 0;
   }
   for (std::vector<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
@@ -368,9 +362,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
 
   if (Ret == 0) {
     outs() << "*** Basic Block extraction failed, please report a bug!\n";
-    M = swapProgramIn(M);
-    EmitProgressBitcode("basicblockextractfail", true);
-    swapProgramIn(M);
+    EmitProgressBitcode(M, "basicblockextractfail", true);
   }
   return Ret;
 }

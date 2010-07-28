@@ -71,7 +71,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
     BD.setPassesToRun(Suffix);
-    BD.EmitProgressBitcode("pass-error",  false);
+    BD.EmitProgressBitcode(BD.getProgram(), "pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
   
@@ -108,7 +108,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
     BD.setPassesToRun(Prefix);
-    BD.EmitProgressBitcode("pass-error",  false);
+    BD.EmitProgressBitcode(BD.getProgram(), "pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
 
@@ -148,7 +148,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
     BD.setPassesToRun(Suffix);
-    BD.EmitProgressBitcode("pass-error",  false);
+    BD.EmitProgressBitcode(BD.getProgram(), "pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
 
@@ -699,7 +699,7 @@ void BugDriver::debugMiscompilation(std::string *Error) {
   outs() << "\n*** Found miscompiling pass"
          << (getPassesToRun().size() == 1 ? "" : "es") << ": "
          << getPassesString(getPassesToRun()) << '\n';
-  EmitProgressBitcode("passinput");
+  EmitProgressBitcode(Program, "passinput");
 
   std::vector<Function *> MiscompiledFunctions = 
     DebugAMiscompilation(*this, TestOptimizer, *Error);
@@ -715,14 +715,12 @@ void BugDriver::debugMiscompilation(std::string *Error) {
                                                  VMap);
 
   outs() << "  Non-optimized portion: ";
-  ToNotOptimize = swapProgramIn(ToNotOptimize);
-  EmitProgressBitcode("tonotoptimize", true);
-  setNewProgram(ToNotOptimize);   // Delete hacked module.
+  EmitProgressBitcode(ToNotOptimize, "tonotoptimize", true);
+  delete ToNotOptimize;  // Delete hacked module.
 
   outs() << "  Portion that is input to optimizer: ";
-  ToOptimize = swapProgramIn(ToOptimize);
-  EmitProgressBitcode("tooptimize");
-  setNewProgram(ToOptimize);      // Delete hacked module.
+  EmitProgressBitcode(ToOptimize, "tooptimize");
+  delete ToOptimize;      // Delete hacked module.
 
   return;
 }

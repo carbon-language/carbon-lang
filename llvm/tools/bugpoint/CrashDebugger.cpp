@@ -471,7 +471,7 @@ static bool DebugACrash(BugDriver &BD, bool (*TestFn)(BugDriver &, Module *),
             return true;
 
           if (GVs.size() < OldSize)
-            BD.EmitProgressBitcode("reduced-global-variables");
+            BD.EmitProgressBitcode(BD.getProgram(), "reduced-global-variables");
         }
       }
     }
@@ -492,7 +492,7 @@ static bool DebugACrash(BugDriver &BD, bool (*TestFn)(BugDriver &, Module *),
     ReduceCrashingFunctions(BD, TestFn).reduceList(Functions, Error);
 
     if (Functions.size() < OldSize)
-      BD.EmitProgressBitcode("reduced-function");
+      BD.EmitProgressBitcode(BD.getProgram(), "reduced-function");
   }
 
   // Attempt to delete entire basic blocks at a time to speed up
@@ -509,7 +509,7 @@ static bool DebugACrash(BugDriver &BD, bool (*TestFn)(BugDriver &, Module *),
     unsigned OldSize = Blocks.size();
     ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks, Error);
     if (Blocks.size() < OldSize)
-      BD.EmitProgressBitcode("reduced-blocks");
+      BD.EmitProgressBitcode(BD.getProgram(), "reduced-blocks");
   }
 
   // Attempt to delete instructions using bisection. This should help out nasty
@@ -602,7 +602,7 @@ ExitLoops:
     }
   }
 
-  BD.EmitProgressBitcode("reduced-simplified");
+  BD.EmitProgressBitcode(BD.getProgram(), "reduced-simplified");
 
   return false;
 }
@@ -628,7 +628,7 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
          << (PassesToRun.size() == 1 ? ": " : "es: ")
          << getPassesString(PassesToRun) << '\n';
 
-  EmitProgressBitcode(ID);
+  EmitProgressBitcode(Program, ID);
 
   bool Success = DebugACrash(*this, TestForOptimizerCrash, Error);
   assert(Error.empty());
