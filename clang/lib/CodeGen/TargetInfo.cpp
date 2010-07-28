@@ -1432,10 +1432,22 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
 
     // AMD64-ABI 3.2.3p3: Rule 4. If the class is SSEUP, the
     // eightbyte is passed in the upper half of the last used SSE
-    // register.
+    // register.  This only happens when 128-bit vectors are passed. 
   case SSEUp:
-    assert(Lo == SSE && "Unexpected SSEUp classification.");
+    assert(Lo == SSE && "Unexpected SSEUp classification");
     ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(VMContext), 2);
+      
+    // If the preferred type is a 16-byte vector, prefer to pass it.
+    if (const llvm::VectorType *VT =
+          dyn_cast_or_null<llvm::VectorType>(PrefType)) {
+      const llvm::Type *EltTy = VT->getElementType();
+      if (VT->getBitWidth() == 128 &&
+          (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
+           EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
+           EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
+           EltTy->isIntegerTy(128)))
+        ResType = PrefType;
+    }
     break;
   }
 
