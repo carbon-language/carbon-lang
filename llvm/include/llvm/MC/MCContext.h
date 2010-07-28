@@ -15,6 +15,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
+#include <vector> // FIXME: Shouldn't be needed.
 
 namespace llvm {
   class MCAsmInfo;
@@ -22,6 +23,7 @@ namespace llvm {
   class MCSection;
   class MCSymbol;
   class MCLabel;
+  class MCDwarfFile;
   class StringRef;
   class Twine;
   class MCSectionMachO;
@@ -65,6 +67,10 @@ namespace llvm {
     /// catch errors if .secure_log_unique appears twice without
     /// .secure_log_reset appearing between them.
     bool SecureLogUsed;
+
+    /// The dwarf file and directory tables from the dwarf .file directive.
+    std::vector<MCDwarfFile *> MCDwarfFiles;
+    std::vector<std::string *> MCDwarfDirs;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -137,6 +143,18 @@ namespace llvm {
     }
 
     
+    /// @}
+
+    /// @name Dwarf Managment
+    /// @{
+
+    /// GetDwarfFile - creates an entry in the dwarf file and directory tables.
+    unsigned GetDwarfFile(StringRef FileName, unsigned FileNumber);
+
+    const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
+      return MCDwarfFiles;
+    }
+
     /// @}
 
     char *getSecureLogFile() { return SecureLogFile; }

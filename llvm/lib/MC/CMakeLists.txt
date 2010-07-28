@@ -11,6 +11,7 @@ add_llvm_library(LLVMMC
   MCInst.cpp
   MCInstPrinter.cpp
   MCLabel.cpp
+  MCDwarf.cpp
   MCLoggingStreamer.cpp
   MCMachOStreamer.cpp
   MCNullStreamer.cpp
