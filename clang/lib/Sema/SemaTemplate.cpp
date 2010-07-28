@@ -5427,15 +5427,6 @@ namespace {
       this->Loc = Loc;
       this->Entity = Entity;
     }
-      
-    /// \brief Transforms an expression by returning the expression itself
-    /// (an identity function).
-    ///
-    /// FIXME: This is completely unsafe; we will need to actually clone the
-    /// expressions.
-    Sema::OwningExprResult TransformExpr(Expr *E) {
-      return getSema().Owned(E->Retain());
-    }
   };
 }
 

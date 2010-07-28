@@ -164,3 +164,38 @@ namespace ConstantInCurrentInstantiation {
   template<typename T>
   int X<T>::array[X<T>::value] = { 1, 2 };
 }
+
+namespace Expressions {
+  template <bool b>
+  struct Bool {
+    enum anonymous_enum { value = b };
+  };
+  struct True : public Bool<true> {};
+  struct False : public Bool<false> {};
+
+  template <typename T1, typename T2>
+  struct Is_Same : public False {};
+  template <typename T>
+  struct Is_Same<T, T> : public True {};
+
+  template <bool b, typename T = void>
+  struct Enable_If {};
+  template <typename T>
+  struct Enable_If<true, T>  {
+    typedef T type;
+  };
+
+  template <typename T>
+  class Class {
+  public:
+    template <typename U>
+    typename Enable_If<Is_Same<U, Class>::value, void>::type
+    foo();
+  };
+
+
+  template <typename T>
+  template <typename U>
+  typename Enable_If<Is_Same<U, Class<T> >::value, void>::type
+  Class<T>::foo() {}
+}
