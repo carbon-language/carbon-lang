@@ -311,11 +311,10 @@ void CodeGenTypes::GetExpandedTypes(QualType Ty,
            "Cannot expand structure with bit-field members.");
 
     QualType FT = FD->getType();
-    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
+    if (CodeGenFunction::hasAggregateLLVMType(FT))
       GetExpandedTypes(FT, ArgTys, IsRecursive);
-    } else {
+    else
       ArgTys.push_back(ConvertType(FT, IsRecursive));
-    }
   }
 }
 
@@ -759,7 +758,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (RetAttrs)
     PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
 
-  // FIXME: we need to honour command line settings also...
+  // FIXME: we need to honor command line settings also.
   // FIXME: RegParm should be reduced in case of nested functions and/or global
   // register variable.
   signed RegParm = FI.getRegParm();
@@ -945,11 +944,16 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       continue;
 
     case ABIArgInfo::Coerce: {
-      // FIXME: This is very wasteful; EmitParmDecl is just going to drop the
-      // result in a new alloca anyway, so we could just store into that
-      // directly if we broke the abstraction down more.
       llvm::AllocaInst *Alloca = CreateMemTemp(Ty, "coerce");
-      Alloca->setAlignment(getContext().getDeclAlign(Arg).getQuantity());
+      
+      // The alignment we need to use is the max of the requested alignment for
+      // the argument plus the alignment required by our access code below.
+      unsigned AlignmentToUse = 
+        CGF.CGM.getTargetData().getABITypeAlignment(ArgI.getCoerceToType());
+      AlignmentToUse = std::max(AlignmentToUse,
+                        (unsigned)getContext().getDeclAlign(Arg).getQuantity());
+      
+      Alloca->setAlignment(AlignmentToUse);
       llvm::Value *V = Alloca;
       
       // If the coerce-to type is a first class aggregate, we flatten it and
@@ -1201,7 +1205,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                        llvm::PointerType::getUnqual(STy));
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           llvm::Value *EltPtr = Builder.CreateConstGEP2_32(SrcPtr, 0, i);
-          Args.push_back(Builder.CreateLoad(EltPtr));
+          llvm::LoadInst *LI = Builder.CreateLoad(EltPtr);
+          // We don't know what we're loading from.
+          LI->setAlignment(1);
+          Args.push_back(LI);
         }
       } else {
         // In the simple case, just pass the coerced loaded value.
