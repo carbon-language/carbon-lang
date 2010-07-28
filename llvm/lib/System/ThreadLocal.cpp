@@ -67,6 +67,10 @@ const void* ThreadLocalImpl::getInstance() {
   return pthread_getspecific(*key);
 }
 
+void ThreadLocalImpl::removeInstance() {
+  setInstance(0);
+}
+
 }
 
 #elif defined(LLVM_ON_UNIX)

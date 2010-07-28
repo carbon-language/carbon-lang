@@ -46,4 +46,8 @@ void ThreadLocalImpl::setInstance(const void* d){
   assert(errorcode != 0);
 }
 
+void ThreadLocalImpl::removeInstance() {
+  setInstance(0);
+}
+
 }

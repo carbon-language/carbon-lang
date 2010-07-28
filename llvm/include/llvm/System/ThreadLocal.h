@@ -28,6 +28,7 @@ namespace llvm {
       virtual ~ThreadLocalImpl();
       void setInstance(const void* d);
       const void* getInstance();
+      void removeInstance();
     };
     
     /// ThreadLocal - A class used to abstract thread-local storage.  It holds,
@@ -43,6 +44,9 @@ namespace llvm {
       
       // set - Associates a pointer to an object with the current thread.
       void set(T* d) { setInstance(d); }
+      
+      // erase - Removes the pointer associated with the current thread.
+      void erase() { removeInstance(); }
     };
   }
 }
