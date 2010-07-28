@@ -31,6 +31,10 @@ class APInt;
 class LLVMContext;
 class DominatorTree;
 
+/// MaximumAlignment - This is the greatest alignment value supported by
+/// load, store, and alloca instructions.
+static const unsigned MaximumAlignment = 1u << 29;
+
 //===----------------------------------------------------------------------===//
 //                                AllocaInst Class
 //===----------------------------------------------------------------------===//

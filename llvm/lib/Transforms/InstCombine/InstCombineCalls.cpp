@@ -104,10 +104,14 @@ unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
   ComputeMaskedBits(V, Mask, KnownZero, KnownOne);
   unsigned TrailZ = KnownZero.countTrailingOnes();
 
-  // LLVM doesn't support alignments larger than this currently.
+  // Avoid trouble with rediculously large TrailZ values, such as
+  // those computed from a null pointer.
   TrailZ = std::min(TrailZ, unsigned(sizeof(unsigned) * CHAR_BIT - 1));
 
   unsigned Align = 1u << std::min(BitWidth - 1, TrailZ);
+
+  // LLVM doesn't support alignments larger than this currently.
+  Align = std::min(Align, MaximumAlignment);
 
   if (PrefAlign > Align)
     Align = EnforceKnownAlignment(V, Align, PrefAlign);

@@ -1154,6 +1154,8 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
   if (ParseUInt32(Alignment)) return true;
   if (!isPowerOf2_32(Alignment))
     return Error(AlignLoc, "alignment is not a power of two");
+  if (Alignment > MaximumAlignment)
+    return Error(AlignLoc, "huge alignments are not supported yet");
   return false;
 }
 
@@ -1176,6 +1178,7 @@ bool LLParser::ParseOptionalCommaAlign(unsigned &Alignment,
     if (Lex.getKind() != lltok::kw_align)
       return Error(Lex.getLoc(), "expected metadata or 'align'");
     
+    LocTy AlignLoc = Lex.getLoc();
     if (ParseOptionalAlignment(Alignment)) return true;
   }
 
