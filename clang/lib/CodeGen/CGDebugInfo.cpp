@@ -251,12 +251,44 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   default:
   case BuiltinType::Void:
     return llvm::DIType();
-  case BuiltinType::ObjCId: 
-    // id is struct objc_object *.
+  case BuiltinType::ObjCClass:
     return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
-                                            Unit, "objc_object", Unit, 0, 0, 0, 0,
+                                            Unit, "objc_class", Unit, 0, 0, 0, 0,
                                             llvm::DIType::FlagFwdDecl, 
                                             llvm::DIType(), llvm::DIArray());
+  case BuiltinType::ObjCId: {
+    // typedef struct objc_class *Class;
+    // typedef struct objc_object {
+    //  Class isa;
+    // } *id;
+
+    llvm::DIType OCTy = 
+      DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
+                                       Unit, "objc_class", Unit, 0, 0, 0, 0,
+                                       llvm::DIType::FlagFwdDecl, 
+                                       llvm::DIType(), llvm::DIArray());
+    unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
+    
+    llvm::DIType ISATy = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type,
+                                     Unit, "", Unit,
+                                     0, Size, 0, 0, 0, OCTy);
+
+    llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
+
+    llvm::DIType FieldTy = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                     "isa", Unit,
+                                     0,Size, 0, 0, 0, ISATy);
+    EltTys.push_back(FieldTy);
+    llvm::DIArray Elements =
+      DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
+    
+    return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
+                                            Unit, "objc_object", Unit, 0, 0, 0, 0,
+                                            0,
+                                            llvm::DIType(), Elements);
+  }
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;
   case BuiltinType::Char_S:
