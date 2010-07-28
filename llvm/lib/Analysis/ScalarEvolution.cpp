@@ -3664,6 +3664,26 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
 /// changed a value in a way that may effect its value, or which may
 /// disconnect it from a def-use chain linking it to a loop.
 void ScalarEvolution::forgetValue(Value *V) {
+  // If there's a SCEVUnknown tying this value into the SCEV
+  // space, remove it from the folding set map. The SCEVUnknown
+  // object and any other SCEV objects which reference it
+  // (transitively) remain allocated, effectively leaked until
+  // the underlying BumpPtrAllocator is freed.
+  //
+  // This permits SCEV pointers to be used as keys in maps
+  // such as the ValuesAtScopes map.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scUnknown);
+  ID.AddPointer(V);
+  void *IP;
+  if (SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) {
+    UniqueSCEVs.RemoveNode(S);
+
+    // This isn't necessary, but we might as well remove the
+    // value from the ValuesAtScopes map too.
+    ValuesAtScopes.erase(S);
+  }
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return;
 
@@ -3683,26 +3703,6 @@ void ScalarEvolution::forgetValue(Value *V) {
       Scalars.erase(It);
       if (PHINode *PN = dyn_cast<PHINode>(I))
         ConstantEvolutionLoopExitValue.erase(PN);
-    }
-
-    // If there's a SCEVUnknown tying this value into the SCEV
-    // space, remove it from the folding set map. The SCEVUnknown
-    // object and any other SCEV objects which reference it
-    // (transitively) remain allocated, effectively leaked until
-    // the underlying BumpPtrAllocator is freed.
-    //
-    // This permits SCEV pointers to be used as keys in maps
-    // such as the ValuesAtScopes map.
-    FoldingSetNodeID ID;
-    ID.AddInteger(scUnknown);
-    ID.AddPointer(I);
-    void *IP;
-    if (SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) {
-      UniqueSCEVs.RemoveNode(S);
-
-      // This isn't necessary, but we might as well remove the
-      // value from the ValuesAtScopes map too.
-      ValuesAtScopes.erase(S);
     }
 
     PushDefUseChildren(I, Worklist);
@@ -5690,15 +5690,32 @@ void ScalarEvolution::SCEVCallbackVH::deleted() {
   // this now dangles!
 }
 
-void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
+void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
   assert(SE && "SCEVCallbackVH called with a null ScalarEvolution!");
+
+  Value *Old = getValPtr();
+
+  // If there's a SCEVUnknown tying this value into the SCEV
+  // space, replace the SCEVUnknown's value with the new value
+  // for the benefit of any SCEVs still referencing it, and
+  // and remove it from the folding set map so that new scevs
+  // don't reference it.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scUnknown);
+  ID.AddPointer(Old);
+  void *IP;
+  if (SCEVUnknown *S = cast_or_null<SCEVUnknown>(
+        SE->UniqueSCEVs.FindNodeOrInsertPos(ID, IP))) {
+    S->V = V;
+    SE->UniqueSCEVs.RemoveNode(S);
+    SE->ValuesAtScopes.erase(S);
+  }
 
   // Forget all the expressions associated with users of the old value,
   // so that future queries will recompute the expressions using the new
   // value.
   SmallVector<User *, 16> Worklist;
   SmallPtrSet<User *, 8> Visited;
-  Value *Old = getValPtr();
   for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
        UI != UE; ++UI)
     Worklist.push_back(*UI);
