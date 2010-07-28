@@ -1567,8 +1567,12 @@ defm UXTH   : AI_unary_rrot<0b01101111,
 defm UXTB16 : AI_unary_rrot<0b01101100,
                             "uxtb16", UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
-def : ARMV6Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
-               (UXTB16r_rot GPR:$Src, 24)>;
+// FIXME: This pattern incorrectly assumes the shl operator is a rotate.
+//        The transformation should probably be done as a combiner action
+//        instead so we can include a check for masking back in the upper
+//        eight bits of the source into the lower eight bits of the result.
+//def : ARMV6Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
+//               (UXTB16r_rot GPR:$Src, 24)>;
 def : ARMV6Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
                (UXTB16r_rot GPR:$Src, 8)>;
 
