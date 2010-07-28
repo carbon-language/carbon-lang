@@ -227,6 +227,7 @@ namespace {
     //@{
     bool IsOrdinaryName(NamedDecl *ND) const;
     bool IsOrdinaryNonTypeName(NamedDecl *ND) const;
+    bool IsIntegralConstantValue(NamedDecl *ND) const;
     bool IsOrdinaryNonValueName(NamedDecl *ND) const;
     bool IsNestedNameSpecifier(NamedDecl *ND) const;
     bool IsEnum(NamedDecl *ND) const;
@@ -819,6 +820,17 @@ bool ResultBuilder::IsOrdinaryNonTypeName(NamedDecl *ND) const {
     return true;
   
   return ND->getIdentifierNamespace() & IDNS;
+}
+
+bool ResultBuilder::IsIntegralConstantValue(NamedDecl *ND) const {
+  if (!IsOrdinaryNonTypeName(ND))
+    return 0;
+  
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(ND->getUnderlyingDecl()))
+    if (VD->getType()->isIntegralOrEnumerationType())
+      return true;
+        
+  return false;
 }
 
 /// \brief Determines whether this given declaration will be found by
@@ -2271,11 +2283,17 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
 
 /// \brief Perform code-completion in an expression context when we know what
 /// type we're looking for.
-void Sema::CodeCompleteExpression(Scope *S, QualType T) {
+///
+/// \param IntegralConstantExpression Only permit integral constant 
+/// expressions.
+void Sema::CodeCompleteExpression(Scope *S, QualType T,
+                                  bool IntegralConstantExpression) {
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this);
   
-  if (WantTypesInContext(CCC_Expression, getLangOptions()))
+  if (IntegralConstantExpression)
+    Results.setFilter(&ResultBuilder::IsIntegralConstantValue);
+  else if (WantTypesInContext(CCC_Expression, getLangOptions()))
     Results.setFilter(&ResultBuilder::IsOrdinaryName);
   else
     Results.setFilter(&ResultBuilder::IsOrdinaryNonTypeName);
@@ -2476,8 +2494,10 @@ void Sema::CodeCompleteCase(Scope *S) {
     return;
   
   SwitchStmt *Switch = getSwitchStack().back();
-  if (!Switch->getCond()->getType()->isEnumeralType())
+  if (!Switch->getCond()->getType()->isEnumeralType()) {
+    CodeCompleteExpression(S, Switch->getCond()->getType(), true);
     return;
+  }
   
   // Code-complete the cases of a switch statement over an enumeration type
   // by providing the list of 

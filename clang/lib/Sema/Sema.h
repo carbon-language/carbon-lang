@@ -4526,7 +4526,8 @@ public:
   //@{
   virtual void CodeCompleteOrdinaryName(Scope *S,
                                      CodeCompletionContext CompletionContext);
-  virtual void CodeCompleteExpression(Scope *S, QualType T);
+  virtual void CodeCompleteExpression(Scope *S, QualType T,
+                                      bool IntegralConstantExpression = false);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);
