@@ -126,8 +126,7 @@ bool AAEval::runOnFunction(Function &F) {
     if (I->getType()->isPointerTy()) // Add all pointer instructions.
       Pointers.insert(&*I);
     Instruction &Inst = *I;
-    CallSite CS = CallSite::get(&Inst);
-    if (CS) {
+    if (CallSite CS = cast<Value>(&Inst)) {
       Value *Callee = CS.getCalledValue();
       // Skip actual functions for direct function calls.
       if (!isa<Function>(Callee) && isInterestingPointer(Callee))
@@ -137,6 +136,7 @@ bool AAEval::runOnFunction(Function &F) {
            AI != AE; ++AI)
         if (isInterestingPointer(*AI))
           Pointers.insert(*AI);
+      CallSites.insert(CS);
     } else {
       // Consider all operands.
       for (Instruction::op_iterator OI = Inst.op_begin(), OE = Inst.op_end();
@@ -144,8 +144,6 @@ bool AAEval::runOnFunction(Function &F) {
         if (isInterestingPointer(*OI))
           Pointers.insert(*OI);
     }
-
-    if (CS.getInstruction()) CallSites.insert(CS);
   }
 
   if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
