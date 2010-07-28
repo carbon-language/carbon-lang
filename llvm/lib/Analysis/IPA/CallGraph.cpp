@@ -145,8 +145,8 @@ private:
     for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
       for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
            II != IE; ++II) {
-        CallSite CS = CallSite::get(II);
-        if (CS.getInstruction() && !isa<DbgInfoIntrinsic>(II)) {
+        CallSite CS(cast<Value>(II));
+        if (CS && !isa<DbgInfoIntrinsic>(II)) {
           const Function *Callee = CS.getCalledFunction();
           if (Callee)
             Node->addCalledFunction(CS, getOrInsertFunction(Callee));
