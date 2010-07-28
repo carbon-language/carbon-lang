@@ -1170,10 +1170,13 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
       return ExprEmpty();
     }
 
-    // If this is a parenthesized expression, it is the start of a
-    // unary-expression, but doesn't include any postfix pieces.  Parse these
-    // now if present.
-    Operand = ParsePostfixExpressionSuffix(move(Operand));
+    if (getLang().CPlusPlus || OpTok.isNot(tok::kw_typeof)) {
+      // GNU typeof in C requires the expression to be parenthesized. Not so for
+      // sizeof/alignof or in C++. Therefore, the parenthesized expression is
+      // the start of a unary-expression, but doesn't include any postfix 
+      // pieces. Parse these now if present.
+      Operand = ParsePostfixExpressionSuffix(move(Operand));
+    }
   }
 
   // If we get here, the operand to the typeof/sizeof/alignof was an expresion.

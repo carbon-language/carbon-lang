@@ -17,3 +17,10 @@ static void test() {
   int xx;
   int *i;
 }
+
+// <rdar://problem/8237491>
+void test2() {
+    int a;
+    short b;
+    __typeof__(a) (*f)(__typeof__(b));    
+}
