@@ -59,6 +59,11 @@ Region::Region(BasicBlock *Entry, BasicBlock *Exit, RegionInfo* RInfo,
                : RegionNode(Parent, Entry, 1), RI(RInfo), DT(dt), exit(Exit) {}
 
 Region::~Region() {
+  // Free the cached nodes.
+  for (BBNodeMapT::iterator it = BBNodeMap.begin(),
+         ie = BBNodeMap.end(); it != ie; ++it)
+    delete it->second;
+
   // Only clean the cache for this Region. Caches of child Regions will be
   // cleaned when the child Regions are deleted.
   BBNodeMap.clear();
