@@ -1112,7 +1112,12 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 
 ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
                                           const llvm::Type *CoerceTo) const {
-  if (CoerceTo->isIntegerTy(64) || isa<llvm::PointerType>(CoerceTo)) {
+  // If this is a pointer passed as a pointer, just pass it directly.
+  if ((isa<llvm::PointerType>(CoerceTo) || CoerceTo->isIntegerTy(64)) &&
+      Ty->hasPointerRepresentation())
+    return ABIArgInfo::getExtend();
+  
+  if (isa<llvm::IntegerType>(CoerceTo)) {
     // Integer and pointer types will end up in a general purpose
     // register.
 
@@ -1120,9 +1125,11 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
 
-    if (Ty->isIntegralOrEnumerationType() || Ty->hasPointerRepresentation())
+    if (Ty->isIntegralOrEnumerationType())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+    
+    // FIXME: Zap this.
     
     // If this is a 8/16/32-bit structure that is passed as an int64, then it
     // will be passed in the low 8/16/32-bits of a 64-bit GPR, which is the same
@@ -1320,6 +1327,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
 
+  uint64_t TySizeInBytes = Context.getTypeSizeInChars(Ty).getQuantity();
+  
   // Check some invariants.
   // FIXME: Enforce these by construction.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
@@ -1351,8 +1360,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
     // available register of the sequence %rdi, %rsi, %rdx, %rcx, %r8
     // and %r9 is used.
   case Integer:
-    // It is always safe to classify this as an i64 argument.
-    ResType = llvm::Type::getInt64Ty(VMContext);
     ++neededInt;
       
     // If we can choose a better 8-byte type based on the preferred type, and if
@@ -1361,6 +1368,19 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
       if (isa<llvm::IntegerType>(PrefTypeLo) ||
           isa<llvm::PointerType>(PrefTypeLo))
         ResType = PrefTypeLo;
+      
+    if (ResType == 0) {
+      // It is always safe to classify this as an integer type up to i64 that
+      // isn't larger than the structure.
+      if (TySizeInBytes == 1)
+        ResType = llvm::Type::getInt8Ty(VMContext);
+      else if (TySizeInBytes == 2)
+        ResType = llvm::Type::getInt16Ty(VMContext);
+      else if (TySizeInBytes <= 4)
+        ResType = llvm::Type::getInt32Ty(VMContext);
+      else
+        ResType = llvm::Type::getInt64Ty(VMContext);
+    }
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1385,8 +1405,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
   case NoClass: break;
       
   case Integer: {
-    // It is always safe to classify this as an i64 argument.
-    const llvm::Type *HiType = llvm::Type::getInt64Ty(VMContext);
+    const llvm::Type *HiType = 0;
     ++neededInt;
 
     // If we can choose a better 8-byte type based on the preferred type, and if
@@ -1395,7 +1414,20 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
       if (isa<llvm::IntegerType>(PrefTypeHi) ||
           isa<llvm::PointerType>(PrefTypeHi))
         HiType = PrefTypeHi;
-      
+    
+    if (HiType == 0) {
+      // It is always safe to classify this as an integer type up to i64 that
+      // isn't larger than the structure.
+      if (TySizeInBytes == 9)
+        HiType = llvm::Type::getInt8Ty(VMContext);
+      else if (TySizeInBytes == 10)
+        HiType = llvm::Type::getInt16Ty(VMContext);
+      else if (TySizeInBytes <= 12)
+        HiType = llvm::Type::getInt32Ty(VMContext);
+      else
+        HiType = llvm::Type::getInt64Ty(VMContext);
+    }
+    
     ResType = llvm::StructType::get(VMContext, ResType, HiType, NULL);
     break;
   }

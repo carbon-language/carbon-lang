@@ -131,3 +131,17 @@ void f22(L x, L y) { }
 // CHECK: %y = alloca{{.*}}, align 16
 
 
+
+// PR7714
+struct f23S {
+  short f0;
+  unsigned f1;
+  int f2;
+};
+
+void f23(int A, struct f23S B) {
+  // CHECK: define void @f23(i32 %A, i64 %B.coerce0, i32 %B.coerce1)
+}
+
+
+
