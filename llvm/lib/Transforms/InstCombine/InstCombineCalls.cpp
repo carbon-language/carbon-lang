@@ -96,12 +96,17 @@ static unsigned EnforceKnownAlignment(Value *V,
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
                                                   unsigned PrefAlign) {
-  unsigned BitWidth = TD ? TD->getTypeSizeInBits(V->getType()) :
-                      sizeof(PrefAlign) * CHAR_BIT;
+  assert(V->getType()->isPointerTy() &&
+         "GetOrEnforceKnownAlignment expects a pointer!");
+  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 64;
   APInt Mask = APInt::getAllOnesValue(BitWidth);
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
   ComputeMaskedBits(V, Mask, KnownZero, KnownOne);
   unsigned TrailZ = KnownZero.countTrailingOnes();
+
+  // LLVM doesn't support alignments larger than this currently.
+  TrailZ = std::min(TrailZ, unsigned(sizeof(unsigned) * CHAR_BIT - 1));
+
   unsigned Align = 1u << std::min(BitWidth - 1, TrailZ);
 
   if (PrefAlign > Align)
