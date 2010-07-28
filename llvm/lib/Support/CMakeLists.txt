@@ -6,6 +6,7 @@ add_llvm_library(LLVMSupport
   circular_raw_ostream.cpp
   CommandLine.cpp
   ConstantRange.cpp
+  CrashRecoveryContext.cpp
   Debug.cpp
   DeltaAlgorithm.cpp
   DAGDeltaAlgorithm.cpp
