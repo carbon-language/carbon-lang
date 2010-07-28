@@ -1295,28 +1295,60 @@ classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
   return getCoerceResult(RetTy, ResType);
 }
 
+/// Get8ByteTypeAtOffset - The ABI specifies that a value should be passed in an
+/// 8-byte GPR.  This means that we either have a scalar or we are talking about
+/// the high or low part of an up-to-16-byte struct.  This routine picks the
+/// best LLVM IR type to represent this, which may be i64 or may be anything
+/// else that the backend will pass in a GPR that works better (e.g. i8, %foo*,
+/// etc).
+///
+/// PrefType is an LLVM IR type that corresponds to (part of) the IR type for
+/// the source type.  IROffset is an offset in bytes into the LLVM IR type that
+/// the 8-byte value references.  PrefType may be null.
+///
+/// SourceTy is the source level type for the entire argument.  SourceOffset is
+/// an offset into this that we're processing (which is always either 0 or 8).
+///
 static const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
-                                              unsigned Offset,
-                                              const llvm::TargetData &TD) {
-  if (PrefType == 0) return 0;
-  
+                                              unsigned IROffset,
+                                              QualType SourceTy,
+                                              unsigned SourceOffset,
+                                              const llvm::TargetData &TD,
+                                              llvm::LLVMContext &VMContext,
+                                              ASTContext &Context) {
   // Pointers are always 8-bytes at offset 0.
-  if (Offset == 0 && isa<llvm::PointerType>(PrefType))
+  if (IROffset == 0 && PrefType && isa<llvm::PointerType>(PrefType))
     return PrefType;
-  
+
   // TODO: 1/2/4/8 byte integers are also interesting, but we have to know that
   // the "hole" is not used in the containing struct (just undef padding).
-  const llvm::StructType *STy = dyn_cast<llvm::StructType>(PrefType);
-  if (STy == 0) return 0;
- 
-  // If this is a struct, recurse into the field at the specified offset.
-  const llvm::StructLayout *SL = TD.getStructLayout(STy);
-  if (Offset >= SL->getSizeInBytes()) return 0;
+
+  if (const llvm::StructType *STy =
+          dyn_cast_or_null<llvm::StructType>(PrefType)) {
+    // If this is a struct, recurse into the field at the specified offset.
+    const llvm::StructLayout *SL = TD.getStructLayout(STy);
+    if (IROffset < SL->getSizeInBytes()) {
+      unsigned FieldIdx = SL->getElementContainingOffset(IROffset);
+      IROffset -= SL->getElementOffset(FieldIdx);
+      
+      return Get8ByteTypeAtOffset(STy->getElementType(FieldIdx), IROffset,
+                                  SourceTy, SourceOffset, TD,VMContext,Context);
+    }      
+  }
   
-  unsigned FieldIdx = SL->getElementContainingOffset(Offset);
-  Offset -= SL->getElementOffset(FieldIdx);
-  
-  return Get8ByteTypeAtOffset(STy->getElementType(FieldIdx), Offset, TD);
+  // Okay, we don't have any better idea of what to pass, so we pass this in an
+  // integer register that isn't too big to fit the rest of the struct.
+  uint64_t TySizeInBytes = Context.getTypeSizeInChars(SourceTy).getQuantity();
+
+  // It is always safe to classify this as an integer type up to i64 that
+  // isn't larger than the structure.
+  switch (unsigned(TySizeInBytes-SourceOffset)) {
+  case 1:  return llvm::Type::getInt8Ty(VMContext);
+  case 2:  return llvm::Type::getInt16Ty(VMContext);
+  case 3:
+  case 4:  return llvm::Type::getInt32Ty(VMContext);
+  default: return llvm::Type::getInt64Ty(VMContext);
+  }  
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
@@ -1327,8 +1359,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
 
-  uint64_t TySizeInBytes = Context.getTypeSizeInChars(Ty).getQuantity();
-  
   // Check some invariants.
   // FIXME: Enforce these by construction.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
@@ -1362,25 +1392,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
   case Integer:
     ++neededInt;
       
-    // If we can choose a better 8-byte type based on the preferred type, and if
-    // that type is still passed in a GPR, use it.
-    if (const llvm::Type *PrefTypeLo = Get8ByteTypeAtOffset(PrefType, 0, TD))
-      if (isa<llvm::IntegerType>(PrefTypeLo) ||
-          isa<llvm::PointerType>(PrefTypeLo))
-        ResType = PrefTypeLo;
-      
-    if (ResType == 0) {
-      // It is always safe to classify this as an integer type up to i64 that
-      // isn't larger than the structure.
-      if (TySizeInBytes == 1)
-        ResType = llvm::Type::getInt8Ty(VMContext);
-      else if (TySizeInBytes == 2)
-        ResType = llvm::Type::getInt16Ty(VMContext);
-      else if (TySizeInBytes <= 4)
-        ResType = llvm::Type::getInt32Ty(VMContext);
-      else
-        ResType = llvm::Type::getInt64Ty(VMContext);
-    }
+    // Pick an 8-byte type based on the preferred type.
+    ResType = Get8ByteTypeAtOffset(PrefType, 0, Ty, 0, TD, VMContext, Context);
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1405,29 +1418,11 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
   case NoClass: break;
       
   case Integer: {
-    const llvm::Type *HiType = 0;
     ++neededInt;
 
-    // If we can choose a better 8-byte type based on the preferred type, and if
-    // that type is still passed in a GPR, use it.
-    if (const llvm::Type *PrefTypeHi = Get8ByteTypeAtOffset(PrefType, 8, TD))
-      if (isa<llvm::IntegerType>(PrefTypeHi) ||
-          isa<llvm::PointerType>(PrefTypeHi))
-        HiType = PrefTypeHi;
-    
-    if (HiType == 0) {
-      // It is always safe to classify this as an integer type up to i64 that
-      // isn't larger than the structure.
-      if (TySizeInBytes == 9)
-        HiType = llvm::Type::getInt8Ty(VMContext);
-      else if (TySizeInBytes == 10)
-        HiType = llvm::Type::getInt16Ty(VMContext);
-      else if (TySizeInBytes <= 12)
-        HiType = llvm::Type::getInt32Ty(VMContext);
-      else
-        HiType = llvm::Type::getInt64Ty(VMContext);
-    }
-    
+    // Pick an 8-byte type based on the preferred type.
+    const llvm::Type *HiType =
+      Get8ByteTypeAtOffset(PrefType, 8, Ty, 8, TD, VMContext, Context);
     ResType = llvm::StructType::get(VMContext, ResType, HiType, NULL);
     break;
   }
