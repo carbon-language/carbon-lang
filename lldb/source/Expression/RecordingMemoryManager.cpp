@@ -19,6 +19,7 @@ RecordingMemoryManager::RecordingMemoryManager () :
     llvm::JITMemoryManager(),
     m_default_mm_ap (llvm::JITMemoryManager::CreateDefaultMemManager())
 {
+    m_log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 }
 
 RecordingMemoryManager::~RecordingMemoryManager ()
@@ -60,6 +61,9 @@ RecordingMemoryManager::endFunctionBody(const llvm::Function *F, uint8_t *Functi
                uint8_t *FunctionEnd)
 {
     m_default_mm_ap->endFunctionBody(F, FunctionStart, FunctionEnd);
+    if (m_log)
+        m_log->Printf("Adding [%p-%p] to m_functions",
+                      FunctionStart, FunctionEnd);
     m_functions.insert(std::pair<uint8_t *, uint8_t *>(FunctionStart, FunctionEnd));
 }
 
@@ -67,6 +71,9 @@ uint8_t *
 RecordingMemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
 {
     uint8_t *return_value = m_default_mm_ap->allocateSpace(Size, Alignment);
+    if (m_log)
+        m_log->Printf("RecordingMemoryManager::allocateSpace(Size=0x%llx, Alignment=%u) = %p",
+                      (uint64_t)Size, Alignment, return_value);
     m_spaceBlocks.insert (std::pair<uint8_t *, intptr_t>(return_value, Size));
     return return_value;
 }
@@ -75,6 +82,9 @@ uint8_t *
 RecordingMemoryManager::allocateGlobal(uintptr_t Size, unsigned Alignment)
 {
     uint8_t *return_value = m_default_mm_ap->allocateGlobal(Size, Alignment);
+    if (m_log)
+        m_log->Printf("RecordingMemoryManager::allocateGlobal(Size=0x%llx, Alignment=%u) = %p",
+                      (uint64_t)Size, Alignment, return_value);
     m_globals.insert (std::pair<uint8_t *, uintptr_t>(return_value, Size));
     return return_value;
 }
@@ -144,6 +154,9 @@ RecordingMemoryManager::GetRemoteRangeForLocal (lldb::addr_t local_address)
 void
 RecordingMemoryManager::AddToLocalToRemoteMap (lldb::addr_t lstart, size_t size, lldb::addr_t rstart)
 {
+    if (m_log)
+        m_log->Printf("Adding local [0x%llx-0x%llx], remote [0x%llx-0x%llx] to local->remote map", lstart, lstart + size, rstart, rstart + size);
+    
     m_address_map.push_back (LocalToRemoteAddressRange(lstart, size, rstart));
 }
 

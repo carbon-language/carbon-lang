@@ -511,20 +511,22 @@ IRForTarget::runOnModule(Module &M)
             return false;
     }
     
+    // TEMPORARY FOR DEBUGGING
+    M.dump();
+    
     if (!replaceVariables(M, function))
         return false;
     
     if (log)
     {
-        for (bbi = function->begin();
-             bbi != function->end();
-             ++bbi)
-        {
-            log->Printf("Rewrote basic block %s for running: \n%s", 
-                        bbi->hasName() ? bbi->getNameStr().c_str() : "[anonymous]",
-                        PrintValue(bbi).c_str());
-        }
+        std::string s;
+        raw_string_ostream oss(s);
         
+        M.print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module after preparing for execution: \n%s", s.c_str());
     }
     
     return true;    

@@ -119,9 +119,7 @@ private:
 
 bool
 IRToDWARF::runOnBasicBlock(BasicBlock &BB, Relocator &R)
-{
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-    
+{    
     ///////////////////////////////////////
     // Mark the current block as visited
     //
@@ -138,29 +136,6 @@ IRToDWARF::runOnBasicBlock(BasicBlock &BB, Relocator &R)
     ////////////////////////////////////////////////
     // Translate the current basic block to DWARF
     //
-    
-    if (log)
-    {
-        log->Printf("Translating basic block %s:",
-                    BB.hasName() ? BB.getNameStr().c_str() : "[anonymous]");
-    
-        llvm::BasicBlock::iterator ii;
-        
-        for (ii = BB.begin();
-             ii != BB.end();
-             ++ii)
-        {
-            llvm::Instruction &inst = *ii;
-            
-            std::string s;
-            raw_string_ostream os(s);
-            
-            inst.print(os);
-            
-            if (log)
-                log->Printf("  %s", s.c_str());
-        }
-    }
     
     /////////////////////////////////////////////////
     // Visit all successors we haven't visited yet
@@ -209,6 +184,18 @@ IRToDWARF::runOnModule(Module &M)
     
     if (!runOnBasicBlock(function->getEntryBlock(), relocator))
         return false;
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        M.print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module being translated to DWARF: \n%s", s.c_str());
+    }
     
     // TEMPORARY: Fail in order to force execution in the target.
     return false;

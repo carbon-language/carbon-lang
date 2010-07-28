@@ -21,6 +21,7 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Core/Log.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "lldb/Expression/ClangExpression.h"
 
@@ -128,6 +129,8 @@ private:
     std::map<uint8_t *, unsigned> m_stubs;
     std::map<uint8_t *, uintptr_t> m_globals;
     std::map<uint8_t *, uint8_t *> m_exception_tables;
+    
+    lldb_private::Log *m_log;
 
     struct LocalToRemoteAddressRange
     {
