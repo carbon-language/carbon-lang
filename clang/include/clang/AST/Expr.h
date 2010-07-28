@@ -1030,7 +1030,8 @@ public:
 
   UnaryOperator(Expr *input, Opcode opc, QualType type, SourceLocation l)
     : Expr(UnaryOperatorClass, type,
-           input->isTypeDependent() && opc != OffsetOf,
+           opc != OffsetOf && (input->isTypeDependent() ||
+                               type->isDependentType()),
            input->isValueDependent()),
       Val(input), Opc(opc), Loc(l) {}
 
