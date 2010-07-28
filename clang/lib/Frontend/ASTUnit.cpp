@@ -789,7 +789,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
-  if (PrecompilePreamble)
+  // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
+  if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus)
     OverrideMainBuffer = AST->BuildPrecompiledPreamble();
   
   if (!AST->Parse(OverrideMainBuffer))
