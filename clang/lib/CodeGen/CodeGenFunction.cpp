@@ -1055,6 +1055,9 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 ///
 /// As a side-effect, this method clears the insertion point.
 void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
+  assert(Dest.getScopeDepth().encloses(EHStack.getInnermostNormalCleanup())
+         && "stale jump destination");
+
   if (!HaveInsertPoint())
     return;
 

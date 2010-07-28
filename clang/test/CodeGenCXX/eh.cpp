@@ -379,3 +379,38 @@ namespace test14 {
     }
   }
 }
+
+// rdar://problem/8231514
+// JumpDests shouldn't get confused by scopes that aren't normal cleanups.
+namespace test15 {
+  struct A { ~A(); };
+
+  bool opaque(int);
+
+  // CHECK: define void @_ZN6test153fooEv()
+  void foo() {
+    A a;
+
+    try {
+      // CHECK:      [[X:%.*]] = alloca i32
+      // CHECK:      store i32 10, i32* [[X]]
+      // CHECK-NEXT: br label
+      //   -> while.cond
+      int x = 10;
+
+      while (true) {
+        // CHECK:      load i32* [[X]]
+        // CHECK-NEXT: [[COND:%.*]] = invoke zeroext i1 @_ZN6test156opaqueEi
+        // CHECK:      br i1 [[COND]]
+        if (opaque(x))
+        // CHECK:      br label
+          break;
+
+        // CHECK:      br label
+      }
+      // CHECK:      br label
+    } catch (int x) { }
+
+    // CHECK: call void @_ZN6test151AD1Ev
+  }
+}

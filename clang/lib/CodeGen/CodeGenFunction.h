@@ -575,7 +575,9 @@ public:
   /// target of a potentially scope-crossing jump; get a stable handle
   /// to which we can perform this jump later.
   JumpDest getJumpDestInCurrentScope(llvm::BasicBlock *Target) {
-    return JumpDest(Target, EHStack.stable_begin(), NextCleanupDestIndex++);
+    return JumpDest(Target,
+                    EHStack.getInnermostNormalCleanup(),
+                    NextCleanupDestIndex++);
   }
 
   /// The given basic block lies in the current EH scope, but may be a
