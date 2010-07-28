@@ -247,6 +247,7 @@ void CGDebugInfo::CreateCompileUnit() {
 llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
                                      llvm::DIFile Unit) {
   unsigned Encoding = 0;
+  const char *BTName = NULL;
   switch (BT->getKind()) {
   default:
   case BuiltinType::Void:
@@ -306,14 +307,23 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   case BuiltinType::LongDouble:
   case BuiltinType::Double:    Encoding = llvm::dwarf::DW_ATE_float; break;
   }
+
+  switch (BT->getKind()) {
+  case BuiltinType::Long:      BTName = "long int"; break;
+  case BuiltinType::LongLong:  BTName = "long long int"; break;
+  case BuiltinType::ULong:     BTName = "long unsigned int"; break;
+  case BuiltinType::ULongLong: BTName = "long long unsigned int"; break;
+  default:
+    BTName = BT->getName(CGM.getContext().getLangOptions());
+    break;
+  }
   // Bit size, align and offset of the type.
   uint64_t Size = CGM.getContext().getTypeSize(BT);
   uint64_t Align = CGM.getContext().getTypeAlign(BT);
   uint64_t Offset = 0;
-
+  
   llvm::DIType DbgTy = 
-    DebugFactory.CreateBasicType(Unit,
-                                 BT->getName(CGM.getContext().getLangOptions()),
+    DebugFactory.CreateBasicType(Unit, BTName,
                                  Unit, 0, Size, Align,
                                  Offset, /*flags*/ 0, Encoding);
   return DbgTy;
