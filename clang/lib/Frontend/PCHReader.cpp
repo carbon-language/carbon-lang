@@ -1685,11 +1685,12 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
     }
 
     case pch::EXT_VECTOR_DECLS:
-      if (!ExtVectorDecls.empty()) {
-        Error("duplicate EXT_VECTOR_DECLS record in PCH file");
-        return Failure;
-      }
-      ExtVectorDecls.swap(Record);
+      // Optimization for the first block.
+      if (ExtVectorDecls.empty())
+        ExtVectorDecls.swap(Record);
+      else
+        ExtVectorDecls.insert(ExtVectorDecls.end(),
+                              Record.begin(), Record.end());
       break;
 
     case pch::VTABLE_USES:
