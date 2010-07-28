@@ -644,12 +644,12 @@ SymbolFileDWARF::ParseCompileUnit(DWARFCompileUnit* cu, CompUnitSP& compile_unit
         {
             const char * cu_die_name = cu_die->GetName(this, cu);
             const char * cu_comp_dir = cu_die->GetAttributeValueAsString(this, cu, DW_AT_comp_dir, NULL);
-            Language::Type language = (Language::Type)cu_die->GetAttributeValueAsUnsigned(this, cu, DW_AT_language, 0);
+            LanguageType class_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, cu, DW_AT_language, 0);
             if (cu_die_name)
             {
                 if (cu_die_name[0] == '/' || cu_comp_dir == NULL && cu_comp_dir[0])
                 {
-                    compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, cu_die_name, cu->GetOffset(), language));
+                    compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, cu_die_name, cu->GetOffset(), class_language));
                 }
                 else
                 {
@@ -658,7 +658,7 @@ SymbolFileDWARF::ParseCompileUnit(DWARFCompileUnit* cu, CompUnitSP& compile_unit
                         fullpath += '/';
                     fullpath += cu_die_name;
 
-                    compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, fullpath.c_str(), cu->GetOffset(), language));
+                    compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), cu, fullpath.c_str(), cu->GetOffset(), class_language));
                 }
 
                 if (compile_unit_sp.get())
@@ -1211,6 +1211,8 @@ SymbolFileDWARF::ParseChildMembers
     TypeSP& type_sp,
     const DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *parent_die,
+    void *class_clang_type,
+    const LanguageType class_language,
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
     ClangASTContext::AccessType& default_accessibility,
@@ -1376,8 +1378,16 @@ SymbolFileDWARF::ParseChildMembers
 
                     Type *base_class_dctype = ResolveTypeUID(encoding_uid);
                     assert(base_class_dctype);
-                    base_classes.push_back (type_list->GetClangASTContext().CreateBaseClassSpecifier (base_class_dctype->GetOpaqueClangQualType(), accessibility, is_virtual, is_base_of_class));
-                    assert(base_classes.back());
+                    
+                    if (class_language == eLanguageTypeObjC)
+                    {
+                        type_list->GetClangASTContext().SetObjCSuperClass(class_clang_type, base_class_dctype->GetOpaqueClangQualType());
+                    }
+                    else
+                    {
+                        base_classes.push_back (type_list->GetClangASTContext().CreateBaseClassSpecifier (base_class_dctype->GetOpaqueClangQualType(), accessibility, is_virtual, is_base_of_class));
+                        assert(base_classes.back());
+                    }
                 }
             }
             break;
@@ -2707,6 +2717,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(DIE_IS_BEING_PARSED);
 
                     size_t byte_size = 0;
+                    LanguageType class_language = eLanguageTypeUnknown;
                     //bool struct_is_class = false;
                     Declaration decl;
                     const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
@@ -2721,16 +2732,39 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                             {
                                 switch (attr)
                                 {
-                                case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
-                                case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
-                                case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
+                                case DW_AT_decl_file:
+                                    decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); 
+                                    break;
+
+                                case DW_AT_decl_line:
+                                    decl.SetLine(form_value.Unsigned()); 
+                                    break;
+
+                                case DW_AT_decl_column: 
+                                    decl.SetColumn(form_value.Unsigned()); 
+                                    break;
+
                                 case DW_AT_name:
                                     type_name_cstr = form_value.AsCString(&get_debug_str_data());
                                     type_name_dbstr.SetCString(type_name_cstr);
                                     break;
-                                case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
-                                case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break; break;
-                                case DW_AT_declaration: is_forward_declaration = form_value.Unsigned() != 0; break;
+
+                                case DW_AT_byte_size:   
+                                    byte_size = form_value.Unsigned(); 
+                                    break;
+
+                                case DW_AT_accessibility: 
+                                    accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); 
+                                    break;
+
+                                case DW_AT_declaration: 
+                                    is_forward_declaration = form_value.Unsigned() != 0; 
+                                    break;
+
+                                case DW_AT_APPLE_runtime_class: 
+                                    class_language = (LanguageType)form_value.Signed(); 
+                                    break;
+
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_data_location:
@@ -2764,7 +2798,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     }
 
                     assert (tag_decl_kind != -1);
-                    clang_type = type_list->GetClangASTContext().CreateRecordType (type_name_cstr, tag_decl_kind, GetClangDeclContextForDIE (dwarf_cu, die));
+                    clang_type = type_list->GetClangASTContext().CreateRecordType (type_name_cstr, tag_decl_kind, GetClangDeclContextForDIE (dwarf_cu, die), class_language);
 
                     m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
                     type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
@@ -2781,11 +2815,24 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         std::vector<clang::CXXBaseSpecifier *> base_classes;
                         std::vector<int> member_accessibilities;
                         bool is_a_class = false;
-                        ParseChildMembers(sc, type_sp, dwarf_cu, die, base_classes, member_accessibilities, default_accessibility, is_a_class);
+                        ParseChildMembers (sc, 
+                                           type_sp, 
+                                           dwarf_cu, 
+                                           die, 
+                                           clang_type,
+                                           class_language,
+                                           base_classes, 
+                                           member_accessibilities, 
+                                           default_accessibility, 
+                                           is_a_class);
+
                         // If we have a DW_TAG_structure_type instead of a DW_TAG_class_type we
                         // need to tell the clang type it is actually a class.
-                        if (is_a_class && tag_decl_kind != clang::TTK_Class)
-                            type_list->GetClangASTContext().SetTagTypeKind (clang_type, clang::TTK_Class);
+                        if (class_language != eLanguageTypeObjC)
+                        {
+                            if (is_a_class && tag_decl_kind != clang::TTK_Class)
+                                type_list->GetClangASTContext().SetTagTypeKind (clang_type, clang::TTK_Class);
+                        }
 
                         // Since DW_TAG_structure_type gets used for both classes
                         // and structures, we may need to set any DW_TAG_member

@@ -495,7 +495,7 @@ SymbolFileDWARFDebugMap::ParseCompileUnitAtIndex(uint32_t cu_idx)
                                                                                             NULL,
                                                                                             so_symbol->GetMangled().GetName().AsCString(),
                                                                                             cu_idx,
-                                                                                            Language::Unknown));
+                                                                                            eLanguageTypeUnknown));
                 }
             }
         }

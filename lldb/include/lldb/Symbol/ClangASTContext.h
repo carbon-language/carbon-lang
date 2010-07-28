@@ -157,7 +157,8 @@ public:
     void *
     CreateRecordType (const char *name,
                       int kind,
-                      clang::DeclContext *decl_ctx);
+                      clang::DeclContext *decl_ctx,
+                      lldb::LanguageType language);
 
     bool
     AddFieldToRecordType (void * record_qual_type,
@@ -201,6 +202,14 @@ public:
     bool
     SetObjCSuperClass (void *class_clang_type,
                        void *superclass_clang_type);
+
+    static bool
+    ObjCTypeHasIVars (void *class_clang_type, bool check_superclass);
+
+    static bool
+    ObjCDeclHasIVars (clang::ObjCInterfaceDecl *class_interface_decl, 
+                      bool check_superclass);
+
     
     //------------------------------------------------------------------
     // Aggregate Types

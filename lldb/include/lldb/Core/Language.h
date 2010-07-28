@@ -26,42 +26,10 @@ namespace lldb_private {
 class Language
 {
 public:
-
-    //------------------------------------------------------------------
-    /// Programming language type.
-    ///
-    /// These enumerations use the same language enumerations as the
-    /// DWARF specification for ease of use and consistency.
-    //------------------------------------------------------------------
-    typedef enum
-    {
-        Unknown         = 0x0000,   ///< Unknown or invalid language value.
-        C89             = 0x0001,   ///< ISO C:1989.
-        C               = 0x0002,   ///< Non-standardized C, such as K&R.
-        Ada83           = 0x0003,   ///< ISO Ada:1983.
-        C_plus_plus     = 0x0004,   ///< ISO C++:1998.
-        Cobol74         = 0x0005,   ///< ISO Cobol:1974.
-        Cobol85         = 0x0006,   ///< ISO Cobol:1985.
-        Fortran77       = 0x0007,   ///< ISO Fortran 77.
-        Fortran90       = 0x0008,   ///< ISO Fortran 90.
-        Pascal83        = 0x0009,   ///< ISO Pascal:1983.
-        Modula2         = 0x000a,   ///< ISO Modula-2:1996.
-        Java            = 0x000b,   ///< Java.
-        C99             = 0x000c,   ///< ISO C:1999.
-        Ada95           = 0x000d,   ///< ISO Ada:1995.
-        Fortran95       = 0x000e,   ///< ISO Fortran 95.
-        PLI             = 0x000f,   ///< ANSI PL/I:1976.
-        ObjC            = 0x0010,   ///< Objective-C.
-        ObjC_plus_plus  = 0x0011,   ///< Objective-C++.
-        UPC             = 0x0012,   ///< Unified Parallel C.
-        D               = 0x0013,   ///< D.
-        Python          = 0x0014    ///< Python.
-    } Type;
-
     //------------------------------------------------------------------
     /// Construct with optional language enumeration.
     //------------------------------------------------------------------
-    Language(Language::Type language = Unknown);
+    Language(lldb::LanguageType language = lldb::eLanguageTypeUnknown);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -78,7 +46,7 @@ public:
     ///     The C string representation of the language. The returned
     ///     string does not need to be freed as it comes from constant
     ///     strings. NULL can be returned when the language is set to
-    ///     a value that doesn't match of of the Language::Type
+    ///     a value that doesn't match of of the lldb::LanguageType
     ///     enumerations.
     //------------------------------------------------------------------
     const char *
@@ -106,7 +74,7 @@ public:
     ///     The enumeration value that describes the programming
     ///     language that an object is associated with.
     //------------------------------------------------------------------
-    Language::Type
+    lldb::LanguageType
     GetLanguage() const;
 
     //------------------------------------------------------------------
@@ -117,7 +85,7 @@ public:
     ///     language that an object is associated with.
     //------------------------------------------------------------------
     void
-    SetLanguage(Language::Type language);
+    SetLanguage(lldb::LanguageType language);
 
     //------------------------------------------------------------------
     /// Set accessor for the language.
@@ -133,9 +101,9 @@ protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    Language::Type m_language; ///< The programming language enumeration value.
-                                 ///< The enumeration values are the same as the
-                                 ///< latest DWARF specification.
+    lldb::LanguageType m_language; ///< The programming language enumeration value.
+                                   ///< The enumeration values are the same as the
+                                   ///< latest DWARF specification.
 };
 
 //--------------------------------------------------------------

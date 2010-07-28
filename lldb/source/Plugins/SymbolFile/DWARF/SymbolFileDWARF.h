@@ -249,6 +249,8 @@ protected:
                                 lldb::TypeSP& type_sp,
                                 const DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *die,
+                                void *class_clang_type,
+                                const lldb::LanguageType class_language,
                                 std::vector<clang::CXXBaseSpecifier *>& base_classes,
                                 std::vector<int>& member_accessibilities,
                                 lldb_private::ClangASTContext::AccessType &default_accessibility,

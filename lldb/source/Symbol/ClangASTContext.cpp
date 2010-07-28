@@ -753,13 +753,21 @@ ClangASTContext::AddVolatileModifier (void *clang_type)
 #pragma mark Structure, Unions, Classes
 
 void *
-ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl_ctx)
+ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl_ctx, lldb::LanguageType language)
 {
     ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
 
     if (decl_ctx == NULL)
         decl_ctx = ast_context->getTranslationUnitDecl();
+
+
+    if (language == lldb::eLanguageTypeObjC)
+    {
+        bool isForwardDecl = false;
+        bool isInternal = false;
+        return CreateObjCClass (name, decl_ctx, isForwardDecl, isInternal);
+    }
 
     // NOTE: Eventually CXXRecordDecl will be merged back into RecordDecl and
     // we will need to update this code. I was told to currently always use
@@ -830,6 +838,20 @@ ClangASTContext::AddFieldToRecordType
             {
                 record_decl->addDecl(field);
                 return true;
+            }
+        }
+        else
+        {
+            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(clang_type);
+            if (objc_class_type)
+            {
+                bool isSynthesized = false;
+                ClangASTContext::AddObjCClassIVar (record_clang_type,
+                                                   name,
+                                                   field_type,
+                                                   access,
+                                                   bitfield_bit_size,
+                                                   isSynthesized);
             }
         }
     }
@@ -998,8 +1020,8 @@ ClangASTContext::CreateObjCClass
                                                          SourceLocation(),
                                                          isForwardDecl,
                                                          isInternal);
-
-    return QualType (decl->getTypeForDecl(), 0).getAsOpaquePtr();
+    
+    return ast_context->getObjCInterfaceType(decl).getAsOpaquePtr();
 }
 
 bool
@@ -1071,26 +1093,60 @@ ClangASTContext::AddObjCClassIVar
                     bit_width = new (*ast_context)IntegerLiteral (bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
                 }
                 
-                //ObjCIvarDecl *field = 
-                ObjCIvarDecl::Create (*ast_context,
-                                      class_interface_decl,
-                                      SourceLocation(),
-                                      &identifier_table->get(name), // Identifier
-                                      QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
-                                      NULL, // TypeSourceInfo *
-                                      ConvertAccessTypeToObjCIvarAccessControl (access),
-                                      bit_width,
-                                      isSynthesized);
-                // TODO: Do I need to do an addDecl? I am thinking I don't since
-                // I passed the "class_interface_decl" into "ObjCIvarDecl::Create"
-                // above. Verify this. Also verify it is ok to pass NULL TypeSourceInfo
-                // above.
-                return true;
+                ObjCIvarDecl *field = ObjCIvarDecl::Create (*ast_context,
+                                                            class_interface_decl,
+                                                            SourceLocation(),
+                                                            &identifier_table->get(name), // Identifier
+                                                            QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
+                                                            NULL, // TypeSourceInfo *
+                                                            ConvertAccessTypeToObjCIvarAccessControl (access),
+                                                            bit_width,
+                                                            isSynthesized);
+                
+                if (field)
+                {
+                    class_interface_decl->addDecl(field);
+                    return true;
+                }
             }
         }
     }
     return false;
 }
+
+
+bool
+ClangASTContext::ObjCTypeHasIVars (void *class_opaque_type, bool check_superclass)
+{
+    QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
+
+    clang::Type *class_type = class_qual_type.getTypePtr();
+    if (class_type)
+    {
+        ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+
+        if (objc_class_type)
+            return ObjCDeclHasIVars (objc_class_type->getInterface(), check_superclass);
+    }
+    return false;            
+}
+
+bool
+ClangASTContext::ObjCDeclHasIVars (ObjCInterfaceDecl *class_interface_decl, bool check_superclass)
+{
+    while (class_interface_decl)
+    {
+        if (class_interface_decl->ivar_size() > 0)
+            return true;
+        
+        if (check_superclass)
+            class_interface_decl = class_interface_decl->getSuperClass();
+        else
+            break;
+    }
+    return false;            
+}
+    
 
 #pragma mark Aggregate Types
 
@@ -1113,6 +1169,9 @@ ClangASTContext::IsAggregateType (void *clang_type)
     case clang::Type::ExtVector:
     case clang::Type::Vector:
     case clang::Type::Record:
+    case clang::Type::ObjCObject:
+    case clang::Type::ObjCInterface:
+    case clang::Type::ObjCObjectPointer:
         return true;
 
     case clang::Type::Typedef:
@@ -1133,7 +1192,8 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
 
     uint32_t num_children = 0;
     QualType qual_type(QualType::getFromOpaquePtr(clang_qual_type));
-    switch (qual_type->getTypeClass())
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
     case clang::Type::Record:
         {
@@ -1176,6 +1236,40 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
         }
         break;
 
+    case clang::Type::ObjCObject:
+    case clang::Type::ObjCInterface:
+        {
+            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+            assert (objc_class_type);
+            if (objc_class_type)
+            {
+                ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            
+                if (class_interface_decl)
+                {
+            
+                    ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                    if (superclass_interface_decl)
+                    {
+                        if (omit_empty_base_classes)
+                        {
+                            if (ClangASTContext::ObjCDeclHasIVars (superclass_interface_decl, true))
+                                ++num_children;
+                        }
+                        else
+                            ++num_children;
+                    }
+                    
+                    num_children += class_interface_decl->ivar_size();
+                }
+            }
+        }
+        break;
+        
+    case clang::Type::ObjCObjectPointer:
+        return ClangASTContext::GetNumChildren (cast<ObjCObjectPointerType>(qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr(), 
+                                                omit_empty_base_classes);
+
     case clang::Type::ConstantArray:
         num_children = cast<ConstantArrayType>(qual_type.getTypePtr())->getSize().getLimitedValue();
         break;
@@ -1184,7 +1278,8 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
         {
             PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
             QualType pointee_type = pointer_type->getPointeeType();
-            uint32_t num_pointee_children = ClangASTContext::GetNumChildren (pointee_type.getAsOpaquePtr(), omit_empty_base_classes);
+            uint32_t num_pointee_children = ClangASTContext::GetNumChildren (pointee_type.getAsOpaquePtr(), 
+                                                                             omit_empty_base_classes);
             // If this type points to a simple type, then it has 1 child
             if (num_pointee_children == 0)
                 num_children = 1;
@@ -1346,6 +1441,100 @@ ClangASTContext::GetChildClangTypeAtIndex
                         return field->getType().getAsOpaquePtr();
                     }
                 }
+            }
+            break;
+
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            {
+                ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(parent_qual_type.getTypePtr());
+                assert (objc_class_type);
+                if (objc_class_type)
+                {
+                    uint32_t child_idx = 0;
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                
+                    if (class_interface_decl)
+                    {
+                
+                        const ASTRecordLayout &interface_layout = ast_context->getASTObjCInterfaceLayout(class_interface_decl);
+                        ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                        if (superclass_interface_decl)
+                        {
+                            if (omit_empty_base_classes)
+                            {
+                                if (ClangASTContext::GetNumChildren(superclass_interface_decl, omit_empty_base_classes) > 0)
+                                {
+                                    if (idx == 0)
+                                    {
+                                        QualType ivar_qual_type(ast_context->getObjCInterfaceType(superclass_interface_decl));
+                                        
+
+                                        child_name.assign(superclass_interface_decl->getNameAsString().c_str());
+
+                                        std::pair<uint64_t, unsigned> ivar_type_info = ast_context->getTypeInfo(ivar_qual_type.getTypePtr());
+
+                                        child_byte_size = ivar_type_info.first / 8;
+
+                                        // Figure out the field offset within the current struct/union/class type
+                                        bit_offset = interface_layout.getFieldOffset (child_idx);
+                                        child_byte_offset = bit_offset / 8;
+
+                                        return ivar_qual_type.getAsOpaquePtr();
+                                    }
+
+                                    ++child_idx;
+                                }
+                            }
+                            else
+                                ++child_idx;
+                        }
+
+                        if (idx < (child_idx + class_interface_decl->ivar_size()))
+                        {
+                            ObjCInterfaceDecl::ivar_iterator ivar_pos, ivar_end = class_interface_decl->ivar_end();
+                            
+                            for (ivar_pos = class_interface_decl->ivar_begin(); ivar_pos != ivar_end; ++ivar_pos)
+                            {
+                                if (child_idx == idx)
+                                {
+                                    const ObjCIvarDecl* ivar_decl = *ivar_pos;
+                                    
+                                    QualType ivar_qual_type(ivar_decl->getType());
+
+                                    child_name.assign(ivar_decl->getNameAsString().c_str());
+
+                                    std::pair<uint64_t, unsigned> ivar_type_info = ast_context->getTypeInfo(ivar_qual_type.getTypePtr());
+
+                                    child_byte_size = ivar_type_info.first / 8;
+
+                                    // Figure out the field offset within the current struct/union/class type
+                                    bit_offset = interface_layout.getFieldOffset (child_idx);
+                                    child_byte_offset = bit_offset / 8;
+
+                                    return ivar_qual_type.getAsOpaquePtr();
+                                }
+                                ++child_idx;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::ObjCObjectPointer:
+            {
+                return GetChildClangTypeAtIndex (ast_context,
+                                                 parent_name,
+                                                 cast<ObjCObjectPointerType>(parent_qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr(),
+                                                 idx,
+                                                 transparent_pointers,
+                                                 omit_empty_base_classes,
+                                                 child_name,
+                                                 child_byte_size,
+                                                 child_byte_offset,
+                                                 child_bitfield_bit_size,
+                                                 child_bitfield_bit_offset);
             }
             break;
 
@@ -1707,6 +1896,76 @@ ClangASTContext::GetIndexOfChildMemberWithName
             }
             break;
 
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            {
+                StringRef name_sref(name);
+                ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+                assert (objc_class_type);
+                if (objc_class_type)
+                {
+                    uint32_t child_idx = 0;
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                
+                    if (class_interface_decl)
+                    {
+                        ObjCInterfaceDecl::ivar_iterator ivar_pos, ivar_end = class_interface_decl->ivar_end();
+                        ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                        
+                        for (ivar_pos = class_interface_decl->ivar_begin(); ivar_pos != ivar_end; ++ivar_pos)
+                        {
+                            const ObjCIvarDecl* ivar_decl = *ivar_pos;
+                            
+                            if (ivar_decl->getName().equals (name_sref))
+                            {
+                                if ((!omit_empty_base_classes && superclass_interface_decl) || 
+                                    ( omit_empty_base_classes && ObjCDeclHasIVars (superclass_interface_decl, true)))
+                                    ++child_idx;
+
+                                child_indexes.push_back (child_idx);
+                                return child_indexes.size();
+                            }
+                        }
+
+                        if (superclass_interface_decl)
+                        {
+                            // The super class index is always zero for ObjC classes,
+                            // so we push it onto the child indexes in case we find
+                            // an ivar in our superclass...
+                            child_indexes.push_back (0);
+                            
+                            if (GetIndexOfChildMemberWithName (ast_context,
+                                                               ast_context->getObjCInterfaceType(superclass_interface_decl).getAsOpaquePtr(),
+                                                               name,
+                                                               omit_empty_base_classes,
+                                                               child_indexes))
+                            {
+                                // We did find an ivar in a superclass so just
+                                // return the results!
+                                return child_indexes.size();
+                            }
+                            
+                            // We didn't find an ivar matching "name" in our 
+                            // superclass, pop the superclass zero index that
+                            // we pushed on above.
+                            child_indexes.pop_back();
+                        }
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::ObjCObjectPointer:
+            {
+                return GetIndexOfChildMemberWithName (ast_context,
+                                                      cast<ObjCObjectPointerType>(qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr(),
+                                                      name,
+                                                      omit_empty_base_classes,
+                                                      child_indexes);
+            }
+            break;
+
+
         case clang::Type::ConstantArray:
             {
 //                const ConstantArrayType *array = cast<ConstantArrayType>(parent_qual_type.getTypePtr());
@@ -1824,7 +2083,10 @@ ClangASTContext::GetIndexOfChildWithName
     if (clang_type && name && name[0])
     {
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
-        switch (qual_type->getTypeClass())
+        
+        clang::Type::TypeClass qual_type_class = qual_type->getTypeClass();
+
+        switch (qual_type_class)
         {
         case clang::Type::Record:
             {
@@ -1865,6 +2127,55 @@ ClangASTContext::GetIndexOfChildWithName
                         return child_idx;
                 }
 
+            }
+            break;
+
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            {
+                StringRef name_sref(name);
+                ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+                assert (objc_class_type);
+                if (objc_class_type)
+                {
+                    uint32_t child_idx = 0;
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                
+                    if (class_interface_decl)
+                    {
+                        ObjCInterfaceDecl::ivar_iterator ivar_pos, ivar_end = class_interface_decl->ivar_end();
+                        ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                        
+                        for (ivar_pos = class_interface_decl->ivar_begin(); ivar_pos != ivar_end; ++ivar_pos)
+                        {
+                            const ObjCIvarDecl* ivar_decl = *ivar_pos;
+                            
+                            if (ivar_decl->getName().equals (name_sref))
+                            {
+                                if ((!omit_empty_base_classes && superclass_interface_decl) || 
+                                    ( omit_empty_base_classes && ObjCDeclHasIVars (superclass_interface_decl, true)))
+                                    ++child_idx;
+
+                                return child_idx;
+                            }
+                        }
+
+                        if (superclass_interface_decl)
+                        {
+                            if (superclass_interface_decl->getName().equals (name_sref))
+                                return 0;
+                        }
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::ObjCObjectPointer:
+            {
+                return GetIndexOfChildWithName (ast_context,
+                                                cast<ObjCObjectPointerType>(qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr(),
+                                                name,
+                                                omit_empty_base_classes);
             }
             break;
 
@@ -2003,34 +2314,32 @@ ClangASTContext::GetDeclContextForType (void *clang_type)
     QualType qual_type(QualType::getFromOpaquePtr(clang_type));
     switch (qual_type->getTypeClass())
     {
-    case clang::Type::FunctionNoProto:         break;
-    case clang::Type::FunctionProto:           break;
-    case clang::Type::IncompleteArray:         break;
-    case clang::Type::VariableArray:           break;
-    case clang::Type::ConstantArray:           break;
-    case clang::Type::ExtVector:               break;
-    case clang::Type::Vector:                  break;
-    case clang::Type::Builtin:                 break;
-    case clang::Type::ObjCObjectPointer:       break;
-    case clang::Type::BlockPointer:            break;
-    case clang::Type::Pointer:                 break;
-    case clang::Type::LValueReference:         break;
-    case clang::Type::RValueReference:         break;
-    case clang::Type::MemberPointer:           break;
-    case clang::Type::Complex:                 break;
-    case clang::Type::ObjCInterface:           break;
-    case clang::Type::Record:
-        return cast<RecordType>(qual_type)->getDecl();
-    case clang::Type::Enum:
-        return cast<EnumType>(qual_type)->getDecl();
-    case clang::Type::Typedef:
-        return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+    case clang::Type::FunctionNoProto:          break;
+    case clang::Type::FunctionProto:            break;
+    case clang::Type::IncompleteArray:          break;
+    case clang::Type::VariableArray:            break;
+    case clang::Type::ConstantArray:            break;
+    case clang::Type::ExtVector:                break;
+    case clang::Type::Vector:                   break;
+    case clang::Type::Builtin:                  break;
+    case clang::Type::BlockPointer:             break;
+    case clang::Type::Pointer:                  break;
+    case clang::Type::LValueReference:          break;
+    case clang::Type::RValueReference:          break;
+    case clang::Type::MemberPointer:            break;
+    case clang::Type::Complex:                  break;
+    case clang::Type::ObjCObject:               break;
+    case clang::Type::ObjCInterface:            return cast<ObjCObjectType>(qual_type.getTypePtr())->getInterface();
+    case clang::Type::ObjCObjectPointer:        return ClangASTContext::GetDeclContextForType (cast<ObjCObjectPointerType>(qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr());
+    case clang::Type::Record:                   return cast<RecordType>(qual_type)->getDecl();
+    case clang::Type::Enum:                     return cast<EnumType>(qual_type)->getDecl();
+    case clang::Type::Typedef:                  return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
 
-    case clang::Type::TypeOfExpr:              break;
-    case clang::Type::TypeOf:                  break;
-    case clang::Type::Decltype:                break;
-    //case clang::Type::QualifiedName:           break;
-    case clang::Type::TemplateSpecialization:  break;
+    case clang::Type::TypeOfExpr:               break;
+    case clang::Type::TypeOf:                   break;
+    case clang::Type::Decltype:                 break;
+    //case clang::Type::QualifiedName:          break;
+    case clang::Type::TemplateSpecialization:   break;
     }
     // No DeclContext in this type...
     return NULL;

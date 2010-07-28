@@ -146,21 +146,21 @@ public:
     "'alias' allows the user to create a short-cut or abbreviation for long \n\
     commands, multi-word commands, and commands that take particular options. \n\
     Below are some simple examples of how one might use the 'alias' command: \n\
-    \n  'alias sc script'       // Creates the abbreviation 'sc' for the 'script' \n\
+    \n  'command alias sc script'       // Creates the abbreviation 'sc' for the 'script' \n\
                               // command. \n\
-      'alias bp breakpoint'   // Creates the abbreviation 'bp' for the 'breakpoint' \n\
+      'command alias bp breakpoint'   // Creates the abbreviation 'bp' for the 'breakpoint' \n\
                               // command.  Since breakpoint commands are two-word \n\
                               // commands, the user will still need to enter the \n\
                               // second word after 'bp', e.g. 'bp enable' or \n\
                               // 'bp delete'. \n\
-      'alias bpi breakpoint list'   // Creates the abbreviation 'bpi' for the \n\
+      'command alias bpi breakpoint list'   // Creates the abbreviation 'bpi' for the \n\
                                     // two-word command 'breakpoint list'. \n\
     \nAn alias can include some options for the command, with the values either \n\
     filled in at the time the alias is created, or specified as positional \n\
     arguments, to be filled in when the alias is invoked.  The following example \n\
     shows how to create aliases with options: \n\
     \n\
-        'alias bfl breakpoint set -f %1 -l %2' \n\
+        'command alias bfl breakpoint set -f %1 -l %2' \n\
     \nThis creates the abbreviation 'bfl' (for break-file-line), with the -f and -l \n\
     options already part of the alias.  So if the user wants to set a breakpoint \n\
     by file and line without explicitly having to use the -f and -l options, the \n\

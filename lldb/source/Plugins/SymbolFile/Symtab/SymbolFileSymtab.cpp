@@ -140,14 +140,14 @@ SymbolFileSymtab::ParseCompileUnitAtIndex(uint32_t idx)
     {
         const FileSpec &obj_file_spec = m_obj_file->GetFileSpec();
         if (obj_file_spec)
-            cu_sp.reset(new CompileUnit(m_obj_file->GetModule(), NULL, obj_file_spec, 0, Language::Unknown));
+            cu_sp.reset(new CompileUnit(m_obj_file->GetModule(), NULL, obj_file_spec, 0, eLanguageTypeUnknown));
 
     }
     else if (idx < m_source_indexes.size())
     {
         const Symbol *cu_symbol = m_obj_file->GetSymtab()->SymbolAtIndex(m_source_indexes[idx]);
         if (cu_symbol)
-            cu_sp.reset(new CompileUnit(m_obj_file->GetModule(), NULL, cu_symbol->GetMangled().GetName().AsCString(), 0, Language::Unknown));
+            cu_sp.reset(new CompileUnit(m_obj_file->GetModule(), NULL, cu_symbol->GetMangled().GetName().AsCString(), 0, eLanguageTypeUnknown));
     }
     return cu_sp;
 }

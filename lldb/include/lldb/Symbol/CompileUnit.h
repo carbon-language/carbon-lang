@@ -66,9 +66,9 @@ public:
     ///     A language enumeration type that describes the main language
     ///     of this compile unit.
     ///
-    /// @see Language::Type
+    /// @see lldb::LanguageType
     //------------------------------------------------------------------
-    CompileUnit(Module *module, void *user_data, const char *pathname, lldb::user_id_t uid, Language::Type language);
+    CompileUnit(Module *module, void *user_data, const char *pathname, lldb::user_id_t uid, lldb::LanguageType language);
 
     //------------------------------------------------------------------
     /// Construct with a module, file spec, UID and language.
@@ -98,9 +98,9 @@ public:
     ///     A language enumeration type that describes the main language
     ///     of this compile unit.
     ///
-    /// @see Language::Type
+    /// @see lldb::LanguageType
     //------------------------------------------------------------------
-    CompileUnit(Module *module, void *user_data, const FileSpec &file_spec, lldb::user_id_t uid, Language::Type language);
+    CompileUnit(Module *module, void *user_data, const FileSpec &file_spec, lldb::user_id_t uid, lldb::LanguageType language);
 
     //------------------------------------------------------------------
     /// Destructor

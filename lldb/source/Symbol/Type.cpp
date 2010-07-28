@@ -219,7 +219,7 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
                 const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
                 std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
                 if (!clang_typedef_name.empty())
-                    *s << " (" << clang_typedef_name.c_str() << ')';
+                    *s << '(' << clang_typedef_name.c_str() << ')';
             }
             else
             {
@@ -229,7 +229,7 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
                 {
                     std::string clang_type_name(qual_type.getAsString());
                     if (!clang_type_name.empty())
-                        *s << " (" << clang_type_name.c_str() << ')';
+                        *s << '(' << clang_type_name.c_str() << ')';
                 }
             }
         }

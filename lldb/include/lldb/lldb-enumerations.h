@@ -428,6 +428,38 @@ typedef enum BreakpointEventType
 } BreakpointEventType;
 
 
+//----------------------------------------------------------------------
+/// Programming language type.
+///
+/// These enumerations use the same language enumerations as the DWARF
+/// specification for ease of use and consistency.
+//----------------------------------------------------------------------
+typedef enum LanguageType
+{
+    eLanguageTypeUnknown         = 0x0000,   ///< Unknown or invalid language value.
+    eLanguageTypeC89             = 0x0001,   ///< ISO C:1989.
+    eLanguageTypeC               = 0x0002,   ///< Non-standardized C, such as K&R.
+    eLanguageTypeAda83           = 0x0003,   ///< ISO Ada:1983.
+    eLanguageTypeC_plus_plus     = 0x0004,   ///< ISO C++:1998.
+    eLanguageTypeCobol74         = 0x0005,   ///< ISO Cobol:1974.
+    eLanguageTypeCobol85         = 0x0006,   ///< ISO Cobol:1985.
+    eLanguageTypeFortran77       = 0x0007,   ///< ISO Fortran 77.
+    eLanguageTypeFortran90       = 0x0008,   ///< ISO Fortran 90.
+    eLanguageTypePascal83        = 0x0009,   ///< ISO Pascal:1983.
+    eLanguageTypeModula2         = 0x000a,   ///< ISO Modula-2:1996.
+    eLanguageTypeJava            = 0x000b,   ///< Java.
+    eLanguageTypeC99             = 0x000c,   ///< ISO C:1999.
+    eLanguageTypeAda95           = 0x000d,   ///< ISO Ada:1995.
+    eLanguageTypeFortran95       = 0x000e,   ///< ISO Fortran 95.
+    eLanguageTypePLI             = 0x000f,   ///< ANSI PL/I:1976.
+    eLanguageTypeObjC            = 0x0010,   ///< Objective-C.
+    eLanguageTypeObjC_plus_plus  = 0x0011,   ///< Objective-C++.
+    eLanguageTypeUPC             = 0x0012,   ///< Unified Parallel C.
+    eLanguageTypeD               = 0x0013,   ///< D.
+    eLanguageTypePython          = 0x0014    ///< Python.
+} LanguageType;
+
+
 } // namespace lldb
 
 

@@ -51,7 +51,7 @@ g_languages[] =
 static const size_t
 g_num_languages = sizeof(g_languages)/sizeof(LanguageStrings);
 
-Language::Language(Language::Type language) :
+Language::Language(LanguageType language) :
     m_language (language)
 {
 }
@@ -60,7 +60,7 @@ Language::~Language()
 {
 }
 
-Language::Type
+LanguageType
 Language::GetLanguage() const
 {
     return m_language;
@@ -69,11 +69,11 @@ Language::GetLanguage() const
 void
 Language::Clear ()
 {
-    m_language = Unknown;
+    m_language = eLanguageTypeUnknown;
 }
 
 void
-Language::SetLanguage(Language::Type language)
+Language::SetLanguage(LanguageType language)
 {
     m_language = language;
 }
@@ -95,13 +95,13 @@ Language::SetLanguageFromCString(const char *language_cstr)
 
             if (::strcasecmp (language_cstr, name) == 0)
             {
-                m_language = (Language::Type)i;
+                m_language = (LanguageType)i;
                 return true;
             }
         }
     }
 
-    m_language = Unknown;
+    m_language = eLanguageTypeUnknown;
     return false;
 }
 

@@ -614,7 +614,8 @@ ClangASTType::DumpTypeValue
     }
     else
     {
-        switch (qual_type->getTypeClass())
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
         {
         case clang::Type::Enum:
             {

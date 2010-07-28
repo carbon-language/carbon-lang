@@ -16,7 +16,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CompileUnit::CompileUnit (Module *module, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, Language::Type language) :
+CompileUnit::CompileUnit (Module *module, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
     ModuleChild(module),
     FileSpec (pathname),
     UserID(cu_sym_id),
@@ -31,7 +31,7 @@ CompileUnit::CompileUnit (Module *module, void *user_data, const char *pathname,
     assert(module != NULL);
 }
 
-CompileUnit::CompileUnit (Module *module, void *user_data, const FileSpec &fspec, const lldb::user_id_t cu_sym_id, Language::Type language) :
+CompileUnit::CompileUnit (Module *module, void *user_data, const FileSpec &fspec, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
     ModuleChild(module),
     FileSpec (fspec),
     UserID(cu_sym_id),

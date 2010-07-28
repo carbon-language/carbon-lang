@@ -225,7 +225,7 @@ public:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    lldb::TargetSP  target_sp;   ///< The Target for a given query
+    lldb::TargetSP  target_sp;  ///< The Target for a given query
     lldb::ModuleSP  module_sp;  ///< The Module for a given query
     CompileUnit *   comp_unit;  ///< The CompileUnit for a given query
     Function *      function;   ///< The Function for a given query
