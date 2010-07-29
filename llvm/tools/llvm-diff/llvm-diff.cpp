@@ -14,6 +14,7 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/ErrorHandling.h>
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
 #include <llvm/Type.h>
@@ -99,6 +100,7 @@ void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering) {
 
 class DiffConsumer : public DifferenceEngine::Consumer {
 private:
+  raw_ostream &out;
   Module *LModule;
   Module *RModule;
   SmallVector<DiffContext, 5> contexts;
@@ -107,21 +109,21 @@ private:
 
   void printValue(Value *V, bool isL) {
     if (V->hasName()) {
-      errs() << (isa<GlobalValue>(V) ? '@' : '%') << V->getName();
+      out << (isa<GlobalValue>(V) ? '@' : '%') << V->getName();
       return;
     }
     if (V->getType()->isVoidTy()) {
       if (isa<StoreInst>(V)) {
-        errs() << "store to ";
+        out << "store to ";
         printValue(cast<StoreInst>(V)->getPointerOperand(), isL);
       } else if (isa<CallInst>(V)) {
-        errs() << "call to ";
+        out << "call to ";
         printValue(cast<CallInst>(V)->getCalledValue(), isL);
       } else if (isa<InvokeInst>(V)) {
-        errs() << "invoke to ";
+        out << "invoke to ";
         printValue(cast<InvokeInst>(V)->getCalledValue(), isL);
       } else {
-        errs() << *V;
+        out << *V;
       }
       return;
     }
@@ -134,17 +136,17 @@ private:
       if (isL) {
         if (ctxt.LNumbering.empty())
           ComputeNumbering(cast<Function>(ctxt.L), ctxt.LNumbering);
-        errs() << '%' << ctxt.LNumbering[V];
+        out << '%' << ctxt.LNumbering[V];
         return;
       } else {
         if (ctxt.RNumbering.empty())
           ComputeNumbering(cast<Function>(ctxt.R), ctxt.RNumbering);
-        errs() << '%' << ctxt.RNumbering[V];
+        out << '%' << ctxt.RNumbering[V];
         return;
       }
     }
 
-    errs() << "<anonymous>";
+    out << "<anonymous>";
   }
 
   void header() {
@@ -154,28 +156,28 @@ private:
       if (I->Differences) continue;
       if (isa<Function>(I->L)) {
         // Extra newline between functions.
-        if (Differences) errs() << "\n";
+        if (Differences) out << "\n";
 
         Function *L = cast<Function>(I->L);
         Function *R = cast<Function>(I->R);
         if (L->getName() != R->getName())
-          errs() << "in function " << L->getName() << " / " << R->getName() << ":\n";
+          out << "in function " << L->getName() << " / " << R->getName() << ":\n";
         else
-          errs() << "in function " << L->getName() << ":\n";
+          out << "in function " << L->getName() << ":\n";
       } else if (isa<BasicBlock>(I->L)) {
         BasicBlock *L = cast<BasicBlock>(I->L);
         BasicBlock *R = cast<BasicBlock>(I->R);
-        errs() << "  in block ";
+        out << "  in block ";
         printValue(L, true);
-        errs() << " / ";
+        out << " / ";
         printValue(R, false);
-        errs() << ":\n";
+        out << ":\n";
       } else if (isa<Instruction>(I->L)) {
-        errs() << "    in instruction ";
+        out << "    in instruction ";
         printValue(I->L, true);
-        errs() << " / ";
+        out << " / ";
         printValue(I->R, false);
-        errs() << ":\n";
+        out << ":\n";
       }
 
       I->Differences = true;
@@ -184,12 +186,12 @@ private:
 
   void indent() {
     unsigned N = Indent;
-    while (N--) errs() << ' ';
+    while (N--) out << ' ';
   }
 
 public:
   DiffConsumer(Module *L, Module *R)
-    : LModule(L), RModule(R), Differences(false), Indent(0) {}
+    : out(errs()), LModule(L), RModule(R), Differences(false), Indent(0) {}
 
   bool hadDifferences() const { return Differences; }
 
@@ -206,18 +208,37 @@ public:
   void log(StringRef text) {
     header();
     indent();
-    errs() << text << "\n";
+    out << text << '\n';
   }
 
   void logf(const DifferenceEngine::LogBuilder &Log) {
     header();
     indent();
 
-    // FIXME: we don't know whether these are l-values or r-values (ha!)
-    // Print them in some saner way!
-    errs() << Log.getFormat() << "\n";
-    for (unsigned I = 0, E = Log.getNumArguments(); I != E; ++I)
-      Log.getArgument(I)->dump();
+    unsigned arg = 0;
+
+    StringRef format = Log.getFormat();
+    while (true) {
+      size_t percent = format.find('%');
+      if (percent == StringRef::npos) {
+        out << format;
+        break;
+      }
+      assert(format[percent] == '%');
+
+      if (percent > 0) out << format.substr(0, percent);
+
+      switch (format[percent+1]) {
+      case '%': out << '%'; break;
+      case 'l': printValue(Log.getArgument(arg++), true); break;
+      case 'r': printValue(Log.getArgument(arg++), false); break;
+      default: llvm_unreachable("unknown format character");
+      }
+
+      format = format.substr(percent+2);
+    }
+
+    out << '\n';
   }
 
   void logd(const DifferenceEngine::DiffLogBuilder &Log) {
@@ -227,22 +248,22 @@ public:
       indent();
       switch (Log.getLineKind(I)) {
       case DifferenceEngine::DC_match:
-        errs() << "  ";
+        out << "  ";
         Log.getLeft(I)->dump();
         //printValue(Log.getLeft(I), true);
         break;
       case DifferenceEngine::DC_left:
-        errs() << "< ";
+        out << "< ";
         Log.getLeft(I)->dump();
         //printValue(Log.getLeft(I), true);
         break;
       case DifferenceEngine::DC_right:
-        errs() << "> ";
+        out << "> ";
         Log.getRight(I)->dump();
         //printValue(Log.getRight(I), false);
         break;
       }
-      //errs() << "\n";
+      //out << "\n";
     }
   }
   

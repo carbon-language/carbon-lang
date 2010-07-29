@@ -162,8 +162,8 @@ class FunctionDifferenceEngine {
     if (Ref) {
       if (Ref == R) return false;
 
-      Engine.logf("successor %s cannot be equivalent to %s; "
-                  "it's already equivalent to %s")
+      Engine.logf("successor %l cannot be equivalent to %r; "
+                  "it's already equivalent to %r")
         << L << R << Ref;
       return true;
     }
@@ -220,7 +220,7 @@ class FunctionDifferenceEngine {
     for (unsigned I = 0, E = L.arg_size(); I != E; ++I)
       if (!equivalentAsOperands(L.getArgument(I), R.getArgument(I))) {
         if (Complain)
-          Engine.logf("arguments %s and %s differ")
+          Engine.logf("arguments %l and %r differ")
             << L.getArgument(I) << R.getArgument(I);
         return true;
       }
@@ -309,7 +309,7 @@ class FunctionDifferenceEngine {
           LCases.erase(CaseValue);
         } else if (!Difference) {
           if (Complain)
-            Engine.logf("right switch has extra case %s") << CaseValue;
+            Engine.logf("right switch has extra case %r") << CaseValue;
           Difference = true;
         }
       }
@@ -317,7 +317,7 @@ class FunctionDifferenceEngine {
         for (DenseMap<ConstantInt*,BasicBlock*>::iterator
                I = LCases.begin(), E = LCases.end(); I != E; ++I) {
           if (Complain)
-            Engine.logf("left switch has extra case %s") << I->first;
+            Engine.logf("left switch has extra case %l") << I->first;
           Difference = true;
         }
       return Difference;
@@ -333,7 +333,7 @@ class FunctionDifferenceEngine {
     for (unsigned I = 0, E = L->getNumOperands(); I != E; ++I) {
       Value *LO = L->getOperand(I), *RO = R->getOperand(I);
       if (!equivalentAsOperands(LO, RO)) {
-        if (Complain) Engine.logf("operands %s and %s differ") << LO << RO;
+        if (Complain) Engine.logf("operands %l and %r differ") << LO << RO;
         return true;
       }
     }
@@ -580,13 +580,13 @@ void DifferenceEngine::diff(Module *L, Module *R) {
     if (Function *RFn = R->getFunction(LFn->getName()))
       Queue.push_back(std::make_pair(LFn, RFn));
     else
-      logf("function %s exists only in left module") << LFn;
+      logf("function %l exists only in left module") << LFn;
   }
 
   for (Module::iterator I = R->begin(), E = R->end(); I != E; ++I) {
     Function *RFn = &*I;
     if (!LNames.count(RFn->getName()))
-      logf("function %s exists only in right module") << RFn;
+      logf("function %r exists only in right module") << RFn;
   }
 
   for (SmallVectorImpl<std::pair<Function*,Function*> >::iterator
