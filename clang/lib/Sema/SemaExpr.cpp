@@ -6313,6 +6313,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   }
 
   // If the operand has type "type", the result has type "pointer to type".
+  if (op->getType()->isObjCObjectType())
+    return Context.getObjCObjectPointerType(op->getType());
   return Context.getPointerType(op->getType());
 }
 

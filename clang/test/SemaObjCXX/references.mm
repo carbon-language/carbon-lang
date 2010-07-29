@@ -24,3 +24,10 @@ int f2(A *a) {
   return f0(a.p1);	// expected-error {{property 'p1' not found on object of type 'A *'}}
 }
 
+// PR7740
+@class NSString;
+
+void f3(id);
+void f4(NSString &tmpstr) {
+  f3(&tmpstr);
+}
