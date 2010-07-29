@@ -18,7 +18,15 @@
 
 */
 
+#ifdef __cplusplus
+
 #include <ccomplex>
+
+#else
+
+#include_next <complex.h>
+
+#endif
 
 #pragma GCC system_header
 
