@@ -627,8 +627,8 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
 // GCC abstraction
 //
 
-static bool IsARMArchitecture(std::vector<std::string> Args) {
-  for (std::vector<std::string>::const_iterator
+static bool IsARMArchitecture(std::vector<const char*> Args) {
+  for (std::vector<const char*>::const_iterator
          I = Args.begin(), E = Args.end(); I != E; ++I) {
     if (StringRef(*I).equals_lower("-arch")) {
       ++I;
@@ -673,7 +673,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
       // explicitly told what architecture it is working on, so we get
       // it from gcc flags
       if ((TargetTriple.getOS() == Triple::Darwin) &&
-          !IsARMArchitecture(ArgsForGCC))
+          !IsARMArchitecture(GCCArgs))
         GCCArgs.push_back("-force_cpusubtype_ALL");
     }
   }
