@@ -725,18 +725,6 @@ class X86_64ABIInfo : public ABIInfo {
                                            unsigned IROffset, QualType SourceTy,
                                            unsigned SourceOffset) const;
   
-  /// getCoerceResult - Given a source type \arg Ty and an LLVM type
-  /// to coerce to, chose the best way to pass Ty in the same place
-  /// that \arg CoerceTo would be passed, but while keeping the
-  /// emitted code as simple as possible.
-  ///
-  /// FIXME: Note, this should be cleaned up to just take an enumeration of all
-  /// the ways we might want to pass things, instead of constructing an LLVM
-  /// type. This makes this code more explicit, and it makes it clearer that we
-  /// are also doing this for correctness in the case of passing scalar types.
-  ABIArgInfo getCoerceResult(QualType Ty,
-                             const llvm::Type *CoerceTo) const;
-
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be returned in memory.
   ABIArgInfo getIndirectReturnResult(QualType Ty) const;
@@ -1108,24 +1096,6 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
   }
 }
 
-ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
-                                          const llvm::Type *CoerceTo) const {
-  if (isa<llvm::IntegerType>(CoerceTo)) {
-    // Integer and pointer types will end up in a general purpose
-    // register.
-
-    // Treat an enum type as its underlying type.
-    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
-      Ty = EnumTy->getDecl()->getIntegerType();
-
-    if (Ty->isIntegralOrEnumerationType())
-      return (Ty->isPromotableIntegerType() ?
-              ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-     
-  }
-  return ABIArgInfo::getDirect(CoerceTo);
-}
-
 ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
@@ -1439,6 +1409,18 @@ classifyReturnType(QualType RetTy) const {
   case Integer:
     ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0,
                                      RetTy, 0);
+      
+    // If we have a sign or zero extended integer, make sure to return Extend
+    // so that the parameter gets the right LLVM IR attributes.
+    if (Hi == NoClass && isa<llvm::IntegerType>(ResType)) {
+      // Treat an enum type as its underlying type.
+      if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
+        RetTy = EnumTy->getDecl()->getIntegerType();
+      
+      if (RetTy->isIntegralOrEnumerationType() &&
+          RetTy->isPromotableIntegerType())
+        return ABIArgInfo::getExtend();
+    }
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
@@ -1513,7 +1495,7 @@ classifyReturnType(QualType RetTy) const {
     break;
   }
 
-  return getCoerceResult(RetTy, ResType);
+  return ABIArgInfo::getDirect(ResType);
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
@@ -1556,6 +1538,19 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     
     // Pick an 8-byte type based on the preferred type.
     ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
+
+    // If we have a sign or zero extended integer, make sure to return Extend
+    // so that the parameter gets the right LLVM IR attributes.
+    if (Hi == NoClass && isa<llvm::IntegerType>(ResType)) {
+      // Treat an enum type as its underlying type.
+      if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+        Ty = EnumTy->getDecl()->getIntegerType();
+      
+      if (Ty->isIntegralOrEnumerationType() &&
+          Ty->isPromotableIntegerType())
+        return ABIArgInfo::getExtend();
+    }
+      
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1608,7 +1603,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     break;
   }
 
-  return getCoerceResult(Ty, ResType);
+  return ABIArgInfo::getDirect(ResType);
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {

@@ -78,8 +78,8 @@ namespace clang {
     static ABIArgInfo getDirect(const llvm::Type *T = 0) {
       return ABIArgInfo(Direct, T);
     }
-    static ABIArgInfo getExtend() {
-      return ABIArgInfo(Extend);
+    static ABIArgInfo getExtend(const llvm::Type *T = 0) {
+      return ABIArgInfo(Extend, T);
     }
     static ABIArgInfo getIgnore() {
       return ABIArgInfo(Ignore);
