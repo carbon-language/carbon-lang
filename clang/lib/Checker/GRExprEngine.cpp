@@ -3234,8 +3234,8 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         // FIXME: Handle structs.
         QualType T = RHS->getType();
 
-        if ((RightV.isUnknown()||!getConstraintManager().canReasonAbout(RightV))
-            && (Loc::IsLocType(T) || (T->isScalarType()&&T->isIntegerType()))) {
+        if (RightV.isUnknown() ||!getConstraintManager().canReasonAbout(RightV))
+        {
           unsigned Count = Builder->getCurrentBlockCount();
           RightV = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), Count);
         }
@@ -3322,10 +3322,8 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
 
         SVal LHSVal;
 
-        if ((Result.isUnknown() ||
-             !getConstraintManager().canReasonAbout(Result))
-            && (Loc::IsLocType(CTy)
-                || (CTy->isScalarType() && CTy->isIntegerType()))) {
+        if (Result.isUnknown() ||
+            !getConstraintManager().canReasonAbout(Result)) {
 
           unsigned Count = Builder->getCurrentBlockCount();
 
