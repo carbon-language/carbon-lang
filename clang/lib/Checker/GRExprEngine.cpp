@@ -1058,6 +1058,9 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
     // In C++, binding an rvalue to a reference requires to create an object.
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::IntegerLiteralClass:
+    case Stmt::CharacterLiteralClass:
+    case Stmt::FloatingLiteralClass:
+    case Stmt::ImaginaryLiteralClass:
       CreateCXXTemporaryObject(Ex, Pred, Dst);
       return;
 

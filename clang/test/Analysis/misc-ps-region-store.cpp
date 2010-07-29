@@ -132,3 +132,19 @@ int TestHandleThis::null_deref_positive() {
   return 0;  
 }
 
+// PR 7675 - passing literals by-reference
+void pr7675(const double &a);
+void pr7675(const int &a);
+void pr7675(const char &a);
+void pr7675_i(const _Complex double &a);
+
+void pr7675_test() {
+  pr7675(10.0);
+  pr7675(10);
+  pr7675('c');
+  pr7675_i(4.0i);
+  // Add null deref to ensure we are analyzing the code up to this point.
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{null pointer}}
+}
+
