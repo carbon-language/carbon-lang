@@ -157,9 +157,9 @@ typedef float v4f32 __attribute__((__vector_size__(16)));
 v4f32 f25(v4f32 X) {
   // CHECK: define <4 x float> @f25(<4 x float> %X)
   // CHECK-NOT: alloca
-  // CHECK: %X.addr = alloca <4 x float>
+  // CHECK: alloca <4 x float>
   // CHECK-NOT: alloca
-  // CHECK: store <4 x float> %X, <4 x float>* %X.addr
+  // CHECK: store <4 x float> %X, <4 x float>*
   // CHECK-NOT: store
   // CHECK: ret <4 x float>
   return X+X;
