@@ -6,7 +6,6 @@ import os, time
 import unittest
 import lldb
 import lldbtest
-import time
 
 class TestSTL(lldbtest.TestBase):
 
