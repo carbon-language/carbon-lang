@@ -19,6 +19,7 @@ struct f2_s1 : public f2_s0 { char d;};
 void f2(f2_s1 a0) { }
 
 // PR5831
+// CHECK: define void @_Z2f34s3_1(i8 %x.coerce0, i64 %x.coerce1)
 struct s3_0 {};
 struct s3_1 { struct s3_0 a; long b; };
 void f3(struct s3_1 x) {}
@@ -44,4 +45,19 @@ void foo() {
   // CHECK: call void @_ZN6PR752310AddKeywordENS_9StringRefEi(i8* {{.*}}, i32 4)
   AddKeyword(StringRef(), 4);
 }
+}
+
+
+
+namespace PR7742 { // Also rdar://8250764
+  struct s2 {
+    float a[2];
+  };
+  
+  struct c2 : public s2 {};
+  
+  // CHECK: define double @_ZN6PR77423fooEPNS_2c2E(%"struct.PR7742::c2"* %P)
+  c2 foo(c2 *P) {
+  }
+  
 }

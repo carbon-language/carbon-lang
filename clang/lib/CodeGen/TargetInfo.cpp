@@ -1026,8 +1026,9 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
           break;
       }
 
-      // If this record has no fields but isn't empty, classify as INTEGER.
-      if (RD->field_empty() && Size)
+      // If this record has no fields, no bases, no vtable, but isn't empty,
+      // classify as INTEGER.
+      if (CXXRD->isEmpty() && Size)
         Current = Integer;
     }
 
