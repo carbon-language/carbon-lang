@@ -1,27 +1,36 @@
+//===-- llvm-diff.cpp - Module comparator command-line driver ---*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the command-line driver for the difference engine.
+//
+//===----------------------------------------------------------------------===//
+
+#include "DifferenceEngine.h"
+
+#include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/Type.h"
+#include "llvm/Assembly/Parser.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SourceMgr.h"
+
 #include <string>
 #include <utility>
 
-#include <llvm/ADT/StringRef.h>
-#include <llvm/ADT/SmallVector.h>
-#include <llvm/ADT/DenseMap.h>
-
-// Required to parse .ll files.
-#include <llvm/Support/SourceMgr.h>
-#include <llvm/Assembly/Parser.h>
-
-// Required to parse .bc files.
-#include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Bitcode/ReaderWriter.h>
-
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/ErrorHandling.h>
-#include <llvm/LLVMContext.h>
-#include <llvm/Module.h>
-#include <llvm/Type.h>
-#include <llvm/Instructions.h>
-
-#include "DifferenceEngine.h"
 
 using namespace llvm;
 

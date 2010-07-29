@@ -7,30 +7,28 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header defines the interface to the LLVM difference engine,
-// which structurally compares functions within a module.
+// This header defines the implementation of the LLVM difference
+// engine, which structurally compares global values within a module.
 //
 //===----------------------------------------------------------------------===//
 
-#include <utility>
-
-#include <llvm/ADT/DenseMap.h>
-#include <llvm/ADT/DenseSet.h>
-#include <llvm/ADT/SmallVector.h>
-#include <llvm/ADT/StringRef.h>
-#include <llvm/ADT/StringSet.h>
-
-#include <llvm/Module.h>
-#include <llvm/Function.h>
-#include <llvm/Instructions.h>
-#include <llvm/Support/CFG.h>
-
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/type_traits.h>
-#include <llvm/Support/ErrorHandling.h>
-#include <llvm/Support/CallSite.h>
-
 #include "DifferenceEngine.h"
+
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/type_traits.h"
+
+#include <utility>
 
 using namespace llvm;
 

@@ -15,17 +15,19 @@
 #ifndef _LLVM_DIFFERENCE_ENGINE_H_
 #define _LLVM_DIFFERENCE_ENGINE_H_
 
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
+
 #include <utility>
-#include <llvm/ADT/SmallVector.h>
-#include <llvm/ADT/StringRef.h>
 
 namespace llvm {
+  class Function;
+  class GlobalValue;
+  class Instruction;
   class LLVMContext;
   class Module;
-  class Function;
   class Twine;
   class Value;
-  class GlobalValue;
 
   /// A class for performing structural comparisons of LLVM assembly.
   class DifferenceEngine {
