@@ -124,7 +124,7 @@ class FunctionDifferenceEngine {
   /// The current mapping from old blocks to new blocks.
   DenseMap<BasicBlock*, BasicBlock*> Blocks;
 
-  DenseSet<std::pair<Value*, Value*> > TentativeValuePairs;
+  DenseSet<std::pair<Value*, Value*> > TentativeValues;
 
   unsigned getUnprocPredCount(BasicBlock *Block) const {
     unsigned Count = 0;
@@ -186,22 +186,32 @@ class FunctionDifferenceEngine {
     BasicBlock::iterator LI = L->begin(), LE = L->end();
     BasicBlock::iterator RI = R->begin(), RE = R->end();
 
+    llvm::SmallVector<std::pair<Instruction*,Instruction*>, 20> TentativePairs;
+
     do {
       assert(LI != LE && RI != RE);
       Instruction *LeftI = &*LI, *RightI = &*RI;
 
       // If the instructions differ, start the more sophisticated diff
-      // algorithm here.
-      if (diff(LeftI, RightI, false, true))
-        return runBlockDiff(LI, RI);
+      // algorithm at the start of the block.
+      if (diff(LeftI, RightI, false, true)) {
+        TentativeValues.clear();
+        return runBlockDiff(L->begin(), R->begin());
+      }
 
-      // Otherwise, unify them.
+      // Otherwise, tentatively unify them.
       if (!LeftI->use_empty())
-        Values[LeftI] = RightI;
+        TentativeValues.insert(std::make_pair(LeftI, RightI));
 
       ++LI, ++RI;
     } while (LI != LE); // This is sufficient: we can't get equality of
                         // terminators if there are residual instructions.
+
+    // Make all the tentative pairs solid.
+    for (llvm::DenseSet<std::pair<Value*,Value*> >::iterator
+           I = TentativeValues.begin(), E = TentativeValues.end(); I != E; ++I)
+      Values[I->first] = I->second;
+    TentativeValues.clear();
   }
 
   bool matchForBlockDiff(Instruction *L, Instruction *R);
@@ -417,7 +427,7 @@ class FunctionDifferenceEngine {
       return equivalentAsOperands(cast<Constant>(L), cast<Constant>(R));
 
     if (isa<Instruction>(L))
-      return Values[L] == R || TentativeValuePairs.count(std::make_pair(L, R));
+      return Values[L] == R || TentativeValues.count(std::make_pair(L, R));
 
     if (isa<Argument>(L))
       return Values[L] == R;
@@ -477,11 +487,15 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
   DiffEntry *Cur = Paths1.data();
   DiffEntry *Next = Paths2.data();
 
-  assert(TentativeValuePairs.empty());
+  const unsigned LeftCost = 2;
+  const unsigned RightCost = 2;
+  const unsigned MatchCost = 0;
+
+  assert(TentativeValues.empty());
 
   // Initialize the first column.
   for (unsigned I = 0; I != NL+1; ++I) {
-    Cur[I].Cost = I;
+    Cur[I].Cost = I * LeftCost;
     for (unsigned J = 0; J != I; ++J)
       Cur[I].Path.push_back(DifferenceEngine::DC_left);
   }
@@ -489,19 +503,23 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
   for (BasicBlock::iterator RI = RStart; RI != RE; ++RI) {
     // Initialize the first row.
     Next[0] = Cur[0];
+    Next[0].Cost += RightCost;
     Next[0].Path.push_back(DifferenceEngine::DC_right);
 
     unsigned Index = 1;
     for (BasicBlock::iterator LI = LStart; LI != LE; ++LI, ++Index) {
       if (matchForBlockDiff(&*LI, &*RI)) {
         Next[Index] = Cur[Index-1];
+        Next[Index].Cost += MatchCost;
         Next[Index].Path.push_back(DifferenceEngine::DC_match);
-        TentativeValuePairs.insert(std::make_pair(&*LI, &*RI));
+        TentativeValues.insert(std::make_pair(&*LI, &*RI));
       } else if (Next[Index-1].Cost <= Cur[Index].Cost) {
         Next[Index] = Next[Index-1];
+        Next[Index].Cost += LeftCost;
         Next[Index].Path.push_back(DifferenceEngine::DC_left);
       } else {
         Next[Index] = Cur[Index];
+        Next[Index].Cost += RightCost;
         Next[Index].Path.push_back(DifferenceEngine::DC_right);
       }
     }
@@ -518,15 +536,21 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
   while (Path.back() == DifferenceEngine::DC_match)
     Path.pop_back();
 
-  for (SmallVectorImpl<char>::iterator
-         PI = Path.begin(), PE = Path.end(); PI != PE; ++PI) {
+  // Skip leading matches.
+  SmallVectorImpl<char>::iterator
+    PI = Path.begin(), PE = Path.end();
+  while (PI != PE && *PI == DifferenceEngine::DC_match)
+    ++PI, ++LI, ++RI;
+
+  for (; PI != PE; ++PI) {
     switch (static_cast<DifferenceEngine::DiffChange>(*PI)) {
     case DifferenceEngine::DC_match:
       assert(LI != LE && RI != RE);
       {
         Instruction *L = &*LI, *R = &*RI;
         DifferenceEngine::Context C(Engine, L, R);
-        diff(L, R, false, true);
+        diff(L, R, false, true); // unify successors
+        Values[L] = R; // make non-tentative
         Diff.addMatch(L, R);
       }
       ++LI; ++RI;
@@ -546,7 +570,7 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
     }
   }
 
-  TentativeValuePairs.clear();
+  TentativeValues.clear();
 }
 
 }
