@@ -470,18 +470,36 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs,
 
   // Split the module into the two halves of the program we want.
   ValueMap<const Value*, Value*> VMap;
+  Module *Clone = CloneModule(BD.getProgram(), VMap);
+  Module *Orig = BD.swapProgramIn(Clone);
+  std::vector<Function*> FuncsOnClone;
+  std::vector<BasicBlock*> BBsOnClone;
+  for (unsigned i = 0, e = FunctionsBeingTested.size(); i != e; ++i) {
+    Function *F = cast<Function>(VMap[FunctionsBeingTested[i]]);
+    FuncsOnClone.push_back(F);
+  }
+  for (unsigned i = 0, e = BBs.size(); i != e; ++i) {
+    BasicBlock *BB = cast<BasicBlock>(VMap[BBs[i]]);
+    BBsOnClone.push_back(BB);
+  }
+  VMap.clear();
+
   Module *ToNotOptimize = CloneModule(BD.getProgram(), VMap);
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
-                                                 FunctionsBeingTested,
+                                                 FuncsOnClone,
                                                  VMap);
 
   // Try the extraction.  If it doesn't work, then the block extractor crashed
   // or something, in which case bugpoint can't chase down this possibility.
-  if (Module *New = BD.ExtractMappedBlocksFromModule(BBs, ToOptimize)) {
+  if (Module *New = BD.ExtractMappedBlocksFromModule(BBsOnClone, ToOptimize)) {
     delete ToOptimize;
-    // Run the predicate, not that the predicate will delete both input modules.
-    return TestFn(BD, New, ToNotOptimize, Error);
+    // Run the predicate,
+    // note that the predicate will delete both input modules.
+    bool Ret = TestFn(BD, New, ToNotOptimize, Error);
+    delete BD.swapProgramIn(Orig);
+    return Ret;
   }
+  delete BD.swapProgramIn(Orig);
   delete ToOptimize;
   delete ToNotOptimize;
   return false;
