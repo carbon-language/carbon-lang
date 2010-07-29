@@ -1210,6 +1210,76 @@ const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
 }
 
 
+/// BitsContainNoUserData - Return true if the specified [start,end) bit range
+/// is known to either be off the end of the specified type or being in
+/// alignment padding.  The user type specified is known to be at most 128 bits
+/// in size, and have passed through X86_64ABIInfo::classify with a successful
+/// classification that put one of the two halves in the INTEGER class.
+///
+/// It is conservatively correct to return false.
+static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
+                                  unsigned EndBit, ASTContext &Context) {
+  // If the bytes being queried are off the end of the type, there is no user
+  // data hiding here.  This handles analysis of builtins, vectors and other
+  // types that don't contain interesting padding.
+  unsigned TySize = (unsigned)Context.getTypeSize(Ty);
+  if (TySize <= StartBit)
+    return true;
+
+  //if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+    // TODO.
+  //}
+  
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    const RecordDecl *RD = RT->getDecl();
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    
+    // If this is a C++ record, check the bases first.
+    if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+      for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
+           e = CXXRD->bases_end(); i != e; ++i) {
+        assert(!i->isVirtual() && !i->getType()->isDependentType() &&
+               "Unexpected base class!");
+        const CXXRecordDecl *Base =
+          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+        
+        // If the base is after the span we care about, ignore it.
+        unsigned BaseOffset = (unsigned)Layout.getBaseClassOffset(Base);
+        if (BaseOffset >= EndBit) continue;
+        
+        unsigned BaseStart = BaseOffset < StartBit ? StartBit-BaseOffset :0;
+        if (!BitsContainNoUserData(i->getType(), BaseStart,
+                                   EndBit-BaseOffset, Context))
+          return false;
+      }
+    }
+    
+    // Verify that no field has data that overlaps the region of interest.  Yes
+    // this could be sped up a lot by being smarter about queried fields,
+    // however we're only looking at structs up to 16 bytes, so we don't care
+    // much.
+    unsigned idx = 0;
+    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i, ++idx) {
+      unsigned FieldOffset = (unsigned)Layout.getFieldOffset(idx);
+      
+      // If we found a field after the region we care about, then we're done.
+      if (FieldOffset >= EndBit) break;
+
+      unsigned FieldStart = FieldOffset < StartBit ? StartBit-FieldOffset :0;
+      if (!BitsContainNoUserData(i->getType(), FieldStart, EndBit-FieldOffset,
+                                 Context))
+        return false;
+    }
+   
+    // If nothing in this record overlapped the area of interest, then we're
+    // clean.
+    return true;
+  }
+  
+  return false;
+}
+
 /// Get8ByteTypeAtOffset - The ABI specifies that a value should be passed in an
 /// 8-byte GPR.  This means that we either have a scalar or we are talking about
 /// the high or low part of an up-to-16-byte struct.  This routine picks the
@@ -1227,12 +1297,28 @@ const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
 const llvm::Type *X86_64ABIInfo::
 Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
                      QualType SourceTy, unsigned SourceOffset) const {
-  // Pointers are always 8-bytes at offset 0.
-  if (IROffset == 0 && isa<llvm::PointerType>(IRType))
-    return IRType;
+  // If we're dealing with an un-offset LLVM IR type, then it means that we're
+  // returning an 8-byte unit starting with it.  See if we can safely use it.
+  if (IROffset == 0) {
+    // Pointers and int64's always fill the 8-byte unit.
+    if (isa<llvm::PointerType>(IRType) || IRType->isIntegerTy(64))
+      return IRType;
 
-  // TODO: 1/2/4/8 byte integers are also interesting, but we have to know that
-  // the "hole" is not used in the containing struct (just undef padding).
+    // If we have a 1/2/4-byte integer, we can use it only if the rest of the
+    // goodness in the source type is just tail padding.  This is allowed to
+    // kick in for struct {double,int} on the int, but not on
+    // struct{double,int,int} because we wouldn't return the second int.  We
+    // have to do this analysis on the source type because we can't depend on
+    // unions being lowered a specific way etc.
+    if (IRType->isIntegerTy(8) || IRType->isIntegerTy(16) ||
+        IRType->isIntegerTy(32)) {
+      unsigned BitWidth = cast<llvm::IntegerType>(IRType)->getBitWidth();
+      
+      if (BitsContainNoUserData(SourceTy, SourceOffset*8+BitWidth,
+                                SourceOffset*8+64, getContext()))
+        return IRType;
+    }
+  }
 
   if (const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType)) {
     // If this is a struct, recurse into the field at the specified offset.

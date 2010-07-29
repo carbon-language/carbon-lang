@@ -63,8 +63,8 @@ void f10(struct s10 a0) {}
 // CHECK: define void @f11(%struct.s19* sret %agg.result)
 union { long double a; float b; } f11() { while (1) {} }
 
-// CHECK: define i64 @f12_0()
-// CHECK: define void @f12_1(i64 %a0.coerce)
+// CHECK: define i32 @f12_0()
+// CHECK: define void @f12_1(i32 %a0.coerce)
 struct s12 { int a __attribute__((aligned(16))); };
 struct s12 f12_0(void) { while (1) {} }
 void f12_1(struct s12 a0) {}
@@ -184,3 +184,13 @@ struct v4f32wrapper f27(struct v4f32wrapper X) {
   // CHECK: define <4 x float> @f27(<4 x float> %X.coerce)
   return X;
 }
+
+// rdar://5711709
+struct f28c {
+  double x;
+  int y;
+};
+void f28(struct f28c C) {
+  // CHECK: define void @f28(double %C.coerce0, i32 %C.coerce1)
+}
+
