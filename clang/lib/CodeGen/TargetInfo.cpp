@@ -717,9 +717,8 @@ class X86_64ABIInfo : public ABIInfo {
   /// also be ComplexX87.
   void classify(QualType T, uint64_t OffsetBase, Class &Lo, Class &Hi) const;
 
-  const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
-                                         unsigned IROffset,
-                                         QualType SourceTy,
+  const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *IRType,
+                                         unsigned IROffset, QualType SourceTy,
                                          unsigned SourceOffset) const;
   
   /// getCoerceResult - Given a source type \arg Ty and an LLVM type
@@ -744,10 +743,8 @@ class X86_64ABIInfo : public ABIInfo {
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
 
-  ABIArgInfo classifyArgumentType(QualType Ty,
-                                  unsigned &neededInt,
-                                  unsigned &neededSSE,
-                                  const llvm::Type *PrefType) const;
+  ABIArgInfo classifyArgumentType(QualType Ty, unsigned &neededInt,
+                                  unsigned &neededSSE) const;
 
 public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
@@ -1197,17 +1194,16 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
 /// an offset into this that we're processing (which is always either 0 or 8).
 ///
 const llvm::Type *X86_64ABIInfo::
-Get8ByteTypeAtOffset(const llvm::Type *PrefType, unsigned IROffset,
+Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
                      QualType SourceTy, unsigned SourceOffset) const {
   // Pointers are always 8-bytes at offset 0.
-  if (IROffset == 0 && PrefType && isa<llvm::PointerType>(PrefType))
-    return PrefType;
+  if (IROffset == 0 && IRType && isa<llvm::PointerType>(IRType))
+    return IRType;
 
   // TODO: 1/2/4/8 byte integers are also interesting, but we have to know that
   // the "hole" is not used in the containing struct (just undef padding).
 
-  if (const llvm::StructType *STy =
-          dyn_cast_or_null<llvm::StructType>(PrefType)) {
+  if (const llvm::StructType *STy = dyn_cast_or_null<llvm::StructType>(IRType)){
     // If this is a struct, recurse into the field at the specified offset.
     const llvm::StructLayout *SL = getTargetData().getStructLayout(STy);
     if (IROffset < SL->getSizeInBytes()) {
@@ -1340,11 +1336,15 @@ classifyReturnType(QualType RetTy) const {
 }
 
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
-                                               unsigned &neededSSE,
-                                               const llvm::Type *PrefType)const{
+                                               unsigned &neededSSE) const {
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
-
+  
+  
+  // Determine the preferred IR type to use and pass it down to
+  // classifyArgumentType.
+  const llvm::Type *IRType = 0;
+  
   // Check some invariants.
   // FIXME: Enforce these by construction.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
@@ -1377,9 +1377,12 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // and %r9 is used.
   case Integer:
     ++neededInt;
-      
+    
+    if (IRType == 0)
+      IRType = CGT.ConvertTypeRecursive(Ty);
+
     // Pick an 8-byte type based on the preferred type.
-    ResType = Get8ByteTypeAtOffset(PrefType, 0, Ty, 0);
+    ResType = Get8ByteTypeAtOffset(IRType, 0, Ty, 0);
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1406,8 +1409,11 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case Integer: {
     ++neededInt;
 
+    if (IRType == 0)
+      IRType = CGT.ConvertTypeRecursive(Ty);
+
     // Pick an 8-byte type based on the preferred type.
-    const llvm::Type *HiType = Get8ByteTypeAtOffset(PrefType, 8, Ty, 8);
+    const llvm::Type *HiType = Get8ByteTypeAtOffset(IRType, 8, Ty, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1429,16 +1435,18 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     assert(Lo == SSE && "Unexpected SSEUp classification");
     ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
       
+    if (IRType == 0)
+      IRType = CGT.ConvertTypeRecursive(Ty);
+
     // If the preferred type is a 16-byte vector, prefer to pass it.
-    if (const llvm::VectorType *VT =
-          dyn_cast_or_null<llvm::VectorType>(PrefType)) {
+    if (const llvm::VectorType *VT =dyn_cast_or_null<llvm::VectorType>(IRType)){
       const llvm::Type *EltTy = VT->getElementType();
       if (VT->getBitWidth() == 128 &&
           (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
            EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
            EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
            EltTy->isIntegerTy(128)))
-        ResType = PrefType;
+        ResType = IRType;
     }
     break;
   }
@@ -1447,6 +1455,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  
+  // Pass preferred type into classifyReturnType.
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
 
   // Keep track of the number of assigned registers.
@@ -1461,12 +1471,8 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // get assigned (in left-to-right order) for passing as follows...
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
-    // Determine the preferred IR type to use and pass it down to
-    // classifyArgumentType.
-    const llvm::Type *PrefType = CGT.ConvertTypeRecursive(it->type);
-      
     unsigned neededInt, neededSSE;
-    it->info = classifyArgumentType(it->type, neededInt, neededSSE, PrefType);
+    it->info = classifyArgumentType(it->type, neededInt, neededSSE);
 
     // AMD64-ABI 3.2.3p3: If there are no registers available for any
     // eightbyte of an argument, the whole argument is passed on the
@@ -1546,7 +1552,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   unsigned neededInt, neededSSE;
   
   Ty = CGF.getContext().getCanonicalType(Ty);
-  ABIArgInfo AI = classifyArgumentType(Ty, neededInt, neededSSE, 0);
+  ABIArgInfo AI = classifyArgumentType(Ty, neededInt, neededSSE);
 
   // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
   // in the registers. If not go to step 7.
