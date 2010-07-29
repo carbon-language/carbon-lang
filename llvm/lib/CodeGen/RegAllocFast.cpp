@@ -847,13 +847,18 @@ void RAFast::AllocateBasicBlock() {
     // operands. If there are also physical defs, these registers must avoid
     // both physical defs and uses, making them more constrained than normal
     // operands.
+    // Similarly, if there are multiple defs and tied operands, we must make sure
+    // the same register is allocated to uses and defs.
     // We didn't detect inline asm tied operands above, so just make this extra
     // pass for all inline asm.
     if (MI->isInlineAsm() || hasEarlyClobbers || hasPartialRedefs ||
-        (hasTiedOps && hasPhysDefs)) {
+        (hasTiedOps && (hasPhysDefs || TID.getNumDefs() > 1))) {
       handleThroughOperands(MI, VirtDead);
       // Don't attempt coalescing when we have funny stuff going on.
       CopyDst = 0;
+      // Pretend we have early clobbers so the use operands get marked below.
+      // This is not necessary for the common case of a single tied use.
+      hasEarlyClobbers = true;
     }
 
     // Second scan.
@@ -874,14 +879,17 @@ void RAFast::AllocateBasicBlock() {
 
     MRI->addPhysRegsUsed(UsedInInstr);
 
-    // Track registers defined by instruction - early clobbers at this point.
+    // Track registers defined by instruction - early clobbers and tied uses at
+    // this point.
     UsedInInstr.reset();
     if (hasEarlyClobbers) {
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (!MO.isReg() || !MO.isDef()) continue;
+        if (!MO.isReg()) continue;
         unsigned Reg = MO.getReg();
         if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+        // Look for physreg defs and tied uses.
+        if (!MO.isDef() && !MI->isRegTiedToDefOperand(i)) continue;
         UsedInInstr.set(Reg);
         for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
           UsedInInstr.set(*AS);
