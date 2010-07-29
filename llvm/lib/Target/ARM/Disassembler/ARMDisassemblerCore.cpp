@@ -887,7 +887,6 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
   }
 
-  assert(0 && "Unexpected BrMiscFrm Opcode");
   return false;
 }
 
