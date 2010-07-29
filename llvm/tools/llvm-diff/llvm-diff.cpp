@@ -13,6 +13,7 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 
+#include <llvm/Support/CommandLine.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <llvm/LLVMContext.h>
@@ -50,14 +51,6 @@ static Module *ReadModule(LLVMContext &Context, StringRef Name) {
   errs() << "error parsing " << Name << ": " << Error;
   delete Buffer;
   return 0;
-}
-
-static int usage() {
-  errs() << "expected usage:\n";
-  errs() << "  llvm-diff oldmodule.ll newmodule.ll [function list]\n";
-  errs() << "Assembly or bitcode modules may be used interchangeably.\n";
-  errs() << "If no functions are provided, all functions will be compared.\n";
-  return 1;
 }
 
 namespace {
@@ -270,48 +263,47 @@ public:
 };
 }
 
-int main(int argc, const char **argv) {
-  if (argc < 3) return usage();
+static void diffGlobal(DifferenceEngine &Engine, Module *L, Module *R,
+                       StringRef Name) {
+  // Drop leading sigils from the global name.
+  if (Name.startswith("@")) Name = Name.substr(1);
 
-  // Don't make StringRef locals like this at home.
-  StringRef LModuleFile = argv[1];
-  StringRef RModuleFile = argv[2];
+  Function *LFn = L->getFunction(Name);
+  Function *RFn = R->getFunction(Name);
+  if (LFn && RFn)
+    Engine.diff(LFn, RFn);
+  else if (!LFn && !RFn)
+    errs() << "No function named @" << Name << " in either module\n";
+  else if (!LFn)
+    errs() << "No function named @" << Name << " in left module\n";
+  else
+    errs() << "No function named @" << Name << " in right module\n";
+}
+
+cl::opt<std::string> LeftFilename(cl::Positional, cl::desc("<first file>"), cl::Required);
+cl::opt<std::string> RightFilename(cl::Positional, cl::desc("<second file>"), cl::Required);
+cl::list<std::string> GlobalsToCompare(cl::Positional, cl::desc("<globals to compare>"));
+
+int main(int argc, char **argv) {
+  cl::ParseCommandLineOptions(argc, argv);
 
   LLVMContext Context;
   
   // Load both modules.  Die if that fails.
-  Module *LModule = ReadModule(Context, LModuleFile);
-  Module *RModule = ReadModule(Context, RModuleFile);
+  Module *LModule = ReadModule(Context, LeftFilename);
+  Module *RModule = ReadModule(Context, RightFilename);
   if (!LModule || !RModule) return 1;
 
   DiffConsumer Consumer(LModule, RModule);
   DifferenceEngine Engine(Context, Consumer);
 
-  // If any function names were given, just diff those.
-  const char **FnNames = argv + 3;
-  unsigned NumFnNames = argc - 3;
-  if (NumFnNames) {
-    for (unsigned I = 0; I != NumFnNames; ++I) {
-      StringRef FnName = FnNames[I];
+  // If any global names were given, just diff those.
+  if (!GlobalsToCompare.empty()) {
+    for (unsigned I = 0, E = GlobalsToCompare.size(); I != E; ++I)
+      diffGlobal(Engine, LModule, RModule, GlobalsToCompare[I]);
 
-      // Drop leading sigils from the function name.
-      if (FnName.startswith("@")) FnName = FnName.substr(1);
-
-      Function *LFn = LModule->getFunction(FnName);
-      Function *RFn = RModule->getFunction(FnName);
-      if (LFn && RFn)
-        Engine.diff(LFn, RFn);
-      else {
-        if (!LFn && !RFn)
-          errs() << "No function named @" << FnName << " in either module\n";
-        else if (!LFn)
-          errs() << "No function named @" << FnName << " in left module\n";
-        else
-          errs() << "No function named @" << FnName << " in right module\n";
-      }
-    }
+  // Otherwise, diff everything in the module.
   } else {
-    // Otherwise, diff all functions in the modules.
     Engine.diff(LModule, RModule);
   }
 
