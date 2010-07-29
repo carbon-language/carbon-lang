@@ -278,9 +278,9 @@ namespace llvm {
     ///
     /// \arg TT - The target triple.
     /// \arg Ctx - The target context.
-    /// \arg TAB - The target assembler backend object.
+    /// \arg TAB - The target assembler backend object. Takes ownership.
     /// \arg _OS - The stream object.
-    /// \arg _Emitter - The target independent assembler object.
+    /// \arg _Emitter - The target independent assembler object.Takes ownership.
     /// \arg RelaxAll - Relax all fixups?
     MCStreamer *createObjectStreamer(const std::string &TT, MCContext &Ctx,
                                      TargetAsmBackend &TAB,

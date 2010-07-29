@@ -11,7 +11,9 @@
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
@@ -23,6 +25,8 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
 }
 
 MCObjectStreamer::~MCObjectStreamer() {
+  delete &Assembler->getBackend();
+  delete &Assembler->getEmitter();
   delete Assembler;
 }
 

@@ -31,7 +31,7 @@ class MCAsmStreamer : public MCStreamer {
   formatted_raw_ostream &OS;
   const MCAsmInfo &MAI;
   OwningPtr<MCInstPrinter> InstPrinter;
-  MCCodeEmitter *Emitter;
+  OwningPtr<MCCodeEmitter> Emitter;
   
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;

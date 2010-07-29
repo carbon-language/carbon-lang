@@ -139,8 +139,6 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
       getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI);
 
     // Create a code emitter if asked to show the encoding.
-    //
-    // FIXME: These are currently leaked.
     MCCodeEmitter *MCE = 0;
     if (ShowMCEncoding)
       MCE = getTarget().createCodeEmitter(*this, *Context);
@@ -154,8 +152,6 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
-    //
-    // FIXME: These are currently leaked.
     MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this, *Context);
     TargetAsmBackend *TAB = getTarget().createAsmBackend(TargetTriple);
     if (MCE == 0 || TAB == 0)
