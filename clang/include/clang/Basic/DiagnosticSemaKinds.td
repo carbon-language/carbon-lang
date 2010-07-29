@@ -2387,6 +2387,8 @@ def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behaviour">;
+def err_delete_incomplete_class_type : Warning<
+  "deleting incomplete class type %0; no conversions to pointer type">;
 def err_no_suitable_delete_member_function_found : Error<
   "no suitable member %0 in %1">;
 def note_member_declared_here : Note<

@@ -310,3 +310,14 @@ namespace rdar8018245 {
   template int *f<X1>(); // expected-note{{in instantiation of}}
 
 }
+
+// <rdar://problem/8248780>
+namespace Instantiate {
+  template<typename T> struct X { 
+    operator T*();
+  };
+
+  void f(X<int> &xi) {
+    delete xi;
+  }
+}

@@ -1360,6 +1360,10 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     QualType Type = Ex->getType();
 
     if (const RecordType *Record = Type->getAs<RecordType>()) {
+      if (RequireCompleteType(StartLoc, Type, 
+                              PDiag(diag::err_delete_incomplete_class_type)))
+        return ExprError();
+      
       llvm::SmallVector<CXXConversionDecl*, 4> ObjectPtrConversions;
 
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
