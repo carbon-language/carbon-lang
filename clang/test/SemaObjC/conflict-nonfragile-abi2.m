@@ -5,9 +5,30 @@ int glob;
 
 @interface I
 @property int glob; // expected-note {{property declared here}}
+@property int p;
+@property int le;
+@property int l;
+@property int ls;
+@property int r;
 @end
 
 @implementation I
 - (int) Meth { return glob; } // expected-warning {{'glob' lookup will access the property ivar in nonfragile-abi2 mode}}
 @synthesize glob;
+// rdar: // 8248681
+- (int) Meth1: (int) p {
+  extern int le;
+  int l = 1;
+  static int ls;
+  register int r;
+  p = le + ls + r;
+  return l;
+}
+@dynamic p;
+@dynamic le;
+@dynamic l;
+@dynamic ls;
+@dynamic r;
 @end
+
+

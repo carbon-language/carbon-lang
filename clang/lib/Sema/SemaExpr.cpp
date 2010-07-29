@@ -1170,7 +1170,8 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
 
   if (VarDecl *Var = R.getAsSingle<VarDecl>()) {
     if (getLangOptions().ObjCNonFragileABI && IvarLookupFollowUp &&
-        !getLangOptions().ObjCNonFragileABI2) {
+        !getLangOptions().ObjCNonFragileABI2 &&
+        Var->isFileVarDecl()) {
       ObjCPropertyDecl *Property = 
         OkToSynthesizeProvisionalIvar(*this, II, NameLoc);
       if (Property) {
