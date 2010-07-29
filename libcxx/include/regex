@@ -3423,11 +3423,12 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
 {
     if (__first != __last)
     {
+        unsigned __grammar = __flags_ & 0x1F0;
         switch (*__first)
         {
         case '*':
             ++__first;
-            if ((__flags_ & ECMAScript) && __first != __last && *__first == '?')
+            if (__grammar == ECMAScript && __first != __last && *__first == '?')
             {
                 ++__first;
                 __push_nongreedy_inf_repeat(0, __s, __mexp_begin, __mexp_end);
@@ -3437,7 +3438,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
             break;
         case '+':
             ++__first;
-            if ((__flags_ & ECMAScript) && __first != __last && *__first == '?')
+            if (__grammar == ECMAScript && __first != __last && *__first == '?')
             {
                 ++__first;
                 __push_nongreedy_inf_repeat(1, __s, __mexp_begin, __mexp_end);
@@ -3447,7 +3448,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
             break;
         case '?':
             ++__first;
-            if ((__flags_ & ECMAScript) && __first != __last && *__first == '?')
+            if (__grammar == ECMAScript && __first != __last && *__first == '?')
             {
                 ++__first;
                 __push_loop(0, 1, __s, __mexp_begin, __mexp_end, false);
@@ -3468,7 +3469,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                 {
                 case '}':
                     ++__first;
-                    if ((__flags_ & ECMAScript) && __first != __last && *__first == '?')
+                    if (__grammar == ECMAScript && __first != __last && *__first == '?')
                     {
                         ++__first;
                         __push_loop(__min, __min, __s, __mexp_begin, __mexp_end, false);
@@ -3482,7 +3483,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                     if (*__first == '}')
                     {
                         ++__first;
-                        if ((__flags_ & ECMAScript) && __first != __last && *__first == '?')
+                        if (__grammar == ECMAScript && __first != __last && *__first == '?')
                         {
                             ++__first;
                             __push_nongreedy_inf_repeat(__min, __s, __mexp_begin, __mexp_end);
@@ -3502,7 +3503,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                         ++__first;
                         if (__max < __min)
                             throw regex_error(regex_constants::error_badbrace);
-                        if ((__flags_ & ECMAScript) && __first != __last && *__first == '?')
+                        if (__grammar == ECMAScript && __first != __last && *__first == '?')
                         {
                             ++__first;
                             __push_loop(__min, __max, __s, __mexp_begin, __mexp_end, false);
