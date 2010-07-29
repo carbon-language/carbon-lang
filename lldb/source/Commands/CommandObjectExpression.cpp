@@ -464,7 +464,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     if (clang_type)
     {
         if (m_options.show_types)
-            output_stream.PutCString(ClangASTType::GetClangTypeName (clang_type).GetCString());
+            output_stream.Printf("(%s) ", ClangASTType::GetClangTypeName (clang_type).GetCString());
         
         ClangASTType::DumpValue (ast_context,               // The ASTContext that the clang type belongs to
                                  clang_type,                // The opaque clang type we want to dump that value of
