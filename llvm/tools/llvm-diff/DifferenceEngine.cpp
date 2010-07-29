@@ -194,7 +194,7 @@ class FunctionDifferenceEngine {
 
       // If the instructions differ, start the more sophisticated diff
       // algorithm at the start of the block.
-      if (diff(LeftI, RightI, false, true)) {
+      if (diff(LeftI, RightI, false, false)) {
         TentativeValues.clear();
         return runBlockDiff(L->begin(), R->begin());
       }
@@ -207,11 +207,22 @@ class FunctionDifferenceEngine {
     } while (LI != LE); // This is sufficient: we can't get equality of
                         // terminators if there are residual instructions.
 
-    // Make all the tentative pairs solid.
-    for (llvm::DenseSet<std::pair<Value*,Value*> >::iterator
-           I = TentativeValues.begin(), E = TentativeValues.end(); I != E; ++I)
-      Values[I->first] = I->second;
     TentativeValues.clear();
+
+    // Do another pass over the block, this time in complaints mode.
+    LI = L->begin(); RI = R->begin();
+    do {
+      assert(LI != LE && RI != RE);
+      bool Result = diff(&*LI, &*RI, true, true);
+      assert(!Result && "structural differences second time around?");
+      (void) Result;
+
+      // Make the mapping non-tentative this time.
+      if (!LI->use_empty())
+        Values[&*LI] = &*RI;
+      
+      ++LI, ++RI;
+    } while (LI != LE);
   }
 
   bool matchForBlockDiff(Instruction *L, Instruction *R);
