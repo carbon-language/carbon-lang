@@ -719,9 +719,9 @@ class X86_64ABIInfo : public ABIInfo {
 
   const llvm::Type *Get16ByteVectorType(QualType Ty) const;
 
-  const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *IRType,
-                                         unsigned IROffset, QualType SourceTy,
-                                         unsigned SourceOffset) const;
+  const llvm::Type *GetINTEGERTypeAtOffset(const llvm::Type *IRType,
+                                           unsigned IROffset, QualType SourceTy,
+                                           unsigned SourceOffset) const;
   
   /// getCoerceResult - Given a source type \arg Ty and an LLVM type
   /// to coerce to, chose the best way to pass Ty in the same place
@@ -1296,10 +1296,10 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
   return false;
 }
 
-/// Get8ByteTypeAtOffset - The ABI specifies that a value should be passed in an
-/// 8-byte GPR.  This means that we either have a scalar or we are talking about
-/// the high or low part of an up-to-16-byte struct.  This routine picks the
-/// best LLVM IR type to represent this, which may be i64 or may be anything
+/// GetINTEGERTypeAtOffset - The ABI specifies that a value should be passed in
+/// an 8-byte GPR.  This means that we either have a scalar or we are talking
+/// about the high or low part of an up-to-16-byte struct.  This routine picks
+/// the best LLVM IR type to represent this, which may be i64 or may be anything
 /// else that the backend will pass in a GPR that works better (e.g. i8, %foo*,
 /// etc).
 ///
@@ -1311,8 +1311,8 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
 /// an offset into this that we're processing (which is always either 0 or 8).
 ///
 const llvm::Type *X86_64ABIInfo::
-Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
-                     QualType SourceTy, unsigned SourceOffset) const {
+GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
+                       QualType SourceTy, unsigned SourceOffset) const {
   // If we're dealing with an un-offset LLVM IR type, then it means that we're
   // returning an 8-byte unit starting with it.  See if we can safely use it.
   if (IROffset == 0) {
@@ -1343,8 +1343,8 @@ Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
       unsigned FieldIdx = SL->getElementContainingOffset(IROffset);
       IROffset -= SL->getElementOffset(FieldIdx);
       
-      return Get8ByteTypeAtOffset(STy->getElementType(FieldIdx), IROffset,
-                                  SourceTy, SourceOffset);
+      return GetINTEGERTypeAtOffset(STy->getElementType(FieldIdx), IROffset,
+                                    SourceTy, SourceOffset);
     }      
   }
   
@@ -1352,8 +1352,8 @@ Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
     const llvm::Type *EltTy = ATy->getElementType();
     unsigned EltSize = getTargetData().getTypeAllocSize(EltTy);
     unsigned EltOffset = IROffset/EltSize*EltSize;
-    return Get8ByteTypeAtOffset(EltTy, IROffset-EltOffset, SourceTy,
-                                SourceOffset);
+    return GetINTEGERTypeAtOffset(EltTy, IROffset-EltOffset, SourceTy,
+                                  SourceOffset);
   }
   
   // Okay, we don't have any better idea of what to pass, so we pass this in an
@@ -1398,7 +1398,8 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    ResType = Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0, RetTy,0);
+    ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0,
+                                     RetTy, 0);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
@@ -1438,7 +1439,7 @@ classifyReturnType(QualType RetTy) const {
 
   case Integer: {
     const llvm::Type *HiType =
-      Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
+      GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1513,7 +1514,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     ++neededInt;
     
     // Pick an 8-byte type based on the preferred type.
-    ResType = Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
+    ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1541,7 +1542,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     ++neededInt;
     // Pick an 8-byte type based on the preferred type.
     const llvm::Type *HiType =
-      Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+      GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
