@@ -719,7 +719,8 @@ class X86_64ABIInfo : public ABIInfo {
 
   const llvm::Type *Get16ByteVectorType(QualType Ty) const;
   const llvm::Type *GetSSETypeAtOffset(const llvm::Type *IRType,
-                                       unsigned IROffset) const;
+                                       unsigned IROffset, QualType SourceTy,
+                                       unsigned SourceOffset) const;
   const llvm::Type *GetINTEGERTypeAtOffset(const llvm::Type *IRType,
                                            unsigned IROffset, QualType SourceTy,
                                            unsigned SourceOffset) const;
@@ -1211,21 +1212,6 @@ const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
   return llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
 }
 
-
-/// GetSSETypeAtOffset - Return a type that will be passed by the backend in the
-/// low 8 bytes of an XMM register, corresponding to the SSE class.
-const llvm::Type *X86_64ABIInfo::GetSSETypeAtOffset(const llvm::Type *IRType,
-                                                    unsigned IROffset) const {
-  // The only two choices we have are either double or <2 x float>.
-  
-  // FIXME: <2 x float> doesn't pass as one XMM register yet.  Don't enable this
-  // code until it does.
-  
-  return llvm::Type::getDoubleTy(getVMContext());
-}
-
-
-
 /// BitsContainNoUserData - Return true if the specified [start,end) bit range
 /// is known to either be off the end of the specified type or being in
 /// alignment padding.  The user type specified is known to be at most 128 bits
@@ -1310,6 +1296,27 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
   
   return false;
 }
+
+
+/// GetSSETypeAtOffset - Return a type that will be passed by the backend in the
+/// low 8 bytes of an XMM register, corresponding to the SSE class.
+const llvm::Type *X86_64ABIInfo::
+GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
+                   QualType SourceTy, unsigned SourceOffset) const {
+  // The only two choices we have are either double, <2 x float>, or float.  We
+  // pass as float if the last 4 bytes is just padding.  This happens for
+  // structs that contain 3 floats.
+  if (BitsContainNoUserData(SourceTy, SourceOffset*8+32,
+                            SourceOffset*8+64, getContext()))
+    return llvm::Type::getFloatTy(getVMContext());
+  
+  // FIXME: <2 x float> doesn't pass as one XMM register yet.  Don't enable this
+  // code until it does.
+  //return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2); 
+  
+  return llvm::Type::getDoubleTy(getVMContext());
+}
+
 
 /// GetINTEGERTypeAtOffset - The ABI specifies that a value should be passed in
 /// an 8-byte GPR.  This means that we either have a scalar or we are talking
@@ -1420,7 +1427,7 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
     // available SSE register of the sequence %xmm0, %xmm1 is used.
   case SSE:
-    ResType = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0);
+    ResType = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0, RetTy, 0);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
@@ -1460,7 +1467,7 @@ classifyReturnType(QualType RetTy) const {
   }
   case SSE: {
     const llvm::Type *HiType =
-      GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8);
+      GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType,NULL);
     break;
   }
@@ -1483,7 +1490,7 @@ classifyReturnType(QualType RetTy) const {
     // extra bits in an SSE reg.
     if (Lo != X87) {
       const llvm::Type *HiType =
-        GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8);
+        GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
       ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     }
     break;
@@ -1539,7 +1546,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // order from %xmm0 to %xmm7.
   case SSE:
     ++neededSSE;
-    ResType = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0);
+    ResType = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
     break;
   }
 
@@ -1569,7 +1576,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case X87Up:
   case SSE: {
     const llvm::Type *HiType =
-      GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8);
+      GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     ++neededSSE;
     break;

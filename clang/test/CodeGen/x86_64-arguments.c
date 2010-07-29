@@ -210,3 +210,13 @@ struct S0 { char f0[8]; char f2; char f3; char f4; };
 void f30(struct S0 p_4) {
   // CHECK: define void @f30(i64 %p_4.coerce0, i24 %p_4.coerce1)
 }
+
+// Pass the third element as a float when followed by tail padding.
+// rdar://8251384
+struct f31foo { float a, b, c; };
+float f31(struct f31foo X) {
+  // CHECK: define float @f31(double %X.coerce0, float %X.coerce1)
+  return X.c;
+}
+
+
