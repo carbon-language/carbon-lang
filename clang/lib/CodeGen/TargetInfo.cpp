@@ -1185,9 +1185,20 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
 /// full vector XMM register.  Pick an LLVM IR type that will be passed as a
 /// vector register.
 const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
+  const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
+  
+  // Wrapper structs that just contain vectors are passed just like vectors,
+  // strip them off if present.
+  const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType);
+  while (STy && STy->getNumElements() == 1) {
+    IRType = STy->getElementType(0);
+    STy = dyn_cast<llvm::StructType>(IRType);
+  }
+  
+  
+  
   // If the preferred type is a 16-byte vector, prefer to pass it.
-  if (const llvm::VectorType *VT =
-      dyn_cast<llvm::VectorType>(CGT.ConvertTypeRecursive(Ty))){
+  if (const llvm::VectorType *VT = dyn_cast<llvm::VectorType>(IRType)){
     const llvm::Type *EltTy = VT->getElementType();
     if (VT->getBitWidth() == 128 &&
         (EltTy->isFloatTy() || EltTy->isDoubleTy() ||

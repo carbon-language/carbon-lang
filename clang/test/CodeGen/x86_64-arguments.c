@@ -168,3 +168,13 @@ struct foo26 f26(struct foo26 *P) {
   // CHECK: define %struct.foo26 @f26(%struct.foo26* %P)
   return *P;
 }
+
+
+struct v4f32wrapper {
+  v4f32 v;
+};
+
+struct v4f32wrapper f27(struct v4f32wrapper X) {
+  // CHECK: define <4 x float> @f27(<4 x float> %X.coerce)
+  return X;
+}
