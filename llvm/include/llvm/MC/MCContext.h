@@ -70,7 +70,7 @@ namespace llvm {
 
     /// The dwarf file and directory tables from the dwarf .file directive.
     std::vector<MCDwarfFile *> MCDwarfFiles;
-    std::vector<std::string *> MCDwarfDirs;
+    std::vector<StringRef> MCDwarfDirs;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///

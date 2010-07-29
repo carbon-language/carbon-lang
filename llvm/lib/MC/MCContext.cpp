@@ -213,7 +213,6 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
   std::pair<StringRef, StringRef> Slash = FileName.rsplit('/');
 
   // Find or make a entry in the MCDwarfDirs vector for this Directory.
-  StringRef Directory;
   StringRef Name;
   unsigned DirIndex;
   // Capture directory name.
@@ -221,23 +220,24 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
     Name = Slash.first;
     DirIndex = 0; // For FileNames with no directories a DirIndex of 0 is used.
   } else {
-    Directory = Slash.first;
+    StringRef Directory = Slash.first;
     Name = Slash.second;
     for (DirIndex = 1; DirIndex < MCDwarfDirs.size(); DirIndex++) {
-      std::string *&Dir = MCDwarfDirs[DirIndex];
-      if (Directory == *Dir)
+      if (Directory == MCDwarfDirs[DirIndex])
 	break;
     }
     if (DirIndex >= MCDwarfDirs.size()) {
-      MCDwarfDirs.resize(DirIndex + 1);
-      std::string *&NewDir = MCDwarfDirs[DirIndex];
-      NewDir = new (*this) std::string(Directory);
+      char *Buf = static_cast<char *>(Allocate(Directory.size()));
+      memcpy(Buf, Directory.data(), Directory.size());
+      MCDwarfDirs.push_back(StringRef(Buf, Directory.size()));
     }
   }
   
   // Now make the MCDwarfFile entry and place it in the slot in the MCDwarfFiles
   // vector.
-  File = new (*this) MCDwarfFile(Name, DirIndex);
+  char *Buf = static_cast<char *>(Allocate(Name.size()));
+  memcpy(Buf, Name.data(), Name.size());
+  File = new (*this) MCDwarfFile(StringRef(Buf, Name.size()), DirIndex);
 
   // return the allocated FileNumber.
   return FileNumber;
