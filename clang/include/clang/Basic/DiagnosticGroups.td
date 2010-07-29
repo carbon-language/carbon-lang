@@ -25,7 +25,7 @@ def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
 def BoolConversions : DiagGroup<"bool-conversions">;
-def : DiagGroup<"c++-compat">;
+def CXXCompat: DiagGroup<"c++-compat">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
