@@ -1197,13 +1197,13 @@ const llvm::Type *X86_64ABIInfo::
 Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
                      QualType SourceTy, unsigned SourceOffset) const {
   // Pointers are always 8-bytes at offset 0.
-  if (IROffset == 0 && IRType && isa<llvm::PointerType>(IRType))
+  if (IROffset == 0 && isa<llvm::PointerType>(IRType))
     return IRType;
 
   // TODO: 1/2/4/8 byte integers are also interesting, but we have to know that
   // the "hole" is not used in the containing struct (just undef padding).
 
-  if (const llvm::StructType *STy = dyn_cast_or_null<llvm::StructType>(IRType)){
+  if (const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType)) {
     // If this is a struct, recurse into the field at the specified offset.
     const llvm::StructLayout *SL = getTargetData().getStructLayout(STy);
     if (IROffset < SL->getSizeInBytes()) {
@@ -1243,7 +1243,6 @@ classifyReturnType(QualType RetTy) const {
   assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
-  const llvm::Type *IRType = 0;
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
@@ -1261,10 +1260,7 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    if (IRType == 0)
-      IRType = CGT.ConvertTypeRecursive(RetTy);
-      
-    ResType = Get8ByteTypeAtOffset(IRType, 0, RetTy, 0);
+    ResType = Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0, RetTy,0);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
@@ -1303,10 +1299,8 @@ classifyReturnType(QualType RetTy) const {
     break;
 
   case Integer: {
-    if (IRType == 0)
-      IRType = CGT.ConvertTypeRecursive(RetTy);
-
-    const llvm::Type *HiType =  Get8ByteTypeAtOffset(IRType, 8, RetTy, 8);
+    const llvm::Type *HiType =
+      Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1347,11 +1341,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
   
-  
-  // Determine the preferred IR type to use and pass it down to
-  // classifyArgumentType.
-  const llvm::Type *IRType = 0;
-  
   // Check some invariants.
   // FIXME: Enforce these by construction.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
@@ -1385,11 +1374,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case Integer:
     ++neededInt;
     
-    if (IRType == 0)
-      IRType = CGT.ConvertTypeRecursive(Ty);
-
     // Pick an 8-byte type based on the preferred type.
-    ResType = Get8ByteTypeAtOffset(IRType, 0, Ty, 0);
+    ResType = Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1415,12 +1401,9 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
       
   case Integer: {
     ++neededInt;
-
-    if (IRType == 0)
-      IRType = CGT.ConvertTypeRecursive(Ty);
-
     // Pick an 8-byte type based on the preferred type.
-    const llvm::Type *HiType = Get8ByteTypeAtOffset(IRType, 8, Ty, 8);
+    const llvm::Type *HiType =
+      Get8ByteTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1442,18 +1425,16 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     assert(Lo == SSE && "Unexpected SSEUp classification");
     ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
       
-    if (IRType == 0)
-      IRType = CGT.ConvertTypeRecursive(Ty);
-
     // If the preferred type is a 16-byte vector, prefer to pass it.
-    if (const llvm::VectorType *VT =dyn_cast_or_null<llvm::VectorType>(IRType)){
+    if (const llvm::VectorType *VT =
+          dyn_cast<llvm::VectorType>(CGT.ConvertTypeRecursive(Ty))){
       const llvm::Type *EltTy = VT->getElementType();
       if (VT->getBitWidth() == 128 &&
           (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
            EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
            EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
            EltTy->isIntegerTy(128)))
-        ResType = IRType;
+        ResType = VT;
     }
     break;
   }
