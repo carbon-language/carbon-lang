@@ -7,11 +7,11 @@
 // RUN: grep '@"OBJC_METACLASS_$_A" = global .* section "__DATA, __objc_data", align 8' %t
 // RUN: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_[0-9]*" = internal global .* section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t
 // RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 2
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .* section "__TEXT,__objc_classname,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_LABEL_CATEGORY_$" = internal global .* section "__DATA, __objc_catlist, regular, no_dead_strip", align 8' %t
 // RUN: grep '@"\\01L_OBJC_LABEL_CLASS_$" = internal global .* section "__DATA, __objc_classlist, regular, no_dead_strip", align 8' %t
-// RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .* section "__TEXT,__objc_methname,cstring_literals", align 1' %t
-// RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .* section "__TEXT,__objc_methtype,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_PROP_NAME_ATTR_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_*" = internal global .* section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"' %t
 // RUN: grep '@"\\01l_OBJC_$_CATEGORY_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t

@@ -3301,9 +3301,7 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
     Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
                           llvm::ConstantArray::get(VMContext,
                                                    Ident->getNameStart()),
-                              ((ObjCABI == 2) ?
-                               "__TEXT,__objc_classname,cstring_literals" :
-                               "__TEXT,__cstring,cstring_literals"),
+                              "__TEXT,__cstring,cstring_literals",
                               1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
@@ -3675,9 +3673,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   llvm::GlobalVariable * Entry =
     CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
                       llvm::ConstantArray::get(VMContext, BitMap.c_str()),
-                      ((ObjCABI == 2) ?
-                       "__TEXT,__objc_classname,cstring_literals" :
-                       "__TEXT,__cstring,cstring_literals"),
+                      "__TEXT,__cstring,cstring_literals",
                       1, true);
   return getConstantGEP(VMContext, Entry, 0, 0);
 }
@@ -3689,9 +3685,7 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_NAME_",
                         llvm::ConstantArray::get(VMContext, Sel.getAsString()),
-                              ((ObjCABI == 2) ?
-                               "__TEXT,__objc_methname,cstring_literals" :
-                               "__TEXT,__cstring,cstring_literals"),
+                              "__TEXT,__cstring,cstring_literals",
                               1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
@@ -3716,9 +3710,7 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const FieldDecl *Field) {
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
                               llvm::ConstantArray::get(VMContext, TypeStr),
-                              ((ObjCABI == 2) ?
-                               "__TEXT,__objc_methtype,cstring_literals" :
-                               "__TEXT,__cstring,cstring_literals"),
+                              "__TEXT,__cstring,cstring_literals",
                               1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
@@ -3734,9 +3726,7 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
                               llvm::ConstantArray::get(VMContext, TypeStr),
-                              ((ObjCABI == 2) ?
-                               "__TEXT,__objc_methtype,cstring_literals" :
-                               "__TEXT,__cstring,cstring_literals"),
+                              "__TEXT,__cstring,cstring_literals",
                               1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
