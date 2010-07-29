@@ -155,7 +155,7 @@ struct f23S f24(struct f23S *X, struct f24s *P2) {
 typedef float v4f32 __attribute__((__vector_size__(16)));
 
 v4f32 f25(v4f32 X) {
-  // CHECK: define <2 x double> @f25(<4 x float> %X.coerce)
+  // CHECK: define <4 x float> @f25(<4 x float> %X.coerce)
   return X+X;
 }
 

@@ -717,6 +717,8 @@ class X86_64ABIInfo : public ABIInfo {
   /// also be ComplexX87.
   void classify(QualType T, uint64_t OffsetBase, Class &Lo, Class &Hi) const;
 
+  const llvm::Type *Get16ByteVectorType(QualType Ty) const;
+
   const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *IRType,
                                          unsigned IROffset, QualType SourceTy,
                                          unsigned SourceOffset) const;
@@ -1179,6 +1181,26 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   return ABIArgInfo::getIndirect(0);
 }
 
+/// Get16ByteVectorType - The ABI specifies that a value should be passed in an
+/// full vector XMM register.  Pick an LLVM IR type that will be passed as a
+/// vector register.
+const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
+  // If the preferred type is a 16-byte vector, prefer to pass it.
+  if (const llvm::VectorType *VT =
+      dyn_cast<llvm::VectorType>(CGT.ConvertTypeRecursive(Ty))){
+    const llvm::Type *EltTy = VT->getElementType();
+    if (VT->getBitWidth() == 128 &&
+        (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
+         EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
+         EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
+         EltTy->isIntegerTy(128)))
+      return VT;
+  }
+  
+  return llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
+}
+
+
 /// Get8ByteTypeAtOffset - The ABI specifies that a value should be passed in an
 /// 8-byte GPR.  This means that we either have a scalar or we are talking about
 /// the high or low part of an up-to-16-byte struct.  This routine picks the
@@ -1316,7 +1338,7 @@ classifyReturnType(QualType RetTy) const {
     // SSEUP should always be preceeded by SSE, just widen.
   case SSEUp:
     assert(Lo == SSE && "Unexpected SSEUp classification.");
-    ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
+    ResType = Get16ByteVectorType(RetTy);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
@@ -1423,19 +1445,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // register.  This only happens when 128-bit vectors are passed. 
   case SSEUp:
     assert(Lo == SSE && "Unexpected SSEUp classification");
-    ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
-      
-    // If the preferred type is a 16-byte vector, prefer to pass it.
-    if (const llvm::VectorType *VT =
-          dyn_cast<llvm::VectorType>(CGT.ConvertTypeRecursive(Ty))){
-      const llvm::Type *EltTy = VT->getElementType();
-      if (VT->getBitWidth() == 128 &&
-          (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
-           EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
-           EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
-           EltTy->isIntegerTy(128)))
-        ResType = VT;
-    }
+    ResType = Get16ByteVectorType(Ty);
     break;
   }
 
