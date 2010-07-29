@@ -483,8 +483,7 @@ void PCHStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
       break;
         
     case OffsetOfExpr::OffsetOfNode::Base:
-      // FIXME: Implement this!
-      llvm_unreachable("PCH for offsetof(base-specifier) not implemented");
+      Writer.AddCXXBaseSpecifier(*ON.getBase(), Record);
       break;
     }
   }

@@ -502,10 +502,12 @@ void PCHStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
       E->setComponent(I, Node(Start, Reader.GetIdentifier(Record[Idx++]), End));
       break;
         
-    case Node::Base:
-      // FIXME: Implement this!
-      llvm_unreachable("PCH for offsetof(base-specifier) not implemented");
+    case Node::Base: {
+      CXXBaseSpecifier *Base = new (*Reader.getContext()) CXXBaseSpecifier();
+      *Base = Reader.ReadCXXBaseSpecifier(DeclsCursor, Record, Idx);
+      E->setComponent(I, Node(Base));
       break;
+    }
     }
   }
   
