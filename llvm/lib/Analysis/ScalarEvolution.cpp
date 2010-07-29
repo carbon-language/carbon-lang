@@ -3660,59 +3660,29 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   }
 }
 
-/// forgetSCEVUnknown - V is being deleted or RAUW'd; remove the
-/// SCEVUnknown for it from the uniquing map, and optionally
-/// clear its contents to point to a replacement value.
-void ScalarEvolution::forgetSCEVUnknown(Value *V, Value *NewV) {
+/// forgetValue - This method should be called by the client when it has
+/// changed a value in a way that may effect its value, or which may
+/// disconnect it from a def-use chain linking it to a loop.
+void ScalarEvolution::forgetValue(Value *V) {
+  // If there's a SCEVUnknown tying this value into the SCEV
+  // space, remove it from the folding set map. The SCEVUnknown
+  // object and any other SCEV objects which reference it
+  // (transitively) remain allocated, effectively leaked until
+  // the underlying BumpPtrAllocator is freed.
+  //
   // This permits SCEV pointers to be used as keys in maps
   // such as the ValuesAtScopes map.
-
-  // Check for an exisitng SCEVUnknown for V in the uniquing map.
   FoldingSetNodeID ID;
   ID.AddInteger(scUnknown);
   ID.AddPointer(V);
   void *IP;
   if (SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) {
-    // Remove the old SCEVUnknown from the uniquing map, effectively
-    // leaking it from subsequent use by ScalarEvolution. There
-    // may be existing SCEVs live which still point to it though.
     UniqueSCEVs.RemoveNode(S);
 
-    // If there's a replacement value, update the old SCEVUnknowns
-    // so that SCEVs which still point to it see the new value.
-    if (NewV) {
-      // Update the old SCEVUnknown and all SCEVUnknowns on its update list
-      // to point to NewV instead of V.
-      for (SCEVUnknown *U = cast<SCEVUnknown>(S); U; U = U->UpdateList) {
-        assert(U->V == V && "SCEVUnknown update list is inconsistent!");
-        U->V = NewV;
-      }
-
-      // Check for an existing SCEVUnknown for NewV in the uniquing map.
-      ID.clear();
-      ID.AddInteger(scUnknown);
-      ID.AddPointer(NewV);
-      if (SCEV *NewS = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) {
-        // The uniquing map already had an entry for the new
-        // value. Append the old SCEVUnknown (and its update list) to the
-        // new SCEVUnknown's update list.
-        cast<SCEVUnknown>(NewS)->getUpdateListBack()->UpdateList =
-          cast<SCEVUnknown>(S);
-      } else {
-        // The uniquing map did not have an entry for the new
-        // value yet. Set the old SCEVUnknown, which has now been
-        // updated, to be the SCEVUnknown in the uniquing map.
-        UniqueSCEVs.InsertNode(S, IP);
-      }
-    }
+    // This isn't necessary, but we might as well remove the
+    // value from the ValuesAtScopes map too.
+    ValuesAtScopes.erase(S);
   }
-}
-
-/// forgetValue - This method should be called by the client when it has
-/// changed a value in a way that may effect its value, or which may
-/// disconnect it from a def-use chain linking it to a loop.
-void ScalarEvolution::forgetValue(Value *V) {
-  forgetSCEVUnknown(V, 0);
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return;
@@ -5722,10 +5692,24 @@ void ScalarEvolution::SCEVCallbackVH::deleted() {
 
 void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
   assert(SE && "SCEVCallbackVH called with a null ScalarEvolution!");
+
   Value *Old = getValPtr();
 
-  // First, update existing SCEVUnknowns.
-  SE->forgetSCEVUnknown(Old, V);
+  // If there's a SCEVUnknown tying this value into the SCEV
+  // space, replace the SCEVUnknown's value with the new value
+  // for the benefit of any SCEVs still referencing it, and
+  // and remove it from the folding set map so that new scevs
+  // don't reference it.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scUnknown);
+  ID.AddPointer(Old);
+  void *IP;
+  if (SCEVUnknown *S = cast_or_null<SCEVUnknown>(
+        SE->UniqueSCEVs.FindNodeOrInsertPos(ID, IP))) {
+    S->V = V;
+    SE->UniqueSCEVs.RemoveNode(S);
+    SE->ValuesAtScopes.erase(S);
+  }
 
   // Forget all the expressions associated with users of the old value,
   // so that future queries will recompute the expressions using the new

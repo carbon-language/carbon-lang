@@ -386,11 +386,6 @@ namespace llvm {
     bool isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS);
 
-    /// forgetSCEVUnknown - V is being deleted or RAUW'd; remove the
-    /// SCEVUnknown for it from the uniquing map, and optionally
-    /// clear its contents to point to a replacement value.
-    void forgetSCEVUnknown(Value *V, Value *NewV);
-
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();
