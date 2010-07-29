@@ -194,8 +194,6 @@ ClangExpression::ClangExpression(const char *target_triple,
         m_target_triple = target_triple;
     else
         m_target_triple = llvm::sys::getHostTriple();
-    
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 }
 
 
