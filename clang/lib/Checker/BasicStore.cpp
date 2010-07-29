@@ -465,12 +465,9 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
         if (Loc::IsLocType(T))
           store = Bind(store, loc::MemRegionVal(VR),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
-        else if (T->isIntegerType())
+        else if (T->isIntegerType() && T->isScalarType())
           store = Bind(store, loc::MemRegionVal(VR),
                        nonloc::ConcreteInt(BasicVals.getValue(0, T)));
-        else {
-          // assert(0 && "ignore other types of variables");
-        }
       } else {
         store = Bind(store, loc::MemRegionVal(VR), *InitVal);
       }
@@ -478,7 +475,8 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
   } else {
     // Process local scalar variables.
     QualType T = VD->getType();
-    if (ValMgr.getSymbolManager().canSymbolicate(T)) {
+    // BasicStore only supports scalars.
+    if (T->isScalarType() && ValMgr.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
       store = Bind(store, loc::MemRegionVal(VR), V);
     }
