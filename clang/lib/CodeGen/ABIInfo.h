@@ -38,17 +38,13 @@ namespace clang {
   class ABIArgInfo {
   public:
     enum Kind {
-      Direct,    /// Pass the argument directly using the normal
-                 /// converted LLVM type. Complex and structure types
-                 /// are passed using first class aggregates.
+      Direct,    /// Pass the argument directly using the normal converted LLVM
+                 /// type, or by coercing to another specified type
+                 /// (stored in 'CoerceToType').
 
       Extend,    /// Valid only for integer argument types. Same as 'direct'
                  /// but also emit a zero/sign extension attribute.
 
-      Coerce,    /// Only valid for aggregate return types, the argument
-                 /// should be accessed by coercion to a provided type.
-      
-      
       Indirect,  /// Pass the argument indirectly via a hidden pointer
                  /// with the specified alignment (0 indicates default
                  /// alignment).
@@ -79,17 +75,14 @@ namespace clang {
   public:
     ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
-    static ABIArgInfo getDirect() {
-      return ABIArgInfo(Direct);
+    static ABIArgInfo getDirect(const llvm::Type *T = 0) {
+      return ABIArgInfo(Direct, T);
     }
     static ABIArgInfo getExtend() {
       return ABIArgInfo(Extend);
     }
     static ABIArgInfo getIgnore() {
       return ABIArgInfo(Ignore);
-    }
-    static ABIArgInfo getCoerce(const llvm::Type *T) {
-      return ABIArgInfo(Coerce, T);
     }
     static ABIArgInfo getIndirect(unsigned Alignment, bool ByVal = true) {
       return ABIArgInfo(Indirect, 0, Alignment, ByVal);
@@ -102,16 +95,23 @@ namespace clang {
     bool isDirect() const { return TheKind == Direct; }
     bool isExtend() const { return TheKind == Extend; }
     bool isIgnore() const { return TheKind == Ignore; }
-    bool isCoerce() const { return TheKind == Coerce; }
     bool isIndirect() const { return TheKind == Indirect; }
     bool isExpand() const { return TheKind == Expand; }
 
-    // Coerce accessors
+    bool canHaveCoerceToType() const {
+      return TheKind == Direct || TheKind == Extend;
+    }
+    
+    // Direct/Extend accessors
     const llvm::Type *getCoerceToType() const {
-      assert(TheKind == Coerce && "Invalid kind!");
+      assert(canHaveCoerceToType() && "Invalid kind!");
       return TypeData;
     }
-
+    
+    void setCoerceToType(const llvm::Type *T) {
+      assert(canHaveCoerceToType() && "Invalid kind!");
+      TypeData = T;
+    }
     // Indirect accessors
     unsigned getIndirectAlign() const {
       assert(TheKind == Indirect && "Invalid kind!");

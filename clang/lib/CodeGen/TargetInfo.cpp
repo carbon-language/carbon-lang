@@ -56,17 +56,17 @@ void ABIArgInfo::dump() const {
   OS << "(ABIArgInfo Kind=";
   switch (TheKind) {
   case Direct:
-    OS << "Direct";
+    OS << "Direct Type=";
+    if (const llvm::Type *Ty = getCoerceToType())
+      Ty->print(OS);
+    else
+      OS << "null";
     break;
   case Extend:
     OS << "Extend";
     break;
   case Ignore:
     OS << "Ignore";
-    break;
-  case Coerce:
-    OS << "Coerce Type=";
-    getCoerceToType()->print(OS);
     break;
   case Indirect:
     OS << "Indirect Align=" << getIndirectAlign()
@@ -451,14 +451,14 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
       // registers and we need to make sure to pick a type the LLVM
       // backend will like.
       if (Size == 128)
-        return ABIArgInfo::getCoerce(llvm::VectorType::get(
+        return ABIArgInfo::getDirect(llvm::VectorType::get(
                   llvm::Type::getInt64Ty(getVMContext()), 2));
 
       // Always return in register if it fits in a general purpose
       // register, or if it is 64 bits and has a single element.
       if ((Size == 8 || Size == 16 || Size == 32) ||
           (Size == 64 && VT->getNumElements() == 1))
-        return ABIArgInfo::getCoerce(llvm::IntegerType::get(getVMContext(),
+        return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                             Size));
 
       return ABIArgInfo::getIndirect(0);
@@ -491,7 +491,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
           // bit-fields can adjust that to be larger than the single
           // element type.
           uint64_t Size = getContext().getTypeSize(RetTy);
-          return ABIArgInfo::getCoerce(
+          return ABIArgInfo::getDirect(
             llvm::IntegerType::get(getVMContext(), (unsigned)Size));
         }
         
@@ -499,20 +499,20 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
           assert(getContext().getTypeSize(RetTy) ==
                  getContext().getTypeSize(SeltTy) &&
                  "Unexpect single element structure size!");
-          return ABIArgInfo::getCoerce(llvm::Type::getFloatTy(getVMContext()));
+          return ABIArgInfo::getDirect(llvm::Type::getFloatTy(getVMContext()));
         }
         
         if (BT->getKind() == BuiltinType::Double) {
           assert(getContext().getTypeSize(RetTy) ==
                  getContext().getTypeSize(SeltTy) &&
                  "Unexpect single element structure size!");
-          return ABIArgInfo::getCoerce(llvm::Type::getDoubleTy(getVMContext()));
+          return ABIArgInfo::getDirect(llvm::Type::getDoubleTy(getVMContext()));
         }
       } else if (SeltTy->isPointerType()) {
         // FIXME: It would be really nice if this could come out as the proper
         // pointer type.
         const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(getVMContext());
-        return ABIArgInfo::getCoerce(PtrTy);
+        return ABIArgInfo::getDirect(PtrTy);
       } else if (SeltTy->isVectorType()) {
         // 64- and 128-bit vectors are never returned in a
         // register when inside a structure.
@@ -528,7 +528,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
     // in a register.
     if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, getContext())) {
       uint64_t Size = getContext().getTypeSize(RetTy);
-      return ABIArgInfo::getCoerce(llvm::IntegerType::get(getVMContext(),Size));
+      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),Size));
     }
 
     return ABIArgInfo::getIndirect(0);
@@ -1139,7 +1139,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
       CoerceTo = llvm::Type::getFloatTy(CoerceTo->getContext());
   }
 
-  return ABIArgInfo::getCoerce(CoerceTo);
+  return ABIArgInfo::getDirect(CoerceTo);
 }
 
 ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
@@ -1194,8 +1194,6 @@ const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
     IRType = STy->getElementType(0);
     STy = dyn_cast<llvm::StructType>(IRType);
   }
-  
-  
   
   // If the preferred type is a 16-byte vector, prefer to pass it.
   if (const llvm::VectorType *VT = dyn_cast<llvm::VectorType>(IRType)){
@@ -1622,7 +1620,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                            "reg_save_area");
   if (neededInt && neededSSE) {
     // FIXME: Cleanup.
-    assert(AI.isCoerce() && "Unexpected ABI info for mixed regs");
+    assert(AI.isDirect() && "Unexpected ABI info for mixed regs");
     const llvm::StructType *ST = cast<llvm::StructType>(AI.getCoerceToType());
     llvm::Value *Tmp = CGF.CreateTempAlloca(ST);
     assert(ST->getNumElements() == 2 && "Unexpected ABI info for mixed regs");
@@ -1948,7 +1946,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
   LLVMFields.push_back(llvm::ArrayType::get(ElemTy, SizeRegs));
   const llvm::Type* STy = llvm::StructType::get(getVMContext(), LLVMFields,
                                                 true);
-  return ABIArgInfo::getCoerce(STy);
+  return ABIArgInfo::getDirect(STy);
 }
 
 static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
@@ -2064,7 +2062,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
     // FIXME: Consider using 2 x vector types if the back end handles them
     // correctly.
     if (RetTy->isAnyComplexType())
-      return ABIArgInfo::getCoerce(llvm::IntegerType::get(getVMContext(),
+      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                               getContext().getTypeSize(RetTy)));
 
     // Integer like structures are returned in r0.
@@ -2072,10 +2070,10 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
       // Return in the smallest viable integer type.
       uint64_t Size = getContext().getTypeSize(RetTy);
       if (Size <= 8)
-        return ABIArgInfo::getCoerce(llvm::Type::getInt8Ty(getVMContext()));
+        return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()));
       if (Size <= 16)
-        return ABIArgInfo::getCoerce(llvm::Type::getInt16Ty(getVMContext()));
-      return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(getVMContext()));
+        return ABIArgInfo::getDirect(llvm::Type::getInt16Ty(getVMContext()));
+      return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
     }
 
     // Otherwise return in memory.
@@ -2093,10 +2091,10 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
   if (Size <= 32) {
     // Return in the smallest viable integer type.
     if (Size <= 8)
-      return ABIArgInfo::getCoerce(llvm::Type::getInt8Ty(getVMContext()));
+      return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()));
     if (Size <= 16)
-      return ABIArgInfo::getCoerce(llvm::Type::getInt16Ty(getVMContext()));
-    return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(getVMContext()));
+      return ABIArgInfo::getDirect(llvm::Type::getInt16Ty(getVMContext()));
+    return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
   }
 
   return ABIArgInfo::getIndirect(0);

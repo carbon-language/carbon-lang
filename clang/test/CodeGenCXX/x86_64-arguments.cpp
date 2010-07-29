@@ -23,7 +23,7 @@ struct s3_0 {};
 struct s3_1 { struct s3_0 a; long b; };
 void f3(struct s3_1 x) {}
 
-// CHECK: define i64 @_Z4f4_0M2s4i(i64 %a.coerce)
+// CHECK: define i64 @_Z4f4_0M2s4i(i64 %a)
 // CHECK: define {{.*}} @_Z4f4_1M2s4FivE(i64 %a.coerce0, i64 %a.coerce1)
 struct s4 {};
 typedef int s4::* s4_mdp;
