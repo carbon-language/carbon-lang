@@ -1907,7 +1907,8 @@ __word_boundary<_CharT, _Traits>::__exec(__state& __s) const
                               __traits_.isctype(__c, ctype_base::alnum);
             }
         }
-        else if (__s.__current_ == __s.__first_)
+        else if (__s.__current_ == __s.__first_ &&
+                !(__s.__flags_ & regex_constants::match_prev_avail))
         {
             if (!(__s.__flags_ & regex_constants::match_not_bow))
             {
@@ -5406,9 +5407,10 @@ basic_regex<_CharT, _Traits>::__search(
     }
     if (__first != __last && !(__flags & regex_constants::match_continuous))
     {
-        __m.__matches_.assign(__m.size(), __m.__unmatched_);
+        __flags |= regex_constants::match_prev_avail;
         for (++__first; __first != __last; ++__first)
         {
+            __m.__matches_.assign(__m.size(), __m.__unmatched_);
             if (__match_at_start(__first, __last, __m, __flags))
             {
                 __m.__prefix_.second = __m[0].first;
