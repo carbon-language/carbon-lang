@@ -1131,13 +1131,11 @@ SVal RegionStoreManager::RetrieveElement(Store store,
     if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
       int64_t i = CI->getValue().getSExtValue();
       int64_t byteLength = Str->getByteLength();
-      if (i > byteLength) {
-        // Buffer overflow checking in GRExprEngine should handle this case,
-        // but we shouldn't rely on it to not overflow here if that checking
-        // is disabled.
-        return UnknownVal();
-      }
-      char c = (i == byteLength) ? '\0' : Str->getStrData()[i];
+      // Technically, only i == byteLength is guaranteed to be null.
+      // However, such overflows should be caught before reaching this point;
+      // the only time such an access would be made is if a string literal was
+      // used to initialize a larger array.
+      char c = (i >= byteLength) ? '\0' : Str->getStrData()[i];
       return ValMgr.makeIntVal(c, T);
     }
   }
@@ -1475,35 +1473,14 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
   if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(AT))
     Size = CAT->getSize().getZExtValue();
 
-  // Check if the init expr is a StringLiteral.
-  if (isa<loc::MemRegionVal>(Init)) {
-    const MemRegion* InitR = cast<loc::MemRegionVal>(Init).getRegion();
-    const StringLiteral* S = cast<StringRegion>(InitR)->getStringLiteral();
-    const char* str = S->getStrData();
-    unsigned len = S->getByteLength();
-    unsigned j = 0;
+  // Check if the init expr is a string literal.
+  if (loc::MemRegionVal *MRV = dyn_cast<loc::MemRegionVal>(&Init)) {
+    const StringRegion *S = cast<StringRegion>(MRV->getRegion());
 
-    // Copy bytes from the string literal into the target array. Trailing bytes
-    // in the array that are not covered by the string literal are initialized
-    // to zero.
-
-    // We assume that string constants are bound to
-    // constant arrays.
-    uint64_t size = Size.getValue();
-
-    for (uint64_t i = 0; i < size; ++i, ++j) {
-      if (j >= len)
-        break;
-
-      SVal Idx = ValMgr.makeArrayIndex(i);
-      const ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R,
-                                                       getContext());
-
-      SVal V = ValMgr.makeIntVal(str[j], sizeof(char)*8, true);
-      store = Bind(store, loc::MemRegionVal(ER), V);
-    }
-
-    return store;
+    // Treat the string as a lazy compound value.
+    nonloc::LazyCompoundVal LCV =
+      cast<nonloc::LazyCompoundVal>(ValMgr.makeLazyCompoundVal(store, S));
+    return CopyLazyBindings(LCV, store, R);
   }
 
   // Handle lazy compound values.
