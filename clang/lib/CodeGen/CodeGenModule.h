@@ -260,7 +260,7 @@ public:
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
-  const TargetCodeGenInfo &getTargetCodeGenInfo() const;
+  const TargetCodeGenInfo &getTargetCodeGenInfo();
   bool isTargetDarwin() const;
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.

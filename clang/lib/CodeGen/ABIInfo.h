@@ -16,16 +16,16 @@
 namespace llvm {
   class Value;
   class LLVMContext;
+  class TargetData;
 }
 
 namespace clang {
   class ASTContext;
 
-  // FIXME: This is a layering issue if we want to move ABIInfo
-  // down. Fortunately CGFunctionInfo has no real tie to CodeGen.
   namespace CodeGen {
     class CGFunctionInfo;
     class CodeGenFunction;
+    class CodeGenTypes;
   }
 
   // FIXME: All of this stuff should be part of the target interface
@@ -45,6 +45,10 @@ namespace clang {
       Extend,    /// Valid only for integer argument types. Same as 'direct'
                  /// but also emit a zero/sign extension attribute.
 
+      Coerce,    /// Only valid for aggregate return types, the argument
+                 /// should be accessed by coercion to a provided type.
+      
+      
       Indirect,  /// Pass the argument indirectly via a hidden pointer
                  /// with the specified alignment (0 indicates default
                  /// alignment).
@@ -52,10 +56,7 @@ namespace clang {
       Ignore,    /// Ignore the argument (treat as void). Useful for
                  /// void and empty structs.
 
-      Coerce,    /// Only valid for aggregate return types, the argument
-                 /// should be accessed by coercion to a provided type.
-
-      Expand,    /// Only valid for aggregate argument types. The
+       Expand,    /// Only valid for aggregate argument types. The
                  /// structure should be expanded into consecutive
                  /// arguments for its constituent fields. Currently
                  /// expand is only allowed on structures whose fields
@@ -129,7 +130,14 @@ namespace clang {
   /// passed or returned from functions.
   class ABIInfo {
   public:
+    CodeGen::CodeGenTypes &CGT;
+    
+    ABIInfo(CodeGen::CodeGenTypes &cgt) : CGT(cgt) {}
     virtual ~ABIInfo();
+    
+    ASTContext &getContext() const;
+    llvm::LLVMContext &getVMContext() const;
+    const llvm::TargetData &getTargetData() const;
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI,
                              ASTContext &Ctx,

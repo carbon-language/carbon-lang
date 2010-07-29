@@ -38,6 +38,19 @@ static void AssignToArrayRange(CodeGen::CGBuilderTy &Builder,
 
 ABIInfo::~ABIInfo() {}
 
+ASTContext &ABIInfo::getContext() const {
+  return CGT.getContext();
+}
+
+llvm::LLVMContext &ABIInfo::getVMContext() const {
+  return CGT.getLLVMContext();
+}
+
+const llvm::TargetData &ABIInfo::getTargetData() const {
+  return CGT.getTargetData();
+}
+
+
 void ABIArgInfo::dump() const {
   llvm::raw_ostream &OS = llvm::errs();
   OS << "(ABIArgInfo Kind=";
@@ -272,6 +285,9 @@ namespace {
 /// self-consistent and sensible LLVM IR generation, but does not
 /// conform to any particular ABI.
 class DefaultABIInfo : public ABIInfo {
+public:
+  DefaultABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
                                 llvm::LLVMContext &VMContext) const;
@@ -297,7 +313,8 @@ class DefaultABIInfo : public ABIInfo {
 
 class DefaultTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  DefaultTargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {}
+  DefaultTargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new DefaultABIInfo(CGT)) {}
 };
 
 llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -325,7 +342,6 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
   
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
-  ASTContext &Context;
   bool IsDarwinVectorABI;
   bool IsSmallStructInRegABI;
 
@@ -341,6 +357,8 @@ class X86_32ABIInfo : public ABIInfo {
                                bool ByVal = true) const;
 
 public:
+  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
                                 llvm::LLVMContext &VMContext) const;
@@ -363,15 +381,14 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(ASTContext &Context, bool d, bool p)
-    : ABIInfo(), Context(Context), IsDarwinVectorABI(d),
-      IsSmallStructInRegABI(p) {}
+  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p)
+    : ABIInfo(CGT), IsDarwinVectorABI(d), IsSmallStructInRegABI(p) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_32TargetCodeGenInfo(ASTContext &Context, bool d, bool p)
-    :TargetCodeGenInfo(new X86_32ABIInfo(Context, d, p)) {}
+  X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p)
+    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p)) {}
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
@@ -673,9 +690,6 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
 namespace {
 /// X86_64ABIInfo - The X86_64 ABI information.
 class X86_64ABIInfo : public ABIInfo {
-  ASTContext &Context;
-  const llvm::TargetData &TD;
-  
   enum Class {
     Integer = 0,
     SSE,
@@ -751,8 +765,7 @@ class X86_64ABIInfo : public ABIInfo {
                                   const llvm::Type *PrefType) const;
 
 public:
-  X86_64ABIInfo(ASTContext &Ctx, const llvm::TargetData &td)
-    : Context(Ctx), TD(td) {}
+  X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
 
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
                            llvm::LLVMContext &VMContext,
@@ -765,8 +778,8 @@ public:
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_64TargetCodeGenInfo(ASTContext &Ctx, const llvm::TargetData &TD)
-    : TargetCodeGenInfo(new X86_64ABIInfo(Ctx, TD)) {}
+  X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new X86_64ABIInfo(CGT)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
     return 7;
@@ -886,7 +899,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
   }
   
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
-    uint64_t Size = Context.getTypeSize(VT);
+    uint64_t Size = getContext().getTypeSize(VT);
     if (Size == 32) {
       // gcc passes all <4 x char>, <2 x short>, <1 x int>, <1 x
       // float> as integer.
@@ -921,35 +934,35 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
   }
   
   if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
-    QualType ET = Context.getCanonicalType(CT->getElementType());
+    QualType ET = getContext().getCanonicalType(CT->getElementType());
 
-    uint64_t Size = Context.getTypeSize(Ty);
+    uint64_t Size = getContext().getTypeSize(Ty);
     if (ET->isIntegralOrEnumerationType()) {
       if (Size <= 64)
         Current = Integer;
       else if (Size <= 128)
         Lo = Hi = Integer;
-    } else if (ET == Context.FloatTy)
+    } else if (ET == getContext().FloatTy)
       Current = SSE;
-    else if (ET == Context.DoubleTy)
+    else if (ET == getContext().DoubleTy)
       Lo = Hi = SSE;
-    else if (ET == Context.LongDoubleTy)
+    else if (ET == getContext().LongDoubleTy)
       Current = ComplexX87;
 
     // If this complex type crosses an eightbyte boundary then it
     // should be split.
     uint64_t EB_Real = (OffsetBase) / 64;
-    uint64_t EB_Imag = (OffsetBase + Context.getTypeSize(ET)) / 64;
+    uint64_t EB_Imag = (OffsetBase + getContext().getTypeSize(ET)) / 64;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
     
     return;
   }
   
-  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+  if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
     // Arrays are treated like structures.
 
-    uint64_t Size = Context.getTypeSize(Ty);
+    uint64_t Size = getContext().getTypeSize(Ty);
 
     // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger
     // than two eightbytes, ..., it has class MEMORY.
@@ -960,13 +973,13 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     // fields, it has class MEMORY.
     //
     // Only need to check alignment of array base.
-    if (OffsetBase % Context.getTypeAlign(AT->getElementType()))
+    if (OffsetBase % getContext().getTypeAlign(AT->getElementType()))
       return;
 
     // Otherwise implement simplified merge. We could be smarter about
     // this, but it isn't worth it and would be harder to verify.
     Current = NoClass;
-    uint64_t EltSize = Context.getTypeSize(AT->getElementType());
+    uint64_t EltSize = getContext().getTypeSize(AT->getElementType());
     uint64_t ArraySize = AT->getSize().getZExtValue();
     for (uint64_t i=0, Offset=OffsetBase; i<ArraySize; ++i, Offset += EltSize) {
       Class FieldLo, FieldHi;
@@ -985,7 +998,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
   }
   
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    uint64_t Size = Context.getTypeSize(Ty);
+    uint64_t Size = getContext().getTypeSize(Ty);
 
     // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger
     // than two eightbytes, ..., it has class MEMORY.
@@ -1004,7 +1017,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     if (RD->hasFlexibleArrayMember())
       return;
 
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
 
     // Reset Lo class, this will be recomputed.
     Current = NoClass;
@@ -1048,7 +1061,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       // fields, it has class MEMORY.
       //
       // Note, skip this test for bit-fields, see below.
-      if (!BitField && Offset % Context.getTypeAlign(i->getType())) {
+      if (!BitField && Offset % getContext().getTypeAlign(i->getType())) {
         Lo = Memory;
         return;
       }
@@ -1070,7 +1083,8 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
           continue;
 
         uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
-        uint64_t Size = i->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+        uint64_t Size =
+          i->getBitWidth()->EvaluateAsInt(getContext()).getZExtValue();
 
         uint64_t EB_Lo = Offset / 64;
         uint64_t EB_Hi = (Offset + Size - 1) / 64;
@@ -1134,13 +1148,13 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     assert(!Ty.hasQualifiers() && "should never have a qualified type here");
 
     // Float and double end up in a single SSE reg.
-    if (Ty == Context.FloatTy || Ty == Context.DoubleTy)
+    if (Ty == getContext().FloatTy || Ty == getContext().DoubleTy)
       return ABIArgInfo::getDirect();
 
     // If this is a 32-bit structure that is passed as a double, then it will be
     // passed in the low 32-bits of the XMM register, which is the same as how a
     // float is passed.  Coerce to a float instead of a double.
-    if (Context.getTypeSizeInChars(Ty).getQuantity() == 4)
+    if (getContext().getTypeSizeInChars(Ty).getQuantity() == 4)
       CoerceTo = llvm::Type::getFloatTy(CoerceTo->getContext());
   }
 
@@ -1180,7 +1194,7 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   // Compute the byval alignment. We trust the back-end to honor the
   // minimum ABI alignment for byval, to make cleaner IR.
   const unsigned MinABIAlign = 8;
-  unsigned Align = Context.getTypeAlign(Ty) / 8;
+  unsigned Align = getContext().getTypeAlign(Ty) / 8;
   if (Align > MinABIAlign)
     return ABIArgInfo::getIndirect(Align);
   return ABIArgInfo::getIndirect(0);
@@ -1271,19 +1285,20 @@ classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    ResType = Get8ByteTypeAtOffset(0, 0, RetTy, 0, TD, VMContext, Context);
+    ResType = Get8ByteTypeAtOffset(0, 0, RetTy, 0, getTargetData(),
+                                   VMContext, getContext());
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
     // available SSE register of the sequence %xmm0, %xmm1 is used.
   case SSE:
-    ResType = llvm::Type::getDoubleTy(VMContext);
+    ResType = llvm::Type::getDoubleTy(getVMContext());
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
     // returned on the X87 stack in %st0 as 80-bit x87 number.
   case X87:
-    ResType = llvm::Type::getX86_FP80Ty(VMContext);
+    ResType = llvm::Type::getX86_FP80Ty(getVMContext());
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
@@ -1292,8 +1307,8 @@ classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
   case ComplexX87:
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
     ResType = llvm::StructType::get(VMContext,
-                                    llvm::Type::getX86_FP80Ty(VMContext),
-                                    llvm::Type::getX86_FP80Ty(VMContext),
+                                    llvm::Type::getX86_FP80Ty(getVMContext()),
+                                    llvm::Type::getX86_FP80Ty(getVMContext()),
                                     NULL);
     break;
   }
@@ -1311,7 +1326,8 @@ classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
 
   case Integer: {
     const llvm::Type *HiType = 
-      Get8ByteTypeAtOffset(0, 8, RetTy, 8, TD, VMContext, Context);
+      Get8ByteTypeAtOffset(0, 8, RetTy, 8, getTargetData(), VMContext,
+                           getContext());
     ResType = llvm::StructType::get(VMContext, ResType, HiType, NULL);
     break;
   }
@@ -1387,7 +1403,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
     ++neededInt;
       
     // Pick an 8-byte type based on the preferred type.
-    ResType = Get8ByteTypeAtOffset(PrefType, 0, Ty, 0, TD, VMContext, Context);
+    ResType = Get8ByteTypeAtOffset(PrefType, 0, Ty, 0, getTargetData(),
+                                   VMContext, getContext());
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1416,7 +1433,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
 
     // Pick an 8-byte type based on the preferred type.
     const llvm::Type *HiType =
-      Get8ByteTypeAtOffset(PrefType, 8, Ty, 8, TD, VMContext, Context);
+      Get8ByteTypeAtOffset(PrefType, 8, Ty, 8, getTargetData(),
+                           VMContext, getContext());
     ResType = llvm::StructType::get(VMContext, ResType, HiType, NULL);
     break;
   }
@@ -1716,6 +1734,9 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 namespace {
 
 class PIC16ABIInfo : public ABIInfo {
+public:
+  PIC16ABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
                                 llvm::LLVMContext &VMContext) const;
@@ -1741,7 +1762,8 @@ class PIC16ABIInfo : public ABIInfo {
 
 class PIC16TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  PIC16TargetCodeGenInfo():TargetCodeGenInfo(new PIC16ABIInfo()) {}
+  PIC16TargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new PIC16ABIInfo(CGT)) {}
 };
 
 }
@@ -1792,6 +1814,8 @@ llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 namespace {
 class PPC32TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
 public:
+  PPC32TargetCodeGenInfo(CodeGenTypes &CGT) : DefaultTargetCodeGenInfo(CGT) {}
+  
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
     // This is recovered from gcc output.
     return 1; // r1 is the dedicated stack pointer
@@ -1864,7 +1888,7 @@ private:
   ABIKind Kind;
 
 public:
-  ARMABIInfo(ABIKind _Kind) : Kind(_Kind) {}
+  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {}
 
 private:
   ABIKind getABIKind() const { return Kind; }
@@ -1888,8 +1912,8 @@ private:
 
 class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  ARMTargetCodeGenInfo(ARMABIInfo::ABIKind K)
-    :TargetCodeGenInfo(new ARMABIInfo(K)) {}
+  ARMTargetCodeGenInfo(CodeGenTypes &CGT, ARMABIInfo::ABIKind K)
+    :TargetCodeGenInfo(new ARMABIInfo(CGT, K)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
     return 13;
@@ -2175,6 +2199,9 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
 namespace {
 
 class SystemZABIInfo : public ABIInfo {
+public:
+  SystemZABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
   bool isPromotableIntegerType(QualType Ty) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy, ASTContext &Context,
@@ -2200,7 +2227,8 @@ class SystemZABIInfo : public ABIInfo {
 
 class SystemZTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  SystemZTargetCodeGenInfo():TargetCodeGenInfo(new SystemZABIInfo()) {}
+  SystemZTargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new SystemZABIInfo(CGT)) {}
 };
 
 }
@@ -2264,7 +2292,8 @@ namespace {
 
 class MSP430TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  MSP430TargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {}
+  MSP430TargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new DefaultABIInfo(CGT)) {}
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &M) const;
 };
@@ -2303,7 +2332,8 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 namespace {
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  MIPSTargetCodeGenInfo(): TargetCodeGenInfo(new DefaultABIInfo()) {}
+  MIPSTargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new DefaultABIInfo(CGT)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
     return 29;
@@ -2348,7 +2378,7 @@ MIPSTargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
 }
 
 
-const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
+const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   if (TheTargetCodeGenInfo)
     return *TheTargetCodeGenInfo;
 
@@ -2358,39 +2388,39 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
   const llvm::Triple &Triple = getContext().Target.getTriple();
   switch (Triple.getArch()) {
   default:
-    return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo(Types));
 
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
-    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types));
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     // FIXME: We want to know the float calling convention as well.
     if (strcmp(getContext().Target.getABI(), "apcs-gnu") == 0)
       return *(TheTargetCodeGenInfo =
-               new ARMTargetCodeGenInfo(ARMABIInfo::APCS));
+               new ARMTargetCodeGenInfo(Types, ARMABIInfo::APCS));
 
     return *(TheTargetCodeGenInfo =
-             new ARMTargetCodeGenInfo(ARMABIInfo::AAPCS));
+             new ARMTargetCodeGenInfo(Types, ARMABIInfo::AAPCS));
 
   case llvm::Triple::pic16:
-    return *(TheTargetCodeGenInfo = new PIC16TargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo = new PIC16TargetCodeGenInfo(Types));
 
   case llvm::Triple::ppc:
-    return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
 
   case llvm::Triple::systemz:
-    return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo(Types));
 
   case llvm::Triple::msp430:
-    return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));
 
   case llvm::Triple::x86:
     switch (Triple.getOS()) {
     case llvm::Triple::Darwin:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Context, true, true));
+               new X86_32TargetCodeGenInfo(Types, true, true));
     case llvm::Triple::Cygwin:
     case llvm::Triple::MinGW32:
     case llvm::Triple::MinGW64:
@@ -2399,15 +2429,14 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
     case llvm::Triple::FreeBSD:
     case llvm::Triple::OpenBSD:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Context, false, true));
+               new X86_32TargetCodeGenInfo(Types, false, true));
 
     default:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Context, false, false));
+               new X86_32TargetCodeGenInfo(Types, false, false));
     }
 
   case llvm::Triple::x86_64:
-    return *(TheTargetCodeGenInfo =
-               new X86_64TargetCodeGenInfo(Context, TheTargetData));
+    return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types));
   }
 }
