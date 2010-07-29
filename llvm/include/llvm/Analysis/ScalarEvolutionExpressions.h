@@ -524,11 +524,26 @@ namespace llvm {
     friend class ScalarEvolution;
     friend class ScalarEvolution::SCEVCallbackVH;
 
-    // This should be an AssertingVH, however SCEVUnknowns are allocated in a
-    // BumpPtrAllocator so their destructors are never called.
+    /// V - The Value represented by this SCEVUnknown.
+    /// This should be an AssertingVH, however SCEVUnknowns are allocated in a
+    /// BumpPtrAllocator so their destructors are never called.
     Value *V;
+
+    /// UpdateList - When values are RAUW'd with new values, and the new
+    /// values already have their own SCEVUnknowns, they can end up with
+    /// muliple SCEVUnknowns. This pointer links them all together so that
+    /// they can all be updated when another RAUW happens.
+    SCEVUnknown *UpdateList;
+
+    /// getUpdateListBack - Return the last SCEVUnknown in te UpdateList.
+    SCEVUnknown *getUpdateListBack() {
+      SCEVUnknown *P = this;
+      while (SCEVUnknown *Q = P->UpdateList) P = Q;
+      return P;
+    }
+
     SCEVUnknown(const FoldingSetNodeIDRef ID, Value *v) :
-      SCEV(ID, scUnknown), V(v) {}
+      SCEV(ID, scUnknown), V(v), UpdateList(0) {}
 
   public:
     Value *getValue() const { return V; }

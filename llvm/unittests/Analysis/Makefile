@@ -1,4 +1,4 @@
-##===- unittests/Makefile ----------------------------------*- Makefile -*-===##
+##===- unittests/Analysis/Makefile -------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
+LEVEL = ../..
+TESTNAME = Analysis
+LINK_COMPONENTS := core support target analysis ipa
 
-PARALLEL_DIRS = ADT ExecutionEngine Support Transforms VMCore Analysis
-
-include $(LEVEL)/Makefile.common
-
-clean::
-	$(Verb) $(RM) -f *Tests
+include $(LEVEL)/Makefile.config
+include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
