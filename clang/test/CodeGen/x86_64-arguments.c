@@ -204,3 +204,9 @@ struct f29a {
 void f29a(struct f29a A) {
   // CHECK: define void @f29a(double %A.coerce0, i32 %A.coerce1)
 }
+
+// rdar://8249586
+struct S0 { char f0[8]; char f2; char f3; char f4; };
+void f30(struct S0 p_4) {
+  // CHECK: define void @f30(i64 %p_4.coerce0, i24 %p_4.coerce1)
+}

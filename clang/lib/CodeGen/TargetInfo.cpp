@@ -1358,18 +1358,15 @@ Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
   
   // Okay, we don't have any better idea of what to pass, so we pass this in an
   // integer register that isn't too big to fit the rest of the struct.
-  uint64_t TySizeInBytes =
-    getContext().getTypeSizeInChars(SourceTy).getQuantity();
+  unsigned TySizeInBytes =
+    (unsigned)getContext().getTypeSizeInChars(SourceTy).getQuantity();
 
+  assert(TySizeInBytes != SourceOffset && "Empty field?");
+  
   // It is always safe to classify this as an integer type up to i64 that
   // isn't larger than the structure.
-  switch (unsigned(TySizeInBytes-SourceOffset)) {
-  case 1:  return llvm::Type::getInt8Ty(getVMContext());
-  case 2:  return llvm::Type::getInt16Ty(getVMContext());
-  case 3:
-  case 4:  return llvm::Type::getInt32Ty(getVMContext());
-  default: return llvm::Type::getInt64Ty(getVMContext());
-  }  
+  return llvm::IntegerType::get(getVMContext(),
+                                std::min(TySizeInBytes-SourceOffset, 8U)*8);
 }
 
 ABIArgInfo X86_64ABIInfo::
