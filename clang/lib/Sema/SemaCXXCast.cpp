@@ -396,6 +396,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // C++ 5.2.7p3: If the type of v is the same as the required result type,
   //   [except for cv].
   if (DestRecord == SrcRecord) {
+    Kind = CastExpr::CK_NoOp;
     return;
   }
 
