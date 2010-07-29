@@ -291,9 +291,7 @@ public:
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
-  virtual void computeInfo(CGFunctionInfo &FI,
-                           const llvm::Type *const *PrefTypes,
-                           unsigned NumPrefTypes) const {
+  virtual void computeInfo(CGFunctionInfo &FI) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
          it != ie; ++it)
@@ -351,9 +349,7 @@ public:
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
-  virtual void computeInfo(CGFunctionInfo &FI,
-                           const llvm::Type *const *PrefTypes,
-                           unsigned NumPrefTypes) const {
+  virtual void computeInfo(CGFunctionInfo &FI) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
          it != ie; ++it)
@@ -756,9 +752,7 @@ class X86_64ABIInfo : public ABIInfo {
 public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
 
-  virtual void computeInfo(CGFunctionInfo &FI, 
-                           const llvm::Type *const *PrefTypes,
-                           unsigned NumPrefTypes) const;
+  virtual void computeInfo(CGFunctionInfo &FI) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
@@ -1452,9 +1446,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   return getCoerceResult(Ty, ResType);
 }
 
-void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, 
-                                const llvm::Type *const *PrefTypes,
-                                unsigned NumPrefTypes) const {
+void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
 
   // Keep track of the number of assigned registers.
@@ -1469,13 +1461,9 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI,
   // get assigned (in left-to-right order) for passing as follows...
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
-    // If the client specified a preferred IR type to use, pass it down to
+    // Determine the preferred IR type to use and pass it down to
     // classifyArgumentType.
-    const llvm::Type *PrefType = 0;
-    if (NumPrefTypes) {
-      PrefType = *PrefTypes++;
-      --NumPrefTypes;
-    }
+    const llvm::Type *PrefType = CGT.ConvertTypeRecursive(it->type);
       
     unsigned neededInt, neededSSE;
     it->info = classifyArgumentType(it->type, neededInt, neededSSE, PrefType);
@@ -1719,9 +1707,7 @@ public:
 
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
-  virtual void computeInfo(CGFunctionInfo &FI, 
-                           const llvm::Type *const *PrefTypes,
-                           unsigned NumPrefTypes) const {
+  virtual void computeInfo(CGFunctionInfo &FI) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
          it != ie; ++it)
@@ -1864,9 +1850,7 @@ private:
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
-  virtual void computeInfo(CGFunctionInfo &FI,
-                           const llvm::Type *const *PrefTypes,
-                           unsigned NumPrefTypes) const;
+  virtual void computeInfo(CGFunctionInfo &FI) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
@@ -1884,9 +1868,7 @@ public:
 
 }
 
-void ARMABIInfo::computeInfo(CGFunctionInfo &FI,
-                             const llvm::Type *const *PrefTypes,
-                             unsigned NumPrefTypes) const {
+void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
@@ -2160,9 +2142,7 @@ public:
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
-  virtual void computeInfo(CGFunctionInfo &FI,
-                           const llvm::Type *const *PrefTypes,
-                           unsigned NumPrefTypes) const {
+  virtual void computeInfo(CGFunctionInfo &FI) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
          it != ie; ++it)

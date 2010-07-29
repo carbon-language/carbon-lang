@@ -243,34 +243,14 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                           ArgTys.data(), ArgTys.size());
   FunctionInfos.InsertNode(FI, InsertPos);
 
-  // ABI lowering wants to know what our preferred type for the argument is in
-  // various situations, pass it in.
-  llvm::SmallVector<const llvm::Type *, 8> PreferredArgTypes;
-  for (llvm::SmallVectorImpl<CanQualType>::const_iterator
-       I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I) {
-    // If this is being called from the guts of the ConvertType loop, make sure
-    // to call ConvertTypeRecursive so we don't get into issues with cyclic
-    // pointer type structures.
-    PreferredArgTypes.push_back(ConvertTypeRecursive(*I));
-  }
-  
   // Compute ABI information.
-  getABIInfo().computeInfo(*FI, PreferredArgTypes.data(),
-                           PreferredArgTypes.size());
+  getABIInfo().computeInfo(*FI);
 
   // If this is a top-level call and ConvertTypeRecursive hit unresolved pointer
   // types, resolve them now.  These pointers may point to this function, which
   // we *just* filled in the FunctionInfo for.
-  if (!IsRecursive && !PointersToResolve.empty()) {
-    // Use PATypeHolder's so that our preferred types don't dangle under
-    // refinement.
-    llvm::SmallVector<llvm::PATypeHolder, 8> Handles(PreferredArgTypes.begin(),
-                                                     PreferredArgTypes.end());
+  if (!IsRecursive && !PointersToResolve.empty())
     HandleLateResolvedPointers();
-    PreferredArgTypes.clear();
-    PreferredArgTypes.append(Handles.begin(), Handles.end());
-  }
-  
   
   return *FI;
 }
