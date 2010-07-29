@@ -492,10 +492,7 @@ class RedeclarableTemplateDecl : public TemplateDecl {
 
   RedeclarableTemplateDecl *getCanonicalDeclImpl();
 
-  void setPreviousDeclarationImpl(RedeclarableTemplateDecl *Prev) {
-    if (Prev)
-      CommonOrPrev = Prev;
-  }
+  void setPreviousDeclarationImpl(RedeclarableTemplateDecl *Prev);
 
   RedeclarableTemplateDecl *getInstantiatedFromMemberTemplateImpl() {
     return getCommonPtr()->InstantiatedFromMember.getPointer();
@@ -517,6 +514,9 @@ protected:
     /// was explicitly specialized.
     llvm::PointerIntPair<RedeclarableTemplateDecl*, 1, bool>
       InstantiatedFromMember;
+
+    /// \brief The latest declaration of this template.
+    RedeclarableTemplateDecl *Latest;
   };
 
   /// \brief A pointer to the previous declaration (if this is a redeclaration)
@@ -602,6 +602,7 @@ public:
   }
 
   friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 template <class decl_type>

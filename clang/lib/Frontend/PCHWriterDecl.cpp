@@ -852,6 +852,8 @@ void PCHDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
     if (D->getInstantiatedFromMemberTemplate())
       Record.push_back(D->isMemberSpecialization());
+
+    Writer.AddDeclRef(D->getCommonPtr()->Latest, Record);
   }
 }
 

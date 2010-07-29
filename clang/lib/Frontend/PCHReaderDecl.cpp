@@ -915,6 +915,11 @@ void PCHDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
       if (Record[Idx++])
         D->setMemberSpecialization();
     }
+
+    RedeclarableTemplateDecl *LatestDecl = 
+        cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+    assert(LatestDecl->getKind() == D->getKind() && "Latest kind mismatch");
+    D->getCommonPtr()->Latest = LatestDecl;
   }
 }
 

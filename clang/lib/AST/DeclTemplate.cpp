@@ -94,6 +94,7 @@ RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
   if (First->CommonOrPrev.isNull()) {
     CommonBase *CommonPtr = First->newCommon();
     First->CommonOrPrev = CommonPtr;
+    CommonPtr->Latest = First;
   }
   return First->CommonOrPrev.get<CommonBase*>();
 }
@@ -104,6 +105,18 @@ RedeclarableTemplateDecl *RedeclarableTemplateDecl::getCanonicalDeclImpl() {
   while (Tmpl->getPreviousDeclaration())
     Tmpl = Tmpl->getPreviousDeclaration();
   return Tmpl;
+}
+
+void RedeclarableTemplateDecl::setPreviousDeclarationImpl(
+                                               RedeclarableTemplateDecl *Prev) {
+  if (Prev) {
+    CommonBase *Common = Prev->getCommonPtr();
+    Prev = Common->Latest;
+    Common->Latest = this;
+    CommonOrPrev = Prev;
+  } else {
+    assert(CommonOrPrev.is<CommonBase*>() && "Cannot reset TemplateDecl Prev");
+  }
 }
 
 //===----------------------------------------------------------------------===//
