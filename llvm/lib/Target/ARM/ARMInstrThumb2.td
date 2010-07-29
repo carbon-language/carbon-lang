@@ -1579,6 +1579,9 @@ def t2USAT16 : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), NoItinerary,
   let Inst{7-6} = 0b00;    // imm2 = '00'
 }
 
+def : T2Pat<(int_arm_ssat GPR:$a, imm:$pos), (t2SSATlsl imm:$pos, GPR:$a, 0)>;
+def : T2Pat<(int_arm_usat GPR:$a, imm:$pos), (t2USATlsl imm:$pos, GPR:$a, 0)>;
+
 //===----------------------------------------------------------------------===//
 //  Shift and rotate Instructions.
 //

@@ -1835,6 +1835,9 @@ def USAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
   let Inst{7-4} = 0b0011;
 }
 
+def : ARMV6Pat<(int_arm_ssat GPR:$a, imm:$pos), (SSATlsl imm:$pos, GPR:$a, 0)>;
+def : ARMV6Pat<(int_arm_usat GPR:$a, imm:$pos), (USATlsl imm:$pos, GPR:$a, 0)>;
+
 //===----------------------------------------------------------------------===//
 //  Bitwise Instructions.
 //

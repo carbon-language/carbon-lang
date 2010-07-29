@@ -29,6 +29,10 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
                         [IntrNoMem, Commutative]>;
   def int_arm_qsub : GCCBuiltin<"__builtin_arm_qsub">,
               Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_arm_ssat : GCCBuiltin<"__builtin_arm_ssat">,
+              Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_arm_usat : GCCBuiltin<"__builtin_arm_usat">,
+              Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//
