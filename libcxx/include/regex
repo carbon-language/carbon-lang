@@ -1883,7 +1883,7 @@ public:
     virtual string speak() const
     {
         ostringstream os;
-        if (__invert_)
+        if (!__invert_)
             os << "__word_boundary";
         else
             os << "not __word_boundary";
@@ -5404,7 +5404,7 @@ basic_regex<_CharT, _Traits>::__search(
         __m.__suffix_.matched = __m.__suffix_.first != __m.__suffix_.second;
         return true;
     }
-    if (!(__flags & regex_constants::match_continuous))
+    if (__first != __last && !(__flags & regex_constants::match_continuous))
     {
         __m.__matches_.assign(__m.size(), __m.__unmatched_);
         for (++__first; __first != __last; ++__first)
