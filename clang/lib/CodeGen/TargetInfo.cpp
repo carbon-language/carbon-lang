@@ -721,6 +721,11 @@ class X86_64ABIInfo : public ABIInfo {
   /// also be ComplexX87.
   void classify(QualType T, uint64_t OffsetBase, Class &Lo, Class &Hi) const;
 
+  const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
+                                         unsigned IROffset,
+                                         QualType SourceTy,
+                                         unsigned SourceOffset) const;
+  
   /// getCoerceResult - Given a source type \arg Ty and an LLVM type
   /// to coerce to, chose the best way to pass Ty in the same place
   /// that \arg CoerceTo would be passed, but while keeping the
@@ -1197,13 +1202,9 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
 /// SourceTy is the source level type for the entire argument.  SourceOffset is
 /// an offset into this that we're processing (which is always either 0 or 8).
 ///
-static const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
-                                              unsigned IROffset,
-                                              QualType SourceTy,
-                                              unsigned SourceOffset,
-                                              const llvm::TargetData &TD,
-                                              llvm::LLVMContext &VMContext,
-                                              ASTContext &Context) {
+const llvm::Type *X86_64ABIInfo::
+Get8ByteTypeAtOffset(const llvm::Type *PrefType, unsigned IROffset,
+                     QualType SourceTy, unsigned SourceOffset) const {
   // Pointers are always 8-bytes at offset 0.
   if (IROffset == 0 && PrefType && isa<llvm::PointerType>(PrefType))
     return PrefType;
@@ -1214,28 +1215,29 @@ static const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
   if (const llvm::StructType *STy =
           dyn_cast_or_null<llvm::StructType>(PrefType)) {
     // If this is a struct, recurse into the field at the specified offset.
-    const llvm::StructLayout *SL = TD.getStructLayout(STy);
+    const llvm::StructLayout *SL = getTargetData().getStructLayout(STy);
     if (IROffset < SL->getSizeInBytes()) {
       unsigned FieldIdx = SL->getElementContainingOffset(IROffset);
       IROffset -= SL->getElementOffset(FieldIdx);
       
       return Get8ByteTypeAtOffset(STy->getElementType(FieldIdx), IROffset,
-                                  SourceTy, SourceOffset, TD,VMContext,Context);
+                                  SourceTy, SourceOffset);
     }      
   }
   
   // Okay, we don't have any better idea of what to pass, so we pass this in an
   // integer register that isn't too big to fit the rest of the struct.
-  uint64_t TySizeInBytes = Context.getTypeSizeInChars(SourceTy).getQuantity();
+  uint64_t TySizeInBytes =
+    getContext().getTypeSizeInChars(SourceTy).getQuantity();
 
   // It is always safe to classify this as an integer type up to i64 that
   // isn't larger than the structure.
   switch (unsigned(TySizeInBytes-SourceOffset)) {
-  case 1:  return llvm::Type::getInt8Ty(VMContext);
-  case 2:  return llvm::Type::getInt16Ty(VMContext);
+  case 1:  return llvm::Type::getInt8Ty(getVMContext());
+  case 2:  return llvm::Type::getInt16Ty(getVMContext());
   case 3:
-  case 4:  return llvm::Type::getInt32Ty(VMContext);
-  default: return llvm::Type::getInt64Ty(VMContext);
+  case 4:  return llvm::Type::getInt32Ty(getVMContext());
+  default: return llvm::Type::getInt64Ty(getVMContext());
   }  
 }
 
@@ -1268,8 +1270,7 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    ResType = Get8ByteTypeAtOffset(0, 0, RetTy, 0, getTargetData(),
-                                   getVMContext(), getContext());
+    ResType = Get8ByteTypeAtOffset(0, 0, RetTy, 0);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
@@ -1308,9 +1309,7 @@ classifyReturnType(QualType RetTy) const {
     break;
 
   case Integer: {
-    const llvm::Type *HiType = 
-      Get8ByteTypeAtOffset(0, 8, RetTy, 8, getTargetData(), getVMContext(),
-                           getContext());
+    const llvm::Type *HiType =  Get8ByteTypeAtOffset(0, 8, RetTy, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1386,8 +1385,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     ++neededInt;
       
     // Pick an 8-byte type based on the preferred type.
-    ResType = Get8ByteTypeAtOffset(PrefType, 0, Ty, 0, getTargetData(),
-                                   getVMContext(), getContext());
+    ResType = Get8ByteTypeAtOffset(PrefType, 0, Ty, 0);
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1415,9 +1413,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     ++neededInt;
 
     // Pick an 8-byte type based on the preferred type.
-    const llvm::Type *HiType =
-      Get8ByteTypeAtOffset(PrefType, 8, Ty, 8, getTargetData(),
-                           getVMContext(), getContext());
+    const llvm::Type *HiType = Get8ByteTypeAtOffset(PrefType, 8, Ty, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
