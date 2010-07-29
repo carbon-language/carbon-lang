@@ -54,7 +54,7 @@ if(PYTHONINTERP_FOUND)
                   --param build_config=${CMAKE_CFG_INTDIR}
                   -sv ${CLANG_TEST_EXTRA_ARGS}
                   ${CMAKE_CURRENT_BINARY_DIR}/${testdir}
-                  DEPENDS clang c-index-test
+                  DEPENDS clang c-index-test FileCheck not count
                   COMMENT "Running Clang regression tests in ${testdir}")
   endforeach()
 
@@ -65,7 +65,7 @@ if(PYTHONINTERP_FOUND)
                 --param build_config=${CMAKE_CFG_INTDIR}
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
-                DEPENDS clang c-index-test
+                DEPENDS clang c-index-test FileCheck not count
                 COMMENT "Running Clang regression tests")
 
   add_custom_target(clang-c++tests
@@ -75,6 +75,6 @@ if(PYTHONINTERP_FOUND)
                 --param build_config=${CMAKE_CFG_INTDIR}
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_SOURCE_DIR}/../utils/C++Tests
-                DEPENDS clang c-index-test
+                DEPENDS clang c-index-test FileCheck not count
                 COMMENT "Running Clang regression tests")
 endif()
