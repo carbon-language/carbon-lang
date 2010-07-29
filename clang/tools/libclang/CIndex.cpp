@@ -1838,12 +1838,17 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     return clang_getNullCursor();
 
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
-
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
   // Translate the given source location to make it point at the beginning of
   // the token under the cursor.
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
+
+  // Guard against an invalid SourceLocation, or we may assert in one
+  // of the following calls.
+  if (SLoc.isInvalid())
+    return clang_getNullCursor();
+
   SLoc = Lexer::GetBeginningOfToken(SLoc, CXXUnit->getSourceManager(),
                                     CXXUnit->getASTContext().getLangOptions());
   
