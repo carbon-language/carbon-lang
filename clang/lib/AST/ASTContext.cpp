@@ -5550,6 +5550,10 @@ bool ASTContext::DeclIsRequiredFunctionOrFileScopedVar(const Decl *D) {
   } else if (!isa<FunctionDecl>(D))
     return false;
 
+  // Weak references don't produce any output by themselves.
+  if (D->hasAttr<WeakRefAttr>())
+    return false;
+
   // Aliases and used decls are required.
   if (D->hasAttr<AliasAttr>() || D->hasAttr<UsedAttr>())
     return true;
@@ -5586,6 +5590,9 @@ bool ASTContext::DeclIsRequiredFunctionOrFileScopedVar(const Decl *D) {
 
   const VarDecl *VD = cast<VarDecl>(D);
   assert(VD->isFileVarDecl() && "Expected file scoped var");
+
+  if (VD->isThisDeclarationADefinition() == VarDecl::DeclarationOnly)
+    return false;
 
   // Structs that have non-trivial constructors or destructors are required.
 

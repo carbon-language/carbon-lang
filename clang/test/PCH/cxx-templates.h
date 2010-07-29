@@ -109,3 +109,10 @@ template<typename T> struct S_PR7660 { void g(void (*)(T)); };
 template<typename> class C_PR7670;
 template<> class C_PR7670<int>;
 template<> class C_PR7670<int>;
+
+template <bool B>
+struct S2 {
+    static bool V;
+};
+
+extern template class S2<true>;
