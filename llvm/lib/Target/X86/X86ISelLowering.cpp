@@ -1701,10 +1701,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   if (isVarArg) {
     if (Is64Bit || (CallConv != CallingConv::X86_FastCall &&
                     CallConv != CallingConv::X86_ThisCall)) {
-      // The fixed varargs object is created large enough that we can load and
-      // store any register in it.
-      FuncInfo->setVarArgsFrameIndex(MFI->CreateFixedObject(32, StackSize,
-                                                            true));
+      FuncInfo->setVarArgsFrameIndex(MFI->CreateFixedObject(1, StackSize,true));
     }
     if (Is64Bit) {
       unsigned TotalNumIntRegs = 0, TotalNumXMMRegs = 0;
