@@ -22,9 +22,6 @@ class TestSTL(lldbtest.TestBase):
         self.ci.HandleCommand("file " + exe, res)
         self.assertTrue(res.Succeeded())
 
-        self.ci.HandleCommand("run", res)
-        time.sleep(1)
-
         # Break on line 13 of main.cpp.
         self.ci.HandleCommand("breakpoint set -f main.cpp -l 13", res)
         self.assertTrue(res.Succeeded())
@@ -33,7 +30,7 @@ class TestSTL(lldbtest.TestBase):
                         )
 
         self.ci.HandleCommand("run", res)
-        time.sleep(1)
+        time.sleep(0.1)
         self.assertTrue(res.Succeeded())
 
         # Stop at 'std::string hello_world ("Hello World!");'.
