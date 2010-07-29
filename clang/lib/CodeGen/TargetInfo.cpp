@@ -1243,6 +1243,7 @@ classifyReturnType(QualType RetTy) const {
   assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
+  const llvm::Type *IRType = 0;
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
@@ -1260,7 +1261,10 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    ResType = Get8ByteTypeAtOffset(0, 0, RetTy, 0);
+    if (IRType == 0)
+      IRType = CGT.ConvertTypeRecursive(RetTy);
+      
+    ResType = Get8ByteTypeAtOffset(IRType, 0, RetTy, 0);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
@@ -1299,7 +1303,10 @@ classifyReturnType(QualType RetTy) const {
     break;
 
   case Integer: {
-    const llvm::Type *HiType =  Get8ByteTypeAtOffset(0, 8, RetTy, 8);
+    if (IRType == 0)
+      IRType = CGT.ConvertTypeRecursive(RetTy);
+
+    const llvm::Type *HiType =  Get8ByteTypeAtOffset(IRType, 8, RetTy, 8);
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1456,7 +1463,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   
-  // Pass preferred type into classifyReturnType.
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
 
   // Keep track of the number of assigned registers.

@@ -159,4 +159,12 @@ v4f32 f25(v4f32 X) {
   return X+X;
 }
 
+struct foo26 {
+  int *X;
+  float *Y;
+};
 
+struct foo26 f26(struct foo26 *P) {
+  // CHECK: define %struct.foo26 @f26(%struct.foo26* %P)
+  return *P;
+}

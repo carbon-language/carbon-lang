@@ -9,7 +9,7 @@ struct Coerce coerce_func(void);
 void Coerce_test(void) {
   struct Coerce c;
   
-  // CHECK: call i64 @coerce_func
+  // CHECK: call i8* @coerce_func
   // CHECK: call i8* @objc_memmove_collectable(
   c = coerce_func();
 }
