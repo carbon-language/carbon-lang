@@ -16,3 +16,14 @@ void f2(x) float x; { } // expected-warning{{promoted type 'double' of K&R funct
 
 typedef void (*f3)(void);
 f3 t3(int b) { return b? f0 : f1; } // okay
+
+// <rdar://problem/8193107>
+void f4() {
+    char *rindex();
+}
+
+char *rindex(s, c)
+     register char *s, c; // expected-warning{{promoted type 'char *' of K&R function parameter is not compatible with the parameter type 'char const *' declared in a previous prototype}}
+{
+  return 0;
+}

@@ -4539,11 +4539,12 @@ bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
 /// both shall have the identically qualified version of a compatible type.
 /// C99 6.2.7p1: Two types have compatible types if their types are the
 /// same. See 6.7.[2,3,5] for additional rules.
-bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
+bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS,
+                                    bool CompareUnqualified) {
   if (getLangOptions().CPlusPlus)
     return hasSameType(LHS, RHS);
   
-  return !mergeTypes(LHS, RHS).isNull();
+  return !mergeTypes(LHS, RHS, false, CompareUnqualified).isNull();
 }
 
 bool ASTContext::typesAreBlockPointerCompatible(QualType LHS, QualType RHS) {
@@ -4551,7 +4552,8 @@ bool ASTContext::typesAreBlockPointerCompatible(QualType LHS, QualType RHS) {
 }
 
 QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs, 
-                                        bool OfBlockPointer) {
+                                        bool OfBlockPointer,
+                                        bool Unqualified) {
   const FunctionType *lbase = lhs->getAs<FunctionType>();
   const FunctionType *rbase = rhs->getAs<FunctionType>();
   const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
@@ -4562,13 +4564,26 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   // Check return type
   QualType retType;
   if (OfBlockPointer)
-    retType = mergeTypes(rbase->getResultType(), lbase->getResultType(), true);
+    retType = mergeTypes(rbase->getResultType(), lbase->getResultType(), true,
+                         Unqualified);
   else
-   retType = mergeTypes(lbase->getResultType(), rbase->getResultType());
+   retType = mergeTypes(lbase->getResultType(), rbase->getResultType(),
+                        false, Unqualified);
   if (retType.isNull()) return QualType();
-  if (getCanonicalType(retType) != getCanonicalType(lbase->getResultType()))
+  
+  if (Unqualified)
+    retType = retType.getUnqualifiedType();
+
+  CanQualType LRetType = getCanonicalType(lbase->getResultType());
+  CanQualType RRetType = getCanonicalType(rbase->getResultType());
+  if (Unqualified) {
+    LRetType = LRetType.getUnqualifiedType();
+    RRetType = RRetType.getUnqualifiedType();
+  }
+  
+  if (getCanonicalType(retType) != LRetType)
     allLTypes = false;
-  if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
+  if (getCanonicalType(retType) != RRetType)
     allRTypes = false;
   // FIXME: double check this
   // FIXME: should we error if lbase->getRegParmAttr() != 0 &&
@@ -4613,9 +4628,19 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     for (unsigned i = 0; i < lproto_nargs; i++) {
       QualType largtype = lproto->getArgType(i).getUnqualifiedType();
       QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
-      QualType argtype = mergeTypes(largtype, rargtype, OfBlockPointer);
+      QualType argtype = mergeTypes(largtype, rargtype, OfBlockPointer,
+                                    Unqualified);
       if (argtype.isNull()) return QualType();
+      
+      if (Unqualified)
+        argtype = argtype.getUnqualifiedType();
+      
       types.push_back(argtype);
+      if (Unqualified) {
+        largtype = largtype.getUnqualifiedType();
+        rargtype = rargtype.getUnqualifiedType();
+      }
+      
       if (getCanonicalType(argtype) != getCanonicalType(largtype))
         allLTypes = false;
       if (getCanonicalType(argtype) != getCanonicalType(rargtype))
@@ -4671,7 +4696,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 }
 
 QualType ASTContext::mergeTypes(QualType LHS, QualType RHS, 
-                                bool OfBlockPointer) {
+                                bool OfBlockPointer,
+                                bool Unqualified) {
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
@@ -4679,6 +4705,11 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
   // the expression is a function call (possibly inside parentheses).
   assert(!LHS->getAs<ReferenceType>() && "LHS is a reference type?");
   assert(!RHS->getAs<ReferenceType>() && "RHS is a reference type?");
+
+  if (Unqualified) {
+    LHS = LHS.getUnqualifiedType();
+    RHS = RHS.getUnqualifiedType();
+  }
   
   QualType LHSCan = getCanonicalType(LHS),
            RHSCan = getCanonicalType(RHS);
@@ -4790,7 +4821,12 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     // Merge two pointer types, while trying to preserve typedef info
     QualType LHSPointee = LHS->getAs<PointerType>()->getPointeeType();
     QualType RHSPointee = RHS->getAs<PointerType>()->getPointeeType();
-    QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
+    if (Unqualified) {
+      LHSPointee = LHSPointee.getUnqualifiedType();
+      RHSPointee = RHSPointee.getUnqualifiedType();
+    }
+    QualType ResultType = mergeTypes(LHSPointee, RHSPointee, false, 
+                                     Unqualified);
     if (ResultType.isNull()) return QualType();
     if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
       return LHS;
@@ -4803,7 +4839,12 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     // Merge two block pointer types, while trying to preserve typedef info
     QualType LHSPointee = LHS->getAs<BlockPointerType>()->getPointeeType();
     QualType RHSPointee = RHS->getAs<BlockPointerType>()->getPointeeType();
-    QualType ResultType = mergeTypes(LHSPointee, RHSPointee, OfBlockPointer);
+    if (Unqualified) {
+      LHSPointee = LHSPointee.getUnqualifiedType();
+      RHSPointee = RHSPointee.getUnqualifiedType();
+    }
+    QualType ResultType = mergeTypes(LHSPointee, RHSPointee, OfBlockPointer,
+                                     Unqualified);
     if (ResultType.isNull()) return QualType();
     if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
       return LHS;
@@ -4820,7 +4861,12 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
 
     QualType LHSElem = getAsArrayType(LHS)->getElementType();
     QualType RHSElem = getAsArrayType(RHS)->getElementType();
-    QualType ResultType = mergeTypes(LHSElem, RHSElem);
+    if (Unqualified) {
+      LHSElem = LHSElem.getUnqualifiedType();
+      RHSElem = RHSElem.getUnqualifiedType();
+    }
+    
+    QualType ResultType = mergeTypes(LHSElem, RHSElem, false, Unqualified);
     if (ResultType.isNull()) return QualType();
     if (LCAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType))
       return LHS;
@@ -4854,7 +4900,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
                                   ArrayType::ArraySizeModifier(), 0);
   }
   case Type::FunctionNoProto:
-    return mergeFunctionTypes(LHS, RHS, OfBlockPointer);
+    return mergeFunctionTypes(LHS, RHS, OfBlockPointer, Unqualified);
   case Type::Record:
   case Type::Enum:
     return QualType();

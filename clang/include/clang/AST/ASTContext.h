@@ -1215,7 +1215,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// Compatibility predicates used to check assignment expressions.
-  bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  bool typesAreCompatible(QualType T1, QualType T2, 
+                          bool CompareUnqualified = false); // C99 6.2.7p1
 
   bool typesAreBlockPointerCompatible(QualType, QualType); 
 
@@ -1247,8 +1248,10 @@ public:
                                    const ObjCObjectPointerType *RHSOPT);
   
   // Functions for calculating composite types
-  QualType mergeTypes(QualType, QualType, bool OfBlockPointer=false);
-  QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false);
+  QualType mergeTypes(QualType, QualType, bool OfBlockPointer=false,
+                      bool Unqualified = false);
+  QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false,
+                              bool Unqualified = false);
   
   QualType mergeObjCGCQualifiers(QualType, QualType);
 

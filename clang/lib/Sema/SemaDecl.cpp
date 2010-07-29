@@ -1246,7 +1246,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                      NewProto->getArgType(Idx))) {
         ArgTypes.push_back(NewParm->getType());
       } else if (Context.typesAreCompatible(OldParm->getType(),
-                                            NewParm->getType())) {
+                                            NewParm->getType(),
+                                            /*CompareUnqualified=*/true)) {
         GNUCompatibleParamWarning Warn
           = { OldParm, NewParm, NewProto->getArgType(Idx) };
         Warnings.push_back(Warn);
@@ -1261,8 +1262,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
              diag::ext_param_promoted_not_compatible_with_prototype)
           << Warnings[Warn].PromotedType
           << Warnings[Warn].OldParm->getType();
-        Diag(Warnings[Warn].OldParm->getLocation(),
-             diag::note_previous_declaration);
+        if (Warnings[Warn].OldParm->getLocation().isValid())
+          Diag(Warnings[Warn].OldParm->getLocation(),
+               diag::note_previous_declaration);
       }
 
       New->setType(Context.getFunctionType(MergedReturn, &ArgTypes[0],
