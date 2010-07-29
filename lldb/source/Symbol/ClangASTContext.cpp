@@ -2594,7 +2594,25 @@ void *
 ClangASTContext::CreatePointerType (void *clang_type)
 {
     if (clang_type)
-        return getASTContext()->getPointerType(QualType::getFromOpaquePtr(clang_type)).getAsOpaquePtr();
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+
+        switch (qual_type->getTypeClass())
+        {
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+        // TODO: find out if I need to make a pointer or objc pointer for "clang::Type::ObjCObjectPointer" types
+        //case clang::Type::ObjCObjectPointer: 
+            return getASTContext()->getObjCObjectPointerType(qual_type).getAsOpaquePtr();
+
+        // TODO: can we detect if this type is a block type?
+//      case clang::Type::BlockType:
+//          return getASTContext()->getBlockPointerType(qual_type).getAsOpaquePtr();
+        
+        default:
+            return getASTContext()->getPointerType(qual_type).getAsOpaquePtr();
+        }
+    }
     return NULL;
 }
 
