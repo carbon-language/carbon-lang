@@ -587,7 +587,7 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   if (Features.EmitAllDecls)
     return false;
 
-  return !getContext().DeclIsRequiredFunctionOrFileScopedVar(Global);
+  return !getContext().DeclMustBeEmitted(Global);
 }
 
 llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {

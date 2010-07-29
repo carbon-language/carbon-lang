@@ -1086,7 +1086,7 @@ static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
   if (isa<FileScopeAsmDecl>(D))
     return true;
 
-  return Context.DeclIsRequiredFunctionOrFileScopedVar(D);
+  return Context.DeclMustBeEmitted(D);
 }
 
 void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {

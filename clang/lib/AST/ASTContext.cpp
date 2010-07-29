@@ -5543,7 +5543,7 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
   return GVA_StrongExternal;
 }
 
-bool ASTContext::DeclIsRequiredFunctionOrFileScopedVar(const Decl *D) {
+bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!VD->isFileVarDecl())
       return false;
