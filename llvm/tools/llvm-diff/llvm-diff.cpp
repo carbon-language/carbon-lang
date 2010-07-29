@@ -163,17 +163,22 @@ private:
         Function *L = cast<Function>(I->L);
         Function *R = cast<Function>(I->R);
         if (L->getName() != R->getName())
-          out << "in function " << L->getName() << " / " << R->getName() << ":\n";
+          out << "in function " << L->getName()
+              << " / " << R->getName() << ":\n";
         else
           out << "in function " << L->getName() << ":\n";
       } else if (isa<BasicBlock>(I->L)) {
         BasicBlock *L = cast<BasicBlock>(I->L);
         BasicBlock *R = cast<BasicBlock>(I->R);
-        out << "  in block ";
-        printValue(L, true);
-        out << " / ";
-        printValue(R, false);
-        out << ":\n";
+        if (L->hasName() && R->hasName() && L->getName() == R->getName())
+          out << "  in block %" << L->getName() << ":\n";
+        else {
+          out << "  in block ";
+          printValue(L, true);
+          out << " / ";
+          printValue(R, false);
+          out << ":\n";
+        }
       } else if (isa<Instruction>(I->L)) {
         out << "    in instruction ";
         printValue(I->L, true);
@@ -289,9 +294,14 @@ static void diffGlobal(DifferenceEngine &Engine, Module *L, Module *R,
     errs() << "No function named @" << Name << " in right module\n";
 }
 
-cl::opt<std::string> LeftFilename(cl::Positional, cl::desc("<first file>"), cl::Required);
-cl::opt<std::string> RightFilename(cl::Positional, cl::desc("<second file>"), cl::Required);
-cl::list<std::string> GlobalsToCompare(cl::Positional, cl::desc("<globals to compare>"));
+cl::opt<std::string> LeftFilename(cl::Positional,
+                                  cl::desc("<first file>"),
+                                  cl::Required);
+cl::opt<std::string> RightFilename(cl::Positional,
+                                   cl::desc("<second file>"),
+                                   cl::Required);
+cl::list<std::string> GlobalsToCompare(cl::Positional,
+                                       cl::desc("<globals to compare>"));
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
