@@ -116,13 +116,13 @@ public:
 
   ValTy *getArgument(unsigned ArgNo) const {
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
-    return *(arg_begin()+ArgNo);
+    return *(arg_begin() + ArgNo);
   }
 
   void setArgument(unsigned ArgNo, Value* newVal) {
     assert(getInstruction() && "Not a call or invoke instruction!");
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
-    getInstruction()->setOperand(getArgumentOffset() + ArgNo, newVal);
+    getInstruction()->setOperand(ArgNo, newVal);
   }
 
   /// Given a value use iterator, returns the argument that corresponds to it.
@@ -143,7 +143,7 @@ public:
   IterTy arg_begin() const {
     assert(getInstruction() && "Not a call or invoke instruction!");
     // Skip non-arguments
-    return (*this)->op_begin() + getArgumentOffset();
+    return (*this)->op_begin();
   }
 
   IterTy arg_end() const { return (*this)->op_end() - getArgumentEndOffset(); }
@@ -253,12 +253,6 @@ public:
   }
 
 private:
-  /// Returns the operand number of the first argument
-  /// FIXME: remove this func!
-  unsigned getArgumentOffset() const {
-    return 0; // Args are at the front
-  }
-
   unsigned getArgumentEndOffset() const {
     if (isCall())
       return 1; // Skip Callee
