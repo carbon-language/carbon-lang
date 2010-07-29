@@ -119,6 +119,13 @@ void RedeclarableTemplateDecl::setPreviousDeclarationImpl(
   }
 }
 
+RedeclarableTemplateDecl *RedeclarableTemplateDecl::getNextRedeclaration() {
+  if (CommonOrPrev.is<RedeclarableTemplateDecl*>())
+    return CommonOrPrev.get<RedeclarableTemplateDecl*>();
+  CommonBase *Common = CommonOrPrev.get<CommonBase*>();
+  return Common ? Common->Latest : this;
+}
+
 //===----------------------------------------------------------------------===//
 // FunctionTemplateDecl Implementation
 //===----------------------------------------------------------------------===//

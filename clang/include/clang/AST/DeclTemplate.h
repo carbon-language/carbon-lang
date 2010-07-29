@@ -592,6 +592,8 @@ public:
     return getInstantiatedFromMemberTemplateImpl();
   }
 
+  virtual RedeclarableTemplateDecl *getNextRedeclaration();
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RedeclarableTemplateDecl *D) { return true; }
