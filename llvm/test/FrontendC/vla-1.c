@@ -1,4 +1,4 @@
-// RUN: not %llvmgcc -std=gnu99 %s -S |& grep "error: alignment for"
+// RUN: %llvmgcc_only -std=gnu99 %s -S |& grep "warning: alignment for"
 
 int foo(int a)
 {
