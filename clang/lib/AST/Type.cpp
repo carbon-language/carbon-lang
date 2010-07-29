@@ -643,10 +643,11 @@ bool Type::isIncompleteType() const {
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return true;
   case ObjCObject:
-    return cast<ObjCObjectType>(this)->getBaseType()->isIncompleteType();
+    return cast<ObjCObjectType>(CanonicalType)->getBaseType()
+                                                         ->isIncompleteType();
   case ObjCInterface:
     // ObjC interfaces are incomplete if they are @class, not @interface.
-    return cast<ObjCInterfaceType>(this)->getDecl()->isForwardDecl();
+    return cast<ObjCInterfaceType>(CanonicalType)->getDecl()->isForwardDecl();
   }
 }
 
