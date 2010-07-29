@@ -31,7 +31,7 @@ public:
     CurrentContext.set(this);
   }
   ~CrashRecoveryContextImpl() {
-    CurrentContext.set(0);
+    CurrentContext.erase();
   }
 
   void HandleCrash() {
