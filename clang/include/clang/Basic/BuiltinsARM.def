@@ -17,8 +17,12 @@
 // In libgcc
 BUILTIN(__clear_cache, "v.", "")
 BUILTIN(__builtin_thread_pointer, "v*", "")
+
+// Saturating arithmetic
 BUILTIN(__builtin_arm_qadd, "iii", "nc")
 BUILTIN(__builtin_arm_qsub, "iii", "nc")
+BUILTIN(__builtin_arm_ssat, "iiUi", "nc")
+BUILTIN(__builtin_arm_usat, "UiUiUi", "nc")
 
 // NEON
 #define GET_NEON_BUILTINS

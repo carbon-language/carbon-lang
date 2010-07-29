@@ -1062,7 +1062,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 
   // Determine the type of this overloaded NEON intrinsic.
-  assert(BuiltinID > ARM::BI__builtin_thread_pointer);
+  assert(BuiltinID > ARM::BI__builtin_arm_usat);
 
   llvm::SmallVector<Value*, 4> Ops;
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)

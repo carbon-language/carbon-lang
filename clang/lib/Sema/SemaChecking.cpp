@@ -298,6 +298,8 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   unsigned i = 0, l = 0, u = 0;
   switch (BuiltinID) {
   default: return false;
+  case ARM::BI__builtin_arm_ssat: i = 1; l = 1; u = 31; break;
+  case ARM::BI__builtin_arm_usat: i = 1; u = 31; break;
 #define GET_NEON_IMMEDIATE_CHECK
 #include "clang/Basic/arm_neon.inc"
 #undef GET_NEON_IMMEDIATE_CHECK
