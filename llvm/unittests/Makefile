@@ -14,4 +14,4 @@ PARALLEL_DIRS = ADT ExecutionEngine Support Transforms VMCore
 include $(LEVEL)/Makefile.common
 
 clean::
-	$(Verb) $(RM) -f *Tests
+	$(Verb) $(RM) -f *Tests Analysis
