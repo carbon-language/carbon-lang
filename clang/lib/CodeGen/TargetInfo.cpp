@@ -1226,9 +1226,24 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
   if (TySize <= StartBit)
     return true;
 
-  //if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
-    // TODO.
-  //}
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+    unsigned EltSize = (unsigned)Context.getTypeSize(AT->getElementType());
+    unsigned NumElts = (unsigned)AT->getSize().getZExtValue();
+
+    // Check each element to see if the element overlaps with the queried range.
+    for (unsigned i = 0; i != NumElts; ++i) {
+      // If the element is after the span we care about, then we're done..
+      unsigned EltOffset = i*EltSize;
+      if (EltOffset >= EndBit) break;
+      
+      unsigned EltStart = EltOffset < StartBit ? StartBit-EltOffset :0;
+      if (!BitsContainNoUserData(AT->getElementType(), EltStart,
+                                 EndBit-EltOffset, Context))
+        return false;
+    }
+    // If it overlaps no elements, then it is safe to process as padding.
+    return true;
+  }
   
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     const RecordDecl *RD = RT->getDecl();
@@ -1330,6 +1345,14 @@ Get8ByteTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
       return Get8ByteTypeAtOffset(STy->getElementType(FieldIdx), IROffset,
                                   SourceTy, SourceOffset);
     }      
+  }
+  
+  if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(IRType)) {
+    const llvm::Type *EltTy = ATy->getElementType();
+    unsigned EltSize = getTargetData().getTypeAllocSize(EltTy);
+    unsigned EltOffset = IROffset/EltSize*EltSize;
+    return Get8ByteTypeAtOffset(EltTy, IROffset-EltOffset, SourceTy,
+                                SourceOffset);
   }
   
   // Okay, we don't have any better idea of what to pass, so we pass this in an

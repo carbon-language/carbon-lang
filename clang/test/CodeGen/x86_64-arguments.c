@@ -194,3 +194,13 @@ void f28(struct f28c C) {
   // CHECK: define void @f28(double %C.coerce0, i32 %C.coerce1)
 }
 
+struct f29a {
+  struct c {
+    double x;
+    int y;
+  } x[1];
+};
+
+void f29a(struct f29a A) {
+  // CHECK: define void @f29a(double %A.coerce0, i32 %A.coerce1)
+}
