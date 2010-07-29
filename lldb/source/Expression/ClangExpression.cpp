@@ -194,6 +194,8 @@ ClangExpression::ClangExpression(const char *target_triple,
         m_target_triple = target_triple;
     else
         m_target_triple = llvm::sys::getHostTriple();
+    
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 }
 
 
@@ -539,17 +541,6 @@ ClangExpression::JITFunction (const ExecutionContext &exc_context, const char *n
             m_jit_mm_ptr = new RecordingMemoryManager();
 
         //llvm::InitializeNativeTarget();
-                        
-        if (m_execution_engine.get() == 0)
-            m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
-                                                                       &error, 
-                                                                       m_jit_mm_ptr,
-                                                                       CodeGenOpt::Default,
-                                                                       true,
-                                                                       CodeModel::Default));
-        
-        m_execution_engine->DisableLazyCompilation();
-        llvm::Function *function = module->getFunction (llvm::StringRef (name));
         
         if (log)
         {
@@ -557,22 +548,33 @@ ClangExpression::JITFunction (const ExecutionContext &exc_context, const char *n
             
             switch (llvm::TargetMachine::getRelocationModel())
             {
-            case llvm::Reloc::Default:
-                relocation_model_string = "Default";
-                break;
-            case llvm::Reloc::Static:
-                relocation_model_string = "Static";
-                break;
-            case llvm::Reloc::PIC_:
-                relocation_model_string = "PIC_++";
-                break;
-            case llvm::Reloc::DynamicNoPIC:
-                relocation_model_string = "DynamicNoPIC";
-                break;
+                case llvm::Reloc::Default:
+                    relocation_model_string = "Default";
+                    break;
+                case llvm::Reloc::Static:
+                    relocation_model_string = "Static";
+                    break;
+                case llvm::Reloc::PIC_:
+                    relocation_model_string = "PIC_";
+                    break;
+                case llvm::Reloc::DynamicNoPIC:
+                    relocation_model_string = "DynamicNoPIC";
+                    break;
             }
             
             log->Printf("Target machine's relocation model: %s", relocation_model_string);
         }
+                        
+        if (m_execution_engine.get() == 0)
+            m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
+                                                                       &error, 
+                                                                       m_jit_mm_ptr,
+                                                                       CodeGenOpt::Default,
+                                                                       true,
+                                                                       CodeModel::Small)); // set to small so RIP-relative relocations work in PIC
+        
+        m_execution_engine->DisableLazyCompilation();
+        llvm::Function *function = module->getFunction (llvm::StringRef (name));
             
         // We don't actually need the function pointer here, this just forces it to get resolved.
         void *fun_ptr = m_execution_engine->getPointerToFunction(function);
