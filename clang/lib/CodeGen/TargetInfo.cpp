@@ -1303,7 +1303,7 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
 const llvm::Type *X86_64ABIInfo::
 GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
                    QualType SourceTy, unsigned SourceOffset) const {
-  // The only two choices we have are either double, <2 x float>, or float.  We
+  // The only three choices we have are either double, <2 x float>, or float. We
   // pass as float if the last 4 bytes is just padding.  This happens for
   // structs that contain 3 floats.
   if (BitsContainNoUserData(SourceTy, SourceOffset*8+32,
