@@ -76,6 +76,7 @@ namespace clang {
     void VisitParmVarDecl(ParmVarDecl *D);
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
+    void VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
@@ -839,15 +840,25 @@ void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
   Writer.AddTemplateParameterList(D->getTemplateParameters(), Record);
 }
 
-void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+void PCHDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   VisitTemplateDecl(D);
 
   Record.push_back(D->getIdentifierNamespace());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   if (D->getPreviousDeclaration() == 0) {
-    // This ClassTemplateDecl owns the CommonPtr; write it.
+    // This TemplateDecl owns the CommonPtr; write it.
     assert(D->isCanonicalDecl());
 
+    Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
+    if (D->getInstantiatedFromMemberTemplate())
+      Record.push_back(D->isMemberSpecialization());
+  }
+}
+
+void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  VisitRedeclarableTemplateDecl(D);
+
+  if (D->getPreviousDeclaration() == 0) {
     typedef llvm::FoldingSet<ClassTemplateSpecializationDecl> CTSDSetTy;
     CTSDSetTy &CTSDSet = D->getSpecializations();
     Record.push_back(CTSDSet.size());
@@ -865,10 +876,6 @@ void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     }
 
     // InjectedClassNameType is computed, no need to write it.
-
-    Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
-    if (D->getInstantiatedFromMemberTemplate())
-      Record.push_back(D->isMemberSpecialization());
   }
   Code = pch::DECL_CLASS_TEMPLATE;
 }
@@ -929,10 +936,8 @@ void PCHDeclWriter::VisitClassTemplatePartialSpecializationDecl(
 }
 
 void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-  VisitTemplateDecl(D);
+  VisitRedeclarableTemplateDecl(D);
 
-  Record.push_back(D->getIdentifierNamespace());
-  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   if (D->getPreviousDeclaration() == 0) {
     // This FunctionTemplateDecl owns the CommonPtr; write it.
 
@@ -945,10 +950,6 @@ void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
              "Expected only canonical decls in set");
       Writer.AddDeclRef(I->Function, Record);
     }
-
-    Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
-    if (D->getInstantiatedFromMemberTemplate())
-      Record.push_back(D->isMemberSpecialization());
   }
   Code = pch::DECL_FUNCTION_TEMPLATE;
 }

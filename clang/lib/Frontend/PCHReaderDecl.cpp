@@ -78,6 +78,7 @@ namespace clang {
     void VisitParmVarDecl(ParmVarDecl *PD);
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
+    void VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
@@ -895,14 +896,32 @@ void PCHDeclReader::VisitTemplateDecl(TemplateDecl *D) {
   D->init(TemplatedDecl, TemplateParams);
 }
 
-void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+void PCHDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   VisitTemplateDecl(D);
 
   D->IdentifierNamespace = Record[Idx++];
-  ClassTemplateDecl *PrevDecl =
-      cast_or_null<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
-  D->setPreviousDeclaration(PrevDecl);
+  RedeclarableTemplateDecl *PrevDecl =
+      cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+  assert((PrevDecl == 0 || PrevDecl->getKind() == D->getKind()) &&
+         "PrevDecl kind mismatch");
+  if (PrevDecl)
+    D->CommonOrPrev = PrevDecl;
   if (PrevDecl == 0) {
+    if (RedeclarableTemplateDecl *RTD
+          = cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {
+      assert(RTD->getKind() == D->getKind() &&
+             "InstantiatedFromMemberTemplate kind mismatch");
+      D->setInstantiatedFromMemberTemplateImpl(RTD);
+      if (Record[Idx++])
+        D->setMemberSpecialization();
+    }
+  }
+}
+
+void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  VisitRedeclarableTemplateDecl(D);
+
+  if (D->getPreviousDeclaration() == 0) {
     // This ClassTemplateDecl owns a CommonPtr; read it.
 
     // FoldingSets are filled in VisitClassTemplateSpecializationDecl.
@@ -916,13 +935,6 @@ void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
                                                  Reader.GetDecl(Record[Idx++]));
 
     // InjectedClassNameType is computed.
-
-    if (ClassTemplateDecl *CTD
-          = cast_or_null<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {
-      D->setInstantiatedFromMemberTemplate(CTD);
-      if (Record[Idx++])
-        D->setMemberSpecialization();
-    }
   }
 }
 
@@ -993,13 +1005,9 @@ void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
 }
 
 void PCHDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-  VisitTemplateDecl(D);
+  VisitRedeclarableTemplateDecl(D);
 
-  D->IdentifierNamespace = Record[Idx++];
-  FunctionTemplateDecl *PrevDecl =
-      cast_or_null<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]));
-  D->setPreviousDeclaration(PrevDecl);
-  if (PrevDecl == 0) {
+  if (D->getPreviousDeclaration() == 0) {
     // This FunctionTemplateDecl owns a CommonPtr; read it.
 
     // Read the function specialization declarations.
@@ -1008,13 +1016,6 @@ void PCHDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     unsigned NumSpecs = Record[Idx++];
     while (NumSpecs--)
       Reader.GetDecl(Record[Idx++]);
-
-    if (FunctionTemplateDecl *CTD
-          = cast_or_null<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {
-      D->setInstantiatedFromMemberTemplate(CTD);
-      if (Record[Idx++])
-        D->setMemberSpecialization();
-    }
   }
 }
 

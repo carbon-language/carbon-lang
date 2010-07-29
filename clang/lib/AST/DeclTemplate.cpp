@@ -84,6 +84,29 @@ unsigned TemplateParameterList::getDepth() const {
 }
 
 //===----------------------------------------------------------------------===//
+// RedeclarableTemplateDecl Implementation
+//===----------------------------------------------------------------------===//
+
+RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
+  // Find the first declaration of this function template.
+  RedeclarableTemplateDecl *First = getCanonicalDecl();
+
+  if (First->CommonOrPrev.isNull()) {
+    CommonBase *CommonPtr = First->newCommon();
+    First->CommonOrPrev = CommonPtr;
+  }
+  return First->CommonOrPrev.get<CommonBase*>();
+}
+
+
+RedeclarableTemplateDecl *RedeclarableTemplateDecl::getCanonicalDeclImpl() {
+  RedeclarableTemplateDecl *Tmpl = this;
+  while (Tmpl->getPreviousDeclaration())
+    Tmpl = Tmpl->getPreviousDeclaration();
+  return Tmpl;
+}
+
+//===----------------------------------------------------------------------===//
 // FunctionTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -100,6 +123,12 @@ FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C,
   return new (C) FunctionTemplateDecl(DC, L, Name, Params, Decl);
 }
 
+RedeclarableTemplateDecl::CommonBase *FunctionTemplateDecl::newCommon() {
+  Common *CommonPtr = new (getASTContext()) Common;
+  getASTContext().AddDeallocation(DeallocateCommon, CommonPtr);
+  return CommonPtr;
+}
+
 FunctionDecl *
 FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
                                          unsigned NumArgs, void *&InsertPos) {
@@ -110,40 +139,12 @@ FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
   return Info ? Info->Function->getMostRecentDeclaration() : 0;
 }
 
-FunctionTemplateDecl *FunctionTemplateDecl::getCanonicalDecl() {
-  FunctionTemplateDecl *FunTmpl = this;
-  while (FunTmpl->getPreviousDeclaration())
-    FunTmpl = FunTmpl->getPreviousDeclaration();
-  return FunTmpl;
-}
-
-FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
-  // Find the first declaration of this function template.
-  FunctionTemplateDecl *First = this;
-  while (First->getPreviousDeclaration())
-    First = First->getPreviousDeclaration();
-
-  if (First->CommonOrPrev.isNull()) {
-    Common *CommonPtr = new (getASTContext()) Common;
-    getASTContext().AddDeallocation(DeallocateCommon, CommonPtr);
-    First->CommonOrPrev = CommonPtr;
-  }
-  return First->CommonOrPrev.get<Common*>();
-}
-
 //===----------------------------------------------------------------------===//
 // ClassTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
 
 void ClassTemplateDecl::DeallocateCommon(void *Ptr) {
   static_cast<Common *>(Ptr)->~Common();
-}
-
-ClassTemplateDecl *ClassTemplateDecl::getCanonicalDecl() {
-  ClassTemplateDecl *Template = this;
-  while (Template->getPreviousDeclaration())
-    Template = Template->getPreviousDeclaration();
-  return Template;
 }
 
 ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
@@ -156,6 +157,12 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
   ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
   New->setPreviousDeclaration(PrevDecl);
   return New;
+}
+
+RedeclarableTemplateDecl::CommonBase *ClassTemplateDecl::newCommon() {
+  Common *CommonPtr = new (getASTContext()) Common;
+  getASTContext().AddDeallocation(DeallocateCommon, CommonPtr);
+  return CommonPtr;
 }
 
 ClassTemplateSpecializationDecl *
@@ -261,20 +268,6 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
                                             &TemplateArgs[0],
                                             TemplateArgs.size());
   return CommonPtr->InjectedClassNameType;
-}
-
-ClassTemplateDecl::Common *ClassTemplateDecl::getCommonPtr() {
-  // Find the first declaration of this function template.
-  ClassTemplateDecl *First = this;
-  while (First->getPreviousDeclaration())
-    First = First->getPreviousDeclaration();
-
-  if (First->CommonOrPrev.isNull()) {
-    Common *CommonPtr = new (getASTContext()) Common;
-    getASTContext().AddDeallocation(DeallocateCommon, CommonPtr);
-    First->CommonOrPrev = CommonPtr;
-  }
-  return First->CommonOrPrev.get<Common*>();
 }
 
 //===----------------------------------------------------------------------===//
