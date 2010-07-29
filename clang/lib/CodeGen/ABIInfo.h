@@ -52,7 +52,7 @@ namespace clang {
       Ignore,    /// Ignore the argument (treat as void). Useful for
                  /// void and empty structs.
 
-       Expand,    /// Only valid for aggregate argument types. The
+      Expand,    /// Only valid for aggregate argument types. The
                  /// structure should be expanded into consecutive
                  /// arguments for its constituent fields. Currently
                  /// expand is only allowed on structures whose fields

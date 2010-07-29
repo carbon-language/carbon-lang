@@ -636,7 +636,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic,
     }
 
     case ABIArgInfo::Extend:
-    case ABIArgInfo::Direct:
+    case ABIArgInfo::Direct: {
       // If the coerce-to type is a first class aggregate, flatten it.  Either
       // way is semantically identical, but fast-isel and the optimizer
       // generally likes scalar values better than FCAs.
@@ -648,6 +648,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic,
         ArgTys.push_back(ArgTy);
       }
       break;
+    }
 
     case ABIArgInfo::Expand:
       GetExpandedTypes(it->type, ArgTys, IsRecursive);
