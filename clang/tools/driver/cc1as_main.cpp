@@ -254,26 +254,25 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     return false;
   }
 
-  OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
-  OwningPtr<TargetAsmBackend> TAB;
 
   if (Opts.OutputType == AssemblerInvocation::FT_Asm) {
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(Opts.OutputAsmVariant, *MAI);
+    MCCodeEmitter *CE = 0;
     if (Opts.ShowEncoding)
-      CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
+      CE = TheTarget->createCodeEmitter(*TM, Ctx);
     Str.reset(createAsmStreamer(Ctx, *Out,TM->getTargetData()->isLittleEndian(),
-                                /*asmverbose*/true, IP, CE.get(),
-                                Opts.ShowInst));
+                                /*asmverbose*/true, IP, CE, Opts.ShowInst));
   } else if (Opts.OutputType == AssemblerInvocation::FT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {
     assert(Opts.OutputType == AssemblerInvocation::FT_Obj &&
            "Invalid file type!");
-    CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
-    TAB.reset(TheTarget->createAsmBackend(Opts.Triple));
-    Str.reset(createMachOStreamer(Ctx, *TAB, *Out, CE.get(), Opts.RelaxAll));
+    MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM, Ctx);
+    TargetAsmBackend *TAB = TheTarget->createAsmBackend(Opts.Triple);
+    Str.reset(TheTarget->createObjectStreamer(Opts.Triple, Ctx, *TAB, *Out,
+                                              CE, Opts.RelaxAll));
   }
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
