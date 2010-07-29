@@ -549,7 +549,7 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
       {
         Instruction *L = &*LI, *R = &*RI;
         DifferenceEngine::Context C(Engine, L, R);
-        diff(L, R, false, true); // unify successors
+        diff(L, R, true, true); // complain and unify successors
         Values[L] = R; // make non-tentative
         Diff.addMatch(L, R);
       }
