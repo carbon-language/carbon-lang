@@ -504,15 +504,6 @@ public:
 
   void EmitVTable(CXXRecordDecl *Class, bool DefinitionRequired);
 
-  enum GVALinkage {
-    GVA_Internal,
-    GVA_C99Inline,
-    GVA_CXXInline,
-    GVA_StrongExternal,
-    GVA_TemplateInstantiation,
-    GVA_ExplicitTemplateInstantiation
-  };
-
   llvm::GlobalVariable::LinkageTypes
   getFunctionLinkage(const FunctionDecl *FD);
 

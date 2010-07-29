@@ -1339,6 +1339,17 @@ public:
   /// when it is called.
   void AddDeallocation(void (*Callback)(void*), void *Data);
 
+  GVALinkage GetGVALinkageForFunction(const FunctionDecl *FD);
+  GVALinkage GetGVALinkageForVariable(const VarDecl *VD);
+
+  /// \brief Determines if the decl can be CodeGen'ed or deserialized from PCH
+  /// lazily, only when used; this is only relevant for function or file scoped
+  /// var definitions.
+  ///
+  /// \returns true if the function/var must be CodeGen'ed/deserialized even if
+  /// it is not used.
+  bool DeclIsRequiredFunctionOrFileScopedVar(const Decl *D);
+
   //===--------------------------------------------------------------------===//
   //                    Statistics
   //===--------------------------------------------------------------------===//

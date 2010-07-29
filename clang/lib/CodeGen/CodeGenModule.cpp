@@ -322,68 +322,9 @@ void CodeGenModule::EmitAnnotations() {
   gv->setSection("llvm.metadata");
 }
 
-static CodeGenModule::GVALinkage
-GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
-                      const LangOptions &Features) {
-  CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
-
-  Linkage L = FD->getLinkage();
-  if (L == ExternalLinkage && Context.getLangOptions().CPlusPlus &&
-      FD->getType()->getLinkage() == UniqueExternalLinkage)
-    L = UniqueExternalLinkage;
-  
-  switch (L) {
-  case NoLinkage:
-  case InternalLinkage:
-  case UniqueExternalLinkage:
-    return CodeGenModule::GVA_Internal;
-    
-  case ExternalLinkage:
-    switch (FD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      External = CodeGenModule::GVA_StrongExternal;
-      break;
-
-    case TSK_ExplicitInstantiationDefinition:
-      return CodeGenModule::GVA_ExplicitTemplateInstantiation;
-
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ImplicitInstantiation:
-      External = CodeGenModule::GVA_TemplateInstantiation;
-      break;
-    }
-  }
-
-  if (!FD->isInlined())
-    return External;
-    
-  if (!Features.CPlusPlus || FD->hasAttr<GNUInlineAttr>()) {
-    // GNU or C99 inline semantics. Determine whether this symbol should be
-    // externally visible.
-    if (FD->isInlineDefinitionExternallyVisible())
-      return External;
-
-    // C99 inline semantics, where the symbol is not externally visible.
-    return CodeGenModule::GVA_C99Inline;
-  }
-
-  // C++0x [temp.explicit]p9:
-  //   [ Note: The intent is that an inline function that is the subject of 
-  //   an explicit instantiation declaration will still be implicitly 
-  //   instantiated when used so that the body can be considered for 
-  //   inlining, but that no out-of-line copy of the inline function would be
-  //   generated in the translation unit. -- end note ]
-  if (FD->getTemplateSpecializationKind() 
-                                       == TSK_ExplicitInstantiationDeclaration)
-    return CodeGenModule::GVA_C99Inline;
-
-  return CodeGenModule::GVA_CXXInline;
-}
-
 llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
-  GVALinkage Linkage = GetLinkageForFunction(getContext(), D, Features);
+  GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
   if (Linkage == GVA_Internal)
     return llvm::Function::InternalLinkage;
@@ -641,102 +582,12 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
   return llvm::ConstantStruct::get(VMContext, Fields, 4, false);
 }
 
-static CodeGenModule::GVALinkage
-GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
-  // If this is a static data member, compute the kind of template
-  // specialization. Otherwise, this variable is not part of a
-  // template.
-  TemplateSpecializationKind TSK = TSK_Undeclared;
-  if (VD->isStaticDataMember())
-    TSK = VD->getTemplateSpecializationKind();
-
-  Linkage L = VD->getLinkage();
-  if (L == ExternalLinkage && Context.getLangOptions().CPlusPlus &&
-      VD->getType()->getLinkage() == UniqueExternalLinkage)
-    L = UniqueExternalLinkage;
-
-  switch (L) {
-  case NoLinkage:
-  case InternalLinkage:
-  case UniqueExternalLinkage:
-    return CodeGenModule::GVA_Internal;
-
-  case ExternalLinkage:
-    switch (TSK) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      return CodeGenModule::GVA_StrongExternal;
-
-    case TSK_ExplicitInstantiationDeclaration:
-      llvm_unreachable("Variable should not be instantiated");
-      // Fall through to treat this like any other instantiation.
-        
-    case TSK_ExplicitInstantiationDefinition:
-      return CodeGenModule::GVA_ExplicitTemplateInstantiation;
-
-    case TSK_ImplicitInstantiation:
-      return CodeGenModule::GVA_TemplateInstantiation;      
-    }
-  }
-
-  return CodeGenModule::GVA_StrongExternal;
-}
-
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
-  // Never defer when EmitAllDecls is specified or the decl has
-  // attribute used.
-  if (Features.EmitAllDecls || Global->hasAttr<UsedAttr>())
+  // Never defer when EmitAllDecls is specified.
+  if (Features.EmitAllDecls)
     return false;
 
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
-    // Constructors and destructors should never be deferred.
-    if (FD->hasAttr<ConstructorAttr>() ||
-        FD->hasAttr<DestructorAttr>())
-      return false;
-
-    // The key function for a class must never be deferred.
-    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Global)) {
-      const CXXRecordDecl *RD = MD->getParent();
-      if (MD->isOutOfLine() && RD->isDynamicClass()) {
-        const CXXMethodDecl *KeyFunction = getContext().getKeyFunction(RD);
-        if (KeyFunction && 
-            KeyFunction->getCanonicalDecl() == MD->getCanonicalDecl())
-          return false;
-      }
-    }
-
-    GVALinkage Linkage = GetLinkageForFunction(getContext(), FD, Features);
-
-    // static, static inline, always_inline, and extern inline functions can
-    // always be deferred.  Normal inline functions can be deferred in C99/C++.
-    // Implicit template instantiations can also be deferred in C++.
-    if (Linkage == GVA_Internal || Linkage == GVA_C99Inline ||
-        Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
-      return true;
-    return false;
-  }
-
-  const VarDecl *VD = cast<VarDecl>(Global);
-  assert(VD->isFileVarDecl() && "Invalid decl");
-
-  // We never want to defer structs that have non-trivial constructors or 
-  // destructors.
-  
-  // FIXME: Handle references.
-  if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
-    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor())
-        return false;
-    }
-  }
-      
-  GVALinkage L = GetLinkageForVariable(getContext(), VD);
-  if (L == GVA_Internal || L == GVA_TemplateInstantiation) {
-    if (!(VD->getInit() && VD->getInit()->HasSideEffects(Context)))
-      return true;
-  }
-
-  return false;
+  return !getContext().DeclIsRequiredFunctionOrFileScopedVar(Global);
 }
 
 llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
@@ -1271,7 +1122,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
 
   // Set the llvm linkage type as appropriate.
-  GVALinkage Linkage = GetLinkageForVariable(getContext(), D);
+  GVALinkage Linkage = getContext().GetGVALinkageForVariable(D);
   if (Linkage == GVA_Internal)
     GV->setLinkage(llvm::Function::InternalLinkage);
   else if (D->hasAttr<DLLImportAttr>())

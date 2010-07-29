@@ -1081,63 +1081,12 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
 /// clients to use a separate API call to "realize" the decl. This should be
 /// relatively painless since they would presumably only do it for top-level
 /// decls.
-//
-// FIXME: This predicate is essentially IRgen's predicate to determine whether a
-// declaration can be deferred. Merge them somehow.
 static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
   // File scoped assembly must be seen.
   if (isa<FileScopeAsmDecl>(D))
     return true;
 
-  // Otherwise if this isn't a function or a file scoped variable it doesn't
-  // need to be seen.
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    if (!VD->isFileVarDecl())
-      return false;
-  } else if (!isa<FunctionDecl>(D))
-    return false;
-
-  // Aliases and used decls must be seen.
-  if (D->hasAttr<AliasAttr>() || D->hasAttr<UsedAttr>())
-    return true;
-
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // Forward declarations don't need to be seen.
-    if (!FD->isThisDeclarationADefinition())
-      return false;
-
-    // Constructors and destructors must be seen.
-    if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
-      return true;
-
-    // Otherwise, this is required unless it is static.
-    //
-    // FIXME: Inlines.
-    return FD->getStorageClass() != FunctionDecl::Static;
-  } else {
-    const VarDecl *VD = cast<VarDecl>(D);
-
-    // Structs that have non-trivial constructors or destructors must be seen.
-    if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
-      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-        if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor())
-          return true;
-      }
-    }
-
-    // In C++, this doesn't need to be seen if it is marked "extern".
-    if (Context.getLangOptions().CPlusPlus && !VD->getInit() &&
-        (VD->getStorageClass() == VarDecl::Extern ||
-         VD->isExternC()))
-      return false;
-
-    // In C, this doesn't need to be seen unless it is a definition.
-    if (!Context.getLangOptions().CPlusPlus && !VD->getInit())
-      return false;
-
-    // Otherwise, this is required unless it is static.
-    return VD->getStorageClass() != VarDecl::Static;
-  }
+  return Context.DeclIsRequiredFunctionOrFileScopedVar(D);
 }
 
 void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {

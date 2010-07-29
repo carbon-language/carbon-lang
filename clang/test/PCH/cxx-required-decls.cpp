@@ -6,3 +6,4 @@
 // RUN: %clang_cc1 -include-pch %t %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: @_ZL5globS = internal global %struct.S zeroinitializer
+// CHECK: @_ZL3bar = internal global i32 0, align 4

@@ -41,6 +41,17 @@ enum Linkage {
   ExternalLinkage
 };
 
+/// \brief A more specific kind of linkage. This is relevant to CodeGen and
+/// PCH reading.
+enum GVALinkage {
+  GVA_Internal,
+  GVA_C99Inline,
+  GVA_CXXInline,
+  GVA_StrongExternal,
+  GVA_TemplateInstantiation,
+  GVA_ExplicitTemplateInstantiation
+};
+
 /// \brief Determine whether the given linkage is semantically
 /// external.
 inline bool isExternalLinkage(Linkage L) {

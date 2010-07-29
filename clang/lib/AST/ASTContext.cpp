@@ -5445,3 +5445,163 @@ ASTContext::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
   }
   return destType;
 }
+
+GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) {
+  GVALinkage External = GVA_StrongExternal;
+
+  Linkage L = FD->getLinkage();
+  if (L == ExternalLinkage && getLangOptions().CPlusPlus &&
+      FD->getType()->getLinkage() == UniqueExternalLinkage)
+    L = UniqueExternalLinkage;
+  
+  switch (L) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    return GVA_Internal;
+    
+  case ExternalLinkage:
+    switch (FD->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      External = GVA_StrongExternal;
+      break;
+
+    case TSK_ExplicitInstantiationDefinition:
+      return GVA_ExplicitTemplateInstantiation;
+
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ImplicitInstantiation:
+      External = GVA_TemplateInstantiation;
+      break;
+    }
+  }
+
+  if (!FD->isInlined())
+    return External;
+    
+  if (!getLangOptions().CPlusPlus || FD->hasAttr<GNUInlineAttr>()) {
+    // GNU or C99 inline semantics. Determine whether this symbol should be
+    // externally visible.
+    if (FD->isInlineDefinitionExternallyVisible())
+      return External;
+
+    // C99 inline semantics, where the symbol is not externally visible.
+    return GVA_C99Inline;
+  }
+
+  // C++0x [temp.explicit]p9:
+  //   [ Note: The intent is that an inline function that is the subject of 
+  //   an explicit instantiation declaration will still be implicitly 
+  //   instantiated when used so that the body can be considered for 
+  //   inlining, but that no out-of-line copy of the inline function would be
+  //   generated in the translation unit. -- end note ]
+  if (FD->getTemplateSpecializationKind() 
+                                       == TSK_ExplicitInstantiationDeclaration)
+    return GVA_C99Inline;
+
+  return GVA_CXXInline;
+}
+
+GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
+  // If this is a static data member, compute the kind of template
+  // specialization. Otherwise, this variable is not part of a
+  // template.
+  TemplateSpecializationKind TSK = TSK_Undeclared;
+  if (VD->isStaticDataMember())
+    TSK = VD->getTemplateSpecializationKind();
+
+  Linkage L = VD->getLinkage();
+  if (L == ExternalLinkage && getLangOptions().CPlusPlus &&
+      VD->getType()->getLinkage() == UniqueExternalLinkage)
+    L = UniqueExternalLinkage;
+
+  switch (L) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    return GVA_Internal;
+
+  case ExternalLinkage:
+    switch (TSK) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      return GVA_StrongExternal;
+
+    case TSK_ExplicitInstantiationDeclaration:
+      llvm_unreachable("Variable should not be instantiated");
+      // Fall through to treat this like any other instantiation.
+        
+    case TSK_ExplicitInstantiationDefinition:
+      return GVA_ExplicitTemplateInstantiation;
+
+    case TSK_ImplicitInstantiation:
+      return GVA_TemplateInstantiation;      
+    }
+  }
+
+  return GVA_StrongExternal;
+}
+
+bool ASTContext::DeclIsRequiredFunctionOrFileScopedVar(const Decl *D) {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (!VD->isFileVarDecl())
+      return false;
+  } else if (!isa<FunctionDecl>(D))
+    return false;
+
+  // Aliases and used decls are required.
+  if (D->hasAttr<AliasAttr>() || D->hasAttr<UsedAttr>())
+    return true;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Forward declarations aren't required.
+    if (!FD->isThisDeclarationADefinition())
+      return false;
+
+    // Constructors and destructors are required.
+    if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
+      return true;
+    
+    // The key function for a class is required.
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      const CXXRecordDecl *RD = MD->getParent();
+      if (MD->isOutOfLine() && RD->isDynamicClass()) {
+        const CXXMethodDecl *KeyFunc = getKeyFunction(RD);
+        if (KeyFunc && KeyFunc->getCanonicalDecl() == MD->getCanonicalDecl())
+          return true;
+      }
+    }
+
+    GVALinkage Linkage = GetGVALinkageForFunction(FD);
+
+    // static, static inline, always_inline, and extern inline functions can
+    // always be deferred.  Normal inline functions can be deferred in C99/C++.
+    // Implicit template instantiations can also be deferred in C++.
+    if (Linkage == GVA_Internal  || Linkage == GVA_C99Inline ||
+        Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
+      return false;
+    return true;
+  }
+
+  const VarDecl *VD = cast<VarDecl>(D);
+  assert(VD->isFileVarDecl() && "Expected file scoped var");
+
+  // Structs that have non-trivial constructors or destructors are required.
+
+  // FIXME: Handle references.
+  if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor())
+        return true;
+    }
+  }
+
+  GVALinkage L = GetGVALinkageForVariable(VD);
+  if (L == GVA_Internal || L == GVA_TemplateInstantiation) {
+    if (!(VD->getInit() && VD->getInit()->HasSideEffects(*this)))
+      return false;
+  }
+
+  return true;
+}
