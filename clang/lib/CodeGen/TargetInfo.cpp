@@ -1297,6 +1297,35 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
   return false;
 }
 
+/// ContainsFloatAtOffset - Return true if the specified LLVM IR type has a
+/// float member at the specified offset.  For example, {int,{float}} has a
+/// float at offset 4.  It is conservatively correct for this routine to return
+/// false.
+static bool ContainsFloatAtOffset(const llvm::Type *IRType, unsigned IROffset,
+                                  const llvm::TargetData &TD) {
+  // Base case if we find a float.
+  if (IROffset == 0 && IRType->isFloatTy())
+    return true;
+    
+  // If this is a struct, recurse into the field at the specified offset.
+  if (const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType)) {
+    const llvm::StructLayout *SL = TD.getStructLayout(STy);
+    unsigned Elt = SL->getElementContainingOffset(IROffset);
+    IROffset -= SL->getElementOffset(Elt);
+    return ContainsFloatAtOffset(STy->getElementType(Elt), IROffset, TD);
+  }
+  
+  // If this is an array, recurse into the field at the specified offset.
+  if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(IRType)) {
+    const llvm::Type *EltTy = ATy->getElementType();
+    unsigned EltSize = TD.getTypeAllocSize(EltTy);
+    IROffset -= IROffset/EltSize*EltSize;
+    return ContainsFloatAtOffset(EltTy, IROffset, TD);
+  }
+
+  return false;
+}
+
 
 /// GetSSETypeAtOffset - Return a type that will be passed by the backend in the
 /// low 8 bytes of an XMM register, corresponding to the SSE class.
@@ -1310,9 +1339,16 @@ GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
                             SourceOffset*8+64, getContext()))
     return llvm::Type::getFloatTy(getVMContext());
   
-  // FIXME: <2 x float> doesn't pass as one XMM register yet.  Don't enable this
-  // code until it does.
-  //return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2); 
+  // We want to pass as <2 x float> if the LLVM IR type contains a float at
+  // offset+0 and offset+4.  Walk the LLVM IR type to find out if this is the
+  // case.
+  if (ContainsFloatAtOffset(IRType, IROffset, getTargetData()) &&
+      ContainsFloatAtOffset(IRType, IROffset+4, getTargetData())) {
+    // FIXME: <2 x float> doesn't pass as one XMM register yet.  Don't enable
+    // this code until it does.
+    //return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2); 
+    
+  }
   
   return llvm::Type::getDoubleTy(getVMContext());
 }
