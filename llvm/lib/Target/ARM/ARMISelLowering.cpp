@@ -4221,30 +4221,43 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
   return SDValue();
 }
 
-/// PerformADDCombine - Target-specific dag combine xforms for ISD::ADD.
-static SDValue PerformADDCombine(SDNode *N,
-                                 TargetLowering::DAGCombinerInfo &DCI) {
-  // added by evan in r37685 with no testcase.
-  SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
-
+/// PerformADDCombineWithOperands - Try DAG combinations for an ADD with
+/// operands N0 and N1.  This is a helper for PerformADDCombine that is
+/// called with the default operands, and if that fails, with commuted
+/// operands.
+static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
+                                         TargetLowering::DAGCombinerInfo &DCI) {
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
   if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N0, N1, DCI);
-    if (Result.getNode()) return Result;
-  }
-  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N1, N0, DCI);
     if (Result.getNode()) return Result;
   }
 
   return SDValue();
 }
 
+/// PerformADDCombine - Target-specific dag combine xforms for ISD::ADD.
+///
+static SDValue PerformADDCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  // First try with the default operand order.
+  SDValue Result = PerformADDCombineWithOperands(N, N0, N1, DCI);
+  if (Result.getNode())
+    return Result;
+
+  // If that didn't work, try again with the operands commuted.
+  return PerformADDCombineWithOperands(N, N1, N0, DCI);
+}
+
 /// PerformSUBCombine - Target-specific dag combine xforms for ISD::SUB.
+///
 static SDValue PerformSUBCombine(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI) {
-  // added by evan in r37685 with no testcase.
-  SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
 
   // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
   if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
