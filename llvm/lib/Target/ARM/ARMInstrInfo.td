@@ -1714,24 +1714,26 @@ def : ARMPat<(adde   GPR:$src, so_imm_not:$imm),
 
 // ARM Arithmetic Instruction -- for disassembly only
 // GPR:$dst = GPR:$a op GPR:$b
-class AAI<bits<8> op27_20, bits<4> op7_4, string opc>
+class AAI<bits<8> op27_20, bits<4> op7_4, string opc,
+          list<dag> pattern = [/* For disassembly only; pattern left blank */]>
   : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, IIC_iALUr,
-       opc, "\t$dst, $a, $b",
-       [/* For disassembly only; pattern left blank */]> {
+       opc, "\t$dst, $a, $b", pattern> {
   let Inst{27-20} = op27_20;
   let Inst{7-4} = op7_4;
 }
 
 // Saturating add/subtract -- for disassembly only
 
-def QADD    : AAI<0b00010000, 0b0101, "qadd">;
+def QADD    : AAI<0b00010000, 0b0101, "qadd",
+                  [(set GPR:$dst, (int_arm_qadd GPR:$a, GPR:$b))]>;
 def QADD16  : AAI<0b01100010, 0b0001, "qadd16">;
 def QADD8   : AAI<0b01100010, 0b1001, "qadd8">;
 def QASX    : AAI<0b01100010, 0b0011, "qasx">;
 def QDADD   : AAI<0b00010100, 0b0101, "qdadd">;
 def QDSUB   : AAI<0b00010110, 0b0101, "qdsub">;
 def QSAX    : AAI<0b01100010, 0b0101, "qsax">;
-def QSUB    : AAI<0b00010010, 0b0101, "qsub">;
+def QSUB    : AAI<0b00010010, 0b0101, "qsub",
+                  [(set GPR:$dst, (int_arm_qsub GPR:$a, GPR:$b))]>;
 def QSUB16  : AAI<0b01100010, 0b0111, "qsub16">;
 def QSUB8   : AAI<0b01100010, 0b1111, "qsub8">;
 def UQADD16 : AAI<0b01100110, 0b0001, "uqadd16">;
