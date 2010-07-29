@@ -1110,11 +1110,6 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 
 ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
                                           const llvm::Type *CoerceTo) const {
-  // If this is a pointer passed as a pointer, just pass it directly.
-  if ((isa<llvm::PointerType>(CoerceTo) || CoerceTo->isIntegerTy(64)) &&
-      Ty->hasPointerRepresentation())
-    return ABIArgInfo::getExtend();
-  
   if (isa<llvm::IntegerType>(CoerceTo)) {
     // Integer and pointer types will end up in a general purpose
     // register.
