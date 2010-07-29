@@ -255,8 +255,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
   }
   
   // Compute ABI information.
-  getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext(),
-                           PreferredArgTypes.data(), PreferredArgTypes.size());
+  getABIInfo().computeInfo(*FI, PreferredArgTypes.data(),
+                           PreferredArgTypes.size());
 
   // If this is a top-level call and ConvertTypeRecursive hit unresolved pointer
   // types, resolve them now.  These pointers may point to this function, which

@@ -140,8 +140,6 @@ namespace clang {
     const llvm::TargetData &getTargetData() const;
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI,
-                             ASTContext &Ctx,
-                             llvm::LLVMContext &VMContext,
                              // This is the preferred type for argument lowering
                              // which can be used to generate better IR.
                              const llvm::Type *const *PrefTypes = 0,
