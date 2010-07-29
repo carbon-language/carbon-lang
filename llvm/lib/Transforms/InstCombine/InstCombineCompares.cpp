@@ -1374,7 +1374,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       case Instruction::Or:
         // If bits are being or'd in that are not present in the constant we
         // are comparing against, then the comparison could never succeed!
-        if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1))) {
+        if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1))) {
           Constant *NotCI = ConstantExpr::getNot(RHS);
           if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
             return ReplaceInstUsesWith(ICI,
