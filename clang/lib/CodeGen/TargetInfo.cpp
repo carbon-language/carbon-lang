@@ -1127,21 +1127,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
      
-  } else if (CoerceTo->isDoubleTy()) {
-    assert(Ty.isCanonical() && "should always have a canonical type here");
-    assert(!Ty.hasQualifiers() && "should never have a qualified type here");
-
-    // Float and double end up in a single SSE reg.
-    if (Ty == getContext().FloatTy || Ty == getContext().DoubleTy)
-      return ABIArgInfo::getDirect();
-
-    // If this is a 32-bit structure that is passed as a double, then it will be
-    // passed in the low 32-bits of the XMM register, which is the same as how a
-    // float is passed.  Coerce to a float instead of a double.
-    if (getContext().getTypeSizeInChars(Ty).getQuantity() == 4)
-      CoerceTo = llvm::Type::getFloatTy(CoerceTo->getContext());
   }
-
   return ABIArgInfo::getDirect(CoerceTo);
 }
 
