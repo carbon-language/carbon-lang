@@ -140,8 +140,8 @@ namespace llvm {
   /// StackAlignment - Override default stack alignment for target.
   extern unsigned StackAlignment;
 
-  /// RealignStack - This flag indicates, whether stack should be automatically
-  /// realigned, if needed.
+  /// RealignStack - This flag indicates whether the stack should be
+  /// automatically realigned, if needed.
   extern bool RealignStack;
 
   /// DisableJumpTables - This flag indicates jump tables should not be 
