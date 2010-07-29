@@ -605,7 +605,7 @@ struct PragmaDebugHandler : public PragmaHandler {
   }
 
   void DebugCrash() {
-    abort();
+    *(int*) 0x11 = 0;
   }
 };
 
