@@ -289,7 +289,7 @@ public: // Part of public interface to class.
   Store BindArray(Store store, const TypedRegion* R, SVal V);
 
   /// KillStruct - Set the entire struct to unknown.
-  Store KillStruct(Store store, const TypedRegion* R);
+  Store KillStruct(Store store, const TypedRegion* R, SVal DefaultVal);
 
   Store Remove(Store store, Loc LV);
 
@@ -1560,10 +1560,11 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
   if (const nonloc::LazyCompoundVal *LCV=dyn_cast<nonloc::LazyCompoundVal>(&V))
     return CopyLazyBindings(*LCV, store, R);
 
-  // We may get non-CompoundVal accidentally due to imprecise cast logic.
-  // Ignore them and kill the field values.
+  // We may get non-CompoundVal accidentally due to imprecise cast logic or
+  // that we are binding symbolic struct value. Kill the field values, and if
+  // the value is symbolic go and bind it as a "default" binding.
   if (V.isUnknown() || !isa<nonloc::CompoundVal>(V))
-    return KillStruct(store, R);
+    return KillStruct(store, R, isa<nonloc::SymbolVal>(V) ? V : UnknownVal());
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
@@ -1596,14 +1597,15 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
   return store;
 }
 
-Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R) {
+Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
+                                     SVal DefaultVal) {
   RegionBindings B = GetRegionBindings(store);
   llvm::OwningPtr<RegionStoreSubRegionMap>
     SubRegions(getRegionStoreSubRegionMap(store));
   RemoveSubRegionBindings(B, R, *SubRegions);
 
   // Set the default value of the struct region to "unknown".
-  return Add(B, R, BindingKey::Default, UnknownVal()).getRoot();
+  return Add(B, R, BindingKey::Default, DefaultVal).getRoot();
 }
 
 Store RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,

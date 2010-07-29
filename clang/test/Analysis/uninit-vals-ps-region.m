@@ -42,7 +42,7 @@ void test_uninit_pos_3() {
 void test_uninit_neg() {
   struct TestUninit v1 = { 0, 0 };
   struct TestUninit v2 = test_uninit_aux();
-  test_unit_aux2(v2.x + v1.y); // no-warning
+  test_unit_aux2(v2.x + v1.y); // expected-warning{{The right operand to '+' is always 0}}
 }
 
 extern void test_uninit_struct_arg_aux(struct TestUninit arg);

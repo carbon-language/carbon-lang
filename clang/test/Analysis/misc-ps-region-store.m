@@ -1041,3 +1041,19 @@ void pr_7450() {
   pr_7450_aux(p + 8);
 }
 
+// <rdar://problem/8243408> - Symbolicate struct values returned by value.
+struct s_rdar_8243408 { int x; };
+extern struct s_rdar_8243408 rdar_8243408_aux(void);
+void rdar_8243408(void) {
+  struct s_rdar_8243408 a = { 1 }, *b = 0;
+  while (a.x && !b)
+    a = rdar_8243408_aux();
+
+  // Previously there was a false error here with 'b' being null.
+  (void) (a.x && b->x); // no-warning
+
+  // Introduce a null deref to ensure we are checking this path.
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+}
+
