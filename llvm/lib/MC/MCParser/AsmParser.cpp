@@ -279,6 +279,13 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
 }
 
 AsmParser::~AsmParser() {
+  assert(ActiveMacros.empty() && "Unexpected active macro instantiation!");
+
+  // Destroy any macros.
+  for (StringMap<Macro*>::iterator it = MacroMap.begin(),
+         ie = MacroMap.end(); it != ie; ++it)
+    delete it->getValue();
+
   delete PlatformParser;
   delete GenericParser;
 }
