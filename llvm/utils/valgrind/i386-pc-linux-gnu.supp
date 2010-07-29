@@ -5,3 +5,31 @@
    fun:_ZN83_GLOBAL_*PassRegistrar12RegisterPassERKN4llvm8PassInfoE
    fun:_ZN4llvm8PassInfo12registerPassEv
 }
+
+# Python false positives according to
+# http://svn.python.org/projects/python/trunk/Misc/README.valgrind
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 4
+   Memcheck:Addr4
+   obj:/usr/bin/python2.5
+}
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 4
+   Memcheck:Value4
+   obj:/usr/bin/python2.5
+}
+
+{
+   ADDRESS_IN_RANGE/Conditional jump or move depends on uninitialised value
+   Memcheck:Cond
+   obj:/usr/bin/python2.5
+}
+
+{
+   We don't care if python leaks
+   Memcheck:Leak
+   obj:/usr/bin/python2.5
+}
+
