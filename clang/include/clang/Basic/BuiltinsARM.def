@@ -17,6 +17,8 @@
 // In libgcc
 BUILTIN(__clear_cache, "v.", "")
 BUILTIN(__builtin_thread_pointer, "v*", "")
+BUILTIN(__builtin_arm_qadd, "iii", "nc")
+BUILTIN(__builtin_arm_qsub, "iii", "nc")
 
 // NEON
 #define GET_NEON_BUILTINS
