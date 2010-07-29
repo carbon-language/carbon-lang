@@ -343,6 +343,7 @@ public:
 //  bool VisitSwitchCase(SwitchCase *S);
 
   // Expression visitors
+  bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
@@ -1052,6 +1053,20 @@ bool CursorVisitor::VisitForStmt(ForStmt *S) {
   if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
     return true;
 
+  return false;
+}
+
+bool CursorVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+  if (Visit(MakeCXCursor(E->getArg(0), StmtParent, TU)))
+    return true;
+  
+  if (Visit(MakeCXCursor(E->getCallee(), StmtParent, TU)))
+    return true;
+  
+  for (unsigned I = 1, N = E->getNumArgs(); I != N; ++I)
+    if (Visit(MakeCXCursor(E->getArg(I), StmtParent, TU)))
+      return true;
+  
   return false;
 }
 
