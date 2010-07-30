@@ -93,6 +93,9 @@ static unsigned getRegisterEnum(BO B, unsigned RegClassID, unsigned RawRegister,
     RegClassID = ARM::DPRRegClassID;
   }
 
+  // For this purpose, we can treat rGPR as if it were GPR.
+  if (RegClassID == ARM::rGPRRegClassID) RegClassID = ARM::GPRRegClassID;
+
   // See also decodeNEONRd(), decodeNEONRn(), decodeNEONRm().
   unsigned RegNum =
     RegClassID == ARM::QPRRegClassID ? RawRegister >> 1 : RawRegister;

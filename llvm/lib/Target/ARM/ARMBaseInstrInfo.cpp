@@ -721,8 +721,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                             Align);
 
   // tGPR is used sometimes in ARM instructions that need to avoid using
-  // certain registers.  Just treat it as GPR here.
-  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass)
+  // certain registers.  Just treat it as GPR here. Likewise, rGPR.
+  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass
+      || RC == ARM::rGPRRegisterClass)
     RC = ARM::GPRRegisterClass;
 
   switch (RC->getID()) {
@@ -823,7 +824,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   // tGPR is used sometimes in ARM instructions that need to avoid using
   // certain registers.  Just treat it as GPR here.
-  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass)
+  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass
+      || RC == ARM::rGPRRegisterClass)
     RC = ARM::GPRRegisterClass;
 
   switch (RC->getID()) {

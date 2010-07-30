@@ -318,6 +318,115 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
   }];
 }
 
+// restricted GPR register class. Many Thumb2 instructions allow the full
+// register range for operands, but have undefined behaviours when PC
+// or SP (R13 or R15) are used. The ARM ARM refers to these operands
+// via the BadReg() pseudo-code description.
+def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
+                                            R7, R8, R9, R10, R11, R12, LR]> {
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    // FP is R11, R9 is available.
+    static const unsigned ARM_rGPRAO_1[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
+      ARM::R8, ARM::R9, ARM::R10,
+      ARM::R11 };
+    // FP is R11, R9 is not available.
+    static const unsigned ARM_rGPRAO_2[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
+      ARM::R8, ARM::R10,
+      ARM::R11 };
+    // FP is R7, R9 is available as non-callee-saved register.
+    // This is used by Darwin.
+    static const unsigned ARM_rGPRAO_3[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R9, ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6,
+      ARM::R8, ARM::R10,ARM::R11,ARM::R7 };
+    // FP is R7, R9 is not available.
+    static const unsigned ARM_rGPRAO_4[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6,
+      ARM::R8, ARM::R10,ARM::R11,
+      ARM::R7 };
+    // FP is R7, R9 is available as callee-saved register.
+    // This is used by non-Darwin platform in Thumb mode.
+    static const unsigned ARM_rGPRAO_5[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6,
+      ARM::R8, ARM::R9, ARM::R10,ARM::R11,ARM::R7 };
+
+    // For Thumb1 mode, we don't want to allocate hi regs at all, as we
+    // don't know how to spill them. If we make our prologue/epilogue code
+    // smarter at some point, we can go back to using the above allocation
+    // orders for the Thumb1 instructions that know how to use hi regs.
+    static const unsigned THUMB_rGPRAO[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
+
+    rGPRClass::iterator
+    rGPRClass::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+      if (Subtarget.isThumb1Only())
+        return THUMB_rGPRAO;
+      if (Subtarget.isTargetDarwin()) {
+        if (Subtarget.isR9Reserved())
+          return ARM_rGPRAO_4;
+        else
+          return ARM_rGPRAO_3;
+      } else {
+        if (Subtarget.isR9Reserved())
+          return ARM_rGPRAO_2;
+        else if (Subtarget.isThumb())
+          return ARM_rGPRAO_5;
+        else
+          return ARM_rGPRAO_1;
+      }
+    }
+
+    rGPRClass::iterator
+    rGPRClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+      GPRClass::iterator I;
+
+      if (Subtarget.isThumb1Only()) {
+        I = THUMB_rGPRAO + (sizeof(THUMB_rGPRAO)/sizeof(unsigned));
+        // Mac OS X requires FP not to be clobbered for backtracing purpose.
+        return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+      }
+
+      if (Subtarget.isTargetDarwin()) {
+        if (Subtarget.isR9Reserved())
+          I = ARM_rGPRAO_4 + (sizeof(ARM_rGPRAO_4)/sizeof(unsigned));
+        else
+          I = ARM_rGPRAO_3 + (sizeof(ARM_rGPRAO_3)/sizeof(unsigned));
+      } else {
+        if (Subtarget.isR9Reserved())
+          I = ARM_rGPRAO_2 + (sizeof(ARM_rGPRAO_2)/sizeof(unsigned));
+        else if (Subtarget.isThumb())
+          I = ARM_rGPRAO_5 + (sizeof(ARM_rGPRAO_5)/sizeof(unsigned));
+        else
+          I = ARM_rGPRAO_1 + (sizeof(ARM_rGPRAO_1)/sizeof(unsigned));
+      }
+
+      // Mac OS X requires FP not to be clobbered for backtracing purpose.
+      return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+    }
+  }];
+}
+
 // Thumb registers are R0-R7 normally. Some instructions can still use
 // the general GPR register class above (MOV, e.g.)
 def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {

@@ -103,7 +103,7 @@ static inline unsigned getT1Cond(uint32_t insn) {
 }
 
 static inline bool IsGPR(unsigned RegClass) {
-  return RegClass == ARM::GPRRegClassID;
+  return RegClass == ARM::GPRRegClassID || RegClass == ARM::rGPRRegClassID;
 }
 
 // Utilities for 32-bit Thumb instructions.
@@ -1324,7 +1324,7 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
            && OpInfo[1].RegClass == ARM::GPRRegClassID
            && OpInfo[2].RegClass < 0
            && OpInfo[3].RegClass < 0
-           && "Exactlt 4 operands expect and first two as reg operands");
+           && "Exactly 4 operands expect and first two as reg operands");
     // Only need to populate the src reg operand.
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
@@ -1338,17 +1338,20 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
   OpIdx = 0;
 
   assert(NumOps >= 2
-         && OpInfo[0].RegClass == ARM::GPRRegClassID
-         && OpInfo[1].RegClass == ARM::GPRRegClassID
+         && (OpInfo[0].RegClass == ARM::GPRRegClassID ||
+             OpInfo[0].RegClass == ARM::rGPRRegClassID)
+         && (OpInfo[1].RegClass == ARM::GPRRegClassID ||
+             OpInfo[1].RegClass == ARM::rGPRRegClassID)
          && "Expect >= 2 operands and first two as reg operands");
 
-  bool ThreeReg = (NumOps > 2 && OpInfo[2].RegClass == ARM::GPRRegClassID);
+  bool ThreeReg = (NumOps > 2 && (OpInfo[2].RegClass == ARM::GPRRegClassID ||
+                                  OpInfo[2].RegClass == ARM::rGPRRegClassID));
   bool NoDstReg = (decodeRs(insn) == 0xF);
 
   // Build the register operands, followed by the constant shift specifier.
 
   MI.addOperand(MCOperand::CreateReg(
-                  getRegisterEnum(B, ARM::GPRRegClassID,
+                  getRegisterEnum(B, OpInfo[0].RegClass,
                                   NoDstReg ? decodeRn(insn) : decodeRs(insn))));
   ++OpIdx;
 
@@ -1359,7 +1362,7 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
       MI.addOperand(MI.getOperand(Idx));
       ++OpIdx;
     } else if (!NoDstReg) {
-      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[1].RegClass,
                                                          decodeRn(insn))));
       ++OpIdx;
     } else {
@@ -1368,7 +1371,7 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
     }
   }
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      decodeRm(insn))));
   ++OpIdx;
 
@@ -1416,16 +1419,20 @@ static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
 
   OpIdx = 0;
 
-  assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::GPRRegClassID
+  unsigned RdRegClassID = OpInfo[0].RegClass;
+  assert(NumOps >= 2 && (RdRegClassID == ARM::GPRRegClassID ||
+                         RdRegClassID == ARM::rGPRRegClassID)
          && "Expect >= 2 operands and first one as reg operand");
 
-  bool TwoReg = (OpInfo[1].RegClass == ARM::GPRRegClassID);
+  unsigned RnRegClassID = OpInfo[1].RegClass;
+  bool TwoReg = (RnRegClassID == ARM::GPRRegClassID
+                 || RnRegClassID == ARM::rGPRRegClassID);
   bool NoDstReg = (decodeRs(insn) == 0xF);
 
   // Build the register operands, followed by the modified immediate.
 
   MI.addOperand(MCOperand::CreateReg(
-                  getRegisterEnum(B, ARM::GPRRegClassID,
+                  getRegisterEnum(B, RdRegClassID,
                                   NoDstReg ? decodeRn(insn) : decodeRs(insn))));
   ++OpIdx;
 
@@ -1434,7 +1441,7 @@ static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
       DEBUG(errs()<<"Thumb2 encoding error: d==15 for DPModImm 2-reg instr.\n");
       return false;
     }
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RnRegClassID,
                                                        decodeRn(insn))));
     ++OpIdx;
   }
@@ -1506,14 +1513,18 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
 
   OpIdx = 0;
 
-  assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::GPRRegClassID
+  unsigned RdRegClassID = OpInfo[0].RegClass;
+  assert(NumOps >= 2 && (RdRegClassID == ARM::GPRRegClassID ||
+                         RdRegClassID == ARM::rGPRRegClassID)
          && "Expect >= 2 operands and first one as reg operand");
 
-  bool TwoReg = (OpInfo[1].RegClass == ARM::GPRRegClassID);
+  unsigned RnRegClassID = OpInfo[1].RegClass;
+  bool TwoReg = (RnRegClassID == ARM::GPRRegClassID
+                 || RnRegClassID == ARM::rGPRRegClassID);
 
   // Build the register operand(s), followed by the immediate(s).
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RdRegClassID,
                                                      decodeRs(insn))));
   ++OpIdx;
 
@@ -1521,7 +1532,7 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
   if (Thumb2SaturateOpcode(Opcode)) {
     MI.addOperand(MCOperand::CreateImm(decodeThumb2SaturatePos(Opcode, insn)));
 
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RnRegClassID,
                                                        decodeRn(insn))));
 
     if (Opcode == ARM::t2SSAT16 || Opcode == ARM::t2USAT16) {
@@ -1549,7 +1560,7 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
       MI.addOperand(MI.getOperand(Idx));
     } else {
       // Add src reg operand.
-      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RnRegClassID,
                                                          decodeRn(insn))));
     }
     ++OpIdx;
@@ -1557,7 +1568,7 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
 
   if (Opcode == ARM::t2BFI) {
     // Add val reg operand.
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RnRegClassID,
                                                        decodeRn(insn))));
     ++OpIdx;
   }
@@ -1959,25 +1970,25 @@ static bool DisassembleThumb2DPReg(MCInst &MI, unsigned Opcode, uint32_t insn,
   OpIdx = 0;
 
   assert(NumOps >= 2 &&
-         OpInfo[0].RegClass == ARM::GPRRegClassID &&
-         OpInfo[1].RegClass == ARM::GPRRegClassID &&
+         OpInfo[0].RegClass == ARM::rGPRRegClassID &&
+         OpInfo[1].RegClass == ARM::rGPRRegClassID &&
          "Expect >= 2 operands and first two as reg operands");
 
   // Build the register operands, followed by the optional rotation amount.
 
-  bool ThreeReg = NumOps > 2 && OpInfo[2].RegClass == ARM::GPRRegClassID;
+  bool ThreeReg = NumOps > 2 && OpInfo[2].RegClass == ARM::rGPRRegClassID;
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRs(insn))));
   ++OpIdx;
 
   if (ThreeReg) {
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                        decodeRn(insn))));
     ++OpIdx;
   }
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRm(insn))));
   ++OpIdx;
 
@@ -2009,26 +2020,26 @@ static bool DisassembleThumb2Mul(MCInst &MI, unsigned Opcode, uint32_t insn,
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
 
   assert(NumOps >= 3 &&
-         OpInfo[0].RegClass == ARM::GPRRegClassID &&
-         OpInfo[1].RegClass == ARM::GPRRegClassID &&
-         OpInfo[2].RegClass == ARM::GPRRegClassID &&
+         OpInfo[0].RegClass == ARM::rGPRRegClassID &&
+         OpInfo[1].RegClass == ARM::rGPRRegClassID &&
+         OpInfo[2].RegClass == ARM::rGPRRegClassID &&
          "Expect >= 3 operands and first three as reg operands");
 
   // Build the register operands.
 
-  bool FourReg = NumOps > 3 && OpInfo[3].RegClass == ARM::GPRRegClassID;
+  bool FourReg = NumOps > 3 && OpInfo[3].RegClass == ARM::rGPRRegClassID;
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRs(insn))));
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRn(insn))));
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRm(insn))));
 
   if (FourReg)
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                        decodeRd(insn))));
 
   NumOpsAdded = FourReg ? 4 : 3;
@@ -2054,26 +2065,26 @@ static bool DisassembleThumb2LongMul(MCInst &MI, unsigned Opcode, uint32_t insn,
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
 
   assert(NumOps >= 3 &&
-         OpInfo[0].RegClass == ARM::GPRRegClassID &&
-         OpInfo[1].RegClass == ARM::GPRRegClassID &&
-         OpInfo[2].RegClass == ARM::GPRRegClassID &&
+         OpInfo[0].RegClass == ARM::rGPRRegClassID &&
+         OpInfo[1].RegClass == ARM::rGPRRegClassID &&
+         OpInfo[2].RegClass == ARM::rGPRRegClassID &&
          "Expect >= 3 operands and first three as reg operands");
 
-  bool FourReg = NumOps > 3 && OpInfo[3].RegClass == ARM::GPRRegClassID;
+  bool FourReg = NumOps > 3 && OpInfo[3].RegClass == ARM::rGPRRegClassID;
 
   // Build the register operands.
 
   if (FourReg)
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                        decodeRd(insn))));
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRs(insn))));
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRn(insn))));
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
                                                      decodeRm(insn))));
 
   if (FourReg)
