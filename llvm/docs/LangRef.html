@@ -6119,8 +6119,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.memset on any integer bit
-   width and for different address spaces. Not all targets support all bit
-   widths however.</p>
+   width and for different address spaces. However, not all targets support all
+   bit widths.</p>
 
 <pre>
   declare void @llvm.memset.p0i8.i32(i8* &lt;dest&gt;, i8 &lt;val&gt;,
@@ -6134,14 +6134,14 @@ LLVM</a>.</p>
    particular byte value.</p>
 
 <p>Note that, unlike the standard libc function, the <tt>llvm.memset</tt>
-   intrinsic does not return a value, takes extra alignment/volatile arguments,
-   and the destination can be in an arbitrary address space.</p>
+   intrinsic does not return a value and takes extra alignment/volatile
+   arguments.  Also, the destination can be in an arbitrary address space.</p>
 
 <h5>Arguments:</h5>
 <p>The first argument is a pointer to the destination to fill, the second is the
-   byte value to fill it with, the third argument is an integer argument
+   byte value with which to fill it, the third argument is an integer argument
    specifying the number of bytes to fill, and the fourth argument is the known
-   alignment of destination location.</p>
+   alignment of the destination location.</p>
 
 <p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that the destination pointer is aligned to that
