@@ -226,13 +226,10 @@ MachTask::TaskPortForProcessID (pid_t pid, DNBError &err)
             char str[1024];
             ::snprintf (str,
                         sizeof(str),
-                        "::task_for_pid ( task_self, pid = %d, task => TASK_NULL (0x%4.4x) ) uid=%u, euid=%u gid=%u egid=%u (%s)",
+                        "::task_for_pid ( target_tport = 0x%4.4x, pid = %d, &task ) => err = 0x%8.8x (%s)",
+                        task_self,
                         pid,
-                        task,
-                        getuid(),
-                        geteuid(),
-                        getgid(),
-                        getegid(),
+                        err.Error(),
                         err.AsString() ? err.AsString() : "success");
             if (err.Fail())
                 err.SetErrorString(str);

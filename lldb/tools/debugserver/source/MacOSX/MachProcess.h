@@ -161,8 +161,6 @@ public:
                                 return state == eStateStopped;
                             }
 
-    const DNBError&         GetLastError () const { return m_err; }
-
     bool                    GetExitStatus(int* status)
                             {
                                 if (GetState() == eStateExited)
@@ -246,7 +244,6 @@ private:
     PThreadMutex                m_exception_messages_mutex; // Multithreaded protection for m_exception_messages
 
     MachThreadList              m_threadList;               // A list of threads that is maintained/updated after each stop
-    DNBError                    m_err;                      // The last error for any transaction
     nub_state_t                 m_state;                    // The state of our process
     PThreadMutex                m_state_mutex;              // Multithreaded protection for m_state
     PThreadEvent                m_events;                   // Process related events in the child processes lifetime can be waited upon

@@ -216,7 +216,7 @@ RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path)
 
     if (pid == INVALID_NUB_PROCESS && strlen(launch_err_str) > 0)
     {
-        DNBLogThreaded ("%s DNBProcessLaunch() returned error: '%s'", __FUNCTION__);
+        DNBLogThreaded ("%s DNBProcessLaunch() returned error: '%s'", __FUNCTION__, launch_err_str);
         ctx.LaunchStatus().SetError(-1, DNBError::Generic);
         ctx.LaunchStatus().SetErrorString(launch_err_str);
     }
@@ -676,6 +676,7 @@ main (int argc, char *argv[])
 
     //    signal (SIGINT, signal_handler);
     signal (SIGPIPE, signal_handler);
+    signal (SIGHUP, signal_handler);
 
     int i;
     int attach_pid = INVALID_NUB_PROCESS;

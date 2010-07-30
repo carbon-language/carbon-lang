@@ -101,7 +101,6 @@ MachProcess::MachProcess() :
     m_threadList        (),
     m_exception_messages (),
     m_exception_messages_mutex (PTHREAD_MUTEX_RECURSIVE),
-    m_err               (KERN_SUCCESS),
     m_state             (eStateUnloaded),
     m_state_mutex       (PTHREAD_MUTEX_RECURSIVE),
     m_events            (0, kAllEventsMask),
@@ -276,8 +275,6 @@ MachProcess::Clear()
         PTHREAD_MUTEX_LOCKER(locker, m_exception_messages_mutex);
         m_exception_messages.clear();
     }
-    m_err.Clear();
-
 }
 
 
@@ -286,8 +283,7 @@ MachProcess::StartSTDIOThread()
 {
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s ( )", __FUNCTION__);
     // Create the thread that watches for the child STDIO
-    m_err = ::pthread_create (&m_stdio_thread, NULL, MachProcess::STDIOThread, this);
-    return m_err.Success();
+    return ::pthread_create (&m_stdio_thread, NULL, MachProcess::STDIOThread, this) == 0;
 }
 
 
@@ -308,19 +304,15 @@ MachProcess::Resume (const DNBThreadResumeActions& thread_actions)
     if (CanResume(state))
     {
         PrivateResume(thread_actions);
+        return true;
     }
     else if (state == eStateRunning)
     {
         DNBLogThreadedIf(LOG_PROCESS, "Resume() - task 0x%x is running, ignoring...", m_task.TaskPort());
-        m_err.Clear();
-
+        return true;
     }
-    else
-    {
-        DNBLogThreadedIf(LOG_PROCESS, "Resume() - task 0x%x can't continue, ignoring...", m_task.TaskPort());
-        m_err.SetError(UINT_MAX, DNBError::Generic);
-    }
-    return m_err.Success();
+    DNBLogThreadedIf(LOG_PROCESS, "Resume() - task 0x%x can't continue, ignoring...", m_task.TaskPort());
+    return false;
 }
 
 bool
@@ -331,8 +323,9 @@ MachProcess::Kill (const struct timespec *timeout_abstime)
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() state = %s", DNBStateAsString(state));
     errno = 0;
     ::ptrace (PT_KILL, m_pid, 0, 0);
-    m_err.SetErrorToErrno();
-    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() ::ptrace (PT_KILL, pid=%u, 0, 0) => 0x%8.8x (%s)", m_err.Error(), m_err.AsString());
+    DNBError err;
+    err.SetErrorToErrno();
+    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() ::ptrace (PT_KILL, pid=%u, 0, 0) => 0x%8.8x (%s)", err.Error(), err.AsString());
     PrivateResume (DNBThreadResumeActions (eStateRunning, 0));
     return true;
 }
@@ -344,7 +337,6 @@ MachProcess::Signal (int signal, const struct timespec *timeout_abstime)
     nub_state_t state = GetState();
     if (::kill (ProcessID(), signal) == 0)
     {
-        m_err.Clear();
         // If we were running and we have a timeout, wait for the signal to stop
         if (IsRunning(state) && timeout_abstime)
         {
@@ -355,13 +347,11 @@ MachProcess::Signal (int signal, const struct timespec *timeout_abstime)
             return !IsRunning (state);
         }
         DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Signal (signal = %d, timeout = %p) not waiting...", signal, timeout_abstime);
+        return true;
     }
-    else
-    {
-        m_err.SetError(errno, DNBError::POSIX);
-        m_err.LogThreadedIfError("kill (pid = %d, signo = %i)", ProcessID(), signal);
-    }
-    return m_err.Success();
+    DNBError err(errno, DNBError::POSIX);
+    err.LogThreadedIfError("kill (pid = %d, signo = %i)", ProcessID(), signal);
+    return false;
 
 }
 
@@ -423,9 +413,9 @@ MachProcess::Detach()
     errno = 0;
     nub_process_t pid = m_pid;
     ::ptrace (PT_DETACH, pid, (caddr_t)1, 0);
-    m_err.SetError (errno, DNBError::POSIX);
-    if (DNBLogCheckLogBit(LOG_PROCESS) || m_err.Fail())
-        m_err.LogThreaded("::ptrace (PT_DETACH, %u, (caddr_t)1, 0)", pid);
+    DNBError err(errno, DNBError::POSIX);
+    if (DNBLogCheckLogBit(LOG_PROCESS) || err.Fail())
+        err.LogThreaded("::ptrace (PT_DETACH, %u, (caddr_t)1, 0)", pid);
 
     // Resume our task
     m_task.Resume();
@@ -590,9 +580,9 @@ MachProcess::ReplyToAllExceptions (const DNBThreadResumeActions& thread_actions)
                     thread_actions.SetSignalHandledForThread (pos->state.thread_port);
             }
 
-            m_err = pos->Reply(this, thread_reply_signal);
+            DNBError err (pos->Reply(this, thread_reply_signal));
             if (DNBLogCheckLogBit(LOG_EXCEPTIONS))
-                m_err.LogThreadedIfError("Error replying to exception");
+                err.LogThreadedIfError("Error replying to exception");
         }
 
         // Erase all exception message as we should have used and replied
@@ -620,8 +610,7 @@ MachProcess::PrivateResume (const DNBThreadResumeActions& thread_actions)
         SetState (eStateRunning);
 
     // Now resume our task.
-    m_err = m_task.Resume();
-
+    m_task.Resume();
 }
 
 nub_break_t
@@ -1138,7 +1127,8 @@ MachProcess::GetAvailableSTDOUT (char *buf, size_t buf_size)
 nub_addr_t
 MachProcess::GetDYLDAllImageInfosAddress ()
 {
-    return m_task.GetDYLDAllImageInfosAddress(m_err);
+    DNBError err;
+    return m_task.GetDYLDAllImageInfosAddress(err);
 }
 
 size_t
@@ -1279,11 +1269,12 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
     Clear();
     if (pid != 0)
     {
+        DNBError err;
         // Make sure the process exists...
         if (::getpgid (pid) < 0)
         {
-            m_err.SetErrorToErrno();
-            const char *err_cstr = m_err.AsString();
+            err.SetErrorToErrno();
+            const char *err_cstr = err.AsString();
             ::snprintf (err_str, err_len, "%s", err_cstr ? err_cstr : "No such process");
             return INVALID_NUB_PROCESS;
         }
@@ -1295,9 +1286,9 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
         if (IsSBProcess(pid))
             m_flags |= eMachProcessFlagsUsingSBS;
 #endif
-        if (!m_task.StartExceptionThread(m_err))
+        if (!m_task.StartExceptionThread(err))
         {
-            const char *err_cstr = m_err.AsString();
+            const char *err_cstr = err.AsString();
             ::snprintf (err_str, err_len, "%s", err_cstr ? err_cstr : "unable to start the exception thread");
             DNBLogThreadedIf(LOG_PROCESS, "error: failed to attach to pid %d", pid);
             m_pid = INVALID_NUB_PROCESS;
@@ -1305,14 +1296,12 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
         }
 
         errno = 0;
-        int err = ptrace (PT_ATTACHEXC, pid, 0, 0);
-
-        if (err < 0)
-            m_err.SetError(errno);
+        if (::ptrace (PT_ATTACHEXC, pid, 0, 0))
+            err.SetError(errno);
         else
-            m_err.Clear();
+            err.Clear();
 
-        if (m_err.Success())
+        if (err.Success())
         {
             m_flags |= eMachProcessFlagsAttached;
             // Sleep a bit to let the exception get received and set our process status
@@ -1323,7 +1312,7 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
         }
         else
         {
-            ::snprintf (err_str, err_len, "%s", m_err.AsString());
+            ::snprintf (err_str, err_len, "%s", err.AsString());
             DNBLogThreadedIf(LOG_PROCESS, "error: failed to attach to pid %d", pid);
         }
     }
@@ -1525,11 +1514,11 @@ MachProcess::LaunchForDebug
         for (i=0; (arg = argv[i]) != NULL; i++)
             m_args.push_back(arg);
 
-        m_task.StartExceptionThread(m_err);
-        if (m_err.Fail())
+        m_task.StartExceptionThread(launch_err);
+        if (launch_err.Fail())
         {
-            if (m_err.AsString() == NULL)
-                m_err.SetErrorString("unable to start the exception thread");
+            if (launch_err.AsString() == NULL)
+                launch_err.SetErrorString("unable to start the exception thread");
             ::ptrace (PT_KILL, m_pid, 0, 0);
             m_pid = INVALID_NUB_PROCESS;
             return INVALID_NUB_PROCESS;
