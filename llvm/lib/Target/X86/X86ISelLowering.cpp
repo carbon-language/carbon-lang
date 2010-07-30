@@ -8543,19 +8543,31 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
 }
 
 // FIXME: When we get size specific XMM0 registers, i.e. XMM0_V16I8
-// all of this code can be replaced with that in the .td file.
+// or XMM0_V32I8 in AVX all of this code can be replaced with that
+// in the .td file.
 MachineBasicBlock *
 X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
                             unsigned numArgs, bool memArg) const {
+
+  assert((Subtarget->hasSSE42() || Subtarget->hasAVX()) &&
+         "Target must have SSE4.2 or AVX features enabled");
 
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
 
   unsigned Opc;
-  if (memArg)
-    Opc = numArgs == 3 ? X86::PCMPISTRM128rm : X86::PCMPESTRM128rm;
-  else
-    Opc = numArgs == 3 ? X86::PCMPISTRM128rr : X86::PCMPESTRM128rr;
+
+  if (!Subtarget->hasAVX()) {
+    if (memArg)
+      Opc = numArgs == 3 ? X86::PCMPISTRM128rm : X86::PCMPESTRM128rm;
+    else
+      Opc = numArgs == 3 ? X86::PCMPISTRM128rr : X86::PCMPESTRM128rr;
+  } else {
+    if (memArg)
+      Opc = numArgs == 3 ? X86::VPCMPISTRM128rm : X86::VPCMPESTRM128rm;
+    else
+      Opc = numArgs == 3 ? X86::VPCMPISTRM128rr : X86::VPCMPESTRM128rr;
+  }
 
   MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(Opc));
 
@@ -8902,12 +8914,16 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
     // String/text processing lowering.
   case X86::PCMPISTRM128REG:
+  case X86::VPCMPISTRM128REG:
     return EmitPCMP(MI, BB, 3, false /* in-mem */);
   case X86::PCMPISTRM128MEM:
+  case X86::VPCMPISTRM128MEM:
     return EmitPCMP(MI, BB, 3, true /* in-mem */);
   case X86::PCMPESTRM128REG:
+  case X86::VPCMPESTRM128REG:
     return EmitPCMP(MI, BB, 5, false /* in mem */);
   case X86::PCMPESTRM128MEM:
+  case X86::VPCMPESTRM128MEM:
     return EmitPCMP(MI, BB, 5, true /* in mem */);
 
     // Atomic Lowering.
