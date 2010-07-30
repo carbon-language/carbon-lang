@@ -30,6 +30,6 @@
 {
    We don't care if python leaks
    Memcheck:Leak
+   fun:malloc
    obj:/usr/bin/python2.5
 }
-
