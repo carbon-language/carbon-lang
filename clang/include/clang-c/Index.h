@@ -1295,6 +1295,12 @@ CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 CINDEX_LINKAGE CXType clang_getCursorResultType(CXCursor C);
 
 /**
+ * \brief Return 1 if the CXType is a POD (plain old data) type, and 0
+ *  otherwise.
+ */
+CINDEX_LINKAGE unsigned clang_isPODType(CXType T);
+
+/**
  * @}
  */
 

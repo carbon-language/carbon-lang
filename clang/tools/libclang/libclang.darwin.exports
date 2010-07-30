@@ -82,6 +82,7 @@ _clang_isDeclaration
 _clang_isExpression
 _clang_isInvalid
 _clang_isPreprocessing
+_clang_isPODType
 _clang_isReference
 _clang_isStatement
 _clang_isTranslationUnit

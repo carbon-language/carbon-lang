@@ -487,6 +487,8 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
         clang_disposeString(RS);
       }
     }
+    /* Print if this is a non-POD type. */
+    printf(" [isPOD=%d]", clang_isPODType(T));
 
     printf("\n");
   }

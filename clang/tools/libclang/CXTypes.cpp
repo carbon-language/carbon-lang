@@ -283,4 +283,11 @@ CXType clang_getCursorResultType(CXCursor C) {
   return MakeCXType(QualType(), cxcursor::getCursorASTUnit(C));
 }
 
+unsigned clang_isPODType(CXType X) {
+  QualType T = GetQualType(X);
+  if (!T.getTypePtr())
+    return 0;
+  return T->isPODType() ? 1 : 0;
+}
+
 } // end: extern "C"
