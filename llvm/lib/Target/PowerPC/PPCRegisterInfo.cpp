@@ -449,8 +449,8 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   // Get stack alignments.
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
-  assert(MaxAlign <= TargetAlign &&
-         "Dynamic alloca with large aligns not supported");
+  if (MaxAlign > TargetAlign)
+    report_fatal_error("Dynamic alloca with large aligns not supported");
 
   // Determine the previous frame's address.  If FrameSize can't be
   // represented as 16 bits or we need special alignment, then we load the

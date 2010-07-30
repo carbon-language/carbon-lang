@@ -1,4 +1,6 @@
 // RUN: %llvmgcc_only -std=gnu99 %s -S |& grep {warning: alignment for}
+// ppc does not support this feature, and gets a fatal error at runtime.
+// XFAIL: powerpc
 
 int foo(int a)
 {
