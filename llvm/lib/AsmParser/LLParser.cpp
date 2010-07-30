@@ -1154,7 +1154,7 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
   if (ParseUInt32(Alignment)) return true;
   if (!isPowerOf2_32(Alignment))
     return Error(AlignLoc, "alignment is not a power of two");
-  if (Alignment > MaximumAlignment)
+  if (Alignment > Value::MaximumAlignment)
     return Error(AlignLoc, "huge alignments are not supported yet");
   return false;
 }
