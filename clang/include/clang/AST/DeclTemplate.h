@@ -512,6 +512,49 @@ protected:
     }
   };
 
+  template <typename EntryType,
+            typename _SETraits = SpecEntryTraits<EntryType>,
+            typename _DeclType = typename _SETraits::DeclType>
+  class SpecIterator : public std::iterator<std::forward_iterator_tag,
+                                            _DeclType*, ptrdiff_t,
+                                            _DeclType*, _DeclType*> {
+    typedef _SETraits SETraits;
+    typedef _DeclType DeclType;
+
+    typedef typename llvm::FoldingSet<EntryType>::iterator SetIteratorType;
+
+    SetIteratorType SetIter;
+
+  public:
+    SpecIterator() : SetIter() {}
+    SpecIterator(SetIteratorType SetIter) : SetIter(SetIter) {}
+
+    DeclType *operator*() const {
+      return SETraits::getMostRecentDeclaration(&*SetIter);
+    }
+    DeclType *operator->() const { return **this; }
+
+    SpecIterator &operator++() { ++SetIter; return *this; }
+    SpecIterator operator++(int) {
+      SpecIterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    bool operator==(SpecIterator Other) const {
+      return SetIter == Other.SetIter;
+    }
+    bool operator!=(SpecIterator Other) const {
+      return SetIter != Other.SetIter;
+    }
+  };
+
+  template <typename EntryType>
+  SpecIterator<EntryType> makeSpecIterator(llvm::FoldingSet<EntryType> &Specs,
+                                           bool isEnd) {
+    return SpecIterator<EntryType>(isEnd ? Specs.end() : Specs.begin());
+  }
+
   template <class EntryType> typename SpecEntryTraits<EntryType>::DeclType*
   findSpecializationImpl(llvm::FoldingSet<EntryType> &Specs,
                          const TemplateArgument *Args, unsigned NumArgs,
@@ -772,6 +815,16 @@ public:
 
   FunctionTemplateDecl *getInstantiatedFromMemberTemplate() {
     return redeclarable_base::getInstantiatedFromMemberTemplate();
+  }
+
+  typedef SpecIterator<FunctionTemplateSpecializationInfo> spec_iterator;
+
+  spec_iterator spec_begin() {
+    return makeSpecIterator(getSpecializations(), false);
+  }
+
+  spec_iterator spec_end() {
+    return makeSpecIterator(getSpecializations(), true);
   }
 
   /// Create a template function node.
@@ -1678,6 +1731,27 @@ public:
   /// };
   /// \endcode
   QualType getInjectedClassNameSpecialization();
+
+  typedef SpecIterator<ClassTemplateSpecializationDecl> spec_iterator;
+
+  spec_iterator spec_begin() {
+    return makeSpecIterator(getSpecializations(), false);
+  }
+
+  spec_iterator spec_end() {
+    return makeSpecIterator(getSpecializations(), true);
+  }
+
+  typedef SpecIterator<ClassTemplatePartialSpecializationDecl>
+          partial_spec_iterator;
+
+  partial_spec_iterator partial_spec_begin() {
+    return makeSpecIterator(getPartialSpecializations(), false);
+  }
+
+  partial_spec_iterator partial_spec_end() {
+    return makeSpecIterator(getPartialSpecializations(), true);
+  }
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
