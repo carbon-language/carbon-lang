@@ -504,6 +504,14 @@ class RedeclarableTemplateDecl : public TemplateDecl {
   }
 
 protected:
+  template <typename EntryType> struct SpecEntryTraits {
+    typedef EntryType DeclType;
+
+    static DeclType *getMostRecentDeclaration(EntryType *D) {
+      return D->getMostRecentDeclaration();
+    }
+  };
+
   struct CommonBase {
     CommonBase() : InstantiatedFromMember(0, false) { }
 
@@ -674,6 +682,16 @@ public:
 
   void setInstantiatedFromMemberTemplate(decl_type *TD) {
     thisDecl()->setInstantiatedFromMemberTemplateImpl(TD);
+  }
+};
+
+template <> struct RedeclarableTemplateDecl::
+SpecEntryTraits<FunctionTemplateSpecializationInfo> {
+  typedef FunctionDecl DeclType;
+
+  static DeclType *
+  getMostRecentDeclaration(FunctionTemplateSpecializationInfo *I) {
+    return I->Function->getMostRecentDeclaration();
   }
 };
 
