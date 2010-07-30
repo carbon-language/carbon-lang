@@ -139,6 +139,9 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
 /// AddDecl - Link the decl to its shadowed decl chain.
 void IdentifierResolver::AddDecl(NamedDecl *D) {
   DeclarationName Name = D->getDeclName();
+  if (IdentifierInfo *II = Name.getAsIdentifierInfo())
+    II->setIsFromPCH(false);
+
   void *Ptr = Name.getFETokenInfo<void>();
 
   if (!Ptr) {
@@ -164,6 +167,9 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
 void IdentifierResolver::RemoveDecl(NamedDecl *D) {
   assert(D && "null param passed");
   DeclarationName Name = D->getDeclName();
+  if (IdentifierInfo *II = Name.getAsIdentifierInfo())
+    II->setIsFromPCH(false);
+
   void *Ptr = Name.getFETokenInfo<void>();
 
   assert(Ptr && "Didn't find this decl on its identifier's chain!");
@@ -182,6 +188,9 @@ bool IdentifierResolver::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
          "Cannot replace a decl with another decl of a different name");
 
   DeclarationName Name = Old->getDeclName();
+  if (IdentifierInfo *II = Name.getAsIdentifierInfo())
+    II->setIsFromPCH(false);
+
   void *Ptr = Name.getFETokenInfo<void>();
 
   if (!Ptr)
@@ -218,6 +227,7 @@ IdentifierResolver::begin(DeclarationName Name) {
 
 void IdentifierResolver::AddDeclToIdentifierChain(IdentifierInfo *II,
                                                   NamedDecl *D) {
+  II->setIsFromPCH(false);
   void *Ptr = II->getFETokenInfo<void>();
 
   if (!Ptr) {
