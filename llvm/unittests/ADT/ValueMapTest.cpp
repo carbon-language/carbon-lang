@@ -39,6 +39,15 @@ protected:
 typedef ::testing::Types<Value, Instruction, const Instruction> KeyTypes;
 TYPED_TEST_CASE(ValueMapTest, KeyTypes);
 
+TYPED_TEST(ValueMapTest, CopyConstructor) {
+  ValueMap<TypeParam*, int> VM1;
+  VM1[this->AddV.get()] = 7;
+  ValueMap<TypeParam*, int> VM2(VM1);
+  this->AddV.reset();
+  EXPECT_TRUE(VM1.empty());
+  EXPECT_TRUE(VM2.empty());
+}
+
 TYPED_TEST(ValueMapTest, Null) {
   ValueMap<TypeParam*, int> VM1;
   VM1[NULL] = 7;
