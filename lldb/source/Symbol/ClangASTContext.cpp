@@ -306,7 +306,8 @@ ClangASTContext::getASTContext()
                 *getTargetInfo(),
                 *getIdentifierTable(),
                 *getSelectorTable(),
-                *getBuiltinContext()));
+                *getBuiltinContext(),
+                0));
     }
     return m_ast_context_ap.get();
 }
@@ -954,7 +955,11 @@ CXXBaseSpecifier *
 ClangASTContext::CreateBaseClassSpecifier (void *base_class_type, AccessType access, bool is_virtual, bool base_of_class)
 {
     if (base_class_type)
-        return new CXXBaseSpecifier(SourceRange(), is_virtual, base_of_class, (AccessSpecifier)access, QualType::getFromOpaquePtr(base_class_type));
+        return new CXXBaseSpecifier (SourceRange(), 
+                                     is_virtual, 
+                                     base_of_class, 
+                                     ConvertAccessTypeToAccessSpecifier (access), 
+                                     getASTContext()->CreateTypeSourceInfo (QualType::getFromOpaquePtr(base_class_type)));
     return NULL;
 }
 

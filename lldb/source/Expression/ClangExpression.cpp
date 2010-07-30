@@ -107,74 +107,88 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 // Main driver
 //===----------------------------------------------------------------------===//
 
-void LLVMErrorHandler(void *UserData, const std::string &Message) {
-    Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
+//===----------------------------------------------------------------------===//
+// Main driver
+//===----------------------------------------------------------------------===//
 
-    Diags.Report(diag::err_fe_error_backend) << Message;
+static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+  Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
 
-    // We cannot recover from llvm errors.
-    exit(1);
+  Diags.Report(diag::err_fe_error_backend) << Message;
+
+  // We cannot recover from llvm errors.
+  exit(1);
 }
 
 static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
-    using namespace clang::frontend;
+  using namespace clang::frontend;
 
-    switch (CI.getFrontendOpts().ProgramAction) {
-        default:
-            llvm_unreachable("Invalid program action!");
+  switch (CI.getFrontendOpts().ProgramAction) {
+  default:
+    llvm_unreachable("Invalid program action!");
 
-        case ASTDump:                return new ASTDumpAction();
-        case ASTPrint:               return new ASTPrintAction();
-        case ASTPrintXML:            return new ASTPrintXMLAction();
-        case ASTView:                return new ASTViewAction();
-        case DumpRawTokens:          return new DumpRawTokensAction();
-        case DumpTokens:             return new DumpTokensAction();
-        case EmitAssembly:           return new EmitAssemblyAction();
-        case EmitBC:                 return new EmitBCAction();
-        case EmitHTML:               return new HTMLPrintAction();
-        case EmitLLVM:               return new EmitLLVMAction();
-        case EmitLLVMOnly:           return new EmitLLVMOnlyAction();
-        case EmitObj:                return new EmitObjAction();
-        case FixIt:                  return new FixItAction();
-        case GeneratePCH:            return new GeneratePCHAction();
-        case GeneratePTH:            return new GeneratePTHAction();
-        case InheritanceView:        return new InheritanceViewAction();
-        case InitOnly:               return new InitOnlyAction();
-        case ParseNoop:              return new ParseOnlyAction();
-        case ParsePrintCallbacks:    return new PrintParseAction();
-        case ParseSyntaxOnly:        return new SyntaxOnlyAction();
+  case ASTDump:                return new ASTDumpAction();
+  case ASTPrint:               return new ASTPrintAction();
+  case ASTPrintXML:            return new ASTPrintXMLAction();
+  case ASTView:                return new ASTViewAction();
+  case BoostCon:               return new BoostConAction();
+  case DumpRawTokens:          return new DumpRawTokensAction();
+  case DumpTokens:             return new DumpTokensAction();
+  case EmitAssembly:           return new EmitAssemblyAction();
+  case EmitBC:                 return new EmitBCAction();
+  case EmitHTML:               return new HTMLPrintAction();
+  case EmitLLVM:               return new EmitLLVMAction();
+  case EmitLLVMOnly:           return new EmitLLVMOnlyAction();
+  case EmitCodeGenOnly:        return new EmitCodeGenOnlyAction();
+  case EmitObj:                return new EmitObjAction();
+  case FixIt:                  return new FixItAction();
+  case GeneratePCH:            return new GeneratePCHAction();
+  case GeneratePTH:            return new GeneratePTHAction();
+  case InheritanceView:        return new InheritanceViewAction();
+  case InitOnly:               return new InitOnlyAction();
+  case ParseSyntaxOnly:        return new SyntaxOnlyAction();
 
-        case PluginAction: {
-            if (CI.getFrontendOpts().ActionName == "help") {
-                llvm::errs() << "clang -cc1 plugins:\n";
-                for (FrontendPluginRegistry::iterator it =
-                     FrontendPluginRegistry::begin(),
-                     ie = FrontendPluginRegistry::end();
-                     it != ie; ++it)
-                    llvm::errs() << "  " << it->getName() << " - " << it->getDesc() << "\n";
-                return 0;
-            }
+  case PluginAction: {
 
-            for (FrontendPluginRegistry::iterator it =
-                 FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
-                 it != ie; ++it) {
-                if (it->getName() == CI.getFrontendOpts().ActionName)
-                    return it->instantiate();
-            }
-
-            CI.getDiagnostics().Report(diag::err_fe_invalid_plugin_name)
-            << CI.getFrontendOpts().ActionName;
-            return 0;
-        }
-
-        case PrintDeclContext:       return new DeclContextPrintAction();
-        case PrintPreprocessedInput: return new PrintPreprocessedAction();
-        case RewriteMacros:          return new RewriteMacrosAction();
-        case RewriteObjC:            return new RewriteObjCAction();
-        case RewriteTest:            return new RewriteTestAction();
-        case RunAnalysis:            return new AnalysisAction();
-        case RunPreprocessorOnly:    return new PreprocessOnlyAction();
+    for (FrontendPluginRegistry::iterator it =
+           FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
+         it != ie; ++it) {
+      if (it->getName() == CI.getFrontendOpts().ActionName) {
+        PluginASTAction* plugin = it->instantiate();
+        plugin->ParseArgs(CI.getFrontendOpts().PluginArgs);
+        return plugin;
+      }
     }
+
+    CI.getDiagnostics().Report(diag::err_fe_invalid_plugin_name)
+      << CI.getFrontendOpts().ActionName;
+    return 0;
+  }
+
+  case PrintDeclContext:       return new DeclContextPrintAction();
+  case PrintPreamble:          return new PrintPreambleAction();
+  case PrintPreprocessedInput: return new PrintPreprocessedAction();
+  case RewriteMacros:          return new RewriteMacrosAction();
+  case RewriteObjC:            return new RewriteObjCAction();
+  case RewriteTest:            return new RewriteTestAction();
+  case RunAnalysis:            return new AnalysisAction();
+  case RunPreprocessorOnly:    return new PreprocessOnlyAction();
+  }
+}
+
+static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
+  // Create the underlying action.
+  FrontendAction *Act = CreateFrontendBaseAction(CI);
+  if (!Act)
+    return 0;
+
+  // If there are any AST files to merge, create a frontend action
+  // adaptor to perform the merge.
+  if (!CI.getFrontendOpts().ASTMergeFiles.empty())
+    Act = new ASTMergeAction(Act, &CI.getFrontendOpts().ASTMergeFiles[0],
+                             CI.getFrontendOpts().ASTMergeFiles.size());
+
+  return Act;
 }
 
 //----------------------------------------------------------------------
@@ -330,7 +344,8 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text,
                                          m_clang_ap->getTarget(),
                                          m_clang_ap->getPreprocessor().getIdentifierTable(),
                                          selector_table,
-                                         *builtin_ap.get());
+                                         *builtin_ap.get(),
+                                         0);
     
     llvm::OwningPtr<ExternalASTSource> ASTSource(new ClangASTSource(*Context, *m_decl_map));
 
@@ -425,24 +440,6 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text,
     
     return num_errors;
 }
-
-static FrontendAction *
-CreateFrontendAction(CompilerInstance &CI)
-{
-    // Create the underlying action.
-    FrontendAction *Act = CreateFrontendBaseAction(CI);
-    if (!Act)
-        return 0;
-
-    // If there are any AST files to merge, create a frontend action
-    // adaptor to perform the merge.
-    if (!CI.getFrontendOpts().ASTMergeFiles.empty())
-        Act = new ASTMergeAction(Act, &CI.getFrontendOpts().ASTMergeFiles[0],
-                                 CI.getFrontendOpts().ASTMergeFiles.size());
-
-    return Act;
-}
-
 
 unsigned
 ClangExpression::ConvertExpressionToDWARF (ClangExpressionVariableList& expr_local_variable_list, 

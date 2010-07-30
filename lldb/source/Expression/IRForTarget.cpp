@@ -242,7 +242,7 @@ static void TurnGuardLoadIntoZero(Instruction* guard_load, Module &M)
          ui != guard_load->use_end();
          ++ui)
     {
-        if (isa<Constant>(ui))
+        if (isa<Constant>(*ui))
         {
             // do nothing for the moment
         }
