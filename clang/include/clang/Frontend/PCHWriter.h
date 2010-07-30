@@ -268,7 +268,7 @@ private:
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
-  PCHWriter(llvm::BitstreamWriter &Stream, PCHReader *Chain);
+  PCHWriter(llvm::BitstreamWriter &Stream);
 
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
@@ -421,6 +421,7 @@ public:
   bool hasChain() const { return Chain; }
 
   // PCHDeserializationListener implementation
+  void SetReader(PCHReader *Reader);
   void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
   void TypeRead(pch::TypeID ID, QualType T);
   void DeclRead(pch::DeclID ID, const Decl *D);

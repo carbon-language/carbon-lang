@@ -18,9 +18,10 @@ namespace clang {
   class ASTContext;
   class CXXRecordDecl;
   class DeclGroupRef;
-  class TagDecl;
   class HandleTagDeclDefinition;
+  class PCHDeserializationListener; // layering violation because void* is ugly
   class SemaConsumer; // layering violation required for safe SemaConsumer
+  class TagDecl;
   class VarDecl;
 
 /// ASTConsumer - This is an abstract interface that should be implemented by
@@ -79,6 +80,12 @@ public:
   /// required in this translation unit; otherwise, it is only needed if
   /// it was actually used.
   virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {}
+
+  /// \brief If the consumer is interested in entities being deserialized from
+  /// PCH, it should return a pointer to a PCHDeserializationListener here.
+  ///
+  /// The return type is void* because PCHDS lives in Frontend.
+  virtual PCHDeserializationListener *GetPCHDeserializationListener() { return 0; }
 
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {}

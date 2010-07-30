@@ -37,19 +37,20 @@ namespace {
     PCHWriter Writer;
 
   public:
-    PCHGenerator(const Preprocessor &PP, PCHReader *Chain,
+    PCHGenerator(const Preprocessor &PP, bool Chaining,
                  const char *isysroot, llvm::raw_ostream *Out);
     virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
     virtual void HandleTranslationUnit(ASTContext &Ctx);
+    virtual PCHDeserializationListener *GetPCHDeserializationListener();
   };
 }
 
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
-                           PCHReader *Chain,
+                           bool Chaining,
                            const char *isysroot,
                            llvm::raw_ostream *OS)
-  : PP(PP), isysroot(isysroot), Out(OS), SemaPtr(0), StatCalls(0),
-    Stream(Buffer), Writer(Stream, Chain) {
+  : PP(PP), isysroot(isysroot), Out(OS), SemaPtr(0),
+    StatCalls(0), Stream(Buffer), Writer(Stream) {
 
   // Install a stat() listener to keep track of all of the stat()
   // calls.
@@ -57,7 +58,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
   // If we have a chain, we want new stat calls only, so install the memorizer
   // *after* the already installed PCHReader's stat cache.
   PP.getFileManager().addStatCache(StatCalls,
-    /*AtBeginning=*/!Chain);
+    /*AtBeginning=*/!Chaining);
 }
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
@@ -78,9 +79,13 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   Buffer.clear();
 }
 
+PCHDeserializationListener *PCHGenerator::GetPCHDeserializationListener() {
+  return &Writer;
+}
+
 ASTConsumer *clang::CreatePCHGenerator(const Preprocessor &PP,
                                        llvm::raw_ostream *OS,
-                                       PCHReader *Chain,
+                                       bool Chaining,
                                        const char *isysroot) {
-  return new PCHGenerator(PP, Chain, isysroot, OS);
+  return new PCHGenerator(PP, Chaining, isysroot, OS);
 }

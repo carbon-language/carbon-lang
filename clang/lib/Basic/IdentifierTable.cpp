@@ -34,6 +34,7 @@ IdentifierInfo::IdentifierInfo() {
   IsPoisoned = false;
   IsCPPOperatorKeyword = false;
   NeedsHandleIdentifier = false;
+  IsFromPCH = false;
   FETokenInfo = 0;
   Entry = 0;
 }

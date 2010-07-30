@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
@@ -112,19 +113,21 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!usesPreprocessorOnly()) {
     CI.createASTContext();
 
-    /// Use PCH? If so, we want the PCHReader active before the consumer
-    /// is created, because the consumer might be interested in the reader
-    /// (e.g. the PCH writer for chaining).
+    llvm::OwningPtr<ASTConsumer> Consumer(CreateASTConsumer(CI, Filename));
+
+    /// Use PCH?
     if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
       assert(hasPCHSupport() && "This action does not have PCH support!");
       CI.createPCHExternalASTSource(
                                 CI.getPreprocessorOpts().ImplicitPCHInclude,
-                                CI.getPreprocessorOpts().DisablePCHValidation);
+                                CI.getPreprocessorOpts().DisablePCHValidation,
+                                CI.getInvocation().getFrontendOpts().ChainedPCH?
+                                 Consumer->GetPCHDeserializationListener() : 0);
       if (!CI.getASTContext().getExternalSource())
         goto failure;
     }
 
-    CI.setASTConsumer(CreateASTConsumer(CI, Filename));
+    CI.setASTConsumer(Consumer.take());
     if (!CI.hasASTConsumer())
       goto failure;
   }

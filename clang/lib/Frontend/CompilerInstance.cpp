@@ -37,7 +37,7 @@
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
-  : Invocation(new CompilerInvocation()), Reader(0) {
+  : Invocation(new CompilerInvocation()) {
 }
 
 CompilerInstance::~CompilerInstance() {
@@ -251,13 +251,13 @@ void CompilerInstance::createASTContext() {
 // ExternalASTSource
 
 void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
-                                                  bool DisablePCHValidation) {
+                                                  bool DisablePCHValidation,
+                                                 void *DeserializationListener){
   llvm::OwningPtr<ExternalASTSource> Source;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
                                           DisablePCHValidation,
-                                          getPreprocessor(), getASTContext()));
-  // Remember the PCHReader, but in a non-owning way.
-  Reader = static_cast<PCHReader*>(Source.get());
+                                          getPreprocessor(), getASTContext(),
+                                          DeserializationListener));
   getASTContext().setExternalSource(Source);
 }
 
@@ -266,12 +266,15 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                              const std::string &Sysroot,
                                              bool DisablePCHValidation,
                                              Preprocessor &PP,
-                                             ASTContext &Context) {
+                                             ASTContext &Context,
+                                             void *DeserializationListener) {
   llvm::OwningPtr<PCHReader> Reader;
   Reader.reset(new PCHReader(PP, &Context,
                              Sysroot.empty() ? 0 : Sysroot.c_str(),
                              DisablePCHValidation));
 
+  Reader->setDeserializationListener(
+            static_cast<PCHDeserializationListener *>(DeserializationListener));
   switch (Reader->ReadPCH(Path)) {
   case PCHReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the

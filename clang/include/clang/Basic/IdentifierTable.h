@@ -59,7 +59,9 @@ class IdentifierInfo {
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
-  // 9 bits left in 32-bit word.
+  bool IsFromPCH              : 1; // True if identfier first appeared in a PCH
+                                   // and wasn't modified since.
+  // 8 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
@@ -125,6 +127,7 @@ public:
       NeedsHandleIdentifier = 1;
     else
       RecomputeNeedsHandleIdentifier();
+    IsFromPCH = false;
   }
 
   /// get/setTokenID - If this is a source-language token (e.g. 'for'), this API
@@ -186,6 +189,7 @@ public:
       NeedsHandleIdentifier = 1;
     else
       RecomputeNeedsHandleIdentifier();
+    IsFromPCH = false;
   }
 
   /// isPoisoned - Return true if this token has been poisoned.
@@ -212,6 +216,12 @@ public:
   /// must be called on a token of this identifier.  If this returns false, we
   /// know that HandleIdentifier will not affect the token.
   bool isHandleIdentifierCase() const { return NeedsHandleIdentifier; }
+
+  /// isFromPCH - Return true if the identifier in its current state was loaded
+  /// from a PCH file.
+  bool isFromPCH() const { return IsFromPCH; }
+
+  void setIsFromPCH(bool FromPCH = true) { IsFromPCH = FromPCH; }
 
 private:
   /// RecomputeNeedsHandleIdentifier - The Preprocessor::HandleIdentifier does
@@ -321,35 +331,33 @@ public:
     return get(llvm::StringRef(Name, NameLen));
   }
 
-  /// \brief Creates a new IdentifierInfo from the given string.
+  /// \brief Gets an IdentifierInfo for the given name without consulting
+  ///        external sources.
   ///
-  /// This is a lower-level version of get() that requires that this
-  /// identifier not be known previously and that does not consult an
-  /// external source for identifiers. In particular, external
-  /// identifier sources can use this routine to build IdentifierInfo
-  /// nodes and then introduce additional information about those
-  /// identifiers.
-  IdentifierInfo &CreateIdentifierInfo(const char *NameStart,
-                                       const char *NameEnd) {
+  /// This is a version of get() meant for external sources that want to
+  /// introduce or modify an identifier. If they called get(), they would
+  /// likely end up in a recursion.
+  IdentifierInfo &getOwn(const char *NameStart, const char *NameEnd) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
       HashTable.GetOrCreateValue(NameStart, NameEnd);
 
     IdentifierInfo *II = Entry.getValue();
-    assert(!II && "IdentifierInfo already exists");
+    if (!II) {
 
-    // Lookups failed, make a new IdentifierInfo.
-    void *Mem = getAllocator().Allocate<IdentifierInfo>();
-    II = new (Mem) IdentifierInfo();
-    Entry.setValue(II);
+      // Lookups failed, make a new IdentifierInfo.
+      void *Mem = getAllocator().Allocate<IdentifierInfo>();
+      II = new (Mem) IdentifierInfo();
+      Entry.setValue(II);
 
-    // Make sure getName() knows how to find the IdentifierInfo
-    // contents.
-    II->Entry = &Entry;
+      // Make sure getName() knows how to find the IdentifierInfo
+      // contents.
+      II->Entry = &Entry;
+    }
 
     return *II;
   }
-  IdentifierInfo &CreateIdentifierInfo(llvm::StringRef Name) {
-    return CreateIdentifierInfo(Name.begin(), Name.end());
+  IdentifierInfo &getOwn(llvm::StringRef Name) {
+    return getOwn(Name.begin(), Name.end());
   }
 
   typedef HashTableTy::const_iterator iterator;

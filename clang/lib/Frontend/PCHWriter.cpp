@@ -1810,7 +1810,8 @@ public:
       for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                      DEnd = IdentifierResolver::end();
            D != DEnd; ++D)
-        DataLen += sizeof(pch::DeclID);
+        if (!Writer.hasChain() || (*D)->getPCHLevel() == 0)
+          DataLen += sizeof(pch::DeclID);
     }
     clang::io::Emit16(Out, DataLen);
     // We emit the key length after the data length so that every
@@ -1898,9 +1899,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
-      // FIXME: Right now, we only write identifiers that are new to this file.
-      // We need to write older identifiers that changed too, though.
-      if (ID->second >= FirstIdentID)
+      if (!Chain || !ID->first->isFromPCH())
         Generator.insert(ID->first, ID->second);
     }
 
@@ -2142,17 +2141,11 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
   SelectorOffsets[ID - 1] = Offset;
 }
 
-PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream, PCHReader *Chain)
-  : Stream(Stream), Chain(Chain), FirstDeclID(1),
+PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
+  : Stream(Stream), Chain(0), FirstDeclID(1),
     FirstTypeID(pch::NUM_PREDEF_TYPE_IDS), FirstIdentID(1),
     CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
     NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) {
-  if (Chain) {
-    Chain->setDeserializationListener(this);
-    FirstDeclID += Chain->getTotalNumDecls();
-    FirstTypeID += Chain->getTotalNumTypes();
-    FirstIdentID += Chain->getTotalNumIdentifiers();
-  }
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
@@ -2335,6 +2328,13 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                               const char *isysroot) {
   using namespace llvm;
 
+  FirstDeclID += Chain->getTotalNumDecls();
+  FirstTypeID += Chain->getTotalNumTypes();
+  FirstIdentID += Chain->getTotalNumIdentifiers();
+  NextDeclID = FirstDeclID;
+  NextTypeID = FirstTypeID;
+  NextIdentID = FirstIdentID;
+
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
 
@@ -2352,9 +2352,6 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // We don't start with the translation unit, but with its decls that
   // don't come from the other PCH.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
-  // The TU was loaded before we managed to register ourselves as a listener.
-  // Thus we need to add it manually.
-  DeclIDs[TU] = 1;
   llvm::SmallVector<pch::DeclID, 64> NewGlobalDecls;
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
                                   E = TU->noload_decls_end();
@@ -2866,6 +2863,15 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   Record.push_back(Base.getAccessSpecifierAsWritten());
   AddTypeSourceInfo(Base.getTypeSourceInfo(), Record);
   AddSourceRange(Base.getSourceRange(), Record);
+}
+
+void PCHWriter::SetReader(PCHReader *Reader) {
+  assert(Reader && "Cannot remove chain");
+  assert(FirstDeclID == NextDeclID &&
+         FirstTypeID == NextTypeID &&
+         FirstIdentID == NextIdentID &&
+         "Setting chain after writing has started.");
+  Chain = Reader;
 }
 
 void PCHWriter::IdentifierRead(pch::IdentID ID, IdentifierInfo *II) {

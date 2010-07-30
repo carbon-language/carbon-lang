@@ -460,6 +460,13 @@ PCHReader::PerFileData::PerFileData()
     NumPreallocatedPreprocessingEntities(0)
 {}
 
+void
+PCHReader::setDeserializationListener(PCHDeserializationListener *Listener) {
+  DeserializationListener = Listener;
+  if (DeserializationListener)
+    DeserializationListener->SetReader(this);
+}
+
 
 namespace {
 class PCHMethodPoolLookupTrait {
@@ -637,9 +644,9 @@ public:
       // and associate it with the persistent ID.
       IdentifierInfo *II = KnownII;
       if (!II)
-        II = &Reader.getIdentifierTable().CreateIdentifierInfo(
-                                                 k.first, k.first + k.second);
+        II = &Reader.getIdentifierTable().getOwn(k.first, k.first + k.second);
       Reader.SetIdentifierInfo(ID, II);
+      II->setIsFromPCH();
       return II;
     }
 
@@ -662,8 +669,7 @@ public:
     // the new IdentifierInfo.
     IdentifierInfo *II = KnownII;
     if (!II)
-      II = &Reader.getIdentifierTable().CreateIdentifierInfo(
-                                                 k.first, k.first + k.second);
+      II = &Reader.getIdentifierTable().getOwn(k.first, k.first + k.second);
     Reader.SetIdentifierInfo(ID, II);
 
     // Set or check the various bits in the IdentifierInfo structure.
@@ -683,6 +689,9 @@ public:
       uint32_t Offset = ReadUnalignedLE32(d);
       Reader.ReadMacroRecord(Stream, Offset);
       DataLen -= 4;
+    } else if (II->hasMacroDefinition() && !Reader.isBuiltinMacro(II)) {
+      // A previous part of the chain added a macro, but this part #undefed it.
+      Reader.EraseMacro(II);
     }
 
     // Read all of the declarations visible at global scope with this
@@ -695,6 +704,7 @@ public:
       Reader.SetGloballyVisibleDecls(II, DeclIDs);
     }
 
+    II->setIsFromPCH();
     return II;
   }
 };
@@ -1379,6 +1389,15 @@ MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
   return MacroDefinitionsLoaded[ID];
 }
 
+void PCHReader::EraseMacro(IdentifierInfo *II) {
+  PP->setMacroInfo(II, 0);
+}
+
+bool PCHReader::isBuiltinMacro(IdentifierInfo *II) {
+  assert(II->hasMacroDefinition() && "Identifier is not a macro");
+  return PP->getMacroInfo(II)->isBuiltinMacro();
+}
+
 /// \brief If we are loading a relocatable PCH file, and the filename is
 /// not an absolute path, add the system root to the beginning of the file
 /// name.
@@ -1797,8 +1816,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
          Id != IdEnd; ++Id)
       Identifiers.push_back(Id->second);
     // We need to search the tables in all files.
-    // FIXME: What happens if this stuff changes between files, e.g. the
-    // dependent PCH undefs a macro from the core file?
     for (unsigned J = 0, M = Chain.size(); J != M; ++J) {
       PCHIdentifierLookupTable *IdTable
         = (PCHIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;

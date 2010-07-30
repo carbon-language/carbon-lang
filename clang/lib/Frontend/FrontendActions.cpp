@@ -81,11 +81,11 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
   if (!OS)
     return 0;
 
-  PCHReader *Chain = CI.getInvocation().getFrontendOpts().ChainedPCH ?
-                               CI.getPCHReader() : 0;
+  bool Chaining = CI.getInvocation().getFrontendOpts().ChainedPCH &&
+                  !CI.getPreprocessorOpts().ImplicitPCHInclude.empty();
   const char *isysroot = CI.getFrontendOpts().RelocatablePCH ?
                              Sysroot.c_str() : 0;
-  return CreatePCHGenerator(CI.getPreprocessor(), OS, Chain, isysroot);
+  return CreatePCHGenerator(CI.getPreprocessor(), OS, Chaining, isysroot);
 }
 
 ASTConsumer *InheritanceViewAction::CreateASTConsumer(CompilerInstance &CI,

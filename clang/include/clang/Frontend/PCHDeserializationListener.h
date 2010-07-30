@@ -20,6 +20,7 @@
 namespace clang {
 
 class Decl;
+class PCHReader;
 class QualType;
 
 class PCHDeserializationListener {
@@ -27,6 +28,9 @@ protected:
   virtual ~PCHDeserializationListener() {}
 
 public:
+  /// \brief Tell the listener about the reader.
+  virtual void SetReader(PCHReader *Reader) = 0;
+
   /// \brief An identifier was deserialized from the PCH.
   virtual void IdentifierRead(pch::IdentID ID, IdentifierInfo *II) = 0;
   /// \brief A type was deserialized from the PCH. The ID here has the qualifier

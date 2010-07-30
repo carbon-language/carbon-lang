@@ -97,9 +97,6 @@ class CompilerInstance {
   /// The list of active output files.
   std::list< std::pair<std::string, llvm::raw_ostream*> > OutputFiles;
 
-  /// The PCH reader. Not owned; the ASTContext owns this.
-  PCHReader *Reader;
-
   void operator=(const CompilerInstance &);  // DO NOT IMPLEMENT
   CompilerInstance(const CompilerInstance&); // DO NOT IMPLEMENT
 public:
@@ -503,7 +500,8 @@ public:
   /// Create an external AST source to read a PCH file and attach it to the AST
   /// context.
   void createPCHExternalASTSource(llvm::StringRef Path,
-                                  bool DisablePCHValidation);
+                                  bool DisablePCHValidation,
+                                  void *DeserializationListener);
 
   /// Create an external AST source to read a PCH file.
   ///
@@ -511,10 +509,8 @@ public:
   static ExternalASTSource *
   createPCHExternalASTSource(llvm::StringRef Path, const std::string &Sysroot,
                              bool DisablePCHValidation,
-                             Preprocessor &PP, ASTContext &Context);
-
-  /// Get the PCH reader, if any.
-  PCHReader *getPCHReader() { return Reader; }
+                             Preprocessor &PP, ASTContext &Context,
+                             void *DeserializationListener);
 
   /// Create a code completion consumer using the invocation; note that this
   /// will cause the source manager to truncate the input source file at the
