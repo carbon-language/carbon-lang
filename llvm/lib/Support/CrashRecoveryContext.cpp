@@ -87,18 +87,9 @@ void CrashRecoveryContext::Disable() {
 
 #include <signal.h>
 
-static struct {
-  int Signal;
-  struct sigaction PrevAction;
-} SignalInfo[] = {
-  { SIGABRT, {} },
-  { SIGBUS,  {} },
-  { SIGFPE,  {} },
-  { SIGILL,  {} },
-  { SIGSEGV, {} },
-  { SIGTRAP, {} },
-};
-static const unsigned NumSignals = sizeof(SignalInfo) / sizeof(SignalInfo[0]);
+static int Signals[] = { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP };
+static const unsigned NumSignals = sizeof(Signals) / sizeof(Signals[0]);
+static struct sigaction PrevActions[NumSignals];
 
 static void CrashRecoverySignalHandler(int Signal) {
   // Lookup the current thread local recovery object.
@@ -142,8 +133,7 @@ void CrashRecoveryContext::Enable() {
   sigemptyset(&Handler.sa_mask);
 
   for (unsigned i = 0; i != NumSignals; ++i) {
-    sigaction(SignalInfo[i].Signal, &Handler,
-              &SignalInfo[i].PrevAction);
+    sigaction(Signals[i], &Handler, &PrevActions[i]);
   }
 }
 
@@ -155,7 +145,7 @@ void CrashRecoveryContext::Disable() {
 
   // Restore the previous signal handlers.
   for (unsigned i = 0; i != NumSignals; ++i)
-    sigaction(SignalInfo[i].Signal, &SignalInfo[i].PrevAction, 0);
+    sigaction(Signals[i], &PrevActions[i], 0);
 }
 
 #endif
