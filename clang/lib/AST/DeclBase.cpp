@@ -606,6 +606,9 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   ExternalASTSource *Source = getParentASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
 
+  // Notify that we have a DeclContext that is initializing.
+  ExternalASTSource::Deserializing ADeclContext(Source);
+
   llvm::SmallVector<Decl*, 64> Decls;
   if (Source->FindExternalLexicalDecls(this, Decls))
     return;
