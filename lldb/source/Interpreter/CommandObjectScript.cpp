@@ -56,11 +56,18 @@ CommandObjectScript::ExecuteRawCommandString
         result.SetStatus (eReturnStatusFailed);
     }
 
-    if (command == NULL || command[0] == '\0')
+    if (command == NULL || command[0] == '\0') {
         script_interpreter->ExecuteInterpreterLoop (interpreter);
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        return result.Succeeded();
+    }
+
+    // We can do better when reporting the status of one-liner script execution.
+    if (script_interpreter->ExecuteOneLine (interpreter, command, &result))
+        result.SetStatus(eReturnStatusSuccessFinishNoResult);
     else
-        script_interpreter->ExecuteOneLine (interpreter, command); 
-    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        result.SetStatus(eReturnStatusFailed);
+
     return result.Succeeded();
 }
 

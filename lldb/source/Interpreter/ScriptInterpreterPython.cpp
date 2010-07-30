@@ -258,17 +258,28 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
     Py_Finalize ();
 }
 
-void
-ScriptInterpreterPython::ExecuteOneLine (CommandInterpreter &interpreter, const char *command)
+bool
+ScriptInterpreterPython::ExecuteOneLine (CommandInterpreter &interpreter,
+                                         const char *command,
+                                         CommandReturnObject *result = 0)
 {
     if (command)
     {
         int success;
 
         success = PyRun_SimpleString (command);
-        if (success != 0)
-            interpreter.GetDebugger().GetErrorStream().Printf ("error: python failed attempting to evaluate '%s'\n", command);
+        if (success == 0)
+            return true;
+
+        // The one-liner failed.  Append the error message.
+        if (result)
+            result->AppendErrorWithFormat ("python failed attempting to evaluate '%s'\n", command);
+        return false;
     }
+
+    if (result)
+        result->AppendError ("empty command passed to python\n");
+    return false;
 }
 
 

@@ -25,10 +25,11 @@ ScriptInterpreterNone::~ScriptInterpreterNone ()
 {
 }
 
-void
-ScriptInterpreterNone::ExecuteOneLine (CommandInterpreter &interpreter, const char *command)
+bool
+ScriptInterpreterNone::ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *)
 {
     interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
+    return false;
 }
 
 void

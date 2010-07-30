@@ -24,8 +24,8 @@ public:
 
     ~ScriptInterpreterPython ();
 
-    void
-    ExecuteOneLine (CommandInterpreter &interpreter, const char *command);
+    bool
+    ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *result);
 
     void
     ExecuteInterpreterLoop (CommandInterpreter &interpreter);

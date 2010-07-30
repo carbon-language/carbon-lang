@@ -22,10 +22,10 @@ public:
 
     ~ScriptInterpreterNone ();
 
-    virtual void
-    ExecuteOneLine (CommandInterpreter &interpreter, const char *command);
+    bool
+    ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *result);
 
-    virtual void
+    void
     ExecuteInterpreterLoop (CommandInterpreter &interpreter);
 
 };

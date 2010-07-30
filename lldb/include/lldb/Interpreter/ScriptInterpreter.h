@@ -42,8 +42,8 @@ public:
 
     virtual ~ScriptInterpreter ();
 
-    virtual void
-    ExecuteOneLine (CommandInterpreter &interpreter, const char *command) = 0;
+    virtual bool
+    ExecuteOneLine (CommandInterpreter &interpreter, const char *command, CommandReturnObject *result) = 0;
 
     virtual void
     ExecuteInterpreterLoop (CommandInterpreter &interpreter) = 0;

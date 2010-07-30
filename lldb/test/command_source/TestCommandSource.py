@@ -21,6 +21,8 @@ class TestCommandSource(lldbtest.TestBase):
         self.assertTrue(res.Succeeded())
 
         self.ci.HandleCommand("script my.date()", res)
+        if (not res.Succeeded()):
+            print res.GetError()
         self.assertTrue(res.Succeeded())
 
         time.sleep(1)
