@@ -126,6 +126,19 @@ RedeclarableTemplateDecl *RedeclarableTemplateDecl::getNextRedeclaration() {
   return Common ? Common->Latest : this;
 }
 
+template <class EntryType>
+typename RedeclarableTemplateDecl::SpecEntryTraits<EntryType>::DeclType*
+RedeclarableTemplateDecl::findSpecializationImpl(
+                                 llvm::FoldingSet<EntryType> &Specs,
+                                 const TemplateArgument *Args, unsigned NumArgs,
+                                 void *&InsertPos) {
+  typedef SpecEntryTraits<EntryType> SETraits;
+  llvm::FoldingSetNodeID ID;
+  EntryType::Profile(ID,Args,NumArgs, getASTContext());
+  EntryType *Entry = Specs.FindNodeOrInsertPos(ID, InsertPos);
+  return Entry ? SETraits::getMostRecentDeclaration(Entry) : 0;
+}
+
 //===----------------------------------------------------------------------===//
 // FunctionTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -152,11 +165,7 @@ RedeclarableTemplateDecl::CommonBase *FunctionTemplateDecl::newCommon() {
 FunctionDecl *
 FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
                                          unsigned NumArgs, void *&InsertPos) {
-  llvm::FoldingSetNodeID ID;
-  FunctionTemplateSpecializationInfo::Profile(ID,Args,NumArgs, getASTContext());
-  FunctionTemplateSpecializationInfo *Info
-      = getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-  return Info ? Info->Function->getMostRecentDeclaration() : 0;
+  return findSpecializationImpl(getSpecializations(), Args, NumArgs, InsertPos);
 }
 
 //===----------------------------------------------------------------------===//
@@ -188,23 +197,15 @@ RedeclarableTemplateDecl::CommonBase *ClassTemplateDecl::newCommon() {
 ClassTemplateSpecializationDecl *
 ClassTemplateDecl::findSpecialization(const TemplateArgument *Args,
                                       unsigned NumArgs, void *&InsertPos) {
-  llvm::FoldingSetNodeID ID;
-  ClassTemplateSpecializationDecl::Profile(ID, Args, NumArgs, getASTContext());
-  ClassTemplateSpecializationDecl *D
-      = getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-  return D ? D->getMostRecentDeclaration() : 0;
+  return findSpecializationImpl(getSpecializations(), Args, NumArgs, InsertPos);
 }
 
 ClassTemplatePartialSpecializationDecl *
 ClassTemplateDecl::findPartialSpecialization(const TemplateArgument *Args,
                                              unsigned NumArgs,
                                              void *&InsertPos) {
-  llvm::FoldingSetNodeID ID;
-  ClassTemplatePartialSpecializationDecl::Profile(ID, Args, NumArgs,
-                                                  getASTContext());
-  ClassTemplatePartialSpecializationDecl *D
-      = getPartialSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-  return D ? D->getMostRecentDeclaration() : 0;
+  return findSpecializationImpl(getPartialSpecializations(), Args, NumArgs,
+                                InsertPos);
 }
 
 void ClassTemplateDecl::getPartialSpecializations(

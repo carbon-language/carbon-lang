@@ -512,6 +512,11 @@ protected:
     }
   };
 
+  template <class EntryType> typename SpecEntryTraits<EntryType>::DeclType*
+  findSpecializationImpl(llvm::FoldingSet<EntryType> &Specs,
+                         const TemplateArgument *Args, unsigned NumArgs,
+                         void *&InsertPos);
+
   struct CommonBase {
     CommonBase() : InstantiatedFromMember(0, false) { }
 
