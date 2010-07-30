@@ -40,6 +40,15 @@
 #include <cstdio>
 using namespace clang;
 
+template <typename T, typename Allocator>
+T *data(std::vector<T, Allocator> &v) {
+  return v.empty() ? 0 : &v.front();
+}
+template <typename T, typename Allocator>
+const T *data(const std::vector<T, Allocator> &v) {
+  return v.empty() ? 0 : &v.front();
+}
+
 //===----------------------------------------------------------------------===//
 // Type serialization
 //===----------------------------------------------------------------------===//
@@ -1218,7 +1227,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Record.push_back(SLocEntryOffsets.size());
   Record.push_back(SourceMgr.getNextOffset());
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record,
-                            (const char *)&SLocEntryOffsets.front(),
+                            (const char *)data(SLocEntryOffsets),
                            SLocEntryOffsets.size()*sizeof(SLocEntryOffsets[0]));
 
   // Write the source location entry preloads array, telling the PCH
@@ -1376,7 +1385,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     Record.push_back(NumPreprocessingRecords);
     Record.push_back(MacroDefinitionOffsets.size());
     Stream.EmitRecordWithBlob(MacroDefOffsetAbbrev, Record,
-                              (const char *)&MacroDefinitionOffsets.front(),
+                              (const char *)data(MacroDefinitionOffsets),
                               MacroDefinitionOffsets.size() * sizeof(uint32_t));
   }
 }
@@ -1523,7 +1532,7 @@ void PCHWriter::WriteTypeDeclOffsets() {
   Record.push_back(pch::TYPE_OFFSET);
   Record.push_back(TypeOffsets.size());
   Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record,
-                            (const char *)&TypeOffsets.front(),
+                            (const char *)data(TypeOffsets),
                             TypeOffsets.size() * sizeof(TypeOffsets[0]));
 
   // Write the declaration offsets array
@@ -1536,7 +1545,7 @@ void PCHWriter::WriteTypeDeclOffsets() {
   Record.push_back(pch::DECL_OFFSET);
   Record.push_back(DeclOffsets.size());
   Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
-                            (const char *)&DeclOffsets.front(),
+                            (const char *)data(DeclOffsets),
                             DeclOffsets.size() * sizeof(DeclOffsets[0]));
 }
 
@@ -1738,7 +1747,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
     Record.push_back(pch::SELECTOR_OFFSETS);
     Record.push_back(SelectorOffsets.size());
     Stream.EmitRecordWithBlob(SelectorOffsetAbbrev, Record,
-                              (const char *)&SelectorOffsets.front(),
+                              (const char *)data(SelectorOffsets),
                               SelectorOffsets.size() * 4);
   }
 }
@@ -1939,7 +1948,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
   Record.push_back(pch::IDENTIFIER_OFFSET);
   Record.push_back(IdentifierOffsets.size());
   Stream.EmitRecordWithBlob(IdentifierOffsetAbbrev, Record,
-                            (const char *)&IdentifierOffsets.front(),
+                            (const char *)data(IdentifierOffsets),
                             IdentifierOffsets.size() * sizeof(uint32_t));
 }
 
