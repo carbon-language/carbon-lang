@@ -5909,7 +5909,7 @@ Sema::DeclPtrTy Sema::ActOnStartLinkageSpecification(Scope *S,
   return DeclPtrTy::make(D);
 }
 
-/// ActOnFinishLinkageSpecification - Completely the definition of
+/// ActOnFinishLinkageSpecification - Complete the definition of
 /// the C++ linkage specification LinkageSpec. If RBraceLoc is
 /// valid, it's the position of the closing '}' brace in a linkage
 /// specification that uses braces.

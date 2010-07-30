@@ -54,3 +54,6 @@ extern "C"
         return f2((char *)0);
     }
 }
+
+// PR6991
+extern "C" typedef int (*PutcFunc_t)(int);

@@ -162,6 +162,7 @@ private:
   // storage-class-specifier
   /*SCS*/unsigned StorageClassSpec : 3;
   bool SCS_thread_specified : 1;
+  bool SCS_extern_in_linkage_spec : 1;
 
   // type-specifier
   /*TSW*/unsigned TypeSpecWidth : 2;
@@ -221,9 +222,7 @@ private:
 
   WrittenBuiltinSpecs writtenBS;
   void SaveWrittenBuiltinSpecs();
-  void SaveStorageSpecifierAsWritten() {
-    StorageClassSpecAsWritten = StorageClassSpec;
-  }
+  void SaveStorageSpecifierAsWritten();
 
   DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
@@ -232,6 +231,7 @@ public:
   DeclSpec()
     : StorageClassSpec(SCS_unspecified),
       SCS_thread_specified(false),
+      SCS_extern_in_linkage_spec(false),
       TypeSpecWidth(TSW_unspecified),
       TypeSpecComplex(TSC_unspecified),
       TypeSpecSign(TSS_unspecified),
@@ -262,6 +262,10 @@ public:
   // storage-class-specifier
   SCS getStorageClassSpec() const { return (SCS)StorageClassSpec; }
   bool isThreadSpecified() const { return SCS_thread_specified; }
+  bool isExternInLinkageSpec() const { return SCS_extern_in_linkage_spec; }
+  void setExternInLinkageSpec(bool Value) {
+    SCS_extern_in_linkage_spec = Value;
+  }
 
   SourceLocation getStorageClassSpecLoc() const { return StorageClassSpecLoc; }
   SourceLocation getThreadSpecLoc() const { return SCS_threadLoc; }
@@ -269,6 +273,7 @@ public:
   void ClearStorageClassSpecs() {
     StorageClassSpec     = DeclSpec::SCS_unspecified;
     SCS_thread_specified = false;
+    SCS_extern_in_linkage_spec = false;
     StorageClassSpecLoc  = SourceLocation();
     SCS_threadLoc        = SourceLocation();
   }

@@ -219,8 +219,15 @@ const char *DeclSpec::getSpecifierName(TQ T) {
 bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
                                    const char *&PrevSpec,
                                    unsigned &DiagID) {
-  if (StorageClassSpec != SCS_unspecified)
-    return BadSpecifier(S, (SCS)StorageClassSpec, PrevSpec, DiagID);
+  if (StorageClassSpec != SCS_unspecified) {
+    // Changing storage class is allowed only if the previous one
+    // was the 'extern' that is part of a linkage specification and
+    // the new storage class is 'typedef'.
+    if (!(SCS_extern_in_linkage_spec &&
+          StorageClassSpec == SCS_extern &&
+          S == SCS_typedef))
+      return BadSpecifier(S, (SCS)StorageClassSpec, PrevSpec, DiagID);
+  }
   StorageClassSpec = S;
   StorageClassSpecLoc = Loc;
   assert((unsigned)S == StorageClassSpec && "SCS constants overflow bitfield");
@@ -239,7 +246,6 @@ bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc,
   SCS_threadLoc = Loc;
   return false;
 }
-
 
 /// These methods set the specified attribute of the DeclSpec, but return true
 /// and ignore the request if invalid (e.g. "extern" then "auto" is
@@ -428,6 +434,15 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
     }
     attrs = attrs->getNext();
   }
+}
+
+void DeclSpec::SaveStorageSpecifierAsWritten() {
+  if (SCS_extern_in_linkage_spec && StorageClassSpec == SCS_extern)
+    // If 'extern' is part of a linkage specification,
+    // then it is not a storage class "as written".
+    StorageClassSpecAsWritten = SCS_unspecified;
+  else
+    StorageClassSpecAsWritten = StorageClassSpec;
 }
 
 /// Finish - This does final analysis of the declspec, rejecting things like
