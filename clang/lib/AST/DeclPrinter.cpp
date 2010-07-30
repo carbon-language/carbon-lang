@@ -198,6 +198,12 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
   llvm::SmallVector<Decl*, 2> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
        D != DEnd; ++D) {
+
+    // Don't print ObjCIvarDecls, as they are printed when visiting the
+    // containing ObjCInterfaceDecl.
+    if (isa<ObjCIvarDecl>(*D))
+      continue;
+
     if (!Policy.Dump) {
       // Skip over implicit declarations in pretty-printing mode.
       if (D->isImplicit()) continue;
