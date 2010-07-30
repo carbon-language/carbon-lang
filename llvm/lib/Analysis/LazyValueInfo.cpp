@@ -204,7 +204,7 @@ namespace {
   /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
-  private:
+  public:
     /// BlockCacheEntryTy - This is a computed lattice value at the end of the
     /// specified basic block for a Value* that depends on context.
     typedef std::pair<BasicBlock*, LVILatticeVal> BlockCacheEntryTy;
@@ -214,6 +214,7 @@ namespace {
     /// entries, allowing us to do a lookup with a binary search.
     typedef DenseMap<BasicBlock*, LVILatticeVal> ValueCacheEntryTy;
 
+  private:
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
     DenseMap<Value*, ValueCacheEntryTy> ValueCache;
@@ -222,44 +223,7 @@ namespace {
     /// values that are over-defined at the end of that block.  This is required
     /// for cache updating.
     DenseSet<std::pair<BasicBlock*, Value*> > OverDefinedCache;
-    
-    LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
-    LVILatticeVal getEdgeValue(Value *Val, BasicBlock *Pred, BasicBlock *Succ);
-    LVILatticeVal &getCachedEntryForBlock(Value *Val, ValueCacheEntryTy &Cache,
-                                          BasicBlock *BB);
-    
-    /************* Begin Per-Query State *************/
-    
-    ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
-    /// added to cache but that are not in sorted order.
-    DenseSet<std::pair<BasicBlock*,Value*> > NewBlockInfo;
-    
-    /// QuerySetup - An RAII helper to construct and tear-down per-query 
-    /// temporary state.
-    struct QuerySetup {
-      LazyValueInfoCache &Owner;
-      QuerySetup(LazyValueInfoCache &O) : Owner(O) {
-        assert(Owner.NewBlockInfo.empty() && "Leaked block info!");
-      }
-      
-      ~QuerySetup() {
-        // When the query is done, insert the newly discovered facts into the
-        // cache in sorted order.
-        for (DenseSet<std::pair<BasicBlock*,Value*> >::iterator
-             I = Owner.NewBlockInfo.begin(), E = Owner.NewBlockInfo.end();
-             I != E; ++I) {
-          if (Owner.ValueCache[I->second][I->first].isOverdefined())
-            Owner.OverDefinedCache.insert(*I);
-        }
-        
-        // Reset Per-Query State
-        Owner.NewBlockInfo.clear();
-      }
-    };
-    /************* End Per-Query State *************/
-    
   public:
-    LazyValueInfoCache() { }
     
     /// getValueInBlock - This is the query interface to determine the lattice
     /// value for the specified Value* at the end of the specified block.
@@ -276,21 +240,90 @@ namespace {
   };
 } // end anonymous namespace
 
+namespace {
+  struct BlockCacheEntryComparator {
+    static int Compare(const void *LHSv, const void *RHSv) {
+      const LazyValueInfoCache::BlockCacheEntryTy *LHS =
+        static_cast<const LazyValueInfoCache::BlockCacheEntryTy *>(LHSv);
+      const LazyValueInfoCache::BlockCacheEntryTy *RHS =
+        static_cast<const LazyValueInfoCache::BlockCacheEntryTy *>(RHSv);
+      if (LHS->first < RHS->first)
+        return -1;
+      if (LHS->first > RHS->first)
+        return 1;
+      return 0;
+    }
+    
+    bool operator()(const LazyValueInfoCache::BlockCacheEntryTy &LHS,
+                    const LazyValueInfoCache::BlockCacheEntryTy &RHS) const {
+      return LHS.first < RHS.first;
+    }
+  };
+}
+
+//===----------------------------------------------------------------------===//
+//                              LVIQuery Impl
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// LVIQuery - This is a transient object that exists while a query is
+  /// being performed.
+  ///
+  /// TODO: Reuse LVIQuery instead of recreating it for every query, this avoids
+  /// reallocation of the densemap on every query.
+  class LVIQuery {
+    typedef LazyValueInfoCache::BlockCacheEntryTy BlockCacheEntryTy;
+    typedef LazyValueInfoCache::ValueCacheEntryTy ValueCacheEntryTy;
+    
+    /// This is the current value being queried for.
+    Value *Val;
+    
+    /// This is all of the cached information about this value.
+    ValueCacheEntryTy &Cache;
+    
+    /// This tracks, for each block, what values are overdefined.
+    DenseSet<std::pair<BasicBlock*, Value*> > &OverDefinedCache;
+    
+    ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
+    /// added to cache but that are not in sorted order.
+    DenseSet<BasicBlock*> NewBlockInfo;
+  public:
+    
+    LVIQuery(Value *V, ValueCacheEntryTy &VC,
+             DenseSet<std::pair<BasicBlock*, Value*> > &ODC)
+      : Val(V), Cache(VC), OverDefinedCache(ODC) {
+    }
+
+    ~LVIQuery() {
+      // When the query is done, insert the newly discovered facts into the
+      // cache in sorted order.
+      if (NewBlockInfo.empty()) return;
+      
+      for (DenseSet<BasicBlock*>::iterator I = NewBlockInfo.begin(),
+           E = NewBlockInfo.end(); I != E; ++I) {
+        if (Cache[*I].isOverdefined())
+          OverDefinedCache.insert(std::make_pair(*I, Val));
+      }
+    }
+
+    LVILatticeVal getBlockValue(BasicBlock *BB);
+    LVILatticeVal getEdgeValue(BasicBlock *FromBB, BasicBlock *ToBB);
+
+  private:
+    LVILatticeVal &getCachedEntryForBlock(BasicBlock *BB);
+  };
+} // end anonymous namespace
 
 /// getCachedEntryForBlock - See if we already have a value for this block.  If
 /// so, return it, otherwise create a new entry in the Cache map to use.
-LVILatticeVal& 
-LazyValueInfoCache::getCachedEntryForBlock(Value *Val, ValueCacheEntryTy &Cache,
-                                           BasicBlock *BB) {
-  NewBlockInfo.insert(std::make_pair(BB, Val));
+LVILatticeVal &LVIQuery::getCachedEntryForBlock(BasicBlock *BB) {
+  NewBlockInfo.insert(BB);
   return Cache[BB];
 }
 
-LVILatticeVal
-LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
+LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   // See if we already have a value for this block.
-  ValueCacheEntryTy &Cache = ValueCache[Val];
-  LVILatticeVal &BBLV = getCachedEntryForBlock(Val, Cache, BB);
+  LVILatticeVal &BBLV = getCachedEntryForBlock(BB);
   
   // If we've already computed this block's value, return it.
   if (!BBLV.isUndefined()) {
@@ -312,7 +345,7 @@ LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
     // Loop over all of our predecessors, merging what we know from them into
     // result.
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-      Result.mergeIn(getEdgeValue(Val, *PI, BB));
+      Result.mergeIn(getEdgeValue(*PI, BB));
       
       // If we hit overdefined, exit early.  The BlockVals entry is already set
       // to overdefined.
@@ -334,7 +367,7 @@ LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
     
     // Return the merged value, which is more precise than 'overdefined'.
     assert(!Result.isOverdefined());
-    return getCachedEntryForBlock(Val, Cache, BB) = Result;
+    return getCachedEntryForBlock(BB) = Result;
   }
   
   // If this value is defined by an instruction in this block, we have to
@@ -351,13 +384,12 @@ LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
 
   LVILatticeVal Result;
   Result.markOverdefined();
-  return getCachedEntryForBlock(Val, Cache, BB) = Result;
+  return getCachedEntryForBlock(BB) = Result;
 }
 
 
 /// getEdgeValue - This method attempts to infer more complex 
-LVILatticeVal LazyValueInfoCache::getEdgeValue(Value *Val, 
-                                         BasicBlock *BBFrom, BasicBlock *BBTo) {
+LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
   // TODO: Handle more complex conditionals.  If (v == 0 || v2 < 1) is false, we
   // know that v != 0.
   if (BranchInst *BI = dyn_cast<BranchInst>(BBFrom->getTerminator())) {
@@ -411,8 +443,13 @@ LVILatticeVal LazyValueInfoCache::getEdgeValue(Value *Val,
   }
   
   // Otherwise see if the value is known in the block.
-  return getBlockValue(Val, BBFrom);
+  return getBlockValue(BBFrom);
 }
+
+
+//===----------------------------------------------------------------------===//
+//                         LazyValueInfoCache Impl
+//===----------------------------------------------------------------------===//
 
 LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   // If already a constant, there is nothing to compute.
@@ -422,8 +459,8 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   DEBUG(dbgs() << "LVI Getting block end value " << *V << " at '"
         << BB->getName() << "'\n");
   
-  QuerySetup QS(*this);
-  LVILatticeVal Result = getBlockValue(V, BB);
+  LVILatticeVal Result = LVIQuery(V, ValueCache[V], 
+                                  OverDefinedCache).getBlockValue(BB);
   
   DEBUG(dbgs() << "  Result = " << Result << "\n");
   return Result;
@@ -438,8 +475,9 @@ getValueOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB) {
   DEBUG(dbgs() << "LVI Getting edge value " << *V << " from '"
         << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
   
-  QuerySetup QS(*this);
-  LVILatticeVal Result = getEdgeValue(V, FromBB, ToBB);
+  LVILatticeVal Result =
+    LVIQuery(V, ValueCache[V],
+             OverDefinedCache).getEdgeValue(FromBB, ToBB);
   
   DEBUG(dbgs() << "  Result = " << Result << "\n");
   
