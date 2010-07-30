@@ -1165,6 +1165,12 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
                                      16, SectionKind::getText());
         OutStreamer.SwitchSection(sect);
       }
+      const MCSection *StaticInitSect =
+        OutContext.getMachOSection("__TEXT", "__StaticInit",
+                                   MCSectionMachO::S_REGULAR |
+                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                   SectionKind::getText());
+      OutStreamer.SwitchSection(StaticInitSect);
     }
   }
 
