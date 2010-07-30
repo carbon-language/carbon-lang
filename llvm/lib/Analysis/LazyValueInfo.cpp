@@ -21,6 +21,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -212,17 +213,36 @@ namespace {
     /// ValueCacheEntryTy - This is all of the cached block information for
     /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
-    typedef DenseMap<BasicBlock*, LVILatticeVal> ValueCacheEntryTy;
+    typedef std::map<BasicBlock*, LVILatticeVal> ValueCacheEntryTy;
 
   private:
+     /// LVIValueHandle - A callback value handle update the cache when
+     /// values are erased.
+    struct LVIValueHandle : public CallbackVH {
+      LazyValueInfoCache *Parent;
+      
+      LVIValueHandle(Value *V, LazyValueInfoCache *P)
+        : CallbackVH(V), Parent(P) { }
+      
+      void deleted();
+      void allUsesReplacedWith(Value* V) {
+        deleted();
+      }
+
+      LVIValueHandle &operator=(Value *V) {
+        return *this = LVIValueHandle(V, Parent);
+      }
+    };
+
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
-    DenseMap<Value*, ValueCacheEntryTy> ValueCache;
+    std::map<LVIValueHandle, ValueCacheEntryTy> ValueCache;
     
     /// OverDefinedCache - This tracks, on a per-block basis, the set of 
     /// values that are over-defined at the end of that block.  This is required
     /// for cache updating.
-    DenseSet<std::pair<BasicBlock*, Value*> > OverDefinedCache;
+    std::set<std::pair<BasicBlock*, Value*> > OverDefinedCache;
+
   public:
     
     /// getValueInBlock - This is the query interface to determine the lattice
@@ -239,27 +259,6 @@ namespace {
     void threadEdge(BasicBlock *PredBB,BasicBlock *OldSucc,BasicBlock *NewSucc);
   };
 } // end anonymous namespace
-
-namespace {
-  struct BlockCacheEntryComparator {
-    static int Compare(const void *LHSv, const void *RHSv) {
-      const LazyValueInfoCache::BlockCacheEntryTy *LHS =
-        static_cast<const LazyValueInfoCache::BlockCacheEntryTy *>(LHSv);
-      const LazyValueInfoCache::BlockCacheEntryTy *RHS =
-        static_cast<const LazyValueInfoCache::BlockCacheEntryTy *>(RHSv);
-      if (LHS->first < RHS->first)
-        return -1;
-      if (LHS->first > RHS->first)
-        return 1;
-      return 0;
-    }
-    
-    bool operator()(const LazyValueInfoCache::BlockCacheEntryTy &LHS,
-                    const LazyValueInfoCache::BlockCacheEntryTy &RHS) const {
-      return LHS.first < RHS.first;
-    }
-  };
-}
 
 //===----------------------------------------------------------------------===//
 //                              LVIQuery Impl
@@ -278,20 +277,24 @@ namespace {
     /// This is the current value being queried for.
     Value *Val;
     
+    /// This is a pointer to the owning cache, for recursive queries.
+    LazyValueInfoCache &Parent;
+
     /// This is all of the cached information about this value.
     ValueCacheEntryTy &Cache;
     
     /// This tracks, for each block, what values are overdefined.
-    DenseSet<std::pair<BasicBlock*, Value*> > &OverDefinedCache;
+    std::set<std::pair<BasicBlock*, Value*> > &OverDefinedCache;
     
     ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
     /// added to cache but that are not in sorted order.
     DenseSet<BasicBlock*> NewBlockInfo;
   public:
     
-    LVIQuery(Value *V, ValueCacheEntryTy &VC,
-             DenseSet<std::pair<BasicBlock*, Value*> > &ODC)
-      : Val(V), Cache(VC), OverDefinedCache(ODC) {
+    LVIQuery(Value *V, LazyValueInfoCache &P,
+             ValueCacheEntryTy &VC,
+             std::set<std::pair<BasicBlock*, Value*> > &ODC)
+      : Val(V), Parent(P), Cache(VC), OverDefinedCache(ODC) {
     }
 
     ~LVIQuery() {
@@ -313,6 +316,20 @@ namespace {
     LVILatticeVal &getCachedEntryForBlock(BasicBlock *BB);
   };
 } // end anonymous namespace
+
+void LazyValueInfoCache::LVIValueHandle::deleted() {
+  Parent->ValueCache.erase(*this);
+  for (std::set<std::pair<BasicBlock*, Value*> >::iterator
+       I = Parent->OverDefinedCache.begin(),
+       E = Parent->OverDefinedCache.end();
+       I != E; ) {
+    std::set<std::pair<BasicBlock*, Value*> >::iterator tmp = I;
+    ++I;
+    if (tmp->second == getValPtr())
+      Parent->OverDefinedCache.erase(tmp);
+  }
+}
+
 
 /// getCachedEntryForBlock - See if we already have a value for this block.  If
 /// so, return it, otherwise create a new entry in the Cache map to use.
@@ -373,8 +390,27 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   // If this value is defined by an instruction in this block, we have to
   // process it here somehow or return overdefined.
   if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
-    (void)PN;
-    // TODO: PHI Translation in preds.
+    LVILatticeVal Result;  // Start Undefined.
+    
+    // Loop over all of our predecessors, merging what we know from them into
+    // result.
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      Value* PhiVal = PN->getIncomingValueForBlock(*PI);
+      Result.mergeIn(Parent.getValueOnEdge(PhiVal, *PI, BB));
+      
+      // If we hit overdefined, exit early.  The BlockVals entry is already set
+      // to overdefined.
+      if (Result.isOverdefined()) {
+        DEBUG(dbgs() << " compute BB '" << BB->getName()
+                     << "' - overdefined because of pred.\n");
+        return Result;
+      }
+    }
+    
+    // Return the merged value, which is more precise than 'overdefined'.
+    assert(!Result.isOverdefined());
+    return getCachedEntryForBlock(BB) = Result;
+
   } else {
     
   }
@@ -459,7 +495,8 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   DEBUG(dbgs() << "LVI Getting block end value " << *V << " at '"
         << BB->getName() << "'\n");
   
-  LVILatticeVal Result = LVIQuery(V, ValueCache[V], 
+  LVILatticeVal Result = LVIQuery(V, *this,
+                                  ValueCache[LVIValueHandle(V, this)], 
                                   OverDefinedCache).getBlockValue(BB);
   
   DEBUG(dbgs() << "  Result = " << Result << "\n");
@@ -476,7 +513,7 @@ getValueOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB) {
         << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
   
   LVILatticeVal Result =
-    LVIQuery(V, ValueCache[V],
+    LVIQuery(V, *this, ValueCache[LVIValueHandle(V, this)],
              OverDefinedCache).getEdgeValue(FromBB, ToBB);
   
   DEBUG(dbgs() << "  Result = " << Result << "\n");
@@ -500,7 +537,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   worklist.push_back(OldSucc);
   
   DenseSet<Value*> ClearSet;
-  for (DenseSet<std::pair<BasicBlock*, Value*> >::iterator
+  for (std::set<std::pair<BasicBlock*, Value*> >::iterator
        I = OverDefinedCache.begin(), E = OverDefinedCache.end(); I != E; ++I) {
     if (I->first == OldSucc)
       ClearSet.insert(I->second);
@@ -521,12 +558,12 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     for (DenseSet<Value*>::iterator I = ClearSet.begin(),E = ClearSet.end();
          I != E; ++I) {
       // If a value was marked overdefined in OldSucc, and is here too...
-      DenseSet<std::pair<BasicBlock*, Value*> >::iterator OI =
+      std::set<std::pair<BasicBlock*, Value*> >::iterator OI =
         OverDefinedCache.find(std::make_pair(ToUpdate, *I));
       if (OI == OverDefinedCache.end()) continue;
 
       // Remove it from the caches.
-      ValueCacheEntryTy &Entry = ValueCache[*I];
+      ValueCacheEntryTy &Entry = ValueCache[LVIValueHandle(*I, this)];
       ValueCacheEntryTy::iterator CI = Entry.find(ToUpdate);
         
       assert(CI != Entry.end() && "Couldn't find entry to update?");
