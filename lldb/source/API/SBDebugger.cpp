@@ -43,6 +43,12 @@ SBDebugger::Terminate ()
     Debugger::Terminate();
 }
 
+void
+SBDebugger::Clear ()
+{
+    m_opaque_sp.reset();
+}
+
 SBDebugger
 SBDebugger::Create()
 {

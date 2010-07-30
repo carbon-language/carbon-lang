@@ -34,6 +34,9 @@ public:
     IsValid() const;
 
     void
+    Clear ();
+
+    void
     SetAsync (bool b);
 
     void

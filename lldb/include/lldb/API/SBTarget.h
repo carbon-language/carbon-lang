@@ -76,6 +76,9 @@ public:
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
+    void
+    Clear ();
+
     bool
     DeleteTargetFromList (lldb_private::TargetList *list);
 

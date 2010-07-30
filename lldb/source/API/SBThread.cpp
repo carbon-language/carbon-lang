@@ -67,6 +67,13 @@ SBThread::IsValid() const
     return m_opaque_sp != NULL;
 }
 
+void
+SBThread::Clear ()
+{
+    m_opaque_sp.reset();
+}
+
+
 StopReason
 SBThread::GetStopReason()
 {

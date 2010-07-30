@@ -30,6 +30,9 @@ public:
     bool
     IsValid() const;
 
+    void
+    Clear ();
+
     lldb::StopReason
     GetStopReason();
 

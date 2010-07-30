@@ -353,6 +353,13 @@ SBTarget::GetNumModules () const
     return 0;
 }
 
+void
+SBTarget::Clear ()
+{
+    m_opaque_sp.reset();
+}
+
+
 SBModule
 SBTarget::FindModule (const SBFileSpec &sb_file_spec)
 {
