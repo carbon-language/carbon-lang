@@ -298,8 +298,10 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     Result = TheSema.GetTypeFromParser(DS.getTypeRep());
-
-    if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
+    if (Result.isNull())
+      TheDeclarator.setInvalidType(true);
+    else if (DeclSpec::ProtocolQualifierListTy PQ
+               = DS.getProtocolQualifiers()) {
       if (const ObjCObjectType *ObjT = Result->getAs<ObjCObjectType>()) {
         // Silently drop any existing protocol qualifiers.
         // TODO: determine whether that's the right thing to do.
