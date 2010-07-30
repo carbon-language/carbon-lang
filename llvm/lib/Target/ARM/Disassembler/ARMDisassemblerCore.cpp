@@ -2248,9 +2248,10 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   // We have homogeneous NEON registers for Load/Store.
   unsigned RegClass = 0;
+  bool DRegPair = UseDRegPair(Opcode);
 
   // Double-spaced registers have increments of 2.
-  unsigned Inc = DblSpaced ? 2 : 1;
+  unsigned Inc = (DblSpaced || DRegPair) ? 2 : 1;
 
   unsigned Rn = decodeRn(insn);
   unsigned Rm = decodeRm(insn);
@@ -2296,8 +2297,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
     RegClass = OpInfo[OpIdx].RegClass;
     while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       MI.addOperand(MCOperand::CreateReg(
-                      getRegisterEnum(B, RegClass, Rd,
-                                      UseDRegPair(Opcode))));
+                      getRegisterEnum(B, RegClass, Rd, DRegPair)));
       Rd += Inc;
       ++OpIdx;
     }
@@ -2316,8 +2316,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       MI.addOperand(MCOperand::CreateReg(
-                      getRegisterEnum(B, RegClass, Rd,
-                                      UseDRegPair(Opcode))));
+                      getRegisterEnum(B, RegClass, Rd, DRegPair)));
       Rd += Inc;
       ++OpIdx;
     }
@@ -2354,6 +2353,11 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
       ++OpIdx;
     }
   }
+
+  // Accessing registers past the end of the NEON register file is not
+  // defined.
+  if (Rd > 32)
+    return false;
 
   return true;
 }
