@@ -56,3 +56,17 @@ void floats(float x) {
   test_f(x * 1.0); // no-warning
   test_f(x * 1.0F); // no-warning
 }
+
+// Ensure that we don't report false poitives on complex loops
+void bailout() {
+  int unused, result = 4;
+  int numbers[5] = { 0, 32, 'x', 128, 255 };
+
+  for (int bg = 0; bg < 5; bg ++) {
+    result += numbers[bg]; // no-warning
+
+    for (int i = 0; i < 256; i++) {
+      unused = i;
+    }
+  }
+}
