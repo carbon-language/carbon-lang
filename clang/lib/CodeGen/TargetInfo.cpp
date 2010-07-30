@@ -1015,11 +1015,6 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
         if (Lo == Memory || Hi == Memory)
           break;
       }
-
-      // If this record has no fields, no bases, no vtable, but isn't empty,
-      // classify as INTEGER.
-      if (CXXRD->isEmpty() && Size)
-        Current = Integer;
     }
 
     // Classify the fields one at a time, merging the results.
@@ -1387,13 +1382,18 @@ classifyReturnType(QualType RetTy) const {
 
   // Check some invariants.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
-  assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
-    return ABIArgInfo::getIgnore();
+    if (Hi == NoClass)
+      return ABIArgInfo::getIgnore();
+    // If the low part is just padding, it takes no register, leave ResType
+    // null.
+    assert((Hi == SSE || Hi == Integer || Hi == X87Up) &&
+           "Unknown missing lo part");
+    break;
 
   case SSEUp:
   case X87Up:
@@ -1461,12 +1461,18 @@ classifyReturnType(QualType RetTy) const {
   case Integer: {
     const llvm::Type *HiType =
       GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
+    if (Lo == NoClass)  // Return HiType at offset 8 in memory.
+      return ABIArgInfo::getDirect(HiType, 8);
+
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
   case SSE: {
     const llvm::Type *HiType =
       GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
+    if (Lo == NoClass)  // Return HiType at offset 8 in memory.
+      return ABIArgInfo::getDirect(HiType, 8);
+
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType,NULL);
     break;
   }
@@ -1490,6 +1496,9 @@ classifyReturnType(QualType RetTy) const {
     if (Lo != X87) {
       const llvm::Type *HiType =
         GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
+      if (Lo == NoClass)  // Return HiType at offset 8 in memory.
+        return ABIArgInfo::getDirect(HiType, 8);
+        
       ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     }
     break;
@@ -1506,7 +1515,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   // Check some invariants.
   // FIXME: Enforce these by construction.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
-  assert((Lo != NoClass || Hi == NoClass) && "Invalid null classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
   neededInt = 0;
@@ -1514,8 +1522,14 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   const llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
-    return ABIArgInfo::getIgnore();
-
+    if (Hi == NoClass)
+      return ABIArgInfo::getIgnore();
+    // If the low part is just padding, it takes no register, leave ResType
+    // null.
+    assert((Hi == SSE || Hi == Integer || Hi == X87Up) &&
+           "Unknown missing lo part");
+    break;
+      
     // AMD64-ABI 3.2.3p3: Rule 1. If the class is MEMORY, pass the argument
     // on the stack.
   case Memory:
@@ -1579,6 +1593,10 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // Pick an 8-byte type based on the preferred type.
     const llvm::Type *HiType =
       GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+    
+    if (Lo == NoClass)  // Pass HiType at offset 8 in memory.
+      return ABIArgInfo::getDirect(HiType, 8);
+
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     break;
   }
@@ -1589,6 +1607,10 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case SSE: {
     const llvm::Type *HiType =
       GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+    
+    if (Lo == NoClass)  // Pass HiType at offset 8 in memory.
+      return ABIArgInfo::getDirect(HiType, 8);
+
     ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     ++neededSSE;
     break;

@@ -38,26 +38,30 @@ namespace clang {
   class ABIArgInfo {
   public:
     enum Kind {
-      Direct,    /// Pass the argument directly using the normal converted LLVM
-                 /// type, or by coercing to another specified type
-                 /// (stored in 'CoerceToType').
+      /// Direct - Pass the argument directly using the normal converted LLVM
+      /// type, or by coercing to another specified type stored in
+      /// 'CoerceToType').  If an offset is specified (in UIntData), then the
+      /// argument passed is offset by some number of bytes in the memory
+      /// representation.
+      Direct,
 
-      Extend,    /// Valid only for integer argument types. Same as 'direct'
-                 /// but also emit a zero/sign extension attribute.
+      /// Extend - Valid only for integer argument types. Same as 'direct'
+      /// but also emit a zero/sign extension attribute.
+      Extend,
 
-      Indirect,  /// Pass the argument indirectly via a hidden pointer
-                 /// with the specified alignment (0 indicates default
-                 /// alignment).
+      /// Indirect - Pass the argument indirectly via a hidden pointer
+      /// with the specified alignment (0 indicates default alignment).
+      Indirect,
 
-      Ignore,    /// Ignore the argument (treat as void). Useful for
-                 /// void and empty structs.
+      /// Ignore - Ignore the argument (treat as void). Useful for void and
+      /// empty structs.
+      Ignore,
 
-      Expand,    /// Only valid for aggregate argument types. The
-                 /// structure should be expanded into consecutive
-                 /// arguments for its constituent fields. Currently
-                 /// expand is only allowed on structures whose fields
-                 /// are all scalar types or are themselves expandable
-                 /// types.
+      /// Expand - Only valid for aggregate argument types. The structure should
+      /// be expanded into consecutive arguments for its constituent fields.
+      /// Currently expand is only allowed on structures whose fields
+      /// are all scalar types or are themselves expandable types.
+      Expand,
 
       KindFirst=Direct, KindLast=Expand
     };
@@ -75,11 +79,11 @@ namespace clang {
   public:
     ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
-    static ABIArgInfo getDirect(const llvm::Type *T = 0) {
-      return ABIArgInfo(Direct, T);
+    static ABIArgInfo getDirect(const llvm::Type *T = 0, unsigned Offset = 0) {
+      return ABIArgInfo(Direct, T, Offset);
     }
     static ABIArgInfo getExtend(const llvm::Type *T = 0) {
-      return ABIArgInfo(Extend, T);
+      return ABIArgInfo(Extend, T, 0);
     }
     static ABIArgInfo getIgnore() {
       return ABIArgInfo(Ignore);
@@ -103,6 +107,10 @@ namespace clang {
     }
     
     // Direct/Extend accessors
+    unsigned getDirectOffset() const {
+      assert((isDirect() || isExtend()) && "Not a direct or extend kind");
+      return UIntData;
+    }
     const llvm::Type *getCoerceToType() const {
       assert(canHaveCoerceToType() && "Invalid kind!");
       return TypeData;
@@ -112,6 +120,7 @@ namespace clang {
       assert(canHaveCoerceToType() && "Invalid kind!");
       TypeData = T;
     }
+    
     // Indirect accessors
     unsigned getIndirectAlign() const {
       assert(TheKind == Indirect && "Invalid kind!");

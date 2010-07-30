@@ -869,7 +869,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Direct: {
       // If we have the trivial case, handle it with no muss and fuss.
       if (!isa<llvm::StructType>(ArgI.getCoerceToType()) &&
-          ArgI.getCoerceToType() == ConvertType(Ty)) {
+          ArgI.getCoerceToType() == ConvertType(Ty) &&
+          ArgI.getDirectOffset() == 0) {
         assert(AI != Fn->arg_end() && "Argument mismatch!");
         llvm::Value *V = AI;
         
@@ -896,13 +897,21 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       
       Alloca->setAlignment(AlignmentToUse);
       llvm::Value *V = Alloca;
+      llvm::Value *Ptr = V;    // Pointer to store into.
+      
+      // If the value is offset in memory, apply the offset now.
+      if (unsigned Offs = ArgI.getDirectOffset()) {
+        Ptr = Builder.CreateBitCast(Ptr, Builder.getInt8PtrTy());
+        Ptr = Builder.CreateConstGEP1_32(Ptr, Offs);
+        Ptr = Builder.CreateBitCast(Ptr, 
+                          llvm::PointerType::getUnqual(ArgI.getCoerceToType()));
+      }
       
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel
       // and the optimizer generally likes scalar values better than FCAs.
       if (const llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgI.getCoerceToType())) {
-        llvm::Value *Ptr = V;
         Ptr = Builder.CreateBitCast(Ptr, llvm::PointerType::getUnqual(STy));
         
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
@@ -915,7 +924,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         // Simple case, just do a coerced store of the argument into the alloca.
         assert(AI != Fn->arg_end() && "Argument mismatch!");
         AI->setName(Arg->getName() + ".coerce");
-        CreateCoercedStore(AI++, V, /*DestIsVolatile=*/false, *this);
+        CreateCoercedStore(AI++, Ptr, /*DestIsVolatile=*/false, *this);
       }
       
       
@@ -992,8 +1001,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
 
   case ABIArgInfo::Extend:
   case ABIArgInfo::Direct:
-    
-    if (RetAI.getCoerceToType() == ConvertType(RetTy)) {
+    if (RetAI.getCoerceToType() == ConvertType(RetTy) &&
+        RetAI.getDirectOffset() == 0) {
       // The internal return value temp always will have pointer-to-return-type
       // type, just do a load.
         
@@ -1019,7 +1028,16 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
         }
       }
     } else {
-      RV = CreateCoercedLoad(ReturnValue, RetAI.getCoerceToType(), *this);
+      llvm::Value *V = ReturnValue;
+      // If the value is offset in memory, apply the offset now.
+      if (unsigned Offs = RetAI.getDirectOffset()) {
+        V = Builder.CreateBitCast(V, Builder.getInt8PtrTy());
+        V = Builder.CreateConstGEP1_32(V, Offs);
+        V = Builder.CreateBitCast(V, 
+                         llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
+      }
+      
+      RV = CreateCoercedLoad(V, RetAI.getCoerceToType(), *this);
     }
     break;
 
@@ -1142,7 +1160,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
       if (!isa<llvm::StructType>(ArgInfo.getCoerceToType()) &&
-          ArgInfo.getCoerceToType() == ConvertType(info_it->type)) {
+          ArgInfo.getCoerceToType() == ConvertType(info_it->type) &&
+          ArgInfo.getDirectOffset() == 0) {
         if (RV.isScalar())
           Args.push_back(RV.getScalarVal());
         else
@@ -1160,6 +1179,15 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
       } else
         SrcPtr = RV.getAggregateAddr();
+      
+      // If the value is offset in memory, apply the offset now.
+      if (unsigned Offs = ArgInfo.getDirectOffset()) {
+        SrcPtr = Builder.CreateBitCast(SrcPtr, Builder.getInt8PtrTy());
+        SrcPtr = Builder.CreateConstGEP1_32(SrcPtr, Offs);
+        SrcPtr = Builder.CreateBitCast(SrcPtr, 
+                       llvm::PointerType::getUnqual(ArgInfo.getCoerceToType()));
+
+      }
       
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel
@@ -1280,7 +1308,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     
   case ABIArgInfo::Extend:
   case ABIArgInfo::Direct: {
-    if (RetAI.getCoerceToType() == ConvertType(RetTy)) {
+    if (RetAI.getCoerceToType() == ConvertType(RetTy) &&
+        RetAI.getDirectOffset() == 0) {
       if (RetTy->isAnyComplexType()) {
         llvm::Value *Real = Builder.CreateExtractValue(CI, 0);
         llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
@@ -1308,7 +1337,16 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       DestIsVolatile = false;
     }
     
-    CreateCoercedStore(CI, DestPtr, DestIsVolatile, *this);
+    // If the value is offset in memory, apply the offset now.
+    llvm::Value *StorePtr = DestPtr;
+    if (unsigned Offs = RetAI.getDirectOffset()) {
+      StorePtr = Builder.CreateBitCast(StorePtr, Builder.getInt8PtrTy());
+      StorePtr = Builder.CreateConstGEP1_32(StorePtr, Offs);
+      StorePtr = Builder.CreateBitCast(StorePtr, 
+                         llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
+    }
+    CreateCoercedStore(CI, StorePtr, DestIsVolatile, *this);
+    
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(DestPtr, false));
     if (CodeGenFunction::hasAggregateLLVMType(RetTy))

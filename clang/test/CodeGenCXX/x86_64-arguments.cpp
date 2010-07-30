@@ -19,7 +19,7 @@ struct f2_s1 : public f2_s0 { char d;};
 void f2(f2_s1 a0) { }
 
 // PR5831
-// CHECK: define void @_Z2f34s3_1(i8 %x.coerce0, i64 %x.coerce1)
+// CHECK: define void @_Z2f34s3_1(i64 %x.coerce)
 struct s3_0 {};
 struct s3_1 { struct s3_0 a; long b; };
 void f3(struct s3_1 x) {}
@@ -47,8 +47,6 @@ void foo() {
 }
 }
 
-
-
 namespace PR7742 { // Also rdar://8250764
   struct s2 {
     float a[2];
@@ -60,4 +58,21 @@ namespace PR7742 { // Also rdar://8250764
   c2 foo(c2 *P) {
   }
   
+}
+
+namespace PR5179 {
+  struct B {};
+
+  struct B1 : B {
+    int* pa;
+  };
+
+  struct B2 : B {
+    B1 b1;
+  };
+
+  // CHECK: define i8* @_ZN6PR51793barENS_2B2E(i32* %b2.coerce)
+  const void *bar(B2 b2) {
+    return b2.b1.pa;
+  }
 }

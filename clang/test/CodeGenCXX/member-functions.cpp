@@ -58,6 +58,6 @@ struct T {
 void test3() {
   T t1, t2;
   
-  // RUN: grep "call i8 @_ZN1TplERKS_" %t
+  // RUN: grep "call void @_ZN1TplERKS_" %t
   T result = t1 + t2;
 }

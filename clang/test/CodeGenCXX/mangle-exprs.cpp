@@ -39,6 +39,6 @@ namespace Casts {
   // CHECK: define weak_odr void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void static_<4>(void*);
 
-  // CHECK: define weak_odr i8 @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
+  // CHECK: define weak_odr void @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
   template T<6> f<6>();
 }
