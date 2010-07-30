@@ -45,19 +45,15 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
   CodeGenModule &CGM = CGF.CGM;
   ASTContext &Context = CGF.getContext();
   
-  const Expr *Init = D.getInit();
   QualType T = D.getType();
-  if (!CGF.hasAggregateLLVMType(T) || T->isAnyComplexType())
-    return;
-                                
-  // Avoid generating destructor(s) for initialized objects. 
-  if (!isa<CXXConstructExpr>(Init))
-    return;
   
+  // Drill down past array types.
   const ConstantArrayType *Array = Context.getAsConstantArrayType(T);
   if (Array)
     T = Context.getBaseElementType(Array);
   
+  /// If that's not a record, we're done.
+  /// FIXME:  __attribute__((cleanup)) ?
   const RecordType *RT = T->getAs<RecordType>();
   if (!RT)
     return;

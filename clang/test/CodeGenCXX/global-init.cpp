@@ -37,6 +37,22 @@ namespace test1 {
   const int z = ~y;    // This also gets deferred, but gets "undeferred" before y.
   int test() { return z; }
 // CHECK:      define i32 @_ZN5test14testEv() {
+
+  // All of these initializers end up delayed, so we check them later.
+}
+
+// <rdar://problem/8246444>
+namespace test2 {
+  struct allocator { allocator(); ~allocator(); };
+  struct A { A(const allocator &a = allocator()); ~A(); };
+
+  A a;
+// CHECK: call void @_ZN5test29allocatorC1Ev(
+// CHECK: invoke void @_ZN5test21AC1ERKNS_9allocatorE(
+// CHECK: call void @_ZN5test29allocatorD1Ev(
+// CHECK: call i32 @__cxa_atexit({{.*}} @_ZN5test21AD1Ev {{.*}} @_ZN5test21aE
+}
+
 // CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
 // CHECK:        load i32* @_ZN5test1L1yE
 // CHECK-NEXT:   xor
@@ -46,8 +62,7 @@ namespace test1 {
 // CHECK-NEXT:   sub
 // CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 
-// Later on, we check that y is initialized before z.
-}
+// At the end of the file, we check that y is initialized before z.
 
 // CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {
 // CHECK:   call void [[TEST1_Y_INIT]]
