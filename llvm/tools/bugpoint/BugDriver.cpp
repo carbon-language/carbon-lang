@@ -211,7 +211,7 @@ bool BugDriver::run(std::string &ErrMsg) {
   // matches, then we assume there is a miscompilation bug and try to 
   // diagnose it.
   outs() << "*** Checking the code generator...\n";
-  bool Diff = diffProgram("", "", false, &Error);
+  bool Diff = diffProgram(Program, "", "", false, &Error);
   if (!Error.empty()) {
     errs() << Error;
     return debugCodeGeneratorCrash(ErrMsg);

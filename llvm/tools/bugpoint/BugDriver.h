@@ -174,7 +174,8 @@ public:
   /// executeProgram - This method runs "Program", capturing the output of the
   /// program to a file.  A recommended filename may be optionally specified.
   ///
-  std::string executeProgram(std::string OutputFilename,
+  std::string executeProgram(const Module *Program,
+                             std::string OutputFilename,
                              std::string Bitcode,
                              const std::string &SharedObjects,
                              AbstractInterpreter *AI,
@@ -185,7 +186,8 @@ public:
   /// the code generator (e.g., llc crashes), this will return false and set
   /// Error.
   ///
-  std::string executeProgramSafely(std::string OutputFile, std::string *Error);
+  std::string executeProgramSafely(const Module *Program,
+                                   std::string OutputFile, std::string *Error);
 
   /// createReferenceFile - calls compileProgram and then records the output
   /// into ReferenceOutputFile. Returns true if reference file created, false 
@@ -200,7 +202,8 @@ public:
   /// is different, 1 is returned.  If there is a problem with the code
   /// generator (e.g., llc crashes), this will return -1 and set Error.
   ///
-  bool diffProgram(const std::string &BitcodeFile = "",
+  bool diffProgram(const Module *Program,
+                   const std::string &BitcodeFile = "",
                    const std::string &SharedObj = "",
                    bool RemoveBitcode = false,
                    std::string *Error = 0);

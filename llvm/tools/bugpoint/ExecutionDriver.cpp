@@ -320,7 +320,8 @@ void BugDriver::compileProgram(Module *M, std::string *Error) {
 /// program to a file, returning the filename of the file.  A recommended
 /// filename may be optionally specified.
 ///
-std::string BugDriver::executeProgram(std::string OutputFile,
+std::string BugDriver::executeProgram(const Module *Program,
+                                      std::string OutputFile,
                                       std::string BitcodeFile,
                                       const std::string &SharedObj,
                                       AbstractInterpreter *AI,
@@ -399,9 +400,10 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 /// executeProgramSafely - Used to create reference output with the "safe"
 /// backend, if reference output is not provided.
 ///
-std::string BugDriver::executeProgramSafely(std::string OutputFile,
+std::string BugDriver::executeProgramSafely(const Module *Program,
+                                            std::string OutputFile,
                                             std::string *Error) {
-  return executeProgram(OutputFile, "", "", SafeInterpreter, Error);
+  return executeProgram(Program, OutputFile, "", "", SafeInterpreter, Error);
 }
 
 std::string BugDriver::compileSharedObject(const std::string &BitcodeFile,
@@ -440,7 +442,7 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
   if (!Error.empty())
     return false;
 
-  ReferenceOutputFile = executeProgramSafely(Filename, &Error);
+  ReferenceOutputFile = executeProgramSafely(Program, Filename, &Error);
   if (!Error.empty()) {
     errs() << Error;
     if (Interpreter != SafeInterpreter) {
@@ -460,12 +462,14 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
 /// is different, 1 is returned.  If there is a problem with the code
 /// generator (e.g., llc crashes), this will return -1 and set Error.
 ///
-bool BugDriver::diffProgram(const std::string &BitcodeFile,
+bool BugDriver::diffProgram(const Module *Program,
+                            const std::string &BitcodeFile,
                             const std::string &SharedObject,
                             bool RemoveBitcode,
                             std::string *ErrMsg) {
   // Execute the program, generating an output file...
-  sys::Path Output(executeProgram("", BitcodeFile, SharedObject, 0, ErrMsg));
+  sys::Path Output(executeProgram(Program, "", BitcodeFile, SharedObject, 0,
+                                  ErrMsg));
   if (!ErrMsg->empty())
     return false;
 

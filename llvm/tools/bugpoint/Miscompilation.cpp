@@ -76,8 +76,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
   
   // Check to see if the finished program matches the reference output...
-  bool Diff = BD.diffProgram(BitcodeResult, "", true /*delete bitcode*/,
-                             &Error);
+  bool Diff = BD.diffProgram(BD.getProgram(), BitcodeResult, "",
+                             true /*delete bitcode*/, &Error);
   if (!Error.empty())
     return InternalError;
   if (Diff) {
@@ -113,7 +113,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
 
   // If the prefix maintains the predicate by itself, only keep the prefix!
-  Diff = BD.diffProgram(BitcodeResult, "", false, &Error);
+  Diff = BD.diffProgram(BD.getProgram(), BitcodeResult, "", false, &Error);
   if (!Error.empty())
     return InternalError;
   if (Diff) {
@@ -153,7 +153,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
 
   // Run the result...
-  Diff = BD.diffProgram(BitcodeResult, "", true /*delete bitcode*/, &Error);
+  Diff = BD.diffProgram(BD.getProgram(), BitcodeResult, "",
+                        true /*delete bitcode*/, &Error);
   if (!Error.empty())
     return InternalError;
   if (Diff) {
@@ -223,15 +224,15 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
   }
   delete M2;   // We are done with this module.
 
-  OwningPtr<Module> OldProgram(BD.swapProgramIn(M1));
-
   // Execute the program.  If it does not match the expected output, we must
   // return true.
-  bool Broken = BD.diffProgram("", "", false, &Error);
+  bool Broken = BD.diffProgram(M1, "", "", false, &Error);
   if (!Error.empty()) {
-    // Delete the linked module & restore the original
-    delete BD.swapProgramIn(OldProgram.take());
+    // Delete the linked module
+    delete M1;
   }
+  // Delete the original and set the new program.
+  delete BD.swapProgramIn(M1);
   return Broken;
 }
 
@@ -958,7 +959,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
-  bool Result = BD.diffProgram(TestModuleBC.str(), SharedObject, false, &Error);
+  bool Result = BD.diffProgram(BD.getProgram(), TestModuleBC.str(),
+                               SharedObject, false, &Error);
   if (!Error.empty())
     return false;
 
@@ -975,7 +977,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
 ///
 bool BugDriver::debugCodeGenerator(std::string *Error) {
   if ((void*)SafeInterpreter == (void*)Interpreter) {
-    std::string Result = executeProgramSafely("bugpoint.safe.out", Error);
+    std::string Result = executeProgramSafely(Program, "bugpoint.safe.out",
+                                              Error);
     if (Error->empty()) {
       outs() << "\n*** The \"safe\" i.e. 'known good' backend cannot match "
              << "the reference diff.  This may be due to a\n    front-end "
