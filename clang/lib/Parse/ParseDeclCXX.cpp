@@ -680,7 +680,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // "FOO : BAR" is not a potential typo for "FOO::BAR".
     ColonProtectionRAIIObject X(*this);
 
-    ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true);
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true))
+      DS.SetTypeSpecError();
     if (SS.isSet())
       if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
         Diag(Tok, diag::err_expected_ident);
@@ -804,10 +805,13 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   else
     TUK = Action::TUK_Reference;
 
-  if (!Name && !TemplateId && TUK != Action::TUK_Definition) {
-    // We have a declaration or reference to an anonymous class.
-    Diag(StartLoc, diag::err_anon_type_definition)
-      << DeclSpec::getSpecifierName(TagType);
+  if (!Name && !TemplateId && (DS.getTypeSpecType() == DeclSpec::TST_error ||
+                               TUK != Action::TUK_Definition)) {
+    if (DS.getTypeSpecType() != DeclSpec::TST_error) {
+      // We have a declaration or reference to an anonymous class.
+      Diag(StartLoc, diag::err_anon_type_definition)
+        << DeclSpec::getSpecifierName(TagType);
+    }
 
     SkipUntil(tok::comma, true);
 

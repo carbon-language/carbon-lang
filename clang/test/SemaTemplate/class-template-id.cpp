@@ -41,3 +41,7 @@ typedef N::C<float> c2;
 template<typename T> struct Foo { }; // expected-note{{template is declared here}}
 
 void f(void) { Foo bar; } // expected-error{{without a template argument list}}
+
+// rdar://problem/8254267
+template <typename T> class Party;
+template <> class Party<T> { friend struct Party<>; }; // expected-error {{use of undeclared identifier 'T'}}
