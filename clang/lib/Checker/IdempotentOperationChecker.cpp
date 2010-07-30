@@ -298,8 +298,8 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
                                                   bool hasWorkRemaining) {
   // If there is any work remaining we cannot be 100% sure about our warnings
-//  if (hasWorkRemaining)
-//    return;
+  if (hasWorkRemaining)
+    return;
 
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
