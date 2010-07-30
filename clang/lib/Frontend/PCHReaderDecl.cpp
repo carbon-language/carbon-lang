@@ -1314,7 +1314,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
   ReadingKindTracker ReadingKind(Read_Decl, *this);
 
   // Note that we are loading a declaration record.
-  LoadingTypeOrDecl Loading(*this);
+  Deserializing ADecl(this);
 
   DeclsCursor.JumpToBit(Loc.second);
   RecordData Record;

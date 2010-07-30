@@ -426,7 +426,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
     NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
     TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), CurrentlyLoadingTypeOrDecl(0) {
+    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
 }
 
@@ -443,7 +443,7 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
     NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
     TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), CurrentlyLoadingTypeOrDecl(0) {
+    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
 }
 
@@ -2242,7 +2242,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
   ReadingKindTracker ReadingKind(Read_Type, *this);
   
   // Note that we are loading a type record.
-  LoadingTypeOrDecl Loading(*this);
+  Deserializing AType(this);
 
   DeclsCursor.JumpToBit(Loc.second);
   RecordData Record;
@@ -3235,7 +3235,7 @@ void
 PCHReader::SetGloballyVisibleDecls(IdentifierInfo *II,
                               const llvm::SmallVectorImpl<uint32_t> &DeclIDs,
                                    bool Nonrecursive) {
-  if (CurrentlyLoadingTypeOrDecl && !Nonrecursive) {
+  if (NumCurrentElementsDeserializing && !Nonrecursive) {
     PendingIdentifierInfos.push_back(PendingIdentifierInfo());
     PendingIdentifierInfo &PII = PendingIdentifierInfos.back();
     PII.II = II;
@@ -3677,28 +3677,22 @@ void PCHReader::SetLabelOf(AddrLabelExpr *S, unsigned ID) {
   }
 }
 
-
-PCHReader::LoadingTypeOrDecl::LoadingTypeOrDecl(PCHReader &Reader)
-  : Reader(Reader), Parent(Reader.CurrentlyLoadingTypeOrDecl) {
-  Reader.CurrentlyLoadingTypeOrDecl = this;
-}
-
-PCHReader::LoadingTypeOrDecl::~LoadingTypeOrDecl() {
-  if (!Parent) {
+void PCHReader::FinishedDeserializing() {
+  assert(NumCurrentElementsDeserializing &&
+         "FinishedDeserializing not paired with StartedDeserializing");
+  if (NumCurrentElementsDeserializing == 1) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
-    while (!Reader.PendingIdentifierInfos.empty()) {
-      Reader.SetGloballyVisibleDecls(Reader.PendingIdentifierInfos.front().II,
-                                 Reader.PendingIdentifierInfos.front().DeclIDs,
-                                     true);
-      Reader.PendingIdentifierInfos.pop_front();
+    while (!PendingIdentifierInfos.empty()) {
+      SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
+                              PendingIdentifierInfos.front().DeclIDs, true);
+      PendingIdentifierInfos.pop_front();
     }
 
     // We are not in recursive loading, so it's safe to pass the "interesting"
     // decls to the consumer.
-    if (Reader.Consumer)
-      Reader.PassInterestingDeclsToConsumer();
+    if (Consumer)
+      PassInterestingDeclsToConsumer();
   }
-
-  Reader.CurrentlyLoadingTypeOrDecl = Parent;
+  --NumCurrentElementsDeserializing;
 }

@@ -468,26 +468,9 @@ private:
 
   /// Number of visible decl contexts read/total.
   unsigned NumVisibleDeclContextsRead, TotalVisibleDeclContexts;
-
-  /// \brief When a type or declaration is being loaded from the PCH file, an
-  /// instantance of this RAII object will be available on the stack to
-  /// indicate when we are in a recursive-loading situation.
-  class LoadingTypeOrDecl {
-    PCHReader &Reader;
-    LoadingTypeOrDecl *Parent;
-
-    LoadingTypeOrDecl(const LoadingTypeOrDecl&); // do not implement
-    LoadingTypeOrDecl &operator=(const LoadingTypeOrDecl&); // do not implement
-
-  public:
-    explicit LoadingTypeOrDecl(PCHReader &Reader);
-    ~LoadingTypeOrDecl();
-  };
-  friend class LoadingTypeOrDecl;
-
-  /// \brief If we are currently loading a type or declaration, points to the
-  /// most recent LoadingTypeOrDecl object on the stack.
-  LoadingTypeOrDecl *CurrentlyLoadingTypeOrDecl;
+  
+  /// \brief Number of Decl/types that are currently deserializing.
+  unsigned NumCurrentElementsDeserializing;
 
   /// \brief An IdentifierInfo that has been loaded but whose top-level
   /// declarations of the same name have not (yet) been loaded.
@@ -756,6 +739,15 @@ public:
   /// declarations for this declaration context.
   virtual bool FindExternalLexicalDecls(const DeclContext *DC,
                                         llvm::SmallVectorImpl<Decl*> &Decls);
+
+  /// \brief Notify PCHReader that we started deserialization of
+  /// a decl or type so until FinishedDeserializing is called there may be
+  /// decls that are initializing. Must be paired with FinishedDeserializing.
+  virtual void StartedDeserializing() { ++NumCurrentElementsDeserializing; }
+
+  /// \brief Notify PCHReader that we finished the deserialization of
+  /// a decl or type. Must be paired with StartedDeserializing.
+  virtual void FinishedDeserializing();
 
   /// \brief Function that will be invoked when we begin parsing a new
   /// translation unit involving this external AST source.

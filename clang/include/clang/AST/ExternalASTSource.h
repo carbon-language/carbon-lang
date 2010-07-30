@@ -58,6 +58,20 @@ public:
 
   virtual ~ExternalASTSource();
 
+  /// \brief RAII class for safely pairing a StartedDeserializing call
+  /// with FinishedDeserializing.
+  class Deserializing {
+    ExternalASTSource *Source;
+  public:
+    explicit Deserializing(ExternalASTSource *source) : Source(source) {
+      assert(Source);
+      Source->StartedDeserializing();
+    }
+    ~Deserializing() {
+      Source->FinishedDeserializing();
+    }
+  };
+
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
   ///
@@ -99,6 +113,19 @@ public:
   /// \return true if an error occurred
   virtual bool FindExternalLexicalDecls(const DeclContext *DC,
                                 llvm::SmallVectorImpl<Decl*> &Result) = 0;
+
+  /// \brief Notify ExternalASTSource that we started deserialization of
+  /// a decl or type so until FinishedDeserializing is called there may be
+  /// decls that are initializing. Must be paired with FinishedDeserializing.
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual void StartedDeserializing() { }
+
+  /// \brief Notify ExternalASTSource that we finished the deserialization of
+  /// a decl or type. Must be paired with StartedDeserializing.
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual void FinishedDeserializing() { }
 
   /// \brief Function that will be invoked when we begin parsing a new
   /// translation unit involving this external AST source.
