@@ -457,7 +457,7 @@ bool LICM::isLoopInvariantInst(Instruction &I) {
 /// position, and may either delete it or move it to outside of the loop.
 ///
 void LICM::sink(Instruction &I) {
-  DEBUG(dbgs() << "LICM sinking instruction: " << I);
+  DEBUG(dbgs() << "LICM sinking instruction: " << I << "\n");
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
