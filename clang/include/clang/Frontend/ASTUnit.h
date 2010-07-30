@@ -22,6 +22,7 @@
 #include "clang/Index/ASTLocation.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/System/Path.h"
+#include "llvm/Support/Timer.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -119,7 +120,7 @@ private:
   static const unsigned int CheckUnlocked = 9803453;
 
   /// \brief The file in which the precompiled preamble is stored.
-  llvm::sys::Path PreambleFile;
+  std::string PreambleFile;
   
   /// \brief The contents of the preamble that has been precompiled to
   /// \c PreambleFile.
@@ -139,6 +140,13 @@ private:
   /// the main file when it has been padded for use with the precompiled
   /// preamble.
   llvm::MemoryBuffer *SavedMainFileBuffer;
+  
+  /// \brief The group of timers associated with this translation unit.
+  llvm::OwningPtr<llvm::TimerGroup> TimerGroup;
+  
+  /// \brief The timers we've created from the various parses, reparses, etc.
+  /// involved in this translation unit.
+  std::vector<llvm::Timer *> Timers;
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT

@@ -33,19 +33,21 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
+#include "llvm/Support/Timer.h"
 #include <cstdlib>
 #include <cstdio>
 using namespace clang;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
-    ConcurrencyCheckValue(CheckUnlocked), SavedMainFileBuffer(0) { }
+    ConcurrencyCheckValue(CheckUnlocked), SavedMainFileBuffer(0) { 
+}
 
 ASTUnit::~ASTUnit() {
   ConcurrencyCheckValue = CheckLocked;
   CleanTemporaryFiles();
   if (!PreambleFile.empty())
-    PreambleFile.eraseFromDisk();
+    llvm::sys::Path(PreambleFile).eraseFromDisk();
   
   // Free the buffers associated with remapped files. We are required to
   // perform this operation here because we explicitly request that the
@@ -62,6 +64,9 @@ ASTUnit::~ASTUnit() {
   }
   
   delete SavedMainFileBuffer;
+  
+  for (unsigned I = 0, N = Timers.size(); I != N; ++I)
+    delete Timers[I];
 }
 
 void ASTUnit::CleanTemporaryFiles() {
@@ -398,7 +403,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
     PreprocessorOpts.PrecompiledPreambleBytes.second
                                                     = PreambleEndsAtStartOfLine;
-    PreprocessorOpts.ImplicitPCHInclude = PreambleFile.str();
+    PreprocessorOpts.ImplicitPCHInclude = PreambleFile;
     PreprocessorOpts.DisablePCHValidation = true;
     
     // Keep track of the override buffer;
@@ -600,7 +605,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     // preamble, if we have one. It's obviously no good any more.
     Preamble.clear();
     if (!PreambleFile.empty()) {
-      PreambleFile.eraseFromDisk();
+      llvm::sys::Path(PreambleFile).eraseFromDisk();
       PreambleFile.clear();
     }
     if (CreatedPreambleBuffer)
@@ -633,10 +638,16 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     
     // We can't reuse the previously-computed preamble. Build a new one.
     Preamble.clear();
-    PreambleFile.eraseFromDisk();
+    llvm::sys::Path(PreambleFile).eraseFromDisk();
   } 
     
   // We did not previously compute a preamble, or it can't be reused anyway.
+  llvm::Timer *PreambleTimer = 0;
+  if (TimerGroup.get()) {
+    PreambleTimer = new llvm::Timer("Precompiling preamble", *TimerGroup);
+    PreambleTimer->startTimer();
+    Timers.push_back(PreambleTimer);
+  }
   
   // Create a new buffer that stores the preamble. The buffer also contains
   // extra space for the original contents of the file (which will be present
@@ -672,10 +683,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   FrontendOpts.ProgramAction = frontend::GeneratePCH;
   // FIXME: Set ChainedPCH, once it is ready.
   // FIXME: Generate the precompiled header into memory?
-  if (PreambleFile.isEmpty())
-    FrontendOpts.OutputFile = GetPreamblePCHPath();
-  else
-    FrontendOpts.OutputFile = PreambleFile.str();
+  FrontendOpts.OutputFile = GetPreamblePCHPath();
   
   // Create the compiler instance to use for building the precompiled preamble.
   CompilerInstance Clang;
@@ -695,6 +703,8 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     Preamble.clear();
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
+    if (PreambleTimer)
+      PreambleTimer->stopTimer();
 
     return 0;
   }
@@ -737,7 +747,9 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     Preamble.clear();
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
-    
+    if (PreambleTimer)
+      PreambleTimer->stopTimer();
+
     return 0;
   }
   
@@ -754,13 +766,19 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     Preamble.clear();
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
-    
+    if (PreambleTimer)
+      PreambleTimer->stopTimer();
+    if (PreambleTimer)
+      PreambleTimer->stopTimer();
+
     return 0;
   }
   
   // Keep track of the preamble we precompiled.
   PreambleFile = FrontendOpts.OutputFile;
-  fprintf(stderr, "Preamble PCH: %s\n", FrontendOpts.OutputFile.c_str());
+  if (PreambleTimer)
+    PreambleTimer->stopTimer();
+  
   return CreatePaddedMainFileBuffer(NewPreamble.first, 
                                     CreatedPreambleBuffer,
                                     PreambleReservedSize,
@@ -788,15 +806,28 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->Invocation.reset(CI);
   CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   
+  if (getenv("LIBCLANG_TIMING"))
+    AST->TimerGroup.reset(
+                  new llvm::TimerGroup(CI->getFrontendOpts().Inputs[0].second));
+  
+  
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
   if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus)
     OverrideMainBuffer = AST->BuildPrecompiledPreamble();
   
-  if (!AST->Parse(OverrideMainBuffer))
-    return AST.take();
+  llvm::Timer *ParsingTimer = 0;
+  if (AST->TimerGroup.get()) {
+    ParsingTimer = new llvm::Timer("Initial parse", *AST->TimerGroup);
+    ParsingTimer->startTimer();
+    AST->Timers.push_back(ParsingTimer);
+  }
   
-  return 0;
+  bool Failed = AST->Parse(OverrideMainBuffer);
+  if (ParsingTimer)
+    ParsingTimer->stopTimer();
+  
+  return Failed? 0 : AST.take();
 }
 
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
@@ -875,6 +906,13 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   if (!Invocation.get())
     return true;
   
+  llvm::Timer *ReparsingTimer = 0;
+  if (TimerGroup.get()) {
+    ReparsingTimer = new llvm::Timer("Reparse", *TimerGroup);
+    ReparsingTimer->startTimer();
+    Timers.push_back(ReparsingTimer);
+  }
+  
   // If we have a preamble file lying around, build or reuse the precompiled
   // preamble.
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
@@ -892,5 +930,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
 
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  
+  if (ReparsingTimer)
+    ReparsingTimer->stopTimer();
   return Result;
 }
