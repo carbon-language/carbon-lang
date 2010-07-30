@@ -36,6 +36,11 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+DisableShifterOp("disable-shifter-op", cl::Hidden,
+  cl::desc("Disable isel of shifter-op"),
+  cl::init(false));
+
 //===--------------------------------------------------------------------===//
 /// ARMDAGToDAGISel - ARM specific code to select ARM machine
 /// instructions for SelectionDAG operations.
@@ -220,6 +225,9 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDNode *Op,
                                               SDValue &BaseReg,
                                               SDValue &ShReg,
                                               SDValue &Opc) {
+  if (DisableShifterOp)
+    return false;
+
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
 
   // Don't match base register only case. That is matched to a separate
@@ -666,6 +674,9 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDNode *Op, SDValue N,
 bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDNode *Op, SDValue N,
                                                 SDValue &BaseReg,
                                                 SDValue &Opc) {
+  if (DisableShifterOp)
+    return false;
+
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
 
   // Don't match base register only case. That is matched to a separate
