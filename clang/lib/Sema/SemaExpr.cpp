@@ -1005,8 +1005,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
 }
 
 static ObjCPropertyDecl *OkToSynthesizeProvisionalIvar(Sema &SemaRef,
-                                          IdentifierInfo *II,
-                                          SourceLocation NameLoc) {
+                                                       IdentifierInfo *II,
+                                                       SourceLocation NameLoc) {
   ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
   ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
   if (!IDecl)
@@ -1024,9 +1024,21 @@ static ObjCPropertyDecl *OkToSynthesizeProvisionalIvar(Sema &SemaRef,
 }
 
 static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
+                                               LookupResult &Lookup,
                                                IdentifierInfo *II,
                                                SourceLocation NameLoc) {
   ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
+  bool LookForIvars;
+  if (Lookup.empty())
+    LookForIvars = true;
+  else if (CurMeth->isClassMethod())
+    LookForIvars = false;
+  else
+    LookForIvars = (Lookup.isSingleResult() &&
+                    Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod());
+  if (!LookForIvars)
+    return 0;
+  
   ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
   if (!IDecl)
     return 0;
@@ -1122,7 +1134,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
       if (Ex) return Owned(Ex);
       // Synthesize ivars lazily
       if (getLangOptions().ObjCNonFragileABI2) {
-        if (SynthesizeProvisionalIvar(*this, II, NameLoc))
+        if (SynthesizeProvisionalIvar(*this, R, II, NameLoc))
           return ActOnIdExpression(S, SS, Id, HasTrailingLParen,
                                    isAddressOfOperand);
       }

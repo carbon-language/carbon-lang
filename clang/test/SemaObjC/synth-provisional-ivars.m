@@ -43,3 +43,8 @@ int bar;
 - (int) Meth { return PROP1; }  // expected-error {{use of undeclared identifier 'PROP1'}}
 @end
 
+@implementation I(r8251648)
+- (int) Meth1: (int) bar {
+  return bar; // expected-warning {{local declaration of 'bar' hides instance variable}}
+}
+@end
