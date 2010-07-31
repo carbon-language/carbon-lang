@@ -15,7 +15,9 @@
 namespace llvm {
     class BasicBlock;
     class CallInst;
+    class Constant;
     class Function;
+    class Instruction;
     class Module;
     class TargetData;
     class Value;
@@ -37,22 +39,36 @@ public:
                            llvm::PassManagerType T = llvm::PMT_ModulePassManager);
     llvm::PassManagerType getPotentialPassManagerType() const;
 private:
+    // pass to rewrite Objective-C method calls to use the runtime function
+    // sel_registerName
+    bool RewriteObjCSelector(llvm::Instruction* selector_load,
+                             llvm::Module &M);
+    bool rewriteObjCSelectors(llvm::Module &M, 
+                              llvm::BasicBlock &BB);
+    
+    // pass to register referenced variables and redirect functions at their
+    // targets in the debugged process
     bool MaybeHandleVariable(llvm::Module &M, 
                              llvm::Value *V,
                              bool Store);
     bool MaybeHandleCall(llvm::Module &M,
                          llvm::CallInst *C);
-    bool runOnBasicBlock(llvm::Module &M,
-                         llvm::BasicBlock &BB);
+    bool resolveExternals(llvm::Module &M,
+                          llvm::BasicBlock &BB);
+    
+    // pass to find references to guard variables and excise them
     bool removeGuards(llvm::Module &M,
                       llvm::BasicBlock &BB);
+    
+    // pass to replace all identified variables with references to members of
+    // the argument struct
     bool replaceVariables(llvm::Module &M,
-                          llvm::Function *F);
-    bool replaceFunctions(llvm::Module &M,
-                          llvm::Function *F);
+                          llvm::Function &F);
     
     lldb_private::ClangExpressionDeclMap *m_decl_map;
     const llvm::TargetData *m_target_data;
+    
+    llvm::Constant *m_sel_registerName;
 };
 
 #endif

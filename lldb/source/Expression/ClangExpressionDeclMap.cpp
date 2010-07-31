@@ -204,6 +204,39 @@ ClangExpressionDeclMap::GetFunctionInfo (const clang::NamedDecl *decl,
     return false;
 }
 
+bool
+ClangExpressionDeclMap::GetFunctionAddress (const char *name,
+                                            uint64_t &ptr)
+{
+    // Back out in all cases where we're not fully initialized
+    if (!m_exe_ctx || !m_exe_ctx->frame || !m_sym_ctx)
+        return false;
+
+    ConstString name_cs(name);
+    SymbolContextList sym_ctxs;
+    
+    m_sym_ctx->FindFunctionsByName(name_cs, false, sym_ctxs);
+    
+    if (!sym_ctxs.GetSize())
+        return false;
+    
+    SymbolContext sym_ctx;
+    sym_ctxs.GetContextAtIndex(0, sym_ctx);
+    
+    const Address *fun_address;
+    
+    if (sym_ctx.function)
+        fun_address = &sym_ctx.function->GetAddressRange().GetBaseAddress();
+    else if (sym_ctx.symbol)
+        fun_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+    else
+        return false;
+    
+    ptr = fun_address->GetLoadAddress(m_exe_ctx->process);
+    
+    return true;
+}
+
 // Interface for DwarfExpression
 lldb_private::Value 
 *ClangExpressionDeclMap::GetValueForIndex (uint32_t index)
@@ -547,7 +580,7 @@ ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
         
         if (type->GetASTContext() == var->GetType()->GetClangAST())
         {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type, var->GetType()->GetOpaqueClangQualType()))
+            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var->GetType()->GetOpaqueClangQualType()))
                 continue;
         }
         else
@@ -778,7 +811,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     m_tuples.push_back(tuple);
     
     if (log)
-        log->PutCString("Found variable");    
+        log->Printf("Found variable %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), var_decl);    
 }
 
 void
@@ -851,5 +884,5 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     m_tuples.push_back(tuple);
     
     if (log)
-        log->PutCString("Found function");    
+        log->Printf("Found function %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), fun_decl);    
 }

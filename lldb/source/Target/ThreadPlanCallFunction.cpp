@@ -181,6 +181,25 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
     if (PlanExplainsStop())
     {
+        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+        
+        if (log)
+        {
+            RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+
+            log->PutCString("Function completed.  Register state was:");
+
+            for (uint32_t register_index = 0, num_registers = reg_ctx->GetRegisterCount();
+                 register_index < num_registers;
+                 ++register_index)
+            {
+                const char *register_name = reg_ctx->GetRegisterName(register_index);
+                uint64_t register_value = reg_ctx->ReadRegisterAsUnsigned(register_index, LLDB_INVALID_ADDRESS);
+                
+                log->Printf("  %s = 0x%llx", register_name, register_value);
+            }
+        }
+        
         m_thread.RestoreSaveFrameZero(m_register_backup);
         m_thread.ClearStackFrames();
         SetPlanComplete();

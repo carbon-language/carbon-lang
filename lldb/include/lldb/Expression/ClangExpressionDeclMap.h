@@ -29,33 +29,6 @@ namespace llvm {
 
 namespace lldb_private {
 
-//----------------------------------------------------------------------
-// For cases in which there are multiple classes of types that are not
-// interchangeable, to allow static type checking.
-//----------------------------------------------------------------------
-template <unsigned int C> class TaggedClangASTType : public ClangASTType
-{
-public:
-    TaggedClangASTType (void *type, clang::ASTContext *ast_context) :
-        ClangASTType(type, ast_context) { }
-    
-    TaggedClangASTType (const TaggedClangASTType<C> &tw) :
-        ClangASTType(tw) { }
-    
-    TaggedClangASTType () :
-        ClangASTType() { }
-    
-    ~TaggedClangASTType() { }
-    
-    const TaggedClangASTType<C> &
-    operator= (const TaggedClangASTType<C> &tw)
-    {
-        ClangASTType::operator= (tw);
-        return *this;
-    }
-};
-
-
 class Error;
 class Function;
 class NameSearchContext;
@@ -92,6 +65,9 @@ public:
                           llvm::Value**& value, 
                           uint64_t &ptr);
     
+    bool GetFunctionAddress (const char *name,
+                             uint64_t &ptr);
+    
     // Interface for DwarfExpression
     Value *GetValueForIndex (uint32_t index);
     
@@ -112,8 +88,8 @@ public:
     void GetDecls (NameSearchContext &context,
                    const char *name);
 private:
-    typedef TaggedClangASTType<0> TypeFromParser;
-    typedef TaggedClangASTType<1> TypeFromUser;
+    typedef TaggedASTType<0> TypeFromParser;
+    typedef TaggedASTType<1> TypeFromUser;
     
     struct Tuple
     {

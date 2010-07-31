@@ -32,12 +32,172 @@ IRForTarget::IRForTarget(const void *pid,
                          const TargetData *target_data) :
     ModulePass(pid),
     m_decl_map(decl_map),
-    m_target_data(target_data)
+    m_target_data(target_data),
+    m_sel_registerName(NULL)
 {
 }
 
 IRForTarget::~IRForTarget()
 {
+}
+
+static bool isObjCSelectorRef(Value *V)
+{
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
+    
+    if (!GV || !GV->hasName() || !GV->getName().startswith("\01L_OBJC_SELECTOR_REFERENCES_"))
+        return false;
+    
+    return true;
+}
+
+bool 
+IRForTarget::RewriteObjCSelector(Instruction* selector_load,
+                                 Module &M)
+{
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+    LoadInst *load = dyn_cast<LoadInst>(selector_load);
+    
+    if (!load)
+        return false;
+    
+    // Unpack the message name from the selector.  In LLVM IR, an objc_msgSend gets represented as
+    //
+    // %tmp     = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_" ; <i8*>
+    // %call    = call i8* (i8*, i8*, ...)* @objc_msgSend(i8* %obj, i8* %tmp, ...) ; <i8*>
+    //
+    // where %obj is the object pointer and %tmp is the selector.
+    // 
+    // @"\01L_OBJC_SELECTOR_REFERENCES_" is a pointer to a character array called @"\01L_OBJC_METH_VAR_NAME_".
+    // @"\01L_OBJC_METH_VAR_NAME_" contains the string.
+    
+    // Find the pointer's initializer (a ConstantExpr with opcode GetElementPtr) and get the string from its target
+    
+    GlobalVariable *_objc_selector_references_ = dyn_cast<GlobalVariable>(load->getPointerOperand());
+    
+    if (!_objc_selector_references_ || !_objc_selector_references_->hasInitializer())
+        return false;
+    
+    Constant *osr_initializer = _objc_selector_references_->getInitializer();
+    
+    ConstantExpr *osr_initializer_expr = dyn_cast<ConstantExpr>(osr_initializer);
+    
+    if (!osr_initializer_expr || osr_initializer_expr->getOpcode() != Instruction::GetElementPtr)
+        return false;
+    
+    Value *osr_initializer_base = osr_initializer_expr->getOperand(0);
+
+    if (!osr_initializer_base)
+        return false;
+    
+    // Find the string's initializer (a ConstantArray) and get the string from it
+    
+    GlobalVariable *_objc_meth_var_name_ = dyn_cast<GlobalVariable>(osr_initializer_base);
+    
+    if (!_objc_meth_var_name_ || !_objc_meth_var_name_->hasInitializer())
+        return false;
+    
+    Constant *omvn_initializer = _objc_meth_var_name_->getInitializer();
+
+    ConstantArray *omvn_initializer_array = dyn_cast<ConstantArray>(omvn_initializer);
+    
+    if (!omvn_initializer_array->isString())
+        return false;
+    
+    std::string omvn_initializer_string = omvn_initializer_array->getAsString();
+    
+    if (log)
+        log->Printf("Found Objective-C selector reference %s", omvn_initializer_string.c_str());
+    
+    // Construct a call to sel_registerName
+    
+    if (!m_sel_registerName)
+    {
+        uint64_t srN_addr;
+        
+        if (!m_decl_map->GetFunctionAddress("sel_registerName", srN_addr))
+            return false;
+        
+        // Build the function type: struct objc_selector *sel_registerName(uint8_t*)
+        
+        // The below code would be "more correct," but in actuality what's required is uint8_t*
+        //Type *sel_type = StructType::get(M.getContext());
+        //Type *sel_ptr_type = PointerType::getUnqual(sel_type);
+        const Type *sel_ptr_type = Type::getInt8PtrTy(M.getContext());
+        
+        std::vector <const Type *> srN_arg_types;
+        srN_arg_types.push_back(Type::getInt8PtrTy(M.getContext()));
+        llvm::Type *srN_type = FunctionType::get(sel_ptr_type, srN_arg_types, false);
+        
+        // Build the constant containing the pointer to the function
+        const IntegerType *intptr_ty = Type::getIntNTy(M.getContext(),
+                                                       (M.getPointerSize() == Module::Pointer64) ? 64 : 32);
+        PointerType *srN_ptr_ty = PointerType::getUnqual(srN_type);
+        Constant *srN_addr_int = ConstantInt::get(intptr_ty, srN_addr, false);
+        m_sel_registerName = ConstantExpr::getIntToPtr(srN_addr_int, srN_ptr_ty);
+    }
+    
+    SmallVector <Value*, 1> srN_arguments;
+    
+    Constant *omvn_pointer = ConstantExpr::getBitCast(_objc_meth_var_name_, Type::getInt8PtrTy(M.getContext()));
+    
+    srN_arguments.push_back(omvn_pointer);
+    
+    CallInst *srN_call = CallInst::Create(m_sel_registerName, 
+                                          srN_arguments.begin(),
+                                          srN_arguments.end(),
+                                          "srN",
+                                          selector_load);
+    
+    // Replace the load with the call in all users
+    
+    selector_load->replaceAllUsesWith(srN_call);
+    
+    selector_load->eraseFromParent();
+    
+    return true;
+}
+
+bool
+IRForTarget::rewriteObjCSelectors(Module &M, 
+                                  BasicBlock &BB)
+{
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+    BasicBlock::iterator ii;
+    
+    typedef SmallVector <Instruction*, 2> InstrList;
+    typedef InstrList::iterator InstrIterator;
+    
+    InstrList selector_loads;
+    
+    for (ii = BB.begin();
+         ii != BB.end();
+         ++ii)
+    {
+        Instruction &inst = *ii;
+        
+        if (LoadInst *load = dyn_cast<LoadInst>(&inst))
+            if (isObjCSelectorRef(load->getPointerOperand()))
+                selector_loads.push_back(&inst);
+    }
+    
+    InstrIterator iter;
+    
+    for (iter = selector_loads.begin();
+         iter != selector_loads.end();
+         ++iter)
+    {
+        if (!RewriteObjCSelector(*iter, M))
+        {
+            if(log)
+                log->PutCString("Couldn't rewrite a reference to an Objective-C selector");
+            return false;
+        }
+    }
+        
+    return true;
 }
 
 static clang::NamedDecl *
@@ -85,9 +245,21 @@ IRForTarget::MaybeHandleVariable(Module &M,
                                  Value *V,
                                  bool Store)
 {
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
     if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(V))
-    {        
+    {
         clang::NamedDecl *named_decl = DeclForGlobalValue(M, global_variable);
+        
+        if (!named_decl)
+        {
+            if (isObjCSelectorRef(V))
+                return true;
+            
+            if (log)
+                log->Printf("Found global variable %s without metadata", global_variable->getName().str().c_str());
+            return false;
+        }
         
         std::string name = named_decl->getName().str();
         
@@ -134,28 +306,34 @@ IRForTarget::MaybeHandleCall(Module &M,
         return true;
     
     clang::NamedDecl *fun_decl = DeclForGlobalValue(M, fun);
-    
-    if (!fun_decl)
-    {
-        if (log)
-            log->Printf("Function %s wasn't in the metadata", fun->getName().str().c_str());
-        return false;
-    }
-    
     uint64_t fun_addr;
-    Value **fun_value_ptr;
+    Value **fun_value_ptr = NULL;
     
-    if (!m_decl_map->GetFunctionInfo(fun_decl, fun_value_ptr, fun_addr)) 
+    if (fun_decl)
     {
-        if (log)
-            log->Printf("Function %s had no address", fun_decl->getNameAsCString());
-        return false;
+        if (!m_decl_map->GetFunctionInfo(fun_decl, fun_value_ptr, fun_addr)) 
+        {
+            if (log)
+                log->Printf("Function %s had no address", fun_decl->getNameAsCString());
+            return false;
+        }
+    }
+    else 
+    {
+        if (!m_decl_map->GetFunctionAddress(fun->getName().str().c_str(), fun_addr))
+        {
+            if (log)
+                log->Printf("Metadataless function %s had no address", fun->getName().str().c_str());
+            return false;
+        }
     }
         
     if (log)
-        log->Printf("Found %s at %llx", fun_decl->getNameAsCString(), fun_addr);
+        log->Printf("Found %s at %llx", fun->getName().str().c_str(), fun_addr);
     
-    if (!*fun_value_ptr)
+    Value *fun_addr_ptr;
+            
+    if (!fun_value_ptr || !*fun_value_ptr)
     {
         std::vector<const Type*> params;
         
@@ -165,17 +343,22 @@ IRForTarget::MaybeHandleCall(Module &M,
         FunctionType *fun_ty = FunctionType::get(intptr_ty, params, true);
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
         Constant *fun_addr_int = ConstantInt::get(intptr_ty, fun_addr, false);
-        Constant *fun_addr_ptr = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
-        *fun_value_ptr = fun_addr_ptr;
+        fun_addr_ptr = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
+            
+        if (fun_value_ptr)
+            *fun_value_ptr = fun_addr_ptr;
     }
+            
+    if (fun_value_ptr)
+        fun_addr_ptr = *fun_value_ptr;
     
-    C->setCalledFunction(*fun_value_ptr);
+    C->setCalledFunction(fun_addr_ptr);
     
     return true;
 }
 
 bool
-IRForTarget::runOnBasicBlock(Module &M, BasicBlock &BB)
+IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
 {        
     /////////////////////////////////////////////////////////////////////////
     // Prepare the current basic block for execution in the remote process
@@ -192,7 +375,7 @@ IRForTarget::runOnBasicBlock(Module &M, BasicBlock &BB)
         if (LoadInst *load = dyn_cast<LoadInst>(&inst))
             if (!MaybeHandleVariable(M, load->getPointerOperand(), false))
                 return false;
-        
+            
         if (StoreInst *store = dyn_cast<StoreInst>(&inst))
             if (!MaybeHandleVariable(M, store->getPointerOperand(), true))
                 return false;
@@ -409,7 +592,7 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
 }
 
 bool 
-IRForTarget::replaceVariables(Module &M, Function *F)
+IRForTarget::replaceVariables(Module &M, Function &F)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
@@ -427,9 +610,9 @@ IRForTarget::replaceVariables(Module &M, Function *F)
     if (!m_decl_map->GetStructInfo (num_elements, size, alignment))
         return false;
     
-    Function::arg_iterator iter(F->getArgumentList().begin());
+    Function::arg_iterator iter(F.getArgumentList().begin());
     
-    if (iter == F->getArgumentList().end())
+    if (iter == F.getArgumentList().end())
         return false;
     
     Argument *argument = iter;
@@ -440,7 +623,7 @@ IRForTarget::replaceVariables(Module &M, Function *F)
     if (log)
         log->Printf("Arg: %s", PrintValue(argument).c_str());
     
-    BasicBlock &entry_block(F->getEntryBlock());
+    BasicBlock &entry_block(F.getEntryBlock());
     Instruction *first_entry_instruction(entry_block.getFirstNonPHIOrDbg());
     
     if (!first_entry_instruction)
@@ -500,21 +683,29 @@ IRForTarget::runOnModule(Module &M)
         
     Function::iterator bbi;
     
+    //////////////////////////////////
+    // Run basic-block level passes
+    //
+    
     for (bbi = function->begin();
          bbi != function->end();
          ++bbi)
     {
-        if (!runOnBasicBlock(M, *bbi))
+        if (!rewriteObjCSelectors(M, *bbi))
+            return false;
+        
+        if (!resolveExternals(M, *bbi))
             return false;
         
         if (!removeGuards(M, *bbi))
             return false;
     }
     
-    // TEMPORARY FOR DEBUGGING
-    M.dump();
+    ///////////////////////////////
+    // Run function-level passes
+    //
     
-    if (!replaceVariables(M, function))
+    if (!replaceVariables(M, *function))
         return false;
     
     if (log)
