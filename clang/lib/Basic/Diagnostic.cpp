@@ -251,6 +251,23 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
 
+  AllExtensionsSilenced = 0;
+  IgnoreAllWarnings = false;
+  WarningsAsErrors = false;
+  ErrorsAsFatal = false;
+  SuppressSystemWarnings = false;
+  SuppressAllDiagnostics = false;
+  ShowOverloads = Ovl_All;
+  ExtBehavior = Ext_Ignore;
+
+  ErrorLimit = 0;
+  TemplateBacktraceLimit = 0;
+  CustomDiagInfo = 0;
+
+  // Set all mappings to 'unset'.
+  DiagMappingsStack.clear();
+  DiagMappingsStack.push_back(DiagMappings());
+
   Reset();
 }
 
@@ -315,31 +332,15 @@ bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID,
 }
 
 void Diagnostic::Reset() {
-  AllExtensionsSilenced = 0;
-  IgnoreAllWarnings = false;
-  WarningsAsErrors = false;
-  ErrorsAsFatal = false;
-  SuppressSystemWarnings = false;
-  SuppressAllDiagnostics = false;
-  ShowOverloads = Ovl_All;
-  ExtBehavior = Ext_Ignore;
-  
   ErrorOccurred = false;
   FatalErrorOccurred = false;
-  ErrorLimit = 0;
-  TemplateBacktraceLimit = 0;
   
   NumWarnings = 0;
   NumErrors = 0;
   NumErrorsSuppressed = 0;
-  CustomDiagInfo = 0;
   CurDiagID = ~0U;
   LastDiagLevel = Ignored;
   DelayedDiagID = 0;
-
-  // Set all mappings to 'unset'.
-  DiagMappingsStack.clear();
-  DiagMappingsStack.push_back(DiagMappings());
 }
 
 /// getDescription - Given a diagnostic ID, return a description of the

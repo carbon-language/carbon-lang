@@ -36,6 +36,7 @@
 #include "llvm/Support/Timer.h"
 #include <cstdlib>
 #include <cstdio>
+#include <sys/stat.h>
 using namespace clang;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
@@ -626,14 +627,72 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
                NewPreamble.second.first) == 0) {
       // The preamble has not changed. We may be able to re-use the precompiled
       // preamble.
-      // FIXME: Check that none of the files used by the preamble have changed.
           
+      // Check that none of the files used by the preamble have changed.
+      bool AnyFileChanged = false;
+          
+      // First, make a record of those files that have been overridden via
+      // remapping or unsaved_files.
+      llvm::StringMap<std::pair<off_t, time_t> > OverriddenFiles;
+      for (PreprocessorOptions::remapped_file_iterator
+                R = PreprocessorOpts.remapped_file_begin(),
+             REnd = PreprocessorOpts.remapped_file_end();
+           !AnyFileChanged && R != REnd;
+           ++R) {
+        struct stat StatBuf;
+        if (stat(R->second.c_str(), &StatBuf)) {
+          // If we can't stat the file we're remapping to, assume that something
+          // horrible happened.
+          AnyFileChanged = true;
+          break;
+        }
         
-      // Okay! Re-use the precompiled preamble.
-      return CreatePaddedMainFileBuffer(NewPreamble.first, 
-                                        CreatedPreambleBuffer,
-                                        PreambleReservedSize,
-                                        FrontendOpts.Inputs[0].second);
+        OverriddenFiles[R->first] = std::make_pair(StatBuf.st_size, 
+                                                   StatBuf.st_mtime);
+      }
+      for (PreprocessorOptions::remapped_file_buffer_iterator
+                R = PreprocessorOpts.remapped_file_buffer_begin(),
+             REnd = PreprocessorOpts.remapped_file_buffer_end();
+           !AnyFileChanged && R != REnd;
+           ++R) {
+        // FIXME: Should we actually compare the contents of file->buffer
+        // remappings?
+        OverriddenFiles[R->first] = std::make_pair(R->second->getBufferSize(), 
+                                                   0);
+      }
+       
+      // Check whether anything has changed.
+      for (llvm::StringMap<std::pair<off_t, time_t> >::iterator 
+             F = FilesInPreamble.begin(), FEnd = FilesInPreamble.end();
+           !AnyFileChanged && F != FEnd; 
+           ++F) {
+        llvm::StringMap<std::pair<off_t, time_t> >::iterator Overridden
+          = OverriddenFiles.find(F->first());
+        if (Overridden != OverriddenFiles.end()) {
+          // This file was remapped; check whether the newly-mapped file 
+          // matches up with the previous mapping.
+          if (Overridden->second != F->second)
+            AnyFileChanged = true;
+          continue;
+        }
+        
+        // The file was not remapped; check whether it has changed on disk.
+        struct stat StatBuf;
+        if (stat(F->first(), &StatBuf)) {
+          // If we can't stat the file, assume that something horrible happened.
+          AnyFileChanged = true;
+        } else if (StatBuf.st_size != F->second.first || 
+                   StatBuf.st_mtime != F->second.second)
+          AnyFileChanged = true;
+      }
+          
+      if (!AnyFileChanged) {
+        // Okay! Re-use the precompiled preamble.
+        return CreatePaddedMainFileBuffer(NewPreamble.first, 
+                                          CreatedPreambleBuffer,
+                                          PreambleReservedSize,
+                                          FrontendOpts.Inputs[0].second);
+      }
     }
     
     // We can't reuse the previously-computed preamble. Build a new one.
@@ -768,14 +827,31 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
       delete NewPreamble.first;
     if (PreambleTimer)
       PreambleTimer->stopTimer();
-    if (PreambleTimer)
-      PreambleTimer->stopTimer();
 
     return 0;
   }
   
   // Keep track of the preamble we precompiled.
   PreambleFile = FrontendOpts.OutputFile;
+  
+  // Keep track of all of the files that the source manager knows about,
+  // so we can verify whether they have changed or not.
+  FilesInPreamble.clear();
+  SourceManager &SourceMgr = Clang.getSourceManager();
+  const llvm::MemoryBuffer *MainFileBuffer
+    = SourceMgr.getBuffer(SourceMgr.getMainFileID());
+  for (SourceManager::fileinfo_iterator F = SourceMgr.fileinfo_begin(),
+                                     FEnd = SourceMgr.fileinfo_end();
+       F != FEnd;
+       ++F) {
+    const FileEntry *File = F->second->Entry;
+    if (!File || F->second->getRawBuffer() == MainFileBuffer)
+      continue;
+    
+    FilesInPreamble[File->getName()]
+      = std::make_pair(F->second->getSize(), File->getModificationTime());
+  }
+  
   if (PreambleTimer)
     PreambleTimer->stopTimer();
   
@@ -913,6 +989,13 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
     Timers.push_back(ReparsingTimer);
   }
   
+  // Remap files.
+  // FIXME: Do we want to remove old mappings for these files?
+  Invocation->getPreprocessorOpts().clearRemappedFiles();
+  for (unsigned I = 0; I != NumRemappedFiles; ++I)
+    Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
+                                                      RemappedFiles[I].second);
+  
   // If we have a preamble file lying around, build or reuse the precompiled
   // preamble.
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
@@ -922,12 +1005,6 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   // Clear out the diagnostics state.
   getDiagnostics().Reset();
   
-  // Remap files.
-  Invocation->getPreprocessorOpts().clearRemappedFiles();
-  for (unsigned I = 0; I != NumRemappedFiles; ++I)
-    Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                                      RemappedFiles[I].second);
-
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  
   if (ReparsingTimer)

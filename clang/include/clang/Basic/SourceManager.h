@@ -110,6 +110,12 @@ namespace SrcMgr {
       Buffer.setPointer(B);
       Buffer.setInt(false);
     }
+    
+    /// \brief Get the underlying buffer, returning NULL if the buffer is not
+    /// yet available.
+    const llvm::MemoryBuffer *getRawBuffer() const {
+      return Buffer.getPointer();
+    }
 
     /// \brief Replace the existing buffer (which will be deleted)
     /// with the given buffer.

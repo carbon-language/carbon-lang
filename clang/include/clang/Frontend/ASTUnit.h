@@ -21,6 +21,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Index/ASTLocation.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Timer.h"
 #include <map>
@@ -28,6 +29,7 @@
 #include <vector>
 #include <cassert>
 #include <utility>
+#include <sys/types.h>
 
 namespace llvm {
   class MemoryBuffer;
@@ -135,14 +137,21 @@ private:
   /// \brief The size of the source buffer that we've reserved for the main 
   /// file within the precompiled preamble.
   unsigned PreambleReservedSize;
-  
+
+  /// \brief Keeps track of the files that were used when computing the 
+  /// preamble, with both their buffer size and their modification time.
+  ///
+  /// If any of the files have changed from one compile to the next,
+  /// the preamble must be thrown away.
+  llvm::StringMap<std::pair<off_t, time_t> > FilesInPreamble;
+
   /// \brief When non-NULL, this is the buffer used to store the contents of
   /// the main file when it has been padded for use with the precompiled
   /// preamble.
   llvm::MemoryBuffer *SavedMainFileBuffer;
   
   /// \brief The group of timers associated with this translation unit.
-  llvm::OwningPtr<llvm::TimerGroup> TimerGroup;
+  llvm::OwningPtr<llvm::TimerGroup> TimerGroup;  
   
   /// \brief The timers we've created from the various parses, reparses, etc.
   /// involved in this translation unit.
