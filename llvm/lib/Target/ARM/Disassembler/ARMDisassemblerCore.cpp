@@ -2431,10 +2431,14 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
     break;
   case ARM::VMOVv4i16:
   case ARM::VMOVv8i16:
+  case ARM::VMVNv4i16:
+  case ARM::VMVNv8i16:
     esize = ESize16;
     break;
   case ARM::VMOVv2i32:
   case ARM::VMOVv4i32:
+  case ARM::VMVNv2i32:
+  case ARM::VMVNv4i32:
     esize = ESize32;
     break;
   case ARM::VMOVv1i64:
