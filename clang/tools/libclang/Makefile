@@ -34,7 +34,6 @@ ifeq ($(HOST_OS),Darwin)
     endif
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                         -avoid-version \
                          -Wl,-dead_strip \
                          -Wl,-seg1addr -Wl,0xE0000000 
 
@@ -42,7 +41,7 @@ ifeq ($(HOST_OS),Darwin)
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
     ifneq ($(DARWIN_VERS),8)
        LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                            -no-undefined -Wl,-install_name \
+                            -Wl,-install_name \
                             -Wl,"@rpath/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
 endif
