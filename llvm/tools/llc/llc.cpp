@@ -76,6 +76,9 @@ MAttrs("mattr",
   cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("a1,+a2,-a3,..."));
 
+static cl::opt<bool>
+RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
+
 cl::opt<TargetMachine::CodeGenFileType>
 FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
   cl::desc("Choose a file type (not all types are supported by all targets):"),
@@ -328,6 +331,14 @@ int main(int argc, char **argv) {
 
   // Override default to generate verbose assembly.
   Target.setAsmVerbosityDefault(true);
+
+  if (RelaxAll) {
+    if (FileType != TargetMachine::CGFT_ObjectFile)
+      errs() << argv[0]
+             << ": warning: ignoring -mc-relax-all because filetype != obj";
+    else
+      Target.setMCRelaxAll(true);
+  }
 
   // Ask the target to add backend passes as necessary.
   if (Target.addPassesToEmitFile(PM, *Out, FileType, OLvl,
