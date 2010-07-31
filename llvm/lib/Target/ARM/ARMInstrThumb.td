@@ -378,7 +378,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   def tBR_JTr : T1JTI<(outs),
                       (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
-                      IIC_Br, "mov\tpc, $target\n\t.align\t2\n$jt",
+                      IIC_Br, "mov\tpc, $target\n\t.align\t2$jt",
                       [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>,
                 Encoding16 {
     let Inst{15-7} = 0b010001101;

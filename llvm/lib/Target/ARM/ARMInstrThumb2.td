@@ -2504,7 +2504,7 @@ let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT :
     T2JTI<(outs),
           (ins GPR:$target, GPR:$index, jt2block_operand:$jt, i32imm:$id),
-           IIC_Br, "mov\tpc, $target\n$jt",
+           IIC_Br, "mov\tpc, $target$jt",
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0100100;
@@ -2518,7 +2518,7 @@ def t2BR_JT :
 def t2TBB :
     T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
-         IIC_Br, "tbb\t$index\n$jt", []> {
+         IIC_Br, "tbb\t$index$jt", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0001101;
   let Inst{19-16} = 0b1111; // Rn = pc (table follows this instruction)
@@ -2529,7 +2529,7 @@ def t2TBB :
 def t2TBH :
     T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
-         IIC_Br, "tbh\t$index\n$jt", []> {
+         IIC_Br, "tbh\t$index$jt", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0001101;
   let Inst{19-16} = 0b1111; // Rn = pc (table follows this instruction)

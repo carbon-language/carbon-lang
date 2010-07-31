@@ -1111,7 +1111,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   let isNotDuplicable = 1, isIndirectBranch = 1 in {
   def BR_JTr : JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
-                    IIC_Br, "mov\tpc, $target \n$jt",
+                    IIC_Br, "mov\tpc, $target$jt",
                     [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
     let Inst{11-4}  = 0b00000000;
     let Inst{15-12} = 0b1111;
@@ -1121,7 +1121,7 @@ let isBranch = 1, isTerminator = 1 in {
   }
   def BR_JTm : JTI<(outs),
                    (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
-                   IIC_Br, "ldr\tpc, $target \n$jt",
+                   IIC_Br, "ldr\tpc, $target$jt",
                    [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
                      imm:$id)]> {
     let Inst{15-12} = 0b1111;
@@ -1133,7 +1133,7 @@ let isBranch = 1, isTerminator = 1 in {
   }
   def BR_JTadd : JTI<(outs),
                    (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
-                    IIC_Br, "add\tpc, $target, $idx \n$jt",
+                    IIC_Br, "add\tpc, $target, $idx$jt",
                     [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
                       imm:$id)]> {
     let Inst{15-12} = 0b1111;

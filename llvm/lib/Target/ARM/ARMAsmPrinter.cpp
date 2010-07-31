@@ -938,7 +938,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum,
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
   // Can't use EmitLabel until instprinter happens, label comes out in the wrong
   // order.
-  O << *JTISymbol << ":\n";
+  O << "\n" << *JTISymbol << ":\n";
 
   const char *JTEntryDirective = MAI->getData32bitsDirective();
 
@@ -980,7 +980,7 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum,
   
   // Can't use EmitLabel until instprinter happens, label comes out in the wrong
   // order.
-  O << *JTISymbol << ":\n";
+  O << "\n" << *JTISymbol << ":\n";
 
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
