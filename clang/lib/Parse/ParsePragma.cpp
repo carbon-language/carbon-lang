@@ -110,27 +110,32 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
                           LParenLoc, RParenLoc);
 }
 
-// #pragma 'options' 'align' '=' {'native','natural','mac68k','power','reset'}
-void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
-  SourceLocation OptionsLoc = OptionsTok.getLocation();
-
+// #pragma 'align' '=' {'native','natural','mac68k','power','reset'}
+// #pragma 'options 'align' '=' {'native','natural','mac68k','power','reset'}
+static void ParseAlignPragma(Action &Actions, Preprocessor &PP, Token &FirstTok,
+                             bool IsOptions) {
   Token Tok;
-  PP.Lex(Tok);
-  if (Tok.isNot(tok::identifier) || !Tok.getIdentifierInfo()->isStr("align")) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_align);
-    return;
+
+  if (IsOptions) {
+    PP.Lex(Tok);
+    if (Tok.isNot(tok::identifier) ||
+        !Tok.getIdentifierInfo()->isStr("align")) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_align);
+      return;
+    }
   }
 
   PP.Lex(Tok);
   if (Tok.isNot(tok::equal)) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_options_expected_equal);
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_align_expected_equal)
+      << IsOptions;
     return;
   }
 
   PP.Lex(Tok);
   if (Tok.isNot(tok::identifier)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
-      << "options";
+      << (IsOptions ? "options" : "align");
     return;
   }
 
@@ -149,7 +154,8 @@ void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
   else if (II->isStr("reset"))
     Kind = Action::POAK_Reset;
   else {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_options_invalid_option);
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_align_invalid_option)
+      << IsOptions;
     return;
   }
 
@@ -157,11 +163,19 @@ void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
   PP.Lex(Tok);
   if (Tok.isNot(tok::eom)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
-      << "options";
+      << (IsOptions ? "options" : "align");
     return;
   }
 
-  Actions.ActOnPragmaOptionsAlign(Kind, OptionsLoc, KindLoc);
+  Actions.ActOnPragmaOptionsAlign(Kind, FirstTok.getLocation(), KindLoc);
+}
+
+void PragmaAlignHandler::HandlePragma(Preprocessor &PP, Token &AlignTok) {
+  ParseAlignPragma(Actions, PP, AlignTok, /*IsOptions=*/false);
+}
+
+void PragmaOptionsHandler::HandlePragma(Preprocessor &PP, Token &OptionsTok) {
+  ParseAlignPragma(Actions, PP, OptionsTok, /*IsOptions=*/true);
 }
 
 // #pragma unused(identifier)

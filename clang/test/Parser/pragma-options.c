@@ -10,3 +10,13 @@
 #pragma options align=reset
 #pragma options align=mac68k
 #pragma options align=power
+
+/* expected-warning {{expected '=' following '#pragma align'}} */ #pragma align
+/* expected-warning {{expected identifier in '#pragma align'}} */ #pragma align =
+/* expected-warning {{invalid alignment option in '#pragma align'}} */ #pragma align = foo
+/* expected-warning {{extra tokens at end of '#pragma align'}} */ #pragma align = reset foo
+
+#pragma align=natural
+#pragma align=reset
+#pragma align=mac68k
+#pragma align=power

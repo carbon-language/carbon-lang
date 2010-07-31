@@ -20,6 +20,14 @@ namespace clang {
   class Action;
   class Parser;
 
+class PragmaAlignHandler : public PragmaHandler {
+  Action &Actions;
+public:
+  explicit PragmaAlignHandler(Action &A) : PragmaHandler("align"), Actions(A) {}
+
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
+};
+
 class PragmaOptionsHandler : public PragmaHandler {
   Action &Actions;
 public:

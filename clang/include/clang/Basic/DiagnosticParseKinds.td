@@ -374,10 +374,10 @@ def warn_pragma_extra_tokens_at_eol : Warning<
 // - #pragma options
 def warn_pragma_options_expected_align : Warning<
   "expected 'align' following '#pragma options' - ignored">;
-def warn_pragma_options_expected_equal : Warning<
-  "expected '=' following '#pragma options align' - ignored">;
-def warn_pragma_options_invalid_option : Warning<
-  "invalid alignment option in '#pragma options align' - ignored">;
+def warn_pragma_align_expected_equal : Warning<
+  "expected '=' following '#pragma %select{align|options align}0' - ignored">;
+def warn_pragma_align_invalid_option : Warning<
+  "invalid alignment option in '#pragma %select{align|options align}0' - ignored">;
 // - #pragma pack
 def warn_pragma_pack_invalid_action : Warning<
   "unknown action for '#pragma pack' - ignored">;
