@@ -1,6 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -triple=i686-apple-darwin9 -o %t %s -O2
-// RUN: grep 'ret i32' %t | count 1
-// RUN: grep 'ret i32 1' %t | count 1
+// RUN: %clang_cc1 -emit-llvm -triple=i686-apple-darwin9 -o - %s -O2 | FileCheck %s
 
 @interface MyClass
 {
@@ -10,31 +8,66 @@
 
 @implementation MyClass
 
+// CHECK: define internal void @"\01-[MyClass method]"
 - (void)method
 {
-	@synchronized(self)
-	{
-	}
+  // CHECK: call void @objc_sync_enter
+  // CHECK: call void @objc_exception_try_enter
+  // CHECK: call i32 @_setjmp
+  @synchronized(self) {
+  }
 }
 
 @end
 
+// CHECK: define void @foo(
 void foo(id a) {
+  // CHECK: [[A:%.*]] = alloca i8*
+
+  // CHECK: call void @objc_sync_enter
+  // CHECK: call void @objc_exception_try_enter
+  // CHECK: call i32 @_setjmp
   @synchronized(a) {
+    // CHECK: call void @objc_exception_try_exit
+    // CHECK: call void @objc_sync_exit
+    // CHECK: ret void
     return;
   }
+
+  // This is unreachable, but the optimizers can't know that.
+  // CHECK: call void asm sideeffect "", "=*m"(i8** [[A]])
+  // CHECK: call i8* @objc_exception_extract
+  // CHECK: call void @objc_sync_exit
+  // CHECK: call void @objc_exception_throw
+  // CHECK: unreachable
 }
 
+// CHECK: define i32 @f0(
 int f0(id a) {
+  // TODO: we can optimize the ret to a constant if we can figure out
+  // either that x isn't stored to within the synchronized block or
+  // that the synchronized block can't longjmp.
+
+  // CHECK: [[X:%.*]] = alloca i32
+  // CHECK: store i32 1, i32* [[X]]
   int x = 0;
   @synchronized((x++, a)) {    
   }
-  return x; // ret i32 1
+
+  // CHECK: [[T:%.*]] = load i32* [[X]]
+  // CHECK: ret i32 [[T]]
+  return x;
 }
 
+// CHECK: define void @f1(
 void f1(id a) {
-  // The trick here is that the return shouldn't go through clean up,
-  // but there isn't a simple way to check this property.
+  // Check that the return doesn't go through the cleanup.
+  extern void opaque(void);
+  opaque();
+
+  // CHECK: call void @opaque()
+  // CHECK-NEXT: ret void
+
   @synchronized(({ return; }), a) {
     return;
   }

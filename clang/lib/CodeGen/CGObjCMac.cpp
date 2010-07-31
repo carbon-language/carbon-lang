@@ -25,7 +25,8 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 
-#include "llvm/Intrinsics.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseSet.h"
@@ -2596,6 +2597,155 @@ namespace {
       }
     }
   };
+
+  class FragileHazards {
+    CodeGenFunction &CGF;
+    llvm::SmallVector<llvm::Value*, 20> Locals;
+    llvm::DenseSet<llvm::BasicBlock*> BlocksBeforeTry;
+
+    llvm::InlineAsm *ReadHazard;
+    llvm::InlineAsm *WriteHazard;
+
+    llvm::FunctionType *GetAsmFnType();
+
+    void collectLocals();
+    void emitReadHazard(CGBuilderTy &Builder);
+
+  public:
+    FragileHazards(CodeGenFunction &CGF);
+    void emitReadHazard();
+    void emitReadHazardsInNewBlocks();
+    void emitWriteHazard();
+  };
+}
+
+/// Create the fragile-ABI read and write hazards based on the current
+/// state of the function, which is presumed to be immediately prior
+/// to a @try block.  These hazards are used to maintain correct
+/// semantics in the face of optimization and the fragile ABI's
+/// cavalier use of setjmp/longjmp.
+FragileHazards::FragileHazards(CodeGenFunction &CGF) : CGF(CGF) {
+  collectLocals();
+
+  if (Locals.empty()) return;
+
+  // Collect all the blocks in the function.
+  for (llvm::Function::iterator
+         I = CGF.CurFn->begin(), E = CGF.CurFn->end(); I != E; ++I)
+    BlocksBeforeTry.insert(&*I);
+
+  llvm::FunctionType *AsmFnTy = GetAsmFnType();
+
+  // Create a read hazard for the allocas.  This inhibits dead-store
+  // optimizations and forces the values to memory.  This hazard is
+  // inserted before any 'throwing' calls in the protected scope to
+  // reflect the possibility that the variables might be read from the
+  // catch block if the call throws.
+  {
+    std::string Constraint;
+    for (unsigned I = 0, E = Locals.size(); I != E; ++I) {
+      if (I) Constraint += ',';
+      Constraint += "*m";
+    }
+
+    ReadHazard = llvm::InlineAsm::get(AsmFnTy, "", Constraint, true, false);
+  }
+
+  // Create a write hazard for the allocas.  This inhibits folding
+  // loads across the hazard.  This hazard is inserted at the
+  // beginning of the catch path to reflect the possibility that the
+  // variables might have been written within the protected scope.
+  {
+    std::string Constraint;
+    for (unsigned I = 0, E = Locals.size(); I != E; ++I) {
+      if (I) Constraint += ',';
+      Constraint += "=*m";
+    }
+
+    WriteHazard = llvm::InlineAsm::get(AsmFnTy, "", Constraint, true, false);
+  }
+}
+
+/// Emit a write hazard at the current location.
+void FragileHazards::emitWriteHazard() {
+  if (Locals.empty()) return;
+
+  CGF.Builder.CreateCall(WriteHazard, Locals.begin(), Locals.end())
+    ->setDoesNotThrow();
+}
+
+void FragileHazards::emitReadHazard() {
+  if (Locals.empty()) return;
+  emitReadHazard(CGF.Builder);
+}
+
+void FragileHazards::emitReadHazard(CGBuilderTy &Builder) {
+  assert(!Locals.empty());
+  Builder.CreateCall(ReadHazard, Locals.begin(), Locals.end())
+    ->setDoesNotThrow();
+}
+
+/// Emit read hazards in all the protected blocks, i.e. all the blocks
+/// which have been inserted since the beginning of the try.
+void FragileHazards::emitReadHazardsInNewBlocks() {
+  if (Locals.empty()) return;
+
+  CGBuilderTy Builder(CGF.getLLVMContext());
+
+  // Iterate through all blocks, skipping those prior to the try.
+  for (llvm::Function::iterator
+         FI = CGF.CurFn->begin(), FE = CGF.CurFn->end(); FI != FE; ++FI) {
+    llvm::BasicBlock &BB = *FI;
+    if (BlocksBeforeTry.count(&BB)) continue;
+
+    // Walk through all the calls in the block.
+    for (llvm::BasicBlock::iterator
+           BI = BB.begin(), BE = BB.end(); BI != BE; ++BI) {
+      llvm::Instruction &I = *BI;
+
+      // Ignore instructions that aren't non-intrinsic calls.
+      // These are the only calls that can possibly call longjmp.
+      if (!isa<llvm::CallInst>(I) && !isa<llvm::InvokeInst>(I)) continue;
+      if (isa<llvm::IntrinsicInst>(I))
+        continue;
+
+      // Ignore call sites marked nounwind.  This may be questionable,
+      // since 'nounwind' doesn't necessarily mean 'does not call longjmp'.
+      llvm::CallSite CS(&I);
+      if (CS.doesNotThrow()) continue;
+
+      // Insert a read hazard before the call.
+      Builder.SetInsertPoint(&BB, BI);
+      emitReadHazard(Builder);
+    }
+  }
+}
+
+static void addIfPresent(llvm::DenseSet<llvm::Value*> &S, llvm::Value *V) {
+  if (V) S.insert(V);
+}
+
+void FragileHazards::collectLocals() {
+  // Compute a set of allocas to ignore.
+  llvm::DenseSet<llvm::Value*> AllocasToIgnore;
+  addIfPresent(AllocasToIgnore, CGF.ReturnValue);
+  addIfPresent(AllocasToIgnore, CGF.NormalCleanupDest);
+  addIfPresent(AllocasToIgnore, CGF.EHCleanupDest);
+
+  // Collect all the allocas currently in the function.  This is
+  // probably way too aggressive.
+  llvm::BasicBlock &Entry = CGF.CurFn->getEntryBlock();
+  for (llvm::BasicBlock::iterator
+         I = Entry.begin(), E = Entry.end(); I != E; ++I)
+    if (isa<llvm::AllocaInst>(*I) && !AllocasToIgnore.count(&*I))
+      Locals.push_back(&*I);
+}
+
+llvm::FunctionType *FragileHazards::GetAsmFnType() {
+  std::vector<const llvm::Type *> Tys(Locals.size());
+  for (unsigned I = 0, E = Locals.size(); I != E; ++I)
+    Tys[I] = Locals[I]->getType();
+  return llvm::FunctionType::get(CGF.Builder.getVoidTy(), Tys, false);
 }
 
 /*
@@ -2737,6 +2887,12 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       ->setDoesNotThrow();
   }
 
+  // Create the fragile hazards.  Note that this will not capture any
+  // of the allocas required for exception processing, but will
+  // capture the current basic block (which extends all the way to the
+  // setjmp call) as "before the @try".
+  FragileHazards Hazards(CGF);
+
   // Allocate memory for the exception data and rethrow pointer.
   llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
                                                     "exceptiondata.ptr");
@@ -2791,6 +2947,9 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Emit the exception handler block.
   CGF.EmitBlock(TryHandler);
+
+  // Don't optimize loads of the in-scope locals across this point.
+  Hazards.emitWriteHazard();
 
   // Retrieve the exception object.  We may emit multiple blocks but
   // nothing can cross this so the value is already in SSA form.
@@ -2960,12 +3119,15 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
 
+  // Insert read hazards as required in the new blocks.
+  Hazards.emitReadHazardsInNewBlocks();
+
   // Pop the cleanup.
   CGF.PopCleanupBlock();
   CGF.EmitBlock(FinallyEnd.getBlock());
 
   // Emit the rethrow block.
-  CGF.Builder.ClearInsertionPoint();
+  CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
   CGF.EmitBlock(FinallyRethrow.getBlock(), true);
   if (CGF.HaveInsertPoint()) {
     CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(),
@@ -2974,7 +3136,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateUnreachable();
   }
 
-  CGF.Builder.SetInsertPoint(FinallyEnd.getBlock());
+  CGF.Builder.restoreIP(SavedIP);
 }
 
 void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
