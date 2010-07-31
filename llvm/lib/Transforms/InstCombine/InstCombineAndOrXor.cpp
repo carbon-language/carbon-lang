@@ -472,22 +472,6 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       Value *NewOr = Builder->CreateOr(Val, Val2);
       return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
-    
-    // (icmp ne (A & C1), 0) & (icmp ne (A & C2), 0) -->
-    // (icmp eq (A & (C1|C2)), (C1|C2)) where C1 and C2 are non-zero POT
-    if (LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero()) {
-      Value *Op1 = 0, *Op2 = 0;
-      ConstantInt *CI1 = 0, *CI2 = 0;
-      if (match(LHS->getOperand(0), m_And(m_Value(Op1), m_ConstantInt(CI1))) &&
-          match(RHS->getOperand(0), m_And(m_Value(Op2), m_ConstantInt(CI2)))) {
-        if (Op1 == Op2 && !CI1->isZero() && !CI2->isZero() &&
-            CI1->getValue().isPowerOf2() && CI2->getValue().isPowerOf2()) {
-          Constant *ConstOr = ConstantExpr::getOr(CI1, CI2);
-          Value *NewAnd = Builder->CreateAnd(Op1, ConstOr);
-          return Builder->CreateICmp(ICmpInst::ICMP_EQ, NewAnd, ConstOr);
-        }
-      }
-    }
   }
   
   // From here on, we only handle:
@@ -1172,22 +1156,6 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero()) {
     Value *NewOr = Builder->CreateOr(Val, Val2);
     return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
-  }
-  
-  // (icmp eq (A & C1), 0) | (icmp eq (A & C2), 0) -->
-  // (icmp ne (A & (C1|C2)), (C1|C2)) where C1 and C2 are non-zero POT
-  if (LHSCC == ICmpInst::ICMP_EQ && LHSCst->isZero()) {
-    Value *Op1 = 0, *Op2 = 0;
-    ConstantInt *CI1 = 0, *CI2 = 0;
-    if (match(LHS->getOperand(0), m_And(m_Value(Op1), m_ConstantInt(CI1))) &&
-        match(RHS->getOperand(0), m_And(m_Value(Op2), m_ConstantInt(CI2)))) {
-      if (Op1 == Op2 && !CI1->isZero() && !CI2->isZero() &&
-          CI1->getValue().isPowerOf2() && CI2->getValue().isPowerOf2()) {
-        Constant *ConstOr = ConstantExpr::getOr(CI1, CI2);
-        Value *NewAnd = Builder->CreateAnd(Op1, ConstOr);
-        return Builder->CreateICmp(ICmpInst::ICMP_NE, NewAnd, ConstOr);
-      }
-    }
   }
   
   // From here on, we only handle:
