@@ -369,6 +369,121 @@ public:
   static bool classof(const NonNullAttr *A) { return true; }
 };
 
+/// OwnershipAttr
+/// Ownership attributes are used to annotate pointers that own a resource
+/// in order for the analyzer to check correct allocation and deallocation.
+/// There are three attributes, ownership_returns, ownership_holds and
+/// ownership_takes, represented by subclasses of OwnershipAttr
+class OwnershipAttr: public AttrWithString {
+ protected:
+  unsigned* ArgNums;
+  unsigned Size;
+public:
+  enum OwnershipKind { Holds, Takes, Returns, None };
+  OwnershipKind OKind;
+  attr::Kind AKind;
+public:
+  OwnershipAttr(attr::Kind AK, ASTContext &C, unsigned* arg_nums, unsigned size,
+                       llvm::StringRef module, OwnershipKind kind);
+
+
+  virtual void Destroy(ASTContext &C);
+
+  OwnershipKind getKind() const {
+    return OKind;
+  }
+  bool isKind(const OwnershipKind k) const {
+    return OKind == k;
+  }
+
+  /// Ownership attributes have a 'module', which is the name of a kind of
+  /// resource that can be checked.
+  /// The Malloc checker uses the module 'malloc'.
+  llvm::StringRef getModule() const {
+    return getString();
+  }
+  void setModule(ASTContext &C, llvm::StringRef module) {
+    ReplaceString(C, module);
+  }
+  bool isModule(const char *m) const {
+    return getModule().equals(m);
+  }
+
+  typedef const unsigned *iterator;
+  iterator begin() const {
+    return ArgNums;
+  }
+  iterator end() const {
+    return ArgNums + Size;
+  }
+  unsigned size() const {
+    return Size;
+  }
+
+  virtual Attr *clone(ASTContext &C) const;
+
+  static bool classof(const Attr *A) {
+    return true;
+  }
+  static bool classof(const OwnershipAttr *A) {
+    return true;
+  }
+};
+
+class OwnershipTakesAttr: public OwnershipAttr {
+public:
+  OwnershipTakesAttr(ASTContext &C, unsigned* arg_nums, unsigned size,
+                     llvm::StringRef module);
+
+  virtual Attr *clone(ASTContext &C) const;
+
+  static bool classof(const Attr *A) {
+    return A->getKind() == attr::OwnershipTakes;
+  }
+  static bool classof(const OwnershipTakesAttr *A) {
+    return true;
+  }
+  static bool classof(const OwnershipAttr *A) {
+    return A->OKind == Takes;
+  }
+};
+
+class OwnershipHoldsAttr: public OwnershipAttr {
+public:
+  OwnershipHoldsAttr(ASTContext &C, unsigned* arg_nums, unsigned size,
+                     llvm::StringRef module);
+
+  virtual Attr *clone(ASTContext &C) const;
+
+  static bool classof(const Attr *A) {
+    return A->getKind() == attr::OwnershipHolds;
+  }
+  static bool classof(const OwnershipHoldsAttr *A) {
+    return true;
+  }
+  static bool classof(const OwnershipAttr *A) {
+    return A->OKind == Holds;
+  }
+};
+
+class OwnershipReturnsAttr: public OwnershipAttr {
+public:
+  OwnershipReturnsAttr(ASTContext &C, unsigned* arg_nums, unsigned size,
+                     llvm::StringRef module);
+
+  virtual Attr *clone(ASTContext &C) const;
+
+  static bool classof(const Attr *A) {
+    return A->getKind() == attr::OwnershipReturns;
+  }
+  static bool classof(const OwnershipReturnsAttr *A) {
+    return true;
+  }
+  static bool classof(const OwnershipAttr *A) {
+    return A->OKind == Returns;
+  }
+};
+
 class FormatAttr : public AttrWithString {
   int formatIdx, firstArg;
 public:

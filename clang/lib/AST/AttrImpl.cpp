@@ -48,6 +48,43 @@ NonNullAttr::NonNullAttr(ASTContext &C, unsigned* arg_nums, unsigned size)
   memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
 }
 
+OwnershipAttr::OwnershipAttr(attr::Kind AK, ASTContext &C, unsigned* arg_nums,
+                                           unsigned size,
+                                           llvm::StringRef module,
+                                           OwnershipKind kind) :
+  AttrWithString(AK, C, module), ArgNums(0), Size(0), OKind(kind) {
+  if (size == 0)
+    return;
+  assert(arg_nums);
+  ArgNums = new (C) unsigned[size];
+  Size = size;
+  AKind = AK;
+  OKind = kind;
+  memcpy(ArgNums, arg_nums, sizeof(*ArgNums) * size);
+}
+
+
+void OwnershipAttr::Destroy(ASTContext &C) {
+  if (ArgNums)
+    C.Deallocate(ArgNums);
+}
+
+OwnershipTakesAttr::OwnershipTakesAttr(ASTContext &C, unsigned* arg_nums,
+                                       unsigned size, llvm::StringRef module) :
+  OwnershipAttr(attr::OwnershipTakes, C, arg_nums, size, module, Takes) {
+}
+
+OwnershipHoldsAttr::OwnershipHoldsAttr(ASTContext &C, unsigned* arg_nums,
+                                       unsigned size, llvm::StringRef module) :
+  OwnershipAttr(attr::OwnershipHolds, C, arg_nums, size, module, Holds) {
+}
+
+OwnershipReturnsAttr::OwnershipReturnsAttr(ASTContext &C, unsigned* arg_nums,
+                                           unsigned size,
+                                           llvm::StringRef module) :
+  OwnershipAttr(attr::OwnershipReturns, C, arg_nums, size, module, Returns) {
+}
+
 #define DEF_SIMPLE_ATTR_CLONE(ATTR)                                     \
   Attr *ATTR##Attr::clone(ASTContext &C) const {                        \
     return ::new (C) ATTR##Attr;                                        \
@@ -145,6 +182,22 @@ Attr *SectionAttr::clone(ASTContext &C) const {
 
 Attr *NonNullAttr::clone(ASTContext &C) const {
   return ::new (C) NonNullAttr(C, ArgNums, Size);
+}
+
+Attr *OwnershipAttr::clone(ASTContext &C) const {
+  return ::new (C) OwnershipAttr(AKind, C, ArgNums, Size, getModule(), OKind);
+}
+
+Attr *OwnershipReturnsAttr::clone(ASTContext &C) const {
+  return ::new (C) OwnershipReturnsAttr(C, ArgNums, Size, getModule());
+}
+
+Attr *OwnershipTakesAttr::clone(ASTContext &C) const {
+  return ::new (C) OwnershipTakesAttr(C, ArgNums, Size, getModule());
+}
+
+Attr *OwnershipHoldsAttr::clone(ASTContext &C) const {
+  return ::new (C) OwnershipHoldsAttr(C, ArgNums, Size, getModule());
 }
 
 Attr *FormatAttr::clone(ASTContext &C) const {

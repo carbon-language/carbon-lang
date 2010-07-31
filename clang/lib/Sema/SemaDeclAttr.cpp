@@ -346,8 +346,173 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   unsigned* start = &NonNullArgs[0];
   unsigned size = NonNullArgs.size();
-  std::sort(start, start + size);
+  llvm::array_pod_sort(start, start + size);
   d->addAttr(::new (S.Context) NonNullAttr(S.Context, start, size));
+}
+
+static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
+  // This attribute must be applied to a function declaration.
+  // The first argument to the attribute must be a string,
+  // the name of the resource, for example "malloc".
+  // The following arguments must be argument indexes, the arguments must be
+  // of integer type for Returns, otherwise of pointer type.
+  // The difference between Holds and Takes is that a pointer may still be used
+  // after being held.  free() should be __attribute((ownership_takes)), whereas a list
+  // append function may well be __attribute((ownership_holds)).
+
+  if (!AL.getParameterName()) {
+    S.Diag(AL.getLoc(), diag::err_attribute_argument_n_not_string)
+        << AL.getName()->getName() << 1;
+    return;
+  }
+  // Figure out our Kind, and check arguments while we're at it.
+  OwnershipAttr::OwnershipKind K = OwnershipAttr::None;
+  if (AL.getName()->getName().equals("ownership_takes")) {
+    K = OwnershipAttr::Takes;
+    if (AL.getNumArgs() < 1) {
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+      return;
+    }
+  } else if (AL.getName()->getName().equals("ownership_holds")) {
+    K = OwnershipAttr::Holds;
+    if (AL.getNumArgs() < 1) {
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+      return;
+    }
+  } else if (AL.getName()->getName().equals("ownership_returns")) {
+    K = OwnershipAttr::Returns;
+    if (AL.getNumArgs() > 1) {
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
+          << AL.getNumArgs() + 1;
+      return;
+    }
+  }
+  // This should never happen given how we are called.
+  if (K == OwnershipAttr::None) {
+    return;
+  }
+
+  if (!isFunction(d) || !hasFunctionProto(d)) {
+    S.Diag(AL.getLoc(), diag::warn_attribute_wrong_decl_type) << AL.getName()
+        << 0 /*function*/;
+    return;
+  }
+
+  unsigned NumArgs = getFunctionOrMethodNumArgs(d);
+
+  llvm::StringRef Module = AL.getParameterName()->getName();
+
+  // Normalize the argument, __foo__ becomes foo.
+  if (Module.startswith("__") && Module.endswith("__"))
+    Module = Module.substr(2, Module.size() - 4);
+
+  llvm::SmallVector<unsigned, 10> OwnershipArgs;
+
+  for (AttributeList::arg_iterator I = AL.arg_begin(), E = AL.arg_end(); I != E; ++I) {
+
+    Expr *IdxExpr = static_cast<Expr *>(*I);
+    llvm::APSInt ArgNum(32);
+    if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent()
+        || !IdxExpr->isIntegerConstantExpr(ArgNum, S.Context)) {
+      S.Diag(AL.getLoc(), diag::err_attribute_argument_not_int)
+          << AL.getName()->getName() << IdxExpr->getSourceRange();
+      continue;
+    }
+
+    unsigned x = (unsigned) ArgNum.getZExtValue();
+
+    if (x > NumArgs || x < 1) {
+      S.Diag(AL.getLoc(), diag::err_attribute_argument_out_of_bounds)
+          << AL.getName()->getName() << x << IdxExpr->getSourceRange();
+      continue;
+    }
+    --x;
+    switch (K) {
+    case OwnershipAttr::Takes:
+    case OwnershipAttr::Holds: {
+      // Is the function argument a pointer type?
+      QualType T = getFunctionOrMethodArgType(d, x);
+      if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
+        // FIXME: Should also highlight argument in decl.
+        S.Diag(AL.getLoc(), diag::err_ownership_type)
+            << ((K==OwnershipAttr::Takes)?"ownership_takes":"ownership_holds")
+            << "pointer"
+            << IdxExpr->getSourceRange();
+        continue;
+      }
+      break;
+    }
+    case OwnershipAttr::Returns: {
+      if (AL.getNumArgs() > 1) {
+          // Is the function argument an integer type?
+          Expr *IdxExpr = static_cast<Expr *>(AL.getArg(0));
+          llvm::APSInt ArgNum(32);
+          if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent()
+              || !IdxExpr->isIntegerConstantExpr(ArgNum, S.Context)) {
+            S.Diag(AL.getLoc(), diag::err_ownership_type)
+                << "ownership_returns" << "integer"
+                << IdxExpr->getSourceRange();
+            return;
+          }
+      }
+      break;
+    }
+    // Should never happen, here to silence a warning.
+    default: {
+      return;
+    }
+    } // switch
+
+    // Check we don't have a conflict with another ownership attribute.
+    if (d->hasAttrs()) {
+      for (const Attr *attr = d->getAttrs(); attr; attr = attr->getNext()) {
+        if (const OwnershipAttr* Att = dyn_cast<OwnershipAttr>(attr)) {
+          // Two ownership attributes of the same kind can't conflict,
+          // except returns attributes.
+          if (K == OwnershipAttr::Returns || Att->getKind() != K) {
+            for (const unsigned *I = Att->begin(), *E = Att->end(); I != E; ++I) {
+              if (x == *I) {
+                S.Diag(AL.getLoc(), diag::err_attributes_are_not_compatible)
+                    << AL.getName()->getName() << "ownership_*";
+              }
+            }
+          }
+        }
+      }
+    }
+    OwnershipArgs.push_back(x);
+  }
+
+  unsigned* start = OwnershipArgs.data();
+  unsigned size = OwnershipArgs.size();
+  llvm::array_pod_sort(start, start + size);
+  switch (K) {
+  case OwnershipAttr::Takes: {
+    if (OwnershipArgs.empty()) {
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+      return;
+    }
+    d->addAttr(::new (S.Context) OwnershipTakesAttr(S.Context, start, size,
+                                                    Module));
+    break;
+  }
+  case OwnershipAttr::Holds: {
+    if (OwnershipArgs.empty()) {
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+      return;
+    }
+    d->addAttr(::new (S.Context) OwnershipHoldsAttr(S.Context, start, size,
+                                                    Module));
+    break;
+  }
+  case OwnershipAttr::Returns: {
+    d->addAttr(::new (S.Context) OwnershipReturnsAttr(S.Context, start, size,
+                                                      Module));
+    break;
+  }
+  default:
+    break;
+  }
 }
 
 static bool isStaticVarOrStaticFunciton(Decl *D) {
@@ -379,7 +544,7 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     Ctx = Ctx->getLookupContext();
     if (!isa<TranslationUnitDecl>(Ctx) && !isa<NamespaceDecl>(Ctx) ) {
       S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_global_context) <<
-	dyn_cast<NamedDecl>(d)->getNameAsString();
+    dyn_cast<NamedDecl>(d)->getNameAsString();
       return;
     }
   }
@@ -2009,6 +2174,10 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_mode:        HandleModeAttr        (D, Attr, S); break;
   case AttributeList::AT_malloc:      HandleMallocAttr      (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr     (D, Attr, S); break;
+  case AttributeList::AT_ownership_returns:
+  case AttributeList::AT_ownership_takes:
+  case AttributeList::AT_ownership_holds:
+      HandleOwnershipAttr     (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr    (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
   case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;
@@ -2087,7 +2256,7 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *Attr
   // but that looks really pointless. We reject it.
   if (D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
     Diag(AttrList->getLoc(), diag::err_attribute_weakref_without_alias) <<
-	dyn_cast<NamedDecl>(D)->getNameAsString();
+    dyn_cast<NamedDecl>(D)->getNameAsString();
     return;
   }
 }

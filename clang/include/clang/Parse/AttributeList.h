@@ -97,6 +97,9 @@ public:
     AT_ns_returns_retained,     // Clang-specific.
     AT_objc_gc,
     AT_overloadable,       // Clang-specific.
+    AT_ownership_holds,    // Clang-specific.
+    AT_ownership_returns,  // Clang-specific.
+    AT_ownership_takes,    // Clang-specific.
     AT_packed,
     AT_pure,
     AT_regparm,

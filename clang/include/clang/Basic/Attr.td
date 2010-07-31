@@ -297,6 +297,21 @@ def Overloadable : Attr {
   let Spellings = ["overloadable"];
 }
 
+def OwnershipReturns : Attr {
+  let Spellings = ["ownership_returns"];
+  let Args = [StringArgument<"Module">, IntArgument<"SizeIdx">];
+}
+
+def OwnershipTakes : Attr {
+  let Spellings = ["ownership_takes"];
+  let Args = [StringArgument<"Module">, IntArgument<"PtrIdx">];
+}
+
+def OwnershipHolds : Attr {
+  let Spellings = ["ownership_holds"];
+  let Args = [StringArgument<"Module">, IntArgument<"PtrIdx">];
+}
+
 def Packed : Attr {
   let Spellings = ["packed"];
 }

@@ -838,6 +838,8 @@ def err_attribute_requires_objc_interface : Error<
   "attribute may only be applied to an Objective-C interface">;
 def err_nonnull_pointers_only : Error<
   "nonnull attribute only applies to pointer arguments">;
+def err_ownership_type : Error<
+  "%0 attribute only applies to %1 arguments">;
 def err_format_strftime_third_parameter : Error<
   "strftime format attribute requires 3rd parameter to be 0">;
 def err_format_attribute_requires_variadic : Error<
