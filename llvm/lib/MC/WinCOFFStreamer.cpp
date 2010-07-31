@@ -339,7 +339,10 @@ namespace llvm
   MCStreamer *createWinCOFFStreamer(MCContext &Context,
                                     TargetAsmBackend &TAB,
                                     MCCodeEmitter &CE,
-                                    raw_ostream &OS) {
-    return new WinCOFFStreamer(Context, TAB, CE, OS);
+                                    raw_ostream &OS,
+                                    bool RelaxAll) {
+    WinCOFFStreamer *S = new WinCOFFStreamer(Context, TAB, CE, OS);
+    S->getAssembler().setRelaxAll(RelaxAll);
+    return S;
   }
 }

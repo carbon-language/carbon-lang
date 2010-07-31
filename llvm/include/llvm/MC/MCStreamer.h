@@ -355,7 +355,8 @@ namespace llvm {
   /// Takes ownership of \arg TAB and \arg CE.
   MCStreamer *createWinCOFFStreamer(MCContext &Ctx,
                                     TargetAsmBackend &TAB,
-                                    MCCodeEmitter &CE, raw_ostream &OS);
+                                    MCCodeEmitter &CE, raw_ostream &OS,
+                                    bool RelaxAll = false);
 
   /// createLoggingStreamer - Create a machine code streamer which just logs the
   /// API calls and then dispatches to another streamer.
