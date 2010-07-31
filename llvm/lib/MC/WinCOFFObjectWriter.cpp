@@ -579,6 +579,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   COFFRelocation Reloc;
 
+  Reloc.Data.SymbolTableIndex = 0;
   Reloc.Data.VirtualAddress = Layout.getFragmentOffset(Fragment);
   Reloc.Symb = coff_symbol;
 

@@ -100,14 +100,14 @@ def NEONfmin      : SDNode<"ARMISD::FMIN", SDTARMFMAX>;
 
 def NEONimmAllZerosV: PatLeaf<(NEONvmovImm (i32 timm)), [{
   ConstantSDNode *ConstVal = cast<ConstantSDNode>(N->getOperand(0));
-  unsigned EltBits;
+  unsigned EltBits = 0;
   uint64_t EltVal = ARM_AM::decodeNEONModImm(ConstVal->getZExtValue(), EltBits);
   return (EltBits == 32 && EltVal == 0);
 }]>;
 
 def NEONimmAllOnesV: PatLeaf<(NEONvmovImm (i32 timm)), [{
   ConstantSDNode *ConstVal = cast<ConstantSDNode>(N->getOperand(0));
-  unsigned EltBits;
+  unsigned EltBits = 0;
   uint64_t EltVal = ARM_AM::decodeNEONModImm(ConstVal->getZExtValue(), EltBits);
   return (EltBits == 8 && EltVal == 0xff);
 }]>;
