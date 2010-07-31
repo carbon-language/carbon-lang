@@ -964,7 +964,12 @@ public:
 # undef protected
 public:
 
+  /// getNumArgOperands - Return the number of call arguments.
+  ///
   unsigned getNumArgOperands() const { return getNumOperands() - 1; }
+
+  /// getArgOperand/setArgOperand - Return/set the i-th call argument.
+  ///
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
 
@@ -2460,7 +2465,12 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
+  /// getNumArgOperands - Return the number of invoke arguments.
+  ///
   unsigned getNumArgOperands() const { return getNumOperands() - 3; }
+
+  /// getArgOperand/setArgOperand - Return/set the i-th invoke argument.
+  ///
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
 
