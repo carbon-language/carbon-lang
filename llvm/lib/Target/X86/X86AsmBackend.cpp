@@ -217,7 +217,6 @@ class WindowsX86AsmBackend : public X86AsmBackend {
 public:
   WindowsX86AsmBackend(const Target &T)
     : X86AsmBackend(T) {
-    HasAbsolutizedSet = true;
     HasScatteredSymbols = true;
   }
 
