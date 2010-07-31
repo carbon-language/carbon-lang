@@ -147,12 +147,10 @@ namespace {
     std::vector<std::pair<std::string, std::string> > BlocksToNotExtractByName;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit BlockExtractorPass(const std::vector<BasicBlock*> &B) 
-      : ModulePass(&ID), BlocksToNotExtract(B) {
+    BlockExtractorPass() : ModulePass(&ID) {
       if (!BlockFile.empty())
         LoadFile(BlockFile.c_str());
     }
-    BlockExtractorPass() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
   };
@@ -166,9 +164,9 @@ INITIALIZE_PASS(BlockExtractorPass, "extract-blocks",
 // createBlockExtractorPass - This pass extracts all blocks (except those
 // specified in the argument list) from the functions in the module.
 //
-ModulePass *llvm::createBlockExtractorPass(const std::vector<BasicBlock*> &BTNE)
+ModulePass *llvm::createBlockExtractorPass()
 {
-  return new BlockExtractorPass(BTNE);
+  return new BlockExtractorPass();
 }
 
 void BlockExtractorPass::LoadFile(const char *Filename) {

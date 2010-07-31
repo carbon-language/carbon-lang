@@ -354,8 +354,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   const char *ExtraArg = uniqueFN.c_str();
 
   std::vector<const PassInfo*> PI;
-  std::vector<BasicBlock *> EmptyBBs; // This parameter is ignored.
-  PI.push_back(getPI(createBlockExtractorPass(EmptyBBs)));
+  PI.push_back(getPI(createBlockExtractorPass()));
   Module *Ret = runPassesOn(M, PI, false, 1, &ExtraArg);
 
   uniqueFilename.eraseFromDisk(); // Free disk space
