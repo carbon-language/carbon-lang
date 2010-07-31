@@ -204,13 +204,15 @@ namespace {
 }
 
 /// TestMergedProgram - Given two modules, link them together and run the
-/// program, checking to see if the program matches the diff.  If the diff
-/// matches, return false, otherwise return true.  If the DeleteInputs argument
-/// is set to true then this function deletes both input modules before it
-/// returns.
+/// program, checking to see if the program matches the diff. If there is
+/// an error, return NULL. If not, return the merged module. The Broken argument
+/// will be set to true if the output is different. If the DeleteInputs
+/// argument is set to true then this function deletes both input
+/// modules before it returns.
 ///
-static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
-                              bool DeleteInputs, std::string &Error) {
+static Module *TestMergedProgram(const BugDriver &BD, Module *M1, Module *M2,
+                                 bool DeleteInputs, std::string &Error,
+                                 bool &Broken) {
   // Link the two portions of the program back to together.
   std::string ErrorMsg;
   if (!DeleteInputs) {
@@ -224,16 +226,14 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
   }
   delete M2;   // We are done with this module.
 
-  // Execute the program.  If it does not match the expected output, we must
-  // return true.
-  bool Broken = BD.diffProgram(M1, "", "", false, &Error);
+  // Execute the program.
+  Broken = BD.diffProgram(M1, "", "", false, &Error);
   if (!Error.empty()) {
     // Delete the linked module
     delete M1;
+    return NULL;
   }
-  // Delete the original and set the new program.
-  delete BD.swapProgramIn(M1);
-  return Broken;
+  return M1;
 }
 
 /// TestFuncs - split functions in a Module into two groups: those that are
@@ -329,10 +329,13 @@ static bool ExtractLoops(BugDriver &BD,
     // has broken.  If something broke, then we'll inform the user and stop
     // extraction.
     AbstractInterpreter *AI = BD.switchToSafeInterpreter();
-    bool Failure = TestMergedProgram(BD, ToOptimizeLoopExtracted, ToNotOptimize,
-                                     false, Error);
-    if (!Error.empty())
+    bool Failure;
+    Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted, ToNotOptimize,
+                                    false, Error, Failure);
+    if (!New)
       return false;
+    // Delete the original and set the new program.
+    delete BD.swapProgramIn(New);
     if (Failure) {
       BD.switchToInterpreter(AI);
 
@@ -695,8 +698,13 @@ static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe,
   delete Test;
 
   outs() << "  Checking to see if the merged program executes correctly: ";
-  bool Broken = TestMergedProgram(BD, Optimized, Safe, true, Error);
-  if (Error.empty()) outs() << (Broken ? " nope.\n" : " yup.\n");
+  bool Broken;
+  Module *New = TestMergedProgram(BD, Optimized, Safe, true, Error, Broken);
+  if (New) {
+    outs() << (Broken ? " nope.\n" : " yup.\n");
+    // Delete the original and set the new program.
+    delete BD.swapProgramIn(New);
+  }
   return Broken;
 }
 

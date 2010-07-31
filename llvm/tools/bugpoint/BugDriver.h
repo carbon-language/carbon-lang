@@ -179,7 +179,7 @@ public:
                              std::string Bitcode,
                              const std::string &SharedObjects,
                              AbstractInterpreter *AI,
-                             std::string *Error);
+                             std::string *Error) const;
 
   /// executeProgramSafely - Used to create reference output with the "safe"
   /// backend, if reference output is not provided.  If there is a problem with
@@ -187,7 +187,8 @@ public:
   /// Error.
   ///
   std::string executeProgramSafely(const Module *Program,
-                                   std::string OutputFile, std::string *Error);
+                                   std::string OutputFile,
+                                   std::string *Error) const;
 
   /// createReferenceFile - calls compileProgram and then records the output
   /// into ReferenceOutputFile. Returns true if reference file created, false 
@@ -206,7 +207,7 @@ public:
                    const std::string &BitcodeFile = "",
                    const std::string &SharedObj = "",
                    bool RemoveBitcode = false,
-                   std::string *Error = 0);
+                   std::string *Error = 0) const;
 
   /// EmitProgressBitcode - This function is used to output M to a file named
   /// "bugpoint-ID.bc".

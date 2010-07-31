@@ -325,7 +325,7 @@ std::string BugDriver::executeProgram(const Module *Program,
                                       std::string BitcodeFile,
                                       const std::string &SharedObj,
                                       AbstractInterpreter *AI,
-                                      std::string *Error) {
+                                      std::string *Error) const {
   if (AI == 0) AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
   bool CreatedBitcode = false;
@@ -402,7 +402,7 @@ std::string BugDriver::executeProgram(const Module *Program,
 ///
 std::string BugDriver::executeProgramSafely(const Module *Program,
                                             std::string OutputFile,
-                                            std::string *Error) {
+                                            std::string *Error) const {
   return executeProgram(Program, OutputFile, "", "", SafeInterpreter, Error);
 }
 
@@ -466,7 +466,7 @@ bool BugDriver::diffProgram(const Module *Program,
                             const std::string &BitcodeFile,
                             const std::string &SharedObject,
                             bool RemoveBitcode,
-                            std::string *ErrMsg) {
+                            std::string *ErrMsg) const {
   // Execute the program, generating an output file...
   sys::Path Output(executeProgram(Program, "", BitcodeFile, SharedObject, 0,
                                   ErrMsg));
