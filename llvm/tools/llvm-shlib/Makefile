@@ -38,7 +38,6 @@ ifeq ($(HOST_OS),Darwin)
     LLVMLibsOptions    := $(LLVMLibsOptions) -all_load
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                         -avoid-version \
                          -Wl,-dead_strip \
                          -Wl,-seg1addr -Wl,0xE0000000 
 

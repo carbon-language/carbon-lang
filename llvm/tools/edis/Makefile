@@ -36,7 +36,6 @@ include $(LEVEL)/Makefile.common
 ifeq ($(HOST_OS),Darwin)
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                         -avoid-version \
                          -Wl,-dead_strip
 
     ifdef EDIS_VERSION
@@ -48,7 +47,7 @@ ifeq ($(HOST_OS),Darwin)
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
     ifneq ($(DARWIN_VERS),8)
        LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                            -no-undefined -Wl,-install_name \
+                            -Wl,-install_name \
                             -Wl,"@rpath/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
 endif
