@@ -526,6 +526,7 @@ Constant* ConstantArray::get(const ArrayType* T, Constant* const* Vals,
 Constant* ConstantArray::get(LLVMContext &Context, StringRef Str,
                              bool AddNull) {
   std::vector<Constant*> ElementVals;
+  ElementVals.reserve(Str.size() + size_t(AddNull));
   for (unsigned i = 0; i < Str.size(); ++i)
     ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), Str[i]));
 
