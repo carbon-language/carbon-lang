@@ -52,6 +52,7 @@ def CXXHexFloats : DiagGroup<"c++-hex-floats">;
 def : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
 def : DiagGroup<"effc++">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
+def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;

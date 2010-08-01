@@ -5358,6 +5358,9 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
                           PDiag(diag::err_access_dtor_var)
                             << VD->getDeclName()
                             << VD->getType());
+
+    if (!VD->isInvalidDecl() && VD->hasGlobalStorage())
+      Diag(VD->getLocation(), diag::warn_global_destructor);
   }
 }
 

@@ -168,6 +168,13 @@ def warn_access_decl_deprecated : Warning<
   "access declarations are deprecated; use using declarations instead">,
   InGroup<Deprecated>;
 
+def warn_global_constructor : Warning<
+  "declaration requires a global constructor">,
+  InGroup<GlobalConstructors>, DefaultIgnore;
+def warn_global_destructor : Warning<
+  "declaration requires a global destructor">,
+   InGroup<GlobalConstructors>, DefaultIgnore;
+
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;
 def err_thread_non_global : Error<
