@@ -116,11 +116,15 @@ struct FunctionScopeInfo {
   /// a block.
   bool IsBlockInfo;
 
-  /// \brief Set true when a function, method contains a VLA or ObjC try block,
-  /// which introduce scopes that need to be checked for goto conditions.  If a
-  /// function does not contain this, then it need not have the jump checker run
-  /// on it.
-  bool NeedsScopeChecking;
+  /// \brief Whether this function contains a VLA, @try, try, C++
+  /// initializer, or anything else that can't be jumped past.
+  bool HasBranchProtectedScope;
+
+  /// \brief Whether this function contains any switches or direct gotos.
+  bool HasBranchIntoScope;
+
+  /// \brief Whether this function contains any indirect gotos.
+  bool HasIndirectGoto;
 
   /// \brief The number of errors that had occurred before starting this
   /// function or block.
@@ -139,9 +143,17 @@ struct FunctionScopeInfo {
   /// block, if there is any chance of applying the named return value
   /// optimization.
   llvm::SmallVector<ReturnStmt *, 4> Returns;
+
+  bool NeedsScopeChecking() const {
+    return HasIndirectGoto ||
+          (HasBranchProtectedScope && HasBranchIntoScope);
+  }
   
   FunctionScopeInfo(unsigned NumErrors)
-    : IsBlockInfo(false), NeedsScopeChecking(false),
+    : IsBlockInfo(false),
+      HasBranchProtectedScope(false),
+      HasBranchIntoScope(false),
+      HasIndirectGoto(false),
       NumErrorsAtStartOfFunction(NumErrors) { }
 
   virtual ~FunctionScopeInfo();
@@ -706,12 +718,27 @@ public:
 
   /// \brief Determine whether the current function or block needs scope
   /// checking.
-  bool &FunctionNeedsScopeChecking() {
-    if (FunctionScopes.empty())
-      return TopFunctionScope.NeedsScopeChecking;
-
-    return FunctionScopes.back()->NeedsScopeChecking;
+  bool FunctionNeedsScopeChecking() {
+    if (!FunctionScopes.empty())
+      return FunctionScopes.back()->NeedsScopeChecking();
+    return false;
   }
+
+  void setFunctionHasBranchIntoScope() {
+    if (!FunctionScopes.empty())
+      FunctionScopes.back()->HasBranchIntoScope = true;
+  }
+
+  void setFunctionHasBranchProtectedScope() {
+    if (!FunctionScopes.empty())
+      FunctionScopes.back()->HasBranchProtectedScope = true;
+  }
+
+  void setFunctionHasIndirectGoto() {
+    if (!FunctionScopes.empty())
+      FunctionScopes.back()->HasIndirectGoto = true;
+  }
+  
 
   bool hasAnyErrorsInThisFunction() const;
 

@@ -2380,7 +2380,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // then it shall have block scope.
   QualType T = NewTD->getUnderlyingType();
   if (T->isVariablyModifiedType()) {
-    FunctionNeedsScopeChecking() = true;
+    setFunctionHasBranchProtectedScope();
 
     if (S->getFnParent() == 0) {
       bool SizeIsNegative;
@@ -2794,12 +2794,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||
       NewVD->hasAttr<BlocksAttr>() ||
-      // FIXME: We need to diagnose jumps passed initialized variables in C++.
-      // However, this turns on the scope checker for everything with a variable
-      // which may impact compile time.  See if we can find a better solution
-      // to this, perhaps only checking functions that contain gotos in C++?
       (LangOpts.CPlusPlus && NewVD->hasLocalStorage()))
-    FunctionNeedsScopeChecking() = true;
+    setFunctionHasBranchProtectedScope();
 
   if ((isVM && NewVD->hasLinkage()) ||
       (T->isVariableArrayType() && NewVD->hasGlobalStorage())) {

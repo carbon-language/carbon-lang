@@ -31,7 +31,10 @@ using namespace clang;
 FunctionScopeInfo::~FunctionScopeInfo() { }
 
 void FunctionScopeInfo::Clear(unsigned NumErrors) {
-  NeedsScopeChecking = false;
+  HasBranchProtectedScope = false;
+  HasBranchIntoScope = false;
+  HasIndirectGoto = false;
+  
   LabelMap.clear();
   SwitchStack.clear();
   Returns.clear();

@@ -298,6 +298,7 @@ void rdar_6777209(char *p) {
 typedef void *Opcode;
 Opcode pr_4033_getOpcode();
 void pr_4033(void) {
+  void *lbl = &&next_opcode;
 next_opcode:
   {
     Opcode op = pr_4033_getOpcode();

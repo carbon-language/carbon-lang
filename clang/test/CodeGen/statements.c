@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wreturn-type < %s -emit-llvm
+// RUN: %clang_cc1 -Wreturn-type %s -emit-llvm
 
 void test1(int x) {
 switch (x) {
@@ -31,5 +31,10 @@ static long y = &&baz;
 }
 
 // PR3869
-int test5(long long b) { goto *b; }
+int test5(long long b) {
+  static void *lbls[] = { &&lbl };
+  goto *b;
+ lbl:
+  return 0;
+}
 

@@ -441,6 +441,8 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond,
     if (!CondExpr)
       return StmtError();
   }
+
+  setFunctionHasBranchIntoScope();
     
   SwitchStmt *SS = new (Context) SwitchStmt(Context, ConditionVar, CondExpr);
   getSwitchStack().push_back(SS);
@@ -962,6 +964,8 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = getLabelMap()[LabelII];
 
+  setFunctionHasBranchIntoScope();
+
   // If we haven't seen this label yet, create a forward reference.
   if (LabelDecl == 0)
     LabelDecl = new (Context) LabelStmt(LabelLoc, LabelII, 0);
@@ -982,6 +986,9 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
     if (DiagnoseAssignmentResult(ConvTy, StarLoc, DestTy, ETy, E, AA_Passing))
       return StmtError();
   }
+
+  setFunctionHasIndirectGoto();
+
   return Owned(new (Context) IndirectGotoStmt(GotoLoc, StarLoc, E));
 }
 
@@ -1504,7 +1511,7 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtArg Body) {
 Action::OwningStmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, StmtArg Try, 
                          MultiStmtArg CatchStmts, StmtArg Finally) {
-  FunctionNeedsScopeChecking() = true;
+  setFunctionHasBranchProtectedScope();
   unsigned NumCatchStmts = CatchStmts.size();
   return Owned(ObjCAtTryStmt::Create(Context, AtLoc, Try.takeAs<Stmt>(),
                                      (Stmt **)CatchStmts.release(),
@@ -1549,7 +1556,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg Throw,
 Action::OwningStmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
                                   StmtArg SynchBody) {
-  FunctionNeedsScopeChecking() = true;
+  setFunctionHasBranchProtectedScope();
 
   // Make sure the expression type is an ObjC pointer or "void *".
   Expr *SyncExpr = static_cast<Expr*>(SynchExpr.get());
@@ -1658,13 +1665,14 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
     }
   }
 
+  setFunctionHasBranchProtectedScope();
+
   // FIXME: We should detect handlers that cannot catch anything because an
   // earlier handler catches a superclass. Need to find a method that is not
   // quadratic for this.
   // Neither of these are explicitly forbidden, but every compiler detects them
   // and warns.
 
-  FunctionNeedsScopeChecking() = true;
   RawHandlers.release();
   return Owned(CXXTryStmt::Create(Context, TryLoc,
                                   static_cast<Stmt*>(TryBlock.release()),
