@@ -633,6 +633,11 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
         CPUName = "x86-64";
       else if (getToolChain().getArchName() == "i386")
         CPUName = "i586";
+    } else if (getToolChain().getOS().startswith("openbsd"))  {
+      if (getToolChain().getArchName() == "x86_64")
+        CPUName = "x86-64";
+      else if (getToolChain().getArchName() == "i386")
+        CPUName = "i486";
     } else {
       if (getToolChain().getArchName() == "x86_64")
         CPUName = "x86-64";
@@ -2845,7 +2850,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Triple.substr(0, 6) == "x86_64")
     Triple.replace(0, 6, "amd64");
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc-lib/" + Triple +
-                                       "/3.3.5"));
+                                       "/4.2.1"));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
@@ -2871,6 +2876,11 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
+    if (D.CCCIsCXX) {
+      CmdArgs.push_back("-lstdc++");
+      CmdArgs.push_back("-lm");
+    }
+
     // FIXME: For some reason GCC passes -lgcc before adding
     // the default system libraries. Just mimic this for now.
     CmdArgs.push_back("-lgcc");
