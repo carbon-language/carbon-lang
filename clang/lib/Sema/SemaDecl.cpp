@@ -3866,57 +3866,6 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init) {
   AddInitializerToDecl(dcl, move(init), /*DirectInit=*/false);
 }
 
-/// Make a reasonable guess at whether the given initializer will
-/// require a global constructor.
-static bool RequiresGlobalConstructor(Sema &S, Expr *Init) {
-  // FIXME: reproducing the logic of CGExprConstant is kindof dumb.
-  // Maybe this should be integrated into the constant-evaluator?
-  // We'd need array and struct value types.
-  //
-  // It's probably okay to still warn in the theoretical cases where
-  // IR gen can eliminate a global constructor based on
-  // initialization order (not that it actually does that
-  // optimization at the moment).
-  if (Init->isEvaluatable(S.Context)) return false;
-
-  Init = Init->IgnoreParenNoopCasts(S.Context);
-
-  // Look through reference-bindings.
-  if (CXXBindReferenceExpr *BE = dyn_cast<CXXBindReferenceExpr>(Init))
-    return RequiresGlobalConstructor(S, BE);
-
-  // A constructor call needs a global constructor if:
-  if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(Init)) {
-    //  - the constructor is non-trivial
-    if (!CE->getConstructor()->isTrivial()) return true;
-
-    //  - any of the argument expressions needs a global constructor
-    for (CXXConstructExpr::arg_iterator
-           I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I)
-      if (RequiresGlobalConstructor(S, *I))
-        return true;
-
-    // We don't have to worry about building temporaries with
-    // non-trivial destructors because we should never have walked
-    // through the CXXExprWithTemporaries.
-
-    // So it should be emitted as a constant expression.
-    return false;
-  }
-
-  /// An initializer list requires a global constructor if any of the
-  /// components do.
-  if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
-    for (unsigned I = 0, E = ILE->getNumInits(); I != E; ++I)
-      if (RequiresGlobalConstructor(S, ILE->getInit(I)))
-        return true;
-    return false;
-  }
-
-  // Assume everything else does.
-  return true;
-}
-
 /// AddInitializerToDecl - Adds the initializer Init to the
 /// declaration dcl. If DirectInit is true, this is C++ direct
 /// initialization rather than copy initialization.
@@ -4118,7 +4067,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   if (getLangOptions().CPlusPlus) {
     if (!VDecl->isInvalidDecl() &&
         !VDecl->getDeclContext()->isDependentContext() &&
-        VDecl->hasGlobalStorage() && RequiresGlobalConstructor(*this, Init))
+        VDecl->hasGlobalStorage() && !Init->isConstantInitializer(Context))
       Diag(VDecl->getLocation(), diag::warn_global_constructor);
 
     // Make sure we mark the destructor as used if necessary.
@@ -4332,7 +4281,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
         if (getLangOptions().CPlusPlus && !Var->isInvalidDecl() && 
             Var->hasGlobalStorage() &&
             !Var->getDeclContext()->isDependentContext() &&
-            RequiresGlobalConstructor(*this, Var->getInit()))
+            !Var->getInit()->isConstantInitializer(Context))
           Diag(Var->getLocation(), diag::warn_global_constructor);
       }
     }

@@ -29,6 +29,11 @@ namespace test2 {
   A a; // expected-warning {{global constructor}}
   A b[10]; // expected-warning {{global constructor}}
   A c[10][10]; // expected-warning {{global constructor}}
+
+  // FIXME: false positives!
+  A &d = a; // expected-warning {{global constructor}}
+  A &e = b[5]; // expected-warning {{global constructor}}
+  A &f = c[5][7]; // expected-warning {{global constructor}}
 }
 
 namespace test3 {
@@ -36,4 +41,15 @@ namespace test3 {
   A a; // expected-warning {{global destructor}}
   A b[10]; // expected-warning {{global destructor}}
   A c[10][10]; // expected-warning {{global destructor}}
+
+  // FIXME: false positives!
+  A &d = a; // expected-warning {{global constructor}}
+  A &e = b[5]; // expected-warning {{global constructor}}
+  A &f = c[5][7]; // expected-warning {{global constructor}}
+}
+
+namespace test4 {
+  char a[] = "hello";
+  char b[5] = "hello";
+  char c[][5] = { "hello" };
 }

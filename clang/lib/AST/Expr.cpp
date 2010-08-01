@@ -1358,6 +1358,20 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   case ObjCStringLiteralClass:
   case ObjCEncodeExprClass:
     return true;
+  case CXXTemporaryObjectExprClass:
+  case CXXConstructExprClass: {
+    const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
+    if (!CE->getConstructor()->isTrivial()) return false;
+    for (CXXConstructExpr::const_arg_iterator
+           I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I)
+      if (!(*I)->isConstantInitializer(Ctx))
+        return false;
+    return true;
+  }
+  case CXXBindReferenceExprClass: {
+    const CXXBindReferenceExpr *RE = cast<CXXBindReferenceExpr>(this);
+    return RE->getSubExpr()->isConstantInitializer(Ctx);
+  }
   case CompoundLiteralExprClass: {
     // This handles gcc's extension that allows global initializers like
     // "struct x {int x;} x = (struct x) {};".
@@ -1397,6 +1411,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
       return true;
     break;
   }
+  case CXXStaticCastExprClass:
   case ImplicitCastExprClass:
   case CStyleCastExprClass:
     // Handle casts with a destination that's a struct or union; this
