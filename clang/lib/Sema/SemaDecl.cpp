@@ -2793,8 +2793,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
 
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||
-      NewVD->hasAttr<BlocksAttr>() ||
-      (LangOpts.CPlusPlus && NewVD->hasLocalStorage()))
+      NewVD->hasAttr<BlocksAttr>())
     setFunctionHasBranchProtectedScope();
 
   if ((isVM && NewVD->hasLinkage()) ||
@@ -3934,6 +3933,9 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     return;
   }
 
+  if (getLangOptions().CPlusPlus && VDecl->hasLocalStorage())
+    setFunctionHasBranchProtectedScope();
+
   // Take ownership of the expression, now that we're sure we have somewhere
   // to put it.
   Expr *Init = init.takeAs<Expr>();
@@ -4253,6 +4255,12 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       //   program is ill-formed.
       // FIXME: DPG thinks it is very fishy that C++0x disables this.
     } else {
+      // Check for jumps past the implicit initializer.  C++0x
+      // clarifies that this applies to a "variable with automatic
+      // storage duration", not a "local variable".
+      if (getLangOptions().CPlusPlus && Var->hasLocalStorage())
+        setFunctionHasBranchProtectedScope();
+
       InitializedEntity Entity = InitializedEntity::InitializeVariable(Var);
       InitializationKind Kind
         = InitializationKind::CreateDefault(Var->getLocation());

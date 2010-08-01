@@ -121,3 +121,15 @@ namespace test6 {
   }
 }
 
+// C++0x says it's okay to skip non-trivial initializers on static
+// locals, and we implement that in '03 as well.
+namespace test7 {
+  struct C { C(); };
+
+  void test() {
+    goto foo;
+    static C c;
+  foo:
+    return;
+  }
+}
