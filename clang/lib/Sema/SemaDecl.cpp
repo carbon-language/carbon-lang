@@ -4205,15 +4205,15 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       return;
     }
 
-   // Provide a specific diagnostic for uninitialized variable
-   // definitions with reference type.
-   if (Type->isReferenceType()) {
-     Diag(Var->getLocation(), diag::err_reference_var_requires_init)
-       << Var->getDeclName()
-       << SourceRange(Var->getLocation(), Var->getLocation());
-     Var->setInvalidDecl();
-     return;
-   }
+    // Provide a specific diagnostic for uninitialized variable
+    // definitions with reference type.
+    if (Type->isReferenceType()) {
+      Diag(Var->getLocation(), diag::err_reference_var_requires_init)
+        << Var->getDeclName()
+        << SourceRange(Var->getLocation(), Var->getLocation());
+      Var->setInvalidDecl();
+      return;
+    }
 
     // Do not attempt to type-check the default initializer for a
     // variable with dependent type.
