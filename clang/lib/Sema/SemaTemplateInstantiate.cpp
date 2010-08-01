@@ -1206,6 +1206,9 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   bool MergeWithParentScope = !Instantiation->isDefinedOutsideFunctionOrMethod();
   Sema::LocalInstantiationScope Scope(*this, MergeWithParentScope);
 
+  // Pull attributes from the pattern onto the instantiation.
+  InstantiateAttrs(TemplateArgs, Pattern, Instantiation);
+
   // Start the definition of this instantiation.
   Instantiation->startDefinition();
   

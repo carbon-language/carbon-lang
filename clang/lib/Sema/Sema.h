@@ -3905,6 +3905,9 @@ public:
                    TemplateSpecializationKind TSK,
                    bool Complain = true);
 
+  void InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
+                        Decl *Pattern, Decl *Inst);
+
   bool
   InstantiateClassTemplateSpecialization(SourceLocation PointOfInstantiation,
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,

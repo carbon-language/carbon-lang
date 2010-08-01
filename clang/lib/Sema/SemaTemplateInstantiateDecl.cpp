@@ -31,8 +31,6 @@ namespace {
     DeclContext *Owner;
     const MultiLevelTemplateArgumentList &TemplateArgs;
 
-    void InstantiateAttrs(Decl *Tmpl, Decl *New);
-      
   public:
     typedef Sema::OwningExprResult OwningExprResult;
 
@@ -144,28 +142,29 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
 }
 
 // FIXME: Is this still too simple?
-void TemplateDeclInstantiator::InstantiateAttrs(Decl *Tmpl, Decl *New) {
+void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
+                            Decl *Tmpl, Decl *New) {
   for (const Attr *TmplAttr = Tmpl->getAttrs(); TmplAttr;
        TmplAttr = TmplAttr->getNext()) {
     // FIXME: This should be generalized to more than just the AlignedAttr.
     if (const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr)) {
       if (Aligned->isDependent()) {
         // The alignment expression is not potentially evaluated.
-        EnterExpressionEvaluationContext Unevaluated(SemaRef,
+        EnterExpressionEvaluationContext Unevaluated(*this,
                                                      Action::Unevaluated);
 
-        OwningExprResult Result = SemaRef.SubstExpr(Aligned->getAlignmentExpr(),
-                                                    TemplateArgs);
+        OwningExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
+                                            TemplateArgs);
         if (!Result.isInvalid())
           // FIXME: Is this the correct source location?
-          SemaRef.AddAlignedAttr(Aligned->getAlignmentExpr()->getExprLoc(),
-                                 New, Result.takeAs<Expr>());
+          AddAlignedAttr(Aligned->getAlignmentExpr()->getExprLoc(),
+                         New, Result.takeAs<Expr>());
         continue;
       }
     }
 
     // FIXME: Is cloning correct for all attributes?
-    Attr *NewAttr = TmplAttr->clone(SemaRef.Context);
+    Attr *NewAttr = TmplAttr->clone(Context);
     New->addAttr(NewAttr);
   }
 }
@@ -234,7 +233,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
     Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
   }
 
-  InstantiateAttrs(D, Typedef);
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Typedef);
 
   Typedef->setAccess(D->getAccess());
   Owner->addDecl(Typedef);
@@ -399,7 +398,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     if (Owner->isFunctionOrMethod())
       SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Var);
   }
-  InstantiateAttrs(D, Var);
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Var);
   
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
@@ -518,7 +517,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     return 0;
   }
 
-  InstantiateAttrs(D, Field);
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Field);
   
   if (Invalid)
     Field->setInvalidDecl();
@@ -1975,7 +1974,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                  Proto->getExtInfo()));
   }
 
-  InstantiateAttrs(Tmpl, New);
+  SemaRef.InstantiateAttrs(TemplateArgs, Tmpl, New);
 
   return false;
 }
