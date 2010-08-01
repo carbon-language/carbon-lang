@@ -319,8 +319,6 @@ int main(int argc_, const char **argv_) {
     TheDriver.CCCGenericGCCName = "g++";
   }
 
-  llvm::OwningPtr<Compilation> C;
-
   // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
   TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
   if (TheDriver.CCPrintOptions)
@@ -351,12 +349,12 @@ int main(int argc_, const char **argv_) {
 
     argv.insert(&argv[1], ExtraArgs.begin(), ExtraArgs.end());
   }
-  C.reset(TheDriver.BuildCompilation(argv.size(), &argv[0]));
 
+  llvm::OwningPtr<Compilation> C(TheDriver.BuildCompilation(argv.size(),
+                                                            &argv[0]));
   int Res = 0;
   if (C.get())
     Res = TheDriver.ExecuteCompilation(*C);
-
   
   // If any timers were active but haven't been destroyed yet, print their
   // results now.  This happens in -disable-free mode.
