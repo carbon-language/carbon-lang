@@ -894,7 +894,7 @@ void DwarfException::EndModule() {
   if (!shouldEmitMovesModule && !shouldEmitTableModule)
     return;
 
-  const std::vector<const Function *> Personalities = MMI->getPersonalities();
+  const std::vector<const Function*> &Personalities = MMI->getPersonalities();
 
   for (unsigned I = 0, E = Personalities.size(); I < E; ++I)
     EmitCIE(Personalities[I], I);
