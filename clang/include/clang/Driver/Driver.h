@@ -65,6 +65,9 @@ public:
   /// The original path to the clang executable.
   std::string ClangExecutable;
 
+  /// The path to the installed clang directory, if any.
+  std::string InstalledDir;
+
   /// The path to the compiler resource directory.
   std::string ResourceDir;
 
@@ -169,6 +172,16 @@ public:
   /// \brief Get the path to the main clang executable.
   const char *getClangProgramPath() const {
     return ClangExecutable.c_str();
+  }
+
+  /// \brief Get the path to where the clang executable was installed.
+  const char *getInstalledDir() const {
+    if (!InstalledDir.empty())
+      return InstalledDir.c_str();
+    return Dir.c_str();
+  }
+  void setInstalledDir(llvm::StringRef Value) {
+    InstalledDir = Value;
   }
 
   /// @}

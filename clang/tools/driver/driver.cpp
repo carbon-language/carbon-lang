@@ -31,6 +31,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 using namespace clang;
 using namespace clang::driver;
@@ -303,6 +304,23 @@ int main(int argc_, const char **argv_) {
   Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
                    "a.out", IsProduction, CXXIsProduction,
                    Diags);
+
+  // Attempt to find the original path used to invoke the driver, to determine
+  // the installed path. We do this manually, because we want to support that
+  // path being a symlink.
+  llvm::sys::Path InstalledPath(argv[0]);
+
+  // Do a PATH lookup, if there are no directory components.
+  if (InstalledPath.getLast() == InstalledPath.str()) {
+    llvm::sys::Path Tmp =
+      llvm::sys::Program::FindProgramByName(InstalledPath.getLast());
+    if (!Tmp.empty())
+      InstalledPath = Tmp;
+  }
+  InstalledPath.makeAbsolute();
+  InstalledPath.eraseComponent();
+  if (InstalledPath.exists())
+    TheDriver.setInstalledDir(InstalledPath.str());
 
   // Check for ".*++" or ".*++-[^-]*" to determine if we are a C++
   // compiler. This matches things like "c++", "clang++", and "clang++-1.1".

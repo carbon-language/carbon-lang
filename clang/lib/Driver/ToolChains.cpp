@@ -174,7 +174,9 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
   Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 
-  getProgramPaths().push_back(getDriver().Dir);
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir)
+    getProgramPaths().push_back(getDriver().Dir);
 }
 
 Darwin::~Darwin() {
@@ -319,7 +321,9 @@ DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
   : Darwin(Host, Triple, DarwinVersion)
 {
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
-  getProgramPaths().push_back(getDriver().Dir);
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir)
+    getProgramPaths().push_back(getDriver().Dir);
 }
 
 void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
@@ -724,7 +728,9 @@ bool Darwin::SupportsObjCGC() const {
 
 Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
   : ToolChain(Host, Triple) {
-  getProgramPaths().push_back(getDriver().Dir);
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+    getProgramPaths().push_back(getDriver().Dir);
 }
 
 Generic_GCC::~Generic_GCC() {
@@ -945,7 +951,9 @@ Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA) const {
 AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
-  getProgramPaths().push_back(getDriver().Dir);
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+    getProgramPaths().push_back(getDriver().Dir);
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
@@ -1009,7 +1017,9 @@ DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
   // Path mangling to find libexec
-  getProgramPaths().push_back(getDriver().Dir);
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+    getProgramPaths().push_back(getDriver().Dir);
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
