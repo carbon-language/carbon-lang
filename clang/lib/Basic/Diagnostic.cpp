@@ -327,7 +327,7 @@ bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID,
       getBuiltinDiagClass(DiagID) != CLASS_EXTENSION)
     return false;
   
-  EnabledByDefault = StaticDiagInfo[DiagID].Mapping != diag::MAP_IGNORE;
+  EnabledByDefault = GetDefaultDiagMapping(DiagID) != diag::MAP_IGNORE;
   return true;
 }
 
