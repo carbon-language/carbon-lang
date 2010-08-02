@@ -1855,9 +1855,9 @@ def warn_missing_braces : Warning<
 def err_redefinition_of_label : Error<"redefinition of label '%0'">;
 def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
 
-def err_goto_into_protected_scope : Error<"illegal goto into protected scope">;
+def err_goto_into_protected_scope : Error<"goto into protected scope">;
 def err_switch_into_protected_scope : Error<
-  "illegal switch case into protected scope">;
+  "switch case is in protected scope">;
 def err_indirect_goto_without_addrlabel : Error<
   "indirect goto in function with no address-of-label expressions">;
 def warn_indirect_goto_in_protected_scope : Warning<

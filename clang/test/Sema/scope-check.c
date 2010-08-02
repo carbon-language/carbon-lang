@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu99 %s -Wno-unreachable-code
 
 int test1(int x) {
-  goto L;    // expected-error{{illegal goto into protected scope}}
+  goto L;    // expected-error{{goto into protected scope}}
   int a[x];  // expected-note {{jump bypasses initialization of variable length array}}
   int b[x];  // expected-note {{jump bypasses initialization of variable length array}}
   L:
@@ -9,7 +9,7 @@ int test1(int x) {
 }
 
 int test2(int x) {
-  goto L;            // expected-error{{illegal goto into protected scope}}
+  goto L;            // expected-error{{goto into protected scope}}
   typedef int a[x];  // expected-note {{jump bypasses initialization of VLA typedef}}
   L:
   return sizeof(a);
@@ -18,14 +18,14 @@ int test2(int x) {
 void test3clean(int*);
 
 int test3() {
-  goto L;            // expected-error{{illegal goto into protected scope}}
+  goto L;            // expected-error{{goto into protected scope}}
 int a __attribute((cleanup(test3clean))); // expected-note {{jump bypasses initialization of variable with __attribute__((cleanup))}}
 L:
   return a;
 }
 
 int test4(int x) {
-  goto L;       // expected-error{{illegal goto into protected scope}}
+  goto L;       // expected-error{{goto into protected scope}}
 int a[x];       // expected-note {{jump bypasses initialization of variable length array}}
   test4(x);
 L:
@@ -50,7 +50,7 @@ void test7(int x) {
   switch (x) {
   case 1: ;
     int a[x];       // expected-note {{jump bypasses initialization of variable length array}}
-  case 2:           // expected-error {{illegal switch case into protected scope}}
+  case 2:           // expected-error {{switch case is in protected scope}}
     a[1] = 2;
     break;
   }
@@ -58,17 +58,17 @@ void test7(int x) {
 
 int test8(int x) {
   // For statement.
-  goto L2;     // expected-error {{illegal goto into protected scope}}
+  goto L2;     // expected-error {{goto into protected scope}}
   for (int arr[x];   // expected-note {{jump bypasses initialization of variable length array}}  
        ; ++x)
     L2:;
 
   // Statement expressions.
-  goto L3;   // expected-error {{illegal goto into protected scope}}
+  goto L3;   // expected-error {{goto into protected scope}}
   int Y = ({  int a[x];   // expected-note {{jump bypasses initialization of variable length array}}  
            L3: 4; });
   
-  goto L4; // expected-error {{illegal goto into protected scope}}
+  goto L4; // expected-error {{goto into protected scope}}
   {
     int A[x],  // expected-note {{jump bypasses initialization of variable length array}}
         B[x];  // expected-note {{jump bypasses initialization of variable length array}}
@@ -91,7 +91,7 @@ int test8(int x) {
     int A[x], B = ({ if (x)
                        goto L7;
                      else 
-                       goto L8;  // expected-error {{illegal goto into protected scope}}
+                       goto L8;  // expected-error {{goto into protected scope}}
                      4; }),
         C[x];   // expected-note {{jump bypasses initialization of variable length array}}
   L8:; // bad
@@ -103,7 +103,7 @@ int test8(int x) {
                goto L9;
              else
                // FIXME:
-               goto L10;  // fixme-error {{illegal goto into protected scope}}
+               goto L10;  // fixme-error {{goto into protected scope}}
            4; })];
   L10:; // bad
   }
@@ -123,7 +123,7 @@ int test8(int x) {
   }
   
   // Statement expressions 2.
-  goto L1;     // expected-error {{illegal goto into protected scope}}
+  goto L1;     // expected-error {{goto into protected scope}}
   return x == ({
                  int a[x];   // expected-note {{jump bypasses initialization of variable length array}}  
                L1:
@@ -151,14 +151,14 @@ L4:
 }
 
 void test10(int n, void *P) {
-  goto L0;     // expected-error {{illegal goto into protected scope}}
+  goto L0;     // expected-error {{goto into protected scope}}
   typedef int A[n];  // expected-note {{jump bypasses initialization of VLA typedef}}
 L0:
   
-  goto L1;      // expected-error {{illegal goto into protected scope}}
+  goto L1;      // expected-error {{goto into protected scope}}
   A b, c[10];        // expected-note 2 {{jump bypasses initialization of variable length array}}
 L1:
-  goto L2;     // expected-error {{illegal goto into protected scope}}
+  goto L2;     // expected-error {{goto into protected scope}}
   A d[n];      // expected-note {{jump bypasses initialization of variable length array}}
 L2:
   return;
@@ -171,7 +171,7 @@ void test11(int n) {
     case 2: 
     case 3:;
       int Arr[n]; // expected-note {{jump bypasses initialization of variable length array}}
-    case 4:       // expected-error {{illegal switch case into protected scope}}
+    case 4:       // expected-error {{switch case is in protected scope}}
       return;
     }
   };
@@ -185,7 +185,7 @@ void test12(int n) {
   L1:
     goto L2;
   L2:
-    goto L3;    // expected-error {{illegal goto into protected scope}}
+    goto L3;    // expected-error {{goto into protected scope}}
     int Arr[n]; // expected-note {{jump bypasses initialization of variable length array}}
   L3:
     goto L4;

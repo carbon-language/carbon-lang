@@ -180,22 +180,6 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
   
   // If we found a label, remember that it is in ParentScope scope.
   switch (S->getStmtClass()) {
-  case Stmt::LabelStmtClass:
-  case Stmt::DefaultStmtClass:
-    LabelAndGotoScopes[S] = ParentScope;
-    break;
-  case Stmt::CaseStmtClass: {
-    // Specially handle CaseStmts since they can nest each other in the
-    // AST and blow out the stack when we walk them.
-    CaseStmt *CS = cast<CaseStmt>(S);
-    do {
-      LabelAndGotoScopes[CS] = ParentScope;
-      S = CS; // 'CS' is the new current statement (if it isn't already).
-      CS = dyn_cast<CaseStmt>(CS->getSubStmt());
-    } while (CS);
-    break;
-  }
-
   case Stmt::AddrLabelExprClass:
     IndirectJumpTargets.push_back(cast<AddrLabelExpr>(S)->getLabel());
     break;
@@ -234,6 +218,24 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     
     Stmt *SubStmt = *CI;
     if (SubStmt == 0) continue;
+
+    // Cases, labels, and defaults aren't "scope parents".  It's also
+    // important to handle these iteratively instead of recursively in
+    // order to avoid blowing out the stack.
+    while (true) {
+      Stmt *Next;
+      if (isa<CaseStmt>(SubStmt))
+        Next = cast<CaseStmt>(SubStmt)->getSubStmt();
+      else if (isa<DefaultStmt>(SubStmt))
+        Next = cast<DefaultStmt>(SubStmt)->getSubStmt();
+      else if (isa<LabelStmt>(SubStmt))
+        Next = cast<LabelStmt>(SubStmt)->getSubStmt();
+      else
+        break;
+
+      LabelAndGotoScopes[SubStmt] = ParentScope;
+      SubStmt = Next;
+    }
 
     // If this is a declstmt with a VLA definition, it defines a scope from here
     // to the end of the containing context.
