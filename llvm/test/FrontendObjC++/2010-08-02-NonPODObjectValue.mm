@@ -18,6 +18,9 @@ public:
    TWindowHistoryEntry* entry;
    TFENodeVector newPath;
    // CHECK: setting a C++ non-POD object value is not implemented
+#ifdef __clang__
+#error setting a C++ non-POD object value is not implemented
+#endif
    entry.targetPath = newPath;
    [entry setTargetPath:newPath];
 }
