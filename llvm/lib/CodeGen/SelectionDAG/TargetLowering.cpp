@@ -1497,11 +1497,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // present in the input.
     APInt NewBits =
       APInt::getHighBitsSet(BitWidth,
-                            BitWidth - EVT.getScalarType().getSizeInBits()) &
-      NewMask;
+                            BitWidth - EVT.getScalarType().getSizeInBits());
     
     // If none of the extended bits are demanded, eliminate the sextinreg.
-    if (NewBits == 0)
+    if ((NewBits & NewMask) == 0)
       return TLO.CombineTo(Op, Op.getOperand(0));
 
     APInt InSignBit = APInt::getSignBit(EVT.getScalarType().getSizeInBits());
