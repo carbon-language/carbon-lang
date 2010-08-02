@@ -1858,11 +1858,13 @@ check::
 	  $(EchoCmd) No test directory ; \
 	fi
 
-check-lit::
+check-lit:: check
+
+check-dg::
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/test" ; then \
 	  if test -f "$(PROJ_OBJ_ROOT)/test/Makefile" ; then \
 	    $(EchoCmd) Running test suite ; \
-	    $(MAKE) -C $(PROJ_OBJ_ROOT)/test check-local-lit ; \
+	    $(MAKE) -C $(PROJ_OBJ_ROOT)/test check-local-dg ; \
 	  else \
 	    $(EchoCmd) No Makefile in test directory ; \
 	  fi ; \

@@ -10,10 +10,10 @@
 LEVEL = ..
 DIRS  =
 
-#
-# Make Dejagnu the default for testing
-#
 all:: check-local
+
+# 'lit' is the default test runner.Make Dejagnu the default for testing
+check-local:: check-local-lit
 
 # Include other test rules
 include Makefile.tests
@@ -90,12 +90,12 @@ endif # AuroraUX
 endif # SunOS
 
 ifneq ($(RUNTEST),)
-check-local:: site.exp
+check-local-dg:: site.exp
 	( $(ULIMIT) \
 	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(LLVMGCCDIR)/bin:$(PATH)" \
 	  $(RUNTEST) $(RUNTESTFLAGS) )
 else
-check-local:: site.exp
+check-local-dg:: site.exp
 	@echo "*** dejagnu not found.  Make sure 'runtest' is in your PATH, then reconfigure LLVM."
 endif
 
