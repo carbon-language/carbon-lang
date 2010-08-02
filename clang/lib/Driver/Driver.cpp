@@ -175,7 +175,6 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   bool CCCPrintOptions = false, CCCPrintActions = false;
 
   const char **Start = argv + 1, **End = argv + argc;
-  const char *HostTriple = DefaultHostTriple.c_str();
 
   InputArgList *Args = ParseArgStrings(Start, End);
 
@@ -225,14 +224,16 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
       Cur = Split.second;
     }
   }
+  // FIXME: We shouldn't overwrite the default host triple here, but we have
+  // nowhere else to put this currently.
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_host_triple))
-    HostTriple = A->getValue(*Args);
+    DefaultHostTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_B))
     PrefixDir = A->getValue(*Args);
 
-  Host = GetHostInfo(HostTriple);
+  Host = GetHostInfo(DefaultHostTriple.c_str());
 
   // Perform the default argument translations.
   DerivedArgList *TranslatedArgs = TranslateInputArgs(*Args);
