@@ -1,5 +1,7 @@
 """
 Test that lldb command "command source" works correctly.
+
+See also http://llvm.org/viewvc/llvm-project?view=rev&revision=109673.
 """
 
 import os, time
@@ -20,12 +22,12 @@ class TestCommandSource(lldbtest.TestBase):
         self.ci.HandleCommand("command source .lldb", res)
         self.assertTrue(res.Succeeded())
 
+        # Python should evaluate "my.date()" successfully.
         self.ci.HandleCommand("script my.date()", res)
         if (not res.Succeeded()):
             print res.GetError()
         self.assertTrue(res.Succeeded())
 
-        time.sleep(1)
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
