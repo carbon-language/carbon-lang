@@ -107,26 +107,6 @@ check-local-all:: lit.site.cfg Unit/lit.site.cfg extra-lit-site-cfgs
 	( $(ULIMIT) \
 	  $(LLVM_SRC_ROOT)/utils/lit/lit.py $(LIT_ARGS) $(LIT_ALL_TESTSUITES) )
 
-ifdef TESTONE
-CLEANED_TESTONE := $(patsubst %/,%,$(TESTONE))
-CLEANED_TESTONE := $(patsubst test/%,%,$(CLEANED_TESTONE))
-SUBDIR := $(shell dirname $(CLEANED_TESTONE))
-TESTPATH := $(LLVM_SRC_ROOT)/test/$(CLEANED_TESTONE)
-check-one: site.exp $(TCLSH)
-	$(Verb)( echo "source $(LLVM_OBJ_ROOT)/test/site.exp" ; \
-	  echo "set subdir $(SUBDIR)" ; \
-	  echo "proc pass  { msg } { puts \"PASS: \$$msg\" } "; \
-	  echo "proc fail  { msg } { puts \"FAIL: \$$msg\" }" ; \
-	  echo "proc xfail { msg } { puts \"XFAIL: \$$msg\" }" ; \
-	  echo "proc xpass { msg } { puts \"XPASS: \$$msg\" }" ; \
-	  echo "proc verbose args { }" ; \
-	  echo "source $(LLVM_SRC_ROOT)/test/lib/llvm.exp" ; \
-	  echo "RunLLVMTests $(TESTPATH)" ) | \
-	( $(ULIMIT) \
-	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
-	  $(TCLSH) )
-endif
-
 clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test -name Output -type d -print`
 
