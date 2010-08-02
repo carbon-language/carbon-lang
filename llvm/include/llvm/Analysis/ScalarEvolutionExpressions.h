@@ -520,18 +520,28 @@ namespace llvm {
   /// value, and only represent it as its LLVM Value.  This is the "bottom"
   /// value for the analysis.
   ///
-  class SCEVUnknown : public SCEV {
+  class SCEVUnknown : public SCEV, private CallbackVH {
     friend class ScalarEvolution;
-    friend class ScalarEvolution::SCEVCallbackVH;
 
-    // This should be an AssertingVH, however SCEVUnknowns are allocated in a
-    // BumpPtrAllocator so their destructors are never called.
-    Value *V;
-    SCEVUnknown(const FoldingSetNodeIDRef ID, Value *v) :
-      SCEV(ID, scUnknown), V(v) {}
+    // Implement CallbackVH.
+    virtual void deleted();
+    virtual void allUsesReplacedWith(Value *New);
+
+    /// SE - The parent ScalarEvolution value. This is used to update
+    /// the parent's maps when the value associated with a SCEVUnknown
+    /// is deleted or RAUW'd.
+    ScalarEvolution *SE;
+
+    /// Next - The next pointer in the linked list of all
+    /// SCEVUnknown instances owned by a ScalarEvolution.
+    SCEVUnknown *Next;
+
+    SCEVUnknown(const FoldingSetNodeIDRef ID, Value *V,
+                ScalarEvolution *se, SCEVUnknown *next) :
+      SCEV(ID, scUnknown), CallbackVH(V), SE(se), Next(next) {}
 
   public:
-    Value *getValue() const { return V; }
+    Value *getValue() const { return getValPtr(); }
 
     /// isSizeOf, isAlignOf, isOffsetOf - Test whether this is a special
     /// constant representing a type size, alignment, or field offset in

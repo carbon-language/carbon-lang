@@ -661,6 +661,11 @@ namespace llvm {
   private:
     FoldingSet<SCEV> UniqueSCEVs;
     BumpPtrAllocator SCEVAllocator;
+
+    /// FirstUnknown - The head of a linked list of all SCEVUnknown
+    /// values that have been allocated. This is used by releaseMemory
+    /// to locate them all and call their destructors.
+    SCEVUnknown *FirstUnknown;
   };
 }
 
