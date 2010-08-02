@@ -3892,6 +3892,7 @@ class FAVecInst<ValueType vectype>:
 multiclass SFPAdd
 {
   def v4f32: FAVecInst<v4f32>;
+  def v2f32: FAVecInst<v2f32>;
   def f32:   FAInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
                     [(set R32FP:$rT, (fadd R32FP:$rA, R32FP:$rB))]>;
 }
@@ -3910,11 +3911,86 @@ class FSVecInst<ValueType vectype>:
 multiclass SFPSub
 {
   def v4f32: FSVecInst<v4f32>;
+  def v2f32: FSVecInst<v2f32>;
   def f32:   FSInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
                     [(set R32FP:$rT, (fsub R32FP:$rA, R32FP:$rB))]>;
 }
 
 defm FS : SFPSub;
+
+class FMInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b01100011010, OOL, IOL,
+      "fm\t$rT, $rA, $rB", SPrecFP,
+      pattern>;
+
+class FMVecInst<ValueType type>:
+    FMInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+           [(set (type VECREG:$rT),
+                 (fmul (type VECREG:$rA), (type VECREG:$rB)))]>;
+
+multiclass SFPMul
+{
+  def v4f32: FMVecInst<v4f32>;
+  def v2f32: FMVecInst<v2f32>;
+  def f32:   FMInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+                     [(set R32FP:$rT, (fmul R32FP:$rA, R32FP:$rB))]>; 
+}
+
+defm FM : SFPMul;
+
+// Floating point multiply and add
+// e.g. d = c + (a * b)
+def FMAv4f32:
+    RRRForm<0b0111, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+      "fma\t$rT, $rA, $rB, $rC", SPrecFP,
+      [(set (v4f32 VECREG:$rT),
+            (fadd (v4f32 VECREG:$rC),
+                  (fmul (v4f32 VECREG:$rA), (v4f32 VECREG:$rB))))]>;
+
+def FMAf32:
+    RRRForm<0b0111, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB, R32FP:$rC),
+      "fma\t$rT, $rA, $rB, $rC", SPrecFP,
+      [(set R32FP:$rT, (fadd R32FP:$rC, (fmul R32FP:$rA, R32FP:$rB)))]>;
+
+// FP multiply and subtract
+// Subtracts value in rC from product
+// res = a * b - c
+def FMSv4f32 :
+    RRRForm<0b0111, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+      "fms\t$rT, $rA, $rB, $rC", SPrecFP,
+      [(set (v4f32 VECREG:$rT),
+            (fsub (fmul (v4f32 VECREG:$rA), (v4f32 VECREG:$rB)),
+                  (v4f32 VECREG:$rC)))]>;
+
+def FMSf32 :
+    RRRForm<0b0111, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB, R32FP:$rC),
+      "fms\t$rT, $rA, $rB, $rC", SPrecFP,
+      [(set R32FP:$rT,
+            (fsub (fmul R32FP:$rA, R32FP:$rB), R32FP:$rC))]>;
+
+// Floating Negative Mulitply and Subtract
+// Subtracts product from value in rC
+// res = fneg(fms a b c)
+//     = - (a * b - c)
+//     = c - a * b
+// NOTE: subtraction order
+// fsub a b = a - b
+// fs a b = b - a?
+def FNMSf32 :
+    RRRForm<0b1101, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB, R32FP:$rC),
+      "fnms\t$rT, $rA, $rB, $rC", SPrecFP,
+      [(set R32FP:$rT, (fsub R32FP:$rC, (fmul R32FP:$rA, R32FP:$rB)))]>;
+
+def FNMSv4f32 :
+    RRRForm<0b1101, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+      "fnms\t$rT, $rA, $rB, $rC", SPrecFP,
+      [(set (v4f32 VECREG:$rT),
+            (fsub (v4f32 VECREG:$rC),
+                  (fmul (v4f32 VECREG:$rA),
+                        (v4f32 VECREG:$rB))))]>;
+
+
+
 
 // Floating point reciprocal estimate
 
@@ -4039,72 +4115,6 @@ def FSCRRf32 :
 // The following are probably just intrinsics
 // status and control register write
 // status and control register read
-
-//--------------------------------------
-// Floating point multiply instructions
-//--------------------------------------
-
-def FMv4f32:
-    RRForm<0b00100011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "fm\t$rT, $rA, $rB", SPrecFP,
-      [(set (v4f32 VECREG:$rT), (fmul (v4f32 VECREG:$rA),
-                                      (v4f32 VECREG:$rB)))]>;
-
-def FMf32 :
-    RRForm<0b01100011010, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
-      "fm\t$rT, $rA, $rB", SPrecFP,
-      [(set R32FP:$rT, (fmul R32FP:$rA, R32FP:$rB))]>;
-
-// Floating point multiply and add
-// e.g. d = c + (a * b)
-def FMAv4f32:
-    RRRForm<0b0111, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-      "fma\t$rT, $rA, $rB, $rC", SPrecFP,
-      [(set (v4f32 VECREG:$rT),
-            (fadd (v4f32 VECREG:$rC),
-                  (fmul (v4f32 VECREG:$rA), (v4f32 VECREG:$rB))))]>;
-
-def FMAf32:
-    RRRForm<0b0111, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB, R32FP:$rC),
-      "fma\t$rT, $rA, $rB, $rC", SPrecFP,
-      [(set R32FP:$rT, (fadd R32FP:$rC, (fmul R32FP:$rA, R32FP:$rB)))]>;
-
-// FP multiply and subtract
-// Subtracts value in rC from product
-// res = a * b - c
-def FMSv4f32 :
-    RRRForm<0b0111, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-      "fms\t$rT, $rA, $rB, $rC", SPrecFP,
-      [(set (v4f32 VECREG:$rT),
-            (fsub (fmul (v4f32 VECREG:$rA), (v4f32 VECREG:$rB)),
-                  (v4f32 VECREG:$rC)))]>;
-
-def FMSf32 :
-    RRRForm<0b0111, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB, R32FP:$rC),
-      "fms\t$rT, $rA, $rB, $rC", SPrecFP,
-      [(set R32FP:$rT,
-            (fsub (fmul R32FP:$rA, R32FP:$rB), R32FP:$rC))]>;
-
-// Floating Negative Mulitply and Subtract
-// Subtracts product from value in rC
-// res = fneg(fms a b c)
-//     = - (a * b - c)
-//     = c - a * b
-// NOTE: subtraction order
-// fsub a b = a - b
-// fs a b = b - a?
-def FNMSf32 :
-    RRRForm<0b1101, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB, R32FP:$rC),
-      "fnms\t$rT, $rA, $rB, $rC", SPrecFP,
-      [(set R32FP:$rT, (fsub R32FP:$rC, (fmul R32FP:$rA, R32FP:$rB)))]>;
-
-def FNMSv4f32 :
-    RRRForm<0b1101, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-      "fnms\t$rT, $rA, $rB, $rC", SPrecFP,
-      [(set (v4f32 VECREG:$rT),
-            (fsub (v4f32 VECREG:$rC),
-                  (fmul (v4f32 VECREG:$rA),
-                        (v4f32 VECREG:$rB))))]>;
 
 //--------------------------------------
 // Floating Point Conversions

@@ -428,6 +428,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // "Odd size" vector classes that we're willing to support:
   addRegisterClass(MVT::v2i32, SPU::VECREGRegisterClass);
+  addRegisterClass(MVT::v2f32, SPU::VECREGRegisterClass);
 
   for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
@@ -1068,6 +1069,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       case MVT::v8i16:
       case MVT::v16i8:
       case MVT::v2i32:
+      case MVT::v2f32:
         ArgRegClass = &SPU::VECREGRegClass;
         break;
       }
