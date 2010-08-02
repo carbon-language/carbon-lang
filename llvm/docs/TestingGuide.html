@@ -16,22 +16,22 @@
   <li><a href="#requirements">Requirements</a></li>
   <li><a href="#org">LLVM testing infrastructure organization</a>
     <ul>
-      <li><a href="#dejagnu">DejaGNU tests</a></li>
+      <li><a href="#regressiontests">Regression tests</a></li>
       <li><a href="#testsuite">Test suite</a></li>
     </ul>
   </li>
   <li><a href="#quick">Quick start</a>
     <ul>
-      <li><a href="#quickdejagnu">DejaGNU tests</a></li>
+      <li><a href="#quickregressiontests">Regression tests</a></li>
       <li><a href="#quicktestsuite">Test suite</a></li>
    </ul>
   </li>
-  <li><a href="#dgstructure">DejaGNU structure</a>
+  <li><a href="#rtstructure">Regression test structure</a>
     <ul>
-      <li><a href="#dgcustom">Writing new DejaGNU tests</a></li>
+      <li><a href="#rtcustom">Writing new regression tests</a></li>
       <li><a href="#FileCheck">The FileCheck utility</a></li>
-      <li><a href="#dgvars">Variables and substitutions</a></li>
-      <li><a href="#dgfeatures">Other features</a></li>
+      <li><a href="#rtvars">Variables and substitutions</a></li>
+      <li><a href="#rtfeatures">Other features</a></li>
    </ul>
   </li>
   <li><a href="#testsuitestructure">Test suite structure</a></li>
@@ -46,8 +46,7 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by John T. Criswell, <a
-  href="http://llvm.x10sys.com/rspencer">Reid Spencer</a>, and Tanya Lattner</p>
+  <p>Written by John T. Criswell, Daniel Dunbar, Reid Spencer, and Tanya Lattner</p>
 </div>
 
 <!--=========================================================================-->
@@ -56,9 +55,9 @@
 
 <div class="doc_text">
 
-<p>This document is the reference manual for the LLVM testing infrastructure. It documents
-the structure of the LLVM testing infrastructure, the tools needed to use it,
-and how to add and run tests.</p>
+<p>This document is the reference manual for the LLVM testing infrastructure. It
+documents the structure of the LLVM testing infrastructure, the tools needed to
+use it, and how to add and run tests.</p>
 
 </div>
 
@@ -68,17 +67,9 @@ and how to add and run tests.</p>
 
 <div class="doc_text">
 
-<p>In order to use the LLVM testing infrastructure, you will need all of the software
-required to build LLVM, plus the following:</p>
-
-<dl>
-<dt><a href="http://www.gnu.org/software/dejagnu/">DejaGNU</a></dt>
-<dd>The Feature and Regressions tests are organized and run by DejaGNU.</dd>
-<dt><a href="http://expect.nist.gov/">Expect</a></dt>
-<dd>Expect is required by DejaGNU.</dd>
-<dt><a href="http://www.tcl.tk/software/tcltk/">tcl</a></dt>
-<dd>Tcl is required by DejaGNU. </dd>
-</dl>
+<p>In order to use the LLVM testing infrastructure, you will need all of the
+software required to build LLVM, as well
+as <a href="http://python.org">Python</a> 2.4 or later.</p>
 
 </div>
 
@@ -88,29 +79,28 @@ required to build LLVM, plus the following:</p>
 
 <div class="doc_text">
 
-<p>The LLVM testing infrastructure contains two major categories of tests: code
-fragments and whole programs. Code fragments are referred to as the "DejaGNU
-tests" and are in the <tt>llvm</tt> module in subversion under the
-<tt>llvm/test</tt> directory. The whole programs tests are referred to as the
-"Test suite" and are in the <tt>test-suite</tt> module in subversion.
+<p>The LLVM testing infrastructure contains two major categories of tests:
+regression tests and whole programs. The regression tests are contained inside
+the LLVM repository itself under <tt>llvm/test</tt> and are expected to always
+pass -- they should be run before every commit. The whole programs tests are
+referred to as the "LLVM test suite" and are in the <tt>test-suite</tt> module
+in subversion.
 </p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="dejagnu">DejaGNU tests</a></div>
+<div class="doc_subsection"><a name="regressiontests">Regression tests</a></div>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
 
-<p>Code fragments are small pieces of code that test a specific
-feature of LLVM or trigger a specific bug in LLVM.  They are usually
-written in LLVM assembly language, but can be written in other
-languages if the test targets a particular language front end (and the
-appropriate <tt>--with-llvmgcc</tt> options were used
-at <tt>configure</tt> time of the <tt>llvm</tt> module). These tests
-are driven by the DejaGNU testing framework, which is hidden behind a
-few simple makefiles.</p>
+<p>The regression tests are small pieces of code that test a specific feature of
+LLVM or trigger a specific bug in LLVM.  They are usually written in LLVM
+assembly language, but can be written in other languages if the test targets a
+particular language front end (and the appropriate <tt>--with-llvmgcc</tt>
+options were used at <tt>configure</tt> time of the <tt>llvm</tt> module). These
+tests are driven by the 'lit' testing tool, which is part of LLVM.</p>
 
 <p>These code fragments are not complete programs. The code generated
 from them is never executed to determine correct behavior.</p>
@@ -157,8 +147,8 @@ generates code.</p>
 
 <div class="doc_text">
 
-  <p>The tests are located in two separate Subversion modules. The
-  DejaGNU tests are in the main "llvm" module under the directory 
+  <p>The tests are located in two separate Subversion modules. The regressions
+  tests are in the main "llvm" module under the directory
   <tt>llvm/test</tt> (so you get these tests for free with the main llvm tree).
   The more comprehensive test suite that includes whole 
 programs in C and C++ is in the <tt>test-suite</tt> module. This module should
@@ -170,10 +160,10 @@ the <tt>test-suite</tt> directory will be automatically configured.
 Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="quickdejagnu">DejaGNU tests</a></div>
+<div class="doc_subsection"><a name="quickregressiontests">Regression tests</a></div>
 <!-- _______________________________________________________________________ -->
-<p>To run all of the simple tests in LLVM using DejaGNU, use the master Makefile
- in the <tt>llvm/test</tt> directory:</p>
+<p>To run all of the LLVM regression tests, use master Makefile in
+ the <tt>llvm/test</tt> directory:</p>
 
 <div class="doc_code">
 <pre>
@@ -189,26 +179,14 @@ Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 </pre>
 </div>
 
-<p>To run only a subdirectory of tests in <tt>llvm/test</tt> using DejaGNU (ie.
-Transforms), just set the TESTSUITE variable to the path of the
-subdirectory (relative to <tt>llvm/test</tt>):</p>
+<p>If you have <a href="http://clang.llvm.org">Clang</a> checked out and built,
+you can run the LLVM and Clang tests simultaneously using:</p>
+
+<p>or</p>
 
 <div class="doc_code">
 <pre>
-% gmake TESTSUITE=Transforms check
-</pre>
-</div>
-
-<p><b>Note: If you are running the tests with <tt>objdir != subdir</tt>, you
-must have run the complete testsuite before you can specify a
-subdirectory.</b></p>
-
-<p>To run only a single test, set <tt>TESTONE</tt> to its path (relative to
-<tt>llvm/test</tt>) and make the <tt>check-one</tt> target:</p>
-
-<div class="doc_code">
-<pre>
-% gmake TESTONE=Feature/basictest.ll check-one
+% gmake check-all
 </pre>
 </div>
 
@@ -220,6 +198,27 @@ subdirectory.</b></p>
 % gmake check VG=1
 </pre>
 </div>
+
+<p>To run individual tests or subsets of tests, you can use the 'llvm-lit'
+script which is built as part of LLVM. For example, to run the
+'Integer/BitCast.ll' test by itself you can run:</p>
+
+<div class="doc_code">
+<pre>
+% llvm-lit ~/llvm/test/Integer/BitCast.ll 
+</pre>
+</div>
+
+<p>or to run all of the ARM CodeGen tests:</p>
+
+<div class="doc_code">
+<pre>
+% llvm-lit ~/llvm/test/CodeGen/ARM
+</pre>
+</div>
+
+<p>For more information on using the 'lit' tool, see 'llvm-lit --help' or the
+'lit' man page.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="quicktestsuite">Test suite</a></div>
@@ -274,11 +273,11 @@ that subdirectory.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="dgstructure">DejaGNU structure</a></div>
+<div class="doc_section"><a name="rtstructure">Regression test structure</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
-  <p>The LLVM DejaGNU tests are driven by DejaGNU together with GNU Make and are
-  located in the <tt>llvm/test</tt> directory.
+  <p>The LLVM regression tests are driven by 'lit' and are located in
+  the <tt>llvm/test</tt> directory.
 
   <p>This directory contains a large array of small tests
   that exercise various features of LLVM and to ensure that regressions do not
@@ -301,23 +300,24 @@ that subdirectory.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="dgcustom">Writing new DejaGNU tests</a></div>
+<div class="doc_subsection"><a name="rtcustom">Writing new regression tests</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
-  <p>The DejaGNU structure is very simple, but does require some information to 
-  be set. This information is gathered via <tt>configure</tt> and is written 
-  to a file, <tt>site.exp</tt> in <tt>llvm/test</tt>. The <tt>llvm/test</tt> 
-  Makefile does this work for you.</p>
+  <p>The regression test structure is very simple, but does require some
+  information to be set. This information is gathered via <tt>configure</tt> and
+  is written to a file, <tt>lit.site.cfg</tt>
+  in <tt>llvm/test</tt>. The <tt>llvm/test</tt> Makefile does this work for
+  you.</p>
 
-  <p>In order for DejaGNU to work, each directory of tests must have a 
-  <tt>dg.exp</tt> file. DejaGNU looks for this file to determine how to run the
-  tests. This file is just a Tcl script and it can do anything you want, but 
-  we've standardized it for the LLVM regression tests. If you're adding a
+  <p>In order for the regression tests to work, each directory of tests must
+  have a <tt>dg.exp</tt> file. Lit looks for this file to determine how to
+  run the tests. This file is just a Tcl script and it can do anything you want,
+  but we've standardized it for the LLVM regression tests. If you're adding a
   directory of tests, just copy <tt>dg.exp</tt> from another directory to get
-  running. The standard <tt>dg.exp</tt> simply loads a Tcl 
-  library (<tt>test/lib/llvm.exp</tt>) and calls the <tt>llvm_runtests</tt> 
-  function defined in that library with a list of file names to run. The names 
-  are obtained by using Tcl's glob command.  Any directory that contains only
+  running. The standard <tt>dg.exp</tt> simply loads a Tcl library
+  (<tt>test/lib/llvm.exp</tt>) and calls the <tt>llvm_runtests</tt> function
+  defined in that library with a list of file names to run. The names are
+  obtained by using Tcl's glob command.  Any directory that contains only
   directories does not need the <tt>dg.exp</tt> file.</p>
 
   <p>The <tt>llvm-runtests</tt> function lookas at each file that is passed to
@@ -378,7 +378,8 @@ that subdirectory.</p>
 
   <p>There are some quoting rules that you must pay attention to when writing
   your RUN lines. In general nothing needs to be quoted. Tcl won't strip off any
-  ' or " so they will get passed to the invoked program. For example:</p>
+  quote characters so they will get passed to the invoked program. For
+  example:</p>
 
 <div class="doc_code">
 <pre>
@@ -695,7 +696,7 @@ define two separate CHECK lines that match on the same line.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="dgvars">Variables and
+<div class="doc_subsection"><a name="rtvars">Variables and
 substitutions</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
@@ -791,7 +792,7 @@ substitutions</a></div>
 </div>
   
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="dgfeatures">Other Features</a></div>
+<div class="doc_subsection"><a name="rtfeatures">Other Features</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>To make RUN line writing easier, there are several shell scripts located
@@ -817,7 +818,7 @@ substitutions</a></div>
   <p>Sometimes it is necessary to mark a test case as "expected fail" or XFAIL.
   You can easily mark a test as XFAIL just by including <tt>XFAIL: </tt> on a
   line near the top of the file. This signals that the test case should succeed
-  if the test fails. Such test cases are counted separately by DejaGnu. To
+  if the test fails. Such test cases are counted separately by the testing tool. To
   specify an expected fail, use the XFAIL keyword in the comments of the test
   program followed by a colon and one or more regular expressions (separated by
   a comma). The regular expressions allow you to XFAIL the test conditionally by
@@ -905,9 +906,10 @@ benchmarks, regression tests, code that is strange grammatically, etc.  These
 organizations should be relatively self explanatory.</p>
 
 <p>Some tests are known to fail.  Some are bugs that we have not fixed yet;
-others are features that we haven't added yet (or may never add).  In DejaGNU,
-the result for such tests will be XFAIL (eXpected FAILure).  In this way, you
-can tell the difference between an expected and unexpected failure.</p>
+others are features that we haven't added yet (or may never add).  In the
+regression tests, the result for such tests will be XFAIL (eXpected FAILure).
+In this way, you can tell the difference between an expected and unexpected
+failure.</p>
 
 <p>The tests in the test suite have no such feature at this time. If the
 test passes, only warnings and other miscellaneous output will be generated.  If
@@ -1143,7 +1145,7 @@ example reports that can do fancy stuff.</p>
   <a href="http://validator.w3.org/check/referer"><img
   src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
 
-  John T. Criswell, Reid Spencer, and Tanya Lattner<br>
+  John T. Criswell, Daniel Dunbar, Reid Spencer, and Tanya Lattner<br>
   <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
   Last modified: $Date$
 </address>
