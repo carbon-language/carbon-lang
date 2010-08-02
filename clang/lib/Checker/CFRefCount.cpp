@@ -2623,19 +2623,25 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
   llvm::SmallVector<const MemRegion*, 10> RegionsToInvalidate;
 
+  // HACK: Symbols that have ref-count state that are referenced directly
+  //  (not as structure or array elements, or via bindings) by an argument
+  //  should not have their ref-count state stripped after we have
+  //  done an invalidation pass.
+  llvm::DenseSet<SymbolRef> WhitelistedSymbols;
+
   for (ConstExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
     SVal V = state->getSValAsScalarOrLoc(*I);
     SymbolRef Sym = V.getAsLocSymbol();
 
     if (Sym)
       if (RefBindings::data_type* T = state->get<RefBindings>(Sym)) {
+        WhitelistedSymbols.insert(Sym);
         state = Update(state, Sym, *T, Summ.getArg(idx), hasErr);
         if (hasErr) {
           ErrorRange = (*I)->getSourceRange();
           ErrorSym = Sym;
           break;
         }
-        continue;
       }
 
   tryAgain:
@@ -2721,7 +2727,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   state = state->makeWithStore(store);
   for (StoreManager::InvalidatedSymbols::iterator I = IS.begin(),
        E = IS.end(); I!=E; ++I) {
-      // Remove any existing reference-count binding.
+    SymbolRef sym = *I;
+    if (WhitelistedSymbols.count(sym))
+      continue;
+    // Remove any existing reference-count binding.
     state = state->remove<RefBindings>(*I);
   }
 

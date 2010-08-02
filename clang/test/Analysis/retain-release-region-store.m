@@ -50,6 +50,7 @@ typedef struct _NSZone NSZone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end
 @interface NSObject <NSObject> {}
+- (id)init;
 + (id)allocWithZone:(NSZone *)zone;
 + (id)alloc;
 - (void)dealloc;
@@ -221,5 +222,31 @@ void pr6699(int x) {
     // pruned from the store.
     CFRelease(values[1]); // no-warning
   }
+}
+
+// <rdar://problem/8261992> Idempotent operation checker false positive with ObjC ivars
+@interface R8261992 : NSObject {
+  @package int myIvar;
+}
+@end
+
+static void R8261992_ChangeMyIvar(R8261992 *tc) {
+    tc->myIvar = 5;
+}
+
+void R8261992_test(R8261992 *tc) {
+  int temp = tc->myIvar;
+  // The ivar binding for tc->myIvar gets invalidated.
+  R8261992_ChangeMyIvar(tc);
+  tc->myIvar = temp; // no-warning
+  tc = [[R8261992 alloc] init];
+  temp = tc->myIvar; // no-warning
+  // The ivar binding for tc->myIvar gets invalidated.
+  R8261992_ChangeMyIvar(tc);
+  tc->myIvar = temp;
+  [tc release]; // no-warning
+  // did we analyze this?
+  int *p = 0x0;
+  *p = 0xDEADBEEF; // expected-warning{{null}}
 }
 
