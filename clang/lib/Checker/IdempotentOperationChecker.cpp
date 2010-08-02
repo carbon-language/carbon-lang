@@ -70,7 +70,7 @@ class IdempotentOperationChecker
 
   private:
     // Our assumption about a particular operation.
-    enum Assumption { Possible, Impossible, Equal, LHSis1, RHSis1, LHSis0,
+    enum Assumption { Possible = 0, Impossible, Equal, LHSis1, RHSis1, LHSis0,
         RHSis0 };
 
     void UpdateAssumption(Assumption &A, const Assumption &New);
@@ -101,13 +101,10 @@ void clang::RegisterIdempotentOperationChecker(GRExprEngine &Eng) {
 void IdempotentOperationChecker::PreVisitBinaryOperator(
                                                       CheckerContext &C,
                                                       const BinaryOperator *B) {
-  // Find or create an entry in the hash for this BinaryOperator instance
-  AssumptionMap::iterator i = hash.find(B);
-  Assumption &A = i == hash.end() ? hash[B] : i->second;
-
-  // If we had to create an entry, initialise the value to Possible
-  if (i == hash.end())
-    A = Possible;
+  // Find or create an entry in the hash for this BinaryOperator instance.
+  // If we haven't done a lookup before, it will get default initialized to
+  // 'Possible'.
+  Assumption &A = hash[B];
 
   // If we already have visited this node on a path that does not contain an
   // idempotent operation, return immediately.
