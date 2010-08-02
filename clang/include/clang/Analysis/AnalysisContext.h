@@ -45,8 +45,8 @@ class AnalysisContext {
   idx::TranslationUnit *TU;
 
   // AnalysisContext owns the following data.
-  CFG *cfg;
-  bool builtCFG;
+  CFG *cfg, *completeCFG;
+  bool builtCFG, builtCompleteCFG;
   LiveVariables *liveness;
   ParentMap *PM;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
@@ -55,7 +55,9 @@ class AnalysisContext {
 public:
   AnalysisContext(const Decl *d, idx::TranslationUnit *tu,
                   bool addehedges = false)
-    : D(d), TU(tu), cfg(0), builtCFG(false), liveness(0), PM(0),
+    : D(d), TU(tu), cfg(0), completeCFG(0),
+      builtCFG(false), builtCompleteCFG(false),
+      liveness(0), PM(0),
       ReferencedBlockVars(0), AddEHEdges(addehedges) {}
 
   ~AnalysisContext();
@@ -72,6 +74,10 @@ public:
   bool getAddEHEdges() const { return AddEHEdges; }
   Stmt *getBody();
   CFG *getCFG();
+  
+  /// Return a version of the CFG without any edges pruned.
+  CFG *getUnoptimizedCFG();
+
   ParentMap &getParentMap();
   LiveVariables *getLiveVariables();
 

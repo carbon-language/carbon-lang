@@ -55,12 +55,23 @@ const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
 
 CFG *AnalysisContext::getCFG() {
   if (!builtCFG) {
-    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), AddEHEdges);
+    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), true, AddEHEdges);
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCFG = true;
   }
   return cfg;
+}
+
+CFG *AnalysisContext::getUnoptimizedCFG() {
+  if (!builtCompleteCFG) {
+    completeCFG = CFG::buildCFG(D, getBody(), &D->getASTContext(),
+                                false, AddEHEdges);
+    // Even when the cfg is not successfully built, we don't
+    // want to try building it again.
+    builtCompleteCFG = true;
+  }
+  return completeCFG;
 }
 
 ParentMap &AnalysisContext::getParentMap() {
@@ -297,6 +308,7 @@ AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
 
 AnalysisContext::~AnalysisContext() {
   delete cfg;
+  delete completeCFG;
   delete liveness;
   delete PM;
   delete ReferencedBlockVars;

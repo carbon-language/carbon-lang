@@ -35,7 +35,7 @@ static SourceLocation GetEndLoc(Decl* D) {
 
   return D->getLocation();
 }
-  
+
 class AddStmtChoice {
 public:
   enum Kind { NotAlwaysAdd = 0,
@@ -99,7 +99,8 @@ public:
                           TryTerminatedBlock(NULL) {}
 
   // buildCFG - Used by external clients to construct the CFG.
-  CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C, bool AddEHEdges,
+  CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
+                bool pruneTriviallyFalseEdges, bool AddEHEdges,
                 bool AddScopes);
 
 private:
@@ -174,12 +175,12 @@ private:
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
   }
-  
+
   void AppendStmt(CFGBlock *B, Stmt *S,
                   AddStmtChoice asc = AddStmtChoice::AlwaysAdd) {
     B->appendStmt(S, cfg->getBumpVectorContext(), asc.asLValue());
   }
-  
+
   void AddSuccessor(CFGBlock *B, CFGBlock *S) {
     B->addSuccessor(S, cfg->getBumpVectorContext());
   }
@@ -206,6 +207,9 @@ private:
   /// TryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
   /// if we can evaluate to a known value, otherwise return -1.
   TryResult TryEvaluateBool(Expr *S) {
+    if (!PruneTriviallyFalseEdges)
+      return TryResult();
+
     Expr::EvalResult Result;
     if (!S->isTypeDependent() && !S->isValueDependent() &&
         S->Evaluate(Result, *Context) && Result.Val.isInt())
@@ -215,6 +219,9 @@ private:
   }
 
   bool badCFG;
+
+  // True iff trivially false edges should be pruned from the CFG.
+  bool PruneTriviallyFalseEdges;
 
   // True iff EH edges on CallExprs should be added to the CFG.
   bool AddEHEdges;
@@ -243,8 +250,12 @@ static VariableArrayType* FindVA(Type* t) {
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
 CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
+                          bool pruneTriviallyFalseEdges,
                           bool addehedges, bool AddScopes) {
+
   AddEHEdges = addehedges;
+  PruneTriviallyFalseEdges = pruneTriviallyFalseEdges;
+
   Context = C;
   assert(cfg.get());
   if (!Statement)
@@ -384,10 +395,10 @@ tryAgain:
 
     case Stmt::CXXThrowExprClass:
       return VisitCXXThrowExpr(cast<CXXThrowExpr>(S));
-      
+
     case Stmt::CXXTryStmtClass:
       return VisitCXXTryStmt(cast<CXXTryStmt>(S));
-      
+
     case Stmt::DeclStmtClass:
       return VisitDeclStmt(cast<DeclStmt>(S));
 
@@ -543,7 +554,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
       autoCreateBlock();
       AppendStmt(Block, B, asc);
     }
-    
+
     Visit(B->getRHS());
     return Visit(B->getLHS(), AddStmtChoice::AsLValueNotAlwaysAdd);
   }
@@ -586,7 +597,7 @@ static bool CanThrow(Expr *E) {
     Ty = Ty->getAs<PointerType>()->getPointeeType();
   else if (Ty->isBlockPointerType())
     Ty = Ty->getAs<BlockPointerType>()->getPointeeType();
-    
+
   const FunctionType *FT = Ty->getAs<FunctionType>();
   if (FT) {
     if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
@@ -901,7 +912,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // new blocks as the condition may contain control-flow.  Any newly created
   // blocks will be pointed to be "Block".
   Block = addStmt(I->getCond());
-  
+
   // Finally, if the IfStmt contains a condition variable, add both the IfStmt
   // and the condition variable initialization to the CFG.
   if (VarDecl *VD = I->getConditionVariable()) {
@@ -911,7 +922,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
       addStmt(Init);
     }
   }
-  
+
   return Block;
 }
 
@@ -1029,7 +1040,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
         assert(Block == EntryConditionBlock);
       }
     }
-    
+
     if (Block) {
       if (!FinishBlock(EntryConditionBlock))
         return 0;
@@ -1277,7 +1288,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
     assert(Block == EntryConditionBlock);
-    
+
     // If this block contains a condition variable, add both the condition
     // variable and initializer to the CFG.
     if (VarDecl *VD = W->getConditionVariable()) {
@@ -1389,7 +1400,7 @@ CFGBlock* CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr* T) {
   if (TryTerminatedBlock)
     // The current try statement is the only successor.
     AddSuccessor(Block, TryTerminatedBlock);
-  else 
+  else
     // otherwise the Exit block is the only successor.
     AddSuccessor(Block, &cfg->getExit());
 
@@ -1589,7 +1600,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   assert(Terminator->getCond() && "switch condition must be non-NULL");
   Block = SwitchTerminatedBlock;
   Block = addStmt(Terminator->getCond());
-  
+
   // Finally, if the SwitchStmt contains a condition variable, add both the
   // SwitchStmt and the condition variable initialization to the CFG.
   if (VarDecl *VD = Terminator->getConditionVariable()) {
@@ -1599,7 +1610,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
       addStmt(Init);
     }
   }
-  
+
   return Block;
 }
 
@@ -1742,9 +1753,9 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   return CatchBlock;
 }
 
-CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C, 
+CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C,
                                              AddStmtChoice asc) {
-  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue 
+  AddStmtChoice::Kind K = asc.asLValue() ? AddStmtChoice::AlwaysAddAsLValue
                                          : AddStmtChoice::AlwaysAdd;
   autoCreateBlock();
   AppendStmt(Block, C, AddStmtChoice(K));
@@ -1795,9 +1806,11 @@ CFGBlock* CFG::createBlock() {
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
 CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
+                   bool PruneTriviallyFalse,
                    bool AddEHEdges, bool AddScopes) {
   CFGBuilder Builder;
-  return Builder.buildCFG(D, Statement, C, AddEHEdges, AddScopes);
+  return Builder.buildCFG(D, Statement, C, PruneTriviallyFalse,
+                          AddEHEdges, AddScopes);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1814,10 +1827,10 @@ static void FindSubExprAssignments(Stmt *S,
     return;
 
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I) {
-    Stmt *child = *I;    
+    Stmt *child = *I;
     if (!child)
       continue;
-    
+
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(child))
       if (B->isAssignmentOp()) Set.insert(B);
 

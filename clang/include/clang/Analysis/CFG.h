@@ -285,6 +285,7 @@ public:
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
   ///   constructed CFG belongs to the caller.
   static CFG* buildCFG(const Decl *D, Stmt* AST, ASTContext *C,
+                       bool pruneTriviallyFalseEdges = true,
                        bool AddEHEdges = false,
                        bool AddScopes = false /* NOT FULLY IMPLEMENTED.
                                                  NOT READY FOR GENERAL USE. */);
