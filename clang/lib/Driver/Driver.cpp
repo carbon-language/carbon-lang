@@ -1061,7 +1061,6 @@ void Driver::BuildJobsForAction(Compilation &C,
   const Tool &T = SelectToolForJob(C, TC, JA, Inputs);
 
   // Only use pipes when there is exactly one input.
-  bool TryToUsePipeInput = Inputs->size() == 1 && T.acceptsPipedInput();
   InputInfoList InputInfos;
   for (ActionList::const_iterator it = Inputs->begin(), ie = Inputs->end();
        it != ie; ++it) {
@@ -1074,7 +1073,7 @@ void Driver::BuildJobsForAction(Compilation &C,
       SubJobAtTopLevel = true;
 
     InputInfo II;
-    BuildJobsForAction(C, *it, TC, BoundArch, TryToUsePipeInput,
+    BuildJobsForAction(C, *it, TC, BoundArch, false,
                        SubJobAtTopLevel, LinkingOutput, II);
     InputInfos.push_back(II);
   }
@@ -1094,11 +1093,7 @@ void Driver::BuildJobsForAction(Compilation &C,
 
   // Figure out where to put the job (pipes).
   Job *Dest = &C.getJobs();
-  if (InputInfos[0].isPipe()) {
-    assert(TryToUsePipeInput && "Unrequested pipe!");
-    assert(InputInfos.size() == 1 && "Unexpected pipe with multiple inputs.");
-    Dest = &InputInfos[0].getPipe();
-  }
+  assert(!InputInfos[0].isPipe() && "Unrequested pipe!");
 
   // Always use the first input as the base input.
   const char *BaseInput = InputInfos[0].getBaseInput();
