@@ -16,6 +16,24 @@ function(get_system_libs return_var)
 endfunction(get_system_libs)
 
 
+function(is_llvm_target_library library return_var)
+  # Sets variable `return_var' to ON if `library' corresponds to a
+  # LLVM supported target. To OFF if it doesn't.
+  set(${return_var} OFF PARENT_SCOPE)
+  string(TOUPPER "${library}" capitalized_lib)
+  string(TOUPPER "${LLVM_ALL_TARGETS}" targets)
+  foreach(t ${targets})
+    if( capitalized_lib STREQUAL "LLVM${t}CODEGEN" OR
+	capitalized_lib STREQUAL "LLVM${t}ASMPARSER" OR
+	capitalized_lib STREQUAL "LLVM${t}DISASSEMBLER" OR
+	capitalized_lib STREQUAL "LLVM${t}INFO" )
+      set(${return_var} ON PARENT_SCOPE)
+      break()
+    endif()
+  endforeach()
+endfunction(is_llvm_target_library)
+
+
 macro(llvm_config executable)
   explicit_llvm_config(${executable} ${ARGN})
 endmacro(llvm_config)
@@ -87,7 +105,13 @@ function(explicit_map_components_to_libraries out_libs)
     string(TOUPPER "${c}" capitalized)
     list(FIND capitalized_libs ${capitalized} idx)
     if( idx LESS 0 )
-      message(FATAL_ERROR "Library ${c} not found in list of llvm libraries.")
+      # The library is unkown. Maybe is an ommitted target?
+      is_llvm_target_library(${c} iltl_result)
+      if( iltl_result )
+	break()
+      else()
+	message(FATAL_ERROR "Library ${c} not found in list of llvm libraries.")
+      endif()
     endif( idx LESS 0 )
     list(GET llvm_libs ${idx} canonical_lib)
     list(REMOVE_ITEM result ${canonical_lib})
