@@ -31,13 +31,8 @@
 // the object they belong to. However, as long as it's only used for a lookup
 // and call, this is irrelevant, and we'd like to fold such implementations.
 //
-// * use SCC to cut down on pair-wise comparisons and solve larger cycles.
-//
-// The current implementation loops over a pair-wise comparison of all
-// functions in the program where the two functions in the pair are treated as
-// assumed to be equal until proven otherwise. We could both use fewer
-// comparisons and optimize more complex cases if we used strongly connected
-// components of the call graph.
+// * switch from n^2 pair-wise comparisons to an n-way comparison for each
+// bucket.
 //
 // * be smarter about bitcast.
 //
@@ -47,11 +42,12 @@
 // other doesn't. We should learn to peer through bitcasts without imposing bad
 // performance properties.
 //
-// * don't emit aliases for Mach-O.
+// * emit aliases for ELF
 //
-// Mach-O doesn't support aliases which means that we must avoid introducing
-// them in the bitcode on architectures which don't support them, such as
-// Mac OSX. There's a few approaches to this problem;
+// ELF supports symbol aliases which are represented with GlobalAlias in the
+// Module, and we could emit them in the case that the addresses don't need to
+// be distinct. The problem is that not all object formats support equivalent
+// functionality. There's a few approaches to this problem;
 //   a) teach codegen to lower global aliases to thunks on platforms which don't
 //      support them.
 //   b) always emit thunks, and create a separate thunk-to-alias pass which
@@ -85,28 +81,16 @@ using namespace llvm;
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
 
 namespace {
-  class MergeFunctions : public ModulePass {
-  public:
+  /// MergeFunctions finds functions which will generate identical machine code,
+  /// by considering all pointer types to be equivalent. Once identified,
+  /// MergeFunctions will fold them by replacing a call to one to a call to a
+  /// bitcast of the other.
+  ///
+  struct MergeFunctions : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     MergeFunctions() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
-
-  private:
-    bool isEquivalentGEP(const GetElementPtrInst *GEP1,
-                         const GetElementPtrInst *GEP2);
-
-    bool equals(const BasicBlock *BB1, const BasicBlock *BB2);
-    bool equals(const Function *F, const Function *G);
-
-    bool compare(const Value *V1, const Value *V2);
-
-    const Function *LHS, *RHS;
-    typedef DenseMap<const Value *, unsigned long> IDMap;
-    IDMap Map;
-    DenseMap<const Function *, IDMap> Domains;
-    DenseMap<const Function *, unsigned long> DomainCount;
-    TargetData *TD;
   };
 }
 
@@ -120,8 +104,60 @@ ModulePass *llvm::createMergeFunctionsPass() {
 // ===----------------------------------------------------------------------===
 // Comparison of functions
 // ===----------------------------------------------------------------------===
+namespace {
+class FunctionComparator {
+public:
+  FunctionComparator(TargetData *TD, Function *F1, Function *F2)
+    : TD(TD), F1(F1), F2(F2) {}
 
-static unsigned long hash(const Function *F) {
+  // Compare - test whether the two functions have equivalent behaviour.
+  bool Compare();
+
+private:
+  // Compare - test whether two basic blocks have equivalent behaviour.
+  bool Compare(const BasicBlock *BB1, const BasicBlock *BB2);
+
+  // getDomain - a value's domain is its parent function if it is specific to a
+  // function, or NULL otherwise.
+  const Function *getDomain(const Value *V) const;
+
+  // Enumerate - Assign or look up previously assigned numbers for the two
+  // values, and return whether the numbers are equal. Numbers are assigned in
+  // the order visited.
+  bool Enumerate(const Value *V1, const Value *V2);
+
+  // isEquivalentOperation - Compare two Instructions for equivalence, similar
+  // to Instruction::isSameOperationAs but with modifications to the type
+  // comparison.
+  bool isEquivalentOperation(const Instruction *I1,
+                             const Instruction *I2) const;
+
+  // isEquivalentGEP - Compare two GEPs for equivalent pointer arithmetic.
+  bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2);
+  bool isEquivalentGEP(const GetElementPtrInst *GEP1,
+		       const GetElementPtrInst *GEP2) {
+    return isEquivalentGEP(cast<GEPOperator>(GEP1), cast<GEPOperator>(GEP2));
+  }
+
+  // isEquivalentType - Compare two Types, treating all pointer types as equal.
+  bool isEquivalentType(const Type *Ty1, const Type *Ty2) const;
+
+  // The two functions undergoing comparison.
+  Function *F1, *F2;
+
+  TargetData *TD;
+
+  typedef DenseMap<const Value *, unsigned long> IDMap;
+  IDMap Map;
+  DenseMap<const Function *, IDMap> Domains;
+  DenseMap<const Function *, unsigned long> DomainCount;
+};
+}
+
+/// Compute a number which is guaranteed to be equal for two equivalent
+/// functions, but is very likely to be different for different functions. This
+/// needs to be computed as efficiently as possible.
+static unsigned long ProfileFunction(const Function *F) {
   const FunctionType *FTy = F->getFunctionType();
 
   FoldingSetNodeID ID;
@@ -137,7 +173,8 @@ static unsigned long hash(const Function *F) {
 
 /// isEquivalentType - any two pointers are equivalent. Otherwise, standard
 /// type equivalence rules apply.
-static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
+bool FunctionComparator::isEquivalentType(const Type *Ty1,
+                                          const Type *Ty2) const {
   if (Ty1 == Ty2)
     return true;
   if (Ty1->getTypeID() != Ty2->getTypeID())
@@ -234,8 +271,8 @@ static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
 /// isEquivalentOperation - determine whether the two operations are the same
 /// except that pointer-to-A and pointer-to-B are equivalent. This should be
 /// kept in sync with Instruction::isSameOperationAs.
-static bool
-isEquivalentOperation(const Instruction *I1, const Instruction *I2) {
+bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
+                                               const Instruction *I2) const {
   if (I1->getOpcode() != I2->getOpcode() ||
       I1->getNumOperands() != I2->getNumOperands() ||
       !isEquivalentType(I1->getType(), I2->getType()) ||
@@ -287,18 +324,15 @@ isEquivalentOperation(const Instruction *I1, const Instruction *I2) {
   return true;
 }
 
-bool MergeFunctions::isEquivalentGEP(const GetElementPtrInst *GEP1,
-                                     const GetElementPtrInst *GEP2) {
+/// isEquivalentGEP - determine whether two GEP operations perform the same
+/// underlying arithmetic.
+bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
+                                         const GEPOperator *GEP2) {
+  // When we have target data, we can reduce the GEP down to the value in bytes
+  // added to the address.
   if (TD && GEP1->hasAllConstantIndices() && GEP2->hasAllConstantIndices()) {
-    SmallVector<Value *, 8> Indices1, Indices2;
-    for (GetElementPtrInst::const_op_iterator I = GEP1->idx_begin(),
-           E = GEP1->idx_end(); I != E; ++I) {
-      Indices1.push_back(*I);
-    }
-    for (GetElementPtrInst::const_op_iterator I = GEP2->idx_begin(),
-           E = GEP2->idx_end(); I != E; ++I) {
-      Indices2.push_back(*I);
-    }
+    SmallVector<Value *, 8> Indices1(GEP1->idx_begin(), GEP1->idx_end());
+    SmallVector<Value *, 8> Indices2(GEP2->idx_begin(), GEP2->idx_end());
     uint64_t Offset1 = TD->getIndexedOffset(GEP1->getPointerOperandType(),
                                             Indices1.data(), Indices1.size());
     uint64_t Offset2 = TD->getIndexedOffset(GEP2->getPointerOperandType(),
@@ -306,7 +340,6 @@ bool MergeFunctions::isEquivalentGEP(const GetElementPtrInst *GEP1,
     return Offset1 == Offset2;
   }
 
-  // Equivalent types aren't enough.
   if (GEP1->getPointerOperand()->getType() !=
       GEP2->getPointerOperand()->getType())
     return false;
@@ -315,19 +348,38 @@ bool MergeFunctions::isEquivalentGEP(const GetElementPtrInst *GEP1,
     return false;
 
   for (unsigned i = 0, e = GEP1->getNumOperands(); i != e; ++i) {
-    if (!compare(GEP1->getOperand(i), GEP2->getOperand(i)))
+    if (!Enumerate(GEP1->getOperand(i), GEP2->getOperand(i)))
       return false;
   }
 
   return true;
 }
 
-bool MergeFunctions::compare(const Value *V1, const Value *V2) {
-  if (V1 == LHS || V1 == RHS)
-    if (V2 == LHS || V2 == RHS)
+/// getDomain - a value's domain is its parent function if it is specific to a
+/// function, or NULL otherwise.
+const Function *FunctionComparator::getDomain(const Value *V) const {
+  if (const Argument *A = dyn_cast<Argument>(V)) {
+    return A->getParent();
+  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
+    return BB->getParent();
+  } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
+    return I->getParent()->getParent();
+  }
+  return NULL;
+}
+
+/// Enumerate - Compare two values used by the two functions under pair-wise
+/// comparison. If this is the first time the values are seen, they're added to
+/// the mapping so that we will detect mismatches on next use.
+bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
+  // Check for function @f1 referring to itself and function @f2 referring to
+  // itself, or referring to each other, or both referring to either of them.
+  // They're all equivalent if the two functions are otherwise equivalent.
+  if (V1 == F1 || V1 == F2)
+    if (V2 == F1 || V2 == F2)
       return true;
 
-  // TODO: constant expressions in terms of LHS and RHS
+  // TODO: constant expressions with GEP or references to F1 or F2.
   if (isa<Constant>(V1))
     return V1 == V2;
 
@@ -340,28 +392,13 @@ bool MergeFunctions::compare(const Value *V1, const Value *V2) {
 
   // We enumerate constants globally and arguments, basic blocks or
   // instructions within the function they belong to.
-  const Function *Domain1 = NULL;
-  if (const Argument *A = dyn_cast<Argument>(V1)) {
-    Domain1 = A->getParent();
-  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V1)) {
-    Domain1 = BB->getParent();
-  } else if (const Instruction *I = dyn_cast<Instruction>(V1)) {
-    Domain1 = I->getParent()->getParent();
-  }
+  const Function *Domain1 = getDomain(V1);
+  const Function *Domain2 = getDomain(V2);
 
-  const Function *Domain2 = NULL;
-  if (const Argument *A = dyn_cast<Argument>(V2)) {
-    Domain2 = A->getParent();
-  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V2)) {
-    Domain2 = BB->getParent();
-  } else if (const Instruction *I = dyn_cast<Instruction>(V2)) {
-    Domain2 = I->getParent()->getParent();
-  }
-
+  // The domains have to either be both NULL, or F1, F2.
   if (Domain1 != Domain2)
-    if (Domain1 != LHS && Domain1 != RHS)
-      if (Domain2 != LHS && Domain2 != RHS)
-        return false;
+    if (Domain1 != F1 && Domain1 != F2)
+      return false;
 
   IDMap &Map1 = Domains[Domain1];
   unsigned long &ID1 = Map1[V1];
@@ -376,116 +413,114 @@ bool MergeFunctions::compare(const Value *V1, const Value *V2) {
   return ID1 == ID2;
 }
 
-bool MergeFunctions::equals(const BasicBlock *BB1, const BasicBlock *BB2) {
-  BasicBlock::const_iterator FI = BB1->begin(), FE = BB1->end();
-  BasicBlock::const_iterator GI = BB2->begin(), GE = BB2->end();
+// Compare - test whether two basic blocks have equivalent behaviour.
+bool FunctionComparator::Compare(const BasicBlock *BB1, const BasicBlock *BB2) {
+  BasicBlock::const_iterator F1I = BB1->begin(), F1E = BB1->end();
+  BasicBlock::const_iterator F2I = BB2->begin(), F2E = BB2->end();
 
   do {
-    if (!compare(FI, GI))
+    if (!Enumerate(F1I, F2I))
       return false;
 
-    if (isa<GetElementPtrInst>(FI) && isa<GetElementPtrInst>(GI)) {
-      const GetElementPtrInst *GEP1 = cast<GetElementPtrInst>(FI);
-      const GetElementPtrInst *GEP2 = cast<GetElementPtrInst>(GI);
+    if (const GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(F1I)) {
+      const GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(F2I);
+      if (!GEP2)
+        return false;
 
-      if (!compare(GEP1->getPointerOperand(), GEP2->getPointerOperand()))
+      if (!Enumerate(GEP1->getPointerOperand(), GEP2->getPointerOperand()))
         return false;
 
       if (!isEquivalentGEP(GEP1, GEP2))
         return false;
     } else {
-      if (!isEquivalentOperation(FI, GI))
+      if (!isEquivalentOperation(F1I, F2I))
         return false;
 
-      for (unsigned i = 0, e = FI->getNumOperands(); i != e; ++i) {
-        Value *OpF = FI->getOperand(i);
-        Value *OpG = GI->getOperand(i);
+      assert(F1I->getNumOperands() == F2I->getNumOperands());
+      for (unsigned i = 0, e = F1I->getNumOperands(); i != e; ++i) {
+        Value *OpF1 = F1I->getOperand(i);
+        Value *OpF2 = F2I->getOperand(i);
 
-        if (!compare(OpF, OpG))
+        if (!Enumerate(OpF1, OpF2))
           return false;
 
-        if (OpF->getValueID() != OpG->getValueID() ||
-            !isEquivalentType(OpF->getType(), OpG->getType()))
+        if (OpF1->getValueID() != OpF2->getValueID() ||
+            !isEquivalentType(OpF1->getType(), OpF2->getType()))
           return false;
       }
     }
 
-    ++FI, ++GI;
-  } while (FI != FE && GI != GE);
+    ++F1I, ++F2I;
+  } while (F1I != F1E && F2I != F2E);
 
-  return FI == FE && GI == GE;
+  return F1I == F1E && F2I == F2E;
 }
 
-bool MergeFunctions::equals(const Function *F, const Function *G) {
+bool FunctionComparator::Compare() {
   // We need to recheck everything, but check the things that weren't included
   // in the hash first.
 
-  if (F->getAttributes() != G->getAttributes())
+  if (F1->getAttributes() != F2->getAttributes())
     return false;
 
-  if (F->hasGC() != G->hasGC())
+  if (F1->hasGC() != F2->hasGC())
     return false;
 
-  if (F->hasGC() && F->getGC() != G->getGC())
+  if (F1->hasGC() && F1->getGC() != F2->getGC())
     return false;
 
-  if (F->hasSection() != G->hasSection())
+  if (F1->hasSection() != F2->hasSection())
     return false;
 
-  if (F->hasSection() && F->getSection() != G->getSection())
+  if (F1->hasSection() && F1->getSection() != F2->getSection())
     return false;
 
-  if (F->isVarArg() != G->isVarArg())
+  if (F1->isVarArg() != F2->isVarArg())
     return false;
 
   // TODO: if it's internal and only used in direct calls, we could handle this
   // case too.
-  if (F->getCallingConv() != G->getCallingConv())
+  if (F1->getCallingConv() != F2->getCallingConv())
     return false;
 
-  if (!isEquivalentType(F->getFunctionType(), G->getFunctionType()))
+  if (!isEquivalentType(F1->getFunctionType(), F2->getFunctionType()))
     return false;
 
-  assert(F->arg_size() == G->arg_size() &&
+  assert(F1->arg_size() == F2->arg_size() &&
          "Identical functions have a different number of args.");
-
-  LHS = F;
-  RHS = G;
 
   // Visit the arguments so that they get enumerated in the order they're
   // passed in.
-  for (Function::const_arg_iterator fi = F->arg_begin(), gi = G->arg_begin(),
-         fe = F->arg_end(); fi != fe; ++fi, ++gi) {
-    if (!compare(fi, gi))
+  for (Function::const_arg_iterator f1i = F1->arg_begin(),
+         f2i = F2->arg_begin(), f1e = F1->arg_end(); f1i != f1e; ++f1i, ++f2i) {
+    if (!Enumerate(f1i, f2i))
       llvm_unreachable("Arguments repeat");
   }
 
-  SmallVector<const BasicBlock *, 8> FBBs, GBBs;
-  SmallSet<const BasicBlock *, 128> VisitedBBs; // in terms of F.
-  FBBs.push_back(&F->getEntryBlock());
-  GBBs.push_back(&G->getEntryBlock());
-  VisitedBBs.insert(FBBs[0]);
-  while (!FBBs.empty()) {
-    const BasicBlock *FBB = FBBs.pop_back_val();
-    const BasicBlock *GBB = GBBs.pop_back_val();
-    if (!compare(FBB, GBB) || !equals(FBB, GBB)) {
-      Domains.clear();
-      DomainCount.clear();
+  // We need to do an ordered walk since the actual ordering of the blocks in
+  // the linked list is immaterial. Our walk starts at the entry block for both
+  // functions, then takes each block from each terminator in order. As an
+  // artifact, this also means that unreachable blocks are ignored.
+  SmallVector<const BasicBlock *, 8> F1BBs, F2BBs;
+  SmallSet<const BasicBlock *, 128> VisitedBBs; // in terms of F1.
+  F1BBs.push_back(&F1->getEntryBlock());
+  F2BBs.push_back(&F2->getEntryBlock());
+  VisitedBBs.insert(F1BBs[0]);
+  while (!F1BBs.empty()) {
+    const BasicBlock *F1BB = F1BBs.pop_back_val();
+    const BasicBlock *F2BB = F2BBs.pop_back_val();
+    if (!Enumerate(F1BB, F2BB) || !Compare(F1BB, F2BB))
       return false;
-    }
-    const TerminatorInst *FTI = FBB->getTerminator();
-    const TerminatorInst *GTI = GBB->getTerminator();
-    assert(FTI->getNumSuccessors() == GTI->getNumSuccessors());
-    for (unsigned i = 0, e = FTI->getNumSuccessors(); i != e; ++i) {
-      if (!VisitedBBs.insert(FTI->getSuccessor(i)))
+    const TerminatorInst *F1TI = F1BB->getTerminator();
+    const TerminatorInst *F2TI = F2BB->getTerminator();
+    assert(F1TI->getNumSuccessors() == F2TI->getNumSuccessors());
+    for (unsigned i = 0, e = F1TI->getNumSuccessors(); i != e; ++i) {
+      if (!VisitedBBs.insert(F1TI->getSuccessor(i)))
         continue;
-      FBBs.push_back(FTI->getSuccessor(i));
-      GBBs.push_back(GTI->getSuccessor(i));
+      F1BBs.push_back(F1TI->getSuccessor(i));
+      F2BBs.push_back(F2TI->getSuccessor(i));
     }
   }
-
-  Domains.clear();
-  DomainCount.clear();
   return true;
 }
 
@@ -720,10 +755,10 @@ bool MergeFunctions::runOnModule(Module &M) {
     if (F->isDeclaration())
       continue;
 
-    FnMap[hash(F)].push_back(F);
+    FnMap[ProfileFunction(F)].push_back(F);
   }
 
-  TD = getAnalysisIfAvailable<TargetData>();
+  TargetData *TD = getAnalysisIfAvailable<TargetData>();
 
   bool LocalChanged;
   do {
@@ -736,7 +771,7 @@ bool MergeFunctions::runOnModule(Module &M) {
 
       for (int i = 0, e = FnVec.size(); i != e; ++i) {
         for (int j = i + 1; j != e; ++j) {
-          bool isEqual = equals(FnVec[i], FnVec[j]);
+          bool isEqual = FunctionComparator(TD, FnVec[i], FnVec[j]).Compare();
 
           DEBUG(dbgs() << "  " << FnVec[i]->getName()
                 << (isEqual ? " == " : " != ")
