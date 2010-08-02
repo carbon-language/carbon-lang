@@ -10,6 +10,7 @@
 #ifndef CLANG_DRIVER_TOOLCHAIN_H_
 #define CLANG_DRIVER_TOOLCHAIN_H_
 
+#include "clang/Driver/Types.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/System/Path.h"
@@ -88,6 +89,10 @@ public:
   std::string GetProgramPath(const char *Name, bool WantFile = false) const;
 
   // Platform defaults information
+
+  /// LookupTypeForExtension - Return the default language type to use for the
+  /// given extension.
+  virtual types::ID LookupTypeForExtension(const char *Ext) const;
 
   /// IsBlocksDefault - Does this tool chain enable -fblocks by default.
   virtual bool IsBlocksDefault() const { return false; }

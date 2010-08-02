@@ -40,6 +40,16 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
     << _DarwinVersion[1];
 }
 
+types::ID Darwin::LookupTypeForExtension(const char *Ext) const {
+  types::ID Ty = types::lookupTypeForExtension(Ext);
+
+  // Darwin always preprocesses assembly files (unless -x is used explicitly).
+  if (Ty == types::TY_PP_Asm)
+    return types::TY_Asm;
+
+  return Ty;
+}
+
 // FIXME: Can we tablegen this?
 static const char *GetArmArchForMArch(llvm::StringRef Value) {
   if (Value == "armv6k")

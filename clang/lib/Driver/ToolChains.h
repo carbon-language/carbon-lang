@@ -147,6 +147,8 @@ public:
   /// @name ToolChain Implementation
   /// {
 
+  virtual types::ID LookupTypeForExtension(const char *Ext) const;
+
   virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
                                         const char *BoundArch) const;
 

@@ -34,3 +34,7 @@ std::string ToolChain::GetFilePath(const char *Name) const {
 std::string ToolChain::GetProgramPath(const char *Name, bool WantFile) const {
   return Host.getDriver().GetProgramPath(Name, *this, WantFile);
 }
+
+types::ID ToolChain::LookupTypeForExtension(const char *Ext) const {
+  return types::lookupTypeForExtension(Ext);
+}

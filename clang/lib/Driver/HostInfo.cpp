@@ -53,17 +53,6 @@ public:
 
   virtual bool useDriverDriver() const;
 
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    types::ID Ty = types::lookupTypeForExtension(Ext);
-
-    // Darwin always preprocesses assembly files (unless -x is used
-    // explicitly).
-    if (Ty == types::TY_PP_Asm)
-      return types::TY_Asm;
-
-    return Ty;
-  }
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -170,15 +159,6 @@ public:
 
   virtual bool useDriverDriver() const;
 
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    types::ID Ty = types::lookupTypeForExtension(Ext);
-
-    if (Ty == types::TY_PP_Asm)
-      return types::TY_Asm;
-
-    return Ty;
-  }
-
   virtual ToolChain *CreateToolChain(const ArgList &Args, 
                                      const char *ArchName) const;
 };
@@ -211,10 +191,6 @@ public:
   ~UnknownHostInfo();
 
   virtual bool useDriverDriver() const;
-
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
 
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
@@ -279,10 +255,6 @@ public:
 
   virtual bool useDriverDriver() const;
 
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -330,10 +302,6 @@ public:
 
   virtual bool useDriverDriver() const;
 
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -378,10 +346,6 @@ public:
   ~FreeBSDHostInfo();
 
   virtual bool useDriverDriver() const;
-
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
 
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
@@ -439,10 +403,6 @@ public:
 
   virtual bool useDriverDriver() const;
 
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -491,10 +451,6 @@ public:
 
   virtual bool useDriverDriver() const;
 
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -539,10 +495,6 @@ public:
   ~LinuxHostInfo();
 
   virtual bool useDriverDriver() const;
-
-  virtual types::ID lookupTypeForExtension(const char *Ext) const {
-    return types::lookupTypeForExtension(Ext);
-  }
 
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;

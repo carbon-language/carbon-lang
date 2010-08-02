@@ -662,7 +662,7 @@ void Driver::BuildActions(const ToolChain &TC, const ArgList &Args,
           // found. We use a host hook here because Darwin at least has its own
           // idea of what .s is.
           if (const char *Ext = strrchr(Value, '.'))
-            Ty = Host->lookupTypeForExtension(Ext + 1);
+            Ty = TC.LookupTypeForExtension(Ext + 1);
 
           if (Ty == types::TY_INVALID)
             Ty = types::TY_Object;

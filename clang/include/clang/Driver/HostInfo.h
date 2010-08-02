@@ -10,7 +10,6 @@
 #ifndef CLANG_DRIVER_HOSTINFO_H_
 #define CLANG_DRIVER_HOSTINFO_H_
 
-#include "clang/Driver/Types.h"
 #include "llvm/ADT/Triple.h"
 #include <string>
 
@@ -47,10 +46,6 @@ public:
   /// useDriverDriver - Whether the driver should act as a driver driver for
   /// this host and support -arch, -Xarch, etc.
   virtual bool useDriverDriver() const = 0;
-
-  /// lookupTypeForExtension - Return the default language type to use for the
-  /// given extension.
-  virtual types::ID lookupTypeForExtension(const char *Ext) const = 0;
 
   /// CreateToolChain - Construct the toolchain to use for this host (which the
   /// host retains ownership of).
