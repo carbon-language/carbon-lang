@@ -59,13 +59,11 @@ public:
   /// ConstructJob - Construct jobs to perform the action \arg JA,
   /// writing to \arg Output and with \arg Inputs.
   ///
-  /// \param Dest - Where to put the resulting commands.
   /// \param TCArgs - The argument list for this toolchain, with any
   /// tool chain specific translations applied.
   /// \param LinkingOutput - If this output will eventually feed the
   /// linker, then this is the final output name of the linked image.
   virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                            Job &Dest,
                             const InputInfo &Output,
                             const InputInfoList &Inputs,
                             const ArgList &TCArgs,

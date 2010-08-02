@@ -46,7 +46,6 @@ namespace tools {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -64,7 +63,6 @@ namespace tools {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -79,7 +77,6 @@ namespace gcc {
            const ToolChain &TC) : Tool(Name, ShortName, TC) {}
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -203,7 +200,6 @@ namespace darwin {
                                           "gcc preprocessor", TC) {}
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -215,7 +211,6 @@ namespace darwin {
     Compile(const ToolChain &TC) : CC1("darwin::Compile", "gcc frontend", TC) {}
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -230,7 +225,6 @@ namespace darwin {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -246,7 +240,6 @@ namespace darwin {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -260,7 +253,6 @@ namespace darwin {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -275,7 +267,6 @@ namespace darwin {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -293,7 +284,6 @@ namespace openbsd {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -306,7 +296,6 @@ namespace openbsd {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -324,7 +313,6 @@ namespace freebsd {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -337,7 +325,6 @@ namespace freebsd {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -355,7 +342,6 @@ namespace minix {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -368,7 +354,6 @@ namespace minix {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -386,7 +371,6 @@ namespace auroraux {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -399,7 +383,6 @@ namespace auroraux {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -417,7 +400,6 @@ namespace dragonfly {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,
@@ -430,7 +412,6 @@ namespace dragonfly {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
                               const ArgList &TCArgs,

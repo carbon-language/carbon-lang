@@ -80,6 +80,8 @@ public:
   JobList &getJobs() { return Jobs; }
   const JobList &getJobs() const { return Jobs; }
 
+  void addCommand(Command *C) { Jobs.addJob(C); }
+
   const ArgStringList &getTempFiles() const { return TempFiles; }
 
   const ArgStringList &getResultFiles() const { return ResultFiles; }
