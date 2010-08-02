@@ -331,6 +331,7 @@ namespace {
     void visitBranchInst(BranchInst &BI);
     void visitReturnInst(ReturnInst &RI);
     void visitSwitchInst(SwitchInst &SI);
+    void visitIndirectBrInst(IndirectBrInst &BI);
     void visitSelectInst(SelectInst &SI);
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
@@ -862,6 +863,16 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
   }
 
   visitTerminatorInst(SI);
+}
+
+void Verifier::visitIndirectBrInst(IndirectBrInst &BI) {
+  Assert1(BI.getAddress()->getType()->isPointerTy(),
+          "Indirectbr operand must have pointer type!", &BI);
+  for (unsigned i = 0, e = BI.getNumDestinations(); i != e; ++i)
+    Assert1(BI.getDestination(i)->getType()->isLabelTy(),
+            "Indirectbr destinations must all have pointer type!", &BI);
+
+  visitTerminatorInst(BI);
 }
 
 void Verifier::visitSelectInst(SelectInst &SI) {
