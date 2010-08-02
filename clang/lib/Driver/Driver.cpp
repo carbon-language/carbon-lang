@@ -1076,10 +1076,6 @@ void Driver::BuildJobsForAction(Compilation &C,
     InputInfos.push_back(II);
   }
 
-  // Figure out where to put the job (pipes).
-  Job *Dest = &C.getJobs();
-  assert(!InputInfos[0].isPipe() && "Unrequested pipe!");
-
   // Always use the first input as the base input.
   const char *BaseInput = InputInfos[0].getBaseInput();
 
@@ -1088,8 +1084,7 @@ void Driver::BuildJobsForAction(Compilation &C,
   if (JA->getType() == types::TY_dSYM)
     BaseInput = InputInfos[0].getFilename();
 
-  // Determine the place to write output to (nothing, pipe, or filename) and
-  // where to put the new job.
+  // Determine the place to write output to, if any.
   if (JA->getType() == types::TY_Nothing) {
     Result = InputInfo(A->getType(), BaseInput);
   } else {
@@ -1107,7 +1102,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     }
     llvm::errs() << "], output: " << Result.getAsString() << "\n";
   } else {
-    T.ConstructJob(C, *JA, *Dest, Result, InputInfos,
+    T.ConstructJob(C, *JA, C.getJobs(), Result, InputInfos,
                    C.getArgsForToolChain(TC, BoundArch), LinkingOutput);
   }
 }
