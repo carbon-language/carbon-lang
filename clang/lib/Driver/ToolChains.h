@@ -269,7 +269,7 @@ public:
 
 class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_GCC {
 public:
-  FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32);
+  FreeBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };

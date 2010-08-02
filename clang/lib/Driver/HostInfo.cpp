@@ -363,27 +363,18 @@ bool FreeBSDHostInfo::useDriverDriver() const {
 
 ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
                                             const char *ArchName) const {
-  bool Lib32 = false;
-
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");
 
-  // On x86_64 we need to be able to compile 32-bits binaries as well.
-  // Compiling 64-bit binaries on i386 is not supported. We don't have a
-  // lib64.
   std::string Arch = getArchName();
   ArchName = Arch.c_str();
-  if (Args.hasArg(options::OPT_m32) && getArchName() == "x86_64") {
-    ArchName = "i386";
-    Lib32 = true;
-  }
 
   ToolChain *&TC = ToolChains[ArchName];
   if (!TC) {
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::FreeBSD(*this, TCTriple, Lib32);
+    TC = new toolchains::FreeBSD(*this, TCTriple);
   }
 
   return TC;

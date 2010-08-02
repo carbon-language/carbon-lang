@@ -889,8 +889,16 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
-FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32)
+FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
+
+  // Determine if we are compiling 32-bit code on an x86_64 platform.
+  bool Lib32 = false;
+  if (Triple.getArch() == llvm::Triple::x86 &&
+      llvm::Triple(getDriver().DefaultHostTriple).getArch() ==
+        llvm::Triple::x86_64)
+    Lib32 = true;
+    
   getProgramPaths().push_back(getDriver().Dir + "/../libexec");
   getProgramPaths().push_back("/usr/libexec");
   if (Lib32) {
