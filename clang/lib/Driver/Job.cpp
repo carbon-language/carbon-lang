@@ -21,13 +21,6 @@ Command::Command(const Action &_Source, const Tool &_Creator,
 {
 }
 
-PipedJob::PipedJob() : Job(PipedJobClass) {}
-
-PipedJob::~PipedJob() {
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    delete *it;
-}
-
 JobList::JobList() : Job(JobListClass) {}
 
 JobList::~JobList() {
@@ -36,9 +29,6 @@ JobList::~JobList() {
 }
 
 void Job::addCommand(Command *C) {
-  if (PipedJob *PJ = dyn_cast<PipedJob>(this))
-    PJ->addCommand(C);
-  else
-    cast<JobList>(this)->addJob(C);
+  cast<JobList>(this)->addJob(C);
 }
 

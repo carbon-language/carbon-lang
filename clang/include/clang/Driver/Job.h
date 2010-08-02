@@ -29,7 +29,6 @@ class Job {
 public:
   enum JobClass {
     CommandClass,
-    PipedJobClass,
     JobListClass
   };
 
@@ -84,39 +83,6 @@ public:
     return J->getKind() == CommandClass;
   }
   static bool classof(const Command *) { return true; }
-};
-
-  /// PipedJob - A list of Commands which should be executed together
-  /// with their standard inputs and outputs connected.
-class PipedJob : public Job {
-public:
-  typedef llvm::SmallVector<Command*, 4> list_type;
-  typedef list_type::size_type size_type;
-  typedef list_type::iterator iterator;
-  typedef list_type::const_iterator const_iterator;
-
-private:
-  list_type Commands;
-
-public:
-  PipedJob();
-  virtual ~PipedJob();
-
-  /// Add a command to the piped job (taking ownership).
-  void addCommand(Command *C) { Commands.push_back(C); }
-
-  const list_type &getCommands() const { return Commands; }
-
-  size_type size() const { return Commands.size(); }
-  iterator begin() { return Commands.begin(); }
-  const_iterator begin() const { return Commands.begin(); }
-  iterator end() { return Commands.end(); }
-  const_iterator end() const { return Commands.end(); }
-
-  static bool classof(const Job *J) {
-    return J->getKind() == PipedJobClass;
-  }
-  static bool classof(const PipedJob *) { return true; }
 };
 
   /// JobList - A sequence of jobs to perform.

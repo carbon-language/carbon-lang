@@ -83,10 +83,6 @@ void Compilation::PrintJob(llvm::raw_ostream &OS, const Job &J,
       OS << '"';
     }
     OS << Terminator;
-  } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
-    for (PipedJob::const_iterator
-           it = PJ->begin(), ie = PJ->end(); it != ie; ++it)
-      PrintJob(OS, **it, (it + 1 != PJ->end()) ? " |\n" : "\n", Quote);
   } else {
     const JobList *Jobs = cast<JobList>(&J);
     for (JobList::const_iterator
@@ -190,14 +186,6 @@ int Compilation::ExecuteJob(const Job &J,
                             const Command *&FailingCommand) const {
   if (const Command *C = dyn_cast<Command>(&J)) {
     return ExecuteCommand(*C, FailingCommand);
-  } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
-    // Piped commands with a single job are easy.
-    if (PJ->size() == 1)
-      return ExecuteCommand(**PJ->begin(), FailingCommand);
-
-    FailingCommand = *PJ->begin();
-    getDriver().Diag(clang::diag::err_drv_unsupported_opt) << "-pipe";
-    return 1;
   } else {
     const JobList *Jobs = cast<JobList>(&J);
     for (JobList::const_iterator
