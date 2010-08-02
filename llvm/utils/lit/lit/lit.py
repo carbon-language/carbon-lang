@@ -358,8 +358,7 @@ def load_test_suite(inputs):
     from LitTestCase import LitTestCase
     return unittest.TestSuite([LitTestCase(test, litConfig) for test in tests])
 
-def main():
-    # Bump the GIL check interval, its more important to get any one thread to a
+def main(builtinParameters = {}):    # Bump the GIL check interval, its more important to get any one thread to a
     # blocking operation (hopefully exec) than to try and unblock other threads.
     #
     # FIXME: This is a hack.
@@ -469,7 +468,7 @@ def main():
     inputs = args
 
     # Create the user defined parameters.
-    userParams = {}
+    userParams = dict(builtinParameters)
     for entry in opts.userParameters:
         if '=' not in entry:
             name,val = entry,''
