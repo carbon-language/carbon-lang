@@ -680,6 +680,12 @@ ASTContext::getTypeInfo(const Type *T) {
       Width = Target.getPointerWidth(0); // C++ 3.9.1p11: sizeof(nullptr_t)
       Align = Target.getPointerAlign(0); //   == sizeof(void*)
       break;
+    case BuiltinType::ObjCId:
+    case BuiltinType::ObjCClass:
+    case BuiltinType::ObjCSel:
+      Width = Target.getPointerWidth(0); 
+      Align = Target.getPointerAlign(0);
+      break;
     }
     break;
   case Type::ObjCObjectPointer:
