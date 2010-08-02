@@ -295,8 +295,7 @@ public:
 
   /// Compute the offset within the top level memory object.
   virtual RegionOffset getAsOffset() const {
-    assert(0 && "unimplemented");
-    return RegionOffset(NULL);
+    llvm_unreachable("unimplemented");
   }
 
   MemRegionManager* getMemRegionManager() const;
