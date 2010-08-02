@@ -18,6 +18,7 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/RecordLayout.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -785,7 +786,7 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   return true;
 }
 
-RegionRawOffset ElementRegion::getAsRawOffset() const {
+RegionRawOffset ElementRegion::getAsArrayOffset() const {
   CharUnits offset = CharUnits::Zero();
   const ElementRegion *ER = this;
   const MemRegion *superR = NULL;
@@ -825,6 +826,50 @@ RegionRawOffset ElementRegion::getAsRawOffset() const {
 
   assert(superR && "super region cannot be NULL");
   return RegionRawOffset(superR, offset.getQuantity());
+}
+
+RegionOffset ElementRegion::getAsOffset() const {
+  uint64_t Offset;
+  if (const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Index)) {
+    int64_t i = CI->getValue().getSExtValue();
+    assert(i >= 0);
+    // We cannot compute offset for incomplete types.
+    if (!IsCompleteType(getContext(), ElementType))
+      return RegionOffset(0); 
+    
+    CharUnits Size = getContext().getTypeSizeInChars(ElementType);
+    Offset = i * Size.getQuantity() * 8;
+  } else
+    // We cannot compute offset for symbolic index.
+    return RegionOffset(0);
+
+  // Get the offset of the super region.
+  RegionOffset SOffset = cast<SubRegion>(superRegion)->getAsOffset();
+  if (!SOffset.getRegion())
+    return RegionOffset(0);
+  else
+    return RegionOffset(SOffset.getRegion(), SOffset.getOffset() + Offset);
+}
+
+RegionOffset FieldRegion::getAsOffset() const {
+  const RecordDecl *RD = getDecl()->getParent();
+  assert(RD->isDefinition());
+  // Get the field number.
+  unsigned idx = 0;
+  for (RecordDecl::field_iterator FI = RD->field_begin(), FE = RD->field_end();
+       FI != FE; ++FI, ++idx)
+    if (getDecl() == *FI)
+      break;
+
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+  // This is offset in bits.
+  uint64_t Offset = Layout.getFieldOffset(idx);
+
+  RegionOffset SOffset = cast<SubRegion>(superRegion)->getAsOffset();
+  if (!SOffset.getRegion())
+    return RegionOffset(0);
+  else
+    return RegionOffset(SOffset.getRegion(), SOffset.getOffset() + Offset);
 }
 
 //===----------------------------------------------------------------------===//

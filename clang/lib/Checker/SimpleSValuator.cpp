@@ -711,8 +711,8 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
       }
 
       // If the element indexes aren't comparable, see if the raw offsets are.
-      RegionRawOffset LeftOffset = LeftER->getAsRawOffset();
-      RegionRawOffset RightOffset = RightER->getAsRawOffset();
+      RegionRawOffset LeftOffset = LeftER->getAsArrayOffset();
+      RegionRawOffset RightOffset = RightER->getAsArrayOffset();
 
       if (LeftOffset.getRegion() != NULL &&
           LeftOffset.getRegion() == RightOffset.getRegion()) {

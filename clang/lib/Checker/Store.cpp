@@ -139,7 +139,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
       // FIXME: Handle symbolic raw offsets.
 
       const ElementRegion *elementR = cast<ElementRegion>(R);
-      const RegionRawOffset &rawOff = elementR->getAsRawOffset();
+      const RegionRawOffset &rawOff = elementR->getAsArrayOffset();
       const MemRegion *baseR = rawOff.getRegion();
 
       // If we cannot compute a raw offset, throw up our hands and return

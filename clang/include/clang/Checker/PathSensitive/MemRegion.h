@@ -261,6 +261,22 @@ public:
   }
 };
 
+/// Represent a region's offset within the top level base region.
+class RegionOffset {
+  /// The base region.
+  const MemRegion *R;
+
+  /// The bit offset within the base region. It shouldn't be negative.
+  uint64_t Offset;
+
+public:
+  RegionOffset(const MemRegion *r) : R(r), Offset(0) {}
+  RegionOffset(const MemRegion *r, uint64_t off) : R(r), Offset(off) {}
+
+  const MemRegion *getRegion() const { return R; }
+  uint64_t getOffset() const { return Offset; }
+};
+
 /// SubRegion - A region that subsets another larger region.  Most regions
 ///  are subclasses of SubRegion.
 class SubRegion : public MemRegion {
@@ -277,6 +293,11 @@ public:
     return UnknownVal();
   }
 
+  /// Compute the offset within the top level memory object.
+  virtual RegionOffset getAsOffset() const {
+    assert(0 && "unimplemented");
+  }
+
   MemRegionManager* getMemRegionManager() const;
 
   bool isSubRegionOf(const MemRegion* R) const;
@@ -284,31 +305,6 @@ public:
   static bool classof(const MemRegion* R) {
     return R->getKind() > END_MEMSPACES;
   }
-};
-
-//===----------------------------------------------------------------------===//
-// Auxillary data classes for use with MemRegions.
-//===----------------------------------------------------------------------===//
-
-class ElementRegion;
-
-class RegionRawOffset {
-private:
-  friend class ElementRegion;
-
-  const MemRegion *Region;
-  int64_t Offset;
-
-  RegionRawOffset(const MemRegion* reg, int64_t offset = 0)
-    : Region(reg), Offset(offset) {}
-
-public:
-  // FIXME: Eventually support symbolic offsets.
-  int64_t getByteOffset() const { return Offset; }
-  const MemRegion *getRegion() const { return Region; }
-
-  void dumpToStream(llvm::raw_ostream& os) const;
-  void dump() const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -334,6 +330,10 @@ public:
   bool isBoundable() const { return true; }
 
   DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
+  }
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -551,6 +551,10 @@ public:
 
   DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
 
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
+  }
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
@@ -587,6 +591,10 @@ public:
 
   DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
 
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
+  }
+
   bool isBoundable() const { return false; }
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
@@ -617,6 +625,10 @@ private:
 public:
   QualType getValueType(ASTContext& C) const {
     return C.getCanonicalType(CL->getType());
+  }
+
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
   }
 
   bool isBoundable() const { return !CL->isFileScope(); }
@@ -661,6 +673,10 @@ class VarRegion : public DeclRegion {
   VarRegion(const VarDecl* vd, const MemRegion* sReg)
     : DeclRegion(vd, sReg, VarRegionKind) {}
 
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
+  }
+
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* VD,
                             const MemRegion *superRegion) {
     DeclRegion::ProfileRegion(ID, VD, superRegion, VarRegionKind);
@@ -704,7 +720,11 @@ public:
   QualType getValueType(ASTContext &C) const {
     return QualType(ThisPointerTy, 0);
   }
-  
+
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
+  }
+
   void dumpToStream(llvm::raw_ostream& os) const;
   
   static bool classof(const MemRegion* R) {
@@ -733,6 +753,8 @@ public:
   }
 
   DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+
+  virtual RegionOffset getAsOffset() const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FieldDecl* FD,
                             const MemRegion* superRegion) {
@@ -766,6 +788,30 @@ public:
     return R->getKind() == ObjCIvarRegionKind;
   }
 };
+//===----------------------------------------------------------------------===//
+// Auxillary data classes for use with MemRegions.
+//===----------------------------------------------------------------------===//
+
+class ElementRegion;
+
+class RegionRawOffset {
+private:
+  friend class ElementRegion;
+
+  const MemRegion *Region;
+  int64_t Offset;
+
+  RegionRawOffset(const MemRegion* reg, int64_t offset = 0)
+    : Region(reg), Offset(offset) {}
+
+public:
+  // FIXME: Eventually support symbolic offsets.
+  int64_t getByteOffset() const { return Offset; }
+  const MemRegion *getRegion() const { return Region; }
+
+  void dumpToStream(llvm::raw_ostream& os) const;
+  void dump() const;
+};
 
 class ElementRegion : public TypedRegion {
   friend class MemRegionManager;
@@ -795,8 +841,10 @@ public:
   QualType getElementType() const {
     return ElementType;
   }
+  /// Compute the offset within the array. The array might also be a subobject.
+  RegionRawOffset getAsArrayOffset() const;
 
-  RegionRawOffset getAsRawOffset() const;
+  virtual RegionOffset getAsOffset() const;
 
   void dumpToStream(llvm::raw_ostream& os) const;
 
@@ -822,6 +870,10 @@ class CXXObjectRegion : public TypedRegion {
 public:
   QualType getValueType(ASTContext& C) const {
     return Ex->getType();
+  }
+
+  virtual RegionOffset getAsOffset() const {
+    return RegionOffset(this, 0);
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const;

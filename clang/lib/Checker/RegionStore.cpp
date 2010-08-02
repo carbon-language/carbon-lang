@@ -1146,7 +1146,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
   //   char *y = &x;
   //   return *y;
   // FIXME: This is a hack, and doesn't do anything really intelligent yet.
-  const RegionRawOffset &O = R->getAsRawOffset();
+  const RegionRawOffset &O = R->getAsArrayOffset();
   if (const TypedRegion *baseR = dyn_cast_or_null<TypedRegion>(O.getRegion())) {
     QualType baseT = baseR->getValueType(Ctx);
     if (baseT->isScalarType()) {
@@ -1608,7 +1608,7 @@ Store RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 
 BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-    const RegionRawOffset &O = ER->getAsRawOffset();
+    const RegionRawOffset &O = ER->getAsArrayOffset();
 
     if (O.getRegion())
       return BindingKey(O.getRegion(), O.getByteOffset(), k);
