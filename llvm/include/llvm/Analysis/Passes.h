@@ -81,6 +81,13 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createTypeBasedAliasAnalysisPass - This pass implements metadata-based
+  // type-based alias analysis.
+  //
+  ImmutablePass *createTypeBasedAliasAnalysisPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // createProfileLoaderPass - This pass loads information from a profile dump
   // file.
   //
