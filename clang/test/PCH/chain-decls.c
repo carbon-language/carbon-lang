@@ -10,7 +10,7 @@
 // CHECK: void f();
 // CHECK: void g();
 
-void h() {
+int h() {
   f();
   g();
 
@@ -19,4 +19,9 @@ void h() {
   struct two y;
   two();
   struct three z;
+
+  many(0);
+  struct many m;
+
+  noret();
 }

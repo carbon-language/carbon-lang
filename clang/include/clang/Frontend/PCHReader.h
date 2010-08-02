@@ -906,12 +906,6 @@ public:
   /// \brief Retrieve the macro definition with the given ID.
   MacroDefinition *getMacroDefinition(pch::IdentID ID);
 
-  /// \brief Erase the macro that's bound to the given IdentifierInfo.
-  void EraseMacro(IdentifierInfo *II);
-
-  /// \brief Check if the given macro identifier is built-in.
-  bool isBuiltinMacro(IdentifierInfo *II);
-      
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.
   ASTContext *getContext() { return Context; }

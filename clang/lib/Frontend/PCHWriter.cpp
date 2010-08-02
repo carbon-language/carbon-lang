@@ -1819,8 +1819,7 @@ public:
       for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                      DEnd = IdentifierResolver::end();
            D != DEnd; ++D)
-        if (!Writer.hasChain() || (*D)->getPCHLevel() == 0)
-          DataLen += sizeof(pch::DeclID);
+        DataLen += sizeof(pch::DeclID);
     }
     clang::io::Emit16(Out, DataLen);
     // We emit the key length after the data length so that every
@@ -1872,8 +1871,7 @@ public:
     for (llvm::SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
                                                       DEnd = Decls.rend();
          D != DEnd; ++D)
-      if (!Writer.hasChain() || (*D)->getPCHLevel() == 0)
-        clang::io::Emit32(Out, Writer.getDeclID(*D));
+      clang::io::Emit32(Out, Writer.getDeclID(*D));
   }
 };
 } // end anonymous namespace

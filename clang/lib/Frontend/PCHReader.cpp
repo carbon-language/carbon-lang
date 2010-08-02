@@ -689,9 +689,6 @@ public:
       uint32_t Offset = ReadUnalignedLE32(d);
       Reader.ReadMacroRecord(Stream, Offset);
       DataLen -= 4;
-    } else if (II->hasMacroDefinition() && !Reader.isBuiltinMacro(II)) {
-      // A previous part of the chain added a macro, but this part #undefed it.
-      Reader.EraseMacro(II);
     }
 
     // Read all of the declarations visible at global scope with this
@@ -1387,15 +1384,6 @@ MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
   }
 
   return MacroDefinitionsLoaded[ID];
-}
-
-void PCHReader::EraseMacro(IdentifierInfo *II) {
-  PP->setMacroInfo(II, 0);
-}
-
-bool PCHReader::isBuiltinMacro(IdentifierInfo *II) {
-  assert(II->hasMacroDefinition() && "Identifier is not a macro");
-  return PP->getMacroInfo(II)->isBuiltinMacro();
 }
 
 /// \brief If we are loading a relocatable PCH file, and the filename is
@@ -3184,12 +3172,11 @@ void PCHReader::InitializeSema(Sema &S) {
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
-  // Try to find this name within our on-disk hash tables. We need to aggregate
-  // the info from all of them.
-  IdentifierInfo *II = 0;
+  // Try to find this name within our on-disk hash tables. We start with the
+  // most recent one, since that one contains the most up-to-date info.
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     PCHIdentifierLookupTable *IdTable
-      = (PCHIdentifierLookupTable *)Chain[N - I - 1]->IdentifierLookupTable;
+        = (PCHIdentifierLookupTable *)Chain[I]->IdentifierLookupTable;
     if (!IdTable)
       continue;
     std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
@@ -3200,9 +3187,9 @@ IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
     // Dereferencing the iterator has the effect of building the
     // IdentifierInfo node and populating it with the various
     // declarations it needs.
-    II = *Pos;
+    return *Pos;
   }
-  return II;
+  return 0;
 }
 
 std::pair<ObjCMethodList, ObjCMethodList>
