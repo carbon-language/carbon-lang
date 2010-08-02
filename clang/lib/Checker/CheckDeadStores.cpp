@@ -217,7 +217,7 @@ public:
               // If x is EVER assigned a new value later, don't issue
               // a warning.  This is because such initialization can be
               // due to defensive programming.
-              if (E->isConstantInitializer(Ctx))
+              if (E->isConstantInitializer(Ctx, false))
                 return;
 
               if (DeclRefExpr *DRE=dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))

@@ -22,6 +22,11 @@ namespace test1 {
   A b = A();
   A c = { 10 };
   A d = { opaque_int() }; // expected-warning {{global constructor}}
+  A e = A(A());
+  A f = A(a); // expected-warning {{global constructor}}
+  A g(a); // expected-warning {{global constructor}}
+  A h((A())); // expected-warning {{global constructor}}
+  A i((A(A()))); // expected-warning {{global constructor}}
 }
 
 namespace test2 {
@@ -30,10 +35,9 @@ namespace test2 {
   A b[10]; // expected-warning {{global constructor}}
   A c[10][10]; // expected-warning {{global constructor}}
 
-  // FIXME: false positives!
-  A &d = a; // expected-warning {{global constructor}}
-  A &e = b[5]; // expected-warning {{global constructor}}
-  A &f = c[5][7]; // expected-warning {{global constructor}}
+  A &d = a;
+  A &e = b[5];
+  A &f = c[5][7];
 }
 
 namespace test3 {
@@ -42,10 +46,9 @@ namespace test3 {
   A b[10]; // expected-warning {{global destructor}}
   A c[10][10]; // expected-warning {{global destructor}}
 
-  // FIXME: false positives!
-  A &d = a; // expected-warning {{global constructor}}
-  A &e = b[5]; // expected-warning {{global constructor}}
-  A &f = c[5][7]; // expected-warning {{global constructor}}
+  A &d = a;
+  A &e = b[5];
+  A &f = c[5][7];
 }
 
 namespace test4 {

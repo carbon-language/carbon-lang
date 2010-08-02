@@ -309,7 +309,7 @@ public:
   }
   /// isConstantInitializer - Returns true if this expression is a constant
   /// initializer, which can be emitted at compile-time.
-  bool isConstantInitializer(ASTContext &Ctx) const;
+  bool isConstantInitializer(ASTContext &Ctx, bool ForRef) const;
 
   /// EvalResult is a struct with detailed info about an evaluated expression.
   struct EvalResult {

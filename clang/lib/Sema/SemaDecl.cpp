@@ -3855,7 +3855,7 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   // "may accept other forms of constant expressions" exception.
   // (We never end up here for C++, so the constant expression
   // rules there don't matter.)
-  if (Init->isConstantInitializer(Context))
+  if (Init->isConstantInitializer(Context, false))
     return false;
   Diag(Init->getExprLoc(), diag::err_init_element_not_constant)
     << Init->getSourceRange();
@@ -4067,8 +4067,11 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   if (getLangOptions().CPlusPlus) {
     if (!VDecl->isInvalidDecl() &&
         !VDecl->getDeclContext()->isDependentContext() &&
-        VDecl->hasGlobalStorage() && !Init->isConstantInitializer(Context))
-      Diag(VDecl->getLocation(), diag::warn_global_constructor);
+        VDecl->hasGlobalStorage() &&
+        !Init->isConstantInitializer(Context,
+                                     VDecl->getType()->isReferenceType()))
+      Diag(VDecl->getLocation(), diag::warn_global_constructor)
+        << Init->getSourceRange();
 
     // Make sure we mark the destructor as used if necessary.
     QualType InitType = VDecl->getType();
@@ -4281,7 +4284,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
         if (getLangOptions().CPlusPlus && !Var->isInvalidDecl() && 
             Var->hasGlobalStorage() &&
             !Var->getDeclContext()->isDependentContext() &&
-            !Var->getInit()->isConstantInitializer(Context))
+            !Var->getInit()->isConstantInitializer(Context, false))
           Diag(Var->getLocation(), diag::warn_global_constructor);
       }
     }

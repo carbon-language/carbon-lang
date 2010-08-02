@@ -1342,15 +1342,20 @@ bool Expr::hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs) {
   return false;
 }
 
-bool Expr::isConstantInitializer(ASTContext &Ctx) const {
+bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   // This function is attempting whether an expression is an initializer
   // which can be evaluated at compile-time.  isEvaluatable handles most
   // of the cases, but it can't deal with some initializer-specific
   // expressions, and it can't deal with aggregates; we deal with those here,
   // and fall back to isEvaluatable for the other cases.
 
-  // FIXME: This function assumes the variable being assigned to
-  // isn't a reference type!
+  // If we ever capture reference-binding directly in the AST, we can
+  // kill the second parameter.
+
+  if (IsForRef) {
+    EvalResult Result;
+    return EvaluateAsLValue(Result, Ctx) && !Result.HasSideEffects;
+  }
 
   switch (getStmtClass()) {
   default: break;
@@ -1361,23 +1366,24 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   case CXXTemporaryObjectExprClass:
   case CXXConstructExprClass: {
     const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
+
+    // Only if it's
+    // 1) an application of the trivial default constructor or
     if (!CE->getConstructor()->isTrivial()) return false;
-    for (CXXConstructExpr::const_arg_iterator
-           I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I)
-      if (!(*I)->isConstantInitializer(Ctx))
-        return false;
-    return true;
-  }
-  case CXXBindReferenceExprClass: {
-    const CXXBindReferenceExpr *RE = cast<CXXBindReferenceExpr>(this);
-    return RE->getSubExpr()->isConstantInitializer(Ctx);
+    if (!CE->getNumArgs()) return true;
+
+    // 2) an elidable trivial copy construction of an operand which is
+    //    itself a constant initializer.  Note that we consider the
+    //    operand on its own, *not* as a reference binding.
+    return CE->isElidable() &&
+           CE->getArg(0)->isConstantInitializer(Ctx, false);
   }
   case CompoundLiteralExprClass: {
     // This handles gcc's extension that allows global initializers like
     // "struct x {int x;} x = (struct x) {};".
     // FIXME: This accepts other cases it shouldn't!
     const Expr *Exp = cast<CompoundLiteralExpr>(this)->getInitializer();
-    return Exp->isConstantInitializer(Ctx);
+    return Exp->isConstantInitializer(Ctx, false);
   }
   case InitListExprClass: {
     // FIXME: This doesn't deal with fields with reference types correctly.
@@ -1386,7 +1392,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
     const InitListExpr *Exp = cast<InitListExpr>(this);
     unsigned numInits = Exp->getNumInits();
     for (unsigned i = 0; i < numInits; i++) {
-      if (!Exp->getInit(i)->isConstantInitializer(Ctx))
+      if (!Exp->getInit(i)->isConstantInitializer(Ctx, false))
         return false;
     }
     return true;
@@ -1394,11 +1400,12 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   case ImplicitValueInitExprClass:
     return true;
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+    return cast<ParenExpr>(this)->getSubExpr()
+      ->isConstantInitializer(Ctx, IsForRef);
   case UnaryOperatorClass: {
     const UnaryOperator* Exp = cast<UnaryOperator>(this);
     if (Exp->getOpcode() == UnaryOperator::Extension)
-      return Exp->getSubExpr()->isConstantInitializer(Ctx);
+      return Exp->getSubExpr()->isConstantInitializer(Ctx, false);
     break;
   }
   case BinaryOperatorClass: {
@@ -1411,6 +1418,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
       return true;
     break;
   }
+  case CXXFunctionalCastExprClass:
   case CXXStaticCastExprClass:
   case ImplicitCastExprClass:
   case CStyleCastExprClass:
@@ -1418,13 +1426,15 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
     // deals with both the gcc no-op struct cast extension and the
     // cast-to-union extension.
     if (getType()->isRecordType())
-      return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+      return cast<CastExpr>(this)->getSubExpr()
+        ->isConstantInitializer(Ctx, false);
       
     // Integer->integer casts can be handled here, which is important for
     // things like (int)(&&x-&&y).  Scary but true.
     if (getType()->isIntegerType() &&
         cast<CastExpr>(this)->getSubExpr()->getType()->isIntegerType())
-      return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+      return cast<CastExpr>(this)->getSubExpr()
+        ->isConstantInitializer(Ctx, false);
       
     break;
   }

@@ -512,10 +512,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
       // If this value is an array or struct, is POD, and if the initializer is
       // a staticly determinable constant, try to optimize it (unless the NRVO
       // is already optimizing this).
-      if (D.getInit() && !isByRef &&
+      if (!NRVO && D.getInit() && !isByRef &&
           (Ty->isArrayType() || Ty->isRecordType()) &&
           Ty->isPODType() &&
-          D.getInit()->isConstantInitializer(getContext()) && !NRVO) {
+          D.getInit()->isConstantInitializer(getContext(), false)) {
         // If this variable is marked 'const', emit the value as a global.
         if (CGM.getCodeGenOpts().MergeAllConstants &&
             Ty.isConstant(getContext())) {
