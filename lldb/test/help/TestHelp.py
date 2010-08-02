@@ -1,4 +1,8 @@
-"""Test lldb help command."""
+"""
+Test lldb help command.
+
+See also CommandInterpreter::OutputFormattedHelpText().
+"""
 
 import os, time
 import unittest
