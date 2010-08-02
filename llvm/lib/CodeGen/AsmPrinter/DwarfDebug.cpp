@@ -2032,6 +2032,7 @@ void DwarfDebug::beginModule(Module *M) {
 void DwarfDebug::endModule() {
   if (!FirstCU) return;
   const Module *M = MMI->getModule();
+  DenseMap<const MDNode *, DbgScope *> DeadFnScopeMap;
   if (NamedMDNode *AllSPs = M->getNamedMetadata("llvm.dbg.sp")) {
     for (unsigned SI = 0, SE = AllSPs->getNumOperands(); SI != SE; ++SI) {
       if (ProcessedSPNodes.count(AllSPs->getOperand(SI)) != 0) continue;
@@ -2049,6 +2050,7 @@ void DwarfDebug::endModule() {
       unsigned E = NMD->getNumOperands();
       if (!E) continue;
       DbgScope *Scope = new DbgScope(NULL, DIDescriptor(SP), NULL);
+      DeadFnScopeMap[SP] = Scope;
       for (unsigned I = 0; I != E; ++I) {
         DIVariable DV(NMD->getOperand(I));
         if (!DV.Verify()) continue;
@@ -2140,6 +2142,8 @@ void DwarfDebug::endModule() {
   // Emit info into a debug str section.
   emitDebugStr();
 
+  // clean up.
+  DeleteContainerSeconds(DeadFnScopeMap);
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I)
     delete I->second;
