@@ -609,21 +609,21 @@ public:
   /// \brief The number of SFINAE diagnostics that have been trapped.
   unsigned NumSFINAEErrors;
 
-  typedef llvm::DenseMap<Selector, ObjCMethodList> MethodPool;
+  typedef std::pair<ObjCMethodList, ObjCMethodList> GlobalMethods;
+  typedef llvm::DenseMap<Selector, GlobalMethods> GlobalMethodPool;
 
-  /// Instance/Factory Method Pools - allows efficient lookup when typechecking
-  /// messages to "id". We need to maintain a list, since selectors can have
-  /// differing signatures across classes. In Cocoa, this happens to be
-  /// extremely uncommon (only 1% of selectors are "overloaded").
-  MethodPool InstanceMethodPool;
-  MethodPool FactoryMethodPool;
+  /// Method Pool - allows efficient lookup when typechecking messages to "id".
+  /// We need to maintain a list, since selectors can have differing signatures
+  /// across classes. In Cocoa, this happens to be extremely uncommon (only 1%
+  /// of selectors are "overloaded").
+  GlobalMethodPool MethodPool;
 
   /// Method selectors used in a @selector expression. Used for implementation 
   /// of -Wselector.
   llvm::DenseMap<Selector, SourceLocation> ReferencedSelectors;
 
 
-  MethodPool::iterator ReadMethodPool(Selector Sel, bool isInstance);
+  GlobalMethodPool::iterator ReadMethodPool(Selector Sel);
 
   /// Private Helper predicate to check for 'self'.
   bool isSelfExpr(Expr *RExpr);
@@ -1686,28 +1686,47 @@ public:
                                   bool &IncompleteImpl,
                                   bool ImmediateClass);
 
+private:
+  /// AddMethodToGlobalPool - Add an instance or factory method to the global
+  /// pool. See descriptoin of AddInstanceMethodToGlobalPool.
+  void AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl, bool instance);
+
+  /// LookupMethodInGlobalPool - Returns the instance or factory method and
+  /// optionally warns if there are multiple signatures.
+  ObjCMethodDecl *LookupMethodInGlobalPool(Selector Sel, SourceRange R,
+                                           bool warn, bool instance);
+
+public:
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking
   /// messages sent to "id" (where the class of the object is unknown).
-  void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false);
+  void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false) {
+    AddMethodToGlobalPool(Method, impl, /*instance*/true);
+  }
+
+  /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
+  void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false) {
+    AddMethodToGlobalPool(Method, impl, /*instance*/false);
+  }
 
   /// LookupInstanceMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
   ObjCMethodDecl *LookupInstanceMethodInGlobalPool(Selector Sel, SourceRange R,
-                                                   bool warn=true);
+                                                   bool warn=true) {
+    return LookupMethodInGlobalPool(Sel, R, warn, /*instance*/true);
+  }
 
   /// LookupFactoryMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
   ObjCMethodDecl *LookupFactoryMethodInGlobalPool(Selector Sel, SourceRange R,
-                                                  bool warn=true);
+                                                  bool warn=true) {
+    return LookupMethodInGlobalPool(Sel, R, warn, /*instance*/false);
+  }
 
   /// LookupImplementedMethodInGlobalPool - Returns the method which has an
   /// implementation.
   ObjCMethodDecl *LookupImplementedMethodInGlobalPool(Selector Sel);
-
-  /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
-  void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false);
 
   /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
   /// initialization.

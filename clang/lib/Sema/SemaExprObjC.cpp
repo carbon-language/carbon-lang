@@ -930,7 +930,7 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
         ClassDecl = OCIType->getInterfaceDecl();
         // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
         // faster than the following method (which can do *many* linear searches).
-        // The idea is to add class info to InstanceMethodPool.
+        // The idea is to add class info to MethodPool.
         Method = ClassDecl->lookupInstanceMethod(Sel);
 
         if (!Method) {

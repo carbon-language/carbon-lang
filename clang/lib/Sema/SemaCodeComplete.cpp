@@ -3547,20 +3547,18 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
       for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
            I != N; ++I) {
         Selector Sel = ExternalSource->GetExternalSelector(I);
-        if (Sel.isNull() || FactoryMethodPool.count(Sel) || 
-            InstanceMethodPool.count(Sel))
+        if (Sel.isNull() || MethodPool.count(Sel))
           continue;
 
-        ReadMethodPool(Sel, /*isInstance=*/false);
+        ReadMethodPool(Sel);
       }
     }
 
-    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
-           M = FactoryMethodPool.begin(),
-           MEnd = FactoryMethodPool.end();
-         M != MEnd;
-         ++M) {
-      for (ObjCMethodList *MethList = &M->second; MethList && MethList->Method; 
+    for (GlobalMethodPool::iterator M = MethodPool.begin(),
+                                    MEnd = MethodPool.end();
+         M != MEnd; ++M) {
+      for (ObjCMethodList *MethList = &M->second.second;
+           MethList && MethList->Method; 
            MethList = MethList->Next) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
@@ -3648,20 +3646,18 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
       for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
            I != N; ++I) {
         Selector Sel = ExternalSource->GetExternalSelector(I);
-        if (Sel.isNull() || InstanceMethodPool.count(Sel) ||
-            FactoryMethodPool.count(Sel))
+        if (Sel.isNull() || MethodPool.count(Sel))
           continue;
 
-        ReadMethodPool(Sel, /*isInstance=*/true);
+        ReadMethodPool(Sel);
       }
     }
 
-    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
-           M = InstanceMethodPool.begin(),
-           MEnd = InstanceMethodPool.end();
-         M != MEnd;
-         ++M) {
-      for (ObjCMethodList *MethList = &M->second; MethList && MethList->Method; 
+    for (GlobalMethodPool::iterator M = MethodPool.begin(),
+                                    MEnd = MethodPool.end();
+         M != MEnd; ++M) {
+      for (ObjCMethodList *MethList = &M->second.first;
+           MethList && MethList->Method; 
            MethList = MethList->Next) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
@@ -4174,20 +4170,16 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
                                               TypeTy *ReturnTy,
                                               IdentifierInfo **SelIdents,
                                               unsigned NumSelIdents) {
-  llvm::DenseMap<Selector, ObjCMethodList> &Pool 
-    = IsInstanceMethod? InstanceMethodPool : FactoryMethodPool;
-  
   // If we have an external source, load the entire class method
   // pool from the PCH file.
   if (ExternalSource) {
     for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
          I != N; ++I) {
       Selector Sel = ExternalSource->GetExternalSelector(I);
-      if (Sel.isNull() || InstanceMethodPool.count(Sel) ||
-          FactoryMethodPool.count(Sel))
+      if (Sel.isNull() || MethodPool.count(Sel))
         continue;
-      
-      ReadMethodPool(Sel, IsInstanceMethod);
+
+      ReadMethodPool(Sel);
     }
   }
 
@@ -4197,13 +4189,14 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
   
   if (ReturnTy)
     Results.setPreferredType(GetTypeFromParser(ReturnTy).getNonReferenceType());
-  
+
   Results.EnterNewScope();  
-  for (llvm::DenseMap<Selector, ObjCMethodList>::iterator M = Pool.begin(),
-                                                       MEnd = Pool.end();
-       M != MEnd;
-       ++M) {
-    for (ObjCMethodList *MethList = &M->second; MethList && MethList->Method; 
+  for (GlobalMethodPool::iterator M = MethodPool.begin(),
+                                  MEnd = MethodPool.end();
+       M != MEnd; ++M) {
+    for (ObjCMethodList *MethList = IsInstanceMethod ? &M->second.first :
+                                                       &M->second.second;
+         MethList && MethList->Method; 
          MethList = MethList->Next) {
       if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                   NumSelIdents))

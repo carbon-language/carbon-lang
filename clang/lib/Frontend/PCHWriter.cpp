@@ -1654,47 +1654,14 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
     OnDiskChainedHashTableGenerator<PCHMethodPoolTrait> Generator;
 
     // Create the on-disk hash table representation. Start by
-    // iterating through the instance method pool.
+    // iterating through the method pool.
     PCHMethodPoolTrait::key_type Key;
     unsigned NumSelectorsInMethodPool = 0;
-    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
-           Instance = SemaRef.InstanceMethodPool.begin(),
-           InstanceEnd = SemaRef.InstanceMethodPool.end();
-         Instance != InstanceEnd; ++Instance) {
-      // Check whether there is a factory method with the same
-      // selector.
-      llvm::DenseMap<Selector, ObjCMethodList>::iterator Factory
-        = SemaRef.FactoryMethodPool.find(Instance->first);
-
-      if (Factory == SemaRef.FactoryMethodPool.end())
-        Generator.insert(Instance->first,
-                         std::make_pair(Instance->second,
-                                        ObjCMethodList()));
-      else
-        Generator.insert(Instance->first,
-                         std::make_pair(Instance->second, Factory->second));
-
+    for (Sema::GlobalMethodPool::iterator I = SemaRef.MethodPool.begin(),
+                                          E = SemaRef.MethodPool.end();
+         I != E; ++I) {
+      Generator.insert(I->first, I->second);
       ++NumSelectorsInMethodPool;
-      Empty = false;
-    }
-
-    // Now iterate through the factory method pool, to pick up any
-    // selectors that weren't already in the instance method pool.
-    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
-           Factory = SemaRef.FactoryMethodPool.begin(),
-           FactoryEnd = SemaRef.FactoryMethodPool.end();
-         Factory != FactoryEnd; ++Factory) {
-      // Check whether there is an instance method with the same
-      // selector. If so, there is no work to do here.
-      llvm::DenseMap<Selector, ObjCMethodList>::iterator Instance
-        = SemaRef.InstanceMethodPool.find(Factory->first);
-
-      if (Instance == SemaRef.InstanceMethodPool.end()) {
-        Generator.insert(Factory->first,
-                         std::make_pair(ObjCMethodList(), Factory->second));
-        ++NumSelectorsInMethodPool;
-      }
-
       Empty = false;
     }
 
