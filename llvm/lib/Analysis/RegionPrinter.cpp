@@ -151,12 +151,16 @@ char RegionPrinter::ID = 0;
 INITIALIZE_PASS(RegionPrinter, "dot-regions",
                 "Print regions of function to 'dot' file", true, true);
 
+namespace {
+
 struct RegionOnlyPrinter
   : public DOTGraphTraitsPrinter<RegionInfo, true> {
   static char ID;
   RegionOnlyPrinter() :
     DOTGraphTraitsPrinter<RegionInfo, true>("reg", &ID) {}
 };
+
+}
 
 char RegionOnlyPrinter::ID = 0;
 INITIALIZE_PASS(RegionOnlyPrinter, "dot-regions-only",

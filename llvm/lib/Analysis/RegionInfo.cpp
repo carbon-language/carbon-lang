@@ -29,9 +29,9 @@ using namespace llvm;
 
 // Always verify if expensive checking is enabled.
 #ifdef XDEBUG
-bool VerifyRegionInfo = true;
+static bool VerifyRegionInfo = true;
 #else
-bool VerifyRegionInfo = false;
+static bool VerifyRegionInfo = false;
 #endif
 
 static cl::opt<bool,true>
