@@ -41,9 +41,6 @@ class DarwinHostInfo : public HostInfo {
   /// Darwin version of host.
   unsigned DarwinVersion[3];
 
-  /// GCC version to use on this host.
-  unsigned GCCVersion[3];
-
   /// Cache of tool chains we have created.
   mutable llvm::DenseMap<unsigned, ToolChain*> ToolChains;
 
@@ -68,11 +65,6 @@ DarwinHostInfo::DarwinHostInfo(const Driver &D, const llvm::Triple& Triple)
                                  DarwinVersion[0], DarwinVersion[1],
                                  DarwinVersion[2], HadExtra))
     D.Diag(clang::diag::err_drv_invalid_darwin_version) << getOSName();
-
-  // We can only call 4.2.1 for now.
-  GCCVersion[0] = 4;
-  GCCVersion[1] = 2;
-  GCCVersion[2] = 1;
 }
 
 DarwinHostInfo::~DarwinHostInfo() {
@@ -139,8 +131,7 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
       TC = new toolchains::DarwinClang(*this, TCTriple, DarwinVersion);
     } else if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64) {
       // We still use the legacy DarwinGCC toolchain on X86.
-      TC = new toolchains::DarwinGCC(*this, TCTriple, DarwinVersion,
-                                     GCCVersion);
+      TC = new toolchains::DarwinGCC(*this, TCTriple, DarwinVersion);
     } else
       TC = new toolchains::Darwin_Generic_GCC(*this, TCTriple);
   }

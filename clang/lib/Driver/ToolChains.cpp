@@ -114,13 +114,13 @@ llvm::StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
 }
 
 DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
-                     const unsigned (&DarwinVersion)[3],
-                     const unsigned (&_GCCVersion)[3])
+                     const unsigned (&DarwinVersion)[3])
   : Darwin(Host, Triple, DarwinVersion)
 {
-  GCCVersion[0] = _GCCVersion[0];
-  GCCVersion[1] = _GCCVersion[1];
-  GCCVersion[2] = _GCCVersion[2];
+  // We can only work with 4.2.1 currently.
+  GCCVersion[0] = 4;
+  GCCVersion[1] = 2;
+  GCCVersion[2] = 1;
 
   // Set up the tool chain paths to match gcc.
   ToolChainDir = "i686-apple-darwin";

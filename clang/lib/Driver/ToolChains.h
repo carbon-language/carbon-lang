@@ -229,8 +229,7 @@ class LLVM_LIBRARY_VISIBILITY DarwinGCC : public Darwin {
 
 public:
   DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
-            const unsigned (&DarwinVersion)[3],
-            const unsigned (&GCCVersion)[3]);
+            const unsigned (&DarwinVersion)[3]);
 
   /// @name Darwin ToolChain Implementation
   /// {
