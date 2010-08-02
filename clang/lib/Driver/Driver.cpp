@@ -182,6 +182,9 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   // -no-canonical-prefixes is used very early in main.
   Args->ClaimAllArgs(options::OPT_no_canonical_prefixes);
 
+  // Ignore -pipe.
+  Args->ClaimAllArgs(options::OPT_pipe);
+
   // Extract -ccc args.
   //
   // FIXME: We need to figure out where this behavior should live. Most of it
@@ -884,16 +887,6 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
 
 void Driver::BuildJobs(Compilation &C) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
-  bool SaveTemps = C.getArgs().hasArg(options::OPT_save_temps);
-  bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
-
-  // FIXME: Pipes are forcibly disabled until we support executing them.
-  if (!CCCPrintBindings)
-    UsePipes = false;
-
-  // -save-temps inhibits pipes.
-  if (SaveTemps && UsePipes)
-    Diag(clang::diag::warn_drv_pipe_ignored_with_save_temps);
 
   Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o);
 
@@ -1037,11 +1030,6 @@ void Driver::BuildJobsForAction(Compilation &C,
                                 InputInfo &Result) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
 
-  bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
-  // FIXME: Pipes are forcibly disabled until we support executing them.
-  if (!CCCPrintBindings)
-    UsePipes = false;
-
   if (const InputAction *IA = dyn_cast<InputAction>(A)) {
     // FIXME: It would be nice to not claim this here; maybe the old scheme of
     // just using Args was better?
@@ -1101,8 +1089,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     if (AtTopLevel) {
       if (isa<PreprocessJobAction>(A) && !C.getArgs().hasArg(options::OPT_o))
         OutputToPipe = true;
-    } else if (UsePipes)
-      OutputToPipe = true;
+    }
   }
 
   // Figure out where to put the job (pipes).

@@ -15,12 +15,6 @@
 // RUN: grep '"gcc::Assemble", inputs: \[".*\.s"\], output: ".*\.o"' %t
 // RUN: grep '"gcc::Link", inputs: \[".*\.o"\], output: "a.out"' %t
 
-// RUN: %clang -ccc-host-triple i386-unknown-unknown -ccc-print-bindings -ccc-no-clang -no-integrated-cpp -pipe %s 2> %t
-// RUN: grep '"gcc::Preprocess", inputs: \[".*bindings.c"\], output: (pipe)' %t
-// RUN: grep '"gcc::Compile", inputs: \[(pipe)\], output: (pipe)' %t
-// RUN: grep '"gcc::Assemble", inputs: \[(pipe)\], output: ".*\.o"' %t
-// RUN: grep '"gcc::Link", inputs: \[".*\.o"\], output: "a.out"' %t
-
 // RUN: %clang -ccc-host-triple i386-unknown-unknown -ccc-print-bindings -ccc-no-clang -x c-header %s 2> %t
 // RUN: grep '"gcc::Precompile", inputs: \[".*bindings.c"\], output: ".*bindings.c.gch' %t
 
