@@ -1067,6 +1067,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       case MVT::v4i32:
       case MVT::v8i16:
       case MVT::v16i8:
+      case MVT::v2i32:
         ArgRegClass = &SPU::VECREGRegClass;
         break;
       }
@@ -1622,8 +1623,7 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T, T, T);
   }
   case MVT::v2i32: {
-    SDValue T = DAG.getConstant(unsigned(SplatBits), VT.getVectorElementType());
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T);
+    return SDValue();
   }
   case MVT::v2i64: {
     return SPU::LowerV2I64Splat(VT, DAG, SplatBits, dl);
@@ -1768,6 +1768,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   } else if (EltVT == MVT::i16) {
     V2EltIdx0 = 8;
     maskVT = MVT::v8i16;
+  } else if (VecVT == MVT::v2i32 || VecVT == MVT::v2f32 ) {
+    V2EltIdx0 = 2;
+    maskVT = MVT::v4i32;
   } else if (EltVT == MVT::i32 || EltVT == MVT::f32) {
     V2EltIdx0 = 4;
     maskVT = MVT::v4i32;
@@ -1847,6 +1850,15 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       for (unsigned j = 0; j < BytesPerElement; ++j)
         ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,MVT::i8));
     }
+    // For half vectors padd the mask with zeros for the second half.
+    // This is needed because mask is assumed to be full vector elsewhere in 
+    // the SPU backend. 
+    if(VecVT == MVT::v2i32 || VecVT == MVT::v2f32)
+    for( unsigned i = 0; i < 2; ++i )
+    {
+      for (unsigned j = 0; j < BytesPerElement; ++j)
+        ResultMask.push_back(DAG.getConstant(0,MVT::i8));
+    }
 
     SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8,
                                     &ResultMask[0], ResultMask.size());
@@ -1877,6 +1889,7 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
     case MVT::v4f32: n_copies = 4; VT = MVT::f32; break;
     case MVT::v2i64: n_copies = 2; VT = MVT::i64; break;
     case MVT::v2f64: n_copies = 2; VT = MVT::f64; break;
+    case MVT::v2i32: n_copies = 2; VT = MVT::i32; break;
     }
 
     SDValue CValue = DAG.getConstant(CN->getZExtValue(), VT);
@@ -1997,7 +2010,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     // Variable index: Rotate the requested element into slot 0, then replicate
     // slot 0 across the vector
     EVT VecVT = N.getValueType();
-    if (!VecVT.isSimple() || !VecVT.isVector() || !VecVT.is128BitVector()) {
+    if (!VecVT.isSimple() || !VecVT.isVector()) {
       report_fatal_error("LowerEXTRACT_VECTOR_ELT: Must have a simple, 128-bit"
                         "vector type!");
     }

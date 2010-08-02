@@ -607,7 +607,7 @@ class ARegInst<RegisterClass rclass>:
 multiclass AddInstruction {
   def v4i32: AVecInst<v4i32>;
   def v16i8: AVecInst<v16i8>;
-  
+  def v2i32: AVecInst<v2i32>;
   def r32:   ARegInst<R32C>;
 }
 
@@ -671,6 +671,12 @@ def SFvec : RRForm<0b00000010000, (outs VECREG:$rT),
                                   (ins VECREG:$rA, VECREG:$rB),
   "sf\t$rT, $rA, $rB", IntegerOp,
   [(set (v4i32 VECREG:$rT), (sub (v4i32 VECREG:$rB), (v4i32 VECREG:$rA)))]>;
+
+def SF2vec : RRForm<0b00000010000, (outs VECREG:$rT),
+                                  (ins VECREG:$rA, VECREG:$rB),
+  "sf\t$rT, $rA, $rB", IntegerOp,
+  [(set (v2i32 VECREG:$rT), (sub (v2i32 VECREG:$rB), (v2i32 VECREG:$rA)))]>;
+
 
 def SFr32 : RRForm<0b00000010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
   "sf\t$rT, $rA, $rB", IntegerOp,
@@ -829,6 +835,10 @@ def MPYUv4i32:
   MPYUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
            [/* no pattern */]>;
 
+def MPYUv2i32:
+  MPYUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+           [/* no pattern */]>;
+
 def MPYUr16:
   MPYUInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB),
            [(set R32C:$rT, (mul (zext R16C:$rA), (zext R16C:$rB)))]>;
@@ -905,6 +915,10 @@ class MPYHInst<dag OOL, dag IOL, list<dag> pattern>:
          pattern>;
          
 def MPYHv4i32:
+    MPYHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+             [/* no pattern */]>;
+
+def MPYHv2i32:
     MPYHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
              [/* no pattern */]>;
 
@@ -1561,6 +1575,9 @@ def : Pat<(v8i16 (SPUprefslot2vec R16C:$rA)),
 def : Pat<(v4i32 (SPUprefslot2vec R32C:$rA)),
           (ORv4i32_i32 R32C:$rA)>;
 
+def : Pat<(v2i32 (SPUprefslot2vec R32C:$rA)),
+          (ORv4i32_i32 R32C:$rA)>;
+
 def : Pat<(v2i64 (SPUprefslot2vec R64C:$rA)),
           (ORv2i64_i64 R64C:$rA)>;
 
@@ -1580,6 +1597,9 @@ def : Pat<(SPUvec2prefslot (v8i16 VECREG:$rA)),
           (ORi16_v8i16 VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v4i32 VECREG:$rA)),
+          (ORi32_v4i32 VECREG:$rA)>;
+
+def : Pat<(SPUvec2prefslot (v2i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v2i64 VECREG:$rA)),
@@ -2123,6 +2143,8 @@ multiclass ShuffleBytes
   def v8i16_m32 : SHUFBVecInst<v8i16, v4i32>;
   def v4i32     : SHUFBVecInst<v4i32, v16i8>;
   def v4i32_m32 : SHUFBVecInst<v4i32, v4i32>;
+  def v2i32     : SHUFBVecInst<v2i32, v16i8>;
+  def v2i32_m32 : SHUFBVecInst<v2i32, v4i32>;
   def v2i64     : SHUFBVecInst<v2i64, v16i8>;
   def v2i64_m32 : SHUFBVecInst<v2i64, v4i32>;
 
