@@ -105,10 +105,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
     // Determine the output location.
     const char *DepFile;
     if (Output.getType() == types::TY_Dependencies) {
-      if (Output.isPipe())
-        DepFile = "-";
-      else
-        DepFile = Output.getFilename();
+      DepFile = Output.getFilename();
     } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue(Args);
     } else if (A->getOption().matches(options::OPT_M) ||
@@ -1474,9 +1471,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Output.getType() == types::TY_Dependencies) {
     // Handled with other dependency code.
-  } else if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
   } else if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
@@ -1489,9 +1483,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     const InputInfo &II = *it;
     CmdArgs.push_back("-x");
     CmdArgs.push_back(types::getTypeName(II.getType()));
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);
@@ -1591,12 +1583,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
-  if (Input.isPipe()) {
-    CmdArgs.push_back("-");
-  } else {
-    assert(Input.isFilename() && "Invalid input.");
-    CmdArgs.push_back(Input.getFilename());
-  }
+  assert(Input.isFilename() && "Invalid input.");
+  CmdArgs.push_back(Input.getFilename());
 
   const char *Exec = getToolChain().getDriver().getClangProgramPath();
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
@@ -1650,10 +1638,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   else if (Arch == "x86_64" || Arch == "powerpc64")
     CmdArgs.push_back("-m64");
 
-  if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
-  } else if (Output.isFilename()) {
+  if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
   } else {
@@ -1688,9 +1673,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(types::getTypeName(II.getType()));
     }
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       // Don't render as input, we need gcc to do the translations.
@@ -2032,10 +2015,7 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else
-      CmdArgs.push_back(II.getFilename());
+    CmdArgs.push_back(II.getFilename());
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wp_COMMA,
@@ -2088,12 +2068,9 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-traditional-cpp");
 
   ArgStringList OutputArgs;
-  if (Output.isFilename()) {
-    OutputArgs.push_back("-o");
-    OutputArgs.push_back(Output.getFilename());
-  } else {
-    assert(Output.isPipe() && "Unexpected CC1 output.");
-  }
+  assert(Output.isFilename() && "Unexpected CC1 output.");
+  OutputArgs.push_back("-o");
+  OutputArgs.push_back(Output.getFilename());
 
   if (Args.hasArg(options::OPT_E)) {
     AddCPPOptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
@@ -2143,9 +2120,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList OutputArgs;
   if (Output.getType() != types::TY_PCH) {
     OutputArgs.push_back("-o");
-    if (Output.isPipe())
-      OutputArgs.push_back("-");
-    else if (Output.isNothing())
+    if (Output.isNothing())
       OutputArgs.push_back("/dev/null");
     else
       OutputArgs.push_back(Output.getFilename());
@@ -2178,10 +2153,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
         return;
       }
 
-      if (II.isPipe())
-        CmdArgs.push_back("-");
-      else
-        CmdArgs.push_back(II.getFilename());
+      CmdArgs.push_back(II.getFilename());
     }
 
     if (OutputArgsEarly) {
@@ -2253,12 +2225,8 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
-  if (Input.isPipe()) {
-    CmdArgs.push_back("-");
-  } else {
-    assert(Input.isFilename() && "Invalid input.");
-    CmdArgs.push_back(Input.getFilename());
-  }
+  assert(Input.isFilename() && "Invalid input.");
+  CmdArgs.push_back(Input.getFilename());
 
   // asm_final spec is empty.
 
@@ -2641,18 +2609,12 @@ void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                        options::OPT_Xassembler);
 
   CmdArgs.push_back("-o");
-  if (Output.isPipe())
-    CmdArgs.push_back("-");
-  else
-    CmdArgs.push_back(Output.getFilename());
+  CmdArgs.push_back(Output.getFilename());
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else
-      CmdArgs.push_back(II.getFilename());
+    CmdArgs.push_back(II.getFilename());
   }
 
   const char *Exec =
@@ -2688,10 +2650,7 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
-  } else if (Output.isFilename()) {
+  if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
   } else {
@@ -2733,9 +2692,7 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);
@@ -2777,18 +2734,12 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                        options::OPT_Xassembler);
 
   CmdArgs.push_back("-o");
-  if (Output.isPipe())
-    CmdArgs.push_back("-");
-  else
-    CmdArgs.push_back(Output.getFilename());
+  CmdArgs.push_back(Output.getFilename());
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else
-      CmdArgs.push_back(II.getFilename());
+    CmdArgs.push_back(II.getFilename());
   }
 
   const char *Exec =
@@ -2823,10 +2774,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
-  } else if (Output.isFilename()) {
+  if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
   } else {
@@ -2866,9 +2814,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);
@@ -2930,18 +2876,12 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                        options::OPT_Xassembler);
 
   CmdArgs.push_back("-o");
-  if (Output.isPipe())
-    CmdArgs.push_back("-");
-  else
-    CmdArgs.push_back(Output.getFilename());
+  CmdArgs.push_back(Output.getFilename());
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else
-      CmdArgs.push_back(II.getFilename());
+    CmdArgs.push_back(II.getFilename());
   }
 
   const char *Exec =
@@ -2976,10 +2916,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf_i386_fbsd");
   }
 
-  if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
-  } else if (Output.isFilename()) {
+  if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
   } else {
@@ -3017,9 +2954,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);
@@ -3084,18 +3019,12 @@ void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                        options::OPT_Xassembler);
 
   CmdArgs.push_back("-o");
-  if (Output.isPipe())
-    CmdArgs.push_back("-");
-  else
-    CmdArgs.push_back(Output.getFilename());
+  CmdArgs.push_back(Output.getFilename());
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else
-      CmdArgs.push_back(II.getFilename());
+    CmdArgs.push_back(II.getFilename());
   }
 
   const char *Exec =
@@ -3111,10 +3040,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
-  if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
-  } else if (Output.isFilename()) {
+  if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
   } else {
@@ -3140,9 +3066,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);
@@ -3196,18 +3120,12 @@ void dragonfly::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                        options::OPT_Xassembler);
 
   CmdArgs.push_back("-o");
-  if (Output.isPipe())
-    CmdArgs.push_back("-");
-  else
-    CmdArgs.push_back(Output.getFilename());
+  CmdArgs.push_back(Output.getFilename());
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else
-      CmdArgs.push_back(II.getFilename());
+    CmdArgs.push_back(II.getFilename());
   }
 
   const char *Exec =
@@ -3241,10 +3159,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf_i386");
   }
 
-  if (Output.isPipe()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back("-");
-  } else if (Output.isFilename()) {
+  if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
   } else {
@@ -3282,9 +3197,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
-    if (II.isPipe())
-      CmdArgs.push_back("-");
-    else if (II.isFilename())
+    if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);

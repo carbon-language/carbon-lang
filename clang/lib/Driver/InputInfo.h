@@ -17,7 +17,6 @@
 
 namespace clang {
 namespace driver {
-  class PipedJob;
 
 /// InputInfo - Wrapper for information about an input source.
 class InputInfo {
@@ -37,7 +36,6 @@ class InputInfo {
   union {
     const char *Filename;
     const Arg *InputArg;
-    PipedJob *Pipe;
   } Data;
   Class Kind;
   types::ID Type;
@@ -56,15 +54,10 @@ public:
     : Kind(InputArg), Type(_Type), BaseInput(_BaseInput) {
     Data.InputArg = _InputArg;
   }
-  InputInfo(PipedJob *_Pipe, types::ID _Type, const char *_BaseInput)
-    : Kind(Pipe), Type(_Type), BaseInput(_BaseInput) {
-    Data.Pipe = _Pipe;
-  }
 
   bool isNothing() const { return Kind == Nothing; }
   bool isFilename() const { return Kind == Filename; }
   bool isInputArg() const { return Kind == InputArg; }
-  bool isPipe() const { return Kind == Pipe; }
   types::ID getType() const { return Type; }
   const char *getBaseInput() const { return BaseInput; }
 
@@ -76,17 +69,11 @@ public:
     assert(isInputArg() && "Invalid accessor.");
     return *Data.InputArg;
   }
-  PipedJob &getPipe() const {
-    assert(isPipe() && "Invalid accessor.");
-    return *Data.Pipe;
-  }
 
   /// getAsString - Return a string name for this input, for
   /// debugging.
   std::string getAsString() const {
-    if (isPipe())
-      return "(pipe)";
-    else if (isFilename())
+    if (isFilename())
       return std::string("\"") + getFilename() + '"';
     else if (isInputArg())
       return "(input arg)";
