@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+# Variables configured at build time.
+llvm_source_root = "@LLVM_SOURCE_DIR@"
+llvm_obj_root = "@LLVM_BINARY_DIR@"
+
+# Make sure we can find the lit package.
+sys.path.append(os.path.join(llvm_source_root, 'utils', 'lit'))
+
+# Set up some builtin parameters, so that by default the LLVM test suite
+# configuration file knows how to find the object tree.
+builtin_parameters = {
+    'llvm_site_config' : os.path.join(llvm_obj_root, 'test', 'lit.site.cfg')
+    }
+
+if __name__=='__main__':
+    import lit
+    lit.main(builtin_parameters)
