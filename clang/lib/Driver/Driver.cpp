@@ -926,7 +926,6 @@ void Driver::BuildJobs(Compilation &C) const {
     InputInfo II;
     BuildJobsForAction(C, A, &C.getDefaultToolChain(),
                        /*BoundArch*/0,
-                       /*CanAcceptPipe*/ true,
                        /*AtTopLevel*/ true,
                        /*LinkingOutput*/ LinkingOutput,
                        II);
@@ -1024,7 +1023,6 @@ void Driver::BuildJobsForAction(Compilation &C,
                                 const Action *A,
                                 const ToolChain *TC,
                                 const char *BoundArch,
-                                bool CanAcceptPipe,
                                 bool AtTopLevel,
                                 const char *LinkingOutput,
                                 InputInfo &Result) const {
@@ -1051,7 +1049,7 @@ void Driver::BuildJobsForAction(Compilation &C,
       TC = Host->CreateToolChain(C.getArgs(), BAA->getArchName());
 
     BuildJobsForAction(C, *BAA->begin(), TC, BAA->getArchName(),
-                       CanAcceptPipe, AtTopLevel, LinkingOutput, Result);
+                       AtTopLevel, LinkingOutput, Result);
     return;
   }
 
@@ -1073,7 +1071,7 @@ void Driver::BuildJobsForAction(Compilation &C,
       SubJobAtTopLevel = true;
 
     InputInfo II;
-    BuildJobsForAction(C, *it, TC, BoundArch, false,
+    BuildJobsForAction(C, *it, TC, BoundArch,
                        SubJobAtTopLevel, LinkingOutput, II);
     InputInfos.push_back(II);
   }

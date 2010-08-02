@@ -291,7 +291,6 @@ public:
                           const Action *A,
                           const ToolChain *TC,
                           const char *BoundArch,
-                          bool CanAcceptPipe,
                           bool AtTopLevel,
                           const char *LinkingOutput,
                           InputInfo &Result) const;
