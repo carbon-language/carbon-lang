@@ -83,14 +83,14 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();
 
   case PluginAction: {
-
     for (FrontendPluginRegistry::iterator it =
            FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
          it != ie; ++it) {
       if (it->getName() == CI.getFrontendOpts().ActionName) {
-        PluginASTAction* plugin = it->instantiate();
-        plugin->ParseArgs(CI.getFrontendOpts().PluginArgs);
-        return plugin;
+        llvm::OwningPtr<PluginASTAction> P(it->instantiate());
+        if (!P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
+          return 0;
+        return P.take();
       }
     }
 
@@ -287,7 +287,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   // If any timers were active but haven't been destroyed yet, print their
   // results now.  This happens in -disable-free mode.
   llvm::TimerGroup::printAll(llvm::errs());
-  
+
   // When running with -disable-free, don't do any destruction or shutdown.
   if (Clang->getFrontendOpts().DisableFree) {
     if (Clang->getFrontendOpts().ShowStats)

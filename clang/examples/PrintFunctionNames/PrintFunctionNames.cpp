@@ -15,6 +15,7 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/AST.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -29,7 +30,7 @@ public:
         llvm::errs() << "top-level-decl: \"" << ND->getNameAsString() << "\"\n";
     }
   }
-}; 
+};
 
 class PrintFunctionNamesAction : public PluginASTAction {
 protected:
@@ -37,15 +38,26 @@ protected:
     return new PrintFunctionsConsumer();
   }
 
-  bool ParseArgs(const std::vector<std::string>& args) {
-    for (unsigned i=0; i<args.size(); ++i)
+  bool ParseArgs(const CompilerInstance &CI,
+                 const std::vector<std::string>& args) {
+    for (unsigned i = 0, e = args.size(); i != e; ++i) {
       llvm::errs() << "PrintFunctionNames arg = " << args[i] << "\n";
+
+      // Example error handling.
+      if (args[i] == "-an-error") {
+        Diagnostic &D = CI.getDiagnostics();
+        unsigned DiagID = D.getCustomDiagID(
+          Diagnostic::Error, "invalid argument '" + args[i] + "'");
+        D.Report(DiagID);
+        return false;
+      }
+    }
     if (args.size() && args[0] == "help")
       PrintHelp(llvm::errs());
 
     return true;
   }
-  void PrintHelp(llvm::raw_ostream& ros) { 
+  void PrintHelp(llvm::raw_ostream& ros) {
     ros << "Help for PrintFunctionNames plugin goes here\n";
   }
 

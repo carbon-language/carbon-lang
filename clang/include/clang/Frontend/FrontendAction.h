@@ -225,8 +225,14 @@ protected:
                                          llvm::StringRef InFile) = 0;
 
 public:
-  virtual bool ParseArgs(const std::vector<std::string>& arg) = 0;
-  virtual void PrintHelp(llvm::raw_ostream&) = 0;
+  /// ParseArgs - Parse the given plugin command line arguments.
+  ///
+  /// \param CI - The compiler instance, for use in reporting diagnostics.
+  /// \return True if the parsing succeeded; otherwise the plugin will be
+  /// destroyed and no action run. The plugin is responsible for using the
+  /// CompilerInstance's Diagnostic object to report errors.
+  virtual bool ParseArgs(const CompilerInstance &CI,
+                         const std::vector<std::string> &arg) = 0;
 };
 
 /// PreprocessorFrontendAction - Abstract base class to use for preprocessor
