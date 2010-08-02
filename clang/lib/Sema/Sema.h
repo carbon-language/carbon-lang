@@ -523,11 +523,11 @@ public:
   Scope *TUScope;
 
   /// \brief The C++ "std" namespace, where the standard library resides.
-  NamespaceDecl *StdNamespace;
+  LazyDeclPtr StdNamespace;
 
   /// \brief The C++ "std::bad_alloc" class, which is defined by the C++
   /// standard library.
-  CXXRecordDecl *StdBadAlloc;
+  LazyDeclPtr StdBadAlloc;
 
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
@@ -2167,7 +2167,17 @@ public:
                                            AttributeList *AttrList);
   virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace);
 
+  NamespaceDecl *getStdNamespace() const {
+    return cast_or_null<NamespaceDecl>(
+                                 StdNamespace.get(Context.getExternalSource()));
+  }
   NamespaceDecl *getOrCreateStdNamespace();
+
+  CXXRecordDecl *getStdBadAlloc() const {
+    return cast_or_null<CXXRecordDecl>(
+                                  StdBadAlloc.get(Context.getExternalSource()));
+  }
+
   virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
                                         SourceLocation UsingLoc,
                                         SourceLocation NamespcLoc,

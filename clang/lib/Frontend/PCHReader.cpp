@@ -1728,6 +1728,14 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       DynamicClasses.swap(Record);
       break;
 
+    case pch::SEMA_DECL_REFS:
+      if (!SemaDeclRefs.empty()) {
+        Error("duplicate SEMA_DECL_REFS record in PCH file");
+        return Failure;
+      }
+      SemaDeclRefs.swap(Record);
+      break;
+
     case pch::ORIGINAL_FILE_NAME:
       // The primary PCH will be the last to get here, so it will be the one
       // that's used.
@@ -3151,6 +3159,14 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I)
     SemaObj->DynamicClasses.push_back(
                                cast<CXXRecordDecl>(GetDecl(DynamicClasses[I])));
+
+  // Load the offsets of the declarations that Sema references.
+  // They will be lazily deserialized when needed.
+  if (!SemaDeclRefs.empty()) {
+    assert(SemaDeclRefs.size() == 2 && "More decl refs than expected!");
+    SemaObj->StdNamespace = SemaDeclRefs[0];
+    SemaObj->StdBadAlloc = SemaDeclRefs[1];
+  }
 
   // If there are @selector references added them to its pool. This is for
   // implementation of -Wselector.

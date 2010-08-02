@@ -3213,12 +3213,12 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
                CurContext->getLookupContext()->isTranslationUnit()) {
       // This is the first "real" definition of the namespace "std", so update
       // our cache of the "std" namespace to point at this definition.
-      if (StdNamespace) {
+      if (NamespaceDecl *StdNS = getStdNamespace()) {
         // We had already defined a dummy namespace "std". Link this new 
         // namespace definition to the dummy namespace "std".
-        StdNamespace->setNextNamespace(Namespc);
-        StdNamespace->setLocation(IdentLoc);
-        Namespc->setOriginalNamespace(StdNamespace->getOriginalNamespace());
+        StdNS->setNextNamespace(Namespc);
+        StdNS->setLocation(IdentLoc);
+        Namespc->setOriginalNamespace(StdNS->getOriginalNamespace());
       }
       
       // Make our StdNamespace cache point at the first real definition of the
@@ -3320,10 +3320,10 @@ NamespaceDecl *Sema::getOrCreateStdNamespace() {
                                          Context.getTranslationUnitDecl(),
                                          SourceLocation(),
                                          &PP.getIdentifierTable().get("std"));
-    StdNamespace->setImplicit(true);
+    getStdNamespace()->setImplicit(true);
   }
   
-  return StdNamespace;
+  return getStdNamespace();
 }
 
 Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,

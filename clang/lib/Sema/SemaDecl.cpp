@@ -5182,7 +5182,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
 
   if (getLangOptions().CPlusPlus && Name && DC && StdNamespace &&
-      DC->Equals(StdNamespace) && Name->isStr("bad_alloc")) {
+      DC->Equals(getStdNamespace()) && Name->isStr("bad_alloc")) {
     // This is a declaration of or a reference to "std::bad_alloc".
     isStdBadAlloc = true;
     
@@ -5190,7 +5190,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // std::bad_alloc has been implicitly declared (but made invisible to
       // name lookup). Fill in this implicit declaration as the previous 
       // declaration, so that the declarations get chained appropriately.
-      Previous.addDecl(StdBadAlloc);
+      Previous.addDecl(getStdBadAlloc());
     }
   }
 
@@ -5481,7 +5481,7 @@ CreateNewDecl:
       New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name, KWLoc,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
       
-      if (isStdBadAlloc && (!StdBadAlloc || StdBadAlloc->isImplicit()))
+      if (isStdBadAlloc && (!StdBadAlloc || getStdBadAlloc()->isImplicit()))
         StdBadAlloc = cast<CXXRecordDecl>(New);
     } else
       New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name, KWLoc,

@@ -343,7 +343,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
   LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
-  LookupQualifiedName(R, StdNamespace);
+  LookupQualifiedName(R, getStdNamespace());
   RecordDecl *TypeInfoRecordDecl = R.getAsSingle<RecordDecl>();
   if (!TypeInfoRecordDecl)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
@@ -1203,7 +1203,7 @@ void Sema::DeclareGlobalNewDelete() {
                                         SourceLocation(), 
                                       &PP.getIdentifierTable().get("bad_alloc"), 
                                         SourceLocation(), 0);
-    StdBadAlloc->setImplicit(true);
+    getStdBadAlloc()->setImplicit(true);
   }
   
   GlobalNewDeleteDeclared = true;
@@ -1257,7 +1257,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
        Name.getCXXOverloadedOperator() == OO_Array_New);
   if (HasBadAllocExceptionSpec) {
     assert(StdBadAlloc && "Must have std::bad_alloc declared");
-    BadAllocType = Context.getTypeDeclType(StdBadAlloc);
+    BadAllocType = Context.getTypeDeclType(getStdBadAlloc());
   }
   
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0,

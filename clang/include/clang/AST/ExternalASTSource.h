@@ -172,7 +172,7 @@ protected:
 /// The AST node is identified within the external AST source by a
 /// 63-bit offset, and can be retrieved via an operation on the
 /// external AST source itself.
-template<typename T, T* (ExternalASTSource::*Get)(uint64_t Offset)>
+template<typename T, typename OffsT, T* (ExternalASTSource::*Get)(OffsT Offset)>
 struct LazyOffsetPtr {
   /// \brief Either a pointer to an AST node or the offset within the
   /// external AST source where the AST node can be found.
@@ -230,8 +230,12 @@ public:
 };
 
 /// \brief A lazy pointer to a statement.
-typedef LazyOffsetPtr<Stmt, &ExternalASTSource::GetExternalDeclStmt>
+typedef LazyOffsetPtr<Stmt, uint64_t, &ExternalASTSource::GetExternalDeclStmt>
   LazyDeclStmtPtr;
+
+/// \brief A lazy pointer to a declaration.
+typedef LazyOffsetPtr<Decl, uint32_t, &ExternalASTSource::GetExternalDecl>
+  LazyDeclPtr;
 
 } // end namespace clang
 

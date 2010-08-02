@@ -243,7 +243,10 @@ namespace clang {
 
       /// \brief Record code for an update to the TU's lexically contained
       /// declarations.
-      TU_UPDATE_LEXICAL = 28
+      TU_UPDATE_LEXICAL = 28,
+
+      /// \brief Record code for declarations that Sema keeps references of.
+      SEMA_DECL_REFS = 29
     };
 
     /// \brief Record types used within a source manager block.

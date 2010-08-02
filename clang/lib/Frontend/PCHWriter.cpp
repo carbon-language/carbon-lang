@@ -2243,6 +2243,13 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned I = 0, N = SemaRef.DynamicClasses.size(); I != N; ++I)
     AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
 
+  // Build a record containing some declaration references.
+  RecordData SemaDeclRefs;
+  if (SemaRef.StdNamespace || SemaRef.StdBadAlloc) {
+    AddDeclRef(SemaRef.getStdNamespace(), SemaDeclRefs);
+    AddDeclRef(SemaRef.getStdBadAlloc(), SemaDeclRefs);
+  }
+
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
@@ -2322,6 +2329,10 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing dynamic classes declarations.
   if (!DynamicClasses.empty())
     Stream.EmitRecord(pch::DYNAMIC_CLASSES, DynamicClasses);
+
+  // Write the record containing declaration references of Sema.
+  if (!SemaDeclRefs.empty())
+    Stream.EmitRecord(pch::SEMA_DECL_REFS, SemaDeclRefs);
 
   // Some simple statistics
   Record.clear();
