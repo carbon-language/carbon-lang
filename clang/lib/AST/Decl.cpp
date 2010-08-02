@@ -1534,14 +1534,7 @@ void TagDecl::setTypedefForAnonDecl(TypedefDecl *TDD) {
 }
 
 void TagDecl::startDefinition() {
-  if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
-    TagT->decl.setPointer(this);
-    TagT->decl.setInt(1);
-  } else if (InjectedClassNameType *Injected
-               = const_cast<InjectedClassNameType *>(
-                                 TypeForDecl->getAs<InjectedClassNameType>())) {
-    Injected->Decl = cast<CXXRecordDecl>(this);
-  }
+  IsBeingDefined = true;
 
   if (isa<CXXRecordDecl>(this)) {
     CXXRecordDecl *D = cast<CXXRecordDecl>(this);
@@ -1558,17 +1551,7 @@ void TagDecl::completeDefinition() {
          "definition completed but not started");
 
   IsDefinition = true;
-  if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
-    assert(TagT->decl.getPointer() == this &&
-           "Attempt to redefine a tag definition?");
-    TagT->decl.setInt(0);
-  } else if (InjectedClassNameType *Injected
-               = const_cast<InjectedClassNameType *>(
-                                TypeForDecl->getAs<InjectedClassNameType>())) {
-    assert(Injected->Decl == this &&
-           "Attempt to redefine a class template definition?");
-    (void)Injected;
-  }
+  IsBeingDefined = false;
 }
 
 TagDecl* TagDecl::getDefinition() const {

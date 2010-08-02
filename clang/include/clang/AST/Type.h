@@ -2267,14 +2267,9 @@ public:
 };
 
 class TagType : public Type {
-  /// Stores the TagDecl associated with this type. The decl will
-  /// point to the TagDecl that actually defines the entity (or is a
-  /// definition in progress), if there is such a definition. The
-  /// single-bit value will be non-zero when this tag is in the
-  /// process of being defined.
-  mutable llvm::PointerIntPair<TagDecl *, 1> decl;
-  friend class ASTContext;
-  friend class TagDecl;
+  /// Stores the TagDecl associated with this type. The decl may point to any
+  /// TagDecl that declares the entity.
+  TagDecl * decl;
 
 protected:
   TagType(TypeClass TC, const TagDecl *D, QualType can);
@@ -2282,12 +2277,11 @@ protected:
   virtual Linkage getLinkageImpl() const;
   
 public:
-  TagDecl *getDecl() const { return decl.getPointer(); }
+  TagDecl *getDecl() const;
 
   /// @brief Determines whether this type is in the process of being
   /// defined.
-  bool isBeingDefined() const { return decl.getInt(); }
-  void setBeingDefined(bool Def) const { decl.setInt(Def? 1 : 0); }
+  bool isBeingDefined() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
@@ -2580,7 +2574,6 @@ class InjectedClassNameType : public Type {
   QualType InjectedType;
 
   friend class ASTContext; // ASTContext creates these.
-  friend class TagDecl; // TagDecl mutilates the Decl
   friend class PCHReader; // FIXME: ASTContext::getInjectedClassNameType is not
                           // currently suitable for PCH reading, too much
                           // interdependencies.
@@ -2598,7 +2591,7 @@ public:
     return cast<TemplateSpecializationType>(InjectedType.getTypePtr());
   }
 
-  CXXRecordDecl *getDecl() const { return Decl; }
+  CXXRecordDecl *getDecl() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

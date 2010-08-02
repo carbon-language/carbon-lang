@@ -1072,7 +1072,30 @@ void DependentDecltypeType::Profile(llvm::FoldingSetNodeID &ID,
 
 TagType::TagType(TypeClass TC, const TagDecl *D, QualType can)
   : Type(TC, can, D->isDependentType()),
-    decl(const_cast<TagDecl*>(D), 0) {}
+    decl(const_cast<TagDecl*>(D)) {}
+
+static TagDecl *getInterestingTagDecl(TagDecl *decl) {
+  for (TagDecl::redecl_iterator I = decl->redecls_begin(),
+                                E = decl->redecls_end();
+       I != E; ++I) {
+    if (I->isDefinition() || I->isBeingDefined())
+      return *I;
+  }
+  // If there's no definition (not even in progress), return what we have.
+  return decl;
+}
+
+TagDecl *TagType::getDecl() const {
+  return getInterestingTagDecl(decl);
+}
+
+bool TagType::isBeingDefined() const {
+  return getDecl()->isBeingDefined();
+}
+
+CXXRecordDecl *InjectedClassNameType::getDecl() const {
+  return cast<CXXRecordDecl>(getInterestingTagDecl(Decl));
+}
 
 bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());

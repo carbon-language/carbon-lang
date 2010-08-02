@@ -1814,6 +1814,9 @@ private:
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 
+  /// IsBeingDefined - True if this is currently being defined.
+  bool IsBeingDefined : 1;
+
   /// IsEmbeddedInDeclarator - True if this tag declaration is
   /// "embedded" (i.e., defined or declared for the very first time)
   /// in the syntax of a declarator.
@@ -1855,6 +1858,7 @@ protected:
            "EnumDecl not matched with TTK_Enum");
     TagDeclKind = TK;
     IsDefinition = false;
+    IsBeingDefined = false;
     IsEmbeddedInDeclarator = false;
     setPreviousDeclaration(PrevDecl);
   }
@@ -1894,6 +1898,11 @@ public:
   /// isDefinition - Return true if this decl has its body specified.
   bool isDefinition() const {
     return IsDefinition;
+  }
+
+  /// isBeingDefined - Return true if this decl is currently being defined.
+  bool isBeingDefined() const {
+    return IsBeingDefined;
   }
 
   bool isEmbeddedInDeclarator() const {
