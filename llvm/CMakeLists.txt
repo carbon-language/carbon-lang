@@ -222,6 +222,9 @@ if( MSVC )
     MTd)
 
   set(LLVM_USE_CRT "" CACHE STRING "Specify VC++ CRT to use for debug/release configurations.")
+  # Lets the GUI show a drop-down list of possible values, including
+  # an empty string as the default:
+  set_property(CACHE LLVM_USE_CRT PROPERTY STRINGS "";${MSVC_CRT})
   add_llvm_definitions( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS )
   add_llvm_definitions( -D_SCL_SECURE_NO_WARNINGS -DCRT_NONSTDC_NO_WARNINGS )
   add_llvm_definitions( -D_SCL_SECURE_NO_DEPRECATE )
