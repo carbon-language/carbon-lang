@@ -41,8 +41,6 @@ namespace tools {
   public:
     Clang(const ToolChain &TC) : Tool("clang", "clang frontend", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedAssembler() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
@@ -61,8 +59,6 @@ namespace tools {
     ClangAs(const ToolChain &TC) : Tool("clang::as",
                                         "clang integrated assembler", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedAssembler() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
@@ -101,8 +97,6 @@ namespace gcc {
     Preprocess(const ToolChain &TC) : Common("gcc::Preprocess",
                                              "gcc preprocessor", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
@@ -115,8 +109,6 @@ namespace gcc {
     Precompile(const ToolChain &TC) : Common("gcc::Precompile",
                                              "gcc precompile", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
@@ -129,8 +121,6 @@ namespace gcc {
     Compile(const ToolChain &TC) : Common("gcc::Compile",
                                           "gcc frontend", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
@@ -143,8 +133,6 @@ namespace gcc {
     Assemble(const ToolChain &TC) : Common("gcc::Assemble",
                                            "assembler (via gcc)", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
@@ -156,8 +144,6 @@ namespace gcc {
     Link(const ToolChain &TC) : Common("gcc::Link",
                                        "linker (via gcc)", TC) {}
 
-    virtual bool acceptsPipedInput() const { return false; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
@@ -207,8 +193,6 @@ namespace darwin {
     CC1(const char *Name, const char *ShortName,
         const ToolChain &TC) : DarwinTool(Name, ShortName, TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
   };
@@ -243,8 +227,6 @@ namespace darwin {
     Assemble(const ToolChain &TC) : DarwinTool("darwin::Assemble",
                                                "assembler", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -261,8 +243,6 @@ namespace darwin {
   public:
     Link(const ToolChain &TC) : DarwinTool("darwin::Link", "linker", TC) {}
 
-    virtual bool acceptsPipedInput() const { return false; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -277,8 +257,6 @@ namespace darwin {
   public:
     Lipo(const ToolChain &TC) : DarwinTool("darwin::Lipo", "lipo", TC) {}
 
-    virtual bool acceptsPipedInput() const { return false; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -294,8 +272,6 @@ namespace darwin {
     Dsymutil(const ToolChain &TC) : DarwinTool("darwin::Dsymutil",
                                                "dsymutil", TC) {}
 
-    virtual bool acceptsPipedInput() const { return false; }
-    virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -314,8 +290,6 @@ namespace openbsd {
     Assemble(const ToolChain &TC) : Tool("openbsd::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -329,8 +303,6 @@ namespace openbsd {
   public:
     Link(const ToolChain &TC) : Tool("openbsd::Link", "linker", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -349,8 +321,6 @@ namespace freebsd {
     Assemble(const ToolChain &TC) : Tool("freebsd::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -364,8 +334,6 @@ namespace freebsd {
   public:
     Link(const ToolChain &TC) : Tool("freebsd::Link", "linker", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -384,8 +352,6 @@ namespace minix {
     Assemble(const ToolChain &TC) : Tool("minix::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -399,8 +365,6 @@ namespace minix {
   public:
     Link(const ToolChain &TC) : Tool("minix::Link", "linker", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -419,8 +383,6 @@ namespace auroraux {
     Assemble(const ToolChain &TC) : Tool("auroraux::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -434,8 +396,6 @@ namespace auroraux {
   public:
     Link(const ToolChain &TC) : Tool("auroraux::Link", "linker", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -454,8 +414,6 @@ namespace dragonfly {
     Assemble(const ToolChain &TC) : Tool("dragonfly::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
@@ -469,8 +427,6 @@ namespace dragonfly {
   public:
     Link(const ToolChain &TC) : Tool("dragonfly::Link", "linker", TC) {}
 
-    virtual bool acceptsPipedInput() const { return true; }
-    virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,

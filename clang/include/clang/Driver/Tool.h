@@ -49,8 +49,6 @@ public:
 
   const ToolChain &getToolChain() const { return TheToolChain; }
 
-  virtual bool acceptsPipedInput() const = 0;
-  virtual bool canPipeOutput() const = 0;
   virtual bool hasIntegratedAssembler() const { return false; }
   virtual bool hasIntegratedCPP() const = 0;
 

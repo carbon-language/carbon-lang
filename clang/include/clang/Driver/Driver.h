@@ -37,7 +37,6 @@ namespace driver {
   class InputInfo;
   class JobAction;
   class OptTable;
-  class PipedJob;
   class ToolChain;
 
 /// Driver - Encapsulate logic for constructing compilation processes
