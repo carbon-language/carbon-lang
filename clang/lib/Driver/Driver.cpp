@@ -1078,19 +1078,6 @@ void Driver::BuildJobsForAction(Compilation &C,
     InputInfos.push_back(II);
   }
 
-  // Determine if we should output to a pipe.
-  bool OutputToPipe = false;
-  if (CanAcceptPipe && T.canPipeOutput()) {
-    // Some actions default to writing to a pipe if they are the top level phase
-    // and there was no user override.
-    //
-    // FIXME: Is there a better way to handle this?
-    if (AtTopLevel) {
-      if (isa<PreprocessJobAction>(A) && !C.getArgs().hasArg(options::OPT_o))
-        OutputToPipe = true;
-    }
-  }
-
   // Figure out where to put the job (pipes).
   Job *Dest = &C.getJobs();
   assert(!InputInfos[0].isPipe() && "Unrequested pipe!");
@@ -1107,18 +1094,6 @@ void Driver::BuildJobsForAction(Compilation &C,
   // where to put the new job.
   if (JA->getType() == types::TY_Nothing) {
     Result = InputInfo(A->getType(), BaseInput);
-  } else if (OutputToPipe) {
-    // Append to current piped job or create a new one as appropriate.
-    PipedJob *PJ = dyn_cast<PipedJob>(Dest);
-    if (!PJ) {
-      PJ = new PipedJob();
-      // FIXME: Temporary hack so that -ccc-print-bindings work until we have
-      // pipe support. Please remove later.
-      if (!CCCPrintBindings)
-        cast<JobList>(Dest)->addJob(PJ);
-      Dest = PJ;
-    }
-    Result = InputInfo(PJ, A->getType(), BaseInput);
   } else {
     Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel),
                        A->getType(), BaseInput);
@@ -1149,6 +1124,10 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
       return C.addResultFile(FinalOutput->getValue(C.getArgs()));
   }
+
+  // Default to writing to stdout?
+  if (AtTopLevel && isa<PreprocessJobAction>(JA))
+    return "-";
 
   // Output to a temporary file?
   if (!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) {
