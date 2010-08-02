@@ -32,6 +32,21 @@ using namespace llvm::dwarf;
 // DIDescriptor
 //===----------------------------------------------------------------------===//
 
+DIDescriptor::DIDescriptor(const DIFile F) : DbgNode(F.DbgNode) {
+}
+
+DIDescriptor::DIDescriptor(const DISubprogram F) : DbgNode(F.DbgNode) {
+}
+
+DIDescriptor::DIDescriptor(const DILexicalBlock F) : DbgNode(F.DbgNode) {
+}
+
+DIDescriptor::DIDescriptor(const DIVariable F) : DbgNode(F.DbgNode) {
+}
+
+DIDescriptor::DIDescriptor(const DIType F) : DbgNode(F.DbgNode) {
+}
+
 StringRef
 DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)

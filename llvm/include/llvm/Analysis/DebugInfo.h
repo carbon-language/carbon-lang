@@ -36,6 +36,12 @@ namespace llvm {
   class LLVMContext;
   class raw_ostream;
 
+  class DIFile;
+  class DISubprogram;
+  class DILexicalBlock;
+  class DIVariable;
+  class DIType;
+
   /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
   /// This should not be stored in a container, because underly MDNode may
   /// change in certain situations.
@@ -61,6 +67,11 @@ namespace llvm {
   public:
     explicit DIDescriptor() : DbgNode(0) {}
     explicit DIDescriptor(const MDNode *N) : DbgNode(N) {}
+    explicit DIDescriptor(const DIFile F);
+    explicit DIDescriptor(const DISubprogram F);
+    explicit DIDescriptor(const DILexicalBlock F);
+    explicit DIDescriptor(const DIVariable F);
+    explicit DIDescriptor(const DIType F);
 
     bool Verify() const { return DbgNode != 0; }
 
