@@ -161,5 +161,7 @@ declare i32 @nonstruct_callee() nounwind
 define void @struct_caller() nounwind {
 entry:
   call %struct bitcast (i32 ()* @foo to %struct ()*)()
-  ret void
+
+  ; CHECK: Undefined behavior: indirectbr with no destinations
+  indirectbr i8* null, []
 }

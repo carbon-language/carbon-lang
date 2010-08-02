@@ -519,6 +519,9 @@ void Lint::visitVAArgInst(VAArgInst &I) {
 
 void Lint::visitIndirectBrInst(IndirectBrInst &I) {
   visitMemoryReference(I, I.getAddress(), ~0u, 0, 0, MemRef::Branchee);
+
+  Assert1(I.getNumDestinations() != 0,
+          "Undefined behavior: indirectbr with no destinations", &I);
 }
 
 void Lint::visitExtractElementInst(ExtractElementInst &I) {
