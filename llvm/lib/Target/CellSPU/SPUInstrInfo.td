@@ -1584,6 +1584,9 @@ def : Pat<(v2i64 (SPUprefslot2vec R64C:$rA)),
 def : Pat<(v4f32 (SPUprefslot2vec R32FP:$rA)),
           (ORv4f32_f32 R32FP:$rA)>;
 
+def : Pat<(v2f32 (SPUprefslot2vec R32FP:$rA)),
+          (ORv4f32_f32 R32FP:$rA)>;
+
 def : Pat<(v2f64 (SPUprefslot2vec R64FP:$rA)),
           (ORv2f64_f64 R64FP:$rA)>;
 
@@ -1606,6 +1609,9 @@ def : Pat<(SPUvec2prefslot (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v4f32 VECREG:$rA)),
+          (ORf32_v4f32 VECREG:$rA)>;
+
+def : Pat<(SPUvec2prefslot (v2f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v2f64 VECREG:$rA)),
@@ -2150,6 +2156,8 @@ multiclass ShuffleBytes
 
   def v4f32     : SHUFBVecInst<v4f32, v16i8>;
   def v4f32_m32 : SHUFBVecInst<v4f32, v4i32>;
+  def v2f32     : SHUFBVecInst<v2f32, v16i8>;
+  def v2f32_m32 : SHUFBVecInst<v2f32, v4i32>;
 
   def v2f64     : SHUFBVecInst<v2f64, v16i8>;
   def v2f64_m32 : SHUFBVecInst<v2f64, v4i32>;

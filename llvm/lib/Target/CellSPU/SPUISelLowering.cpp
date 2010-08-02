@@ -1624,6 +1624,7 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     SDValue T = DAG.getConstant(unsigned(SplatBits), VT.getVectorElementType());
     return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T, T, T);
   }
+  case MVT::v2f32:
   case MVT::v2i32: {
     return SDValue();
   }

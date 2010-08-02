@@ -33,3 +33,13 @@ define %vec @test_mul(%vec %param)
  ret %vec %1
 }
 
+define %vec @test_splat(float %param ) {
+;CHECK: lqa
+;CHECK: shufb
+  %sv = insertelement <1 x float> undef, float %param, i32 0 
+  %rv = shufflevector <1 x float> %sv, <1 x float> undef, <2 x i32> zeroinitializer 
+;CHECK: bi $lr
+  ret %vec %rv
+}
+
+
