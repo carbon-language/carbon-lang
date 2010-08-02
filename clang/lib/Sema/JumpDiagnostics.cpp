@@ -182,9 +182,19 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
   switch (S->getStmtClass()) {
   case Stmt::LabelStmtClass:
   case Stmt::DefaultStmtClass:
-  case Stmt::CaseStmtClass:
     LabelAndGotoScopes[S] = ParentScope;
     break;
+  case Stmt::CaseStmtClass: {
+    // Specially handle CaseStmts since they can nest each other in the
+    // AST and blow out the stack when we walk them.
+    CaseStmt *CS = cast<CaseStmt>(S);
+    do {
+      LabelAndGotoScopes[CS] = ParentScope;
+      S = CS; // 'CS' is the new current statement (if it isn't already).
+      CS = dyn_cast<CaseStmt>(CS->getSubStmt());
+    } while (CS);
+    break;
+  }
 
   case Stmt::AddrLabelExprClass:
     IndirectJumpTargets.push_back(cast<AddrLabelExpr>(S)->getLabel());
