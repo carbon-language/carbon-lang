@@ -3313,7 +3313,7 @@ void Sema::ActOnFinishNamespaceDef(DeclPtrTy D, SourceLocation RBrace) {
 
 /// \brief Retrieve the special "std" namespace, which may require us to 
 /// implicitly define the namespace.
-NamespaceDecl *Sema::getStdNamespace() {
+NamespaceDecl *Sema::getOrCreateStdNamespace() {
   if (!StdNamespace) {
     // The "std" namespace has not yet been defined, so build one implicitly.
     StdNamespace = NamespaceDecl::Create(Context, 
@@ -3355,7 +3355,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
     if ((!Qualifier || Qualifier->getKind() == NestedNameSpecifier::Global) &&
         NamespcName->isStr("std")) {
       Diag(IdentLoc, diag::ext_using_undefined_std);
-      R.addDecl(getStdNamespace());
+      R.addDecl(getOrCreateStdNamespace());
       R.resolveKind();
     } 
     // Otherwise, attempt typo correction.

@@ -2167,7 +2167,7 @@ public:
                                            AttributeList *AttrList);
   virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace);
 
-  NamespaceDecl *getStdNamespace();
+  NamespaceDecl *getOrCreateStdNamespace();
   virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
                                         SourceLocation UsingLoc,
                                         SourceLocation NamespcLoc,
