@@ -108,7 +108,7 @@ namespace {
 class FunctionComparator {
 public:
   FunctionComparator(TargetData *TD, Function *F1, Function *F2)
-    : TD(TD), F1(F1), F2(F2) {}
+    : F1(F1), F2(F2), TD(TD) {}
 
   // Compare - test whether the two functions have equivalent behaviour.
   bool Compare();
