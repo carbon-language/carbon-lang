@@ -38,9 +38,6 @@ namespace {
 
 /// DarwinHostInfo - Darwin host information implementation.
 class DarwinHostInfo : public HostInfo {
-  /// Darwin version of host.
-  unsigned DarwinVersion[3];
-
   /// Cache of tool chains we have created.
   mutable llvm::DenseMap<unsigned, ToolChain*> ToolChains;
 
@@ -56,15 +53,6 @@ public:
 
 DarwinHostInfo::DarwinHostInfo(const Driver &D, const llvm::Triple& Triple)
   : HostInfo(D, Triple) {
-
-  assert(Triple.getArch() != llvm::Triple::UnknownArch && "Invalid arch!");
-  assert(memcmp(&getOSName()[0], "darwin", 6) == 0 &&
-         "Unknown Darwin platform.");
-  bool HadExtra;
-  if (!Driver::GetReleaseVersion(&getOSName()[6],
-                                 DarwinVersion[0], DarwinVersion[1],
-                                 DarwinVersion[2], HadExtra))
-    D.Diag(clang::diag::err_drv_invalid_darwin_version) << getOSName();
 }
 
 DarwinHostInfo::~DarwinHostInfo() {
@@ -128,10 +116,10 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     const char *UseNewToolChain = ::getenv("CCC_ENABLE_NEW_DARWIN_TOOLCHAIN");
     if (UseNewToolChain || 
         Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
-      TC = new toolchains::DarwinClang(*this, TCTriple, DarwinVersion);
+      TC = new toolchains::DarwinClang(*this, TCTriple);
     } else if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64) {
       // We still use the legacy DarwinGCC toolchain on X86.
-      TC = new toolchains::DarwinGCC(*this, TCTriple, DarwinVersion);
+      TC = new toolchains::DarwinGCC(*this, TCTriple);
     } else
       TC = new toolchains::Darwin_Generic_GCC(*this, TCTriple);
   }

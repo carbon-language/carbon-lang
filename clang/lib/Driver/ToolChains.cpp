@@ -31,13 +31,20 @@ using namespace clang::driver::toolchains;
 
 /// Darwin - Darwin tool chain for i386 and x86_64.
 
-Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
-               const unsigned (&_DarwinVersion)[3])
+Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple)
   : ToolChain(Host, Triple), TargetInitialized(false)
 {
+  // Compute the initial Darwin version based on the host.
+  bool HadExtra;
+  std::string OSName = Triple.getOSName();
+  if (!Driver::GetReleaseVersion(&OSName[6],
+                                 DarwinVersion[0], DarwinVersion[1],
+                                 DarwinVersion[2], HadExtra))
+    getDriver().Diag(clang::diag::err_drv_invalid_darwin_version) << OSName;
+
   llvm::raw_string_ostream(MacosxVersionMin)
-    << "10." << std::max(0, (int)_DarwinVersion[0] - 4) << '.'
-    << _DarwinVersion[1];
+    << "10." << std::max(0, (int)DarwinVersion[0] - 4) << '.'
+    << DarwinVersion[1];
 }
 
 types::ID Darwin::LookupTypeForExtension(const char *Ext) const {
@@ -113,9 +120,8 @@ llvm::StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
   }
 }
 
-DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
-                     const unsigned (&DarwinVersion)[3])
-  : Darwin(Host, Triple, DarwinVersion)
+DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple)
+  : Darwin(Host, Triple)
 {
   // We can only work with 4.2.1 currently.
   GCCVersion[0] = 4;
@@ -326,9 +332,8 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
   }
 }
 
-DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
-                         const unsigned (&DarwinVersion)[3])
-  : Darwin(Host, Triple, DarwinVersion)
+DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple)
+  : Darwin(Host, Triple)
 {
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
   getProgramPaths().push_back(getDriver().getInstalledDir());

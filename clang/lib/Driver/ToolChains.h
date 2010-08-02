@@ -42,6 +42,11 @@ public:
 
 /// Darwin - The base Darwin tool chain.
 class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
+public:
+  /// The host version.
+  unsigned DarwinVersion[3];
+
+private:
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
   /// Whether the information on the target has been initialized.
@@ -65,8 +70,7 @@ private:
   void AddDeploymentTarget(DerivedArgList &Args) const;
 
 public:
-  Darwin(const HostInfo &Host, const llvm::Triple& Triple,
-         const unsigned (&DarwinVersion)[3]);
+  Darwin(const HostInfo &Host, const llvm::Triple& Triple);
   ~Darwin();
 
   /// @name Darwin Specific Toolchain API
@@ -204,8 +208,7 @@ public:
 /// DarwinClang - The Darwin toolchain used by Clang.
 class LLVM_LIBRARY_VISIBILITY DarwinClang : public Darwin {
 public:
-  DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
-              const unsigned (&DarwinVersion)[3]);
+  DarwinClang(const HostInfo &Host, const llvm::Triple& Triple);
 
   /// @name Darwin ToolChain Implementation
   /// {
@@ -228,8 +231,7 @@ class LLVM_LIBRARY_VISIBILITY DarwinGCC : public Darwin {
   std::string ToolChainDir;
 
 public:
-  DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
-            const unsigned (&DarwinVersion)[3]);
+  DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple);
 
   /// @name Darwin ToolChain Implementation
   /// {
