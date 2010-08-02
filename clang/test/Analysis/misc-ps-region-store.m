@@ -1057,3 +1057,12 @@ void rdar_8243408(void) {
   *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
 }
 
+// <rdar://problem/8258814>
+int r8258814()
+{
+  int foo;
+  int * a = &foo;
+  a[0] = 10;
+  // Do not warn that the value of 'foo' is uninitialized.
+  return foo; // no-warning
+}
