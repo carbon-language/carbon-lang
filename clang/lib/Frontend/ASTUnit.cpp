@@ -381,9 +381,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
   // Clear out old caches and data.
   TopLevelDecls.clear();
-  StoredDiagnostics.clear();
   CleanTemporaryFiles();
   PreprocessedEntitiesByFile.clear();
+
+  if (!OverrideMainBuffer)
+    StoredDiagnostics.clear();
   
   // Capture any diagnostics that would otherwise be dropped.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
@@ -409,6 +411,17 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     
     // Keep track of the override buffer;
     SavedMainFileBuffer = OverrideMainBuffer;
+
+    // The stored diagnostic has the old source manager in it; update
+    // the locations to refer into the new source manager. Since we've
+    // been careful to make sure that the source manager's state
+    // before and after are identical, so that we can reuse the source
+    // location itself.
+    for (unsigned I = 0, N = StoredDiagnostics.size(); I != N; ++I) {
+      FullSourceLoc Loc(StoredDiagnostics[I].getLocation(),
+                        getSourceManager());
+      StoredDiagnostics[I].setLocation(Loc);
+    }
   }
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
@@ -430,11 +443,9 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Act->EndSourceFile();
 
   // Remove the overridden buffer we used for the preamble.
-  if (OverrideMainBuffer) {
+  if (OverrideMainBuffer)
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
-    PreprocessorOpts.DisablePCHValidation = true;
-  }
   
   Clang.takeDiagnosticClient();
   
@@ -627,7 +638,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
                NewPreamble.second.first) == 0) {
       // The preamble has not changed. We may be able to re-use the precompiled
       // preamble.
-          
+
       // Check that none of the files used by the preamble have changed.
       bool AnyFileChanged = false;
           
@@ -687,7 +698,19 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
       }
           
       if (!AnyFileChanged) {
-        // Okay! Re-use the precompiled preamble.
+        // Okay! We can re-use the precompiled preamble.
+
+        // Set the state of the diagnostic object to mimic its state
+        // after parsing the preamble.
+        getDiagnostics().Reset();
+        getDiagnostics().setNumWarnings(NumWarningsInPreamble);
+        if (StoredDiagnostics.size() > NumStoredDiagnosticsInPreamble)
+          StoredDiagnostics.erase(
+            StoredDiagnostics.begin() + NumStoredDiagnosticsInPreamble,
+                                  StoredDiagnostics.end());
+
+        // Create a version of the main file buffer that is padded to
+        // buffer size we reserved when creating the preamble.
         return CreatePaddedMainFileBuffer(NewPreamble.first, 
                                           CreatedPreambleBuffer,
                                           PreambleReservedSize,
@@ -718,6 +741,13 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   else
     PreambleReservedSize *= 2;
 
+  // Save the preamble text for later; we'll need to compare against it for
+  // subsequent reparses.
+  Preamble.assign(NewPreamble.first->getBufferStart(), 
+                  NewPreamble.first->getBufferStart() 
+                                                  + NewPreamble.second.first);
+  PreambleEndsAtStartOfLine = NewPreamble.second.second;
+
   llvm::MemoryBuffer *PreambleBuffer
     = llvm::MemoryBuffer::getNewUninitMemBuffer(PreambleReservedSize,
                                                 FrontendOpts.Inputs[0].second);
@@ -726,13 +756,6 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + Preamble.size(), 
          ' ', PreambleReservedSize - Preamble.size() - 1);
   const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = '\n';  
-
-  // Save the preamble text for later; we'll need to compare against it for
-  // subsequent reparses.
-  Preamble.assign(NewPreamble.first->getBufferStart(), 
-                  NewPreamble.first->getBufferStart() 
-                                                  + NewPreamble.second.first);
-  PreambleEndsAtStartOfLine = NewPreamble.second.second;
   
   // Remap the main source file to the preamble buffer.
   llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].second);
@@ -786,7 +809,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   
   // Capture any diagnostics that would otherwise be dropped.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
-                                    Clang.getDiagnostics(),
+                                    getDiagnostics(),
                                     StoredDiagnostics);
   
   // Create a file manager object to provide access to and cache the filesystem.
@@ -833,6 +856,8 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   
   // Keep track of the preamble we precompiled.
   PreambleFile = FrontendOpts.OutputFile;
+  NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
+  NumWarningsInPreamble = getDiagnostics().getNumWarnings();
   
   // Keep track of all of the files that the source manager knows about,
   // so we can verify whether they have changed or not.
@@ -1003,7 +1028,8 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
     OverrideMainBuffer = BuildPrecompiledPreamble();
     
   // Clear out the diagnostics state.
-  getDiagnostics().Reset();
+  if (!OverrideMainBuffer)
+    getDiagnostics().Reset();
   
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  

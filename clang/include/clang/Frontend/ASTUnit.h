@@ -149,7 +149,23 @@ private:
   /// the main file when it has been padded for use with the precompiled
   /// preamble.
   llvm::MemoryBuffer *SavedMainFileBuffer;
-  
+
+  /// \brief The number of warnings that occurred while parsing the preamble.
+  ///
+  /// This value will be used to restore the state of the \c Diagnostic object
+  /// when re-using the precompiled preamble. Note that only the
+  /// number of warnings matters, since we will not save the preamble
+  /// when any errors are present.
+  unsigned NumWarningsInPreamble;
+
+  /// \brief The number of diagnostics that were stored when parsing
+  /// the precompiled preamble.
+  ///
+  /// This value is used to determine how many of the stored
+  /// diagnostics should be retained when reparsing in the presence of
+  /// a precompiled preamble.
+  unsigned NumStoredDiagnosticsInPreamble;
+
   /// \brief The group of timers associated with this translation unit.
   llvm::OwningPtr<llvm::TimerGroup> TimerGroup;  
   

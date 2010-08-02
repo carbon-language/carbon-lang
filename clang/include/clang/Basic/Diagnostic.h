@@ -398,6 +398,10 @@ public:
   unsigned getNumErrorsSuppressed() const { return NumErrorsSuppressed; }
   unsigned getNumWarnings() const { return NumWarnings; }
 
+  void setNumWarnings(unsigned NumWarnings) {
+    this->NumWarnings = NumWarnings;
+  }
+
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message
   /// and level.  If this is the first request for this diagnosic, it is
   /// registered and created, otherwise the existing ID is returned.
@@ -943,7 +947,9 @@ public:
   Diagnostic::Level getLevel() const { return Level; }
   const FullSourceLoc &getLocation() const { return Loc; }
   llvm::StringRef getMessage() const { return Message; }
-  
+
+  void setLocation(FullSourceLoc Loc) { this->Loc = Loc; }
+
   typedef std::vector<CharSourceRange>::const_iterator range_iterator;
   range_iterator range_begin() const { return Ranges.begin(); }
   range_iterator range_end() const { return Ranges.end(); }
