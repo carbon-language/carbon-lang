@@ -12,7 +12,7 @@ DIRS  =
 
 all:: check-local
 
-# 'lit' is the default test runner.Make Dejagnu the default for testing
+# 'lit' is the default test runner.
 check-local:: check-local-lit
 
 # Include other test rules
