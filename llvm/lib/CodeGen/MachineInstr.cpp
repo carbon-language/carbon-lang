@@ -1338,7 +1338,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     for (mmo_iterator i = memoperands_begin(), e = memoperands_end();
          i != e; ++i) {
       OS << **i;
-      if (next(i) != e)
+      if (llvm::next(i) != e)
         OS << " ";
     }
   }

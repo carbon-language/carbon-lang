@@ -59,9 +59,9 @@ TEST(InstructionsTest, BranchInst) {
   EXPECT_EQ(b0->getNumOperands(), 1U);
 
   EXPECT_NE(b0->op_begin(), b0->op_end());
-  EXPECT_EQ(next(b0->op_begin()), b0->op_end());
+  EXPECT_EQ(llvm::next(b0->op_begin()), b0->op_end());
 
-  EXPECT_EQ(next(b0->op_begin()), b0->op_end());
+  EXPECT_EQ(llvm::next(b0->op_begin()), b0->op_end());
 
   const IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);

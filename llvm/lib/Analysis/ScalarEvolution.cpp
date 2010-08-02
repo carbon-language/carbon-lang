@@ -251,7 +251,7 @@ void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   OS << "(";
   for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
     OS << **I;
-    if (next(I) != E)
+    if (llvm::next(I) != E)
       OS << OpStr;
   }
   OS << ")";
@@ -2805,7 +2805,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
     return getUnknown(GEP);
   const SCEV *TotalOffset = getConstant(IntPtrTy, 0);
   gep_type_iterator GTI = gep_type_begin(GEP);
-  for (GetElementPtrInst::op_iterator I = next(GEP->op_begin()),
+  for (GetElementPtrInst::op_iterator I = llvm::next(GEP->op_begin()),
                                       E = GEP->op_end();
        I != E; ++I) {
     Value *Index = *I;

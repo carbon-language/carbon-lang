@@ -1083,7 +1083,7 @@ void LSRUse::print(raw_ostream &OS) const {
   for (SmallVectorImpl<int64_t>::const_iterator I = Offsets.begin(),
        E = Offsets.end(); I != E; ++I) {
     OS << *I;
-    if (next(I) != E)
+    if (llvm::next(I) != E)
       OS << ',';
   }
   OS << '}';
@@ -1987,7 +1987,7 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
   for (SmallSetVector<const SCEV *, 4>::const_iterator
        I = Strides.begin(), E = Strides.end(); I != E; ++I)
     for (SmallSetVector<const SCEV *, 4>::const_iterator NewStrideIter =
-         next(I); NewStrideIter != E; ++NewStrideIter) {
+         llvm::next(I); NewStrideIter != E; ++NewStrideIter) {
       const SCEV *OldStride = *I;
       const SCEV *NewStride = *NewStrideIter;
 
@@ -2300,7 +2300,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
       SmallVector<const SCEV *, 8> InnerAddOps
         (         ((const SmallVector<const SCEV *, 8> &)AddOps).begin(), J);
       InnerAddOps.append
-        (next(J), ((const SmallVector<const SCEV *, 8> &)AddOps).end());
+        (llvm::next(J), ((const SmallVector<const SCEV *, 8> &)AddOps).end());
 
       // Don't leave just a constant behind in a register if the constant could
       // be folded into an immediate field.
