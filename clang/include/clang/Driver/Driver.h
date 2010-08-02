@@ -206,16 +206,20 @@ public:
   /// BuildActions - Construct the list of actions to perform for the
   /// given arguments, which are only done for a single architecture.
   ///
+  /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildActions(const ArgList &Args, ActionList &Actions) const;
+  void BuildActions(const ToolChain &TC, const ArgList &Args,
+                    ActionList &Actions) const;
 
   /// BuildUniversalActions - Construct the list of actions to perform
   /// for the given arguments, which may require a universal build.
   ///
+  /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildUniversalActions(const ArgList &Args, ActionList &Actions) const;
+  void BuildUniversalActions(const ToolChain &TC, const ArgList &Args,
+                             ActionList &Actions) const;
 
   /// BuildJobs - Bind actions to concrete tools and translate
   /// arguments to form the list of jobs to run.

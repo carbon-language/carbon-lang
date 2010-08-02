@@ -250,14 +250,12 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   if (!HandleImmediateArgs(*C))
     return C;
 
-  // Construct the list of abstract actions to perform for this compilation. We
-  // avoid passing a Compilation here simply to enforce the abstraction that
-  // pipelining is not host or toolchain dependent (other than the driver driver
-  // test).
+  // Construct the list of abstract actions to perform for this compilation.
   if (Host->useDriverDriver())
-    BuildUniversalActions(C->getArgs(), C->getActions());
+    BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
+                          C->getActions());
   else
-    BuildActions(C->getArgs(), C->getActions());
+    BuildActions(C->getDefaultToolChain(), C->getArgs(), C->getActions());
 
   if (CCCPrintActions) {
     PrintActions(*C);
@@ -527,7 +525,8 @@ static bool ContainsCompileAction(const Action *A) {
   return false;
 }
 
-void Driver::BuildUniversalActions(const ArgList &Args,
+void Driver::BuildUniversalActions(const ToolChain &TC,
+                                   const ArgList &Args,
                                    ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building universal build actions");
   // Collect the list of architectures. Duplicates are allowed, but should only
@@ -572,7 +571,7 @@ void Driver::BuildUniversalActions(const ArgList &Args,
   }
 
   ActionList SingleActions;
-  BuildActions(Args, SingleActions);
+  BuildActions(TC, Args, SingleActions);
 
   // Add in arch bindings for every top level action, as well as lipo and
   // dsymutil steps if needed.
@@ -622,7 +621,8 @@ void Driver::BuildUniversalActions(const ArgList &Args,
   }
 }
 
-void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
+void Driver::BuildActions(const ToolChain &TC, const ArgList &Args,
+                          ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
   // Start by constructing the list of inputs and their types.
 
