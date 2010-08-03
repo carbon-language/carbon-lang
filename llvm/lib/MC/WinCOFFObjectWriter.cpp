@@ -617,7 +617,8 @@ void WinCOFFObjectWriter::WriteObject(const MCAssembler &Asm,
       COFFSection *coff_section = SectionMap[SymbolData->Fragment->getParent()];
 
       coff_symbol->Data.SectionNumber = coff_section->Number;
-      coff_symbol->Data.Value = Layout.getFragmentOffset(SymbolData->Fragment);
+      coff_symbol->Data.Value = Layout.getFragmentOffset(SymbolData->Fragment)
+                              + SymbolData->Offset;
     }
 
     // Update auxiliary symbol info.
