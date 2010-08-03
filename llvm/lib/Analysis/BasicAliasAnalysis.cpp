@@ -427,11 +427,11 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
   return NoAA::getModRefInfo(CS1, CS2);
 }
 
-/// GetIndiceDifference - Dest and Src are the variable indices from two
+/// GetIndexDifference - Dest and Src are the variable indices from two
 /// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
 /// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
 /// difference between the two pointers. 
-static void GetIndiceDifference(
+static void GetIndexDifference(
                       SmallVectorImpl<std::pair<const Value*, int64_t> > &Dest,
                 const SmallVectorImpl<std::pair<const Value*, int64_t> > &Src) {
   if (Src.empty()) return;
@@ -515,7 +515,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
     // Subtract the GEP2 pointer from the GEP1 pointer to find out their
     // symbolic difference.
     GEP1BaseOffset -= GEP2BaseOffset;
-    GetIndiceDifference(GEP1VariableIndices, GEP2VariableIndices);
+    GetIndexDifference(GEP1VariableIndices, GEP2VariableIndices);
     
   } else {
     // Check to see if these two pointers are related by the getelementptr
