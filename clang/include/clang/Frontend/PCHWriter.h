@@ -448,6 +448,10 @@ class PCHGenerator : public SemaConsumer {
   llvm::BitstreamWriter Stream;
   PCHWriter Writer;
 
+protected:
+  PCHWriter &getWriter() { return Writer; }
+  const PCHWriter &getWriter() const { return Writer; }
+
 public:
   PCHGenerator(const Preprocessor &PP, bool Chaining,
                const char *isysroot, llvm::raw_ostream *Out);

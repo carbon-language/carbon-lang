@@ -309,7 +309,7 @@ public:
       // fundamental problem in the parser right now.
       if (isa<ObjCMethodDecl>(D))
         continue;
-      Unit.getTopLevelDecls().push_back(D);
+      Unit.addTopLevelDecl(D);
     }
   }
 };
@@ -331,6 +331,7 @@ public:
 
 class PrecompilePreambleConsumer : public PCHGenerator {
   ASTUnit &Unit;
+  std::vector<Decl *> TopLevelDecls;
 
 public:
   PrecompilePreambleConsumer(ASTUnit &Unit,
@@ -338,7 +339,7 @@ public:
                              const char *isysroot, llvm::raw_ostream *Out)
     : PCHGenerator(PP, Chaining, isysroot, Out), Unit(Unit) { }
 
-  void HandleTopLevelDecl(DeclGroupRef D) {
+  virtual void HandleTopLevelDecl(DeclGroupRef D) {
     for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it) {
       Decl *D = *it;
       // FIXME: Currently ObjC method declarations are incorrectly being
@@ -347,7 +348,20 @@ public:
       // fundamental problem in the parser right now.
       if (isa<ObjCMethodDecl>(D))
         continue;
-      Unit.getTopLevelDecls().push_back(D);
+      TopLevelDecls.push_back(D);
+    }
+  }
+
+  virtual void HandleTranslationUnit(ASTContext &Ctx) {
+    PCHGenerator::HandleTranslationUnit(Ctx);
+    if (!Unit.getDiagnostics().hasErrorOccurred()) {
+      // Translate the top-level declarations we captured during
+      // parsing into declaration IDs in the precompiled
+      // preamble. This will allow us to deserialize those top-level
+      // declarations when requested.
+      for (unsigned I = 0, N = TopLevelDecls.size(); I != N; ++I)
+        Unit.addTopLevelDeclFromPreamble(
+                                      getWriter().getDeclID(TopLevelDecls[I]));
     }
   }
 };
@@ -855,7 +869,9 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   
   // Clear out old caches and data.
   StoredDiagnostics.clear();
-  
+  TopLevelDecls.clear();
+  TopLevelDeclsInPreamble.clear();
+
   // Capture any diagnostics that would otherwise be dropped.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
                                     getDiagnostics(),
@@ -867,7 +883,6 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   // Create the source manager.
   Clang.setSourceManager(new SourceManager(getDiagnostics()));
   
-  // FIXME: Eventually, we'll have to track top-level declarations here, too.
   llvm::OwningPtr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
@@ -889,7 +904,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   Clang.takeDiagnosticClient();
   Clang.takeInvocation();
   
-  if (Diagnostics->getNumErrors() > 0) {
+  if (Diagnostics->hasErrorOccurred()) {
     // There were errors parsing the preamble, so no precompiled header was
     // generated. Forget that we even tried.
     // FIXME: Should we leave a note for ourselves to try again?
@@ -899,7 +914,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
       delete NewPreamble.first;
     if (PreambleTimer)
       PreambleTimer->stopTimer();
-
+    TopLevelDeclsInPreamble.clear();
     return 0;
   }
   
@@ -933,6 +948,31 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
                                     CreatedPreambleBuffer,
                                     PreambleReservedSize,
                                     FrontendOpts.Inputs[0].second);
+}
+
+void ASTUnit::RealizeTopLevelDeclsFromPreamble() {
+  std::vector<Decl *> Resolved;
+  Resolved.reserve(TopLevelDeclsInPreamble.size());
+  ExternalASTSource &Source = *getASTContext().getExternalSource();
+  for (unsigned I = 0, N = TopLevelDeclsInPreamble.size(); I != N; ++I) {
+    // Resolve the declaration ID to an actual declaration, possibly
+    // deserializing the declaration in the process.
+    Decl *D = Source.GetExternalDecl(TopLevelDeclsInPreamble[I]);
+    if (D)
+      Resolved.push_back(D);
+  }
+  TopLevelDeclsInPreamble.clear();
+  TopLevelDecls.insert(TopLevelDecls.begin(), Resolved.begin(), Resolved.end());
+}
+
+unsigned ASTUnit::getMaxPCHLevel() const {
+  if (!getOnlyLocalDecls())
+    return Decl::MaxPCHLevel;
+
+  unsigned Result = 0;
+  if (isMainFileAST() || SavedMainFileBuffer)
+    ++Result;
+  return Result;
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,

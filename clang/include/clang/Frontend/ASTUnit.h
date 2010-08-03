@@ -14,12 +14,13 @@
 #ifndef LLVM_CLANG_FRONTEND_ASTUNIT_H
 #define LLVM_CLANG_FRONTEND_ASTUNIT_H
 
+#include "clang/Index/ASTLocation.h"
+#include "clang/Frontend/PCHBitCodes.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "clang/Basic/FileManager.h"
-#include "clang/Index/ASTLocation.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/Path.h"
@@ -168,7 +169,11 @@ private:
 
   /// \brief The group of timers associated with this translation unit.
   llvm::OwningPtr<llvm::TimerGroup> TimerGroup;  
-  
+
+  /// \brief A list of the PCH ID numbers for each of the top-level
+  /// declarations parsed within the precompiled preamble.
+  std::vector<pch::DeclID> TopLevelDeclsInPreamble;
+
   /// \brief The timers we've created from the various parses, reparses, etc.
   /// involved in this translation unit.
   std::vector<llvm::Timer *> Timers;
@@ -185,7 +190,8 @@ private:
   ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer);
   
   llvm::MemoryBuffer *BuildPrecompiledPreamble();
-  
+  void RealizeTopLevelDeclsFromPreamble();
+
 public:
   class ConcurrencyCheck {
     volatile ASTUnit &Self;
@@ -236,16 +242,48 @@ public:
                         
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
 
+  /// \brief Retrieve the maximum PCH level of declarations that a
+  /// traversal of the translation unit should consider.
+  unsigned getMaxPCHLevel() const;
+
   void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }
   ASTLocation getLastASTLocation() const { return LastLoc; }
 
-  std::vector<Decl*> &getTopLevelDecls() {
+  typedef std::vector<Decl *>::iterator top_level_iterator;
+
+  top_level_iterator top_level_begin() {
     assert(!isMainFileAST() && "Invalid call for AST based ASTUnit!");
-    return TopLevelDecls;
+    if (!TopLevelDeclsInPreamble.empty())
+      RealizeTopLevelDeclsFromPreamble();
+    return TopLevelDecls.begin();
   }
-  const std::vector<Decl*> &getTopLevelDecls() const {
+
+  top_level_iterator top_level_end() {
     assert(!isMainFileAST() && "Invalid call for AST based ASTUnit!");
-    return TopLevelDecls;
+    if (!TopLevelDeclsInPreamble.empty())
+      RealizeTopLevelDeclsFromPreamble();
+    return TopLevelDecls.end();
+  }
+
+  std::size_t top_level_size() const {
+    assert(!isMainFileAST() && "Invalid call for AST based ASTUnit!");
+    return TopLevelDeclsInPreamble.size() + TopLevelDecls.size();
+  }
+
+  bool top_level_empty() const {
+    assert(!isMainFileAST() && "Invalid call for AST based ASTUnit!");
+    return TopLevelDeclsInPreamble.empty() && TopLevelDecls.empty();
+  }
+
+  /// \brief Add a new top-level declaration.
+  void addTopLevelDecl(Decl *D) {
+    TopLevelDecls.push_back(D);
+  }
+
+  /// \brief Add a new top-level declaration, identified by its ID in
+  /// the precompiled preamble.
+  void addTopLevelDeclFromPreamble(pch::DeclID D) {
+    TopLevelDeclsInPreamble.push_back(D);
   }
 
   /// \brief Retrieve the mapping from File IDs to the preprocessed entities

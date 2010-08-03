@@ -478,10 +478,10 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
     ASTUnit *CXXUnit = getCursorASTUnit(Cursor);
     if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls() &&
         RegionOfInterest.isInvalid()) {
-      const std::vector<Decl*> &TLDs = CXXUnit->getTopLevelDecls();
-      for (std::vector<Decl*>::const_iterator it = TLDs.begin(),
-           ie = TLDs.end(); it != ie; ++it) {
-        if (Visit(MakeCXCursor(*it, CXXUnit), true))
+      for (ASTUnit::top_level_iterator TL = CXXUnit->top_level_begin(),
+                                    TLEnd = CXXUnit->top_level_end();
+           TL != TLEnd; ++TL) {
+        if (Visit(MakeCXCursor(*TL, CXXUnit), true))
           return true;
       }
     } else if (VisitDeclContext(
@@ -1636,18 +1636,8 @@ unsigned clang_visitChildren(CXCursor parent,
                              CXClientData client_data) {
   ASTUnit *CXXUnit = getCursorASTUnit(parent);
 
-  unsigned PCHLevel = Decl::MaxPCHLevel;
-
-  // Set the PCHLevel to filter out unwanted decls if requested.
-  if (CXXUnit->getOnlyLocalDecls()) {
-    PCHLevel = 0;
-
-    // If the main input was an AST, bump the level.
-    if (CXXUnit->isMainFileAST())
-      ++PCHLevel;
-  }
-
-  CursorVisitor CursorVis(CXXUnit, visitor, client_data, PCHLevel);
+  CursorVisitor CursorVis(CXXUnit, visitor, client_data, 
+                          CXXUnit->getMaxPCHLevel());
   return CursorVis.VisitChildren(parent);
 }
 
