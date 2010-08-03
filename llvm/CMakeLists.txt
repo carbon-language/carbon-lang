@@ -3,8 +3,18 @@
 project(LLVM)
 cmake_minimum_required(VERSION 2.8)
 
+# Add path for custom modules
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
+  )
+
+set(PACKAGE_VERSION "2.8")
+include(VersionFromVCS)
+add_version_info_from_vcs(PACKAGE_VERSION)
+
 set(PACKAGE_NAME llvm)
-set(PACKAGE_VERSION 2.8svn)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
@@ -123,13 +133,6 @@ configure_file(
   )
 
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
-
-# Add path for custom modules
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  "${LLVM_MAIN_SRC_DIR}/cmake"
-  "${LLVM_MAIN_SRC_DIR}/cmake/modules"
-  )
 
 include(AddLLVMDefinitions)
 
