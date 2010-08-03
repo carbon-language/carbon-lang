@@ -420,33 +420,34 @@ def VTOUIZS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
 
 // And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
 // For disassembly only.
-
+let Uses = [FPSCR] in {
 def VTOSIRD : AVConv1I<0b11101, 0b11, 0b1101, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  IIC_fpCVTDI, "vcvtr", ".s32.f64\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (int_arm_vcvtr (f64 DPR:$a)))]> {
   let Inst{7} = 0; // Z bit
 }
 
 def VTOSIRS : AVConv1In<0b11101, 0b11, 0b1101, 0b1010,
                         (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpCVTSI, "vcvtr", ".s32.f32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (int_arm_vcvtr SPR:$a))]> {
   let Inst{7} = 0; // Z bit
 }
 
 def VTOUIRD : AVConv1I<0b11101, 0b11, 0b1100, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  IIC_fpCVTDI, "vcvtr", ".u32.f64\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (int_arm_vcvtru (f64 DPR:$a)))]> {
   let Inst{7} = 0; // Z bit
 }
 
 def VTOUIRS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
                         (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpCVTSI, "vcvtr", ".u32.f32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (int_arm_vcvtru SPR:$a))]> {
   let Inst{7} = 0; // Z bit
+}
 }
 
 // Convert between floating-point and fixed-point
@@ -654,32 +655,27 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
 }
 
 // FPSCR <-> GPR (for disassembly only)
-
-let neverHasSideEffects = 1 in {
-let Uses = [FPSCR] in {
-def VMRS : VFPAI<(outs GPR:$dst), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
-                 "\t$dst, fpscr",
-             [/* For disassembly only; pattern left blank */]> {
+let hasSideEffects = 1, Uses = [FPSCR] in
+def VMRS : VFPAI<(outs GPR:$dst), (ins), VFPMiscFrm, IIC_fpSTAT,
+                 "vmrs", "\t$dst, fpscr",
+             [(set GPR:$dst, (int_arm_get_fpscr))]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
   let Inst{4}     = 1;
 }
-}
 
-let Defs = [FPSCR] in {
-def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT, "vmsr",
-                 "\tfpscr, $src",
-             [/* For disassembly only; pattern left blank */]> {
+let Defs = [FPSCR] in 
+def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT, 
+                 "vmsr", "\tfpscr, $src",
+             [(int_arm_set_fpscr GPR:$src)]> {
   let Inst{27-20} = 0b11101110;
   let Inst{19-16} = 0b0001;
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
   let Inst{4}     = 1;
 }
-}
-} // neverHasSideEffects
 
 // Materialize FP immediates. VFP3 only.
 let isReMaterializable = 1 in {

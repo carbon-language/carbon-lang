@@ -36,6 +36,20 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
 }
 
 //===----------------------------------------------------------------------===//
+// VFP
+
+let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
+  def int_arm_get_fpscr : GCCBuiltin<"__builtin_arm_get_fpscr">, 
+                         Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_arm_set_fpscr : GCCBuiltin<"__builtin_arm_set_fpscr">, 
+                         Intrinsic<[], [llvm_i32_ty], [IntrWriteMem]>;
+  def int_arm_vcvtr     : Intrinsic<[llvm_float_ty], [llvm_anyfloat_ty],
+                                    [IntrNoMem]>;
+  def int_arm_vcvtru    : Intrinsic<[llvm_float_ty], [llvm_anyfloat_ty],
+                                    [IntrNoMem]>;
+}
+
+//===----------------------------------------------------------------------===//
 // Advanced SIMD (NEON)
 
 let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".

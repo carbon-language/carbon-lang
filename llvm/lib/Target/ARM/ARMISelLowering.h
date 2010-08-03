@@ -82,7 +82,7 @@ namespace llvm {
 
       MEMBARRIER,   // Memory barrier
       SYNCBARRIER,  // Memory sync barrier
-
+      
       VCEQ,         // Vector compare equal.
       VCGE,         // Vector compare greater than or equal.
       VCGEU,        // Vector compare unsigned greater than or equal.
@@ -342,6 +342,7 @@ namespace llvm {
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,

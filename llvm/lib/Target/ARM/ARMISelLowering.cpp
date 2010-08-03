@@ -474,10 +474,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only())
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
     // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR
     // iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
+    setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
+  }
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
@@ -2764,6 +2766,24 @@ SDValue ARMTargetLowering::LowerShiftLeftParts(SDValue Op,
   return DAG.getMergeValues(Ops, 2, dl);
 }
 
+SDValue ARMTargetLowering::LowerFLT_ROUNDS_(SDValue Op, 
+                                            SelectionDAG &DAG) const {
+  // The rounding mode is in bits 23:22 of the FPSCR.
+  // The ARM rounding mode value to FLT_ROUNDS mapping is 0->1, 1->2, 2->3, 3->0
+  // The formula we use to implement this is (((FPSCR + 1 << 22) >> 22) & 3)
+  // so that the shift + and get folded into a bitfield extract.
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue FPSCR = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i32,
+                              DAG.getConstant(Intrinsic::arm_get_fpscr,
+                                              MVT::i32));
+  SDValue FltRounds = DAG.getNode(ISD::ADD, dl, MVT::i32, FPSCR, 
+                                  DAG.getConstant(1U << 22, MVT::i32));
+  SDValue RMODE = DAG.getNode(ISD::SRL, dl, MVT::i32, FltRounds,
+                              DAG.getConstant(22, MVT::i32));
+  return DAG.getNode(ISD::AND, dl, MVT::i32, RMODE, 
+                     DAG.getConstant(3, MVT::i32));
+}
+
 static SDValue LowerCTTZ(SDNode *N, SelectionDAG &DAG,
                          const ARMSubtarget *ST) {
   EVT VT = N->getValueType(0);
@@ -3705,6 +3725,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
+  case ISD::FLT_ROUNDS_: return LowerFLT_ROUNDS_(Op, DAG);
   }
   return SDValue();
 }
