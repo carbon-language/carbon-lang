@@ -3133,13 +3133,15 @@ void PCHReader::InitializeSema(Sema &S) {
 
   // If there were any VTable uses, deserialize the information and add it
   // to Sema's vector and map of VTable uses.
-  unsigned Idx = 0;
-  for (unsigned I = 0, N = VTableUses[Idx++]; I != N; ++I) {
-    CXXRecordDecl *Class = cast<CXXRecordDecl>(GetDecl(VTableUses[Idx++]));
-    SourceLocation Loc = ReadSourceLocation(VTableUses, Idx);
-    bool DefinitionRequired = VTableUses[Idx++];
-    SemaObj->VTableUses.push_back(std::make_pair(Class, Loc));
-    SemaObj->VTablesUsed[Class] = DefinitionRequired;
+  if (!VTableUses.empty()) {
+    unsigned Idx = 0;
+    for (unsigned I = 0, N = VTableUses[Idx++]; I != N; ++I) {
+      CXXRecordDecl *Class = cast<CXXRecordDecl>(GetDecl(VTableUses[Idx++]));
+      SourceLocation Loc = ReadSourceLocation(VTableUses, Idx);
+      bool DefinitionRequired = VTableUses[Idx++];
+      SemaObj->VTableUses.push_back(std::make_pair(Class, Loc));
+      SemaObj->VTablesUsed[Class] = DefinitionRequired;
+    }
   }
 
   // If there were any dynamic classes declarations, deserialize them
