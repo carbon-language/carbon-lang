@@ -94,6 +94,11 @@ public:
   virtual AliasResult alias(const Value *V1, unsigned V1Size,
                             const Value *V2, unsigned V2Size);
 
+  /// alias - A convenience wrapper for the case where the sizes are unknown.
+  AliasResult alias(const Value *V1, const Value *V2) {
+    return alias(V1, ~0u, V2, ~0u);
+  }
+
   /// isNoAlias - A trivial helper function to check to see if the specified
   /// pointers are no-alias.
   bool isNoAlias(const Value *V1, unsigned V1Size,

@@ -195,8 +195,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // FIXME: This only considers queries directly on the invariant-tagged
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
-        AliasAnalysis::AliasResult R = 
-          AA->alias(II->getArgOperand(2), ~0U, MemPtr, ~0U);
+        AliasAnalysis::AliasResult R = AA->alias(II->getArgOperand(2), MemPtr);
         if (R == AliasAnalysis::MustAlias) {
           InvariantTag = II->getArgOperand(0);
           continue;
@@ -208,8 +207,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // FIXME: This only considers queries directly on the invariant-tagged
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
-        AliasAnalysis::AliasResult R =
-          AA->alias(II->getArgOperand(1), ~0U, MemPtr, ~0U);
+        AliasAnalysis::AliasResult R = AA->alias(II->getArgOperand(1), MemPtr);
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(II);
       }

@@ -246,8 +246,7 @@ void Lint::visitCallSite(CallSite CS) {
         // where nothing is known.
         if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy())
           for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI) {
-            Assert1(AI == BI ||
-                    AA->alias(*AI, ~0u, *BI, ~0u) != AliasAnalysis::MustAlias,
+            Assert1(AI == BI || AA->alias(*AI, *BI) != AliasAnalysis::MustAlias,
                     "Unusual: noalias argument aliases another argument", &I);
           }
 
