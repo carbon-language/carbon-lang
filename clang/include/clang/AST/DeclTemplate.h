@@ -613,6 +613,32 @@ public:
       const_cast<RedeclarableTemplateDecl*>(this)->getPreviousDeclaration();
   }
 
+  /// \brief Retrieve the first declaration of this template, or itself
+  /// if this the first one.
+  RedeclarableTemplateDecl *getFirstDeclaration() {
+    return getCanonicalDecl();
+  }
+
+  /// \brief Retrieve the first declaration of this template, or itself
+  /// if this the first one.
+  const RedeclarableTemplateDecl *getFirstDeclaration() const {
+    return
+      const_cast<RedeclarableTemplateDecl*>(this)->getFirstDeclaration();
+  }
+
+  /// \brief Retrieve the most recent declaration of this template, or itself
+  /// if this the most recent one.
+  RedeclarableTemplateDecl *getMostRecentDeclaration() {
+    return getCommonPtr()->Latest;
+  }
+
+  /// \brief Retrieve the most recent declaration of this template, or itself
+  /// if this the most recent one.
+  const RedeclarableTemplateDecl *getMostRecentDeclaration() const {
+    return
+      const_cast<RedeclarableTemplateDecl*>(this)->getMostRecentDeclaration();
+  }
+
   /// \brief Determines whether this template was a specialization of a 
   /// member template.
   ///
