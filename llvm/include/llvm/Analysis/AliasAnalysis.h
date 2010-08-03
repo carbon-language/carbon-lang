@@ -18,12 +18,9 @@
 //
 // This API represents memory as a (Pointer, Size) pair.  The Pointer component
 // specifies the base memory address of the region, the Size specifies how large
-// of an area is being queried.  If Size is 0, two pointers only alias if they
-// are exactly equal.  If size is greater than zero, but small, the two pointers
-// alias if the areas pointed to overlap.  If the size is very large (ie, ~0U),
-// then the two pointers alias if they may be pointing to components of the same
-// memory object.  Pointers that point to two completely different objects in
-// memory never alias, regardless of the value of the Size component.
+// of an area is being queried, or UnknownSize if the size is not known.
+// Pointers that point to two completely different objects in memory never
+// alias, regardless of the value of the Size component.
 //
 //===----------------------------------------------------------------------===//
 
@@ -88,6 +85,9 @@ public:
   /// _might_ alias.  This enum is designed so you can do things like:
   ///     if (AA.alias(P1, P2)) { ... }
   /// to check to see if two pointers might alias.
+  ///
+  /// See docs/AliasAnalysis.html for more information on the specific meanings
+  /// of these values.
   ///
   enum AliasResult { NoAlias = 0, MayAlias = 1, MustAlias = 2 };
 
