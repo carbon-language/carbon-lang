@@ -78,8 +78,17 @@ AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(LoadInst *L, Value *P, unsigned Size) {
-  return alias(L->getOperand(0), getTypeStoreSize(L->getType()),
-               P, Size) ? Ref : NoModRef;
+  // If the load address doesn't alias the given address, it doesn't read
+  // or write the specified memory.
+  if (!alias(L->getOperand(0), getTypeStoreSize(L->getType()), P, Size))
+    return NoModRef;
+
+  // Be conservative in the face of volatile.
+  if (L->isVolatile())
+    return ModRef;
+
+  // Otherwise, a load just reads.
+  return Ref;
 }
 
 AliasAnalysis::ModRefResult
@@ -90,9 +99,17 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
              getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
     return NoModRef;
 
+  // Be conservative in the face of volatile.
+  if (S->isVolatile())
+    return ModRef;
+
   // If the pointer is a pointer to constant memory, then it could not have been
   // modified by this store.
-  return pointsToConstantMemory(P) ? NoModRef : Mod;
+  if (pointsToConstantMemory(P))
+    return NoModRef;
+
+  // Otherwise, a store just writes.
+  return Mod;
 }
 
 AliasAnalysis::ModRefBehavior
