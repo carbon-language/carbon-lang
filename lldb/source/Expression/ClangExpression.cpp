@@ -245,6 +245,7 @@ ClangExpression::CreateCompilerInstance (bool &IsAST)
     
     // Set CodeGen options
     m_clang_ap->getCodeGenOpts().EmitDeclMetadata = true;
+    m_clang_ap->getCodeGenOpts().InstrumentFunctions = false;
 
     // Disable some warnings.
     m_clang_ap->getDiagnosticOpts().Warnings.push_back("no-unused-value");

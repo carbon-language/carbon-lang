@@ -247,6 +247,14 @@ IRForTarget::MaybeHandleVariable(Module &M,
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
+    if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(V))
+    {
+        if (constant_expr->getOpcode() == Instruction::GetElementPtr)
+        {
+            Value *s = constant_expr->getOperand(0);
+            MaybeHandleVariable(M, s, Store);
+        }
+    }
     if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(V))
     {
         clang::NamedDecl *named_decl = DeclForGlobalValue(M, global_variable);
