@@ -518,7 +518,7 @@ const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
 void GRExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
   for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
        I != E; ++I) {
-    I->second->VisitEndAnalysis(G, BR, hasWorkRemaining);
+    I->second->VisitEndAnalysis(G, BR, *this);
   }
 }
 

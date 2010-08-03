@@ -33,8 +33,9 @@ namespace {
 class UnreachableCodeChecker : public CheckerVisitor<UnreachableCodeChecker> {
 public:
   static void *getTag();
-  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
-      bool hasWorkRemaining);
+  void VisitEndAnalysis(ExplodedGraph &G,
+                        BugReporter &B,
+                        GRExprEngine &Eng);
 private:
   typedef bool (*ExplodedNodeHeuristic)(const ExplodedNode &EN);
 
@@ -60,9 +61,9 @@ void clang::RegisterUnreachableCodeChecker(GRExprEngine &Eng) {
 
 void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
                                               BugReporter &B,
-                                              bool hasWorkRemaining) {
+                                              GRExprEngine &Eng) {
   // Bail out if we didn't cover all paths
-  if (hasWorkRemaining)
+  if (Eng.hasWorkRemaining())
     return;
 
   CFG *C = 0;

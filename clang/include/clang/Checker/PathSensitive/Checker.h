@@ -285,7 +285,7 @@ public:
   }
 
   virtual void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
-                                bool hasWorkRemaining) {}
+                                GRExprEngine &Eng) {}
 };
 } // end clang namespace
 

@@ -65,8 +65,7 @@ class IdempotentOperationChecker
   public:
     static void *getTag();
     void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
-    void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
-        bool hasWorkRemaining);
+    void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, GRExprEngine &Eng);
 
   private:
     // Our assumption about a particular operation.
@@ -293,9 +292,9 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
 
 void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
-                                                  bool hasWorkRemaining) {
+                                                  GRExprEngine &Eng) {
   // If there is any work remaining we cannot be 100% sure about our warnings
-  if (hasWorkRemaining)
+  if (Eng.hasWorkRemaining())
     return;
 
   // Iterate over the hash to see if we have any paths with definite

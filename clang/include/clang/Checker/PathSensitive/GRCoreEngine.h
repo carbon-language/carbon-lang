@@ -158,6 +158,12 @@ public:
   void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
                                        const GRState *InitState, 
                                        ExplodedNodeSet &Dst);
+
+  // Functions for external checking of whether we have unfinished work
+  bool wasBlockAborted() const { return BlockAborted; }
+  bool hasWorkRemaining() const { return BlockAborted || WList->hasWork(); }
+
+  GRWorkList *getWorkList() const { return WList; }
 };
 
 class GRStmtNodeBuilder {

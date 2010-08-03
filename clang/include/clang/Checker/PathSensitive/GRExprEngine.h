@@ -236,6 +236,14 @@ public:
   SymbolManager& getSymbolManager() { return SymMgr; }
   const SymbolManager& getSymbolManager() const { return SymMgr; }
 
+  // Functions for external checking of whether we have unfinished work
+  bool wasBlockAborted() const { return CoreEngine.wasBlockAborted(); }
+  bool hasWorkRemaining() const {
+    return wasBlockAborted() || getWorkList()->hasWork();
+  }
+
+  GRWorkList *getWorkList() const { return CoreEngine.getWorkList(); }
+
 protected:
   const GRState* GetState(ExplodedNode* N) {
     return N == EntryNode ? CleanedState : N->getState();
