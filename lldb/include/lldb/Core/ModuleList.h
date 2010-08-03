@@ -270,7 +270,46 @@ public:
                                 lldb::SymbolType symbol_type,
                                 SymbolContextList &sc_list);
 
-
+    //------------------------------------------------------------------
+    /// Find types by name.
+    ///
+    /// @param[in] sc
+    ///     A symbol context that scopes where to extract a type list
+    ///     from.
+    ///
+    /// @param[in] name
+    ///     The name of the type we are looking for.
+    ///
+    /// @param[in] append
+    ///     If \b true, any matches will be appended to \a
+    ///     variable_list, else matches replace the contents of
+    ///     \a variable_list.
+    ///
+    /// @param[in] max_matches
+    ///     Allow the number of matches to be limited to \a
+    ///     max_matches. Specify UINT_MAX to get all possible matches.
+    ///
+    /// @param[in] encoding
+    ///     Limit the search to specific types, or get all types if
+    ///     set to Type::invalid.
+    ///
+    /// @param[in] udt_name
+    ///     If the encoding is a user defined type, specify the name
+    ///     of the user defined type ("struct", "union", "class", etc).
+    ///
+    /// @param[out] type_list
+    ///     A type list gets populated with any matches.
+    ///
+    /// @return
+    ///     The number of matches added to \a type_list.
+    //------------------------------------------------------------------
+    uint32_t
+    FindTypes (const SymbolContext& sc, 
+               const ConstString &name, 
+               bool append, 
+               uint32_t max_matches, 
+               TypeList& types);
+    
     bool
     Remove (lldb::ModuleSP &module_sp);
 

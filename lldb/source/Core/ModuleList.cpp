@@ -290,6 +290,28 @@ ModuleList::FindModule (lldb_private::Module *module_ptr)
 }
 
 
+uint32_t
+ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+{
+    Mutex::Locker locker(m_modules_mutex);
+    
+    if (!append)
+        types.Clear();
+
+    uint32_t total_matches = 0;
+    collection::const_iterator pos, end = m_modules.end();
+    for (pos = m_modules.begin(); pos != end; ++pos)
+    {
+        if (sc.module_sp.get() == NULL || sc.module_sp.get() == (*pos).get())
+            total_matches += (*pos)->FindTypes (sc, name, true, max_matches, types);
+
+        if (total_matches >= max_matches)
+            break;
+    }
+    return total_matches;
+}
+
+
 ModuleSP
 ModuleList::FindFirstModuleForFileSpec (const FileSpec &file_spec, const ConstString *object_name)
 {

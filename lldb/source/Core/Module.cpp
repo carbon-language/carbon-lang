@@ -303,16 +303,19 @@ Module::FindFunctions(const RegularExpression& regex, bool append, SymbolContext
     return 0;
 }
 
-//uint32_t
-//Module::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& types)
-//{
-//  Timer scoped_timer(__PRETTY_FUNCTION__);
-//  SymbolVendor *symbols = GetSymbolVendor ();
-//  if (symbols)
-//      return symbols->FindTypes(sc, name, append, max_matches, encoding, udt_name, types);
-//  return 0;
-//}
-//
+uint32_t
+Module::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+{
+    Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+    if (sc.module_sp.get() == NULL || sc.module_sp.get() == this)
+    {
+        SymbolVendor *symbols = GetSymbolVendor ();
+        if (symbols)
+            return symbols->FindTypes(sc, name, append, max_matches, types);
+    }
+    return 0;
+}
+
 //uint32_t
 //Module::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& types)
 //{

@@ -283,8 +283,8 @@ public:
     /// @return
     ///     The number of matches added to \a type_list.
     //------------------------------------------------------------------
-//  uint32_t
-//  FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& type_list);
+    uint32_t
+    FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types);
 
     //------------------------------------------------------------------
     /// Find types by name.
