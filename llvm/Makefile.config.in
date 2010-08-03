@@ -39,14 +39,18 @@ ifndef PROJECT_NAME
 PROJECT_NAME := $(LLVMPackageName)
 endif
 
-PROJ_OBJ_DIR  := $(shell $(PWD))
-PROJ_OBJ_ROOT := $(shell cd $(PROJ_OBJ_DIR)/$(LEVEL); $(PWD))
+# The macro below is expanded when 'realpath' is not built-in.
+# Built-in 'realpath' is available on GNU Make 3.81.
+realpath = $(shell cd $(1); $(PWD))
+
+PROJ_OBJ_DIR  := $(call realpath, .)
+PROJ_OBJ_ROOT := $(call realpath, $(PROJ_OBJ_DIR)/$(LEVEL))
 
 ifeq ($(PROJECT_NAME),llvm)
-LLVM_SRC_ROOT   := $(shell cd @abs_top_srcdir@; $(PWD))
-LLVM_OBJ_ROOT   := $(shell cd @abs_top_builddir@; $(PWD))
-PROJ_SRC_ROOT   := $(shell cd $(LLVM_SRC_ROOT); $(PWD))
-PROJ_SRC_DIR    := $(shell cd $(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
+LLVM_SRC_ROOT   := $(call realpath, @abs_top_srcdir@)
+LLVM_OBJ_ROOT   := $(call realpath, @abs_top_builddir@)
+PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
+PROJ_SRC_DIR    := $(call realpath, $(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
 prefix          := @prefix@
 PROJ_prefix     := $(prefix)
 PROJ_VERSION    := $(LLVMVersion)
@@ -66,7 +70,7 @@ endif
 ifndef LLVM_OBJ_ROOT
 $(error Projects must define LLVM_OBJ_ROOT)
 endif
-PROJ_SRC_DIR := $(shell cd $(PROJ_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
+PROJ_SRC_DIR := $(call realpath, $(PROJ_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
 prefix          := $(PROJ_INSTALL_ROOT)
 PROJ_prefix     := $(prefix)
 ifndef PROJ_VERSION
