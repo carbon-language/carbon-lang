@@ -40,6 +40,7 @@ typedef __typeof__(*L"") wchar_t;
 
 #undef NULL
 #ifdef __cplusplus
+#undef __null  // VC++ hack.
 #define NULL __null
 #else
 #define NULL ((void*)0)
