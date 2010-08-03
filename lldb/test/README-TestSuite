@@ -1,0 +1,58 @@
+This README file describes the files and directories related to the Python test
+suite under the current 'test' directory.
+
+o dotest.py
+
+  Provides the test driver for the test suite.  To invoke it, cd to the 'test'
+  directory and issue the './dotest.py' command or './dotest.py -v' for more
+  verbose output.  '.dotest.py -h' prints out the help messge.
+
+  A specific naming pattern is followed by the .py script under the 'test'
+  directory in order to be recognized by 'dotest.py' test driver as a module
+  which implements a test case, namely, Test*.py.
+
+o lldbtest.py
+
+  Provides an abstract base class of lldb test case named 'TestVase', which in
+  turn inherits from Python's unittest.TestCase.  The concrete subclass can
+  override lldbtest.TestBase in order to inherit the common behavior for
+  unittest.TestCase.setUp/tearDown implemented in this file.
+
+  To provide a test case, the concrete subclass provides methods whose names
+  start with the letters test.  For more details about the Python's unittest
+  framework, go to http://docs.python.org/library/unittest.html. 
+
+  ./command_source/TestCommandSource.py provides a simple example of test case
+  which overrides lldbtest.TestBase to exercise the lldb's 'command source'
+  command.  The subclass should override the attribute 'mydir' in order for the
+  runtime to locate the individual test cases when running as part of a large
+  test suite or when running each test case as a separate Python invocation.
+
+  The doc string provides more details about the setup required for running a
+  test case on its own.  To run the whole test suite, 'dotest.py' is all you
+  need to do.
+
+o subdirectories of 'test'
+
+  Most of them predate the introduction of the python test suite and contain
+  example C/C++/ObjC source files which get compiled into executables which are
+  to be exercised by the debugger.
+
+  For such subdirectory which has an associated Test*.py file, it was added as
+  part of the Python-based test suite to test lldb functionality.
+
+  Some of the subdirectories, for example, the 'help' subdirectory, do not have
+  C/C++/ObjC source files; they were created to house the Python test case which
+  does not involve lldb reading in an executable file at all.
+
+o dotest.pl
+
+  In case you wonder, there is also a 'dotest.pl' perl script file.  It was
+  created to visit each Python test case under the specified directory and
+  invoke Python's builtin unittest.main() on each test case.
+
+  It does not take advantage of the test runner and test suite functionality
+  provided by Python's unitest framework.  Its existence is because we want a
+  different way of running the whole test suite.  As lldb and the Python test
+  suite become more reliable, we don't expect to be using 'dotest.pl' anymore.
+
