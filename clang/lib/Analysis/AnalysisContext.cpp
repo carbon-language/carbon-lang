@@ -54,6 +54,9 @@ const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
 }
 
 CFG *AnalysisContext::getCFG() {
+  if (UseUnoptimizedCFG)
+    return getUnoptimizedCFG();
+
   if (!builtCFG) {
     cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), true, AddEHEdges);
     // Even when the cfg is not successfully built, we don't
@@ -98,7 +101,7 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
                                                     idx::TranslationUnit *TU) {
   AnalysisContext *&AC = Contexts[D];
   if (!AC)
-    AC = new AnalysisContext(D, TU);
+    AC = new AnalysisContext(D, TU, UseUnoptimizedCFG);
 
   return AC;
 }

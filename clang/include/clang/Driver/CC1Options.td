@@ -38,6 +38,8 @@ def analysis_CFGDump : Flag<"-cfg-dump">,
   HelpText<"Display Control-Flow Graphs">;
 def analysis_CFGView : Flag<"-cfg-view">,
   HelpText<"View Control-Flow Graphs using GraphViz">;
+def analysis_UnoptimizedCFG : Flag<"-unoptimized-cfg">,
+  HelpText<"View Control-Flow Graphs using GraphViz">;
 def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
   HelpText<"Print results of live variable analysis">;
 def analysis_LLVMConventionChecker : Flag<"-analyzer-check-llvm-conventions">,

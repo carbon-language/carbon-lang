@@ -76,9 +76,10 @@ public:
                   idx::Indexer *idxer,
                   unsigned maxnodes, unsigned maxloop,
                   bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
-                  bool inlinecall)
+                  bool inlinecall, bool useUnoptimizedCFG)
 
-    : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
+    : AnaCtxMgr(useUnoptimizedCFG), Ctx(ctx), Diags(diags), LangInfo(lang),
+      PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),Idxer(idxer),
       AScope(ScopeDecl), MaxNodes(maxnodes), MaxLoop(maxloop),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
@@ -89,6 +90,10 @@ public:
   void ClearContexts() {
     LocCtxMgr.clear();
     AnaCtxMgr.clear();
+  }
+  
+  AnalysisContextManager& getAnalysisContextManager() {
+    return AnaCtxMgr;
   }
 
   StoreManagerCreator getStoreManagerCreator() {

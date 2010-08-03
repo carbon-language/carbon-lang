@@ -786,6 +786,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.PurgeDead = !Args.hasArg(OPT_analyzer_no_purge_dead);
   Opts.EagerlyAssume = Args.hasArg(OPT_analyzer_eagerly_assume);
   Opts.AnalyzeSpecificFunction = Args.getLastArgValue(OPT_analyze_function);
+  Opts.UnoptimizedCFG = Args.hasArg(OPT_analysis_UnoptimizedCFG);
   Opts.EnableExperimentalChecks = Args.hasArg(OPT_analyzer_experimental_checks);
   Opts.EnableExperimentalInternalChecks =
     Args.hasArg(OPT_analyzer_experimental_internal_checks);

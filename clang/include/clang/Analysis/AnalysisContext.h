@@ -51,14 +51,17 @@ class AnalysisContext {
   ParentMap *PM;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
   llvm::BumpPtrAllocator A;
+  bool UseUnoptimizedCFG;  
   bool AddEHEdges;
 public:
   AnalysisContext(const Decl *d, idx::TranslationUnit *tu,
+                  bool useUnoptimizedCFG = false,
                   bool addehedges = false)
     : D(d), TU(tu), cfg(0), completeCFG(0),
       builtCFG(false), builtCompleteCFG(false),
       liveness(0), PM(0),
-      ReferencedBlockVars(0), AddEHEdges(addehedges) {}
+      ReferencedBlockVars(0), UseUnoptimizedCFG(useUnoptimizedCFG),
+      AddEHEdges(addehedges) {}
 
   ~AnalysisContext();
 
@@ -72,6 +75,9 @@ public:
   /// reachable from them can appear to be dead in the CFG, analysis passes must
   /// cope with that.
   bool getAddEHEdges() const { return AddEHEdges; }
+  
+  bool getUseUnoptimizedCFG() const { return UseUnoptimizedCFG; }
+
   Stmt *getBody();
   CFG *getCFG();
   
@@ -94,10 +100,16 @@ public:
 class AnalysisContextManager {
   typedef llvm::DenseMap<const Decl*, AnalysisContext*> ContextMap;
   ContextMap Contexts;
+  bool UseUnoptimizedCFG;
 public:
+  AnalysisContextManager(bool useUnoptimizedCFG = false)
+    : UseUnoptimizedCFG(useUnoptimizedCFG) {}
+  
   ~AnalysisContextManager();
 
   AnalysisContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
+
+  bool getUseUnoptimizedCFG() const { return UseUnoptimizedCFG; }
 
   // Discard all previously created AnalysisContexts.
   void clear();

@@ -177,7 +177,8 @@ public:
                                   Opts.MaxNodes, Opts.MaxLoop,
                                   Opts.VisualizeEGDot, Opts.VisualizeEGUbi,
                                   Opts.PurgeDead, Opts.EagerlyAssume,
-                                  Opts.TrimGraph, Opts.InlineCall));
+                                  Opts.TrimGraph, Opts.InlineCall,
+                                  Opts.UnoptimizedCFG));
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);
