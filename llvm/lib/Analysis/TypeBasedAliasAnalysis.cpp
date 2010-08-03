@@ -133,7 +133,7 @@ TypeBasedAliasAnalysis::alias(const Value *A, unsigned ASize,
                       ->getMDKindID("tbaa"));
   if (!AM) return MayAlias;
   MDNode *BM =
-    AI->getMetadata(BI->getParent()->getParent()->getParent()
+    BI->getMetadata(BI->getParent()->getParent()->getParent()
                       ->getMDKindID("tbaa"));
   if (!BM) return MayAlias;
 
