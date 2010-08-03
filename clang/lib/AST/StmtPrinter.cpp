@@ -1354,7 +1354,7 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty(ASTContext& Context) const {
-  printPretty(llvm::errs(), Context, 0,
+  printPretty(llvm::outs(), Context, 0,
               PrintingPolicy(Context.getLangOptions()));
 }
 

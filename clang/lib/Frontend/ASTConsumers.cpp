@@ -37,7 +37,7 @@ namespace {
 
   public:
     ASTPrinter(llvm::raw_ostream* o = NULL, bool Dump = false)
-      : Out(o? *o : llvm::errs()), Dump(Dump) { }
+      : Out(o? *o : llvm::outs()), Dump(Dump) { }
 
     virtual void HandleTranslationUnit(ASTContext &Context) {
       PrintingPolicy Policy = Context.PrintingPolicy;
