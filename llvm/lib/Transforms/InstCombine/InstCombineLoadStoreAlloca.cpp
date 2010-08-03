@@ -146,10 +146,14 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (TD) {
     unsigned KnownAlign =
       GetOrEnforceKnownAlignment(Op, TD->getPrefTypeAlignment(LI.getType()));
-    if (KnownAlign >
-        (LI.getAlignment() == 0 ? TD->getABITypeAlignment(LI.getType()) :
-                                  LI.getAlignment()))
+    unsigned LoadAlign = LI.getAlignment();
+    unsigned EffectiveLoadAlign = LoadAlign != 0 ? LoadAlign :
+      TD->getABITypeAlignment(LI.getType());
+
+    if (KnownAlign > EffectiveLoadAlign)
       LI.setAlignment(KnownAlign);
+    else if (LoadAlign == 0)
+      LI.setAlignment(EffectiveLoadAlign);
   }
 
   // load (cast X) --> cast (load X) iff safe.
@@ -411,10 +415,14 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   if (TD) {
     unsigned KnownAlign =
       GetOrEnforceKnownAlignment(Ptr, TD->getPrefTypeAlignment(Val->getType()));
-    if (KnownAlign >
-        (SI.getAlignment() == 0 ? TD->getABITypeAlignment(Val->getType()) :
-                                  SI.getAlignment()))
+    unsigned StoreAlign = SI.getAlignment();
+    unsigned EffectiveStoreAlign = StoreAlign != 0 ? StoreAlign :
+      TD->getABITypeAlignment(Val->getType());
+
+    if (KnownAlign > EffectiveStoreAlign)
       SI.setAlignment(KnownAlign);
+    else if (StoreAlign == 0)
+      SI.setAlignment(EffectiveStoreAlign);
   }
 
   // Do really simple DSE, to catch cases where there are several consecutive
