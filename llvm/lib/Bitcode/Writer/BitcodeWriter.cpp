@@ -735,8 +735,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Code = bitc::CST_CODE_UNDEF;
     } else if (const ConstantInt *IV = dyn_cast<ConstantInt>(C)) {
       if (IV->getBitWidth() <= 64) {
-        int64_t V = IV->getSExtValue();
-        if (V >= 0)
+        uint64_t V = IV->getSExtValue();
+        if ((int64_t)V >= 0)
           Record.push_back(V << 1);
         else
           Record.push_back((-V << 1) | 1);
