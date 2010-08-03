@@ -13,4 +13,5 @@ int test0(void) {
 // CHECK:       define [[INT:i.*]] @test1() nounwind {
 // CHECK-NOEXC: define [[INT:i.*]] @test1() nounwind {
 int test1(void) {
+  return 0;
 }
