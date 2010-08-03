@@ -168,7 +168,7 @@ let isCall = 1, isCodeGenOnly = 1 in
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, EFLAGS],
       Uses = [RSP] in {
-    def WINCALL64pcrel32 : I<0xE8, RawFrm,
+    def WINCALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                              (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
                              "call\t$dst", []>,
                            Requires<[IsWin64]>;
