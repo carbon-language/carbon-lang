@@ -1600,6 +1600,11 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
     if (A->getOption().hasForwardToGCC()) {
+      // Don't forward any -g arguments to assembly steps.
+      if (isa<AssembleJobAction>(JA) &&
+          A->getOption().matches(options::OPT_g_Group))
+        continue;
+
       // It is unfortunate that we have to claim here, as this means
       // we will basically never report anything interesting for
       // platforms using a generic gcc, even if we are just using gcc
