@@ -2926,6 +2926,22 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
   
   // Set the right visibility.
   CGM.setGlobalVisibility(VTable, RD);
+
+  // It's okay to have multiple copies of a vtable, so don't make the
+  // dynamic linker unique them.  Suppress this optimization if it's
+  // possible that there might be unresolved references elsewhere,
+  // which can happen if
+  //   - there's a key function and the vtable is getting emitted weak
+  //     anyway for whatever reason
+  //   - there might be an explicit instantiation declaration somewhere,
+  //     i.e. if it's a template at all
+  if (Linkage == llvm::GlobalVariable::WeakODRLinkage &&
+      VTable->getVisibility() == llvm::GlobalVariable::DefaultVisibility &&
+      !RD->hasAttr<VisibilityAttr>() &&
+      RD->getTemplateSpecializationKind() == TSK_Undeclared &&
+      !CGM.Context.getKeyFunction(RD)) {
+    VTable->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+  }
 }
 
 llvm::GlobalVariable *

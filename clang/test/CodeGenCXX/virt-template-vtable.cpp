@@ -10,4 +10,13 @@ class B : A<int> {
 };
 B::B() {}
 
+template class A<long>;
+
+extern template class A<short>;
+template class A<short>;
+
+
+// CHECK: @_ZTV1B = weak_odr hidden constant
+// CHECK: @_ZTV1AIlE = weak_odr constant
+// CHECK: @_ZTV1AIsE = weak_odr constant
 // CHECK: @_ZTV1AIiE = weak_odr constant

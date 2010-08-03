@@ -95,8 +95,9 @@ void use_F(F<char> &fc) {
 // has external linkage.
 // CHECK-1: @_ZTV1B = external constant
 
-// C has no key function, so its vtable should have weak_odr linkage.
-// CHECK-2: @_ZTV1C = weak_odr constant
+// C has no key function, so its vtable should have weak_odr linkage
+// and hidden visibility (rdar://problem/7523229).
+// CHECK-2: @_ZTV1C = weak_odr hidden constant
 // CHECK-2: @_ZTS1C = weak_odr constant
 // CHECK-2: @_ZTI1C = weak_odr constant
 
