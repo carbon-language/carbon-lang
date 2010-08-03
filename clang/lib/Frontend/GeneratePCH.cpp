@@ -25,26 +25,6 @@
 
 using namespace clang;
 
-namespace {
-  class PCHGenerator : public SemaConsumer {
-    const Preprocessor &PP;
-    const char *isysroot;
-    llvm::raw_ostream *Out;
-    Sema *SemaPtr;
-    MemorizeStatCalls *StatCalls; // owned by the FileManager
-    std::vector<unsigned char> Buffer;
-    llvm::BitstreamWriter Stream;
-    PCHWriter Writer;
-
-  public:
-    PCHGenerator(const Preprocessor &PP, bool Chaining,
-                 const char *isysroot, llvm::raw_ostream *Out);
-    virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
-    virtual void HandleTranslationUnit(ASTContext &Ctx);
-    virtual PCHDeserializationListener *GetPCHDeserializationListener();
-  };
-}
-
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            bool Chaining,
                            const char *isysroot,
@@ -81,11 +61,4 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
 PCHDeserializationListener *PCHGenerator::GetPCHDeserializationListener() {
   return &Writer;
-}
-
-ASTConsumer *clang::CreatePCHGenerator(const Preprocessor &PP,
-                                       llvm::raw_ostream *OS,
-                                       bool Chaining,
-                                       const char *isysroot) {
-  return new PCHGenerator(PP, Chaining, isysroot, OS);
 }

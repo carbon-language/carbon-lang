@@ -17,6 +17,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/PCHWriter.h"
 #include "clang/Frontend/Utils.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -70,22 +71,35 @@ ASTConsumer *DeclContextPrintAction::CreateASTConsumer(CompilerInstance &CI,
 
 ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
                                                   llvm::StringRef InFile) {
-  const std::string &Sysroot = CI.getHeaderSearchOpts().Sysroot;
-  if (CI.getFrontendOpts().RelocatablePCH &&
-      Sysroot.empty()) {
-    CI.getDiagnostics().Report(diag::err_relocatable_without_without_isysroot);
+  std::string Sysroot;
+  llvm::raw_ostream *OS = 0;
+  bool Chaining;
+  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OS, Chaining))
     return 0;
+
+  const char *isysroot = CI.getFrontendOpts().RelocatablePCH ?
+                             Sysroot.c_str() : 0;  
+  return new PCHGenerator(CI.getPreprocessor(), Chaining, isysroot, OS);
+}
+
+bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
+                                                    llvm::StringRef InFile,
+                                                    std::string &Sysroot,
+                                                    llvm::raw_ostream *&OS,
+                                                    bool &Chaining) {
+  Sysroot = CI.getHeaderSearchOpts().Sysroot;
+  if (CI.getFrontendOpts().RelocatablePCH && Sysroot.empty()) {
+    CI.getDiagnostics().Report(diag::err_relocatable_without_without_isysroot);
+    return true;
   }
 
-  llvm::raw_ostream *OS = CI.createDefaultOutputFile(true, InFile);
+  OS = CI.createDefaultOutputFile(true, InFile);
   if (!OS)
-    return 0;
+    return true;
 
-  bool Chaining = CI.getInvocation().getFrontendOpts().ChainedPCH &&
-                  !CI.getPreprocessorOpts().ImplicitPCHInclude.empty();
-  const char *isysroot = CI.getFrontendOpts().RelocatablePCH ?
-                             Sysroot.c_str() : 0;
-  return CreatePCHGenerator(CI.getPreprocessor(), OS, Chaining, isysroot);
+  Chaining = CI.getInvocation().getFrontendOpts().ChainedPCH &&
+             !CI.getPreprocessorOpts().ImplicitPCHInclude.empty();
+  return false;
 }
 
 ASTConsumer *InheritanceViewAction::CreateASTConsumer(CompilerInstance &CI,

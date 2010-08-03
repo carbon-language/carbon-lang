@@ -74,6 +74,17 @@ protected:
   virtual bool usesCompleteTranslationUnit() { return false; }
 
   virtual bool hasASTFileSupport() const { return false; }
+
+public:
+  /// \brief Compute the AST consumer arguments that will be used to
+  /// create the PCHGenerator instance returned by CreateASTConsumer.
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  static bool ComputeASTConsumerArguments(CompilerInstance &CI,
+                                          llvm::StringRef InFile,
+                                          std::string &Sysroot,
+                                          llvm::raw_ostream *&OS,
+                                          bool &Chaining);
 };
 
 class InheritanceViewAction : public ASTFrontendAction {

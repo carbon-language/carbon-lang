@@ -57,14 +57,6 @@ ASTConsumer *CreateASTViewer();
 // to stderr; this is intended for debugging.
 ASTConsumer *CreateDeclContextPrinter();
 
-// PCH generator: generates a precompiled header file; this file can be used
-// later with the PCHReader (clang -cc1 option -include-pch) to speed up compile
-// times.
-ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
-                                llvm::raw_ostream *OS,
-                                bool Chaining,
-                                const char *isysroot = 0);
-
 // Inheritance viewer: for C++ code, creates a graph of the inheritance
 // tree for the given class and displays it with "dotty".
 ASTConsumer *CreateInheritanceViewer(const std::string& clsname);

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/PCHReader.h"
+#include "clang/Frontend/PCHWriter.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclVisitor.h"
@@ -25,6 +25,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
+#include "clang/Frontend/PCHReader.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetOptions.h"
@@ -326,6 +327,54 @@ public:
   TopLevelDeclTrackerAction(ASTUnit &_Unit) : Unit(_Unit) {}
 
   virtual bool hasCodeCompletionSupport() const { return false; }
+};
+
+class PrecompilePreambleConsumer : public PCHGenerator {
+  ASTUnit &Unit;
+
+public:
+  PrecompilePreambleConsumer(ASTUnit &Unit,
+                             const Preprocessor &PP, bool Chaining,
+                             const char *isysroot, llvm::raw_ostream *Out)
+    : PCHGenerator(PP, Chaining, isysroot, Out), Unit(Unit) { }
+
+  void HandleTopLevelDecl(DeclGroupRef D) {
+    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it) {
+      Decl *D = *it;
+      // FIXME: Currently ObjC method declarations are incorrectly being
+      // reported as top-level declarations, even though their DeclContext
+      // is the containing ObjC @interface/@implementation.  This is a
+      // fundamental problem in the parser right now.
+      if (isa<ObjCMethodDecl>(D))
+        continue;
+      Unit.getTopLevelDecls().push_back(D);
+    }
+  }
+};
+
+class PrecompilePreambleAction : public ASTFrontendAction {
+  ASTUnit &Unit;
+
+public:
+  explicit PrecompilePreambleAction(ASTUnit &Unit) : Unit(Unit) {}
+
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         llvm::StringRef InFile) {
+    std::string Sysroot;
+    llvm::raw_ostream *OS = 0;
+    bool Chaining;
+    if (GeneratePCHAction::ComputeASTConsumerArguments(CI, InFile, Sysroot, 
+                                                       OS, Chaining))
+      return 0;
+    
+    const char *isysroot = CI.getFrontendOpts().RelocatablePCH ?
+                             Sysroot.c_str() : 0;  
+    return new PrecompilePreambleConsumer(Unit, CI.getPreprocessor(), Chaining,
+                                          isysroot, OS);
+  }
+
+  virtual bool hasCodeCompletionSupport() const { return false; }
+  virtual bool hasASTFileSupport() const { return false; }
 };
 
 }
@@ -819,8 +868,8 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   Clang.setSourceManager(new SourceManager(getDiagnostics()));
   
   // FIXME: Eventually, we'll have to track top-level declarations here, too.
-  llvm::OwningPtr<GeneratePCHAction> Act;
-  Act.reset(new GeneratePCHAction);
+  llvm::OwningPtr<PrecompilePreambleAction> Act;
+  Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
                             Clang.getFrontendOpts().Inputs[0].first)) {
     Clang.takeDiagnosticClient();

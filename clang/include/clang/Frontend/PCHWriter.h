@@ -20,10 +20,13 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/Frontend/PCHBitCodes.h"
 #include "clang/Frontend/PCHDeserializationListener.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Bitcode/BitstreamWriter.h"
 #include <map>
 #include <queue>
+#include <vector>
 
 namespace llvm {
   class APFloat;
@@ -425,6 +428,26 @@ public:
   void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
   void TypeRead(pch::TypeID ID, QualType T);
   void DeclRead(pch::DeclID ID, const Decl *D);
+};
+
+/// \brief AST and semantic-analysis consumer that generates a
+/// precompiled header from the parsed source code.
+class PCHGenerator : public SemaConsumer {
+  const Preprocessor &PP;
+  const char *isysroot;
+  llvm::raw_ostream *Out;
+  Sema *SemaPtr;
+  MemorizeStatCalls *StatCalls; // owned by the FileManager
+  std::vector<unsigned char> Buffer;
+  llvm::BitstreamWriter Stream;
+  PCHWriter Writer;
+
+public:
+  PCHGenerator(const Preprocessor &PP, bool Chaining,
+               const char *isysroot, llvm::raw_ostream *Out);
+  virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
+  virtual void HandleTranslationUnit(ASTContext &Ctx);
+  virtual PCHDeserializationListener *GetPCHDeserializationListener();
 };
 
 } // end namespace clang
