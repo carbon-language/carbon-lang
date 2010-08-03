@@ -35,11 +35,13 @@ namespace llvm {
     }
     ~LibCallAliasAnalysis();
     
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Value *P, unsigned Size);
     
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2) {
       // TODO: Could compare two direct calls against each other if we cared to.
-      return AliasAnalysis::getModRefInfo(CS1,CS2);
+      return AliasAnalysis::getModRefInfo(CS1, CS2);
     }
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -61,7 +63,8 @@ namespace llvm {
     
   private:
     ModRefResult AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
-                                       CallSite CS, Value *P, unsigned Size);
+                                       ImmutableCallSite CS,
+                                       const Value *P, unsigned Size);
   };
 }  // End of llvm namespace
 

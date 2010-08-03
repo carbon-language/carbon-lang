@@ -65,7 +65,7 @@ void AliasAnalysis::copyValue(Value *From, Value *To) {
 }
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
+AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
   // FIXME: we can do better.
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
   return AA->getModRefInfo(CS1, CS2);
@@ -77,7 +77,7 @@ AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 //===----------------------------------------------------------------------===//
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(LoadInst *L, Value *P, unsigned Size) {
+AliasAnalysis::getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
   // If the load address doesn't alias the given address, it doesn't read
   // or write the specified memory.
   if (!alias(L->getOperand(0), getTypeStoreSize(L->getType()), P, Size))
@@ -92,7 +92,7 @@ AliasAnalysis::getModRefInfo(LoadInst *L, Value *P, unsigned Size) {
 }
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
+AliasAnalysis::getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) {
   // If the stored address cannot alias the pointer in question, then the
   // pointer cannot be modified by the store.
   if (!alias(S->getOperand(1),
@@ -113,7 +113,7 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 }
 
 AliasAnalysis::ModRefBehavior
-AliasAnalysis::getModRefBehavior(CallSite CS,
+AliasAnalysis::getModRefBehavior(ImmutableCallSite CS,
                                  std::vector<PointerAccessInfo> *Info) {
   if (CS.doesNotAccessMemory())
     // Can't do better than this.
@@ -125,7 +125,7 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 }
 
 AliasAnalysis::ModRefBehavior
-AliasAnalysis::getModRefBehavior(Function *F,
+AliasAnalysis::getModRefBehavior(const Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
   if (F) {
     if (F->doesNotAccessMemory())
@@ -134,19 +134,21 @@ AliasAnalysis::getModRefBehavior(Function *F,
     if (F->onlyReadsMemory())
       return OnlyReadsMemory;
     if (unsigned id = F->getIntrinsicID())
-      return getModRefBehavior(id);
+      return getIntrinsicModRefBehavior(id);
   }
   return UnknownModRefBehavior;
 }
 
-AliasAnalysis::ModRefBehavior AliasAnalysis::getModRefBehavior(unsigned iid) {
+AliasAnalysis::ModRefBehavior
+AliasAnalysis::getIntrinsicModRefBehavior(unsigned iid) {
 #define GET_INTRINSIC_MODREF_BEHAVIOR
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_MODREF_BEHAVIOR
 }
 
 AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
+                             const Value *P, unsigned Size) {
   ModRefBehavior MRB = getModRefBehavior(CS);
   if (MRB == DoesNotAccessMemory)
     return NoModRef;
@@ -156,7 +158,7 @@ AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     Mask = Ref;
   else if (MRB == AliasAnalysis::AccessesArguments) {
     bool doesAlias = false;
-    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+    for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI)
       if (!isNoAlias(*AI, ~0U, P, Size)) {
         doesAlias = true;
@@ -223,12 +225,12 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
                                               const Value *Ptr, unsigned Size) {
   assert(I1.getParent() == I2.getParent() &&
          "Instructions not in same basic block!");
-  BasicBlock::iterator I = const_cast<Instruction*>(&I1);
-  BasicBlock::iterator E = const_cast<Instruction*>(&I2);
+  BasicBlock::const_iterator I = &I1;
+  BasicBlock::const_iterator E = &I2;
   ++E;  // Convert from inclusive to exclusive range.
 
   for (; I != E; ++I) // Check every instruction in range
-    if (getModRefInfo(I, const_cast<Value*>(Ptr), Size) & Mod)
+    if (getModRefInfo(I, Ptr, Size) & Mod)
       return true;
   return false;
 }
@@ -237,7 +239,7 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
 /// function.
 bool llvm::isNoAliasCall(const Value *V) {
   if (isa<CallInst>(V) || isa<InvokeInst>(V))
-    return CallSite(const_cast<Instruction*>(cast<Instruction>(V)))
+    return ImmutableCallSite(cast<Instruction>(V))
       .paramHasAttr(0, Attribute::NoAlias);
   return false;
 }

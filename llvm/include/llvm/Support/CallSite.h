@@ -271,16 +271,6 @@ private:
   }
 };
 
-/// ImmutableCallSite - establish a view to a call site for examination
-class ImmutableCallSite : public CallSiteBase<> {
-  typedef CallSiteBase<> Base;
-public:
-  ImmutableCallSite(const Value* V) : Base(V) {}
-  ImmutableCallSite(const CallInst *CI) : Base(CI) {}
-  ImmutableCallSite(const InvokeInst *II) : Base(II) {}
-  ImmutableCallSite(const Instruction *II) : Base(II) {}
-};
-
 class CallSite : public CallSiteBase<Function, Value, User, Instruction,
                                      CallInst, InvokeInst, User::op_iterator> {
   typedef CallSiteBase<Function, Value, User, Instruction,
@@ -311,6 +301,17 @@ public:
 
 private:
   User::op_iterator getCallee() const;
+};
+
+/// ImmutableCallSite - establish a view to a call site for examination
+class ImmutableCallSite : public CallSiteBase<> {
+  typedef CallSiteBase<> Base;
+public:
+  ImmutableCallSite(const Value* V) : Base(V) {}
+  ImmutableCallSite(const CallInst *CI) : Base(CI) {}
+  ImmutableCallSite(const InvokeInst *II) : Base(II) {}
+  ImmutableCallSite(const Instruction *II) : Base(II) {}
+  ImmutableCallSite(CallSite CS) : Base(CS.getInstruction()) {}
 };
 
 } // End llvm namespace

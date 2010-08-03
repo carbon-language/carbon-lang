@@ -47,14 +47,15 @@ namespace {
     /// GlobalInfo - Maintain mod/ref info for all of the globals without
     /// addresses taken that are read or written (transitively) by this
     /// function.
-    std::map<GlobalValue*, unsigned> GlobalInfo;
+    std::map<const GlobalValue*, unsigned> GlobalInfo;
 
     /// MayReadAnyGlobal - May read global variables, but it is not known which.
     bool MayReadAnyGlobal;
 
-    unsigned getInfoForGlobal(GlobalValue *GV) const {
+    unsigned getInfoForGlobal(const GlobalValue *GV) const {
       unsigned Effect = MayReadAnyGlobal ? AliasAnalysis::Ref : 0;
-      std::map<GlobalValue*, unsigned>::const_iterator I = GlobalInfo.find(GV);
+      std::map<const GlobalValue*, unsigned>::const_iterator I =
+        GlobalInfo.find(GV);
       if (I != GlobalInfo.end())
         Effect |= I->second;
       return Effect;
@@ -71,19 +72,19 @@ namespace {
   class GlobalsModRef : public ModulePass, public AliasAnalysis {
     /// NonAddressTakenGlobals - The globals that do not have their addresses
     /// taken.
-    std::set<GlobalValue*> NonAddressTakenGlobals;
+    std::set<const GlobalValue*> NonAddressTakenGlobals;
 
     /// IndirectGlobals - The memory pointed to by this global is known to be
     /// 'owned' by the global.
-    std::set<GlobalValue*> IndirectGlobals;
+    std::set<const GlobalValue*> IndirectGlobals;
 
     /// AllocsForIndirectGlobals - If an instruction allocates memory for an
     /// indirect global, this map indicates which one.
-    std::map<Value*, GlobalValue*> AllocsForIndirectGlobals;
+    std::map<const Value*, const GlobalValue*> AllocsForIndirectGlobals;
 
     /// FunctionInfo - For each function, keep track of what globals are
     /// modified or read.
-    std::map<Function*, FunctionRecord> FunctionInfo;
+    std::map<const Function*, FunctionRecord> FunctionInfo;
 
   public:
     static char ID;
@@ -107,16 +108,18 @@ namespace {
     //
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
-      return AliasAnalysis::getModRefInfo(CS1,CS2);
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Value *P, unsigned Size);
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2) {
+      return AliasAnalysis::getModRefInfo(CS1, CS2);
     }
 
     /// getModRefBehavior - Return the behavior of the specified function if
     /// called from the specified call site.  The call site may be null in which
     /// case the most generic behavior of this function should be returned.
-    ModRefBehavior getModRefBehavior(Function *F,
-                                         std::vector<PointerAccessInfo> *Info) {
+    ModRefBehavior getModRefBehavior(const Function *F,
+                                     std::vector<PointerAccessInfo> *Info) {
       if (FunctionRecord *FR = getFunctionInfo(F)) {
         if (FR->FunctionEffect == 0)
           return DoesNotAccessMemory;
@@ -129,9 +132,9 @@ namespace {
     /// getModRefBehavior - Return the behavior of the specified function if
     /// called from the specified call site.  The call site may be null in which
     /// case the most generic behavior of this function should be returned.
-    ModRefBehavior getModRefBehavior(CallSite CS,
-                                         std::vector<PointerAccessInfo> *Info) {
-      Function* F = CS.getCalledFunction();
+    ModRefBehavior getModRefBehavior(ImmutableCallSite CS,
+                                     std::vector<PointerAccessInfo> *Info) {
+      const Function* F = CS.getCalledFunction();
       if (!F) return AliasAnalysis::getModRefBehavior(CS, Info);
       if (FunctionRecord *FR = getFunctionInfo(F)) {
         if (FR->FunctionEffect == 0)
@@ -158,8 +161,9 @@ namespace {
   private:
     /// getFunctionInfo - Return the function info for the function, or null if
     /// we don't have anything useful to say about it.
-    FunctionRecord *getFunctionInfo(Function *F) {
-      std::map<Function*, FunctionRecord>::iterator I = FunctionInfo.find(F);
+    FunctionRecord *getFunctionInfo(const Function *F) {
+      std::map<const Function*, FunctionRecord>::iterator I =
+        FunctionInfo.find(F);
       if (I != FunctionInfo.end())
         return &I->second;
       return 0;
@@ -409,7 +413,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
             FunctionEffect |= CalleeFR->FunctionEffect;
 
             // Incorporate callee's effects on globals into our info.
-            for (std::map<GlobalValue*, unsigned>::iterator GI =
+            for (std::map<const GlobalValue*, unsigned>::iterator GI =
                    CalleeFR->GlobalInfo.begin(), E = CalleeFR->GlobalInfo.end();
                  GI != E; ++GI)
               FR.GlobalInfo[GI->first] |= GI->second;
@@ -477,13 +481,13 @@ AliasAnalysis::AliasResult
 GlobalsModRef::alias(const Value *V1, unsigned V1Size,
                      const Value *V2, unsigned V2Size) {
   // Get the base object these pointers point to.
-  Value *UV1 = const_cast<Value*>(V1->getUnderlyingObject());
-  Value *UV2 = const_cast<Value*>(V2->getUnderlyingObject());
+  const Value *UV1 = V1->getUnderlyingObject();
+  const Value *UV2 = V2->getUnderlyingObject();
 
   // If either of the underlying values is a global, they may be non-addr-taken
   // globals, which we can answer queries about.
-  GlobalValue *GV1 = dyn_cast<GlobalValue>(UV1);
-  GlobalValue *GV2 = dyn_cast<GlobalValue>(UV2);
+  const GlobalValue *GV1 = dyn_cast<GlobalValue>(UV1);
+  const GlobalValue *GV2 = dyn_cast<GlobalValue>(UV2);
   if (GV1 || GV2) {
     // If the global's address is taken, pretend we don't know it's a pointer to
     // the global.
@@ -503,12 +507,12 @@ GlobalsModRef::alias(const Value *V1, unsigned V1Size,
   // so, we may be able to handle this.  First check to see if the base pointer
   // is a direct load from an indirect global.
   GV1 = GV2 = 0;
-  if (LoadInst *LI = dyn_cast<LoadInst>(UV1))
+  if (const LoadInst *LI = dyn_cast<LoadInst>(UV1))
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
       if (IndirectGlobals.count(GV))
         GV1 = GV;
-  if (LoadInst *LI = dyn_cast<LoadInst>(UV2))
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
+  if (const LoadInst *LI = dyn_cast<LoadInst>(UV2))
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
       if (IndirectGlobals.count(GV))
         GV2 = GV;
 
@@ -530,16 +534,17 @@ GlobalsModRef::alias(const Value *V1, unsigned V1Size,
 }
 
 AliasAnalysis::ModRefResult
-GlobalsModRef::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+GlobalsModRef::getModRefInfo(ImmutableCallSite CS,
+                             const Value *P, unsigned Size) {
   unsigned Known = ModRef;
 
   // If we are asking for mod/ref info of a direct call with a pointer to a
   // global we are tracking, return information if we have it.
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(P->getUnderlyingObject()))
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(P->getUnderlyingObject()))
     if (GV->hasLocalLinkage())
-      if (Function *F = CS.getCalledFunction())
+      if (const Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))
-          if (FunctionRecord *FR = getFunctionInfo(F))
+          if (const FunctionRecord *FR = getFunctionInfo(F))
             Known = FR->getInfoForGlobal(GV);
 
   if (Known == NoModRef)
@@ -558,7 +563,7 @@ void GlobalsModRef::deleteValue(Value *V) {
       // any AllocRelatedValues for it.
       if (IndirectGlobals.erase(GV)) {
         // Remove any entries in AllocsForIndirectGlobals for this global.
-        for (std::map<Value*, GlobalValue*>::iterator
+        for (std::map<const Value*, const GlobalValue*>::iterator
              I = AllocsForIndirectGlobals.begin(),
              E = AllocsForIndirectGlobals.end(); I != E; ) {
           if (I->second == GV) {

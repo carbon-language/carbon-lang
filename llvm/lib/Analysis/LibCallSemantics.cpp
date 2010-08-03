@@ -40,7 +40,8 @@ const LibCallLocationInfo &LibCallInfo::getLocationInfo(unsigned LocID) const {
 
 /// getFunctionInfo - Return the LibCallFunctionInfo object corresponding to
 /// the specified function if we have it.  If not, return null.
-const LibCallFunctionInfo *LibCallInfo::getFunctionInfo(Function *F) const {
+const LibCallFunctionInfo *
+LibCallInfo::getFunctionInfo(const Function *F) const {
   StringMap<const LibCallFunctionInfo*> *Map = getMap(Impl);
   
   /// If this is the first time we are querying for this info, lazily construct

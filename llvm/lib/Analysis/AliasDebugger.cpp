@@ -99,12 +99,14 @@ namespace {
       return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
     }
 
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Value *P, unsigned Size) {
       assert(Vals.find(P) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::getModRefInfo(CS, P, Size);
     }
 
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2) {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
     

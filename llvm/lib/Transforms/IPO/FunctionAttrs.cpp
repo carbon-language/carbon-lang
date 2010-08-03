@@ -169,7 +169,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
           continue;
         // Ignore intrinsics that only access local memory.
         if (unsigned id = CS.getCalledFunction()->getIntrinsicID())
-          if (AliasAnalysis::getModRefBehavior(id) ==
+          if (AliasAnalysis::getIntrinsicModRefBehavior(id) ==
               AliasAnalysis::AccessesArguments) {
             // Check that all pointer arguments point to local memory.
             for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();

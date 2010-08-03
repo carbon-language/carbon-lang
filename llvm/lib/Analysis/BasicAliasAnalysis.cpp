@@ -153,10 +153,12 @@ namespace {
     }
 
     virtual bool pointsToConstantMemory(const Value *P) { return false; }
-    virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
+                                       const Value *P, unsigned Size) {
       return ModRef;
     }
-    virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                                       ImmutableCallSite CS2) {
       return ModRef;
     }
 
@@ -225,8 +227,10 @@ namespace {
       return Alias;
     }
 
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Value *P, unsigned Size);
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2);
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
@@ -295,7 +299,8 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 /// function, we really can't say much about this query.  We do, however, use
 /// simple "address taken" analysis on local objects.
 AliasAnalysis::ModRefResult
-BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
+                                  const Value *P, unsigned Size) {
   assert(notDifferentParent(CS.getInstruction(), P) &&
          "AliasAnalysis query involving multiple functions!");
 
@@ -307,7 +312,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   // the current function not to the current function, and a tail callee
   // may reference them.
   if (isa<AllocaInst>(Object))
-    if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
+    if (const CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
       if (CI->isTailCall())
         return NoModRef;
   
@@ -318,7 +323,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       isNonEscapingLocalObject(Object)) {
     bool PassedAsArg = false;
     unsigned ArgNo = 0;
-    for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+    for (ImmutableCallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
          CI != CE; ++CI, ++ArgNo) {
       // Only look at the no-capture pointer arguments.
       if (!(*CI)->getType()->isPointerTy() ||
@@ -340,7 +345,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   }
 
   // Finally, handle specific knowledge of intrinsics.
-  IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
+  const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
   if (II == 0)
     return AliasAnalysis::getModRefInfo(CS, P, Size);
 
@@ -411,7 +416,8 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
 
 AliasAnalysis::ModRefResult 
-BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
+BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
+                                  ImmutableCallSite CS2) {
   // If CS1 or CS2 are readnone, they don't interact.
   ModRefBehavior CS1B = AliasAnalysis::getModRefBehavior(CS1);
   if (CS1B == DoesNotAccessMemory) return NoModRef;

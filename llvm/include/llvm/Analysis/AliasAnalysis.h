@@ -178,17 +178,17 @@ public:
   };
 
   /// getModRefBehavior - Return the behavior when calling the given call site.
-  virtual ModRefBehavior getModRefBehavior(CallSite CS,
+  virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS,
                                    std::vector<PointerAccessInfo> *Info = 0);
 
   /// getModRefBehavior - Return the behavior when calling the given function.
   /// For use when the call site is not known.
-  virtual ModRefBehavior getModRefBehavior(Function *F,
+  virtual ModRefBehavior getModRefBehavior(const Function *F,
                                    std::vector<PointerAccessInfo> *Info = 0);
 
-  /// getModRefBehavior - Return the modref behavior of the intrinsic with the
-  /// given id.
-  static ModRefBehavior getModRefBehavior(unsigned iid);
+  /// getIntrinsicModRefBehavior - Return the modref behavior of the intrinsic
+  /// with the given id.
+  static ModRefBehavior getIntrinsicModRefBehavior(unsigned iid);
 
   /// doesNotAccessMemory - If the specified call is known to never read or
   /// write memory, return true.  If the call only reads from known-constant
@@ -201,14 +201,14 @@ public:
   ///
   /// This property corresponds to the GCC 'const' attribute.
   ///
-  bool doesNotAccessMemory(CallSite CS) {
+  bool doesNotAccessMemory(ImmutableCallSite CS) {
     return getModRefBehavior(CS) == DoesNotAccessMemory;
   }
 
   /// doesNotAccessMemory - If the specified function is known to never read or
   /// write memory, return true.  For use when the call site is not known.
   ///
-  bool doesNotAccessMemory(Function *F) {
+  bool doesNotAccessMemory(const Function *F) {
     return getModRefBehavior(F) == DoesNotAccessMemory;
   }
 
@@ -221,7 +221,7 @@ public:
   ///
   /// This property corresponds to the GCC 'pure' attribute.
   ///
-  bool onlyReadsMemory(CallSite CS) {
+  bool onlyReadsMemory(ImmutableCallSite CS) {
     ModRefBehavior MRB = getModRefBehavior(CS);
     return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
   }
@@ -230,7 +230,7 @@ public:
   /// non-volatile memory (or not access memory at all), return true.  For use
   /// when the call site is not known.
   ///
-  bool onlyReadsMemory(Function *F) {
+  bool onlyReadsMemory(const Function *F) {
     ModRefBehavior MRB = getModRefBehavior(F);
     return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
   }
@@ -244,7 +244,8 @@ public:
   /// a particular call site modifies or reads the memory specified by the
   /// pointer.
   ///
-  virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+  virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
+                                     const Value *P, unsigned Size);
 
   /// getModRefInfo - Return information about whether two call sites may refer
   /// to the same set of memory locations.  This function returns NoModRef if
@@ -252,28 +253,32 @@ public:
   /// written by CS2, Mod if CS1 writes to memory read or written by CS2, or
   /// ModRef if CS1 might read or write memory accessed by CS2.
   ///
-  virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
+  virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                                     ImmutableCallSite CS2);
 
 public:
   /// Convenience functions...
-  ModRefResult getModRefInfo(LoadInst *L, Value *P, unsigned Size);
-  ModRefResult getModRefInfo(StoreInst *S, Value *P, unsigned Size);
-  ModRefResult getModRefInfo(CallInst *C, Value *P, unsigned Size) {
-    return getModRefInfo(CallSite(C), P, Size);
+  ModRefResult getModRefInfo(const LoadInst *L, const Value *P, unsigned Size);
+  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, unsigned Size);
+  ModRefResult getModRefInfo(const CallInst *C, const Value *P, unsigned Size) {
+    return getModRefInfo(ImmutableCallSite(C), P, Size);
   }
-  ModRefResult getModRefInfo(InvokeInst *I, Value *P, unsigned Size) {
-    return getModRefInfo(CallSite(I), P, Size);
+  ModRefResult getModRefInfo(const InvokeInst *I,
+                             const Value *P, unsigned Size) {
+    return getModRefInfo(ImmutableCallSite(I), P, Size);
   }
-  ModRefResult getModRefInfo(VAArgInst* I, Value* P, unsigned Size) {
+  ModRefResult getModRefInfo(const VAArgInst* I,
+                             const Value* P, unsigned Size) {
     return AliasAnalysis::ModRef;
   }
-  ModRefResult getModRefInfo(Instruction *I, Value *P, unsigned Size) {
+  ModRefResult getModRefInfo(const Instruction *I,
+                             const Value *P, unsigned Size) {
     switch (I->getOpcode()) {
-    case Instruction::VAArg:  return getModRefInfo((VAArgInst*)I, P, Size);
-    case Instruction::Load:   return getModRefInfo((LoadInst*)I, P, Size);
-    case Instruction::Store:  return getModRefInfo((StoreInst*)I, P, Size);
-    case Instruction::Call:   return getModRefInfo((CallInst*)I, P, Size);
-    case Instruction::Invoke: return getModRefInfo((InvokeInst*)I, P, Size);
+    case Instruction::VAArg:  return getModRefInfo((const VAArgInst*)I, P,Size);
+    case Instruction::Load:   return getModRefInfo((const LoadInst*)I, P, Size);
+    case Instruction::Store:  return getModRefInfo((const StoreInst*)I, P,Size);
+    case Instruction::Call:   return getModRefInfo((const CallInst*)I, P, Size);
+    case Instruction::Invoke: return getModRefInfo((const InvokeInst*)I,P,Size);
     default:                  return NoModRef;
     }
   }

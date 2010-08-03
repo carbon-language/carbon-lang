@@ -103,8 +103,10 @@ namespace {
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Value *P, unsigned Size);
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2) {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
   };
@@ -145,7 +147,8 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
 }
 
 AliasAnalysis::ModRefResult
-AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
+                                    const Value *P, unsigned Size) {
   ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size);
 
   const char *MRString;

@@ -47,7 +47,8 @@ namespace llvm {
     enum LocResult {
       Yes, No, Unknown
     };
-    LocResult (*isLocation)(CallSite CS, const Value *Ptr, unsigned Size);
+    LocResult (*isLocation)(ImmutableCallSite CS,
+                            const Value *Ptr, unsigned Size);
   };
   
   /// LibCallFunctionInfo - Each record in the array of FunctionInfo structs
@@ -142,7 +143,7 @@ namespace llvm {
     
     /// getFunctionInfo - Return the LibCallFunctionInfo object corresponding to
     /// the specified function if we have it.  If not, return null.
-    const LibCallFunctionInfo *getFunctionInfo(Function *F) const;
+    const LibCallFunctionInfo *getFunctionInfo(const Function *F) const;
     
     
     //===------------------------------------------------------------------===//
