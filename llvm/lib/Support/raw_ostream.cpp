@@ -143,9 +143,10 @@ raw_ostream &raw_ostream::operator<<(unsigned long long N) {
 }
 
 raw_ostream &raw_ostream::operator<<(long long N) {
-  if (N <  0) {
+  if (N < 0) {
     *this << '-';
-    N = -N;
+    // Avoid undefined behavior on INT64_MIN with a cast.
+    N = -(unsigned long long)N;
   }
 
   return this->operator<<(static_cast<unsigned long long>(N));
