@@ -2712,19 +2712,16 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   //  expression (the context) and the expression itself.  This should
   //  disambiguate conjured symbols.
   unsigned Count = Builder.getCurrentBlockCount();
-  StoreManager& StoreMgr = Eng.getStateManager().getStoreManager();
   StoreManager::InvalidatedSymbols IS;
-  Store store = state->getStore();
 
   // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
   //  global variables.
-  store = StoreMgr.InvalidateRegions(store, RegionsToInvalidate.data(),
-                                     RegionsToInvalidate.data() +
-                                     RegionsToInvalidate.size(),
-                                     Ex, Count, &IS,
-                                     /* invalidateGlobals = */ true);
+  state = state->InvalidateRegions(RegionsToInvalidate.data(),
+                                   RegionsToInvalidate.data() +
+                                   RegionsToInvalidate.size(),
+                                   Ex, Count, &IS,
+                                   /* invalidateGlobals = */ true);
 
-  state = state->makeWithStore(store);
   for (StoreManager::InvalidatedSymbols::iterator I = IS.begin(),
        E = IS.end(); I!=E; ++I) {
     SymbolRef sym = *I;

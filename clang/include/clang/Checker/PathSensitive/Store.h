@@ -159,12 +159,7 @@ public:
   virtual Store BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
-  
-  virtual Store InvalidateRegion(Store store,
-                                 const MemRegion *R,
-                                 const Expr *E, unsigned Count,
-                                 InvalidatedSymbols *IS) = 0;
-  
+
   virtual Store InvalidateRegions(Store store,
                                   const MemRegion * const *Begin,
                                   const MemRegion * const *End,
@@ -174,10 +169,8 @@ public:
 
   /// EnterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.
-  virtual const GRState *EnterStackFrame(const GRState *state,
-                                         const StackFrameContext *frame) {
-    return state;
-  }
+  virtual Store EnterStackFrame(const GRState *state,
+                                const StackFrameContext *frame);
 
   virtual void print(Store store, llvm::raw_ostream& Out,
                      const char* nl, const char *sep) = 0;

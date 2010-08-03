@@ -197,10 +197,7 @@ void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     const GRState *state = GetState(*I);
 
     if (ObjTy->isRecordType()) {
-      Store store = state->getStore();
-      StoreManager::InvalidatedSymbols IS;
-      store = getStoreManager().InvalidateRegion(store, EleReg, CNE, Count, &IS);
-      state = state->makeWithStore(store);
+      state = state->InvalidateRegion(EleReg, CNE, Count);
     } else {
       if (CNE->hasInitializer()) {
         SVal V = state->getSVal(*CNE->constructor_arg_begin());

@@ -77,6 +77,10 @@ private:
   Store St;
   GenericDataMap   GDM;
 
+  /// makeWithStore - Return a GRState with the same values as the current
+  ///  state with the exception of using the specified Store.
+  const GRState *makeWithStore(Store store) const;
+
 public:
 
   /// This ctor is used when creating the first GRState object.
@@ -133,10 +137,6 @@ public:
   SVal LookupExpr(Expr* E) const {
     return Env.LookupExpr(E);
   }
-
-  /// makeWithStore - Return a GRState with the same values as the current
-  /// state with the exception of using the specified Store.
-  const GRState *makeWithStore(Store store) const;
 
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
@@ -214,6 +214,28 @@ public:
   const GRState *bindDefault(SVal loc, SVal V) const;
 
   const GRState *unbindLoc(Loc LV) const;
+
+  /// InvalidateRegion - Returns the state with bindings for the given region
+  ///  cleared from the store. See InvalidateRegions.
+  const GRState *InvalidateRegion(const MemRegion *R,
+                                  const Expr *E, unsigned BlockCount,
+                                  StoreManager::InvalidatedSymbols *IS = NULL)
+                                  const {
+    return InvalidateRegions(&R, &R+1, E, BlockCount, IS, false);
+  }
+
+  /// InvalidateRegions - Returns the state with bindings for the given regions
+  ///  cleared from the store. The regions are provided as a continuous array
+  ///  from Begin to End. Optionally invalidates global regions as well.
+  const GRState *InvalidateRegions(const MemRegion * const *Begin,
+                                   const MemRegion * const *End,
+                                   const Expr *E, unsigned BlockCount,
+                                   StoreManager::InvalidatedSymbols *IS,
+                                   bool invalidateGlobals) const;
+
+  /// EnterStackFrame - Returns the state for entry to the given stack frame,
+  ///  preserving the current state.
+  const GRState *EnterStackFrame(const StackFrameContext *frame) const;
 
   /// Get the lvalue for a variable reference.
   Loc getLValue(const VarDecl *D, const LocationContext *LC) const;
@@ -626,6 +648,25 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
 inline const GRState *GRState::bindDefault(SVal loc, SVal V) const {
   const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
   Store new_store = getStateManager().StoreMgr->BindDefault(St, R, V);
+  return makeWithStore(new_store);
+}
+
+inline const GRState *
+GRState::InvalidateRegions(const MemRegion * const *Begin,
+                           const MemRegion * const *End,
+                           const Expr *E, unsigned Count,
+                           StoreManager::InvalidatedSymbols *IS,
+                           bool invalidateGlobals) const {
+  Store new_store
+    = getStateManager().StoreMgr->InvalidateRegions(St, Begin, End,
+                                                    E, Count, IS,
+                                                    invalidateGlobals);
+  return makeWithStore(new_store);
+}
+
+inline const GRState *
+GRState::EnterStackFrame(const StackFrameContext *frame) const {
+  Store new_store = getStateManager().StoreMgr->EnterStackFrame(this, frame);
   return makeWithStore(new_store);
 }
 

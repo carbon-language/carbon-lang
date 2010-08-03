@@ -21,6 +21,11 @@ StoreManager::StoreManager(GRStateManager &stateMgr)
   : ValMgr(stateMgr.getValueManager()), StateMgr(stateMgr),
     MRMgr(ValMgr.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
+Store StoreManager::EnterStackFrame(const GRState *state,
+                                    const StackFrameContext *frame) {
+  return state->getStore();
+}
+
 const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
                                               QualType EleTy, uint64_t index) {
   SVal idx = ValMgr.makeArrayIndex(index);

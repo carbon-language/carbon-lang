@@ -357,8 +357,7 @@ public: // Part of public interface to class.
                                     SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
-  const GRState *EnterStackFrame(const GRState *state,
-                                 const StackFrameContext *frame);
+  Store EnterStackFrame(const GRState *state, const StackFrameContext *frame);
 
   //===------------------------------------------------------------------===//
   // Region "extents".
@@ -1841,8 +1840,8 @@ const GRState *RegionStoreManager::RemoveDeadBindings(GRState &state,
 }
 
 
-GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
-                                               StackFrameContext const *frame) {
+Store RegionStoreManager::EnterStackFrame(const GRState *state,
+                                          const StackFrameContext *frame) {
   FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
   FunctionDecl::param_const_iterator PI = FD->param_begin();
   Store store = state->getStore();
@@ -1866,9 +1865,9 @@ GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
       store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI,frame)),ArgVal);
     }
   } else
-    assert(0 && "Unhandled call expression.");
+    llvm_unreachable("Unhandled call expression.");
 
-  return state->makeWithStore(store);
+  return store;
 }
 
 //===----------------------------------------------------------------------===//

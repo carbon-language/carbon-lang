@@ -1454,8 +1454,7 @@ void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
                          B.getBlock(),
                          B.getIndex());
 
-  const GRState *state = B.getState();
-  state = getStoreManager().EnterStackFrame(state, LocCtx);
+  const GRState *state = B.getState()->EnterStackFrame(LocCtx);
 
   B.GenerateNode(state, LocCtx);
 }
