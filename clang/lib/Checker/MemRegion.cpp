@@ -830,7 +830,7 @@ RegionRawOffset ElementRegion::getAsArrayOffset() const {
 
 RegionOffset MemRegion::getAsOffset() const {
   const MemRegion *R = this;
-  uint64_t Offset = 0;
+  int64_t Offset = 0;
 
   while (1) {
     switch (R->getKind()) {
@@ -854,7 +854,6 @@ RegionOffset MemRegion::getAsOffset() const {
       SVal Index = ER->getIndex();
       if (const nonloc::ConcreteInt *CI=dyn_cast<nonloc::ConcreteInt>(&Index)) {
         int64_t i = CI->getValue().getSExtValue();
-        assert(i >= 0);
         CharUnits Size = getContext().getTypeSizeInChars(EleTy);
         Offset += i * Size.getQuantity() * 8;
       } else {

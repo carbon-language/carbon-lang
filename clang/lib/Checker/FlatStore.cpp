@@ -78,7 +78,7 @@ private:
   public:
     const MemRegion *R;
     Interval I;
-    RegionInterval(const MemRegion *r, uint64_t s, uint64_t e) : R(r), I(s, e){}
+    RegionInterval(const MemRegion *r, int64_t s, int64_t e) : R(r), I(s, e){}
   };
 
   RegionInterval RegionToInterval(const MemRegion *R);
@@ -186,7 +186,7 @@ FlatStoreManager::RegionToInterval(const MemRegion *R) {
   switch (R->getKind()) {
   case MemRegion::VarRegionKind: {
     QualType T = cast<VarRegion>(R)->getValueType(Ctx);
-    uint64_t Size = Ctx.getTypeSize(T);
+    int64_t Size = Ctx.getTypeSize(T);
     return RegionInterval(R, 0, Size-1);
   }
 
@@ -197,8 +197,8 @@ FlatStoreManager::RegionToInterval(const MemRegion *R) {
     // with symbolic offsets.
     if (!Offset.getRegion())
       return RegionInterval(0, 0, 0);
-    uint64_t Start = Offset.getOffset();
-    uint64_t Size = Ctx.getTypeSize(cast<TypedRegion>(R)->getValueType(Ctx));
+    int64_t Start = Offset.getOffset();
+    int64_t Size = Ctx.getTypeSize(cast<TypedRegion>(R)->getValueType(Ctx));
     return RegionInterval(Offset.getRegion(), Start, Start+Size);
   }
 

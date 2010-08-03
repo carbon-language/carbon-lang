@@ -45,14 +45,14 @@ class RegionOffset {
   const MemRegion *R;
 
   /// The bit offset within the base region. It shouldn't be negative.
-  uint64_t Offset;
+  int64_t Offset;
 
 public:
   RegionOffset(const MemRegion *r) : R(r), Offset(0) {}
-  RegionOffset(const MemRegion *r, uint64_t off) : R(r), Offset(off) {}
+  RegionOffset(const MemRegion *r, int64_t off) : R(r), Offset(off) {}
 
   const MemRegion *getRegion() const { return R; }
-  uint64_t getOffset() const { return Offset; }
+  int64_t getOffset() const { return Offset; }
 };
 
 //===----------------------------------------------------------------------===//
