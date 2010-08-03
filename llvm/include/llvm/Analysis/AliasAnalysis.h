@@ -164,27 +164,12 @@ public:
     UnknownModRefBehavior
   };
 
-  /// PointerAccessInfo - This struct is used to return results for pointers,
-  /// globals, and the return value of a function.
-  struct PointerAccessInfo {
-    /// V - The value this record corresponds to.  This may be an Argument for
-    /// the function, a GlobalVariable, or null, corresponding to the return
-    /// value for the function.
-    Value *V;
-
-    /// ModRefInfo - Whether the pointer is loaded or stored to/from.
-    ///
-    ModRefResult ModRefInfo;
-  };
-
   /// getModRefBehavior - Return the behavior when calling the given call site.
-  virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS,
-                                   std::vector<PointerAccessInfo> *Info = 0);
+  virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS);
 
   /// getModRefBehavior - Return the behavior when calling the given function.
   /// For use when the call site is not known.
-  virtual ModRefBehavior getModRefBehavior(const Function *F,
-                                   std::vector<PointerAccessInfo> *Info = 0);
+  virtual ModRefBehavior getModRefBehavior(const Function *F);
 
   /// getIntrinsicModRefBehavior - Return the modref behavior of the intrinsic
   /// with the given id.
