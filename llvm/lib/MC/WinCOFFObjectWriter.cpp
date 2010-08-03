@@ -31,6 +31,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include "llvm/System/TimeValue.h"
+
 #include <cstdio>
 
 using namespace llvm;
@@ -686,6 +688,8 @@ void WinCOFFObjectWriter::WriteObject(const MCAssembler &Asm,
   }
 
   Header.PointerToSymbolTable = offset;
+
+  Header.TimeDateStamp = sys::TimeValue::now().toEpochTime();
 
   // Write it all to disk...
   WriteFileHeader(Header);
