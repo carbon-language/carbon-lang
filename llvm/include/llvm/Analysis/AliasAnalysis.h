@@ -64,6 +64,11 @@ public:
   AliasAnalysis() : TD(0), AA(0) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
+  /// UnknownSize - This is a special value which can be used with the
+  /// size arguments in alias queries to indicate that the caller does not
+  /// know the sizes of the potential memory references.
+  static unsigned const UnknownSize = ~0u;
+
   /// getTargetData - Return a pointer to the current TargetData object, or
   /// null if no TargetData object is available.
   ///
@@ -96,7 +101,7 @@ public:
 
   /// alias - A convenience wrapper for the case where the sizes are unknown.
   AliasResult alias(const Value *V1, const Value *V2) {
-    return alias(V1, ~0u, V2, ~0u);
+    return alias(V1, UnknownSize, V2, UnknownSize);
   }
 
   /// isNoAlias - A trivial helper function to check to see if the specified

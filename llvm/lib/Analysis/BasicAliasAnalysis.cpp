@@ -334,7 +334,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       // is impossible to alias the pointer we're checking.  If not, we have to
       // assume that the call could touch the pointer, even though it doesn't
       // escape.
-      if (!isNoAlias(cast<Value>(CI), ~0U, P, ~0U)) {
+      if (!isNoAlias(cast<Value>(CI), UnknownSize, P, UnknownSize)) {
         PassedAsArg = true;
         break;
       }
@@ -353,7 +353,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   default: break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
-    unsigned Len = ~0U;
+    unsigned Len = UnknownSize;
     if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2)))
       Len = LenCI->getZExtValue();
     Value *Dest = II->getArgOperand(0);
@@ -490,7 +490,8 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
   // out if the indexes to the GEP tell us anything about the derived pointer.
   if (const GEPOperator *GEP2 = dyn_cast<GEPOperator>(V2)) {
     // Do the base pointers alias?
-    AliasResult BaseAlias = aliasCheck(UnderlyingV1, ~0U, UnderlyingV2, ~0U);
+    AliasResult BaseAlias = aliasCheck(UnderlyingV1, UnknownSize,
+                                       UnderlyingV2, UnknownSize);
     
     // If we get a No or May, then return it immediately, no amount of analysis
     // will improve this situation.
@@ -527,10 +528,10 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
     // pointer, we know they cannot alias.
 
     // If both accesses are unknown size, we can't do anything useful here.
-    if (V1Size == ~0U && V2Size == ~0U)
+    if (V1Size == UnknownSize && V2Size == UnknownSize)
       return MayAlias;
 
-    AliasResult R = aliasCheck(UnderlyingV1, ~0U, V2, V2Size);
+    AliasResult R = aliasCheck(UnderlyingV1, UnknownSize, V2, V2Size);
     if (R != MustAlias)
       // If V2 may alias GEP base pointer, conservatively returns MayAlias.
       // If V2 is known not to alias GEP base pointer, then the two values
@@ -778,8 +779,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
   if (TD)
-    if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, *TD)) ||
-        (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, *TD)))
+    if ((V1Size != UnknownSize && isObjectSmallerThan(O2, V1Size, *TD)) ||
+        (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *TD)))
       return NoAlias;
   
   // FIXME: This isn't aggressively handling alias(GEP, PHI) for example: if the

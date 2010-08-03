@@ -155,8 +155,8 @@ ScalarEvolutionAliasAnalysis::alias(const Value *A, unsigned ASize,
   Value *AO = GetBaseValue(AS);
   Value *BO = GetBaseValue(BS);
   if ((AO && AO != A) || (BO && BO != B))
-    if (alias(AO ? AO : A, AO ? ~0u : ASize,
-              BO ? BO : B, BO ? ~0u : BSize) == NoAlias)
+    if (alias(AO ? AO : A, AO ? UnknownSize : ASize,
+              BO ? BO : B, BO ? UnknownSize : BSize) == NoAlias)
       return NoAlias;
 
   // Forward the query to the next analysis.
