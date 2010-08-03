@@ -1061,9 +1061,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                a, b);
   }
 
-  // Determine the type of this overloaded NEON intrinsic.
-  assert(BuiltinID > ARM::BI__builtin_arm_usat);
-
   llvm::SmallVector<Value*, 4> Ops;
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
     Ops.push_back(EmitScalarExpr(E->getArg(i)));
@@ -1073,6 +1070,25 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   if (!Arg->isIntegerConstantExpr(Result, getContext()))
     return 0;
 
+  if (BuiltinID == ARM::BI__builtin_arm_vcvtr_f ||
+      BuiltinID == ARM::BI__builtin_arm_vcvtr_d) {
+    // Determine the overloaded type of this builtin.
+    const llvm::Type *Ty;
+    if (BuiltinID == ARM::BI__builtin_arm_vcvtr_f)
+      Ty = llvm::Type::getFloatTy(VMContext);
+    else
+      Ty = llvm::Type::getDoubleTy(VMContext);
+    
+    // Determine whether this is an unsigned conversion or not.
+    bool usgn = Result.getZExtValue() == 1;
+    unsigned Int = usgn ? Intrinsic::arm_vcvtru : Intrinsic::arm_vcvtr;
+
+    // Call the appropriate intrinsic.
+    Function *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, Ops.begin(), Ops.end(), "vcvtr");
+  }
+  
+  // Determine the type of this overloaded NEON intrinsic.
   unsigned type = Result.getZExtValue();
   bool usgn = type & 0x08;
   bool quad = type & 0x10;

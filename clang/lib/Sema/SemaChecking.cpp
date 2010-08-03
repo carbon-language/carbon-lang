@@ -300,6 +300,8 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   default: return false;
   case ARM::BI__builtin_arm_ssat: i = 1; l = 1; u = 31; break;
   case ARM::BI__builtin_arm_usat: i = 1; u = 31; break;
+  case ARM::BI__builtin_arm_vcvtr_f:
+  case ARM::BI__builtin_arm_vcvtr_d: i = 1; u = 1; break;
 #define GET_NEON_IMMEDIATE_CHECK
 #include "clang/Basic/arm_neon.inc"
 #undef GET_NEON_IMMEDIATE_CHECK
@@ -316,6 +318,7 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       << llvm::utostr(l) << llvm::utostr(u+l)  
       << TheCall->getArg(i)->getSourceRange();
 
+  // FIXME: VFP Intrinsics should error if VFP not present.
   return false;
 }
 

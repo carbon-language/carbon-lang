@@ -24,6 +24,12 @@ BUILTIN(__builtin_arm_qsub, "iii", "nc")
 BUILTIN(__builtin_arm_ssat, "iiUi", "nc")
 BUILTIN(__builtin_arm_usat, "UiUiUi", "nc")
 
+// VFP
+BUILTIN(__builtin_arm_get_fpscr, "Ui", "nc")
+BUILTIN(__builtin_arm_set_fpscr, "vUi", "nc")
+BUILTIN(__builtin_arm_vcvtr_f, "ffi", "nc")
+BUILTIN(__builtin_arm_vcvtr_d, "fdi", "nc")
+
 // NEON
 #define GET_NEON_BUILTINS
 #include "clang/Basic/arm_neon.inc"
