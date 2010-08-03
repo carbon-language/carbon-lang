@@ -625,3 +625,6 @@
 
 /* Native LLVM architecture */
 #cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}Target
+
+/* Native LLVM architecture, short name */
+#cmakedefine LLVM_NATIVE_ARCHNAME ${LLVM_NATIVE_ARCH}

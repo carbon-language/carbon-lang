@@ -5018,6 +5018,11 @@ for a_target in $TARGETS_TO_BUILD; do
     LLVM_NATIVE_ARCHTARGET="${LLVM_NATIVE_ARCH}Target"
 
 cat >>confdefs.h <<_ACEOF
+#define LLVM_NATIVE_ARCHNAME $LLVM_NATIVE_ARCH
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
 #define LLVM_NATIVE_ARCH $LLVM_NATIVE_ARCHTARGET
 _ACEOF
 
@@ -11391,7 +11396,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11394 "configure"
+#line 11399 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

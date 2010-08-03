@@ -30,13 +30,6 @@ extern "C" {
 #define LLVM_ASM_PRINTER(TargetName) void LLVMInitialize##TargetName##AsmPrinter();
 #include "llvm/Config/AsmPrinters.def"
 
-  // FIXME: Workaround for unfortunate definition of LLVM_NATIVE_ARCH.
-#define LLVM_ASM_PRINTER(TargetName) \
-  static inline void LLVMInitialize##TargetName##TargetAsmPrinter() { \
-    LLVMInitialize##TargetName##AsmPrinter(); \
-  }
-#include "llvm/Config/AsmPrinters.def"
-
   // Declare all of the available assembly parser initialization functions.
 #define LLVM_ASM_PARSER(TargetName) void LLVMInitialize##TargetName##AsmParser();
 #include "llvm/Config/AsmParsers.def"
@@ -107,7 +100,7 @@ namespace llvm {
   /// It is legal for a client to make multiple calls to this function.
   inline bool InitializeNativeTarget() {
   // If we have a native target, initialize it to ensure it is linked in.
-#ifdef LLVM_NATIVE_ARCH
+#ifdef LLVM_NATIVE_ARCHNAME
 #define DoInit2(TARG) \
     LLVMInitialize ## TARG ## Info ();          \
     LLVMInitialize ## TARG ()
@@ -129,7 +122,7 @@ namespace llvm {
 #define DoInit2(TARG) \
     LLVMInitialize ## TARG ## AsmPrinter ();
 #define DoInit(T) DoInit2(T)
-    DoInit(LLVM_NATIVE_ARCH);
+    DoInit(LLVM_NATIVE_ARCHNAME);
     return false;
 #undef DoInit
 #undef DoInit2
