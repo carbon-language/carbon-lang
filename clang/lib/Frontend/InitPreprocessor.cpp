@@ -173,7 +173,7 @@ static void DefineTypeSize(llvm::StringRef MacroName, unsigned TypeWidth,
     assert(TypeWidth != 1);
     MaxVal = ~0ULL >> (65-TypeWidth);
   } else
-    MaxVal = ~0LL >> (64-TypeWidth);
+    MaxVal = ~0ULL >> (64-TypeWidth);
 
   Builder.defineMacro(MacroName, llvm::Twine(MaxVal) + ValSuffix);
 }

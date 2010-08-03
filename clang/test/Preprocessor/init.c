@@ -117,6 +117,13 @@
 // SCHAR-NOT:#define __UNSIGNED_CHAR__
 // SCHAR:#define __clang__ 1
 //
+// RUN: %clang_cc1 -E -dM -fshort-wchar < /dev/null | FileCheck -check-prefix SHORTWCHAR %s
+//
+// SHORTWCHAR: #define __SIZEOF_WCHAR_T__ 2
+// SHORTWCHAR: #define __WCHAR_MAX__ 65535U
+// SHORTWCHAR: #define __WCHAR_TYPE__ unsigned short
+// SHORTWCHAR: #define __WCHAR_WIDTH__ 16
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm-none-none < /dev/null | FileCheck -check-prefix ARM %s
 //
 // ARM:#define __APCS_32__ 1
