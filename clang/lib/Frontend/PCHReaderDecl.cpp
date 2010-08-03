@@ -31,6 +31,7 @@ namespace clang {
   class PCHDeclReader : public DeclVisitor<PCHDeclReader, void> {
     PCHReader &Reader;
     llvm::BitstreamCursor &Cursor;
+    const pch::DeclID ThisDeclID;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
     pch::TypeID TypeIDForTypeDecl;
@@ -39,9 +40,10 @@ namespace clang {
 
   public:
     PCHDeclReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
-                  const PCHReader::RecordData &Record, unsigned &Idx)
-      : Reader(Reader), Cursor(Cursor), Record(Record), Idx(Idx),
-        TypeIDForTypeDecl(0) { }
+                  pch::DeclID thisDeclID, const PCHReader::RecordData &Record,
+                  unsigned &Idx)
+      : Reader(Reader), Cursor(Cursor), ThisDeclID(thisDeclID), Record(Record),
+        Idx(Idx), TypeIDForTypeDecl(0) { }
 
     void Visit(Decl *D);
 
@@ -93,6 +95,7 @@ namespace clang {
     void VisitBlockDecl(BlockDecl *BD);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
+    template <typename T> void VisitRedeclarable(Redeclarable<T> *D);
 
     // FIXME: Reorder according to DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
@@ -178,8 +181,7 @@ void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
   VisitTypeDecl(TD);
   TD->IdentifierNamespace = Record[Idx++];
-  TD->setPreviousDeclaration(
-                        cast_or_null<TagDecl>(Reader.GetDecl(Record[Idx++])));
+  VisitRedeclarable(TD);
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
@@ -305,10 +307,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // FunctionDecl's body is handled last at PCHReaderDecl::Visit,
   // after everything else is read.
 
-  // Avoid side effects and invariant checking of FunctionDecl's
-  // setPreviousDeclaration.
-  FD->redeclarable_base::setPreviousDeclaration(
-                   cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
+  VisitRedeclarable(FD);
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
   FD->setStorageClassAsWritten((FunctionDecl::StorageClass)Record[Idx++]);
   FD->setInlineSpecified(Record[Idx++]);
@@ -550,8 +549,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setDeclaredInCondition(Record[Idx++]);
   VD->setExceptionVariable(Record[Idx++]);
   VD->setNRVOVariable(Record[Idx++]);
-  VD->setPreviousDeclaration(
-                         cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
+  VisitRedeclarable(VD);
   if (Record[Idx++])
     VD->setInit(Reader.ReadExpr(Cursor));
 
@@ -918,6 +916,25 @@ void PCHDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
 
     RedeclarableTemplateDecl *LatestDecl = 
         cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+  
+    // This decl is a first one and the latest declaration that it points to is
+    // in the same PCH. However, if this actually needs to point to a
+    // redeclaration in another chained PCH, we need to update it by checking
+    // the FirstLatestDeclIDs map which tracks this kind of decls.
+    assert(Reader.GetDecl(ThisDeclID) == D && "Invalid ThisDeclID ?");
+    PCHReader::FirstLatestDeclIDMap::iterator I
+        = Reader.FirstLatestDeclIDs.find(ThisDeclID);
+    if (I != Reader.FirstLatestDeclIDs.end()) {
+      Decl *NewLatest = Reader.GetDecl(I->second);
+      assert((LatestDecl->getLocation().isInvalid() ||
+              NewLatest->getLocation().isInvalid()  ||
+              Reader.SourceMgr.isBeforeInTranslationUnit(
+                                                   LatestDecl->getLocation(),
+                                                   NewLatest->getLocation())) &&
+             "The new latest is supposed to come after the previous latest");
+      LatestDecl = cast<RedeclarableTemplateDecl>(NewLatest);
+    }
+
     assert(LatestDecl->getKind() == D->getKind() && "Latest kind mismatch");
     D->getCommonPtr()->Latest = LatestDecl;
   }
@@ -1070,6 +1087,54 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
   uint64_t LexicalOffset = Record[Idx++];
   uint64_t VisibleOffset = Record[Idx++];
   return std::make_pair(LexicalOffset, VisibleOffset);
+}
+
+template <typename T>
+void PCHDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
+  enum RedeclKind { NoRedeclaration = 0, PointsToPrevious, PointsToLatest };
+  RedeclKind Kind = (RedeclKind)Record[Idx++];
+  switch (Kind) {
+  default:
+    assert(0 && "Out of sync with PCHDeclWriter::VisitRedeclarable or messed up"
+                " reading");
+  case NoRedeclaration:
+    break;
+  case PointsToPrevious:
+    D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(
+                                cast_or_null<T>(Reader.GetDecl(Record[Idx++])));
+    break;
+  case PointsToLatest:
+    D->RedeclLink = typename Redeclarable<T>::LatestDeclLink(
+                                cast_or_null<T>(Reader.GetDecl(Record[Idx++])));
+    break;
+  }
+
+  assert(!(Kind == PointsToPrevious &&
+           Reader.FirstLatestDeclIDs.find(ThisDeclID) !=
+               Reader.FirstLatestDeclIDs.end()) &&
+         "This decl is not first, it should not be in the map");
+  if (Kind == PointsToPrevious)
+    return;
+
+  // This decl is a first one and the latest declaration that it points to is in
+  // the same PCH. However, if this actually needs to point to a redeclaration
+  // in another chained PCH, we need to update it by checking the
+  // FirstLatestDeclIDs map which tracks this kind of decls.
+  assert(Reader.GetDecl(ThisDeclID) == static_cast<T*>(D) &&
+         "Invalid ThisDeclID ?");
+  PCHReader::FirstLatestDeclIDMap::iterator I
+      = Reader.FirstLatestDeclIDs.find(ThisDeclID);
+  if (I != Reader.FirstLatestDeclIDs.end()) {
+    Decl *NewLatest = Reader.GetDecl(I->second);
+    assert((D->getMostRecentDeclaration()->getLocation().isInvalid() ||
+            NewLatest->getLocation().isInvalid() ||
+            Reader.SourceMgr.isBeforeInTranslationUnit(
+                                   D->getMostRecentDeclaration()->getLocation(),
+                                   NewLatest->getLocation())) &&
+           "The new latest is supposed to come after the previous latest");
+    D->RedeclLink
+        = typename Redeclarable<T>::LatestDeclLink(cast_or_null<T>(NewLatest));
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -1304,7 +1369,7 @@ PCHReader::RecordLocation PCHReader::DeclCursorForIndex(unsigned Index) {
 }
 
 /// \brief Read the declaration at the given offset from the PCH file.
-Decl *PCHReader::ReadDeclRecord(unsigned Index) {
+Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
   RecordLocation Loc = DeclCursorForIndex(Index);
   llvm::BitstreamCursor &DeclsCursor = *Loc.first;
   // Keep track of where we are in the stream, then jump back there
@@ -1320,7 +1385,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned Idx = 0;
-  PCHDeclReader Reader(*this, DeclsCursor, Record, Idx);
+  PCHDeclReader Reader(*this, DeclsCursor, ID, Record, Idx);
 
   Decl *D = 0;
   switch ((pch::DeclCode)DeclsCursor.ReadRecord(Code, Record)) {

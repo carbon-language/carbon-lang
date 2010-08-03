@@ -319,6 +319,11 @@ private:
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
 
+  typedef llvm::DenseMap<pch::DeclID, pch::DeclID> FirstLatestDeclIDMap;
+  /// \brief Map of first declarations from a chained PCH that point to the
+  /// most recent declarations in another PCH.
+  FirstLatestDeclIDMap FirstLatestDeclIDs;
+
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
                               const std::pair<uint64_t, uint64_t> &Offsets,
@@ -561,7 +566,7 @@ private:
   QualType ReadTypeRecord(unsigned Index);
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
-  Decl *ReadDeclRecord(unsigned Index);
+  Decl *ReadDeclRecord(unsigned Index, pch::DeclID ID);
   RecordLocation DeclCursorForIndex(unsigned Index);
 
   void PassInterestingDeclsToConsumer();

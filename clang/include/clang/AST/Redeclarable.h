@@ -177,6 +177,9 @@ public:
                                           static_cast<const decl_type*>(this)));
   }
   redecl_iterator redecls_end() const { return redecl_iterator(); }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 }

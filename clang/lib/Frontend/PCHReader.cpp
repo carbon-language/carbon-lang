@@ -1557,6 +1557,18 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
     }
 
+    case pch::REDECLS_UPDATE_LATEST: {
+      assert(Record.size() % 2 == 0 && "Expected pairs of DeclIDs");
+      for (unsigned i = 0, e = Record.size(); i < e; i += 2) {
+        pch::DeclID First = Record[i], Latest = Record[i+1];
+        assert((FirstLatestDeclIDs.find(First) == FirstLatestDeclIDs.end() ||
+                Latest > FirstLatestDeclIDs[First]) &&
+               "The new latest is supposed to come after the previous latest");
+        FirstLatestDeclIDs[First] = Latest;
+      }
+      break;
+    }
+
     case pch::LANGUAGE_OPTIONS:
       if (ParseLanguageOptions(Record) && !DisableValidation)
         return IgnorePCH;
@@ -2868,7 +2880,7 @@ Decl *PCHReader::GetExternalDecl(uint32_t ID) {
 
 TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
   if (!DeclsLoaded[0]) {
-    ReadDeclRecord(0);
+    ReadDeclRecord(0, 0);
     if (DeserializationListener)
       DeserializationListener->DeclRead(1, DeclsLoaded[0]);
   }
@@ -2887,7 +2899,7 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 
   unsigned Index = ID - 1;
   if (!DeclsLoaded[Index]) {
-    ReadDeclRecord(Index);
+    ReadDeclRecord(Index, ID);
     if (DeserializationListener)
       DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
   }

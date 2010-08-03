@@ -245,8 +245,12 @@ namespace clang {
       /// declarations.
       TU_UPDATE_LEXICAL = 28,
 
+      /// \brief Record code for an update to first decls pointing to the
+      /// latest redeclarations.
+      REDECLS_UPDATE_LATEST = 29,
+
       /// \brief Record code for declarations that Sema keeps references of.
-      SEMA_DECL_REFS = 29
+      SEMA_DECL_REFS = 30
     };
 
     /// \brief Record types used within a source manager block.

@@ -92,6 +92,7 @@ namespace clang {
 
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
                           uint64_t VisibleOffset);
+    template <typename T> void VisitRedeclarable(Redeclarable<T> *D);
 
 
     // FIXME: Put in the same order is DeclNodes.td?
@@ -163,7 +164,7 @@ void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
 void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
   VisitTypeDecl(D);
   Record.push_back(D->getIdentifierNamespace());
-  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  VisitRedeclarable(D);
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
   Record.push_back(D->isDefinition());
   Record.push_back(D->isEmbeddedInDeclarator());
@@ -279,7 +280,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   // FunctionDecl's body is handled last at PCHWriterDecl::Visit,
   // after everything else is written.
 
-  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  VisitRedeclarable(D);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->getStorageClassAsWritten());
   Record.push_back(D->isInlineSpecified());
@@ -500,7 +501,7 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isDeclaredInCondition());
   Record.push_back(D->isExceptionVariable());
   Record.push_back(D->isNRVOVariable());
-  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  VisitRedeclarable(D);
   Record.push_back(D->getInit() ? 1 : 0);
   if (D->getInit())
     Writer.AddStmt(D->getInit());
@@ -854,6 +855,18 @@ void PCHDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
       Record.push_back(D->isMemberSpecialization());
 
     Writer.AddDeclRef(D->getCommonPtr()->Latest, Record);
+  } else {
+    RedeclarableTemplateDecl *First = D->getFirstDeclaration();
+    assert(First != D);
+    // If this is a most recent redeclaration that is pointed to by a first decl
+    // in a chained PCH, keep track of the association with the map so we can
+    // update the first decl during PCH reading.
+    if (First->getMostRecentDeclaration() == D &&
+        First->getPCHLevel() > D->getPCHLevel()) {
+      assert(Writer.FirstLatestDecls.find(First)==Writer.FirstLatestDecls.end()
+             && "The latest is already set");
+      Writer.FirstLatestDecls[First] = D;
+    }
   }
 }
 
@@ -1016,6 +1029,29 @@ void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
   Record.push_back(VisibleOffset);
 }
 
+template <typename T>
+void PCHDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
+  enum { NoRedeclaration = 0, PointsToPrevious, PointsToLatest };
+  if (D->RedeclLink.getNext() == D) {
+    Record.push_back(NoRedeclaration);
+  } else {
+    Record.push_back(D->RedeclLink.NextIsPrevious() ? PointsToPrevious
+                                                    : PointsToLatest);
+    Writer.AddDeclRef(D->RedeclLink.getPointer(), Record);
+  }
+
+  T *First = D->getFirstDeclaration();
+  T *ThisDecl = static_cast<T*>(D);
+  // If this is a most recent redeclaration that is pointed to by a first decl
+  // in a chained PCH, keep track of the association with the map so we can
+  // update the first decl during PCH reading.
+  if (ThisDecl != First && First->getMostRecentDeclaration() == ThisDecl &&
+      First->getPCHLevel() > ThisDecl->getPCHLevel()) {
+    assert(Writer.FirstLatestDecls.find(First) == Writer.FirstLatestDecls.end()
+           && "The latest is already set");
+    Writer.FirstLatestDecls[First] = ThisDecl;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // PCHWriter Implementation

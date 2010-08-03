@@ -2410,6 +2410,19 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteIdentifierTable(PP);
   WriteTypeDeclOffsets();
 
+  /// Build a record containing first declarations from a chained PCH and the
+  /// most recent declarations in this PCH that they point to.
+  RecordData FirstLatestDeclIDs;
+  for (FirstLatestDeclMap::iterator
+        I = FirstLatestDecls.begin(), E = FirstLatestDecls.end(); I != E; ++I) {
+    assert(I->first->getPCHLevel() > I->second->getPCHLevel() &&
+           "Expected first & second to be in different PCHs");
+    AddDeclRef(I->first, FirstLatestDeclIDs);
+    AddDeclRef(I->second, FirstLatestDeclIDs);
+  }
+  if (!FirstLatestDeclIDs.empty())
+    Stream.EmitRecord(pch::REDECLS_UPDATE_LATEST, FirstLatestDeclIDs);
+
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
     Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);

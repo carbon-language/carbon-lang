@@ -79,6 +79,7 @@ class PCHWriter : public PCHDeserializationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
+  friend class PCHDeclWriter;
 private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
@@ -195,6 +196,11 @@ private:
   /// \brief Mapping from the macro definition indices in \c MacroDefinitions
   /// to the corresponding offsets within the preprocessor block.
   std::vector<uint32_t> MacroDefinitionOffsets;
+
+  typedef llvm::DenseMap<Decl *, Decl *> FirstLatestDeclMap;
+  /// \brief Map of first declarations from a chained PCH that point to the
+  /// most recent declarations in another PCH.
+  FirstLatestDeclMap FirstLatestDecls;
   
   /// \brief Declarations encountered that might be external
   /// definitions.

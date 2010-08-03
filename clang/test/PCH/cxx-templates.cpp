@@ -1,9 +1,13 @@
 // Test this without pch.
-// RUN: %clang_cc1 -include %S/cxx-templates.h -verify %s -ast-dump
+// RUN: %clang_cc1 -include %S/cxx-templates.h -verify %s -ast-dump 1>/dev/null
+// RUN: %clang_cc1 -include %S/cxx-templates.h %s -emit-llvm -o - | FileCheck %s
 
 // Test with pch.
 // RUN: %clang_cc1 -x c++-header -emit-pch -o %t %S/cxx-templates.h
-// RUN: %clang_cc1 -include-pch %t -verify %s -ast-dump 
+// RUN: %clang_cc1 -include-pch %t -verify %s -ast-dump  1>/dev/null
+// RUN: %clang_cc1 -include-pch %t %s -emit-llvm -o - | FileCheck %s
+
+// CHECK: define linkonce_odr void @_ZN2S3IiE1mEv
 
 struct A {
   typedef int type;
@@ -22,4 +26,7 @@ void test() {
   Dep<A>::Ty ty;
   Dep<A> a;
   a.f();
+  
+  S3<int> s3;
+  s3.m();
 }

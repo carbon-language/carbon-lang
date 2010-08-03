@@ -116,3 +116,11 @@ struct S2 {
 };
 
 extern template class S2<true>;
+
+template <typename T>
+struct S3 {
+    void m();
+};
+
+template <typename T>
+inline void S3<T>::m() { }
