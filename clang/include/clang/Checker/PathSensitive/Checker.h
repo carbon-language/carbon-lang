@@ -36,7 +36,6 @@ class CheckerContext {
   const GRState *ST;
   const Stmt *statement;
   const unsigned size;
-  bool DoneEvaluating; // FIXME: This is not a permanent API change.
 public:
   bool *respondsToCallback;
 public:
