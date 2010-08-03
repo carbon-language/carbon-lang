@@ -338,6 +338,12 @@ FunctionPass *createABCDPass();
 //
 FunctionPass *createSinkingPass();
 
+//===----------------------------------------------------------------------===//
+//
+// LowerAtomic - Lower atomic intrinsics to non-atomic form
+//
+Pass *createLowerAtomicPass();
+
 } // End llvm namespace
 
 #endif

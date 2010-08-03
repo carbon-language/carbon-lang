@@ -167,6 +167,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#loop-unroll">-loop-unroll</a></td><td>Unroll loops</td></tr>
 <tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch loops</td></tr>
 <tr><td><a href="#loopsimplify">-loopsimplify</a></td><td>Canonicalize natural loops</td></tr>
+<tr><td><a href="#loweratomic">-loweratomic</a></td><td>Lower atomic intrinsics</td></tr>
 <tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower invoke and unwind, for unwindless code generators</td></tr>
 <tr><td><a href="#lowersetjmp">-lowersetjmp</a></td><td>Lower Set Jump</td></tr>
 <tr><td><a href="#lowerswitch">-lowerswitch</a></td><td>Lower SwitchInst's to branches</td></tr>
@@ -1544,6 +1545,24 @@ if (X &lt; 3) {</pre>
   <p>
   This is a target-dependent tranformation because it depends on the size of
   data types and alignment constraints.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loweratomic">-loweratomic: Lower atomic intrinsics
+</div>
+<div class="doc_text">
+  <p>
+  This pass lowers atomic intrinsics to non-atomic form for use in a known
+  non-preemptible environment.
+  </p>
+
+  <p>
+  The pass does not verify that the environment is non-preemptible (in
+  general this would require knowledge of the entire call graph of the
+  program including any libraries which may not be available in bitcode form);
+  it simply lowers every atomic intrinsic.
   </p>
 </div>
 

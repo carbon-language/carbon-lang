@@ -148,6 +148,7 @@ namespace {
       (void) llvm::createABCDPass();
       (void) llvm::createLintPass();
       (void) llvm::createSinkingPass();
+      (void) llvm::createLowerAtomicPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
