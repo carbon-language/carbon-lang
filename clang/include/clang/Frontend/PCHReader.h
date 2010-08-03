@@ -285,6 +285,23 @@ private:
     /// \brief Method selectors used in a @selector expression. Used for
     /// implementation of -Wselector.
     llvm::SmallVector<long long unsigned int,64u> ReferencedSelectorsData;
+
+    /// \brief A pointer to an on-disk hash table of opaque type
+    /// PCHMethodPoolLookupTable.
+    ///
+    /// This hash table provides the instance and factory methods
+    /// associated with every selector known in the PCH file.
+    void *MethodPoolLookupTable;
+
+    /// \brief A pointer to the character data that comprises the method
+    /// pool.
+    ///
+    /// The SelectorOffsets table refers into this memory.
+    const unsigned char *MethodPoolLookupTableData;
+
+    /// \brief Offsets into the method pool lookup table's data array
+    /// where each selector resides.
+    const uint32_t *SelectorOffsets;
   };
 
   /// \brief The chain of PCH files. The first entry is the one named by the
@@ -337,25 +354,8 @@ private:
   /// been loaded.
   std::vector<IdentifierInfo *> IdentifiersLoaded;
 
-  /// \brief A pointer to an on-disk hash table of opaque type
-  /// PCHMethodPoolLookupTable.
-  ///
-  /// This hash table provides the instance and factory methods
-  /// associated with every selector known in the PCH file.
-  void *MethodPoolLookupTable;
-
-  /// \brief A pointer to the character data that comprises the method
-  /// pool.
-  ///
-  /// The SelectorOffsets table refers into this memory.
-  const unsigned char *MethodPoolLookupTableData;
-
   /// \brief The number of selectors stored in the method pool itself.
   unsigned TotalSelectorsInMethodPool;
-
-  /// \brief Offsets into the method pool lookup table's data array
-  /// where each selector resides.
-  const uint32_t *SelectorOffsets;
 
   /// \brief The total number of selectors stored in the PCH file.
   unsigned TotalNumSelectors;

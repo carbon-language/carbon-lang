@@ -418,15 +418,14 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
-    TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0),  isysroot(isysroot), 
-    DisableValidation(DisableValidation), NumStatHits(0), NumStatMisses(0),
-    NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
-    TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
-    NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
-    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
+    Consumer(0), TotalSelectorsInMethodPool(0), TotalNumSelectors(0),
+    isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
+    NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
+    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
+    NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0), TotalNumMacros(0),
+    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
+    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
+    NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
 }
 
@@ -435,9 +434,7 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      bool DisableValidation)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
-    TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), isysroot(isysroot), 
+    TotalSelectorsInMethodPool(0), TotalNumSelectors(0), isysroot(isysroot), 
     DisableValidation(DisableValidation), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
@@ -457,7 +454,8 @@ PCHReader::PerFileData::PerFileData()
     LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
     IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
     LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0),
-    NumPreallocatedPreprocessingEntities(0)
+    NumPreallocatedPreprocessingEntities(0), MethodPoolLookupTable(0),
+    MethodPoolLookupTableData(0), SelectorOffsets(0)
 {}
 
 void
@@ -1648,18 +1646,18 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::SELECTOR_OFFSETS:
-      SelectorOffsets = (const uint32_t *)BlobStart;
+      F.SelectorOffsets = (const uint32_t *)BlobStart;
       TotalNumSelectors = Record[0];
       SelectorsLoaded.resize(TotalNumSelectors);
       break;
 
     case pch::METHOD_POOL:
-      MethodPoolLookupTableData = (const unsigned char *)BlobStart;
+      F.MethodPoolLookupTableData = (const unsigned char *)BlobStart;
       if (Record[0])
-        MethodPoolLookupTable
+        F.MethodPoolLookupTable
           = PCHMethodPoolLookupTable::Create(
-                        MethodPoolLookupTableData + Record[0],
-                        MethodPoolLookupTableData,
+                        Chain[0]->MethodPoolLookupTableData + Record[0],
+                        Chain[0]->MethodPoolLookupTableData,
                         PCHMethodPoolLookupTrait(*this));
       TotalSelectorsInMethodPool = Record[1];
       break;
@@ -3208,12 +3206,12 @@ IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
 
 std::pair<ObjCMethodList, ObjCMethodList>
 PCHReader::ReadMethodPool(Selector Sel) {
-  if (!MethodPoolLookupTable)
+  if (!Chain[0]->MethodPoolLookupTable)
     return std::pair<ObjCMethodList, ObjCMethodList>();
 
   // Try to find this selector within our on-disk hash table.
   PCHMethodPoolLookupTable *PoolTable
-    = (PCHMethodPoolLookupTable*)MethodPoolLookupTable;
+    = (PCHMethodPoolLookupTable*)Chain[0]->MethodPoolLookupTable;
   PCHMethodPoolLookupTable::iterator Pos = PoolTable->find(Sel);
   if (Pos == PoolTable->end()) {
     ++NumMethodPoolMisses;
@@ -3329,7 +3327,7 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   if (ID == 0)
     return Selector();
 
-  if (!MethodPoolLookupTableData)
+  if (!Chain[0]->MethodPoolLookupTableData)
     return Selector();
 
   if (ID > TotalNumSelectors) {
@@ -3340,10 +3338,10 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   unsigned Index = ID - 1;
   if (SelectorsLoaded[Index].getAsOpaquePtr() == 0) {
     // Load this selector from the selector table.
-    // FIXME: endianness portability issues with SelectorOffsets table
     PCHMethodPoolLookupTrait Trait(*this);
     SelectorsLoaded[Index]
-      = Trait.ReadKey(MethodPoolLookupTableData + SelectorOffsets[Index], 0);
+      = Trait.ReadKey(Chain[0]->MethodPoolLookupTableData +
+                        Chain[0]->SelectorOffsets[Index], 0);
   }
 
   return SelectorsLoaded[Index];

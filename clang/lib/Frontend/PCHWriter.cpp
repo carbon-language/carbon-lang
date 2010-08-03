@@ -1640,51 +1640,41 @@ public:
 };
 } // end anonymous namespace
 
-/// \brief Write the method pool into the PCH file.
+/// \brief Write ObjC data: selectors and the method pool.
 ///
 /// The method pool contains both instance and factory methods, stored
-/// in an on-disk hash table indexed by the selector.
-void PCHWriter::WriteMethodPool(Sema &SemaRef) {
+/// in an on-disk hash table indexed by the selector. The hash table also
+/// contains an empty entry for every other selector known to Sema.
+void PCHWriter::WriteSelectors(Sema &SemaRef) {
   using namespace llvm;
 
-  // Create and write out the blob that contains the instance and
-  // factor method pools.
-  bool Empty = true;
+  // Do we have to do anything at all?
+  if (SemaRef.MethodPool.empty() && SelVector.empty())
+    return;
+  // Create and write out the blob that contains selectors and the method pool.
   {
     OnDiskChainedHashTableGenerator<PCHMethodPoolTrait> Generator;
 
-    // Create the on-disk hash table representation. Start by
-    // iterating through the method pool.
-    PCHMethodPoolTrait::key_type Key;
-    unsigned NumSelectorsInMethodPool = 0;
-    for (Sema::GlobalMethodPool::iterator I = SemaRef.MethodPool.begin(),
-                                          E = SemaRef.MethodPool.end();
-         I != E; ++I) {
-      Generator.insert(I->first, I->second);
-      ++NumSelectorsInMethodPool;
-      Empty = false;
+    // Create the on-disk hash table representation. We walk through every
+    // selector we've seen and look it up in the method pool.
+    SelectorOffsets.resize(SelVector.size());
+    for (unsigned I = 0, N = SelVector.size(); I != N; ++I) {
+      Selector S = SelVector[I];
+      Sema::GlobalMethodPool::iterator F = SemaRef.MethodPool.find(S);
+      Generator.insert(S, F != SemaRef.MethodPool.end() ? F->second :
+                            std::make_pair(ObjCMethodList(), ObjCMethodList()));
+                            
     }
-
-    if (Empty && SelectorOffsets.empty())
-      return;
 
     // Create the on-disk hash table in a buffer.
     llvm::SmallString<4096> MethodPool;
     uint32_t BucketOffset;
-    SelectorOffsets.resize(SelVector.size());
     {
       PCHMethodPoolTrait Trait(*this);
       llvm::raw_svector_ostream Out(MethodPool);
       // Make sure that no bucket is at offset 0
       clang::io::Emit32(Out, 0);
       BucketOffset = Generator.Emit(Out, Trait);
-
-      // For every selector that we have seen but which was not
-      // written into the hash table, write the selector itself and
-      // record it's offset.
-      for (unsigned I = 0, N = SelVector.size(); I != N; ++I)
-        if (SelectorOffsets[I] == 0)
-          Trait.EmitKey(Out, SelVector[I], 0);
     }
 
     // Create a blob abbreviation
@@ -1699,7 +1689,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
     RecordData Record;
     Record.push_back(pch::METHOD_POOL);
     Record.push_back(BucketOffset);
-    Record.push_back(NumSelectorsInMethodPool);
+    Record.push_back(SelVector.size());
     Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, MethodPool.str());
 
     // Create a blob abbreviation for the selector table offsets.
@@ -2262,7 +2252,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.ExitBlock();
 
   WritePreprocessor(PP);
-  WriteMethodPool(SemaRef);
+  WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP);
 
