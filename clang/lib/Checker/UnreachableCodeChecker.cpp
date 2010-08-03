@@ -15,6 +15,7 @@
 
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/ExplodedGraph.h"
 #include "clang/Checker/PathSensitive/SVals.h"
@@ -37,16 +38,12 @@ public:
                         BugReporter &B,
                         GRExprEngine &Eng);
 private:
-  typedef bool (*ExplodedNodeHeuristic)(const ExplodedNode &EN);
-
-  static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R);
+  static inline const Stmt *getUnreachableStmt(const CFGBlock *CB);
   void FindUnreachableEntryPoints(const CFGBlock *CB);
-  void MarkSuccessorsReachable(const CFGBlock *CB);
-  static const Expr *getConditon(const Stmt *S);
   static bool isInvalidPath(const CFGBlock *CB, const ParentMap &PM);
 
-  llvm::SmallPtrSet<const CFGBlock*, DEFAULT_CFGBLOCKS> reachable;
-  llvm::SmallPtrSet<const CFGBlock*, DEFAULT_CFGBLOCKS> visited;
+  llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> reachable;
+  llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> visited;
 };
 }
 
@@ -76,13 +73,13 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
 
     // Save the CFG if we don't have it already
     if (!C)
-      C = LC->getCFG();
+      C = LC->getAnalysisContext()->getUnoptimizedCFG();
     if (!PM)
       PM = &LC->getParentMap();
 
     if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
       const CFGBlock *CB = BE->getBlock();
-      reachable.insert(CB);
+      reachable.insert(CB->getBlockID());
     }
   }
 
@@ -96,24 +93,18 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
   for (CFG::const_iterator I = C->begin(); I != C->end(); ++I) {
     const CFGBlock *CB = *I;
     // Check if the block is unreachable
-    if (reachable.count(CB))
+    if (reachable.count(CB->getBlockID()))
       continue;
 
     // Find the entry points for this block
     FindUnreachableEntryPoints(CB);
 
     // This block may have been pruned; check if we still want to report it
-    if (reachable.count(CB))
+    if (reachable.count(CB->getBlockID()))
       continue;
 
     // Check for false positives
     if (CB->size() > 0 && isInvalidPath(CB, *PM))
-      continue;
-
-    // We found a statement that wasn't covered
-    SourceRange S;
-    SourceLocation SL = GetUnreachableLoc(*CB, S);
-    if (S.isInvalid() || SL.isInvalid())
       continue;
 
     // Special case for __builtin_unreachable.
@@ -127,8 +118,25 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
       }
     }
 
-    B.EmitBasicReport("Unreachable code", "This statement is never executed",
-        SL, S);
+    // We found a block that wasn't covered - find the statement to report
+    SourceRange SR;
+    SourceLocation SL;
+    if (const Stmt *S = getUnreachableStmt(CB)) {
+      SR = S->getSourceRange();
+      SL = S->getLocStart();
+      if (SR.isInvalid() || SL.isInvalid())
+        continue;
+    }
+    else
+      continue;
+
+    // Check if the SourceLocation is in a system header
+    const SourceManager &SM = B.getSourceManager();
+    if (SM.isInSystemHeader(SL) || SM.isInExternCSystemHeader(SL))
+      continue;
+
+    B.EmitBasicReport("Unreachable code", "Dead code", "This statement is never"
+        " executed", SL, SR);
   }
 }
 
@@ -136,12 +144,13 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
 void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB) {
   bool allPredecessorsReachable = true;
 
-  visited.insert(CB);
+  visited.insert(CB->getBlockID());
 
   for (CFGBlock::const_pred_iterator I = CB->pred_begin(); I != CB->pred_end();
       ++I) {
     // Recurse over all unreachable blocks
-    if (!reachable.count(*I) && !visited.count(*I)) {
+    if (!reachable.count((*I)->getBlockID())
+        && !visited.count((*I)->getBlockID())) {
       FindUnreachableEntryPoints(*I);
       allPredecessorsReachable = false;
     }
@@ -150,71 +159,45 @@ void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB) {
   // If at least one predecessor is unreachable, mark this block as reachable
   // so we don't report this block.
   if (!allPredecessorsReachable) {
-    reachable.insert(CB);
+    reachable.insert(CB->getBlockID());
   }
 }
 
-// Find the SourceLocation and SourceRange to report this CFGBlock
-SourceLocation UnreachableCodeChecker::GetUnreachableLoc(const CFGBlock &b,
-                                                         SourceRange &R) {
-  const Stmt *S = 0;
-  unsigned sn = 0;
-  R = SourceRange();
-
-  if (sn < b.size())
-    S = b[sn].getStmt();
-  else if (b.getTerminator())
-    S = b.getTerminator();
+// Find the Stmt* in a CFGBlock for reporting a warning
+const Stmt *UnreachableCodeChecker::getUnreachableStmt(const CFGBlock *CB) {
+  if (CB->size() > 0)
+    return CB->front().getStmt();
+  else if (const Stmt *S = CB->getTerminator())
+    return S;
   else
-    return SourceLocation();
-
-  R = S->getSourceRange();
-  return S->getLocStart();
+    return 0;
 }
 
-// Returns the Expr* condition if this is a conditional statement, or 0
-// otherwise
-const Expr *UnreachableCodeChecker::getConditon(const Stmt *S) {
-  if (const IfStmt *IS = dyn_cast<IfStmt>(S)) {
-    return IS->getCond();
-  }
-  else if (const SwitchStmt *SS = dyn_cast<SwitchStmt>(S)) {
-    return SS->getCond();
-  }
-  else if (const WhileStmt *WS = dyn_cast<WhileStmt>(S)) {
-    return WS->getCond();
-  }
-  else if (const DoStmt *DS = dyn_cast<DoStmt>(S)) {
-    return DS->getCond();
-  }
-  else if (const ForStmt *FS = dyn_cast<ForStmt>(S)) {
-    return FS->getCond();
-  }
-  else if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S)) {
-    return CO->getCond();
-  }
-
-  return 0;
-}
-
-// Traverse the predecessor Stmt*s from this CFGBlock to find any signs of a
-// path that is a false positive.
+// Determines if the path to this CFGBlock contained an element that infers this
+// block is a false positive. We assume that FindUnreachableEntryPoints has
+// already marked only the entry points to any dead code, so we need only to
+// find the condition that led to this block (the predecessor of this block.)
+// There will never be more than one predecessor.
 bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
                                            const ParentMap &PM) {
+  // Assert this CFGBlock only has one or zero predecessors
+  assert(CB->pred_size() == 0 || CB->pred_size() == 1);
 
-  // Start at the end of the block and work up the path.
-  const Stmt *S = CB->back().getStmt();
-  while (S) {
-    // Find any false positives in the conditions on this path.
-    if (const Expr *cond = getConditon(S)) {
-      if (containsMacro(cond) || containsEnum(cond)
-          || containsStaticLocal(cond) || containsBuiltinOffsetOf(cond)
-          || containsStmt<SizeOfAlignOfExpr>(cond))
-        return true;
-    }
-    // Get the previous statement.
-    S = PM.getParent(S);
-  }
+  // If there are no predecessors, then this block is trivially unreachable
+  if (CB->pred_size() == 0)
+    return false;
+
+  const CFGBlock *pred = *CB->pred_begin();
+
+  // Get the predecessor block's terminator conditon
+  const Stmt *cond = pred->getTerminatorCondition();
+  assert(cond && "CFGBlock's predecessor has a terminator condition");
+
+  // Run each of the checks on the conditions
+  if (containsMacro(cond) || containsEnum(cond)
+      || containsStaticLocal(cond) || containsBuiltinOffsetOf(cond)
+      || containsStmt<SizeOfAlignOfExpr>(cond))
+    return true;
 
   return false;
 }
