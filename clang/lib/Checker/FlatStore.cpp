@@ -192,14 +192,13 @@ FlatStoreManager::RegionToInterval(const MemRegion *R) {
 
   case MemRegion::ElementRegionKind: 
   case MemRegion::FieldRegionKind: {
-    const TypedRegion *TR = cast<TypedRegion>(R);
-    RegionOffset Offset = TR->getAsOffset();
-    // We cannot compute offset for all ElementRegions, for example, elements
+    RegionOffset Offset = R->getAsOffset();
+    // We cannot compute offset for all regions, for example, elements
     // with symbolic offsets.
     if (!Offset.getRegion())
       return RegionInterval(0, 0, 0);
     uint64_t Start = Offset.getOffset();
-    uint64_t Size = Ctx.getTypeSize(TR->getValueType(Ctx));
+    uint64_t Size = Ctx.getTypeSize(cast<TypedRegion>(R)->getValueType(Ctx));
     return RegionInterval(Offset.getRegion(), Start, Start+Size);
   }
 

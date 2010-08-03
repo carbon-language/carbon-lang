@@ -828,48 +828,66 @@ RegionRawOffset ElementRegion::getAsArrayOffset() const {
   return RegionRawOffset(superR, offset.getQuantity());
 }
 
-RegionOffset ElementRegion::getAsOffset() const {
-  uint64_t Offset;
-  if (const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Index)) {
-    int64_t i = CI->getValue().getSExtValue();
-    assert(i >= 0);
-    // We cannot compute offset for incomplete types.
-    if (!IsCompleteType(getContext(), ElementType))
-      return RegionOffset(0); 
-    
-    CharUnits Size = getContext().getTypeSizeInChars(ElementType);
-    Offset = i * Size.getQuantity() * 8;
-  } else
-    // We cannot compute offset for symbolic index.
-    return RegionOffset(0);
+RegionOffset MemRegion::getAsOffset() const {
+  const MemRegion *R = this;
+  uint64_t Offset = 0;
 
-  // Get the offset of the super region.
-  RegionOffset SOffset = cast<SubRegion>(superRegion)->getAsOffset();
-  if (!SOffset.getRegion())
-    return RegionOffset(0);
-  else
-    return RegionOffset(SOffset.getRegion(), SOffset.getOffset() + Offset);
-}
+  while (1) {
+    switch (R->getKind()) {
+    default:
+      return RegionOffset(0);
+    case SymbolicRegionKind:
+    case AllocaRegionKind:
+    case CompoundLiteralRegionKind:
+    case CXXThisRegionKind:
+    case StringRegionKind:
+    case VarRegionKind:
+    case CXXObjectRegionKind:
+      goto Finish;
+    case ElementRegionKind: {
+      const ElementRegion *ER = cast<ElementRegion>(R);
+      QualType EleTy = ER->getValueType(getContext());
 
-RegionOffset FieldRegion::getAsOffset() const {
-  const RecordDecl *RD = getDecl()->getParent();
-  assert(RD->isDefinition());
-  // Get the field number.
-  unsigned idx = 0;
-  for (RecordDecl::field_iterator FI = RD->field_begin(), FE = RD->field_end();
-       FI != FE; ++FI, ++idx)
-    if (getDecl() == *FI)
+      if (!IsCompleteType(getContext(), EleTy))
+        return RegionOffset(0);
+
+      SVal Index = ER->getIndex();
+      if (const nonloc::ConcreteInt *CI=dyn_cast<nonloc::ConcreteInt>(&Index)) {
+        int64_t i = CI->getValue().getSExtValue();
+        assert(i >= 0);
+        CharUnits Size = getContext().getTypeSizeInChars(EleTy);
+        Offset += i * Size.getQuantity() * 8;
+      } else {
+        // We cannot compute offset for non-concrete index.
+        return RegionOffset(0);
+      }
+      R = ER->getSuperRegion();
       break;
+    }
+    case FieldRegionKind: {
+      const FieldRegion *FR = cast<FieldRegion>(R);
+      const RecordDecl *RD = FR->getDecl()->getParent();
+      if (!RD->isDefinition())
+        // We cannot compute offset for incomplete type.
+        return RegionOffset(0);
+      // Get the field number.
+      unsigned idx = 0;
+      for (RecordDecl::field_iterator FI = RD->field_begin(), 
+             FE = RD->field_end(); FI != FE; ++FI, ++idx)
+        if (FR->getDecl() == *FI)
+          break;
 
-  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
-  // This is offset in bits.
-  uint64_t Offset = Layout.getFieldOffset(idx);
+      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+      // This is offset in bits.
+      Offset += Layout.getFieldOffset(idx);
+      R = FR->getSuperRegion();
+      break;
+    }
+    }
+  }
 
-  RegionOffset SOffset = cast<SubRegion>(superRegion)->getAsOffset();
-  if (!SOffset.getRegion())
-    return RegionOffset(0);
-  else
-    return RegionOffset(SOffset.getRegion(), SOffset.getOffset() + Offset);
+ Finish:
+  return RegionOffset(R, Offset);
 }
 
 //===----------------------------------------------------------------------===//
