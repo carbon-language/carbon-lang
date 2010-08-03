@@ -657,9 +657,27 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
 }
 
 void *
-ClangASTContext::GetVoidBuiltInType()
+ClangASTContext::GetBuiltInType_void()
 {
     return getASTContext()->VoidTy.getAsOpaquePtr();
+}
+
+void *
+ClangASTContext::GetBuiltInType_objc_id()
+{
+    return getASTContext()->getObjCIdType().getAsOpaquePtr();
+}
+
+void *
+ClangASTContext::GetBuiltInType_objc_Class()
+{
+    return getASTContext()->getObjCClassType().getAsOpaquePtr();
+}
+
+void *
+ClangASTContext::GetBuiltInType_objc_selector()
+{
+    return getASTContext()->getObjCSelType().getAsOpaquePtr();
 }
 
 void *
@@ -1176,7 +1194,6 @@ ClangASTContext::IsAggregateType (void *clang_type)
     case clang::Type::Record:
     case clang::Type::ObjCObject:
     case clang::Type::ObjCInterface:
-    case clang::Type::ObjCObjectPointer:
         return true;
 
     case clang::Type::Typedef:
@@ -1200,6 +1217,19 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
+    case clang::Type::Builtin:
+        switch (cast<clang::BuiltinType>(qual_type)->getKind())
+        {
+        case clang::BuiltinType::ObjCId:    // Child is Class
+        case clang::BuiltinType::ObjCClass: // child is Class
+        case clang::BuiltinType::ObjCSel:   // child is const char *
+            num_children = 1;
+
+        default:
+            break;
+        }
+        break;
+        
     case clang::Type::Record:
         {
             const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
@@ -1272,8 +1302,18 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
         break;
         
     case clang::Type::ObjCObjectPointer:
-        return ClangASTContext::GetNumChildren (cast<ObjCObjectPointerType>(qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr(), 
-                                                omit_empty_base_classes);
+        {
+            ObjCObjectPointerType *pointer_type = cast<ObjCObjectPointerType>(qual_type.getTypePtr());
+            QualType pointee_type = pointer_type->getPointeeType();
+            uint32_t num_pointee_children = ClangASTContext::GetNumChildren (pointee_type.getAsOpaquePtr(), 
+                                                                             omit_empty_base_classes);
+            // If this type points to a simple type, then it has 1 child
+            if (num_pointee_children == 0)
+                num_children = 1;
+            else
+                num_children = num_pointee_children;
+        }
+        break;
 
     case clang::Type::ConstantArray:
         num_children = cast<ConstantArrayType>(qual_type.getTypePtr())->getSize().getLimitedValue();
@@ -1362,6 +1402,27 @@ ClangASTContext::GetChildClangTypeAtIndex
         QualType parent_qual_type(QualType::getFromOpaquePtr(parent_clang_type));
         switch (parent_qual_type->getTypeClass())
         {
+        case clang::Type::Builtin:
+            switch (cast<clang::BuiltinType>(parent_qual_type)->getKind())
+            {
+            case clang::BuiltinType::ObjCId:
+            case clang::BuiltinType::ObjCClass:
+                return ast_context->ObjCBuiltinClassTy.getAsOpaquePtr();
+                
+            case clang::BuiltinType::ObjCSel:
+                {
+                    QualType char_type(ast_context->CharTy);
+                    char_type.addConst();
+                    return ast_context->getPointerType(char_type).getAsOpaquePtr();
+                }
+                break;
+
+            default:
+                break;
+            }
+            break;
+        
+
         case clang::Type::Record:
             {
                 const RecordType *record_type = cast<RecordType>(parent_qual_type.getTypePtr());
@@ -1468,7 +1529,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                         {
                             if (omit_empty_base_classes)
                             {
-                                if (ClangASTContext::GetNumChildren(superclass_interface_decl, omit_empty_base_classes) > 0)
+                                if (ClangASTContext::GetNumChildren(ast_context->getObjCInterfaceType(superclass_interface_decl).getAsOpaquePtr(), omit_empty_base_classes) > 0)
                                 {
                                     if (idx == 0)
                                     {
@@ -1480,10 +1541,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                         std::pair<uint64_t, unsigned> ivar_type_info = ast_context->getTypeInfo(ivar_qual_type.getTypePtr());
 
                                         child_byte_size = ivar_type_info.first / 8;
-
-                                        // Figure out the field offset within the current struct/union/class type
-                                        bit_offset = interface_layout.getFieldOffset (child_idx);
-                                        child_byte_offset = bit_offset / 8;
+                                        child_byte_offset = 0;
 
                                         return ivar_qual_type.getAsOpaquePtr();
                                     }
@@ -1494,6 +1552,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                             else
                                 ++child_idx;
                         }
+    
+                        const uint32_t superclass_idx = child_idx;
 
                         if (idx < (child_idx + class_interface_decl->ivar_size()))
                         {
@@ -1514,7 +1574,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                     child_byte_size = ivar_type_info.first / 8;
 
                                     // Figure out the field offset within the current struct/union/class type
-                                    bit_offset = interface_layout.getFieldOffset (child_idx);
+                                    bit_offset = interface_layout.getFieldOffset (child_idx - superclass_idx);
                                     child_byte_offset = bit_offset / 8;
 
                                     return ivar_qual_type.getAsOpaquePtr();
@@ -1529,17 +1589,41 @@ ClangASTContext::GetChildClangTypeAtIndex
             
         case clang::Type::ObjCObjectPointer:
             {
-                return GetChildClangTypeAtIndex (ast_context,
-                                                 parent_name,
-                                                 cast<ObjCObjectPointerType>(parent_qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr(),
-                                                 idx,
-                                                 transparent_pointers,
-                                                 omit_empty_base_classes,
-                                                 child_name,
-                                                 child_byte_size,
-                                                 child_byte_offset,
-                                                 child_bitfield_bit_size,
-                                                 child_bitfield_bit_offset);
+                ObjCObjectPointerType *pointer_type = cast<ObjCObjectPointerType>(parent_qual_type.getTypePtr());
+                QualType pointee_type = pointer_type->getPointeeType();
+
+                if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
+                {
+                    return GetChildClangTypeAtIndex (ast_context,
+                                                     parent_name,
+                                                     pointer_type->getPointeeType().getAsOpaquePtr(),
+                                                     idx,
+                                                     transparent_pointers,
+                                                     omit_empty_base_classes,
+                                                     child_name,
+                                                     child_byte_size,
+                                                     child_byte_offset,
+                                                     child_bitfield_bit_size,
+                                                     child_bitfield_bit_offset);
+                }
+                else
+                {
+                    if (parent_name)
+                    {
+                        child_name.assign(1, '*');
+                        child_name += parent_name;
+                    }
+
+                    // We have a pointer to an simple type
+                    if (idx == 0)
+                    {
+                        std::pair<uint64_t, unsigned> clang_type_info = ast_context->getTypeInfo(pointee_type);
+                        assert(clang_type_info.first % 8 == 0);
+                        child_byte_size = clang_type_info.first / 8;
+                        child_byte_offset = 0;
+                        return pointee_type.getAsOpaquePtr();
+                    }
+                }
             }
             break;
 
@@ -2686,22 +2770,6 @@ ClangASTContext::IsPointerOrReferenceType (void *clang_type, void **target_type)
         break;
     }
     return false;
-}
-
-size_t
-ClangASTContext::GetTypeBitSize (clang::ASTContext *ast_context, void *clang_type)
-{
-    if (clang_type)
-        return ast_context->getTypeSize(QualType::getFromOpaquePtr(clang_type));
-    return 0;
-}
-
-size_t
-ClangASTContext::GetTypeBitAlign (clang::ASTContext *ast_context, void *clang_type)
-{
-    if (clang_type)
-        return ast_context->getTypeAlign(QualType::getFromOpaquePtr(clang_type));
-    return 0;
 }
 
 bool

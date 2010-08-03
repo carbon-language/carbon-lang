@@ -810,16 +810,18 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool app
     return 0;
 }
 
-//
-//uint32_t
-//SymbolFileDWARFDebugMap::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)
-//{
-//  SymbolFileDWARF *oso_dwarf = GetSymbolFile (sc);
-//  if (oso_dwarf)
-//      return oso_dwarf->FindTypes (sc, name, append, max_matches, encoding, udt_uid, types);
-//  return 0;
-//}
-//
+
+uint32_t
+SymbolFileDWARFDebugMap::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+{
+    SymbolFileDWARF *oso_dwarf = GetSymbolFile (sc);
+    if (oso_dwarf)
+        return oso_dwarf->FindTypes (sc, name, append, max_matches, types);
+    if (!append)
+        types.Clear();
+    return 0;
+}
+
 //
 //uint32_t
 //SymbolFileDWARFDebugMap::FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)

@@ -2126,8 +2126,8 @@ DWARFExpression::Evaluate
                     return false;
                 }
                 
-                uint64_t member_bit_size = ClangASTContext::GetTypeBitSize(ast_context, member_type);
-                uint64_t member_bit_align = ClangASTContext::GetTypeBitAlign(ast_context, member_type);
+                uint64_t member_bit_size = ClangASTType::GetClangTypeBitWidth(ast_context, member_type);
+                uint64_t member_bit_align = ClangASTType::GetTypeBitAlign(ast_context, member_type);
                 uint64_t member_bit_incr = ((member_bit_size + member_bit_align - 1) / member_bit_align) * member_bit_align;
                 if (member_bit_incr % 8)
                 {
@@ -2194,7 +2194,7 @@ DWARFExpression::Evaluate
                             addr_t source_addr = (addr_t)tmp.GetScalar().ULongLong();
                             addr_t target_addr = (addr_t)stack.back().GetScalar().ULongLong();
                             
-                            size_t byte_size = (ClangASTContext::GetTypeBitSize(ast_context, clang_type) + 7) / 8;
+                            size_t byte_size = (ClangASTType::GetClangTypeBitWidth(ast_context, clang_type) + 7) / 8;
                             
                             switch (source_value_type)
                             {

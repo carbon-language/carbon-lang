@@ -252,21 +252,16 @@ SymbolVendor::FindFunctions(const RegularExpression& regex, bool append, SymbolC
 }
 
 
-
-//uint32_t
-//SymbolVendor::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& types)
-//{
-//  Mutex::Locker locker(m_mutex);
-//  if (m_sym_file_ap.get())
-//  {
-//      lldb::user_id_t udt_uid = LLDB_INVALID_UID;
-//      if (encoding == Type::user_defined_type)
-//          udt_uid = UserDefType::GetUserDefTypeUID(udt_name);
-//
-//      return m_sym_file_ap->FindTypes(sc, name, append, max_matches, encoding, udt_uid, types);
-//  }
-//  return 0;
-//}
+uint32_t
+SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+{
+    Mutex::Locker locker(m_mutex);
+    if (m_sym_file_ap.get())
+        return m_sym_file_ap->FindTypes(sc, name, append, max_matches, types);
+    if (!append)
+        types.Clear();
+    return 0;
+}
 //
 //uint32_t
 //SymbolVendor::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& types)

@@ -416,7 +416,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
                 
                 if (ClangASTContext::IsIntegerType (value_type, is_signed))
                 {
-                    size_t bit_width = ClangASTContext::GetTypeBitSize(ast_context, value_type);
+                    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
                     
                     ReadIntegerArgument(value->GetScalar(),
                                         bit_width, 
@@ -465,7 +465,7 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
             
             if (ClangASTContext::IsIntegerType (value_type, is_signed))
             {
-                size_t bit_width = ClangASTContext::GetTypeBitSize(ast_context, value_type);
+                size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
                 
                 unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->reg;
                 unsigned edx_id = reg_ctx->GetRegisterInfoByName("edx", 0)->reg;

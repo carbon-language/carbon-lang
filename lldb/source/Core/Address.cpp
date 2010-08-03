@@ -712,18 +712,16 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             {
                 lldb_private::SymbolContext sc;
                 module->ResolveSymbolContextForAddress(*this, eSymbolContextEverything, sc);
-                if (sc.function || sc.symbol)
+                if (sc.symbol)
                 {
-                    if (sc.function == NULL && sc.symbol != NULL)
-                    {
-                        // If we have just a symbol make sure it is in the right section
-                        if (sc.symbol->GetAddressRangePtr() && sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() == GetSection())
-                        {
-                            sc.GetDescription(s, eDescriptionLevelBrief, process);
-                            break;
-                        }
-                    }
+                    // If we have just a symbol make sure it is in the same section
+                    // as our address. If it isn't, then we might have just found
+                    // the last symbol that came before the address that we are 
+                    // looking up that has nothing to do with our address lookup.
+                    if (sc.symbol->GetAddressRangePtr() && sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() != GetSection())
+                        sc.symbol = NULL;
                 }
+                sc.GetDescription(s, eDescriptionLevelBrief, process);
             }
         }
         if (fallback_style != DumpStyleInvalid)

@@ -1673,7 +1673,6 @@
 		26BC7C4B10F1B6C100F91463 /* Symbol */ = {
 			isa = PBXGroup;
 			children = (
-				AF94005711C03F6500085DB9 /* SymbolVendor.cpp */,
 				26BC7C5510F1B6E900F91463 /* Block.h */,
 				26BC7F1310F1B8EC00F91463 /* Block.cpp */,
 				26BC7C5610F1B6E900F91463 /* ClangASTContext.h */,
@@ -1703,6 +1702,7 @@
 				26BC7C6210F1B6E900F91463 /* SymbolFile.h */,
 				26BC7F1D10F1B8EC00F91463 /* SymbolFile.cpp */,
 				26BC7C6310F1B6E900F91463 /* SymbolVendor.h */,
+				AF94005711C03F6500085DB9 /* SymbolVendor.cpp */,
 				26BC7C6410F1B6E900F91463 /* Symtab.h */,
 				26BC7F1F10F1B8EC00F91463 /* Symtab.cpp */,
 				49BB309511F79450001A4197 /* TaggedASTType.h */,

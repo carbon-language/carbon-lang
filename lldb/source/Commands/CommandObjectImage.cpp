@@ -201,7 +201,16 @@ DumpModuleSymbolVendor (Stream &strm, Module *module)
 }
 
 static bool
-LookupAddressInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, uint32_t resolve_mask, lldb::addr_t raw_addr, lldb::addr_t offset)
+LookupAddressInModule 
+(
+    CommandInterpreter &interpreter, 
+    Stream &strm, 
+    Module *module, 
+    uint32_t resolve_mask, 
+    lldb::addr_t raw_addr, 
+    lldb::addr_t offset,
+    bool verbose
+)
 {
     if (module)
     {
@@ -234,8 +243,12 @@ LookupAddressInModule (CommandInterpreter &interpreter, Stream &strm, Module *mo
         strm.Indent ("    Summary: ");
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
         strm.EOL();
-        if (so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext))
-            strm.EOL();
+        // Print out detailed address information when verbose is enabled
+        if (verbose)
+        {
+            if (so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext))
+                strm.EOL();
+        }
         strm.IndentLess();
         return true;
     }
@@ -364,6 +377,63 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
                 DumpFullpath (strm, &module->GetFileSpec(), 0);
                 strm.PutCString(":\n");
                 DumpSymbolContextList (interpreter, strm, sc_list, true);
+            }
+            return num_matches;
+        }
+    }
+    return 0;
+}
+
+static uint32_t
+LookupTypeInModule 
+(
+    CommandInterpreter &interpreter, 
+    Stream &strm, 
+    Module *module, 
+    const char *name_cstr, 
+    bool name_is_regex
+)
+{
+    if (module && name_cstr && name_cstr[0])
+    {
+        SymbolContextList sc_list;
+
+        SymbolVendor *symbol_vendor = module->GetSymbolVendor();
+        if (symbol_vendor)
+        {
+            TypeList type_list;
+            uint32_t num_matches = 0;
+            SymbolContext sc;
+//            if (name_is_regex)
+//            {
+//                RegularExpression name_regex (name_cstr);
+//                num_matches = symbol_vendor->FindFunctions(sc, name_regex, true, UINT32_MAX, type_list);
+//            }
+//            else
+//            {
+                ConstString name(name_cstr);
+                num_matches = symbol_vendor->FindTypes(sc, name, true, UINT32_MAX, type_list);
+//            }
+
+            if (num_matches)
+            {
+                strm.Indent ();
+                strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
+                DumpFullpath (strm, &module->GetFileSpec(), 0);
+                strm.PutCString(":\n");
+                const uint32_t num_types = type_list.GetSize();
+                for (uint32_t i=0; i<num_types; ++i)
+                {
+                    TypeSP type_sp (type_list.GetTypeAtIndex(i));
+                    if (type_sp)
+                    {
+                        // Resolve the clang type so that any forward references
+                        // to types that haven't yet been parsed will get parsed.
+                        type_sp->GetOpaqueClangQualType ();
+                        type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
+                    }
+                    strm.EOL();
+                }
             }
             return num_matches;
         }
@@ -1130,6 +1200,7 @@ public:
         eLookupTypeSymbol,
         eLookupTypeFileLine,    // Line is optional
         eLookupTypeFunction,
+        eLookupTypeType,
         kNumLookupTypes
     };
 
@@ -1198,6 +1269,15 @@ public:
                 m_type = eLookupTypeFunction;
                 break;
 
+            case 't':
+                m_str = option_arg;
+                m_type = eLookupTypeType;
+                break;
+
+            case 'v':
+                m_verbose = 1;
+                break;
+
             case 'r':
                 m_use_regex = true;
                 break;
@@ -1218,6 +1298,7 @@ public:
             m_line_number = 0;
             m_use_regex = false;
             m_check_inlines = true;
+            m_verbose = false;
         }
 
         const lldb::OptionDefinition*
@@ -1237,6 +1318,8 @@ public:
         uint32_t        m_line_number;  // Line number for file+line lookups
         bool            m_use_regex;    // Name lookups in m_str are regular expressions.
         bool            m_check_inlines;// Check for inline entries when looking up by file/line.
+        bool            m_verbose;      // Enable verbose lookup info
+
     };
 
     CommandObjectImageLookup () :
@@ -1268,7 +1351,13 @@ public:
         case eLookupTypeAddress:
             if (m_options.m_addr != LLDB_INVALID_ADDRESS)
             {
-                if (LookupAddressInModule (interpreter, result.GetOutputStream(), module, eSymbolContextEverything, m_options.m_addr, m_options.m_offset))
+                if (LookupAddressInModule (interpreter, 
+                                           result.GetOutputStream(), 
+                                           module, 
+                                           eSymbolContextEverything, 
+                                           m_options.m_addr, 
+                                           m_options.m_offset,
+                                           m_options.m_verbose))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;
@@ -1312,6 +1401,21 @@ public:
                                             module,
                                             m_options.m_str.c_str(),
                                             m_options.m_use_regex))
+                {
+                    result.SetStatus(eReturnStatusSuccessFinishResult);
+                    return true;
+                }
+            }
+            break;
+
+        case eLookupTypeType:
+            if (!m_options.m_str.empty())
+            {
+                if (LookupTypeInModule (interpreter,
+                                        result.GetOutputStream(),
+                                        module,
+                                        m_options.m_str.c_str(),
+                                        m_options.m_use_regex))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;
@@ -1428,14 +1532,16 @@ protected:
 lldb::OptionDefinition
 CommandObjectImageLookup::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, true,  "address",    'a', required_argument, NULL, 0, "<addr>",    "Lookup an address in one or more executable images."},
-{ LLDB_OPT_SET_1, false, "offset",     'o', required_argument, NULL, 0, "<offset>",  "When looking up an address subtract <offset> from any addresses before doing the lookup."},
-{ LLDB_OPT_SET_2, true,  "symbol",     's', required_argument, NULL, 0, "<name>",    "Lookup a symbol by name in the symbol tables in one or more executable images."},
-{ LLDB_OPT_SET_2, false, "regex",      'r', no_argument,       NULL, 0, NULL,        "The <name> argument for name lookups are regular expressions."},
-{ LLDB_OPT_SET_3, true,  "file",       'f', required_argument, NULL, 0, "<file>",    "Lookup a file by fullpath or basename in one or more executable images."},
-{ LLDB_OPT_SET_3, false, "line",       'l', required_argument, NULL, 0, "<line>",    "Lookup a line number in a file (must be used in conjunction with --file)."},
-{ LLDB_OPT_SET_3, false, "no-inlines", 'i', no_argument,       NULL, 0, NULL,        "Check inline line entries (must be used in conjunction with --file)."},
-{ LLDB_OPT_SET_4, true,  "function",   'n', required_argument, NULL, 0, "<name>",    "Lookup a function by name in the debug symbols in one or more executable images."},
+{ LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, "<addr>",    "Lookup an address in one or more executable images."},
+{ LLDB_OPT_SET_1,   false, "offset",     'o', required_argument, NULL, 0, "<offset>",  "When looking up an address subtract <offset> from any addresses before doing the lookup."},
+{ LLDB_OPT_SET_2,   true,  "symbol",     's', required_argument, NULL, 0, "<name>",    "Lookup a symbol by name in the symbol tables in one or more executable images."},
+{ LLDB_OPT_SET_2,   false, "regex",      'r', no_argument,       NULL, 0, NULL,        "The <name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_3,   true,  "file",       'f', required_argument, NULL, 0, "<file>",    "Lookup a file by fullpath or basename in one or more executable images."},
+{ LLDB_OPT_SET_3,   false, "line",       'l', required_argument, NULL, 0, "<line>",    "Lookup a line number in a file (must be used in conjunction with --file)."},
+{ LLDB_OPT_SET_3,   false, "no-inlines", 'i', no_argument,       NULL, 0, NULL,        "Check inline line entries (must be used in conjunction with --file)."},
+{ LLDB_OPT_SET_4,   true,  "function",   'n', required_argument, NULL, 0, "<name>",    "Lookup a function by name in the debug symbols in one or more executable images."},
+{ LLDB_OPT_SET_5,   true,  "type",       't', required_argument, NULL, 0, "<name>",    "Lookup a type by name in the debug symbols in one or more executable images."},
+{ LLDB_OPT_SET_ALL, false, "verbose",    'v', no_argument,       NULL, 0, NULL,        "Enable verbose lookup information."},
 { 0, false, NULL,           0, 0,                 NULL, 0, NULL, NULL }
 };
 

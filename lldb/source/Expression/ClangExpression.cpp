@@ -107,10 +107,6 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 // Main driver
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// Main driver
-//===----------------------------------------------------------------------===//
-
 static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
 
@@ -149,14 +145,14 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();
 
   case PluginAction: {
-
     for (FrontendPluginRegistry::iterator it =
            FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
          it != ie; ++it) {
       if (it->getName() == CI.getFrontendOpts().ActionName) {
-        PluginASTAction* plugin = it->instantiate();
-        plugin->ParseArgs(CI.getFrontendOpts().PluginArgs);
-        return plugin;
+        llvm::OwningPtr<PluginASTAction> P(it->instantiate());
+        if (!P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
+          return 0;
+        return P.take();
       }
     }
 

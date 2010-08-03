@@ -8,21 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 // Other libraries and framework includes
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/DeclGroup.h"
-#include "clang/AST/RecordLayout.h"
-
-#include "clang/Basic/Builtins.h"
-#include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/TargetInfo.h"
-
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/raw_ostream.h"
 
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -113,50 +98,15 @@ lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, boo
 
     m_decl.Dump(s);
 
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(m_clang_qual_type));
-
-    if (qual_type.getTypePtr())
+    if (m_clang_qual_type)
     {
-        *s << ", type = ";
+        *s << ", clang_type = " << m_clang_qual_type << ' ';
 
-        clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
-        clang::TagDecl *tag_decl = NULL;
-        if (tag_type)
-            tag_decl = tag_type->getDecl();
-
-        if (tag_decl)
-        {
-            s->EOL();
-            s->EOL();
-            tag_decl->print(llvm::fouts(), 0);
-            s->EOL();
-        }
-        else
-        {
-            const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
-            if (typedef_type)
-            {
-                const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
-                std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
-                if (!clang_typedef_name.empty())
-                    *s << ' ' << clang_typedef_name.c_str();
-            }
-            else
-            {
-                // We have a clang type, lets show it
-                clang::ASTContext *ast_context = GetClangAST();
-                if (ast_context)
-                {
-                    std::string clang_type_name(qual_type.getAsString());
-                    if (!clang_type_name.empty())
-                        *s << ' ' << clang_type_name.c_str();
-                }
-            }
-        }
+        ClangASTType::DumpTypeDescription (GetClangAST(), m_clang_qual_type, s);
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
     {
-        *s << ", type_uid = " << m_encoding_uid;
+        s->Printf(", type_uid = 0x%8.8x", m_encoding_uid);
         switch (m_encoding_uid_type)
         {
         case eIsTypeWithUID: s->PutCString(" (unresolved type)"); break;
@@ -193,46 +143,11 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
 
     m_decl.Dump(s);
 
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(m_clang_qual_type));
-
-    if (qual_type.getTypePtr())
+    if (m_clang_qual_type)
     {
-        *s << ", clang_type = ";
+        *s << ", clang_type = " << m_clang_qual_type << ' ';
 
-        clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
-        clang::TagDecl *tag_decl = NULL;
-        if (tag_type)
-            tag_decl = tag_type->getDecl();
-
-        if (tag_decl)
-        {
-            s->EOL();
-            s->EOL();
-            tag_decl->print(llvm::fouts(), 0);
-            s->EOL();
-        }
-        else
-        {
-            const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
-            if (typedef_type)
-            {
-                const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
-                std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
-                if (!clang_typedef_name.empty())
-                    *s << '(' << clang_typedef_name.c_str() << ')';
-            }
-            else
-            {
-                // We have a clang type, lets show it
-                clang::ASTContext *ast_context = GetClangAST();
-                if (ast_context)
-                {
-                    std::string clang_type_name(qual_type.getAsString());
-                    if (!clang_type_name.empty())
-                        *s << '(' << clang_type_name.c_str() << ')';
-                }
-            }
-        }
+        ClangASTType::DumpTypeDescription (GetClangAST(), m_clang_qual_type, s);
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
     {
@@ -303,19 +218,19 @@ lldb_private::Type::DumpValue
         }
 
         lldb_private::ClangASTType::DumpValue (GetClangAST (),
-                                                   m_clang_qual_type,
-                                                   exe_ctx,
-                                                   s,
-                                                   format == lldb::eFormatDefault ? GetFormat() : format,
-                                                   data,
-                                                   data_byte_offset,
-                                                   GetByteSize(),
-                                                   0, // Bitfield bit size
-                                                   0, // Bitfield bit offset
-                                                   show_types,
-                                                   show_summary,
-                                                   verbose,
-                                                   0);
+                                               m_clang_qual_type,
+                                               exe_ctx,
+                                               s,
+                                               format == lldb::eFormatDefault ? GetFormat() : format,
+                                               data,
+                                               data_byte_offset,
+                                               GetByteSize(),
+                                               0, // Bitfield bit size
+                                               0, // Bitfield bit offset
+                                               show_types,
+                                               show_summary,
+                                               verbose,
+                                               0);
     }
 }
 
@@ -339,7 +254,7 @@ lldb_private::Type::GetByteSize()
             }
             if (m_byte_size == 0)
             {
-                uint64_t bit_width = GetClangAST()->getTypeSize(clang::QualType::getFromOpaquePtr(GetOpaqueClangQualType()));
+                uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (GetClangAST(), GetOpaqueClangQualType());
                 m_byte_size = (bit_width + 7 ) / 8;
             }
             break;
@@ -478,10 +393,8 @@ lldb_private::Type::GetTypeList()
 bool
 lldb_private::Type::ResolveClangType()
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(m_clang_qual_type));
-    if (qual_type.getTypePtr() == NULL)
+    if (m_clang_qual_type == NULL)
     {
-        clang::QualType resolved_qual_type;
         TypeList *type_list = GetTypeList();
         if (m_encoding_uid != LLDB_INVALID_UID)
         {
@@ -492,38 +405,38 @@ lldb_private::Type::ResolveClangType()
                 switch (m_encoding_uid_type)
                 {
                 case eIsTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(encoding_type->GetOpaqueClangQualType());
+                    m_clang_qual_type = encoding_type->GetOpaqueClangQualType();
                     break;
 
                 case eIsConstTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(ClangASTContext::AddConstModifier (encoding_type->GetOpaqueClangQualType()));
+                    m_clang_qual_type = ClangASTContext::AddConstModifier (encoding_type->GetOpaqueClangQualType());
                     break;
 
                 case eIsRestrictTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(ClangASTContext::AddRestrictModifier (encoding_type->GetOpaqueClangQualType()));
+                    m_clang_qual_type = ClangASTContext::AddRestrictModifier (encoding_type->GetOpaqueClangQualType());
                     break;
 
                 case eIsVolatileTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(ClangASTContext::AddVolatileModifier (encoding_type->GetOpaqueClangQualType()));
+                    m_clang_qual_type = ClangASTContext::AddVolatileModifier (encoding_type->GetOpaqueClangQualType());
                     break;
 
                 case eTypedefToTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->CreateClangTypedefType (this, encoding_type));
+                    m_clang_qual_type = type_list->CreateClangTypedefType (this, encoding_type);
                     // Clear the name so it can get fully qualified in case the
                     // typedef is in a namespace.
                     m_name.Clear();
                     break;
 
                 case ePointerToTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->CreateClangPointerType (encoding_type));
+                    m_clang_qual_type = type_list->CreateClangPointerType (encoding_type);
                     break;
 
                 case eLValueReferenceToTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->CreateClangLValueReferenceType (encoding_type));
+                    m_clang_qual_type = type_list->CreateClangLValueReferenceType (encoding_type);
                     break;
 
                 case eRValueReferenceToTypeWithUID:
-                    resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->CreateClangRValueReferenceType (encoding_type));
+                    m_clang_qual_type = type_list->CreateClangRValueReferenceType (encoding_type);
                     break;
 
                 default:
@@ -535,39 +448,39 @@ lldb_private::Type::ResolveClangType()
         else
         {
             // We have no encoding type, return void?
-            void *void_clang_type = type_list->GetClangASTContext().GetVoidBuiltInType();
+            void *void_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
             switch (m_encoding_uid_type)
             {
             case eIsTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr(void_clang_type);
+                m_clang_qual_type = void_clang_type;
                 break;
 
             case eIsConstTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr (ClangASTContext::AddConstModifier (void_clang_type));
+                m_clang_qual_type = ClangASTContext::AddConstModifier (void_clang_type);
                 break;
 
             case eIsRestrictTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr (ClangASTContext::AddRestrictModifier (void_clang_type));
+                m_clang_qual_type = ClangASTContext::AddRestrictModifier (void_clang_type);
                 break;
 
             case eIsVolatileTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr (ClangASTContext::AddVolatileModifier (void_clang_type));
+                m_clang_qual_type = ClangASTContext::AddVolatileModifier (void_clang_type);
                 break;
 
             case eTypedefToTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->GetClangASTContext().CreateTypedefType (m_name.AsCString(), void_clang_type, NULL));
+                m_clang_qual_type = type_list->GetClangASTContext().CreateTypedefType (m_name.AsCString(), void_clang_type, NULL);
                 break;
 
             case ePointerToTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->GetClangASTContext().CreatePointerType (void_clang_type));
+                m_clang_qual_type = type_list->GetClangASTContext().CreatePointerType (void_clang_type);
                 break;
 
             case eLValueReferenceToTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->GetClangASTContext().CreateLValueReferenceType (void_clang_type));
+                m_clang_qual_type = type_list->GetClangASTContext().CreateLValueReferenceType (void_clang_type);
                 break;
 
             case eRValueReferenceToTypeWithUID:
-                resolved_qual_type = clang::QualType::getFromOpaquePtr(type_list->GetClangASTContext().CreateRValueReferenceType (void_clang_type));
+                m_clang_qual_type = type_list->GetClangASTContext().CreateRValueReferenceType (void_clang_type);
                 break;
 
             default:
@@ -575,11 +488,6 @@ lldb_private::Type::ResolveClangType()
                 break;
             }
         }
-        if (resolved_qual_type.getTypePtr())
-        {
-            m_clang_qual_type = resolved_qual_type.getAsOpaquePtr();
-        }
-
     }
     return m_clang_qual_type != NULL;
 }

@@ -250,7 +250,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
                 
                 if (ClangASTContext::IsIntegerType (value_type, is_signed))
                 {
-                    size_t bit_width = ClangASTContext::GetTypeBitSize(ast_context, value_type);
+                    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
                     
                     ReadIntegerArgument(value->GetScalar(),
                                         bit_width, 
@@ -305,7 +305,7 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
                 
                 // Extract the register context so we can read arguments from registers
                 
-                size_t bit_width = ClangASTContext::GetTypeBitSize(ast_context, value_type);
+                size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
                 unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->reg;
                 
                 switch (bit_width)

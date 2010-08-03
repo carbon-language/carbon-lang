@@ -75,6 +75,18 @@ public:
     static ConstString
     GetClangTypeName (void *clang_type);
 
+    uint64_t
+    GetClangTypeBitWidth ();
+
+    static uint64_t
+    GetClangTypeBitWidth (clang::ASTContext *ast_context, void *opaque_clang_qual_type);
+
+    size_t
+    GetTypeBitAlign ();
+    
+    static size_t
+    GetTypeBitAlign (clang::ASTContext *ast_context, void *clang_type);
+
     void
     DumpValue (ExecutionContext *exe_ctx,
                Stream *s,
@@ -142,8 +154,15 @@ public:
                  const DataExtractor &data,
                  uint32_t data_offset,
                  size_t data_byte_size);
-                 
-
+    
+    void
+    DumpTypeDescription (Stream *s);
+    
+    static void
+    DumpTypeDescription (clang::ASTContext *ast_context,
+                         void *opaque_clang_qual_type,
+                         Stream *s);
+                         
     lldb::Encoding
     GetEncoding (uint32_t &count);                 
 

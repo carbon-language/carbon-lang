@@ -66,7 +66,7 @@ public:
     virtual uint32_t        FindGlobalVariables (const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
     virtual uint32_t        FindFunctions (const lldb_private::ConstString &name, uint32_t name_type_mask, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindFunctions (const lldb_private::RegularExpression& regex, bool append, lldb_private::SymbolContextList& sc_list);
-//  virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types);
+    virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types);
 //  virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types);
 
     //------------------------------------------------------------------

@@ -109,7 +109,16 @@ public:
         uint32_t bit_size);
 
     void *
-    GetVoidBuiltInType();
+    GetBuiltInType_void();
+
+    void *
+    GetBuiltInType_objc_id();
+
+    void *
+    GetBuiltInType_objc_Class();
+
+    void *
+    GetBuiltInType_objc_selector();
 
     void *
     GetCStringType(bool is_const);
@@ -386,12 +395,6 @@ public:
 
     size_t
     GetPointerBitSize ();
-
-    static size_t
-    GetTypeBitSize (clang::ASTContext *ast_context, void *clang_type);
-    
-    static size_t
-    GetTypeBitAlign (clang::ASTContext *ast_context, void *clang_type);
 
     static bool
     IsIntegerType (void *clang_type, bool &is_signed);

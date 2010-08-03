@@ -157,8 +157,8 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* ofile) :
     m_name_to_type_die(),
     m_indexed(false),
 //    m_pubnames(),
-//    m_pubtypes(),
 //    m_pubbasetypes(),
+    m_pubtypes(),
     m_ranges()//,
 //  m_type_fixups(),
 //  m_indirect_fixups()
@@ -615,24 +615,24 @@ SymbolFileDWARF::DebugRanges() const
 //    return m_pubtypes.get();
 //}
 //
-//DWARFDebugPubnames*
-//SymbolFileDWARF::DebugPubtypes()
-//{
-//    if (m_pubtypes.get() == NULL)
-//    {
-//        Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p", __PRETTY_FUNCTION__, this);
-//        const DataExtractor &debug_pubtypes_data = get_debug_pubtypes_data();
-//        if (debug_pubtypes_data.GetByteSize() > 0)
-//        {
-//            // Pass false to indicate this is a pubnames section
-//            m_pubtypes.reset(new DWARFDebugPubnames());
-//            if (m_pubtypes.get())
-//                m_pubtypes->Extract(debug_pubtypes_data);
-//        }
-//    }
-//    return m_pubtypes.get();
-//}
-//
+DWARFDebugPubnames*
+SymbolFileDWARF::DebugPubtypes()
+{
+    if (m_pubtypes.get() == NULL)
+    {
+        Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p", __PRETTY_FUNCTION__, this);
+        const DataExtractor &debug_pubtypes_data = get_debug_pubtypes_data();
+        if (debug_pubtypes_data.GetByteSize() > 0)
+        {
+            // Pass false to indicate this is a pubnames section
+            m_pubtypes.reset(new DWARFDebugPubnames());
+            if (m_pubtypes.get())
+                m_pubtypes->Extract(debug_pubtypes_data);
+        }
+    }
+    return m_pubtypes.get();
+}
+
 
 bool
 SymbolFileDWARF::ParseCompileUnit(DWARFCompileUnit* cu, CompUnitSP& compile_unit_sp)
@@ -1974,9 +1974,8 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     return sc_list.GetSize() - original_size;
 }
 
-#if 0
 uint32_t
-SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)
+SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
 {
     // If we aren't appending the results to this list, then clear the list
     if (!append)
@@ -1984,54 +1983,55 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
 
     // Create the pubnames information so we can quickly lookup external symbols by name
     DWARFDebugPubnames* pubtypes = DebugPubtypes();
+
     if (pubtypes)
     {
         std::vector<dw_offset_t> die_offsets;
         if (!pubtypes->Find(name.AsCString(), false, die_offsets))
         {
-            DWARFDebugPubnames* pub_base_types = DebugPubBaseTypes();
-            if (pub_base_types && !pub_base_types->Find(name.AsCString(), false, die_offsets))
+//            DWARFDebugPubnames* pub_base_types = DebugPubBaseTypes();
+//            if (pub_base_types && !pub_base_types->Find(name.AsCString(), false, die_offsets))
                 return 0;
         }
-        return FindTypes(die_offsets, max_matches, encoding, udt_uid, types);
+        return FindTypes(die_offsets, max_matches, types);
     }
     return 0;
 }
 
 
+//uint32_t
+//SymbolFileDWARF::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types)
+//{
+//    // If we aren't appending the results to this list, then clear the list
+//    if (!append)
+//        types.Clear();
+//
+//    // Create the pubnames information so we can quickly lookup external symbols by name
+//    DWARFDebugPubnames* pubtypes = DebugPubtypes();
+//    if (pubtypes)
+//    {
+//        std::vector<dw_offset_t> die_offsets;
+//        if (!pubtypes->Find(regex, die_offsets))
+//        {
+//            DWARFDebugPubnames* pub_base_types = DebugPubBaseTypes();
+//            if (pub_base_types && !pub_base_types->Find(regex, die_offsets))
+//                return 0;
+//        }
+//
+//        return FindTypes(die_offsets, max_matches, encoding, udt_uid, types);
+//    }
+//
+//    return 0;
+//}
+//
+
+
 uint32_t
-SymbolFileDWARF::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)
-{
-    // If we aren't appending the results to this list, then clear the list
-    if (!append)
-        types.Clear();
-
-    // Create the pubnames information so we can quickly lookup external symbols by name
-    DWARFDebugPubnames* pubtypes = DebugPubtypes();
-    if (pubtypes)
-    {
-        std::vector<dw_offset_t> die_offsets;
-        if (!pubtypes->Find(regex, die_offsets))
-        {
-            DWARFDebugPubnames* pub_base_types = DebugPubBaseTypes();
-            if (pub_base_types && !pub_base_types->Find(regex, die_offsets))
-                return 0;
-        }
-
-        return FindTypes(die_offsets, max_matches, encoding, udt_uid, types);
-    }
-
-    return 0;
-}
-
-
-
-uint32_t
-SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)
+SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, TypeList& types)
 {
     // Remember how many sc_list are in the list before we search in case
     // we are appending the results to a variable list.
-    uint32_t original_size = types.Size();
+    uint32_t original_size = types.GetSize();
 
     const uint32_t num_die_offsets = die_offsets.size();
     // Parse all of the types we found from the pubtypes matches
@@ -2039,124 +2039,22 @@ SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_ma
     uint32_t num_matches = 0;
     for (i = 0; i < num_die_offsets; ++i)
     {
-        dw_offset_t die_offset = die_offsets[i];
-        DWARFCompileUnitSP cu_sp;
-        const DWARFDebugInfoEntry* die = DebugInfo()->GetDIEPtr(die_offset, &cu_sp);
-
-        assert(die != NULL);
-
-        bool get_type_for_die = true;
-        if (encoding)
+        Type *matching_type = ResolveTypeUID (die_offsets[i]);
+        if (matching_type)
         {
-            // Check if this type has already been uniqued and registers with the module?
-            Type* type = (Type*)die->GetUserData();
-            if (type != NULL && type != DIE_IS_BEING_PARSED)
-            {
-                get_type_for_die = type->GetEncoding() == encoding;
-            }
-            else
-            {
-                dw_tag_t tag = die->Tag();
-                switch (encoding)
-                {
-                case Type::address:
-                case Type::boolean:
-                case Type::complex_float:
-                case Type::float_type:
-                case Type::signed_int:
-                case Type::signed_char:
-                case Type::unsigned_int:
-                case Type::unsigned_char:
-                case Type::imaginary_float:
-                case Type::packed_decimal:
-                case Type::numeric_string:
-                case Type::edited_string:
-                case Type::signed_fixed:
-                case Type::unsigned_fixed:
-                case Type::decimal_float:
-                    if (tag != DW_TAG_base_type)
-                        get_type_for_die = false;
-                    else
-                    {
-                        if (die->GetAttributeValueAsUnsigned(this, cu_sp.get(), DW_AT_encoding, Type::invalid) != encoding)
-                            get_type_for_die = false;
-                    }
-                    break;
-
-                case Type::indirect_const:      get_type_for_die = tag == DW_TAG_const_type; break;
-                case Type::indirect_restrict:       get_type_for_die = tag == DW_TAG_restrict_type; break;
-                case Type::indirect_volatile:       get_type_for_die = tag == DW_TAG_volatile_type; break;
-                case Type::indirect_typedef:        get_type_for_die = tag == DW_TAG_typedef; break;
-                case Type::indirect_pointer:        get_type_for_die = tag == DW_TAG_pointer_type; break;
-                case Type::indirect_reference:  get_type_for_die = tag == DW_TAG_reference_type; break;
-
-                case Type::user_defined_type:
-                    switch (tag)
-                    {
-                    case DW_TAG_array_type:
-                        get_type_for_die = UserDefTypeArray::OwnsUserDefTypeUID(udt_uid);
-                        break;
-
-                    case DW_TAG_structure_type:
-                    case DW_TAG_union_type:
-                    case DW_TAG_class_type:
-                        get_type_for_die = UserDefTypeStruct::OwnsUserDefTypeUID(udt_uid);
-                        break;
-
-                    case DW_TAG_enumeration_type:
-                        get_type_for_die = UserDefTypeEnum::OwnsUserDefTypeUID(udt_uid);
-                        break;
-
-                    case DW_TAG_subprogram:
-                    case DW_TAG_subroutine_type:
-                        get_type_for_die = UserDefTypeFunction::OwnsUserDefTypeUID(udt_uid);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (get_type_for_die)
-        {
-            TypeSP owning_type_sp;
-            TypeSP type_sp(GetTypeForDIE(cu_sp.get(), die, owning_type_sp, NULL, 0, 0));
-
-            if (type_sp.get())
-            {
-                // See if we are filtering results based on encoding?
-                bool add_type = (encoding == Type::invalid);
-                if (!add_type)
-                {
-                    // We are filtering base on encoding, so lets check the resulting type encoding
-                    add_type = (encoding == type_sp->GetEncoding());
-                    if (add_type)
-                    {
-                        // The type encoding matches, if this is a user defined type, lets
-                        // make sure the exact user define type uid matches if one was provided
-                        if (encoding == Type::user_defined_type && udt_uid != LLDB_INVALID_UID)
-                        {
-                            UserDefType* udt = type_sp->GetUserDefinedType().get();
-                            if (udt)
-                                add_type = udt->UserDefinedTypeUID() == udt_uid;
-                        }
-                    }
-                }
-                // Add the type to our list as long as everything matched
-                if (add_type)
-                {
-                    types.InsertUnique(type_sp);
-                    if (++num_matches >= max_matches)
-                        break;
-                }
-            }
+            // We found a type pointer, now find the shared pointer form our type list
+            TypeSP type_sp (m_obj_file->GetModule()->GetTypeList()->FindType(matching_type->GetID()));
+            assert (type_sp.get() != NULL);
+            types.InsertUnique (type_sp);
+            ++num_matches;
+            if (num_matches >= max_matches)
+                break;
         }
     }
 
     // Return the number of variable that were appended to the list
-    return types.Size() - original_size;
+    return types.GetSize() - original_size;
 }
-
-#endif
 
 
 size_t
@@ -2692,6 +2590,30 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         break;
                     }
 
+                    if (type_name_cstr != NULL && sc.comp_unit != NULL && 
+                        (sc.comp_unit->GetLanguage() == eLanguageTypeObjC || sc.comp_unit->GetLanguage() == eLanguageTypeObjC_plus_plus))
+                    {
+                        static ConstString g_objc_type_name_id("id");
+                        static ConstString g_objc_type_name_Class("Class");
+                        static ConstString g_objc_type_name_selector("SEL");
+                        
+                        if (type_name_dbstr == g_objc_type_name_id)
+                        {
+                            clang_type = type_list->GetClangASTContext().GetBuiltInType_objc_id();
+                            ResolveTypeUID (encoding_uid);
+                        }
+                        else if (type_name_dbstr == g_objc_type_name_Class)
+                        {
+                            clang_type = type_list->GetClangASTContext().GetBuiltInType_objc_Class();
+                            ResolveTypeUID (encoding_uid);
+                        }
+                        else if (type_name_dbstr == g_objc_type_name_selector)
+                        {
+                            clang_type = type_list->GetClangASTContext().GetBuiltInType_objc_selector();
+                            ResolveTypeUID (encoding_uid);
+                        }
+                    }
+                        
                     type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, encoding_uid, encoding_uid_type, &decl, clang_type));
 
                     const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
@@ -3024,7 +2946,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         if (func_type)
                             return_clang_type = func_type->GetOpaqueClangQualType();
                         else
-                            return_clang_type = type_list->GetClangASTContext().GetVoidBuiltInType();
+                            return_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
 
                         std::vector<void *> function_param_types;
                         std::vector<clang::ParmVarDecl*> function_param_decls;
@@ -3165,7 +3087,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
 
                         clang_type = type_list->GetClangASTContext().CreateMemberPointerType(pointee_clang_type, class_clang_type);
 
-                        size_t byte_size = ClangASTContext::GetTypeBitSize(type_list->GetClangASTContext().getASTContext(), clang_type) / 8;
+                        size_t byte_size = ClangASTType::GetClangTypeBitWidth (type_list->GetClangASTContext().getASTContext(), clang_type) / 8;
 
                         type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, NULL, clang_type));
                         const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());

@@ -346,7 +346,7 @@ Function::GetReturnType ()
     CalculateSymbolContext (&sc);
     // Null out everything below the CompUnit 'cause we don't actually know these.
 
-    size_t bit_size = ClangASTContext::GetTypeBitSize ((GetType()->GetClangASTContext().getASTContext()), &fun_return_qualtype);
+    size_t bit_size = ClangASTType::GetClangTypeBitWidth ((GetType()->GetClangASTContext().getASTContext()), fun_return_qualtype.getAsOpaquePtr());
     Type return_type (0, GetType()->GetSymbolFile(), fun_return_name, bit_size, sc.comp_unit, 0, Type::eTypeUIDSynthetic, Declaration(), fun_return_qualtype.getAsOpaquePtr());
     return return_type;
 }
@@ -387,7 +387,7 @@ Function::GetArgumentTypeAtIndex (size_t idx)
         CalculateSymbolContext (&sc);
         // Null out everything below the CompUnit 'cause we don't actually know these.
 
-        size_t bit_size = ClangASTContext::GetTypeBitSize ((GetType()->GetClangASTContext().getASTContext()), &arg_qualtype);
+        size_t bit_size = ClangASTType::GetClangTypeBitWidth ((GetType()->GetClangASTContext().getASTContext()), arg_qualtype.getAsOpaquePtr());
         Type arg_type (0, GetType()->GetSymbolFile(), arg_return_name, bit_size, sc.comp_unit, 0, Type::eTypeUIDSynthetic, Declaration(), arg_qualtype.getAsOpaquePtr());
         return arg_type;
     }

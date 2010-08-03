@@ -13,6 +13,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/RecordLayout.h"
 
@@ -230,7 +231,13 @@ ClangASTType::GetFormat (void *opaque_clang_qual_type)
         case clang::BuiltinType::Float:         return lldb::eFormatFloat;
         case clang::BuiltinType::Double:        return lldb::eFormatFloat;
         case clang::BuiltinType::LongDouble:    return lldb::eFormatFloat;
-        case clang::BuiltinType::NullPtr:       return lldb::eFormatHex;
+        case clang::BuiltinType::NullPtr:       
+        case clang::BuiltinType::Overload:
+        case clang::BuiltinType::Dependent:
+        case clang::BuiltinType::UndeducedAuto:
+        case clang::BuiltinType::ObjCId:
+        case clang::BuiltinType::ObjCClass:
+        case clang::BuiltinType::ObjCSel:       return lldb::eFormatHex;
         }
         break;
     case clang::Type::ObjCObjectPointer:        return lldb::eFormatHex;
@@ -746,6 +753,108 @@ ClangASTType::DumpSummary
             }
             if (total_cstr_len > 0)
                 s->PutChar ('"');
+        }
+    }
+}
+
+uint64_t
+ClangASTType::GetClangTypeBitWidth ()
+{
+    return GetClangTypeBitWidth (m_ast, m_type);
+}
+
+uint64_t
+ClangASTType::GetClangTypeBitWidth (clang::ASTContext *ast_context, void *opaque_clang_qual_type)
+{
+    if (ast_context && opaque_clang_qual_type)
+        return ast_context->getTypeSize(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    return 0;
+}
+
+size_t
+ClangASTType::GetTypeBitAlign ()
+{
+    return GetTypeBitAlign (m_ast, m_type);
+}
+
+size_t
+ClangASTType::GetTypeBitAlign (clang::ASTContext *ast_context, void *opaque_clang_qual_type)
+{
+    if (ast_context && opaque_clang_qual_type)
+        return ast_context->getTypeAlign(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    return 0;
+}
+
+void
+ClangASTType::DumpTypeDescription (Stream *s)
+{
+    return DumpTypeDescription (m_ast, m_type, s);
+}
+
+// Dump the full description of a type. For classes this means all of the
+// ivars and member functions, for structs/unions all of the members. 
+void
+ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, void *opaque_clang_qual_type, Stream *s)
+{
+    if (opaque_clang_qual_type)
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+
+        llvm::SmallVector<char, 1024> buf;
+        llvm::raw_svector_ostream llvm_ostrm (buf);
+
+        clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+        if (tag_type)
+        {
+            clang::TagDecl *tag_decl = tag_type->getDecl();
+            if (tag_decl)
+                tag_decl->print(llvm_ostrm, 0);
+        }
+        else
+        {
+            const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+            switch (type_class)
+            {
+            case clang::Type::ObjCObject:
+            case clang::Type::ObjCInterface:
+                {
+                    clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                    assert (objc_class_type);
+                    if (objc_class_type)
+                    {
+                        clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                        if (class_interface_decl)
+                            class_interface_decl->print(llvm_ostrm, ast_context->PrintingPolicy, s->GetIndentLevel());
+                    }
+                }
+                break;
+            
+            case clang::Type::Typedef:
+                {
+                    const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
+                    if (typedef_type)
+                    {
+                        const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
+                        std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
+                        if (!clang_typedef_name.empty())
+                            s->PutCString (clang_typedef_name.c_str());
+                    }
+                }
+                break;
+
+            default:
+                {
+                    std::string clang_type_name(qual_type.getAsString());
+                    if (!clang_type_name.empty())
+                        s->PutCString (clang_type_name.c_str());
+                }
+            }
+        }
+        
+        llvm_ostrm.flush();
+        if (buf.size() > 0)
+        {
+            s->Write (buf.data(), buf.size());
         }
     }
 }

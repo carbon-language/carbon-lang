@@ -475,7 +475,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
     {
         lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
         
-        size_t bit_size = ClangASTContext::GetTypeBitSize(type.GetASTContext(), type.GetOpaqueQualType());
+        size_t bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
         size_t byte_size = bit_size % 8 ? ((bit_size + 8) / 8) : (bit_size / 8);
         
         DataBufferHeap data;

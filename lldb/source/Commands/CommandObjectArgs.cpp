@@ -232,7 +232,7 @@ CommandObjectArgs::Execute
         else if (strchr (arg_type_cstr, '*'))
         {
             if (!strcmp (arg_type_cstr, "void*"))
-                type = ast_context.CreatePointerType (ast_context.GetVoidBuiltInType ());
+                type = ast_context.CreatePointerType (ast_context.GetBuiltInType_void ());
             else if (!strcmp (arg_type_cstr, "char*"))
                 type = ast_context.GetCStringType (false);
             else

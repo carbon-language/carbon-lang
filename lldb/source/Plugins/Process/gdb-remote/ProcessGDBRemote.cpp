@@ -430,6 +430,20 @@ ProcessGDBRemote::DoLaunch
                     }
                 }
 
+				// FIXME: convert this to use the new set/show variables when they are available
+#if 0
+                if (::getenv ("LLDB_DEBUG_DEBUGSERVER"))
+                {
+                    const uint32_t attach_debugserver_secs = 10;
+                    ::printf ("attach to debugserver (pid = %i)\n", m_debugserver_pid);
+                    for (uint32_t i=0; i<attach_debugserver_secs; ++i)
+                    {
+                        printf ("%i\n", attach_debugserver_secs - i);
+                        sleep (1);
+                    }
+                }
+#endif
+
                 const uint32_t arg_timeout_seconds = 10;
                 int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv, arg_timeout_seconds);
                 if (arg_packet_err == 0)

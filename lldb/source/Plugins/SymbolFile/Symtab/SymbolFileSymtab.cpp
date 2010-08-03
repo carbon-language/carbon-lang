@@ -346,14 +346,17 @@ SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool append, Sym
     return 0;
 }
 
-//uint32_t
-//SymbolFileSymtab::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)
-//{
-//  return 0;
-//}
+uint32_t
+SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types)
+{
+    if (!append)
+        types.Clear();
+
+    return 0;
+}
 //
 //uint32_t
-//SymbolFileSymtab::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types)
+//SymbolFileSymtab::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types)
 //{
 //  return 0;
 //}

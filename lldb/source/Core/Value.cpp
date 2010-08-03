@@ -385,7 +385,7 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
         }
         else
         {
-            uint64_t bit_width = ClangASTContext::GetTypeBitSize (ast_context, m_context);
+            uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (ast_context, m_context);
             byte_size = (bit_width + 7 ) / 8;
         }
         break;

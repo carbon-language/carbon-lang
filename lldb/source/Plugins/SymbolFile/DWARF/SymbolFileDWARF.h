@@ -101,7 +101,7 @@ public:
     virtual uint32_t        FindGlobalVariables(const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
     virtual uint32_t        FindFunctions(const lldb_private::ConstString &name, uint32_t name_type_mask, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindFunctions(const lldb_private::RegularExpression& regex, bool append, lldb_private::SymbolContextList& sc_list);
-//  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
+    virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types);
 //  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
 
 
@@ -164,7 +164,7 @@ public:
 //    DWARFDebugPubnames*     DebugPubBaseTypes();
 //    const DWARFDebugPubnames* DebugPubBaseTypes() const;
 //
-//    DWARFDebugPubnames*     DebugPubtypes();
+    DWARFDebugPubnames*     DebugPubtypes();
 //    const DWARFDebugPubnames* DebugPubtypes() const;
 
     DWARFDebugRanges*       DebugRanges();
@@ -289,7 +289,7 @@ protected:
 
     lldb_private::Type*     GetUniquedTypeForDIEOffset(dw_offset_t type_die_offset, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx, bool safe);
     lldb::TypeSP            GetTypeForDIE(DWARFCompileUnit *cu, const DWARFDebugInfoEntry* die, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx);
-//  uint32_t                FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types);
+    uint32_t                FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, lldb_private::TypeList& types);
 
     void                    Index();
 
@@ -323,7 +323,7 @@ protected:
 
 //    std::auto_ptr<DWARFDebugPubnames>   m_pubnames;
 //    std::auto_ptr<DWARFDebugPubnames>   m_pubbasetypes; // Just like m_pubtypes, but for DW_TAG_base_type DIEs
-//    std::auto_ptr<DWARFDebugPubnames>   m_pubtypes;
+    std::auto_ptr<DWARFDebugPubnames>   m_pubtypes;
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
 
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;

@@ -97,28 +97,42 @@ public:
                           SymbolContextList& sc_list);
 
     virtual uint32_t
-    FindGlobalVariables(const ConstString &name,
-                        bool append,
-                        uint32_t max_matches,
-                        VariableList& variables);
+    FindGlobalVariables (const ConstString &name,
+                         bool append,
+                         uint32_t max_matches,
+                         VariableList& variables);
 
     virtual uint32_t
-    FindGlobalVariables(const RegularExpression& regex,
-                        bool append,
-                        uint32_t max_matches,
-                        VariableList& variables);
+    FindGlobalVariables (const RegularExpression& regex,
+                         bool append,
+                         uint32_t max_matches,
+                         VariableList& variables);
 
     virtual uint32_t
-    FindFunctions(const ConstString &name,
-                  uint32_t name_type_mask, 
-                  bool append,
-                  SymbolContextList& sc_list);
+    FindFunctions (const ConstString &name,
+                   uint32_t name_type_mask, 
+                   bool append,
+                   SymbolContextList& sc_list);
 
     virtual uint32_t
-    FindFunctions(const RegularExpression& regex,
-                  bool append,
-                  SymbolContextList& sc_list);
+    FindFunctions (const RegularExpression& regex,
+                   bool append,
+                   SymbolContextList& sc_list);
 
+    virtual uint32_t
+    FindTypes (const SymbolContext& sc, 
+               const ConstString &name, 
+               bool append, 
+               uint32_t max_matches, 
+               TypeList& types);
+
+//    virtual uint32_t
+//    FindTypes (const SymbolContext& sc, 
+//               const RegularExpression& regex, 
+//               bool append, 
+//               uint32_t max_matches, 
+//               TypeList& types);
+    
     virtual uint32_t
     GetNumCompileUnits();
 
