@@ -36,7 +36,7 @@ namespace test1 {
   const int y = x - 1; // This gets deferred.
   const int z = ~y;    // This also gets deferred, but gets "undeferred" before y.
   int test() { return z; }
-// CHECK:      define i32 @_ZN5test14testEv() {
+// CHECK:      define i32 @_ZN5test14testEv()
 
   // All of these initializers end up delayed, so we check them later.
 }

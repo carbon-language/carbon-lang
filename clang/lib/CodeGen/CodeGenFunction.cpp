@@ -311,6 +311,19 @@ void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {
   EmitStmt(FD->getBody());
 }
 
+/// Tries to mark the given function nounwind based on the
+/// non-existence of any throwing calls within it.  We believe this is
+/// lightweight enough to do at -O0.
+static void TryMarkNoThrow(llvm::Function *F) {
+  for (llvm::Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
+    for (llvm::BasicBlock::iterator
+           BI = FI->begin(), BE = FI->end(); BI != BE; ++BI)
+      if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(&*BI))
+        if (!Call->doesNotThrow())
+          return;
+  F->setDoesNotThrow(true);
+}
+
 void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
   
@@ -369,6 +382,11 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
 
   // Emit the standard function epilogue.
   FinishFunction(BodyRange.getEnd());
+
+  // If we haven't marked the function nothrow through other means, do
+  // a quick pass now to see if we can.
+  if (!CurFn->doesNotThrow())
+    TryMarkNoThrow(CurFn);
 }
 
 /// ContainsLabel - Return true if the statement contains a label in it.  If
