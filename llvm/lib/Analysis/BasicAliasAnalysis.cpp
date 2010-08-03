@@ -152,11 +152,6 @@ namespace {
       return MayAlias;
     }
 
-    virtual void getArgumentAccesses(Function *F, CallSite CS,
-                                     std::vector<PointerAccessInfo> &Info) {
-      llvm_unreachable("This method may not be called on this function!");
-    }
-
     virtual bool pointsToConstantMemory(const Value *P) { return false; }
     virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       return ModRef;
