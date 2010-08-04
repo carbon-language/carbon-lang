@@ -43,6 +43,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -327,6 +328,19 @@ namespace {
 
     void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
                                raw_ostream &O, const char *Modifier);
+
+    MachineLocation getDebugValueLocation(const MachineInstr *MI) const {
+
+      MachineLocation Location;
+      assert (MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
+      // Frame address.  Currently handles register +- offset only.
+      if (MI->getOperand(0).isReg() && MI->getOperand(2).isImm())
+        Location.set(MI->getOperand(0).getReg(), MI->getOperand(2).getImm());
+      else {
+        DEBUG(dbgs() << "DBG_VALUE instruction ignored! " << *MI << "\n");
+      }
+      return Location;
+    }
   };
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
