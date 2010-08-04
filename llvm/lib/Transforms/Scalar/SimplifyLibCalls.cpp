@@ -2156,7 +2156,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * pow(pow(x,y),z)-> pow(x,y*z)
 //
 // puts:
-//   * puts("") -> putchar("\n")
+//   * puts("") -> putchar('\n')
 //
 // round, roundf, roundl:
 //   * round(cnst) -> cnst'
