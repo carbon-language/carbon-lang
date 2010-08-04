@@ -323,7 +323,34 @@ expose new optimization opportunities:</p>
   these routines tend to perform costly dereference operations more than once. You
   have to dereference the iterators yourself and pass them in.
 </li>
-
+<li>
+  llvm.memcpy.*, llvm.memset.*, llvm.memmove.* (and possibly other?) intrinsics
+  take an extra parameter now (i1 isVolatile), totaling 5 parameters.
+  If you were creating these intrinsic calls and prototypes yourself (as opposed
+  to using Intrinsic::getDeclaration), you can use UpgradeIntrinsicFunction/UpgradeIntrinsicCall
+  to be portable accross releases.
+  Note that you cannot use Intrinsic::getDeclaration() in a backwards compatible
+  way (needs 2/3 types now, in 2.7 it needed just 1).
+</li>
+<li>
+  SetCurrentDebugLocation takes a DebugLoc now instead of a MDNode.
+  Change your code to use
+  SetCurrentDebugLocation(DebugLoc::getFromDILocation(...)).
+</li>
+<li>
+  VISIBILITY_HIDDEN is gone.
+</li>
+<li>
+  SMDiagnostic takes different parameters now. //FIXME: how to upgrade?
+</li>
+<li>
+  Some APIs got renamed:
+  <ul>
+      <li>llvm_report_error -&gt; report_fatal_error</li>
+      <li>llvm_install_error_handler -&gt; install_fatal_error_handler</li>
+      <li>llvm::DwarfExceptionHandling -&gt; llvm::JITExceptionHandling</li>
+  </ul>
+</li>
 </ul>
 
 </div>
