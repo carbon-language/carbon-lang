@@ -178,9 +178,6 @@ private:
   /// table, indexed by the Selector ID (-1).
   std::vector<uint32_t> SelectorOffsets;
 
-  /// \brief A vector of all Selectors (ordered by ID).
-  std::vector<Selector> SelVector;
-
   /// \brief Offsets of each of the macro identifiers into the
   /// bitstream.
   ///
@@ -318,9 +315,11 @@ public:
 
   /// \brief Emit a CXXTemporary.
   void AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record);
+
+  /// \brief Get the unique number used to refer to the given selector.
+  pch::SelectorID getSelectorRef(Selector Sel);
   
-  /// \brief Get the unique number used to refer to the given
-  /// identifier.
+  /// \brief Get the unique number used to refer to the given identifier.
   pch::IdentID getIdentifierRef(const IdentifierInfo *II);
 
   /// \brief Retrieve the offset of the macro definition for the given
@@ -434,6 +433,7 @@ public:
   void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
   void TypeRead(pch::TypeID ID, QualType T);
   void DeclRead(pch::DeclID ID, const Decl *D);
+  void SelectorRead(pch::SelectorID iD, Selector Sel);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

@@ -471,7 +471,10 @@ class PCHMethodPoolLookupTrait {
   PCHReader &Reader;
 
 public:
-  typedef std::pair<ObjCMethodList, ObjCMethodList> data_type;
+  struct data_type {
+    pch::SelectorID ID;
+    ObjCMethodList Instance, Factory;
+  };
 
   typedef Selector external_key_type;
   typedef external_key_type internal_key_type;
@@ -527,20 +530,22 @@ public:
 
   data_type ReadData(Selector, const unsigned char* d, unsigned DataLen) {
     using namespace clang::io;
-    unsigned NumInstanceMethods = ReadUnalignedLE16(d);
-    unsigned NumFactoryMethods = ReadUnalignedLE16(d);
 
     data_type Result;
+
+    Result.ID = ReadUnalignedLE32(d);
+    unsigned NumInstanceMethods = ReadUnalignedLE16(d);
+    unsigned NumFactoryMethods = ReadUnalignedLE16(d);
 
     // Load instance methods
     ObjCMethodList *Prev = 0;
     for (unsigned I = 0; I != NumInstanceMethods; ++I) {
       ObjCMethodDecl *Method
         = cast<ObjCMethodDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
-      if (!Result.first.Method) {
+      if (!Result.Instance.Method) {
         // This is the first method, which is the easy case.
-        Result.first.Method = Method;
-        Prev = &Result.first;
+        Result.Instance.Method = Method;
+        Prev = &Result.Instance;
         continue;
       }
 
@@ -555,10 +560,10 @@ public:
     for (unsigned I = 0; I != NumFactoryMethods; ++I) {
       ObjCMethodDecl *Method
         = cast<ObjCMethodDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
-      if (!Result.second.Method) {
+      if (!Result.Factory.Method) {
         // This is the first method, which is the easy case.
-        Result.second.Method = Method;
-        Prev = &Result.second;
+        Result.Factory.Method = Method;
+        Prev = &Result.Factory;
         continue;
       }
 
@@ -3215,11 +3220,14 @@ PCHReader::ReadMethodPool(Selector Sel) {
   PCHMethodPoolLookupTable::iterator Pos = PoolTable->find(Sel);
   if (Pos == PoolTable->end()) {
     ++NumMethodPoolMisses;
-    return std::pair<ObjCMethodList, ObjCMethodList>();;
+    return std::pair<ObjCMethodList, ObjCMethodList>();
   }
 
   ++NumMethodPoolSelectorsRead;
-  return *Pos;
+  PCHMethodPoolLookupTrait::data_type Data = *Pos;
+  if (DeserializationListener)
+    DeserializationListener->SelectorRead(Data.ID, Sel);
+  return std::make_pair(Data.Instance, Data.Factory);
 }
 
 void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {

@@ -38,6 +38,8 @@ public:
   virtual void TypeRead(pch::TypeID ID, QualType T) = 0;
   /// \brief A decl was deserialized from the PCH.
   virtual void DeclRead(pch::DeclID ID, const Decl *D) = 0;
+  /// \brief A selector was read from the PCH.
+  virtual void SelectorRead(pch::SelectorID iD, Selector Sel) = 0;
 };
 
 }

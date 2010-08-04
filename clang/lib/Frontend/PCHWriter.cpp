@@ -1562,7 +1562,10 @@ public:
   typedef Selector key_type;
   typedef key_type key_type_ref;
 
-  typedef std::pair<ObjCMethodList, ObjCMethodList> data_type;
+  struct data_type {
+    pch::SelectorID ID;
+    ObjCMethodList Instance, Factory;
+  };
   typedef const data_type& data_type_ref;
 
   explicit PCHMethodPoolTrait(PCHWriter &Writer) : Writer(Writer) { }
@@ -1583,12 +1586,12 @@ public:
                       data_type_ref Methods) {
     unsigned KeyLen = 2 + (Sel.getNumArgs()? Sel.getNumArgs() * 4 : 4);
     clang::io::Emit16(Out, KeyLen);
-    unsigned DataLen = 2 + 2; // 2 bytes for each of the method counts
-    for (const ObjCMethodList *Method = &Methods.first; Method;
+    unsigned DataLen = 4 + 2 + 2; // 2 bytes for each of the method counts
+    for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->Next)
       if (Method->Method)
         DataLen += 4;
-    for (const ObjCMethodList *Method = &Methods.second; Method;
+    for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->Next)
       if (Method->Method)
         DataLen += 4;
@@ -1612,25 +1615,26 @@ public:
   void EmitData(llvm::raw_ostream& Out, key_type_ref,
                 data_type_ref Methods, unsigned DataLen) {
     uint64_t Start = Out.tell(); (void)Start;
+    clang::io::Emit32(Out, Methods.ID);
     unsigned NumInstanceMethods = 0;
-    for (const ObjCMethodList *Method = &Methods.first; Method;
+    for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->Next)
       if (Method->Method)
         ++NumInstanceMethods;
 
     unsigned NumFactoryMethods = 0;
-    for (const ObjCMethodList *Method = &Methods.second; Method;
+    for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->Next)
       if (Method->Method)
         ++NumFactoryMethods;
 
     clang::io::Emit16(Out, NumInstanceMethods);
     clang::io::Emit16(Out, NumFactoryMethods);
-    for (const ObjCMethodList *Method = &Methods.first; Method;
+    for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->Next)
       if (Method->Method)
         clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
-    for (const ObjCMethodList *Method = &Methods.second; Method;
+    for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->Next)
       if (Method->Method)
         clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
@@ -1649,7 +1653,7 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
   using namespace llvm;
 
   // Do we have to do anything at all?
-  if (SemaRef.MethodPool.empty() && SelVector.empty())
+  if (SemaRef.MethodPool.empty() && SelectorIDs.empty())
     return;
   // Create and write out the blob that contains selectors and the method pool.
   {
@@ -1657,13 +1661,22 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
 
     // Create the on-disk hash table representation. We walk through every
     // selector we've seen and look it up in the method pool.
-    SelectorOffsets.resize(SelVector.size());
-    for (unsigned I = 0, N = SelVector.size(); I != N; ++I) {
-      Selector S = SelVector[I];
+    SelectorOffsets.resize(SelectorIDs.size());
+    for (llvm::DenseMap<Selector, pch::SelectorID>::iterator
+             I = SelectorIDs.begin(), E = SelectorIDs.end();
+         I != E; ++I) {
+      Selector S = I->first;
       Sema::GlobalMethodPool::iterator F = SemaRef.MethodPool.find(S);
-      Generator.insert(S, F != SemaRef.MethodPool.end() ? F->second :
-                            std::make_pair(ObjCMethodList(), ObjCMethodList()));
-                            
+      PCHMethodPoolTrait::data_type Data = {
+        I->second,
+        ObjCMethodList(),
+        ObjCMethodList()
+      };
+      if (F != SemaRef.MethodPool.end()) {
+        Data.Instance = F->second.first;
+        Data.Factory = F->second.second;
+      }
+      Generator.insert(S, Data);
     }
 
     // Create the on-disk hash table in a buffer.
@@ -1689,7 +1702,7 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
     RecordData Record;
     Record.push_back(pch::METHOD_POOL);
     Record.push_back(BucketOffset);
-    Record.push_back(SelVector.size());
+    Record.push_back(SelectorIDs.size());
     Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, MethodPool.str());
 
     // Create a blob abbreviation for the selector table offsets.
@@ -2497,17 +2510,19 @@ pch::IdentID PCHWriter::getMacroDefinitionID(MacroDefinition *MD) {
 }
 
 void PCHWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
-  if (SelRef.getAsOpaquePtr() == 0) {
-    Record.push_back(0);
-    return;
+  Record.push_back(getSelectorRef(SelRef));
+}
+
+pch::SelectorID PCHWriter::getSelectorRef(Selector Sel) {
+  if (Sel.getAsOpaquePtr() == 0) {
+    return 0;
   }
 
-  pch::SelectorID &SID = SelectorIDs[SelRef];
+  pch::SelectorID &SID = SelectorIDs[Sel];
   if (SID == 0) {
     SID = SelectorIDs.size();
-    SelVector.push_back(SelRef);
   }
-  Record.push_back(SID);
+  return SID;
 }
 
 void PCHWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record) {
@@ -2874,4 +2889,8 @@ void PCHWriter::TypeRead(pch::TypeID ID, QualType T) {
 
 void PCHWriter::DeclRead(pch::DeclID ID, const Decl *D) {
   DeclIDs[D] = ID;
+}
+
+void PCHWriter::SelectorRead(pch::SelectorID ID, Selector S) {
+  SelectorIDs[S] = ID;
 }
