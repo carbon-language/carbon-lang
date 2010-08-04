@@ -244,11 +244,9 @@ static bool TypeInfoIsInStandardLibrary(const PointerType *PointerTy) {
   return TypeInfoIsInStandardLibrary(BuiltinTy);
 }
 
-/// ShouldUseExternalRTTIDescriptor - Returns whether the type information for
-/// the given type exists somewhere else, and that we should not emit the type
-/// information in this translation unit.
-static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
-                                            QualType Ty) {
+/// IsStandardLibraryRTTIDescriptor - Returns whether the type
+/// information for the given type exists in the standard library.
+static bool IsStandardLibraryRTTIDescriptor(QualType Ty) {
   // Type info for builtin types is defined in the standard library.
   if (const BuiltinType *BuiltinTy = dyn_cast<BuiltinType>(Ty))
     return TypeInfoIsInStandardLibrary(BuiltinTy);
@@ -258,6 +256,15 @@ static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
   if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty))
     return TypeInfoIsInStandardLibrary(PointerTy);
 
+  return false;
+}
+
+/// ShouldUseExternalRTTIDescriptor - Returns whether the type information for
+/// the given type exists somewhere else, and that we should not emit the type
+/// information in this translation unit.  Assumes that it is not a
+/// standard-library type.
+static bool ShouldUseExternalRTTIDescriptor(ASTContext &Context,
+                                            QualType Ty) {
   // If RTTI is disabled, don't consider key functions.
   if (!Context.getLangOptions().RTTI) return false;
 
@@ -456,8 +463,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   Fields.push_back(VTable);
 }
 
-llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty,
-                                           bool Force) {
+llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // We want to operate on the canonical type.
   Ty = CGM.getContext().getCanonicalType(Ty);
 
@@ -469,19 +475,26 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty,
   llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);
   if (OldGV && !OldGV->isDeclaration())
     return llvm::ConstantExpr::getBitCast(OldGV, Int8PtrTy);
-  
+
   // Check if there is already an external RTTI descriptor for this type.
-  if (!Force && ShouldUseExternalRTTIDescriptor(CGM.getContext(), Ty))
+  bool IsStdLib = IsStandardLibraryRTTIDescriptor(Ty);
+  if (!Force &&
+      (IsStdLib || ShouldUseExternalRTTIDescriptor(CGM.getContext(), Ty)))
     return GetAddrOfExternalRTTIDescriptor(Ty);
 
-  llvm::GlobalVariable::LinkageTypes Linkage = getTypeInfoLinkage(Ty);
+  // Emit the standard library with external linkage.
+  llvm::GlobalVariable::LinkageTypes Linkage;
+  if (IsStdLib)
+    Linkage = llvm::GlobalValue::ExternalLinkage;
+  else
+    Linkage = getTypeInfoLinkage(Ty);
 
   // Add the vtable pointer.
   BuildVTablePointer(cast<Type>(Ty));
   
   // And the name.
   Fields.push_back(BuildName(Ty, DecideHidden(Ty), Linkage));
-  
+
   switch (Ty->getTypeClass()) {
   default: assert(false && "Unhandled type class!");
 
@@ -551,7 +564,15 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty,
     OldGV->replaceAllUsesWith(NewPtr);
     OldGV->eraseFromParent();
   }
-    
+
+  // GCC only relies on the uniqueness of the type names, not the
+  // type_infos themselves, so we can emit these as hidden symbols.
+  if (const RecordType *RT = dyn_cast<RecordType>(Ty))
+    CGM.setTypeVisibility(GV, cast<CXXRecordDecl>(RT->getDecl()),
+                          /*ForRTTI*/ true);
+  else if (Linkage == llvm::GlobalValue::WeakODRLinkage)
+    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 }
 

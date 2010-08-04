@@ -11,13 +11,16 @@
 
 
 
-// CHECK: _ZTI1A = weak_odr constant
+// CHECK: _ZTI1A = weak_odr hidden constant
 // CHECK: _ZTI1B = constant
 // CHECK: _ZTI1C = internal constant
-// CHECK: _ZTIA10_i = weak_odr constant
+// CHECK: _ZTI1TILj0EE = weak_odr hidden constant
+// CHECK: _ZTI1TILj1EE = weak_odr constant
+// CHECK: _ZTI1TILj2EE = external constant
+// CHECK: _ZTIA10_i = weak_odr hidden constant
 // CHECK: _ZTIFN12_GLOBAL__N_11DEvE = internal constant
 // CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal constant
-// CHECK: _ZTIFvvE = weak_odr
+// CHECK: _ZTIFvvE = weak_odr hidden constant
 // CHECK: _ZTIM1A1C = internal constant
 // CHECK: _ZTIM1AP1C = internal constant
 // CHECK: _ZTIM1CPS_ = internal constant
@@ -26,7 +29,7 @@
 // CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTIN12_GLOBAL__N_11EE = internal constant
 // CHECK: _ZTIP1C = internal constant
-// CHECK: _ZTIPFvvE = weak_odr constant
+// CHECK: _ZTIPFvvE = weak_odr hidden constant
 // CHECK: _ZTIPM1Ci = internal constant
 // CHECK: _ZTIPN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTIPP1C = internal constant
@@ -117,4 +120,15 @@ namespace Arrays {
   const std::type_info &f() {
     return typeid(A::a);
   }
+}
+
+template <unsigned N> class T {
+  virtual void anchor() {}
+};
+template class T<1>;
+template <> class T<2> { virtual void anchor(); };
+void t3() {
+  (void) typeid(T<0>);
+  (void) typeid(T<1>);
+  (void) typeid(T<2>);
 }

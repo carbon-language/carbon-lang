@@ -2925,39 +2925,7 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
   VTable->setLinkage(Linkage);
   
   // Set the right visibility.
-  CGM.setGlobalVisibility(VTable, RD);
-
-  // It's okay to have multiple copies of a vtable, so don't make the
-  // dynamic linker unique them.  Suppress this optimization if it's
-  // possible that there might be unresolved references elsewhere
-  // which can only be resolved by this emission.
-  if (Linkage == llvm::GlobalVariable::WeakODRLinkage &&
-      VTable->getVisibility() == llvm::GlobalVariable::DefaultVisibility &&
-      !RD->hasAttr<VisibilityAttr>()) {
-    switch (RD->getTemplateSpecializationKind()) {
-
-    // Every use of a non-template or explicitly-specialized class's
-    // vtable has to emit it.
-    case TSK_ExplicitSpecialization:
-    case TSK_Undeclared:
-    // Implicit instantiations can ignore the possibility of an
-    // explicit instantiation declaration because there necessarily
-    // must be an EI definition somewhere with default visibility.
-    case TSK_ImplicitInstantiation:
-      // If there's a key function, there may be translation units
-      // that don't have the key function's definition.
-      if (!CGM.Context.getKeyFunction(RD))
-        // Otherwise, drop the visibility to hidden.
-        VTable->setVisibility(llvm::GlobalValue::HiddenVisibility);
-      break;
-
-    // We have to disable the optimization if this is an EI definition
-    // because there might be EI declarations in other shared objects.
-    case TSK_ExplicitInstantiationDefinition:
-    case TSK_ExplicitInstantiationDeclaration:
-      break;
-    }
-  }
+  CGM.setTypeVisibility(VTable, RD, /*ForRTTI*/ false);
 }
 
 llvm::GlobalVariable *

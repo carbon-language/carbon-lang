@@ -7,6 +7,6 @@ struct X { };
 
 void f() {
   // CHECK: @_ZTS1X = weak_odr constant
-  // CHECK: @_ZTI1X = weak_odr constant 
+  // CHECK: @_ZTI1X = weak_odr hidden constant 
   (void)typeid(X&);
 }

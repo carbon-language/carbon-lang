@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 -fno-rtti -fexceptions %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
-// CHECK: @_ZTIN5test11AE = weak_odr constant
-// CHECK: @_ZTIN5test11BE = weak_odr constant
-// CHECK: @_ZTIN5test11CE = weak_odr constant
-// CHECK: @_ZTIN5test11DE = weak_odr constant
-// CHECK: @_ZTIPN5test11DE = weak_odr constant {{.*}} @_ZTIN5test11DE
+// CHECK: @_ZTIN5test11AE = weak_odr hidden constant
+// CHECK: @_ZTIN5test11BE = weak_odr hidden constant
+// CHECK: @_ZTIN5test11CE = weak_odr hidden constant
+// CHECK: @_ZTIN5test11DE = weak_odr hidden constant
+// CHECK: @_ZTIPN5test11DE = weak_odr hidden constant {{.*}} @_ZTIN5test11DE
 
 // PR6974: this shouldn't crash
 namespace test0 {
@@ -18,9 +18,12 @@ namespace test0 {
 }
 
 namespace test1 {
-  // These classes have key functions defined out-of-line.
-  // Under normal circumstances, we wouldn't generate RTTI for them;
-  // under -fno-rtti, we generate RTTI only when required by EH.
+  // These classes have key functions defined out-of-line.  Under
+  // normal circumstances, we wouldn't generate RTTI for them; under
+  // -fno-rtti, we generate RTTI only when required by EH.  But
+  // everything gets hidden visibility because we assume that all
+  // users are also compiled under -fno-rtti and therefore will be
+  // emitting RTTI regardless of key function.
   class A { virtual void foo(); };
   class B { virtual void foo(); };
   class C { virtual void foo(); };

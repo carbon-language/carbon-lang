@@ -101,7 +101,7 @@ void use_F() {
 // and hidden visibility (rdar://problem/7523229).
 // CHECK-2: @_ZTV1C = weak_odr hidden constant
 // CHECK-2: @_ZTS1C = weak_odr constant
-// CHECK-2: @_ZTI1C = weak_odr constant
+// CHECK-2: @_ZTI1C = weak_odr hidden constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
@@ -140,7 +140,7 @@ void use_F() {
 // so its vtable should have weak_odr linkage and hidden visibility.
 // CHECK-8: @_ZTV1FIlE = weak_odr hidden constant
 // CHECK-8: @_ZTS1FIlE = weak_odr constant
-// CHECK-8: @_ZTI1FIlE = weak_odr constant
+// CHECK-8: @_ZTI1FIlE = weak_odr hidden constant
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
@@ -167,7 +167,7 @@ void use_F() {
 // its vtable should have weak_odr linkage and hidden visibility.
 // CHECK-13: @_ZTV1FIcE = weak_odr hidden constant
 // CHECK-13: @_ZTS1FIcE = weak_odr constant
-// CHECK-13: @_ZTI1FIcE = weak_odr constant
+// CHECK-13: @_ZTI1FIcE = weak_odr hidden constant
 
 // RUN: FileCheck --check-prefix=CHECK-G %s < %t
 //

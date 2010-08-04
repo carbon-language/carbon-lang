@@ -216,6 +216,57 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
   }
 }
 
+/// Set the symbol visibility of type information (vtable and RTTI)
+/// associated with the given type.
+void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
+                                      const CXXRecordDecl *RD,
+                                      bool IsForRTTI) const {
+  setGlobalVisibility(GV, RD);
+
+  // We want to drop the visibility to hidden for weak type symbols.
+  // This isn't possible if there might be unresolved references
+  // elsewhere that rely on this symbol being visible.
+
+  // Preconditions.
+  if (GV->getLinkage() != llvm::GlobalVariable::WeakODRLinkage ||
+      GV->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
+    return;
+
+  // Don't override an explicit visibility attribute.
+  if (RD->hasAttr<VisibilityAttr>())
+    return;
+
+  switch (RD->getTemplateSpecializationKind()) {
+  // We have to disable the optimization if this is an EI definition
+  // because there might be EI declarations in other shared objects.
+  case TSK_ExplicitInstantiationDefinition:
+  case TSK_ExplicitInstantiationDeclaration:
+    return;
+
+  // Every use of a non-template or explicitly-specialized class's
+  // type information has to emit it.
+  case TSK_ExplicitSpecialization:
+  case TSK_Undeclared:
+    break;
+
+  // Implicit instantiations can ignore the possibility of an
+  // explicit instantiation declaration because there necessarily
+  // must be an EI definition somewhere with default visibility.
+  case TSK_ImplicitInstantiation:
+    break;
+  }
+
+  // If there's a key function, there may be translation units
+  // that don't have the key function's definition.  But ignore
+  // this if we're emitting RTTI under -fno-rtti.
+  if (!IsForRTTI || Features.RTTI)
+    if (Context.getKeyFunction(RD))
+      return;
+
+  // Otherwise, drop the visibility to hidden.
+  GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+}
+
 llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
 
