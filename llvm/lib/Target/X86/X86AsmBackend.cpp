@@ -308,6 +308,8 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   switch (Triple(TT).getOS()) {
   case Triple::Darwin:
     return new DarwinX86_32AsmBackend(T);
+  case Triple::MinGW32:
+  case Triple::Cygwin:
   case Triple::Win32:
     return new WindowsX86AsmBackend(T);
   default:
