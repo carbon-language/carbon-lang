@@ -1952,7 +1952,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
 ///  EvalVal - This function is complements EvalAddr in the mutual recursion.
 ///   See the comments for EvalAddr for more details.
 static DeclRefExpr* EvalVal(Expr *E) {
-
+do {
   // We should only be called for evaluating non-pointer expressions, or
   // expressions with a pointer type that are not used as references but instead
   // are l-values (e.g., DeclRefExpr with a pointer type).
@@ -1961,6 +1961,15 @@ static DeclRefExpr* EvalVal(Expr *E) {
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
   switch (E->getStmtClass()) {
+  case Stmt::ImplicitCastExprClass: {
+    ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
+    if (IE->getCategory() == ImplicitCastExpr::LValue) {
+      E = IE->getSubExpr();
+      continue;
+    }
+    return NULL;
+  }
+
   case Stmt::DeclRefExprClass: {
     // DeclRefExpr: the base case.  When we hit a DeclRefExpr we are looking
     //  at code that refers to a variable's name.  We check if it has local
@@ -1973,9 +1982,11 @@ static DeclRefExpr* EvalVal(Expr *E) {
     return NULL;
   }
 
-  case Stmt::ParenExprClass:
+  case Stmt::ParenExprClass: {
     // Ignore parentheses.
-    return EvalVal(cast<ParenExpr>(E)->getSubExpr());
+    E = cast<ParenExpr>(E)->getSubExpr();
+    continue;
+  }
 
   case Stmt::UnaryOperatorClass: {
     // The only unary operator that make sense to handle here
@@ -2024,6 +2035,7 @@ static DeclRefExpr* EvalVal(Expr *E) {
   default:
     return NULL;
   }
+} while (true);
 }
 
 //===--- CHECK: Floating-Point comparisons (-Wfloat-equal) ---------------===//
