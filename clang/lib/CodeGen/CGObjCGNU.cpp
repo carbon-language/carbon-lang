@@ -212,6 +212,10 @@ public:
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
+  virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
+              const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &) {
+    return NULLPtr;
+  }
 };
 } // end anonymous namespace
 

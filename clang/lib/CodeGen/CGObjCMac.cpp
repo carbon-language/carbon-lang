@@ -1033,6 +1033,9 @@ public:
   /// forward references will be filled in with empty bodies if no
   /// definition is seen. The return value has type ProtocolPtrTy.
   virtual llvm::Constant *GetOrEmitProtocolRef(const ObjCProtocolDecl *PD)=0;
+  virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
+                      const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &);
+  
 };
 
 class CGObjCMac : public CGObjCCommonMac {
@@ -1684,6 +1687,11 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   }
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(FnInfo, Fn, Return, ActualArgs);
+}
+
+llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
+              const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &BDRE) {
+  return llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,

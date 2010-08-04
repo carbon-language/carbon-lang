@@ -759,8 +759,7 @@ public:
 
   llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
-                                           bool BlockHasCopyDispose,
-                                           CharUnits Size,
+                                           const CGBlockInfo &Info,
                                            const llvm::StructType *,
                                            std::vector<HelperInfo> *);
 
@@ -1677,7 +1676,36 @@ private:
   void EmitDeclMetadata();
 };
 
-
+/// CGBlockInfo - Information to generate a block literal.
+class CGBlockInfo {
+public:
+  /// Name - The name of the block, kindof.
+  const char *Name;
+    
+  /// DeclRefs - Variables from parent scopes that have been
+  /// imported into this block.
+  llvm::SmallVector<const BlockDeclRefExpr *, 8> DeclRefs;
+    
+  /// InnerBlocks - This block and the blocks it encloses.
+  llvm::SmallPtrSet<const DeclContext *, 4> InnerBlocks;
+    
+  /// CXXThisRef - Non-null if 'this' was required somewhere, in
+  /// which case this is that expression.
+  const CXXThisExpr *CXXThisRef;
+    
+  /// NeedsObjCSelf - True if something in this block has an implicit
+  /// reference to 'self'.
+  bool NeedsObjCSelf;
+    
+  /// These are initialized by GenerateBlockFunction.
+  bool BlockHasCopyDispose;
+  CharUnits BlockSize;
+  CharUnits BlockAlign;
+  llvm::SmallVector<const Expr*, 8> BlockLayout;
+    
+  CGBlockInfo(const char *Name);
+};
+  
 }  // end namespace CodeGen
 }  // end namespace clang
 

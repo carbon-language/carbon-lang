@@ -24,36 +24,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-/// CGBlockInfo - Information to generate a block literal.
-class clang::CodeGen::CGBlockInfo {
-public:
-  /// Name - The name of the block, kindof.
-  const char *Name;
-
-  /// DeclRefs - Variables from parent scopes that have been
-  /// imported into this block.
-  llvm::SmallVector<const BlockDeclRefExpr *, 8> DeclRefs;
-
-  /// InnerBlocks - This block and the blocks it encloses.
-  llvm::SmallPtrSet<const DeclContext *, 4> InnerBlocks;
-
-  /// CXXThisRef - Non-null if 'this' was required somewhere, in
-  /// which case this is that expression.
-  const CXXThisExpr *CXXThisRef;
-
-  /// NeedsObjCSelf - True if something in this block has an implicit
-  /// reference to 'self'.
-  bool NeedsObjCSelf;
-
-  /// These are initialized by GenerateBlockFunction.
-  bool BlockHasCopyDispose;
-  CharUnits BlockSize;
-  CharUnits BlockAlign;
-  llvm::SmallVector<const Expr*, 8> BlockLayout;
-
-  CGBlockInfo(const char *Name);
-};
-
 CGBlockInfo::CGBlockInfo(const char *N)
   : Name(N), CXXThisRef(0), NeedsObjCSelf(false) {
     
@@ -64,9 +34,11 @@ CGBlockInfo::CGBlockInfo(const char *N)
 
 
 llvm::Constant *CodeGenFunction::
-BuildDescriptorBlockDecl(const BlockExpr *BE, bool BlockHasCopyDispose, CharUnits Size,
+BuildDescriptorBlockDecl(const BlockExpr *BE, const CGBlockInfo &Info,
                          const llvm::StructType* Ty,
                          std::vector<HelperInfo> *NoteForHelper) {
+  bool BlockHasCopyDispose = Info.BlockHasCopyDispose;
+  CharUnits Size = Info.BlockSize;
   const llvm::Type *UnsignedLongTy
     = CGM.getTypes().ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *C;
@@ -100,7 +72,11 @@ BuildDescriptorBlockDecl(const BlockExpr *BE, bool BlockHasCopyDispose, CharUnit
           CGM.GetAddrOfConstantCString(BlockTypeEncoding), PtrToInt8Ty));
   
   // Layout.
-  C = llvm::ConstantInt::get(UnsignedLongTy, 0);
+  if (CGM.getContext().getLangOptions().ObjC1)
+    C = CGM.getObjCRuntime().GCBlockLayout(*this, Info.DeclRefs);
+  else
+    C = llvm::Constant::getNullValue(PtrToInt8Ty);
+  
   Elts.push_back(C);
 
   C = llvm::ConstantStruct::get(VMContext, Elts, false);
@@ -257,8 +233,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     if (Info.BlockLayout.empty()) {
       // __descriptor
-      Elts[4] = BuildDescriptorBlockDecl(BE, Info.BlockHasCopyDispose,
-                                         Info.BlockSize, 0, 0);
+      Elts[4] = BuildDescriptorBlockDecl(BE, Info, 0, 0);
 
       // Optimize to being a global block.
       Elts[0] = CGM.getNSConcreteGlobalBlock();
@@ -412,9 +387,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     NoteForHelper.resize(NumHelpers);
 
     // __descriptor
-    llvm::Value *Descriptor = BuildDescriptorBlockDecl(BE,
-                                                       Info.BlockHasCopyDispose,
-                                                       Info.BlockSize, Ty,
+    llvm::Value *Descriptor = BuildDescriptorBlockDecl(BE, Info, Ty,
                                                        &NoteForHelper);
     Descriptor = Builder.CreateBitCast(Descriptor, PtrToInt8Ty);
     Builder.CreateStore(Descriptor, Builder.CreateStructGEP(V, 4, "block.tmp"));

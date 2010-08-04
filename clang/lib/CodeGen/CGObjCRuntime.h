@@ -52,6 +52,7 @@ namespace CodeGen {
   class Selector;
   class ObjCIvarDecl;
   class ObjCStringLiteral;
+  class BlockDeclRefExpr;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -218,6 +219,9 @@ public:
                                         llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr,
                                         llvm::Value *Size) = 0;
+  virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
+                  const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &) = 0;
+                                        
 };
 
 /// Creates an instance of an Objective-C runtime class.
