@@ -25,7 +25,7 @@ namespace llvm {
 
 template <> struct GraphTraits<const Value*> {
   typedef const Value NodeType;
-  typedef Value::use_const_iterator ChildIteratorType;
+  typedef Value::const_use_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(const Value *G) {
     return G;
