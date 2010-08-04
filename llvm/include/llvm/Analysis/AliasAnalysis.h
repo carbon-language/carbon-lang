@@ -140,17 +140,11 @@ public:
 
     // AccessesArguments - This function accesses function arguments in well
     // known (possibly volatile) ways, but does not access any other memory.
-    //
-    // Clients may use the Info parameter of getModRefBehavior to get specific
-    // information about how pointer arguments are used.
     AccessesArguments,
 
     // AccessesArgumentsAndGlobals - This function has accesses function
     // arguments and global variables well known (possibly volatile) ways, but
     // does not access any other memory.
-    //
-    // Clients may use the Info parameter of getModRefBehavior to get specific
-    // information about how pointer arguments are used.
     AccessesArgumentsAndGlobals,
 
     // OnlyReadsMemory - This function does not perform any non-local stores or
