@@ -1896,7 +1896,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
       // TODO: Generalize this to non-constants by using known-bits information.
       const Type *Ty = LHS->getType();
       unsigned LZ = RHSC->getValue()->getValue().countLeadingZeros();
-      unsigned MaxShiftAmt = getTypeSizeInBits(Ty) - LZ;
+      unsigned MaxShiftAmt = getTypeSizeInBits(Ty) - LZ - 1;
       // For non-power-of-two values, effectively round the value up to the
       // nearest power of two.
       if (!RHSC->getValue()->getValue().isPowerOf2())
