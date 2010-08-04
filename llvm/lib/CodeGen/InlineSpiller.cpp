@@ -110,7 +110,8 @@ bool InlineSpiller::split() {
   splitAnalysis_.analyze(li_);
 
   if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
-    SplitEditor(splitAnalysis_, lis_, vrm_).splitAroundLoop(loop);
+    SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+      .splitAroundLoop(loop);
     return true;
   }
   return false;
@@ -372,7 +373,9 @@ void InlineSpiller::spill(LiveInterval *li,
   if (li_->empty())
     return;
 
-  stackSlot_ = vrm_.assignVirt2StackSlot(li->reg);
+  stackSlot_ = vrm_.getStackSlot(li->reg);
+  if (stackSlot_ == VirtRegMap::NO_STACK_SLOT)
+    stackSlot_ = vrm_.assignVirt2StackSlot(li->reg);
 
   // Iterate over instructions using register.
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(li->reg);
