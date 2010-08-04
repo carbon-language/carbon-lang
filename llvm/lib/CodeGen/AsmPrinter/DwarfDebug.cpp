@@ -2315,7 +2315,9 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
 
       const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
       const MCSymbol *SLabel = getLabelBeforeInsn(End);
-      DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
+      if (MLoc.getReg())
+        DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
+
       Begin = End;
       if (MVI + 1 == MVE) {
         // If End is the last instruction then its value is valid
@@ -2326,8 +2328,9 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
           EMLoc.set(Begin->getOperand(0).getReg(), Begin->getOperand(1).getImm());
         } else
           EMLoc = Asm->getDebugValueLocation(End);
-        DotDebugLocEntries.
-          push_back(DotDebugLocEntry(SLabel, FunctionEndSym, EMLoc));
+        if (EMLoc.getReg()) 
+          DotDebugLocEntries.
+            push_back(DotDebugLocEntry(SLabel, FunctionEndSym, EMLoc));
       }
     }
     DotDebugLocEntries.push_back(DotDebugLocEntry());
