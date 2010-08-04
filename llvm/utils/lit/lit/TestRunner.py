@@ -487,14 +487,16 @@ def formatTestOutput(status, out, err, exitCode, script):
     print >>output, '\n'.join(script)
     print >>output, "--"
     print >>output, "Exit Code: %r" % exitCode
-    print >>output, "Command Output (stdout):"
-    print >>output, "--"
-    output.write(out)
-    print >>output, "--"
-    print >>output, "Command Output (stderr):"
-    print >>output, "--"
-    output.write(err)
-    print >>output, "--"
+    if out:
+        print >>output, "Command Output (stdout):"
+        print >>output, "--"
+        output.write(out)
+        print >>output, "--"
+    if err:
+        print >>output, "Command Output (stderr):"
+        print >>output, "--"
+        output.write(err)
+        print >>output, "--"
     return (status, output.getvalue())
 
 def executeTclTest(test, litConfig):
