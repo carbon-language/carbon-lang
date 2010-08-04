@@ -1617,9 +1617,30 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
 CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // CaseStmts are essentially labels, so they are the first statement in a
   // block.
+  CFGBlock *TopBlock = 0, *LastBlock = 0;
+  
+  if (Stmt *Sub = CS->getSubStmt()) {
+    // For deeply nested chains of CaseStmts, instead of doing a recursion
+    // (which can blow out the stack), manually unroll and create blocks
+    // along the way.
+    while (isa<CaseStmt>(Sub)) {
+      CFGBlock *CurrentBlock = createBlock(false);
+      CurrentBlock->setLabel(CS);
 
-  if (CS->getSubStmt())
-    addStmt(CS->getSubStmt());
+      if (TopBlock)
+        AddSuccessor(LastBlock, CurrentBlock);
+      else
+        TopBlock = CurrentBlock;
+
+      AddSuccessor(SwitchTerminatedBlock, CurrentBlock);
+      LastBlock = CurrentBlock;
+
+      CS = cast<CaseStmt>(Sub);
+      Sub = CS->getSubStmt();
+    }
+
+    addStmt(Sub);
+  }
 
   CFGBlock* CaseBlock = Block;
   if (!CaseBlock)
@@ -1640,10 +1661,16 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // We set Block to NULL to allow lazy creation of a new block (if necessary)
   Block = NULL;
 
-  // This block is now the implicit successor of other blocks.
-  Succ = CaseBlock;
+  if (TopBlock) {
+    AddSuccessor(LastBlock, CaseBlock);
+    Succ = TopBlock;
+  }
+  else {
+    // This block is now the implicit successor of other blocks.
+    Succ = CaseBlock;
+  }
 
-  return CaseBlock;
+  return Succ;
 }
 
 CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* Terminator) {
