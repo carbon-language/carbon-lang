@@ -1300,6 +1300,13 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
 }
 
 std::string CWriter::GetValueName(const Value *Operand) {
+
+  // Resolve potential alias.
+  if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Operand)) {
+    if (const Value *V = GA->resolveAliasedGlobal(false))
+      Operand = V;
+  }
+
   // Mangle globals with the standard mangler interface for LLC compatibility.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand)) {
     SmallString<128> Str;
