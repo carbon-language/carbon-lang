@@ -282,26 +282,26 @@ private:
     /// preprocessing record.
     unsigned NumPreallocatedPreprocessingEntities;
 
-    /// \brief Method selectors used in a @selector expression. Used for
-    /// implementation of -Wselector.
-    llvm::SmallVector<long long unsigned int,64u> ReferencedSelectorsData;
-
     /// \brief A pointer to an on-disk hash table of opaque type
-    /// PCHMethodPoolLookupTable.
+    /// PCHSelectorLookupTable.
     ///
-    /// This hash table provides the instance and factory methods
-    /// associated with every selector known in the PCH file.
-    void *MethodPoolLookupTable;
+    /// This hash table provides the IDs of all selectors, and the associated
+    /// instance and factory methods.
+    void *SelectorLookupTable;
 
-    /// \brief A pointer to the character data that comprises the method
-    /// pool.
+    /// \brief A pointer to the character data that comprises the selector table
     ///
     /// The SelectorOffsets table refers into this memory.
-    const unsigned char *MethodPoolLookupTableData;
+    const unsigned char *SelectorLookupTableData;
 
     /// \brief Offsets into the method pool lookup table's data array
     /// where each selector resides.
     const uint32_t *SelectorOffsets;
+
+    /// \brief The number of selectors new to this file.
+    ///
+    /// This is the number of entries in SelectorOffsets.
+    unsigned LocalNumSelectors;
   };
 
   /// \brief The chain of PCH files. The first entry is the one named by the
@@ -354,18 +354,16 @@ private:
   /// been loaded.
   std::vector<IdentifierInfo *> IdentifiersLoaded;
 
-  /// \brief The number of selectors stored in the method pool itself.
-  unsigned TotalSelectorsInMethodPool;
-
-  /// \brief The total number of selectors stored in the PCH file.
-  unsigned TotalNumSelectors;
-
   /// \brief A vector containing selectors that have already been loaded.
   ///
   /// This vector is indexed by the Selector ID (-1). NULL selector
   /// entries indicate that the particular selector ID has not yet
   /// been loaded.
   llvm::SmallVector<Selector, 16> SelectorsLoaded;
+
+  /// \brief Method selectors used in a @selector expression. Used for
+  /// implementation of -Wselector.
+  llvm::SmallVector<long long unsigned int,64u> ReferencedSelectorsData;
       
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
@@ -461,12 +459,12 @@ private:
   /// \brief The number of macros de-serialized from the PCH file.
   unsigned NumMacrosRead;
 
-  /// \brief The number of method pool entries that have been read.
-  unsigned NumMethodPoolSelectorsRead;
+  /// \brief The number of selectors that have been read.
+  unsigned NumSelectorsRead;
 
-  /// \brief The number of times we have looked into the global method
-  /// pool and not found anything.
-  unsigned NumMethodPoolMisses;
+  /// \brief The number of times we have looked into the selector table
+  /// and not found anything.
+  unsigned NumSelectorMisses;
 
   /// \brief The total number of macros stored in the PCH file.
   unsigned TotalNumMacros;

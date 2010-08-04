@@ -1747,10 +1747,9 @@ void PCHWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
   using namespace llvm;
   if (SemaRef.ReferencedSelectors.empty())
     return;
-  
+
   RecordData Record;
-  
-  Record.push_back(SemaRef.ReferencedSelectors.size());
+
   for (DenseMap<Selector, SourceLocation>::iterator S =
        SemaRef.ReferencedSelectors.begin(),
        E = SemaRef.ReferencedSelectors.end(); S != E; ++S) {

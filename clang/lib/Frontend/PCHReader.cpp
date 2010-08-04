@@ -418,14 +418,13 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), TotalSelectorsInMethodPool(0), TotalNumSelectors(0),
-    isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
-    NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
-    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
-    NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0), TotalNumMacros(0),
-    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
-    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
-    NumCurrentElementsDeserializing(0) {
+    Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
+    NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
+    TotalNumSLocEntries(0), NumStatementsRead(0), TotalNumStatements(0),
+    NumMacrosRead(0), NumSelectorsRead(0), NumSelectorMisses(0),
+    TotalNumMacros(0), NumLexicalDeclContextsRead(0),
+    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
+    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
 }
 
@@ -434,13 +433,13 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      bool DisableValidation)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    TotalSelectorsInMethodPool(0), TotalNumSelectors(0), isysroot(isysroot), 
-    DisableValidation(DisableValidation), NumStatHits(0), NumStatMisses(0),
-    NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
-    TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
-    NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
-    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
+    isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
+    NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
+    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
+    NumSelectorsRead(0), NumSelectorMisses(0), TotalNumMacros(0),
+    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
+    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
+    NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
 }
 
@@ -454,8 +453,8 @@ PCHReader::PerFileData::PerFileData()
     LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
     IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
     LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0),
-    NumPreallocatedPreprocessingEntities(0), MethodPoolLookupTable(0),
-    MethodPoolLookupTableData(0), SelectorOffsets(0)
+    NumPreallocatedPreprocessingEntities(0), SelectorLookupTable(0),
+    SelectorLookupTableData(0), SelectorOffsets(0), LocalNumSelectors(0)
 {}
 
 void
@@ -467,7 +466,7 @@ PCHReader::setDeserializationListener(PCHDeserializationListener *Listener) {
 
 
 namespace {
-class PCHMethodPoolLookupTrait {
+class PCHSelectorLookupTrait {
   PCHReader &Reader;
 
 public:
@@ -479,7 +478,7 @@ public:
   typedef Selector external_key_type;
   typedef external_key_type internal_key_type;
 
-  explicit PCHMethodPoolLookupTrait(PCHReader &Reader) : Reader(Reader) { }
+  explicit PCHSelectorLookupTrait(PCHReader &Reader) : Reader(Reader) { }
 
   static bool EqualKey(const internal_key_type& a,
                        const internal_key_type& b) {
@@ -580,8 +579,8 @@ public:
 } // end anonymous namespace
 
 /// \brief The on-disk hash table used for the global method pool.
-typedef OnDiskChainedHashTable<PCHMethodPoolLookupTrait>
-  PCHMethodPoolLookupTable;
+typedef OnDiskChainedHashTable<PCHSelectorLookupTrait>
+  PCHSelectorLookupTable;
 
 namespace {
 class PCHIdentifierLookupTrait {
@@ -1652,25 +1651,22 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
 
     case pch::SELECTOR_OFFSETS:
       F.SelectorOffsets = (const uint32_t *)BlobStart;
-      TotalNumSelectors = Record[0];
-      SelectorsLoaded.resize(TotalNumSelectors);
+      F.LocalNumSelectors = Record[0];
       break;
 
     case pch::METHOD_POOL:
-      F.MethodPoolLookupTableData = (const unsigned char *)BlobStart;
+      F.SelectorLookupTableData = (const unsigned char *)BlobStart;
       if (Record[0])
-        F.MethodPoolLookupTable
-          = PCHMethodPoolLookupTable::Create(
-                        Chain[0]->MethodPoolLookupTableData + Record[0],
-                        Chain[0]->MethodPoolLookupTableData,
-                        PCHMethodPoolLookupTrait(*this));
-      TotalSelectorsInMethodPool = Record[1];
+        F.SelectorLookupTable
+          = PCHSelectorLookupTable::Create(
+                        F.SelectorLookupTableData + Record[0],
+                        F.SelectorLookupTableData,
+                        PCHSelectorLookupTrait(*this));
       break;
 
     case pch::REFERENCED_SELECTOR_POOL: {
-      unsigned int numEl = Record[0]*2;
-      for (unsigned int i = 1; i <= numEl; i++)
-        F.ReferencedSelectorsData.push_back(Record[i]);
+      ReferencedSelectorsData.insert(ReferencedSelectorsData.end(),
+          Record.begin(), Record.end());
       break;
     }
 
@@ -1780,7 +1776,8 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
 
   // Allocate space for loaded identifiers, decls and types.
   unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0,
-           TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0;
+           TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0,
+           TotalNumSelectors = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
     TotalNumTypes += Chain[I]->LocalNumTypes;
@@ -1788,6 +1785,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     TotalNumPreallocatedPreprocessingEntities +=
         Chain[I]->NumPreallocatedPreprocessingEntities;
     TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
+    TotalNumSelectors += Chain[I]->LocalNumSelectors;
   }
   IdentifiersLoaded.resize(TotalNumIdentifiers);
   TypesLoaded.resize(TotalNumTypes);
@@ -1803,6 +1801,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
                                      TotalNumPreallocatedPreprocessingEntities);
     }
   }
+  SelectorsLoaded.resize(TotalNumSelectors);
 
   // Check the predefines buffers.
   if (!DisableValidation && CheckPredefinesBuffers())
@@ -3071,10 +3070,10 @@ void PCHReader::PrintStats() {
     std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
                  NumIdentifiersLoaded, (unsigned)IdentifiersLoaded.size(),
                  ((float)NumIdentifiersLoaded/IdentifiersLoaded.size() * 100));
-  if (TotalNumSelectors)
+  if (!SelectorsLoaded.empty())
     std::fprintf(stderr, "  %u/%u selectors read (%f%%)\n",
-                 NumSelectorsLoaded, TotalNumSelectors,
-                 ((float)NumSelectorsLoaded/TotalNumSelectors * 100));
+                 NumSelectorsLoaded, (unsigned)SelectorsLoaded.size(),
+                 ((float)NumSelectorsLoaded/SelectorsLoaded.size() * 100));
   if (TotalNumStatements)
     std::fprintf(stderr, "  %u/%u statements read (%f%%)\n",
                  NumStatementsRead, TotalNumStatements,
@@ -3093,13 +3092,15 @@ void PCHReader::PrintStats() {
                  NumVisibleDeclContextsRead, TotalVisibleDeclContexts,
                  ((float)NumVisibleDeclContextsRead/TotalVisibleDeclContexts
                   * 100));
-  if (TotalSelectorsInMethodPool) {
+#if 0
+  if (TotalSelectorsInSelector) {
     std::fprintf(stderr, "  %u/%u method pool entries read (%f%%)\n",
-                 NumMethodPoolSelectorsRead, TotalSelectorsInMethodPool,
-                 ((float)NumMethodPoolSelectorsRead/TotalSelectorsInMethodPool
+                 NumSelectorSelectorsRead, TotalSelectorsInSelector,
+                 ((float)NumSelectorSelectorsRead/TotalSelectorsInSelector
                   * 100));
-    std::fprintf(stderr, "  %u method pool misses\n", NumMethodPoolMisses);
+    std::fprintf(stderr, "  %u method pool misses\n", NumSelectorMisses);
   }
+#endif
   std::fprintf(stderr, "\n");
 }
 
@@ -3175,14 +3176,13 @@ void PCHReader::InitializeSema(Sema &S) {
 
   // If there are @selector references added them to its pool. This is for
   // implementation of -Wselector.
-  PerFileData &F = *Chain[0];
-  if (!F.ReferencedSelectorsData.empty()) {
-    unsigned int DataSize = F.ReferencedSelectorsData.size()-1;
+  if (!ReferencedSelectorsData.empty()) {
+    unsigned int DataSize = ReferencedSelectorsData.size()-1;
     unsigned I = 0;
     while (I < DataSize) {
-      Selector Sel = DecodeSelector(F.ReferencedSelectorsData[I++]);
+      Selector Sel = DecodeSelector(ReferencedSelectorsData[I++]);
       SourceLocation SelLoc = 
-        SourceLocation::getFromRawEncoding(F.ReferencedSelectorsData[I++]);
+        SourceLocation::getFromRawEncoding(ReferencedSelectorsData[I++]);
       SemaObj->ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
     }
   }
@@ -3211,23 +3211,26 @@ IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
 
 std::pair<ObjCMethodList, ObjCMethodList>
 PCHReader::ReadMethodPool(Selector Sel) {
-  if (!Chain[0]->MethodPoolLookupTable)
-    return std::pair<ObjCMethodList, ObjCMethodList>();
+  // Find this selector in a hash table. We want to find the most recent entry.
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    PerFileData &F = *Chain[I];
+    if (!F.SelectorLookupTable)
+      continue;
 
-  // Try to find this selector within our on-disk hash table.
-  PCHMethodPoolLookupTable *PoolTable
-    = (PCHMethodPoolLookupTable*)Chain[0]->MethodPoolLookupTable;
-  PCHMethodPoolLookupTable::iterator Pos = PoolTable->find(Sel);
-  if (Pos == PoolTable->end()) {
-    ++NumMethodPoolMisses;
-    return std::pair<ObjCMethodList, ObjCMethodList>();
+    PCHSelectorLookupTable *PoolTable
+      = (PCHSelectorLookupTable*)F.SelectorLookupTable;
+    PCHSelectorLookupTable::iterator Pos = PoolTable->find(Sel);
+    if (Pos != PoolTable->end()) {
+      ++NumSelectorsRead;
+      PCHSelectorLookupTrait::data_type Data = *Pos;
+      if (DeserializationListener)
+        DeserializationListener->SelectorRead(Data.ID, Sel);
+      return std::make_pair(Data.Instance, Data.Factory);
+    }
   }
 
-  ++NumMethodPoolSelectorsRead;
-  PCHMethodPoolLookupTrait::data_type Data = *Pos;
-  if (DeserializationListener)
-    DeserializationListener->SelectorRead(Data.ID, Sel);
-  return std::make_pair(Data.Instance, Data.Factory);
+  ++NumSelectorMisses;
+  return std::pair<ObjCMethodList, ObjCMethodList>();
 }
 
 void PCHReader::LoadSelector(Selector Sel) {
@@ -3340,24 +3343,29 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   if (ID == 0)
     return Selector();
 
-  if (!Chain[0]->MethodPoolLookupTableData)
-    return Selector();
-
-  if (ID > TotalNumSelectors) {
+  if (ID > SelectorsLoaded.size()) {
     Error("selector ID out of range in PCH file");
     return Selector();
   }
 
-  unsigned Index = ID - 1;
-  if (SelectorsLoaded[Index].getAsOpaquePtr() == 0) {
+  if (SelectorsLoaded[ID - 1].getAsOpaquePtr() == 0) {
     // Load this selector from the selector table.
-    PCHMethodPoolLookupTrait Trait(*this);
-    SelectorsLoaded[Index]
-      = Trait.ReadKey(Chain[0]->MethodPoolLookupTableData +
-                        Chain[0]->SelectorOffsets[Index], 0);
+    unsigned Idx = ID - 1;
+    for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+      PerFileData &F = *Chain[N - I - 1];
+      if (Idx < F.LocalNumSelectors) {
+        PCHSelectorLookupTrait Trait(*this);
+        SelectorsLoaded[ID - 1] =
+           Trait.ReadKey(F.SelectorLookupTableData + F.SelectorOffsets[Idx], 0);
+        if (DeserializationListener)
+          DeserializationListener->SelectorRead(ID, SelectorsLoaded[ID - 1]);
+        break;
+      }
+      Idx -= F.LocalNumSelectors;
+    }
   }
 
-  return SelectorsLoaded[Index];
+  return SelectorsLoaded[ID - 1];
 }
 
 Selector PCHReader::GetExternalSelector(uint32_t ID) { 
@@ -3365,7 +3373,8 @@ Selector PCHReader::GetExternalSelector(uint32_t ID) {
 }
 
 uint32_t PCHReader::GetNumExternalSelectors() {
-  return TotalNumSelectors + 1;
+  // ID 0 (the null selector) is considered an external selector.
+  return getTotalNumSelectors() + 1;
 }
 
 DeclarationName
