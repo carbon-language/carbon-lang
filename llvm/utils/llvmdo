@@ -76,8 +76,6 @@ fi
 shift;
 
 paths_to_ignore="\
-  -path */CVS -o \
-  -path */CVS/* -o \
   -path */.svn/ -o \
   -path */.svn/* -o \
   -path docs/doxygen/* -o \
@@ -152,7 +150,6 @@ files_to_ignore="\
      -name \.* \
   -o -name *~ \
   -o -name #* \
-  -o -name *.cvs \
   -o -name configure \
   -o -name slow.ll \
   -o -name *libtool* \
