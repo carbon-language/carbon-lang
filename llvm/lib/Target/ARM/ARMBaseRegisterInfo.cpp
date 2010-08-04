@@ -851,18 +851,13 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // slot of the previous FP. Also, if we have variable sized objects in the
   // function, stack slot references will often be negative, and some of
   // our instructions are positive-offset only, so conservatively consider
-  // that case to want a spill slot (or register) as well. Similarly, if
-  // the function adjusts the stack pointer during execution and the
-  // adjustments aren't already part of our stack size estimate, our offset
-  // calculations may be off, so be conservative.
+  // that case to want a spill slot (or register) as well.
   // FIXME: We could add logic to be more precise about negative offsets
   //        and which instructions will need a scratch register for them. Is it
   //        worth the effort and added fragility?
   bool BigStack =
     (RS && (estimateStackSize(MF) + (hasFP(MF) ? 4:0) >=
-            estimateRSStackSizeLimit(MF))
-     || MFI->hasVarSizedObjects()
-     || (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF)));
+            estimateRSStackSizeLimit(MF))) || MFI->hasVarSizedObjects();
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || cannotEliminateFrame(MF)) {
