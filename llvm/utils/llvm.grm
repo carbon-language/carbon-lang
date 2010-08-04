@@ -8,6 +8,9 @@ It is strictly syntax-based, and makes no attempt to generate
 IR that is semantically valid. Most of the IR produced doesn't
 pass the Verifier.
 
+TODO: Metadata, in all its forms
+TODO: Union types
+
 *)
 
 I ::=   "title:    LLVM assembly language\n"
@@ -90,6 +93,8 @@ GVInternalLinkage
  | dllexport
  | common
  | private
+ | "linker_private"
+ | "linker_private_weak"
  ;
 
 GVExternalLinkage
