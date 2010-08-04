@@ -3663,7 +3663,7 @@ void DwarfDebug::emitDebugLoc() {
           Asm->OutStreamer.AddComment("Loc expr size");
           Asm->EmitInt16(1);
           Asm->OutStreamer.AddComment(
-            dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
+            dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
           Asm->EmitInt8(dwarf::DW_OP_reg0 + Reg);
         } else {
           Asm->OutStreamer.AddComment("Loc expr size");
