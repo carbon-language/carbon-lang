@@ -87,22 +87,10 @@ public:
     const char *
     GetBasicInfoAsString ();
 
-    lldb_private::Thread::StopInfo &
-    GetStopInfoRef ()
-    {
-        return m_stop_info;
-    }
-
-    uint32_t
-    GetStopInfoStopID()
-    {
-        return m_stop_info_stop_id;
-    }
-
     void
-    SetStopInfoStopID (uint32_t stop_id)
+    SetStopInfo (const lldb::StopInfoSP &stop_info)
     {
-        m_stop_info_stop_id = stop_id;
+        m_actual_stop_info_sp = stop_info;
     }
 
     void
@@ -130,8 +118,6 @@ protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
-    uint32_t m_stop_info_stop_id;
-    lldb_private::Thread::StopInfo m_stop_info;
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
@@ -146,8 +132,8 @@ protected:
     void
     SetStopInfoFromPacket (StringExtractor &stop_packet, uint32_t stop_id);
 
-    virtual bool
-    GetRawStopReason (StopInfo *stop_info);
+    virtual lldb::StopInfoSP
+    GetPrivateStopReason ();
 
 
 };

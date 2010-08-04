@@ -21,6 +21,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Thread.h"
@@ -1706,48 +1707,35 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
     {
         int num_threads = m_process_sp->GetThreadList().GetSize();
         int idx;
-        
+
+        int32_t should_stop_count = -1;
+        int32_t should_run_count = -1;
         for (idx = 0; idx < num_threads; ++idx)
         {
             lldb::ThreadSP thread_sp = m_process_sp->GetThreadList().GetThreadAtIndex(idx);
 
-            Thread::StopInfo stop_info;
-            if (thread_sp->GetStopInfo(&stop_info))
+            StopInfo *stop_info = thread_sp->GetStopInfo ();
+            if (stop_info)
             {
-                StopReason reason = stop_info.GetStopReason();
-                if (reason == eStopReasonBreakpoint)
+                if (stop_info->ShouldStop(event_ptr))
                 {
-                    BreakpointSiteSP bp_site_sp;
-                    // Look up the breakpoint site in the stop info, but the breakpoint
-                    // might be a temporary one that's been deleted between the time we
-                    // hit the breakpoint and now, if so there's nothing to do.
-                    
-                    bp_site_sp = m_process_sp->GetBreakpointSiteList().FindByID (stop_info.GetBreakpointSiteID());
-                    if (bp_site_sp)
-                    {
-                        size_t num_owners = bp_site_sp->GetNumberOfOwners();
-                        for (size_t j = 0; j < num_owners; j++)
-                        {
-                            lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
-                            StoppointCallbackContext context (event_ptr, 
-                                                              m_process_sp.get(), 
-                                                              thread_sp.get(), 
-                                                              thread_sp->GetStackFrameAtIndex(0).get(),
-                                                              false);
-                            bp_loc_sp->InvokeCallback (&context);
-                        }
-                    }
+                    if (should_stop_count < 0)
+                        should_stop_count = 1;
                     else
-                    {
-                        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
-
-                        if (log)
-                            log->Printf ("Process::%s could not find breakpoint site id: %d...", __FUNCTION__, stop_info.GetBreakpointSiteID());
-                    }
-
+                        should_stop_count++;
+                }
+                else
+                {
+                    if (should_run_count < 0)
+                        should_run_count = 1;
+                    else
+                        should_run_count++;
                 }
             }
         }
+        
+        // Are we secretly watching the private state here? Should we look at the
+        // should_run_count or the "should_stop_count" and the "should_run_count"???
         if (m_process_sp->GetPrivateState() == eStateRunning)
             SetRestarted(true);
     }

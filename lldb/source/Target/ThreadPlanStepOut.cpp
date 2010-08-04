@@ -18,6 +18,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -102,44 +103,37 @@ ThreadPlanStepOut::PlanExplainsStop ()
 {
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
-    Thread::StopInfo info;
-    if (m_thread.GetStopInfo (&info))
+    StopInfo *stop_info = m_thread.GetStopInfo();
+    if (stop_info)
     {
-        StopReason reason = info.GetStopReason();
-
+        StopReason reason = stop_info->GetStopReason();
         switch (reason)
         {
-            case eStopReasonBreakpoint:
+        case eStopReasonBreakpoint:
+        {
+            // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
+            BreakpointSiteSP site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info->GetValue()));
+            if (site_sp && site_sp->IsBreakpointAtThisSite (m_return_bp_id))
             {
-                // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
-                BreakpointSiteSP this_site = m_thread.GetProcess().GetBreakpointSiteList().FindByID (info.GetBreakpointSiteID());
-                if (!this_site)
-                    return false;
+                // If there was only one owner, then we're done.  But if we also hit some
+                // user breakpoint on our way out, we should mark ourselves as done, but
+                // also not claim to explain the stop, since it is more important to report
+                // the user breakpoint than the step out completion.
 
-                if (this_site->IsBreakpointAtThisSite (m_return_bp_id))
-                {
-                    // If there was only one owner, then we're done.  But if we also hit some
-                    // user breakpoint on our way out, we should mark ourselves as done, but
-                    // also not claim to explain the stop, since it is more important to report
-                    // the user breakpoint than the step out completion.
-
-                    if (this_site->GetNumberOfOwners() == 1)
-                        return true;
-                    else
-                    {
-                        SetPlanComplete();
-                        return false;
-                    }
-                }
-                else
-                    return false;
+                if (site_sp->GetNumberOfOwners() == 1)
+                    return true;
+                
+                SetPlanComplete();
             }
-            case eStopReasonWatchpoint:
-            case eStopReasonSignal:
-            case eStopReasonException:
-                return false;
-            default:
-                return true;
+            return false;
+        }
+        case eStopReasonWatchpoint:
+        case eStopReasonSignal:
+        case eStopReasonException:
+            return false;
+
+        default:
+            return true;
         }
     }
     return true;

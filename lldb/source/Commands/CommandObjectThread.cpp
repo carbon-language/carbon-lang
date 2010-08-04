@@ -50,14 +50,8 @@ lldb_private::DisplayThreadInfo
     {
         if (only_threads_with_stop_reason)
         {
-            StopReason thread_stop_reason = eStopReasonNone;
-            Thread::StopInfo thread_stop_info;
-            if (thread->GetStopInfo(&thread_stop_info))
-            {
-                thread_stop_reason = thread_stop_info.GetStopReason();
-                if (thread_stop_reason == eStopReasonNone)
-                    return false;
-            }
+            if (thread->GetStopInfo() == NULL)
+                return false;
         }
 
         strm.Indent();

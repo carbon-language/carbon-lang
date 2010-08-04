@@ -15,6 +15,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Unwind.h"
 #include "lldb/Breakpoint/WatchpointLocation.h"
@@ -35,8 +36,6 @@ using namespace lldb_private;
 
 ThreadGDBRemote::ThreadGDBRemote (ProcessGDBRemote &process, lldb::tid_t tid) :
     Thread(process, tid),
-    m_stop_info_stop_id (0),
-    m_stop_info (this),
     m_thread_name (),
     m_dispatch_queue_name (),
     m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS),
@@ -83,7 +82,7 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     // TODO: cache for next time in case we can match things up??
     ClearStackFrames();
     int signo = GetResumeSignal();
-    m_stop_info.Clear();
+
     switch (resume_state)
     {
     case eStateSuspended:
@@ -269,11 +268,13 @@ ThreadGDBRemote::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
     return false;
 }
 
-bool
-ThreadGDBRemote::GetRawStopReason (StopInfo *stop_info)
+lldb::StopInfoSP
+ThreadGDBRemote::GetPrivateStopReason ()
 {
-    if (m_stop_info_stop_id != m_process.GetStopID())
+    if (m_actual_stop_info_sp.get() == NULL || m_actual_stop_info_sp->IsValid() == false)
     {
+        m_actual_stop_info_sp.reset();
+
         char packet[256];
         ::snprintf(packet, sizeof(packet), "qThreadStopInfo%x", GetID());
         StringExtractorGDBRemote stop_packet;
@@ -281,18 +282,9 @@ ThreadGDBRemote::GetRawStopReason (StopInfo *stop_info)
         {
             std::string copy(stop_packet.GetStringRef());
             GetGDBProcess().SetThreadStopInfo (stop_packet);
-            // The process should have set the stop info stop ID and also
-            // filled this thread in with valid stop info
-            if (m_stop_info_stop_id != m_process.GetStopID())
-            {
-                //ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD, "warning: qThreadStopInfo problem: '%s' => '%s'", packet, stop_packet.GetStringRef().c_str());
-                printf("warning: qThreadStopInfo problem: '%s' => '%s'\n\torig '%s'\n", packet, stop_packet.GetStringRef().c_str(), copy.c_str()); /// REMOVE THIS
-                return false;
-            }
         }
     }
-    *stop_info = m_stop_info;
-    return true;
+    return m_actual_stop_info_sp;
 }
 
 

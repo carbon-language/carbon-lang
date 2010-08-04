@@ -138,11 +138,10 @@ bool
 BreakpointLocationCollection::ShouldStop (StoppointCallbackContext *context)
 {
     bool shouldStop = false;
-
     const size_t count = GetSize();
-    for (size_t i = 0; i < count; i++) {
-        bool one_result = GetByIndex(i)->ShouldStop(context);
-        if (one_result)
+    for (size_t i = 0; i < count; i++) 
+    {
+        if (GetByIndex(i)->ShouldStop(context))
             shouldStop = true;
     }
     return shouldStop;

@@ -444,22 +444,6 @@ public:
     GetOptions ();
 
 
-protected:
-    friend class Target;
-    friend class BreakpointLocation; // To call InvokeCallback
-    //------------------------------------------------------------------
-    /// Constructors and Destructors
-    /// Only the Target can make a breakpoint, and it owns the breakpoint lifespans.
-    /// The constructor takes a filter and a resolver.  Up in Target there are convenience
-    /// variants that make breakpoints for some common cases.
-    //------------------------------------------------------------------
-    // This is the generic constructor
-    Breakpoint(Target &target, lldb::SearchFilterSP &filter_sp, lldb::BreakpointResolverSP &resolver_sp);
-
-    //------------------------------------------------------------------
-    // Protected Methods
-    //------------------------------------------------------------------
-
     //------------------------------------------------------------------
     /// Invoke the callback action when the breakpoint is hit.
     ///
@@ -478,8 +462,6 @@ protected:
     InvokeCallback (StoppointCallbackContext *context,
                     lldb::break_id_t bp_loc_id);
 
-protected:
-
     //------------------------------------------------------------------
     /// Returns the shared pointer that this breakpoint holds for the
     /// breakpoint location passed in as \a bp_loc_ptr.  Passing in a 
@@ -493,6 +475,23 @@ protected:
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
     GetLocationSP (BreakpointLocation *bp_loc_ptr);
+
+
+protected:
+    friend class Target;
+    //------------------------------------------------------------------
+    // Protected Methods
+    //------------------------------------------------------------------
+
+
+    //------------------------------------------------------------------
+    /// Constructors and Destructors
+    /// Only the Target can make a breakpoint, and it owns the breakpoint lifespans.
+    /// The constructor takes a filter and a resolver.  Up in Target there are convenience
+    /// variants that make breakpoints for some common cases.
+    //------------------------------------------------------------------
+    // This is the generic constructor
+    Breakpoint(Target &target, lldb::SearchFilterSP &filter_sp, lldb::BreakpointResolverSP &resolver_sp);
 
 private:
     //------------------------------------------------------------------

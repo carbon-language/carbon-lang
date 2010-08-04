@@ -29,133 +29,133 @@ class Thread :
 {
 friend class ThreadPlan;
 public:
-    //----------------------------------------------------------------------
-    // StopInfo
-    //
-    // Describes the reason the thread it was created with stopped.
-    //----------------------------------------------------------------------
-    class StopInfo
-    {
-    public:
-        StopInfo(Thread *thread = NULL);
-
-        ~StopInfo();
-
-        // Clear clears the stop reason, but it does not clear the thread this
-        // StopInfo is tied to.
-        void
-        Clear();
-
-        lldb::StopReason
-        GetStopReason() const;
-
-        void
-        SetThread (Thread *thread);
-
-        Thread *
-        GetThread ();
-
-        void
-        SetStopReasonWithBreakpointSiteID (lldb::user_id_t break_id);
-
-        void
-        SetStopReasonWithWatchpointID (lldb::user_id_t watch_id);
-
-        void
-        SetStopReasonWithSignal (int signo);
-
-        void
-        SetStopReasonToTrace ();
-
-        void
-        SetStopReasonWithGenericException (uint32_t exc_type, size_t exc_data_count);
-
-        void
-        SetStopReasonWithPlan (lldb::ThreadPlanSP &plan);
-
-        void
-        SetStopReasonToNone ();
-
-        const char *
-        GetStopDescription() const;
-
-        void
-        SetStopDescription(const char *desc);
-        
-        void
-        SetStopReasonWithMachException (uint32_t exc_type, 
-                                        size_t exc_data_count, 
-                                        const lldb::addr_t *exc_data);
-
-        lldb::user_id_t
-        GetBreakpointSiteID() const;
-
-        lldb::user_id_t
-        GetWatchpointID() const;
-
-        int
-        GetSignal() const;
-
-        lldb::user_id_t
-        GetPlanID () const;
-
-        uint32_t
-        GetExceptionType() const;
-
-        size_t
-        GetExceptionDataCount() const;
-
-        lldb::addr_t
-        GetExceptionDataAtIndex (uint32_t idx) const;
-
-        bool
-        SetExceptionDataAtIndex (uint32_t idx, lldb::addr_t data);
-
-        void
-        Dump (Stream *s) const;
-
-    protected:
-        lldb::StopReason m_reason;
-        //--------------------------------------------------------------
-        // For eStopReasonPlan the completed plan is stored in this shared pointer.
-        //--------------------------------------------------------------
-        lldb::ThreadPlanSP m_completed_plan_sp;
-        Thread *m_thread;
-        char m_description[256];
-        union
-        {
-            //--------------------------------------------------------------
-            // eStopReasonBreakpoint
-            //--------------------------------------------------------------
-            struct
-            {
-                lldb::user_id_t bp_site_id;
-            } breakpoint;
-            //--------------------------------------------------------------
-            // eStopReasonWatchpoint
-            //--------------------------------------------------------------
-            struct
-            {
-                lldb::user_id_t watch_id;
-            } watchpoint;
-            //--------------------------------------------------------------
-            // eStopReasonSignal
-            //--------------------------------------------------------------
-            struct
-            {
-                int signo;
-            } signal;
-            //--------------------------------------------------------------
-            // eStopReasonException
-            //--------------------------------------------------------------
-            struct
-            {
-                uint32_t type;
-                size_t data_count;
-                lldb::addr_t data[LLDB_THREAD_MAX_STOP_EXC_DATA];
-            } exception;
-        } m_details;
-    };
+//    //----------------------------------------------------------------------
+//    // StopInfo
+//    //
+//    // Describes the reason the thread it was created with stopped.
+//    //----------------------------------------------------------------------
+//    class StopInfo
+//    {
+//    public:
+//        StopInfo(Thread *thread = NULL);
+//
+//        ~StopInfo();
+//
+//        // Clear clears the stop reason, but it does not clear the thread this
+//        // StopInfo is tied to.
+//        void
+//        Clear();
+//
+//        lldb::StopReason
+//        GetStopReason() const;
+//
+//        void
+//        SetThread (Thread *thread);
+//
+//        Thread *
+//        GetThread ();
+//
+//        void
+//        SetStopReasonWithBreakpointSiteID (lldb::user_id_t break_id);
+//
+//        void
+//        SetStopReasonWithWatchpointID (lldb::user_id_t watch_id);
+//
+//        void
+//        SetStopReasonWithSignal (int signo);
+//
+//        void
+//        SetStopReasonToTrace ();
+//
+//        void
+//        SetStopReasonWithGenericException (uint32_t exc_type, size_t exc_data_count);
+//
+//        void
+//        SetStopReasonWithPlan (lldb::ThreadPlanSP &plan);
+//
+//        void
+//        SetStopReasonToNone ();
+//
+//        const char *
+//        GetStopDescription() const;
+//
+//        void
+//        SetStopDescription(const char *desc);
+//        
+//        void
+//        SetStopReasonWithMachException (uint32_t exc_type, 
+//                                        size_t exc_data_count, 
+//                                        const lldb::addr_t *exc_data);
+//
+//        lldb::user_id_t
+//        GetBreakpointSiteID() const;
+//
+//        lldb::user_id_t
+//        GetWatchpointID() const;
+//
+//        int
+//        GetSignal() const;
+//
+//        lldb::user_id_t
+//        GetPlanID () const;
+//
+//        uint32_t
+//        GetExceptionType() const;
+//
+//        size_t
+//        GetExceptionDataCount() const;
+//
+//        lldb::addr_t
+//        GetExceptionDataAtIndex (uint32_t idx) const;
+//
+//        bool
+//        SetExceptionDataAtIndex (uint32_t idx, lldb::addr_t data);
+//
+//        void
+//        Dump (Stream *s) const;
+//
+//    protected:
+//        lldb::StopReason m_reason;
+//        //--------------------------------------------------------------
+//        // For eStopReasonPlan the completed plan is stored in this shared pointer.
+//        //--------------------------------------------------------------
+//        lldb::ThreadPlanSP m_completed_plan_sp;
+//        Thread *m_thread;
+//        char m_description[256];
+//        union
+//        {
+//            //--------------------------------------------------------------
+//            // eStopReasonBreakpoint
+//            //--------------------------------------------------------------
+//            struct
+//            {
+//                lldb::user_id_t bp_site_id;
+//            } breakpoint;
+//            //--------------------------------------------------------------
+//            // eStopReasonWatchpoint
+//            //--------------------------------------------------------------
+//            struct
+//            {
+//                lldb::user_id_t watch_id;
+//            } watchpoint;
+//            //--------------------------------------------------------------
+//            // eStopReasonSignal
+//            //--------------------------------------------------------------
+//            struct
+//            {
+//                int signo;
+//            } signal;
+//            //--------------------------------------------------------------
+//            // eStopReasonException
+//            //--------------------------------------------------------------
+//            struct
+//            {
+//                uint32_t type;
+//                size_t data_count;
+//                lldb::addr_t data[LLDB_THREAD_MAX_STOP_EXC_DATA];
+//            } exception;
+//        } m_details;
+//    };
 
     class RegisterCheckpoint
     {
@@ -276,8 +276,8 @@ public:
     virtual bool
     MatchesSpec (const ThreadSpec *spec);
 
-    bool
-    GetStopInfo (StopInfo *stop_info);
+    StopInfo *
+    GetStopInfo ();
 
     bool
     ThreadStoppedForAReason ();
@@ -656,8 +656,8 @@ protected:
 
     ThreadPlan *GetPreviousPlan (ThreadPlan *plan);
 
-    virtual bool
-    GetRawStopReason (StopInfo *stop_info) = 0;
+    virtual lldb::StopInfoSP
+    GetPrivateStopReason () = 0;
 
     typedef std::vector<lldb::ThreadPlanSP> plan_stack;
 
@@ -665,6 +665,8 @@ protected:
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------
     Process &           m_process;          ///< The process that owns this thread.
+    lldb::StopInfoSP    m_public_stop_info_sp;     ///< The public stop reason for this thread
+    lldb::StopInfoSP    m_actual_stop_info_sp;     ///< The private stop reason for this thread
     const uint32_t      m_index_id;         ///< A unique 1 based index assigned to each thread for easy UI/command line access.
     lldb::RegisterContextSP   m_reg_context_sp;   ///< The register context for this thread's current register state.
     lldb::StateType     m_state;            ///< The state of our process.

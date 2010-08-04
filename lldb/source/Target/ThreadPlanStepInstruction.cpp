@@ -17,10 +17,11 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Target.h"
-#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -83,11 +84,11 @@ ThreadPlanStepInstruction::ValidatePlan (Stream *error)
 bool
 ThreadPlanStepInstruction::PlanExplainsStop ()
 {
-    Thread::StopInfo info;
-    if (m_thread.GetStopInfo (&info))
+    StopInfo *stop_info = m_thread.GetStopInfo();
+    if (stop_info)
     {
-        StopReason reason = info.GetStopReason();
-        if (reason == eStopReasonTrace || reason ==eStopReasonNone)
+        StopReason reason = stop_info->GetStopReason();
+        if (reason == eStopReasonTrace || reason == eStopReasonNone)
             return true;
         else
             return false;

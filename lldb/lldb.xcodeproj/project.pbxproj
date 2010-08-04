@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		260C876A10F538E700BB2B04 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
+		2615DB851208A9C90021781D /* StopInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 2615DB841208A9C90021781D /* StopInfo.h */; };
+		2615DB871208A9E40021781D /* StopInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2615DB861208A9E40021781D /* StopInfo.cpp */; };
+		2615DBCA1208B5FC0021781D /* StopInfoMachException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */; };
+		2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */ = {isa = PBXBuildFile; fileRef = 2615DBC91208B5FC0021781D /* StopInfoMachException.h */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
@@ -503,6 +507,10 @@
 		260C89E310F57C5600BB2B04 /* SymbolVendorMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolVendorMacOSX.h; sourceTree = "<group>"; };
 		26109B3B1155D70100CC3529 /* LogChannelDWARF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LogChannelDWARF.cpp; sourceTree = "<group>"; };
 		26109B3C1155D70100CC3529 /* LogChannelDWARF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogChannelDWARF.h; sourceTree = "<group>"; };
+		2615DB841208A9C90021781D /* StopInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StopInfo.h; path = include/lldb/Target/StopInfo.h; sourceTree = "<group>"; };
+		2615DB861208A9E40021781D /* StopInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StopInfo.cpp; path = source/Target/StopInfo.cpp; sourceTree = "<group>"; };
+		2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StopInfoMachException.cpp; path = Utility/StopInfoMachException.cpp; sourceTree = "<group>"; };
+		2615DBC91208B5FC0021781D /* StopInfoMachException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StopInfoMachException.h; path = Utility/StopInfoMachException.h; sourceTree = "<group>"; };
 		261744771168585B005ADD65 /* SBType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBType.cpp; path = source/API/SBType.cpp; sourceTree = "<group>"; };
 		2617447911685869005ADD65 /* SBType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBType.h; path = include/lldb/API/SBType.h; sourceTree = "<group>"; };
 		261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SharingPtr.cpp; path = source/Utility/SharingPtr.cpp; sourceTree = "<group>"; };
@@ -1535,16 +1543,18 @@
 			isa = PBXGroup;
 			children = (
 				9654F79F1197DA3F00F72B43 /* libunwind */,
-				26B4666F11A2091600CF6220 /* LibUnwindRegisterContext.cpp */,
 				26B4667011A2091600CF6220 /* LibUnwindRegisterContext.h */,
-				9654F79C1197DA1300F72B43 /* MacOSXLibunwindCallbacks.cpp */,
+				26B4666F11A2091600CF6220 /* LibUnwindRegisterContext.cpp */,
 				9654F79D1197DA1300F72B43 /* MacOSXLibunwindCallbacks.h */,
-				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
+				9654F79C1197DA1300F72B43 /* MacOSXLibunwindCallbacks.cpp */,
 				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
-				26E3EEBE11A98A1900FBADB6 /* UnwindLibUnwind.cpp */,
+				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
+				2615DBC91208B5FC0021781D /* StopInfoMachException.h */,
+				2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */,
 				26E3EEBF11A98A1900FBADB6 /* UnwindLibUnwind.h */,
-				26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */,
+				26E3EEBE11A98A1900FBADB6 /* UnwindLibUnwind.cpp */,
 				26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */,
+				26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -1930,6 +1940,8 @@
 				26BC7F3910F1B90C00F91463 /* StackFrameList.cpp */,
 				26BC7DF710F1B81A00F91463 /* StackID.h */,
 				26BC7F3A10F1B90C00F91463 /* StackID.cpp */,
+				2615DB841208A9C90021781D /* StopInfo.h */,
+				2615DB861208A9E40021781D /* StopInfo.cpp */,
 				26BC7DF810F1B81A00F91463 /* Target.h */,
 				26BC7F3B10F1B90C00F91463 /* Target.cpp */,
 				26BC7DF910F1B81A00F91463 /* TargetList.h */,
@@ -2210,6 +2222,8 @@
 				49E45FAA11F660DC008F7B28 /* ClangASTType.h in Headers */,
 				49BB309611F79450001A4197 /* TaggedASTType.h in Headers */,
 				264723A611FA076E00DE380C /* CleanUp.h in Headers */,
+				2615DB851208A9C90021781D /* StopInfo.h in Headers */,
+				2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2664,6 +2678,8 @@
 				4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */,
 				26D27C9F11ED3A4E0024D721 /* ELFHeader.cpp in Sources */,
 				49E45FAF11F660FE008F7B28 /* ClangASTType.cpp in Sources */,
+				2615DB871208A9E40021781D /* StopInfo.cpp in Sources */,
+				2615DBCA1208B5FC0021781D /* StopInfoMachException.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

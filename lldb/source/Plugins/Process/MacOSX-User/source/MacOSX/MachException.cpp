@@ -13,6 +13,7 @@
 
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Host.h"
+#include "StopInfoMachException.h"
 
 #include "MachException.h"
 #include "ProcessMacOSXLog.h"
@@ -198,22 +199,16 @@ MachException::Message::PutToLog(Log *log) const
     }
 }
 
-bool
-MachException::Data::GetStopInfo(Thread::StopInfo *stop_info) const
+lldb::StopInfoSP
+MachException::Data::GetStopInfo (lldb_private::Thread &thread) const
 {
-    // Zero out the structure.
-    stop_info->Clear();
-
-    // Make sure we have a valid exception before we return anything valid
-    if (exc_type == 0)
-        return true;
-    // We always stop with a mach exceptions
+    
     const size_t exc_data_count = exc_data.size();
-    stop_info->SetStopReasonWithMachException (exc_type, 
-                                               exc_data_count, 
-                                               exc_data_count ? &exc_data[0] : NULL);
-
-    return true;
+    return StopInfoMachException::CreateStopReasonWithMachException (thread, 
+                                                                     exc_type,
+                                                                     exc_data_count,
+                                                                     exc_data_count >= 1 ? exc_data[0] : 0,
+                                                                     exc_data_count >= 2 ? exc_data[1] : 0);
 }
 
 

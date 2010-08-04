@@ -102,6 +102,7 @@ class   StackFrame;
 class   StackFrameList;
 class   StackID;
 class   StateVariable;
+class   StopInfo;
 class   Stoppoint;
 class   StoppointCallbackContext;
 class   StoppointLocation;

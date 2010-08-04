@@ -46,6 +46,8 @@
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
 #include "MacOSXLibunwindCallbacks.h"
+#include "StopInfoMachException.h"
+
 
 
 #define DEBUGSERVER_BASENAME    "debugserver"
@@ -1021,21 +1023,24 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 
                 gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
                 gdb_thread->SetName (thread_name.empty() ? thread_name.c_str() : NULL);
-                Thread::StopInfo& stop_info = gdb_thread->GetStopInfoRef();
-                gdb_thread->SetStopInfoStopID (GetStopID());
                 if (exc_type != 0)
                 {
-                    stop_info.SetStopReasonWithMachException (exc_type, 
-                                                              exc_data.size(), 
-                                                              &exc_data[0]);
+                    const size_t exc_data_count = exc_data.size();
+
+                    gdb_thread->SetStopInfo (StopInfoMachException::CreateStopReasonWithMachException (*thread_sp,
+                                                                                                       exc_type, 
+                                                                                                       exc_data_count,
+                                                                                                       exc_data_count >= 1 ? exc_data[0] : 0,
+                                                                                                       exc_data_count >= 2 ? exc_data[1] : 0));
                 }
                 else if (signo)
                 {
-                    stop_info.SetStopReasonWithSignal (signo);
+                    gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
                 }
                 else
                 {
-                    stop_info.SetStopReasonToNone ();
+                    StopInfoSP invalid_stop_info_sp;
+                    gdb_thread->SetStopInfo (invalid_stop_info_sp);
                 }
             }
             return eStateStopped;

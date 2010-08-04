@@ -17,6 +17,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
@@ -38,6 +39,8 @@ using namespace lldb_private;
 Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
     m_process (process),
+    m_public_stop_info_sp (),
+    m_actual_stop_info_sp (),
     m_index_id (process.GetNextThreadIndexID ()),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
@@ -89,550 +92,24 @@ Thread::SetResumeState (StateType state)
     m_resume_state = state;
 }
 
-Thread::StopInfo::StopInfo(Thread *thread) :
-    m_reason (eStopReasonInvalid),
-    m_thread (thread),
-    m_description (),
-    m_details ()
+StopInfo *
+Thread::GetStopInfo ()
 {
-    m_description[0] = '\0';
-}
-
-Thread::StopInfo::~StopInfo()
-{
-}
-
-
-void
-Thread::StopInfo::Clear()
-{
-    m_reason = eStopReasonInvalid;
-    m_completed_plan_sp.reset();
-    m_description[0] = '\0';
-    ::bzero (&m_details, sizeof(m_details));
-}
-
-StopReason
-Thread::StopInfo::GetStopReason() const
-{
-    return m_reason;
-}
-
-const char *
-Thread::StopInfo::GetStopDescription() const
-{
-    if (m_description[0])
-        return m_description;
-    return NULL;
-}
-
-void
-Thread::StopInfo::SetStopDescription(const char *desc)
-{
-    if (desc && desc[0])
+    if (m_public_stop_info_sp.get() == NULL)
     {
-        ::snprintf (m_description, sizeof(m_description), "%s", desc);
+        ThreadPlanSP plan_sp (GetCompletedPlan());
+        if (plan_sp)
+            m_public_stop_info_sp = StopInfo::CreateStopReasonWithPlan (plan_sp);
+        else
+            m_public_stop_info_sp = GetPrivateStopReason ();
     }
-    else
-    {
-        m_description[0] = '\0';
-    }
-}
-
-void
-Thread::StopInfo::SetStopReasonWithMachException 
-(
-    uint32_t exc_type, 
-    size_t exc_data_count, 
-    const addr_t *exc_data
-)
-{
-    assert (exc_data_count < LLDB_THREAD_MAX_STOP_EXC_DATA);
-    assert (m_thread != NULL);
-    m_reason = eStopReasonException;
-    m_details.exception.type = exc_type;
-    m_details.exception.data_count = exc_data_count;
-    for (size_t i=0; i<exc_data_count; ++i)
-        m_details.exception.data[i] = exc_data[i];
-
-    if (m_details.exception.type != 0)
-    {
-        ArchSpec::CPU cpu = m_thread->GetProcess().GetTarget().GetArchitecture().GetGenericCPUType();
-
-        bool exc_translated = false;
-        const char *exc_desc = NULL;
-        const char *code_label = "code";
-        const char *code_desc = NULL;
-        const char *subcode_label = "subcode";
-        const char *subcode_desc = NULL;
-        switch (m_details.exception.type)
-        {
-        case 1: // EXC_BAD_ACCESS
-            exc_desc = "EXC_BAD_ACCESS";
-            subcode_label = "address";
-            switch (cpu)
-            {                        
-            case ArchSpec::eCPU_arm:
-                switch (m_details.exception.data[0])
-                {
-                case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
-                case 0x102: code_desc = "EXC_ARM_DA_DEBUG"; break;
-                }
-                break;
-
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
-                switch (m_details.exception.data[0])
-                {
-                case 0x101: code_desc = "EXC_PPC_VM_PROT_READ"; break;
-                case 0x102: code_desc = "EXC_PPC_BADSPACE";     break;
-                case 0x103: code_desc = "EXC_PPC_UNALIGNED";    break;
-                }
-                break;
-
-            default:
-                break;
-            }
-            break;
-
-        case 2: // EXC_BAD_INSTRUCTION
-            exc_desc = "EXC_BAD_INSTRUCTION";
-            switch (cpu)
-            {
-            case ArchSpec::eCPU_i386:
-            case ArchSpec::eCPU_x86_64:
-                if (m_details.exception.data[0] == 1)
-                    code_desc = "EXC_I386_INVOP";
-                break;
-
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
-                switch (m_details.exception.data[0])
-                {
-                case 1: code_desc = "EXC_PPC_INVALID_SYSCALL"; break; 
-                case 2: code_desc = "EXC_PPC_UNIPL_INST"; break; 
-                case 3: code_desc = "EXC_PPC_PRIVINST"; break; 
-                case 4: code_desc = "EXC_PPC_PRIVREG"; break; 
-                case 5: // EXC_PPC_TRACE
-                    SetStopReasonToTrace();
-                    exc_translated = true;
-                    break;
-                case 6: code_desc = "EXC_PPC_PERFMON"; break; 
-                }
-                break;
-
-            case ArchSpec::eCPU_arm:
-                if (m_details.exception.data[0] == 1)
-                    code_desc = "EXC_ARM_UNDEFINED";
-                break;
-
-            default:
-                break;
-            }
-            break;
-
-        case 3: // EXC_ARITHMETIC
-            exc_desc = "EXC_ARITHMETIC";
-            switch (cpu)
-            {
-            case ArchSpec::eCPU_i386:
-            case ArchSpec::eCPU_x86_64:
-                switch (m_details.exception.data[0])
-                {
-                case 1: code_desc = "EXC_I386_DIV"; break;
-                case 2: code_desc = "EXC_I386_INTO"; break;
-                case 3: code_desc = "EXC_I386_NOEXT"; break;
-                case 4: code_desc = "EXC_I386_EXTOVR"; break;
-                case 5: code_desc = "EXC_I386_EXTERR"; break;
-                case 6: code_desc = "EXC_I386_EMERR"; break;
-                case 7: code_desc = "EXC_I386_BOUND"; break;
-                case 8: code_desc = "EXC_I386_SSEEXTERR"; break;
-                }
-                break;
-
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
-                switch (m_details.exception.data[0])
-                {
-                case 1: code_desc = "EXC_PPC_OVERFLOW"; break;
-                case 2: code_desc = "EXC_PPC_ZERO_DIVIDE"; break;
-                case 3: code_desc = "EXC_PPC_FLT_INEXACT"; break;
-                case 4: code_desc = "EXC_PPC_FLT_ZERO_DIVIDE"; break;
-                case 5: code_desc = "EXC_PPC_FLT_UNDERFLOW"; break;
-                case 6: code_desc = "EXC_PPC_FLT_OVERFLOW"; break;
-                case 7: code_desc = "EXC_PPC_FLT_NOT_A_NUMBER"; break;
-                }
-                break;
-
-            default:
-                break;
-            }
-            break;
-
-        case 4: // EXC_EMULATION
-            exc_desc = "EXC_EMULATION";
-            break;
-
-
-        case 5: // EXC_SOFTWARE
-            exc_desc = "EXC_SOFTWARE";
-            // Check for EXC_SOFT_SIGNAL
-            if (m_details.exception.data[0] == 0x10003 && m_details.exception.data_count == 2)
-            {
-                SetStopReasonWithSignal(m_details.exception.data[1]);
-                exc_translated = true;
-            }
-            break;
-        
-        case 6:
-            {
-                exc_desc = "EXC_SOFTWARE";
-                bool is_software_breakpoint = false;
-                switch (cpu)
-                {
-                case ArchSpec::eCPU_i386:
-                case ArchSpec::eCPU_x86_64:
-                    if (m_details.exception.data[0] == 1) // EXC_I386_SGL
-                    {
-                        exc_translated = true;
-                        SetStopReasonToTrace ();
-                    }
-                    else if (m_details.exception.data[0] == 2) // EXC_I386_BPT
-                    {
-                        is_software_breakpoint = true;
-                    }
-                    break;
-
-                case ArchSpec::eCPU_ppc:
-                case ArchSpec::eCPU_ppc64:
-                    is_software_breakpoint = m_details.exception.data[0] == 1; // EXC_PPC_BREAKPOINT
-                    break;
-                
-                case ArchSpec::eCPU_arm:
-                    is_software_breakpoint = m_details.exception.data[0] == 1; // EXC_ARM_BREAKPOINT
-                    break;
-
-                default:
-                    break;
-                }
-
-                if (is_software_breakpoint)
-                {
-                    addr_t pc = m_thread->GetRegisterContext()->GetPC();
-                    lldb::BreakpointSiteSP bp_site_sp = m_thread->GetProcess().GetBreakpointSiteList().FindByAddress(pc);
-                    if (bp_site_sp)
-                    {
-                        exc_translated = true;
-                        if (bp_site_sp->ValidForThisThread (m_thread))
-                        {
-                            Clear ();
-                            SetStopReasonWithBreakpointSiteID (bp_site_sp->GetID());
-                        }
-                        else
-                        {
-                            Clear ();
-                            SetStopReasonToNone();
-                        }
-
-                    }
-                }
-            }
-            break;
-
-        case 7:
-            exc_desc = "EXC_SYSCALL";
-            break;
-
-        case 8:
-            exc_desc = "EXC_MACH_SYSCALL";
-            break;
-
-        case 9:
-            exc_desc = "EXC_RPC_ALERT";
-            break;
-
-        case 10:
-            exc_desc = "EXC_CRASH";
-            break;
-        }
-        
-        if (!exc_translated)
-        {
-            StreamString desc_strm;
-
-            if (exc_desc)
-                desc_strm.PutCString(exc_desc);
-            else
-                desc_strm.Printf("EXC_??? (%u)", exc_type);
-
-            if (m_details.exception.data_count >= 1)
-            {
-                if (code_desc)
-                    desc_strm.Printf(" (%s=%s", code_label, code_desc);
-                else
-                    desc_strm.Printf(" (%s=%llu", code_label, exc_data[0]);
-            }
-
-            if (m_details.exception.data_count >= 2)
-            {
-                if (subcode_desc)
-                    desc_strm.Printf(", %s=%s", subcode_label, subcode_desc);
-                else
-                    desc_strm.Printf(", %s=0x%llx", subcode_label, exc_data[1]);
-            }
-            
-            if (m_details.exception.data_count > 0)
-                desc_strm.PutChar(')');
-            
-            SetStopDescription(desc_strm.GetString().c_str());
-        }
-    }
-}
-void
-Thread::StopInfo::SetThread (Thread* thread)
-{
-    m_thread = thread;
-}
-
-Thread *
-Thread::StopInfo::GetThread ()
-{
-    return m_thread;
-}
-
-lldb::user_id_t
-Thread::StopInfo::GetBreakpointSiteID() const
-{
-    if (m_reason == eStopReasonBreakpoint)
-        return m_details.breakpoint.bp_site_id;
-    return LLDB_INVALID_BREAK_ID;
-}
-
-void
-Thread::StopInfo::SetStopReasonWithBreakpointSiteID (lldb::user_id_t bp_site_id)
-{
-    m_reason = eStopReasonBreakpoint;
-    m_details.breakpoint.bp_site_id = bp_site_id;
-}
-
-lldb::user_id_t
-Thread::StopInfo::GetWatchpointID() const
-{
-    if (m_reason == eStopReasonWatchpoint)
-        return m_details.watchpoint.watch_id;
-    return LLDB_INVALID_WATCH_ID;
-}
-
-void
-Thread::StopInfo::SetStopReasonWithWatchpointID (lldb::user_id_t watch_id)
-{
-    m_reason = eStopReasonWatchpoint;
-    m_details.watchpoint.watch_id = watch_id;
-}
-
-
-int
-Thread::StopInfo::GetSignal() const
-{
-    if (m_reason == eStopReasonSignal)
-        return m_details.signal.signo;
-    return 0;
-}
-
-lldb::user_id_t
-Thread::StopInfo::GetPlanID() const
-{
-    if (m_reason == eStopReasonPlanComplete)
-        return m_completed_plan_sp->GetID();
-    return LLDB_INVALID_UID;
-}
-
-void
-Thread::StopInfo::SetStopReasonWithSignal (int signo)
-{
-    m_reason = eStopReasonSignal;
-    m_details.signal.signo = signo;
-}
-
-void
-Thread::StopInfo::SetStopReasonToTrace ()
-{
-    m_reason = eStopReasonTrace;
-}
-
-uint32_t
-Thread::StopInfo::GetExceptionType() const
-{
-    if (m_reason == eStopReasonException)
-        return m_details.exception.type;
-    return 0;
-}
-
-size_t
-Thread::StopInfo::GetExceptionDataCount() const
-{
-    if (m_reason == eStopReasonException)
-        return m_details.exception.data_count;
-    return 0;
-}
-
-void
-Thread::StopInfo::SetStopReasonWithGenericException (uint32_t exc_type, size_t exc_data_count)
-{
-    m_reason = eStopReasonException;
-    m_details.exception.type = exc_type;
-    m_details.exception.data_count = exc_data_count;
-}
-
-void
-Thread::StopInfo::SetStopReasonWithPlan (ThreadPlanSP &thread_plan_sp)
-{
-    m_reason = eStopReasonPlanComplete;
-    m_completed_plan_sp = thread_plan_sp;
-}
-
-void
-Thread::StopInfo::SetStopReasonToNone ()
-{
-    Clear();
-    m_reason = eStopReasonNone;
-}
-
-lldb::addr_t
-Thread::StopInfo::GetExceptionDataAtIndex (uint32_t idx) const
-{
-    if (m_reason == eStopReasonException && idx < m_details.exception.data_count)
-        return m_details.exception.data[idx];
-    return 0;
-
-}
-
-
-bool
-Thread::StopInfo::SetExceptionDataAtIndex (uint32_t idx, lldb::addr_t data)
-{
-    if (m_reason == eStopReasonException && idx < m_details.exception.data_count)
-    {
-        m_details.exception.data[idx] = data;
-        return true;
-    }
-    return false;
-}
-
-void
-Thread::StopInfo::Dump (Stream *s) const
-{
-    if (m_description[0])
-        s->Printf("%s", m_description);
-    else
-    {
-        switch (m_reason)
-        {
-        case eStopReasonInvalid:
-            s->PutCString("invalid");
-            break;
-
-        case eStopReasonNone:
-            s->PutCString("none");
-            break;
-
-        case eStopReasonTrace:
-            s->PutCString("trace");
-            break;
-
-        case eStopReasonBreakpoint:
-            {
-                bool no_details = true;
-                s->PutCString ("breakpoint");
-                if (m_thread)
-                {
-                    BreakpointSiteSP bp_site_sp = m_thread->GetProcess().GetBreakpointSiteList().FindByID(m_details.breakpoint.bp_site_id);
-                    if (bp_site_sp)
-                    {
-                        // Only report the breakpoint locations that actually caused this hit - some of them may
-                        // have options that would have caused us not to stop here...
-                        uint32_t num_locations = bp_site_sp->GetNumberOfOwners();
-                        for (uint32_t i = 0; i < num_locations; i++)
-                        {
-                            BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(i);
-                            if (bp_loc_sp->ValidForThisThread(m_thread))
-                            {
-                                s->PutCString(" ");
-                                bp_loc_sp->GetDescription(s, lldb::eDescriptionLevelBrief);
-                                no_details = false;
-                            }
-                        }
-                    }
-                }
-
-                if (no_details)
-                    s->Printf ("site id: %d", m_details.breakpoint.bp_site_id);
-            }
-            break;
-
-        case eStopReasonWatchpoint:
-            s->Printf("watchpoint (site id = %u)", m_details.watchpoint.watch_id);
-            break;
-
-        case eStopReasonSignal:
-            {
-                s->Printf("signal: signo = %i", m_details.signal.signo);
-                const char * signal_name = m_thread->GetProcess().GetUnixSignals().GetSignalAsCString (m_details.signal.signo);
-                if (signal_name)
-                    s->Printf(" (%s)", signal_name);
-            }
-            break;
-
-        case eStopReasonException:
-            {
-                s->Printf("exception: type = 0x%8.8x, data_count = %zu", m_details.exception.type, m_details.exception.data_count);
-                uint32_t i;
-                for (i=0; i<m_details.exception.data_count; ++i)
-                {
-                    s->Printf(", data[%u] = 0x%8.8llx", i, m_details.exception.data[i]);
-                }
-            }
-            break;
-
-        case eStopReasonPlanComplete:
-            {
-                m_completed_plan_sp->GetDescription (s, lldb::eDescriptionLevelBrief);
-            }
-            break;
-        }
-    }
-}
-
-bool
-Thread::GetStopInfo (Thread::StopInfo *stop_info)
-{
-    stop_info->SetThread(this);
-    ThreadPlanSP completed_plan = GetCompletedPlan();
-    if (completed_plan != NULL)
-    {
-        stop_info->Clear ();
-        stop_info->SetStopReasonWithPlan (completed_plan);
-        return true;
-    }
-    else
-        return GetRawStopReason (stop_info);
+    return m_public_stop_info_sp.get();
 }
 
 bool
 Thread::ThreadStoppedForAReason (void)
 {
-    Thread::StopInfo stop_info;
-    stop_info.SetThread(this);
-    if (GetRawStopReason (&stop_info))
-    {
-        StopReason reason = stop_info.GetStopReason();
-        if (reason == eStopReasonInvalid || reason == eStopReasonNone)
-            return false;
-        else
-            return true;
-    }
-    else
-        return false;
+    return GetPrivateStopReason () != NULL;
 }
 
 StateType
@@ -710,26 +187,9 @@ Thread::WillResume (StateType resume_state)
     m_completed_plan_stack.clear();
     m_discarded_plan_stack.clear();
 
-    // If this thread stopped with a signal, work out what its resume state should
-    // be.  Note if the thread resume state is already set, then don't override it,
-    // the user must have asked us to resume with some other signal.
-
-    if (GetResumeSignal() == LLDB_INVALID_SIGNAL_NUMBER)
-    {
-        Thread::StopInfo stop_info;
-        GetRawStopReason(&stop_info);
-
-        StopReason reason = stop_info.GetStopReason();
-        if (reason == eStopReasonSignal)
-        {
-            UnixSignals &signals = GetProcess().GetUnixSignals();
-            int32_t signo = stop_info.GetSignal();
-            if (!signals.GetShouldSuppress(signo))
-            {
-                SetResumeSignal(signo);
-            }
-        }
-    }
+    StopInfo *stop_info = GetPrivateStopReason().get();
+    if (stop_info)
+        stop_info->WillResume (resume_state);
     
     // Tell all the plans that we are about to resume in case they need to clear any state.
     // We distinguish between the plan on the top of the stack and the lower
@@ -742,6 +202,9 @@ Thread::WillResume (StateType resume_state)
     {
         plan_ptr->WillResume (resume_state, false);
     }
+    
+    m_public_stop_info_sp.reset();
+    m_actual_stop_info_sp.reset();
     return true;
 }
 
@@ -1369,14 +832,13 @@ Thread::DumpInfo
 
     if (show_stop_reason)
     {
-        Thread::StopInfo thread_stop_info;
-        if (GetStopInfo(&thread_stop_info))
+        StopInfo *stop_info = GetStopInfo();
+        
+        if (stop_info)
         {
-            if (thread_stop_info.GetStopReason() != eStopReasonNone)
-            {
-                strm.PutCString(", stop reason = ");
-                thread_stop_info.Dump(&strm);
-            }
+            const char *stop_description = stop_info->GetDescription();
+            if (stop_description)
+                strm.Printf (", stop reason = %s", stop_description);
         }
     }
 

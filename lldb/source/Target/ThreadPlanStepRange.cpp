@@ -17,11 +17,12 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Thread.h"
-#include "lldb/Target/Process.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -61,20 +62,20 @@ ThreadPlanStepRange::PlanExplainsStop ()
 {
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
-    Thread::StopInfo info;
-    if (m_thread.GetStopInfo (&info))
+    StopInfo *stop_info = m_thread.GetStopInfo();
+    if (stop_info)
     {
-        StopReason reason = info.GetStopReason();
+        StopReason reason = stop_info->GetStopReason();
 
         switch (reason)
         {
-            case eStopReasonBreakpoint:
-            case eStopReasonWatchpoint:
-            case eStopReasonSignal:
-            case eStopReasonException:
-                return false;
-            default:
-                return true;
+        case eStopReasonBreakpoint:
+        case eStopReasonWatchpoint:
+        case eStopReasonSignal:
+        case eStopReasonException:
+            return false;
+        default:
+            return true;
         }
     }
     return true;

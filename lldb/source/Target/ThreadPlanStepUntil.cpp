@@ -22,6 +22,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -168,20 +169,20 @@ ThreadPlanStepUntil::AnalyzeStop()
     if (m_ran_analyze)
         return;
         
-    Thread::StopInfo info;
+    StopInfo *stop_info = m_thread.GetStopInfo();
     m_should_stop = true;
     m_explains_stop = false;
     
-    if (m_thread.GetStopInfo (&info))
+    if (stop_info)
     {
-        StopReason reason = info.GetStopReason();
+        StopReason reason = stop_info->GetStopReason();
 
         switch (reason)
         {
             case eStopReasonBreakpoint:
             {
                 // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
-                BreakpointSiteSP this_site = m_thread.GetProcess().GetBreakpointSiteList().FindByID (info.GetBreakpointSiteID());
+                BreakpointSiteSP this_site = m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info->GetValue());
                 if (!this_site)
                 {
                     m_explains_stop = false;
@@ -273,9 +274,8 @@ ThreadPlanStepUntil::ShouldStop (Event *event_ptr)
     // do so here.  Otherwise, as long as this thread has stopped for a reason,
     // we will stop.
 
-    Thread::StopInfo stop_info (&m_thread);
-    if (!m_thread.GetStopInfo(&stop_info)
-        || stop_info.GetStopReason() == eStopReasonNone)
+    StopInfo *stop_info = m_thread.GetStopInfo ();
+    if (stop_info == NULL || stop_info->GetStopReason() == eStopReasonNone)
         return false;
 
     AnalyzeStop();

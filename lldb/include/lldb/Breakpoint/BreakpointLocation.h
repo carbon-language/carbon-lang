@@ -265,10 +265,6 @@ public:
     bool
     ValidForThisThread (Thread *thread);
 
-protected:
-    friend class Breakpoint;
-    friend class CommandObjectBreakpointCommandAdd;
-    friend class Process;
     
     //------------------------------------------------------------------
     /// Invoke the callback action when the breakpoint is hit.
@@ -287,6 +283,11 @@ protected:
     //------------------------------------------------------------------
     bool
     InvokeCallback (StoppointCallbackContext *context);
+
+protected:
+    friend class Breakpoint;
+    friend class CommandObjectBreakpointCommandAdd;
+    friend class Process;
 
     //------------------------------------------------------------------
     /// Set the breakpoint site for this location to \a bp_site_sp.

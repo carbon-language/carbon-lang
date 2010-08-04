@@ -126,8 +126,8 @@ public:
     size_t
     GetStackFrameData (std::vector<std::pair<lldb::addr_t, lldb::addr_t> >& fp_pc_pairs);
 
-    virtual bool
-    GetRawStopReason (lldb_private::Thread::StopInfo *stop_info);
+    virtual lldb::StopInfoSP
+    GetPrivateStopReason ();
 
 protected:
     bool

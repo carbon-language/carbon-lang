@@ -13,6 +13,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
 #include "ProcessMacOSX.h"
@@ -63,70 +64,12 @@ ThreadMacOSX::~ThreadMacOSX ()
 #endif
 
 
-bool
-ThreadMacOSX::GetRawStopReason (Thread::StopInfo *stop_info )
+StopInfoSP
+ThreadMacOSX::GetPrivateStopReason ()
 {
-    stop_info->SetThread(this);
-
-    bool success = GetStopException().GetStopInfo(stop_info);
-
-
-#if defined (MACH_SOFTWARE_BREAKPOINT_DATA_0) || defined (MACH_TRAP_DATA_0)
-    if (stop_info->GetStopReason() == eStopReasonException)
-    {
-        if (stop_info->GetExceptionType() == EXC_BREAKPOINT && stop_info->GetExceptionDataCount() == 2)
-        {
-            const lldb::addr_t data_0 = stop_info->GetExceptionDataAtIndex(0);
-#if defined (MACH_SOFTWARE_BREAKPOINT_DATA_0)
-            if (data_0 == MACH_SOFTWARE_BREAKPOINT_DATA_0)
-            {
-                lldb::addr_t pc = GetRegisterContext()->GetPC();
-                lldb::BreakpointSiteSP bp_site_sp = m_process.GetBreakpointSiteList().FindByAddress(pc);
-                if (bp_site_sp)
-                {
-                    if (bp_site_sp->ValidForThisThread (this))
-                    {
-                        stop_info->Clear ();
-                        stop_info->SetStopReasonWithBreakpointSiteID (GetID());
-                    }
-                    else
-                    {
-                        stop_info->Clear ();
-                        stop_info->SetStopReasonToNone();
-                    }
-                    return success;
-                }
-            }
-#endif
-#if defined (MACH_TRAP_DATA_0)
-            if (data_0 == MACH_TRAP_DATA_0)
-            {
-                stop_info->Clear ();
-                stop_info->SetStopReasonToTrace ();
-                return success;
-            }
-#endif
-        }
-    }
-#endif
-
-    if (stop_info->GetStopReason() == eStopReasonException)
-    {
-        if (stop_info->GetExceptionType() == EXC_SOFTWARE &&
-            stop_info->GetExceptionDataCount() == 2 &&
-            stop_info->GetExceptionDataAtIndex(0) == EXC_SOFT_SIGNAL)
-        {
-            int signo = stop_info->GetExceptionDataAtIndex(1);
-            stop_info->Clear ();
-            stop_info->SetStopReasonWithSignal (signo);
-        }
-    }
-    else
-    {
-        stop_info->SetStopReasonToNone();
-    }
-
-    return success;
+    if (m_actual_stop_info_sp.get() == NULL || m_actual_stop_info_sp->IsValid() == false)
+        m_actual_stop_info_sp = GetStopException().GetStopInfo(*this);
+    return m_actual_stop_info_sp;
 }
 
 const char *

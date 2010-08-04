@@ -98,7 +98,7 @@ public:
         }
         void PutToLog(lldb_private::Log *log) const;
         void DumpStopReason() const;
-        bool GetStopInfo(lldb_private::Thread::StopInfo *stop_info) const;
+        lldb::StopInfoSP GetStopInfo (lldb_private::Thread &thread) const;
     };
 
     struct Message

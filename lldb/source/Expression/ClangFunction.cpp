@@ -33,6 +33,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
@@ -629,9 +630,6 @@ ClangFunction::ExecuteFunction (
                             continue;
                         }
                         
-                        Thread::StopInfo stop_info;
-                        thread->GetStopInfo(&stop_info);
-                        
                         ts.Printf("<");
                         RegisterContext *register_context = thread->GetRegisterContext();
                         
@@ -640,7 +638,13 @@ ClangFunction::ExecuteFunction (
                         else
                             ts.Printf("[ip unknown] ");
                         
-                        stop_info.Dump(&ts);
+                        StopInfo *stop_info = thread->GetStopInfo();
+                        if (stop_info)
+                        {
+                            const char *stop_desc = stop_info->GetDescription();
+                            if (stop_desc)
+                                ts.PutCString (stop_desc);
+                        }
                         ts.Printf(">");
                     }
                     
