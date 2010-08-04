@@ -912,11 +912,12 @@ class X86TargetInfo : public TargetInfo {
   } AMD3DNowLevel;
 
   bool HasAES;
-  
+  bool HasAVX;
+
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoMMXSSE), AMD3DNowLevel(NoAMD3DNow),
-      HasAES(false) {
+      HasAES(false), HasAVX(false) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -963,6 +964,7 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
   Features["sse41"] = false;
   Features["sse42"] = false;
   Features["aes"] = false;
+  Features["avx"] = false;
 
   // LLVM does not currently recognize this.
   // Features["sse4a"] = false;
@@ -1046,6 +1048,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["3dnow"] = Features["3dnowa"] = true;
     else if (Name == "aes")
       Features["aes"] = true;
+    else if (Name == "avx")
+      Features["avx"] = true;
   } else {
     if (Name == "mmx")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
@@ -1073,6 +1077,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["3dnowa"] = false;
     else if (Name == "aes")
       Features["aes"] = false;
+    else if (Name == "avx")
+      Features["avx"] = false;
   }
 
   return true;
@@ -1089,6 +1095,13 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     if (Features[i].substr(1) == "aes") {
       HasAES = true;
+      continue;
+    }
+
+    // FIXME: Not sure yet how to treat AVX in regard to SSE levels.
+    // For now let it be enabled together with other SSE levels.
+    if (Features[i].substr(1) == "avx") {
+      HasAVX = true;
       continue;
     }
 
@@ -1132,6 +1145,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   if (HasAES)
     Builder.defineMacro("__AES__");
+
+  if (HasAVX)
+    Builder.defineMacro("__AVX__");
 
   // Target properties.
   Builder.defineMacro("__LITTLE_ENDIAN__");
