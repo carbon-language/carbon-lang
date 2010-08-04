@@ -470,13 +470,17 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
     isXFail = isExpectedFail(xfails, xtargets, test.suite.config.target_triple)
     return script,isXFail,tmpBase,execdir
 
-def formatTestOutput(status, out, err, exitCode, script):
+def formatTestOutput(status, out, err, exitCode, failDueToStderr, script):
     output = StringIO.StringIO()
     print >>output, "Script:"
     print >>output, "--"
     print >>output, '\n'.join(script)
     print >>output, "--"
-    print >>output, "Exit Code: %r" % exitCode
+    print >>output, "Exit Code: %r" % exitCode,
+    if failDueToStderr:
+        print >>output, "(but there was output on stderr)"
+    else:
+        print >>output
     if out:
         print >>output, "Command Output (stdout):"
         print >>output, "--"
@@ -511,8 +515,8 @@ def executeTclTest(test, litConfig):
     if len(res) == 2:
         return res
 
-    # Test for failure. In addition to the exit code, Tcl commands fail
-    # if there is any standard error output.
+    # Test for failure. In addition to the exit code, Tcl commands are
+    # considered to fail if there is any standard error output.
     out,err,exitCode = res
     if isXFail:
         ok = exitCode != 0 or err
@@ -524,7 +528,11 @@ def executeTclTest(test, litConfig):
     if ok:
         return (status,'')
 
-    return formatTestOutput(status, out, err, exitCode, script)
+    # Set a flag for formatTestOutput so it can explain why the test was
+    # considered to have failed, despite having an exit code of 0.
+    failDueToStderr = exitCode == 0 and err
+
+    return formatTestOutput(status, out, err, exitCode, failDueToStderr, script)
 
 def executeShTest(test, litConfig, useExternalSh):
     if test.config.unsupported:
@@ -560,4 +568,7 @@ def executeShTest(test, litConfig, useExternalSh):
     if ok:
         return (status,'')
 
-    return formatTestOutput(status, out, err, exitCode, script)
+    # Sh tests are not considered to fail just from stderr output.
+    failDueToStderr = False
+
+    return formatTestOutput(status, out, err, exitCode, failDueToStderr, script)
