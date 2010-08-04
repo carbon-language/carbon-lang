@@ -3934,8 +3934,8 @@ def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
                      [(X86MemBarrier)]>, Requires<[HasSSE2]>;
 
 // TODO: Get this to fold the constant into the instruction.           
-let Uses = [ESP] in
-def Int_MemBarrierNoSSE  : I<0x0B, Pseudo, (outs), (ins GR32:$zero),
+let Defs = [ESP] in
+def Int_MemBarrierNoSSE  : I<0x09, MRM1r, (outs), (ins GR32:$zero),
                            "lock\n\t"
                            "or{l}\t{$zero, (%esp)|(%esp), $zero}",
                            [(X86MemBarrierNoSSE GR32:$zero)]>, LOCK;

@@ -1619,6 +1619,13 @@ def MOV64FSrm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 // Atomic Instructions
 //===----------------------------------------------------------------------===//
 
+// TODO: Get this to fold the constant into the instruction.           
+let Defs = [ESP] in
+def Int_MemBarrierNoSSE64  : RI<0x09, MRM1r, (outs), (ins GR64:$zero),
+                           "lock\n\t"
+                           "or{q}\t{$zero, (%rsp)|(%rsp), $zero}",
+                           [(X86MemBarrierNoSSE GR64:$zero)]>, LOCK;
+
 let Defs = [RAX, EFLAGS], Uses = [RAX] in {
 def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
                "lock\n\t"

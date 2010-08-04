@@ -7654,9 +7654,12 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const{
   DebugLoc dl = Op.getDebugLoc();
   
-  if (!Subtarget->hasSSE2())
+  if (!Subtarget->hasSSE2()) {
+    SDValue Zero = DAG.getConstant(0,
+                                   Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
     return DAG.getNode(X86ISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
-                       DAG.getConstant(0, MVT::i32));
+                       Zero);
+  }
   
   unsigned isDev = cast<ConstantSDNode>(Op.getOperand(5))->getZExtValue();
   if(!isDev)
