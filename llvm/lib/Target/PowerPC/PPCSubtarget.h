@@ -63,6 +63,7 @@ protected:
   bool HasFSQRT;
   bool HasSTFIWX;
   bool HasLazyResolverStubs;
+  bool IsJITCodeModel;
   
   /// DarwinVers - Nonzero if this is a darwin platform.  Otherwise, the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
@@ -124,6 +125,9 @@ public:
   bool hasLazyResolverStub(const GlobalValue *GV, 
                            const TargetMachine &TM) const;
   
+  // isJITCodeModel - True if we're generating code for the JIT
+  bool isJITCodeModel() const { return IsJITCodeModel; }
+
   // Specific obvious features.
   bool hasFSQRT() const { return HasFSQRT; }
   bool hasSTFIWX() const { return HasSTFIWX; }

@@ -69,6 +69,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &FS,
   , HasFSQRT(false)
   , HasSTFIWX(false)
   , HasLazyResolverStubs(false)
+  , IsJITCodeModel(false)
   , DarwinVers(0) {
 
   // Determine default and user specified characteristics
@@ -117,6 +118,9 @@ void PPCSubtarget::SetJITMode() {
   // everything is.  This matters for PPC64, which codegens in PIC mode without
   // stubs.
   HasLazyResolverStubs = false;
+
+  // Calls to external functions need to use indirect calls
+  IsJITCodeModel = true;
 }
 
 
