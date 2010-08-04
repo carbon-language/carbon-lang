@@ -1752,6 +1752,9 @@ void PCHWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
 
   RecordData Record;
 
+  // Note: this writes out all references even for a dependent PCH. But it is
+  // very tricky to fix, and given that @selector shouldn't really appear in
+  // headers, probably not worth it. It's not a correctness issue.
   for (DenseMap<Selector, SourceLocation>::iterator S =
        SemaRef.ReferencedSelectors.begin(),
        E = SemaRef.ReferencedSelectors.end(); S != E; ++S) {
@@ -2435,7 +2438,8 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.ExitBlock();
 
   WritePreprocessor(PP);
-  // FIXME: Method pool
+  WriteSelectors(SemaRef);
+  WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP);
   WriteTypeDeclOffsets();
 
