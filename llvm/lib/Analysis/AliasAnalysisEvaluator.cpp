@@ -204,13 +204,13 @@ bool AAEval::runOnFunction(Function &F) {
         PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
         ++NoModRef; break;
       case AliasAnalysis::Mod:
-        PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
+        PrintModRefResults("Just Mod", PrintMod, I, *V, F.getParent());
         ++Mod; break;
       case AliasAnalysis::Ref:
-        PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
+        PrintModRefResults("Just Ref", PrintRef, I, *V, F.getParent());
         ++Ref; break;
       case AliasAnalysis::ModRef:
-        PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
+        PrintModRefResults("Both ModRef", PrintModRef, I, *V, F.getParent());
         ++ModRef; break;
       default:
         errs() << "Unknown alias query result!\n";
@@ -229,13 +229,13 @@ bool AAEval::runOnFunction(Function &F) {
         PrintModRefResults("NoModRef", PrintNoModRef, *C, *D, F.getParent());
         ++NoModRef; break;
       case AliasAnalysis::Mod:
-        PrintModRefResults("     Mod", PrintMod, *C, *D, F.getParent());
+        PrintModRefResults("Just Mod", PrintMod, *C, *D, F.getParent());
         ++Mod; break;
       case AliasAnalysis::Ref:
-        PrintModRefResults("     Ref", PrintRef, *C, *D, F.getParent());
+        PrintModRefResults("Just Ref", PrintRef, *C, *D, F.getParent());
         ++Ref; break;
       case AliasAnalysis::ModRef:
-        PrintModRefResults("  ModRef", PrintModRef, *C, *D, F.getParent());
+        PrintModRefResults("Both ModRef", PrintModRef, *C, *D, F.getParent());
         ++ModRef; break;
       }
     }
