@@ -203,3 +203,27 @@ declare <2 x i64> @llvm.arm.neon.vabals.v2i64(<2 x i64>, <2 x i32>, <2 x i32>) n
 declare <8 x i16> @llvm.arm.neon.vabalu.v8i16(<8 x i16>, <8 x i8>, <8 x i8>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vabalu.v4i32(<4 x i32>, <4 x i16>, <4 x i16>) nounwind readnone
 declare <2 x i64> @llvm.arm.neon.vabalu.v2i64(<2 x i64>, <2 x i32>, <2 x i32>) nounwind readnone
+
+define <8 x i8> @vabd_combine_s8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+;CHECK: vabd_combine_s8:
+;CHECK: vaba.s8
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = call <8 x i8> @llvm.arm.neon.vabds.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
+        %tmp4 = add <8 x i8> %tmp2, %tmp3
+	ret <8 x i8> %tmp4
+}
+
+define <4 x i16> @vabd_combine_u16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+;CHECK: vabd_combine_u16:
+;CHECK: vaba.u16
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = load <4 x i16>* %B
+	%tmp3 = call <4 x i16> @llvm.arm.neon.vabdu.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
+        %tmp4 = add <4 x i16> %tmp3, %tmp1
+	ret <4 x i16> %tmp4
+}
+
+declare <8 x i8>  @llvm.arm.neon.vabds.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vabdu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
+

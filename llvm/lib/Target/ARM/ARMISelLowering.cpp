@@ -4248,10 +4248,26 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
 /// operands.
 static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
                                          TargetLowering::DAGCombinerInfo &DCI) {
+  SelectionDAG &DAG = DCI.DAG;
+
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
   if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N0, N1, DCI);
     if (Result.getNode()) return Result;
+  }
+
+  // fold (add (arm_neon_vabd a, b) c) -> (arm_neon_vaba c, a, b)
+  EVT VT = N->getValueType(0);
+  if (N0.getOpcode() == ISD::INTRINSIC_WO_CHAIN && VT.isInteger()) {
+    unsigned IntNo = cast<ConstantSDNode>(N0.getOperand(0))->getZExtValue();
+    if (IntNo == Intrinsic::arm_neon_vabds)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(), VT,
+                         DAG.getConstant(Intrinsic::arm_neon_vabas, MVT::i32),
+                         N1, N0.getOperand(1), N0.getOperand(2));
+    if (IntNo == Intrinsic::arm_neon_vabdu)
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(), VT,
+                         DAG.getConstant(Intrinsic::arm_neon_vabau, MVT::i32),
+                         N1, N0.getOperand(1), N0.getOperand(2));
   }
 
   return SDValue();
