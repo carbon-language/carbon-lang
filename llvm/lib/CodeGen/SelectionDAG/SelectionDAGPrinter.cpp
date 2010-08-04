@@ -199,7 +199,7 @@ const std::string SelectionDAG::getGraphAttrs(const SDNode *N) const {
 #else
   errs() << "SelectionDAG::getGraphAttrs is only available in debug builds"
          << " on systems with Graphviz or gv!\n";
-  return std::string("");
+  return std::string();
 #endif
 }
 

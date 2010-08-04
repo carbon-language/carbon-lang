@@ -276,7 +276,7 @@ Path::GetCurrentDirectory() {
   char pathname[MAXPATHLEN];
   if (!getcwd(pathname,MAXPATHLEN)) {
     assert (false && "Could not query current working directory.");
-    return Path("");
+    return Path();
   }
 
   return Path(pathname);
@@ -408,7 +408,7 @@ Path::getSuffix() const {
 
   std::string::size_type dot = path.rfind('.');
   if (dot == std::string::npos || dot < slash)
-    return StringRef("");
+    return StringRef();
   else
     return StringRef(path).substr(dot + 1);
 }

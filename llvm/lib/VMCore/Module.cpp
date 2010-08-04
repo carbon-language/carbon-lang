@@ -58,7 +58,7 @@ template class llvm::SymbolTableListTraits<GlobalAlias, Module>;
 //
 
 Module::Module(StringRef MID, LLVMContext& C)
-  : Context(C), Materializer(NULL), ModuleID(MID), DataLayout("")  {
+  : Context(C), Materializer(NULL), ModuleID(MID) {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
   NamedMDSymTab = new StringMap<NamedMDNode *>();
