@@ -25,6 +25,7 @@ typedef float V4f __attribute__((vector_size(16)));
 typedef double V2d __attribute__((vector_size(16)));
 
 // 256-bit
+typedef char V32c __attribute__((vector_size(32)));
 typedef signed int V8i __attribute__((vector_size(32)));
 typedef signed long long V4LLi __attribute__((vector_size(32)));
 
@@ -83,12 +84,22 @@ void f0() {
   V2LLi  tmp_V2LLi;
   V4f    tmp_V4f;
   V2d    tmp_V2d;
+  V2d*   tmp_V2dp;
+  V4f*   tmp_V4fp;
+  const V2d* tmp_V2dCp;
+  const V4f* tmp_V4fCp;
 
   // 256-bit
+  V32c   tmp_V32c;
   V4d    tmp_V4d;
   V8f    tmp_V8f;
   V4LLi  tmp_V4LLi;
   V8i    tmp_V8i;
+  V4LLi* tmp_V4LLip;
+  V4d*   tmp_V4dp;
+  V8f*   tmp_V8fp;
+  const V4d* tmp_V4dCp;
+  const V8f* tmp_V8fCp;
 
   tmp_i = __builtin_ia32_comieq(tmp_V4f, tmp_V4f);
   tmp_i = __builtin_ia32_comilt(tmp_V4f, tmp_V4f);
@@ -477,4 +488,29 @@ void f0() {
   tmp_i = __builtin_ia32_ptestnzc256(tmp_V4LLi, tmp_V4LLi);
   tmp_i = __builtin_ia32_movmskpd256(tmp_V4d);
   tmp_i = __builtin_ia32_movmskps256(tmp_V8f);
+  __builtin_ia32_vzeroall();
+  __builtin_ia32_vzeroupper();
+  tmp_V4f = __builtin_ia32_vbroadcastss(tmp_fCp);
+  tmp_V4d = __builtin_ia32_vbroadcastsd256(tmp_dCp);
+  tmp_V8f = __builtin_ia32_vbroadcastss256(tmp_fCp);
+  tmp_V4d = __builtin_ia32_vbroadcastf128_pd256(tmp_V2dCp);
+  tmp_V8f = __builtin_ia32_vbroadcastf128_ps256(tmp_V4fCp);
+  tmp_V4d = __builtin_ia32_loadupd256(tmp_dCp);
+  tmp_V8f = __builtin_ia32_loadups256(tmp_fCp);
+  __builtin_ia32_storeupd256(tmp_dp, tmp_V4d);
+  __builtin_ia32_storeups256(tmp_fp, tmp_V8f);
+  tmp_V32c = __builtin_ia32_loaddqu256(tmp_cCp);
+  __builtin_ia32_storedqu256(tmp_cp, tmp_V32c);
+  tmp_V32c = __builtin_ia32_lddqu256(tmp_cCp);
+  __builtin_ia32_movntdq256(tmp_V4LLip, tmp_V4LLi);
+  __builtin_ia32_movntpd256(tmp_dp, tmp_V4d);
+  __builtin_ia32_movntps256(tmp_fp, tmp_V8f);
+  tmp_V2d = __builtin_ia32_maskloadpd(tmp_V2dCp, tmp_V2d);
+  tmp_V4f = __builtin_ia32_maskloadps(tmp_V4fCp, tmp_V4f);
+  tmp_V4d = __builtin_ia32_maskloadpd256(tmp_V4dCp, tmp_V4d);
+  tmp_V8f = __builtin_ia32_maskloadps256(tmp_V8fCp, tmp_V8f);
+  __builtin_ia32_maskstorepd(tmp_V2dp, tmp_V2d, tmp_V2d);
+  __builtin_ia32_maskstoreps(tmp_V4fp, tmp_V4f, tmp_V4f);
+  __builtin_ia32_maskstorepd256(tmp_V4dp, tmp_V4d, tmp_V4d);
+  __builtin_ia32_maskstoreps256(tmp_V8fp, tmp_V8f, tmp_V8f);
 }
