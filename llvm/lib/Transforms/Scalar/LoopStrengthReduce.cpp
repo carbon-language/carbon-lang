@@ -2298,7 +2298,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 
       // Collect all operands except *J.
       SmallVector<const SCEV *, 8> InnerAddOps
-        (         ((const SmallVector<const SCEV *, 8> &)AddOps).begin(), J);
+        (((const SmallVector<const SCEV *, 8> &)AddOps).begin(), J);
       InnerAddOps.append
         (llvm::next(J), ((const SmallVector<const SCEV *, 8> &)AddOps).end());
 
