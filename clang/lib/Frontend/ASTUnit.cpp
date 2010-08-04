@@ -1213,6 +1213,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
 
   // Remap files.
   PreprocessorOpts.clearRemappedFiles();
+  PreprocessorOpts.RetainRemappedFileBuffers = true;
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
                                      RemappedFiles[I].second);

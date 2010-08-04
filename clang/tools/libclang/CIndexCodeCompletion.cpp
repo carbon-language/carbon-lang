@@ -224,10 +224,6 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   AllocatedCXCodeCompleteResults();
   ~AllocatedCXCodeCompleteResults();
   
-  /// \brief The memory buffer from which we parsed the results. We
-  /// retain this buffer because the completion strings point into it.
-  llvm::MemoryBuffer *Buffer;
-
   /// \brief Diagnostics produced while performing code completion.
   llvm::SmallVector<StoredDiagnostic, 8> Diagnostics;
 
@@ -246,20 +242,23 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// \brief Temporary files that should be removed once we have finished
   /// with the code-completion results.
   std::vector<llvm::sys::Path> TemporaryFiles;
+
+  /// \brief Temporary buffers that will be deleted once we have finished with the code-completion results.
+  llvm::SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
 };
 
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
-  : CXCodeCompleteResults(), Buffer(0), Diag(new Diagnostic), 
-    SourceMgr(*Diag) { }
+  : CXCodeCompleteResults(), Diag(new Diagnostic), SourceMgr(*Diag) { }
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   for (unsigned I = 0, N = NumResults; I != N; ++I)
     delete (CXStoredCodeCompletionString *)Results[I].CompletionString;
   delete [] Results;
-  delete Buffer;
   
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
     TemporaryFiles[I].eraseFromDisk();
+  for (unsigned I = 0, N = TemporaryBuffers.size(); I != N; ++I)
+    delete TemporaryBuffers[I];
 }
   
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
@@ -409,7 +408,6 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults;
   Results->Results = 0;
   Results->NumResults = 0;
-  Results->Buffer = 0;
   // FIXME: Set Results->LangOpts!
   if (MemoryBuffer *F = MemoryBuffer::getFile(ResultsFile.c_str())) {
     llvm::SmallVector<CXCompletionResult, 4> CompletionResults;
@@ -445,7 +443,7 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     Results->NumResults = CompletionResults.size();
     memcpy(Results->Results, CompletionResults.data(),
            CompletionResults.size() * sizeof(CXCompletionResult));
-    Results->Buffer = F;
+    Results->TemporaryBuffers.push_back(F);
   }
 
   LoadSerializedDiagnostics(DiagnosticsFile, num_unsaved_files, unsaved_files,
@@ -602,10 +600,14 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
   AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults;
   Results->Results = 0;
   Results->NumResults = 0;
-  Results->Buffer = 0;
 
   // Create a code-completion consumer to capture the results.
   CaptureCompletionResults Capture(*Results);
+
+  // Make sure that we free the temporary buffers when the
+  // code-completion constructor is freed.
+  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I)
+    Results->TemporaryBuffers.push_back(RemappedFiles[I].second);
 
   // Perform completion.
   AST->CodeComplete(complete_filename, complete_line, complete_column,
