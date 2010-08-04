@@ -36,6 +36,7 @@ CGBlockInfo::CGBlockInfo(const char *N)
 llvm::Constant *CodeGenFunction::
 BuildDescriptorBlockDecl(const BlockExpr *BE, const CGBlockInfo &Info,
                          const llvm::StructType* Ty,
+                         llvm::Constant *BlockVarLayout,
                          std::vector<HelperInfo> *NoteForHelper) {
   bool BlockHasCopyDispose = Info.BlockHasCopyDispose;
   CharUnits Size = Info.BlockSize;
@@ -72,11 +73,8 @@ BuildDescriptorBlockDecl(const BlockExpr *BE, const CGBlockInfo &Info,
           CGM.GetAddrOfConstantCString(BlockTypeEncoding), PtrToInt8Ty));
   
   // Layout.
-  if (CGM.getContext().getLangOptions().ObjC1)
-    C = CGM.getObjCRuntime().GCBlockLayout(*this, Info.DeclRefs);
-  else
-    C = llvm::Constant::getNullValue(PtrToInt8Ty);
-  
+  C = BlockVarLayout;
+    
   Elts.push_back(C);
 
   C = llvm::ConstantStruct::get(VMContext, Elts, false);
@@ -198,6 +196,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   llvm::Value *V;
 
   {
+    llvm::Constant *BlockVarLayout;
     // C = BuildBlockStructInitlist();
     unsigned int flags = BLOCK_HAS_SIGNATURE;
 
@@ -206,6 +205,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // __invoke
     llvm::Function *Fn
       = CodeGenFunction(CGM).GenerateBlockFunction(CurGD, BE, Info, CurFuncDecl,
+                                                   BlockVarLayout,
                                                    LocalDeclMap);
     BlockHasCopyDispose |= Info.BlockHasCopyDispose;
     Elts[3] = Fn;
@@ -233,7 +233,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     if (Info.BlockLayout.empty()) {
       // __descriptor
-      Elts[4] = BuildDescriptorBlockDecl(BE, Info, 0, 0);
+      C = llvm::Constant::getNullValue(PtrToInt8Ty);
+      Elts[4] = BuildDescriptorBlockDecl(BE, Info, 0, C, 0);
 
       // Optimize to being a global block.
       Elts[0] = CGM.getNSConcreteGlobalBlock();
@@ -388,6 +389,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     // __descriptor
     llvm::Value *Descriptor = BuildDescriptorBlockDecl(BE, Info, Ty,
+                                                       BlockVarLayout,
                                                        &NoteForHelper);
     Descriptor = Builder.CreateBitCast(Descriptor, PtrToInt8Ty);
     Builder.CreateStore(Descriptor, Builder.CreateStructGEP(V, 4, "block.tmp"));
@@ -656,10 +658,12 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   std::vector<llvm::Constant*> LiteralFields(FieldCount);
 
   CGBlockInfo Info(n);
+  llvm::Constant *BlockVarLayout;
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
   llvm::Function *Fn
     = CodeGenFunction(CGM).GenerateBlockFunction(GlobalDecl(), BE, 
-                                                 Info, 0, LocalDeclMap);
+                                                 Info, 0, BlockVarLayout,
+                                                 LocalDeclMap);
   assert(Info.BlockSize == BlockLiteralSize
          && "no imports allowed for global block");
 
@@ -703,6 +707,7 @@ llvm::Function *
 CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
                                        CGBlockInfo &Info,
                                        const Decl *OuterFuncDecl,
+                                       llvm::Constant *& BlockVarLayout,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm) {
 
   // Check if we should generate debug info for this block.
@@ -750,6 +755,12 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
   // Build the block struct now.
   AllocateAllBlockDeclRefs(*this, Info);
 
+  // Capture block layout info. here.
+  if (CGM.getContext().getLangOptions().ObjC1)
+    BlockVarLayout = CGM.getObjCRuntime().GCBlockLayout(*this, Info.DeclRefs);
+  else
+    BlockVarLayout = llvm::Constant::getNullValue(PtrToInt8Ty);
+  
   QualType ParmTy = getContext().getBlockParmType(BlockHasCopyDispose,
                                                   BlockLayout);
 

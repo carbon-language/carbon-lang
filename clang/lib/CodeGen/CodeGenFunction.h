@@ -761,12 +761,14 @@ public:
   llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
                                            const CGBlockInfo &Info,
                                            const llvm::StructType *,
+                                           llvm::Constant *BlockVarLayout,
                                            std::vector<HelperInfo> *);
 
   llvm::Function *GenerateBlockFunction(GlobalDecl GD,
                                         const BlockExpr *BExpr,
                                         CGBlockInfo &Info,
                                         const Decl *OuterFuncDecl,
+                                        llvm::Constant *& BlockVarLayout,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm);
 
   llvm::Value *LoadBlockStruct();

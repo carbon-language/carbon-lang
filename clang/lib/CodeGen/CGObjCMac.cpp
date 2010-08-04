@@ -1690,8 +1690,12 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-              const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &BDRE) {
-  return llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
+              const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &DeclRefs) {
+  llvm::Constant *NullPtr = 
+    llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
+  if (DeclRefs.empty())
+    return NullPtr;
+  return NullPtr;
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,
