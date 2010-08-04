@@ -36,6 +36,7 @@
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/Support/COFF.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetOptions.h"
@@ -668,6 +669,9 @@ X86AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
   
   if (MI->getOperand(0).isReg() && MI->getOperand(3).isImm())
     Location.set(MI->getOperand(0).getReg(), MI->getOperand(3).getImm());
+  else {
+    DEBUG(dbgs() << "DBG_VALUE instruction ignored! " << *MI << "\n");
+  }
   return Location;
 }
 
