@@ -1811,13 +1811,15 @@ static void AddFunctionTypeQualsToCompletionString(CodeCompletionString *Result,
 /// how to use this result, or NULL to indicate that the string or name of the
 /// result is all that is needed.
 CodeCompletionString *
-CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
+CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S,
+                                               CodeCompletionString *Result) {
   typedef CodeCompletionString::Chunk Chunk;
   
   if (Kind == RK_Pattern)
-    return Pattern->Clone();
+    return Pattern->Clone(Result);
   
-  CodeCompletionString *Result = new CodeCompletionString;
+  if (!Result)
+    Result = new CodeCompletionString;
 
   if (Kind == RK_Keyword) {
     Result->AddTypedTextChunk(Keyword);

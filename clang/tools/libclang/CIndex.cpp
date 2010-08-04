@@ -1443,7 +1443,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
     const llvm::MemoryBuffer *Buffer
-    = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
+      = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
     RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
                                            Buffer));
   }

@@ -16,6 +16,7 @@
 #include "CIndexDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
@@ -231,7 +232,7 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   llvm::SmallVector<StoredDiagnostic, 8> Diagnostics;
 
   /// \brief Diag object
-  Diagnostic Diag;
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diag;
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
@@ -248,7 +249,8 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 };
 
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
-  : CXCodeCompleteResults(), Buffer(0), SourceMgr(Diag) { }
+  : CXCodeCompleteResults(), Buffer(0), Diag(new Diagnostic), 
+    SourceMgr(*Diag) { }
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   for (unsigned I = 0, N = NumResults; I != N; ++I)
@@ -453,6 +455,165 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   // Make sure we delete temporary files when the code-completion results are
   // destroyed.
   Results->TemporaryFiles.swap(TemporaryFiles);
+
+#ifdef UDP_CODE_COMPLETION_LOGGER
+#ifdef UDP_CODE_COMPLETION_LOGGER_PORT
+  const llvm::TimeRecord &EndTime =  llvm::TimeRecord::getCurrentTime();
+  llvm::SmallString<256> LogResult;
+  llvm::raw_svector_ostream os(LogResult);
+
+  // Figure out the language and whether or not it uses PCH.
+  const char *lang = 0;
+  bool usesPCH = false;
+
+  for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
+       I != E; ++I) {
+    if (*I == 0)
+      continue;
+    if (strcmp(*I, "-x") == 0) {
+      if (I + 1 != E) {
+        lang = *(++I);
+        continue;
+      }
+    }
+    else if (strcmp(*I, "-include") == 0) {
+      if (I+1 != E) {
+        const char *arg = *(++I);
+        llvm::SmallString<512> pchName;
+        {
+          llvm::raw_svector_ostream os(pchName);
+          os << arg << ".pth";
+        }
+        pchName.push_back('\0');
+        struct stat stat_results;
+        if (stat(pchName.data(), &stat_results) == 0)
+          usesPCH = true;
+        continue;
+      }
+    }
+  }
+
+  os << "{ ";
+  os << "\"wall\": " << (EndTime.getWallTime() - StartTime.getWallTime());
+  os << ", \"numRes\": " << Results->NumResults;
+  os << ", \"diags\": " << Results->Diagnostics.size();
+  os << ", \"pch\": " << (usesPCH ? "true" : "false");
+  os << ", \"lang\": \"" << (lang ? lang : "<unknown>") << '"';
+  const char *name = getlogin();
+  os << ", \"user\": \"" << (name ? name : "unknown") << '"';
+  os << ", \"clangVer\": \"" << getClangFullVersion() << '"';
+  os << " }";
+
+  llvm::StringRef res = os.str();
+  if (res.size() > 0) {
+    do {
+      // Setup the UDP socket.
+      struct sockaddr_in servaddr;
+      bzero(&servaddr, sizeof(servaddr));
+      servaddr.sin_family = AF_INET;
+      servaddr.sin_port = htons(UDP_CODE_COMPLETION_LOGGER_PORT);
+      if (inet_pton(AF_INET, UDP_CODE_COMPLETION_LOGGER,
+                    &servaddr.sin_addr) <= 0)
+        break;
+
+      int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (sockfd < 0)
+        break;
+
+      sendto(sockfd, res.data(), res.size(), 0,
+             (struct sockaddr *)&servaddr, sizeof(servaddr));
+      close(sockfd);
+    }
+    while (false);
+  }
+#endif
+#endif
+  return Results;
+}
+
+} // end extern "C"
+
+namespace clang {
+  // FIXME: defined in CodeCompleteConsumer.cpp, but should be a
+  // static function here.
+  CXCursorKind 
+  getCursorKindForCompletionResult(const CodeCompleteConsumer::Result &R);
+}
+
+
+namespace {
+  class CaptureCompletionResults : public CodeCompleteConsumer {
+    AllocatedCXCodeCompleteResults &AllocatedResults;
+
+  public:
+    explicit CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results)
+      : CodeCompleteConsumer(true, false, false), AllocatedResults(Results) { }
+
+    virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
+                                            unsigned NumResults) {
+      AllocatedResults.Results = new CXCompletionResult [NumResults];
+      AllocatedResults.NumResults = NumResults;
+      for (unsigned I = 0; I != NumResults; ++I) {
+        CXStoredCodeCompletionString *StoredCompletion
+          = new CXStoredCodeCompletionString(Results[I].Priority);
+        (void)Results[I].CreateCodeCompletionString(S, StoredCompletion);
+        AllocatedResults.Results[I].CursorKind 
+          = getCursorKindForCompletionResult(Results[I]);
+        AllocatedResults.Results[I].CompletionString = StoredCompletion;
+      }
+    }
+  };
+}
+
+extern "C" {
+CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
+                                            const char *complete_filename,
+                                            unsigned complete_line,
+                                            unsigned complete_column,
+                                            struct CXUnsavedFile *unsaved_files,
+                                            unsigned num_unsaved_files) {
+#ifdef UDP_CODE_COMPLETION_LOGGER
+#ifdef UDP_CODE_COMPLETION_LOGGER_PORT
+  const llvm::TimeRecord &StartTime =  llvm::TimeRecord::getCurrentTime();
+#endif
+#endif
+
+  bool EnableLogging = getenv("LIBCLANG_CODE_COMPLETION_LOGGING") != 0;
+  
+  ASTUnit *AST = static_cast<ASTUnit *>(TU);
+  if (!AST)
+    return 0;
+
+  // Perform the remapping of source files.
+  llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
+  for (unsigned I = 0; I != num_unsaved_files; ++I) {
+    llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
+    const llvm::MemoryBuffer *Buffer
+      = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
+    RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
+                                           Buffer));
+  }
+  
+  if (EnableLogging) {
+    // FIXME: Add logging.
+  }
+
+  // Parse the resulting source file to find code-completion results.
+  AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults;
+  Results->Results = 0;
+  Results->NumResults = 0;
+  Results->Buffer = 0;
+
+  // Create a code-completion consumer to capture the results.
+  CaptureCompletionResults Capture(*Results);
+
+  // Perform completion.
+  AST->CodeComplete(complete_filename, complete_line, complete_column,
+                    RemappedFiles.data(), RemappedFiles.size(), Capture,
+                    *Results->Diag, Results->LangOpts, Results->SourceMgr,
+                    Results->FileMgr, Results->Diagnostics);
+
+  
 
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #ifdef UDP_CODE_COMPLETION_LOGGER_PORT

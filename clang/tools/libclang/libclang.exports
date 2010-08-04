@@ -1,6 +1,7 @@
 clang_CXXMethod_isStatic
 clang_annotateTokens
 clang_codeComplete
+clang_codeCompleteAt
 clang_codeCompleteGetDiagnostic
 clang_codeCompleteGetNumDiagnostics
 clang_constructUSR_ObjCCategory

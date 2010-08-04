@@ -296,17 +296,41 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
 
 // Code Completion
 
+static bool EnableCodeCompletion(Preprocessor &PP, 
+                                 const std::string &Filename,
+                                 unsigned Line,
+                                 unsigned Column) {
+  // Tell the source manager to chop off the given file at a specific
+  // line and column.
+  const FileEntry *Entry = PP.getFileManager().getFile(Filename);
+  if (!Entry) {
+    PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
+      << Filename;
+    return true;
+  }
+
+  // Truncate the named file at the given line/column.
+  PP.SetCodeCompletionPoint(Entry, Line, Column);
+  return false;
+}
+
 void CompilerInstance::createCodeCompletionConsumer() {
   const ParsedSourceLocation &Loc = getFrontendOpts().CodeCompletionAt;
-  CompletionConsumer.reset(
-    createCodeCompletionConsumer(getPreprocessor(),
-                                 Loc.FileName, Loc.Line, Loc.Column,
-                                 getFrontendOpts().DebugCodeCompletionPrinter,
-                                 getFrontendOpts().ShowMacrosInCodeCompletion,
+  if (!CompletionConsumer) {
+    CompletionConsumer.reset(
+      createCodeCompletionConsumer(getPreprocessor(),
+                                   Loc.FileName, Loc.Line, Loc.Column,
+                                   getFrontendOpts().DebugCodeCompletionPrinter,
+                                   getFrontendOpts().ShowMacrosInCodeCompletion,
                              getFrontendOpts().ShowCodePatternsInCodeCompletion,
-                                 llvm::outs()));
-  if (!CompletionConsumer)
+                                   llvm::outs()));
+    if (!CompletionConsumer)
+      return;
+  } else if (EnableCodeCompletion(getPreprocessor(), Loc.FileName,
+                                  Loc.Line, Loc.Column)) {
+    CompletionConsumer.reset();
     return;
+  }
 
   if (CompletionConsumer->isOutputBinary() &&
       llvm::sys::Program::ChangeStdoutToBinary()) {
@@ -328,17 +352,8 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                                bool ShowMacros,
                                                bool ShowCodePatterns,
                                                llvm::raw_ostream &OS) {
-  // Tell the source manager to chop off the given file at a specific
-  // line and column.
-  const FileEntry *Entry = PP.getFileManager().getFile(Filename);
-  if (!Entry) {
-    PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
-      << Filename;
+  if (EnableCodeCompletion(PP, Filename, Line, Column))
     return 0;
-  }
-
-  // Truncate the named file at the given line/column.
-  PP.SetCodeCompletionPoint(Entry, Line, Column);
 
   // Set up the creation routine for code-completion.
   if (UseDebugPrinter)

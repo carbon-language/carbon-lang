@@ -38,6 +38,7 @@ namespace llvm {
 
 namespace clang {
 class ASTContext;
+class CodeCompleteConsumer;
 class CompilerInvocation;
 class Decl;
 class Diagnostic;
@@ -384,6 +385,24 @@ public:
   /// contain any translation-unit information, false otherwise.  
   bool Reparse(RemappedFile *RemappedFiles = 0,
                unsigned NumRemappedFiles = 0);
+
+  /// \brief Perform code completion at the given file, line, and
+  /// column within this translation unit.
+  ///
+  /// \brief File The file in which code completion will occur.
+  /// \brief Line The line at which code completion will occur.
+  /// \brief Column The column at which code completion will occur.
+  /// \brief Consumer The consumer that will receive code-completion results.
+  ///
+  /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, and
+  /// StoredDiagnostics parameters are all disgusting hacks. They will
+  /// go away.
+  void CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
+                    RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
+                    CodeCompleteConsumer &Consumer,
+                    Diagnostic &Diag, LangOptions &LangOpts,
+                    SourceManager &SourceMgr, FileManager &FileMgr,
+                    llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics);
 };
 
 } // namespace clang

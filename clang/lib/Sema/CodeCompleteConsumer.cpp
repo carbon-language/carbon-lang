@@ -245,8 +245,10 @@ const char *CodeCompletionString::getTypedText() const {
   return 0;
 }
 
-CodeCompletionString *CodeCompletionString::Clone() const {
-  CodeCompletionString *Result = new CodeCompletionString;
+CodeCompletionString *
+CodeCompletionString::Clone(CodeCompletionString *Result) const {
+  if (!Result)
+    Result = new CodeCompletionString;
   for (iterator C = begin(), CEnd = end(); C != CEnd; ++C)
     Result->AddChunk(C->Clone());
   return Result;
@@ -493,98 +495,81 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   }
 }
 
-void 
-CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
-                                                       Result *Results, 
-                                                       unsigned NumResults) {
-  // Print the results.
-  for (unsigned I = 0; I != NumResults; ++I) {
-    CXCursorKind Kind = CXCursor_NotImplemented;
-
-    switch (Results[I].Kind) {
+namespace clang {
+  // FIXME: Used externally by CIndexCodeCompletion.cpp; this code
+  // will move there, eventually, when the CIndexCodeCompleteConsumer
+  // dies.
+  CXCursorKind 
+  getCursorKindForCompletionResult(const CodeCompleteConsumer::Result &R) {
+    typedef CodeCompleteConsumer::Result Result;
+    switch (R.Kind) {
     case Result::RK_Declaration:
-      switch (Results[I].Declaration->getKind()) {
+      switch (R.Declaration->getKind()) {
       case Decl::Record:
       case Decl::CXXRecord:
       case Decl::ClassTemplateSpecialization: {
-        RecordDecl *Record = cast<RecordDecl>(Results[I].Declaration);
+        RecordDecl *Record = cast<RecordDecl>(R.Declaration);
         if (Record->isStruct())
-          Kind = CXCursor_StructDecl;
+          return CXCursor_StructDecl;
         else if (Record->isUnion())
-          Kind = CXCursor_UnionDecl;
+          return CXCursor_UnionDecl;
         else
-          Kind = CXCursor_ClassDecl;
-        break;
+          return CXCursor_ClassDecl;
       }
         
       case Decl::ObjCMethod: {
-        ObjCMethodDecl *Method = cast<ObjCMethodDecl>(Results[I].Declaration);
+        ObjCMethodDecl *Method = cast<ObjCMethodDecl>(R.Declaration);
         if (Method->isInstanceMethod())
-            Kind = CXCursor_ObjCInstanceMethodDecl;
+            return CXCursor_ObjCInstanceMethodDecl;
         else
-          Kind = CXCursor_ObjCClassMethodDecl;
-        break;
+          return CXCursor_ObjCClassMethodDecl;
       }
         
       case Decl::Typedef:
-        Kind = CXCursor_TypedefDecl;
-        break;
+        return CXCursor_TypedefDecl;
         
       case Decl::Enum:
-        Kind = CXCursor_EnumDecl;
-        break;
+        return CXCursor_EnumDecl;
         
       case Decl::Field:
-        Kind = CXCursor_FieldDecl;
-        break;
+        return CXCursor_FieldDecl;
         
       case Decl::EnumConstant:
-        Kind = CXCursor_EnumConstantDecl;
-        break;
+        return CXCursor_EnumConstantDecl;
         
       case Decl::Function:
       case Decl::CXXMethod:
       case Decl::CXXConstructor:
       case Decl::CXXDestructor:
       case Decl::CXXConversion:
-        Kind = CXCursor_FunctionDecl;
-        break;
+        return CXCursor_FunctionDecl;
         
       case Decl::Var:
-        Kind = CXCursor_VarDecl;
-        break;
+        return CXCursor_VarDecl;
         
       case Decl::ParmVar:
-        Kind = CXCursor_ParmDecl;
-        break;
+        return CXCursor_ParmDecl;
         
       case Decl::ObjCInterface:
-        Kind = CXCursor_ObjCInterfaceDecl;
-        break;
+        return CXCursor_ObjCInterfaceDecl;
         
       case Decl::ObjCCategory:
-        Kind = CXCursor_ObjCCategoryDecl;
-        break;
+        return CXCursor_ObjCCategoryDecl;
         
       case Decl::ObjCProtocol:
-        Kind = CXCursor_ObjCProtocolDecl;
-        break;
+        return CXCursor_ObjCProtocolDecl;
         
       case Decl::ObjCProperty:
-        Kind = CXCursor_ObjCPropertyDecl;
-        break;
+        return CXCursor_ObjCPropertyDecl;
         
       case Decl::ObjCIvar:
-        Kind = CXCursor_ObjCIvarDecl;
-        break;
+        return CXCursor_ObjCIvarDecl;
         
       case Decl::ObjCImplementation:
-        Kind = CXCursor_ObjCImplementationDecl;
-        break;
+        return CXCursor_ObjCImplementationDecl;
         
       case Decl::ObjCCategoryImpl:
-        Kind = CXCursor_ObjCCategoryImplDecl;
-        break;
+        return CXCursor_ObjCCategoryImplDecl;
         
       default:
         break;
@@ -592,16 +577,23 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
       break;
 
     case Result::RK_Macro:
-      Kind = CXCursor_MacroDefinition;
-      break;
+      return CXCursor_MacroDefinition;
 
     case Result::RK_Keyword:
     case Result::RK_Pattern:
-      Kind = CXCursor_NotImplemented;
-      break;
+      return CXCursor_NotImplemented;
     }
+    return CXCursor_NotImplemented;
+  }
+}
 
-    WriteUnsigned(OS, Kind);
+void 
+CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
+                                                       Result *Results, 
+                                                       unsigned NumResults) {
+  // Print the results.
+  for (unsigned I = 0; I != NumResults; ++I) {
+    WriteUnsigned(OS, getCursorKindForCompletionResult(Results[I]));
     WriteUnsigned(OS, Results[I].Priority);
     CodeCompletionString *CCS = Results[I].CreateCodeCompletionString(SemaRef);
     assert(CCS && "No code-completion string?");

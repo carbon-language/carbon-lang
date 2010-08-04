@@ -888,11 +888,21 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
     return -1;
 
   CIdx = clang_createIndex(0, 1);
-  results = clang_codeComplete(CIdx,
-                               argv[argc - 1], argc - num_unsaved_files - 3,
-                               argv + num_unsaved_files + 2,
-                               num_unsaved_files, unsaved_files,
-                               filename, line, column);
+  if (getenv("CINDEXTEST_EDITING")) {
+    CXTranslationUnit *TU = clang_parseTranslationUnit(CIdx, 0,
+                                  argv + num_unsaved_files + 2,
+                                  argc - num_unsaved_files - 2,
+                                  unsaved_files,
+                                  num_unsaved_files,
+                                  getDefaultParsingOptions());
+    results = clang_codeCompleteAt(TU, filename, line, column,
+                                   unsaved_files, num_unsaved_files);
+  } else
+    results = clang_codeComplete(CIdx,
+                                 argv[argc - 1], argc - num_unsaved_files - 3,
+                                 argv + num_unsaved_files + 2,
+                                 num_unsaved_files, unsaved_files,
+                                 filename, line, column);
 
   if (results) {
     unsigned i, n = results->NumResults;

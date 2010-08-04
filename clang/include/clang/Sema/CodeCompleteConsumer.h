@@ -274,7 +274,10 @@ public:
   std::string getAsString() const; 
   
   /// \brief Clone this code-completion string.
-  CodeCompletionString *Clone() const;
+  ///
+  /// \param Result If non-NULL, points to an empty code-completion
+  /// result that will be given a cloned copy of
+  CodeCompletionString *Clone(CodeCompletionString *Result = 0) const;
   
   /// \brief Serialize this code-completion string to the given stream.
   void Serialize(llvm::raw_ostream &OS) const;
@@ -410,7 +413,14 @@ public:
     
     /// \brief Create a new code-completion string that describes how to insert
     /// this result into a program.
-    CodeCompletionString *CreateCodeCompletionString(Sema &S);
+    ///
+    /// \param S The semantic analysis that created the result.
+    ///
+    /// \param Result If non-NULL, the already-allocated, empty
+    /// code-completion string that will be populated with the
+    /// appropriate code completion string for this result.
+    CodeCompletionString *CreateCodeCompletionString(Sema &S,
+                                              CodeCompletionString *Result = 0);
     
     void Destroy();
     

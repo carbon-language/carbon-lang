@@ -417,8 +417,12 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Clang.setInvocation(Invocation.take());
   OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
     
-  // Set up diagnostics.
+  // Set up diagnostics, capturing any diagnostics that would
+  // otherwise be dropped.
   Clang.setDiagnostics(&getDiagnostics());
+  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
+                                    getDiagnostics(),
+                                    StoredDiagnostics);
   Clang.setDiagnosticClient(getDiagnostics().getClient());
   
   // Create the target instance.
@@ -456,12 +460,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
   if (!OverrideMainBuffer)
     StoredDiagnostics.clear();
-  
-  // Capture any diagnostics that would otherwise be dropped.
-  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
-                                    Clang.getDiagnostics(),
-                                    StoredDiagnostics);
-  
+    
   // Create a file manager object to provide access to and cache the filesystem.
   Clang.setFileManager(&getFileManager());
   
@@ -471,11 +470,13 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
   PreprocessorOptions &PreprocessorOpts = Clang.getPreprocessorOpts();
+  std::string PriorImplicitPCHInclude;
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
     PreprocessorOpts.PrecompiledPreambleBytes.second
                                                     = PreambleEndsAtStartOfLine;
+    PriorImplicitPCHInclude = PreprocessorOpts.ImplicitPCHInclude;
     PreprocessorOpts.ImplicitPCHInclude = PreambleFile;
     PreprocessorOpts.DisablePCHValidation = true;
     
@@ -513,10 +514,12 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Act->EndSourceFile();
 
   // Remove the overridden buffer we used for the preamble.
-  if (OverrideMainBuffer)
+  if (OverrideMainBuffer) {
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
-  
+    PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
+  }
+
   Clang.takeDiagnosticClient();
   
   Invocation.reset(Clang.takeInvocation());
@@ -528,6 +531,7 @@ error:
     PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
     PreprocessorOpts.DisablePCHValidation = true;
+    PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
   }
   
   Clang.takeSourceManager();
@@ -853,8 +857,11 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   Clang.setInvocation(&PreambleInvocation);
   OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
   
-  // Set up diagnostics.
+  // Set up diagnostics, capturing all of the diagnostics produced.
   Clang.setDiagnostics(&getDiagnostics());
+  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
+                                    getDiagnostics(),
+                                    StoredDiagnostics);
   Clang.setDiagnosticClient(getDiagnostics().getClient());
   
   // Create the target instance.
@@ -889,11 +896,6 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   StoredDiagnostics.clear();
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
-
-  // Capture any diagnostics that would otherwise be dropped.
-  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
-                                    getDiagnostics(),
-                                    StoredDiagnostics);
   
   // Create a file manager object to provide access to and cache the filesystem.
   Clang.setFileManager(new FileManager);
@@ -1127,7 +1129,6 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   }
   
   // Remap files.
-  // FIXME: Do we want to remove old mappings for these files?
   Invocation->getPreprocessorOpts().clearRemappedFiles();
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
@@ -1148,4 +1149,89 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   if (ReparsingTimer)
     ReparsingTimer->stopTimer();
   return Result;
+}
+
+void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
+                           RemappedFile *RemappedFiles, 
+                           unsigned NumRemappedFiles,
+                           CodeCompleteConsumer &Consumer,
+                           Diagnostic &Diag, LangOptions &LangOpts,
+                           SourceManager &SourceMgr, FileManager &FileMgr,
+                   llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics) {
+  if (!Invocation.get())
+    return;
+
+  CompilerInvocation CCInvocation(*Invocation);
+  FrontendOptions &FrontendOpts = CCInvocation.getFrontendOpts();
+  PreprocessorOptions &PreprocessorOpts = CCInvocation.getPreprocessorOpts();
+  
+  FrontendOpts.ShowMacrosInCodeCompletion = 1;
+  FrontendOpts.ShowCodePatternsInCodeCompletion = 1;
+  FrontendOpts.CodeCompletionAt.FileName = File;
+  FrontendOpts.CodeCompletionAt.Line = Line;
+  FrontendOpts.CodeCompletionAt.Column = Column;
+
+  // Set the language options appropriately.
+  LangOpts = CCInvocation.getLangOpts();
+
+  CompilerInstance Clang;
+  Clang.setInvocation(&CCInvocation);
+  OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+    
+  // Set up diagnostics, capturing any diagnostics produced.
+  Clang.setDiagnostics(&Diag);
+  CaptureDroppedDiagnostics Capture(true, 
+                                    Clang.getDiagnostics(),
+                                    StoredDiagnostics);
+  Clang.setDiagnosticClient(Diag.getClient());
+  
+  // Create the target instance.
+  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
+                                               Clang.getTargetOpts()));
+  if (!Clang.hasTarget()) {
+    Clang.takeDiagnosticClient();
+    Clang.takeInvocation();
+  }
+  
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
+  
+  assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
+         "Invocation must have exactly one source file!");
+  assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
+         "FIXME: AST inputs not yet supported here!");
+  assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+         "IR inputs not support here!");
+
+  
+  // Use the source and file managers that we were given.
+  Clang.setFileManager(&FileMgr);
+  Clang.setSourceManager(&SourceMgr);
+
+  // Remap files.
+  PreprocessorOpts.clearRemappedFiles();
+  for (unsigned I = 0; I != NumRemappedFiles; ++I)
+    PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
+                                     RemappedFiles[I].second);
+  
+  // Use the code completion consumer we were given.
+  Clang.setCodeCompletionConsumer(&Consumer);
+
+  llvm::OwningPtr<SyntaxOnlyAction> Act;
+  Act.reset(new SyntaxOnlyAction);
+  if (Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
+                           Clang.getFrontendOpts().Inputs[0].first)) {
+    Act->Execute();
+    Act->EndSourceFile();
+  }
+  
+  // Steal back our resources. 
+  Clang.takeFileManager();
+  Clang.takeSourceManager();
+  Clang.takeInvocation();
+  Clang.takeDiagnosticClient();
+  Clang.takeCodeCompletionConsumer();
 }
