@@ -171,6 +171,12 @@ private:
   /// table.
   std::vector<uint32_t> IdentifierOffsets;
 
+  /// \brief The first ID number we can use for our own selectors.
+  pch::SelectorID FirstSelectorID;
+
+  /// \brief The selector ID that will be assigned to the next new identifier.
+  pch::SelectorID NextSelectorID;
+
   /// \brief Map that provides the ID numbers of each Selector.
   llvm::DenseMap<Selector, pch::SelectorID> SelectorIDs;
 

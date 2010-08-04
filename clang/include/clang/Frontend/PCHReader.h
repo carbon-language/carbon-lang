@@ -675,14 +675,19 @@ public:
     return static_cast<unsigned>(IdentifiersLoaded.size());
   }
 
-  /// \brief Returns the number of types found in this file.
+  /// \brief Returns the number of types found in the chain.
   unsigned getTotalNumTypes() const {
     return static_cast<unsigned>(TypesLoaded.size());
   }
 
-  /// \brief Returns the number of declarations found in this file.
+  /// \brief Returns the number of declarations found in the chain.
   unsigned getTotalNumDecls() const {
     return static_cast<unsigned>(DeclsLoaded.size());
+  }
+
+  /// \brief Returns the number of selectors found in the chain.
+  unsigned getTotalNumSelectors() const {
+    return static_cast<unsigned>(SelectorsLoaded.size());
   }
 
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
@@ -793,6 +798,9 @@ public:
   /// instance and factory methods, respectively, with this selector.
   virtual std::pair<ObjCMethodList, ObjCMethodList>
     ReadMethodPool(Selector Sel);
+
+  /// \brief Load a selector from disk, registering its ID if it exists.
+  void LoadSelector(Selector Sel);
 
   void SetIdentifierInfo(unsigned ID, IdentifierInfo *II);
   void SetGloballyVisibleDecls(IdentifierInfo *II,

@@ -1655,13 +1655,14 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
   // Do we have to do anything at all?
   if (SemaRef.MethodPool.empty() && SelectorIDs.empty())
     return;
+  unsigned NumTableEntries = 0;
   // Create and write out the blob that contains selectors and the method pool.
   {
     OnDiskChainedHashTableGenerator<PCHMethodPoolTrait> Generator;
 
     // Create the on-disk hash table representation. We walk through every
     // selector we've seen and look it up in the method pool.
-    SelectorOffsets.resize(SelectorIDs.size());
+    SelectorOffsets.resize(NextSelectorID - FirstSelectorID);
     for (llvm::DenseMap<Selector, pch::SelectorID>::iterator
              I = SelectorIDs.begin(), E = SelectorIDs.end();
          I != E; ++I) {
@@ -1676,7 +1677,26 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
         Data.Instance = F->second.first;
         Data.Factory = F->second.second;
       }
+      // Only write this selector if it's not in an existing PCH or something
+      // changed.
+      if (Chain && I->second < FirstSelectorID) {
+        // Selector already exists. Did it change?
+        bool changed = false;
+        for (ObjCMethodList *M = &Data.Instance; !changed && M && M->Method;
+             M = M->Next) {
+          if (M->Method->getPCHLevel() == 0)
+            changed = true;
+        }
+        for (ObjCMethodList *M = &Data.Factory; !changed && M && M->Method;
+             M = M->Next) {
+          if (M->Method->getPCHLevel() == 0)
+            changed = true;
+        }
+        if (!changed)
+          continue;
+      }
       Generator.insert(S, Data);
+      ++NumTableEntries;
     }
 
     // Create the on-disk hash table in a buffer.
@@ -1702,7 +1722,7 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
     RecordData Record;
     Record.push_back(pch::METHOD_POOL);
     Record.push_back(BucketOffset);
-    Record.push_back(SelectorIDs.size());
+    Record.push_back(NumTableEntries);
     Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, MethodPool.str());
 
     // Create a blob abbreviation for the selector table offsets.
@@ -2115,17 +2135,20 @@ void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
 void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
   unsigned ID = SelectorIDs[Sel];
   assert(ID && "Unknown selector");
-  SelectorOffsets[ID - 1] = Offset;
+  // Don't record offsets for selectors that are also available in a different
+  // file.
+  if (ID < FirstSelectorID)
+    return;
+  SelectorOffsets[ID - FirstSelectorID] = Offset;
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
-  : Stream(Stream), Chain(0), FirstDeclID(1),
-    FirstTypeID(pch::NUM_PREDEF_TYPE_IDS), FirstIdentID(1),
-    CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
-    NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) {
-  NextDeclID = FirstDeclID;
-  NextTypeID = FirstTypeID;
-  NextIdentID = FirstIdentID;
+  : Stream(Stream), Chain(0), FirstDeclID(1), NextDeclID(FirstDeclID),
+    FirstTypeID(pch::NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
+    FirstIdentID(1), NextIdentID(FirstIdentID), FirstSelectorID(1),
+    NextSelectorID(FirstSelectorID), CollectedStmts(&StmtsToEmit),
+    NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
+    NumVisibleDeclContexts(0) {
 }
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
@@ -2321,9 +2344,11 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   FirstDeclID += Chain->getTotalNumDecls();
   FirstTypeID += Chain->getTotalNumTypes();
   FirstIdentID += Chain->getTotalNumIdentifiers();
+  FirstSelectorID += Chain->getTotalNumSelectors();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
+  NextSelectorID = FirstSelectorID;
 
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
@@ -2519,8 +2544,13 @@ pch::SelectorID PCHWriter::getSelectorRef(Selector Sel) {
   }
 
   pch::SelectorID &SID = SelectorIDs[Sel];
+  if (SID == 0 && Chain) {
+    // This might trigger a ReadSelector callback, which will set the ID for
+    // this selector.
+    Chain->LoadSelector(Sel);
+  }
   if (SID == 0) {
-    SID = SelectorIDs.size();
+    SID = NextSelectorID++;
   }
   return SID;
 }
@@ -2875,6 +2905,7 @@ void PCHWriter::SetReader(PCHReader *Reader) {
   assert(FirstDeclID == NextDeclID &&
          FirstTypeID == NextTypeID &&
          FirstIdentID == NextIdentID &&
+         FirstSelectorID == NextSelectorID &&
          "Setting chain after writing has started.");
   Chain = Reader;
 }

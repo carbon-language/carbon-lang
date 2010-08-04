@@ -3230,6 +3230,11 @@ PCHReader::ReadMethodPool(Selector Sel) {
   return std::make_pair(Data.Instance, Data.Factory);
 }
 
+void PCHReader::LoadSelector(Selector Sel) {
+  // It would be complicated to avoid reading the methods anyway. So don't.
+  ReadMethodPool(Sel);
+}
+
 void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
   assert(ID && "Non-zero identifier ID required");
   assert(ID <= IdentifiersLoaded.size() && "identifier ID out of range");
