@@ -130,7 +130,6 @@ files_to_match="\
   -o -name llvmgrep \
   -o -name check-each-file \
   -o -name codgen-diff \
-  -o -name cvsupdate \
   -o -name llvm-native-gcc \
   -o -name llvm-native-gxx \
   -o -name makellvm \
