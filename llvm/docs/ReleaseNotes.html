@@ -341,6 +341,11 @@ expose new optimization opportunities:</p>
   VISIBILITY_HIDDEN is gone.
 </li>
 <li>
+  The <tt>RegisterPass</tt> and <tt>RegisterAnalysisGroup</tt> templates are
+  considered deprecated, but continue to function in LLVM 2.8.  Clients are  
+  strongly advised to use the upcoming <tt>INITIALIZE_PASS()</tt> and
+  <tt>INITIALIZE_AG_PASS()</tt> macros instead.
+<li>
   SMDiagnostic takes different parameters now. //FIXME: how to upgrade?
 </li>
 <li>
