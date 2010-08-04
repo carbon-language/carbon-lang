@@ -2460,6 +2460,56 @@ static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
   return CGF.Builder.CreateBitCast(V, Ptr->getType());
 }
 
+static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
+                               const ThunkInfo &Thunk, llvm::Function *Fn) {
+  CGM.setGlobalVisibility(Fn, MD);
+
+  // If the thunk has weak/linkonce linkage, but the function must be
+  // emitted in every translation unit that references it, then we can
+  // emit its thunks with hidden visibility, since its thunks must be
+  // emitted when the function is.
+
+  // This mostly follows CodeGenModule::setTypeVisibility.
+
+  if ((Fn->getLinkage() != llvm::GlobalVariable::LinkOnceODRLinkage &&
+       Fn->getLinkage() != llvm::GlobalVariable::WeakODRLinkage) ||
+      Fn->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
+    return;
+
+  // Don't override an explicit visibility attribute.
+  if (MD->hasAttr<VisibilityAttr>())
+    return;
+
+  switch (MD->getTemplateSpecializationKind()) {
+  // We have to disable the optimization if this is an EI definition
+  // because there might be EI declarations in other shared objects.
+  case TSK_ExplicitInstantiationDefinition:
+  case TSK_ExplicitInstantiationDeclaration:
+    return;
+
+  // Every use of a non-template or explicitly-specialized class's
+  // type information has to emit it.
+  case TSK_ExplicitSpecialization:
+  case TSK_Undeclared:
+    break;
+
+  // Implicit instantiations can ignore the possibility of an
+  // explicit instantiation declaration because there necessarily
+  // must be an EI definition somewhere with default visibility.
+  case TSK_ImplicitInstantiation:
+    break;
+  }
+
+  // If there's an explicit definition, and that definition is
+  // out-of-line, then we can't assume that all users will have a
+  // definition to emit.
+  const FunctionDecl *Def = 0;
+  if (MD->hasBody(Def) && Def->isOutOfLine())
+    return;
+
+  Fn->setVisibility(llvm::GlobalValue::HiddenVisibility);
+}
+
 void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
                                     const ThunkInfo &Thunk) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
@@ -2582,7 +2632,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   CGM.setFunctionLinkage(MD, Fn);
   
   // Set the right visibility.
-  CGM.setGlobalVisibility(Fn, MD);
+  setThunkVisibility(CGM, MD, Thunk, Fn);
 }
 
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)

@@ -246,8 +246,21 @@ namespace Test9 {
   }
 }
 
+namespace Test10 {
+  struct A { virtual void foo(); };
+  struct B { virtual void foo(); };
+  struct C : A, B { void foo() {} };
+
+  // CHECK: define linkonce_odr void @_ZN6Test101C3fooEv
+  // CHECK: define linkonce_odr hidden void @_ZThn8_N6Test101C3fooEv
+
+  void test() {
+    C c;
+  }
+}
+
 /**** The following has to go at the end of the file ****/
 
 // This is from Test5:
-// CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
+// CHECK: define linkonce_odr hidden void @_ZTv0_n24_N5Test51B1fEv
 // CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(
