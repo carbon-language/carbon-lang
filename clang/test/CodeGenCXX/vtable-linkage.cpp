@@ -11,6 +11,7 @@
 // RUN: FileCheck --check-prefix=CHECK-10 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-11 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-12 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-13 %s < %t
 
 namespace {
   struct A {
@@ -83,12 +84,13 @@ struct F<char> {
 template struct F<short>;
 extern template struct F<int>;
 
-void use_F(F<char> &fc) {
+void use_F() {
+  F<char> fc;
+  fc.foo();
   F<int> fi;
   fi.foo();
   F<long> fl;
   (void)fl;
-  fc.foo();
 }
 
 // B has a key function that is not defined in this translation unit so its vtable
@@ -135,8 +137,8 @@ void use_F(F<char> &fc) {
 // CHECK-7: @_ZTI1EIlE = weak_odr constant
 
 // F<long> is an implicit template instantiation with no key function,
-// so its vtable should have weak_odr linkage.
-// CHECK-8: @_ZTV1FIlE = weak_odr constant
+// so its vtable should have weak_odr linkage and hidden visibility.
+// CHECK-8: @_ZTV1FIlE = weak_odr hidden constant
 // CHECK-8: @_ZTS1FIlE = weak_odr constant
 // CHECK-8: @_ZTI1FIlE = weak_odr constant
 
@@ -160,6 +162,12 @@ void use_F(F<char> &fc) {
 // CHECK-12: @_ZTVN12_GLOBAL__N_11AE = internal constant
 // CHECK-12: @_ZTSN12_GLOBAL__N_11AE = internal constant
 // CHECK-12: @_ZTIN12_GLOBAL__N_11AE = internal constant
+
+// F<char> is an explicit specialization without a key function, so
+// its vtable should have weak_odr linkage and hidden visibility.
+// CHECK-13: @_ZTV1FIcE = weak_odr hidden constant
+// CHECK-13: @_ZTS1FIcE = weak_odr constant
+// CHECK-13: @_ZTI1FIcE = weak_odr constant
 
 // RUN: FileCheck --check-prefix=CHECK-G %s < %t
 //

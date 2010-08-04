@@ -2929,18 +2929,34 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
 
   // It's okay to have multiple copies of a vtable, so don't make the
   // dynamic linker unique them.  Suppress this optimization if it's
-  // possible that there might be unresolved references elsewhere,
-  // which can happen if
-  //   - there's a key function and the vtable is getting emitted weak
-  //     anyway for whatever reason
-  //   - there might be an explicit instantiation declaration somewhere,
-  //     i.e. if it's a template at all
+  // possible that there might be unresolved references elsewhere
+  // which can only be resolved by this emission.
   if (Linkage == llvm::GlobalVariable::WeakODRLinkage &&
       VTable->getVisibility() == llvm::GlobalVariable::DefaultVisibility &&
-      !RD->hasAttr<VisibilityAttr>() &&
-      RD->getTemplateSpecializationKind() == TSK_Undeclared &&
-      !CGM.Context.getKeyFunction(RD)) {
-    VTable->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+      !RD->hasAttr<VisibilityAttr>()) {
+    switch (RD->getTemplateSpecializationKind()) {
+
+    // Every use of a non-template or explicitly-specialized class's
+    // vtable has to emit it.
+    case TSK_ExplicitSpecialization:
+    case TSK_Undeclared:
+    // Implicit instantiations can ignore the possibility of an
+    // explicit instantiation declaration because there necessarily
+    // must be an EI definition somewhere with default visibility.
+    case TSK_ImplicitInstantiation:
+      // If there's a key function, there may be translation units
+      // that don't have the key function's definition.
+      if (!CGM.Context.getKeyFunction(RD))
+        // Otherwise, drop the visibility to hidden.
+        VTable->setVisibility(llvm::GlobalValue::HiddenVisibility);
+      break;
+
+    // We have to disable the optimization if this is an EI definition
+    // because there might be EI declarations in other shared objects.
+    case TSK_ExplicitInstantiationDefinition:
+    case TSK_ExplicitInstantiationDeclaration:
+      break;
+    }
   }
 }
 
