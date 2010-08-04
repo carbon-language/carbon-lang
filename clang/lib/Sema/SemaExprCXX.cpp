@@ -1298,15 +1298,31 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
 
   Found.suppressDiagnostics();
 
+  llvm::SmallVector<DeclAccessPair,4> Matches;
   for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
        F != FEnd; ++F) {
-    if (CXXMethodDecl *Delete = dyn_cast<CXXMethodDecl>(*F))
-      if (Delete->isUsualDeallocationFunction()) {
-        Operator = Delete;
-        CheckAllocationAccess(StartLoc, SourceRange(), Found.getNamingClass(),
-                              F.getPair());
-        return false;
-      }
+    CXXMethodDecl *Delete = cast<CXXMethodDecl>((*F)->getUnderlyingDecl());
+    if (Delete->isUsualDeallocationFunction())
+      Matches.push_back(F.getPair());
+  }
+
+  // There's exactly one suitable operator;  pick it.
+  if (Matches.size() == 1) {
+    Operator = cast<CXXMethodDecl>(Matches[0]->getUnderlyingDecl());
+    CheckAllocationAccess(StartLoc, SourceRange(), Found.getNamingClass(),
+                          Matches[0]);
+    return false;
+
+  // We found multiple suitable operators;  complain about the ambiguity.
+  } else if (!Matches.empty()) {
+    Diag(StartLoc, diag::err_ambiguous_suitable_delete_member_function_found)
+      << Name << RD;
+
+    for (llvm::SmallVectorImpl<DeclAccessPair>::iterator
+           F = Matches.begin(), FEnd = Matches.end(); F != FEnd; ++F)
+      Diag((*F)->getUnderlyingDecl()->getLocation(),
+           diag::note_member_declared_here) << Name;
+    return true;
   }
 
   // We did find operator delete/operator delete[] declarations, but
@@ -1316,10 +1332,9 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
       << Name << RD;
         
     for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
-         F != FEnd; ++F) {
-      Diag((*F)->getLocation(), diag::note_member_declared_here)
-        << Name;
-    }
+         F != FEnd; ++F)
+      Diag((*F)->getUnderlyingDecl()->getLocation(),
+           diag::note_member_declared_here) << Name;
 
     return true;
   }

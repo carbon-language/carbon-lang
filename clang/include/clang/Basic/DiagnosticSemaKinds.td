@@ -2400,6 +2400,8 @@ def err_delete_incomplete_class_type : Warning<
   "deleting incomplete class type %0; no conversions to pointer type">;
 def err_no_suitable_delete_member_function_found : Error<
   "no suitable member %0 in %1">;
+def err_ambiguous_suitable_delete_member_function_found : Error<
+  "multiple suitable %0 functions in %1">;
 def note_member_declared_here : Note<
   "member %0 declared here">;
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;
