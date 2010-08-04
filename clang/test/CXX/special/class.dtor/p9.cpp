@@ -70,3 +70,16 @@ namespace test2 {
     C c; // expected-note {{first required here}}
   }
 }
+
+// PR7346
+namespace test3 {
+  struct A {
+    virtual ~A();
+    static void operator delete(void*, const int &);
+  };
+
+  struct B : A {
+    virtual ~B() {}
+    static void operator delete(void*);
+  };
+}
