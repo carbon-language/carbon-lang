@@ -40,9 +40,16 @@
 #include <sys/stat.h>
 using namespace clang;
 
+/// \brief After failing to build a precompiled preamble (due to
+/// errors in the source that occurs in the preamble), the number of
+/// reparses during which we'll skip even trying to precompile the
+/// preamble.
+const unsigned DefaultPreambleRebuildInterval = 5;
+
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
-    ConcurrencyCheckValue(CheckUnlocked), SavedMainFileBuffer(0) { 
+    ConcurrencyCheckValue(CheckUnlocked), PreambleRebuildCounter(0),
+    SavedMainFileBuffer(0) { 
 }
 
 ASTUnit::~ASTUnit() {
@@ -685,7 +692,9 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     }
     if (CreatedPreambleBuffer)
       delete NewPreamble.first;
-    
+
+    // The next time we actually see a preamble, precompile it.
+    PreambleRebuildCounter = 1;
     return 0;
   }
   
@@ -784,8 +793,17 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     // We can't reuse the previously-computed preamble. Build a new one.
     Preamble.clear();
     llvm::sys::Path(PreambleFile).eraseFromDisk();
+    PreambleRebuildCounter = 1;
   } 
-    
+
+  // If the preamble rebuild counter > 1, it's because we previously
+  // failed to build a preamble and we're not yet ready to try
+  // again. Decrement the counter and return a failure.
+  if (PreambleRebuildCounter > 1) {
+    --PreambleRebuildCounter;
+    return 0;
+  }
+
   // We did not previously compute a preamble, or it can't be reused anyway.
   llvm::Timer *PreambleTimer = 0;
   if (TimerGroup.get()) {
@@ -850,7 +868,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
       delete NewPreamble.first;
     if (PreambleTimer)
       PreambleTimer->stopTimer();
-
+    PreambleRebuildCounter = DefaultPreambleRebuildInterval;
     return 0;
   }
   
@@ -895,6 +913,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
       delete NewPreamble.first;
     if (PreambleTimer)
       PreambleTimer->stopTimer();
+    PreambleRebuildCounter = DefaultPreambleRebuildInterval;
 
     return 0;
   }
@@ -915,6 +934,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
     if (PreambleTimer)
       PreambleTimer->stopTimer();
     TopLevelDeclsInPreamble.clear();
+    PreambleRebuildCounter = DefaultPreambleRebuildInterval;
     return 0;
   }
   
@@ -944,6 +964,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   if (PreambleTimer)
     PreambleTimer->stopTimer();
   
+  PreambleRebuildCounter = 1;
   return CreatePaddedMainFileBuffer(NewPreamble.first, 
                                     CreatedPreambleBuffer,
                                     PreambleReservedSize,
@@ -1003,8 +1024,10 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
-  if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus)
+  if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus) {
+    AST->PreambleRebuildCounter = 1;
     OverrideMainBuffer = AST->BuildPrecompiledPreamble();
+  }
   
   llvm::Timer *ParsingTimer = 0;
   if (AST->TimerGroup.get()) {
@@ -1110,10 +1133,10 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
     Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
                                                       RemappedFiles[I].second);
   
-  // If we have a preamble file lying around, build or reuse the precompiled
-  // preamble.
+  // If we have a preamble file lying around, or if we might try to
+  // build a precompiled preamble, do so now.
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
-  if (!PreambleFile.empty())
+  if (!PreambleFile.empty() || PreambleRebuildCounter > 0)
     OverrideMainBuffer = BuildPrecompiledPreamble();
     
   // Clear out the diagnostics state.

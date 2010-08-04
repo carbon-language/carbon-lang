@@ -122,6 +122,17 @@ private:
   static const unsigned int CheckLocked = 28573289;
   static const unsigned int CheckUnlocked = 9803453;
 
+  /// \brief Counter that determines when we want to try building a
+  /// precompiled preamble.
+  ///
+  /// If zero, we will never build a precompiled preamble. Otherwise,
+  /// it's treated as a counter that decrements each time we reparse
+  /// without the benefit of a precompiled preamble. When it hits 1,
+  /// we'll attempt to rebuild the precompiled header. This way, if
+  /// building the precompiled preamble fails, we won't try again for
+  /// some number of calls.
+  unsigned PreambleRebuildCounter;
+  
   /// \brief The file in which the precompiled preamble is stored.
   std::string PreambleFile;
   
