@@ -2307,7 +2307,12 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       }
       End = *MVI;
       MachineLocation MLoc;
-      MLoc.set(Begin->getOperand(0).getReg(), 0);
+      if (Begin->getNumOperands() == 3) {
+        if (Begin->getOperand(0).isReg() && Begin->getOperand(1).isImm())
+          MLoc.set(Begin->getOperand(0).getReg(), Begin->getOperand(1).getImm());
+      } else
+        MLoc = Asm->getDebugValueLocation(Begin);
+
       const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
       const MCSymbol *SLabel = getLabelBeforeInsn(End);
       DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
@@ -2315,9 +2320,14 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       if (MVI + 1 == MVE) {
         // If End is the last instruction then its value is valid
         // until the end of the funtion.
-        MLoc.set(End->getOperand(0).getReg(), 0);
+        MachineLocation EMLoc;
+        if (End->getNumOperands() == 3) {
+          if (End->getOperand(0).isReg() && Begin->getOperand(1).isImm())
+          EMLoc.set(Begin->getOperand(0).getReg(), Begin->getOperand(1).getImm());
+        } else
+          EMLoc = Asm->getDebugValueLocation(End);
         DotDebugLocEntries.
-          push_back(DotDebugLocEntry(SLabel, FunctionEndSym, MLoc));
+          push_back(DotDebugLocEntry(SLabel, FunctionEndSym, EMLoc));
       }
     }
     DotDebugLocEntries.push_back(DotDebugLocEntry());
@@ -3637,15 +3647,30 @@ void DwarfDebug::emitDebugLoc() {
       Asm->OutStreamer.EmitSymbolValue(Entry.End, Size, 0);
       const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
       unsigned Reg = RI->getDwarfRegNum(Entry.Loc.getReg(), false);
-      if (Reg < 32) {
+      if (int Offset =  Entry.Loc.getOffset()) {
+        // If the value is at a certain offset from frame register then
+        // use DW_OP_fbreg.
+        unsigned OffsetSize = Offset ? MCAsmInfo::getSLEB128Size(Offset) : 1;
         Asm->OutStreamer.AddComment("Loc expr size");
-        Asm->EmitInt16(1);
-        Asm->EmitInt8(dwarf::DW_OP_reg0 + Reg);
+        Asm->EmitInt16(1 + OffsetSize);
+        Asm->OutStreamer.AddComment(
+          dwarf::OperationEncodingString(dwarf::DW_OP_fbreg));
+        Asm->EmitInt8(dwarf::DW_OP_fbreg);
+        Asm->OutStreamer.AddComment("Offset");
+        Asm->EmitSLEB128(Offset);
       } else {
-        Asm->OutStreamer.AddComment("Loc expr size");
-        Asm->EmitInt16(1+MCAsmInfo::getULEB128Size(Reg));
-        Asm->EmitInt8(dwarf::DW_OP_regx);
-        Asm->EmitULEB128(Reg);
+        if (Reg < 32) {
+          Asm->OutStreamer.AddComment("Loc expr size");
+          Asm->EmitInt16(1);
+          Asm->OutStreamer.AddComment(
+            dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
+          Asm->EmitInt8(dwarf::DW_OP_reg0 + Reg);
+        } else {
+          Asm->OutStreamer.AddComment("Loc expr size");
+          Asm->EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg));
+          Asm->EmitInt8(dwarf::DW_OP_regx);
+          Asm->EmitULEB128(Reg);
+        }
       }
     }
   }
