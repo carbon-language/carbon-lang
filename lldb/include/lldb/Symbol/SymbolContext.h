@@ -220,7 +220,7 @@ public:
     ///     A shared pointer to the variable found.
     //------------------------------------------------------------------
     lldb::TypeSP
-    FindTypeByName (const char *name) const;
+    FindTypeByName (const ConstString &name) const;
 
     //------------------------------------------------------------------
     // Member variables

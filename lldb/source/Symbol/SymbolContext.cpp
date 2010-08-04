@@ -403,9 +403,18 @@ SymbolContext::FindVariableByName (const char *name) const
 }
 
 lldb::TypeSP
-SymbolContext::FindTypeByName (const char *name) const
+SymbolContext::FindTypeByName (const ConstString &name) const
 {
     lldb::TypeSP return_value;
+        
+    TypeList types;
+    
+    if (module_sp && module_sp->FindTypes (*this, name, false, 1, types))
+        return types.GetTypeAtIndex(0);
+    
+    if (!return_value.get() && target_sp && target_sp->GetImages().FindTypes (*this, name, false, 1, types))
+        return types.GetTypeAtIndex(0);
+    
     return return_value;
 }
 

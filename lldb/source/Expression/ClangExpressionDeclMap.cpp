@@ -679,6 +679,13 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     
     if (var)
         AddOneVariable(context, var);
+    
+    /* Commented out pending resolution of a loop when the TagType is imported
+    lldb::TypeSP type = m_sym_ctx->FindTypeByName(name_cs);
+    
+    if (type.get())
+        AddOneType(context, type.get());
+    */
 }
         
 Value *
@@ -885,4 +892,16 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     
     if (log)
         log->Printf("Found function %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), fun_decl);    
+}
+
+void 
+ClangExpressionDeclMap::AddOneType(NameSearchContext &context, 
+                                   Type *type)
+{
+    TypeFromUser ut(type->GetOpaqueClangQualType(),
+                    type->GetClangAST());
+    
+    void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), ut.GetASTContext(), ut.GetOpaqueQualType());
+    
+    context.AddTypeDecl(copied_type);
 }

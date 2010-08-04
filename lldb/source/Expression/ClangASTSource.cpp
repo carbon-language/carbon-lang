@@ -162,3 +162,22 @@ clang::NamedDecl *NameSearchContext::AddGenericFunDecl()
 
     return AddFunDecl(generic_function_type.getAsOpaquePtr());
 }
+
+clang::NamedDecl *NameSearchContext::AddTypeDecl(void *type)
+{
+    QualType QT = QualType::getFromOpaquePtr(type);
+    clang::Type *T = QT.getTypePtr();
+
+    if (TagType *tag_type = dyn_cast<clang::TagType>(T))
+    {
+        TagDecl *tag_decl = tag_type->getDecl();
+        
+        Decls.push_back(tag_decl);
+        
+        return tag_decl;
+    }
+    else
+    {
+        return NULL;
+    }
+}

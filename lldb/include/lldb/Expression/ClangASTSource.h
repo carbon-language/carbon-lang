@@ -62,6 +62,7 @@ struct NameSearchContext {
     clang::NamedDecl *AddVarDecl(void *type);
     clang::NamedDecl *AddFunDecl(void *type);
     clang::NamedDecl *AddGenericFunDecl();
+    clang::NamedDecl *AddTypeDecl(void *type);
 };
 
 }

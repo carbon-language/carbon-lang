@@ -24,6 +24,7 @@
 #include "lldb/Symbol/TaggedASTType.h"
 
 namespace llvm {
+    class Type;
     class Value;
 }
 
@@ -139,6 +140,7 @@ private:
     
     void AddOneVariable(NameSearchContext &context, Variable *var);
     void AddOneFunction(NameSearchContext &context, Function *fun, Symbol *sym);
+    void AddOneType(NameSearchContext &context, Type *type);
     
     bool DoMaterialize (bool dematerialize,
                         ExecutionContext *exe_ctx,

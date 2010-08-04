@@ -249,8 +249,12 @@ IRForTarget::MaybeHandleVariable(Module &M,
 
     if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(V))
     {
-        if (constant_expr->getOpcode() == Instruction::GetElementPtr)
+        switch (constant_expr->getOpcode())
         {
+        default:
+            break;
+        case Instruction::GetElementPtr:
+        case Instruction::BitCast:
             Value *s = constant_expr->getOperand(0);
             MaybeHandleVariable(M, s, Store);
         }
