@@ -1841,7 +1841,8 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
     // Look for (X86cmp (and $op, $imm), 0) and see if we can convert it to
     // use a smaller encoding.
-    if (N0.getOpcode() == ISD::TRUNCATE && N0.hasOneUse())
+    if (N0.getOpcode() == ISD::TRUNCATE && N0.hasOneUse() &&
+        HasNoSignedComparisonUses(Node))
       // Look past the truncate if CMP is the only use of it.
       N0 = N0.getOperand(0);
     if (N0.getNode()->getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
