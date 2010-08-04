@@ -2554,16 +2554,16 @@ void CGObjCMac::EmitSynchronizedStmt(CodeGenFunction &CGF,
 namespace {
   struct PerformFragileFinally : EHScopeStack::Cleanup {
     const Stmt &S;
-    llvm::Value *SyncArg;
+    llvm::Value *SyncArgSlot;
     llvm::Value *CallTryExitVar;
     llvm::Value *ExceptionData;
     ObjCTypesHelper &ObjCTypes;
     PerformFragileFinally(const Stmt *S,
-                          llvm::Value *SyncArg,
+                          llvm::Value *SyncArgSlot,
                           llvm::Value *CallTryExitVar,
                           llvm::Value *ExceptionData,
                           ObjCTypesHelper *ObjCTypes)
-      : S(*S), SyncArg(SyncArg), CallTryExitVar(CallTryExitVar),
+      : S(*S), SyncArgSlot(SyncArgSlot), CallTryExitVar(CallTryExitVar),
         ExceptionData(ExceptionData), ObjCTypes(*ObjCTypes) {}
 
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
@@ -2592,6 +2592,7 @@ namespace {
       } else {
         // Emit objc_sync_exit(expr); as finally's sole statement for
         // @synchronized.
+        llvm::Value *SyncArg = CGF.Builder.CreateLoad(SyncArgSlot);
         CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg)
           ->setDoesNotThrow();
       }
@@ -2613,9 +2614,9 @@ namespace {
 
   public:
     FragileHazards(CodeGenFunction &CGF);
-    void emitReadHazard();
-    void emitReadHazardsInNewBlocks();
+
     void emitWriteHazard();
+    void emitHazardsInNewBlocks();
   };
 }
 
@@ -2674,11 +2675,6 @@ void FragileHazards::emitWriteHazard() {
     ->setDoesNotThrow();
 }
 
-void FragileHazards::emitReadHazard() {
-  if (Locals.empty()) return;
-  emitReadHazard(CGF.Builder);
-}
-
 void FragileHazards::emitReadHazard(CGBuilderTy &Builder) {
   assert(!Locals.empty());
   Builder.CreateCall(ReadHazard, Locals.begin(), Locals.end())
@@ -2687,7 +2683,7 @@ void FragileHazards::emitReadHazard(CGBuilderTy &Builder) {
 
 /// Emit read hazards in all the protected blocks, i.e. all the blocks
 /// which have been inserted since the beginning of the try.
-void FragileHazards::emitReadHazardsInNewBlocks() {
+void FragileHazards::emitHazardsInNewBlocks() {
   if (Locals.empty()) return;
 
   CGBuilderTy Builder(CGF.getLLVMContext());
@@ -2714,7 +2710,11 @@ void FragileHazards::emitReadHazardsInNewBlocks() {
       llvm::CallSite CS(&I);
       if (CS.doesNotThrow()) continue;
 
-      // Insert a read hazard before the call.
+      // Insert a read hazard before the call.  This will ensure that
+      // any writes to the locals are performed before making the
+      // call.  If the call throws, then this is sufficient to
+      // guarantee correctness as long as it doesn't also write to any
+      // locals.
       Builder.SetInsertPoint(&BB, BI);
       emitReadHazard(Builder);
     }
@@ -2876,16 +2876,25 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // For @synchronized, call objc_sync_enter(sync.expr). The
   // evaluation of the expression must occur before we enter the
-  // @synchronized. We can safely avoid a temp here because jumps into
-  // @synchronized are illegal & this will dominate uses.
-  llvm::Value *SyncArg = 0;
+  // @synchronized.  We can't avoid a temp here because we need the
+  // value to be preserved.  If the backend ever does liveness
+  // correctly after setjmp, this will be unnecessary.
+  llvm::Value *SyncArgSlot = 0;
   if (!isTry) {
-    SyncArg =
+    llvm::Value *SyncArg =
       CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
     SyncArg = CGF.Builder.CreateBitCast(SyncArg, ObjCTypes.ObjectPtrTy);
     CGF.Builder.CreateCall(ObjCTypes.getSyncEnterFn(), SyncArg)
       ->setDoesNotThrow();
+
+    SyncArgSlot = CGF.CreateTempAlloca(SyncArg->getType(), "sync.arg");
+    CGF.Builder.CreateStore(SyncArg, SyncArgSlot);
   }
+
+  // Allocate memory for the setjmp buffer.  This needs to be kept
+  // live throughout the try and catch blocks.
+  llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
+                                                    "exceptiondata.ptr");
 
   // Create the fragile hazards.  Note that this will not capture any
   // of the allocas required for exception processing, but will
@@ -2893,25 +2902,20 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // setjmp call) as "before the @try".
   FragileHazards Hazards(CGF);
 
-  // Allocate memory for the exception data and rethrow pointer.
-  llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
-                                                    "exceptiondata.ptr");
-  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy,
-                                                 "_rethrow");
-
   // Create a flag indicating whether the cleanup needs to call
   // objc_exception_try_exit.  This is true except when
   //   - no catches match and we're branching through the cleanup
   //     just to rethrow the exception, or
   //   - a catch matched and we're falling out of the catch handler.
+  // The setjmp-safety rule here is that we should always store to this
+  // variable in a place that dominates the branch through the cleanup
+  // without passing through any setjmps.
   llvm::Value *CallTryExitVar = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(),
                                                      "_call_try_exit");
-  CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(VMContext),
-                          CallTryExitVar);
 
   // Push a normal cleanup to leave the try scope.
   CGF.EHStack.pushCleanup<PerformFragileFinally>(NormalCleanup, &S,
-                                                 SyncArg,
+                                                 SyncArgSlot,
                                                  CallTryExitVar,
                                                  ExceptionData,
                                                  &ObjCTypes);
@@ -2941,9 +2945,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Emit the protected block.
   CGF.EmitBlock(TryBlock);
+  CGF.Builder.CreateStore(CGF.Builder.getTrue(), CallTryExitVar);
   CGF.EmitStmt(isTry ? cast<ObjCAtTryStmt>(S).getTryBody()
                      : cast<ObjCAtSynchronizedStmt>(S).getSynchBody());
-  CGF.EmitBranchThroughCleanup(FinallyEnd);
+
+  CGBuilderTy::InsertPoint TryFallthroughIP = CGF.Builder.saveAndClearIP();
 
   // Emit the exception handler block.
   CGF.EmitBlock(TryHandler);
@@ -2951,56 +2957,54 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // Don't optimize loads of the in-scope locals across this point.
   Hazards.emitWriteHazard();
 
-  // Retrieve the exception object.  We may emit multiple blocks but
-  // nothing can cross this so the value is already in SSA form.
-  llvm::CallInst *Caught =
-    CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
-                           ExceptionData, "caught");
-  Caught->setDoesNotThrow();
-
-  // Remember the exception to rethrow.
-  CGF.Builder.CreateStore(Caught, RethrowPtr);
-
-  // Note: at this point, objc_exception_throw already popped the
-  // catch handler, so anything that branches to the cleanup needs
-  // to set CallTryExitVar to false.
-
   // For a @synchronized (or a @try with no catches), just branch
   // through the cleanup to the rethrow block.
   if (!isTry || !cast<ObjCAtTryStmt>(S).getNumCatchStmts()) {
     // Tell the cleanup not to re-pop the exit.
-    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext),
-                            CallTryExitVar);
-    
+    CGF.Builder.CreateStore(CGF.Builder.getFalse(), CallTryExitVar);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
 
   // Otherwise, we have to match against the caught exceptions.
   } else {
+    // Retrieve the exception object.  We may emit multiple blocks but
+    // nothing can cross this so the value is already in SSA form.
+    llvm::CallInst *Caught =
+      CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
+                             ExceptionData, "caught");
+    Caught->setDoesNotThrow();
+
     // Push the exception to rethrow onto the EH value stack for the
     // benefit of any @throws in the handlers.
     CGF.ObjCEHValueStack.push_back(Caught);
 
     const ObjCAtTryStmt* AtTryStmt = cast<ObjCAtTryStmt>(&S);
-    
-    // Enter a new exception try block (in case a @catch block throws
-    // an exception).  Now CallTryExitVar (currently true) is back in
-    // synch with reality.
-    CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData)
-      ->setDoesNotThrow();
 
-    llvm::CallInst *SetJmpResult =
-      CGF.Builder.CreateCall(ObjCTypes.getSetJmpFn(), SetJmpBuffer,
-                             "setjmp.result");
-    SetJmpResult->setDoesNotThrow();
+    bool HasFinally = (AtTryStmt->getFinallyStmt() != 0);
 
-    llvm::Value *Threw =
-      CGF.Builder.CreateIsNotNull(SetJmpResult, "did_catch_exception");
+    llvm::BasicBlock *CatchBlock = 0;
+    llvm::BasicBlock *CatchHandler = 0;
+    if (HasFinally) {
+      // Enter a new exception try block (in case a @catch block
+      // throws an exception).
+      CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData)
+        ->setDoesNotThrow();
 
-    llvm::BasicBlock *CatchBlock = CGF.createBasicBlock("catch");
-    llvm::BasicBlock *CatchHandler = CGF.createBasicBlock("catch_for_catch");
-    CGF.Builder.CreateCondBr(Threw, CatchHandler, CatchBlock);
+      llvm::CallInst *SetJmpResult =
+        CGF.Builder.CreateCall(ObjCTypes.getSetJmpFn(), SetJmpBuffer,
+                               "setjmp.result");
+      SetJmpResult->setDoesNotThrow();
 
-    CGF.EmitBlock(CatchBlock);
+      llvm::Value *Threw =
+        CGF.Builder.CreateIsNotNull(SetJmpResult, "did_catch_exception");
+
+      CatchBlock = CGF.createBasicBlock("catch");
+      CatchHandler = CGF.createBasicBlock("catch_for_catch");
+      CGF.Builder.CreateCondBr(Threw, CatchHandler, CatchBlock);
+
+      CGF.EmitBlock(CatchBlock);
+    }
+
+    CGF.Builder.CreateStore(CGF.Builder.getInt1(HasFinally), CallTryExitVar);
 
     // Handle catch list. As a special case we check if everything is
     // matched and avoid generating code for falling off the end if
@@ -3073,7 +3077,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
       // Collect any cleanups for the catch variable.  The scope lasts until
       // the end of the catch body.
-      CodeGenFunction::RunCleanupsScope CatchVarCleanups(CGF);      
+      CodeGenFunction::RunCleanupsScope CatchVarCleanups(CGF);
 
       CGF.EmitLocalBlockVarDecl(*CatchParam);
       assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
@@ -3097,41 +3101,50 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
     CGF.ObjCEHValueStack.pop_back();
 
-    if (!AllMatched) {
-      // None of the handlers caught the exception, so store it to be
-      // rethrown at the end of the @finally block.
-      CGF.Builder.CreateStore(Caught, RethrowPtr);
+    // If nothing wanted anything to do with the caught exception,
+    // kill the extract call.
+    if (Caught->use_empty())
+      Caught->eraseFromParent();
+
+    if (!AllMatched)
+      CGF.EmitBranchThroughCleanup(FinallyRethrow);
+
+    if (HasFinally) {
+      // Emit the exception handler for the @catch blocks.
+      CGF.EmitBlock(CatchHandler);
+
+      // In theory we might now need a write hazard, but actually it's
+      // unnecessary because there's no local-accessing code between
+      // the try's write hazard and here.
+      //Hazards.emitWriteHazard();
+
+      // Don't pop the catch handler; the throw already did.
+      CGF.Builder.CreateStore(CGF.Builder.getFalse(), CallTryExitVar);
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
     }
-
-    // Emit the exception handler for the @catch blocks.
-    CGF.EmitBlock(CatchHandler);
-
-    // Rethrow the new exception, not the old one.
-    Caught = CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
-                                    ExceptionData);
-    Caught->setDoesNotThrow();
-    CGF.Builder.CreateStore(Caught, RethrowPtr);
-
-    // Don't pop the catch handler; the throw already did.
-    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext),
-                            CallTryExitVar);
-    CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
 
   // Insert read hazards as required in the new blocks.
-  Hazards.emitReadHazardsInNewBlocks();
+  Hazards.emitHazardsInNewBlocks();
 
   // Pop the cleanup.
+  CGF.Builder.restoreIP(TryFallthroughIP);
+  if (CGF.HaveInsertPoint())
+    CGF.Builder.CreateStore(CGF.Builder.getTrue(), CallTryExitVar);
   CGF.PopCleanupBlock();
-  CGF.EmitBlock(FinallyEnd.getBlock());
+  CGF.EmitBlock(FinallyEnd.getBlock(), true);
 
   // Emit the rethrow block.
   CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
   CGF.EmitBlock(FinallyRethrow.getBlock(), true);
   if (CGF.HaveInsertPoint()) {
-    CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(),
-                           CGF.Builder.CreateLoad(RethrowPtr))
+    // Just look in the buffer for the exception to throw.
+    llvm::CallInst *Caught =
+      CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
+                             ExceptionData);
+    Caught->setDoesNotThrow();
+
+    CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), Caught)
       ->setDoesNotThrow();
     CGF.Builder.CreateUnreachable();
   }

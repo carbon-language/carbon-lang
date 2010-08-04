@@ -25,12 +25,13 @@ void f1() {
     // CHECK-NEXT: icmp
     // CHECK-NEXT: br i1
     @try {
-    // CHECK:      call void @foo()
+    // CHECK:      call void asm sideeffect "", "*m"
+    // CHECK-NEXT: call void @foo()
       foo();
-    // CHECK:      call void @objc_exception_try_exit
+    // CHECK-NEXT: call void @objc_exception_try_exit
     // CHECK-NEXT: ret void
 
-    // CHECK:      call i8* @objc_exception_extract
+    // CHECK:      call void asm sideeffect "", "=*m"
     // CHECK-NEXT: ret void
     } @finally {
       break;
@@ -46,40 +47,38 @@ int f2() {
   extern void foo(void);
 
   // CHECK:        [[X:%.*]] = alloca i32
-  // CHECK:        store i32 0, i32* [[X]]
+  // CHECK:        store i32 5, i32* [[X]]
   int x = 0;
+  x += 5;
 
   // CHECK:        [[SETJMP:%.*]] = call i32 @_setjmp
   // CHECK-NEXT:   [[CAUGHT:%.*]] = icmp eq i32 [[SETJMP]], 0
   // CHECK-NEXT:   br i1 [[CAUGHT]]
   @try {
-    // This load should be coalescable with the store of 0, so if the
-    // optimizers ever figure out that out, that's okay.
+    // If the optimizers ever figure out how to make this store 6,
+    // that's okay.
     // CHECK:      [[T1:%.*]] = load i32* [[X]]
     // CHECK-NEXT: [[T2:%.*]] = add nsw i32 [[T1]], 1
     // CHECK-NEXT: store i32 [[T2]], i32* [[X]]
     x++;
-    // CHECK-NEXT: call void asm sideeffect "", "*m"(i32* [[X]]) nounwind
+    // CHECK-NEXT: call void asm sideeffect "", "*m,*m"(i32* [[X]]
     // CHECK-NEXT: call void @foo()
+    // CHECK-NEXT: call void @objc_exception_try_exit
+    // CHECK-NEXT: [[T:%.*]] = load i32* [[X]]
+    // CHECK-NEXT: ret i32 [[T]]
     foo();
   } @catch (id) {
-    // Landing pad.  It turns out that the re-enter is unnecessary here.
-    // CHECK:      call void asm sideeffect "", "=*m"(i32* [[X]]) nounwind
+    // Landing pad.  Note that we elide the re-enter.
+    // CHECK:      call void asm sideeffect "", "=*m,=*m"(i32* [[X]]
     // CHECK-NEXT: call i8* @objc_exception_extract
-    // CHECK-NEXT: call void @objc_exception_try_enter
-    // CHECK-NEXT: call i32 @_setjmp
-    // CHECK-NEXT: icmp eq i32
-    // CHECK-NEXT: br i1
-
-    // Catch handler.
-    // CHECK:      [[T1:%.*]] = load i32* [[X]]
+    // CHECK-NEXT: [[T1:%.*]] = load i32* [[X]]
     // CHECK-NEXT: [[T2:%.*]] = add nsw i32 [[T1]], -1
+
+    // This store is dead.
     // CHECK-NEXT: store i32 [[T2]], i32* [[X]]
-    // CHECK-NEXT: br label
+
+    // CHECK-NEXT: ret i32 [[T2]]
     x--;
   }
-  // CHECK:        call void @objc_exception_try_exit
-  // CHECK-NEXT:   [[T:%.*]] = load i32* [[X]]
-  // CHECK:        ret i32 [[T]]
   return x;
 }
