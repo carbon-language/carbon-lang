@@ -1268,10 +1268,17 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
           ConstantFoldConstantExpression(CE, AP.TM.getTargetData()))
       if (C != CE)
         return LowerConstant(C, AP);
-#ifndef NDEBUG
-    CE->dump();
-#endif
-    llvm_unreachable("FIXME: Don't support this constant expr");
+
+    // Otherwise report the problem to the user.
+    {
+      std::string S;
+      raw_string_ostream OS(S);
+      OS << "Unsupported expression in static initializer: ";
+      WriteAsOperand(OS, CE, /*PrintType=*/false,
+                     !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+      report_fatal_error(OS.str());
+    }
+    return MCConstantExpr::Create(0, Ctx);
   case Instruction::GetElementPtr: {
     const TargetData &TD = *AP.TM.getTargetData();
     // Generate a symbolic expression for the byte address
