@@ -29,4 +29,8 @@
 #include <nmmintrin.h>
 #  endif
 
+#  if defined(__AVX__)
+#include <avxintrin.h>
+#  endif
+
 #endif
