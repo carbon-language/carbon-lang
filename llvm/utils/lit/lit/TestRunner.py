@@ -312,11 +312,6 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
         out,err,exitCode = executeCommand(command, cwd=cwd,
                                           env=test.config.environment)
 
-        # Tcl commands fail on standard error output.
-        if err:
-            exitCode = 1
-            out = 'Command has output on stderr!\n\n' + out
-
         return out,err,exitCode
     else:
         results = []
@@ -327,11 +322,6 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
             exitCode = 255
 
     out = err = ''
-
-    # Tcl commands fail on standard error output.
-    if [True for _,_,err,res in results if err]:
-        exitCode = 1
-        out += 'Command has output on stderr!\n\n'
 
     for i,(cmd, cmd_out, cmd_err, res) in enumerate(results):
         out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s for s in cmd.args))
@@ -521,12 +511,14 @@ def executeTclTest(test, litConfig):
     if len(res) == 2:
         return res
 
+    # Test for failure. In addition to the exit code, Tcl commands fail
+    # if there is any standard error output.
     out,err,exitCode = res
     if isXFail:
-        ok = exitCode != 0
+        ok = exitCode != 0 or err
         status = Test.XFAIL if ok else Test.XPASS
     else:
-        ok = exitCode == 0
+        ok = exitCode == 0 and not err
         status = Test.PASS if ok else Test.FAIL
 
     if ok:
