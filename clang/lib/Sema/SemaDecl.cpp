@@ -3731,12 +3731,6 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
         AddOverriddenMethods(Method->getParent(), Method);
     }
 
-    // Additional checks for the destructor; make sure we do this after we
-    // figure out whether the destructor is virtual.
-    if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
-      if (!Destructor->getParent()->isDependentType())
-        CheckDestructor(Destructor);
-
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&
         CheckOverloadedOperatorDeclaration(NewFD))
@@ -4793,9 +4787,13 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
         !hasAnyErrorsInThisFunction())
       DiagnoseInvalidJumps(Body);
 
-    if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
+    if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl)) {
+      if (!Destructor->getParent()->isDependentType())
+        CheckDestructor(Destructor);
+
       MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
                                              Destructor->getParent());
+    }
     
     // If any errors have occurred, clear out any temporaries that may have
     // been leftover. This ensures that these temporaries won't be picked up for

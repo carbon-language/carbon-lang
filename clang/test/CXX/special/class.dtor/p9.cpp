@@ -43,6 +43,30 @@ namespace test1 {
     using A::operator delete;
     using B::operator delete;
 
-    ~C(); // expected-error {{multiple suitable 'operator delete' functions in 'C'}}
+    ~C();
   };
+
+  C::~C() {} // expected-error {{multiple suitable 'operator delete' functions in 'C'}}
+}
+
+// ...at the point of definition of a virtual destructor...
+namespace test2 {
+  struct A {
+    virtual ~A();
+    static void operator delete(void*, const int &);
+  };
+
+  struct B {
+    virtual ~B();
+    static void operator delete(void*, const int &); // expected-note {{declared here}}
+  };
+  B::~B() {} // expected-error {{no suitable member 'operator delete' in 'B'}}
+
+  struct CBase { virtual ~CBase(); };
+  struct C : CBase { // expected-error {{no suitable member 'operator delete' in 'C'}}
+    static void operator delete(void*, const int &); // expected-note {{declared here}}
+  };
+  void test() {
+    C c; // expected-note {{first required here}}
+  }
 }

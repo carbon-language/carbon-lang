@@ -2877,8 +2877,9 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
     ClassDecl->addedConstructor(Context, Constructor);
 }
 
-/// CheckDestructor - Checks a fully-formed destructor for well-formedness, 
-/// issuing any diagnostics required. Returns true on error.
+/// CheckDestructor - Checks a fully-formed destructor definition for
+/// well-formedness, issuing any diagnostics required.  Returns true
+/// on error.
 bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
   CXXRecordDecl *RD = Destructor->getParent();
   
