@@ -942,6 +942,9 @@ protected:
   ///
   llvm::Constant *BuildIvarLayout(const ObjCImplementationDecl *OI,
                                   bool ForStrongLayout);
+  
+  llvm::Constant *BuildIvarLayoutBitmap(bool hasUnion,
+                                        std::string &BitMap);
 
   void BuildAggrIvarRecordLayout(const RecordType *RT,
                                  unsigned int BytePos, bool ForStrongLayout,
@@ -1689,13 +1692,74 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   return CGF.EmitCall(FnInfo, Fn, Return, ActualArgs);
 }
 
+static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
+  if (FQT.isObjCGCStrong())
+    return Qualifiers::Strong;
+  
+  if (FQT.isObjCGCWeak())
+    return Qualifiers::Weak;
+  
+  if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
+    return Qualifiers::Strong;
+  
+  if (const PointerType *PT = FQT->getAs<PointerType>())
+    return GetGCAttrTypeForType(Ctx, PT->getPointeeType());
+  
+  return Qualifiers::GCNone;
+}
+
 llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
               const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &DeclRefs) {
   llvm::Constant *NullPtr = 
     llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
   if (DeclRefs.empty())
     return NullPtr;
-  return NullPtr;
+  SkipIvars.clear();
+  IvarsInfo.clear();
+  unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
+  unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
+  
+  for (size_t i = 0; i < DeclRefs.size(); ++i) {
+    const BlockDeclRefExpr *BDRE = DeclRefs[i];
+    const ValueDecl *VD = BDRE->getDecl();
+    CharUnits Offset = CGF.BlockDecls[VD];
+    uint64_t FieldOffset = Offset.getQuantity();
+    QualType Ty = VD->getType();
+    assert(!Ty->isArrayType() && 
+           "Array block variable should have been caught");
+    if (Ty->isRecordType() || Ty->isUnionType())
+      assert(false && "Aggregate block variable layout NYI");
+    Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), Ty);
+    unsigned FieldSize = CGM.getContext().getTypeSize(Ty);
+    // __block variables are passed by their descriptior address. So, size
+    // must reflect this.
+    if (BDRE->isByRef())
+      FieldSize = WordSizeInBits;
+    if (GCAttr == Qualifiers::Strong || BDRE->isByRef())
+      IvarsInfo.push_back(GC_IVAR(FieldOffset,
+                                  FieldSize / WordSizeInBits));
+    else if (GCAttr == Qualifiers::GCNone || GCAttr == Qualifiers::Weak)
+      SkipIvars.push_back(GC_IVAR(FieldOffset,
+                                  FieldSize / ByteSizeInBits));
+  }
+  
+  if (IvarsInfo.empty())
+    return NullPtr;
+  
+  std::string BitMap;
+  llvm::Constant *C = BuildIvarLayoutBitmap(false, BitMap);
+  if (CGM.getLangOptions().ObjCGCBitmapPrint) {
+    printf("\n block variable layout for block: ");
+    const unsigned char *s = (unsigned char*)BitMap.c_str();
+    for (unsigned i = 0; i < BitMap.size(); i++)
+      if (!(s[i] & 0xf0))
+        printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
+      else
+        printf("0x%x%s",  s[i], s[i] != 0 ? ", " : "");
+    printf("\n");
+  }
+  
+  return C;
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,
@@ -3501,22 +3565,6 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
   return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
 }
 
-static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
-  if (FQT.isObjCGCStrong())
-    return Qualifiers::Strong;
-
-  if (FQT.isObjCGCWeak())
-    return Qualifiers::Weak;
-
-  if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
-    return Qualifiers::Strong;
-
-  if (const PointerType *PT = FQT->getAs<PointerType>())
-    return GetGCAttrTypeForType(Ctx, PT->getPointeeType());
-
-  return Qualifiers::GCNone;
-}
-
 void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
                                                 unsigned int BytePos,
                                                 bool ForStrongLayout,
@@ -3680,63 +3728,22 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                                 MaxSkippedUnionIvarSize));
 }
 
-/// BuildIvarLayout - Builds ivar layout bitmap for the class
-/// implementation for the __strong or __weak case.
-/// The layout map displays which words in ivar list must be skipped
-/// and which must be scanned by GC (see below). String is built of bytes.
-/// Each byte is divided up in two nibbles (4-bit each). Left nibble is count
-/// of words to skip and right nibble is count of words to scan. So, each
-/// nibble represents up to 15 workds to skip or scan. Skipping the rest is
-/// represented by a 0x00 byte which also ends the string.
-/// 1. when ForStrongLayout is true, following ivars are scanned:
-/// - id, Class
-/// - object *
-/// - __strong anything
-///
-/// 2. When ForStrongLayout is false, following ivars are scanned:
-/// - __weak anything
-///
-llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
-  const ObjCImplementationDecl *OMD,
-  bool ForStrongLayout) {
-  bool hasUnion = false;
-
+llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(bool hasUnion,
+                                                       std::string& BitMap) {
   unsigned int WordsToScan, WordsToSkip;
   const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
-    return llvm::Constant::getNullValue(PtrTy);
-
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
-  const ObjCInterfaceDecl *OI = OMD->getClassInterface();
-  CGM.getContext().CollectObjCIvars(OI, RecFields);
-
-  // Add this implementations synthesized ivars.
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  CGM.getContext().CollectNonClassIvars(OI, Ivars);
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
-    RecFields.push_back(cast<FieldDecl>(Ivars[k]));
-
-  if (RecFields.empty())
-    return llvm::Constant::getNullValue(PtrTy);
-
-  SkipIvars.clear();
-  IvarsInfo.clear();
-
-  BuildAggrIvarLayout(OMD, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
-  if (IvarsInfo.empty())
-    return llvm::Constant::getNullValue(PtrTy);
-
+  
   // Sort on byte position in case we encounterred a union nested in
   // the ivar list.
   if (hasUnion && !IvarsInfo.empty())
     std::sort(IvarsInfo.begin(), IvarsInfo.end());
   if (hasUnion && !SkipIvars.empty())
     std::sort(SkipIvars.begin(), SkipIvars.end());
-
+  
   // Build the string of skip/scan nibbles
   llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
   unsigned int WordSize =
-    CGM.getTypes().getTargetData().getTypeAllocSize(PtrTy);
+  CGM.getTypes().getTargetData().getTypeAllocSize(PtrTy);
   if (IvarsInfo[0].ivar_bytepos == 0) {
     WordsToSkip = 0;
     WordsToScan = IvarsInfo[0].ivar_size;
@@ -3746,7 +3753,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   }
   for (unsigned int i=1, Last=IvarsInfo.size(); i != Last; i++) {
     unsigned int TailPrevGCObjC =
-      IvarsInfo[i-1].ivar_bytepos + IvarsInfo[i-1].ivar_size * WordSize;
+    IvarsInfo[i-1].ivar_bytepos + IvarsInfo[i-1].ivar_size * WordSize;
     if (IvarsInfo[i].ivar_bytepos == TailPrevGCObjC) {
       // consecutive 'scanned' object pointers.
       WordsToScan += IvarsInfo[i].ivar_size;
@@ -3760,7 +3767,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       SkScan.skip = WordsToSkip;
       SkScan.scan = WordsToScan;
       SkipScanIvars.push_back(SkScan);
-
+      
       // Skip the hole.
       SkScan.skip = (IvarsInfo[i].ivar_bytepos - TailPrevGCObjC) / WordSize;
       SkScan.scan = 0;
@@ -3775,15 +3782,15 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     SkScan.scan = WordsToScan;
     SkipScanIvars.push_back(SkScan);
   }
-
+  
   if (!SkipIvars.empty()) {
     unsigned int LastIndex = SkipIvars.size()-1;
     int LastByteSkipped =
-      SkipIvars[LastIndex].ivar_bytepos + SkipIvars[LastIndex].ivar_size;
+    SkipIvars[LastIndex].ivar_bytepos + SkipIvars[LastIndex].ivar_size;
     LastIndex = IvarsInfo.size()-1;
     int LastByteScanned =
-      IvarsInfo[LastIndex].ivar_bytepos +
-      IvarsInfo[LastIndex].ivar_size * WordSize;
+    IvarsInfo[LastIndex].ivar_bytepos +
+    IvarsInfo[LastIndex].ivar_size * WordSize;
     // Compute number of bytes to skip at the tail end of the last ivar scanned.
     if (LastByteSkipped > LastByteScanned) {
       unsigned int TotalWords = (LastByteSkipped + (WordSize -1)) / WordSize;
@@ -3806,20 +3813,19 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       --SkipScan;
     }
   }
-
+  
   // Generate the string.
-  std::string BitMap;
   for (int i = 0; i <= SkipScan; i++) {
     unsigned char byte;
     unsigned int skip_small = SkipScanIvars[i].skip % 0xf;
     unsigned int scan_small = SkipScanIvars[i].scan % 0xf;
     unsigned int skip_big  = SkipScanIvars[i].skip / 0xf;
     unsigned int scan_big  = SkipScanIvars[i].scan / 0xf;
-
+    
     // first skip big.
     for (unsigned int ix = 0; ix < skip_big; ix++)
       BitMap += (unsigned char)(0xf0);
-
+    
     // next (skip small, scan)
     if (skip_small) {
       byte = skip_small << 4;
@@ -3844,8 +3850,63 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   // null terminate string.
   unsigned char zero = 0;
   BitMap += zero;
+  
+  llvm::GlobalVariable * Entry =
+  CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
+                    llvm::ConstantArray::get(VMContext, BitMap.c_str()),
+                    "__TEXT,__cstring,cstring_literals",
+                    1, true);
+  return getConstantGEP(VMContext, Entry, 0, 0);
+}
 
-  if (CGM.getLangOptions().ObjCGCBitmapPrint) {
+/// BuildIvarLayout - Builds ivar layout bitmap for the class
+/// implementation for the __strong or __weak case.
+/// The layout map displays which words in ivar list must be skipped
+/// and which must be scanned by GC (see below). String is built of bytes.
+/// Each byte is divided up in two nibbles (4-bit each). Left nibble is count
+/// of words to skip and right nibble is count of words to scan. So, each
+/// nibble represents up to 15 workds to skip or scan. Skipping the rest is
+/// represented by a 0x00 byte which also ends the string.
+/// 1. when ForStrongLayout is true, following ivars are scanned:
+/// - id, Class
+/// - object *
+/// - __strong anything
+///
+/// 2. When ForStrongLayout is false, following ivars are scanned:
+/// - __weak anything
+///
+llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
+  const ObjCImplementationDecl *OMD,
+  bool ForStrongLayout) {
+  bool hasUnion = false;
+
+  const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
+    return llvm::Constant::getNullValue(PtrTy);
+
+  llvm::SmallVector<FieldDecl*, 32> RecFields;
+  const ObjCInterfaceDecl *OI = OMD->getClassInterface();
+  CGM.getContext().CollectObjCIvars(OI, RecFields);
+
+  // Add this implementations synthesized ivars.
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  CGM.getContext().CollectNonClassIvars(OI, Ivars);
+  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
+    RecFields.push_back(cast<FieldDecl>(Ivars[k]));
+
+  if (RecFields.empty())
+    return llvm::Constant::getNullValue(PtrTy);
+
+  SkipIvars.clear();
+  IvarsInfo.clear();
+
+  BuildAggrIvarLayout(OMD, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
+  if (IvarsInfo.empty())
+    return llvm::Constant::getNullValue(PtrTy);
+  std::string BitMap;
+  llvm::Constant *C = BuildIvarLayoutBitmap(hasUnion, BitMap);
+  
+   if (CGM.getLangOptions().ObjCGCBitmapPrint) {
     printf("\n%s ivar layout for class '%s': ",
            ForStrongLayout ? "strong" : "weak",
            OMD->getClassInterface()->getNameAsCString());
@@ -3857,12 +3918,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
         printf("0x%x%s",  s[i], s[i] != 0 ? ", " : "");
     printf("\n");
   }
-  llvm::GlobalVariable * Entry =
-    CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
-                      llvm::ConstantArray::get(VMContext, BitMap.c_str()),
-                      "__TEXT,__cstring,cstring_literals",
-                      1, true);
-  return getConstantGEP(VMContext, Entry, 0, 0);
+  return C;
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
