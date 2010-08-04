@@ -98,6 +98,7 @@ namespace llvm {
     virtual bool runOnFunction(Function &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     void print(raw_ostream &OS, const Module* = 0) const;
+    Value *computeAllocationCountValue(Value *P, const Type *&Ty) const;
   private:
     Function *FF;
     TargetData *TD;
