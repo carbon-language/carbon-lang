@@ -46,10 +46,16 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     bool RelaxAll) {
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
+  case Triple::Darwin:
+    return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
+  case Triple::MinGW32:
+  case Triple::MinGW64:
+  case Triple::Cygwin:
   case Triple::Win32:
     return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
   default:
-    return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
+    // FIXME: default to ELF.
+    report_fatal_error("object emission not implemented for this target.");
   }
 }
 
