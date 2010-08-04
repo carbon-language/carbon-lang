@@ -5,7 +5,7 @@ This directory contains various tests of llvm-ar and llvm-ranlib to ensure
 compatibility reading other ar(1) formats. It also provides a basic
 functionality test for these tools.
 
-There are four archives stored in CVS with these tests: 
+There are four archives accompanying these tests: 
 
 GNU.a    - constructed on Linux with GNU ar
 MacOSX.a - constructed on Mac OS X with its native BSD4.4 ar
