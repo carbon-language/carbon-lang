@@ -459,15 +459,21 @@ private:
   /// \brief The number of macros de-serialized from the PCH file.
   unsigned NumMacrosRead;
 
+  /// \brief The total number of macros stored in the PCH file.
+  unsigned TotalNumMacros;
+
   /// \brief The number of selectors that have been read.
   unsigned NumSelectorsRead;
 
-  /// \brief The number of times we have looked into the selector table
-  /// and not found anything.
-  unsigned NumSelectorMisses;
+  /// \brief The number of method pool entries that have been read.
+  unsigned NumMethodPoolEntriesRead;
 
-  /// \brief The total number of macros stored in the PCH file.
-  unsigned TotalNumMacros;
+  /// \brief The number of times we have looked up a selector in the method
+  /// pool and not found anything interesting.
+  unsigned NumMethodPoolMisses;
+
+  /// \brief The total number of method pool entries in the selector table.
+  unsigned TotalNumMethodPoolEntries;
 
   /// Number of lexical decl contexts read/total.
   unsigned NumLexicalDeclContextsRead, TotalLexicalDeclContexts;

@@ -1694,9 +1694,11 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
         }
         if (!changed)
           continue;
+      } else if (Data.Instance.Method || Data.Factory.Method) {
+        // A new method pool entry.
+        ++NumTableEntries;
       }
       Generator.insert(S, Data);
-      ++NumTableEntries;
     }
 
     // Create the on-disk hash table in a buffer.

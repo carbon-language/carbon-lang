@@ -421,8 +421,9 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
     Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
     NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
     TotalNumSLocEntries(0), NumStatementsRead(0), TotalNumStatements(0),
-    NumMacrosRead(0), NumSelectorsRead(0), NumSelectorMisses(0),
-    TotalNumMacros(0), NumLexicalDeclContextsRead(0),
+    NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
+    NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
+    TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
     TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
     TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
   RelocatablePCH = false;
@@ -436,7 +437,8 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
     NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
-    NumSelectorsRead(0), NumSelectorMisses(0), TotalNumMacros(0),
+    TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
+    NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0),
     NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
     NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
     NumCurrentElementsDeserializing(0) {
@@ -1662,6 +1664,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
                         F.SelectorLookupTableData + Record[0],
                         F.SelectorLookupTableData,
                         PCHSelectorLookupTrait(*this));
+      TotalNumMethodPoolEntries += Record[1];
       break;
 
     case pch::REFERENCED_SELECTOR_POOL: {
@@ -3092,15 +3095,13 @@ void PCHReader::PrintStats() {
                  NumVisibleDeclContextsRead, TotalVisibleDeclContexts,
                  ((float)NumVisibleDeclContextsRead/TotalVisibleDeclContexts
                   * 100));
-#if 0
-  if (TotalSelectorsInSelector) {
+  if (TotalNumMethodPoolEntries) {
     std::fprintf(stderr, "  %u/%u method pool entries read (%f%%)\n",
-                 NumSelectorSelectorsRead, TotalSelectorsInSelector,
-                 ((float)NumSelectorSelectorsRead/TotalSelectorsInSelector
+                 NumMethodPoolEntriesRead, TotalNumMethodPoolEntries,
+                 ((float)NumMethodPoolEntriesRead/TotalNumMethodPoolEntries
                   * 100));
-    std::fprintf(stderr, "  %u method pool misses\n", NumSelectorMisses);
+    std::fprintf(stderr, "  %u method pool misses\n", NumMethodPoolMisses);
   }
-#endif
   std::fprintf(stderr, "\n");
 }
 
@@ -3222,6 +3223,10 @@ PCHReader::ReadMethodPool(Selector Sel) {
     PCHSelectorLookupTable::iterator Pos = PoolTable->find(Sel);
     if (Pos != PoolTable->end()) {
       ++NumSelectorsRead;
+      // FIXME: Not quite happy with the statistics here. We probably should
+      // disable this tracking when called via LoadSelector.
+      // Also, should entries without methods count as misses?
+      ++NumMethodPoolEntriesRead;
       PCHSelectorLookupTrait::data_type Data = *Pos;
       if (DeserializationListener)
         DeserializationListener->SelectorRead(Data.ID, Sel);
@@ -3229,7 +3234,7 @@ PCHReader::ReadMethodPool(Selector Sel) {
     }
   }
 
-  ++NumSelectorMisses;
+  ++NumMethodPoolMisses;
   return std::pair<ObjCMethodList, ObjCMethodList>();
 }
 
