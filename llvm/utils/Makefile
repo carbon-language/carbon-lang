@@ -16,7 +16,7 @@ EXTRA_DIST := cgiplotNLT.pl check-each-file codegen-diff countloc.sh \
 	      getsrcs.sh importNLT.pl llvmdo llvmgrep llvm-native-gcc \
 	      llvm-native-gxx makellvm NightlyTest.gnuplot NightlyTest.pl \
 	      NightlyTestTemplate.html NLT.schema OldenDataRecover.pl \
-	      parseNLT.pl plotNLT.pl profile.pl RegressionFinder.pl userloc.pl \
+	      parseNLT.pl plotNLT.pl profile.pl \
 	      webNLT.pl vim
 
 include $(LEVEL)/Makefile.common
