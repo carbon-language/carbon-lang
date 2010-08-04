@@ -302,9 +302,9 @@ define void @caller_a(double* %arg_a0,
 ; CHECK:   36 may alias responses (30.0%)
 ; CHECK:   0 must alias responses (0.0%)
 ; CHECK:   Alias Analysis Evaluator Pointer Alias Summary: 70%/30%/0%
-; CHECK:   128 Total ModRef Queries Performed
-; CHECK:   44 no mod/ref responses (34.3%)
+; CHECK:   184 Total ModRef Queries Performed
+; CHECK:   44 no mod/ref responses (23.9%)
 ; CHECK:   0 mod responses (0.0%)
 ; CHECK:   0 ref responses (0.0%)
-; CHECK:   84 mod & ref responses (65.6%)
-; CHECK:   Alias Analysis Evaluator Mod/Ref Summary: 34%/0%/0%/65%
+; CHECK:   140 mod & ref responses (76.0%)
+; CHECK:   Alias Analysis Evaluator Mod/Ref Summary: 23%/0%/0%/76%

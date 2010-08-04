@@ -107,6 +107,15 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
   }
 }
 
+static inline void
+PrintModRefResults(const char *Msg, bool P, CallSite CSA, CallSite CSB,
+                   Module *M) {
+  if (P) {
+    errs() << "  " << Msg << ": " << *CSA.getInstruction()
+           << " <-> " << *CSB.getInstruction() << '\n';
+  }
+}
+
 static inline bool isInterestingPointer(Value *V) {
   return V->getType()->isPointerTy()
       && !isa<ConstantPointerNull>(V);
@@ -205,6 +214,29 @@ bool AAEval::runOnFunction(Function &F) {
         ++ModRef; break;
       default:
         errs() << "Unknown alias query result!\n";
+      }
+    }
+  }
+
+  // Mod/ref alias analysis: compare all pairs of calls
+  for (SetVector<CallSite>::iterator C = CallSites.begin(),
+         Ce = CallSites.end(); C != Ce; ++C) {
+    for (SetVector<CallSite>::iterator D = CallSites.begin(); D != Ce; ++D) {
+      if (D == C)
+        continue;
+      switch (AA.getModRefInfo(*C, *D)) {
+      case AliasAnalysis::NoModRef:
+        PrintModRefResults("NoModRef", PrintNoModRef, *C, *D, F.getParent());
+        ++NoModRef; break;
+      case AliasAnalysis::Mod:
+        PrintModRefResults("     Mod", PrintMod, *C, *D, F.getParent());
+        ++Mod; break;
+      case AliasAnalysis::Ref:
+        PrintModRefResults("     Ref", PrintRef, *C, *D, F.getParent());
+        ++Ref; break;
+      case AliasAnalysis::ModRef:
+        PrintModRefResults("  ModRef", PrintModRef, *C, *D, F.getParent());
+        ++ModRef; break;
       }
     }
   }
