@@ -170,16 +170,17 @@ public:
 //===----------------------------------------------------------------------===//
 
 void GRExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
-                                ExplodedNodeSet &Src, bool isPrevisit) {
+                                ExplodedNodeSet &Src, CallbackKind Kind) {
 
   // Determine if we already have a cached 'CheckersOrdered' vector
-  // specifically tailored for the provided <Stmt kind, isPrevisit>.  This
+  // specifically tailored for the provided <CallbackKind, Stmt kind>.  This
   // can reduce the number of checkers actually called.
   CheckersOrdered *CO = &Checkers;
   llvm::OwningPtr<CheckersOrdered> NewCO;
-  
-  const std::pair<unsigned, unsigned> &K =
-    std::make_pair((unsigned)S->getStmtClass(), isPrevisit ? 1U : 0U);
+
+  // The cache key is made up of the and the callback kind (pre- or post-visit)
+  // and the statement kind.
+  CallbackTag K = GetCallbackTag(Kind, S->getStmtClass());
 
   CheckersOrdered *& CO_Ref = COCache[K];
   
@@ -219,8 +220,8 @@ void GRExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
          NI != NE; ++NI) {
 
-      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag, isPrevisit,
-                        respondsToCallback);
+      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag,
+                        Kind == PreVisitStmtCallback, respondsToCallback);
       
     }
 
@@ -500,15 +501,53 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
 ///  logic for handling assumptions on symbolic values.
 const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
                                            bool assumption) {
-  for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
-        I != E; ++I) {
+  // Determine if we already have a cached 'CheckersOrdered' vector
+  // specifically tailored for processing assumptions.  This
+  // can reduce the number of checkers actually called.
+  CheckersOrdered *CO = &Checkers;
+  llvm::OwningPtr<CheckersOrdered> NewCO;
 
-    if (!state)
-      return NULL;
+  CallbackTag K = GetCallbackTag(ProcessAssumeCallback);
+  CheckersOrdered *& CO_Ref = COCache[K];
 
-    state = I->second->EvalAssume(state, cond, assumption);
+  if (!CO_Ref) {
+    // If we have no previously cached CheckersOrdered vector for this
+    // statement kind, then create one.
+    NewCO.reset(new CheckersOrdered);
+  }
+  else {
+    // Use the already cached set.
+    CO = CO_Ref;
   }
 
+  if (!CO->empty()) {
+    // Let the checkers have a crack at the assume before the transfer functions
+    // get their turn.
+    for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
+          I != E; ++I) {
+
+      // If any checker declares the state infeasible (or if it starts that
+      // way), bail out.
+      if (!state)
+        return NULL;
+
+      Checker *C = I->second;
+      bool respondsToCallback = true;
+
+      state = C->EvalAssume(state, cond, assumption, &respondsToCallback);
+
+      // Check if we're building the cache of checkers that care about Assumes.
+      if (NewCO.get() && respondsToCallback)
+        NewCO->push_back(*I);
+    }
+
+    // If we got through all the checkers, and we built a list of those that
+    // care about Assumes, save it.
+    if (NewCO.get())
+      CO_Ref = NewCO.take();
+  }
+
+  // If the state is infeasible at this point, bail out.
   if (!state)
     return NULL;
 
@@ -1563,7 +1602,7 @@ void GRExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
            ProgramPoint::PostLValueKind);
 
   // Post-visit the BlockExpr.
-  CheckerVisit(BE, Dst, Tmp, false);
+  CheckerVisit(BE, Dst, Tmp, PostVisitStmtCallback);
 }
 
 void GRExprEngine::VisitDeclRefExpr(const DeclRefExpr *Ex, ExplodedNode *Pred,
@@ -1647,7 +1686,7 @@ void GRExprEngine::VisitArraySubscriptExpr(const ArraySubscriptExpr* A,
     Visit(Idx, *I1, Tmp2);     // Evaluate the index.
 
     ExplodedNodeSet Tmp3;
-    CheckerVisit(A, Tmp3, Tmp2, true);
+    CheckerVisit(A, Tmp3, Tmp2, PreVisitStmtCallback);
 
     for (ExplodedNodeSet::iterator I2=Tmp3.begin(),E2=Tmp3.end();I2!=E2; ++I2) {
       const GRState* state = GetState(*I2);
@@ -1974,7 +2013,7 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
     ExplodedNodeSet DstTmp2;
     Visit(Callee, *NI, DstTmp2);
     // Perform the previsit of the CallExpr, storing the results in DstTmp.
-    CheckerVisit(CE, DstTmp, DstTmp2, true);
+    CheckerVisit(CE, DstTmp, DstTmp2, PreVisitStmtCallback);
   }
 
   // Finally, evaluate the function call.  We try each of the checkers
@@ -2029,7 +2068,7 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
   // If the callee returns a reference and we want an rvalue, skip this check
   // and do the load.
   if (!(!asLValue && CalleeReturnsReference(CE))) {
-    CheckerVisit(CE, Dst, DstTmp3, false);
+    CheckerVisit(CE, Dst, DstTmp3, PostVisitStmtCallback);
     return;
   }
 
@@ -2039,7 +2078,7 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
   // FIXME: This conversion doesn't actually happen unless the result
   //  of CallExpr is consumed by another expression.
   ExplodedNodeSet DstTmp4;
-  CheckerVisit(CE, DstTmp4, DstTmp3, false);
+  CheckerVisit(CE, DstTmp4, DstTmp3, PostVisitStmtCallback);
   QualType LoadTy = CE->getType();
 
   static int *ConvertToRvalueTag = 0;
@@ -2283,7 +2322,7 @@ void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
 
   // Now that the arguments are processed, handle the previsits checks.
   ExplodedNodeSet DstPrevisit;
-  CheckerVisit(ME, DstPrevisit, ArgsEvaluated, true);
+  CheckerVisit(ME, DstPrevisit, ArgsEvaluated, PreVisitStmtCallback);
 
   // Proceed with evaluate the message expression.
   ExplodedNodeSet DstEval;
@@ -2386,7 +2425,7 @@ void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
   // the created nodes in 'Dst'.
   if (!(!asLValue && ReceiverReturnsReference(ME))) {
-    CheckerVisit(ME, Dst, DstEval, false);
+    CheckerVisit(ME, Dst, DstEval, PostVisitStmtCallback);
     return;
   }
 
@@ -2396,7 +2435,7 @@ void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
   // FIXME: This conversion doesn't actually happen unless the result
   //  of ObjCMessageExpr is consumed by another expression.
   ExplodedNodeSet DstRValueConvert;
-  CheckerVisit(ME, DstRValueConvert, DstEval, false);
+  CheckerVisit(ME, DstRValueConvert, DstEval, PostVisitStmtCallback);
   QualType LoadTy = ME->getType();
 
   static int *ConvertToRvalueTag = 0;
@@ -2429,7 +2468,7 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     Visit(Ex, Pred, S1);
 
   ExplodedNodeSet S2;
-  CheckerVisit(CastE, S2, S1, true);
+  CheckerVisit(CastE, S2, S1, PreVisitStmtCallback);
 
   // If we are evaluating the cast in an lvalue context, we implicitly want
   // the cast to evaluate to a location.
@@ -2558,7 +2597,7 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
     Tmp.Add(Pred);
 
   ExplodedNodeSet Tmp2;
-  CheckerVisit(DS, Tmp2, Tmp, true);
+  CheckerVisit(DS, Tmp2, Tmp, PreVisitStmtCallback);
 
   for (ExplodedNodeSet::iterator I=Tmp2.begin(), E=Tmp2.end(); I!=E; ++I) {
     ExplodedNode *N = *I;
@@ -3165,7 +3204,7 @@ void GRExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
   }
 
   ExplodedNodeSet CheckedSet;
-  CheckerVisit(RS, CheckedSet, Src, true);
+  CheckerVisit(RS, CheckedSet, Src, PreVisitStmtCallback);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I != E; ++I) {
@@ -3218,7 +3257,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     Visit(RHS, *I1, Tmp2);
 
     ExplodedNodeSet CheckedSet;
-    CheckerVisit(B, CheckedSet, Tmp2, true);
+    CheckerVisit(B, CheckedSet, Tmp2, PreVisitStmtCallback);
 
     // With both the LHS and RHS evaluated, process the operation itself.
 
@@ -3349,7 +3388,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     }
   }
 
-  CheckerVisit(B, Dst, Tmp3, false);
+  CheckerVisit(B, Dst, Tmp3, PostVisitStmtCallback);
 }
 
 //===----------------------------------------------------------------------===//

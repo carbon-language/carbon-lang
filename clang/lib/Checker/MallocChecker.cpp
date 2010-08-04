@@ -75,7 +75,8 @@ public:
   void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
   void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
-  const GRState *EvalAssume(const GRState *state, SVal Cond, bool Assumption);
+  const GRState *EvalAssume(const GRState *state, SVal Cond, bool Assumption,
+                            bool *respondsToCallback);
   void VisitLocation(CheckerContext &C, const Stmt *S, SVal l);
   virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
                             const Stmt *StoreE, SVal location,
@@ -629,7 +630,8 @@ void MallocChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
 }
 
 const GRState *MallocChecker::EvalAssume(const GRState *state, SVal Cond, 
-                                         bool Assumption) {
+                                         bool Assumption,
+                                         bool * /* respondsToCallback */) {
   // If a symblic region is assumed to NULL, set its state to AllocateFailed.
   // FIXME: should also check symbols assumed to non-null.
 

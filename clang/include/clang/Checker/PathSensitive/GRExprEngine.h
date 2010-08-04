@@ -75,10 +75,25 @@ class GRExprEngine : public GRSubEngine {
 
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
 
+  enum CallbackKind {
+    PreVisitStmtCallback,
+    PostVisitStmtCallback,
+    ProcessAssumeCallback
+  };
+
+  typedef uint32_t CallbackTag;
+
+  /// GetCallbackTag - Create a tag for a certain kind of callback. The 'Sub'
+  ///  argument can be used to differentiate callbacks that depend on another
+  ///  value from a small set of possibilities, such as statement classes.
+  static inline CallbackTag GetCallbackTag(CallbackKind K, uint32_t Sub = 0) {
+    assert(Sub == ((Sub << 8) >> 8) && "Tag sub-kind must fit into 24 bits");
+    return K | (Sub << 8);
+  }
+
   typedef llvm::DenseMap<void *, unsigned> CheckerMap;
   typedef std::vector<std::pair<void *, Checker*> > CheckersOrdered;
-  typedef llvm::DenseMap<std::pair<unsigned, unsigned>, CheckersOrdered *>
-          CheckersOrderedCache;
+  typedef llvm::DenseMap<CallbackTag, CheckersOrdered *> CheckersOrderedCache;
   
   /// A registration map from checker tag to the index into the
   ///  ordered checkers vector.
@@ -89,7 +104,7 @@ class GRExprEngine : public GRSubEngine {
   CheckersOrdered Checkers;
 
   /// A map used for caching the checkers that respond to the callback for
-  ///  a particular statement and visitation order.
+  ///  a particular callback tag.
   CheckersOrderedCache COCache;
 
   /// The BugReporter associated with this engine.  It is important that
@@ -258,7 +273,7 @@ public:
   /// CheckerVisit - Dispatcher for performing checker-specific logic
   ///  at specific statements.
   void CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
-                    bool isPrevisit);
+                    CallbackKind Kind);
 
   bool CheckerEvalCall(const CallExpr *CE, 
                        ExplodedNodeSet &Dst, 

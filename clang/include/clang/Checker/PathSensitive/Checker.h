@@ -279,7 +279,8 @@ public:
   }
 
   virtual const GRState *EvalAssume(const GRState *state, SVal Cond, 
-                                    bool Assumption) {
+                                    bool Assumption, bool *respondsToCallback) {
+    *respondsToCallback = false;
     return state;
   }
 
