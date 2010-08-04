@@ -1988,7 +1988,6 @@ for i in `ls ${srcdir}/projects`
 do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
-      CVS) ;;
       sample)       subdirs="$subdirs projects/sample"
     ;;
       privbracket)  subdirs="$subdirs projects/privbracket"
@@ -4691,7 +4690,7 @@ else
 
 fi
 
-if test -d "CVS" -o -d "${srcdir}/CVS" -o -d ".svn" -o -d "${srcdir}/.svn" -o -d ".git" -o -d "${srcdir}/.git"; then
+if test -d ".svn" -o -d "${srcdir}/.svn" -o -d ".git" -o -d "${srcdir}/.git"; then
   cvsbuild="yes"
   optimize="no"
   CVSBUILD=CVSBUILD=1
@@ -11396,7 +11395,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11399 "configure"
+#line 11398 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
