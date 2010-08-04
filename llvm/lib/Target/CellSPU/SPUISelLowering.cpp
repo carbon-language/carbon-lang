@@ -2102,7 +2102,10 @@ static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   SDValue Pointer = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                 DAG.getRegister(SPU::R1, PtrVT),
                                 DAG.getConstant(Idx, PtrVT));
-  SDValue ShufMask = DAG.getNode(SPUISD::SHUFFLE_MASK, dl, VT, Pointer);
+  // widen the mask when dealing with half vectors
+  EVT maskVT = EVT::getVectorVT(*(DAG.getContext()), VT.getVectorElementType(), 
+                                128/ VT.getVectorElementType().getSizeInBits());
+  SDValue ShufMask = DAG.getNode(SPUISD::SHUFFLE_MASK, dl, maskVT, Pointer);
 
   SDValue result =
     DAG.getNode(SPUISD::SHUFB, dl, VT,

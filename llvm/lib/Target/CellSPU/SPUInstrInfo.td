@@ -63,6 +63,7 @@ let canFoldAsLoad = 1 in {
     def v2f64: LoadDFormVec<v2f64>;
 
     def v2i32: LoadDFormVec<v2i32>;
+    def v2f32: LoadDFormVec<v2f32>;
 
     def r128:  LoadDForm<GPRC>;
     def r64:   LoadDForm<R64C>;
@@ -97,6 +98,7 @@ let canFoldAsLoad = 1 in {
     def v2f64: LoadAFormVec<v2f64>;
 
     def v2i32: LoadAFormVec<v2i32>;
+    def v2f32: LoadAFormVec<v2f32>;
 
     def r128:  LoadAForm<GPRC>;
     def r64:   LoadAForm<R64C>;
@@ -131,6 +133,7 @@ let canFoldAsLoad = 1 in {
     def v2f64: LoadXFormVec<v2f64>;
 
     def v2i32: LoadXFormVec<v2i32>;
+    def v2f32: LoadXFormVec<v2f32>;
 
     def r128:  LoadXForm<GPRC>;
     def r64:   LoadXForm<R64C>;
@@ -181,6 +184,7 @@ multiclass StoreDForms
   def v2f64: StoreDFormVec<v2f64>;
 
   def v2i32: StoreDFormVec<v2i32>;
+  def v2f32: StoreDFormVec<v2f32>;
 
   def r128:  StoreDForm<GPRC>;
   def r64:   StoreDForm<R64C>;
@@ -213,6 +217,7 @@ multiclass StoreAForms
   def v2f64: StoreAFormVec<v2f64>;
 
   def v2i32: StoreAFormVec<v2i32>;
+  def v2f32: StoreAFormVec<v2f32>;
 
   def r128:  StoreAForm<GPRC>;
   def r64:   StoreAForm<R64C>;
@@ -247,6 +252,7 @@ multiclass StoreXForms
   def v2f64: StoreXFormVec<v2f64>;
 
   def v2i32: StoreXFormVec<v2i32>;
+  def v2f32: StoreXFormVec<v2f32>;
 
   def r128:  StoreXForm<GPRC>;
   def r64:   StoreXForm<R64C>;

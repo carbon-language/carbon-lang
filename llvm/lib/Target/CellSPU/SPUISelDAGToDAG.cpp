@@ -607,7 +607,8 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
     return true;
   } else if (Opc == ISD::Register 
            ||Opc == ISD::CopyFromReg 
-           ||Opc == ISD::UNDEF) {
+           ||Opc == ISD::UNDEF
+           ||Opc == ISD::Constant) {
     unsigned OpOpc = Op->getOpcode();
 
     if (OpOpc == ISD::STORE || OpOpc == ISD::LOAD) {

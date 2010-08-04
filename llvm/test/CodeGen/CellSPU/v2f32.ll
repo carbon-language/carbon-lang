@@ -42,4 +42,22 @@ define %vec @test_splat(float %param ) {
   ret %vec %rv
 }
 
+define void @test_store(%vec %val, %vec* %ptr){
+
+;CHECK: stqd 
+  store %vec undef, %vec* null
+
+;CHECK: stqd $3, 0($4)
+;CHECK: bi $lr
+  store %vec %val, %vec* %ptr
+  ret void
+}
+
+define %vec @test_insert(){
+;CHECK: cwd
+;CHECK: shufb $3
+  %rv = insertelement %vec undef, float 0.0e+00, i32 undef
+;CHECK: bi $lr
+  ret %vec %rv
+}
 

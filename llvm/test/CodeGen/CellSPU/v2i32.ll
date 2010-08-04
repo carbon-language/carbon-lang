@@ -55,3 +55,10 @@ define i32 @test_extract() {
   ret i32 %rv
 }
 
+define void @test_store( %vec %val, %vec* %ptr)
+{
+;CHECK: stqd $3, 0($4)
+;CHECK: bi $lr
+  store %vec %val, %vec* %ptr
+  ret void
+}
