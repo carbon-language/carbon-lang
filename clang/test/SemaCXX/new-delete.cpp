@@ -321,3 +321,14 @@ namespace Instantiate {
     delete xi;
   }
 }
+
+namespace PR7810 {
+  struct X {
+    // cv is ignored in arguments
+    static void operator delete(void *const);
+  };
+  struct Y {
+    // cv is ignored in arguments
+    static void operator delete(void *volatile);
+  };
+}

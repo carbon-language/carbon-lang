@@ -5627,18 +5627,6 @@ CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
                                  diag::err_operator_delete_param_type))
     return true;
 
-  QualType FirstParamType = FnDecl->getParamDecl(0)->getType();
-  if (FirstParamType->isDependentType())
-    return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_delete_dependent_param_type)
-    << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
-
-  if (SemaRef.Context.getCanonicalType(FirstParamType) != 
-      SemaRef.Context.VoidPtrTy)
-    return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_delete_param_type)
-      << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
-  
   return false;
 }
 
