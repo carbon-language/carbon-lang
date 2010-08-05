@@ -2207,6 +2207,20 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   RecordData UnusedStaticFuncs;
   for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i)
     AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
+  
+  RecordData WeakUndeclaredIdentifiers;
+  if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
+    WeakUndeclaredIdentifiers.push_back(
+                                      SemaRef.WeakUndeclaredIdentifiers.size());
+    for (llvm::DenseMap<IdentifierInfo*,Sema::WeakInfo>::iterator
+         I = SemaRef.WeakUndeclaredIdentifiers.begin(),
+         E = SemaRef.WeakUndeclaredIdentifiers.end(); I != E; ++I) {
+      AddIdentifierRef(I->first, WeakUndeclaredIdentifiers);
+      AddIdentifierRef(I->second.getAlias(), WeakUndeclaredIdentifiers);
+      AddSourceLocation(I->second.getLocation(), WeakUndeclaredIdentifiers);
+      WeakUndeclaredIdentifiers.push_back(I->second.getUsed());
+    }
+  }
 
   // Build a record containing all of the locally-scoped external
   // declarations in this header file. Generally, this record will be
@@ -2310,6 +2324,11 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing unused static functions.
   if (!UnusedStaticFuncs.empty())
     Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
+
+  // Write the record containing weak undeclared identifiers.
+  if (!WeakUndeclaredIdentifiers.empty())
+    Stream.EmitRecord(pch::WEAK_UNDECLARED_IDENTIFIERS,
+                      WeakUndeclaredIdentifiers);
 
   // Write the record containing locally-scoped external definitions.
   if (!LocallyScopedExternalDecls.empty())

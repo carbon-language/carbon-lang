@@ -1642,6 +1642,15 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
                                  Record.begin(), Record.end());
       break;
 
+    case pch::WEAK_UNDECLARED_IDENTIFIERS:
+      // Optimization for the first block.
+      if (WeakUndeclaredIdentifiers.empty())
+        WeakUndeclaredIdentifiers.swap(Record);
+      else
+        WeakUndeclaredIdentifiers.insert(WeakUndeclaredIdentifiers.end(),
+                                         Record.begin(), Record.end());
+      break;
+
     case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
       // Optimization for the first block.
       if (LocallyScopedExternalDecls.empty())
@@ -3129,6 +3138,21 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = UnusedStaticFuncs.size(); I != N; ++I) {
     FunctionDecl *FD = cast<FunctionDecl>(GetDecl(UnusedStaticFuncs[I]));
     SemaObj->UnusedStaticFuncs.push_back(FD);
+  }
+
+  // If there were any weak undeclared identifiers, deserialize them and add to
+  // Sema's list of weak undeclared identifiers.
+  if (!WeakUndeclaredIdentifiers.empty()) {
+    unsigned Idx = 0;
+    for (unsigned I = 0, N = WeakUndeclaredIdentifiers[Idx++]; I != N; ++I) {
+      IdentifierInfo *WeakId = GetIdentifierInfo(WeakUndeclaredIdentifiers,Idx);
+      IdentifierInfo *AliasId=GetIdentifierInfo(WeakUndeclaredIdentifiers,Idx);
+      SourceLocation Loc = ReadSourceLocation(WeakUndeclaredIdentifiers, Idx);
+      bool Used = WeakUndeclaredIdentifiers[Idx++];
+      Sema::WeakInfo WI(AliasId, Loc);
+      WI.setUsed(Used);
+      SemaObj->WeakUndeclaredIdentifiers.insert(std::make_pair(WeakId, WI));
+    }
   }
 
   // If there were any locally-scoped external declarations,

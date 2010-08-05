@@ -379,6 +379,9 @@ private:
   /// \brief The set of unused static functions stored in the the PCH
   /// file.
   llvm::SmallVector<uint64_t, 16> UnusedStaticFuncs;
+  
+  /// \brief The set of weak undeclared identifiers stored in the the PCH file.
+  llvm::SmallVector<uint64_t, 64> WeakUndeclaredIdentifiers;
 
   /// \brief The set of locally-scoped external declarations stored in
   /// the the PCH file.

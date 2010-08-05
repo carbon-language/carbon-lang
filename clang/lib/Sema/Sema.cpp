@@ -243,6 +243,9 @@ void Sema::ActOnEndOfTranslationUnit() {
                                           true)), 
                           UnusedStaticFuncs.end());
 
+  if (!CompleteTranslationUnit)
+    return;
+
   // Check for #pragma weak identifiers that were never declared
   // FIXME: This will cause diagnostics to be emitted in a non-determinstic
   // order!  Iterating over a densemap like this is bad.
@@ -254,9 +257,6 @@ void Sema::ActOnEndOfTranslationUnit() {
     Diag(I->second.getLocation(), diag::warn_weak_identifier_undeclared)
       << I->first;
   }
-
-  if (!CompleteTranslationUnit)
-    return;
 
   // C99 6.9.2p2:
   //   A declaration of an identifier for an object that has file

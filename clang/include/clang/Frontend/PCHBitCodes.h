@@ -250,7 +250,10 @@ namespace clang {
       REDECLS_UPDATE_LATEST = 29,
 
       /// \brief Record code for declarations that Sema keeps references of.
-      SEMA_DECL_REFS = 30
+      SEMA_DECL_REFS = 30,
+
+      /// \brief Record code for weak undeclared identifiers.
+      WEAK_UNDECLARED_IDENTIFIERS = 31
     };
 
     /// \brief Record types used within a source manager block.
