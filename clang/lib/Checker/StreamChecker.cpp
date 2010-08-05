@@ -373,7 +373,10 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
   assert(Sym);
   
   const StreamState *SS = state->get<StreamState>(Sym);
-  assert(SS);
+
+  // If the file stream is not tracked, return.
+  if (!SS)
+    return state;
   
   // Check: Double close a File Descriptor could cause undefined behaviour.
   // Conforming to man-pages
