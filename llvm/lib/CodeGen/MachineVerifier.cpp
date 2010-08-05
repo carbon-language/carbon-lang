@@ -245,12 +245,13 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   TRI = TM->getRegisterInfo();
   MRI = &MF.getRegInfo();
 
+  LiveVars = NULL;
+  LiveInts = NULL;
   if (PASS) {
-    LiveVars = PASS->getAnalysisIfAvailable<LiveVariables>();
     LiveInts = PASS->getAnalysisIfAvailable<LiveIntervals>();
-  } else {
-    LiveVars = NULL;
-    LiveInts = NULL;
+    // We don't want to verify LiveVariables if LiveIntervals is available.
+    if (!LiveInts)
+      LiveVars = PASS->getAnalysisIfAvailable<LiveVariables>();
   }
 
   visitMachineFunctionBefore();
@@ -576,16 +577,16 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       } else
         isKill = MO->isKill();
 
-      if (isKill) {
+      if (isKill)
         addRegWithSubRegs(regsKilled, Reg);
 
-        // Check that LiveVars knows this kill
-        if (LiveVars && TargetRegisterInfo::isVirtualRegister(Reg)) {
-          LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
-          if (std::find(VI.Kills.begin(),
-                        VI.Kills.end(), MI) == VI.Kills.end())
-            report("Kill missing from LiveVariables", MO, MONum);
-        }
+      // Check that LiveVars knows this kill.
+      if (LiveVars && TargetRegisterInfo::isVirtualRegister(Reg) &&
+          MO->isKill()) {
+        LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
+        if (std::find(VI.Kills.begin(),
+                      VI.Kills.end(), MI) == VI.Kills.end())
+          report("Kill missing from LiveVariables", MO, MONum);
       }
 
       // Check LiveInts liveness and kill.
