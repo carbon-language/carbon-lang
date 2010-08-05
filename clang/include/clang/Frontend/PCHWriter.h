@@ -22,6 +22,7 @@
 #include "clang/Frontend/PCHDeserializationListener.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <map>
@@ -219,6 +220,13 @@ private:
   /// record.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
+  /// \brief Namespaces that have received extensions since their PCH form.
+  ///
+  /// Basically, when we're chaining and encountering a namespace, we check if
+  /// its primary namespace comes from the chain. If it does, we add the primary
+  /// to this set, so that we can write out lexical content updates for it.
+  llvm::SmallPtrSet<const NamespaceDecl *, 16> UpdatedNamespaces;
+
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
   llvm::SmallVector<Stmt *, 16> StmtsToEmit;
@@ -390,11 +398,16 @@ public:
   /// \brief Emit a UnresolvedSet structure.
   void AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record);
 
-  /// brief Emit a C++ base specifier.
+  /// \brief Emit a C++ base specifier.
   void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base, RecordData &Record);
 
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);
+
+  /// \brief Mark a namespace as needing an update.
+  void AddUpdatedNamespace(const NamespaceDecl *NS) {
+    UpdatedNamespaces.insert(NS);
+  }
 
   /// \brief Note that the identifier II occurs at the given offset
   /// within the identifier table.

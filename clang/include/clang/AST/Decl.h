@@ -239,7 +239,7 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   // there will be one NamespaceDecl for each declaration.
   // NextNamespace points to the next extended declaration.
   // OrigNamespace points to the original namespace declaration.
-  // OrigNamespace of the first namespace decl points to itself.
+  // OrigNamespace of the first namespace decl points to its anonymous namespace
   NamespaceDecl *NextNamespace;
 
   /// \brief A pointer to either the original namespace definition for
@@ -277,7 +277,7 @@ public:
     return !getIdentifier();
   }
 
-  /// \brief Return the next extended namespace declaration or null if this
+  /// \brief Return the next extended namespace declaration or null if there
   /// is none.
   NamespaceDecl *getNextNamespace() { return NextNamespace; }
   const NamespaceDecl *getNextNamespace() const { return NextNamespace; }

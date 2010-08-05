@@ -600,6 +600,11 @@ void PCHDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   else
     Writer.AddDeclRef(D->getOriginalNamespace(), Record);
   Code = pch::DECL_NAMESPACE;
+
+  if (Writer.hasChain() && !D->isOriginalNamespace() &&
+      D->getOriginalNamespace()->getPCHLevel() > 0) {
+    Writer.AddUpdatedNamespace(D->getOriginalNamespace());
+  }
 }
 
 void PCHDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
