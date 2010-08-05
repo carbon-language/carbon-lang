@@ -943,8 +943,7 @@ protected:
   llvm::Constant *BuildIvarLayout(const ObjCImplementationDecl *OI,
                                   bool ForStrongLayout);
   
-  llvm::Constant *BuildIvarLayoutBitmap(bool hasUnion,
-                                        std::string &BitMap);
+  llvm::Constant *BuildIvarLayoutBitmap(std::string &BitMap);
 
   void BuildAggrIvarRecordLayout(const RecordType *RT,
                                  unsigned int BytePos, bool ForStrongLayout,
@@ -1747,7 +1746,7 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
     return NullPtr;
   
   std::string BitMap;
-  llvm::Constant *C = BuildIvarLayoutBitmap(false, BitMap);
+  llvm::Constant *C = BuildIvarLayoutBitmap(BitMap);
   if (CGM.getLangOptions().ObjCGCBitmapPrint) {
     printf("\n block variable layout for block: ");
     const unsigned char *s = (unsigned char*)BitMap.c_str();
@@ -3728,17 +3727,14 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                                 MaxSkippedUnionIvarSize));
 }
 
-llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(bool hasUnion,
-                                                       std::string& BitMap) {
+/// BuildIvarLayoutBitmap - This routine is the horsework for doing all
+/// the computations and returning the layout bitmap (for ivar or blocks) in
+/// the given argument BitMap string container. Routine reads
+/// two containers, IvarsInfo and SkipIvars which are assumed to be
+/// filled already by the caller.
+llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string& BitMap) {
   unsigned int WordsToScan, WordsToSkip;
   const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-  
-  // Sort on byte position in case we encounterred a union nested in
-  // the ivar list.
-  if (hasUnion && !IvarsInfo.empty())
-    std::sort(IvarsInfo.begin(), IvarsInfo.end());
-  if (hasUnion && !SkipIvars.empty())
-    std::sort(SkipIvars.begin(), SkipIvars.end());
   
   // Build the string of skip/scan nibbles
   llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
@@ -3903,8 +3899,15 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   BuildAggrIvarLayout(OMD, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
   if (IvarsInfo.empty())
     return llvm::Constant::getNullValue(PtrTy);
+  // Sort on byte position in case we encounterred a union nested in
+  // the ivar list.
+  if (hasUnion && !IvarsInfo.empty())
+    std::sort(IvarsInfo.begin(), IvarsInfo.end());
+  if (hasUnion && !SkipIvars.empty())
+    std::sort(SkipIvars.begin(), SkipIvars.end());
+  
   std::string BitMap;
-  llvm::Constant *C = BuildIvarLayoutBitmap(hasUnion, BitMap);
+  llvm::Constant *C = BuildIvarLayoutBitmap(BitMap);
   
    if (CGM.getLangOptions().ObjCGCBitmapPrint) {
     printf("\n%s ivar layout for class '%s': ",
