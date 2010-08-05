@@ -126,26 +126,15 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       // If these two calls do not interfere, look past it.
       switch (AA->getModRefInfo(CS, InstCS)) {
       case AliasAnalysis::NoModRef:
-        // If the two calls don't interact (e.g. InstCS is readnone) keep
-        // scanning.
+        // If the two calls are the same, return InstCS as a Def, so that
+        // CS can be found redundant and eliminated.
+        if (isReadOnlyCall && InstCS.onlyReadsMemory() &&
+            CS.getInstruction()->isIdenticalToWhenDefined(Inst))
+          return MemDepResult::getDef(Inst);
+
+        // Otherwise if the two calls don't interact (e.g. InstCS is readnone)
+        // keep scanning.
         continue;
-      case AliasAnalysis::Ref:
-        // If the two calls read the same memory locations and CS is a readonly
-        // function, then we have two cases: 1) the calls may not interfere with
-        // each other at all.  2) the calls may produce the same value.  In case
-        // #1 we want to ignore the values, in case #2, we want to return Inst
-        // as a Def dependence.  This allows us to CSE in cases like:
-        //   X = strlen(P);
-        //    memchr(...);
-        //   Y = strlen(P);  // Y = X
-        if (isReadOnlyCall) {
-          if (CS.getCalledFunction() != 0 &&
-              CS.getCalledFunction() == InstCS.getCalledFunction())
-            return MemDepResult::getDef(Inst);
-          // Ignore unrelated read/read call dependences.
-          continue;
-        }
-        // FALL THROUGH
       default:
         return MemDepResult::getClobber(Inst);
       }

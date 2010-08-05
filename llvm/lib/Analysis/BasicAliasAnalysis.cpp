@@ -425,8 +425,13 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   ModRefBehavior CS2B = AliasAnalysis::getModRefBehavior(CS2);
   if (CS2B == DoesNotAccessMemory) return NoModRef;
   
-  // If they both only read from memory, just return ref.
+  // If they both only read from memory, there is no dependence.
   if (CS1B == OnlyReadsMemory && CS2B == OnlyReadsMemory)
+    return NoModRef;
+
+  // If CS1 only reads memory, the only dependence on CS2 can be
+  // from CS1 reading memory written by CS2.
+  if (CS1B == OnlyReadsMemory)
     return Ref;
   
   // Otherwise, fall back to NoAA (mod+ref).
