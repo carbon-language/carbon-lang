@@ -460,6 +460,15 @@ typedef enum LanguageType
 } LanguageType;
 
 
+typedef enum AccessType
+{
+    eAccessNone,
+    eAccessPublic,
+    eAccessPrivate,
+    eAccessProtected,
+    eAccessPackage
+} AccessType;
+
 } // namespace lldb
 
 
