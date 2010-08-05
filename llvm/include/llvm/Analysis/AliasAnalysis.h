@@ -43,8 +43,11 @@ class AnalysisUsage;
 class AliasAnalysis {
 protected:
   const TargetData *TD;
+
+private:
   AliasAnalysis *AA;       // Previous Alias Analysis to chain to.
 
+protected:
   /// InitializeAliasAnalysis - Subclasses must call this method to initialize
   /// the AliasAnalysis interface before any other methods are called.  This is
   /// typically called by the run* methods of these subclasses.  This may be
