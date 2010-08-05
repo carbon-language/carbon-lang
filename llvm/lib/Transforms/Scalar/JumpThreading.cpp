@@ -45,7 +45,10 @@ Threshold("jump-threading-threshold",
 
 // Turn on use of LazyValueInfo.
 static cl::opt<bool>
-EnableLVI("enable-jump-threading-lvi", cl::ReallyHidden);
+EnableLVI("enable-jump-threading-lvi",
+          cl::desc("Use LVI for jump threading"),
+          cl::init(false),
+          cl::ReallyHidden);
 
 
 
