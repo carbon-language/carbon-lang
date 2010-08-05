@@ -3,7 +3,7 @@ Test that breakpoint by symbol name works correctly dlopen'ing a dynamic lib.
 """
 
 import os, time
-import unittest
+import unittest2
 import lldb
 import lldbtest
 
@@ -70,4 +70,4 @@ if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
     atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest.main()
+    unittest2.main()

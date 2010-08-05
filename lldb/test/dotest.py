@@ -17,14 +17,14 @@ working directory is searched if nothing is specified on the command line.
 import os
 import sys
 import time
-import unittest
+import unittest2
 
 #
 # Global variables:
 #
 
 # The test suite.
-suite = unittest.TestSuite()
+suite = unittest2.TestSuite()
 
 # Default verbosity is 0.
 verbose = 0
@@ -122,7 +122,7 @@ def visit(prefix, dir, names):
             if not sys.path.count(dir):
                 sys.path.append(dir)
             base = os.path.splitext(name)[0]
-            suite.addTests(unittest.defaultTestLoader.loadTestsFromName(base))
+            suite.addTests(unittest2.defaultTestLoader.loadTestsFromName(base))
 
 
 #
@@ -155,7 +155,7 @@ if ("LLDB_LOG" in os.environ):
     if not res.Succeeded():
         raise Exception('log enable failed (check your LLDB_LOG env variable...')
 
-unittest.TextTestRunner(verbosity=verbose).run(suite)
+unittest2.TextTestRunner(verbosity=verbose).run(suite)
 
 # Add some delay before calling SBDebugger.Terminate().
 time.sleep(1)

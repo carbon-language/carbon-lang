@@ -28,11 +28,11 @@ $
 """
 
 import os
-import unittest
+import unittest2
 import lldb
 import traceback
 
-class TestBase(unittest.TestCase):
+class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 
     # The concrete subclass should override this attribute.
