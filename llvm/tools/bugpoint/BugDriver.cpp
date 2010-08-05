@@ -66,12 +66,12 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
-BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
+BugDriver::BugDriver(const char *toolname, bool find_bugs,
                      unsigned timeout, unsigned memlimit, bool use_valgrind,
                      LLVMContext& ctxt)
   : Context(ctxt), ToolName(toolname), ReferenceOutputFile(OutputFile),
     Program(0), Interpreter(0), SafeInterpreter(0), gcc(0),
-    run_as_child(as_child), run_find_bugs(find_bugs), Timeout(timeout), 
+    run_find_bugs(find_bugs), Timeout(timeout), 
     MemoryLimit(memlimit), UseValgrind(use_valgrind) {}
 
 BugDriver::~BugDriver() {
@@ -119,15 +119,13 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
   Program = ParseInputFile(Filenames[0], Context);
   if (Program == 0) return true;
     
-  if (!run_as_child)
-    outs() << "Read input file      : '" << Filenames[0] << "'\n";
+  outs() << "Read input file      : '" << Filenames[0] << "'\n";
 
   for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
     std::auto_ptr<Module> M(ParseInputFile(Filenames[i], Context));
     if (M.get() == 0) return true;
 
-    if (!run_as_child)
-      outs() << "Linking in input file: '" << Filenames[i] << "'\n";
+    outs() << "Linking in input file: '" << Filenames[i] << "'\n";
     std::string ErrorMessage;
     if (Linker::LinkModules(Program, M.get(), &ErrorMessage)) {
       errs() << ToolName << ": error linking in '" << Filenames[i] << "': "
@@ -136,8 +134,7 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
     }
   }
 
-  if (!run_as_child)
-    outs() << "*** All input ok\n";
+  outs() << "*** All input ok\n";
 
   // All input files read successfully!
   return false;
@@ -149,14 +146,6 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
 /// variables are set up from command line arguments.
 ///
 bool BugDriver::run(std::string &ErrMsg) {
-  // The first thing to do is determine if we're running as a child. If we are,
-  // then what to do is very narrow. This form of invocation is only called
-  // from the runPasses method to actually run those passes in a child process.
-  if (run_as_child) {
-    // Execute the passes
-    return runPassesAsChild(PassesToRun);
-  }
-  
   if (run_find_bugs) {
     // Rearrange the passes and apply them to the program. Repeat this process
     // until the user kills the program or we find a bug.

@@ -29,13 +29,6 @@
 #include "llvm/LinkAllVMCore.h"
 using namespace llvm;
 
-// AsChild - Specifies that this invocation of bugpoint is being generated
-// from a parent process. It is not intended to be used by users so the 
-// option is hidden.
-static cl::opt<bool> 
-AsChild("as-child", cl::desc("Run bugpoint as child process"), 
-        cl::ReallyHidden);
-          
 static cl::opt<bool> 
 FindBugs("find-bugs", cl::desc("Run many different optimization sequences "
                                "on program to find bugs"), cl::init(false));
@@ -123,7 +116,7 @@ int main(int argc, char **argv) {
       MemoryLimit = 100;
   }
 
-  BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit,
+  BugDriver D(argv[0], FindBugs, TimeoutValue, MemoryLimit,
               UseValgrind, Context);
   if (D.addSources(InputFilenames)) return 1;
   
