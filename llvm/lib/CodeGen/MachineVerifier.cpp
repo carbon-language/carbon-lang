@@ -194,7 +194,7 @@ namespace {
     static char ID; // Pass ID, replacement for typeid
 
     MachineVerifierPass()
-      : MachineFunctionPass(&ID) {}
+      : MachineFunctionPass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();

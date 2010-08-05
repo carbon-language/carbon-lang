@@ -34,7 +34,7 @@ class PassRegistry {
   mutable sys::SmartMutex<true> Lock;
   
   /// PassInfoMap - Keep track of the PassInfo object for each registered pass.
-  typedef std::map<intptr_t, const PassInfo*> MapType;
+  typedef std::map<const void*, const PassInfo*> MapType;
   MapType PassInfoMap;
   
   typedef StringMap<const PassInfo*> StringMapType;
@@ -51,14 +51,14 @@ class PassRegistry {
 public:
   static PassRegistry *getPassRegistry();
   
-  const PassInfo *getPassInfo(intptr_t TI) const;
+  const PassInfo *getPassInfo(const void *TI) const;
   const PassInfo *getPassInfo(StringRef Arg) const;
   
   void registerPass(const PassInfo &PI);
   void unregisterPass(const PassInfo &PI);
   
   /// Analysis Group Mechanisms.
-  void registerAnalysisGroup(intptr_t InterfaceID, intptr_t PassID,
+  void registerAnalysisGroup(const void *InterfaceID, const void *PassID,
                              PassInfo& Registeree, bool isDefault);
   
   void enumerateWith(PassRegistrationListener *L);

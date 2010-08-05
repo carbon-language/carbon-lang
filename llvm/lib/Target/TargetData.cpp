@@ -226,13 +226,13 @@ void TargetData::init(StringRef Desc) {
 ///
 /// @note This has to exist, because this is a pass, but it should never be
 /// used.
-TargetData::TargetData() : ImmutablePass(&ID) {
+TargetData::TargetData() : ImmutablePass(ID) {
   report_fatal_error("Bad TargetData ctor used.  "
                     "Tool did not specify a TargetData to use?");
 }
 
 TargetData::TargetData(const Module *M) 
-  : ImmutablePass(&ID) {
+  : ImmutablePass(ID) {
   init(M->getDataLayout());
 }
 

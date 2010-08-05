@@ -35,7 +35,7 @@ namespace {
     ///
     explicit GVExtractorPass(std::vector<GlobalValue*>& GVs, bool deleteS = true,
                              bool relinkCallees = false)
-      : ModulePass(&ID), Named(GVs), deleteStuff(deleteS),
+      : ModulePass(ID), Named(GVs), deleteStuff(deleteS),
         reLink(relinkCallees) {}
 
     bool runOnModule(Module &M) {

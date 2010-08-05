@@ -27,7 +27,7 @@ char MachineDominatorTree::ID = 0;
 static RegisterPass<MachineDominatorTree>
 E("machinedomtree", "MachineDominator Tree Construction", true);
 
-const PassInfo *const llvm::MachineDominatorsID = &E;
+char &llvm::MachineDominatorsID = MachineDominatorTree::ID;
 
 void MachineDominatorTree::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
@@ -41,7 +41,7 @@ bool MachineDominatorTree::runOnMachineFunction(MachineFunction &F) {
 }
 
 MachineDominatorTree::MachineDominatorTree()
-    : MachineFunctionPass(&ID) {
+    : MachineFunctionPass(ID) {
   DT = new DominatorTreeBase<MachineBasicBlock>(false);
 }
 

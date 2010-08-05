@@ -23,7 +23,7 @@ namespace {
 
   public:
     static char ID;
-    NEONPreAllocPass() : MachineFunctionPass(&ID) {}
+    NEONPreAllocPass() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

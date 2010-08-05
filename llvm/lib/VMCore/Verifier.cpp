@@ -72,7 +72,7 @@ namespace {  // Anonymous namespace for class
   struct PreVerifier : public FunctionPass {
     static char ID; // Pass ID, replacement for typeid
 
-    PreVerifier() : FunctionPass(&ID) { }
+    PreVerifier() : FunctionPass(ID) { }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -104,7 +104,7 @@ namespace {  // Anonymous namespace for class
 char PreVerifier::ID = 0;
 static RegisterPass<PreVerifier>
 PreVer("preverify", "Preliminary module verification");
-static const PassInfo *const PreVerifyID = &PreVer;
+char &PreVerifyID = PreVerifier::ID;
 
 namespace {
   class TypeSet : public AbstractTypeUser {
@@ -182,20 +182,20 @@ namespace {
     SmallPtrSet<MDNode *, 32> MDNodes;
 
     Verifier()
-      : FunctionPass(&ID), 
+      : FunctionPass(ID), 
       Broken(false), RealPass(true), action(AbortProcessAction),
       Mod(0), Context(0), DT(0), MessagesStr(Messages) {}
     explicit Verifier(VerifierFailureAction ctn)
-      : FunctionPass(&ID), 
+      : FunctionPass(ID), 
       Broken(false), RealPass(true), action(ctn), Mod(0), Context(0), DT(0),
       MessagesStr(Messages) {}
     explicit Verifier(bool AB)
-      : FunctionPass(&ID), 
+      : FunctionPass(ID), 
       Broken(false), RealPass(true),
       action( AB ? AbortProcessAction : PrintMessageAction), Mod(0),
       Context(0), DT(0), MessagesStr(Messages) {}
     explicit Verifier(DominatorTree &dt)
-      : FunctionPass(&ID), 
+      : FunctionPass(ID), 
       Broken(false), RealPass(false), action(PrintMessageAction), Mod(0),
       Context(0), DT(&dt), MessagesStr(Messages) {}
 

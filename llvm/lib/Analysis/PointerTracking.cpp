@@ -28,7 +28,7 @@
 using namespace llvm;
 
 char PointerTracking::ID = 0;
-PointerTracking::PointerTracking() : FunctionPass(&ID) {}
+PointerTracking::PointerTracking() : FunctionPass(ID) {}
 
 bool PointerTracking::runOnFunction(Function &F) {
   predCache.clear();

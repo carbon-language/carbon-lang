@@ -137,8 +137,8 @@ namespace {
   ///
   struct NoAA : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
-    NoAA() : ImmutablePass(&ID) {}
-    explicit NoAA(void *PID) : ImmutablePass(PID) { }
+    NoAA() : ImmutablePass(ID) {}
+    explicit NoAA(char &PID) : ImmutablePass(PID) { }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     }
@@ -169,8 +169,8 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it should
     /// override this to adjust the this pointer as needed for the specified pass
     /// info.
-    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
-      if (PI->isPassID(&AliasAnalysis::ID))
+    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+      if (PI ==  &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;
     }
@@ -215,7 +215,7 @@ namespace {
   /// derives from the NoAA class.
   struct BasicAliasAnalysis : public NoAA {
     static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : NoAA(&ID) {}
+    BasicAliasAnalysis() : NoAA(ID) {}
 
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size) {
@@ -240,8 +240,8 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it should
     /// override this to adjust the this pointer as needed for the specified pass
     /// info.
-    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
-      if (PI->isPassID(&AliasAnalysis::ID))
+    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+      if (PI == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;
     }

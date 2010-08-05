@@ -31,7 +31,7 @@ class LazyValueInfo : public FunctionPass {
   void operator=(const LazyValueInfo&); // DO NOT IMPLEMENT.
 public:
   static char ID;
-  LazyValueInfo() : FunctionPass(&ID), PImpl(0) {}
+  LazyValueInfo() : FunctionPass(ID), PImpl(0) {}
   ~LazyValueInfo() { assert(PImpl == 0 && "releaseMemory not called"); }
 
   /// Tristate - This is used to return true/false/dunno results.

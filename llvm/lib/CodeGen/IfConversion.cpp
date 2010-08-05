@@ -154,7 +154,7 @@ namespace {
     int FnNum;
   public:
     static char ID;
-    IfConverter() : MachineFunctionPass(&ID), FnNum(-1) {}
+    IfConverter() : MachineFunctionPass(ID), FnNum(-1) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "If Converter"; }

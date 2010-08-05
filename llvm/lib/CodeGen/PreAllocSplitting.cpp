@@ -92,7 +92,7 @@ namespace {
   public:
     static char ID;
     PreAllocSplitting()
-      : MachineFunctionPass(&ID) {}
+      : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -206,7 +206,7 @@ char PreAllocSplitting::ID = 0;
 static RegisterPass<PreAllocSplitting>
 X("pre-alloc-splitting", "Pre-Register Allocation Live Interval Splitting");
 
-const PassInfo *const llvm::PreAllocSplittingID = &X;
+char &llvm::PreAllocSplittingID = PreAllocSplitting::ID;
 
 /// findSpillPoint - Find a gap as far away from the given MI that's suitable
 /// for spilling the current live interval. The index must be before any

@@ -78,7 +78,7 @@ namespace {
   public:
     static char ID;             // Pass identification, replacement for typeid.
     explicit ARMGlobalMerge(const TargetLowering *tli)
-      : FunctionPass(&ID), TLI(tli) {}
+      : FunctionPass(ID), TLI(tli) {}
 
     virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function& F);

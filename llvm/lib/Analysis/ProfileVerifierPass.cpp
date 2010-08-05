@@ -59,10 +59,10 @@ namespace llvm {
   public:
     static char ID; // Class identification, replacement for typeinfo
 
-    explicit ProfileVerifierPassT () : FunctionPass(&ID) {
+    explicit ProfileVerifierPassT () : FunctionPass(ID) {
       DisableAssertions = ProfileVerifierDisableAssertions;
     }
-    explicit ProfileVerifierPassT (bool da) : FunctionPass(&ID), 
+    explicit ProfileVerifierPassT (bool da) : FunctionPass(ID), 
                                               DisableAssertions(da) {
     }
 

@@ -33,7 +33,7 @@ STATISTIC(NumRemoved, "Number of instructions removed");
 namespace {
   struct ADCE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    ADCE() : FunctionPass(&ID) {}
+    ADCE() : FunctionPass(ID) {}
     
     virtual bool runOnFunction(Function& F);
     

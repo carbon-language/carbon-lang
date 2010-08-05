@@ -49,7 +49,7 @@ namespace {
 class ABCD : public FunctionPass {
  public:
   static char ID;  // Pass identification, replacement for typeid.
-  ABCD() : FunctionPass(&ID) {}
+  ABCD() : FunctionPass(ID) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<SSI>();

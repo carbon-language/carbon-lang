@@ -1524,7 +1524,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
 namespace {
   struct MSAH : public MachineFunctionPass {
     static char ID;
-    MSAH() : MachineFunctionPass(&ID) {}
+    MSAH() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       const X86TargetMachine *TM =

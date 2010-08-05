@@ -31,8 +31,7 @@ class MachineFunction;
 /// override runOnMachineFunction.
 class MachineFunctionPass : public FunctionPass {
 protected:
-  explicit MachineFunctionPass(intptr_t ID) : FunctionPass(ID) {}
-  explicit MachineFunctionPass(void *ID) : FunctionPass(ID) {}
+  explicit MachineFunctionPass(char &ID) : FunctionPass(ID) {}
 
   /// runOnMachineFunction - This method must be overloaded to perform the
   /// desired machine code transformation or analysis.

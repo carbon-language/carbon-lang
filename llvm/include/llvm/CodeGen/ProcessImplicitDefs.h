@@ -31,7 +31,7 @@ namespace llvm {
   public:
     static char ID;
 
-    ProcessImplicitDefs() : MachineFunctionPass(&ID) {}
+    ProcessImplicitDefs() : MachineFunctionPass(ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &au) const;
 

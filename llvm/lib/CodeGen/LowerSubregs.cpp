@@ -36,7 +36,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerSubregsInstructionPass() : MachineFunctionPass(&ID) {}
+    LowerSubregsInstructionPass() : MachineFunctionPass(ID) {}
     
     const char *getPassName() const {
       return "Subregister lowering instruction pass";

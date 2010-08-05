@@ -399,7 +399,7 @@ INITIALIZE_PASS(SSI, "ssi",
 namespace {
   struct SSIEverything : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    SSIEverything() : FunctionPass(&ID) {}
+    SSIEverything() : FunctionPass(ID) {}
 
     bool runOnFunction(Function &F);
 

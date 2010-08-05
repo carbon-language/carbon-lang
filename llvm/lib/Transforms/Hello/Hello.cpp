@@ -25,7 +25,7 @@ namespace {
   // Hello - The first implementation, without getAnalysisUsage.
   struct Hello : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    Hello() : FunctionPass(&ID) {}
+    Hello() : FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F) {
       ++HelloCounter;
@@ -43,7 +43,7 @@ namespace {
   // Hello2 - The second implementation with getAnalysisUsage implemented.
   struct Hello2 : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    Hello2() : FunctionPass(&ID) {}
+    Hello2() : FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F) {
       ++HelloCounter;

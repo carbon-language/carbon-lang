@@ -50,7 +50,7 @@ INITIALIZE_PASS(MemoryDependenceAnalysis, "memdep",
                 "Memory Dependence Analysis", false, true);
 
 MemoryDependenceAnalysis::MemoryDependenceAnalysis()
-: FunctionPass(&ID), PredCache(0) {
+: FunctionPass(ID), PredCache(0) {
 }
 MemoryDependenceAnalysis::~MemoryDependenceAnalysis() {
 }

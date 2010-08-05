@@ -121,7 +121,7 @@ namespace {
 struct RegionViewer
   : public DOTGraphTraitsViewer<RegionInfo, false> {
   static char ID;
-  RegionViewer() : DOTGraphTraitsViewer<RegionInfo, false>("reg", &ID){}
+  RegionViewer() : DOTGraphTraitsViewer<RegionInfo, false>("reg", ID){}
 };
 
 char RegionViewer::ID = 0;
@@ -131,7 +131,7 @@ INITIALIZE_PASS(RegionViewer, "view-regions", "View regions of function",
 struct RegionOnlyViewer
   : public DOTGraphTraitsViewer<RegionInfo, true> {
   static char ID;
-  RegionOnlyViewer() : DOTGraphTraitsViewer<RegionInfo, true>("regonly", &ID){}
+  RegionOnlyViewer() : DOTGraphTraitsViewer<RegionInfo, true>("regonly", ID){}
 };
 
 char RegionOnlyViewer::ID = 0;
@@ -143,7 +143,7 @@ struct RegionPrinter
   : public DOTGraphTraitsPrinter<RegionInfo, false> {
   static char ID;
   RegionPrinter() :
-    DOTGraphTraitsPrinter<RegionInfo, false>("reg", &ID) {}
+    DOTGraphTraitsPrinter<RegionInfo, false>("reg", ID) {}
 };
 } //end anonymous namespace
 
@@ -157,7 +157,7 @@ struct RegionOnlyPrinter
   : public DOTGraphTraitsPrinter<RegionInfo, true> {
   static char ID;
   RegionOnlyPrinter() :
-    DOTGraphTraitsPrinter<RegionInfo, true>("reg", &ID) {}
+    DOTGraphTraitsPrinter<RegionInfo, true>("reg", ID) {}
 };
 
 }

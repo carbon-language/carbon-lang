@@ -36,7 +36,7 @@ namespace {
 
   public:
     static char ID;
-    CodePlacementOpt() : MachineFunctionPass(&ID) {}
+    CodePlacementOpt() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const {

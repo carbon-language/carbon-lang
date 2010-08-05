@@ -90,7 +90,8 @@ namespace {
     AddToDriver(BugDriver &_D) : D(_D) {}
     
     virtual void add(Pass *P) {
-      const PassInfo *PI = P->getPassInfo();
+      const void *ID = P->getPassID();
+      const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
       D.addPasses(&PI, &PI + 1);
     }
   };

@@ -32,7 +32,7 @@ namespace {
     const TargetData *TD;
   public:
     static char ID; // Pass identification
-    SimplifyHalfPowrLibCalls() : FunctionPass(&ID) {}
+    SimplifyHalfPowrLibCalls() : FunctionPass(ID) {}
 
     bool runOnFunction(Function &F);
 

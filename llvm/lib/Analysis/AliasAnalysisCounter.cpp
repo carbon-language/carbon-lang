@@ -34,7 +34,7 @@ namespace {
     Module *M;
   public:
     static char ID; // Class identification, replacement for typeinfo
-    AliasAnalysisCounter() : ModulePass(&ID) {
+    AliasAnalysisCounter() : ModulePass(ID) {
       No = May = Must = 0;
       NoMR = JustRef = JustMod = MR = 0;
     }
@@ -87,8 +87,8 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
-      if (PI->isPassID(&AliasAnalysis::ID))
+    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+      if (PI == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;
     }

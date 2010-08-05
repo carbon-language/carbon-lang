@@ -33,8 +33,7 @@ class CallGraphSCC;
   
 class CallGraphSCCPass : public Pass {
 public:
-  explicit CallGraphSCCPass(intptr_t pid) : Pass(PT_CallGraphSCC, pid) {}
-  explicit CallGraphSCCPass(void *pid) : Pass(PT_CallGraphSCC, pid) {}
+  explicit CallGraphSCCPass(char &pid) : Pass(PT_CallGraphSCC, pid) {}
 
   /// createPrinterPass - Get a pass that prints the Module
   /// corresponding to a CallGraph.

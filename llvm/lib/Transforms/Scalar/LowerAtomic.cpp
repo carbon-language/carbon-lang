@@ -138,7 +138,7 @@ bool LowerAtomicIntrinsic(CallInst *CI) {
 
 struct LowerAtomic : public BasicBlockPass {
   static char ID;
-  LowerAtomic() : BasicBlockPass(&ID) {}
+  LowerAtomic() : BasicBlockPass(ID) {}
   bool runOnBasicBlock(BasicBlock &BB) {
     bool Changed = false;
     for (BasicBlock::iterator DI = BB.begin(), DE = BB.end(); DI != DE; ) {

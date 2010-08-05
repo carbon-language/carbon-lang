@@ -51,7 +51,7 @@ STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 namespace {
   struct SROA : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    explicit SROA(signed T = -1) : FunctionPass(&ID) {
+    explicit SROA(signed T = -1) : FunctionPass(ID) {
       if (T == -1)
         SRThreshold = 128;
       else

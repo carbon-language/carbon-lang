@@ -73,7 +73,7 @@ namespace {
   public:
     static char ID;
     CBackendNameAllUsedStructsAndMergeFunctions() 
-      : ModulePass(&ID) {}
+      : ModulePass(ID) {}
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
     }
@@ -110,7 +110,7 @@ namespace {
   public:
     static char ID;
     explicit CWriter(formatted_raw_ostream &o)
-      : FunctionPass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+      : FunctionPass(ID), Out(o), IL(0), Mang(0), LI(0), 
         TheModule(0), TAsm(0), TCtx(0), TD(0), OpaqueCounter(0),
         NextAnonValueNumber(0) {
       FPCounter = 0;

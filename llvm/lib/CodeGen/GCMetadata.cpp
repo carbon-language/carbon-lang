@@ -30,8 +30,8 @@ namespace {
     raw_ostream &OS;
     
   public:
-    Printer() : FunctionPass(&ID), OS(errs()) {}
-    explicit Printer(raw_ostream &OS) : FunctionPass(&ID), OS(OS) {}
+    Printer() : FunctionPass(ID), OS(errs()) {}
+    explicit Printer(raw_ostream &OS) : FunctionPass(ID), OS(OS) {}
 
     
     const char *getPassName() const;
@@ -70,7 +70,7 @@ GCFunctionInfo::~GCFunctionInfo() {}
 char GCModuleInfo::ID = 0;
 
 GCModuleInfo::GCModuleInfo()
-  : ImmutablePass(&ID) {}
+  : ImmutablePass(ID) {}
 
 GCModuleInfo::~GCModuleInfo() {
   clear();
@@ -189,7 +189,7 @@ FunctionPass *llvm::createGCInfoDeleter() {
   return new Deleter();
 }
 
-Deleter::Deleter() : FunctionPass(&ID) {}
+Deleter::Deleter() : FunctionPass(ID) {}
 
 const char *Deleter::getPassName() const {
   return "Delete Garbage Collector Information";

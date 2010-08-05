@@ -57,7 +57,7 @@ STATISTIC(NumSTRD2STR,  "Number of strd instructions turned back into str's");
 namespace {
   struct ARMLoadStoreOpt : public MachineFunctionPass {
     static char ID;
-    ARMLoadStoreOpt() : MachineFunctionPass(&ID) {}
+    ARMLoadStoreOpt() : MachineFunctionPass(ID) {}
 
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
@@ -1268,7 +1268,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
 namespace {
   struct ARMPreAllocLoadStoreOpt : public MachineFunctionPass{
     static char ID;
-    ARMPreAllocLoadStoreOpt() : MachineFunctionPass(&ID) {}
+    ARMPreAllocLoadStoreOpt() : MachineFunctionPass(ID) {}
 
     const TargetData *TD;
     const TargetInstrInfo *TII;

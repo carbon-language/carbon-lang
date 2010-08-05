@@ -30,9 +30,9 @@ private:
 
 public:
   static char ID;
-  PrintLoopPass() : LoopPass(&ID), Out(dbgs()) {}
+  PrintLoopPass() : LoopPass(ID), Out(dbgs()) {}
   PrintLoopPass(const std::string &B, raw_ostream &o)
-      : LoopPass(&ID), Banner(B), Out(o) {}
+      : LoopPass(ID), Banner(B), Out(o) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -59,7 +59,7 @@ char PrintLoopPass::ID = 0;
 char LPPassManager::ID = 0;
 
 LPPassManager::LPPassManager(int Depth) 
-  : FunctionPass(&ID), PMDataManager(Depth) { 
+  : FunctionPass(ID), PMDataManager(Depth) { 
   skipThisLoop = false;
   redoThisLoop = false;
   LI = NULL;

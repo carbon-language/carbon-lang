@@ -35,7 +35,7 @@ namespace {
   //
   struct DeadInstElimination : public BasicBlockPass {
     static char ID; // Pass identification, replacement for typeid
-    DeadInstElimination() : BasicBlockPass(&ID) {}
+    DeadInstElimination() : BasicBlockPass(ID) {}
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
       for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
@@ -70,7 +70,7 @@ namespace {
   //
   struct DCE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    DCE() : FunctionPass(&ID) {}
+    DCE() : FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F);
 
