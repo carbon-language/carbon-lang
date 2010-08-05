@@ -860,9 +860,9 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //        worth the effort and added fragility?
   bool BigStack =
     (RS && (estimateStackSize(MF) + (hasFP(MF) ? 4:0) >=
-            estimateRSStackSizeLimit(MF))
-     || MFI->hasVarSizedObjects()
-     || (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF)));
+            estimateRSStackSizeLimit(MF)))
+    || MFI->hasVarSizedObjects()
+    || (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || cannotEliminateFrame(MF)) {
