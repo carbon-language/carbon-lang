@@ -65,11 +65,14 @@ bool clang::containsStaticLocal(const Stmt *S) {
   return false;
 }
 
-// Recursively find any substatements containing __builtin_offset_of
+// Recursively find any substatements containing __builtin_offsetof
 bool clang::containsBuiltinOffsetOf(const Stmt *S) {
   const UnaryOperator *UO = dyn_cast<UnaryOperator>(S);
 
   if (UO && UO->getOpcode() == UnaryOperator::OffsetOf)
+    return true;
+
+  if (isa<OffsetOfExpr>(S))
     return true;
 
   for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
