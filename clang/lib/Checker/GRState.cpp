@@ -69,15 +69,15 @@ const GRState *GRStateManager::MarshalState(const GRState *state,
 }
 
 const GRState *GRState::unbindLoc(Loc LV) const {
+  assert(!isa<loc::MemRegionVal>(LV) && "Use InvalidateRegion instead.");
+
   Store OldStore = getStore();
   Store NewStore = getStateManager().StoreMgr->Remove(OldStore, LV);
 
   if (NewStore == OldStore)
     return this;
 
-  GRState NewSt = *this;
-  NewSt.St = NewStore;
-  return getStateManager().getPersistentState(NewSt);
+  return makeWithStore(NewStore);
 }
 
 SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
