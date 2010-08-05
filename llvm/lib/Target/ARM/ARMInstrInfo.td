@@ -1673,6 +1673,14 @@ def RSCri : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                  Requires<[IsARM]> {
     let Inst{25} = 1;
 }
+// The reg/reg form is only defined for the disassembler; for codegen it is
+// equivalent to SUBrr.
+def RSCrr : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                 DPFrm, IIC_iALUr, "rsc", "\t$dst, $a, $b",
+                 [/* For disassembly only; pattern left blank */]> {
+    let Inst{25} = 0;
+    let Inst{11-4} = 0b00000000;
+}
 def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                  DPSoRegFrm, IIC_iALUsr, "rsc", "\t$dst, $a, $b",
                  [(set GPR:$dst, (sube_dead_carry so_reg:$b, GPR:$a))]>,
