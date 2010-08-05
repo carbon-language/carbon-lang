@@ -3938,7 +3938,8 @@ let Defs = [ESP] in
 def Int_MemBarrierNoSSE  : I<0x09, MRM1r, (outs), (ins GR32:$zero),
                            "lock\n\t"
                            "or{l}\t{$zero, (%esp)|(%esp), $zero}",
-                           [(X86MemBarrierNoSSE GR32:$zero)]>, LOCK;
+                           [(X86MemBarrierNoSSE GR32:$zero)]>,
+ 													 Requires<[In32BitMode]>, LOCK;
 }
 
 // Atomic swap. These are just normal xchg instructions. But since a memory
