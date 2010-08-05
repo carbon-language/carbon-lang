@@ -24,7 +24,6 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
@@ -65,10 +64,11 @@ class LVILatticeVal {
   
   /// Val: This stores the current lattice value along with the Constant* for
   /// the constant if this is a 'constant' or 'notconstant' value.
-  PointerIntPair<Constant *, 2, LatticeValueTy> Val;
+  LatticeValueTy Tag;
+  Constant *Val;
   
 public:
-  LVILatticeVal() : Val(0, undefined) {}
+  LVILatticeVal() : Tag(undefined), Val(0) {}
 
   static LVILatticeVal get(Constant *C) {
     LVILatticeVal Res;
@@ -81,26 +81,26 @@ public:
     return Res;
   }
   
-  bool isUndefined() const   { return Val.getInt() == undefined; }
-  bool isConstant() const    { return Val.getInt() == constant; }
-  bool isNotConstant() const { return Val.getInt() == notconstant; }
-  bool isOverdefined() const { return Val.getInt() == overdefined; }
+  bool isUndefined() const   { return Tag == undefined; }
+  bool isConstant() const    { return Tag == constant; }
+  bool isNotConstant() const { return Tag == notconstant; }
+  bool isOverdefined() const { return Tag == overdefined; }
   
   Constant *getConstant() const {
     assert(isConstant() && "Cannot get the constant of a non-constant!");
-    return Val.getPointer();
+    return Val;
   }
   
   Constant *getNotConstant() const {
     assert(isNotConstant() && "Cannot get the constant of a non-notconstant!");
-    return Val.getPointer();
+    return Val;
   }
   
   /// markOverdefined - Return true if this is a change in status.
   bool markOverdefined() {
     if (isOverdefined())
       return false;
-    Val.setInt(overdefined);
+    Tag = overdefined;
     return true;
   }
 
@@ -112,9 +112,9 @@ public:
     }
     
     assert(isUndefined());
-    Val.setInt(constant);
+    Tag = constant;
     assert(V && "Marking constant with NULL");
-    Val.setPointer(V);
+    Val = V;
     return true;
   }
   
@@ -130,9 +130,9 @@ public:
     else
       assert(isUndefined());
 
-    Val.setInt(notconstant);
+    Tag = notconstant;
     assert(V && "Marking constant with NULL");
-    Val.setPointer(V);
+    Val = V;
     return true;
   }
   
