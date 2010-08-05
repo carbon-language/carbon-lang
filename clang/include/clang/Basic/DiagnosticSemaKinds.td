@@ -2508,9 +2508,6 @@ def note_condition_assign_to_comparison : Note<
 def note_condition_assign_silence : Note<
   "place parentheses around the assignment to silence this warning">;
 
-def warn_value_always_zero : Warning<
-  "%0 is always %select{zero|false|NULL}1 in this context">;
-
 def warn_ivar_variable_conflict : Warning<
   "%0 lookup will access the property ivar in nonfragile-abi2 mode">, 
   InGroup<NonfragileAbi2>;

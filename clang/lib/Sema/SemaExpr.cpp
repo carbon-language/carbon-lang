@@ -1191,26 +1191,6 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
         Diag(Property->getLocation(), diag::note_property_declare);
       }
     }
-    
-    // Warn about constructs like:
-    //   if (void *X = foo()) { ... } else { X }.
-    // In the else block, the pointer is always false.
-    if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
-      Scope *CheckS = S;
-      while (CheckS && CheckS->getControlParent()) {
-        if ((CheckS->getFlags() & Scope::ElseScope) &&
-            CheckS->getControlParent()->isDeclScope(DeclPtrTy::make(Var))) {
-          ExprError(Diag(NameLoc, diag::warn_value_always_zero)
-            << Var->getDeclName()
-            << (Var->getType()->isPointerType() ? 2 :
-                Var->getType()->isBooleanType() ? 1 : 0));
-          break;
-        }
-
-        // Move to the parent of this scope.
-        CheckS = CheckS->getParent();
-      }
-    }
   } else if (FunctionDecl *Func = R.getAsSingle<FunctionDecl>()) {
     if (!getLangOptions().CPlusPlus && !Func->hasPrototype()) {
       // C99 DR 316 says that, if a function type comes from a
@@ -4973,7 +4953,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // This check seems unnatural, however it is necessary to ensure the proper
   // conversion of functions/arrays. If the conversion were done for all
   // DeclExpr's (created by ActOnIdExpression), it would mess up the unary
-  // expressions that surpress this implicit conversion (&, sizeof).
+  // expressions that suppress this implicit conversion (&, sizeof).
   //
   // Suppress this for references: C++ 8.5.3p5.
   if (!lhsType->isReferenceType())
