@@ -16,6 +16,8 @@
 #ifndef LLVM_TARGET_TARGETSELECT_H
 #define LLVM_TARGET_TARGETSELECT_H
 
+#include "llvm/Config/config.h"
+
 extern "C" {
   // Declare all of the target-initialization functions that are available.
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetInfo();
