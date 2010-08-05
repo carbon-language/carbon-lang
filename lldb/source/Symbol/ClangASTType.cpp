@@ -79,6 +79,25 @@ ClangASTType::GetClangTypeName (void *opaque_clang_qual_type)
     return clang_type_name;
 }
 
+
+void *
+ClangASTType::GetPointeeType ()
+{
+    return GetPointeeType (m_type);
+}
+
+void *
+ClangASTType::GetPointeeType (void *opaque_clang_qual_type)
+{
+    if (opaque_clang_qual_type)
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        
+        return qual_type.getTypePtr()->getPointeeType().getAsOpaquePtr();
+    }
+    return NULL;
+}
+
 lldb::Encoding
 ClangASTType::GetEncoding (uint32_t &count)
 {

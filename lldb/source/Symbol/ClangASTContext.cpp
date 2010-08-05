@@ -34,35 +34,36 @@
 
 #include <stdio.h>
 
+using namespace lldb;
 using namespace lldb_private;
 using namespace llvm;
 using namespace clang;
 
 static AccessSpecifier
-ConvertAccessTypeToAccessSpecifier (ClangASTContext::AccessType access)
+ConvertAccessTypeToAccessSpecifier (AccessType access)
 {
     switch (access)
     {
-    default:                                break;
-    case ClangASTContext::eAccessNone:      return AS_none;
-    case ClangASTContext::eAccessPublic:    return AS_public;
-    case ClangASTContext::eAccessPrivate:   return AS_private;
-    case ClangASTContext::eAccessProtected: return AS_protected;
+    default:               break;
+    case eAccessNone:      return AS_none;
+    case eAccessPublic:    return AS_public;
+    case eAccessPrivate:   return AS_private;
+    case eAccessProtected: return AS_protected;
     }
     return AS_none;
 }
 
 static ObjCIvarDecl::AccessControl
-ConvertAccessTypeToObjCIvarAccessControl (ClangASTContext::AccessType access)
+ConvertAccessTypeToObjCIvarAccessControl (AccessType access)
 {
     switch (access)
     {
-    default:                                break;
-    case ClangASTContext::eAccessNone:      return ObjCIvarDecl::None;
-    case ClangASTContext::eAccessPublic:    return ObjCIvarDecl::Public;
-    case ClangASTContext::eAccessPrivate:   return ObjCIvarDecl::Private;
-    case ClangASTContext::eAccessProtected: return ObjCIvarDecl::Protected;
-    case ClangASTContext::eAccessPackage:   return ObjCIvarDecl::Package;
+    default:               break;
+    case eAccessNone:      return ObjCIvarDecl::None;
+    case eAccessPublic:    return ObjCIvarDecl::Public;
+    case eAccessPrivate:   return ObjCIvarDecl::Private;
+    case eAccessProtected: return ObjCIvarDecl::Protected;
+    case eAccessPackage:   return ObjCIvarDecl::Package;
     }
     return ObjCIvarDecl::None;
 }
@@ -398,7 +399,7 @@ QualTypeMatchesBitSize(const uint64_t bit_size, ASTContext *ast_context, QualTyp
 }
 
 void *
-ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding, uint32_t bit_size)
+ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (Encoding encoding, uint32_t bit_size)
 {
     ASTContext *ast_context = getASTContext();
 
@@ -408,19 +409,19 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding, u
 }
 
 void *
-ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast_context, lldb::Encoding encoding, uint32_t bit_size)
+ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast_context, Encoding encoding, uint32_t bit_size)
 {
     if (!ast_context)
         return NULL;
     
     switch (encoding)
     {
-    case lldb::eEncodingInvalid:
+    case eEncodingInvalid:
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->VoidPtrTy))
             return ast_context->VoidPtrTy.getAsOpaquePtr();
         break;
         
-    case lldb::eEncodingUint:
+    case eEncodingUint:
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->UnsignedCharTy))
             return ast_context->UnsignedCharTy.getAsOpaquePtr();
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->UnsignedShortTy))
@@ -435,7 +436,7 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast_con
             return ast_context->UnsignedInt128Ty.getAsOpaquePtr();
         break;
         
-    case lldb::eEncodingSint:
+    case eEncodingSint:
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->CharTy))
             return ast_context->CharTy.getAsOpaquePtr();
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->ShortTy))
@@ -450,7 +451,7 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast_con
             return ast_context->Int128Ty.getAsOpaquePtr();
         break;
         
-    case lldb::eEncodingIEEE754:
+    case eEncodingIEEE754:
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->FloatTy))
             return ast_context->FloatTy.getAsOpaquePtr();
         if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->DoubleTy))
@@ -459,7 +460,7 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast_con
             return ast_context->LongDoubleTy.getAsOpaquePtr();
         break;
         
-    case lldb::eEncodingVector:
+    case eEncodingVector:
     default:
         break;
     }
@@ -772,7 +773,7 @@ ClangASTContext::AddVolatileModifier (void *clang_type)
 #pragma mark Structure, Unions, Classes
 
 void *
-ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl_ctx, lldb::LanguageType language)
+ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl_ctx, LanguageType language)
 {
     ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
@@ -781,7 +782,7 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
         decl_ctx = ast_context->getTranslationUnitDecl();
 
 
-    if (language == lldb::eLanguageTypeObjC)
+    if (language == eLanguageTypeObjC)
     {
         bool isForwardDecl = false;
         bool isInternal = false;

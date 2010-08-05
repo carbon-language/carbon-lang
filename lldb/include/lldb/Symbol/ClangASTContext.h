@@ -30,22 +30,6 @@ class Declaration;
 class ClangASTContext
 {
 public:
-    // Define access values that can be used for all functions in this
-    // class since Clang uses different values for all of the different
-    // access values (C++ AccessSpecifier enums differ from ObjC AccessControl).
-    // The SymbolFile classes that use these methods to created types
-    // will then be able to use one enumeration for all access and we can
-    // translate them correctly into the correct Clang versions depending on
-    // what the access is applied to.
-    enum AccessType
-    {
-        eAccessNone,
-        eAccessPublic,
-        eAccessPrivate,
-        eAccessProtected,
-        eAccessPackage
-    };
-    
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -173,7 +157,7 @@ public:
     AddFieldToRecordType (void * record_qual_type,
                           const char *name,
                           void * field_type,
-                          AccessType access,
+                          lldb::AccessType access,
                           uint32_t bitfield_bit_size);
     
     bool
@@ -204,7 +188,7 @@ public:
     AddObjCClassIVar (void *class_opaque_type, 
                       const char *name, 
                       void *ivar_opaque_type, 
-                      AccessType access, 
+                      lldb::AccessType access, 
                       uint32_t bitfield_bit_size, 
                       bool isSynthesized);
 
@@ -289,7 +273,7 @@ public:
 
     clang::CXXBaseSpecifier *
     CreateBaseClassSpecifier (void * base_class_type,
-                              AccessType access,
+                              lldb::AccessType access,
                               bool is_virtual,
                               bool base_of_class);
     

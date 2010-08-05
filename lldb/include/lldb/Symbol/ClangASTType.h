@@ -227,6 +227,12 @@ public:
                    lldb::AddressType address_type,
                    StreamString &new_value);
 
+    void *
+    GetPointeeType ();
+
+    static void *
+    GetPointeeType (void *opaque_clang_qual_type);
+
 private:
     void               *m_type;
     clang::ASTContext  *m_ast;
