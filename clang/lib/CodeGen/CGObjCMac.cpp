@@ -1711,7 +1711,8 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
               const llvm::SmallVectorImpl<const BlockDeclRefExpr *> &DeclRefs) {
   llvm::Constant *NullPtr = 
     llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
-  if (DeclRefs.empty())
+  if ((CGM.getLangOptions().getGCMode() == LangOptions::NonGC) ||
+      DeclRefs.empty())
     return NullPtr;
   SkipIvars.clear();
   IvarsInfo.clear();
