@@ -1245,7 +1245,8 @@ Sema::SubstituteExplicitTemplateArguments(
                                       Proto->isVariadic(),
                                       Proto->getTypeQuals(),
                                       Function->getLocation(),
-                                      Function->getDeclName());
+                                      Function->getDeclName(),
+                                      Proto->getExtInfo());
     if (FunctionType->isNull() || Trap.hasErrorOccurred())
       return TDK_SubstitutionFailure;
   }

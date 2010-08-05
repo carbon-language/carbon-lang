@@ -468,7 +468,8 @@ public:
   QualType RebuildFunctionProtoType(QualType T,
                                     QualType *ParamTypes,
                                     unsigned NumParamTypes,
-                                    bool Variadic, unsigned Quals);
+                                    bool Variadic, unsigned Quals,
+                                    const FunctionType::ExtInfo &Info);
 
   /// \brief Build a new unprototyped function type.
   QualType RebuildFunctionNoProtoType(QualType ResultType);
@@ -2932,7 +2933,8 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    ParamTypes.data(),
                                                    ParamTypes.size(),
                                                    T->isVariadic(),
-                                                   T->getTypeQuals());
+                                                   T->getTypeQuals(),
+                                                   T->getExtInfo());
     if (Result.isNull())
       return QualType();
   }
@@ -6252,7 +6254,8 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
                                                         ParamTypes.data(),
                                                         ParamTypes.size(),
                                                         BD->isVariadic(),
-                                                        0);
+                                                        0,
+                                               BExprFunctionType->getExtInfo());
   
   CurBlock->FunctionType = FunctionType;
   return SemaRef.ActOnBlockStmtExpr(CaretLoc, move(Body), /*Scope=*/0);
@@ -6429,11 +6432,13 @@ QualType TreeTransform<Derived>::RebuildFunctionProtoType(QualType T,
                                                           QualType *ParamTypes,
                                                         unsigned NumParamTypes,
                                                           bool Variadic,
-                                                          unsigned Quals) {
+                                                          unsigned Quals,
+                                            const FunctionType::ExtInfo &Info) {
   return SemaRef.BuildFunctionType(T, ParamTypes, NumParamTypes, Variadic,
                                    Quals,
                                    getDerived().getBaseLocation(),
-                                   getDerived().getBaseEntity());
+                                   getDerived().getBaseEntity(),
+                                   Info);
 }
 
 template<typename Derived>

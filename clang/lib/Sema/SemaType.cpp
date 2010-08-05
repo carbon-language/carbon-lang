@@ -811,7 +811,8 @@ QualType Sema::BuildFunctionType(QualType T,
                                  QualType *ParamTypes,
                                  unsigned NumParamTypes,
                                  bool Variadic, unsigned Quals,
-                                 SourceLocation Loc, DeclarationName Entity) {
+                                 SourceLocation Loc, DeclarationName Entity,
+                                 const FunctionType::ExtInfo &Info) {
   if (T->isArrayType() || T->isFunctionType()) {
     Diag(Loc, diag::err_func_returning_array_function) 
       << T->isFunctionType() << T;
@@ -833,8 +834,7 @@ QualType Sema::BuildFunctionType(QualType T,
     return QualType();
 
   return Context.getFunctionType(T, ParamTypes, NumParamTypes, Variadic,
-                                 Quals, false, false, 0, 0,
-                                 FunctionType::ExtInfo());
+                                 Quals, false, false, 0, 0, Info);
 }
 
 /// \brief Build a member pointer type \c T Class::*.
