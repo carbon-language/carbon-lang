@@ -173,9 +173,10 @@ bool cocoa::isCocoaObjectRef(QualType Ty) {
   if (!PT)
     return true;
   
-  // We assume that id<..>, id, and "Class" all represent tracked objects.
+  // We assume that id<..>, id, Class, and Class<..> all represent tracked
+  // objects.
   if (PT->isObjCIdType() || PT->isObjCQualifiedIdType() ||
-      PT->isObjCClassType())
+      PT->isObjCClassType() || PT->isObjCQualifiedClassType())
     return true;
   
   // Does the interface subclass NSObject?

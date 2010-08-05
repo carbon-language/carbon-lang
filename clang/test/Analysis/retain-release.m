@@ -1358,3 +1358,12 @@ void test_blocks_1_indirect_retain_via_call(void) {
 }
 @end
 
+// <rdar://problem/8272168> - Correcly handle Class<...> in Cocoa Conventions
+// detector.
+
+@protocol Prot_R8272168 @end
+Class <Prot_R8272168> GetAClassThatImplementsProt_R8272168();
+void r8272168() {
+  GetAClassThatImplementsProt_R8272168();
+}
+
