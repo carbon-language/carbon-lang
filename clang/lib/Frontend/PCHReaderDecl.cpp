@@ -1350,7 +1350,8 @@ static bool isConsumerInterestedIn(Decl *D) {
   if (isa<FileScopeAsmDecl>(D))
     return true;
   if (VarDecl *Var = dyn_cast<VarDecl>(D))
-    return Var->isFileVarDecl() && Var->getInit();
+    return Var->isFileVarDecl() &&
+           Var->isThisDeclarationADefinition() == VarDecl::Definition;
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
     return Func->isThisDeclarationADefinition();
   return isa<ObjCProtocolDecl>(D);
