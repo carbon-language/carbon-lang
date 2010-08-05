@@ -515,6 +515,12 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
 
+  // Emit nothing here but a comment if we can.
+  case X86::Int_MemBarrier:
+    if (OutStreamer.hasRawTextSupport())
+      OutStreamer.EmitRawText(StringRef("\t#MEMBARRIER"));
+    return;
+        
   case X86::TAILJMPr:
   case X86::TAILJMPd:
   case X86::TAILJMPd64:
