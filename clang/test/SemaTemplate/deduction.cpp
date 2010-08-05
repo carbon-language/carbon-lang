@@ -105,3 +105,11 @@ namespace PR7463 {
   template <typename T_> void g (T_&); // expected-note{{T_ = int}}
   void h (void) { g(f()); } // expected-error{{no matching function for call}}
 }
+
+namespace test0 {
+  template <class T> void make(const T *(*fn)()); // expected-note {{candidate template ignored: can't deduce a type for 'T' which would make 'T const' equal 'char'}}
+  char *char_maker();
+  void test() {
+    make(char_maker); // expected-error {{no matching function for call to 'make'}}
+  }
+}

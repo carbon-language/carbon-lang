@@ -3320,7 +3320,7 @@ public:
     /// cv-qualifiers on a template parameter type that would
     /// otherwise be deduced, e.g., we tried to deduce T in "const T"
     /// but were given a non-const "X".
-    TDK_InconsistentQuals,
+    TDK_Underqualified,
     /// \brief Substitution of the deduced template argument values
     /// resulted in an error.
     TDK_SubstitutionFailure,

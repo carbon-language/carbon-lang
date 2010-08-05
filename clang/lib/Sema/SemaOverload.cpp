@@ -315,7 +315,7 @@ static MakeDeductionFailureInfo(ASTContext &Context,
     break;
       
   case Sema::TDK_Inconsistent:
-  case Sema::TDK_InconsistentQuals: {
+  case Sema::TDK_Underqualified: {
     // FIXME: Should allocate from normal heap so that we can free this later.
     DFIParamWithArguments *Saved = new (Context) DFIParamWithArguments;
     Saved->Param = Info.Param;
@@ -348,7 +348,7 @@ void OverloadCandidate::DeductionFailureInfo::Destroy() {
     break;
       
   case Sema::TDK_Inconsistent:
-  case Sema::TDK_InconsistentQuals:
+  case Sema::TDK_Underqualified:
     // FIXME: Destroy the data?
     Data = 0;
     break;
@@ -380,7 +380,7 @@ OverloadCandidate::DeductionFailureInfo::getTemplateParameter() {
     return TemplateParameter::getFromOpaqueValue(Data);    
 
   case Sema::TDK_Inconsistent:
-  case Sema::TDK_InconsistentQuals:
+  case Sema::TDK_Underqualified:
     return static_cast<DFIParamWithArguments*>(Data)->Param;
       
   // Unhandled
@@ -402,7 +402,7 @@ OverloadCandidate::DeductionFailureInfo::getTemplateArgumentList() {
     case Sema::TDK_Incomplete:
     case Sema::TDK_InvalidExplicitArguments:
     case Sema::TDK_Inconsistent:
-    case Sema::TDK_InconsistentQuals:
+    case Sema::TDK_Underqualified:
       return 0;
 
     case Sema::TDK_SubstitutionFailure:
@@ -429,7 +429,7 @@ const TemplateArgument *OverloadCandidate::DeductionFailureInfo::getFirstArg() {
     return 0;
 
   case Sema::TDK_Inconsistent:
-  case Sema::TDK_InconsistentQuals:
+  case Sema::TDK_Underqualified:
     return &static_cast<DFIParamWithArguments*>(Data)->FirstArg;      
 
   // Unhandled
@@ -454,7 +454,7 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
     return 0;
 
   case Sema::TDK_Inconsistent:
-  case Sema::TDK_InconsistentQuals:
+  case Sema::TDK_Underqualified:
     return &static_cast<DFIParamWithArguments*>(Data)->SecondArg;
 
   // Unhandled
@@ -5592,8 +5592,31 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
     return;
   }
 
-  case Sema::TDK_Inconsistent:
-  case Sema::TDK_InconsistentQuals: {
+  case Sema::TDK_Underqualified: {
+    assert(ParamD && "no parameter found for bad qualifiers deduction result");
+    TemplateTypeParmDecl *TParam = cast<TemplateTypeParmDecl>(ParamD);
+
+    QualType Param = Cand->DeductionFailure.getFirstArg()->getAsType();
+
+    // Param will have been canonicalized, but it should just be a
+    // qualified version of ParamD, so move the qualifiers to that.
+    QualifierCollector Qs(S.Context);
+    Qs.strip(Param);
+    QualType NonCanonParam = Qs.apply(TParam->getTypeForDecl());
+    assert(S.Context.hasSameType(Param, NonCanonParam));
+
+    // Arg has also been canonicalized, but there's nothing we can do
+    // about that.  It also doesn't matter as much, because it won't
+    // have any template parameters in it (because deduction isn't
+    // done on dependent types).
+    QualType Arg = Cand->DeductionFailure.getSecondArg()->getAsType();
+
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_underqualified)
+      << ParamD->getDeclName() << Arg << NonCanonParam;
+    return;
+  }
+
+  case Sema::TDK_Inconsistent: {
     assert(ParamD && "no parameter found for inconsistent deduction result");    
     int which = 0;
     if (isa<TemplateTypeParmDecl>(ParamD))

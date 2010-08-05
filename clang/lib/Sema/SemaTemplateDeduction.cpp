@@ -428,9 +428,9 @@ DeduceTemplateArguments(Sema &S,
     // type.
     if (Param.isMoreQualifiedThan(Arg) && !(TDF & TDF_IgnoreQualifiers)) {
       Info.Param = cast<TemplateTypeParmDecl>(TemplateParams->getParam(Index));
-      Info.FirstArg = Deduced[Index];
+      Info.FirstArg = TemplateArgument(Param);
       Info.SecondArg = TemplateArgument(Arg);
-      return Sema::TDK_InconsistentQuals;
+      return Sema::TDK_Underqualified;
     }
 
     assert(TemplateTypeParm->getDepth() == 0 && "Can't deduce with depth > 0");

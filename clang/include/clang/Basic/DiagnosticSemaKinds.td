@@ -1151,6 +1151,9 @@ def note_ovl_candidate_explicit_arg_mismatch_unnamed : Note<
 def note_ovl_candidate_instantiation_depth : Note<
     "candidate template ignored: substitution exceeded maximum template "
     "instantiation depth">;
+def note_ovl_candidate_underqualified : Note<
+    "candidate template ignored: can't deduce a type for %0 which would "
+    "make %2 equal %1">;
 def note_ovl_candidate_substitution_failure : Note<
     "candidate template ignored: substitution failure %0">;
     
