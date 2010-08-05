@@ -88,3 +88,17 @@ void test8() {
   a = 5;
 }
 
+// Check for bugs where multiple statements are reported
+void test9(unsigned a) {
+  switch (a) {
+    if (a) // expected-warning{{never executed}}
+      foo(a + 5); // no-warning
+    else // no-warning
+      foo(a); // no-warning
+    case 1:
+    case 2:
+      break;
+    default:
+      break;
+  }
+}

@@ -149,10 +149,13 @@ void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB) {
   for (CFGBlock::const_pred_iterator I = CB->pred_begin(); I != CB->pred_end();
       ++I) {
     // Recurse over all unreachable blocks
-    if (!reachable.count((*I)->getBlockID())
-        && !visited.count((*I)->getBlockID())) {
-      FindUnreachableEntryPoints(*I);
+    if (!reachable.count((*I)->getBlockID())) {
+      // At least one predeccessor was unreachable
       allPredecessorsReachable = false;
+
+      // Only visit the block once
+      if (!visited.count((*I)->getBlockID()))
+        FindUnreachableEntryPoints(*I);
     }
   }
 
