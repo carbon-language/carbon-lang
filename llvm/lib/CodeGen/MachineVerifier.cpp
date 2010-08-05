@@ -44,19 +44,14 @@ using namespace llvm;
 namespace {
   struct MachineVerifier {
 
-    MachineVerifier(Pass *pass, bool allowDoubleDefs) :
+    MachineVerifier(Pass *pass) :
       PASS(pass),
-      allowVirtDoubleDefs(allowDoubleDefs),
-      allowPhysDoubleDefs(true),
       OutFileName(getenv("LLVM_VERIFY_MACHINEINSTRS"))
       {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
     Pass *const PASS;
-    const bool allowVirtDoubleDefs;
-    const bool allowPhysDoubleDefs;
-
     const char *const OutFileName;
     raw_ostream *OS;
     const MachineFunction *MF;
@@ -90,10 +85,6 @@ namespace {
       // Vregs that must be live in because they are used without being
       // defined. Map value is the user.
       RegMap vregsLiveIn;
-
-      // Vregs that must be dead in because they are defined without being
-      // killed first. Map value is the defining instruction.
-      RegMap vregsDeadIn;
 
       // Regs killed in MBB. They may be defined again, and will then be in both
       // regsKilled and regsLiveOut.
@@ -199,11 +190,9 @@ namespace {
 
   struct MachineVerifierPass : public MachineFunctionPass {
     static char ID; // Pass ID, replacement for typeid
-    bool AllowDoubleDefs;
 
-    explicit MachineVerifierPass(bool allowDoubleDefs = false)
-      : MachineFunctionPass(&ID),
-        AllowDoubleDefs(allowDoubleDefs) {}
+    MachineVerifierPass()
+      : MachineFunctionPass(&ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -211,7 +200,7 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &MF) {
-      MF.verify(this, AllowDoubleDefs);
+      MF.verify(this);
       return false;
     }
   };
@@ -223,13 +212,12 @@ static RegisterPass<MachineVerifierPass>
 MachineVer("machineverifier", "Verify generated machine code");
 static const PassInfo *const MachineVerifyID = &MachineVer;
 
-FunctionPass *llvm::createMachineVerifierPass(bool allowPhysDoubleDefs) {
-  return new MachineVerifierPass(allowPhysDoubleDefs);
+FunctionPass *llvm::createMachineVerifierPass() {
+  return new MachineVerifierPass();
 }
 
-void MachineFunction::verify(Pass *p, bool allowDoubleDefs) const {
-  MachineVerifier(p, allowDoubleDefs)
-    .runOnMachineFunction(const_cast<MachineFunction&>(*this));
+void MachineFunction::verify(Pass *p) const {
+  MachineVerifier(p).runOnMachineFunction(const_cast<MachineFunction&>(*this));
 }
 
 bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
@@ -670,40 +658,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
 void MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI) {
   BBInfo &MInfo = MBBInfoMap[MI->getParent()];
   set_union(MInfo.regsKilled, regsKilled);
-  set_subtract(regsLive, regsKilled);
-  regsKilled.clear();
-
-  // Verify that both <def> and <def,dead> operands refer to dead registers.
-  RegVector defs(regsDefined);
-  defs.append(regsDead.begin(), regsDead.end());
-
-  for (RegVector::const_iterator I = defs.begin(), E = defs.end();
-       I != E; ++I) {
-    if (regsLive.count(*I)) {
-      if (TargetRegisterInfo::isPhysicalRegister(*I)) {
-        if (!allowPhysDoubleDefs && !isReserved(*I) &&
-            !regsLiveInButUnused.count(*I)) {
-          report("Redefining a live physical register", MI);
-          *OS << "Register " << TRI->getName(*I)
-              << " was defined but already live.\n";
-        }
-      } else {
-        if (!allowVirtDoubleDefs) {
-          report("Redefining a live virtual register", MI);
-          *OS << "Virtual register %reg" << *I
-              << " was defined but already live.\n";
-        }
-      }
-    } else if (TargetRegisterInfo::isVirtualRegister(*I) &&
-               !MInfo.regsKilled.count(*I)) {
-      // Virtual register defined without being killed first must be dead on
-      // entry.
-      MInfo.vregsDeadIn.insert(std::make_pair(*I, MI));
-    }
-  }
-
-  set_subtract(regsLive, regsDead); regsDead.clear();
-  set_union(regsLive, regsDefined); regsDefined.clear();
+  set_subtract(regsLive, regsKilled); regsKilled.clear();
+  set_subtract(regsLive, regsDead);   regsDead.clear();
+  set_union(regsLive, regsDefined);   regsDefined.clear();
 }
 
 void
@@ -828,28 +785,6 @@ void MachineVerifier::visitMachineFunctionAfter() {
       continue;
 
     checkPHIOps(MFI);
-
-    // Verify dead-in virtual registers.
-    if (!allowVirtDoubleDefs) {
-      for (MachineBasicBlock::const_pred_iterator PrI = MFI->pred_begin(),
-             PrE = MFI->pred_end(); PrI != PrE; ++PrI) {
-        BBInfo &PrInfo = MBBInfoMap[*PrI];
-        if (!PrInfo.reachable)
-          continue;
-
-        for (RegMap::iterator I = MInfo.vregsDeadIn.begin(),
-               E = MInfo.vregsDeadIn.end(); I != E; ++I) {
-          // DeadIn register must be in neither regsLiveOut or vregsPassed of
-          // any predecessor.
-          if (PrInfo.isLiveOut(I->first)) {
-            report("Live-in virtual register redefined", I->second);
-            *OS << "Register %reg" << I->first
-                << " was live-out from predecessor MBB #"
-                << (*PrI)->getNumber() << ".\n";
-          }
-        }
-      }
-    }
   }
 
   // Now check LiveVariables info if available

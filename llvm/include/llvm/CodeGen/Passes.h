@@ -188,10 +188,7 @@ namespace llvm {
 
   /// createMachineVerifierPass - This pass verifies cenerated machine code
   /// instructions for correctness.
-  ///
-  /// @param allowDoubleDefs ignore double definitions of
-  ///        registers. Useful before LiveVariables has run.
-  FunctionPass *createMachineVerifierPass(bool allowDoubleDefs);
+  FunctionPass *createMachineVerifierPass();
 
   /// createDwarfEHPass - This pass mulches exception handling code into a form
   /// adapted to code generation.  Required if using dwarf exception handling.

@@ -266,7 +266,7 @@ public:
 
   /// verify - Run the current MachineFunction through the machine code
   /// verifier, useful for debugger use.
-  void verify(Pass *p=NULL, bool allowDoubleDefs=false) const;
+  void verify(Pass *p=NULL) const;
 
   // Provide accessors for the MachineBasicBlock list...
   typedef BasicBlockListType::iterator iterator;
