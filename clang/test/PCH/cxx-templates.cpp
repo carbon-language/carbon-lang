@@ -7,6 +7,7 @@
 // RUN: %clang_cc1 -include-pch %t -verify %s -ast-dump  1>/dev/null
 // RUN: %clang_cc1 -include-pch %t %s -emit-llvm -o - | FileCheck %s
 
+// CHECK: define weak_odr void @_ZN2S4IiE1mEv
 // CHECK: define linkonce_odr void @_ZN2S3IiE1mEv
 
 struct A {
@@ -30,3 +31,5 @@ void test() {
   S3<int> s3;
   s3.m();
 }
+
+template struct S4<int>;

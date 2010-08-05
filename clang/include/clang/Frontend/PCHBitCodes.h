@@ -253,7 +253,10 @@ namespace clang {
       SEMA_DECL_REFS = 30,
 
       /// \brief Record code for weak undeclared identifiers.
-      WEAK_UNDECLARED_IDENTIFIERS = 31
+      WEAK_UNDECLARED_IDENTIFIERS = 31,
+
+      /// \brief Record code for pending implicit instantiations.
+      PENDING_IMPLICIT_INSTANTIATIONS = 32
     };
 
     /// \brief Record types used within a source manager block.

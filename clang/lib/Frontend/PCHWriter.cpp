@@ -2255,6 +2255,17 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned I = 0, N = SemaRef.DynamicClasses.size(); I != N; ++I)
     AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
 
+  // Build a record containing all of pending implicit instantiations.
+  RecordData PendingImplicitInstantiations;
+  for (std::deque<Sema::PendingImplicitInstantiation>::iterator
+         I = SemaRef.PendingImplicitInstantiations.begin(),
+         N = SemaRef.PendingImplicitInstantiations.end(); I != N; ++I) {
+    AddDeclRef(I->first, PendingImplicitInstantiations);
+    AddSourceLocation(I->second, PendingImplicitInstantiations);
+  }
+  assert(SemaRef.PendingLocalImplicitInstantiations.empty() &&
+         "There are local ones at end of translation unit!");
+
   // Build a record containing some declaration references.
   RecordData SemaDeclRefs;
   if (SemaRef.StdNamespace || SemaRef.StdBadAlloc) {
@@ -2346,6 +2357,11 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing dynamic classes declarations.
   if (!DynamicClasses.empty())
     Stream.EmitRecord(pch::DYNAMIC_CLASSES, DynamicClasses);
+
+  // Write the record containing pending implicit instantiations.
+  if (!PendingImplicitInstantiations.empty())
+    Stream.EmitRecord(pch::PENDING_IMPLICIT_INSTANTIATIONS,
+                      PendingImplicitInstantiations);
 
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())

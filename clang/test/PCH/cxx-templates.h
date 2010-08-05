@@ -124,3 +124,14 @@ struct S3 {
 
 template <typename T>
 inline void S3<T>::m() { }
+
+template <typename T>
+struct S4 {
+    void m() { }
+};
+extern template struct S4<int>;
+
+void S4ImplicitInst() {
+    S4<int> s;
+    s.m();
+}

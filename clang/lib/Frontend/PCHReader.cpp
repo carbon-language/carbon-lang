@@ -1739,6 +1739,15 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       DynamicClasses.swap(Record);
       break;
 
+    case pch::PENDING_IMPLICIT_INSTANTIATIONS:
+      // Optimization for the first block.
+      if (PendingImplicitInstantiations.empty())
+        PendingImplicitInstantiations.swap(Record);
+      else
+        PendingImplicitInstantiations.insert(
+             PendingImplicitInstantiations.end(), Record.begin(), Record.end());
+      break;
+
     case pch::SEMA_DECL_REFS:
       if (!SemaDeclRefs.empty()) {
         Error("duplicate SEMA_DECL_REFS record in PCH file");
@@ -3190,6 +3199,16 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I)
     SemaObj->DynamicClasses.push_back(
                                cast<CXXRecordDecl>(GetDecl(DynamicClasses[I])));
+
+  // If there were any pending implicit instantiations, deserialize them
+  // and add them to Sema's queue of such instantiations.
+  assert(PendingImplicitInstantiations.size() % 2 == 0 &&
+         "Expected pairs of entries");
+  for (unsigned Idx = 0, N = PendingImplicitInstantiations.size(); Idx < N;) {
+    ValueDecl *D=cast<ValueDecl>(GetDecl(PendingImplicitInstantiations[Idx++]));
+    SourceLocation Loc = ReadSourceLocation(PendingImplicitInstantiations, Idx);
+    SemaObj->PendingImplicitInstantiations.push_back(std::make_pair(D, Loc));
+  }
 
   // Load the offsets of the declarations that Sema references.
   // They will be lazily deserialized when needed.

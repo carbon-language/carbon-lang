@@ -397,6 +397,9 @@ private:
   /// \brief The set of dynamic CXXRecord declarations stored in the PCH file.
   llvm::SmallVector<uint64_t, 16> DynamicClasses;
 
+  /// \brief The set of pending implicit instantiations stored in the PCH file.
+  llvm::SmallVector<uint64_t, 64> PendingImplicitInstantiations;
+
   /// \brief The set of Sema declaration references, stored in PCH.
   llvm::SmallVector<uint64_t, 4> SemaDeclRefs;
 
