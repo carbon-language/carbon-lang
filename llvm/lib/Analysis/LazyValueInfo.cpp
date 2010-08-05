@@ -19,6 +19,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
@@ -51,11 +52,14 @@ class LVILatticeVal {
   enum LatticeValueTy {
     /// undefined - This LLVM Value has no known value yet.
     undefined,
+    
     /// constant - This LLVM Value has a specific constant value.
     constant,
-    
     /// notconstant - This LLVM value is known to not have the specified value.
     notconstant,
+    
+    /// constantrange
+    constantrange,
     
     /// overdefined - This instruction is not known to be constant, and we know
     /// it has a value.
@@ -66,9 +70,10 @@ class LVILatticeVal {
   /// the constant if this is a 'constant' or 'notconstant' value.
   LatticeValueTy Tag;
   Constant *Val;
+  ConstantRange Range;
   
 public:
-  LVILatticeVal() : Tag(undefined), Val(0) {}
+  LVILatticeVal() : Tag(undefined), Val(0), Range(1, true) {}
 
   static LVILatticeVal get(Constant *C) {
     LVILatticeVal Res;
@@ -81,10 +86,11 @@ public:
     return Res;
   }
   
-  bool isUndefined() const   { return Tag == undefined; }
-  bool isConstant() const    { return Tag == constant; }
-  bool isNotConstant() const { return Tag == notconstant; }
-  bool isOverdefined() const { return Tag == overdefined; }
+  bool isUndefined() const     { return Tag == undefined; }
+  bool isConstant() const      { return Tag == constant; }
+  bool isNotConstant() const   { return Tag == notconstant; }
+  bool isConstantRange() const { return Tag == constantrange; }
+  bool isOverdefined() const   { return Tag == overdefined; }
   
   Constant *getConstant() const {
     assert(isConstant() && "Cannot get the constant of a non-constant!");
@@ -94,6 +100,12 @@ public:
   Constant *getNotConstant() const {
     assert(isNotConstant() && "Cannot get the constant of a non-notconstant!");
     return Val;
+  }
+  
+  ConstantRange getConstantRange() const {
+    assert(isConstantRange() &&
+           "Cannot get the constant-range of a non-constant-range!");
+    return Range;
   }
   
   /// markOverdefined - Return true if this is a change in status.
@@ -136,6 +148,32 @@ public:
     return true;
   }
   
+  /// markConstantRange - Return true if this is a change in status.
+  bool markConstantRange(const ConstantRange NewR) {
+    if (isConstantRange()) {
+      if (NewR.isEmptySet())
+        return markOverdefined();
+      
+      assert(Range.contains(NewR) &&
+             "Marking constant range with non-subset range!");
+      bool changed = Range == NewR;
+      Range = NewR;
+      return changed;
+    }
+    
+    assert(isUndefined());
+    if (NewR.isEmptySet())
+      return markOverdefined();
+    else if (NewR.isFullSet()) {
+      Tag = undefined;
+      return true;
+    }
+    
+    Tag = constantrange;
+    Range = NewR;
+    return true;
+  }
+  
   /// mergeIn - Merge the specified lattice value into this one, updating this
   /// one and returning true if anything changed.
   bool mergeIn(const LVILatticeVal &RHS) {
@@ -162,7 +200,23 @@ public:
       return markNotConstant(RHS.getNotConstant());
     }
     
+    if (RHS.isConstantRange()) {
+      if (isConstantRange()) {
+        ConstantRange NewR = Range.intersectWith(RHS.getConstantRange());
+        if (NewR.isEmptySet())
+          return markOverdefined();
+        else
+          return markConstantRange(NewR);
+      }
+      
+      assert(isUndefined() && "Unexpected lattice");
+      return markConstantRange(RHS.getConstantRange());
+    }
+    
     // RHS must be a constant, we must be undef, constant, or notconstant.
+    assert(!isConstantRange() &&
+           "Constant and ConstantRange cannot be merged.");
+    
     if (isUndefined())
       return markConstant(RHS.getConstant());
     
