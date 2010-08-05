@@ -1489,9 +1489,6 @@ public:
     WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
     Builder.defineMacro("_M_X64");
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* va_list;";
-  }
 };
 } // end anonymous namespace
 
