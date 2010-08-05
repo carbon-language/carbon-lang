@@ -168,7 +168,7 @@ bool Type::isVoidType() const {
 
 bool Type::isObjectType() const {
   if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType) ||
-      isa<IncompleteArrayType>(CanonicalType) || isVoidType())
+      isVoidType())
     return false;
   return true;
 }
