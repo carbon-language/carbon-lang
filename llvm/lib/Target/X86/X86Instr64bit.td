@@ -1620,7 +1620,7 @@ def MOV64FSrm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 //===----------------------------------------------------------------------===//
 
 // TODO: Get this to fold the constant into the instruction.           
-let Defs = [ESP] in
+let hasSideEffects = 1, Defs = [ESP] in
 def Int_MemBarrierNoSSE64  : RI<0x09, MRM1r, (outs), (ins GR64:$zero),
                            "lock\n\t"
                            "or{q}\t{$zero, (%rsp)|(%rsp), $zero}",
