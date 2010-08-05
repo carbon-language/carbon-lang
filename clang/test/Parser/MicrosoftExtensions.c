@@ -3,6 +3,7 @@ __stdcall int func0();
 int __stdcall func();
 typedef int (__cdecl *tptr)();
 void (*__fastcall fastpfunc)();
+struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {};
 extern __declspec(dllimport) void __stdcall VarR4FromDec();
 __declspec(deprecated) __declspec(deprecated) char * __cdecl ltoa( long _Val, char * _DstBuf, int _Radix);
 __declspec(noalias) __declspec(restrict) void * __cdecl xxx( void * _Memory );

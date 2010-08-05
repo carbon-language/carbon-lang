@@ -646,7 +646,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     AttrList = ParseGNUAttributes();
 
   // If declspecs exist after tag, parse them.
-  if (Tok.is(tok::kw___declspec))
+  while (Tok.is(tok::kw___declspec))
     AttrList = ParseMicrosoftDeclSpec(AttrList);
 
   // If C++0x attributes exist here, parse them.
