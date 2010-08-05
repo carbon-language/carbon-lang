@@ -1914,7 +1914,6 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
     if (InsertSpills(MII))
       NextMII = llvm::next(MII);
 
-    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
     bool Erased = false;
     bool BackTracked = false;
     MachineInstr &MI = *MII;
@@ -2248,15 +2247,22 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
     // If we have folded references to memory operands, make sure we clear all
     // physical registers that may contain the value of the spilled virtual
     // register
+
+    // Copy the folded virts to a small vector, we may change MI2VirtMap.
+    SmallVector<std::pair<unsigned, VirtRegMap::ModRef>, 4> FoldedVirts;
+    // C++0x FTW!
+    for (std::pair<VirtRegMap::MI2VirtMapTy::const_iterator,
+                   VirtRegMap::MI2VirtMapTy::const_iterator> FVRange =
+           VRM->getFoldedVirts(&MI);
+         FVRange.first != FVRange.second; ++FVRange.first)
+      FoldedVirts.push_back(FVRange.first->second);
+
     SmallSet<int, 2> FoldedSS;
-    for (tie(I, End) = VRM->getFoldedVirts(&MI); I != End; ) {
-      unsigned VirtReg = I->second.first;
-      VirtRegMap::ModRef MR = I->second.second;
+    for (unsigned FVI = 0, FVE = FoldedVirts.size(); FVI != FVE; ++FVI) {
+      unsigned VirtReg = FoldedVirts[FVI].first;
+      VirtRegMap::ModRef MR = FoldedVirts[FVI].second;
       DEBUG(dbgs() << "Folded vreg: " << VirtReg << "  MR: " << MR);
 
-      // MI2VirtMap be can updated which invalidate the iterator.
-      // Increment the iterator first.
-      ++I;
       int SS = VRM->getStackSlot(VirtReg);
       if (SS == VirtRegMap::NO_STACK_SLOT)
         continue;
