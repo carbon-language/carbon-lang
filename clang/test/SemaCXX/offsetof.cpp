@@ -53,3 +53,16 @@ struct Derived2 : public Base1, public Base2 {
 int derived1[__builtin_offsetof(Derived2, x) == 0? 1 : -1];
 int derived2[__builtin_offsetof(Derived2, y)  == 4? 1 : -1];
 int derived3[__builtin_offsetof(Derived2, z)  == 8? 1 : -1];
+
+// offsetof referring to anonymous struct in base.
+// PR7769
+struct foo {
+    struct {
+        int x;
+    };
+};
+
+struct bar : public foo  {
+};
+
+int anonstruct[__builtin_offsetof(bar, x) == 0 ? 1 : -1];

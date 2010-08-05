@@ -6940,22 +6940,27 @@ Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
       Diag(MemberDecl->getLocation(), diag::note_bitfield_decl);
       return ExprError();
     }
-      
+
+    RecordDecl *Parent = MemberDecl->getParent();
+    bool AnonStructUnion = Parent->isAnonymousStructOrUnion();
+    if (AnonStructUnion) {
+      do {
+        Parent = cast<RecordDecl>(Parent->getParent());
+      } while (Parent->isAnonymousStructOrUnion());
+    }
+
     // If the member was found in a base class, introduce OffsetOfNodes for
     // the base class indirections.
     CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                        /*DetectVirtual=*/false);
-    if (IsDerivedFrom(CurrentType, 
-                      Context.getTypeDeclType(MemberDecl->getParent()), 
-                      Paths)) {
+    if (IsDerivedFrom(CurrentType, Context.getTypeDeclType(Parent), Paths)) {
       CXXBasePath &Path = Paths.front();
       for (CXXBasePath::iterator B = Path.begin(), BEnd = Path.end();
            B != BEnd; ++B)
         Comps.push_back(OffsetOfNode(B->Base));
     }
-    
-    if (cast<RecordDecl>(MemberDecl->getDeclContext())->
-                                                isAnonymousStructOrUnion()) {
+
+    if (AnonStructUnion) {
       llvm::SmallVector<FieldDecl*, 4> Path;
       BuildAnonymousStructUnionMemberPath(MemberDecl, Path);
       unsigned n = Path.size();
