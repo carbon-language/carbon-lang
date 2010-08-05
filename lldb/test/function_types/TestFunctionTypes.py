@@ -64,6 +64,7 @@ class TestFunctionTypes(lldbtest.TestBase):
 
 
 if __name__ == '__main__':
+    import atexit
     lldb.SBDebugger.Initialize()
+    atexit.register(lambda: lldb.SBDebugger.Terminate())
     unittest.main()
-    lldb.SBDebugger.Terminate()

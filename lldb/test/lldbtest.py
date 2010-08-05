@@ -30,6 +30,7 @@ $
 import os
 import unittest
 import lldb
+import traceback
 
 class TestBase(unittest.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
@@ -38,6 +39,8 @@ class TestBase(unittest.TestCase):
     mydir = None
 
     def setUp(self):
+        #traceback.print_stack()
+
         # Fail fast if 'mydir' attribute is not overridden.
         if not self.mydir or len(self.mydir) == 0:
             raise Exception("Subclasses must override the 'mydir' attribute.")

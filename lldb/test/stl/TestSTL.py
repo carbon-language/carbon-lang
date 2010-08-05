@@ -53,7 +53,8 @@ class TestSTL(lldbtest.TestBase):
         # This assertion currently always fails.
         # This might be related: rdar://problem/8247112.
         #
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(),
+                        'Command "thread step-in" returns successfully')
 
         #self.ci.HandleCommand("process status", res)
         #print "process status:", res.GetOutput()
@@ -63,13 +64,15 @@ class TestSTL(lldbtest.TestBase):
         output = res.GetOutput()
         self.assertTrue(output.find('[inlined]') > 0 and
                         output.find('basic_string.h') and
-                        output.find('stop reason = step in,') > 0)
+                        output.find('stop reason = step in,') > 0,
+                        'Command "thread backtrace" shows we stepped in STL')
 
         self.ci.HandleCommand("continue", res)
         self.assertTrue(res.Succeeded())
 
 
 if __name__ == '__main__':
+    import atexit
     lldb.SBDebugger.Initialize()
+    atexit.register(lambda: lldb.SBDebugger.Terminate())
     unittest.main()
-    lldb.SBDebugger.Terminate()
