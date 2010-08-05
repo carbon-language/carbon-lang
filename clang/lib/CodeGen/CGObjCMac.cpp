@@ -1727,8 +1727,11 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
     QualType Ty = VD->getType();
     assert(!Ty->isArrayType() && 
            "Array block variable should have been caught");
-    if (Ty->isRecordType() || Ty->isUnionType())
+    // FIXME. Handle none __block Aggregate variables
+#if 0
+    if ((Ty->isRecordType() || Ty->isUnionType()) && !BDRE->isByRef())
       assert(false && "Aggregate block variable layout NYI");
+#endif
     Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), Ty);
     unsigned FieldSize = CGM.getContext().getTypeSize(Ty);
     // __block variables are passed by their descriptior address. So, size
