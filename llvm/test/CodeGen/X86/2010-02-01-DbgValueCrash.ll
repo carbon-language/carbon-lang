@@ -1,6 +1,5 @@
 ; RUN: llc -O1 < %s
 ; ModuleID = 'pr6157.bc'
-target triple = "x86_64-unknown-linux-gnu"
 ; formerly crashed in SelectionDAGBuilder
 
 %tart.reflect.ComplexType = type { double, double }
