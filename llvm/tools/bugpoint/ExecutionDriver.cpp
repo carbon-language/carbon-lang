@@ -293,7 +293,7 @@ bool BugDriver::initializeExecutionEnvironment() {
 /// setting Error if an error occurs.  This is used for code generation
 /// crash testing.
 ///
-void BugDriver::compileProgram(Module *M, std::string *Error) {
+void BugDriver::compileProgram(Module *M, std::string *Error) const {
   // Emit the program to a bitcode file...
   sys::Path BitcodeFile (OutputPrefix + "-test-program.bc");
   std::string ErrMsg;

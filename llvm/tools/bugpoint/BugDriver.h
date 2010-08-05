@@ -165,7 +165,7 @@ public:
   /// setting Error if an error occurs.  This is used for code generation
   /// crash testing.
   ///
-  void compileProgram(Module *M, std::string *Error);
+  void compileProgram(Module *M, std::string *Error) const;
 
   /// executeProgram - This method runs "Program", capturing the output of the
   /// program to a file.  A recommended filename may be optionally specified.

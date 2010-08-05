@@ -106,10 +106,10 @@ namespace {
   ///
   class ReduceCrashingGlobalVariables : public ListReducer<GlobalVariable*> {
     BugDriver &BD;
-    bool (*TestFn)(BugDriver &, Module *);
+    bool (*TestFn)(const BugDriver &, Module *);
   public:
     ReduceCrashingGlobalVariables(BugDriver &bd,
-                                  bool (*testFn)(BugDriver &, Module *))
+                                  bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<GlobalVariable*> &Prefix,
@@ -176,10 +176,10 @@ namespace llvm {
   ///
   class ReduceCrashingFunctions : public ListReducer<Function*> {
     BugDriver &BD;
-    bool (*TestFn)(BugDriver &, Module *);
+    bool (*TestFn)(const BugDriver &, Module *);
   public:
     ReduceCrashingFunctions(BugDriver &bd,
-                            bool (*testFn)(BugDriver &, Module *))
+                            bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<Function*> &Prefix,
@@ -249,9 +249,10 @@ namespace {
   ///
   class ReduceCrashingBlocks : public ListReducer<const BasicBlock*> {
     BugDriver &BD;
-    bool (*TestFn)(BugDriver &, Module *);
+    bool (*TestFn)(const BugDriver &, Module *);
   public:
-    ReduceCrashingBlocks(BugDriver &bd, bool (*testFn)(BugDriver &, Module *))
+    ReduceCrashingBlocks(BugDriver &bd,
+                         bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<const BasicBlock*> &Prefix,
@@ -348,10 +349,10 @@ namespace {
   ///
   class ReduceCrashingInstructions : public ListReducer<const Instruction*> {
     BugDriver &BD;
-    bool (*TestFn)(BugDriver &, Module *);
+    bool (*TestFn)(const BugDriver &, Module *);
   public:
-    ReduceCrashingInstructions(BugDriver &bd, bool (*testFn)(BugDriver &,
-                                                             Module *))
+    ReduceCrashingInstructions(BugDriver &bd,
+                               bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
     virtual TestResult doTest(std::vector<const Instruction*> &Prefix,
@@ -422,7 +423,8 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
 /// DebugACrash - Given a predicate that determines whether a component crashes
 /// on a program, try to destructively reduce the program while still keeping
 /// the predicate true.
-static bool DebugACrash(BugDriver &BD, bool (*TestFn)(BugDriver &, Module *),
+static bool DebugACrash(BugDriver &BD,
+                        bool (*TestFn)(const BugDriver &, Module *),
                         std::string &Error) {
   // See if we can get away with nuking some of the global variable initializers
   // in the program...
@@ -607,7 +609,7 @@ ExitLoops:
   return false;
 }
 
-static bool TestForOptimizerCrash(BugDriver &BD, Module *M) {
+static bool TestForOptimizerCrash(const BugDriver &BD, Module *M) {
   return BD.runPasses(M);
 }
 
@@ -635,7 +637,7 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
   return Success;
 }
 
-static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
+static bool TestForCodeGenCrash(const BugDriver &BD, Module *M) {
   std::string Error;
   BD.compileProgram(M, &Error);
   if (!Error.empty()) {
