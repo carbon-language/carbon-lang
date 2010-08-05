@@ -705,6 +705,12 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       llvm_unreachable("psuedo instructions should be removed before code"
                        " emission");
       break;
+    // Do nothing for Int_MemBarrier - it's just a comment.  Add a debug
+    // to make it slightly easier to see.
+    case X86::Int_MemBarrier:
+      DEBUG(dbgs() << "#MEMBARRIER\n");
+      break;
+    
     case TargetOpcode::INLINEASM:
       // We allow inline assembler nodes with empty bodies - they can
       // implicitly define registers, which is ok for JIT.
@@ -716,7 +722,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     case TargetOpcode::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getMCSymbol());
       break;
-        
+    
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
       break;
