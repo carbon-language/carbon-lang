@@ -1727,10 +1727,18 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
     QualType Ty = VD->getType();
     assert(!Ty->isArrayType() && 
            "Array block variable should have been caught");
+    if (Ty->isRecordType() && !BDRE->isByRef()) {
+      bool HasUnion = false;
+      BuildAggrIvarRecordLayout(Ty->getAs<RecordType>(),
+                                FieldOffset,
+                                true,
+                                HasUnion);
+      continue;
+    }
     // FIXME. Handle none __block Aggregate variables
 #if 0
-    if ((Ty->isRecordType() || Ty->isUnionType()) && !BDRE->isByRef())
-      assert(false && "Aggregate block variable layout NYI");
+    if (Ty->isUnionType() && !BDRE->isByRef())
+      assert(false && "union block variable layout NYI");
 #endif
     Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), Ty);
     unsigned FieldSize = CGM.getContext().getTypeSize(Ty);

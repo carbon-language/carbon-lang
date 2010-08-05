@@ -3,6 +3,17 @@
 // RUN: %clang_cc1 -x objective-c++ -fblocks -fobjc-gc -triple x86_64-apple-darwin -O0 -S %s -o %t-64.s
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
 
+struct S {
+    int i1;
+    id o1;
+    struct V {
+     int i2;
+     id o2;
+    } v1;
+    int i3;
+    id o3;
+};
+
 __weak id wid;
 void x(id y) {}
 void y(int a) {}
@@ -52,6 +63,13 @@ void (^d)() = ^{
         x(byref_bab);
     };    
     d();
+
+// Test4
+    struct S s2;
+    void (^e)() = ^{
+        x(s2.o1);
+    };    
+    e();
 }
 
 // CHECK-LP64: L_OBJC_CLASS_NAME_:
@@ -63,3 +81,5 @@ void (^d)() = ^{
 // CHECK-LP64: L_OBJC_CLASS_NAME_6:
 // CHECK-LP64-NEXT: .asciz   "A\023!"
 
+// CHECK-LP64: L_OBJC_CLASS_NAME_11:
+// CHECK-LP64-NEXT: .asciz   "Q\021\021"
