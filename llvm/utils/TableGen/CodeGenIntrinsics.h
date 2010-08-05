@@ -60,7 +60,7 @@ namespace llvm {
 
     // Memory mod/ref behavior of this intrinsic.
     enum {
-      NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem
+      NoMem, ReadArgMem, ReadMem, ReadWriteArgMem, ReadWriteMem
     } ModRef;
 
     /// This is set to true if the intrinsic is overloaded by its argument

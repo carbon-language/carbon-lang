@@ -2197,10 +2197,10 @@ private:
       if (IntInfo->ModRef >= CodeGenIntrinsic::ReadArgMem)
         mayLoad = true;// These may load memory.
 
-      if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
+      if (IntInfo->ModRef >= CodeGenIntrinsic::ReadWriteArgMem)
         mayStore = true;// Intrinsics that can write to memory are 'mayStore'.
 
-      if (IntInfo->ModRef >= CodeGenIntrinsic::WriteMem)
+      if (IntInfo->ModRef >= CodeGenIntrinsic::ReadWriteMem)
         // WriteMem intrinsics can have other strange effects.
         HasSideEffects = true;
     }

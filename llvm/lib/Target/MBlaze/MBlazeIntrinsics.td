@@ -17,17 +17,11 @@
 
 // MBlaze intrinsic classes.
 let TargetPrefix = "mblaze", isTarget = 1 in { 
-  class MBFSL_Get_Intrinsic : Intrinsic<[llvm_i32_ty],
-                                        [llvm_i32_ty],
-                                        [IntrWriteMem]>;
+  class MBFSL_Get_Intrinsic : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], []>;
 
-  class MBFSL_Put_Intrinsic : Intrinsic<[],
-                                        [llvm_i32_ty, llvm_i32_ty],
-                                        [IntrWriteMem]>;
+  class MBFSL_Put_Intrinsic : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty], []>;
 
-  class MBFSL_PutT_Intrinsic : Intrinsic<[],
-                                         [llvm_i32_ty],
-                                         [IntrWriteMem]>;
+  class MBFSL_PutT_Intrinsic : Intrinsic<[], [llvm_i32_ty], []>;
 }
 
 //===----------------------------------------------------------------------===//

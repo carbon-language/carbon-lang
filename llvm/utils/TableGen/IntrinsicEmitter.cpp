@@ -545,7 +545,7 @@ EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
   OS << "switch (iid) {\n";
   OS << "default:\n    return UnknownModRefBehavior;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    if (Ints[i].ModRef == CodeGenIntrinsic::WriteMem)
+    if (Ints[i].ModRef == CodeGenIntrinsic::ReadWriteMem)
       continue;
     OS << "case " << TargetPrefix << "Intrinsic::" << Ints[i].EnumName
       << ":\n";
@@ -559,7 +559,7 @@ EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
     case CodeGenIntrinsic::ReadMem:
       OS << "  return OnlyReadsMemory;\n";
       break;
-    case CodeGenIntrinsic::WriteArgMem:
+    case CodeGenIntrinsic::ReadWriteArgMem:
       OS << "  return AccessesArguments;\n";
       break;
     }
