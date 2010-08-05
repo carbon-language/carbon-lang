@@ -699,7 +699,11 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       //   a program to refer to the anonymous union, and there is therefore no
       //   need to mangle its name.
       const FieldDecl *FD = FindFirstNamedDataMember(RD);
-      assert(FD && "Didn't find a named data member!");
+
+      // It's actually possible for various reasons for us to get here
+      // with an empty anonymous struct / union.  Fortunately, it
+      // doesn't really matter what name we generate.
+      if (!FD) break;
       assert(FD->getIdentifier() && "Data member name isn't an identifier!");
       
       mangleSourceName(FD->getIdentifier());

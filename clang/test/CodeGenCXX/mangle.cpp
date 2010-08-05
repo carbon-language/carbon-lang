@@ -529,3 +529,14 @@ namespace test15 {
   // CHECK: define weak_odr void @_ZN6test151fILi7EEEvNS_1SIXplT_LNS_1EE3EEEE(
   template void f<7>(S<7 + e>);
 }
+
+// rdar://problem/8125400.  Don't crash.
+namespace test16 {
+  static union {};
+  static union { union {}; };
+  static union { struct {}; };
+  static union { union { union {}; }; };
+  static union { union { struct {}; }; };
+  static union { struct { union {}; }; };
+  static union { struct { struct {}; }; };
+}
