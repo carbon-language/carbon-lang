@@ -246,6 +246,12 @@ void memcmp6 (char *a, char *b, size_t n) {
     (void)*(char*)0; // expected-warning{{null}}
 }
 
+int memcmp7 (char *a, size_t x, size_t y, size_t n) {
+  // We used to crash when either of the arguments was unknown.
+  return memcmp(a, &a[x*y], n) +
+         memcmp(&a[x*y], a, n);
+}
+
 //===----------------------------------------------------------------------===
 // bcopy()
 //===----------------------------------------------------------------------===

@@ -221,14 +221,16 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
                                                   *Length, One, SizeTy));
 
   // Check that the first buffer is sufficently long.
-  Loc BufStart = cast<Loc>(SV.EvalCast(BufVal, PtrTy, FirstBuf->getType()));
-  SVal BufEnd
-    = SV.EvalBinOpLN(state, BinaryOperator::Add, BufStart, LastOffset, PtrTy);
-  state = CheckLocation(C, state, FirstBuf, BufEnd);
+  SVal BufStart = SV.EvalCast(BufVal, PtrTy, FirstBuf->getType());
+  if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
+    SVal BufEnd = SV.EvalBinOpLN(state, BinaryOperator::Add, *BufLoc,
+                                 LastOffset, PtrTy);
+    state = CheckLocation(C, state, FirstBuf, BufEnd);
 
-  // If the buffer isn't large enough, abort.
-  if (!state)
-    return NULL;
+    // If the buffer isn't large enough, abort.
+    if (!state)
+      return NULL;
+  }
 
   // If there's a second buffer, check it as well.
   if (SecondBuf) {
@@ -237,10 +239,12 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
     if (!state)
       return NULL;
 
-    BufStart = cast<Loc>(SV.EvalCast(BufVal, PtrTy, SecondBuf->getType()));
-    BufEnd
-      = SV.EvalBinOpLN(state, BinaryOperator::Add, BufStart, LastOffset, PtrTy);
-    state = CheckLocation(C, state, SecondBuf, BufEnd);
+    BufStart = SV.EvalCast(BufVal, PtrTy, SecondBuf->getType());
+    if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
+      SVal BufEnd = SV.EvalBinOpLN(state, BinaryOperator::Add, *BufLoc,
+                                   LastOffset, PtrTy);
+      state = CheckLocation(C, state, SecondBuf, BufEnd);
+    }
   }
 
   // Large enough or not, return this state!
