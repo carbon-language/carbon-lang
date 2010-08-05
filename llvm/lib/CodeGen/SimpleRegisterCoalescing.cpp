@@ -1726,7 +1726,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         bool DoDelete = true;
         assert(MI->isCopyLike() && "Unrecognized copy instruction");
         unsigned SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
-        if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
+        if (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
+            MI->getNumOperands() > 2)
           // Do not delete extract_subreg, insert_subreg of physical
           // registers unless the definition is dead. e.g.
           // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
@@ -1740,9 +1741,15 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
             ShortenDeadCopyLiveRange(li, MI);
           DoDelete = true;
         }
-        if (!DoDelete)
+        if (!DoDelete) {
+          // We need the instruction to adjust liveness, so make it a KILL.
+          if (MI->isSubregToReg()) {
+            MI->RemoveOperand(3);
+            MI->RemoveOperand(1);
+          }
+          MI->setDesc(tii_->get(TargetOpcode::KILL));
           mii = llvm::next(mii);
-        else {
+        } else {
           li_->RemoveMachineInstrFromMaps(MI);
           mii = mbbi->erase(mii);
           ++numPeep;
