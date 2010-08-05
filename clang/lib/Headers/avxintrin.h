@@ -169,49 +169,49 @@ _mm256_round_ps(__m256 v, const int m)
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_and_pd(__m256d a, __m256d b)
 {
-  return (__m256d)((__v4df)a & (__v4df)b);
+  return (__m256d)((__v4di)a & (__v4di)b);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_and_ps(__m256 a, __m256 b)
 {
-  return (__m256)((__v8sf)a & (__v8sf)b);
+  return (__m256)((__v8si)a & (__v8si)b);
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_andnot_pd(__m256d a, __m256d b)
 {
-  return (__m256d)(~(__v4df)a & (__v4df)b);
+  return (__m256d)(~(__v4di)a & (__v4di)b);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_andnot_ps(__m256 a, __m256 b)
 {
-  return (__m256)(~(__v8sf)a & (__v8sf)b);
+  return (__m256)(~(__v8si)a & (__v8si)b);
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_or_pd(__m256d a, __m256d b)
 {
-  return (__m256d)((__v4df)a | (__v4df)b);
+  return (__m256d)((__v4di)a | (__v4di)b);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_or_ps(__m256 a, __m256 b)
 {
-  return (__m256)((__v8sf)a | (__v8sf)b);
+  return (__m256)((__v8si)a | (__v8si)b);
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_xor_pd(__m256d a, __m256d b)
 {
-  return (__m256d)((__v4df)a ^ (__v4df)b);
+  return (__m256d)((__v4di)a ^ (__v4di)b);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_xor_ps(__m256 a, __m256 b)
 {
-  return (__m256)((__v8sf)a ^ (__v8sf)b);
+  return (__m256)((__v8si)a ^ (__v8si)b);
 }
 
 /* Horizontal arithmetic */
