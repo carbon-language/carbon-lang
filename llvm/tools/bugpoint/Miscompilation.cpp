@@ -67,7 +67,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
          << "' compiles correctly: ";
 
   std::string BitcodeResult;
-  if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(BD.getProgram(), Suffix, BitcodeResult, false/*delete*/,
+                   true/*quiet*/)) {
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
     BD.setPassesToRun(Suffix);
@@ -104,7 +105,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // kept passes, we can update our bitcode file to include the result of the
   // prefix passes, then discard the prefix passes.
   //
-  if (BD.runPasses(Prefix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(BD.getProgram(), Prefix, BitcodeResult, false/*delete*/,
+                   true/*quiet*/)) {
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
     BD.setPassesToRun(Prefix);
@@ -144,7 +146,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
             << getPassesString(Prefix) << "' passes: ";
 
   OwningPtr<Module> OriginalInput(BD.swapProgramIn(PrefixOutput.take()));
-  if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(BD.getProgram(), Suffix, BitcodeResult, false/*delete*/,
+                   true/*quiet*/)) {
     errs() << " Error running this sequence of passes"
            << " on the input program!\n";
     BD.setPassesToRun(Suffix);

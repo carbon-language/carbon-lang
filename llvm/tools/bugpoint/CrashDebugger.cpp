@@ -68,7 +68,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
     outs() << "Checking to see if these passes crash: "
            << getPassesString(Prefix) << ": ";
     std::string PfxOutput;
-    if (BD.runPasses(Prefix, PfxOutput))
+    if (BD.runPasses(BD.getProgram(), Prefix, PfxOutput))
       return KeepPrefix;
 
     PrefixOutput.set(PfxOutput);

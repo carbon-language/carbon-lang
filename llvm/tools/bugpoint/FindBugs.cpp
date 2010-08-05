@@ -62,7 +62,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses,
     }
     
     std::string Filename;
-    if(runPasses(PassesToRun, Filename, false)) {
+    if(runPasses(Program, PassesToRun, Filename, false)) {
       outs() << "\n";
       outs() << "Optimizer passes caused failure!\n\n";
       debugOptimizerCrash();

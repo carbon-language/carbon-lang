@@ -213,7 +213,7 @@ public:
   /// "bugpoint-ID.bc".
   ///
   void EmitProgressBitcode(const Module *M, const std::string &ID,
-                           bool NoFlyer = false);
+                           bool NoFlyer = false) const;
 
   /// deleteInstructionFromProgram - This method clones the current Program and
   /// deletes the specified instruction from the cloned module.  It then runs a
@@ -261,7 +261,8 @@ public:
   /// or failed, unless Quiet is set.  ExtraArgs specifies additional arguments
   /// to pass to the child bugpoint instance.
   ///
-  bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
+  bool runPasses(Module *Program,
+                 const std::vector<const PassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
                  bool Quiet = false, unsigned NumExtraArgs = 0,
                  const char * const *ExtraArgs = NULL) const;
@@ -289,7 +290,7 @@ private:
   bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
                  bool DeleteOutput = true) const {
     std::string Filename;
-    return runPasses(PassesToRun, Filename, DeleteOutput);
+    return runPasses(Program, PassesToRun, Filename, DeleteOutput);
   }
 
   /// runAsChild - The actual "runPasses" guts that runs in a child process.

@@ -66,7 +66,8 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
 /// to a file named "bugpoint-ID.bc".
 ///
 void BugDriver::EmitProgressBitcode(const Module *M,
-                                    const std::string &ID, bool NoFlyer) {
+                                    const std::string &ID,
+                                    bool NoFlyer)  const {
   // Output the input to the current pass to a bitcode file, emit a message
   // telling the user how to reproduce it: opt -foo blah.bc
   //
@@ -125,7 +126,8 @@ cl::opt<bool> SilencePasses("silence-passes", cl::desc("Suppress output of runni
 /// outs() a single line message indicating whether compilation was successful
 /// or failed.
 ///
-bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
+bool BugDriver::runPasses(Module *Program,
+                          const std::vector<const PassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
                           bool Quiet, unsigned NumExtraArgs,
                           const char * const *ExtraArgs) const {
@@ -239,23 +241,18 @@ Module *BugDriver::runPassesOn(Module *M,
                                const std::vector<const PassInfo*> &Passes,
                                bool AutoDebugCrashes, unsigned NumExtraArgs,
                                const char * const *ExtraArgs) {
-  Module *OldProgram = swapProgramIn(M);
   std::string BitcodeResult;
-  if (runPasses(Passes, BitcodeResult, false/*delete*/, true/*quiet*/,
+  if (runPasses(M, Passes, BitcodeResult, false/*delete*/, true/*quiet*/,
                 NumExtraArgs, ExtraArgs)) {
     if (AutoDebugCrashes) {
       errs() << " Error running this sequence of passes"
              << " on the input program!\n";
-      delete OldProgram;
-      EmitProgressBitcode(Program, "pass-error",  false);
+      delete swapProgramIn(M);
+      EmitProgressBitcode(M, "pass-error",  false);
       exit(debugOptimizerCrash());
     }
-    swapProgramIn(OldProgram);
     return 0;
   }
-
-  // Restore the current program.
-  swapProgramIn(OldProgram);
 
   Module *Ret = ParseInputFile(BitcodeResult, Context);
   if (Ret == 0) {
