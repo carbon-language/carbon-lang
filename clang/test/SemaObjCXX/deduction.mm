@@ -56,3 +56,10 @@ namespace test1 {
   template struct tester<Test1Class>; // expected-note {{in instantiation}}
   template struct tester<Test1Class<Test1Protocol> >; // expected-note {{in instantiation}}
 }
+
+namespace test2 {
+  template <typename T> void foo(const T* t) {}
+  void test(id x) {
+    foo(x);
+  }
+}

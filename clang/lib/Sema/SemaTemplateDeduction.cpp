@@ -1721,7 +1721,8 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //     - The transformed A can be another pointer or pointer to member
     //       type that can be converted to the deduced A via a qualification
     //       conversion (4.4).
-    if (ArgType->isPointerType() || ArgType->isMemberPointerType())
+    if (ArgType->isPointerType() || ArgType->isMemberPointerType() ||
+        ArgType->isObjCObjectPointerType())
       TDF |= TDF_IgnoreQualifiers;
     //     - If P is a class and P has the form simple-template-id, then the
     //       transformed A can be a derived class of the deduced A. Likewise,
