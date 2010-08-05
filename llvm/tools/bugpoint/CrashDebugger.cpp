@@ -86,7 +86,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
   outs() << "Checking to see if these passes crash: "
          << getPassesString(Suffix) << ": ";
 
-  if (BD.runPasses(Suffix)) {
+  if (BD.runPasses(BD.getProgram(), Suffix)) {
     delete OrigProgram;            // The suffix crashes alone...
     return KeepSuffix;
   }

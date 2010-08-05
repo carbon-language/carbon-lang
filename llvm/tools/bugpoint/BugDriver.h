@@ -69,7 +69,7 @@ public:
 
   const char *getToolName() const { return ToolName; }
 
-  LLVMContext& getContext() { return Context; }
+  LLVMContext& getContext() const { return Context; }
 
   // Set up methods... these methods are used to copy information about the
   // command line arguments into instance variables of BugDriver.
@@ -132,12 +132,8 @@ public:
 
   /// runPasses - Run all of the passes in the "PassesToRun" list, discard the
   /// output, and return true if any of the passes crashed.
-  bool runPasses(Module *M = 0) {
-    if (M == 0) M = Program;
-    std::swap(M, Program);
-    bool Result = runPasses(PassesToRun);
-    std::swap(M, Program);
-    return Result;
+  bool runPasses(Module *M) const {
+    return runPasses(M, PassesToRun);
   }
 
   Module *getProgram() const { return Program; }
@@ -287,10 +283,11 @@ private:
   /// false indicating whether or not the optimizer crashed on the specified
   /// input (true = crashed).
   ///
-  bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
+  bool runPasses(Module *M,
+                 const std::vector<const PassInfo*> &PassesToRun,
                  bool DeleteOutput = true) const {
     std::string Filename;
-    return runPasses(Program, PassesToRun, Filename, DeleteOutput);
+    return runPasses(M, PassesToRun, Filename, DeleteOutput);
   }
 
   /// runAsChild - The actual "runPasses" guts that runs in a child process.

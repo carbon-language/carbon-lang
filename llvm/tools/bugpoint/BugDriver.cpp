@@ -172,7 +172,7 @@ bool BugDriver::run(std::string &ErrMsg) {
   // miscompilation.
   if (!PassesToRun.empty()) {
     outs() << "Running selected passes on program to test for crash: ";
-    if (runPasses(PassesToRun))
+    if (runPasses(Program, PassesToRun))
       return debugOptimizerCrash();
   }
 
