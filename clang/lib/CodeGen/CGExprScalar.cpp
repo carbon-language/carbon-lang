@@ -1576,12 +1576,13 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
         llvm::PointerType::getUnqual(handlerTy));
   handlerFunction = Builder.CreateLoad(handlerFunction);
 
-  llvm::Value *handlerResult = Builder.CreateCall4(handlerFunction,
-      Builder.CreateSExt(Ops.LHS, CGF.Int64Ty),
-      Builder.CreateSExt(Ops.RHS, CGF.Int64Ty),
-      llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), OpID),
-      llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext),
-        cast<llvm::IntegerType>(opTy)->getBitWidth()));
+  llvm::Value *lhs = Builder.CreateSExt(Ops.LHS, CGF.Int64Ty);
+  llvm::Value *rhs = Builder.CreateSExt(Ops.RHS, CGF.Int64Ty);
+
+  llvm::Value *handlerResult =
+    Builder.CreateCall4(handlerFunction, lhs, rhs,
+                        Builder.getInt8(OpID),
+              Builder.getInt8(cast<llvm::IntegerType>(opTy)->getBitWidth()));
 
   handlerResult = Builder.CreateTrunc(handlerResult, opTy);
 
