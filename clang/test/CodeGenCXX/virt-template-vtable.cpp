@@ -19,4 +19,4 @@ template class A<short>;
 // CHECK: @_ZTV1B = weak_odr hidden constant
 // CHECK: @_ZTV1AIlE = weak_odr constant
 // CHECK: @_ZTV1AIsE = weak_odr constant
-// CHECK: @_ZTV1AIiE = weak_odr hidden constant
+// CHECK: @_ZTV1AIiE = weak_odr constant

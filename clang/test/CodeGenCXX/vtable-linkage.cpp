@@ -137,10 +137,10 @@ void use_F() {
 // CHECK-7: @_ZTI1EIlE = weak_odr constant
 
 // F<long> is an implicit template instantiation with no key function,
-// so its vtable should have weak_odr linkage and hidden visibility.
-// CHECK-8: @_ZTV1FIlE = weak_odr hidden constant
+// so its vtable should have weak_odr linkage.
+// CHECK-8: @_ZTV1FIlE = weak_odr constant
 // CHECK-8: @_ZTS1FIlE = weak_odr constant
-// CHECK-8: @_ZTI1FIlE = weak_odr hidden constant
+// CHECK-8: @_ZTI1FIlE = weak_odr constant
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
@@ -164,10 +164,10 @@ void use_F() {
 // CHECK-12: @_ZTIN12_GLOBAL__N_11AE = internal constant
 
 // F<char> is an explicit specialization without a key function, so
-// its vtable should have weak_odr linkage and hidden visibility.
-// CHECK-13: @_ZTV1FIcE = weak_odr hidden constant
+// its vtable should have weak_odr linkage.
+// CHECK-13: @_ZTV1FIcE = weak_odr constant
 // CHECK-13: @_ZTS1FIcE = weak_odr constant
-// CHECK-13: @_ZTI1FIcE = weak_odr hidden constant
+// CHECK-13: @_ZTI1FIcE = weak_odr constant
 
 // RUN: FileCheck --check-prefix=CHECK-G %s < %t
 //

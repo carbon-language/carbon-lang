@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/Compiler.h"
@@ -2469,34 +2470,29 @@ static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
   // emit its thunks with hidden visibility, since its thunks must be
   // emitted when the function is.
 
-  // This mostly follows CodeGenModule::setTypeVisibility.
+  // This follows CodeGenModule::setTypeVisibility; see the comments
+  // there for explanation.
 
   if ((Fn->getLinkage() != llvm::GlobalVariable::LinkOnceODRLinkage &&
        Fn->getLinkage() != llvm::GlobalVariable::WeakODRLinkage) ||
       Fn->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
     return;
 
-  // Don't override an explicit visibility attribute.
   if (MD->hasAttr<VisibilityAttr>())
     return;
 
   switch (MD->getTemplateSpecializationKind()) {
-  // We have to disable the optimization if this is an EI definition
-  // because there might be EI declarations in other shared objects.
   case TSK_ExplicitInstantiationDefinition:
   case TSK_ExplicitInstantiationDeclaration:
     return;
 
-  // Every use of a non-template or explicitly-specialized class's
-  // type information has to emit it.
-  case TSK_ExplicitSpecialization:
   case TSK_Undeclared:
     break;
 
-  // Implicit instantiations can ignore the possibility of an
-  // explicit instantiation declaration because there necessarily
-  // must be an EI definition somewhere with default visibility.
+  case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
+    if (!CGM.getCodeGenOpts().EmitWeakTemplatesHidden)
+      return;
     break;
   }
 

@@ -229,6 +229,9 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   // This isn't possible if there might be unresolved references
   // elsewhere that rely on this symbol being visible.
 
+  // This should be kept roughly in sync with setThunkVisibility
+  // in CGVTables.cpp.
+
   // Preconditions.
   if (GV->getLinkage() != llvm::GlobalVariable::WeakODRLinkage ||
       GV->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
@@ -245,16 +248,20 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   case TSK_ExplicitInstantiationDeclaration:
     return;
 
-  // Every use of a non-template or explicitly-specialized class's
-  // type information has to emit it.
-  case TSK_ExplicitSpecialization:
+  // Every use of a non-template class's type information has to emit it.
   case TSK_Undeclared:
     break;
 
-  // Implicit instantiations can ignore the possibility of an
-  // explicit instantiation declaration because there necessarily
-  // must be an EI definition somewhere with default visibility.
+  // In theory, implicit instantiations can ignore the possibility of
+  // an explicit instantiation declaration because there necessarily
+  // must be an EI definition somewhere with default visibility.  In
+  // practice, it's possible to have an explicit instantiation for
+  // an arbitrary template class, and linkers aren't necessarily able
+  // to deal with mixed-visibility symbols.
+  case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
+    if (!CodeGenOpts.EmitWeakTemplatesHidden)
+      return;
     break;
   }
 

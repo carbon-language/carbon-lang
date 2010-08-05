@@ -14,7 +14,7 @@
 // CHECK: _ZTI1A = weak_odr hidden constant
 // CHECK: _ZTI1B = constant
 // CHECK: _ZTI1C = internal constant
-// CHECK: _ZTI1TILj0EE = weak_odr hidden constant
+// CHECK: _ZTI1TILj0EE = weak_odr constant
 // CHECK: _ZTI1TILj1EE = weak_odr constant
 // CHECK: _ZTI1TILj2EE = external constant
 // CHECK: _ZTIA10_i = weak_odr hidden constant
