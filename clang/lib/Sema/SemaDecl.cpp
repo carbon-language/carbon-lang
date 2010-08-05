@@ -2680,6 +2680,11 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       !NewVD->isInvalidDecl())
     RegisterLocallyScopedExternCDecl(NewVD, Previous, S);
 
+  // If there's a #pragma GCC visibility in scope, and this isn't a class
+  // member, set the visibility of this variable.
+  if (NewVD->getLinkage() == ExternalLinkage && !DC->isRecord())
+    AddPushedVisibilityAttribute(NewVD);
+
   return NewVD;
 }
 
@@ -3528,6 +3533,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
            diag::note_attribute_overloadable_prev_overload);
     NewFD->addAttr(::new (Context) OverloadableAttr());
   }
+
+  // If there's a #pragma GCC visibility in scope, and this isn't a class
+  // member, set the visibility of this function.
+  if (NewFD->getLinkage() == ExternalLinkage && !DC->isRecord())
+    AddPushedVisibilityAttribute(NewFD);
 
   // If this is a locally-scoped extern C function, update the
   // map of such names.
@@ -6367,6 +6377,11 @@ void Sema::ActOnFields(Scope* S,
 
   if (Attr)
     ProcessDeclAttributeList(S, Record, Attr);
+
+  // If there's a #pragma GCC visibility in scope, and this isn't a subclass,
+  // set the visibility of this record.
+  if (Record && !Record->getDeclContext()->isRecord())
+    AddPushedVisibilityAttribute(Record);
 }
 
 /// \brief Determine whether the given integral value is representable within

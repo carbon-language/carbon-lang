@@ -18,6 +18,59 @@
 #include "clang/Parse/Parser.h"
 using namespace clang;
 
+
+// #pragma GCC visibility comes in two variants:
+//   'push' '(' [visibility] ')'
+//   'pop'
+void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP, Token &VisTok) {
+  SourceLocation VisLoc = VisTok.getLocation();
+
+  Token Tok;
+  PP.Lex(Tok);
+
+  const IdentifierInfo *PushPop = Tok.getIdentifierInfo();
+
+  bool IsPush;
+  const IdentifierInfo *VisType;
+  if (PushPop && PushPop->isStr("pop")) {
+    IsPush = false;
+    VisType = 0;
+  } else if (PushPop && PushPop->isStr("push")) {
+    IsPush = true;
+    PP.Lex(Tok);
+    if (Tok.isNot(tok::l_paren)) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_lparen)
+        << "visibility";
+      return;
+    }
+    PP.Lex(Tok);
+    VisType = Tok.getIdentifierInfo();
+    if (!VisType) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
+        << "visibility";
+      return;
+    }
+    PP.Lex(Tok);
+    if (Tok.isNot(tok::r_paren)) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_rparen)
+        << "visibility";
+      return;
+    }
+  } else {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
+      << "visibility";
+    return;
+  }
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::eom)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+      << "visibility";
+    return;
+  }
+
+  Actions.ActOnPragmaVisibility(IsPush, VisType, VisLoc);
+}
+
 // #pragma pack(...) comes in the following delicious flavors:
 //   pack '(' [integer] ')'
 //   pack '(' 'show' ')'

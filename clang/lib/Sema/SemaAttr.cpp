@@ -288,3 +288,70 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
     VD->addAttr(::new (Context) UnusedAttr());
   }
 }
+
+typedef std::vector<VisibilityAttr::VisibilityTypes> VisStack;
+
+void Sema::AddPushedVisibilityAttribute(Decl *D) {
+  if (!VisContext)
+    return;
+
+  if (D->hasAttr<VisibilityAttr>())
+    return;
+
+  VisStack *Stack = static_cast<VisStack*>(VisContext);
+  VisibilityAttr::VisibilityTypes type = Stack->back();
+
+  D->addAttr(::new (Context) VisibilityAttr(type, true));
+}
+
+/// FreeVisContext - Deallocate and null out VisContext.
+void Sema::FreeVisContext() {
+  delete static_cast<VisStack*>(VisContext);
+  VisContext = 0;
+}
+
+void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
+                                 SourceLocation PragmaLoc) {
+  if (IsPush) {
+    // Compute visibility to use.
+    VisibilityAttr::VisibilityTypes type;
+    if (VisType->isStr("default"))
+      type = VisibilityAttr::DefaultVisibility;
+    else if (VisType->isStr("hidden"))
+      type = VisibilityAttr::HiddenVisibility;
+    else if (VisType->isStr("internal"))
+      type = VisibilityAttr::HiddenVisibility; // FIXME
+    else if (VisType->isStr("protected"))
+      type = VisibilityAttr::ProtectedVisibility;
+    else {
+      Diag(PragmaLoc, diag::warn_attribute_unknown_visibility) <<
+        VisType->getName();
+      return;
+    }
+    PushPragmaVisibility(type);
+  } else {
+    PopPragmaVisibility();
+  }
+}
+
+void Sema::PushPragmaVisibility(VisibilityAttr::VisibilityTypes type) {
+  // Put visibility on stack.
+  if (!VisContext)
+    VisContext = new VisStack;
+
+  VisStack *Stack = static_cast<VisStack*>(VisContext);
+  Stack->push_back(type);
+}
+
+void Sema::PopPragmaVisibility() {
+  // Pop visibility from stack, if there is one on the stack.
+  if (VisContext) {
+    VisStack *Stack = static_cast<VisStack*>(VisContext);
+
+    Stack->pop_back();
+    // To simplify the implementation, never keep around an empty stack.
+    if (Stack->empty())
+      FreeVisContext();
+  }
+  // FIXME: Add diag for pop without push.
+}

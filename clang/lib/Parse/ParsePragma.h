@@ -28,6 +28,15 @@ public:
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
 };
 
+class PragmaGCCVisibilityHandler : public PragmaHandler {
+  Action &Actions;
+public:
+  explicit PragmaGCCVisibilityHandler(Action &A) : PragmaHandler("visibility"),
+                                                   Actions(A) {}
+
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
+};
+
 class PragmaOptionsHandler : public PragmaHandler {
   Action &Actions;
 public:

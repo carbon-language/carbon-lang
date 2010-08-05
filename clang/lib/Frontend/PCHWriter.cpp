@@ -2106,6 +2106,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case attr::Visibility:
       // FIXME: stable encoding
       Record.push_back(cast<VisibilityAttr>(Attr)->getVisibility());
+      Record.push_back(cast<VisibilityAttr>(Attr)->isFromPragma());
       break;
 
     case attr::WarnUnusedResult:

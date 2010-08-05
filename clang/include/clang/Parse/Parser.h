@@ -110,6 +110,7 @@ class Parser {
   IdentifierInfo *Ident_pixel;
 
   llvm::OwningPtr<PragmaHandler> AlignHandler;
+  llvm::OwningPtr<PragmaHandler> GCCVisibilityHandler;
   llvm::OwningPtr<PragmaHandler> OptionsHandler;
   llvm::OwningPtr<PragmaHandler> PackHandler;
   llvm::OwningPtr<PragmaHandler> UnusedHandler;

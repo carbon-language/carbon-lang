@@ -3179,6 +3179,9 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
   ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
 
+  if (const VisibilityAttr *attr = Namespc->getAttr<VisibilityAttr>())
+    PushPragmaVisibility(attr->getVisibility());
+
   if (II) {
     // C++ [namespace.def]p2:
     // The identifier in an original-namespace-definition shall not have been
@@ -3310,6 +3313,8 @@ void Sema::ActOnFinishNamespaceDef(DeclPtrTy D, SourceLocation RBrace) {
   assert(Namespc && "Invalid parameter, expected NamespaceDecl");
   Namespc->setRBracLoc(RBrace);
   PopDeclContext();
+  if (Namespc->hasAttr<VisibilityAttr>())
+    PopPragmaVisibility();
 }
 
 /// \brief Retrieve the special "std" namespace, which may require us to 

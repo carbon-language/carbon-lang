@@ -1292,7 +1292,8 @@ Attr *PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor) {
 
     case attr::Visibility:
       New = ::new (*Context) VisibilityAttr(
-                              (VisibilityAttr::VisibilityTypes)Record[Idx++]);
+                              (VisibilityAttr::VisibilityTypes)Record[Idx++],
+                              (bool)Record[Idx++]);
       break;
 
     SIMPLE_ATTR(WarnUnusedResult);

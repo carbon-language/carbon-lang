@@ -285,6 +285,9 @@ public:
   /// of 0 indicates default alignment.
   void *PackContext; // Really a "PragmaPackStack*"
 
+  /// VisContext - Manages the stack for #pragma GCC visibility.
+  void *VisContext; // Really a "PragmaVisStack*"
+
   /// \brief Stack containing information about each of the nested function,
   /// block, and method scopes that are currently active.
   llvm::SmallVector<FunctionScopeInfo *, 4> FunctionScopes;
@@ -4199,6 +4202,10 @@ public:
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc);
 
+  /// ActOnPragmaVisibility - Called on well formed #pragma GCC visibility... .
+  virtual void ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
+                                     SourceLocation PragmaLoc);
+
   NamedDecl *DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II);
   void DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W);
 
@@ -4220,6 +4227,21 @@ public:
 
   /// FreePackedContext - Deallocate and null out PackContext.
   void FreePackedContext();
+
+  /// AddPushedVisibilityAttribute - If '#pragma GCC visibility' was used,
+  /// add an appropriate visibility attribute.
+  void AddPushedVisibilityAttribute(Decl *RD);
+
+  /// PushPragmaVisibility - Push the top element of the visibility stack; used
+  ///  for '#pragma GCC visibility' and visibility attributes on namespaces.
+  void PushPragmaVisibility(VisibilityAttr::VisibilityTypes type);
+
+  /// PopPragmaVisibility - Pop the top element of the visibility stack; used
+  /// for '#pragma GCC visibility' and visibility attributes on namespaces.
+  void PopPragmaVisibility();
+
+  /// FreeVisContext - Deallocate and null out VisContext.
+  void FreeVisContext();
 
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
   void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E);

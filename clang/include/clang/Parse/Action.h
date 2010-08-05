@@ -2734,6 +2734,14 @@ public:
     return;
   }
 
+
+  /// ActOnPragmaVisibility - Called on well formed #pragma GCC visibility... .
+  virtual void ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
+                                     SourceLocation PragmaLoc) {
+    return;
+  }
+
+
   /// ActOnPragmaWeakID - Called on well formed #pragma weak ident.
   virtual void ActOnPragmaWeakID(IdentifierInfo* WeakName,
                                  SourceLocation PragmaLoc,

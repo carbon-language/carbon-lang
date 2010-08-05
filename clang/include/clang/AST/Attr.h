@@ -540,11 +540,14 @@ public:
   };
 private:
   VisibilityTypes VisibilityType;
+  bool FromPragma;
 public:
-  VisibilityAttr(VisibilityTypes v) : Attr(attr::Visibility),
-                 VisibilityType(v) {}
+  VisibilityAttr(VisibilityTypes v, bool fp) : Attr(attr::Visibility),
+                 VisibilityType(v), FromPragma(fp) {}
 
   VisibilityTypes getVisibility() const { return VisibilityType; }
+
+  bool isFromPragma() const { return FromPragma; }
 
   virtual Attr *clone(ASTContext &C) const;
 

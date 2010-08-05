@@ -213,7 +213,7 @@ Attr *SentinelAttr::clone(ASTContext &C) const {
 }
 
 Attr *VisibilityAttr::clone(ASTContext &C) const {
-  return ::new (C) VisibilityAttr(VisibilityType);
+  return ::new (C) VisibilityAttr(VisibilityType, FromPragma);
 }
 
 Attr *OverloadableAttr::clone(ASTContext &C) const {

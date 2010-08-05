@@ -36,6 +36,9 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   AlignHandler.reset(new PragmaAlignHandler(actions));
   PP.AddPragmaHandler(AlignHandler.get());
 
+  GCCVisibilityHandler.reset(new PragmaGCCVisibilityHandler(actions));
+  PP.AddPragmaHandler("GCC", GCCVisibilityHandler.get());
+
   OptionsHandler.reset(new PragmaOptionsHandler(actions));
   PP.AddPragmaHandler(OptionsHandler.get());
 
@@ -303,6 +306,8 @@ Parser::~Parser() {
   // Remove the pragma handlers we installed.
   PP.RemovePragmaHandler(AlignHandler.get());
   AlignHandler.reset();
+  PP.RemovePragmaHandler("GCC", GCCVisibilityHandler.get());
+  GCCVisibilityHandler.reset();
   PP.RemovePragmaHandler(OptionsHandler.get());
   OptionsHandler.reset();
   PP.RemovePragmaHandler(PackHandler.get());

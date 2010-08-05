@@ -126,7 +126,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
-    PackContext(0), TopFunctionScope(0), ParsingDeclDepth(0),
+    PackContext(0), VisContext(0), TopFunctionScope(0), ParsingDeclDepth(0),
     IdResolver(pp.getLangOptions()), GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), SuppressAccessChecking(false),
@@ -147,6 +147,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 
 Sema::~Sema() {
   if (PackContext) FreePackedContext();
+  if (VisContext) FreeVisContext();
   delete TheTargetAttributesSema;
   while (!FunctionScopes.empty())
     PopFunctionOrBlockScope();

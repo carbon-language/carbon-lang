@@ -847,7 +847,7 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) VisibilityAttr(type));
+  d->addAttr(::new (S.Context) VisibilityAttr(type, false));
 }
 
 static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,

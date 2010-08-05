@@ -190,9 +190,11 @@ CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
           return LangOptions::Hidden;
   }
            
-  // This decl should have the same visibility as its parent.
+  // If this decl is contained in a class, it should have the same visibility
+  // as the parent class.
   if (const DeclContext *DC = D->getDeclContext()) 
-    return getDeclVisibilityMode(cast<Decl>(DC));
+    if (DC->isRecord())
+      return getDeclVisibilityMode(cast<Decl>(DC));
 
   return getLangOptions().getVisibilityMode();
 }
