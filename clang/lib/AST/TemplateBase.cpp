@@ -152,7 +152,9 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
                                            const TemplateArgument &Arg) {
   switch (Arg.getKind()) {
   case TemplateArgument::Null:
-    return DB;
+    // This is bad, but not as bad as crashing because of argument
+    // count mismatches.
+    return DB << "(null template argument)";
       
   case TemplateArgument::Type:
     return DB << Arg.getAsType();
