@@ -1,4 +1,5 @@
 ; RUN: opt < %s -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
+; XFAIL: *
 
 ; CHECK: Just Ref: call void @ro() <-> call void @f0()
 
