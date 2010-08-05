@@ -137,7 +137,7 @@ public:
                                   CGF.getContext().typesAreCompatible(
                                     E->getArgType1(), E->getArgType2()));
   }
-  Value *VisitOffsetOfExpr(const OffsetOfExpr *E);
+  Value *VisitOffsetOfExpr(OffsetOfExpr *E);
   Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     llvm::Value *V = CGF.GetAddrOfLabel(E->getLabel());
@@ -1264,19 +1264,95 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
   return Builder.CreateZExt(BoolVal, ConvertType(E->getType()), "lnot.ext");
 }
 
-Value *ScalarExprEmitter::VisitOffsetOfExpr(const OffsetOfExpr *E) {
-  Expr::EvalResult Result;
-  if(E->Evaluate(Result, CGF.getContext()))
-    return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
-  
-  // FIXME: Cannot support code generation for non-constant offsetof.
-  unsigned DiagID = CGF.CGM.getDiags().getCustomDiagID(Diagnostic::Error,
-                             "cannot compile non-constant __builtin_offsetof");
-  CGF.CGM.getDiags().Report(CGF.getContext().getFullLoc(E->getLocStart()), 
-                            DiagID)
-    << E->getSourceRange();
-  
-  return llvm::Constant::getNullValue(ConvertType(E->getType()));
+Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
+  // Try folding the offsetof to a constant.
+  Expr::EvalResult EvalResult;
+  if (E->Evaluate(EvalResult, CGF.getContext()))
+    return llvm::ConstantInt::get(VMContext, EvalResult.Val.getInt());
+
+  // Loop over the components of the offsetof to compute the value.
+  unsigned n = E->getNumComponents();
+  const llvm::Type* ResultType = ConvertType(E->getType());
+  llvm::Value* Result = llvm::Constant::getNullValue(ResultType);
+  QualType CurrentType = E->getTypeSourceInfo()->getType();
+  for (unsigned i = 0; i != n; ++i) {
+    OffsetOfExpr::OffsetOfNode ON = E->getComponent(i);
+    llvm::Value *Offset;
+    switch (ON.getKind()) {
+    case OffsetOfExpr::OffsetOfNode::Array: {
+      // Compute the index
+      Expr *IdxExpr = E->getIndexExpr(ON.getArrayExprIndex());
+      llvm::Value* Idx = CGF.EmitScalarExpr(IdxExpr);
+      bool IdxSigned = IdxExpr->getType()->isSignedIntegerType();
+      Idx = Builder.CreateIntCast(Idx, ResultType, IdxSigned, "conv");
+
+      // Save the element type
+      CurrentType =
+          CGF.getContext().getAsArrayType(CurrentType)->getElementType();
+
+      // Compute the element size
+      llvm::Value* ElemSize = llvm::ConstantInt::get(ResultType,
+          CGF.getContext().getTypeSizeInChars(CurrentType).getQuantity());
+
+      // Multiply out to compute the result
+      Offset = Builder.CreateMul(Idx, ElemSize);
+      break;
+    }
+
+    case OffsetOfExpr::OffsetOfNode::Field: {
+      FieldDecl *MemberDecl = ON.getField();
+      RecordDecl *RD = CurrentType->getAs<RecordType>()->getDecl();
+      const ASTRecordLayout &RL = CGF.getContext().getASTRecordLayout(RD);
+
+      // Compute the index of the field in its parent.
+      unsigned i = 0;
+      // FIXME: It would be nice if we didn't have to loop here!
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                      FieldEnd = RD->field_end();
+           Field != FieldEnd; (void)++Field, ++i) {
+        if (*Field == MemberDecl)
+          break;
+      }
+      assert(i < RL.getFieldCount() && "offsetof field in wrong type");
+
+      // Compute the offset to the field
+      int64_t OffsetInt = RL.getFieldOffset(i) /
+                          CGF.getContext().getCharWidth();
+      Offset = llvm::ConstantInt::get(ResultType, OffsetInt);
+
+      // Save the element type.
+      CurrentType = MemberDecl->getType();
+      break;
+    }
+        
+    case OffsetOfExpr::OffsetOfNode::Identifier:
+      assert(0 && "Invalid offsetof");
+      break;
+        
+    case OffsetOfExpr::OffsetOfNode::Base: {
+      if (ON.getBase()->isVirtual()) {
+        CGF.ErrorUnsupported(E, "virtual base in offsetof");
+        continue;
+      }
+
+      RecordDecl *RD = CurrentType->getAs<RecordType>()->getDecl();
+      const ASTRecordLayout &RL = CGF.getContext().getASTRecordLayout(RD);
+
+      // Save the element type.
+      CurrentType = ON.getBase()->getType();
+      
+      // Compute the offset to the base.
+      const RecordType *BaseRT = CurrentType->getAs<RecordType>();
+      CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
+      int64_t OffsetInt = RL.getBaseClassOffset(BaseRD) /
+                          CGF.getContext().getCharWidth();
+      Offset = llvm::ConstantInt::get(ResultType, OffsetInt);
+      break;
+    }
+    }
+    Result = Builder.CreateAdd(Result, Offset);
+  }
+  return Result;
 }
 
 /// VisitSizeOfAlignOfExpr - Return the size or alignment of the type of
