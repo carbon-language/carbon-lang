@@ -226,12 +226,6 @@ public:
   // Binding values to regions.
   //===-------------------------------------------------------------------===//
 
-  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E,
-                         unsigned Count, InvalidatedSymbols *IS) {
-    return RegionStoreManager::InvalidateRegions(store, &R, &R+1, E, Count, IS,
-                                                 false);
-  }
-
   Store InvalidateRegions(Store store,
                           const MemRegion * const *Begin,
                           const MemRegion * const *End,
@@ -1391,8 +1385,8 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
         }
         // For now, just invalidate the fields of the struct/union/class.
         // FIXME: Precisely handle the fields of the record.
-        if (superTy->isRecordType())
-          return InvalidateRegion(store, superR, NULL, 0, NULL);
+        if (superTy->isStructureOrClassType())
+          return KillStruct(store, superR, UnknownVal());
       }
     }
   }

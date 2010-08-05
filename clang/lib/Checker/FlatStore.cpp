@@ -57,9 +57,6 @@ public:
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   
-  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E, 
-                         unsigned Count, InvalidatedSymbols *IS);
-  
   Store InvalidateRegions(Store store, const MemRegion * const *I,
                           const MemRegion * const *E, const Expr *Ex,
                           unsigned Count, InvalidatedSymbols *IS,
@@ -163,13 +160,6 @@ Store FlatStoreManager::InvalidateRegions(Store store,
                                             const Expr *Ex, unsigned Count,
                                             InvalidatedSymbols *IS,
                                             bool invalidateGlobals) {
-  assert(false && "Not implemented");
-  return store;
-}
-
-Store FlatStoreManager::InvalidateRegion(Store store, const MemRegion *R,
-                                         const Expr *E, unsigned Count,
-                                         InvalidatedSymbols *IS) {
   assert(false && "Not implemented");
   return store;
 }
