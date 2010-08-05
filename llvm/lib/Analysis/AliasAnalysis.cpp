@@ -66,7 +66,6 @@ void AliasAnalysis::copyValue(Value *From, Value *To) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
-  // FIXME: we can do better.
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
   return AA->getModRefInfo(CS1, CS2);
 }
