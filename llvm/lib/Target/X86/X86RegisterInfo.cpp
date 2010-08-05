@@ -38,7 +38,14 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<bool>
+ForceStackAlign("force-align-stack",
+                 cl::desc("Force align the stack to the minimum alignment"
+                           " needed for the function."),
+                 cl::init(false), cl::Hidden);
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
@@ -471,7 +478,11 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   if (0 && requiresRealignment && MFI->hasVarSizedObjects())
     report_fatal_error(
       "Stack realignment in presense of dynamic allocas is not supported");
-
+    
+  // If we've requested that we force align the stack do so now.
+  if (ForceStackAlign)
+    return canRealignStack(MF);
+    
   return requiresRealignment && canRealignStack(MF);
 }
 
@@ -906,6 +917,17 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   bool HasFP = hasFP(MF);
   DebugLoc DL;
 
+  // If we're forcing a stack realignment we can't rely on just the frame
+  // info, we need to know the ABI stack alignment as well in case we
+  // have a call out.  Otherwise just make sure we have some alignment - we'll
+  // go with the minimum SlotSize.
+  if (ForceStackAlign) {
+    if (MFI->hasCalls())
+      MaxAlign = (StackAlign > MaxAlign) ? StackAlign : MaxAlign;
+    else if (MaxAlign < SlotSize)
+      MaxAlign = SlotSize;
+  }
+
   // Add RETADDR move area to callee saved frame size.
   int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
   if (TailCallReturnAddrDelta < 0)
@@ -1176,6 +1198,17 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   uint64_t MaxAlign  = MFI->getMaxAlignment();
   unsigned CSSize = X86FI->getCalleeSavedFrameSize();
   uint64_t NumBytes = 0;
+
+  // If we're forcing a stack realignment we can't rely on just the frame
+  // info, we need to know the ABI stack alignment as well in case we
+  // have a call out.  Otherwise just make sure we have some alignment - we'll
+  // go with the minimum.
+  if (ForceStackAlign) {
+    if (MFI->hasCalls())
+      MaxAlign = (StackAlign > MaxAlign) ? StackAlign : MaxAlign;
+    else
+      MaxAlign = MaxAlign ? MaxAlign : 4;
+  }
 
   if (hasFP(MF)) {
     // Calculate required stack adjustment.
