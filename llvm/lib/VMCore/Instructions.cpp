@@ -33,7 +33,7 @@ using namespace llvm;
 User::op_iterator CallSite::getCallee() const {
   Instruction *II(getInstruction());
   return isCall()
-    ? cast</*FIXME: CallInst*/User>(II)->op_end() - 1 // Skip Callee
+    ? cast<CallInst>(II)->op_end() - 1 // Skip Callee
     : cast<InvokeInst>(II)->op_end() - 3; // Skip BB, BB, Callee
 }
 
