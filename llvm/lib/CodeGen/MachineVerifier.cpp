@@ -24,6 +24,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Function.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -166,6 +167,7 @@ namespace {
 
     // Analysis information if available
     LiveVariables *LiveVars;
+    LiveIntervals *LiveInts;
 
     void visitMachineFunctionBefore();
     void visitMachineBasicBlockBefore(const MachineBasicBlock *MBB);
@@ -245,8 +247,10 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 
   if (PASS) {
     LiveVars = PASS->getAnalysisIfAvailable<LiveVariables>();
+    LiveInts = PASS->getAnalysisIfAvailable<LiveIntervals>();
   } else {
     LiveVars = NULL;
+    LiveInts = NULL;
   }
 
   visitMachineFunctionBefore();
@@ -500,6 +504,20 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
     if ((*I)->isStore() && !TI.mayStore())
       report("Missing mayStore flag", MI);
   }
+
+  // Debug values must not have a slot index.
+  // Other instructions must have one.
+  if (LiveInts) {
+    bool mapped = !LiveInts->isNotInMIMap(MI);
+    if (MI->isDebugValue()) {
+      if (mapped)
+        report("Debug instruction has a slot index", MI);
+    } else {
+      if (!mapped)
+        report("Missing slot index", MI);
+    }
+  }
+
 }
 
 void
@@ -570,6 +588,21 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         }
       }
 
+      // Check LiveInts liveness and kill.
+      if (LiveInts && !LiveInts->isNotInMIMap(MI)) {
+        SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getUseIndex();
+        if (LiveInts->hasInterval(Reg)) {
+          const LiveInterval &LI = LiveInts->getInterval(Reg);
+          if (!LI.liveAt(UseIdx)) {
+            report("No live range at use", MO, MONum);
+            *OS << UseIdx << " is not live in " << LI << '\n';
+          }
+          // TODO: Verify isKill == LI.killedAt.
+        } else if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+          report("Virtual register has no Live interval", MO, MONum);
+        }
+      }
+
       // Use of a dead register.
       if (!regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
@@ -595,6 +628,32 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         addRegWithSubRegs(regsDead, Reg);
       else
         addRegWithSubRegs(regsDefined, Reg);
+
+      // Check LiveInts for a live range.
+      if (LiveInts && !LiveInts->isNotInMIMap(MI)) {
+        SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getDefIndex();
+        if (LiveInts->hasInterval(Reg)) {
+          const LiveInterval &LI = LiveInts->getInterval(Reg);
+          if (const LiveRange *LR = LI.getLiveRangeContaining(DefIdx)) {
+            assert(LR->valno && "NULL valno is not allowed");
+            if (LR->valno->def != DefIdx) {
+              report("Inconsistent valno->def", MO, MONum);
+              *OS << "Valno " << LR->valno->id << " is not defined at "
+                  << DefIdx << " in " << LI << '\n';
+            }
+            if (LR->start != DefIdx) {
+              report("Live range doesn't start at def", MO, MONum);
+              LR->print(*OS);
+              *OS << " should start at " << DefIdx << " in " << LI << '\n';
+            }
+          } else {
+            report("No live range at def", MO, MONum);
+            *OS << DefIdx << " is not live in " << LI << '\n';
+          }
+        } else if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+          report("Virtual register has no Live interval", MO, MONum);
+        }
+      }
     }
 
     // Check register classes.
