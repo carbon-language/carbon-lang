@@ -1629,11 +1629,19 @@ defm ADCS : AI1_adde_sube_s_irs<0b0101, "adcs",
 defm SBCS : AI1_adde_sube_s_irs<0b0110, "sbcs",
                           BinOpFrag<(sube_live_carry node:$LHS, node:$RHS) >>;
 
-// These don't define reg/reg forms, because they are handled above.
 def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                   IIC_iALUi, "rsb", "\t$dst, $a, $b",
                   [(set GPR:$dst, (sub so_imm:$b, GPR:$a))]> {
     let Inst{25} = 1;
+}
+
+// The reg/reg form is only defined for the disassembler; for codegen it is
+// equivalent to SUBrr.
+def RSBrr : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+                  IIC_iALUr, "rsb", "\t$dst, $a, $b",
+                  [/* For disassembly only; pattern left blank */]> {
+    let Inst{25} = 0;
+    let Inst{11-4} = 0b00000000;
 }
 
 def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
