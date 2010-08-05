@@ -2079,6 +2079,33 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           unsigned complete_column);
 
 /**
+ * \brief Flags that can be passed to \c clang_codeCompleteAt() to
+ * modify its behavior.
+ *
+ * The enumerators in this enumeration can be bitwise-OR'd together to
+ * provide multiple options to \c clang_codeCompleteAt().
+ */
+enum CXCodeComplete_Flags {
+  /**
+   * \brief Whether to include macros within the set of code
+   * completions returned.
+   */
+  CXCodeComplete_IncludeMacros = 0x01,
+
+  /**
+   * \brief Whether to include code patterns for language constructs
+   * within the set of code completions, e.g., for loops.
+   */
+  CXCodeComplete_IncludeCodePatterns = 0x02
+};
+
+/**
+ * \brief Returns a default set of code-completion options that can be
+ * passed to\c clang_codeCompleteAt(). 
+ */
+CINDEX_LINKAGE unsigned clang_defaultCodeCompleteOptions(void);
+
+/**
  * \brief Perform code completion at a given location in a translation unit.
  *
  * This function performs code completion at a particular file, line, and
@@ -2135,6 +2162,12 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
  * \param num_unsaved_files The number of unsaved file entries in \p
  * unsaved_files.
  *
+ * \param options Extra options that control the behavior of code
+ * completion, expressed as a bitwise OR of the enumerators of the
+ * CXCodeComplete_Flags enumeration. The 
+ * \c clang_defaultCodeCompleteOptions() function returns a default set
+ * of code-completion options.
+ *
  * \returns If successful, a new \c CXCodeCompleteResults structure
  * containing code-completion results, which should eventually be
  * freed with \c clang_disposeCodeCompleteResults(). If code
@@ -2146,7 +2179,8 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
                                             unsigned complete_line,
                                             unsigned complete_column,
                                             struct CXUnsavedFile *unsaved_files,
-                                            unsigned num_unsaved_files);
+                                            unsigned num_unsaved_files,
+                                            unsigned options);
 
 /**
  * \brief Free the given set of code-completion results.

@@ -389,16 +389,24 @@ public:
   /// \brief Perform code completion at the given file, line, and
   /// column within this translation unit.
   ///
-  /// \brief File The file in which code completion will occur.
-  /// \brief Line The line at which code completion will occur.
-  /// \brief Column The column at which code completion will occur.
-  /// \brief Consumer The consumer that will receive code-completion results.
+  /// \param File The file in which code completion will occur.
+  ///
+  /// \param Line The line at which code completion will occur.
+  ///
+  /// \param Column The column at which code completion will occur.
+  ///
+  /// \param IncludeMacros Whether to include macros in the code-completion 
+  /// results.
+  ///
+  /// \param IncludeCodePatterns Whether to include code patterns (such as a 
+  /// for loop) in the code-completion results.
   ///
   /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, and
   /// StoredDiagnostics parameters are all disgusting hacks. They will
   /// go away.
   void CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                     RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
+                    bool IncludeMacros, bool IncludeCodePatterns,
                     CodeCompleteConsumer &Consumer,
                     Diagnostic &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,

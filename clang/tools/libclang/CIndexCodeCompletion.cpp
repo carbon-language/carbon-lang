@@ -569,7 +569,8 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
                                             unsigned complete_line,
                                             unsigned complete_column,
                                             struct CXUnsavedFile *unsaved_files,
-                                            unsigned num_unsaved_files) {
+                                            unsigned num_unsaved_files,
+                                            unsigned options) {
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #ifdef UDP_CODE_COMPLETION_LOGGER_PORT
   const llvm::TimeRecord &StartTime =  llvm::TimeRecord::getCurrentTime();
@@ -611,7 +612,10 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
 
   // Perform completion.
   AST->CodeComplete(complete_filename, complete_line, complete_column,
-                    RemappedFiles.data(), RemappedFiles.size(), Capture,
+                    RemappedFiles.data(), RemappedFiles.size(), 
+                    (options & CXCodeComplete_IncludeMacros),
+                    (options & CXCodeComplete_IncludeCodePatterns),
+                    Capture,
                     *Results->Diag, Results->LangOpts, Results->SourceMgr,
                     Results->FileMgr, Results->Diagnostics);
 
@@ -690,6 +694,10 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
 #endif
 #endif
   return Results;
+}
+
+unsigned clang_defaultCodeCompleteOptions(void) {
+  return CXCodeComplete_IncludeMacros;
 }
 
 void clang_disposeCodeCompleteResults(CXCodeCompleteResults *ResultsIn) {

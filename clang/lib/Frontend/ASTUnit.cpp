@@ -1154,6 +1154,8 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
 void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                            RemappedFile *RemappedFiles, 
                            unsigned NumRemappedFiles,
+                           bool IncludeMacros, 
+                           bool IncludeCodePatterns,
                            CodeCompleteConsumer &Consumer,
                            Diagnostic &Diag, LangOptions &LangOpts,
                            SourceManager &SourceMgr, FileManager &FileMgr,
@@ -1164,12 +1166,17 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   CompilerInvocation CCInvocation(*Invocation);
   FrontendOptions &FrontendOpts = CCInvocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts = CCInvocation.getPreprocessorOpts();
-  
-  FrontendOpts.ShowMacrosInCodeCompletion = 1;
-  FrontendOpts.ShowCodePatternsInCodeCompletion = 1;
+
+  FrontendOpts.ShowMacrosInCodeCompletion = IncludeMacros;
+  FrontendOpts.ShowCodePatternsInCodeCompletion = IncludeCodePatterns;
   FrontendOpts.CodeCompletionAt.FileName = File;
   FrontendOpts.CodeCompletionAt.Line = Line;
   FrontendOpts.CodeCompletionAt.Column = Column;
+
+  // Turn on spell-checking when performing code completion. It leads
+  // to better results.
+  unsigned SpellChecking = CCInvocation.getLangOpts().SpellChecking;
+  CCInvocation.getLangOpts().SpellChecking = 1;
 
   // Set the language options appropriately.
   LangOpts = CCInvocation.getLangOpts();
@@ -1235,4 +1242,5 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   Clang.takeInvocation();
   Clang.takeDiagnosticClient();
   Clang.takeCodeCompletionConsumer();
+  CCInvocation.getLangOpts().SpellChecking = SpellChecking;
 }
