@@ -1643,12 +1643,8 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::WEAK_UNDECLARED_IDENTIFIERS:
-      // Optimization for the first block.
-      if (WeakUndeclaredIdentifiers.empty())
-        WeakUndeclaredIdentifiers.swap(Record);
-      else
-        WeakUndeclaredIdentifiers.insert(WeakUndeclaredIdentifiers.end(),
-                                         Record.begin(), Record.end());
+      // Later blocks overwrite earlier ones.
+      WeakUndeclaredIdentifiers.swap(Record);
       break;
 
     case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
@@ -1724,19 +1720,17 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::VTABLE_USES:
-      if (!VTableUses.empty()) {
-        Error("duplicate VTABLE_USES record in PCH file");
-        return Failure;
-      }
+      // Later tables overwrite earlier ones.
       VTableUses.swap(Record);
       break;
 
     case pch::DYNAMIC_CLASSES:
-      if (!DynamicClasses.empty()) {
-        Error("duplicate DYNAMIC_CLASSES record in PCH file");
-        return Failure;
-      }
-      DynamicClasses.swap(Record);
+      // Optimization for the first block.
+      if (DynamicClasses.empty())
+        DynamicClasses.swap(Record);
+      else
+        DynamicClasses.insert(DynamicClasses.end(),
+                              Record.begin(), Record.end());
       break;
 
     case pch::PENDING_IMPLICIT_INSTANTIATIONS:
@@ -1749,10 +1743,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::SEMA_DECL_REFS:
-      if (!SemaDeclRefs.empty()) {
-        Error("duplicate SEMA_DECL_REFS record in PCH file");
-        return Failure;
-      }
+      // Later tables overwrite earlier ones.
       SemaDeclRefs.swap(Record);
       break;
 

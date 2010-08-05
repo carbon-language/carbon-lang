@@ -2207,7 +2207,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   RecordData UnusedStaticFuncs;
   for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i)
     AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
-  
+
   RecordData WeakUndeclaredIdentifiers;
   if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
     WeakUndeclaredIdentifiers.push_back(
@@ -2440,6 +2440,21 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
   }
 
+  // We write the entire table, overwriting the tables from the chain.
+  RecordData WeakUndeclaredIdentifiers;
+  if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
+    WeakUndeclaredIdentifiers.push_back(
+                                      SemaRef.WeakUndeclaredIdentifiers.size());
+    for (llvm::DenseMap<IdentifierInfo*,Sema::WeakInfo>::iterator
+         I = SemaRef.WeakUndeclaredIdentifiers.begin(),
+         E = SemaRef.WeakUndeclaredIdentifiers.end(); I != E; ++I) {
+      AddIdentifierRef(I->first, WeakUndeclaredIdentifiers);
+      AddIdentifierRef(I->second.getAlias(), WeakUndeclaredIdentifiers);
+      AddSourceLocation(I->second.getLocation(), WeakUndeclaredIdentifiers);
+      WeakUndeclaredIdentifiers.push_back(I->second.getUsed());
+    }
+  }
+
   // Build a record containing all of the locally-scoped external
   // declarations in this header file. Generally, this record will be
   // empty.
@@ -2459,6 +2474,46 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned I = 0, N = SemaRef.ExtVectorDecls.size(); I != N; ++I) {
     if (SemaRef.ExtVectorDecls[I]->getPCHLevel() == 0)
       AddDeclRef(SemaRef.ExtVectorDecls[I], ExtVectorDecls);
+  }
+
+  // Build a record containing all of the VTable uses information.
+  // We write everything here, because it's too hard to determine whether
+  // a use is new to this part.
+  RecordData VTableUses;
+  if (!SemaRef.VTableUses.empty()) {
+    VTableUses.push_back(SemaRef.VTableUses.size());
+    for (unsigned I = 0, N = SemaRef.VTableUses.size(); I != N; ++I) {
+      AddDeclRef(SemaRef.VTableUses[I].first, VTableUses);
+      AddSourceLocation(SemaRef.VTableUses[I].second, VTableUses);
+      VTableUses.push_back(SemaRef.VTablesUsed[SemaRef.VTableUses[I].first]);
+    }
+  }
+
+  // Build a record containing all of dynamic classes declarations.
+  RecordData DynamicClasses;
+  for (unsigned I = 0, N = SemaRef.DynamicClasses.size(); I != N; ++I)
+    if (SemaRef.DynamicClasses[I]->getPCHLevel() == 0)
+      AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
+
+  // Build a record containing all of pending implicit instantiations.
+  RecordData PendingImplicitInstantiations;
+  for (std::deque<Sema::PendingImplicitInstantiation>::iterator
+         I = SemaRef.PendingImplicitInstantiations.begin(),
+         N = SemaRef.PendingImplicitInstantiations.end(); I != N; ++I) {
+    if (I->first->getPCHLevel() == 0) {
+      AddDeclRef(I->first, PendingImplicitInstantiations);
+      AddSourceLocation(I->second, PendingImplicitInstantiations);
+    }
+  }
+  assert(SemaRef.PendingLocalImplicitInstantiations.empty() &&
+         "There are local ones at end of translation unit!");
+
+  // Build a record containing some declaration references.
+  // It's not worth the effort to avoid duplication here.
+  RecordData SemaDeclRefs;
+  if (SemaRef.StdNamespace || SemaRef.StdBadAlloc) {
+    AddDeclRef(SemaRef.getStdNamespace(), SemaDeclRefs);
+    AddDeclRef(SemaRef.getStdBadAlloc(), SemaDeclRefs);
   }
 
   Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
@@ -2504,6 +2559,11 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!UnusedStaticFuncs.empty())
     Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
 
+  // Write the record containing weak undeclared identifiers.
+  if (!WeakUndeclaredIdentifiers.empty())
+    Stream.EmitRecord(pch::WEAK_UNDECLARED_IDENTIFIERS,
+                      WeakUndeclaredIdentifiers);
+
   // Write the record containing locally-scoped external definitions.
   if (!LocallyScopedExternalDecls.empty())
     Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS,
@@ -2513,8 +2573,22 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!ExtVectorDecls.empty())
     Stream.EmitRecord(pch::EXT_VECTOR_DECLS, ExtVectorDecls);
 
-  // FIXME: Vtable uses
-  // FIXME: Dynamic classes declarations
+  // Write the record containing VTable uses information.
+  if (!VTableUses.empty())
+    Stream.EmitRecord(pch::VTABLE_USES, VTableUses);
+
+  // Write the record containing dynamic classes declarations.
+  if (!DynamicClasses.empty())
+    Stream.EmitRecord(pch::DYNAMIC_CLASSES, DynamicClasses);
+
+  // Write the record containing pending implicit instantiations.
+  if (!PendingImplicitInstantiations.empty())
+    Stream.EmitRecord(pch::PENDING_IMPLICIT_INSTANTIATIONS,
+                      PendingImplicitInstantiations);
+
+  // Write the record containing declaration references of Sema.
+  if (!SemaDeclRefs.empty())
+    Stream.EmitRecord(pch::SEMA_DECL_REFS, SemaDeclRefs);
 
   Record.clear();
   Record.push_back(NumStatements);
