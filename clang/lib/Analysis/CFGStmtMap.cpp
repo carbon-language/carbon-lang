@@ -40,7 +40,7 @@ CFGBlock *CFGStmtMap::getBlock(Stmt *S) {
       return B;
     }
 
-    Stmt *X = PM->getParentIgnoreParens(X);
+    X = PM->getParentIgnoreParens(X);
   }
   
   return 0;
