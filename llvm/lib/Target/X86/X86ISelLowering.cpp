@@ -1633,6 +1633,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         RC = X86::FR32RegisterClass;
       else if (RegVT == MVT::f64)
         RC = X86::FR64RegisterClass;
+      else if (RegVT.isVector() && RegVT.getSizeInBits() == 256)
+        RC = X86::VR256RegisterClass;
       else if (RegVT.isVector() && RegVT.getSizeInBits() == 128)
         RC = X86::VR128RegisterClass;
       else if (RegVT.isVector() && RegVT.getSizeInBits() == 64)
