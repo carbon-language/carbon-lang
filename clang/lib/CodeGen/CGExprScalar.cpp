@@ -1193,7 +1193,8 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
         BinOp.Ty = E->getType();
         BinOp.Opcode = BinaryOperator::Add;
         BinOp.E = E;
-        return EmitOverflowCheckedBinOp(BinOp);
+        NextVal = EmitOverflowCheckedBinOp(BinOp);
+        break;
       }
     }
   } else {
