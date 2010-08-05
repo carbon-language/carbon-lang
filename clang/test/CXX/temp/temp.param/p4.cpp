@@ -17,4 +17,5 @@ template<typename T, T x> struct A10;
 
 template<float f> struct A11; // expected-error{{a non-type template parameter cannot have type 'float'}}
 
-template<void *Ptr> struct A12; // expected-error{{a non-type template parameter cannot have type 'void *'}}
+template<void *Ptr> struct A12;
+template<int (*IncompleteArrayPtr)[]> struct A13;

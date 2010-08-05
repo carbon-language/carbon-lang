@@ -542,9 +542,7 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
   //       -- integral or enumeration type,
   if (T->isIntegralOrEnumerationType() ||
       //   -- pointer to object or pointer to function,
-      (T->isPointerType() &&
-       (T->getAs<PointerType>()->getPointeeType()->isObjectType() ||
-        T->getAs<PointerType>()->getPointeeType()->isFunctionType())) ||
+      T->isPointerType() ||
       //   -- reference to object or reference to function,
       T->isReferenceType() ||
       //   -- pointer to member.
@@ -2923,7 +2921,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //      object, qualification conversions (4.4) and the
     //      array-to-pointer conversion (4.2) are applied.
     // C++0x also allows a value of std::nullptr_t.
-    assert(ParamType->getAs<PointerType>()->getPointeeType()->isObjectType() &&
+    assert(ParamType->getPointeeType()->isIncompleteOrObjectType() &&
            "Only object pointers allowed here");
 
     return CheckTemplateArgumentAddressOfObjectOrFunction(*this, Param, 
@@ -2938,7 +2936,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //      identical) type of the template-argument. The
     //      template-parameter is bound directly to the
     //      template-argument, which must be an lvalue.
-    assert(ParamRefType->getPointeeType()->isObjectType() &&
+    assert(ParamRefType->getPointeeType()->isIncompleteOrObjectType() &&
            "Only object references allowed here");
 
     if (Arg->getType() == Context.OverloadTy) {

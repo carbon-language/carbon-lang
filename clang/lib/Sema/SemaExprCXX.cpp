@@ -1397,7 +1397,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         
         QualType ConvType = Conv->getConversionType().getNonReferenceType();
         if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
-          if (ConvPtrType->getPointeeType()->isObjectType())
+          if (ConvPtrType->getPointeeType()->isIncompleteOrObjectType())
             ObjectPtrConversions.push_back(Conv);
       }
       if (ObjectPtrConversions.size() == 1) {

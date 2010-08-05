@@ -1106,7 +1106,7 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(CallExpr *E) {
   QualType T = GetObjectType(LVBase);
   if (T.isNull() ||
       T->isIncompleteType() ||
-      !T->isObjectType() ||
+      T->isFunctionType() ||
       T->isVariablyModifiedType() ||
       T->isDependentType())
     return false;

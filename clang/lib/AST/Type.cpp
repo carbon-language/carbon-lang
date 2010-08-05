@@ -166,13 +166,6 @@ bool Type::isVoidType() const {
   return false;
 }
 
-bool Type::isObjectType() const {
-  if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType) ||
-      isVoidType())
-    return false;
-  return true;
-}
-
 bool Type::isDerivedType() const {
   switch (CanonicalType->getTypeClass()) {
   case Pointer:
