@@ -237,8 +237,10 @@ void GRExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
   // If we built NewCO, check if we called all the checkers.  This is important
   // so that we know that we accurately determined the entire set of checkers
   // that responds to this callback.
-  if (NewCO.get() && checkersEvaluated == Checkers.size())
+  if (NewCO.get()) { 
+    assert(checkersEvaluated == Checkers.size());
     CO_Ref = NewCO.take();
+  }
 
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
