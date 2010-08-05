@@ -51,6 +51,7 @@ class BugDriver {
   AbstractInterpreter *Interpreter;   // How to run the program
   AbstractInterpreter *SafeInterpreter;  // To generate reference output, etc.
   GCC *gcc;
+  bool run_as_child;
   bool run_find_bugs;
   unsigned Timeout;
   unsigned MemoryLimit;
@@ -61,7 +62,7 @@ class BugDriver {
   friend class ReduceMisCodegenFunctions;
 
 public:
-  BugDriver(const char *toolname, bool find_bugs,
+  BugDriver(const char *toolname, bool as_child, bool find_bugs,
             unsigned timeout, unsigned memlimit, bool use_valgrind,
             LLVMContext& ctxt);
   ~BugDriver();
@@ -288,6 +289,9 @@ private:
     std::string Filename;
     return runPasses(M, PassesToRun, Filename, DeleteOutput);
   }
+
+  /// runAsChild - The actual "runPasses" guts that runs in a child process.
+  int runPassesAsChild(const std::vector<const PassInfo*> &PassesToRun);
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.
