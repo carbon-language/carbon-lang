@@ -429,13 +429,43 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   if (CS1B == OnlyReadsMemory && CS2B == OnlyReadsMemory)
     return NoModRef;
 
+  AliasAnalysis::ModRefResult Mask = ModRef;
+
   // If CS1 only reads memory, the only dependence on CS2 can be
   // from CS1 reading memory written by CS2.
   if (CS1B == OnlyReadsMemory)
-    return Ref;
+    Mask = ModRefResult(Mask & Ref);
   
+  // If CS2 only access memory through arguments, accumulate the mod/ref
+  // information from CS1's references to the memory referenced by
+  // CS2's arguments.
+  if (CS2B == AccessesArguments) {
+    AliasAnalysis::ModRefResult R = NoModRef;
+    for (ImmutableCallSite::arg_iterator
+         I = CS2.arg_begin(), E = CS2.arg_end(); I != E; ++I) {
+      R = ModRefResult((R | getModRefInfo(CS1, *I, UnknownSize)) & Mask);
+      if (R == Mask)
+        break;
+    }
+    return R;
+  }
+
+  // If CS1 only accesses memory through arguments, check if CS2 references
+  // any of the memory referenced by CS1's arguments. If not, return NoModRef.
+  if (CS1B == AccessesArguments) {
+    AliasAnalysis::ModRefResult R = NoModRef;
+    for (ImmutableCallSite::arg_iterator
+         I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I)
+      if (getModRefInfo(CS2, *I, UnknownSize) != NoModRef) {
+        R = Mask;
+        break;
+      }
+    if (R == NoModRef)
+      return R;
+  }
+
   // Otherwise, fall back to NoAA (mod+ref).
-  return NoAA::getModRefInfo(CS1, CS2);
+  return ModRefResult(NoAA::getModRefInfo(CS1, CS2) & Mask);
 }
 
 /// GetIndexDifference - Dest and Src are the variable indices from two
