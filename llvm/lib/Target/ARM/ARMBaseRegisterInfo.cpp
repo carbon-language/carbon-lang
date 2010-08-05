@@ -980,47 +980,69 @@ ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return ARM::SP;
 }
 
+// Provide a base+offset reference to an FI slot for debug info. It's the
+// same as what we use for resolving the code-gen references for now.
+// FIXME: This can go wrong when references are SP-relative and simple call
+//        frames aren't used.
 int
 ARMBaseRegisterInfo::getFrameIndexReference(const MachineFunction &MF, int FI,
                                             unsigned &FrameReg) const {
+  return ResolveFrameIndexReference(MF, FI, FrameReg, 0);
+}
+
+int
+ARMBaseRegisterInfo::ResolveFrameIndexReference(const MachineFunction &MF,
+                                                int FI,
+                                                unsigned &FrameReg,
+                                                int SPAdj) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
+  int FPOffset = Offset - AFI->getFramePtrSpillOffset();
   bool isFixed = MFI->isFixedObjectIndex(FI);
 
   FrameReg = ARM::SP;
+  Offset += SPAdj;
   if (AFI->isGPRCalleeSavedArea1Frame(FI))
-    Offset -= AFI->getGPRCalleeSavedArea1Offset();
+    return Offset - AFI->getGPRCalleeSavedArea1Offset();
   else if (AFI->isGPRCalleeSavedArea2Frame(FI))
-    Offset -= AFI->getGPRCalleeSavedArea2Offset();
+    return Offset - AFI->getGPRCalleeSavedArea2Offset();
   else if (AFI->isDPRCalleeSavedAreaFrame(FI))
-    Offset -= AFI->getDPRCalleeSavedAreaOffset();
-  else if (needsStackRealignment(MF)) {
-    // When dynamically realigning the stack, use the frame pointer for
-    // parameters, and the stack pointer for locals.
+    return Offset - AFI->getDPRCalleeSavedAreaOffset();
+
+  // When dynamically realigning the stack, use the frame pointer for
+  // parameters, and the stack pointer for locals.
+  if (needsStackRealignment(MF)) {
     assert (hasFP(MF) && "dynamic stack realignment without a FP!");
     if (isFixed) {
       FrameReg = getFrameRegister(MF);
-      Offset -= AFI->getFramePtrSpillOffset();
+      Offset = FPOffset;
     }
-  } else if (hasFP(MF) && AFI->hasStackFrame()) {
+    return Offset;
+  }
+
+  // If there is a frame pointer, use it when we can.
+  if (hasFP(MF) && AFI->hasStackFrame()) {
+    // Use frame pointer to reference fixed objects. Use it for locals if
+    // there are VLAs (and thus the SP isn't reliable as a base).
     if (isFixed || MFI->hasVarSizedObjects()) {
-      // Use frame pointer to reference fixed objects unless this is a
-      // frameless function.
       FrameReg = getFrameRegister(MF);
-      Offset -= AFI->getFramePtrSpillOffset();
+      Offset = FPOffset;
     } else if (AFI->isThumb2Function()) {
-      // In Thumb2 mode, the negative offset is very limited.
-      int FPOffset = Offset - AFI->getFramePtrSpillOffset();
+      // In Thumb2 mode, the negative offset is very limited. Try to avoid
+      // out of range references.
       if (FPOffset >= -255 && FPOffset < 0) {
         FrameReg = getFrameRegister(MF);
         Offset = FPOffset;
       }
+    } else if (Offset > (FPOffset < 0 ? -FPOffset : FPOffset)) {
+      // Otherwise, use SP or FP, whichever is closer to the stack slot.
+      FrameReg = getFrameRegister(MF);
+      Offset = FPOffset;
     }
   }
   return Offset;
 }
-
 
 int
 ARMBaseRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
@@ -1357,10 +1379,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = MI.getOperand(i).getIndex();
   unsigned FrameReg;
 
-  int Offset = getFrameIndexReference(MF, FrameIndex, FrameReg);
-  if (FrameReg != ARM::SP)
-    SPAdj = 0;
-  Offset += SPAdj;
+  int Offset = ResolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj);
 
   // Special handling of dbg_value instructions.
   if (MI.isDebugValue()) {
