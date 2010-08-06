@@ -243,16 +243,13 @@ public:
   /// Convenience functions...
   ModRefResult getModRefInfo(const LoadInst *L, const Value *P, unsigned Size);
   ModRefResult getModRefInfo(const StoreInst *S, const Value *P, unsigned Size);
+  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, unsigned Size);
   ModRefResult getModRefInfo(const CallInst *C, const Value *P, unsigned Size) {
     return getModRefInfo(ImmutableCallSite(C), P, Size);
   }
   ModRefResult getModRefInfo(const InvokeInst *I,
                              const Value *P, unsigned Size) {
     return getModRefInfo(ImmutableCallSite(I), P, Size);
-  }
-  ModRefResult getModRefInfo(const VAArgInst* I,
-                             const Value* P, unsigned Size) {
-    return AliasAnalysis::ModRef;
   }
   ModRefResult getModRefInfo(const Instruction *I,
                              const Value *P, unsigned Size) {

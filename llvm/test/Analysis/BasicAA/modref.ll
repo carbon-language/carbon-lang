@@ -123,3 +123,14 @@ define i32 @test5(i8* %P, i32 %Len) {
 ; CHECK: sub i32 %tmp, %tmp
 }
 
+define i8 @test6(i8* %p, i8* noalias %a) {
+  %x = load i8* %a
+  %t = va_arg i8* %p, float
+  %y = load i8* %a
+  %z = add i8 %x, %y
+  ret i8 %z
+; CHECK: @test6
+; CHECK: load i8* %a
+; CHECK-NOT: load
+; CHECK: ret
+}

@@ -229,6 +229,23 @@ AliasAnalysis::getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) 
   return Mod;
 }
 
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(const VAArgInst *V, const Value *P, unsigned Size) {
+  // If the va_arg address cannot alias the pointer in question, then the
+  // specified memory cannot be accessed by the va_arg.
+  if (!alias(V->getOperand(0), UnknownSize, P, Size))
+    return NoModRef;
+
+  // If the pointer is a pointer to constant memory, then it could not have been
+  // modified by this va_arg.
+  if (pointsToConstantMemory(P))
+    return NoModRef;
+
+  // Otherwise, a va_arg reads and writes.
+  return ModRef;
+}
+
+
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getIntrinsicModRefBehavior(unsigned iid) {
 #define GET_INTRINSIC_MODREF_BEHAVIOR
