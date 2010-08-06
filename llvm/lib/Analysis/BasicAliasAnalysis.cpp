@@ -169,8 +169,8 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
-      if (PI ==  &AliasAnalysis::ID)
+    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+      if (PI->isPassID(&AliasAnalysis::ID))
         return (AliasAnalysis*)this;
       return this;
     }
@@ -240,8 +240,8 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
-      if (PI == &AliasAnalysis::ID)
+    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+      if (PI->isPassID(&AliasAnalysis::ID))
         return (AliasAnalysis*)this;
       return this;
     }
