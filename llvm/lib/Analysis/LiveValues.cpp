@@ -25,7 +25,7 @@ char LiveValues::ID = 0;
 INITIALIZE_PASS(LiveValues, "live-values",
                 "Value Liveness Analysis", false, true);
 
-LiveValues::LiveValues() : FunctionPass(&ID) {}
+LiveValues::LiveValues() : FunctionPass(ID) {}
 
 void LiveValues::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTree>();

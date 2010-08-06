@@ -44,7 +44,7 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    MachineSinking() : MachineFunctionPass(&ID) {}
+    MachineSinking() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

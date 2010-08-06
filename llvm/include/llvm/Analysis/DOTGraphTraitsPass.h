@@ -22,7 +22,7 @@ template <class Analysis, bool Simple>
 struct DOTGraphTraitsViewer : public FunctionPass {
   std::string Name;
 
-  DOTGraphTraitsViewer(std::string GraphName, const void *ID) : FunctionPass(ID) {
+  DOTGraphTraitsViewer(std::string GraphName, char &ID) : FunctionPass(ID) {
     Name = GraphName;
   }
 
@@ -48,7 +48,7 @@ struct DOTGraphTraitsPrinter : public FunctionPass {
 
   std::string Name;
 
-  DOTGraphTraitsPrinter(std::string GraphName, const void *ID)
+  DOTGraphTraitsPrinter(std::string GraphName, char &ID)
     : FunctionPass(ID) {
     Name = GraphName;
   }

@@ -26,7 +26,7 @@ struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ReturnBlock, *UnwindBlock, *UnreachableBlock;
 public:
   static char ID; // Pass identification, replacement for typeid
-  UnifyFunctionExitNodes() : FunctionPass(&ID),
+  UnifyFunctionExitNodes() : FunctionPass(ID),
                              ReturnBlock(0), UnwindBlock(0) {}
 
   // We can preserve non-critical-edgeness when we unify function exit nodes

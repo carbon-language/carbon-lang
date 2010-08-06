@@ -29,7 +29,7 @@ struct MachineFunctionPrinterPass : public MachineFunctionPass {
   const std::string Banner;
 
   MachineFunctionPrinterPass(raw_ostream &os, const std::string &banner) 
-      : MachineFunctionPass(&ID), OS(os), Banner(banner) {}
+      : MachineFunctionPass(ID), OS(os), Banner(banner) {}
 
   const char *getPassName() const { return "MachineFunction Printer"; }
 

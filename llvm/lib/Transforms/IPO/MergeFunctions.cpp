@@ -75,7 +75,7 @@ namespace {
   ///
   struct MergeFunctions : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    MergeFunctions() : ModulePass(&ID) {}
+    MergeFunctions() : ModulePass(ID) {}
 
     bool runOnModule(Module &M);
   };

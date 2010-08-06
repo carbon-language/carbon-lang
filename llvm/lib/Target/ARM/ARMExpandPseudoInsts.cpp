@@ -26,7 +26,7 @@ namespace {
   class ARMExpandPseudo : public MachineFunctionPass {
   public:
     static char ID;
-    ARMExpandPseudo() : MachineFunctionPass(&ID) {}
+    ARMExpandPseudo() : MachineFunctionPass(ID) {}
 
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;

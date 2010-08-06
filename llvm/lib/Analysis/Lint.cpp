@@ -108,7 +108,7 @@ namespace {
     raw_string_ostream MessagesStr;
 
     static char ID; // Pass identification, replacement for typeid
-    Lint() : FunctionPass(&ID), MessagesStr(Messages) {}
+    Lint() : FunctionPass(ID), MessagesStr(Messages) {}
 
     virtual bool runOnFunction(Function &F);
 

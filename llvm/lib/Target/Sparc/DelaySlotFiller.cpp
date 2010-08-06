@@ -32,7 +32,7 @@ namespace {
 
     static char ID;
     Filler(TargetMachine &tm) 
-      : MachineFunctionPass(&ID), TM(tm), TII(tm.getInstrInfo()) { }
+      : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
 
     virtual const char *getPassName() const {
       return "SPARC Delay Slot Filler";

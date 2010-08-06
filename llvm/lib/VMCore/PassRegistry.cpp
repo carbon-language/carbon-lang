@@ -60,7 +60,7 @@ ManagedCleanup<&cleanupPassRegistry> registryCleanup ATTRIBUTE_USED;
 
 }
 
-const PassInfo *PassRegistry::getPassInfo(intptr_t TI) const {
+const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
   sys::SmartScopedLock<true> Guard(Lock);
   MapType::const_iterator I = PassInfoMap.find(TI);
   return I != PassInfoMap.end() ? I->second : 0;
@@ -108,8 +108,8 @@ void PassRegistry::enumerateWith(PassRegistrationListener *L) {
 
 
 /// Analysis Group Mechanisms.
-void PassRegistry::registerAnalysisGroup(intptr_t InterfaceID, 
-                                         intptr_t PassID,
+void PassRegistry::registerAnalysisGroup(const void *InterfaceID, 
+                                         const void *PassID,
                                          PassInfo& Registeree,
                                          bool isDefault) {
   PassInfo *InterfaceInfo =  const_cast<PassInfo*>(getPassInfo(InterfaceID));

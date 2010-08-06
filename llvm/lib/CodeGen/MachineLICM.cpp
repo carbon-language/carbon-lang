@@ -74,10 +74,10 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() :
-      MachineFunctionPass(&ID), PreRegAlloc(true) {}
+      MachineFunctionPass(ID), PreRegAlloc(true) {}
 
     explicit MachineLICM(bool PreRA) :
-      MachineFunctionPass(&ID), PreRegAlloc(PreRA) {}
+      MachineFunctionPass(ID), PreRegAlloc(PreRA) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

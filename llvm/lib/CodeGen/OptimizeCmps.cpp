@@ -46,7 +46,7 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    OptimizeCmps() : MachineFunctionPass(&ID) {}
+    OptimizeCmps() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

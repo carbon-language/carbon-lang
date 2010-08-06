@@ -579,7 +579,7 @@ namespace {
     AliasSetTracker *Tracker;
   public:
     static char ID; // Pass identification, replacement for typeid
-    AliasSetPrinter() : FunctionPass(&ID) {}
+    AliasSetPrinter() : FunctionPass(ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();

@@ -69,7 +69,7 @@ namespace {
   public:
     static char ID;
     explicit TailDuplicatePass(bool PreRA) :
-      MachineFunctionPass(&ID), PreRegAlloc(PreRA) {}
+      MachineFunctionPass(ID), PreRegAlloc(PreRA) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Tail Duplication"; }

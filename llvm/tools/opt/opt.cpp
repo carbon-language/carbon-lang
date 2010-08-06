@@ -139,7 +139,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
   static char ID;
   const PassInfo *PassToPrint;
   CallGraphSCCPassPrinter(const PassInfo *PI) :
-    CallGraphSCCPass(&ID), PassToPrint(PI) {}
+    CallGraphSCCPass(ID), PassToPrint(PI) {}
 
   virtual bool runOnSCC(CallGraphSCC &SCC) {
     if (!Quiet) {
@@ -148,7 +148,8 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
       for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
         Function *F = (*I)->getFunction();
         if (F)
-          getAnalysisID<Pass>(PassToPrint).print(outs(), F->getParent());
+          getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(outs(), 
+                F->getParent());
       }
     }
     // Get and print pass...
@@ -158,7 +159,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
   virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
+    AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
 };
@@ -168,13 +169,13 @@ char CallGraphSCCPassPrinter::ID = 0;
 struct ModulePassPrinter : public ModulePass {
   static char ID;
   const PassInfo *PassToPrint;
-  ModulePassPrinter(const PassInfo *PI) : ModulePass(&ID),
+  ModulePassPrinter(const PassInfo *PI) : ModulePass(ID),
                                           PassToPrint(PI) {}
 
   virtual bool runOnModule(Module &M) {
     if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      getAnalysisID<Pass>(PassToPrint).print(outs(), &M);
+      getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(outs(), &M);
     }
 
     // Get and print pass...
@@ -184,7 +185,7 @@ struct ModulePassPrinter : public ModulePass {
   virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
+    AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
 };
@@ -193,7 +194,7 @@ char ModulePassPrinter::ID = 0;
 struct FunctionPassPrinter : public FunctionPass {
   const PassInfo *PassToPrint;
   static char ID;
-  FunctionPassPrinter(const PassInfo *PI) : FunctionPass(&ID),
+  FunctionPassPrinter(const PassInfo *PI) : FunctionPass(ID),
                                             PassToPrint(PI) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -202,14 +203,15 @@ struct FunctionPassPrinter : public FunctionPass {
               << "' for function '" << F.getName() << "':\n";
     }
     // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint).print(outs(), F.getParent());
+    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(outs(),
+            F.getParent());
     return false;
   }
 
   virtual const char *getPassName() const { return "FunctionPass Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
+    AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
 };
@@ -220,12 +222,12 @@ struct LoopPassPrinter : public LoopPass {
   static char ID;
   const PassInfo *PassToPrint;
   LoopPassPrinter(const PassInfo *PI) :
-    LoopPass(&ID), PassToPrint(PI) {}
+    LoopPass(ID), PassToPrint(PI) {}
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      getAnalysisID<Pass>(PassToPrint).print(outs(),
+      getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(outs(),
                                   L->getHeader()->getParent()->getParent());
     }
     // Get and print pass...
@@ -235,7 +237,7 @@ struct LoopPassPrinter : public LoopPass {
   virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
+    AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
 };
@@ -246,7 +248,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
   const PassInfo *PassToPrint;
   static char ID;
   BasicBlockPassPrinter(const PassInfo *PI)
-    : BasicBlockPass(&ID), PassToPrint(PI) {}
+    : BasicBlockPass(ID), PassToPrint(PI) {}
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     if (!Quiet) {
@@ -255,14 +257,15 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
     }
 
     // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint).print(outs(), BB.getParent()->getParent());
+    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(outs(), 
+            BB.getParent()->getParent());
     return false;
   }
 
   virtual const char *getPassName() const { return "BasicBlockPass Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
+    AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
 };

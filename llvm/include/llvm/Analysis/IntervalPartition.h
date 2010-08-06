@@ -48,7 +48,7 @@ class IntervalPartition : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  IntervalPartition() : FunctionPass(&ID), RootInterval(0) {}
+  IntervalPartition() : FunctionPass(ID), RootInterval(0) {}
 
   // run - Calculate the interval partition for this function
   virtual bool runOnFunction(Function &F);

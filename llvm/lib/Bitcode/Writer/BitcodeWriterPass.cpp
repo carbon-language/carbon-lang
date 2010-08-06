@@ -21,7 +21,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit WriteBitcodePass(raw_ostream &o)
-      : ModulePass(&ID), OS(o) {}
+      : ModulePass(ID), OS(o) {}
     
     const char *getPassName() const { return "Bitcode Writer"; }
     

@@ -302,7 +302,7 @@ public:
   /// through getAnalysis interface.
   virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
 
-  virtual Pass *getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F);
+  virtual Pass *getOnTheFlyPass(Pass *P, AnalysisID PI, Function &F);
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
@@ -414,7 +414,7 @@ class FPPassManager : public ModulePass, public PMDataManager {
 public:
   static char ID;
   explicit FPPassManager(int Depth) 
-  : ModulePass(&ID), PMDataManager(Depth) { }
+  : ModulePass(ID), PMDataManager(Depth) { }
   
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.

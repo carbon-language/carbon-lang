@@ -68,7 +68,7 @@ namespace llvm {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    LiveIntervals() : MachineFunctionPass(&ID) {}
+    LiveIntervals() : MachineFunctionPass(ID) {}
 
     // Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);

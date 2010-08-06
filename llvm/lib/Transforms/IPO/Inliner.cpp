@@ -48,10 +48,10 @@ HintThreshold("inlinehint-threshold", cl::Hidden, cl::init(325),
 // Threshold to use when optsize is specified (and there is no -inline-limit).
 const int OptSizeThreshold = 75;
 
-Inliner::Inliner(void *ID) 
+Inliner::Inliner(char &ID) 
   : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
 
-Inliner::Inliner(void *ID, int Threshold) 
+Inliner::Inliner(char &ID, int Threshold) 
   : CallGraphSCCPass(ID), InlineThreshold(Threshold) {}
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve

@@ -30,7 +30,7 @@ namespace {
   struct PartialInliner : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const { }
     static char ID; // Pass identification, replacement for typeid
-    PartialInliner() : ModulePass(&ID) {}
+    PartialInliner() : ModulePass(ID) {}
     
     bool runOnModule(Module& M);
     

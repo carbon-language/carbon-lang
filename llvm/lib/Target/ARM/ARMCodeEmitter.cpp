@@ -65,7 +65,7 @@ namespace {
     static char ID;
   public:
     ARMCodeEmitter(TargetMachine &tm, JITCodeEmitter &mce)
-      : MachineFunctionPass(&ID), JTI(0),
+      : MachineFunctionPass(ID), JTI(0),
         II((const ARMInstrInfo *)tm.getInstrInfo()),
         TD(tm.getTargetData()), TM(tm),
         MCE(mce), MCPEs(0), MJTEs(0),

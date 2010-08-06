@@ -130,7 +130,7 @@ FunctionPass *llvm::createGCLoweringPass() {
 char LowerIntrinsics::ID = 0;
 
 LowerIntrinsics::LowerIntrinsics()
-  : FunctionPass(&ID) {}
+  : FunctionPass(ID) {}
 
 const char *LowerIntrinsics::getPassName() const {
   return "Lower Garbage Collection Instructions";
@@ -318,7 +318,7 @@ FunctionPass *llvm::createGCMachineCodeAnalysisPass() {
 char MachineCodeAnalysis::ID = 0;
 
 MachineCodeAnalysis::MachineCodeAnalysis()
-  : MachineFunctionPass(&ID) {}
+  : MachineFunctionPass(ID) {}
 
 const char *MachineCodeAnalysis::getPassName() const {
   return "Analyze Machine Code For Garbage Collection";

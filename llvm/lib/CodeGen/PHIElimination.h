@@ -25,7 +25,7 @@ namespace llvm {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    PHIElimination() : MachineFunctionPass(&ID) {}
+    PHIElimination() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
     

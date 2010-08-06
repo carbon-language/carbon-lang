@@ -37,7 +37,7 @@ STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 namespace {
   struct PruneEH : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    PruneEH() : CallGraphSCCPass(&ID) {}
+    PruneEH() : CallGraphSCCPass(ID) {}
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(CallGraphSCC &SCC);

@@ -65,7 +65,7 @@ STATISTIC(NumNested  , "Number of nested loops split out");
 namespace {
   struct LoopSimplify : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LoopSimplify() : LoopPass(&ID) {}
+    LoopSimplify() : LoopPass(ID) {}
 
     // AA - If we have an alias analysis object to update, this is it, otherwise
     // this is null.
@@ -110,7 +110,7 @@ static RegisterPass<LoopSimplify>
 X("loopsimplify", "Canonicalize natural loops", true);
 
 // Publically exposed interface to pass...
-const PassInfo *const llvm::LoopSimplifyID = &X;
+char &llvm::LoopSimplifyID = LoopSimplify::ID;
 Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 
 /// runOnLoop - Run down all loops in the CFG (recursively, but we could do

@@ -31,7 +31,7 @@ STATISTIC(NumExpanded, "Number of branches expanded to long format");
 namespace {
   struct PPCBSel : public MachineFunctionPass {
     static char ID;
-    PPCBSel() : MachineFunctionPass(&ID) {}
+    PPCBSel() : MachineFunctionPass(ID) {}
 
     /// BlockSizes - The sizes of the basic blocks in the function.
     std::vector<unsigned> BlockSizes;

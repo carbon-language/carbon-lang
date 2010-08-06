@@ -27,7 +27,7 @@ namespace {
 
   public:
     static char ID;
-    Thumb2ITBlockPass() : MachineFunctionPass(&ID) {}
+    Thumb2ITBlockPass() : MachineFunctionPass(ID) {}
 
     const Thumb2InstrInfo *TII;
     const TargetRegisterInfo *TRI;

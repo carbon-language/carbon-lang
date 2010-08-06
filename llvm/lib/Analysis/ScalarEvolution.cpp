@@ -5742,7 +5742,7 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //===----------------------------------------------------------------------===//
 
 ScalarEvolution::ScalarEvolution()
-  : FunctionPass(&ID), FirstUnknown(0) {
+  : FunctionPass(ID), FirstUnknown(0) {
 }
 
 bool ScalarEvolution::runOnFunction(Function &F) {

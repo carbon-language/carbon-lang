@@ -65,7 +65,7 @@ X("simple-register-coalescing", "Simple Register Coalescing");
 // Declare that we implement the RegisterCoalescer interface
 static RegisterAnalysisGroup<RegisterCoalescer, true/*The Default*/> V(X);
 
-const PassInfo *const llvm::SimpleRegisterCoalescingID = &X;
+char &llvm::SimpleRegisterCoalescingID = SimpleRegisterCoalescing::ID;
 
 void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();

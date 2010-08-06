@@ -24,7 +24,7 @@ STATISTIC(NumVMovs, "Number of reg-reg moves converted");
 namespace {
   struct NEONMoveFixPass : public MachineFunctionPass {
     static char ID;
-    NEONMoveFixPass() : MachineFunctionPass(&ID) {}
+    NEONMoveFixPass() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 

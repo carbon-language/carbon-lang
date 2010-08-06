@@ -115,7 +115,7 @@ class SSEDomainFixPass : public MachineFunctionPass {
   unsigned Distance;
 
 public:
-  SSEDomainFixPass() : MachineFunctionPass(&ID) {}
+  SSEDomainFixPass() : MachineFunctionPass(ID) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

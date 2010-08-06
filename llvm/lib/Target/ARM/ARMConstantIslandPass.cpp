@@ -173,7 +173,7 @@ namespace {
     bool isThumb2;
   public:
     static char ID;
-    ARMConstantIslands() : MachineFunctionPass(&ID) {}
+    ARMConstantIslands() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

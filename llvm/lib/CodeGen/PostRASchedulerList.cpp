@@ -85,7 +85,7 @@ namespace {
   public:
     static char ID;
     PostRAScheduler(CodeGenOpt::Level ol) :
-      MachineFunctionPass(&ID), OptLevel(ol) {}
+      MachineFunctionPass(ID), OptLevel(ol) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();

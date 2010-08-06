@@ -3751,7 +3751,7 @@ Pass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
 }
 
 LoopStrengthReduce::LoopStrengthReduce(const TargetLowering *tli)
-  : LoopPass(&ID), TLI(tli) {}
+  : LoopPass(ID), TLI(tli) {}
 
 void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   // We split critical edges, so we change the CFG.  However, we do update

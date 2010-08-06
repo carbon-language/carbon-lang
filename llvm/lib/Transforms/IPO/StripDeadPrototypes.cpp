@@ -29,7 +29,7 @@ namespace {
 class StripDeadPrototypesPass : public ModulePass {
 public:
   static char ID; // Pass identification, replacement for typeid
-  StripDeadPrototypesPass() : ModulePass(&ID) { }
+  StripDeadPrototypesPass() : ModulePass(ID) { }
   virtual bool runOnModule(Module &M);
 };
 

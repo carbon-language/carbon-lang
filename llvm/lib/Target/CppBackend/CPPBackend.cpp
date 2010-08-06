@@ -104,7 +104,7 @@ namespace {
   public:
     static char ID;
     explicit CppWriter(formatted_raw_ostream &o) :
-      ModulePass(&ID), Out(o), uniqueNum(0), is_inline(false), indent_level(0){}
+      ModulePass(ID), Out(o), uniqueNum(0), is_inline(false), indent_level(0){}
 
     virtual const char *getPassName() const { return "C++ backend"; }
 

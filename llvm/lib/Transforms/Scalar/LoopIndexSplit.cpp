@@ -74,7 +74,7 @@ namespace {
   class LoopIndexSplit : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopIndexSplit() : LoopPass(&ID) {}
+    LoopIndexSplit() : LoopPass(ID) {}
 
     // Index split Loop L. Return true if loop is split.
     bool runOnLoop(Loop *L, LPPassManager &LPM);

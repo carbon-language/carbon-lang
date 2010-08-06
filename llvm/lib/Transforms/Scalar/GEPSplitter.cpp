@@ -27,7 +27,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit GEPSplitter() : FunctionPass(&ID) {}
+    explicit GEPSplitter() : FunctionPass(ID) {}
   };
 }
 

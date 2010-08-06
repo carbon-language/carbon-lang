@@ -82,15 +82,17 @@ PrintAfterAll("print-after-all",
 /// This is a helper to determine whether to print IR before or
 /// after a pass.
 
-static bool ShouldPrintBeforeOrAfterPass(Pass *P,
+static bool ShouldPrintBeforeOrAfterPass(const void *PassID,
                                          PassOptionList &PassesToPrint) {
-  for (unsigned i = 0, ie = PassesToPrint.size(); i < ie; ++i) {
-    const llvm::PassInfo *PassInf = PassesToPrint[i];
-    if (PassInf && P->getPassInfo())
-      if (PassInf->getPassArgument() ==
-          P->getPassInfo()->getPassArgument()) {
-        return true;
-      }
+  if (const llvm::PassInfo *PI =
+      PassRegistry::getPassRegistry()->getPassInfo(PassID)) {
+    for (unsigned i = 0, ie = PassesToPrint.size(); i < ie; ++i) {
+      const llvm::PassInfo *PassInf = PassesToPrint[i];
+      if (PassInf)
+        if (PassInf->getPassArgument() == PI->getPassArgument()) {
+          return true;
+        }
+    }
   }
   return false;
 }
@@ -98,14 +100,14 @@ static bool ShouldPrintBeforeOrAfterPass(Pass *P,
 
 /// This is a utility to check whether a pass should have IR dumped
 /// before it.
-static bool ShouldPrintBeforePass(Pass *P) {
-  return PrintBeforeAll || ShouldPrintBeforeOrAfterPass(P, PrintBefore);
+static bool ShouldPrintBeforePass(const void *PassID) {
+  return PrintBeforeAll || ShouldPrintBeforeOrAfterPass(PassID, PrintBefore);
 }
 
 /// This is a utility to check whether a pass should have IR dumped
 /// after it.
-static bool ShouldPrintAfterPass(Pass *P) {
-  return PrintAfterAll || ShouldPrintBeforeOrAfterPass(P, PrintAfter);
+static bool ShouldPrintAfterPass(const void *PassID) {
+  return PrintAfterAll || ShouldPrintBeforeOrAfterPass(PassID, PrintAfter);
 }
 
 } // End of llvm namespace
@@ -163,7 +165,7 @@ class BBPassManager : public PMDataManager, public FunctionPass {
 public:
   static char ID;
   explicit BBPassManager(int Depth) 
-    : PMDataManager(Depth), FunctionPass(&ID) {}
+    : PMDataManager(Depth), FunctionPass(ID) {}
 
   /// Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the function, and if so, return true.
@@ -224,7 +226,7 @@ private:
 public:
   static char ID;
   explicit FunctionPassManagerImpl(int Depth) : 
-    Pass(PT_PassManager, &ID), PMDataManager(Depth), 
+    Pass(PT_PassManager, ID), PMDataManager(Depth), 
     PMTopLevelManager(TLM_Function), wasRun(false) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
@@ -298,7 +300,7 @@ class MPPassManager : public Pass, public PMDataManager {
 public:
   static char ID;
   explicit MPPassManager(int Depth) :
-    Pass(PT_PassManager, &ID), PMDataManager(Depth) { }
+    Pass(PT_PassManager, ID), PMDataManager(Depth) { }
 
   // Delete on the fly managers.
   virtual ~MPPassManager() {
@@ -332,7 +334,7 @@ public:
   /// Return function pass corresponding to PassInfo PI, that is 
   /// required by module pass MP. Instantiate analysis pass, by using
   /// its runOnFunction() for function F.
-  virtual Pass* getOnTheFlyPass(Pass *MP, const PassInfo *PI, Function &F);
+  virtual Pass* getOnTheFlyPass(Pass *MP, AnalysisID PI, Function &F);
 
   virtual const char *getPassName() const {
     return "Module Pass Manager";
@@ -383,7 +385,7 @@ class PassManagerImpl : public Pass,
 public:
   static char ID;
   explicit PassManagerImpl(int Depth) :
-    Pass(PT_PassManager, &ID), PMDataManager(Depth),
+    Pass(PT_PassManager, ID), PMDataManager(Depth),
                                PMTopLevelManager(TLM_Pass) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
@@ -568,8 +570,9 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   // If P is an analysis pass and it is available then do not
   // generate the analysis again. Stale analysis info should not be
   // available at this point.
-  if (P->getPassInfo() &&
-      P->getPassInfo()->isAnalysis() && findAnalysisPass(P->getPassInfo())) {
+  const PassInfo *PI =
+    PassRegistry::getPassRegistry()->getPassInfo(P->getPassID());
+  if (PI && PI->isAnalysis() && findAnalysisPass(P->getPassID())) {
     delete P;
     return;
   }
@@ -586,7 +589,8 @@ void PMTopLevelManager::schedulePass(Pass *P) {
       
       Pass *AnalysisPass = findAnalysisPass(*I);
       if (!AnalysisPass) {
-        AnalysisPass = (*I)->createPass();
+        const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(*I);
+        AnalysisPass = PI->createPass();
         if (P->getPotentialPassManagerType () ==
             AnalysisPass->getPotentialPassManagerType())
           // Schedule analysis pass that is managed by the same pass manager.
@@ -632,16 +636,21 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   for (SmallVector<ImmutablePass *, 8>::iterator I = ImmutablePasses.begin(),
          E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
-    const PassInfo *PI = (*I)->getPassInfo();
+    AnalysisID PI = (*I)->getPassID();
     if (PI == AID)
       P = *I;
 
     // If Pass not found then check the interfaces implemented by Immutable Pass
     if (!P) {
+      const PassInfo *PassInf =
+        PassRegistry::getPassRegistry()->getPassInfo(PI);
       const std::vector<const PassInfo*> &ImmPI =
-        PI->getInterfacesImplemented();
-      if (std::find(ImmPI.begin(), ImmPI.end(), AID) != ImmPI.end())
-        P = *I;
+        PassInf->getInterfacesImplemented();
+      for (std::vector<const PassInfo*>::const_iterator II = ImmPI.begin(),
+           EE = ImmPI.end(); II != EE; ++II) {
+        if ((*II)->getTypeInfo() == AID)
+          P = *I;
+      }
     }
   }
 
@@ -724,16 +733,19 @@ PMTopLevelManager::~PMTopLevelManager() {
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
 void PMDataManager::recordAvailableAnalysis(Pass *P) {
-  const PassInfo *PI = P->getPassInfo();
-  if (PI == 0) return;
+  AnalysisID PI = P->getPassID();
   
   AvailableAnalysis[PI] = P;
+  
+  assert(AvailableAnalysis.size());
 
   //This pass is the current implementation of all of the interfaces it
   //implements as well.
-  const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+  const PassInfo *PInf = PassRegistry::getPassRegistry()->getPassInfo(PI);
+  if (PInf == 0) return;
+  const std::vector<const PassInfo*> &II = PInf->getInterfacesImplemented();
   for (unsigned i = 0, e = II.size(); i != e; ++i)
-    AvailableAnalysis[II[i]] = P;
+    AvailableAnalysis[II[i]->getTypeInfo()] = P;
 }
 
 // Return true if P preserves high level analysis used by other
@@ -749,7 +761,7 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
     Pass *P1 = *I;
     if (P1->getAsImmutablePass() == 0 &&
         std::find(PreservedSet.begin(), PreservedSet.end(),
-                  P1->getPassInfo()) == 
+                  P1->getPassID()) == 
            PreservedSet.end())
       return false;
   }
@@ -799,7 +811,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
       AvailableAnalysis.erase(Info);
     }
   }
-
+  
   // Check inherited analysis also. If P is not preserving analysis
   // provided by parent manager then remove it here.
   for (unsigned Index = 0; Index < PMT_Last; ++Index) {
@@ -861,16 +873,17 @@ void PMDataManager::freePass(Pass *P, StringRef Msg,
     P->releaseMemory();
   }
 
-  if (const PassInfo *PI = P->getPassInfo()) {
+  AnalysisID PI = P->getPassID();
+  if (const PassInfo *PInf = PassRegistry::getPassRegistry()->getPassInfo(PI)) {
     // Remove the pass itself (if it is not already removed).
     AvailableAnalysis.erase(PI);
 
     // Remove all interfaces this pass implements, for which it is also
     // listed as the available implementation.
-    const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+    const std::vector<const PassInfo*> &II = PInf->getInterfacesImplemented();
     for (unsigned i = 0, e = II.size(); i != e; ++i) {
       std::map<AnalysisID, Pass*>::iterator Pos =
-        AvailableAnalysis.find(II[i]);
+        AvailableAnalysis.find(II[i]->getTypeInfo());
       if (Pos != AvailableAnalysis.end() && Pos->second == P)
         AvailableAnalysis.erase(Pos);
     }
@@ -941,7 +954,8 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
   for (SmallVector<AnalysisID, 8>::iterator 
          I = ReqAnalysisNotAvailable.begin(), 
          E = ReqAnalysisNotAvailable.end() ;I != E; ++I) {
-    Pass *AnalysisPass = (*I)->createPass();
+    const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(*I);
+    Pass *AnalysisPass = PI->createPass();
     this->addLowerLevelRequiredPass(P, AnalysisPass);
   }
 
@@ -1044,7 +1058,8 @@ void PMDataManager::dumpPassArguments() const {
     if (PMDataManager *PMD = (*I)->getAsPMDataManager())
       PMD->dumpPassArguments();
     else
-      if (const PassInfo *PI = (*I)->getPassInfo())
+      if (const PassInfo *PI =
+            PassRegistry::getPassRegistry()->getPassInfo((*I)->getPassID()))
         if (!PI->isAnalysisGroup())
           dbgs() << " -" << PI->getPassArgument();
   }
@@ -1116,7 +1131,8 @@ void PMDataManager::dumpAnalysisUsage(StringRef Msg, const Pass *P,
   dbgs() << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
   for (unsigned i = 0; i != Set.size(); ++i) {
     if (i) dbgs() << ',';
-    dbgs() << ' ' << Set[i]->getPassName();
+    const PassInfo *PInf = PassRegistry::getPassRegistry()->getPassInfo(Set[i]);
+    dbgs() << ' ' << PInf->getPassName();
   }
   dbgs() << '\n';
 }
@@ -1147,7 +1163,7 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   llvm_unreachable("Unable to schedule pass");
 }
 
-Pass *PMDataManager::getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F) {
+Pass *PMDataManager::getOnTheFlyPass(Pass *P, AnalysisID PI, Function &F) {
   assert(0 && "Unable to find on the fly pass");
   return NULL;
 }
@@ -1166,7 +1182,7 @@ Pass *AnalysisResolver::getAnalysisIfAvailable(AnalysisID ID, bool dir) const {
   return PM.findAnalysisPass(ID, dir);
 }
 
-Pass *AnalysisResolver::findImplPass(Pass *P, const PassInfo *AnalysisPI, 
+Pass *AnalysisResolver::findImplPass(Pass *P, AnalysisID AnalysisPI, 
                                      Function &F) {
   return PM.getOnTheFlyPass(P, AnalysisPI, F);
 }
@@ -1288,15 +1304,16 @@ void FunctionPassManager::addImpl(Pass *P) {
 /// This implies that all passes MUST be allocated with 'new'.
 void FunctionPassManager::add(Pass *P) { 
   // If this is a not a function pass, don't add a printer for it.
+  const void *PassID = P->getPassID();
   if (P->getPassKind() == PT_Function)
-    if (ShouldPrintBeforePass(P))
+    if (ShouldPrintBeforePass(PassID))
       addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
                                    + P->getPassName() + " ***"));
 
   addImpl(P);
 
   if (P->getPassKind() == PT_Function)
-    if (ShouldPrintAfterPass(P))
+    if (ShouldPrintAfterPass(PassID))
       addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
                                    + P->getPassName() + " ***"));
 }
@@ -1561,7 +1578,7 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 /// Return function pass corresponding to PassInfo PI, that is 
 /// required by module pass MP. Instantiate analysis pass, by using
 /// its runOnFunction() for function F.
-Pass* MPPassManager::getOnTheFlyPass(Pass *MP, const PassInfo *PI, Function &F){
+Pass* MPPassManager::getOnTheFlyPass(Pass *MP, AnalysisID PI, Function &F){
   FunctionPassManagerImpl *FPP = OnTheFlyManagers[MP];
   assert(FPP && "Unable to find on the fly pass");
   
@@ -1614,13 +1631,14 @@ void PassManager::addImpl(Pass *P) {
 /// will be destroyed as well, so there is no need to delete the pass.  This
 /// implies that all passes MUST be allocated with 'new'.
 void PassManager::add(Pass *P) {
-  if (ShouldPrintBeforePass(P))
+  const void* PassID = P->getPassID();
+  if (ShouldPrintBeforePass(PassID))
     addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
                                  + P->getPassName() + " ***"));
 
   addImpl(P);
 
-  if (ShouldPrintAfterPass(P))
+  if (ShouldPrintAfterPass(PassID))
     addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
                                  + P->getPassName() + " ***"));
 }

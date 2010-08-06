@@ -36,7 +36,7 @@ namespace {
     bool runOnModule(Module &M);
   public:
     static char ID; // Pass identification, replacement for typeid
-    OptimalEdgeProfiler() : ModulePass(&ID) {}
+    OptimalEdgeProfiler() : ModulePass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(ProfileEstimatorPassID);

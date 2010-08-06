@@ -49,24 +49,28 @@ public:
   // addRequired - Add the specified ID to the required set of the usage info
   // for a pass.
   //
-  AnalysisUsage &addRequiredID(AnalysisID ID);
+  AnalysisUsage &addRequiredID(const void *ID);
+  AnalysisUsage &addRequiredID(char &ID);
   template<class PassClass>
   AnalysisUsage &addRequired() {
-    return addRequiredID(Pass::getClassPassInfo<PassClass>());
+    return addRequiredID(PassClass::ID);
   }
 
-  AnalysisUsage &addRequiredTransitiveID(AnalysisID ID);
+  AnalysisUsage &addRequiredTransitiveID(char &ID);
   template<class PassClass>
   AnalysisUsage &addRequiredTransitive() {
-    AnalysisID ID = Pass::getClassPassInfo<PassClass>();
-    return addRequiredTransitiveID(ID);
+    return addRequiredTransitiveID(PassClass::ID);
   }
 
   // addPreserved - Add the specified ID to the set of analyses preserved by
   // this pass
   //
-  AnalysisUsage &addPreservedID(AnalysisID ID) {
+  AnalysisUsage &addPreservedID(const void *ID) {
     Preserved.push_back(ID);
+    return *this;
+  }
+  AnalysisUsage &addPreservedID(char &ID) {
+    Preserved.push_back(&ID);
     return *this;
   }
 
@@ -75,8 +79,7 @@ public:
   //
   template<class PassClass>
   AnalysisUsage &addPreserved() {
-    assert(Pass::getClassPassInfo<PassClass>() && "Pass class not registered!");
-    Preserved.push_back(Pass::getClassPassInfo<PassClass>());
+    Preserved.push_back(&PassClass::ID);
     return *this;
   }
 
@@ -85,12 +88,7 @@ public:
   // This can be useful when a pass is trivially preserved, but may not be
   // linked in. Be careful about spelling!
   //
-  AnalysisUsage &addPreserved(StringRef Arg) {
-    const PassInfo *PI = Pass::lookupPassInfo(Arg);
-    // If the pass exists, preserve it. Otherwise silently do nothing.
-    if (PI) Preserved.push_back(PI);
-    return *this;
-  }
+  AnalysisUsage &addPreserved(StringRef Arg);
 
   // setPreservesAll - Set by analyses that do not transform their input at all
   void setPreservesAll() { PreservesAll = true; }
@@ -130,7 +128,7 @@ public:
   inline PMDataManager &getPMDataManager() { return PM; }
 
   // Find pass that is implementing PI.
-  Pass *findImplPass(const PassInfo *PI) {
+  Pass *findImplPass(AnalysisID PI) {
     Pass *ResultPass = 0;
     for (unsigned i = 0; i < AnalysisImpls.size() ; ++i) {
       if (AnalysisImpls[i].first == PI) {
@@ -142,10 +140,10 @@ public:
   }
 
   // Find pass that is implementing PI. Initialize pass for Function F.
-  Pass *findImplPass(Pass *P, const PassInfo *PI, Function &F);
+  Pass *findImplPass(Pass *P, AnalysisID PI, Function &F);
 
-  void addAnalysisImplsPair(const PassInfo *PI, Pass *P) {
-    std::pair<const PassInfo*, Pass*> pir = std::make_pair(PI,P);
+  void addAnalysisImplsPair(AnalysisID PI, Pass *P) {
+    std::pair<AnalysisID, Pass*> pir = std::make_pair(PI,P);
     AnalysisImpls.push_back(pir);
   }
 
@@ -160,7 +158,7 @@ public:
 
   // AnalysisImpls - This keeps track of which passes implements the interfaces
   // that are required by the current pass (to implement getAnalysis()).
-  std::vector<std::pair<const PassInfo*, Pass*> > AnalysisImpls;
+  std::vector<std::pair<AnalysisID, Pass*> > AnalysisImpls;
 
 private:
   // PassManager that is used to resolve analysis info
@@ -179,8 +177,7 @@ template<typename AnalysisType>
 AnalysisType *Pass::getAnalysisIfAvailable() const {
   assert(Resolver && "Pass not resident in a PassManager object!");
 
-  const PassInfo *PI = getClassPassInfo<AnalysisType>();
-  if (PI == 0) return 0;
+  const void *PI = &AnalysisType::ID;
 
   Pass *ResultPass = Resolver->getAnalysisIfAvailable(PI, true);
   if (ResultPass == 0) return 0;
@@ -199,11 +196,11 @@ AnalysisType *Pass::getAnalysisIfAvailable() const {
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysis() const {
   assert(Resolver && "Pass has not been inserted into a PassManager object!");
-  return getAnalysisID<AnalysisType>(getClassPassInfo<AnalysisType>());
+  return getAnalysisID<AnalysisType>(&AnalysisType::ID);
 }
 
 template<typename AnalysisType>
-AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
+AnalysisType &Pass::getAnalysisID(AnalysisID PI) const {
   assert(PI && "getAnalysis for unregistered pass!");
   assert(Resolver&&"Pass has not been inserted into a PassManager object!");
   // PI *must* appear in AnalysisImpls.  Because the number of passes used
@@ -229,11 +226,11 @@ template<typename AnalysisType>
 AnalysisType &Pass::getAnalysis(Function &F) {
   assert(Resolver &&"Pass has not been inserted into a PassManager object!");
 
-  return getAnalysisID<AnalysisType>(getClassPassInfo<AnalysisType>(), F);
+  return getAnalysisID<AnalysisType>(&AnalysisType::ID, F);
 }
 
 template<typename AnalysisType>
-AnalysisType &Pass::getAnalysisID(const PassInfo *PI, Function &F) {
+AnalysisType &Pass::getAnalysisID(AnalysisID PI, Function &F) {
   assert(PI && "getAnalysis for unregistered pass!");
   assert(Resolver && "Pass has not been inserted into a PassManager object!");
   // PI *must* appear in AnalysisImpls.  Because the number of passes used
