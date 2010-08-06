@@ -848,7 +848,9 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
   
   // Tell the compiler invocation to generate a temporary precompiled header.
   FrontendOpts.ProgramAction = frontend::GeneratePCH;
-  // FIXME: Set ChainedPCH, once it is ready.
+  // FIXME: Set ChainedPCH unconditionally, once it is ready.
+  if (::getenv("LIBCLANG_CHAINING"))
+    FrontendOpts.ChainedPCH = true;
   // FIXME: Generate the precompiled header into memory?
   FrontendOpts.OutputFile = GetPreamblePCHPath();
   
