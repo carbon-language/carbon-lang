@@ -680,15 +680,13 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="print-dbginfo">-print-dbginfo: Print debug info in human readable form</a>
 </div>
 <div class="doc_text">
-  <p>Pass that prints instructions, and associated debug info:
+  <p>Pass that prints instructions, and associated debug info:</p>
   <ul>
   
   <li>source/line/col information</li>
   <li>original variable name</li>
   <li>original type name</li>
   </ul>
-
-  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1550,7 +1548,7 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="loweratomic">-loweratomic: Lower atomic intrinsics
+  <a name="loweratomic">-loweratomic: Lower atomic intrinsics</a>
 </div>
 <div class="doc_text">
   <p>
@@ -1960,12 +1958,13 @@ if (X &lt; 3) {</pre>
   <a name="strip-debug-declare">-strip-debug-declare: Strip all llvm.dbg.declare intrinsics</a>
 </div>
 <div class="doc_text">
-  <p>This pass implements code stripping. Specifically, it can delete:
+  <p>This pass implements code stripping. Specifically, it can delete:</p>
   <ul>
   <li>names for virtual registers</li>
   <li>symbols for internal globals and functions</li>
   <li>debug information</li>
   </ul>
+  <p>
   Note that this transformation makes code much less readable, so it should
   only be used in situations where the 'strip' utility would be used, such as
   reducing code size or making it harder to reverse engineer code.
@@ -1977,12 +1976,13 @@ if (X &lt; 3) {</pre>
   <a name="strip-nondebug">-strip-nondebug: Strip all symbols, except dbg symbols, from a module</a>
 </div>
 <div class="doc_text">
-  <p>This pass implements code stripping. Specifically, it can delete:
+  <p>This pass implements code stripping. Specifically, it can delete:</p>
   <ul>
   <li>names for virtual registers</li>
   <li>symbols for internal globals and functions</li>
   <li>debug information</li>
   </ul>
+  <p>
   Note that this transformation makes code much less readable, so it should
   only be used in situations where the 'strip' utility would be used, such as
   reducing code size or making it harder to reverse engineer code.
