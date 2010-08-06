@@ -343,8 +343,10 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
     return DC;
   }
 
+  // ObjCMethodDecls are parsed (for some reason) outside the context
+  // of the class.
   if (isa<ObjCMethodDecl>(DC))
-    return Context.getTranslationUnitDecl();
+    return DC->getLexicalParent()->getLexicalParent();
 
   return DC->getLexicalParent();
 }

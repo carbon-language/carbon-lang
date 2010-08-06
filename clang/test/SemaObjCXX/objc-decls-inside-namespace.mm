@@ -23,5 +23,10 @@ namespace C {
 @implementation A(C) //expected-error{{Objective-C declarations may only appear in global scope}}
 @end
 
+@interface B @end //expected-error{{Objective-C declarations may only appear in global scope}}
+@implementation B //expected-error{{Objective-C declarations may only appear in global scope}}
++ (void) foo {}
+@end
+
 }
 
