@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains code to generate C++ code a matcher.
+// This file contains code to generate C++ code for a matcher.
 //
 //===----------------------------------------------------------------------===//
 
