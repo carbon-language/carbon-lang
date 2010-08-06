@@ -1367,7 +1367,8 @@ public:
   /// \brief Sets the type of this specialization as it was written by
   /// the user. This will be a class template specialization type.
   void setTypeAsWritten(TypeSourceInfo *T) {
-    if (!ExplicitInfo) ExplicitInfo = new ExplicitSpecializationInfo;
+    if (!ExplicitInfo)
+      ExplicitInfo = new (getASTContext()) ExplicitSpecializationInfo;
     ExplicitInfo->TypeAsWritten = T;
   }
   /// \brief Gets the type of this specialization as it was written by
@@ -1382,13 +1383,15 @@ public:
   }
   /// \brief Sets the location of the extern keyword.
   void setExternLoc(SourceLocation Loc) {
-    if (!ExplicitInfo) ExplicitInfo = new ExplicitSpecializationInfo;
+    if (!ExplicitInfo)
+      ExplicitInfo = new (getASTContext()) ExplicitSpecializationInfo;
     ExplicitInfo->ExternLoc = Loc;
   }
 
   /// \brief Sets the location of the template keyword.
   void setTemplateKeywordLoc(SourceLocation Loc) {
-    if (!ExplicitInfo) ExplicitInfo = new ExplicitSpecializationInfo;
+    if (!ExplicitInfo)
+      ExplicitInfo = new (getASTContext()) ExplicitSpecializationInfo;
     ExplicitInfo->TemplateKeywordLoc = Loc;
   }
   /// \brief Gets the location of the template keyword, if present.
