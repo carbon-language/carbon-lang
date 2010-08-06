@@ -458,8 +458,8 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 
   // Insert the COPY instruction.
   MachineInstr *MI = BuildMI(MBB, MBB.begin(), DebugLoc(),
-                             tii_.get(TargetOpcode::COPY), openli_->reg)
-                       .addReg(dupli_->reg);
+                             tii_.get(TargetOpcode::COPY), dupli_->reg)
+                       .addReg(openli_->reg);
   SlotIndex Idx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
 
   // Adjust dupli and openli values.
