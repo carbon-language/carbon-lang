@@ -121,8 +121,7 @@ public:
 /// SplitEditor - Edit machine code and LiveIntervals for live range
 /// splitting.
 ///
-/// - Create a SplitEditor from a SplitAnalysis. This will create a new
-///   LiveInterval, dupli, that is identical to SA.curli.
+/// - Create a SplitEditor from a SplitAnalysis.
 /// - Start a new live interval with openIntv.
 /// - Mark the places where the new interval is entered using enterIntv*
 /// - Mark the ranges where the new interval is used with useIntv* 
@@ -137,8 +136,12 @@ class SplitEditor {
   MachineRegisterInfo &mri_;
   const TargetInstrInfo &tii_;
 
-  /// dupli_ - Created as a copy of sa_.curli_, ranges are carved out as new
-  /// intervals get added through openIntv / closeIntv.
+  /// curli_ - The immutable interval we are currently splitting.
+  const LiveInterval *const curli_;
+
+  /// dupli_ - Created as a copy of curli_, ranges are carved out as new
+  /// intervals get added through openIntv / closeIntv. This is used to avoid
+  /// editing curli_.
   LiveInterval *dupli_;
 
   /// Currently open LiveInterval.
@@ -148,13 +151,16 @@ class SplitEditor {
   /// register class and spill slot as curli.
   LiveInterval *createInterval();
 
-	/// valueMap_ - Map values in dupli to values in openIntv. These are direct 1-1
-	/// mappings, and do not include values created by inserted copies.
-	DenseMap<VNInfo*,VNInfo*> valueMap_;
+  /// getDupLI - Ensure dupli is created and return it.
+  LiveInterval *getDupLI();
 
-	/// mapValue - Return the openIntv value that corresponds to the given dupli
-	/// value.
-	VNInfo *mapValue(VNInfo *dupliVNI);
+  /// valueMap_ - Map values in dupli to values in openIntv. These are direct 1-1
+  /// mappings, and do not include values created by inserted copies.
+  DenseMap<const VNInfo*, VNInfo*> valueMap_;
+
+  /// mapValue - Return the openIntv value that corresponds to the given curli
+  /// value.
+  VNInfo *mapValue(const VNInfo *curliVNI);
 
   /// A dupli value is live through openIntv.
   bool liveThrough_;
@@ -178,8 +184,8 @@ public:
   SplitEditor(SplitAnalysis &SA, LiveIntervals&, VirtRegMap&,
               std::vector<LiveInterval*> &newIntervals);
 
-	/// getAnalysis - Get the corresponding analysis.
-	SplitAnalysis &getAnalysis() { return sa_; }
+  /// getAnalysis - Get the corresponding analysis.
+  SplitAnalysis &getAnalysis() { return sa_; }
 
   /// Create a new virtual register and live interval.
   void openIntv();
@@ -210,8 +216,9 @@ public:
   // ===--- High level methods ---===
 
   /// splitAroundLoop - Split curli into a separate live interval inside
-  /// the loop.
-  void splitAroundLoop(const MachineLoop*);
+  /// the loop. Return true if curli has been completely replaced, false if
+  /// curli is still intact, and needs to be spilled or split further.
+  bool splitAroundLoop(const MachineLoop*);
 
 };
 

@@ -113,9 +113,10 @@ bool InlineSpiller::split() {
   splitAnalysis_.analyze(li_);
 
   if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
-      .splitAroundLoop(loop);
-    return true;
+    // We can split, but li_ may be left intact with fewer uses.
+    if (SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+          .splitAroundLoop(loop))
+      return true;
   }
   return false;
 }

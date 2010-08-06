@@ -289,22 +289,18 @@ SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
   : sa_(sa), lis_(lis), vrm_(vrm),
     mri_(vrm.getMachineFunction().getRegInfo()),
     tii_(*vrm.getMachineFunction().getTarget().getInstrInfo()),
+    curli_(sa_.getCurLI()),
     dupli_(0), openli_(0),
     intervals_(intervals),
     firstInterval(intervals_.size())
 {
-  const LiveInterval *curli = sa_.getCurLI();
-  assert(curli && "SplitEditor created from empty SplitAnalysis");
+  assert(curli_ && "SplitEditor created from empty SplitAnalysis");
 
-  // Make sure curli is assigned a stack slot, so all our intervals get the
-  // same slot as curli.
-  if (vrm_.getStackSlot(curli->reg) == VirtRegMap::NO_STACK_SLOT)
-    vrm_.assignVirt2StackSlot(curli->reg);
+  // Make sure curli_ is assigned a stack slot, so all our intervals get the
+  // same slot as curli_.
+  if (vrm_.getStackSlot(curli_->reg) == VirtRegMap::NO_STACK_SLOT)
+    vrm_.assignVirt2StackSlot(curli_->reg);
 
-  // Create an interval for dupli that is a copy of curli.
-  dupli_ = createInterval();
-  dupli_->Copy(*curli, &mri_, lis_.getVNInfoAllocator());
-  DEBUG(dbgs() << "SplitEditor DupLI: " << *dupli_ << '\n');
 }
 
 LiveInterval *SplitEditor::createInterval() {
@@ -316,10 +312,20 @@ LiveInterval *SplitEditor::createInterval() {
   return &Intv;
 }
 
-VNInfo *SplitEditor::mapValue(VNInfo *dupliVNI) {
-  VNInfo *&VNI = valueMap_[dupliVNI];
+LiveInterval *SplitEditor::getDupLI() {
+  if (!dupli_) {
+    // Create an interval for dupli that is a copy of curli.
+    dupli_ = createInterval();
+    dupli_->Copy(*curli_, &mri_, lis_.getVNInfoAllocator());
+    DEBUG(dbgs() << "SplitEditor DupLI: " << *dupli_ << '\n');
+  }
+  return dupli_;
+}
+
+VNInfo *SplitEditor::mapValue(const VNInfo *curliVNI) {
+  VNInfo *&VNI = valueMap_[curliVNI];
   if (!VNI)
-    VNI = openli_->createValueCopy(dupliVNI, lis_.getVNInfoAllocator());
+    VNI = openli_->createValueCopy(curliVNI, lis_.getVNInfoAllocator());
   return VNI;
 }
 
@@ -330,9 +336,8 @@ VNInfo *SplitEditor::mapValue(VNInfo *dupliVNI) {
 VNInfo *SplitEditor::insertCopy(LiveInterval &LI,
                                 MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator I) {
-  unsigned curli = sa_.getCurLI()->reg;
   MachineInstr *MI = BuildMI(MBB, I, DebugLoc(), tii_.get(TargetOpcode::COPY),
-                             LI.reg).addReg(curli);
+                             LI.reg).addReg(curli_->reg);
   SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
   return LI.getNextValue(DefIdx, MI, true, lis_.getVNInfoAllocator());
 }
@@ -352,9 +357,9 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &A, MachineBasicBlock &B) {
   assert(openli_ && "openIntv not called before enterIntvAtEnd");
 
   SlotIndex EndA = lis_.getMBBEndIdx(&A);
-  VNInfo *DupVNIA = dupli_->getVNInfoAt(EndA.getPrevIndex());
-  if (!DupVNIA) {
-    DEBUG(dbgs() << "  ignoring enterIntvAtEnd, dupli not live out of BB#"
+  VNInfo *CurVNIA = curli_->getVNInfoAt(EndA.getPrevIndex());
+  if (!CurVNIA) {
+    DEBUG(dbgs() << "  ignoring enterIntvAtEnd, curli not live out of BB#"
                  << A.getNumber() << ".\n");
     return;
   }
@@ -370,9 +375,9 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &A, MachineBasicBlock &B) {
   // Now look at the start of B.
   SlotIndex StartB = lis_.getMBBStartIdx(&B);
   SlotIndex EndB = lis_.getMBBEndIdx(&B);
-  LiveRange *DupB = dupli_->getLiveRangeContaining(StartB);
-  if (!DupB) {
-    DEBUG(dbgs() << "  enterIntvAtEnd: dupli not live in to BB#"
+  const LiveRange *CurB = curli_->getLiveRangeContaining(StartB);
+  if (!CurB) {
+    DEBUG(dbgs() << "  enterIntvAtEnd: curli not live in to BB#"
                  << B.getNumber() << ".\n");
     return;
   }
@@ -384,9 +389,9 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &A, MachineBasicBlock &B) {
                                  lis_.getVNInfoAllocator());
     VNIB->setIsPHIDef(true);
     // Add a minimal range for the new value.
-    openli_->addRange(LiveRange(VNIB->def, std::min(EndB, DupB->end), VNIB));
+    openli_->addRange(LiveRange(VNIB->def, std::min(EndB, CurB->end), VNIB));
 
-    VNInfo *&mapVNI = valueMap_[DupB->valno];
+    VNInfo *&mapVNI = valueMap_[CurB->valno];
     if (mapVNI) {
       // Multiple copies - must create PHI value.
       abort();
@@ -408,8 +413,8 @@ void SplitEditor::useIntv(const MachineBasicBlock &MBB) {
 void SplitEditor::useIntv(SlotIndex Start, SlotIndex End) {
   assert(openli_ && "openIntv not called before useIntv");
 
-  // Map the dupli values from the interval into openli_
-  LiveInterval::const_iterator B = dupli_->begin(), E = dupli_->end();
+  // Map the curli values from the interval into openli_
+  LiveInterval::const_iterator B = curli_->begin(), E = curli_->end();
   LiveInterval::const_iterator I = std::lower_bound(B, E, Start);
 
   if (I != B) {
@@ -435,26 +440,30 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   assert(openli_ && "openIntv not called before leaveIntvAtTop");
 
   SlotIndex Start = lis_.getMBBStartIdx(&MBB);
-  LiveRange *DupLR = dupli_->getLiveRangeContaining(Start);
+  const LiveRange *CurLR = curli_->getLiveRangeContaining(Start);
 
-  // Is dupli even live-in to MBB?
-  if (!DupLR) {
+  // Is curli even live-in to MBB?
+  if (!CurLR) {
     DEBUG(dbgs() << "  leaveIntvAtTop at " << Start << ": not live\n");
     return;
   }
 
-  // Is dupli defined by PHI at the beginning of MBB?
-  bool isPHIDef = DupLR->valno->isPHIDef() &&
-                  DupLR->valno->def.getBaseIndex() == Start;
+  // Is curli defined by PHI at the beginning of MBB?
+  bool isPHIDef = CurLR->valno->isPHIDef() &&
+                  CurLR->valno->def.getBaseIndex() == Start;
 
-  // If MBB is using a value of dupli that was defined outside the openli range,
+  // If MBB is using a value of curli that was defined outside the openli range,
   // we don't want to copy it back here.
-  if (!isPHIDef && !openli_->liveAt(DupLR->valno->def)) {
+  if (!isPHIDef && !openli_->liveAt(CurLR->valno->def)) {
     DEBUG(dbgs() << "  leaveIntvAtTop at " << Start
                  << ": using external value\n");
     liveThrough_ = true;
     return;
   }
+
+  // We are going to insert a back copy, so we must have a dupli_.
+  LiveRange *DupLR = getDupLI()->getLiveRangeContaining(Start);
+  assert(DupLR && "dupli not live into black, but curli is?");
 
   // Insert the COPY instruction.
   MachineInstr *MI = BuildMI(MBB, MBB.begin(), DebugLoc(),
@@ -501,8 +510,6 @@ void SplitEditor::closeIntv() {
   assert(openli_ && "openIntv not called before closeIntv");
 
   DEBUG(dbgs() << "  closeIntv cleaning up\n");
-
-  DEBUG(dbgs() << "    dup  " << *dupli_ << '\n');
   DEBUG(dbgs() << "    open " << *openli_ << '\n');
 
   if (liveThrough_) {
@@ -510,6 +517,7 @@ void SplitEditor::closeIntv() {
   } else {
     // live out with copies inserted, or killed by region. Either way we need to
     // remove the overlapping region from dupli.
+    getDupLI();
     for (LiveInterval::iterator I = openli_->begin(), E = openli_->end();
          I != E; ++I) {
       dupli_->removeRange(I->start, I->end);
@@ -567,7 +575,7 @@ void SplitEditor::rewrite() {
 //                               Loop Splitting
 //===----------------------------------------------------------------------===//
 
-void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
+bool SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   SplitAnalysis::LoopBlocks Blocks;
   sa_.getLoopBlocks(Loop, Blocks);
 
@@ -601,5 +609,6 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   // Done.
   closeIntv();
   rewrite();
+  return dupli_;
 }
 
