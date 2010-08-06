@@ -667,13 +667,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
     ParseScope InnerScope(this, Scope::DeclScope,
                           C99orCXX && Tok.isNot(tok::l_brace));
 
-    // Regardless of whether or not InnerScope actually pushed a scope, set the
-    // ElseScope flag for the innermost scope so we can diagnose use of the if
-    // condition variable in C++.
-    unsigned OldFlags = getCurScope()->getFlags();
-    getCurScope()->setFlags(OldFlags | Scope::ElseScope);
     ElseStmt = ParseStatement();
-    getCurScope()->setFlags(OldFlags);
     
     // Pop the 'else' scope if needed.
     InnerScope.Exit();

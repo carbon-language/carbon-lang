@@ -72,11 +72,7 @@ public:
     
     /// ObjCMethodScope - This scope corresponds to an Objective-C method body.
     /// It always has FnScope and DeclScope set as well.
-    ObjCMethodScope = 0x400,
-    
-    /// ElseScope - This scope corresponds to an 'else' scope of an if/then/else
-    /// statement.
-    ElseScope = 0x800
+    ObjCMethodScope = 0x400
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
