@@ -78,10 +78,9 @@ public:
   virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
 
   // ValLessThan - Provide a sorting comparator for Values elements...
-  typedef std::pair<const char*,
-                    std::pair<const PassInfo*, const char*> > ValType;
+  typedef PassNameParser::OptionInfo  ValType;
   static bool ValLessThan(const ValType &VT1, const ValType &VT2) {
-    return std::string(VT1.first) < std::string(VT2.first);
+    return std::string(VT1.Name) < std::string(VT2.Name);
   }
 
   // printOptionInfo - Print out information about this option.  Override the

@@ -443,16 +443,23 @@ protected:
 template <class DataType>
 class parser : public generic_parser_base {
 protected:
-  SmallVector<std::pair<const char *,
-                        std::pair<DataType, const char *> >, 8> Values;
+  class OptionInfo {
+  public:
+    OptionInfo(const char *name, DataType v, const char *helpStr) :
+      Name(name), V(v), HelpStr(helpStr) {}
+    const char *Name;
+    DataType V;
+    const char *HelpStr;
+  };
+  SmallVector<OptionInfo, 8> Values;
 public:
   typedef DataType parser_data_type;
 
   // Implement virtual functions needed by generic_parser_base
   unsigned getNumOptions() const { return unsigned(Values.size()); }
-  const char *getOption(unsigned N) const { return Values[N].first; }
+  const char *getOption(unsigned N) const { return Values[N].Name; }
   const char *getDescription(unsigned N) const {
-    return Values[N].second.second;
+    return Values[N].HelpStr;
   }
 
   // parse - Return true on error.
@@ -465,8 +472,8 @@ public:
 
     for (unsigned i = 0, e = static_cast<unsigned>(Values.size());
          i != e; ++i)
-      if (Values[i].first == ArgVal) {
-        V = Values[i].second.first;
+      if (Values[i].Name == ArgVal) {
+        V = Values[i].V;
         return false;
       }
 
@@ -478,8 +485,8 @@ public:
   template <class DT>
   void addLiteralOption(const char *Name, const DT &V, const char *HelpStr) {
     assert(findOption(Name) == Values.size() && "Option already exists!");
-    Values.push_back(std::make_pair(Name,
-                             std::make_pair(static_cast<DataType>(V),HelpStr)));
+    OptionInfo X(Name, static_cast<DataType>(V), HelpStr);
+    Values.push_back(X);
     MarkOptionsChanged();
   }
 

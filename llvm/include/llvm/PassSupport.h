@@ -53,8 +53,7 @@ public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const void *pi,
-           NormalCtor_t normal = 0,
-           bool isCFGOnly = false, bool is_analysis = false)
+           NormalCtor_t normal, bool isCFGOnly, bool is_analysis)
     : PassName(name), PassArgument(arg), PassID(pi), 
       IsCFGOnlyPass(isCFGOnly), 
       IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal) {
