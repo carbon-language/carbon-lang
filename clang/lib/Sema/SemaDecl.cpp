@@ -3232,6 +3232,17 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
+  // C++ [dcl.fct.spec]p3:
+  //  The inline specifier shall not appear on a block scope function declaration.
+  if (isInline && !NewFD->isInvalidDecl() && getLangOptions().CPlusPlus) {
+    if (CurContext->isFunctionOrMethod()) {
+      // 'inline' is not allowed on block scope function declaration.
+      Diag(D.getDeclSpec().getInlineSpecLoc(), 
+           diag::err_inline_declaration_block_scope) << Name
+        << FixItHint::CreateRemoval(D.getDeclSpec().getInlineSpecLoc());
+    }
+  }
+ 
   // C++ [dcl.fct.spec]p6:
   //  The explicit specifier shall be used only in the declaration of a
   //  constructor or conversion function within its class definition; see 12.3.1
