@@ -1540,10 +1540,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!vecType.isCanonical() || (AltiVecSpec == VectorType::AltiVec)) {
-    // pass VectorType::NotAltiVec for AltiVecSpec to make AltiVec canonical
-    // vector type (except 'vector bool ...' and 'vector Pixel') the same as
-    // the equivalent GCC vector types
+  if (!vecType.isCanonical()) {
     Canonical = getVectorType(getCanonicalType(vecType), NumElts,
       VectorType::NotAltiVec);
 
@@ -4168,6 +4165,28 @@ static bool areCompatVectorTypes(const VectorType *LHS,
   assert(LHS->isCanonicalUnqualified() && RHS->isCanonicalUnqualified());
   return LHS->getElementType() == RHS->getElementType() &&
          LHS->getNumElements() == RHS->getNumElements();
+}
+
+bool ASTContext::areCompatibleVectorTypes(QualType FirstVec,
+                                          QualType SecondVec) {
+  assert(FirstVec->isVectorType() && "FirstVec should be a vector type");
+  assert(SecondVec->isVectorType() && "SecondVec should be a vector type");
+
+  if (hasSameUnqualifiedType(FirstVec, SecondVec))
+    return true;
+
+  // AltiVec vectors types are identical to equivalent GCC vector types
+  const VectorType *First = FirstVec->getAs<VectorType>();
+  const VectorType *Second = SecondVec->getAs<VectorType>();
+  if ((((First->getAltiVecSpecific() == VectorType::AltiVec) &&
+        (Second->getAltiVecSpecific() == VectorType::NotAltiVec)) ||
+       ((First->getAltiVecSpecific() == VectorType::NotAltiVec) &&
+        (Second->getAltiVecSpecific() == VectorType::AltiVec))) &&
+      hasSameType(First->getElementType(), Second->getElementType()) &&
+      (First->getNumElements() == Second->getNumElements()))
+    return true;
+
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

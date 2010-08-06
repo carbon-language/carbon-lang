@@ -14,3 +14,22 @@ v8 foo(void) {
   // FIXME: test that (type)(fn)(args) still works with -faltivec
   // FIXME: test that c++ overloaded commas still work -faltivec
 }
+
+void __attribute__((__overloadable__)) f(v4 a)
+{
+}
+
+void __attribute__((__overloadable__)) f(int a)
+{
+}
+
+void test()
+{
+  v4 vGCC;
+  vector int vAltiVec;
+
+  f(vAltiVec);
+  vGCC = vAltiVec;
+  vGCC = vGCC > vAltiVec;
+  vAltiVec = 0 ? vGCC : vGCC;
+}

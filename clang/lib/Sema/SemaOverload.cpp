@@ -850,16 +850,20 @@ static bool IsVectorConversion(ASTContext &Context, QualType FromType,
       return true;
     }
   }
-  
-  // If lax vector conversions are permitted and the vector types are of the
-  // same size, we can perform the conversion.
-  if (Context.getLangOptions().LaxVectorConversions &&
-      FromType->isVectorType() && ToType->isVectorType() &&
-      Context.getTypeSize(FromType) == Context.getTypeSize(ToType)) {
-    ICK = ICK_Vector_Conversion;
-    return true;
+
+  // We can perform the conversion between vector types in the following cases:
+  // 1)vector types are equivalent AltiVec and GCC vector types
+  // 2)lax vector conversions are permitted and the vector types are of the
+  //   same size
+  if (ToType->isVectorType() && FromType->isVectorType()) {
+    if (Context.areCompatibleVectorTypes(FromType, ToType) ||
+       Context.getLangOptions().LaxVectorConversions &&
+       (Context.getTypeSize(FromType) == Context.getTypeSize(ToType))) {
+      ICK = ICK_Vector_Conversion;
+      return true;
+    }
   }
-  
+
   return false;
 }
   

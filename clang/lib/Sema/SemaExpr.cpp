@@ -4731,13 +4731,18 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   }
 
   if (lhsType->isVectorType() || rhsType->isVectorType()) {
-    // If we are allowing lax vector conversions, and LHS and RHS are both
-    // vectors, the total size only needs to be the same. This is a bitcast;
-    // no bits are changed but the result type is different.
-    if (getLangOptions().LaxVectorConversions &&
-        lhsType->isVectorType() && rhsType->isVectorType()) {
-      if (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))
+    if (lhsType->isVectorType() && rhsType->isVectorType()) {
+      // If we are allowing lax vector conversions, and LHS and RHS are both
+      // vectors, the total size only needs to be the same. This is a bitcast;
+      // no bits are changed but the result type is different.
+      if (getLangOptions().LaxVectorConversions &&
+         (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType)))
         return IncompatibleVectors;
+
+      // Allow assignments of an AltiVec vector type to an equivalent GCC
+      // vector type and vice versa
+      if (Context.areCompatibleVectorTypes(lhsType, rhsType))
+        return Compatible;
     }
     return Incompatible;
   }
@@ -5010,6 +5015,13 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
           return rhsType;
         }
     }
+  }
+
+  // Handle the case of equivalent AltiVec and GCC vector types
+  if (lhsType->isVectorType() && rhsType->isVectorType() &&
+      Context.areCompatibleVectorTypes(lhsType, rhsType)) {
+    ImpCastExprToType(lex, rhsType, CastExpr::CK_BitCast);
+    return rhsType;
   }
 
   // Canonicalize the ExtVector to the LHS, remember if we swapped so we can
