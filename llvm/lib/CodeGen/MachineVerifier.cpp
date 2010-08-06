@@ -167,7 +167,7 @@ namespace {
 
     // Analysis information if available
     LiveVariables *LiveVars;
-    LiveIntervals *LiveInts;
+    const LiveIntervals *LiveInts;
 
     void visitMachineFunctionBefore();
     void visitMachineBasicBlockBefore(const MachineBasicBlock *MBB);
@@ -188,6 +188,7 @@ namespace {
 
     void calcRegsRequired();
     void verifyLiveVariables();
+    void verifyLiveIntervals();
   };
 
   struct MachineVerifierPass : public MachineFunctionPass {
@@ -843,11 +844,13 @@ void MachineVerifier::visitMachineFunctionAfter() {
     checkPHIOps(MFI);
   }
 
-  // Now check LiveVariables info if available
-  if (LiveVars) {
+  // Now check liveness info if available
+  if (LiveVars || LiveInts)
     calcRegsRequired();
+  if (LiveVars)
     verifyLiveVariables();
-  }
+  if (LiveInts)
+    verifyLiveIntervals();
 }
 
 void MachineVerifier::verifyLiveVariables() {
@@ -877,4 +880,55 @@ void MachineVerifier::verifyLiveVariables() {
   }
 }
 
+void MachineVerifier::verifyLiveIntervals() {
+  assert(LiveInts && "Don't call verifyLiveIntervals without LiveInts");
+  for (LiveIntervals::const_iterator LVI = LiveInts->begin(),
+       LVE = LiveInts->end(); LVI != LVE; ++LVI) {
+    const LiveInterval &LI = *LVI->second;
+    assert(LVI->first == LI.reg && "Invalid reg to interval mapping");
+
+    for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
+         I!=E; ++I) {
+      VNInfo *VNI = *I;
+      const LiveRange *DefLR = LI.getLiveRangeContaining(VNI->def);
+
+      if (!DefLR) {
+        if (!VNI->isUnused()) {
+          report("Valno not live at def and not marked unused", MF);
+          *OS << "Valno #" << VNI->id << " in " << LI << '\n';
+        }
+        continue;
+      }
+
+      if (VNI->isUnused())
+        continue;
+
+      if (DefLR->valno != VNI) {
+        report("Live range at def has different valno", MF);
+        DefLR->print(*OS);
+        *OS << " should use valno #" << VNI->id << " in " << LI << '\n';
+      }
+
+    }
+
+    for (LiveInterval::const_iterator I = LI.begin(), E = LI.end(); I!=E; ++I) {
+      const LiveRange &LR = *I;
+      assert(LR.valno && "Live range has no valno");
+
+      if (LR.valno->id >= LI.getNumValNums() ||
+          LR.valno != LI.getValNumInfo(LR.valno->id)) {
+        report("Foreign valno in live range", MF);
+        LR.print(*OS);
+        *OS << " has a valno not in " << LI << '\n';
+      }
+
+      if (LR.valno->isUnused()) {
+        report("Live range valno is marked unused", MF);
+        LR.print(*OS);
+        *OS << " in " << LI << '\n';
+      }
+
+    }
+  }
+}
 
