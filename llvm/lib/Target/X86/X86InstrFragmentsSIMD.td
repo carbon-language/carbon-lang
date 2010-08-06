@@ -216,6 +216,8 @@ def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 def memopv32i8 : PatFrag<(ops node:$ptr), (v32i8 (memop node:$ptr))>;
 def memopv8f32 : PatFrag<(ops node:$ptr), (v8f32 (memop node:$ptr))>;
 def memopv4f64 : PatFrag<(ops node:$ptr), (v4f64 (memop node:$ptr))>;
+def memopv4i64 : PatFrag<(ops node:$ptr), (v4i64 (memop node:$ptr))>;
+def memopv8i32 : PatFrag<(ops node:$ptr), (v8i32 (memop node:$ptr))>;
 
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
