@@ -169,7 +169,8 @@ public:
   virtual ModRefBehavior getModRefBehavior(const Function *F);
 
   /// getIntrinsicModRefBehavior - Return the modref behavior of the intrinsic
-  /// with the given id.
+  /// with the given id.  Most clients won't need this, because the regular
+  /// getModRefBehavior incorporates this information.
   static ModRefBehavior getIntrinsicModRefBehavior(unsigned iid);
 
   /// doesNotAccessMemory - If the specified call is known to never read or
