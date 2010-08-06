@@ -57,17 +57,17 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-static ClangASTContext::AccessType
+static AccessType
 DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
 {
     switch (dwarf_accessibility)
     {
-        case DW_ACCESS_public:      return ClangASTContext::eAccessPublic;
-        case DW_ACCESS_private:     return ClangASTContext::eAccessPrivate;
-        case DW_ACCESS_protected:   return ClangASTContext::eAccessProtected;
+        case DW_ACCESS_public:      return eAccessPublic;
+        case DW_ACCESS_private:     return eAccessPrivate;
+        case DW_ACCESS_protected:   return eAccessProtected;
         default:                    break;
     }
-    return ClangASTContext::eAccessNone;
+    return eAccessNone;
 }
 
 void
@@ -1215,7 +1215,7 @@ SymbolFileDWARF::ParseChildMembers
     const LanguageType class_language,
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
-    ClangASTContext::AccessType& default_accessibility,
+    AccessType& default_accessibility,
     bool &is_a_class
 )
 {
@@ -1242,7 +1242,7 @@ SymbolFileDWARF::ParseChildMembers
                     DWARFExpression location;
                     const char *name = NULL;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
-                    ClangASTContext::AccessType accessibility = ClangASTContext::eAccessNone;
+                    AccessType accessibility = eAccessNone;
                     off_t member_offset = 0;
                     size_t byte_size = 0;
                     size_t bit_offset = 0;
@@ -1293,7 +1293,7 @@ SymbolFileDWARF::ParseChildMembers
 
                     Type *member_type = ResolveTypeUID(encoding_uid);
                     assert(member_type);
-                    if (accessibility == ClangASTContext::eAccessNone)
+                    if (accessibility == eAccessNone)
                         accessibility = default_accessibility;
                     member_accessibilities.push_back(accessibility);
 
@@ -1305,8 +1305,8 @@ SymbolFileDWARF::ParseChildMembers
         case DW_TAG_subprogram:
             {
                 is_a_class = true;
-                if (default_accessibility == ClangASTContext::eAccessNone)
-                    default_accessibility = ClangASTContext::eAccessPrivate;
+                if (default_accessibility == eAccessNone)
+                    default_accessibility = eAccessPrivate;
                 // TODO: implement DW_TAG_subprogram type parsing
 //              UserDefTypeChildInfo method_info(die->GetOffset());
 //
@@ -1322,8 +1322,8 @@ SymbolFileDWARF::ParseChildMembers
         case DW_TAG_inheritance:
             {
                 is_a_class = true;
-                if (default_accessibility == ClangASTContext::eAccessNone)
-                    default_accessibility = ClangASTContext::eAccessPrivate;
+                if (default_accessibility == eAccessNone)
+                    default_accessibility = eAccessPrivate;
                 // TODO: implement DW_TAG_inheritance type parsing
                 DWARFDebugInfoEntry::Attributes attributes;
                 const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
@@ -1332,7 +1332,7 @@ SymbolFileDWARF::ParseChildMembers
                     Declaration decl;
                     DWARFExpression location;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
-                    ClangASTContext::AccessType accessibility = default_accessibility;
+                    AccessType accessibility = default_accessibility;
                     bool is_virtual = false;
                     bool is_base_of_class = true;
                     off_t member_offset = 0;
@@ -2479,7 +2479,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
 {
     TypeSP type_sp;
 
-    ClangASTContext::AccessType accessibility = ClangASTContext::eAccessNone;
+    AccessType accessibility = eAccessNone;
     if (die != NULL)
     {
         dw_tag_t tag = die->Tag();
@@ -2702,21 +2702,21 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     }
 
                     int tag_decl_kind = -1;
-                    ClangASTContext::AccessType default_accessibility = ClangASTContext::eAccessNone;
+                    AccessType default_accessibility = eAccessNone;
                     if (tag == DW_TAG_structure_type)
                     {
                         tag_decl_kind = clang::TTK_Struct;
-                        default_accessibility = ClangASTContext::eAccessPublic;
+                        default_accessibility = eAccessPublic;
                     }
                     else if (tag == DW_TAG_union_type)
                     {
                         tag_decl_kind = clang::TTK_Union;
-                        default_accessibility = ClangASTContext::eAccessPublic;
+                        default_accessibility = eAccessPublic;
                     }
                     else if (tag == DW_TAG_class_type)
                     {
                         tag_decl_kind = clang::TTK_Class;
-                        default_accessibility = ClangASTContext::eAccessPrivate;
+                        default_accessibility = eAccessPrivate;
                     }
 
                     assert (tag_decl_kind != -1);
@@ -2770,7 +2770,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         {
                             // This is a class and all members that didn't have
                             // their access specified are private.
-                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, ClangASTContext::eAccessPrivate, &member_accessibilities.front(), member_accessibilities.size());
+                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, eAccessPrivate, &member_accessibilities.front(), member_accessibilities.size());
                         }
 
                         if (!base_classes.empty())
@@ -3332,7 +3332,7 @@ SymbolFileDWARF::ParseVariableDIE
         DWARFExpression location;
         bool is_external = false;
         bool is_artificial = false;
-        ClangASTContext::AccessType accessibility = ClangASTContext::eAccessNone;
+        AccessType accessibility = eAccessNone;
 
         for (i=0; i<num_attributes; ++i)
         {
