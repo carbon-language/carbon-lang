@@ -277,7 +277,14 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
       int64_t Offset = 0;
       if (DBG->getOperand(1).isImm())
         Offset = DBG->getOperand(1).getImm();
-      DebugLoc DL = MI->getDebugLoc();
+      DebugLoc DL;
+      if (MI == MBB->end()) {
+        // If MI is at basic block end then use last instruction's location.
+        MachineBasicBlock::iterator EI = MI;
+        DL = (--EI)->getDebugLoc();
+      }
+      else
+        DL = MI->getDebugLoc();
       if (MachineInstr *NewDV = 
           TII->emitFrameIndexDebugValue(*MF, FI, Offset, MDPtr, DL)) {
         MachineBasicBlock *MBB = DBG->getParent();
