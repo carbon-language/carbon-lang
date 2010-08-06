@@ -85,7 +85,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // This is a cluster of orthogonal Transforms
-      AU.addPreservedID(PromoteMemoryToRegisterID);
+      AU.addPreserved("mem2reg");
       AU.addPreservedID(LowerSwitchID);
     }
 

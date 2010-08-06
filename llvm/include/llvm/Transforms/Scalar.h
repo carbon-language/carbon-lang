@@ -149,7 +149,6 @@ Pass *createLoopIndexSplitPass();
 //   ret i32 %Y
 //
 FunctionPass *createPromoteMemoryToRegisterPass();
-extern char &PromoteMemoryToRegisterID;
 
 //===----------------------------------------------------------------------===//
 //
