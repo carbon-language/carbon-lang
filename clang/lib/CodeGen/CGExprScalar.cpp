@@ -1327,8 +1327,7 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
     }
         
     case OffsetOfExpr::OffsetOfNode::Identifier:
-      assert(0 && "Invalid offsetof");
-      break;
+      llvm_unreachable("dependent __builtin_offsetof");
         
     case OffsetOfExpr::OffsetOfNode::Base: {
       if (ON.getBase()->isVirtual()) {
