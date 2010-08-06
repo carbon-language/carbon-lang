@@ -77,7 +77,9 @@ MAttrs("mattr",
   cl::value_desc("a1,+a2,-a3,..."));
 
 static cl::opt<bool>
-RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
+RelaxAll("mc-relax-all",
+  cl::desc("When used with filetype=obj, "
+           "relax all fixups in the emited object file"));
 
 cl::opt<TargetMachine::CodeGenFileType>
 FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
