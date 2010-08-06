@@ -42,19 +42,6 @@
 // other doesn't. We should learn to peer through bitcasts without imposing bad
 // performance properties.
 //
-// * emit aliases for ELF
-//
-// ELF supports symbol aliases which are represented with GlobalAlias in the
-// Module, and we could emit them in the case that the addresses don't need to
-// be distinct. The problem is that not all object formats support equivalent
-// functionality. There's a few approaches to this problem;
-//   a) teach codegen to lower global aliases to thunks on platforms which don't
-//      support them.
-//   b) always emit thunks, and create a separate thunk-to-alias pass which
-//      runs on ELF systems. This has the added benefit of transforming other
-//      thunks such as those produced by a C++ frontend into aliases when legal
-//      to do so.
-//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mergefunc"
@@ -108,7 +95,7 @@ namespace {
 class FunctionComparator {
 public:
   FunctionComparator(TargetData *TD, Function *F1, Function *F2)
-    : F1(F1), F2(F2), TD(TD) {}
+    : F1(F1), F2(F2), TD(TD), IDMap1Count(0), IDMap2Count(0) {}
 
   // Compare - test whether the two functions have equivalent behaviour.
   bool Compare();
@@ -116,10 +103,6 @@ public:
 private:
   // Compare - test whether two basic blocks have equivalent behaviour.
   bool Compare(const BasicBlock *BB1, const BasicBlock *BB2);
-
-  // getDomain - a value's domain is its parent function if it is specific to a
-  // function, or NULL otherwise.
-  const Function *getDomain(const Value *V) const;
 
   // Enumerate - Assign or look up previously assigned numbers for the two
   // values, and return whether the numbers are equal. Numbers are assigned in
@@ -134,6 +117,7 @@ private:
 
   // isEquivalentGEP - Compare two GEPs for equivalent pointer arithmetic.
   bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2);
+
   bool isEquivalentGEP(const GetElementPtrInst *GEP1,
 		       const GetElementPtrInst *GEP2) {
     return isEquivalentGEP(cast<GEPOperator>(GEP1), cast<GEPOperator>(GEP2));
@@ -148,9 +132,8 @@ private:
   TargetData *TD;
 
   typedef DenseMap<const Value *, unsigned long> IDMap;
-  IDMap Map;
-  DenseMap<const Function *, IDMap> Domains;
-  DenseMap<const Function *, unsigned long> DomainCount;
+  IDMap Map1, Map2;
+  unsigned long IDMap1Count, IDMap2Count;
 };
 }
 
@@ -171,8 +154,8 @@ static unsigned long ProfileFunction(const Function *F) {
   return ID.ComputeHash();
 }
 
-/// isEquivalentType - any two pointers are equivalent. Otherwise, standard
-/// type equivalence rules apply.
+/// isEquivalentType - any two pointers in the same address space are
+/// equivalent. Otherwise, standard type equivalence rules apply.
 bool FunctionComparator::isEquivalentType(const Type *Ty1,
                                           const Type *Ty2) const {
   if (Ty1 == Ty2)
@@ -259,6 +242,7 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
     return ATy1->getNumElements() == ATy2->getNumElements() &&
            isEquivalentType(ATy1->getElementType(), ATy2->getElementType());
   }
+
   case Type::VectorTyID: {
     const VectorType *VTy1 = cast<VectorType>(Ty1);
     const VectorType *VTy2 = cast<VectorType>(Ty2);
@@ -355,19 +339,6 @@ bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
   return true;
 }
 
-/// getDomain - a value's domain is its parent function if it is specific to a
-/// function, or NULL otherwise.
-const Function *FunctionComparator::getDomain(const Value *V) const {
-  if (const Argument *A = dyn_cast<Argument>(V)) {
-    return A->getParent();
-  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-    return BB->getParent();
-  } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    return I->getParent()->getParent();
-  }
-  return NULL;
-}
-
 /// Enumerate - Compare two values used by the two functions under pair-wise
 /// comparison. If this is the first time the values are seen, they're added to
 /// the mapping so that we will detect mismatches on next use.
@@ -375,9 +346,10 @@ bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
   // Check for function @f1 referring to itself and function @f2 referring to
   // itself, or referring to each other, or both referring to either of them.
   // They're all equivalent if the two functions are otherwise equivalent.
-  if (V1 == F1 || V1 == F2)
-    if (V2 == F1 || V2 == F2)
-      return true;
+  if (V1 == F1 && V2 == F2)
+    return true;
+  if (V1 == F2 && V2 == F1)
+    return true;
 
   // TODO: constant expressions with GEP or references to F1 or F2.
   if (isa<Constant>(V1))
@@ -390,25 +362,13 @@ bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
            IA1->getConstraintString() == IA2->getConstraintString();
   }
 
-  // We enumerate constants globally and arguments, basic blocks or
-  // instructions within the function they belong to.
-  const Function *Domain1 = getDomain(V1);
-  const Function *Domain2 = getDomain(V2);
-
-  // The domains have to either be both NULL, or F1, F2.
-  if (Domain1 != Domain2)
-    if (Domain1 != F1 && Domain1 != F2)
-      return false;
-
-  IDMap &Map1 = Domains[Domain1];
   unsigned long &ID1 = Map1[V1];
   if (!ID1)
-    ID1 = ++DomainCount[Domain1];
+    ID1 = ++IDMap1Count;
 
-  IDMap &Map2 = Domains[Domain2];
   unsigned long &ID2 = Map2[V2];
   if (!ID2)
-    ID2 = ++DomainCount[Domain2];
+    ID2 = ++IDMap2Count;
 
   return ID1 == ID2;
 }
@@ -503,20 +463,26 @@ bool FunctionComparator::Compare() {
   // artifact, this also means that unreachable blocks are ignored.
   SmallVector<const BasicBlock *, 8> F1BBs, F2BBs;
   SmallSet<const BasicBlock *, 128> VisitedBBs; // in terms of F1.
+
   F1BBs.push_back(&F1->getEntryBlock());
   F2BBs.push_back(&F2->getEntryBlock());
+
   VisitedBBs.insert(F1BBs[0]);
   while (!F1BBs.empty()) {
     const BasicBlock *F1BB = F1BBs.pop_back_val();
     const BasicBlock *F2BB = F2BBs.pop_back_val();
+
     if (!Enumerate(F1BB, F2BB) || !Compare(F1BB, F2BB))
       return false;
+
     const TerminatorInst *F1TI = F1BB->getTerminator();
     const TerminatorInst *F2TI = F2BB->getTerminator();
+
     assert(F1TI->getNumSuccessors() == F2TI->getNumSuccessors());
     for (unsigned i = 0, e = F1TI->getNumSuccessors(); i != e; ++i) {
       if (!VisitedBBs.insert(F1TI->getSuccessor(i)))
         continue;
+
       F1BBs.push_back(F1TI->getSuccessor(i));
       F2BBs.push_back(F2TI->getSuccessor(i));
     }
@@ -530,70 +496,24 @@ bool FunctionComparator::Compare() {
 
 // Cases:
 // * F is external strong, G is external strong:
-//   turn G into a thunk to F    (1)
+//   turn G into a thunk to F
 // * F is external strong, G is external weak:
-//   turn G into a thunk to F    (1)
+//   turn G into a thunk to F
 // * F is external weak, G is external weak:
 //   unfoldable
 // * F is external strong, G is internal:
-//   address of G taken:
-//     turn G into a thunk to F  (1)
-//   address of G not taken:
-//     make G an alias to F      (2)
+//     turn G into a thunk to F
 // * F is internal, G is external weak
-//   address of F is taken:
-//     turn G into a thunk to F  (1)
-//   address of F is not taken:
-//     make G an alias of F      (2)
+//     turn G into a thunk to F
 // * F is internal, G is internal:
-//   address of F and G are taken:
-//     turn G into a thunk to F  (1)
-//   address of G is not taken:
-//     make G an alias to F      (2)
+//     turn G into a thunk to F
 //
-// alias requires linkage == (external,local,weak) fallback to creating a thunk
 // external means 'externally visible' linkage != (internal,private)
 // internal means linkage == (internal,private)
 // weak means linkage mayBeOverridable
-// being external implies that the address is taken
-//
-// 1. turn G into a thunk to F
-// 2. make G an alias to F
 
-enum LinkageCategory {
-  ExternalStrong,
-  ExternalWeak,
-  Internal
-};
-
-static LinkageCategory categorize(const Function *F) {
-  switch (F->getLinkage()) {
-  case GlobalValue::InternalLinkage:
-  case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-    return Internal;
-
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-  case GlobalValue::ExternalWeakLinkage:
-  case GlobalValue::LinkerPrivateWeakLinkage:
-    return ExternalWeak;
-
-  case GlobalValue::ExternalLinkage:
-  case GlobalValue::AvailableExternallyLinkage:
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::AppendingLinkage:
-  case GlobalValue::DLLImportLinkage:
-  case GlobalValue::DLLExportLinkage:
-  case GlobalValue::CommonLinkage:
-    return ExternalStrong;
-  }
-
-  llvm_unreachable("Unknown LinkageType.");
-  return ExternalWeak;
-}
-
+/// ThunkGToF - Replace G with a simple tail call to bitcast(F). Also replace
+/// direct uses of G with bitcast(F).
 static void ThunkGToF(Function *F, Function *G) {
   if (!G->mayBeOverridden()) {
     // Redirect direct callers of G to F.
@@ -606,6 +526,13 @@ static void ThunkGToF(Function *F, Function *G) {
       if (CS && CS.isCallee(TheIter))
         TheIter.getUse().set(BitcastF);
     }
+  }
+
+  // If G was internal then we may have replaced all uses if G with F. If so,
+  // stop here and delete G. There's no need for a thunk.
+  if (G->hasLocalLinkage() && G->use_empty()) {
+    G->eraseFromParent();
+    return;
   }
 
   Function *NewG = Function::Create(G->getFunctionType(), G->getLinkage(), "",
@@ -643,59 +570,19 @@ static void ThunkGToF(Function *F, Function *G) {
   G->eraseFromParent();
 }
 
-static void AliasGToF(Function *F, Function *G) {
-  // Darwin will trigger llvm_unreachable if asked to codegen an alias.
-  return ThunkGToF(F, G);
-
-#if 0
-  if (!G->hasExternalLinkage() && !G->hasLocalLinkage() && !G->hasWeakLinkage())
-    return ThunkGToF(F, G);
-
-  GlobalAlias *GA = new GlobalAlias(
-    G->getType(), G->getLinkage(), "",
-    ConstantExpr::getBitCast(F, G->getType()), G->getParent());
-  F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
-  GA->takeName(G);
-  GA->setVisibility(G->getVisibility());
-  G->replaceAllUsesWith(GA);
-  G->eraseFromParent();
-#endif
-}
-
 static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
   Function *F = FnVec[i];
   Function *G = FnVec[j];
 
-  LinkageCategory catF = categorize(F);
-  LinkageCategory catG = categorize(G);
-
-  if (catF == ExternalWeak || (catF == Internal && catG == ExternalStrong)) {
+  if (F->isWeakForLinker() && !G->isWeakForLinker()) {
     std::swap(FnVec[i], FnVec[j]);
     std::swap(F, G);
-    std::swap(catF, catG);
   }
 
-  switch (catF) {
-  case ExternalStrong:
-    switch (catG) {
-    case ExternalStrong:
-    case ExternalWeak:
-      ThunkGToF(F, G);
-      break;
-    case Internal:
-      if (G->hasAddressTaken())
-        ThunkGToF(F, G);
-      else
-        AliasGToF(F, G);
-      break;
-    }
-    break;
-
-  case ExternalWeak: {
-    assert(catG == ExternalWeak);
+  if (F->isWeakForLinker()) {
+    assert(G->isWeakForLinker());
 
     // Make them both thunks to the same internal function.
-    F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
     Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
                                    F->getParent());
     H->copyAttributesFrom(F);
@@ -705,37 +592,10 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
     ThunkGToF(F, G);
     ThunkGToF(F, H);
 
+    F->setAlignment(std::max(G->getAlignment(), H->getAlignment()));
     F->setLinkage(GlobalValue::InternalLinkage);
-  } break;
-
-  case Internal:
-    switch (catG) {
-    case ExternalStrong:
-      llvm_unreachable(0);
-      // fall-through
-    case ExternalWeak:
-      if (F->hasAddressTaken())
-        ThunkGToF(F, G);
-      else
-        AliasGToF(F, G);
-      break;
-    case Internal: {
-      bool addrTakenF = F->hasAddressTaken();
-      bool addrTakenG = G->hasAddressTaken();
-      if (!addrTakenF && addrTakenG) {
-        std::swap(FnVec[i], FnVec[j]);
-        std::swap(F, G);
-        std::swap(addrTakenF, addrTakenG);
-      }
-
-      if (addrTakenF && addrTakenG) {
-        ThunkGToF(F, G);
-      } else {
-        assert(!addrTakenG);
-        AliasGToF(F, G);
-      }
-    } break;
-  } break;
+  } else {
+    ThunkGToF(F, G);
   }
 
   ++NumFunctionsMerged;
@@ -752,7 +612,7 @@ bool MergeFunctions::runOnModule(Module &M) {
   std::map<unsigned long, std::vector<Function *> > FnMap;
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    if (F->isDeclaration())
+    if (F->isDeclaration() || F->hasAvailableExternallyLinkage())
       continue;
 
     FnMap[ProfileFunction(F)].push_back(F);
