@@ -1278,7 +1278,7 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   QualType CurrentType = E->getTypeSourceInfo()->getType();
   for (unsigned i = 0; i != n; ++i) {
     OffsetOfExpr::OffsetOfNode ON = E->getComponent(i);
-    llvm::Value *Offset;
+    llvm::Value *Offset = 0;
     switch (ON.getKind()) {
     case OffsetOfExpr::OffsetOfNode::Array: {
       // Compute the index
@@ -1325,10 +1325,10 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
       CurrentType = MemberDecl->getType();
       break;
     }
-        
+
     case OffsetOfExpr::OffsetOfNode::Identifier:
       llvm_unreachable("dependent __builtin_offsetof");
-        
+
     case OffsetOfExpr::OffsetOfNode::Base: {
       if (ON.getBase()->isVirtual()) {
         CGF.ErrorUnsupported(E, "virtual base in offsetof");
