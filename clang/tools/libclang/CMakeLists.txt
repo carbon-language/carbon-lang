@@ -41,7 +41,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       "-Wl,-current_version -Wl,${LIBCLANG_VERSION}.${LIBCLANG_SUBVERSION} -Wl,-compatibility_version -Wl,1")
 
   set(LIBCLANG_LINK_FLAGS 
-      "${LIBCLANG_LINK_FLAGS} -avoid-version -Wl,-dead_strip -Wl,-seg1addr -Wl,0xE0000000")
+      "${LIBCLANG_LINK_FLAGS} -Wl,-dead_strip -Wl,-seg1addr -Wl,0xE0000000")
 
   set_target_properties(libclang
     PROPERTIES
