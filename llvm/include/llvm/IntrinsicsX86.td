@@ -982,28 +982,10 @@ let TargetPrefix = "x86" in { // All intrinsics start with "llvm.x86.".
 
 // Arithmetic ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_add_pd_256 : GCCBuiltin<"__builtin_ia32_addpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_add_ps_256 : GCCBuiltin<"__builtin_ia32_addps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_sub_pd_256 : GCCBuiltin<"__builtin_ia32_subpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_sub_ps_256 : GCCBuiltin<"__builtin_ia32_subps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
   def int_x86_avx_addsub_pd_256 : GCCBuiltin<"__builtin_ia32_addsubpd256">,
         Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
                   llvm_v4f64_ty], [IntrNoMem]>;
   def int_x86_avx_addsub_ps_256 : GCCBuiltin<"__builtin_ia32_addsubps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_div_pd_256 : GCCBuiltin<"__builtin_ia32_divpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_div_ps_256 : GCCBuiltin<"__builtin_ia32_divps256">,
         Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
                   llvm_v8f32_ty], [IntrNoMem]>;
   def int_x86_avx_max_pd_256 : GCCBuiltin<"__builtin_ia32_maxpd256">,
@@ -1016,12 +998,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
         Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
                   llvm_v4f64_ty], [IntrNoMem]>;
   def int_x86_avx_min_ps_256 : GCCBuiltin<"__builtin_ia32_minps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_mul_pd_256 : GCCBuiltin<"__builtin_ia32_mulpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_mul_ps_256 : GCCBuiltin<"__builtin_ia32_mulps256">,
         Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
                   llvm_v8f32_ty], [IntrNoMem]>;
 
@@ -1047,34 +1023,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_round_ps_256 : GCCBuiltin<"__builtin_ia32_roundps256">,
         Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
                   llvm_i32_ty], [IntrNoMem]>;
-}
-
-// Logical ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_and_pd_256 : GCCBuiltin<"__builtin_ia32_andpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_and_ps_256 : GCCBuiltin<"__builtin_ia32_andps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_andn_pd_256 : GCCBuiltin<"__builtin_ia32_andnpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_andn_ps_256 : GCCBuiltin<"__builtin_ia32_andnps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_or_pd_256 : GCCBuiltin<"__builtin_ia32_orpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_or_ps_256 : GCCBuiltin<"__builtin_ia32_orps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_xor_pd_256 : GCCBuiltin<"__builtin_ia32_xorpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_xor_ps_256 : GCCBuiltin<"__builtin_ia32_xorps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
 }
 
 // Horizontal ops
