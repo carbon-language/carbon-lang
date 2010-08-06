@@ -33,7 +33,7 @@ public:
     uint64_t
     GetByteSize();
 
-    Encoding
+	lldb::Encoding
     GetEncoding (uint32_t &count);
 
     uint64_t
