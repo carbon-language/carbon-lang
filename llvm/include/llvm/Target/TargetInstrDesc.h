@@ -105,7 +105,6 @@ namespace TID {
     IndirectBranch,
     Predicable,
     NotDuplicable,
-    Compare,
     DelaySlot,
     FoldableAsLoad,
     MayLoad,
@@ -316,7 +315,7 @@ public:
   bool isIndirectBranch() const {
     return Flags & (1 << TID::IndirectBranch);
   }
-
+  
   /// isConditionalBranch - Return true if this is a branch which may fall
   /// through to the next instruction or may transfer control flow to some other
   /// block.  The TargetInstrInfo::AnalyzeBranch method can be used to get more
@@ -339,11 +338,6 @@ public:
   /// control and modify the predicate in this instruction.
   bool isPredicable() const {
     return Flags & (1 << TID::Predicable);
-  }
-  
-  /// isCompare - Return true if this instruction is a comparison.
-  bool isCompare() const {
-    return Flags & (1 << TID::Compare);
   }
   
   /// isNotDuplicable - Return true if this instruction cannot be safely

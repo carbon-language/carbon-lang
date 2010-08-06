@@ -123,7 +123,6 @@ namespace llvm {
     bool isReturn;
     bool isBranch;
     bool isIndirectBranch;
-    bool isCompare;
     bool isBarrier;
     bool isCall;
     bool canFoldAsLoad;
