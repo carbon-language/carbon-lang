@@ -671,7 +671,7 @@ public:
   }
 
   /// processFunctionBeforeFrameFinalized - This method is called immediately
-  /// before the specified functions frame layout (MF.getFrameInfo()) is
+  /// before the specified function's frame layout (MF.getFrameInfo()) is
   /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
   /// replaced with direct constants.  This method is optional.
   ///
