@@ -210,8 +210,8 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) {
-  // If the stored address cannot alias the pointer in question, then the
-  // pointer cannot be modified by the store.
+  // If the store address cannot alias the pointer in question, then the
+  // specified memory cannot be modified by the store.
   if (!alias(S->getOperand(1),
              getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
     return NoModRef;
