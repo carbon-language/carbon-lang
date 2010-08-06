@@ -52,6 +52,12 @@ o unittest2
   Python.
 
   It currently has unittest2 0.5.1 from http://pypi.python.org/pypi/unittest2.
+  Version 0.5.1 of unittest2 has feature parity with unittest in Python 2.7
+  final. If you want to ensure that your tests run identically under unittest2
+  and unittest in Python 2.7 you should use unittest2 0.5.1. 
+
+  Later versions of unittest2 include changes in unittest made in Python 3.2 and
+  onwards after the release of Python 2.7.
 
 o dotest.pl
 
