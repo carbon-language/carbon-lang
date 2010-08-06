@@ -33,3 +33,21 @@ A<f> *a9; // expected-error{{must be a class template}}
 // FIXME: The code below is ill-formed, because of the evil digraph '<:'. 
 // We should provide a much better error message than we currently do.
 // A<::N::Z> *a10;
+
+// PR7807
+namespace N {
+  template <typename, typename = int> 
+  struct X
+  { };
+
+  template <typename ,int> 
+  struct Y
+  { X<int> const_ref(); };
+
+  template <template<typename,int> class TT, typename T, int N> 
+  int operator<<(int, TT<T, N> a) { // expected-note{{candidate template ignored}}
+    0 << a.const_ref(); // expected-error{{invalid operands to binary expression ('int' and 'X<int>')}}
+  }
+
+  void f0( Y<int,1> y){ 1 << y; } // expected-note{{in instantiation of function template specialization 'N::operator<<<Y, int, 1>' requested here}}
+}

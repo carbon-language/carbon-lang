@@ -847,7 +847,6 @@ DeduceTemplateArguments(Sema &S,
       return Sema::TDK_NonDeducedMismatch;
     }
 
-    assert(false && "Type/value mismatch");
     Info.FirstArg = Param;
     Info.SecondArg = Arg;
     return Sema::TDK_NonDeducedMismatch;
@@ -868,7 +867,6 @@ DeduceTemplateArguments(Sema &S,
         return DeduceNonTypeTemplateArgument(S, NTTP, Arg.getAsDecl(),
                                              Info, Deduced);
       
-      assert(false && "Type/value mismatch");
       Info.FirstArg = Param;
       Info.SecondArg = Arg;
       return Sema::TDK_NonDeducedMismatch;
