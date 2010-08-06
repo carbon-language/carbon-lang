@@ -30,6 +30,7 @@ using namespace llvm;
 
 namespace {
 class InlineSpiller : public Spiller {
+  MachineFunctionPass &pass_;
   MachineFunction &mf_;
   LiveIntervals &lis_;
   MachineLoopInfo &loops_;
@@ -61,7 +62,8 @@ public:
   InlineSpiller(MachineFunctionPass &pass,
                 MachineFunction &mf,
                 VirtRegMap &vrm)
-    : mf_(mf),
+    : pass_(pass),
+      mf_(mf),
       lis_(pass.getAnalysis<LiveIntervals>()),
       loops_(pass.getAnalysis<MachineLoopInfo>()),
       vrm_(vrm),
