@@ -334,7 +334,6 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
     return notNullState;
 
   SymbolRef Sym = SR->getSymbol();
-  
   const RefState *RS = state->get<RegionState>(Sym);
 
   // If the symbol has not been tracked, return. This is possible when free() is
@@ -345,8 +344,7 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
 
   // Check double free.
   if (RS->isReleased()) {
-    ExplodedNode *N = C.GenerateSink();
-    if (N) {
+    if (ExplodedNode *N = C.GenerateSink()) {
       if (!BT_DoubleFree)
         BT_DoubleFree
           = new BuiltinBug("Double free",
@@ -457,8 +455,7 @@ bool MallocChecker::SummarizeRegion(llvm::raw_ostream& os,
 
 void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
                                   SourceRange range) {
-  ExplodedNode *N = C.GenerateSink();
-  if (N) {
+  if (ExplodedNode *N = C.GenerateSink()) {
     if (!BT_BadFree)
       BT_BadFree = new BuiltinBug("Bad free");
     
@@ -571,8 +568,7 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
       return;
 
     if (RS->isAllocated()) {
-      ExplodedNode *N = C.GenerateSink();
-      if (N) {
+      if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_Leak)
           BT_Leak = new BuiltinBug("Memory leak",
                      "Allocated memory never released. Potential memory leak.");
