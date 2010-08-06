@@ -362,7 +362,6 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
                                  D->getStorageClassAsWritten());
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
-  Var->setDeclaredInCondition(D->isDeclaredInCondition());
 
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(D, Var))

@@ -6647,8 +6647,6 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   if (!Dcl)
     return DeclResult();
 
-  VarDecl *VD = cast<VarDecl>(Dcl.getAs<Decl>());
-  VD->setDeclaredInCondition(true);
   return Dcl;
 }
 

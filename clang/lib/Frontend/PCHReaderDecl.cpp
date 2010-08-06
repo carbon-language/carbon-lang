@@ -546,7 +546,6 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setStorageClassAsWritten((VarDecl::StorageClass)Record[Idx++]);
   VD->setThreadSpecified(Record[Idx++]);
   VD->setCXXDirectInitializer(Record[Idx++]);
-  VD->setDeclaredInCondition(Record[Idx++]);
   VD->setExceptionVariable(Record[Idx++]);
   VD->setNRVOVariable(Record[Idx++]);
   VisitRedeclarable(VD);

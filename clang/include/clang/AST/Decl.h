@@ -561,10 +561,6 @@ private:
   bool ThreadSpecified : 1;
   bool HasCXXDirectInit : 1;
 
-  /// DeclaredInCondition - Whether this variable was declared in a
-  /// condition, e.g., if (int x = foo()) { ... }.
-  bool DeclaredInCondition : 1;
-
   /// \brief Whether this variable is the exception variable in a C++ catch
   /// or an Objective-C @catch statement.
   bool ExceptionVar : 1;
@@ -580,7 +576,7 @@ protected:
           StorageClass SCAsWritten)
     : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      DeclaredInCondition(false), ExceptionVar(false), NRVOVariable(false) {
+      ExceptionVar(false), NRVOVariable(false) {
     SClass = SC;
     SClassAsWritten = SCAsWritten;
   }
@@ -902,18 +898,6 @@ public:
     return HasCXXDirectInit;
   }
 
-  /// isDeclaredInCondition - Whether this variable was declared as
-  /// part of a condition in an if/switch/while statement, e.g.,
-  /// @code
-  /// if (int x = foo()) { ... }
-  /// @endcode
-  bool isDeclaredInCondition() const {
-    return DeclaredInCondition;
-  }
-  void setDeclaredInCondition(bool InCondition) {
-    DeclaredInCondition = InCondition;
-  }
-  
   /// \brief Determine whether this variable is the exception variable in a
   /// C++ catch statememt or an Objective-C @catch statement.
   bool isExceptionVariable() const {
