@@ -217,12 +217,13 @@ namespace llvm {
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
     virtual void EmitValue(const MCExpr *Value, unsigned Size,
-                           unsigned AddrSpace) = 0;
+                           unsigned AddrSpace = 0) = 0;
 
     /// EmitIntValue - Special case of EmitValue that avoids the client having
     /// to pass in a MCExpr for constant integers.
-    virtual void EmitIntValue(uint64_t Value, unsigned Size,unsigned AddrSpace);
-
+    virtual void EmitIntValue(uint64_t Value, unsigned Size,
+                              unsigned AddrSpace = 0);
+    
     /// EmitSymbolValue - Special case of EmitValue that avoids the client
     /// having to pass in a MCExpr for MCSymbols.
     virtual void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
