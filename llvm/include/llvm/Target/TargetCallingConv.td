@@ -89,6 +89,13 @@ class CCAssignToStack<int size, int align> : CCAction {
   int Align = align;
 }
 
+/// CCAssignToStackWithShadow - Same as CCAssignToStack, but with a register
+/// to be shadowed.
+class CCAssignToStackWithShadow<int size, int align, Register reg> :
+        CCAssignToStack<size, align> {
+  Register ShadowReg = reg;
+}
+
 /// CCPassByVal - This action always matches: it assigns the value to a stack
 /// slot to implement ByVal aggregate parameter passing. Size and alignment
 /// specify the minimum size and alignment for the stack slot.

@@ -169,6 +169,8 @@ void CallingConvEmitter::EmitAction(Record *Action,
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
           "->getABITypeAlignment(LocVT.getTypeForEVT(State.getContext()))";
+      if (Action->isSubClassOf("CCAssignToStackWithShadow"))
+        O << ", " << getQualifiedName(Action->getValueAsDef("ShadowReg"));
       O << ");\n" << IndentStr
         << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";

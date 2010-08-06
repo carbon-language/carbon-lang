@@ -275,6 +275,12 @@ public:
     return Result;
   }
 
+  /// Version of AllocateStack with extra register to be shadowed.
+  unsigned AllocateStack(unsigned Size, unsigned Align, unsigned ShadowReg) {
+    MarkAllocated(ShadowReg);
+    return AllocateStack(Size, Align);
+  }
+
   // HandleByVal - Allocate a stack slot large enough to pass an argument by
   // value. The size and alignment information of the argument is encoded in its
   // parameter attribute.

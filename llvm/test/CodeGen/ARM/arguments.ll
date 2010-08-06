@@ -24,6 +24,20 @@ entry:
   ret i32 %.0
 }
 
+; test that on gnueabi a 64 bit value at this position will cause r3 to go
+; unused and the value stored in [sp]
+; ELF: f3:
+; ELF: ldr r0, [sp]
+; ELF-NEXT: mov pc, lr
+; DARWIN: f3:
+; DARWIN: mov r0, r3
+; DARWIN-NEXT: mov pc, lr
+define i32 @f3(i32 %i, i32 %j, i32 %k, i64 %l, ...) {
+entry:
+  %0 = trunc i64 %l to i32
+  ret i32 %0
+}
+
 declare i32 @g1(i64)
 
 declare i32 @g2(i32 %i, ...)

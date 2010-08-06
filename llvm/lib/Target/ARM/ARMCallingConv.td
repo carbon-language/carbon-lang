@@ -68,7 +68,7 @@ def CC_ARM_AAPCS_Common : CallingConv<[
                        "ArgFlags.getOrigAlign() != 8",
                        CCAssignToReg<[R0, R1, R2, R3]>>>,
 
-  CCIfType<[i32], CCIfAlign<"8", CCAssignToStack<4, 8>>>,
+  CCIfType<[i32], CCIfAlign<"8", CCAssignToStackWithShadow<4, 8, R3>>>,
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
   CCIfType<[f64], CCAssignToStack<8, 8>>,
   CCIfType<[v2f64], CCAssignToStack<16, 8>>
