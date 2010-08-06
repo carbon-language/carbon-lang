@@ -33,7 +33,7 @@ char MachineLoopInfo::ID = 0;
 static RegisterPass<MachineLoopInfo>
 X("machine-loops", "Machine Natural Loop Construction", true);
 
-char &llvm::MachineLoopInfoID = MachineLoopInfo::ID;
+const PassInfo *const llvm::MachineLoopInfoID = &X;
 
 bool MachineLoopInfo::runOnMachineFunction(MachineFunction &) {
   releaseMemory();

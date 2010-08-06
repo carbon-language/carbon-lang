@@ -91,7 +91,7 @@ static unsigned getGVAlignmentLog2(const GlobalValue *GV, const TargetData &TD,
 
 
 AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
-  : MachineFunctionPass(ID),
+  : MachineFunctionPass(&ID),
     TM(tm), MAI(tm.getMCAsmInfo()),
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),

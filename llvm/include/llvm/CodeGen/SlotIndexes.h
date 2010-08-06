@@ -475,7 +475,7 @@ namespace llvm {
   public:
     static char ID;
 
-    SlotIndexes() : MachineFunctionPass(ID), indexListHead(0) {}
+    SlotIndexes() : MachineFunctionPass(&ID), indexListHead(0) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &au) const;
     virtual void releaseMemory(); 

@@ -65,7 +65,7 @@ namespace {
   public:
     static char ID;
     explicit BranchFolderPass(bool defaultEnableTailMerge)
-      : MachineFunctionPass(ID), BranchFolder(defaultEnableTailMerge) {}
+      : MachineFunctionPass(&ID), BranchFolder(defaultEnableTailMerge) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Control Flow Optimizer"; }

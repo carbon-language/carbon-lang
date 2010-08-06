@@ -46,7 +46,7 @@ class TargetRegisterInfo;
 class LiveVariables : public MachineFunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
-  LiveVariables() : MachineFunctionPass(ID) {}
+  LiveVariables() : MachineFunctionPass(&ID) {}
 
   /// VarInfo - This represents the regions where a virtual register is live in
   /// the program.  We represent this with three different pieces of

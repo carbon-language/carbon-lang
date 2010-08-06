@@ -30,7 +30,7 @@ namespace {
     DebugInfoFinder Finder;
   public:
     static char ID; // Pass identification, replacement for typeid
-    ModuleDebugInfoPrinter() : ModulePass(ID) {}
+    ModuleDebugInfoPrinter() : ModulePass(&ID) {}
 
     virtual bool runOnModule(Module &M);
 

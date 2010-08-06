@@ -59,7 +59,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     }
     static char ID; // Pass identification, replacement for typeid
-    GlobalOpt() : ModulePass(ID) {}
+    GlobalOpt() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
 

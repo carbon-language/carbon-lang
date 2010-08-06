@@ -140,7 +140,7 @@ IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
 }
 
 IVUsers::IVUsers()
- : LoopPass(ID) {
+ : LoopPass(&ID) {
 }
 
 void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {

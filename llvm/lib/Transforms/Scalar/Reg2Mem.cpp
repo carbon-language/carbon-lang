@@ -36,7 +36,7 @@ STATISTIC(NumPhisDemoted, "Number of phi-nodes demoted");
 namespace {
   struct RegToMem : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    RegToMem() : FunctionPass(ID) {}
+    RegToMem() : FunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
@@ -124,7 +124,7 @@ bool RegToMem::runOnFunction(Function &F) {
 
 // createDemoteRegisterToMemory - Provide an entry point to create this pass.
 //
-char &llvm::DemoteRegisterToMemoryID = RegToMem::ID;
+const PassInfo *const llvm::DemoteRegisterToMemoryID = &X;
 FunctionPass *llvm::createDemoteRegisterToMemoryPass() {
   return new RegToMem();
 }

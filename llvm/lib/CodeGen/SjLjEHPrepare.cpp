@@ -58,7 +58,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit SjLjEHPass(const TargetLowering *tli = NULL)
-      : FunctionPass(ID), TLI(tli) { }
+      : FunctionPass(&ID), TLI(tli) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
 

@@ -110,7 +110,7 @@ public:
   
   /// Constructs a TargetData from a specification string. See init().
   explicit TargetData(StringRef TargetDescription)
-    : ImmutablePass(ID) {
+    : ImmutablePass(&ID) {
     init(TargetDescription);
   }
 
@@ -118,7 +118,7 @@ public:
   explicit TargetData(const Module *M);
 
   TargetData(const TargetData &TD) :
-    ImmutablePass(ID),
+    ImmutablePass(&ID),
     LittleEndian(TD.isLittleEndian()),
     PointerMemSize(TD.PointerMemSize),
     PointerABIAlign(TD.PointerABIAlign),

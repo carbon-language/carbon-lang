@@ -28,7 +28,8 @@ class PMStack;
 
 class LoopPass : public Pass {
 public:
-  explicit LoopPass(char &pid) : Pass(PT_Loop, pid) {}
+  explicit LoopPass(intptr_t pid) : Pass(PT_Loop, pid) {}
+  explicit LoopPass(void *pid) : Pass(PT_Loop, pid) {}
 
   /// getPrinterPass - Get a pass to print the function corresponding
   /// to a Loop.

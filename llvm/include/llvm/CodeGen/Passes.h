@@ -43,18 +43,18 @@ namespace llvm {
 
   /// MachineLoopInfo pass - This pass is a loop analysis pass.
   /// 
-  extern char &MachineLoopInfoID;
+  extern const PassInfo *const MachineLoopInfoID;
 
   /// MachineDominators pass - This pass is a machine dominators analysis pass.
   /// 
-  extern char &MachineDominatorsID;
+  extern const PassInfo *const MachineDominatorsID;
 
   /// PHIElimination pass - This pass eliminates machine instruction PHI nodes
   /// by inserting copy instructions.  This destroys SSA information, but is the
   /// desired input for some register allocators.  This pass is "required" by
   /// these register allocator like this: AU.addRequiredID(PHIEliminationID);
   ///
-  extern char &PHIEliminationID;
+  extern const PassInfo *const PHIEliminationID;
   
   /// StrongPHIElimination pass - This pass eliminates machine instruction PHI
   /// nodes by inserting copy instructions.  This destroys SSA information, but
@@ -62,23 +62,23 @@ namespace llvm {
   /// "required" by these register allocator like this:
   ///    AU.addRequiredID(PHIEliminationID);
   ///  This pass is still in development
-  extern char &StrongPHIEliminationID;
+  extern const PassInfo *const StrongPHIEliminationID;
 
-  extern char &PreAllocSplittingID;
+  extern const PassInfo *const PreAllocSplittingID;
 
   /// SimpleRegisterCoalescing pass.  Aggressively coalesces every register
   /// copy it can.
   ///
-  extern char &SimpleRegisterCoalescingID;
+  extern const PassInfo *const SimpleRegisterCoalescingID;
 
   /// TwoAddressInstruction pass - This pass reduces two-address instructions to
   /// use two operands. This destroys SSA information but it is desired by
   /// register allocators.
-  extern char &TwoAddressInstructionPassID;
+  extern const PassInfo *const TwoAddressInstructionPassID;
 
   /// UnreachableMachineBlockElimination pass - This pass removes unreachable
   /// machine basic blocks.
-  extern char &UnreachableMachineBlockElimID;
+  extern const PassInfo *const UnreachableMachineBlockElimID;
 
   /// DeadMachineInstructionElim pass - This pass removes dead machine
   /// instructions.

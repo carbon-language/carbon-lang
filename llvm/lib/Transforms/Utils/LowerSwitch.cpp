@@ -34,7 +34,7 @@ namespace {
   class LowerSwitch : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerSwitch() : FunctionPass(ID) {} 
+    LowerSwitch() : FunctionPass(&ID) {} 
 
     virtual bool runOnFunction(Function &F);
     
@@ -85,7 +85,7 @@ static RegisterPass<LowerSwitch>
 X("lowerswitch", "Lower SwitchInst's to branches");
 
 // Publically exposed interface to pass...
-char &llvm::LowerSwitchID = LowerSwitch::ID;
+const PassInfo *const llvm::LowerSwitchID = &X;
 // createLowerSwitchPass - Interface to this file...
 FunctionPass *llvm::createLowerSwitchPass() {
   return new LowerSwitch();

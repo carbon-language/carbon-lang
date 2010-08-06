@@ -36,7 +36,7 @@ namespace {
     
     static char ID;
     explicit FPMover(TargetMachine &tm) 
-      : MachineFunctionPass(ID), TM(tm) { }
+      : MachineFunctionPass(&ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "Sparc Double-FP Move Fixer";

@@ -39,7 +39,7 @@ namespace llvm {
     
   public:
     static char ID; // Pass identification, replacement for typeid
-    LiveStacks() : MachineFunctionPass(ID) {}
+    LiveStacks() : MachineFunctionPass(&ID) {}
 
     typedef SS2IntervalMap::iterator iterator;
     typedef SS2IntervalMap::const_iterator const_iterator;

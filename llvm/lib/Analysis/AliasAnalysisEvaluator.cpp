@@ -50,7 +50,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    AAEval() : FunctionPass(ID) {}
+    AAEval() : FunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();

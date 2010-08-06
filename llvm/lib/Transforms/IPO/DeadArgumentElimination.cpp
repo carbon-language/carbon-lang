@@ -122,11 +122,11 @@ namespace {
 
   protected:
     // DAH uses this to specify a different ID.
-    explicit DAE(char &ID) : ModulePass(ID) {}
+    explicit DAE(void *ID) : ModulePass(ID) {}
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    DAE() : ModulePass(ID) {}
+    DAE() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
 
@@ -159,7 +159,7 @@ namespace {
   /// by bugpoint.
   struct DAH : public DAE {
     static char ID;
-    DAH() : DAE(ID) {}
+    DAH() : DAE(&ID) {}
 
     virtual bool ShouldHackArguments() const { return true; }
   };

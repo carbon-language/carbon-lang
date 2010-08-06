@@ -160,7 +160,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid.
     DwarfEHPrepare(const TargetMachine *tm, bool fast) :
-      FunctionPass(ID), TM(tm), TLI(TM->getTargetLowering()),
+      FunctionPass(&ID), TM(tm), TLI(TM->getTargetLowering()),
       CompileFast(fast),
       ExceptionValueIntrinsic(0), SelectorIntrinsic(0),
       URoR(0), EHCatchAllValue(0), RewindFunction(0) {}

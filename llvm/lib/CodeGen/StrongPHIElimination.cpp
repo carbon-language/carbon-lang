@@ -39,7 +39,7 @@ using namespace llvm;
 namespace {
   struct StrongPHIElimination : public MachineFunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    StrongPHIElimination() : MachineFunctionPass(ID) {}
+    StrongPHIElimination() : MachineFunctionPass(&ID) {}
 
     // Waiting stores, for each MBB, the set of copies that need to
     // be inserted into that MBB
@@ -154,7 +154,7 @@ static RegisterPass<StrongPHIElimination>
 X("strong-phi-node-elimination",
   "Eliminate PHI nodes for register allocation, intelligently");
 
-char &llvm::StrongPHIEliminationID = StrongPHIElimination::ID;
+const PassInfo *const llvm::StrongPHIEliminationID = &X;
 
 /// computeDFS - Computes the DFS-in and DFS-out numbers of the dominator tree
 /// of the given MachineFunction.  These numbers are then used in other parts

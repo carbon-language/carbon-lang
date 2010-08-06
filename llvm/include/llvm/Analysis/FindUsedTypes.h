@@ -26,7 +26,7 @@ class FindUsedTypes : public ModulePass {
   std::set<const Type *> UsedTypes;
 public:
   static char ID; // Pass identification, replacement for typeid
-  FindUsedTypes() : ModulePass(ID) {}
+  FindUsedTypes() : ModulePass(&ID) {}
 
   /// getTypes - After the pass has been run, return the set containing all of
   /// the types used in the module.

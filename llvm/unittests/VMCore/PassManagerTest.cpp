@@ -40,7 +40,7 @@ namespace llvm {
     public:
       static char run;
       static char ID;
-      ModuleNDNM() : ModulePass(ID) {}
+      ModuleNDNM() : ModulePass(&ID) {}
       virtual bool runOnModule(Module &M) {
         run++;
         return false;
@@ -56,7 +56,7 @@ namespace llvm {
     public:
       static char run;
       static char ID;
-      ModuleNDM() : ModulePass(ID) {}
+      ModuleNDM() : ModulePass(&ID) {}
       virtual bool runOnModule(Module &M) {
         run++;
         return true;
@@ -70,7 +70,7 @@ namespace llvm {
     public:
       static char run;
       static char ID;
-      ModuleNDM2() : ModulePass(ID) {}
+      ModuleNDM2() : ModulePass(&ID) {}
       virtual bool runOnModule(Module &M) {
         run++;
         return true;
@@ -83,7 +83,7 @@ namespace llvm {
     public:
       static char run;
       static char ID;
-      ModuleDNM() : ModulePass(ID) {}
+      ModuleDNM() : ModulePass(&ID) {}
       virtual bool runOnModule(Module &M) {
         EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
         run++;
@@ -119,7 +119,7 @@ namespace llvm {
         EXPECT_TRUE(finalized);
         EXPECT_EQ(run, runc);
       }
-      PassTestBase() : P(ID), allocated(0) {
+      PassTestBase() : P(&ID), allocated(0) {
         initialized = false;
         finalized = false;
         runc = 0;
@@ -253,7 +253,7 @@ namespace llvm {
     struct OnTheFlyTest: public ModulePass {
     public:
       static char ID;
-      OnTheFlyTest() : ModulePass(ID) {}
+      OnTheFlyTest() : ModulePass(&ID) {}
       virtual bool runOnModule(Module &M) {
         EXPECT_TRUE(getAnalysisIfAvailable<TargetData>());
         for (Module::iterator I=M.begin(),E=M.end(); I != E; ++I) {

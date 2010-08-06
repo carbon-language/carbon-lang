@@ -90,7 +90,7 @@ namespace {
  
   struct RALinScan : public MachineFunctionPass {
     static char ID;
-    RALinScan() : MachineFunctionPass(ID) {
+    RALinScan() : MachineFunctionPass(&ID) {
       // Initialize the queue to record recently-used registers.
       if (NumRecentlyUsedRegs > 0)
         RecentRegs.resize(NumRecentlyUsedRegs, 0);

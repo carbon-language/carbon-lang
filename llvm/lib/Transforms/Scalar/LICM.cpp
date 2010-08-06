@@ -66,7 +66,7 @@ DisablePromotion("disable-licm-promotion", cl::Hidden,
 namespace {
   struct LICM : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LICM() : LoopPass(ID) {}
+    LICM() : LoopPass(&ID) {}
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 

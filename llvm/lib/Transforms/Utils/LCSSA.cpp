@@ -47,7 +47,7 @@ STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 namespace {
   struct LCSSA : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LCSSA() : LoopPass(ID) {}
+    LCSSA() : LoopPass(&ID) {}
 
     // Cached analysis information for the current function.
     DominatorTree *DT;
@@ -93,7 +93,7 @@ char LCSSA::ID = 0;
 static RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 
 Pass *llvm::createLCSSAPass() { return new LCSSA(); }
-char &llvm::LCSSAID = LCSSA::ID;
+const PassInfo *const llvm::LCSSAID = &X;
 
 
 /// BlockDominatesAnExit - Return true if the specified block dominates at least

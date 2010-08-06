@@ -22,7 +22,7 @@ using namespace llvm;
 namespace {
   struct AlphaBSel : public MachineFunctionPass {
     static char ID;
-    AlphaBSel() : MachineFunctionPass(ID) {}
+    AlphaBSel() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 

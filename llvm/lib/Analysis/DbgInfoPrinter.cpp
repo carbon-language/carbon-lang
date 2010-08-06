@@ -40,7 +40,7 @@ namespace {
     void printVariableDeclaration(const Value *V);
   public:
     static char ID; // Pass identification
-    PrintDbgInfo() : FunctionPass(ID), Out(outs()) {}
+    PrintDbgInfo() : FunctionPass(&ID), Out(outs()) {}
 
     virtual bool runOnFunction(Function &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

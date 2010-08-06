@@ -53,12 +53,12 @@ namespace {
   public:
     static char ID;
     explicit Emitter(X86TargetMachine &tm, CodeEmitter &mce)
-      : MachineFunctionPass(ID), II(0), TD(0), TM(tm), 
+      : MachineFunctionPass(&ID), II(0), TD(0), TM(tm), 
       MCE(mce), PICBaseOffset(0), Is64BitMode(false),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
     Emitter(X86TargetMachine &tm, CodeEmitter &mce,
             const X86InstrInfo &ii, const TargetData &td, bool is64)
-      : MachineFunctionPass(ID), II(&ii), TD(&td), TM(tm), 
+      : MachineFunctionPass(&ID), II(&ii), TD(&td), TM(tm), 
       MCE(mce), PICBaseOffset(0), Is64BitMode(is64),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
 

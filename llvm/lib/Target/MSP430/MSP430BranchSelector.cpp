@@ -30,7 +30,7 @@ STATISTIC(NumExpanded, "Number of branches expanded to long format");
 namespace {
   struct MSP430BSel : public MachineFunctionPass {
     static char ID;
-    MSP430BSel() : MachineFunctionPass(ID) {}
+    MSP430BSel() : MachineFunctionPass(&ID) {}
 
     /// BlockSizes - The sizes of the basic blocks in the function.
     std::vector<unsigned> BlockSizes;

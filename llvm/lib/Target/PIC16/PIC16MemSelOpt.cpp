@@ -38,7 +38,7 @@ using namespace llvm;
 namespace {
   struct MemSelOpt : public MachineFunctionPass {
     static char ID;
-    MemSelOpt() : MachineFunctionPass(ID) {}
+    MemSelOpt() : MachineFunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreservedID(MachineLoopInfoID);

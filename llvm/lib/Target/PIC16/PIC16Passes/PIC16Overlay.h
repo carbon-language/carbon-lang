@@ -39,7 +39,7 @@ namespace  llvm {
     unsigned IndirectCallColor;
   public:
     static char ID; // Class identification 
-    PIC16Overlay() : ModulePass(ID) {
+    PIC16Overlay() : ModulePass(&ID) {
       OverlayStr = "Overlay=";
       InterruptDepth = PIC16OVERLAY::StartInterruptColor;
       IndirectCallColor = PIC16OVERLAY::StartIndirectCallColor;

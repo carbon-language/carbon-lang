@@ -37,7 +37,7 @@ namespace {
     unsigned NumLoops;
 
     explicit LoopExtractor(unsigned numLoops = ~0) 
-      : LoopPass(ID), NumLoops(numLoops) {}
+      : LoopPass(&ID), NumLoops(numLoops) {}
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -147,7 +147,7 @@ namespace {
     std::vector<std::pair<std::string, std::string> > BlocksToNotExtractByName;
   public:
     static char ID; // Pass identification, replacement for typeid
-    BlockExtractorPass() : ModulePass(ID) {
+    BlockExtractorPass() : ModulePass(&ID) {
       if (!BlockFile.empty())
         LoadFile(BlockFile.c_str());
     }

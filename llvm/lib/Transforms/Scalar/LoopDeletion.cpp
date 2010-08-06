@@ -28,7 +28,7 @@ namespace {
   class LoopDeletion : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopDeletion() : LoopPass(ID) {}
+    LoopDeletion() : LoopPass(&ID) {}
     
     // Possibly eliminate loop L if it is dead.
     bool runOnLoop(Loop* L, LPPassManager& LPM);

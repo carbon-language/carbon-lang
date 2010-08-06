@@ -35,7 +35,7 @@ namespace llvm {
   class PIC16Cloner : public ModulePass { 
   public:
     static char ID; // Class identification 
-    PIC16Cloner() : ModulePass(ID)  {}
+    PIC16Cloner() : ModulePass(&ID)  {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<CallGraph>();

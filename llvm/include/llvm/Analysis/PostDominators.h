@@ -25,7 +25,7 @@ struct PostDominatorTree : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
   DominatorTreeBase<BasicBlock>* DT;
 
-  PostDominatorTree() : FunctionPass(ID) {
+  PostDominatorTree() : FunctionPass(&ID) {
     DT = new DominatorTreeBase<BasicBlock>(true);
   }
 
@@ -106,7 +106,7 @@ template <> struct GraphTraits<PostDominatorTree*>
 struct PostDominanceFrontier : public DominanceFrontierBase {
   static char ID;
   PostDominanceFrontier()
-    : DominanceFrontierBase(ID, true) {}
+    : DominanceFrontierBase(&ID, true) {}
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

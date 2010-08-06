@@ -31,7 +31,7 @@ STATISTIC(NumMerged, "Number of global constants merged");
 namespace {
   struct ConstantMerge : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    ConstantMerge() : ModulePass(ID) {}
+    ConstantMerge() : ModulePass(&ID) {}
 
     // run - For this pass, process all of the globals in the module,
     // eliminating duplicate constants.

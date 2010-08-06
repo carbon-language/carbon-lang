@@ -40,7 +40,7 @@ char PHIElimination::ID = 0;
 static RegisterPass<PHIElimination>
 X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
 
-char &llvm::PHIEliminationID = PHIElimination::ID;
+const PassInfo *const llvm::PHIEliminationID = &X;
 
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();

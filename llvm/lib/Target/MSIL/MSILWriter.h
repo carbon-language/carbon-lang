@@ -40,7 +40,7 @@ namespace llvm {
     static char ID;
     MSILModule(const std::set<const Type *>*& _UsedTypes,
                const TargetData*& _TD)
-      : ModulePass(ID), UsedTypes(_UsedTypes), TD(_TD) {}
+      : ModulePass(&ID), UsedTypes(_UsedTypes), TD(_TD) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
@@ -86,7 +86,7 @@ namespace llvm {
     DenseMap<const Value*, unsigned> AnonValueNumbers;
     unsigned NextAnonValueNumber;
 
-    MSILWriter(formatted_raw_ostream &o) : FunctionPass(ID), Out(o),
+    MSILWriter(formatted_raw_ostream &o) : FunctionPass(&ID), Out(o),
          NextAnonValueNumber(0) {
       UniqID = 0;
     }

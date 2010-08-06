@@ -92,7 +92,7 @@ namespace {
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LoopUnswitch(bool Os = false) : 
-      LoopPass(ID), OptimizeForSize(Os), redoLoop(false), 
+      LoopPass(&ID), OptimizeForSize(Os), redoLoop(false), 
       currentLoop(NULL), DF(NULL), DT(NULL), loopHeader(NULL),
       loopPreheader(NULL) {}
 

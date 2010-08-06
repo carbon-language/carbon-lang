@@ -26,7 +26,7 @@ STATISTIC(NumKilled, "Number of unused typenames removed from symtab");
 namespace {
   struct DTE : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    DTE() : ModulePass(ID) {}
+    DTE() : ModulePass(&ID) {}
 
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and

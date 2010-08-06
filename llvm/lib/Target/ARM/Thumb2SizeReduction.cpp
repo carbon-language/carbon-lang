@@ -173,7 +173,7 @@ namespace {
   char Thumb2SizeReduce::ID = 0;
 }
 
-Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(ID) {
+Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(&ID) {
   for (unsigned i = 0, e = array_lengthof(ReduceTable); i != e; ++i) {
     unsigned FromOpc = ReduceTable[i].WideOpc;
     if (!ReduceOpcodeMap.insert(std::make_pair(FromOpc, i)).second)

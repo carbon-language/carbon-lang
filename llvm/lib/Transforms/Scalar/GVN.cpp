@@ -665,7 +665,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit GVN(bool noloads = false)
-      : FunctionPass(ID), NoLoads(noloads), MD(0) { }
+      : FunctionPass(&ID), NoLoads(noloads), MD(0) { }
 
   private:
     bool NoLoads;

@@ -128,7 +128,7 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo.
     explicit ProfileInfoPrinterPass(ProfileInfoLoader &_PIL) 
-      : ModulePass(ID), PIL(_PIL) {}
+      : ModulePass(&ID), PIL(_PIL) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();

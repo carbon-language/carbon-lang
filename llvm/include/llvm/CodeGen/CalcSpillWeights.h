@@ -23,7 +23,7 @@ namespace llvm {
   public:
     static char ID;
 
-    CalculateSpillWeights() : MachineFunctionPass(ID) {}
+    CalculateSpillWeights() : MachineFunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &au) const;
 

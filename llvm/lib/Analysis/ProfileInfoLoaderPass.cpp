@@ -45,7 +45,7 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo
     explicit LoaderPass(const std::string &filename = "")
-      : ModulePass(ID), Filename(filename) {
+      : ModulePass(&ID), Filename(filename) {
       if (filename.empty()) Filename = ProfileInfoFilename;
     }
 
@@ -67,8 +67,8 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
-      if (PI == &ProfileInfo::ID)
+    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+      if (PI->isPassID(&ProfileInfo::ID))
         return (ProfileInfo*)this;
       return this;
     }
@@ -84,7 +84,7 @@ X("profile-loader", "Load profile information from llvmprof.out", false, true);
 
 static RegisterAnalysisGroup<ProfileInfo> Y(X);
 
-char &llvm::ProfileLoaderPassID = LoaderPass::ID;
+const PassInfo *llvm::ProfileLoaderPassID = &X;
 
 ModulePass *llvm::createProfileLoaderPass() { return new LoaderPass(); }
 

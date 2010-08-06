@@ -139,7 +139,7 @@ namespace llvm {
 
   public:
     static char ID;
-    VirtRegMap() : MachineFunctionPass(ID), Virt2PhysMap(NO_PHYS_REG),
+    VirtRegMap() : MachineFunctionPass(&ID), Virt2PhysMap(NO_PHYS_REG),
                    Virt2StackSlotMap(NO_STACK_SLOT), 
                    Virt2ReMatIdMap(NO_STACK_SLOT), Virt2SplitMap(0),
                    Virt2SplitKillMap(SlotIndex()), ReMatMap(NULL),

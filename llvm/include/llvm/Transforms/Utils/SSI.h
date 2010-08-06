@@ -39,7 +39,7 @@ namespace llvm {
     public:
       static char ID; // Pass identification, replacement for typeid.
       SSI() :
-        FunctionPass(ID) {
+        FunctionPass(&ID) {
       }
 
       void getAnalysisUsage(AnalysisUsage &AU) const;

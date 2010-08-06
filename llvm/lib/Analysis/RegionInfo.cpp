@@ -589,7 +589,7 @@ void RegionInfo::releaseMemory() {
   TopLevelRegion = 0;
 }
 
-RegionInfo::RegionInfo() : FunctionPass(ID) {
+RegionInfo::RegionInfo() : FunctionPass(&ID) {
   TopLevelRegion = 0;
 }
 

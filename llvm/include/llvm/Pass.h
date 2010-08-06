@@ -50,7 +50,7 @@ class raw_ostream;
 class StringRef;
 
 // AnalysisID - Use the PassInfo to identify a pass...
-typedef const void* AnalysisID;
+typedef const PassInfo* AnalysisID;
 
 /// Different types of internal pass managers. External pass managers
 /// (PassManager and FunctionPassManager) are not represented here.
@@ -82,13 +82,14 @@ enum PassKind {
 ///
 class Pass {
   AnalysisResolver *Resolver;  // Used to resolve analysis
-  const void *PassID;
+  intptr_t PassID;
   PassKind Kind;
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
   
 public:
-  explicit Pass(PassKind K, char &pid);
+  explicit Pass(PassKind K, intptr_t pid);
+  explicit Pass(PassKind K, const void *pid);
   virtual ~Pass();
 
   
@@ -100,10 +101,10 @@ public:
   ///
   virtual const char *getPassName() const;
 
-  /// getPassID - Return the PassID number that corresponds to this pass.
-  virtual AnalysisID getPassID() const {
-    return PassID;
-  }
+  /// getPassInfo - Return the PassInfo data structure that corresponds to this
+  /// pass...  If the pass has not been registered, this will return null.
+  ///
+  const PassInfo *getPassInfo() const;
 
   /// print - Print out the internal state of the pass.  This is called by
   /// Analyze to print out the contents of an analysis.  Otherwise it is not
@@ -158,7 +159,7 @@ public:
   /// an analysis interface through multiple inheritance.  If needed, it should
   /// override this to adjust the this pointer as needed for the specified pass
   /// info.
-  virtual void *getAdjustedAnalysisPointer(AnalysisID ID);
+  virtual void *getAdjustedAnalysisPointer(const PassInfo *);
   virtual ImmutablePass *getAsImmutablePass();
   virtual PMDataManager *getAsPMDataManager();
   
@@ -169,9 +170,14 @@ public:
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);
 
+  template<typename AnalysisClass>
+  static const PassInfo *getClassPassInfo() {
+    return lookupPassInfo(intptr_t(&AnalysisClass::ID));
+  }
+
   // lookupPassInfo - Return the pass info object for the specified pass class,
   // or null if it is not known.
-  static const PassInfo *lookupPassInfo(const void *TI);
+  static const PassInfo *lookupPassInfo(intptr_t TI);
 
   // lookupPassInfo - Return the pass info object for the pass with the given
   // argument string, or null if it is not known.
@@ -194,7 +200,7 @@ public:
   /// don't have the class name available (use getAnalysisIfAvailable if you
   /// do), but it can tell you if you need to preserve the pass at least.
   ///
-  bool mustPreserveAnalysisID(char &AID) const;
+  bool mustPreserveAnalysisID(const PassInfo *AnalysisID) const;
 
   /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
   /// to the analysis information that they claim to use by overriding the
@@ -207,10 +213,10 @@ public:
   AnalysisType &getAnalysis(Function &F); // Defined in PassAnalysisSupport.h
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysisID(AnalysisID PI) const;
+  AnalysisType &getAnalysisID(const PassInfo *PI) const;
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysisID(AnalysisID PI, Function &F);
+  AnalysisType &getAnalysisID(const PassInfo *PI, Function &F);
 };
 
 
@@ -234,7 +240,8 @@ public:
   ///  Return what kind of Pass Manager can manage this pass.
   virtual PassManagerType getPotentialPassManagerType() const;
 
-  explicit ModulePass(char &pid) : Pass(PT_Module, pid) {}
+  explicit ModulePass(intptr_t pid) : Pass(PT_Module, pid) {}
+  explicit ModulePass(const void *pid) : Pass(PT_Module, pid) {}
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -261,7 +268,8 @@ public:
   ///
   bool runOnModule(Module &) { return false; }
 
-  explicit ImmutablePass(char &pid) 
+  explicit ImmutablePass(intptr_t pid) : ModulePass(pid) {}
+  explicit ImmutablePass(const void *pid) 
   : ModulePass(pid) {}
   
   // Force out-of-line virtual method.
@@ -279,7 +287,8 @@ public:
 ///
 class FunctionPass : public Pass {
 public:
-  explicit FunctionPass(char &pid) : Pass(PT_Function, pid) {}
+  explicit FunctionPass(intptr_t pid) : Pass(PT_Function, pid) {}
+  explicit FunctionPass(const void *pid) : Pass(PT_Function, pid) {}
 
   /// createPrinterPass - Get a function printer pass.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
@@ -331,7 +340,8 @@ public:
 ///
 class BasicBlockPass : public Pass {
 public:
-  explicit BasicBlockPass(char &pid) : Pass(PT_BasicBlock, pid) {}
+  explicit BasicBlockPass(intptr_t pid) : Pass(PT_BasicBlock, pid) {}
+  explicit BasicBlockPass(const void *pid) : Pass(PT_BasicBlock, pid) {}
 
   /// createPrinterPass - Get a function printer pass.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;

@@ -36,7 +36,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    DeadMachineInstructionElim() : MachineFunctionPass(ID) {}
+    DeadMachineInstructionElim() : MachineFunctionPass(&ID) {}
 
   private:
     bool isDead(const MachineInstr *MI) const;

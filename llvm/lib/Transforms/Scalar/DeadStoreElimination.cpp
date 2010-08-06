@@ -40,7 +40,7 @@ namespace {
     TargetData *TD;
 
     static char ID; // Pass identification, replacement for typeid
-    DSE() : FunctionPass(ID) {}
+    DSE() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;

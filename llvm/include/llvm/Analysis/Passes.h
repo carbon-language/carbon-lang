@@ -92,7 +92,7 @@ namespace llvm {
   // file.
   //
   ModulePass *createProfileLoaderPass();
-  extern char &ProfileLoaderPassID;
+  extern const PassInfo *ProfileLoaderPassID;
 
   //===--------------------------------------------------------------------===//
   //
@@ -106,7 +106,7 @@ namespace llvm {
   // instead of loading it from a previous run.
   //
   FunctionPass *createProfileEstimatorPass();
-  extern char &ProfileEstimatorPassID;
+  extern const PassInfo *ProfileEstimatorPassID;
 
   //===--------------------------------------------------------------------===//
   //

@@ -79,7 +79,7 @@ namespace {
 #endif
   public:
     static char ID; // Pass identification
-    JumpThreading() : FunctionPass(ID) {}
+    JumpThreading() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
     

@@ -28,9 +28,9 @@ namespace llvm {
     LibCallInfo *LCI;
     
     explicit LibCallAliasAnalysis(LibCallInfo *LC = 0)
-      : FunctionPass(ID), LCI(LC) {
+      : FunctionPass(&ID), LCI(LC) {
     }
-    explicit LibCallAliasAnalysis(char &ID, LibCallInfo *LC)
+    explicit LibCallAliasAnalysis(const void *ID, LibCallInfo *LC)
       : FunctionPass(ID), LCI(LC) {
     }
     ~LibCallAliasAnalysis();
@@ -55,8 +55,8 @@ namespace llvm {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const void *PI) {
-      if (PI == &AliasAnalysis::ID)
+    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+      if (PI->isPassID(&AliasAnalysis::ID))
         return (AliasAnalysis*)this;
       return this;
     }

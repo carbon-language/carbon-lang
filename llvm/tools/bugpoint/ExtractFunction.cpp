@@ -100,8 +100,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
 }
 
 static const PassInfo *getPI(Pass *P) {
-  const void *ID = P->getPassID();
-  const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
+  const PassInfo *PI = P->getPassInfo();
   delete P;
   return PI;
 }

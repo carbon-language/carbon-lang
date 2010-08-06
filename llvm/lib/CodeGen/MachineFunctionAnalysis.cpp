@@ -20,14 +20,14 @@ using namespace llvm;
 // a default constructor.
 static PassInfo
 X("Machine Function Analysis", "machine-function-analysis",
-   &MachineFunctionAnalysis::ID, 0,
+  intptr_t(&MachineFunctionAnalysis::ID), 0,
   /*CFGOnly=*/false, /*is_analysis=*/true);
 
 char MachineFunctionAnalysis::ID = 0;
 
 MachineFunctionAnalysis::MachineFunctionAnalysis(const TargetMachine &tm,
                                                  CodeGenOpt::Level OL) :
-  FunctionPass(ID), TM(tm), OptLevel(OL), MF(0) {
+  FunctionPass(&ID), TM(tm), OptLevel(OL), MF(0) {
 }
 
 MachineFunctionAnalysis::~MachineFunctionAnalysis() {

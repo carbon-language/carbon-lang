@@ -3029,7 +3029,7 @@ namespace {
   /// global base register for x86-32.
   struct CGBR : public MachineFunctionPass {
     static char ID;
-    CGBR() : MachineFunctionPass(ID) {}
+    CGBR() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       const X86TargetMachine *TM =

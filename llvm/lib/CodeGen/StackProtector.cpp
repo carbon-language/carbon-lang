@@ -62,9 +62,9 @@ namespace {
     bool RequiresStackProtector() const;
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    StackProtector() : FunctionPass(ID), TLI(0) {}
+    StackProtector() : FunctionPass(&ID), TLI(0) {}
     StackProtector(const TargetLowering *tli)
-      : FunctionPass(ID), TLI(tli) {}
+      : FunctionPass(&ID), TLI(tli) {}
 
     virtual bool runOnFunction(Function &Fn);
   };

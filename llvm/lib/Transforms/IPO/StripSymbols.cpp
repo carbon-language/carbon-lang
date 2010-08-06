@@ -39,7 +39,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripSymbols(bool ODI = false) 
-      : ModulePass(ID), OnlyDebugInfo(ODI) {}
+      : ModulePass(&ID), OnlyDebugInfo(ODI) {}
 
     virtual bool runOnModule(Module &M);
 
@@ -52,7 +52,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripNonDebugSymbols()
-      : ModulePass(ID) {}
+      : ModulePass(&ID) {}
 
     virtual bool runOnModule(Module &M);
 
@@ -65,7 +65,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripDebugDeclare()
-      : ModulePass(ID) {}
+      : ModulePass(&ID) {}
 
     virtual bool runOnModule(Module &M);
 
@@ -78,7 +78,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripDeadDebugInfo()
-      : ModulePass(ID) {}
+      : ModulePass(&ID) {}
 
     virtual bool runOnModule(Module &M);
 

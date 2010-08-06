@@ -47,7 +47,7 @@ namespace {
   class RAFast : public MachineFunctionPass {
   public:
     static char ID;
-    RAFast() : MachineFunctionPass(ID), StackSlotForVirtReg(-1),
+    RAFast() : MachineFunctionPass(&ID), StackSlotForVirtReg(-1),
                isBulkSpilling(false) {}
   private:
     const TargetMachine *TM;

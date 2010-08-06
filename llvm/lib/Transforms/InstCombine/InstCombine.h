@@ -81,7 +81,7 @@ public:
   BuilderTy *Builder;
       
   static char ID; // Pass identification, replacement for typeid
-  InstCombiner() : FunctionPass(ID), TD(0), Builder(0) {}
+  InstCombiner() : FunctionPass(&ID), TD(0), Builder(0) {}
 
 public:
   virtual bool runOnFunction(Function &F);

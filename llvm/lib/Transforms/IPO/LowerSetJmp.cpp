@@ -109,7 +109,7 @@ namespace {
     bool IsTransformableFunction(StringRef Name);
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerSetJmp() : ModulePass(ID) {}
+    LowerSetJmp() : ModulePass(&ID) {}
 
     void visitCallInst(CallInst& CI);
     void visitInvokeInst(InvokeInst& II);

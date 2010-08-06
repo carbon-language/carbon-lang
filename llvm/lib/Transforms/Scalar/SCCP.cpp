@@ -1586,7 +1586,7 @@ namespace {
   ///
   struct SCCP : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    SCCP() : FunctionPass(ID) {}
+    SCCP() : FunctionPass(&ID) {}
 
     // runOnFunction - Run the Sparse Conditional Constant Propagation
     // algorithm, and return true if the function was modified.
@@ -1702,7 +1702,7 @@ namespace {
   ///
   struct IPSCCP : public ModulePass {
     static char ID;
-    IPSCCP() : ModulePass(ID) {}
+    IPSCCP() : ModulePass(&ID) {}
     bool runOnModule(Module &M);
   };
 } // end anonymous namespace

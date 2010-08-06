@@ -35,7 +35,7 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    Sinking() : FunctionPass(ID) {}
+    Sinking() : FunctionPass(&ID) {}
     
     virtual bool runOnFunction(Function &F);
     
