@@ -195,14 +195,14 @@ AliasAnalysis::getModRefBehavior(const Function *F) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
+  // Be conservative in the face of volatile.
+  if (L->isVolatile())
+    return ModRef;
+
   // If the load address doesn't alias the given address, it doesn't read
   // or write the specified memory.
   if (!alias(L->getOperand(0), getTypeStoreSize(L->getType()), P, Size))
     return NoModRef;
-
-  // Be conservative in the face of volatile.
-  if (L->isVolatile())
-    return ModRef;
 
   // Otherwise, a load just reads.
   return Ref;
@@ -210,15 +210,15 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Value *P, unsigned Size) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const StoreInst *S, const Value *P, unsigned Size) {
+  // Be conservative in the face of volatile.
+  if (S->isVolatile())
+    return ModRef;
+
   // If the store address cannot alias the pointer in question, then the
   // specified memory cannot be modified by the store.
   if (!alias(S->getOperand(1),
              getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
     return NoModRef;
-
-  // Be conservative in the face of volatile.
-  if (S->isVolatile())
-    return ModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been
   // modified by this store.
