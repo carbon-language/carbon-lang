@@ -630,8 +630,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       else
         addRegWithSubRegs(regsDefined, Reg);
 
-      // Check LiveInts for a live range.
-      if (LiveInts && !LiveInts->isNotInMIMap(MI)) {
+      // Check LiveInts for a live range, but only for virtual registers.
+      if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
+          !LiveInts->isNotInMIMap(MI)) {
         SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getDefIndex();
         if (LiveInts->hasInterval(Reg)) {
           const LiveInterval &LI = LiveInts->getInterval(Reg);
@@ -642,16 +643,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
               *OS << "Valno " << LR->valno->id << " is not defined at "
                   << DefIdx << " in " << LI << '\n';
             }
-            if (LR->start != DefIdx) {
-              report("Live range doesn't start at def", MO, MONum);
-              LR->print(*OS);
-              *OS << " should start at " << DefIdx << " in " << LI << '\n';
-            }
           } else {
             report("No live range at def", MO, MONum);
             *OS << DefIdx << " is not live in " << LI << '\n';
           }
-        } else if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        } else {
           report("Virtual register has no Live interval", MO, MONum);
         }
       }
