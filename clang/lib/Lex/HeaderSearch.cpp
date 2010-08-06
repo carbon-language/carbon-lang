@@ -203,14 +203,14 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(llvm::StringRef Filename,
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
-/// for system #include's or not (i.e. using <> instead of "").  CurFileEnt, if
-/// non-null, indicates where the #including file is, in case a relative search
-/// is needed.
+/// for system #include's or not (i.e. using <> instead of "").  RelSearchDir,
+/// if non-empty, indicates where the #including file is, in case a relative
+/// search is needed.
 const FileEntry *HeaderSearch::LookupFile(llvm::StringRef Filename,
                                           bool isAngled,
                                           const DirectoryLookup *FromDir,
                                           const DirectoryLookup *&CurDir,
-                                          const FileEntry *CurFileEnt) {
+                                          const llvm::sys::Path &RelPath) {
   // If 'Filename' is absolute, check to see if it exists and no searching.
   if (llvm::sys::Path::isAbsolute(Filename.begin(), Filename.size())) {
     CurDir = 0;
@@ -223,25 +223,29 @@ const FileEntry *HeaderSearch::LookupFile(llvm::StringRef Filename,
   }
 
   // Step #0, unless disabled, check to see if the file is in the #includer's
-  // directory.  This has to be based on CurFileEnt, not CurDir, because
-  // CurFileEnt could be a #include of a subdirectory (#include "foo/bar.h") and
+  // directory.  This has to be based on RelPath, not CurDir, because
+  // RelPath could be a #include of a subdirectory (#include "foo/bar.h") and
   // a subsequent include of "baz.h" should resolve to "whatever/foo/baz.h".
   // This search is not done for <> headers.
-  if (CurFileEnt && !isAngled && !NoCurDirSearch) {
-    llvm::SmallString<1024> TmpDir;
-    // Concatenate the requested file onto the directory.
-    // FIXME: Portability.  Filename concatenation should be in sys::Path.
-    TmpDir += CurFileEnt->getDir()->getName();
-    TmpDir.push_back('/');
-    TmpDir.append(Filename.begin(), Filename.end());
-    if (const FileEntry *FE = FileMgr.getFile(TmpDir.str())) {
+  if (!RelPath.isEmpty() && !isAngled && !NoCurDirSearch) {
+
+    // Default SrcMgr::CharacteristicKind
+    unsigned DirInfo = SrcMgr::C_User;
+    llvm::sys::Path TmpPath(RelPath);
+
+    // Update DirInfo if needed and remove filename from path if
+    // treating actual file (the non-stdin case)
+    if (!TmpPath.isDirectory()) {
+      const FileEntry *MainFile = FileMgr.getFile(TmpPath.c_str());
+      DirInfo = getFileInfo(MainFile).DirInfo;
+      TmpPath.eraseComponent();
+    }
+
+    // Formulate path to try
+    TmpPath.appendComponent(Filename);
+    llvm::StringRef RelSearchFilename(TmpPath.c_str());
+    if (const FileEntry *FE = FileMgr.getFile(RelSearchFilename)) {
       // Leave CurDir unset.
-      // This file is a system header or C++ unfriendly if the old file is.
-      //
-      // Note that the temporary 'DirInfo' is required here, as either call to
-      // getFileInfo could resize the vector and we don't want to rely on order
-      // of evaluation.
-      unsigned DirInfo = getFileInfo(CurFileEnt).DirInfo;
       getFileInfo(FE).DirInfo = DirInfo;
       return FE;
     }
