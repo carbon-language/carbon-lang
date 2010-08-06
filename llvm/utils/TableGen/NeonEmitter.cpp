@@ -145,6 +145,9 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       type = 'f';
       usgn = false;
       break;
+    case 'g':
+      quad = false;
+      break;
     case 'w':
       type = Widen(type);
       quad = true;
@@ -686,15 +689,15 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
   bool cnst = false;
   bool pntr = false;
   
-  // base type to get the type string for.
+  // Base type to get the type string for.
   char type = ClassifyType(typestr, quad, poly, usgn);
   
   // Based on the modifying character, change the type and width if necessary.
   type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
-  
+
   if (usgn)
     ret |= 0x08;
-  if (quad)
+  if (quad && proto[1] != 'g')
     ret |= 0x10;
   
   switch (type) {
