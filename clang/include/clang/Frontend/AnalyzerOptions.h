@@ -66,6 +66,7 @@ public:
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
   unsigned EagerlyAssume : 1;
+  unsigned IdempotentOps : 1;
   unsigned PurgeDead : 1;
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;

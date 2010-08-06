@@ -48,7 +48,7 @@
 // - Handle mixed assumptions (which assumptions can belong together?)
 // - Finer grained false positive control (levels)
 
-#include "GRExprEngineInternalChecks.h"
+#include "GRExprEngineExperimentalChecks.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerHelpers.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
