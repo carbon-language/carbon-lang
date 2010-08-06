@@ -24,7 +24,8 @@ using namespace clang;
 namespace {
 
 class RefState {
-  enum Kind { AllocateUnchecked, AllocateFailed, Released, Escaped, Relinquished } K;
+  enum Kind { AllocateUnchecked, AllocateFailed, Released, Escaped,
+              Relinquished } K;
   const Stmt *S;
 
 public:
@@ -48,7 +49,9 @@ public:
   }
   static RefState getReleased(const Stmt *s) { return RefState(Released, s); }
   static RefState getEscaped(const Stmt *s) { return RefState(Escaped, s); }
-  static RefState getRelinquished(const Stmt *s) { return RefState(Relinquished, s); }
+  static RefState getRelinquished(const Stmt *s) {
+    return RefState(Relinquished, s);
+  }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddInteger(K);
@@ -68,7 +71,8 @@ class MallocChecker : public CheckerVisitor<MallocChecker> {
 
 public:
   MallocChecker() 
-    : BT_DoubleFree(0), BT_Leak(0), BT_UseFree(0), BT_UseRelinquished(0), BT_BadFree(0),
+    : BT_DoubleFree(0), BT_Leak(0), BT_UseFree(0), BT_UseRelinquished(0),
+      BT_BadFree(0),
       II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
   static void *getTag();
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
@@ -84,7 +88,8 @@ public:
 
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
-  void MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE, const OwnershipAttr* Att);
+  void MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
+                            const OwnershipAttr* Att);
   const GRState *MallocMemAux(CheckerContext &C, const CallExpr *CE,
                               const Expr *SizeEx, SVal Init,
                               const GRState *state) {
@@ -706,11 +711,14 @@ void MallocChecker::PreVisitBind(CheckerContext &C,
             break;
 
           // If the state can't represent this binding, we still own it.
-          if (notNullState == (notNullState->bindLoc(cast<Loc>(location), UnknownVal())))
+          if (notNullState == (notNullState->bindLoc(cast<Loc>(location),
+                                                     UnknownVal())))
             break;
 
           // We no longer own this pointer.
-          notNullState = notNullState->set<RegionState>(Sym, RefState::getRelinquished(StoreE));
+          notNullState =
+            notNullState->set<RegionState>(Sym,
+                                           RefState::getRelinquished(StoreE));
         }
         while (false);
       }
