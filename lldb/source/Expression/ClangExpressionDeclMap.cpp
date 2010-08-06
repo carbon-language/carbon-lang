@@ -36,8 +36,10 @@
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionDeclMap::ClangExpressionDeclMap(ExecutionContext *exe_ctx) :
+ClangExpressionDeclMap::ClangExpressionDeclMap(ExecutionContext *exe_ctx,
+                                               ClangPersistentVariables &persistent_vars) :
     m_exe_ctx(exe_ctx),
+    m_persistent_vars(persistent_vars),
     m_struct_laid_out(false),
     m_materialized_location(0)
 {

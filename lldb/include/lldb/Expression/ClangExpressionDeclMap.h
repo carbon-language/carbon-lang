@@ -30,6 +30,7 @@ namespace llvm {
 
 namespace lldb_private {
 
+class ClangPersistentVariables;
 class Error;
 class Function;
 class NameSearchContext;
@@ -38,7 +39,8 @@ class Variable;
 class ClangExpressionDeclMap
 {
 public:
-    ClangExpressionDeclMap(ExecutionContext *exe_ctx);
+    ClangExpressionDeclMap(ExecutionContext *exe_ctx,
+                           ClangPersistentVariables &persistent_vars);
     ~ClangExpressionDeclMap();
     
     // Interface for ClangStmtVisitor
@@ -88,10 +90,10 @@ public:
     // Interface for ClangASTSource
     void GetDecls (NameSearchContext &context,
                    const char *name);
-private:
+
     typedef TaggedASTType<0> TypeFromParser;
     typedef TaggedASTType<1> TypeFromUser;
-    
+private:    
     struct Tuple
     {
         const clang::NamedDecl  *m_decl;
@@ -118,15 +120,16 @@ private:
     typedef std::vector<StructMember> StructMemberVector;
     typedef StructMemberVector::iterator StructMemberIterator;
     
-    TupleVector         m_tuples;
-    StructMemberVector  m_members;
-    ExecutionContext   *m_exe_ctx;
-    SymbolContext      *m_sym_ctx; /* owned by ClangExpressionDeclMap */
-    off_t               m_struct_alignment;
-    size_t              m_struct_size;
-    bool                m_struct_laid_out;
-    lldb::addr_t        m_allocated_area;
-    lldb::addr_t        m_materialized_location;
+    TupleVector                 m_tuples;
+    StructMemberVector          m_members;
+    ExecutionContext           *m_exe_ctx;
+    SymbolContext              *m_sym_ctx; /* owned by ClangExpressionDeclMap */
+    ClangPersistentVariables   &m_persistent_vars;
+    off_t                       m_struct_alignment;
+    size_t                      m_struct_size;
+    bool                        m_struct_laid_out;
+    lldb::addr_t                m_allocated_area;
+    lldb::addr_t                m_materialized_location;
         
     Variable *FindVariableInScope(const SymbolContext &sym_ctx,
                                   const char *name,
@@ -154,6 +157,11 @@ private:
                                   TypeFromUser type,
                                   lldb::addr_t addr, 
                                   Error &err);
+};
+    
+class ClangPersistentVariables
+{
+    
 };
     
 } // namespace lldb_private
