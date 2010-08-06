@@ -52,8 +52,9 @@ bool LowerAtomicIntrinsic(CallInst *CI) {
     Value *Delta = CI->getArgOperand(1);
 
     LoadInst *Orig = Builder.CreateLoad(Ptr);
-    Value *Res;
+    Value *Res = NULL;
     switch (IID) {
+      default: assert(0 && "Unrecognized atomic modify operation");
       case Intrinsic::atomic_load_add:
         Res = Builder.CreateAdd(Orig, Delta);
         break;
@@ -92,7 +93,6 @@ bool LowerAtomicIntrinsic(CallInst *CI) {
                                    Orig,
                                    Delta);
         break;
-      default: assert(0 && "Unrecognized atomic modify operation");
     }
     Builder.CreateStore(Res, Ptr);
 
