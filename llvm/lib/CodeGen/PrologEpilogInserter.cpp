@@ -73,10 +73,10 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   calculateCalleeSavedRegisters(Fn);
 
   // Determine placement of CSR spill/restore code:
-  //  - with shrink wrapping, place spills and restores to tightly
+  //  - With shrink wrapping, place spills and restores to tightly
   //    enclose regions in the Machine CFG of the function where
-  //    they are used. Without shrink wrapping
-  //  - default (no shrink wrapping), place all spills in the
+  //    they are used.
+  //  - Without shink wrapping (default), place all spills in the
   //    entry block, all restores in return blocks.
   placeCSRSpillsAndRestores(Fn);
 
