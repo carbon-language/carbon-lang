@@ -74,9 +74,10 @@
 // C94:#define __STDC_VERSION__ 199409L
 //
 // 
-// RUN: %clang_cc1 -fms-extensions -E -dM < /dev/null | FileCheck -check-prefix MSEXT %s
+// RUN: %clang_cc1 -fms-extensions -triple i686-pc-win32 -E -dM < /dev/null | FileCheck -check-prefix MSEXT %s
 //
 // MSEXT-NOT:#define __STDC__
+// MSEXT:#define _INTEGRAL_MAX_BITS 64
 // MSEXT:#define __int16 __INT16_TYPE__
 // MSEXT:#define __int32 __INT32_TYPE__
 // MSEXT:#define __int64 __INT64_TYPE__

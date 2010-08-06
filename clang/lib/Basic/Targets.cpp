@@ -1349,6 +1349,7 @@ public:
     // 300=386, 400=486, 500=Pentium, 600=Blend (default)
     // We lost the original triple, so we use the default.
     Builder.defineMacro("_M_IX86", "600");
+    Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
   }
 };
 } // end anonymous namespace
@@ -1488,6 +1489,7 @@ public:
                                 MacroBuilder &Builder) const {
     WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
     Builder.defineMacro("_M_X64");
+    Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
   }
 };
 } // end anonymous namespace
