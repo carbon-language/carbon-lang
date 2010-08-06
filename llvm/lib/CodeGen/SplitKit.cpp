@@ -553,8 +553,10 @@ void SplitEditor::rewrite() {
   }
 
   // dupli_ goes in last, after rewriting.
-  if (dupli_)
+  if (dupli_) {
+    dupli_->RenumberValues();
     intervals_.push_back(dupli_);
+  }
 
   // FIXME: *Calculate spill weights, allocation hints, and register classes for
   // firstInterval..

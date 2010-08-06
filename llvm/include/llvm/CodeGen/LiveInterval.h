@@ -336,6 +336,10 @@ namespace llvm {
       return VNI;
     }
 
+    /// RenumberValues - Renumber all values in order of appearance and remove
+    /// unused values.
+    void RenumberValues();
+
     /// isOnlyLROfValNo - Return true if the specified live range is the only
     /// one defined by the its val#.
     bool isOnlyLROfValNo(const LiveRange *LR) {

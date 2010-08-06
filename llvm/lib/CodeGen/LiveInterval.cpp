@@ -180,6 +180,21 @@ void LiveInterval::markValNoForDeletion(VNInfo *ValNo) {
   }
 }
 
+/// RenumberValues - Renumber all values in order of appearance and delete the
+/// remaining unused values.
+void LiveInterval::RenumberValues() {
+  SmallPtrSet<VNInfo*, 8> Seen;
+  valnos.clear();
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    VNInfo *VNI = I->valno;
+    if (!Seen.insert(VNI))
+      continue;
+    assert(!VNI->isUnused() && "Unused valno used by live range");
+    VNI->id = (unsigned)valnos.size();
+    valnos.push_back(VNI);
+  }
+}
+
 /// extendIntervalEndTo - This method is used when we want to extend the range
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is
