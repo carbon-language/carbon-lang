@@ -699,23 +699,6 @@ static bool IsFullyFormedScope(Sema &SemaRef, CXXRecordDecl *Record) {
   return true;
 }
 
-/// Determines whether we can lookup this id-expression now or whether
-/// we have to wait until template instantiation is complete.
-static bool IsDependentIdExpression(Sema &SemaRef, const CXXScopeSpec &SS) {
-  DeclContext *DC = SemaRef.computeDeclContext(SS, false);
-
-  // If the qualifier scope isn't computable, it's definitely dependent.
-  if (!DC) return true;
-
-  // If the qualifier scope doesn't name a record, we can always look into it.
-  if (!isa<CXXRecordDecl>(DC)) return false;
-
-  // We can't look into record types unless they're fully-formed.
-  if (!IsFullyFormedScope(SemaRef, cast<CXXRecordDecl>(DC))) return true;
-
-  return false;
-}
-
 /// Determines if the given class is provably not derived from all of
 /// the prospective base classes.
 static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
@@ -1100,9 +1083,24 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   //        names a dependent type.
   // Determine whether this is a member of an unknown specialization;
   // we need to handle these differently.
-  if ((Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
-       Name.getCXXNameType()->isDependentType()) ||
-      (SS.isSet() && IsDependentIdExpression(*this, SS))) {
+  bool DependentID = false;
+  if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
+      Name.getCXXNameType()->isDependentType()) {
+    DependentID = true;
+  } else if (SS.isSet()) {
+    DeclContext *DC = computeDeclContext(SS, false);
+    if (DC) {
+      if (RequireCompleteDeclContext(SS, DC))
+        return ExprError();
+      // FIXME: We should be checking whether DC is the current instantiation.
+      if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC))
+        DependentID = !IsFullyFormedScope(*this, RD);
+    } else {
+      DependentID = true;
+    }
+  }
+
+  if (DependentID) {
     return ActOnDependentIdExpression(SS, Name, NameLoc,
                                       isAddressOfOperand,
                                       TemplateArgs);
