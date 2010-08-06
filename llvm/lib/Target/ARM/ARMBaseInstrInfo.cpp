@@ -1353,3 +1353,59 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   Offset = (isSub) ? -Offset : Offset;
   return Offset == 0;
 }
+
+bool ARMBaseInstrInfo::
+isCompareInstr(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::t2CMPri:
+  case ARM::t2CMPzri:
+    SrcReg = MI->getOperand(0).getReg();
+    CmpValue = MI->getOperand(1).getImm();
+    return true;
+  }
+
+  return false;
+}
+
+/// convertToSetZeroFlag - Convert the instruction to set the "zero" flag so
+/// that we can remove a "comparison with zero".
+bool ARMBaseInstrInfo::
+convertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
+  // Conservatively refuse to convert an instruction which isn't in the same BB
+  // as the comparison.
+  if (MI->getParent() != CmpInstr->getParent())
+    return false;
+
+  // Check that CPSR isn't set between the comparison instruction and the one we
+  // want to change.
+  MachineBasicBlock::const_iterator I = CmpInstr, E = MI;
+  --I;
+  for (; I != E; --I) {
+    const MachineInstr &Instr = *I;
+
+    for (unsigned IO = 0, EO = Instr.getNumOperands(); IO != EO; ++IO) {
+      const MachineOperand &MO = Instr.getOperand(IO);
+      if (!MO.isDef() || !MO.isReg()) continue;
+
+      // This instruction modifies CPSR before the one we want to change. We
+      // can't do this transformation.
+      if (MO.getReg() == ARM::CPSR)
+        return false;
+    }
+  }
+
+  // Set the "zero" bit in CPSR.
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::t2SUBri: {
+    MI->RemoveOperand(5);
+    MachineInstrBuilder MB(MI);
+    MB.addReg(ARM::CPSR, RegState::Define | RegState::Implicit);
+    CmpInstr->eraseFromParent();
+    return true;
+  }
+  }
+
+  return false;
+}

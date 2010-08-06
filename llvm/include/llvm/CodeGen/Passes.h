@@ -180,6 +180,10 @@ namespace llvm {
   /// to take advantage of opportunities created during DAG legalization.
   FunctionPass *createOptimizePHIsPass();
 
+  /// createOptimizeCmpsPass - This pass performs redundant comparison removal
+  /// optimization.
+  FunctionPass *createOptimizeCmpsPass();
+
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
   FunctionPass *createStackSlotColoringPass(bool);
 
