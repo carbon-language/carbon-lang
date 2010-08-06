@@ -72,6 +72,41 @@ void (^d)() = ^{
     e();
 }
 
+// Test 5 (unions/structs and their nesting):
+void Test5() {
+struct S5 {
+    int i1;
+    id o1;
+    struct V {
+     int i2;
+     id o2;
+    } v1;
+    int i3;
+    union UI {
+        void * i1;
+        id o1;
+        int i3;
+        id o3;
+    }ui;
+};
+
+union U {
+        void * i1;
+        id o1;
+        int i3;
+        id o3;
+}ui;
+
+struct S5 s2;
+union U u2;
+void (^c)() = ^{
+    x(s2.ui.o1);
+    x(u2.o1);
+};
+c();
+
+}
+
 // CHECK-LP64: L_OBJC_CLASS_NAME_:
 // CHECK-LP64-NEXT: .asciz      "A\024"
 
@@ -83,3 +118,6 @@ void (^d)() = ^{
 
 // CHECK-LP64: L_OBJC_CLASS_NAME_11:
 // CHECK-LP64-NEXT: .asciz   "Q\021\021"
+
+// CHECK-LP64: L_OBJC_CLASS_NAME_14:
+// CHECK-LP64-NEXT: .asciz   "Q\021\022p"

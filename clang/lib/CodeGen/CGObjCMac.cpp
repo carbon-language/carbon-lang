@@ -1714,6 +1714,7 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
   if ((CGM.getLangOptions().getGCMode() == LangOptions::NonGC) ||
       DeclRefs.empty())
     return NullPtr;
+  bool hasUnion = false;
   SkipIvars.clear();
   IvarsInfo.clear();
   unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
@@ -1727,19 +1728,14 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
     QualType Ty = VD->getType();
     assert(!Ty->isArrayType() && 
            "Array block variable should have been caught");
-    if (Ty->isRecordType() && !BDRE->isByRef()) {
-      bool HasUnion = false;
+    if ((Ty->isRecordType() || Ty->isUnionType()) && !BDRE->isByRef()) {
       BuildAggrIvarRecordLayout(Ty->getAs<RecordType>(),
                                 FieldOffset,
                                 true,
-                                HasUnion);
+                                hasUnion);
       continue;
     }
-    // FIXME. Handle none __block Aggregate variables
-#if 0
-    if (Ty->isUnionType() && !BDRE->isByRef())
-      assert(false && "union block variable layout NYI");
-#endif
+      
     Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), Ty);
     unsigned FieldSize = CGM.getContext().getTypeSize(Ty);
     // __block variables are passed by their descriptior address. So, size
@@ -1756,6 +1752,12 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
   
   if (IvarsInfo.empty())
     return NullPtr;
+  // Sort on byte position in case we encounterred a union nested in
+  // block variable type's aggregate type.
+  if (hasUnion && !IvarsInfo.empty())
+    std::sort(IvarsInfo.begin(), IvarsInfo.end());
+  if (hasUnion && !SkipIvars.empty())
+    std::sort(SkipIvars.begin(), SkipIvars.end());
   
   std::string BitMap;
   llvm::Constant *C = BuildIvarLayoutBitmap(BitMap);
