@@ -3415,24 +3415,22 @@ multiclass S3_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
 }
 
 let isAsmParserOnly = 1, Predicates = [HasAVX] in {
-  defm VHADDPS : S3D_Int<0x7C, "vhaddps", v4f32, VR128, f128mem,
-                         int_x86_sse3_hadd_ps, 0>, VEX_4V;
-  defm VHADDPD : S3_Int <0x7C, "vhaddpd", v2f64, VR128, f128mem,
-                         int_x86_sse3_hadd_pd, 0>, VEX_4V;
-  defm VHSUBPS : S3D_Int<0x7D, "vhsubps", v4f32, VR128, f128mem,
-                         int_x86_sse3_hsub_ps, 0>, VEX_4V;
-  defm VHSUBPD : S3_Int <0x7D, "vhsubpd", v2f64, VR128, f128mem,
-                         int_x86_sse3_hsub_pd, 0>, VEX_4V;
-  let Pattern = []<dag> in {
-  defm VHADDPSY : S3D_Int<0x7C, "vhaddps", v8f32, VR256, f256mem,
+  defm VHADDPS  : S3D_Int<0x7C, "vhaddps", v4f32, VR128, f128mem,
                           int_x86_sse3_hadd_ps, 0>, VEX_4V;
-  defm VHADDPDY : S3_Int <0x7C, "vhaddpd", v4f64, VR256, f256mem,
+  defm VHADDPD  : S3_Int <0x7C, "vhaddpd", v2f64, VR128, f128mem,
                           int_x86_sse3_hadd_pd, 0>, VEX_4V;
-  defm VHSUBPSY : S3D_Int<0x7D, "vhsubps", v8f32, VR256, f256mem,
+  defm VHSUBPS  : S3D_Int<0x7D, "vhsubps", v4f32, VR128, f128mem,
                           int_x86_sse3_hsub_ps, 0>, VEX_4V;
-  defm VHSUBPDY : S3_Int <0x7D, "vhsubpd", v4f64, VR256, f256mem,
+  defm VHSUBPD  : S3_Int <0x7D, "vhsubpd", v2f64, VR128, f128mem,
                           int_x86_sse3_hsub_pd, 0>, VEX_4V;
-  }
+  defm VHADDPSY : S3D_Int<0x7C, "vhaddps", v8f32, VR256, f256mem,
+                          int_x86_avx_hadd_ps_256, 0>, VEX_4V;
+  defm VHADDPDY : S3_Int <0x7C, "vhaddpd", v4f64, VR256, f256mem,
+                          int_x86_avx_hadd_pd_256, 0>, VEX_4V;
+  defm VHSUBPSY : S3D_Int<0x7D, "vhsubps", v8f32, VR256, f256mem,
+                          int_x86_avx_hsub_ps_256, 0>, VEX_4V;
+  defm VHSUBPDY : S3_Int <0x7D, "vhsubpd", v4f64, VR256, f256mem,
+                          int_x86_avx_hsub_pd_256, 0>, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in {
