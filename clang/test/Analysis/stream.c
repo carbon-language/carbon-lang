@@ -73,3 +73,7 @@ FILE *f9(void) {
   else
     return 0;
 }
+
+void pr7831(FILE *fp) {
+  fclose(fp); // no-warning
+}
