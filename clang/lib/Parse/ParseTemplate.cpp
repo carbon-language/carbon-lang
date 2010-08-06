@@ -928,7 +928,9 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
     
     if (isEndOfTemplateArgument(Tok)) {
       bool MemberOfUnknownSpecialization;
-      TemplateNameKind TNK = Actions.isTemplateName(getCurScope(), SS, Name, 
+      TemplateNameKind TNK = Actions.isTemplateName(getCurScope(), SS,
+                                               /*hasTemplateKeyword=*/false,
+                                                    Name,
                                                     /*ObjectType=*/0, 
                                                     /*EnteringContext=*/false, 
                                                     Template,

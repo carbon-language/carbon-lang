@@ -281,6 +281,8 @@ public:
   /// \param SS the C++ nested-name-specifier that precedes the template name,
   /// if any.
   ///
+  /// \param hasTemplateKeyword true if the template keyword was specified.
+  ///
   /// \param Name the name that we are querying to determine whether it is
   /// a template.
   ///
@@ -303,6 +305,7 @@ public:
   /// \returns the kind of template that this name refers to.
   virtual TemplateNameKind isTemplateName(Scope *S,
                                           CXXScopeSpec &SS,
+                                          bool hasTemplateKeyword,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,

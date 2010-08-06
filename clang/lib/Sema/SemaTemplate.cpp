@@ -97,6 +97,7 @@ static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
 
 TemplateNameKind Sema::isTemplateName(Scope *S,
                                       CXXScopeSpec &SS,
+                                      bool hasTemplateKeyword,
                                       UnqualifiedId &Name,
                                       TypeTy *ObjectTypePtr,
                                       bool EnteringContext,
@@ -150,7 +151,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     if (SS.isSet() && !SS.isInvalid()) {
       NestedNameSpecifier *Qualifier
         = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-      Template = Context.getQualifiedTemplateName(Qualifier, false, TD);
+      Template = Context.getQualifiedTemplateName(Qualifier,
+                                                  hasTemplateKeyword, TD);
     } else {
       Template = TemplateName(TD);
     }
@@ -1681,8 +1683,8 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
     // "template" keyword is now permitted). We follow the C++0x
     // rules, even in C++03 mode with a warning, retroactively applying the DR.
     bool MemberOfUnknownSpecialization;
-    TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
-                                          EnteringContext, Result,
+    TemplateNameKind TNK = isTemplateName(0, SS, TemplateKWLoc.isValid(), Name,
+                                          ObjectType, EnteringContext, Result,
                                           MemberOfUnknownSpecialization);
     if (TNK == TNK_Non_template && LookupCtx->isDependentContext() &&
         isa<CXXRecordDecl>(LookupCtx) &&

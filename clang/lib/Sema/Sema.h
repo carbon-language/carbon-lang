@@ -2960,6 +2960,7 @@ public:
 
   virtual TemplateNameKind isTemplateName(Scope *S,
                                           CXXScopeSpec &SS,
+                                          bool hasTemplateKeyword,
                                           UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,

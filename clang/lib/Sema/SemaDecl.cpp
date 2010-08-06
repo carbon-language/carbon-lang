@@ -282,7 +282,8 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
     CXXScopeSpec EmptySS;
     TemplateTy TemplateResult;
     bool MemberOfUnknownSpecialization;
-    if (isTemplateName(S, SS ? *SS : EmptySS, Name, 0, true, TemplateResult,
+    if (isTemplateName(S, SS ? *SS : EmptySS, /*hasTemplateKeyword=*/false,
+                       Name, 0, true, TemplateResult,
                        MemberOfUnknownSpecialization) == TNK_Type_template) {
       TemplateName TplName = TemplateResult.getAsVal<TemplateName>();
       Diag(IILoc, diag::err_template_missing_args) << TplName;

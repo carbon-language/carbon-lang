@@ -294,6 +294,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       TemplateName.setIdentifier(&II, Tok.getLocation());
       bool MemberOfUnknownSpecialization;
       if (TemplateNameKind TNK = Actions.isTemplateName(getCurScope(), SS, 
+                                              /*hasTemplateKeyword=*/false,
                                                         TemplateName,
                                                         ObjectType,
                                                         EnteringContext,
@@ -1023,8 +1024,9 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
         return true;
     } else {
       bool MemberOfUnknownSpecialization;
-      TNK = Actions.isTemplateName(getCurScope(), SS, Id, ObjectType, 
-                                   EnteringContext, Template,
+      TNK = Actions.isTemplateName(getCurScope(), SS,
+                                   TemplateKWLoc.isValid(), Id,
+                                   ObjectType, EnteringContext, Template,
                                    MemberOfUnknownSpecialization);
       
       if (TNK == TNK_Non_template && MemberOfUnknownSpecialization &&
@@ -1059,7 +1061,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     UnqualifiedId TemplateName;
     bool MemberOfUnknownSpecialization;
     TemplateName.setIdentifier(Name, NameLoc);
-    TNK = Actions.isTemplateName(getCurScope(), SS, TemplateName, ObjectType, 
+    TNK = Actions.isTemplateName(getCurScope(), SS, TemplateKWLoc.isValid(),
+                                 TemplateName, ObjectType, 
                                  EnteringContext, Template,
                                  MemberOfUnknownSpecialization);
     break;
@@ -1076,7 +1079,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
       if (TNK == TNK_Non_template)
         return true;
     } else {
-      TNK = Actions.isTemplateName(getCurScope(), SS, TemplateName, ObjectType, 
+      TNK = Actions.isTemplateName(getCurScope(), SS, TemplateKWLoc.isValid(),
+                                   TemplateName, ObjectType, 
                                    EnteringContext, Template,
                                    MemberOfUnknownSpecialization);
       
