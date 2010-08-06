@@ -152,6 +152,13 @@ namespace {
       return MayAlias;
     }
 
+    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS) {
+      return UnknownModRefBehavior;
+    }
+    virtual ModRefBehavior getModRefBehavior(const Function *F) {
+      return UnknownModRefBehavior;
+    }
+
     virtual bool pointsToConstantMemory(const Value *P) { return false; }
     virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
                                        const Value *P, unsigned Size) {
@@ -217,8 +224,8 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
     BasicAliasAnalysis() : NoAA(&ID) {}
 
-    AliasResult alias(const Value *V1, unsigned V1Size,
-                      const Value *V2, unsigned V2Size) {
+    virtual AliasResult alias(const Value *V1, unsigned V1Size,
+                              const Value *V2, unsigned V2Size) {
       assert(Visited.empty() && "Visited must be cleared after use!");
       assert(notDifferentParent(V1, V2) &&
              "BasicAliasAnalysis doesn't support interprocedural queries.");
@@ -227,14 +234,26 @@ namespace {
       return Alias;
     }
 
-    ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Value *P, unsigned Size);
-    ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2);
+    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
+                                       const Value *P, unsigned Size);
+
+    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                                       ImmutableCallSite CS2) {
+      // The AliasAnalysis base class has some smarts, lets use them.
+      return AliasAnalysis::getModRefInfo(CS1, CS2);
+    }
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
-    bool pointsToConstantMemory(const Value *P);
+    virtual bool pointsToConstantMemory(const Value *P);
+
+    /// getModRefBehavior - Return the behavior when calling the given
+    /// call site.
+    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS);
+
+    /// getModRefBehavior - Return the behavior when calling the given function.
+    /// For use when the call site is not known.
+    virtual ModRefBehavior getModRefBehavior(const Function *F);
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
@@ -290,9 +309,42 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
     // global to be marked constant in some modules and non-constant in others.
     // GV may even be a declaration, not a definition.
     return GV->isConstant();
-  return false;
+
+  return NoAA::pointsToConstantMemory(P);
 }
 
+/// getModRefBehavior - Return the behavior when calling the given call site.
+AliasAnalysis::ModRefBehavior
+BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
+  if (CS.doesNotAccessMemory())
+    // Can't do better than this.
+    return DoesNotAccessMemory;
+
+  ModRefBehavior Min = UnknownModRefBehavior;
+
+  // If the callsite knows it only reads memory, don't return worse
+  // than that.
+  if (CS.onlyReadsMemory())
+    Min = OnlyReadsMemory;
+
+  // The AliasAnalysis base class has some smarts, lets use them.
+  return std::min(AliasAnalysis::getModRefBehavior(CS), Min);
+}
+
+/// getModRefBehavior - Return the behavior when calling the given function.
+/// For use when the call site is not known.
+AliasAnalysis::ModRefBehavior
+BasicAliasAnalysis::getModRefBehavior(const Function *F) {
+  if (F->doesNotAccessMemory())
+    // Can't do better than this.
+    return DoesNotAccessMemory;
+  if (F->onlyReadsMemory())
+    return OnlyReadsMemory;
+  if (unsigned id = F->getIntrinsicID())
+    return getIntrinsicModRefBehavior(id);
+
+  return NoAA::getModRefBehavior(F);
+}
 
 /// getModRefInfo - Check to see if the specified callsite can clobber the
 /// specified memory object.  Since we only look at local properties of this
@@ -346,127 +398,74 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 
   // Finally, handle specific knowledge of intrinsics.
   const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
-  if (II == 0)
-    return AliasAnalysis::getModRefInfo(CS, P, Size);
-
-  switch (II->getIntrinsicID()) {
-  default: break;
-  case Intrinsic::memcpy:
-  case Intrinsic::memmove: {
-    unsigned Len = UnknownSize;
-    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2)))
-      Len = LenCI->getZExtValue();
-    Value *Dest = II->getArgOperand(0);
-    Value *Src = II->getArgOperand(1);
-    if (isNoAlias(Dest, Len, P, Size)) {
-      if (isNoAlias(Src, Len, P, Size))
-        return NoModRef;
-      return Ref;
-    }
-    break;
-  }
-  case Intrinsic::memset:
-    // Since memset is 'accesses arguments' only, the AliasAnalysis base class
-    // will handle it for the variable length case.
-    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
-      unsigned Len = LenCI->getZExtValue();
+  if (II != 0)
+    switch (II->getIntrinsicID()) {
+    default: break;
+    case Intrinsic::memcpy:
+    case Intrinsic::memmove: {
+      unsigned Len = UnknownSize;
+      if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2)))
+        Len = LenCI->getZExtValue();
       Value *Dest = II->getArgOperand(0);
-      if (isNoAlias(Dest, Len, P, Size))
-        return NoModRef;
+      Value *Src = II->getArgOperand(1);
+      if (isNoAlias(Dest, Len, P, Size)) {
+        if (isNoAlias(Src, Len, P, Size))
+          return NoModRef;
+        return Ref;
+      }
+      break;
     }
-    break;
-  case Intrinsic::atomic_cmp_swap:
-  case Intrinsic::atomic_swap:
-  case Intrinsic::atomic_load_add:
-  case Intrinsic::atomic_load_sub:
-  case Intrinsic::atomic_load_and:
-  case Intrinsic::atomic_load_nand:
-  case Intrinsic::atomic_load_or:
-  case Intrinsic::atomic_load_xor:
-  case Intrinsic::atomic_load_max:
-  case Intrinsic::atomic_load_min:
-  case Intrinsic::atomic_load_umax:
-  case Intrinsic::atomic_load_umin:
-    if (TD) {
-      Value *Op1 = II->getArgOperand(0);
-      unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
-      if (isNoAlias(Op1, Op1Size, P, Size))
+    case Intrinsic::memset:
+      // Since memset is 'accesses arguments' only, the AliasAnalysis base class
+      // will handle it for the variable length case.
+      if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
+        unsigned Len = LenCI->getZExtValue();
+        Value *Dest = II->getArgOperand(0);
+        if (isNoAlias(Dest, Len, P, Size))
+          return NoModRef;
+      }
+      break;
+    case Intrinsic::atomic_cmp_swap:
+    case Intrinsic::atomic_swap:
+    case Intrinsic::atomic_load_add:
+    case Intrinsic::atomic_load_sub:
+    case Intrinsic::atomic_load_and:
+    case Intrinsic::atomic_load_nand:
+    case Intrinsic::atomic_load_or:
+    case Intrinsic::atomic_load_xor:
+    case Intrinsic::atomic_load_max:
+    case Intrinsic::atomic_load_min:
+    case Intrinsic::atomic_load_umax:
+    case Intrinsic::atomic_load_umin:
+      if (TD) {
+        Value *Op1 = II->getArgOperand(0);
+        unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
+        if (isNoAlias(Op1, Op1Size, P, Size))
+          return NoModRef;
+      }
+      break;
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+    case Intrinsic::invariant_start: {
+      unsigned PtrSize =
+        cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
+      if (isNoAlias(II->getArgOperand(1), PtrSize, P, Size))
         return NoModRef;
+      break;
     }
-    break;
-  case Intrinsic::lifetime_start:
-  case Intrinsic::lifetime_end:
-  case Intrinsic::invariant_start: {
-    unsigned PtrSize = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
-    if (isNoAlias(II->getArgOperand(1), PtrSize, P, Size))
-      return NoModRef;
-    break;
-  }
-  case Intrinsic::invariant_end: {
-    unsigned PtrSize = cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
-    if (isNoAlias(II->getArgOperand(2), PtrSize, P, Size))
-      return NoModRef;
-    break;
-  }
-  }
+    case Intrinsic::invariant_end: {
+      unsigned PtrSize =
+        cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
+      if (isNoAlias(II->getArgOperand(2), PtrSize, P, Size))
+        return NoModRef;
+      break;
+    }
+    }
 
   // The AliasAnalysis base class has some smarts, lets use them.
   return AliasAnalysis::getModRefInfo(CS, P, Size);
 }
 
-
-AliasAnalysis::ModRefResult 
-BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
-                                  ImmutableCallSite CS2) {
-  // If CS1 or CS2 are readnone, they don't interact.
-  ModRefBehavior CS1B = AliasAnalysis::getModRefBehavior(CS1);
-  if (CS1B == DoesNotAccessMemory) return NoModRef;
-  
-  ModRefBehavior CS2B = AliasAnalysis::getModRefBehavior(CS2);
-  if (CS2B == DoesNotAccessMemory) return NoModRef;
-  
-  // If they both only read from memory, there is no dependence.
-  if (CS1B == OnlyReadsMemory && CS2B == OnlyReadsMemory)
-    return NoModRef;
-
-  AliasAnalysis::ModRefResult Mask = ModRef;
-
-  // If CS1 only reads memory, the only dependence on CS2 can be
-  // from CS1 reading memory written by CS2.
-  if (CS1B == OnlyReadsMemory)
-    Mask = ModRefResult(Mask & Ref);
-  
-  // If CS2 only access memory through arguments, accumulate the mod/ref
-  // information from CS1's references to the memory referenced by
-  // CS2's arguments.
-  if (CS2B == AccessesArguments) {
-    AliasAnalysis::ModRefResult R = NoModRef;
-    for (ImmutableCallSite::arg_iterator
-         I = CS2.arg_begin(), E = CS2.arg_end(); I != E; ++I) {
-      R = ModRefResult((R | getModRefInfo(CS1, *I, UnknownSize)) & Mask);
-      if (R == Mask)
-        break;
-    }
-    return R;
-  }
-
-  // If CS1 only accesses memory through arguments, check if CS2 references
-  // any of the memory referenced by CS1's arguments. If not, return NoModRef.
-  if (CS1B == AccessesArguments) {
-    AliasAnalysis::ModRefResult R = NoModRef;
-    for (ImmutableCallSite::arg_iterator
-         I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I)
-      if (getModRefInfo(CS2, *I, UnknownSize) != NoModRef) {
-        R = Mask;
-        break;
-      }
-    if (R == NoModRef)
-      return R;
-  }
-
-  // Otherwise, fall back to NoAA (mod+ref).
-  return ModRefResult(NoAA::getModRefInfo(CS1, CS2) & Mask);
-}
 
 /// GetIndexDifference - Dest and Src are the variable indices from two
 /// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
@@ -843,7 +842,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   if (const SelectInst *S1 = dyn_cast<SelectInst>(V1))
     return aliasSelect(S1, V1Size, V2, V2Size);
 
-  return MayAlias;
+  return NoAA::alias(V1, V1Size, V2, V2Size);
 }
 
 // Make sure that anything that uses AliasAnalysis pulls in this file.
