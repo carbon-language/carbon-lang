@@ -41,7 +41,6 @@ double promote(float) __attribute__((__overloadable__)); // expected-note {{cand
 double promote(double) __attribute__((__overloadable__)); // expected-note {{candidate}}
 long double promote(long double) __attribute__((__overloadable__)); // expected-note {{candidate}}
 
-void promote() __attribute__((__overloadable__)); // expected-error{{'overloadable' function 'promote' must have a prototype}}
 void promote(...) __attribute__((__overloadable__, __unavailable__)); // \
     // expected-note{{candidate function}}
 
@@ -59,4 +58,14 @@ double magnitude(DoubleVec) __attribute__((__overloadable__));
 double magnitude(IntVec) __attribute__((__overloadable__));
 double test_p6600(DoubleVec d) {
   return magnitude(d) * magnitude(d);
+}
+
+// PR7738
+extern int __attribute__((overloadable)) f0(); // expected-error{{'overloadable' function 'f0' must have a prototype}}
+typedef int f1_type();
+f1_type __attribute__((overloadable)) f1; // expected-error{{'overloadable' function 'f1' must have a prototype}}
+
+void test() { 
+  f0();
+  f1();
 }

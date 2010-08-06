@@ -3548,6 +3548,20 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewFD->addAttr(::new (Context) OverloadableAttr());
   }
 
+  if (NewFD->hasAttr<OverloadableAttr>() && 
+      !NewFD->getType()->getAs<FunctionProtoType>()) {
+    Diag(NewFD->getLocation(),
+         diag::err_attribute_overloadable_no_prototype)
+      << NewFD;
+
+    // Turn this into a variadic function with no parameters.
+    const FunctionType *FT = NewFD->getType()->getAs<FunctionType>();
+    QualType R = Context.getFunctionType(FT->getResultType(),
+                                         0, 0, true, 0, false, false, 0, 0,
+                                         FT->getExtInfo());
+    NewFD->setType(R);
+  }
+
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this function.
   if (NewFD->getLinkage() == ExternalLinkage && !DC->isRecord())
@@ -3639,26 +3653,8 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       Redeclaration = true;
       OldDecl = Previous.getFoundDecl();
     } else {
-      if (!getLangOptions().CPlusPlus) {
+      if (!getLangOptions().CPlusPlus)
         OverloadableAttrRequired = true;
-
-        // Functions marked "overloadable" must have a prototype (that
-        // we can't get through declaration merging).
-        if (!NewFD->getType()->getAs<FunctionProtoType>()) {
-          Diag(NewFD->getLocation(),
-               diag::err_attribute_overloadable_no_prototype)
-            << NewFD;
-          Redeclaration = true;
-
-          // Turn this into a variadic function with no parameters.
-          QualType R = Context.getFunctionType(
-                     NewFD->getType()->getAs<FunctionType>()->getResultType(),
-                     0, 0, true, 0, false, false, 0, 0,
-                     FunctionType::ExtInfo());
-          NewFD->setType(R);
-          return NewFD->setInvalidDecl();
-        }
-      }
 
       switch (CheckOverload(S, NewFD, Previous, OldDecl,
                             /*NewIsUsingDecl*/ false)) {
