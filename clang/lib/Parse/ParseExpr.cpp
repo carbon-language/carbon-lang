@@ -568,7 +568,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // If this expression is limited to being a unary-expression, the parent can
     // not start a cast expression.
     ParenParseOption ParenExprType =
-      isUnaryExpression ? CompoundLiteral : CastExpr;
+      (isUnaryExpression && !getLang().CPlusPlus)? CompoundLiteral : CastExpr;
     TypeTy *CastTy;
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
@@ -702,10 +702,14 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___null:
     return Actions.ActOnGNUNullExpr(ConsumeToken());
     break;
-  case tok::plusplus:      // unary-expression: '++' unary-expression
-  case tok::minusminus: {  // unary-expression: '--' unary-expression
+  case tok::plusplus:      // unary-expression: '++' unary-expression [C99]
+  case tok::minusminus: {  // unary-expression: '--' unary-expression [C99]
+    // C++ [expr.unary] has:
+    //   unary-expression:
+    //     ++ cast-expression
+    //     -- cast-expression
     SourceLocation SavedLoc = ConsumeToken();
-    Res = ParseCastExpression(true);
+    Res = ParseCastExpression(!getLang().CPlusPlus);
     if (!Res.isInvalid())
       Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, move(Res));
     return move(Res);
