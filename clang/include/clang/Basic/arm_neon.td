@@ -64,6 +64,7 @@ class WInst<string p, string t> : Inst<p, t, OP_NONE> {}
 // u: unsigned integer (int/float args)
 // f: float (int args)
 // d: default
+// g: default, ignore 'Q' size modifier.
 // w: double width elements, same num elts
 // n: double width elements, half num elts
 // h: half width elements, double num elts
@@ -239,6 +240,7 @@ def VCREATE: Inst<"dl", "csihfUcUsUiUlPcPsl", OP_CAST>;
 // E.3.19 Set all lanes to same value
 def VDUP_N : Inst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
 def VMOV_N : Inst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
+def VDUP_LANE : WInst<"dgi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.20 Combining vectors
