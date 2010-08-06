@@ -650,9 +650,8 @@ void MallocChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l) {
   SymbolRef Sym = l.getLocSymbolInBase();
   if (Sym) {
     const RefState *RS = C.getState()->get<RegionState>(Sym);
-    if (RS)
-      if (RS->isReleased()) {
-        ExplodedNode *N = C.GenerateSink();
+    if (RS && RS->isReleased()) {
+      if (ExplodedNode *N = C.GenerateNode()) {
         if (!BT_UseFree)
           BT_UseFree = new BuiltinBug("Use dynamically allocated memory after"
                                       " it is freed.");
@@ -661,6 +660,7 @@ void MallocChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l) {
                                      N);
         C.EmitReport(R);
       }
+    }
   }
 }
 
