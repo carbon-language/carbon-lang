@@ -96,6 +96,7 @@ TOK(unknown)             // Not a token.
 TOK(eof)                 // End of file.
 TOK(eom)                 // End of macro (end of line inside a macro).
 TOK(code_completion)     // Code completion marker
+TOK(cxx_defaultarg_end)  // C++ default argument end marker
 
 // C99 6.4.9: Comments.
 TOK(comment)             // Comment (only in -E -C[C] mode)

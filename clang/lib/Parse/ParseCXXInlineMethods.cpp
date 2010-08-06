@@ -142,9 +142,13 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
         OwningExprResult DefArgResult(ParseAssignmentExpression());
         if (DefArgResult.isInvalid())
           Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
-        else
+        else {
+          assert(Tok.is(tok::cxx_defaultarg_end) &&
+                 "We didn't parse the whole default arg!");
+          ConsumeToken(); // Consume tok::cxx_defaultarg_end.
           Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
                                             move(DefArgResult));
+        }
 
         assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
                                                            Tok.getLocation()) &&

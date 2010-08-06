@@ -3085,9 +3085,17 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
             delete DefArgToks;
             DefArgToks = 0;
             Actions.ActOnParamDefaultArgumentError(Param);
-          } else
+          } else {
+            // Mark the end of the default argument so that we know when to
+            // stop when we parse it later on.
+            Token DefArgEnd;
+            DefArgEnd.startToken();
+            DefArgEnd.setKind(tok::cxx_defaultarg_end);
+            DefArgEnd.setLocation(Tok.getLocation());
+            DefArgToks->push_back(DefArgEnd);
             Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc,
                                                 (*DefArgToks)[1].getLocation());
+          }
         } else {
           // Consume the '='.
           ConsumeToken();

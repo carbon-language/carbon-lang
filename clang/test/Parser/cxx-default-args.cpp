@@ -7,3 +7,6 @@ class C {
   void m(int x = undecl + 0); // expected-error {{use of undeclared identifier 'undecl'}}
 };
 
+typedef struct Inst {
+  void m(int x=0);
+} *InstPtr;
