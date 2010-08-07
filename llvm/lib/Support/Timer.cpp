@@ -20,7 +20,6 @@
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Process.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
@@ -316,8 +315,8 @@ void TimerGroup::addTimer(Timer &T) {
 
 void TimerGroup::PrintQueuedTimers(raw_ostream &OS) {
   // Sort the timers in descending order by amount of time taken.
-  array_pod_sort(TimersToPrint.begin(), TimersToPrint.end());
-
+  std::sort(TimersToPrint.begin(), TimersToPrint.end());
+  
   TimeRecord Total;
   for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i)
     Total += TimersToPrint[i].first;
