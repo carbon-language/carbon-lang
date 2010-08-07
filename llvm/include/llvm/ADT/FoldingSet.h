@@ -198,7 +198,7 @@ protected:
 ///  to "profile" (in the FoldingSet parlance) an object of a given type.
 ///  The default behavior is to invoke a 'Profile' method on an object, but
 ///  through template specialization the behavior can be tailored for specific
-///  types.  Combined with the FoldingSetNodeWrapper classs, one can add objects
+///  types.  Combined with the FoldingSetNodeWrapper class, one can add objects
 ///  to FoldingSets that were not originally designed to have that behavior.
 ///
 template<typename T> struct FoldingSetTrait {
