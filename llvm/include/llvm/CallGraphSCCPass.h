@@ -63,7 +63,7 @@ public:
 
   /// Assign pass manager to manager this pass
   virtual void assignPassManager(PMStack &PMS,
-                                 PassManagerType PMT =PMT_CallGraphPassManager);
+                                 PassManagerType PMT);
 
   ///  Return what kind of Pass Manager can manage this pass.
   virtual PassManagerType getPotentialPassManagerType() const {
