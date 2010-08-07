@@ -655,6 +655,17 @@ ConstantRange::lshr(const ConstantRange &Amount) const {
   return ConstantRange(min, max);
 }
 
+ConstantRange ConstantRange::inverse() const {
+  if (isFullSet()) {
+    return ConstantRange(APInt::getNullValue(Lower.getBitWidth()),
+      APInt::getNullValue(Lower.getBitWidth()));
+  } else if (isEmptySet()) {
+    return ConstantRange(APInt::getAllOnesValue(Lower.getBitWidth()),
+      APInt::getAllOnesValue(Lower.getBitWidth()));
+  }
+  return ConstantRange(Upper, Lower);
+}
+
 /// print - Print out the bounds to a stream...
 ///
 void ConstantRange::print(raw_ostream &OS) const {
