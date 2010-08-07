@@ -533,18 +533,18 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXBaseSpecifierArray BasePath;
+    CXXCastPath BasePath;
     if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, BasePath,
                        /*FunctionalStyle=*/true))
       return ExprError();
 
     exprs.release();
 
-    return Owned(new (Context) CXXFunctionalCastExpr(
+    return Owned(CXXFunctionalCastExpr::Create(Context,
                                               Ty.getNonLValueExprType(Context),
-                                                     TInfo, TyBeginLoc, Kind,
-                                                     Exprs[0], BasePath,
-                                                     RParenLoc));
+                                               TInfo, TyBeginLoc, Kind,
+                                               Exprs[0], &BasePath,
+                                               RParenLoc));
   }
 
   if (Ty->isRecordType()) {
@@ -1823,22 +1823,22 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
     
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXBaseSpecifierArray BasePath;
+    CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, IgnoreBaseAccess))
       return true;
-    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, BasePath);
+    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, &BasePath);
     break;
   }
   
   case ICK_Pointer_Member: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXBaseSpecifierArray BasePath;
+    CXXCastPath BasePath;
     if (CheckMemberPointerConversion(From, ToType, Kind, BasePath,
                                      IgnoreBaseAccess))
       return true;
     if (CheckExceptionSpecCompatibility(From, ToType))
       return true;
-    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, BasePath);
+    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, &BasePath);
     break;
   }
   case ICK_Boolean_Conversion: {
@@ -1851,7 +1851,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   }
 
   case ICK_Derived_To_Base: {
-    CXXBaseSpecifierArray BasePath;
+    CXXCastPath BasePath;
     if (CheckDerivedToBaseConversion(From->getType(), 
                                      ToType.getNonReferenceType(),
                                      From->getLocStart(),
@@ -1861,7 +1861,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return true;
 
     ImpCastExprToType(From, ToType.getNonReferenceType(),
-                      CastExpr::CK_DerivedToBase, CastCategory(From), BasePath);
+                      CastExpr::CK_DerivedToBase, CastCategory(From),
+                      &BasePath);
     break;
   }
 
@@ -1994,10 +1995,10 @@ QualType Sema::CheckPointerToMemberOperands(
     ImplicitCastExpr::ResultCategory Category =
         isIndirect ? ImplicitCastExpr::RValue : CastCategory(lex);
 
-    CXXBaseSpecifierArray BasePath;
+    CXXCastPath BasePath;
     BuildBasePathArray(Paths, BasePath);
     ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, Category,
-                      BasePath);
+                      &BasePath);
   }
 
   if (isa<CXXScalarValueInitExpr>(rex->IgnoreParens())) {

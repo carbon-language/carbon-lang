@@ -949,7 +949,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
       DestTy->getCXXRecordDeclForPointerType();
     
     return CGF.GetAddressOfDerivedClass(Visit(E), DerivedClassDecl, 
-                                        CE->getBasePath(), 
+                                        CE->path_begin(), CE->path_end(),
                                         ShouldNullCheckClassCastValue(CE));
   }
   case CastExpr::CK_UncheckedDerivedToBase:
@@ -960,7 +960,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
 
     return CGF.GetAddressOfBaseClass(Visit(E), DerivedClassDecl, 
-                                     CE->getBasePath(),
+                                     CE->path_begin(), CE->path_end(),
                                      ShouldNullCheckClassCastValue(CE));
   }
   case CastExpr::CK_Dynamic: {
@@ -1011,7 +1011,9 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
       std::swap(DerivedDecl, BaseDecl);
 
     if (llvm::Constant *Adj = 
-          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl, CE->getBasePath())){
+          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
+                                               CE->path_begin(),
+                                               CE->path_end())) {
       if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
         Src = Builder.CreateNSWSub(Src, Adj, "adj");
       else

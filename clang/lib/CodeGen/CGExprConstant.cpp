@@ -572,7 +572,9 @@ public:
         
         // Check if we need to update the adjustment.
         if (llvm::Constant *Offset = 
-            CGM.GetNonVirtualBaseClassOffset(DerivedClass, E->getBasePath())) {
+            CGM.GetNonVirtualBaseClassOffset(DerivedClass,
+                                             E->path_begin(),
+                                             E->path_end())) {
           llvm::Constant *Values[2];
         
           Values[0] = CS->getOperand(0);

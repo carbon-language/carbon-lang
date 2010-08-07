@@ -559,14 +559,15 @@ void PCHStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
 
 void PCHStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
+  unsigned NumBaseSpecs = Record[Idx++];
+  assert(NumBaseSpecs == E->path_size());
   E->setSubExpr(Reader.ReadSubExpr());
   E->setCastKind((CastExpr::CastKind)Record[Idx++]);
-  CXXBaseSpecifierArray &BasePath = E->getBasePath();
-  unsigned NumBaseSpecs = Record[Idx++];
+  CastExpr::path_iterator BaseI = E->path_begin();
   while (NumBaseSpecs--) {
     CXXBaseSpecifier *BaseSpec = new (*Reader.getContext()) CXXBaseSpecifier;
     *BaseSpec = Reader.ReadCXXBaseSpecifier(DeclsCursor, Record, Idx);
-    BasePath.push_back(BaseSpec);
+    *BaseI++ = BaseSpec;
   }
 }
 
@@ -1495,11 +1496,13 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_IMPLICIT_CAST:
-      S = new (Context) ImplicitCastExpr(Empty);
+      S = ImplicitCastExpr::CreateEmpty(*Context,
+                       /*PathSize*/ Record[PCHStmtReader::NumExprFields]);
       break;
 
     case pch::EXPR_CSTYLE_CAST:
-      S = new (Context) CStyleCastExpr(Empty);
+      S = CStyleCastExpr::CreateEmpty(*Context,
+                       /*PathSize*/ Record[PCHStmtReader::NumExprFields]);
       break;
 
     case pch::EXPR_COMPOUND_LITERAL:
@@ -1638,23 +1641,27 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_CXX_STATIC_CAST:
-      S = new (Context) CXXStaticCastExpr(Empty);
+      S = CXXStaticCastExpr::CreateEmpty(*Context,
+                       /*PathSize*/ Record[PCHStmtReader::NumExprFields]);
       break;
 
     case pch::EXPR_CXX_DYNAMIC_CAST:
-      S = new (Context) CXXDynamicCastExpr(Empty);
+      S = CXXDynamicCastExpr::CreateEmpty(*Context,
+                       /*PathSize*/ Record[PCHStmtReader::NumExprFields]);
       break;
 
     case pch::EXPR_CXX_REINTERPRET_CAST:
-      S = new (Context) CXXReinterpretCastExpr(Empty);
+      S = CXXReinterpretCastExpr::CreateEmpty(*Context,
+                       /*PathSize*/ Record[PCHStmtReader::NumExprFields]);
       break;
 
     case pch::EXPR_CXX_CONST_CAST:
-      S = new (Context) CXXConstCastExpr(Empty);
+      S = CXXConstCastExpr::CreateEmpty(*Context);
       break;
 
     case pch::EXPR_CXX_FUNCTIONAL_CAST:
-      S = new (Context) CXXFunctionalCastExpr(Empty);
+      S = CXXFunctionalCastExpr::CreateEmpty(*Context,
+                       /*PathSize*/ Record[PCHStmtReader::NumExprFields]);
       break;
 
     case pch::EXPR_CXX_BOOL_LITERAL:

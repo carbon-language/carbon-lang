@@ -1179,14 +1179,14 @@ public:
   
   bool CheckPointerConversion(Expr *From, QualType ToType,
                               CastExpr::CastKind &Kind,
-                              CXXBaseSpecifierArray& BasePath,
+                              CXXCastPath& BasePath,
                               bool IgnoreBaseAccess);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                  bool InOverloadResolution,
                                  QualType &ConvertedType);
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
                                     CastExpr::CastKind &Kind,
-                                    CXXBaseSpecifierArray &BasePath,
+                                    CXXCastPath &BasePath,
                                     bool IgnoreBaseAccess);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   OverloadingResult IsUserDefinedConversion(Expr *From, QualType ToType,
@@ -2831,21 +2831,20 @@ public:
   bool IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths);
 
   // FIXME: I don't like this name.
-  void BuildBasePathArray(const CXXBasePaths &Paths,
-                          CXXBaseSpecifierArray &BasePath);
+  void BuildBasePathArray(const CXXBasePaths &Paths, CXXCastPath &BasePath);
 
-  bool BasePathInvolvesVirtualBase(const CXXBaseSpecifierArray &BasePath);
+  bool BasePathInvolvesVirtualBase(const CXXCastPath &BasePath);
 
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range,
-                                    CXXBaseSpecifierArray *BasePath = 0,
+                                    CXXCastPath *BasePath = 0,
                                     bool IgnoreAccess = false);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     unsigned InaccessibleBaseID,
                                     unsigned AmbigiousBaseConvID,
                                     SourceLocation Loc, SourceRange Range,
                                     DeclarationName Name,
-                                    CXXBaseSpecifierArray *BasePath);
+                                    CXXCastPath *BasePath);
 
   std::string getAmbiguousPathsDisplayString(CXXBasePaths &Paths);
 
@@ -4257,8 +4256,7 @@ public:
   void ImpCastExprToType(Expr *&Expr, QualType Type, CastExpr::CastKind Kind,
                          ImplicitCastExpr::ResultCategory Category =
                           ImplicitCastExpr::RValue,
-                         CXXBaseSpecifierArray BasePath =
-                          CXXBaseSpecifierArray());
+                         const CXXCastPath *BasePath = 0);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).
@@ -4524,7 +4522,7 @@ public:
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
-                      CastExpr::CastKind &Kind, CXXBaseSpecifierArray &BasePath,
+                      CastExpr::CastKind &Kind, CXXCastPath &BasePath,
                       bool FunctionalStyle = false);
 
   // CheckVectorCast - check type constraints for vectors.
@@ -4545,8 +4543,7 @@ public:
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
   bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                          CastExpr::CastKind &Kind,
-                          CXXBaseSpecifierArray &BasePath,
+                          CastExpr::CastKind &Kind, CXXCastPath &BasePath,
                           bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.

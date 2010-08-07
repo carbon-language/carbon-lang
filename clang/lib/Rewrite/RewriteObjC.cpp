@@ -459,8 +459,8 @@ namespace {
   CStyleCastExpr* NoTypeInfoCStyleCastExpr(ASTContext *Ctx, QualType Ty,
                                            CastExpr::CastKind Kind, Expr *E) {
     TypeSourceInfo *TInfo = Ctx->getTrivialTypeSourceInfo(Ty, SourceLocation());
-    return new (Ctx) CStyleCastExpr(Ty, Kind, E, CXXBaseSpecifierArray(), TInfo,
-                                    SourceLocation(), SourceLocation());
+    return CStyleCastExpr::Create(*Ctx, Ty, Kind, E, 0, TInfo,
+                                  SourceLocation(), SourceLocation());
   }
 }
 
@@ -2106,9 +2106,8 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   // Now, we cast the reference to a pointer to the objc_msgSend type.
   QualType pToFunc = Context->getPointerType(msgSendType);
   ImplicitCastExpr *ICE = 
-    new (Context) ImplicitCastExpr(pToFunc, CastExpr::CK_Unknown,
-                                   DRE, CXXBaseSpecifierArray(),
-                                   ImplicitCastExpr::RValue);
+    ImplicitCastExpr::Create(*Context, pToFunc, CastExpr::CK_Unknown,
+                             DRE, 0, ImplicitCastExpr::RValue);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 

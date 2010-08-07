@@ -3585,7 +3585,7 @@ InitializationSequence::Perform(Sema &S,
       // We have a derived-to-base cast that produces either an rvalue or an
       // lvalue. Perform that cast.
       
-      CXXBaseSpecifierArray BasePath;
+      CXXCastPath BasePath;
 
       // Casts to inaccessible base classes are allowed with C-style casts.
       bool IgnoreBaseAccess = Kind.isCStyleOrFunctionalCast();
@@ -3610,10 +3610,11 @@ InitializationSequence::Perform(Sema &S,
               (Step->Kind == SK_CastDerivedToBaseXValue ?
                    ImplicitCastExpr::XValue :
                    ImplicitCastExpr::RValue);
-      CurInit = S.Owned(new (S.Context) ImplicitCastExpr(Step->Type,
-                                                    CastExpr::CK_DerivedToBase,
-                                                    (Expr*)CurInit.release(),
-                                                    BasePath, Category));
+      CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
+                                                 Step->Type,
+                                                 CastExpr::CK_DerivedToBase,
+                                                 (Expr*)CurInit.release(),
+                                                 &BasePath, Category));
       break;
     }
         
@@ -3748,10 +3749,9 @@ InitializationSequence::Perform(Sema &S,
       
       CurInitExpr = CurInit.takeAs<Expr>();
       // FIXME: xvalues
-      CurInit = S.Owned(new (S.Context) ImplicitCastExpr(CurInitExpr->getType(),
-                                                         CastKind, 
-                                                         CurInitExpr,
-                                                        CXXBaseSpecifierArray(),
+      CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
+                                                 CurInitExpr->getType(),
+                                                 CastKind, CurInitExpr, 0,
                IsLvalue ? ImplicitCastExpr::LValue : ImplicitCastExpr::RValue));
       
       if (RequiresCopy)

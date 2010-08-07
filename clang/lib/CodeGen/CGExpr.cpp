@@ -142,7 +142,7 @@ struct SubobjectAdjustment {
   
   union {
     struct {
-      const CXXBaseSpecifierArray *BasePath;
+      const CastExpr *BasePath;
       const CXXRecordDecl *DerivedClass;
     } DerivedToBase;
     
@@ -152,7 +152,7 @@ struct SubobjectAdjustment {
     } Field;
   };
   
-  SubobjectAdjustment(const CXXBaseSpecifierArray *BasePath, 
+  SubobjectAdjustment(const CastExpr *BasePath, 
                       const CXXRecordDecl *DerivedClass)
     : Kind(DerivedToBaseAdjustment) 
   {
@@ -236,8 +236,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
           E = CE->getSubExpr();
           CXXRecordDecl *Derived 
             = cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
-          Adjustments.push_back(SubobjectAdjustment(&CE->getBasePath(), 
-                                                    Derived));
+          Adjustments.push_back(SubobjectAdjustment(CE, Derived));
           continue;
         }
 
@@ -291,7 +290,8 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
           Object = 
               CGF.GetAddressOfBaseClass(Object, 
                                         Adjustment.DerivedToBase.DerivedClass, 
-                                        *Adjustment.DerivedToBase.BasePath, 
+                              Adjustment.DerivedToBase.BasePath->path_begin(),
+                              Adjustment.DerivedToBase.BasePath->path_end(),
                                         /*NullCheckValue=*/false);
           break;
             
@@ -1820,7 +1820,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     // Perform the derived-to-base conversion
     llvm::Value *Base = 
       GetAddressOfBaseClass(This, DerivedClassDecl, 
-                            E->getBasePath(), /*NullCheckValue=*/false);
+                            E->path_begin(), E->path_end(),
+                            /*NullCheckValue=*/false);
     
     return LValue::MakeAddr(Base, MakeQualifiers(E->getType()));
   }
@@ -1836,7 +1837,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     // Perform the base-to-derived conversion
     llvm::Value *Derived = 
       GetAddressOfDerivedClass(LV.getAddress(), DerivedClassDecl, 
-                               E->getBasePath(),/*NullCheckValue=*/false);
+                               E->path_begin(), E->path_end(),
+                               /*NullCheckValue=*/false);
     
     return LValue::MakeAddr(Derived, MakeQualifiers(E->getType()));
   }

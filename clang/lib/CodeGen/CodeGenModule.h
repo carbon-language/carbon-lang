@@ -315,7 +315,8 @@ public:
   /// a class. Returns null if the offset is 0. 
   llvm::Constant *
   GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
-                               const CXXBaseSpecifierArray &BasePath);
+                               CastExpr::path_const_iterator PathBegin,
+                               CastExpr::path_const_iterator PathEnd);
   
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of

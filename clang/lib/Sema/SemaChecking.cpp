@@ -524,9 +524,9 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
     cast<FunctionDecl>(LazilyCreateBuiltin(NewBuiltinII, NewBuiltinID,
                                            TUScope, false, DRE->getLocStart()));
 
-  // The first argument is by definition correct, we use it's type as the type
-  // of the entire operation. Walk the remaining arguments promoting them to
-  // the deduced value type.
+  // The first argument --- the pointer --- has a fixed type; we
+  // deduce the types of the rest of the arguments accordingly.  Walk
+  // the remaining arguments, converting them to the deduced value type.
   for (unsigned i = 0; i != NumFixed; ++i) {
     Expr *Arg = TheCall->getArg(i+1);
 
@@ -541,7 +541,7 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXBaseSpecifierArray BasePath;
+    CXXCastPath BasePath;
     if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind, BasePath))
       return ExprError();
 
@@ -551,7 +551,7 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.
-    ImpCastExprToType(Arg, ValType, Kind);
+    ImpCastExprToType(Arg, ValType, Kind, ImplicitCastExpr::RValue, &BasePath);
     TheCall->setArg(i+1, Arg);
   }
 

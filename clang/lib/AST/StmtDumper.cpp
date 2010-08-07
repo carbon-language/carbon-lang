@@ -308,13 +308,13 @@ void StmtDumper::VisitExpr(Expr *Node) {
 }
 
 static void DumpBasePath(llvm::raw_ostream &OS, CastExpr *Node) {
-  if (Node->getBasePath().empty())
+  if (Node->path_empty())
     return;
 
   OS << " (";
   bool First = true;
-  for (CXXBaseSpecifierArray::iterator I = Node->getBasePath().begin(),
-       E = Node->getBasePath().end(); I != E; ++I) {
+  for (CastExpr::path_iterator
+         I = Node->path_begin(), E = Node->path_end(); I != E; ++I) {
     const CXXBaseSpecifier *Base = *I;
     if (!First)
       OS << " -> ";

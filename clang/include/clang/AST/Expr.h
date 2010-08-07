@@ -42,7 +42,7 @@ namespace clang {
   class TemplateArgumentListInfo;
 
 /// \brief A simple array of base specifiers.
-typedef UsuallyTinyPtrVector<const CXXBaseSpecifier> CXXBaseSpecifierArray;
+typedef llvm::SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -60,6 +60,8 @@ protected:
   /// ValueDependent - Whether this expression is value-dependent
   /// (C++ [temp.dep.constexpr]).
   bool ValueDependent : 1;
+
+  enum { BitsRemaining = 30 };
 
   Expr(StmtClass SC, QualType T, bool TD, bool VD)
     : Stmt(SC), TypeDependent(TD), ValueDependent(VD) {
@@ -1930,12 +1932,9 @@ public:
   };
 
 private:
-  CastKind Kind;
+  unsigned Kind : 5;
+  unsigned BasePathSize : BitsRemaining - 5;
   Stmt *Op;
-
-  /// BasePath - For derived-to-base and base-to-derived casts, the base array
-  /// contains the inheritance path.
-  CXXBaseSpecifierArray BasePath;
 
   void CheckBasePath() const {
 #ifndef NDEBUG
@@ -1945,7 +1944,7 @@ private:
     case CK_DerivedToBaseMemberPointer:
     case CK_BaseToDerived:
     case CK_BaseToDerivedMemberPointer:
-      assert(!BasePath.empty() && "Cast kind should have a base path!");
+      assert(!path_empty() && "Cast kind should have a base path!");
       break;
 
     // These should not have an inheritance path.
@@ -1971,15 +1970,20 @@ private:
     case CK_MemberPointerToBoolean:
     case CK_AnyPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
-      assert(BasePath.empty() && "Cast kind should not have a base path!");
+      assert(path_empty() && "Cast kind should not have a base path!");
       break;
     }
 #endif
   }
 
+  const CXXBaseSpecifier * const *path_buffer() const {
+    return const_cast<CastExpr*>(this)->path_buffer();
+  }
+  CXXBaseSpecifier **path_buffer();
+
 protected:
   CastExpr(StmtClass SC, QualType ty, const CastKind kind, Expr *op,
-           CXXBaseSpecifierArray BasePath) :
+           unsigned BasePathSize) :
     Expr(SC, ty,
          // Cast expressions are type-dependent if the type is
          // dependent (C++ [temp.dep.expr]p3).
@@ -1987,16 +1991,16 @@ protected:
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())),
-    Kind(kind), Op(op), BasePath(BasePath) {
-      CheckBasePath();
-    }
+    Kind(kind), BasePathSize(BasePathSize), Op(op) {
+    CheckBasePath();
+  }
 
   /// \brief Construct an empty cast.
-  CastExpr(StmtClass SC, EmptyShell Empty)
-    : Expr(SC, Empty) { }
+  CastExpr(StmtClass SC, EmptyShell Empty, unsigned BasePathSize)
+    : Expr(SC, Empty), BasePathSize(BasePathSize) { }
 
 public:
-  CastKind getCastKind() const { return Kind; }
+  CastKind getCastKind() const { return static_cast<CastKind>(Kind); }
   void setCastKind(CastKind K) { Kind = K; }
   const char *getCastKindName() const;
 
@@ -2012,8 +2016,16 @@ public:
     return const_cast<CastExpr *>(this)->getSubExprAsWritten();
   }
 
-  const CXXBaseSpecifierArray& getBasePath() const { return BasePath; }
-        CXXBaseSpecifierArray& getBasePath()       { return BasePath; }
+  typedef CXXBaseSpecifier **path_iterator;
+  typedef const CXXBaseSpecifier * const *path_const_iterator;
+  bool path_empty() const { return BasePathSize == 0; }
+  unsigned path_size() const { return BasePathSize; }
+  path_iterator path_begin() { return path_buffer(); }
+  path_iterator path_end() { return path_buffer() + path_size(); }
+  path_const_iterator path_begin() const { return path_buffer(); }
+  path_const_iterator path_end() const { return path_buffer() + path_size(); }
+
+  void setCastPath(const CXXCastPath &Path);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstCastExprConstant &&
@@ -2056,14 +2068,28 @@ private:
   /// Category - The category this cast produces.
   ResultCategory Category;
 
-public:
-  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, 
-                   CXXBaseSpecifierArray BasePath, ResultCategory Cat)
-    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath), Category(Cat) { }
+  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op,
+                   unsigned BasePathLength, ResultCategory Cat)
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePathLength),
+      Category(Cat) { }
 
   /// \brief Construct an empty implicit cast.
-  explicit ImplicitCastExpr(EmptyShell Shell)
-    : CastExpr(ImplicitCastExprClass, Shell) { }
+  explicit ImplicitCastExpr(EmptyShell Shell, unsigned PathSize)
+    : CastExpr(ImplicitCastExprClass, Shell, PathSize) { }
+
+public:
+  enum OnStack_t { OnStack };
+  ImplicitCastExpr(OnStack_t _, QualType ty, CastKind kind, Expr *op,
+                   ResultCategory Cat)
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, 0),
+      Category(Cat) { }
+
+  static ImplicitCastExpr *Create(ASTContext &Context, QualType T,
+                                  CastKind Kind, Expr *Operand,
+                                  const CXXCastPath *BasePath,
+                                  ResultCategory Cat);
+
+  static ImplicitCastExpr *CreateEmpty(ASTContext &Context, unsigned PathSize);
 
   virtual SourceRange getSourceRange() const {
     return getSubExpr()->getSourceRange();
@@ -2104,13 +2130,12 @@ class ExplicitCastExpr : public CastExpr {
 
 protected:
   ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind,
-                   Expr *op, CXXBaseSpecifierArray BasePath,
-                   TypeSourceInfo *writtenTy)
-    : CastExpr(SC, exprTy, kind, op, BasePath), TInfo(writtenTy) {}
+                   Expr *op, unsigned PathSize, TypeSourceInfo *writtenTy)
+    : CastExpr(SC, exprTy, kind, op, PathSize), TInfo(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
-  ExplicitCastExpr(StmtClass SC, EmptyShell Shell)
-    : CastExpr(SC, Shell) { }
+  ExplicitCastExpr(StmtClass SC, EmptyShell Shell, unsigned PathSize)
+    : CastExpr(SC, Shell, PathSize) { }
 
 public:
   /// getTypeInfoAsWritten - Returns the type source info for the type
@@ -2135,16 +2160,24 @@ public:
 class CStyleCastExpr : public ExplicitCastExpr {
   SourceLocation LPLoc; // the location of the left paren
   SourceLocation RPLoc; // the location of the right paren
-public:
+
   CStyleCastExpr(QualType exprTy, CastKind kind, Expr *op,
-                 CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                 unsigned PathSize, TypeSourceInfo *writtenTy,
                  SourceLocation l, SourceLocation r)
-    : ExplicitCastExpr(CStyleCastExprClass, exprTy, kind, op, BasePath,
+    : ExplicitCastExpr(CStyleCastExprClass, exprTy, kind, op, PathSize,
                        writtenTy), LPLoc(l), RPLoc(r) {}
 
   /// \brief Construct an empty C-style explicit cast.
-  explicit CStyleCastExpr(EmptyShell Shell)
-    : ExplicitCastExpr(CStyleCastExprClass, Shell) { }
+  explicit CStyleCastExpr(EmptyShell Shell, unsigned PathSize)
+    : ExplicitCastExpr(CStyleCastExprClass, Shell, PathSize) { }
+
+public:
+  static CStyleCastExpr *Create(ASTContext &Context, QualType T, CastKind K,
+                                Expr *Op, const CXXCastPath *BasePath,
+                                TypeSourceInfo *WrittenTy, SourceLocation L,
+                                SourceLocation R);
+
+  static CStyleCastExpr *CreateEmpty(ASTContext &Context, unsigned PathSize);
 
   SourceLocation getLParenLoc() const { return LPLoc; }
   void setLParenLoc(SourceLocation L) { LPLoc = L; }

@@ -1491,7 +1491,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     // type of the object type, in which case we just ignore it.
     // Otherwise build the appropriate casts.
     if (IsDerivedFrom(FromRecordType, QRecordType)) {
-      CXXBaseSpecifierArray BasePath;
+      CXXCastPath BasePath;
       if (CheckDerivedToBaseConversion(FromRecordType, QRecordType,
                                        FromLoc, FromRange, &BasePath))
         return true;
@@ -1499,7 +1499,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (PointerConversions)
         QType = Context.getPointerType(QType);
       ImpCastExprToType(From, QType, CastExpr::CK_UncheckedDerivedToBase,
-                        Category, BasePath);
+                        Category, &BasePath);
 
       FromType = QType;
       FromRecordType = QRecordType;
@@ -1527,7 +1527,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     // conversion is non-trivial.
     if (!Context.hasSameUnqualifiedType(FromRecordType, URecordType)) {
       assert(IsDerivedFrom(FromRecordType, URecordType));
-      CXXBaseSpecifierArray BasePath;
+      CXXCastPath BasePath;
       if (CheckDerivedToBaseConversion(FromRecordType, URecordType,
                                        FromLoc, FromRange, &BasePath))
         return true;
@@ -1536,7 +1536,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (PointerConversions)
         UType = Context.getPointerType(UType);
       ImpCastExprToType(From, UType, CastExpr::CK_UncheckedDerivedToBase,
-                        Category, BasePath);
+                        Category, &BasePath);
       FromType = UType;
       FromRecordType = URecordType;
     }
@@ -1546,14 +1546,14 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     IgnoreAccess = true;
   }
 
-  CXXBaseSpecifierArray BasePath;
+  CXXCastPath BasePath;
   if (CheckDerivedToBaseConversion(FromRecordType, DestRecordType,
                                    FromLoc, FromRange, &BasePath,
                                    IgnoreAccess))
     return true;
 
   ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
-                    Category, BasePath);
+                    Category, &BasePath);
   return false;
 }
 
@@ -3894,7 +3894,7 @@ static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                           CastExpr::CastKind& Kind,
-                          CXXBaseSpecifierArray &BasePath,
+                          CXXCastPath &BasePath,
                           bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
     return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, BasePath,
@@ -4064,16 +4064,16 @@ Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
   Expr *castExpr = static_cast<Expr*>(Op.get());
 
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-  CXXBaseSpecifierArray BasePath;
+  CXXCastPath BasePath;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
                      Kind, BasePath))
     return ExprError();
 
   Op.release();
-  return Owned(new (Context) CStyleCastExpr(
+  return Owned(CStyleCastExpr::Create(Context,
                                     Ty->getType().getNonLValueExprType(Context),
-                                            Kind, castExpr, BasePath, Ty,
-                                            LParenLoc, RParenLoc));
+                                      Kind, castExpr, &BasePath, Ty,
+                                      LParenLoc, RParenLoc));
 }
 
 /// This is not an AltiVec-style cast, so turn the ParenListExpr into a sequence

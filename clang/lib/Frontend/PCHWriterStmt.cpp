@@ -567,13 +567,13 @@ void PCHStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
 
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
+  Record.push_back(E->path_size());
   Writer.AddStmt(E->getSubExpr());
   Record.push_back(E->getCastKind()); // FIXME: stable encoding
-  CXXBaseSpecifierArray &BasePath = E->getBasePath();
-  Record.push_back(BasePath.size());
-  for (CXXBaseSpecifierArray::iterator I = BasePath.begin(), E = BasePath.end();
-       I != E; ++I)
-    Writer.AddCXXBaseSpecifier(**I, Record);
+
+  for (CastExpr::path_iterator
+         PI = E->path_begin(), PE = E->path_end(); PI != PE; ++PI)
+    Writer.AddCXXBaseSpecifier(**PI, Record);
 }
 
 void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {

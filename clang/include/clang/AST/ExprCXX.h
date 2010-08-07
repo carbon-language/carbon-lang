@@ -121,12 +121,12 @@ private:
 
 protected:
   CXXNamedCastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op,
-                   CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                   unsigned PathSize, TypeSourceInfo *writtenTy,
                    SourceLocation l)
-    : ExplicitCastExpr(SC, ty, kind, op, BasePath, writtenTy), Loc(l) {}
+    : ExplicitCastExpr(SC, ty, kind, op, PathSize, writtenTy), Loc(l) {}
 
-  explicit CXXNamedCastExpr(StmtClass SC, EmptyShell Shell)
-    : ExplicitCastExpr(SC, Shell) { }
+  explicit CXXNamedCastExpr(StmtClass SC, EmptyShell Shell, unsigned PathSize)
+    : ExplicitCastExpr(SC, Shell, PathSize) { }
 
 public:
   const char *getCastName() const;
@@ -158,14 +158,22 @@ public:
 /// This expression node represents a C++ static cast, e.g.,
 /// @c static_cast<int>(1.0).
 class CXXStaticCastExpr : public CXXNamedCastExpr {
-public:
   CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op, 
-                    CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                    unsigned pathSize, TypeSourceInfo *writtenTy,
                     SourceLocation l)
-    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, BasePath, writtenTy, l) {}
+    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, pathSize,
+                       writtenTy, l) {}
 
-  explicit CXXStaticCastExpr(EmptyShell Empty)
-    : CXXNamedCastExpr(CXXStaticCastExprClass, Empty) { }
+  explicit CXXStaticCastExpr(EmptyShell Empty, unsigned PathSize)
+    : CXXNamedCastExpr(CXXStaticCastExprClass, Empty, PathSize) { }
+
+public:
+  static CXXStaticCastExpr *Create(ASTContext &Context, QualType T,
+                                   CastKind K, Expr *Op,
+                                   const CXXCastPath *Path,
+                                   TypeSourceInfo *Written, SourceLocation L);
+  static CXXStaticCastExpr *CreateEmpty(ASTContext &Context,
+                                        unsigned PathSize);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXStaticCastExprClass;
@@ -180,15 +188,23 @@ public:
 /// This expression node represents a dynamic cast, e.g.,
 /// @c dynamic_cast<Derived*>(BasePtr).
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
-public:
   CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op, 
-                     CXXBaseSpecifierArray BasePath, TypeSourceInfo *writtenTy,
+                     unsigned pathSize, TypeSourceInfo *writtenTy,
                      SourceLocation l)
-    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, BasePath,
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, pathSize,
                        writtenTy, l) {}
 
-  explicit CXXDynamicCastExpr(EmptyShell Empty)
-    : CXXNamedCastExpr(CXXDynamicCastExprClass, Empty) { }
+  explicit CXXDynamicCastExpr(EmptyShell Empty, unsigned pathSize)
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, Empty, pathSize) { }
+
+public:
+  static CXXDynamicCastExpr *Create(ASTContext &Context, QualType T,
+                                    CastKind Kind, Expr *Op,
+                                    const CXXCastPath *Path,
+                                    TypeSourceInfo *Written, SourceLocation L);
+  
+  static CXXDynamicCastExpr *CreateEmpty(ASTContext &Context,
+                                         unsigned pathSize);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDynamicCastExprClass;
@@ -203,15 +219,22 @@ public:
 /// This expression node represents a reinterpret cast, e.g.,
 /// @c reinterpret_cast<int>(VoidPtr).
 class CXXReinterpretCastExpr : public CXXNamedCastExpr {
-public:
   CXXReinterpretCastExpr(QualType ty, CastKind kind, Expr *op, 
-                         CXXBaseSpecifierArray BasePath,
+                         unsigned pathSize,
                          TypeSourceInfo *writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op, BasePath,
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op, pathSize,
                        writtenTy, l) {}
 
-  explicit CXXReinterpretCastExpr(EmptyShell Empty)
-    : CXXNamedCastExpr(CXXReinterpretCastExprClass, Empty) { }
+  CXXReinterpretCastExpr(EmptyShell Empty, unsigned pathSize)
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, Empty, pathSize) { }
+
+public:
+  static CXXReinterpretCastExpr *Create(ASTContext &Context, QualType T,
+                                        CastKind Kind, Expr *Op,
+                                        const CXXCastPath *Path,
+                                 TypeSourceInfo *WrittenTy, SourceLocation L);
+  static CXXReinterpretCastExpr *CreateEmpty(ASTContext &Context,
+                                             unsigned pathSize);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXReinterpretCastExprClass;
@@ -225,14 +248,18 @@ public:
 /// This expression node represents a const cast, e.g.,
 /// @c const_cast<char*>(PtrToConstChar).
 class CXXConstCastExpr : public CXXNamedCastExpr {
-public:
   CXXConstCastExpr(QualType ty, Expr *op, TypeSourceInfo *writtenTy,
                    SourceLocation l)
     : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, 
-                       CXXBaseSpecifierArray(), writtenTy, l) {}
+                       0, writtenTy, l) {}
 
   explicit CXXConstCastExpr(EmptyShell Empty)
-    : CXXNamedCastExpr(CXXConstCastExprClass, Empty) { }
+    : CXXNamedCastExpr(CXXConstCastExprClass, Empty, 0) { }
+
+public:
+  static CXXConstCastExpr *Create(ASTContext &Context, QualType T, Expr *Op,
+                                  TypeSourceInfo *WrittenTy, SourceLocation L);
+  static CXXConstCastExpr *CreateEmpty(ASTContext &Context);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstCastExprClass;
@@ -788,17 +815,27 @@ public:
 class CXXFunctionalCastExpr : public ExplicitCastExpr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
-public:
+
   CXXFunctionalCastExpr(QualType ty, TypeSourceInfo *writtenTy,
                         SourceLocation tyBeginLoc, CastKind kind,
-                        Expr *castExpr, CXXBaseSpecifierArray BasePath,
+                        Expr *castExpr, unsigned pathSize,
                         SourceLocation rParenLoc) 
     : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, 
-                       BasePath, writtenTy),
+                       pathSize, writtenTy),
       TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
-  explicit CXXFunctionalCastExpr(EmptyShell Shell)
-    : ExplicitCastExpr(CXXFunctionalCastExprClass, Shell) { }
+  explicit CXXFunctionalCastExpr(EmptyShell Shell, unsigned PathSize)
+    : ExplicitCastExpr(CXXFunctionalCastExprClass, Shell, PathSize) { }
+
+public:
+  static CXXFunctionalCastExpr *Create(ASTContext &Context, QualType T,
+                                       TypeSourceInfo *Written,
+                                       SourceLocation TyBeginLoc,
+                                       CastKind Kind, Expr *Op,
+                                       const CXXCastPath *Path,
+                                       SourceLocation RPLoc);
+  static CXXFunctionalCastExpr *CreateEmpty(ASTContext &Context,
+                                            unsigned PathSize);
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }

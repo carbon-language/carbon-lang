@@ -747,6 +747,66 @@ Expr *CastExpr::getSubExprAsWritten() {
   return SubExpr;
 }
 
+CXXBaseSpecifier **CastExpr::path_buffer() {
+  switch (getStmtClass()) {
+#define ABSTRACT_STMT(x)
+#define CASTEXPR(Type, Base) \
+  case Stmt::Type##Class: \
+    return reinterpret_cast<CXXBaseSpecifier**>(static_cast<Type*>(this)+1);
+#define STMT(Type, Base)
+#include "clang/AST/StmtNodes.inc"
+  default:
+    llvm_unreachable("non-cast expressions not possible here");
+    return 0;
+  }
+}
+
+void CastExpr::setCastPath(const CXXCastPath &Path) {
+  assert(Path.size() == path_size());
+  memcpy(path_buffer(), Path.data(), Path.size() * sizeof(CXXBaseSpecifier*));
+}
+
+ImplicitCastExpr *ImplicitCastExpr::Create(ASTContext &C, QualType T,
+                                           CastKind Kind, Expr *Operand,
+                                           const CXXCastPath *BasePath,
+                                           ResultCategory Cat) {
+  unsigned PathSize = (BasePath ? BasePath->size() : 0);
+  void *Buffer =
+    C.Allocate(sizeof(ImplicitCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+  ImplicitCastExpr *E =
+    new (Buffer) ImplicitCastExpr(T, Kind, Operand, PathSize, Cat);
+  if (PathSize) E->setCastPath(*BasePath);
+  return E;
+}
+
+ImplicitCastExpr *ImplicitCastExpr::CreateEmpty(ASTContext &C,
+                                                unsigned PathSize) {
+  void *Buffer =
+    C.Allocate(sizeof(ImplicitCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+  return new (Buffer) ImplicitCastExpr(EmptyShell(), PathSize);
+}
+
+
+CStyleCastExpr *CStyleCastExpr::Create(ASTContext &C, QualType T,
+                                       CastKind K, Expr *Op,
+                                       const CXXCastPath *BasePath,
+                                       TypeSourceInfo *WrittenTy,
+                                       SourceLocation L, SourceLocation R) {
+  unsigned PathSize = (BasePath ? BasePath->size() : 0);
+  void *Buffer =
+    C.Allocate(sizeof(CStyleCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+  CStyleCastExpr *E =
+    new (Buffer) CStyleCastExpr(T, K, Op, PathSize, WrittenTy, L, R);
+  if (PathSize) E->setCastPath(*BasePath);
+  return E;
+}
+
+CStyleCastExpr *CStyleCastExpr::CreateEmpty(ASTContext &C, unsigned PathSize) {
+  void *Buffer =
+    C.Allocate(sizeof(CStyleCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+  return new (Buffer) CStyleCastExpr(EmptyShell(), PathSize);
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {

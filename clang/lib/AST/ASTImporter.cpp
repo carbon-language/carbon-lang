@@ -123,6 +123,8 @@ namespace {
     Expr *VisitCompoundAssignOperator(CompoundAssignOperator *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
     Expr *VisitCStyleCastExpr(CStyleCastExpr *E);
+
+    bool ImportCasePath(CastExpr *E, CXXCastPath &Path);
   };
 }
 
@@ -2886,6 +2888,13 @@ Expr *ASTNodeImporter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
                                           Importer.Import(E->getOperatorLoc()));
 }
 
+bool ImportCastPath(CastExpr *E, CXXCastPath &Path) {
+  if (E->path_empty()) return false;
+
+  // TODO: import cast paths
+  return true;
+}
+
 Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   QualType T = Importer.Import(E->getType());
   if (T.isNull())
@@ -2894,13 +2903,13 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   Expr *SubExpr = Importer.Import(E->getSubExpr());
   if (!SubExpr)
     return 0;
-  
-  // FIXME: Initialize the base path.
-  assert(E->getBasePath().empty() && "FIXME: Must copy base path!");
-  CXXBaseSpecifierArray BasePath;
-  return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
-                                                        SubExpr, BasePath,
-                                                        E->getCategory());
+
+  CXXCastPath BasePath;
+  if (ImportCastPath(E, BasePath))
+    return 0;
+
+  return ImplicitCastExpr::Create(Importer.getToContext(), T, E->getCastKind(),
+                                  SubExpr, &BasePath, E->getCategory());
 }
 
 Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
@@ -2916,13 +2925,14 @@ Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   if (!TInfo && E->getTypeInfoAsWritten())
     return 0;
   
-  // FIXME: Initialize the base path.
-  assert(E->getBasePath().empty() && "FIXME: Must copy base path!");
-  CXXBaseSpecifierArray BasePath;
-  return new (Importer.getToContext()) CStyleCastExpr(T, E->getCastKind(),
-                                                      SubExpr, BasePath, TInfo,
-                                            Importer.Import(E->getLParenLoc()),
-                                            Importer.Import(E->getRParenLoc()));
+  CXXCastPath BasePath;
+  if (ImportCastPath(E, BasePath))
+    return 0;
+
+  return CStyleCastExpr::Create(Importer.getToContext(), T, E->getCastKind(),
+                                SubExpr, &BasePath, TInfo,
+                                Importer.Import(E->getLParenLoc()),
+                                Importer.Import(E->getRParenLoc()));
 }
 
 ASTImporter::ASTImporter(Diagnostic &Diags,

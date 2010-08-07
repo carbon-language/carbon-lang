@@ -22,13 +22,13 @@ using namespace CodeGen;
 static uint64_t 
 ComputeNonVirtualBaseClassOffset(ASTContext &Context, 
                                  const CXXRecordDecl *DerivedClass,
-                                 CXXBaseSpecifierArray::iterator Start,
-                                 CXXBaseSpecifierArray::iterator End) {
+                                 CastExpr::path_const_iterator Start,
+                                 CastExpr::path_const_iterator End) {
   uint64_t Offset = 0;
   
   const CXXRecordDecl *RD = DerivedClass;
   
-  for (CXXBaseSpecifierArray::iterator I = Start; I != End; ++I) {
+  for (CastExpr::path_const_iterator I = Start; I != End; ++I) {
     const CXXBaseSpecifier *Base = *I;
     assert(!Base->isVirtual() && "Should not see virtual bases here!");
 
@@ -50,12 +50,13 @@ ComputeNonVirtualBaseClassOffset(ASTContext &Context,
 
 llvm::Constant *
 CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
-                                        const CXXBaseSpecifierArray &BasePath) {
-  assert(!BasePath.empty() && "Base path should not be empty!");
+                                   CastExpr::path_const_iterator PathBegin,
+                                   CastExpr::path_const_iterator PathEnd) {
+  assert(PathBegin != PathEnd && "Base path should not be empty!");
 
   uint64_t Offset = 
-    ComputeNonVirtualBaseClassOffset(getContext(), ClassDecl, 
-                                     BasePath.begin(), BasePath.end());
+    ComputeNonVirtualBaseClassOffset(getContext(), ClassDecl,
+                                     PathBegin, PathEnd);
   if (!Offset)
     return 0;
   
@@ -131,11 +132,12 @@ ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
 llvm::Value *
 CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value, 
                                        const CXXRecordDecl *Derived,
-                                       const CXXBaseSpecifierArray &BasePath, 
+                                       CastExpr::path_const_iterator PathBegin,
+                                       CastExpr::path_const_iterator PathEnd,
                                        bool NullCheckValue) {
-  assert(!BasePath.empty() && "Base path should not be empty!");
+  assert(PathBegin != PathEnd && "Base path should not be empty!");
 
-  CXXBaseSpecifierArray::iterator Start = BasePath.begin();
+  CastExpr::path_const_iterator Start = PathBegin;
   const CXXRecordDecl *VBase = 0;
   
   // Get the virtual base.
@@ -147,11 +149,11 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   
   uint64_t NonVirtualOffset = 
     ComputeNonVirtualBaseClassOffset(getContext(), VBase ? VBase : Derived,
-                                     Start, BasePath.end());
+                                     Start, PathEnd);
 
   // Get the base pointer type.
   const llvm::Type *BasePtrTy = 
-    ConvertType((BasePath.end()[-1])->getType())->getPointerTo();
+    ConvertType((PathEnd[-1])->getType())->getPointerTo();
   
   if (!NonVirtualOffset && !VBase) {
     // Just cast back.
@@ -206,16 +208,17 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 llvm::Value *
 CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
                                           const CXXRecordDecl *Derived,
-                                          const CXXBaseSpecifierArray &BasePath,
+                                        CastExpr::path_const_iterator PathBegin,
+                                          CastExpr::path_const_iterator PathEnd,
                                           bool NullCheckValue) {
-  assert(!BasePath.empty() && "Base path should not be empty!");
+  assert(PathBegin != PathEnd && "Base path should not be empty!");
 
   QualType DerivedTy =
     getContext().getCanonicalType(getContext().getTagDeclType(Derived));
   const llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
   
   llvm::Value *NonVirtualOffset =
-    CGM.GetNonVirtualBaseClassOffset(Derived, BasePath);
+    CGM.GetNonVirtualBaseClassOffset(Derived, PathBegin, PathEnd);
   
   if (!NonVirtualOffset) {
     // No offset, we can just cast back.

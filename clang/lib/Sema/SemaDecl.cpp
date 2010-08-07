@@ -6803,11 +6803,11 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
 
     // Adjust the Expr initializer and type.
     if (ECD->getInitExpr())
-      ECD->setInitExpr(new (Context) ImplicitCastExpr(NewTy,
-                                                      CastExpr::CK_IntegralCast,
-                                                      ECD->getInitExpr(),
-                                                      CXXBaseSpecifierArray(),
-                                                     ImplicitCastExpr::RValue));
+      ECD->setInitExpr(ImplicitCastExpr::Create(Context, NewTy,
+                                                CastExpr::CK_IntegralCast,
+                                                ECD->getInitExpr(),
+                                                /*base paths*/ 0,
+                                                ImplicitCastExpr::RValue));
     if (getLangOptions().CPlusPlus)
       // C++ [dcl.enum]p4: Following the closing brace of an
       // enum-specifier, each enumerator has the type of its

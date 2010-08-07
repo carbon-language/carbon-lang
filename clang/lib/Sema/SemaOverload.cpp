@@ -1663,7 +1663,7 @@ bool Sema::FunctionArgTypesAreEqual(FunctionProtoType*  OldType,
 /// error, or returns false otherwise.
 bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
                                   CastExpr::CastKind &Kind,
-                                  CXXBaseSpecifierArray& BasePath,
+                                  CXXCastPath& BasePath,
                                   bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
 
@@ -1755,7 +1755,7 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
                                         CastExpr::CastKind &Kind,
-                                        CXXBaseSpecifierArray &BasePath,
+                                        CXXCastPath &BasePath,
                                         bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
   const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
@@ -3725,10 +3725,10 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // well-formed.
   DeclRefExpr ConversionRef(Conversion, Conversion->getType(),
                             From->getLocStart());
-  ImplicitCastExpr ConversionFn(Context.getPointerType(Conversion->getType()),
+  ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
+                                Context.getPointerType(Conversion->getType()),
                                 CastExpr::CK_FunctionToPointerDecay,
-                                &ConversionRef, CXXBaseSpecifierArray(),
-                                ImplicitCastExpr::RValue);
+                                &ConversionRef, ImplicitCastExpr::RValue);
 
   // Note that it is safe to allocate CallExpr on the stack here because
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
@@ -7636,13 +7636,14 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     assert(Context.hasSameType(ICE->getSubExpr()->getType(), 
                                SubExpr->getType()) &&
            "Implicit cast type cannot be determined from overload");
+    assert(ICE->path_empty() && "fixing up hierarchy conversion?");
     if (SubExpr == ICE->getSubExpr())
       return ICE->Retain();
     
-    return new (Context) ImplicitCastExpr(ICE->getType(), 
-                                          ICE->getCastKind(),
-                                          SubExpr, CXXBaseSpecifierArray(),
-                                          ICE->getCategory());
+    return ImplicitCastExpr::Create(Context, ICE->getType(), 
+                                    ICE->getCastKind(),
+                                    SubExpr, 0,
+                                    ICE->getCategory());
   } 
   
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {

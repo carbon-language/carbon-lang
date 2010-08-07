@@ -403,8 +403,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     // Objective-C pointer types, we can always bit cast the RHS in these cases.
     if (getContext().getCanonicalType(Ivar->getType()) !=
         getContext().getCanonicalType(ArgDecl->getType())) {
-      ImplicitCastExpr ArgCasted(Ivar->getType(), CastExpr::CK_BitCast, &Arg,
-                                 CXXBaseSpecifierArray(),
+      ImplicitCastExpr ArgCasted(ImplicitCastExpr::OnStack,
+                                 Ivar->getType(), CastExpr::CK_BitCast, &Arg,
                                  ImplicitCastExpr::RValue);
       BinaryOperator Assign(&IvarRef, &ArgCasted, BinaryOperator::Assign,
                             Ivar->getType(), Loc);

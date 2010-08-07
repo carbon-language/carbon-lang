@@ -720,7 +720,7 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths) {
 }
 
 void Sema::BuildBasePathArray(const CXXBasePaths &Paths, 
-                              CXXBaseSpecifierArray &BasePathArray) {
+                              CXXCastPath &BasePathArray) {
   assert(BasePathArray.empty() && "Base path array must be empty!");
   assert(Paths.isRecordingPaths() && "Must record paths!");
   
@@ -739,14 +739,14 @@ void Sema::BuildBasePathArray(const CXXBasePaths &Paths,
 
   // Now add all bases.
   for (unsigned I = Start, E = Path.size(); I != E; ++I)
-    BasePathArray.push_back(Path[I].Base);
+    BasePathArray.push_back(const_cast<CXXBaseSpecifier*>(Path[I].Base));
 }
 
 /// \brief Determine whether the given base path includes a virtual
 /// base class.
-bool Sema::BasePathInvolvesVirtualBase(const CXXBaseSpecifierArray &BasePath) {
-  for (CXXBaseSpecifierArray::iterator B = BasePath.begin(), 
-                                    BEnd = BasePath.end();
+bool Sema::BasePathInvolvesVirtualBase(const CXXCastPath &BasePath) {
+  for (CXXCastPath::const_iterator B = BasePath.begin(), 
+                                BEnd = BasePath.end();
        B != BEnd; ++B)
     if ((*B)->isVirtual())
       return true;
@@ -768,7 +768,7 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                    unsigned AmbigiousBaseConvID,
                                    SourceLocation Loc, SourceRange Range,
                                    DeclarationName Name,
-                                   CXXBaseSpecifierArray *BasePath) {
+                                   CXXCastPath *BasePath) {
   // First, determine whether the path from Derived to Base is
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
@@ -826,7 +826,7 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
 bool
 Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                    SourceLocation Loc, SourceRange Range,
-                                   CXXBaseSpecifierArray *BasePath,
+                                   CXXCastPath *BasePath,
                                    bool IgnoreAccess) {
   return CheckDerivedToBaseConversion(Derived, Base,
                                       IgnoreAccess ? 0
@@ -1534,10 +1534,12 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     QualType ArgTy = 
       SemaRef.Context.getQualifiedType(BaseSpec->getType().getUnqualifiedType(), 
                                        ParamType.getQualifiers());
+
+    CXXCastPath BasePath;
+    BasePath.push_back(BaseSpec);
     SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
                               CastExpr::CK_UncheckedDerivedToBase,
-                              ImplicitCastExpr::LValue,
-                              CXXBaseSpecifierArray(BaseSpec));
+                              ImplicitCastExpr::LValue, &BasePath);
 
     InitializationKind InitKind
       = InitializationKind::CreateDirect(Constructor->getLocation(),
@@ -4856,12 +4858,15 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       continue;
     }
 
+    CXXCastPath BasePath;
+    BasePath.push_back(Base);
+
     // Construct the "from" expression, which is an implicit cast to the
     // appropriately-qualified base type.
     Expr *From = OtherRef->Retain();
     ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
                       CastExpr::CK_UncheckedDerivedToBase,
-                      ImplicitCastExpr::LValue, CXXBaseSpecifierArray(Base));
+                      ImplicitCastExpr::LValue, &BasePath);
 
     // Dereference "this".
     OwningExprResult To = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref,
@@ -4873,7 +4878,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                       Context.getCVRQualifiedType(BaseType,
                                       CopyAssignOperator->getTypeQualifiers()),
                       CastExpr::CK_UncheckedDerivedToBase, 
-                      ImplicitCastExpr::LValue, CXXBaseSpecifierArray(Base));
+                      ImplicitCastExpr::LValue, &BasePath);
     To = Owned(ToE);
 
     // Build the copy.

@@ -1074,12 +1074,14 @@ public:
   /// load of 'this' and returns address of the base class.
   llvm::Value *GetAddressOfBaseClass(llvm::Value *Value, 
                                      const CXXRecordDecl *Derived,
-                                     const CXXBaseSpecifierArray &BasePath, 
+                                     CastExpr::path_const_iterator PathBegin,
+                                     CastExpr::path_const_iterator PathEnd,
                                      bool NullCheckValue);
 
   llvm::Value *GetAddressOfDerivedClass(llvm::Value *Value,
                                         const CXXRecordDecl *Derived,
-                                        const CXXBaseSpecifierArray &BasePath,
+                                        CastExpr::path_const_iterator PathBegin,
+                                        CastExpr::path_const_iterator PathEnd,
                                         bool NullCheckValue);
 
   llvm::Value *GetVirtualBaseClassOffset(llvm::Value *This,

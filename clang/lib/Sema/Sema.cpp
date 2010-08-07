@@ -159,7 +159,7 @@ Sema::~Sema() {
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
                              CastExpr::CastKind Kind, 
                              ImplicitCastExpr::ResultCategory Category,
-                             CXXBaseSpecifierArray BasePath) {
+                             const CXXCastPath *BasePath) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 
@@ -178,7 +178,7 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   // If this is a derived-to-base cast to a through a virtual base, we
   // need a vtable.
   if (Kind == CastExpr::CK_DerivedToBase && 
-      BasePathInvolvesVirtualBase(BasePath)) {
+      BasePathInvolvesVirtualBase(*BasePath)) {
     QualType T = Expr->getType();
     if (const PointerType *Pointer = T->getAs<PointerType>())
       T = Pointer->getPointeeType();
@@ -188,14 +188,14 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   }
 
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
-    if (ImpCast->getCastKind() == Kind && BasePath.empty()) {
+    if (ImpCast->getCastKind() == Kind && (!BasePath || BasePath->empty())) {
       ImpCast->setType(Ty);
       ImpCast->setCategory(Category);
       return;
     }
   }
 
-  Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, BasePath, Category);
+  Expr = ImplicitCastExpr::Create(Context, Ty, Kind, Expr, BasePath, Category);
 }
 
 ImplicitCastExpr::ResultCategory Sema::CastCategory(Expr *E) {
