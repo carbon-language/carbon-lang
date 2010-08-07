@@ -18,7 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include <deque>
+#include <vector>
 #include <map>
 
 //===----------------------------------------------------------------------===//
@@ -138,30 +138,28 @@ public:
 //===----------------------------------------------------------------------===//
 // PMStack
 //
-/// PMStack
+/// PMStack - This class implements a stack data structure of PMDataManager
+/// pointers.
+///
 /// Top level pass managers (see PassManager.cpp) maintain active Pass Managers 
 /// using PMStack. Each Pass implements assignPassManager() to connect itself
 /// with appropriate manager. assignPassManager() walks PMStack to find
 /// suitable manager.
-///
-/// PMStack is just a wrapper around standard deque that overrides pop() and
-/// push() methods.
 class PMStack {
 public:
-  typedef std::deque<PMDataManager *>::reverse_iterator iterator;
-  iterator begin() { return S.rbegin(); }
-  iterator end() { return S.rend(); }
-
-  void handleLastUserOverflow();
+  typedef std::vector<PMDataManager *>::const_reverse_iterator iterator;
+  iterator begin() const { return S.rbegin(); }
+  iterator end() const { return S.rend(); }
 
   void pop();
-  inline PMDataManager *top() { return S.back(); }
+  PMDataManager *top() const { return S.back(); }
   void push(PMDataManager *PM);
-  inline bool empty() { return S.empty(); }
+  bool empty() const { return S.empty(); }
 
-  void dump();
+  void dump() const;
+
 private:
-  std::deque<PMDataManager *> S;
+  std::vector<PMDataManager *> S;
 };
 
 
