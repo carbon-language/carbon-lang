@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
@@ -85,37 +86,6 @@ void BugDriver::EmitProgressBitcode(const Module *M,
   outs() << getPassesString(PassesToRun) << "\n";
 }
 
-int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
-  std::string ErrInfo;
-  raw_fd_ostream OutFile(ChildOutput.c_str(), ErrInfo,
-                         raw_fd_ostream::F_Binary);
-  if (!ErrInfo.empty()) {
-    errs() << "Error opening bitcode file: " << ChildOutput << "\n";
-    return 1;
-  }
-
-  PassManager PM;
-  // Make sure that the appropriate target data is always used...
-  PM.add(new TargetData(Program));
-
-  for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
-    if (Passes[i]->getNormalCtor())
-      PM.add(Passes[i]->getNormalCtor()());
-    else
-      errs() << "Cannot create pass yet: " << Passes[i]->getPassName() << "\n";
-  }
-  // Check that the module is well formed on completion of optimization
-  PM.add(createVerifierPass());
-
-  // Write bitcode out to disk as the last step...
-  PM.add(createBitcodeWriterPass(OutFile));
-
-  // Run all queued passes.
-  PM.run(*Program);
-
-  return 0;
-}
-
 cl::opt<bool> SilencePasses("silence-passes", cl::desc("Suppress output of running passes (both stdout and stderr)"));
 
 /// runPasses - Run the specified passes on Program, outputting a bitcode file
@@ -164,17 +134,25 @@ bool BugDriver::runPasses(Module *Program,
 
   // setup the child process' arguments
   SmallVector<const char*, 8> Args;
-  sys::Path tool = sys::Program::FindProgramByName(ToolName);
+  std::string Opt;
+  llvm::StringRef TN(ToolName);
+  if (TN.find('/') == llvm::StringRef::npos) {
+    Opt = "opt";
+  } else {
+    std::pair<llvm::StringRef, llvm::StringRef> P = TN.rsplit('/');
+    Opt = P.first.str() + "/" + "opt";
+  }
+
+  sys::Path tool = sys::Program::FindProgramByName(Opt);
   if (UseValgrind) {
     Args.push_back("valgrind");
     Args.push_back("--error-exitcode=1");
     Args.push_back("-q");
     Args.push_back(tool.c_str());
   } else
-    Args.push_back(ToolName);
+    Args.push_back(Opt.c_str());
 
-  Args.push_back("-as-child");
-  Args.push_back("-child-output");
+  Args.push_back("-o");
   Args.push_back(OutputFilename.c_str());
   std::vector<std::string> pass_args;
   for (unsigned i = 0, e = PluginLoader::getNumPlugins(); i != e; ++i) {
@@ -191,6 +169,12 @@ bool BugDriver::runPasses(Module *Program,
   for (unsigned i = 0; i < NumExtraArgs; ++i)
     Args.push_back(*ExtraArgs);
   Args.push_back(0);
+
+  DEBUG(errs() << "\nAbout to run:\t";
+        for (unsigned i = 0, e = Args.size()-1; i != e; ++i)
+          errs() << " " << Args[i];
+        errs() << "\n";
+        );
 
   sys::Path prog;
   if (UseValgrind)
