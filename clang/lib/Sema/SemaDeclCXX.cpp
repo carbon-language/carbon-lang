@@ -6797,8 +6797,6 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,
            e = RD->bases_end(); i != e; ++i) {
     const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (i->isVirtual())
-      continue;
     if (Base->getNumVBases() == 0)
       continue;
     MarkVirtualMembersReferenced(Loc, Base);
