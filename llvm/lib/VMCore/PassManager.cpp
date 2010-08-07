@@ -1707,8 +1707,8 @@ void PMStack::push(PMDataManager *PM) {
 }
 
 // Dump content of the pass manager stack.
-void PMStack::dump() {
-  for (std::deque<PMDataManager *>::iterator I = S.begin(),
+void PMStack::dump() const {
+  for (std::vector<PMDataManager *>::const_iterator I = S.begin(),
          E = S.end(); I != E; ++I)
     printf("%s ", (*I)->getAsPass()->getPassName());
 
