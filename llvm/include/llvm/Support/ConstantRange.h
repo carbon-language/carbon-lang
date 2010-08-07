@@ -37,6 +37,8 @@
 
 namespace llvm {
 
+class ConstantInt;
+
 /// ConstantRange - This class represents an range of values.
 ///
 class ConstantRange {
@@ -52,6 +54,7 @@ public:
   /// Initialize a range to hold the single specified value.
   ///
   ConstantRange(const APInt &Value);
+  ConstantRange(const ConstantInt *Value);
 
   /// @brief Initialize a range of values explicitly. This will assert out if
   /// Lower==Upper and Lower != Min or Max value for its type. It will also
