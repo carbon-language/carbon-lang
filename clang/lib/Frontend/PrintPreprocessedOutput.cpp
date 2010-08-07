@@ -137,6 +137,9 @@ public:
   /// MacroDefined - This hook is called whenever a macro definition is seen.
   void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
 
+  /// MacroUndefined - This hook is called whenever a macro #undef is seen.
+  void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
+                      const MacroInfo *MI);
 };
 }  // end anonymous namespace
 
@@ -280,6 +283,16 @@ void PrintPPOutputPPCallbacks::MacroDefined(const IdentifierInfo *II,
   EmittedMacroOnThisLine = true;
 }
 
+void PrintPPOutputPPCallbacks::MacroUndefined(SourceLocation Loc,
+                                              const IdentifierInfo *II,
+                                              const MacroInfo *MI) {
+  // Only print out macro definitions in -dD mode.
+  if (!DumpDefines) return;
+
+  MoveToLine(Loc);
+  OS << "#undef " << II->getName();
+  EmittedMacroOnThisLine = true;
+}
 
 void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
                                              const IdentifierInfo *Kind,

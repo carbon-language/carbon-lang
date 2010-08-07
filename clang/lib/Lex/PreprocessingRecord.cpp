@@ -118,7 +118,8 @@ void PreprocessingRecord::MacroDefined(const IdentifierInfo *II,
   PreprocessedEntities.push_back(Def);
 }
 
-void PreprocessingRecord::MacroUndefined(const IdentifierInfo *II, 
+void PreprocessingRecord::MacroUndefined(SourceLocation Loc,
+                                         const IdentifierInfo *II,
                                          const MacroInfo *MI) {
   llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
     = MacroDefinitions.find(MI);

@@ -1508,7 +1508,8 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
 
   // If the callbacks want to know, tell them about the macro #undef.
   if (Callbacks)
-    Callbacks->MacroUndefined(MacroNameTok.getIdentifierInfo(), MI);
+    Callbacks->MacroUndefined(MacroNameTok.getLocation(),
+                              MacroNameTok.getIdentifierInfo(), MI);
 
   // Free macro definition.
   ReleaseMacroInfo(MI);

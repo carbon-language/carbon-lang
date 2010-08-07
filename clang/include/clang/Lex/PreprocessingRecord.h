@@ -257,7 +257,8 @@ namespace clang {
     
     virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
     virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
-    virtual void MacroUndefined(const IdentifierInfo *II, const MacroInfo *MI);
+    virtual void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
+                                const MacroInfo *MI);
   };
 } // end namespace clang
 

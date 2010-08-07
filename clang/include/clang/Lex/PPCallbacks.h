@@ -89,7 +89,8 @@ public:
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
   /// MI is released immediately following this callback.
-  virtual void MacroUndefined(const IdentifierInfo *II, const MacroInfo *MI) {
+  virtual void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
+                              const MacroInfo *MI) {
   }
 };
 
@@ -149,9 +150,10 @@ public:
     Second->MacroDefined(II, MI);
   }
 
-  virtual void MacroUndefined(const IdentifierInfo *II, const MacroInfo *MI) {
-    First->MacroUndefined(II, MI);
-    Second->MacroUndefined(II, MI);
+  virtual void MacroUndefined(SourceLocation Loc, const IdentifierInfo *II,
+                              const MacroInfo *MI) {
+    First->MacroUndefined(Loc, II, MI);
+    Second->MacroUndefined(Loc, II, MI);
   }
 };
 
