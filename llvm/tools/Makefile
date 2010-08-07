@@ -20,7 +20,7 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli llvm-extract llvm-mc \
-                 bugpoint llvm-bcanalyzer llvm-stub \
+                 bugpoint bugpoint-passes llvm-bcanalyzer llvm-stub \
                  llvmc
 
 # Let users override the set of tools to build from the command line.
