@@ -156,11 +156,11 @@ public:
   // getAnalysisIfAvailable - Return analysis result or null if it doesn't exist
   Pass *getAnalysisIfAvailable(AnalysisID ID, bool Direction) const;
 
+private:
   // AnalysisImpls - This keeps track of which passes implements the interfaces
   // that are required by the current pass (to implement getAnalysis()).
   std::vector<std::pair<AnalysisID, Pass*> > AnalysisImpls;
 
-private:
   // PassManager that is used to resolve analysis info
   PMDataManager &PM;
 };
