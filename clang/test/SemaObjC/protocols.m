@@ -61,3 +61,7 @@
 @protocol B < A > // expected-error{{protocol has circular dependency}}
 @end
 
+@protocol P
+- (int)test:(int)param, ..; // expected-warning{{type specifier missing}} \
+                      // expected-error{{expected ';' after method prototype}}
+@end

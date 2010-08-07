@@ -1532,7 +1532,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       Param->setInvalidDecl();
     }
     Param->setDeclContext(ObjCMethod);
-    IdResolver.RemoveDecl(Param);
+    if (Param->getDeclName())
+      IdResolver.RemoveDecl(Param);
     Params.push_back(Param);
   }
   
