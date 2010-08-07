@@ -14,7 +14,7 @@
 #ifndef LLVM_PASSMANAGERS_H
 #define LLVM_PASSMANAGERS_H
 
-#include "llvm/PassManager.h"
+#include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
@@ -96,6 +96,7 @@ namespace llvm {
   class StringRef;
   class Value;
   class Timer;
+  class PMDataManager;
 
 /// FunctionPassManager and PassManager, two top level managers, serve 
 /// as the public interface of pass manager infrastructure.

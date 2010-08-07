@@ -29,11 +29,7 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
-#include "llvm/System/DataTypes.h"
-
 #include <string>
-#include <utility>
-#include <vector>
 
 namespace llvm {
 

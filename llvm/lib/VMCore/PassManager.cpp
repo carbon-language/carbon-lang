@@ -13,6 +13,7 @@
 
 
 #include "llvm/PassManagers.h"
+#include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
