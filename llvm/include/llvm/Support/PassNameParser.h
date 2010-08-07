@@ -23,11 +23,11 @@
 #ifndef LLVM_SUPPORT_PASS_NAME_PARSER_H
 #define LLVM_SUPPORT_PASS_NAME_PARSER_H
 
+#include "llvm/Pass.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Pass.h"
-#include <algorithm>
 #include <cstring>
 
 namespace llvm {
@@ -42,8 +42,7 @@ class PassNameParser : public PassRegistrationListener,
 public:
   PassNameParser() : Opt(0) {}
   virtual ~PassNameParser();
-                         
-                         
+
   void initialize(cl::Option &O) {
     Opt = &O;
     cl::parser<const PassInfo*>::initialize(O);
@@ -77,18 +76,20 @@ public:
   }
   virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
 
-  // ValLessThan - Provide a sorting comparator for Values elements...
-  typedef PassNameParser::OptionInfo  ValType;
-  static bool ValLessThan(const ValType &VT1, const ValType &VT2) {
-    return std::string(VT1.Name) < std::string(VT2.Name);
-  }
-
   // printOptionInfo - Print out information about this option.  Override the
   // default implementation to sort the table before we print...
   virtual void printOptionInfo(const cl::Option &O, size_t GlobalWidth) const {
     PassNameParser *PNP = const_cast<PassNameParser*>(this);
-    std::sort(PNP->Values.begin(), PNP->Values.end(), ValLessThan);
+    array_pod_sort(PNP->Values.begin(), PNP->Values.end(), ValLessThan);
     cl::parser<const PassInfo*>::printOptionInfo(O, GlobalWidth);
+  }
+
+private:
+  // ValLessThan - Provide a sorting comparator for Values elements...
+  static int ValLessThan(const void *VT1, const void *VT2) {
+    typedef PassNameParser::OptionInfo ValType;
+    return std::strcmp(static_cast<const ValType *>(VT1)->Name,
+                       static_cast<const ValType *>(VT2)->Name);
   }
 };
 
