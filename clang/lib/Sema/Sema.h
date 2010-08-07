@@ -4517,7 +4517,8 @@ public:
 
   ReferenceCompareResult CompareReferenceRelationship(SourceLocation Loc,
                                                       QualType T1, QualType T2,
-                                                      bool& DerivedToBase);
+                                                      bool &DerivedToBase,
+                                                      bool &ObjCConversion);
 
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.

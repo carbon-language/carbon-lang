@@ -2035,6 +2035,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_ZeroInitialization:
   case SK_CAssignment:
   case SK_StringInit:
+  case SK_ObjCObjectConversion:
     break;
     
   case SK_ConversionSequence:
@@ -2201,6 +2202,13 @@ void InitializationSequence::AddStringInitStep(QualType T) {
   Steps.push_back(S);
 }
 
+void InitializationSequence::AddObjCObjectConversionStep(QualType T) {
+  Step S;
+  S.Kind = SK_ObjCObjectConversion;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
 void InitializationSequence::SetOverloadFailure(FailureKind Failure, 
                                                 OverloadingResult Result) {
   SequenceKind = FailedSequence;
@@ -2275,10 +2283,13 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   QualType T2 = cv2T2.getUnqualifiedType();
 
   bool DerivedToBase;
+  bool ObjCConversion;
   assert(!S.CompareReferenceRelationship(Initializer->getLocStart(), 
-                                         T1, T2, DerivedToBase) &&
+                                         T1, T2, DerivedToBase,
+                                         ObjCConversion) &&
          "Must have incompatible references when binding via conversion");
   (void)DerivedToBase;
+  (void)ObjCConversion;
 
   // Build the candidate set directly in the initialization sequence
   // structure, so that it will persist if we fail.
@@ -2400,10 +2411,11 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
         ImplicitCastExpr::LValue : ImplicitCastExpr::XValue;
 
   bool NewDerivedToBase = false;
+  bool NewObjCConversion = false;
   Sema::ReferenceCompareResult NewRefRelationship
     = S.CompareReferenceRelationship(DeclLoc, T1, 
                                      T2.getNonLValueExprType(S.Context),
-                                     NewDerivedToBase);
+                                     NewDerivedToBase, NewObjCConversion);
   if (NewRefRelationship == Sema::Ref_Incompatible) {
     // If the type we've converted to is not reference-related to the
     // type we're looking for, then there is another conversion step
@@ -2418,8 +2430,12 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     Sequence.AddDerivedToBaseCastStep(
                                 S.Context.getQualifiedType(T1,
                                   T2.getNonReferenceType().getQualifiers()), 
-                                  Category);
-  
+                                      Category);
+  else if (NewObjCConversion)
+    Sequence.AddObjCObjectConversionStep(
+                                S.Context.getQualifiedType(T1,
+                                  T2.getNonReferenceType().getQualifiers()));
+
   if (cv1T1.getQualifiers() != T2.getNonReferenceType().getQualifiers())
     Sequence.AddQualificationConversionStep(cv1T1, Category);
   
@@ -2467,9 +2483,11 @@ static void TryReferenceInitialization(Sema &S,
   bool isLValueRef = DestType->isLValueReferenceType();
   bool isRValueRef = !isLValueRef;
   bool DerivedToBase = false;
+  bool ObjCConversion = false;
   Expr::Classification InitCategory = Initializer->Classify(S.Context);
   Sema::ReferenceCompareResult RefRelationship
-    = S.CompareReferenceRelationship(DeclLoc, cv1T1, cv2T2, DerivedToBase);
+    = S.CompareReferenceRelationship(DeclLoc, cv1T1, cv2T2, DerivedToBase,
+                                     ObjCConversion);
 
   // C++0x [dcl.init.ref]p5:
   //   A reference to type "cv1 T1" is initialized by an expression of type 
@@ -2497,6 +2515,10 @@ static void TryReferenceInitialization(Sema &S,
         Sequence.AddDerivedToBaseCastStep(
                          S.Context.getQualifiedType(T1, T2Quals), 
                          ImplicitCastExpr::LValue);
+      else if (ObjCConversion)
+        Sequence.AddObjCObjectConversionStep(
+                                     S.Context.getQualifiedType(T1, T2Quals));
+
       if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1,ImplicitCastExpr::LValue);
       bool BindingTemporary = T1Quals.hasConst() && !T1Quals.hasVolatile() &&
@@ -2577,6 +2599,10 @@ static void TryReferenceInitialization(Sema &S,
                          S.Context.getQualifiedType(T1, T2Quals), 
                          isXValue ? ImplicitCastExpr::XValue
                                   : ImplicitCastExpr::RValue);
+      else if (ObjCConversion)
+        Sequence.AddObjCObjectConversionStep(
+                                     S.Context.getQualifiedType(T1, T2Quals));
+
       if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1,
                      isXValue ? ImplicitCastExpr::XValue
@@ -3546,6 +3572,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_ListInitialization:
   case SK_CAssignment:
   case SK_StringInit:
+  case SK_ObjCObjectConversion:
     assert(Args.size() == 1);
     CurInit = Sema::OwningExprResult(S, ((Expr **)(Args.get()))[0]->Retain());
     if (CurInit.isInvalid())
@@ -3926,6 +3953,14 @@ InitializationSequence::Perform(Sema &S,
       CheckStringInit(CurInitExpr, ResultType ? *ResultType : Ty, S);
       break;
     }
+
+    case SK_ObjCObjectConversion:
+      S.ImpCastExprToType(CurInitExpr, Step->Type, 
+                          CastExpr::CK_ObjCObjectLValueCast,
+                          S.CastCategory(CurInitExpr));
+      CurInit.release();
+      CurInit = S.Owned(CurInitExpr);
+      break;
     }
   }
   
@@ -4391,6 +4426,10 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
       
     case SK_StringInit:
       OS << "string initialization";
+      break;
+
+    case SK_ObjCObjectConversion:
+      OS << "Objective-C object conversion";
       break;
     }
   }

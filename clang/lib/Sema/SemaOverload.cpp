@@ -2575,7 +2575,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 Sema::ReferenceCompareResult
 Sema::CompareReferenceRelationship(SourceLocation Loc,
                                    QualType OrigT1, QualType OrigT2,
-                                   bool& DerivedToBase) {
+                                   bool &DerivedToBase,
+                                   bool &ObjCConversion) {
   assert(!OrigT1->isReferenceType() &&
     "T1 must be the pointee type of the reference type");
   assert(!OrigT2->isReferenceType() && "T2 cannot be a reference type");
@@ -2590,11 +2591,17 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   //   Given types "cv1 T1" and "cv2 T2," "cv1 T1" is
   //   reference-related to "cv2 T2" if T1 is the same type as T2, or
   //   T1 is a base class of T2.
-  if (UnqualT1 == UnqualT2)
-    DerivedToBase = false;
-  else if (!RequireCompleteType(Loc, OrigT2, PDiag()) &&
+  DerivedToBase = false;
+  ObjCConversion = false;
+  if (UnqualT1 == UnqualT2) {
+    // Nothing to do.
+  } else if (!RequireCompleteType(Loc, OrigT2, PDiag()) &&
            IsDerivedFrom(UnqualT2, UnqualT1))
     DerivedToBase = true;
+  else if (UnqualT1->isObjCObjectOrInterfaceType() &&
+           UnqualT2->isObjCObjectOrInterfaceType() &&
+           Context.canBindObjCObjectType(UnqualT1, UnqualT2))
+    ObjCConversion = true;
   else
     return Ref_Incompatible;
 
@@ -2741,9 +2748,11 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   // Compute some basic properties of the types and the initializer.
   bool isRValRef = DeclType->isRValueReferenceType();
   bool DerivedToBase = false;
+  bool ObjCConversion = false;
   Expr::Classification InitCategory = Init->Classify(S.Context);
   Sema::ReferenceCompareResult RefRelationship
-    = S.CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
+    = S.CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase,
+                                     ObjCConversion);
 
 
   // C++0x [dcl.init.ref]p5:
@@ -2769,7 +2778,9 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
       //   derived-to-base Conversion (13.3.3.1).
       ICS.setStandard();
       ICS.Standard.First = ICK_Identity;
-      ICS.Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
+      ICS.Standard.Second = DerivedToBase? ICK_Derived_To_Base
+                         : ObjCConversion? ICK_Compatible_Conversion
+                         : ICK_Identity;
       ICS.Standard.Third = ICK_Identity;
       ICS.Standard.FromTypePtr = T2.getAsOpaquePtr();
       ICS.Standard.setToType(0, T2);
@@ -2857,7 +2868,9 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
       RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
     ICS.setStandard();
     ICS.Standard.First = ICK_Identity;
-    ICS.Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
+    ICS.Standard.Second = DerivedToBase? ICK_Derived_To_Base 
+                        : ObjCConversion? ICK_Compatible_Conversion
+                        : ICK_Identity;
     ICS.Standard.Third = ICK_Identity;
     ICS.Standard.FromTypePtr = T2.getAsOpaquePtr();
     ICS.Standard.setToType(0, T2);

@@ -925,7 +925,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     //assert(0 && "Unknown cast kind!");
     break;
 
-  case CastExpr::CK_LValueBitCast: {
+  case CastExpr::CK_LValueBitCast: 
+  case CastExpr::CK_ObjCObjectLValueCast: {
     Value *V = EmitLValue(E).getAddress();
     V = Builder.CreateBitCast(V, 
                           ConvertType(CGF.getContext().getPointerType(DestTy)));
@@ -1044,7 +1045,10 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
   case CastExpr::CK_ToVoid: {
-    CGF.EmitAnyExpr(E, 0, false, true);
+    if (E->Classify(CGF.getContext()).isGLValue())
+      CGF.EmitLValue(E);
+    else
+      CGF.EmitAnyExpr(E, 0, false, true);
     return 0;
   }
   case CastExpr::CK_VectorSplat: {

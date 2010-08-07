@@ -717,6 +717,8 @@ const char *CastExpr::getCastKindName() const {
     return "AnyPointerToObjCPointerCast";
   case CastExpr::CK_AnyPointerToBlockPointerCast:
     return "AnyPointerToBlockPointerCast";
+  case CastExpr::CK_ObjCObjectLValueCast:
+    return "ObjCObjectLValueCast";
   }
 
   assert(0 && "Unhandled cast kind!");

@@ -479,7 +479,10 @@ public:
     /// \brief C assignment
     SK_CAssignment,
     /// \brief Initialization by string
-    SK_StringInit
+    SK_StringInit,
+    /// \brief An initialization that "converts" an Objective-C object
+    /// (not a point to an object) to another Objective-C object type.
+    SK_ObjCObjectConversion
   };
   
   /// \brief A single step in the initialization sequence.
@@ -736,6 +739,10 @@ public:
 
   /// \brief Add a string init step.
   void AddStringInitStep(QualType T);
+
+  /// \brief Add an Objective-C object conversion step, which is
+  /// always a no-op.
+  void AddObjCObjectConversionStep(QualType T);
 
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {

@@ -4560,6 +4560,12 @@ bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
          canAssignObjCInterfaces(RHSOPT, LHSOPT);
 }
 
+bool ASTContext::canBindObjCObjectType(QualType To, QualType From) {
+  return canAssignObjCInterfaces(
+                getObjCObjectPointerType(To)->getAs<ObjCObjectPointerType>(),
+                getObjCObjectPointerType(From)->getAs<ObjCObjectPointerType>());
+}
+
 /// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible,
 /// both shall have the identically qualified version of a compatible type.
 /// C99 6.2.7p1: Two types have compatible types if their types are the

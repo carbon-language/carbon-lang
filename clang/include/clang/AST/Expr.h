@@ -1927,8 +1927,12 @@ public:
     CK_AnyPointerToObjCPointerCast,
     /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block 
     /// pointer
-    CK_AnyPointerToBlockPointerCast
+    CK_AnyPointerToBlockPointerCast,
 
+    /// \brief Converting between two Objective-C object types, which
+    /// can occur when performing reference binding to an Objective-C
+    /// object.
+    CK_ObjCObjectLValueCast
   };
 
 private:
@@ -1970,6 +1974,7 @@ private:
     case CK_MemberPointerToBoolean:
     case CK_AnyPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
+    case CK_ObjCObjectLValueCast:
       assert(path_empty() && "Cast kind should not have a base path!");
       break;
     }

@@ -646,9 +646,10 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // this is the only cast possibility, so we issue an error if we fail now.
   // FIXME: Should allow casting away constness if CStyle.
   bool DerivedToBase;
+  bool ObjCConversion;
   if (Self.CompareReferenceRelationship(SrcExpr->getLocStart(),
                                         SrcExpr->getType(), R->getPointeeType(),
-                                        DerivedToBase) <
+                                        DerivedToBase, ObjCConversion) <
         Sema::Ref_Compatible_With_Added_Qualification) {
     msg = diag::err_bad_lvalue_to_rvalue_cast;
     return TC_Failed;

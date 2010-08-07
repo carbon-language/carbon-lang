@@ -2514,7 +2514,8 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   case CastExpr::CK_AnyPointerToObjCPointerCast:
   case CastExpr::CK_AnyPointerToBlockPointerCast:
   case CastExpr::CK_DerivedToBase:
-  case CastExpr::CK_UncheckedDerivedToBase: {
+  case CastExpr::CK_UncheckedDerivedToBase:
+  case CastExpr::CK_ObjCObjectLValueCast: {
     // Delegate to SValuator to process.
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
       ExplodedNode* N = *I;

@@ -917,6 +917,7 @@ public:
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
   bool isObjCQualifiedClassType() const;        // Class<foo>
+  bool isObjCObjectOrInterfaceType() const;
   bool isObjCIdType() const;                    // id
   bool isObjCClassType() const;                 // Class
   bool isObjCSelType() const;                 // Class
@@ -3506,6 +3507,11 @@ inline bool Type::isObjCObjectPointerType() const {
 inline bool Type::isObjCObjectType() const {
   return isa<ObjCObjectType>(CanonicalType);
 }
+inline bool Type::isObjCObjectOrInterfaceType() const {
+  return isa<ObjCInterfaceType>(CanonicalType) || 
+    isa<ObjCObjectType>(CanonicalType);
+}
+
 inline bool Type::isObjCQualifiedIdType() const {
   if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
     return OPT->isObjCQualifiedIdType();

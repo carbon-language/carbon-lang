@@ -1851,6 +1851,13 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
                                            ConvertType(CE->getTypeAsWritten()));
     return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
   }
+  case CastExpr::CK_ObjCObjectLValueCast: {
+    LValue LV = EmitLValue(E->getSubExpr());
+    QualType ToType = getContext().getLValueReferenceType(E->getType());
+    llvm::Value *V = Builder.CreateBitCast(LV.getAddress(), 
+                                           ConvertType(ToType));
+    return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  }
   }
   
   llvm_unreachable("Unhandled lvalue cast kind?");
