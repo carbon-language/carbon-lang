@@ -1548,54 +1548,21 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   Value *overflow = Builder.CreateExtractValue(resultAndOverflow, 1);
 
   // Branch in case of overflow.
-  llvm::BasicBlock *initialBB = Builder.GetInsertBlock();
-  llvm::BasicBlock *overflowBB =
-    CGF.createBasicBlock("overflow", CGF.CurFn);
-  llvm::BasicBlock *continueBB =
-    CGF.createBasicBlock("overflow.continue", CGF.CurFn);
+  llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
+  llvm::BasicBlock *continueBB = CGF.createBasicBlock("nooverflow", CGF.CurFn);
 
   Builder.CreateCondBr(overflow, overflowBB, continueBB);
 
-  // Handle overflow
-
+  // Handle overflow with llvm.trap.
+  // TODO: it would be better to generate one of these blocks per function.
   Builder.SetInsertPoint(overflowBB);
-
-  // Handler is:
-  // long long *__overflow_handler)(long long a, long long b, char op,
-  // char width)
-  std::vector<const llvm::Type*> handerArgTypes;
-  handerArgTypes.push_back(CGF.Int64Ty);
-  handerArgTypes.push_back(CGF.Int64Ty);
-  handerArgTypes.push_back(llvm::Type::getInt8Ty(VMContext));
-  handerArgTypes.push_back(llvm::Type::getInt8Ty(VMContext));
-  llvm::FunctionType *handlerTy =
-    llvm::FunctionType::get(CGF.Int64Ty, handerArgTypes, false);
-  llvm::Value *handlerFunction =
-    CGF.CGM.getModule().getOrInsertGlobal("__overflow_handler",
-        llvm::PointerType::getUnqual(handlerTy));
-  handlerFunction = Builder.CreateLoad(handlerFunction);
-
-  llvm::Value *lhs = Builder.CreateSExt(Ops.LHS, CGF.Int64Ty);
-  llvm::Value *rhs = Builder.CreateSExt(Ops.RHS, CGF.Int64Ty);
-
-  llvm::Value *handlerResult =
-    Builder.CreateCall4(handlerFunction, lhs, rhs,
-                        Builder.getInt8(OpID),
-              Builder.getInt8(cast<llvm::IntegerType>(opTy)->getBitWidth()));
-
-  handlerResult = Builder.CreateTrunc(handlerResult, opTy);
-
-  Builder.CreateBr(continueBB);
-
-  // Set up the continuation
+  llvm::Function *Trap = CGF.CGM.getIntrinsic(llvm::Intrinsic::trap);
+  Builder.CreateCall(Trap);
+  Builder.CreateUnreachable();
+  
+  // Continue on.
   Builder.SetInsertPoint(continueBB);
-  // Get the correct result
-  llvm::PHINode *phi = Builder.CreatePHI(opTy);
-  phi->reserveOperandSpace(2);
-  phi->addIncoming(result, initialBB);
-  phi->addIncoming(handlerResult, overflowBB);
-
-  return phi;
+  return result;
 }
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
