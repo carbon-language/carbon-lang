@@ -19,6 +19,21 @@ import sys
 import time
 import unittest2
 
+class _WritelnDecorator(object):
+    """Used to decorate file-like objects with a handy 'writeln' method"""
+    def __init__(self,stream):
+        self.stream = stream
+
+    def __getattr__(self, attr):
+        if attr in ('stream', '__getstate__'):
+            raise AttributeError(attr)
+        return getattr(self.stream,attr)
+
+    def writeln(self, arg=None):
+        if arg:
+            self.write(arg)
+        self.write('\n') # text-mode streams translate to \r\n if needed
+
 #
 # Global variables:
 #
@@ -31,6 +46,12 @@ verbose = 0
 
 # By default, search from the current working directory.
 testdirs = [ os.getcwd() ]
+
+# Separator string.
+separator = '-' * 70
+
+# Decorated sys.stdout.
+out = _WritelnDecorator(sys.stdout)
 
 
 def usage():
@@ -136,6 +157,10 @@ for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
 # Now that we have loaded all the test cases, run the whole test suite.
+out.writeln(separator)
+out.writeln("Collected %d test%s" % (suite.countTestCases(),
+                                     suite.countTestCases() != 1 and "s" or ""))
+out.writeln()
 
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
