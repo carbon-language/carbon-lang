@@ -148,9 +148,12 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   // SimplifyLibCalls is only derived.
   // TimePasses is only derived.
   // UnitAtATime is unused.
-  // UnrollLoops is only derived.
   // Inlining is only derived.
-
+  
+  // UnrollLoops is derived, but also accepts an option, no
+  // harm in pushing it back here.
+  if (Opts.UnrollLoops)
+    Res.push_back("-funroll-loops");
   if (Opts.DataSections)
     Res.push_back("-fdata-sections");
   if (Opts.FunctionSections)
@@ -828,7 +831,8 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.OptimizeSize = Args.hasArg(OPT_Os);
   Opts.SimplifyLibCalls = !(Args.hasArg(OPT_fno_builtin) ||
                             Args.hasArg(OPT_ffreestanding));
-  Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
+  Opts.UnrollLoops = Args.hasArg(OPT_funroll_loops) || 
+                     (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
   Opts.CXAAtExit = !Args.hasArg(OPT_fno_use_cxa_atexit);

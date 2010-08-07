@@ -1208,6 +1208,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_ftrapv);
   Args.AddLastArg(CmdArgs, options::OPT_fwrapv);
   Args.AddLastArg(CmdArgs, options::OPT_fwritable_strings);
+  Args.AddLastArg(CmdArgs, options::OPT_funroll_loops);
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);
 
