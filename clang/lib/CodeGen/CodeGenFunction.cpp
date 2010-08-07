@@ -545,21 +545,6 @@ void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
 
 void
 CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
-  // If the type contains a pointer to data member we can't memset it to zero.
-  // Instead, create a null constant and copy it to the destination.
-  if (CGM.getTypes().ContainsPointerToDataMember(Ty)) {
-    llvm::Constant *NullConstant = CGM.EmitNullConstant(Ty);
-    
-    llvm::GlobalVariable *NullVariable = 
-      new llvm::GlobalVariable(CGM.getModule(), NullConstant->getType(),
-                               /*isConstant=*/true, 
-                               llvm::GlobalVariable::PrivateLinkage,
-                               NullConstant, llvm::Twine());
-    EmitAggregateCopy(DestPtr, NullVariable, Ty, /*isVolatile=*/false);
-    return;
-  } 
-  
-
   // Ignore empty classes in C++.
   if (getContext().getLangOptions().CPlusPlus) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -567,29 +552,58 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
         return;
     }
   }
-  
-  // Otherwise, just memset the whole thing to zero.  This is legal
-  // because in LLVM, all default initializers (other than the ones we just
-  // handled above) are guaranteed to have a bit pattern of all zeros.
-  const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+
+  // Cast the dest ptr to the appropriate i8 pointer type.
+  unsigned DestAS =
+    cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
+  const llvm::Type *BP =
+    llvm::Type::getInt8PtrTy(VMContext, DestAS);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
   // Get size and alignment info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
+  uint64_t Size = TypeInfo.first;
+  unsigned Align = TypeInfo.second;
 
   // Don't bother emitting a zero-byte memset.
-  if (TypeInfo.first == 0)
+  if (Size == 0)
     return;
+
+  llvm::ConstantInt *SizeVal = llvm::ConstantInt::get(IntPtrTy, Size / 8);
+  llvm::ConstantInt *AlignVal = Builder.getInt32(Align / 8);
+
+  // If the type contains a pointer to data member we can't memset it to zero.
+  // Instead, create a null constant and copy it to the destination.
+  if (CGM.getTypes().ContainsPointerToDataMember(Ty)) {
+    llvm::Constant *NullConstant = CGM.EmitNullConstant(Ty);
+
+    llvm::GlobalVariable *NullVariable = 
+      new llvm::GlobalVariable(CGM.getModule(), NullConstant->getType(),
+                               /*isConstant=*/true, 
+                               llvm::GlobalVariable::PrivateLinkage,
+                               NullConstant, llvm::Twine());
+    llvm::Value *SrcPtr =
+      Builder.CreateBitCast(NullVariable, Builder.getInt8PtrTy());
+
+    // FIXME: variable-size types?
+
+    // Get and call the appropriate llvm.memcpy overload.
+    llvm::Constant *Memcpy =
+      CGM.getMemCpyFn(DestPtr->getType(), SrcPtr->getType(), IntPtrTy);
+    Builder.CreateCall5(Memcpy, DestPtr, SrcPtr, SizeVal, AlignVal,
+                        /*volatile*/ Builder.getFalse());
+    return;
+  } 
+  
+  // Otherwise, just memset the whole thing to zero.  This is legal
+  // because in LLVM, all default initializers (other than the ones we just
+  // handled above) are guaranteed to have a bit pattern of all zeros.
 
   // FIXME: Handle variable sized types.
   Builder.CreateCall5(CGM.getMemSetFn(BP, IntPtrTy), DestPtr,
-                 llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext)),
-                      // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
-                      llvm::ConstantInt::get(Int32Ty, TypeInfo.second/8),
-                      llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext),
-                                             0));
+                      Builder.getInt8(0),
+                      SizeVal, AlignVal, /*volatile*/ Builder.getFalse());
 }
 
 llvm::BlockAddress *CodeGenFunction::GetAddrOfLabel(const LabelStmt *L) {

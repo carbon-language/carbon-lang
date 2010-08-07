@@ -49,3 +49,21 @@ void test_enum_holder_and_int() {
   enum_holder_and_int();
   // CHECK-NEXT: ret void
 }
+
+// PR7834: don't crash.
+namespace test1 {
+  struct A {
+    int A::*f;
+    A();
+    A(const A&);
+    A &operator=(const A &);
+  };
+
+  struct B {
+    A base;
+  };
+
+  void foo() {
+    B();
+  }
+}
