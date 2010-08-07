@@ -18,7 +18,6 @@
 #include "llvm/System/DataTypes.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
-#include <string>
 #include <vector>
 #include <utility>
 
@@ -165,7 +164,7 @@ struct NamedRegionTimer : public TimeRegion {
 class TimerGroup {
   std::string Name;
   Timer *FirstTimer;   // First timer in the group.
-  std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
+  std::vector<std::pair<TimeRecord, StringRef> > TimersToPrint;
   
   TimerGroup **Prev, *Next; // Doubly linked list of TimerGroup's.
   TimerGroup(const TimerGroup &TG);      // DO NOT IMPLEMENT
