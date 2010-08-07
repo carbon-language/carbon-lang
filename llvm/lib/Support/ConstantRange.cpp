@@ -40,8 +40,6 @@ ConstantRange::ConstantRange(uint32_t BitWidth, bool Full) {
 /// Initialize a range to hold the single specified value.
 ///
 ConstantRange::ConstantRange(const APInt & V) : Lower(V), Upper(V + 1) {}
-ConstantRange::ConstantRange(const ConstantInt *V)
-  : Lower(V->getValue()), Upper(V->getValue() + 1) {}
 
 ConstantRange::ConstantRange(const APInt &L, const APInt &U) :
   Lower(L), Upper(U) {
