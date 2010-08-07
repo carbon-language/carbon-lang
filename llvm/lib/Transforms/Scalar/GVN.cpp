@@ -2111,6 +2111,11 @@ bool GVN::performPRE(Function &F) {
           CurInst->mayReadFromMemory() || CurInst->mayHaveSideEffects() ||
           isa<DbgInfoIntrinsic>(CurInst))
         continue;
+      
+      // We don't currently value number ANY inline asm calls.
+      if (CallInst *CallI = dyn_cast<CallInst>(CurInst))
+        if (CallI->isInlineAsm())
+          continue;
 
       uint32_t ValNo = VN.lookup(CurInst);
 
