@@ -142,12 +142,6 @@ public:
   ///
   APInt getSignedMin() const;
 
-  /// operator= - Copy one ConstantRange over another.
-  void operator=(const ConstantRange &CR) {
-    Lower = CR.Lower;
-    Upper = CR.Upper;
-  }
-
   /// operator== - Return true if this range is equal to another range.
   ///
   bool operator==(const ConstantRange &CR) const {
