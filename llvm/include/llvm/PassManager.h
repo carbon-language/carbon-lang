@@ -22,7 +22,6 @@
 namespace llvm {
 
 class Pass;
-class ModulePass;
 class Module;
 
 class PassManagerImpl;

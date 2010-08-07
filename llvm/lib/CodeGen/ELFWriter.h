@@ -39,6 +39,7 @@ namespace llvm {
   class raw_ostream;
   class SectionKind;
   class MCContext;
+  class TargetMachine;
 
   typedef std::vector<ELFSym*>::iterator ELFSymIter;
   typedef std::vector<ELFSection*>::iterator ELFSectionIter;

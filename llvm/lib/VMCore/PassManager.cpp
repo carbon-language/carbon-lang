@@ -25,7 +25,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Threading.h"
-#include "llvm-c/Core.h"
 #include <algorithm>
 #include <cstdio>
 #include <map>
@@ -1814,38 +1813,3 @@ void BasicBlockPass::assignPassManager(PMStack &PMS,
 }
 
 PassManagerBase::~PassManagerBase() {}
-  
-/*===-- C Bindings --------------------------------------------------------===*/
-
-LLVMPassManagerRef LLVMCreatePassManager() {
-  return wrap(new PassManager());
-}
-
-LLVMPassManagerRef LLVMCreateFunctionPassManagerForModule(LLVMModuleRef M) {
-  return wrap(new FunctionPassManager(unwrap(M)));
-}
-
-LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef P) {
-  return LLVMCreateFunctionPassManagerForModule(
-                                            reinterpret_cast<LLVMModuleRef>(P));
-}
-
-LLVMBool LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M) {
-  return unwrap<PassManager>(PM)->run(*unwrap(M));
-}
-
-LLVMBool LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM) {
-  return unwrap<FunctionPassManager>(FPM)->doInitialization();
-}
-
-LLVMBool LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F) {
-  return unwrap<FunctionPassManager>(FPM)->run(*unwrap<Function>(F));
-}
-
-LLVMBool LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM) {
-  return unwrap<FunctionPassManager>(FPM)->doFinalization();
-}
-
-void LLVMDisposePassManager(LLVMPassManagerRef PM) {
-  delete unwrap(PM);
-}

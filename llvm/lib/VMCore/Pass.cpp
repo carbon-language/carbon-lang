@@ -17,19 +17,14 @@
 #include "llvm/PassManager.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Threading.h"
-#include <algorithm>
-#include <map>
-#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

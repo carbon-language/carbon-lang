@@ -54,6 +54,7 @@ namespace llvm {
   class Mangler;
   class TargetLoweringObjectFile;
   class TargetData;
+  class TargetMachine;
   class Twine;
   class Type;
 

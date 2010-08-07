@@ -26,8 +26,6 @@
 
 namespace llvm {
 
-class TargetMachine;
-
 //===---------------------------------------------------------------------------
 /// PassInfo class - An instance of this class exists for every pass known by
 /// the system, and can be obtained from a live Pass by calling its
