@@ -519,6 +519,8 @@ void StmtDumper::VisitCXXConstructExpr(CXXConstructExpr *Node) {
   DumpType(Ctor->getType());
   if (Node->isElidable())
     OS << " elidable";
+  if (Node->requiresZeroInitialization())
+    OS << " zeroing";
 }
 
 void StmtDumper::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
