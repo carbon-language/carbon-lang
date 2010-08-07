@@ -1052,6 +1052,11 @@ public:
   void setCalledFunction(Value* Fn) {
     Op<-1>() = Fn;
   }
+  
+  /// isInlineAsm - Check if this call is an inline asm statement.
+  bool isInlineAsm() const {
+    return isa<InlineAsm>(Op<-1>());
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }
