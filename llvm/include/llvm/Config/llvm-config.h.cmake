@@ -1,0 +1,84 @@
+/*===-- llvm/config/llvm-config.h - llvm configure variable -------*- C -*-===*/
+/*                                                                            */
+/*                     The LLVM Compiler Infrastructure                       */
+/*                                                                            */
+/* This file is distributed under the University of Illinois Open Source      */
+/* License. See LICENSE.TXT for details.                                      */
+/*                                                                            */
+/*===----------------------------------------------------------------------===*/
+
+/* This file enumerates all of the llvm variables from configure so that
+   they can be in exported headers and won't override package specific
+   directives.  This is a C file so we can include it in the llvm-c headers.  */
+
+/* Installation directory for binary executables */
+#cmakedefine LLVM_BINDIR "${LLVM_BINDIR}"
+
+/* Time at which LLVM was configured */
+#cmakedefine LLVM_CONFIGTIME "${LLVM_CONFIGTIME}"
+
+/* Installation directory for data files */
+#cmakedefine LLVM_DATADIR "${LLVM_DATADIR}"
+
+/* Installation directory for documentation */
+#cmakedefine LLVM_DOCSDIR "${LLVM_DOCSDIR}"
+
+/* Installation directory for config files */
+#cmakedefine LLVM_ETCDIR "${LLVM_ETCDIR}"
+
+/* Host triple we were built on */
+#cmakedefine LLVM_HOSTTRIPLE "${LLVM_HOSTTRIPLE}"
+
+/* Installation directory for include files */
+#cmakedefine LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}"
+
+/* Installation directory for .info files */
+#cmakedefine LLVM_INFODIR "${LLVM_INFODIR}"
+
+/* Installation directory for libraries */
+#cmakedefine LLVM_LIBDIR "${LLVM_LIBDIR}"
+
+/* Installation directory for man pages */
+#cmakedefine LLVM_MANDIR "${LLVM_MANDIR}"
+
+/* Build multithreading support into LLVM */
+#cmakedefine LLVM_MULTITHREADED
+
+/* LLVM architecture name for the native architecture, if available */
+#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}Target
+
+/* Short LLVM architecture name for the native architecture, if available */
+#cmakedefine LLVM_NATIVE_ARCHNAME ${LLVM_NATIVE_ARCH}
+
+/* Define if this is Unixish platform */
+#cmakedefine LLVM_ON_UNIX
+
+/* Define if this is Win32ish platform */
+#cmakedefine LLVM_ON_WIN32
+
+/* Define to path to circo program if found or 'echo circo' otherwise */
+#cmakedefine LLVM_PATH_CIRCO "${LLVM_PATH_CIRCO}"
+
+/* Define to path to dot program if found or 'echo dot' otherwise */
+#cmakedefine LLVM_PATH_DOT "${LLVM_PATH_DOT}"
+
+/* Define to path to dotty program if found or 'echo dotty' otherwise */
+#cmakedefine LLVM_PATH_DOTTY "${LLVM_PATH_DOTTY}"
+
+/* Define to path to fdp program if found or 'echo fdp' otherwise */
+#cmakedefine LLVM_PATH_FDP "${LLVM_PATH_FDP}"
+
+/* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
+#cmakedefine LLVM_PATH_GRAPHVIZ "${LLVM_PATH_GRAPHVIZ}"
+
+/* Define to path to gv program if found or 'echo gv' otherwise */
+#cmakedefine LLVM_PATH_GV "${LLVM_PATH_GV}"
+
+/* Define to path to neato program if found or 'echo neato' otherwise */
+#cmakedefine LLVM_PATH_NEATO "${LLVM_PATH_NEATO}"
+
+/* Define to path to twopi program if found or 'echo twopi' otherwise */
+#cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
+
+/* Installation prefix directory */
+#cmakedefine LLVM_PREFIX

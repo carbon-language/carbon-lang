@@ -266,6 +266,11 @@ configure_file(
   )
 
 configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/llvm-config.h.cmake
+  ${LLVM_BINARY_DIR}/include/llvm/Config/llvm-config.h
+  )
+
+configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/System/DataTypes.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/System/DataTypes.h
   )
