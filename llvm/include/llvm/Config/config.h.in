@@ -1,5 +1,8 @@
 /* include/llvm/Config/config.h.in.  Generated from autoconf/configure.ac by autoheader.  */
 
+#ifndef CONFIG_H
+#define CONFIG_H
+
 /* 32 bit multilib directory. */
 #undef CXX_INCLUDE_32BIT_DIR
 
@@ -607,3 +610,5 @@
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
+
+#endif

@@ -1581,6 +1581,10 @@ dnl you MUST also update Makefile.rules so that the variable FilesToConfig
 dnl contains the same list of files as AC_CONFIG_HEADERS below. This ensures the
 dnl files can be updated automatically when their *.in sources change.
 AC_CONFIG_HEADERS([include/llvm/Config/config.h include/llvm/Config/llvm-config.h])
+AH_TOP([#ifndef CONFIG_H
+#define CONFIG_H])
+AH_BOTTOM([#endif])
+
 AC_CONFIG_FILES([include/llvm/Config/Targets.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmPrinters.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmParsers.def])
