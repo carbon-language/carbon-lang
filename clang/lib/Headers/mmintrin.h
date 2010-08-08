@@ -478,8 +478,8 @@ _mm_setr_pi8(char __b7, char __b6, char __b5, char __b4, char __b3, char __b2,
 #define _m_psllwi _mm_slli_pi16
 #define _m_pslld _mm_sll_pi32
 #define _m_pslldi _mm_slli_pi32
-#define _m_psllq _mm_sll_pi64
-#define _m_psllqi _mm_slli_pi64
+#define _m_psllq _mm_sll_si64
+#define _m_psllqi _mm_slli_si64
 #define _m_psraw _mm_sra_pi16
 #define _m_psrawi _mm_srai_pi16
 #define _m_psrad _mm_sra_pi32
@@ -488,8 +488,8 @@ _mm_setr_pi8(char __b7, char __b6, char __b5, char __b4, char __b3, char __b2,
 #define _m_psrlwi _mm_srli_pi16
 #define _m_psrld _mm_srl_pi32
 #define _m_psrldi _mm_srli_pi32
-#define _m_psrlq _mm_srl_pi64
-#define _m_psrlqi _mm_srli_pi64
+#define _m_psrlq _mm_srl_si64
+#define _m_psrlqi _mm_srli_si64
 #define _m_pand _mm_and_si64
 #define _m_pandn _mm_andnot_si64
 #define _m_por _mm_or_si64
