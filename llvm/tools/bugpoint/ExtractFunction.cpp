@@ -99,13 +99,6 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   return Result;
 }
 
-static const PassInfo *getPI(Pass *P) {
-  const void *ID = P->getPassID();
-  const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
-  delete P;
-  return PI;
-}
-
 /// performFinalCleanups - This method clones the current Program and performs
 /// a series of cleanups intended to get rid of extra cruft on the module
 /// before handing it to the user.
@@ -115,15 +108,15 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
 
-  std::vector<const PassInfo*> CleanupPasses;
-  CleanupPasses.push_back(getPI(createGlobalDCEPass()));
+  std::vector<std::string> CleanupPasses;
+  CleanupPasses.push_back("globaldce");
 
   if (MayModifySemantics)
-    CleanupPasses.push_back(getPI(createDeadArgHackingPass()));
+    CleanupPasses.push_back("deadarghaX0r");
   else
-    CleanupPasses.push_back(getPI(createDeadArgEliminationPass()));
+    CleanupPasses.push_back("deadargelim");
 
-  CleanupPasses.push_back(getPI(createDeadTypeEliminationPass()));
+  CleanupPasses.push_back("deadtypeelim");
 
   Module *New = runPassesOn(M, CleanupPasses);
   if (New == 0) {
@@ -139,8 +132,8 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
 /// function.  This returns null if there are no extractable loops in the
 /// program or if the loop extractor crashes.
 Module *BugDriver::ExtractLoop(Module *M) {
-  std::vector<const PassInfo*> LoopExtractPasses;
-  LoopExtractPasses.push_back(getPI(createSingleLoopExtractorPass()));
+  std::vector<std::string> LoopExtractPasses;
+  LoopExtractPasses.push_back("loop-extract-single");
 
   Module *NewM = runPassesOn(M, LoopExtractPasses);
   if (NewM == 0) {
@@ -354,8 +347,8 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   std::string uniqueFN = "--extract-blocks-file=" + uniqueFilename.str();
   const char *ExtraArg = uniqueFN.c_str();
 
-  std::vector<const PassInfo*> PI;
-  PI.push_back(getPI(createBlockExtractorPass()));
+  std::vector<std::string> PI;
+  PI.push_back("extract-blocks");
   Module *Ret = runPassesOn(M, PI, false, 1, &ExtraArg);
 
   uniqueFilename.eraseFromDisk(); // Free disk space

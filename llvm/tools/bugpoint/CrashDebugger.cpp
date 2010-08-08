@@ -43,7 +43,7 @@ namespace {
 }
 
 namespace llvm {
-  class ReducePassList : public ListReducer<const PassInfo*> {
+  class ReducePassList : public ListReducer<std::string> {
     BugDriver &BD;
   public:
     ReducePassList(BugDriver &bd) : BD(bd) {}
@@ -52,15 +52,15 @@ namespace llvm {
     // running the "Kept" passes fail when run on the output of the "removed"
     // passes.  If we return true, we update the current module of bugpoint.
     //
-    virtual TestResult doTest(std::vector<const PassInfo*> &Removed,
-                              std::vector<const PassInfo*> &Kept,
+    virtual TestResult doTest(std::vector<std::string> &Removed,
+                              std::vector<std::string> &Kept,
                               std::string &Error);
   };
 }
 
 ReducePassList::TestResult
-ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
-                       std::vector<const PassInfo*> &Suffix,
+ReducePassList::doTest(std::vector<std::string> &Prefix,
+                       std::vector<std::string> &Suffix,
                        std::string &Error) {
   sys::Path PrefixOutput;
   Module *OrigProgram = 0;

@@ -85,7 +85,7 @@ namespace {
     virtual void add(Pass *P) {
       const void *ID = P->getPassID();
       const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
-      D.addPasses(&PI, &PI + 1);
+      D.addPass(PI->getPassArgument());
     }
   };
 }
@@ -137,7 +137,13 @@ int main(int argc, char **argv) {
                             /*RunInliner=*/true,
                             /*VerifyEach=*/false);
 
-  D.addPasses(PassList.begin(), PassList.end());
+
+  for (std::vector<const PassInfo*>::iterator I = PassList.begin(),
+         E = PassList.end();
+       I != E; ++I) {
+    const PassInfo* PI = *I;
+    D.addPass(PI->getPassArgument());
+  }
 
   // Bugpoint has the ability of generating a plethora of core files, so to
   // avoid filling up the disk, we prevent it

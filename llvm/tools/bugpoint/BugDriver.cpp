@@ -56,12 +56,12 @@ void BugDriver::setNewProgram(Module *M) {
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
 ///
-std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
+std::string llvm::getPassesString(const std::vector<std::string> &Passes) {
   std::string Result;
   for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
     if (i) Result += " ";
     Result += "-";
-    Result += Passes[i]->getPassArgument();
+    Result += Passes[i];
   }
   return Result;
 }

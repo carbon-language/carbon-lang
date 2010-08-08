@@ -97,7 +97,7 @@ cl::opt<bool> SilencePasses("silence-passes", cl::desc("Suppress output of runni
 /// or failed.
 ///
 bool BugDriver::runPasses(Module *Program,
-                          const std::vector<const PassInfo*> &Passes,
+                          const std::vector<std::string> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
                           bool Quiet, unsigned NumExtraArgs,
                           const char * const *ExtraArgs) const {
@@ -159,9 +159,9 @@ bool BugDriver::runPasses(Module *Program,
     pass_args.push_back( std::string("-load"));
     pass_args.push_back( PluginLoader::getPlugin(i));
   }
-  for (std::vector<const PassInfo*>::const_iterator I = Passes.begin(),
+  for (std::vector<std::string>::const_iterator I = Passes.begin(),
        E = Passes.end(); I != E; ++I )
-    pass_args.push_back( std::string("-") + (*I)->getPassArgument() );
+    pass_args.push_back( std::string("-") + (*I) );
   for (std::vector<std::string>::const_iterator I = pass_args.begin(),
        E = pass_args.end(); I != E; ++I )
     Args.push_back(I->c_str());
@@ -222,7 +222,7 @@ bool BugDriver::runPasses(Module *Program,
 /// module, returning the transformed module on success, or a null pointer on
 /// failure.
 Module *BugDriver::runPassesOn(Module *M,
-                               const std::vector<const PassInfo*> &Passes,
+                               const std::vector<std::string> &Passes,
                                bool AutoDebugCrashes, unsigned NumExtraArgs,
                                const char * const *ExtraArgs) {
   std::string BitcodeResult;

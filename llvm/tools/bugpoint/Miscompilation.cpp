@@ -43,13 +43,13 @@ namespace {
         cl::desc("Don't extract blocks when searching for miscompilations"),
         cl::init(false));
 
-  class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
+  class ReduceMiscompilingPasses : public ListReducer<std::string> {
     BugDriver &BD;
   public:
     ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
 
-    virtual TestResult doTest(std::vector<const PassInfo*> &Prefix,
-                              std::vector<const PassInfo*> &Suffix,
+    virtual TestResult doTest(std::vector<std::string> &Prefix,
+                              std::vector<std::string> &Suffix,
                               std::string &Error);
   };
 }
@@ -58,8 +58,8 @@ namespace {
 /// group, see if they still break the program.
 ///
 ReduceMiscompilingPasses::TestResult
-ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
-                                 std::vector<const PassInfo*> &Suffix,
+ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
+                                 std::vector<std::string> &Suffix,
                                  std::string &Error) {
   // First, run the program with just the Suffix passes.  If it is still broken
   // with JUST the kept passes, discard the prefix passes.

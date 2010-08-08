@@ -47,7 +47,7 @@ class BugDriver {
   const char *ToolName;            // argv[0] of bugpoint
   std::string ReferenceOutputFile; // Name of `good' output file
   Module *Program;             // The raw program, linked together
-  std::vector<const PassInfo*> PassesToRun;
+  std::vector<std::string> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
   AbstractInterpreter *SafeInterpreter;  // To generate reference output, etc.
   GCC *gcc;
@@ -74,12 +74,11 @@ public:
   // command line arguments into instance variables of BugDriver.
   //
   bool addSources(const std::vector<std::string> &FileNames);
-  template<class It>
-  void addPasses(It I, It E) { PassesToRun.insert(PassesToRun.end(), I, E); }
-  void setPassesToRun(const std::vector<const PassInfo*> &PTR) {
+  void addPass(std::string p) { PassesToRun.push_back(p); }
+  void setPassesToRun(const std::vector<std::string> &PTR) {
     PassesToRun = PTR;
   }
-  const std::vector<const PassInfo*> &getPassesToRun() const {
+  const std::vector<std::string> &getPassesToRun() const {
     return PassesToRun;
   }
 
@@ -243,7 +242,7 @@ public:
   /// failure.  If AutoDebugCrashes is set to true, then bugpoint will
   /// automatically attempt to track down a crashing pass if one exists, and
   /// this method will never return null.
-  Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes,
+  Module *runPassesOn(Module *M, const std::vector<std::string> &Passes,
                       bool AutoDebugCrashes = false, unsigned NumExtraArgs = 0,
                       const char * const *ExtraArgs = NULL);
 
@@ -257,7 +256,7 @@ public:
   /// to pass to the child bugpoint instance.
   ///
   bool runPasses(Module *Program,
-                 const std::vector<const PassInfo*> &PassesToRun,
+                 const std::vector<std::string> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
                  bool Quiet = false, unsigned NumExtraArgs = 0,
                  const char * const *ExtraArgs = NULL) const;
@@ -269,7 +268,7 @@ public:
   /// If the passes did not compile correctly, output the command required to 
   /// recreate the failure. This returns true if a compiler error is found.
   ///
-  bool runManyPasses(const std::vector<const PassInfo*> &AllPasses,
+  bool runManyPasses(const std::vector<std::string> &AllPasses,
                      std::string &ErrMsg);
 
   /// writeProgramToFile - This writes the current "Program" to the named
@@ -283,7 +282,7 @@ private:
   /// input (true = crashed).
   ///
   bool runPasses(Module *M,
-                 const std::vector<const PassInfo*> &PassesToRun,
+                 const std::vector<std::string> &PassesToRun,
                  bool DeleteOutput = true) const {
     std::string Filename;
     return runPasses(M, PassesToRun, Filename, DeleteOutput);
@@ -305,7 +304,7 @@ Module *ParseInputFile(const std::string &InputFilename,
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
 ///
-std::string getPassesString(const std::vector<const PassInfo*> &Passes);
+std::string getPassesString(const std::vector<std::string> &Passes);
 
 /// PrintFunctionList - prints out list of problematic functions
 ///
