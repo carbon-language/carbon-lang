@@ -337,15 +337,15 @@ public:
     return NumInstrs && NumInstrs == 1;
   }
 
-  /// isCompareInstr - If the machine instruction is a comparison instruction,
-  /// then return true. Also return the source register in SrcReg and the value
-  /// it compares against in CmpValue.
-  virtual bool isCompareInstr(const MachineInstr *MI, unsigned &SrcReg,
+  /// AnalyzeCompare - For a comparison instruction, return the source register
+  /// in SrcReg and the value it compares against in CmpValue. Return true if
+  /// the comparison instruction can be analyzed.
+  virtual bool AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
                               int &CmpValue) const;
 
-  /// convertToSetZeroFlag - Convert the instruction to set the zero flag so
+  /// ConvertToSetZeroFlag - Convert the instruction to set the zero flag so
   /// that we can remove a "comparison with zero".
-  virtual bool convertToSetZeroFlag(MachineInstr *Instr,
+  virtual bool ConvertToSetZeroFlag(MachineInstr *Instr,
                                     MachineInstr *CmpInstr) const;
 };
 

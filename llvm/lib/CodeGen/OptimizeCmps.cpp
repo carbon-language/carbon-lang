@@ -72,9 +72,8 @@ bool OptimizeCmps::OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB) {
   // physical register, we can try to optimize it.
   unsigned SrcReg;
   int CmpValue;
-  if (!TII->isCompareInstr(MI, SrcReg, CmpValue) ||
-      TargetRegisterInfo::isPhysicalRegister(SrcReg) ||
-      CmpValue != 0)
+  if (!TII->AnalyzeCompare(MI, SrcReg, CmpValue) ||
+      TargetRegisterInfo::isPhysicalRegister(SrcReg) || CmpValue != 0)
     return false;
 
   MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
@@ -83,7 +82,7 @@ bool OptimizeCmps::OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB) {
     return false;
 
   // Attempt to convert the defining instruction to set the "zero" flag.
-  if (TII->convertToSetZeroFlag(&*DI, MI)) {
+  if (TII->ConvertToSetZeroFlag(&*DI, MI)) {
     ++NumEliminated;
     return true;
   }
@@ -104,7 +103,8 @@ bool OptimizeCmps::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::iterator
            MII = MBB->begin(), ME = MBB->end(); MII != ME; ) {
       MachineInstr *MI = &*MII++;
-      Changed |= OptimizeCmpInstr(MI, MBB);
+      if (MI->getDesc().isCompare())
+        Changed |= OptimizeCmpInstr(MI, MBB);
     }
   }
 

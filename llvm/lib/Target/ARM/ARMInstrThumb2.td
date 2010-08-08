@@ -2155,11 +2155,12 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
 //
-
+let isCompare = 1 in {
 defm t2CMP  : T2I_cmp_irs<0b1101, "cmp",
                           BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 defm t2CMPz : T2I_cmp_irs<0b1101, "cmp",
                           BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
+}
 
 //FIXME: Disable CMN, as CCodes are backwards from compare expectations
 //       Compare-to-zero still works out, just not the relationals
