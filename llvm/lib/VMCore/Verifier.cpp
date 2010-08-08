@@ -1840,8 +1840,13 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
     // and iPTR. In the verifier, we can not distinguish which case we have so
     // allow either case to be legal.
     if (const PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
-      Suffix += ".p" + utostr(PTyp->getAddressSpace()) + 
-        EVT::getEVT(PTyp->getElementType()).getEVTString();
+      EVT PointeeVT = EVT::getEVT(PTyp->getElementType(), true);
+      if (PointeeVT == MVT::Other) {
+        CheckFailed("Intrinsic has pointer to complex type.");
+        return false;
+      }
+      Suffix += ".p" + utostr(PTyp->getAddressSpace()) +
+        PointeeVT.getEVTString();
     } else {
       CheckFailed(IntrinsicParam(ArgNo, NumRetVals) + " is not a "
                   "pointer and a pointer is required.", F);
