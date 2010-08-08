@@ -67,6 +67,10 @@ tool.
 Pass all arguments specified after B<--gcc-tool-args> to the invocation of
 B<gcc>.
 
+=item B<--opt-args> I<opt args>
+
+Pass all arguments specified after B<--opt-args> to the invocation of B<opt>.
+
 =item B<--disable-{dce,simplifycfg}>
 
 Do not run the specified passes to clean up and reduce the size of the test
