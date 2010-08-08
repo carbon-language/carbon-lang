@@ -1201,7 +1201,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);   
   else if (!getLangOptions().CPlusPlus && !CodeGenOpts.NoCommon &&
            !D->hasExternalStorage() && !D->getInit() &&
-           !D->getAttr<SectionAttr>()) {
+           !D->getAttr<SectionAttr>() && !D->isThreadSpecified()) {
+    // Thread local vars aren't considered common linkage.
     GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
     // common vars aren't constant even if declared const.
     GV->setConstant(false);
