@@ -332,3 +332,15 @@ namespace PR7810 {
     static void operator delete(void *volatile);
   };
 }
+
+// Don't crash on template delete operators
+namespace TemplateDestructors {
+  struct S {
+    virtual ~S() {}
+
+    void* operator new(const size_t size);
+    template<class T> void* operator new(const size_t, const int, T*);
+    void operator delete(void*, const size_t);
+    template<class T> void operator delete(void*, const size_t, const int, T*);
+  };
+}

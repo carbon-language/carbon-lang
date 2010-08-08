@@ -1301,8 +1301,14 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   llvm::SmallVector<DeclAccessPair,4> Matches;
   for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
        F != FEnd; ++F) {
-    CXXMethodDecl *Delete = cast<CXXMethodDecl>((*F)->getUnderlyingDecl());
-    if (Delete->isUsualDeallocationFunction())
+    NamedDecl *ND = (*F)->getUnderlyingDecl();
+
+    // Ignore template operator delete members from the check for a usual
+    // deallocation function.
+    if (isa<FunctionTemplateDecl>(ND))
+      continue;
+
+    if (cast<CXXMethodDecl>(ND)->isUsualDeallocationFunction())
       Matches.push_back(F.getPair());
   }
 
