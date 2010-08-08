@@ -9,7 +9,6 @@ add_llvm_tool(bugpoint
   FindBugs.cpp
   Miscompilation.cpp
   OptimizerDriver.cpp
-  TestPasses.cpp
   ToolRunner.cpp
   bugpoint.cpp
   )
