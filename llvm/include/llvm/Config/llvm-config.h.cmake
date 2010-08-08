@@ -81,4 +81,4 @@
 #cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
 
 /* Installation prefix directory */
-#cmakedefine LLVM_PREFIX
+#cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"

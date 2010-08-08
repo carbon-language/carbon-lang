@@ -260,6 +260,8 @@ else( ENABLE_THREADS )
   message(STATUS "Threads disabled.")
 endif()
 
+set(LLVM_PREFIX ${CMAKE_INSTALL_PREFIX})
+
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Config/config.h
