@@ -20825,7 +20825,7 @@ fi
 
 
 
-ac_config_headers="$ac_config_headers include/llvm/Config/config.h"
+ac_config_headers="$ac_config_headers include/llvm/Config/config.h include/llvm/Config/llvm-config.h"
 
 ac_config_files="$ac_config_files include/llvm/Config/Targets.def"
 
@@ -21456,6 +21456,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "include/llvm/Config/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Config/config.h" ;;
+    "include/llvm/Config/llvm-config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Config/llvm-config.h" ;;
     "include/llvm/Config/Targets.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/Targets.def" ;;
     "include/llvm/Config/AsmPrinters.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/AsmPrinters.def" ;;
     "include/llvm/Config/AsmParsers.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/AsmParsers.def" ;;
