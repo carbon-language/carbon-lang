@@ -102,6 +102,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isReturn     = R->getValueAsBit("isReturn");
   isBranch     = R->getValueAsBit("isBranch");
   isIndirectBranch = R->getValueAsBit("isIndirectBranch");
+  isCompare    = R->getValueAsBit("isCompare");
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
   canFoldAsLoad = R->getValueAsBit("canFoldAsLoad");
