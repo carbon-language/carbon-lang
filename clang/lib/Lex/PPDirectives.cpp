@@ -19,7 +19,6 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/System/Path.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -417,49 +416,33 @@ const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
                                           const DirectoryLookup *&CurDir) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
-  llvm::sys::Path RelSearchPath;
-
+  const FileEntry *CurFileEnt = 0;
   if (!FromDir) {
     FileID FID = getCurrentFileLexer()->getFileID();
-    const FileEntry *CurFileEnt = SourceMgr.getFileEntryForID(FID);
+    CurFileEnt = SourceMgr.getFileEntryForID(FID);
 
     // If there is no file entry associated with this file, it must be the
     // predefines buffer.  Any other file is not lexed with a normal lexer, so
-    // it won't be scanned for preprocessor directives.
-    //
-    // If we have the predefines buffer, resolve #include references (which
-    // come from the -include command line argument) as if they came from the
-    // main file.  When the main file is actually stdin, resolve references
-    // as if they came from the current working directory.
-    if (CurFileEnt) {
-      if (!RelSearchPath.set(CurFileEnt->getDir()->getName())) {
-        assert("Main file somehow invalid path?");
-      }
-    } else {
+    // it won't be scanned for preprocessor directives.   If we have the
+    // predefines buffer, resolve #include references (which come from the
+    // -include command line argument) as if they came from the main file, this
+    // affects file lookup etc.
+    if (CurFileEnt == 0) {
       FID = SourceMgr.getMainFileID();
       CurFileEnt = SourceMgr.getFileEntryForID(FID);
-
-      if (CurFileEnt) {
-        // 'main file' case
-        RelSearchPath.set(CurFileEnt->getDir()->getName());
-      } else {
-        // stdin case
-        RelSearchPath = llvm::sys::Path::GetCurrentDirectory();
-      }
     }
   }
 
   // Do a standard file entry lookup.
   CurDir = CurDirLookup;
   const FileEntry *FE =
-    HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, RelSearchPath);
+    HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, CurFileEnt);
   if (FE) return FE;
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
   if (IsFileLexer()) {
-    const FileEntry *CurFileEnt = 0;
     if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID())))
       if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
         return FE;
@@ -468,7 +451,6 @@ const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
     if (IsFileLexer(ISEntry)) {
-      const FileEntry *CurFileEnt = 0;
       if ((CurFileEnt =
            SourceMgr.getFileEntryForID(ISEntry.ThePPLexer->getFileID())))
         if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))

@@ -16,7 +16,6 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/System/Path.h"
 #include <vector>
 
 namespace clang {
@@ -145,16 +144,16 @@ public:
 
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
-  /// a <> reference.  If successful, this returns 'CurDir', the
+  /// a <> reference.  If successful, this returns 'UsedDir', the
   /// DirectoryLookup member the file was found in, or null if not applicable.
   /// If CurDir is non-null, the file was found in the specified directory
-  /// search location.  This is used to implement #include_next.  RelSearchPath,
-  /// if non-empty, indicates where the #including file is, in case a relative
+  /// search location.  This is used to implement #include_next.  CurFileEnt, if
+  /// non-null, indicates where the #including file is, in case a relative
   /// search is needed.
   const FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
-                              const llvm::sys::Path &RelSearchPath);
+                              const FileEntry *CurFileEnt);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
