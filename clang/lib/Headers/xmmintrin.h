@@ -460,7 +460,7 @@ _mm_cvtsi32_ss(__m128 a, int b)
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_cvtt_si2ss(__m128 a, int b)
+_mm_cvt_si2ss(__m128 a, int b)
 {
   return _mm_cvtsi32_ss(a, b);
 }
@@ -483,7 +483,7 @@ _mm_cvtpi32_ps(__m128 a, __m64 b)
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_cvtt_pi2ps(__m128 a, __m64 b)
+_mm_cvt_pi2ps(__m128 a, __m64 b)
 {
   return _mm_cvtpi32_ps(a, b);
 }
