@@ -14,8 +14,8 @@ Then build binutils with "make all-gold".
 
 To build the LLVMgold plugin, configure LLVM with the option
 --with-binutils-include=/path/to/binutils/src/include/ --enable-pic. To use the
-plugin, run "ld-new --plugin /path/to/libLLVMgold.so".
-Without PIC libLTO and libLLVMgold are not being built (because they would fail
+plugin, run "ld-new --plugin /path/to/LLVMgold.so".
+Without PIC libLTO and LLVMgold are not being built (because they would fail
 link on x86-64 with a relocation error: PIC and non-PIC can't be combined).
 As an alternative to passing --enable-pic, you can use 'make ENABLE_PIC=1' in
 your entire LLVM build.

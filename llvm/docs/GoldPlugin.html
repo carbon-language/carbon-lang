@@ -79,7 +79,7 @@ placed.
   the plugin <tt>.so</tt> file. To find out what link command <tt>gcc</tt>
   would run in a given situation, run <tt>gcc -v <em>[...]</em></tt> and look
   for the line where it runs <tt>collect2</tt>. Replace that with
-  <tt>ld-new -plugin /path/to/libLLVMgold.so</tt> to test it out. Once you're
+  <tt>ld-new -plugin /path/to/LLVMgold.so</tt> to test it out. Once you're
   ready to switch to using gold, backup your existing <tt>/usr/bin/ld</tt>
   then replace it with <tt>ld-new</tt>.</p>
   <p>You can produce bitcode files from <tt>llvm-gcc</tt> using
@@ -91,7 +91,7 @@ placed.
   linker, which is why you need gold to be the installed system linker in your
   path.</p>
   <p>If you want <tt>ar</tt> and <tt>nm</tt> to work seamlessly as well, install
-  <tt>libLLVMgold.so</tt> to <tt>/usr/lib/bfd-plugins</tt>. If you built your
+  <tt>LLVMgold.so</tt> to <tt>/usr/lib/bfd-plugins</tt>. If you built your
   own gold, be sure to install the <tt>ar</tt> and <tt>nm-new</tt> you built to
   <tt>/usr/bin</tt>.
   <p>
@@ -157,9 +157,9 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
   bitcode, everything is in place for an easy to use LTO build of autotooled
   projects:</p>
   <ul>
-    <li>Follow the instructions <a href="#build">on how to build libLLVMgold.so</a>.</li>
+    <li>Follow the instructions <a href="#build">on how to build LLVMgold.so</a>.</li>
     <li>Install the newly built binutils to <tt>$PREFIX</tt></li>
-    <li>Copy <tt>Release/lib/libLLVMgold.so</tt> to
+    <li>Copy <tt>Release/lib/LLVMgold.so</tt> to
     <tt>$PREFIX/libexec/gcc/x86_64-unknown-linux-gnu/4.2.1/</tt> and
     <tt>$PREFIX/lib/bfd-plugins/</tt></li>
     <li>Set environment variables (<tt>$PREFIX</tt> is where you installed llvm-gcc and
