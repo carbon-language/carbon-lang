@@ -72,7 +72,7 @@ asm(".desc ___crashreporter_info__, 0x10");
 
 /// CrashHandler - This callback is run if a fatal signal is delivered to the
 /// process, it prints the pretty stack trace.
-static void CrashHandler(void *Cookie) {
+static void CrashHandler(void *) {
 #ifndef __APPLE__
   // On non-apple systems, just emit the crash stack trace to stderr.
   PrintCurStackTrace(errs());
@@ -89,7 +89,8 @@ static void CrashHandler(void *Cookie) {
 #ifndef HAVE_CRASHREPORTERCLIENT_H
     __crashreporter_info__ = strdup(std::string(TmpStr.str()).c_str());
 #else
-    CRSetCrashLogMessage(std::string(TmpStr.str()).c_str());
+    // Cast to void to avoid warning.
+    (void)CRSetCrashLogMessage(std::string(TmpStr.str()).c_str());
 #endif
     errs() << TmpStr.str();
   }
