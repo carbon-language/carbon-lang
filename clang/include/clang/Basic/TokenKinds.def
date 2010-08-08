@@ -273,16 +273,11 @@ CXX_KEYWORD_OPERATOR(xor_eq  , caretequal)
 
 // C++0x keywords
 KEYWORD(alignof                     , KEYCXX0X)
-KEYWORD(axiom                       , KEYCXX0X)
 KEYWORD(char16_t                    , KEYCXX0X)
 KEYWORD(char32_t                    , KEYCXX0X)
-KEYWORD(concept                     , KEYCXX0X)
-KEYWORD(concept_map                 , KEYCXX0X)
 KEYWORD(constexpr                   , KEYCXX0X)
 KEYWORD(decltype                    , KEYCXX0X)
-KEYWORD(late_check                  , KEYCXX0X)
 KEYWORD(nullptr                     , KEYCXX0X)
-KEYWORD(requires                    , KEYCXX0X)
 KEYWORD(static_assert               , KEYCXX0X)
 KEYWORD(thread_local                , KEYCXX0X)
 
