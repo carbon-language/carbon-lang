@@ -857,8 +857,8 @@ static bool IsVectorConversion(ASTContext &Context, QualType FromType,
   //   same size
   if (ToType->isVectorType() && FromType->isVectorType()) {
     if (Context.areCompatibleVectorTypes(FromType, ToType) ||
-       Context.getLangOptions().LaxVectorConversions &&
-       (Context.getTypeSize(FromType) == Context.getTypeSize(ToType))) {
+        (Context.getLangOptions().LaxVectorConversions &&
+         (Context.getTypeSize(FromType) == Context.getTypeSize(ToType)))) {
       ICK = ICK_Vector_Conversion;
       return true;
     }
