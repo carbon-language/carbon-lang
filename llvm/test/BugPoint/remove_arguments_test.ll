@@ -1,5 +1,5 @@
 ; FIXME: This likely fails on windows
-; RUN: bugpoint -load %llvmlibsdir/BugpointPasses.so %s -output-prefix %t -bugpoint-crashcalls -silence-passes
+; RUN: bugpoint -load %llvmlibsdir/BugpointPasses%shlibext %s -output-prefix %t -bugpoint-crashcalls -silence-passes
 ; RUN: llvm-dis %t-reduced-simplified.bc -o - | FileCheck %s
 
 ; Test to make sure that arguments are removed from the function if they are 
