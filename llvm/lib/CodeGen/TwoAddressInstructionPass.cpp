@@ -1446,7 +1446,17 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         //
         // If the REG_SEQUENCE doesn't kill its source, keeping live variables
         // correctly up to date becomes very difficult. Insert a copy.
-        //
+
+        // Defer any kill flag to the last operand using SrcReg. Otherwise, we
+        // might insert a COPY that uses SrcReg after is was killed.
+        if (isKill)
+          for (unsigned j = i + 2; j < e; j += 2)
+            if (MI->getOperand(j).getReg() == SrcReg) {
+              MI->getOperand(j).setIsKill();
+              isKill = false;
+              break;
+            }
+
         MachineBasicBlock::iterator InsertLoc = MI;
         MachineInstr *CopyMI = BuildMI(*MI->getParent(), InsertLoc,
                                 MI->getDebugLoc(), TII->get(TargetOpcode::COPY))
