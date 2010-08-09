@@ -247,6 +247,9 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 
   if (Val.isNotConstant())
     return OS << "notconstant<" << *Val.getNotConstant() << '>';
+  else if (Val.isConstantRange())
+    return OS << "constantrange<" << Val.getConstantRange().getLower() << ", "
+              << Val.getConstantRange().getUpper() << '>';
   return OS << "constant<" << *Val.getConstant() << '>';
 }
 }
