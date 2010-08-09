@@ -31,6 +31,24 @@ import os
 import unittest2
 import lldb
 
+#
+# Some commonly used assert messages.
+#
+
+CURRENT_EXECUTABLE_SET = "Current executable set successfully"
+
+COMMAND_HANDLED = "Command handled successfully"
+
+BREAK_POINT_CREATED = "Breakpoint created successfully"
+
+BREAK_POINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
+
+STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
+
+STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
+
+VARIABLES_DISPLAYED_CORRECTLY = "Show specified variable(s) correctly"
+
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 
