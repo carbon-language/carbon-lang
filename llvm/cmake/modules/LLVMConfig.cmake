@@ -49,6 +49,13 @@ function(explicit_llvm_config executable)
 endfunction(explicit_llvm_config)
 
 
+# This is a variant intended for the final user:
+function(llvm_map_components_to_libraries OUT_VAR)
+  explicit_map_components_to_libraries(result ${ARGN})
+  set( ${OUT_VAR} ${result} )
+endfunction(llvm_map_components_to_libraries)
+
+
 function(explicit_map_components_to_libraries out_libs)
   set( link_components ${ARGN} )
   foreach(c ${link_components})

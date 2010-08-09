@@ -361,6 +361,8 @@ add_subdirectory(tools)
 option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." OFF)
 add_subdirectory(examples)
 
+add_subdirectory(cmake/modules)
+
 install(DIRECTORY include/
   DESTINATION include
   FILES_MATCHING
