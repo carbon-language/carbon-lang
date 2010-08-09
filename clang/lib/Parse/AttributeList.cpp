@@ -100,6 +100,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("format_arg", AT_format_arg)
     .Case("gnu_inline", AT_gnu_inline)
     .Case("weak_import", AT_weak_import)
+    .Case("vecreturn", AT_vecreturn)
     .Case("vector_size", AT_vector_size)
     .Case("constructor", AT_constructor)
     .Case("unavailable", AT_unavailable)

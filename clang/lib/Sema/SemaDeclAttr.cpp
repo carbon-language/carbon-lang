@@ -687,6 +687,45 @@ static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
     d->addAttr(::new (S.Context) AnalyzerNoReturnAttr());
 }
 
+// PS3 PPU-specific.
+static void HandleVecReturnAttr(Decl *d, const AttributeList &Attr,
+                                       Sema &S) {
+/*
+  Returning a Vector Class in Registers
+  
+  According to the PPU ABI specifications, a class with a single member of vector type is returned in
+  memory when used as the return value of a function. This results in inefficient code when implementing
+  vector classes. To return the value in a single vector register, add the vecreturn attribute to the class
+  definition. This attribute is also applicable to struct types.
+  
+  Example:
+  
+  struct Vector
+  {
+    __vector float xyzw;
+  } __attribute__((vecreturn));
+  
+  Vector Add(Vector lhs, Vector rhs)
+  {
+    Vector result;
+    result.xyzw = vec_add(lhs.xyzw, rhs.xyzw);
+    return result; // This will be returned in a register
+  }
+*/
+  if (!isa<CXXRecordDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << 9 /*class*/;
+    return;
+  }
+
+  if (d->getAttr<VecReturnAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "vecreturn";
+    return;
+  }
+
+  d->addAttr(::new (S.Context) VecReturnAttr());
+}
+
 static void HandleDependencyAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (!isFunctionOrMethod(d) && !isa<ParmVarDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
@@ -2181,6 +2220,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_noreturn:    HandleNoReturnAttr    (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
   case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;
+  case AttributeList::AT_vecreturn:   HandleVecReturnAttr   (D, Attr, S); break;
 
   // Checker-specific.
   case AttributeList::AT_ns_returns_not_retained:

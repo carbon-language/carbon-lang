@@ -126,3 +126,38 @@ vector char v3 = (vector char)((vector int)('a', 'b', 'c', 'd'));
 vector int v4 = (vector int)(1, 2, 3, 4);
 vector float v5 = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
 vector char v6 = (vector char)((vector int)(1+2, -2, (int)(2.0 * 3), -(5-3)));
+
+#if 0 // Not ready yet.
+// bug 7553 - Problem with '==' and vectors
+void func() {
+  vector int v10i = (vector int)(1, 2, 3, 4);
+  vector int v11i = (vector int)(1, 2, 3, 4);
+  bool r10ieq = (v10i == v11i);
+  bool r10ine = (v10i != v11i);
+  bool r10igt = (v10i > v11i);
+  bool r10ige = (v10i >= v11i);
+  bool r10ilt = (v10i < v11i);
+  bool r10ile = (v10i <= v11i);
+  vector float v10f = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
+  vector float v11f = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
+  bool r10feq = (v10f == v11f);
+  bool r10fne = (v10f != v11f);
+  bool r10fgt = (v10f > v11f);
+  bool r10fge = (v10f >= v11f);
+  bool r10flt = (v10f < v11f);
+  bool r10fle = (v10f <= v11f);
+}
+#endif
+
+// vecreturn attribute test
+struct Vector
+{
+	__vector float xyzw;
+} __attribute__((vecreturn));
+
+Vector Add(Vector lhs, Vector rhs)
+{
+	Vector result;
+	result.xyzw = vec_add(lhs.xyzw, rhs.xyzw);
+	return result; // This will (eventually) be returned in a register
+}

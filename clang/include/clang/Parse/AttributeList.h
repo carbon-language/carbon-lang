@@ -111,6 +111,7 @@ public:
     AT_unavailable,
     AT_unused,
     AT_used,
+    AT_vecreturn,     // PS3 PPU-specific.
     AT_vector_size,
     AT_visibility,
     AT_warn_unused_result,

@@ -376,6 +376,12 @@ def Visibility : Attr {
   let Args = [StringArgument<"Visibility">];
 }
 
+def VecReturn : Attr {
+  let Spellings = ["vecreturn"];
+  let Subjects = [CXXRecord];
+  let DoNotEmit = 0;
+}
+
 def WarnUnusedResult : Attr {
   let Spellings = ["warn_unused_result"];
 }
