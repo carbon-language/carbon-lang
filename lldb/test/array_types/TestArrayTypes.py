@@ -21,14 +21,15 @@ class TestArrayTypes(TestBase):
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.c', line = 42, locations = 1"),
-                        BREAK_POINT_CREATED)
+                        BREAKPOINT_CREATED)
 
         self.ci.HandleCommand("run", res)
-        time.sleep(1)
-        self.assertTrue(res.Succeeded())
+        #time.sleep(0.1)
+        self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint.
         self.ci.HandleCommand("thread list", res)
+        #print "thread list ->", res.GetOutput()
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().find('state is Stopped') > 0 and
                         res.GetOutput().find('stop reason = breakpoint') > 0,
@@ -38,7 +39,7 @@ class TestArrayTypes(TestBase):
         self.ci.HandleCommand("breakpoint list", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().find('resolved, hit count = 1') > 0,
-                        BREAK_POINT_HIT_ONCE)
+                        BREAKPOINT_HIT_ONCE)
 
         # Issue 'variable list' command on several array-type variables.
 

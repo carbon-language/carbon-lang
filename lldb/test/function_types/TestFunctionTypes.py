@@ -3,9 +3,9 @@
 import os, time
 import unittest2
 import lldb
-import lldbtest
+from lldbtest import *
 
-class TestFunctionTypes(lldbtest.TestBase):
+class TestFunctionTypes(TestBase):
 
     mydir = "function_types"
 
@@ -14,39 +14,43 @@ class TestFunctionTypes(lldbtest.TestBase):
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.
         self.ci.HandleCommand("breakpoint set -f main.c -l 21", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 1: file ='main.c', line = 21, locations = 1"))
+            "Breakpoint created: 1: file ='main.c', line = 21, locations = 1"),
+                        BREAKPOINT_CREATED)
 
         self.ci.HandleCommand("run", res)
-        time.sleep(0.1)
-        self.assertTrue(res.Succeeded())
+        #time.sleep(0.1)
+        self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint.
         self.ci.HandleCommand("thread list", res)
-        print "thread list ->", res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        #print "thread list ->", res.GetOutput()
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
         self.assertTrue(res.GetOutput().find('state is Stopped') > 0 and
-                        res.GetOutput().find('stop reason = breakpoint') > 0)
+                        res.GetOutput().find('stop reason = breakpoint') > 0,
+                        STOPPED_DUE_TO_BREAKPOINT)
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0)
+        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
+                        BREAKPOINT_HIT_ONCE)
 
         # Check that the 'callback' variable display properly.
         self.ci.HandleCommand("variable list callback", res);
         self.assertTrue(res.Succeeded())
         output = res.GetOutput()
-        self.assertTrue(output.startswith('(int (*)(char const *)) callback ='))
+        self.assertTrue(output.startswith('(int (*)(char const *)) callback ='),
+                        VARIABLES_DISPLAYED_CORRECTLY)
 
         # And that we can break on the callback function.
         self.ci.HandleCommand("breakpoint set -n string_not_empty", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), BREAKPOINT_CREATED)
         self.ci.HandleCommand("continue", res)
         self.assertTrue(res.Succeeded())
 
@@ -57,7 +61,8 @@ class TestFunctionTypes(lldbtest.TestBase):
         #print "process status =", output
         self.assertTrue(output.find('where = a.out`string_not_empty') > 0 and
                         output.find('main.c:12') > 0 and
-                        output.find('stop reason = breakpoint') > 0)
+                        output.find('stop reason = breakpoint') > 0,
+                        STOPPED_DUE_TO_BREAKPOINT)
 
         self.ci.HandleCommand("continue", res)
         self.assertTrue(res.Succeeded())

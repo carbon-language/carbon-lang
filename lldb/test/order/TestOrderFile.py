@@ -6,9 +6,9 @@ import os, time
 import re
 import unittest2
 import lldb
-import lldbtest
+from lldbtest import *
 
-class TestOrderFile(lldbtest.TestBase):
+class TestOrderFile(TestBase):
 
     mydir = "order"
 
@@ -17,7 +17,7 @@ class TestOrderFile(lldbtest.TestBase):
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
 
         # Test that the debug symbols have Function f3 before Function f1.
         self.ci.HandleCommand("image dump symtab a.out", res)
@@ -27,10 +27,11 @@ class TestOrderFile(lldbtest.TestBase):
         mo_f1 = re.search("Function +.+f1", output)
         
         # Match objects for f3 and f1 must exist and f3 must come before f1.
-        self.assertTrue(mo_f3 and mo_f1 and mo_f3.start() < mo_f1.start())
+        self.assertTrue(mo_f3 and mo_f1 and mo_f3.start() < mo_f1.start(),
+                        "Symbols have correct order by the order file")
 
         self.ci.HandleCommand("run", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), RUN_COMPLETED)
 
 
 if __name__ == '__main__':

@@ -3,9 +3,9 @@
 import os, time
 import unittest2
 import lldb
-import lldbtest
+from lldbtest import *
 
-class TestClassTypes(lldbtest.TestBase):
+class TestClassTypes(TestBase):
 
     mydir = "class_types"
 
@@ -14,34 +14,38 @@ class TestClassTypes(lldbtest.TestBase):
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
 
         # Break on the ctor function of class C.
         self.ci.HandleCommand("breakpoint set -f main.cpp -l 73", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 1: file ='main.cpp', line = 73, locations = 1"))
+            "Breakpoint created: 1: file ='main.cpp', line = 73, locations = 1"),
+                        BREAKPOINT_CREATED)
 
         self.ci.HandleCommand("run", res)
-        time.sleep(0.1)
-        self.assertTrue(res.Succeeded())
+        #time.sleep(0.1)
+        self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint.
         self.ci.HandleCommand("thread list", res)
-        print "thread list ->", res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        #print "thread list ->", res.GetOutput()
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
         self.assertTrue(res.GetOutput().find('state is Stopped') > 0 and
-                        res.GetOutput().find('stop reason = breakpoint') > 0)
+                        res.GetOutput().find('stop reason = breakpoint') > 0,
+                        STOPPED_DUE_TO_BREAKPOINT)
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0)
+        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
+                        BREAKPOINT_HIT_ONCE)
 
         # We should be stopped on the ctor function of class C.
         self.ci.HandleCommand("variable list this", res);
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().startswith('(class C *const) this = '))
+        self.assertTrue(res.GetOutput().startswith('(class C *const) this = '),
+                        VARIABLES_DISPLAYED_CORRECTLY)
 
         self.ci.HandleCommand("continue", res)
         self.assertTrue(res.Succeeded())

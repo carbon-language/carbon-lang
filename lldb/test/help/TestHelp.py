@@ -7,9 +7,9 @@ See also CommandInterpreter::OutputFormattedHelpText().
 import os, time
 import unittest2
 import lldb
-import lldbtest
+from lldbtest import *
 
-class TestHelpCommand(lldbtest.TestBase):
+class TestHelpCommand(TestBase):
 
     mydir = "help"
 
@@ -17,22 +17,24 @@ class TestHelpCommand(lldbtest.TestBase):
         """A simple test of 'help' command and its output."""
         res = lldb.SBCommandReturnObject()
         self.ci.HandleCommand("help", res)
-        time.sleep(0.1)
+        #time.sleep(0.1)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
-            'The following is a list of built-in, permanent debugger commands'))
+            'The following is a list of built-in, permanent debugger commands'),
+                        CMD_MSG('help'))
 
     def test_help_should_not_hang_emacsshell(self):
         """Command 'set term-width 0' should not hang the help command."""
         res = lldb.SBCommandReturnObject()
         self.ci.HandleCommand("set term-width 0", res)
-        time.sleep(0.1)
-        self.assertTrue(res.Succeeded())
+        #time.sleep(0.1)
+        self.assertTrue(res.Succeeded(), CMD_MSG('set term-width 0'))
         self.ci.HandleCommand("help", res)
-        time.sleep(0.1)
+        #time.sleep(0.1)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
-            'The following is a list of built-in, permanent debugger commands'))
+            'The following is a list of built-in, permanent debugger commands'),
+                        CMD_MSG('help'))
 
 
 if __name__ == '__main__':

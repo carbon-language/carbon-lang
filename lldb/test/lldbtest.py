@@ -37,17 +37,26 @@ import lldb
 
 CURRENT_EXECUTABLE_SET = "Current executable set successfully"
 
-COMMAND_HANDLED = "Command handled successfully"
+RUN_STOPPED = "Process is stopped successfully"
 
-BREAK_POINT_CREATED = "Breakpoint created successfully"
+RUN_COMPLETED = "Process exited successfully"
 
-BREAK_POINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
+BREAKPOINT_CREATED = "Breakpoint created successfully"
+
+BREAKPOINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
 
 STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
 
 STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
 
 VARIABLES_DISPLAYED_CORRECTLY = "Show specified variable(s) correctly"
+
+#
+# And a generic "Command '%s' returns successfully" message generator.
+#
+def CMD_MSG(command):
+    return "Command '%s' returns successfully" % (command)
+
 
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
