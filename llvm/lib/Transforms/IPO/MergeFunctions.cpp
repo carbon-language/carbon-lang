@@ -559,7 +559,7 @@ void MergeFunctions::WriteThunk(Function *F, Function *G) const {
 }
 
 /// MergeTwoFunctions - Merge two equivalent functions. Upon completion,
-/// FnVec[j] should never be visited again.
+/// FnVec[j] is deleted but not removed from the vector.
 void MergeFunctions::MergeTwoFunctions(std::vector<Function *> &FnVec,
                                        unsigned i, unsigned j) const {
   Function *F = FnVec[i];
@@ -580,10 +580,12 @@ void MergeFunctions::MergeTwoFunctions(std::vector<Function *> &FnVec,
     H->takeName(F);
     F->replaceAllUsesWith(H);
 
+    unsigned MaxAlignment = std::max(G->getAlignment(), H->getAlignment());
+
     WriteThunk(F, G);
     WriteThunk(F, H);
 
-    F->setAlignment(std::max(G->getAlignment(), H->getAlignment()));
+    F->setAlignment(MaxAlignment);
     F->setLinkage(GlobalValue::InternalLinkage);
   } else {
     WriteThunk(F, G);
