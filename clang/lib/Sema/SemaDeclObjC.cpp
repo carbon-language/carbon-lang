@@ -20,6 +20,50 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
+/// \brief Look for an Objective-C class in the translation unit.
+///
+/// \param Id The name of the Objective-C class we're looking for. If
+/// typo-correction fixes this name, the Id will be updated
+/// to the fixed name.
+///
+/// \param IdLoc The location of the name in the translation unit.
+///
+/// \param TypoCorrection If true, this routine will attempt typo correction
+/// if there is no class with the given name.
+///
+/// \returns The declaration of the named Objective-C class, which is also the
+/// definition if one is available, or NULL if the class could not be found.
+ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
+                                              SourceLocation IdLoc,
+                                              bool TypoCorrection) {
+  // The third "scope" argument is 0 since we aren't enabling lazy built-in
+  // creation from this context.
+  NamedDecl *Decl = LookupSingleName(TUScope, Id, IdLoc, LookupOrdinaryName);
+
+  if (!Decl && TypoCorrection) {
+    // Perform typo correction at the given location, but only if we
+    // find an Objective-C class name.
+    LookupResult R(*this, Id, IdLoc, LookupOrdinaryName);
+    if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
+        (Decl = R.getAsSingle<ObjCInterfaceDecl>())) {
+      Diag(IdLoc, diag::err_undef_interface_suggest)
+        << Id << Decl->getDeclName() 
+        << FixItHint::CreateReplacement(IdLoc, Decl->getNameAsString());
+      Diag(Decl->getLocation(), diag::note_previous_decl)
+        << Decl->getDeclName();
+
+      Id = Decl->getIdentifier();
+    }
+  }
+
+  ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(Decl);
+  if (IDecl) {
+    if (ObjCInterfaceDecl *Def = IDecl->getDefinition())
+      IDecl = Def;
+  }
+  return IDecl;
+}
+
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
@@ -65,6 +109,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                          SourceLocation EndProtoLoc, AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
 
+  bool Invalid = false;
+
   // Check for another declaration kind with the same name.
   NamedDecl *PrevDecl = LookupSingleName(TUScope, ClassName, ClassLoc,
                                          LookupOrdinaryName, ForRedeclaration);
@@ -72,41 +118,34 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+    // Set the new decl invalid and ignore the old.
+    Invalid = true;
+    PrevDecl = 0;
   }
 
-  ObjCInterfaceDecl* IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
-  if (IDecl) {
+  ObjCInterfaceDecl *ODecl = cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+  if (ODecl) {
     // Class already seen. Is it a forward declaration?
-    if (!IDecl->isForwardDecl()) {
-      IDecl->setInvalidDecl();
-      Diag(AtInterfaceLoc, diag::err_duplicate_class_def)<<IDecl->getDeclName();
-      Diag(IDecl->getLocation(), diag::note_previous_definition);
+    if (ObjCInterfaceDecl *Def = ODecl->getDefinition()) {
+      Invalid = true;
+      Diag(AtInterfaceLoc, diag::err_duplicate_class_def) << Def->getDeclName();
+      Diag(Def->getLocation(), diag::note_previous_definition);
 
-      // Return the previous class interface.
-      // FIXME: don't leak the objects passed in!
-      return DeclPtrTy::make(IDecl);
-    } else {
-      IDecl->setLocation(AtInterfaceLoc);
-      IDecl->setForwardDecl(false);
-      IDecl->setClassLoc(ClassLoc);
-      
-      // Since this ObjCInterfaceDecl was created by a forward declaration,
-      // we now add it to the DeclContext since it wasn't added before
-      // (see ActOnForwardClassDeclaration).
-      IDecl->setLexicalDeclContext(CurContext);
-      CurContext->addDecl(IDecl);
-      
-      if (AttrList)
-        ProcessDeclAttributeList(TUScope, IDecl, AttrList);
+      // Return the previous class interface and ignore the new one.
+      return DeclPtrTy::make(ODecl);
     }
-  } else {
-    IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                      ClassName, ClassLoc);
-    if (AttrList)
-      ProcessDeclAttributeList(TUScope, IDecl, AttrList);
-
-    PushOnScopeChains(IDecl, TUScope);
   }
+
+  ObjCInterfaceDecl *IDecl =
+      ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
+                                ClassName, ClassLoc, ODecl);
+  if (Invalid)
+    IDecl->setInvalidDecl();
+
+  if (AttrList)
+    ProcessDeclAttributeList(TUScope, IDecl, AttrList);
+
+  PushOnScopeChains(IDecl, TUScope);
 
   if (SuperName) {
     // Check if a different kind of symbol declared in this scope.
@@ -125,6 +164,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       }
     }
 
+    // Since we just pushed IDecl on the scope chain, if PrevDecl is the same
+    // class, it will be the same declaration.
     if (PrevDecl == IDecl) {
       Diag(SuperLoc, diag::err_recursive_superclass)
         << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
@@ -140,11 +181,11 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       if (PrevDecl && SuperClassDecl == 0) {
         // The previous declaration was not a class decl. Check if we have a
         // typedef. If we do, get the underlying class type.
-        if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
+        if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(PrevDecl)){
           QualType T = TDecl->getUnderlyingType();
           if (T->isObjCObjectType()) {
-            if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface())
-              SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
+            if (NamedDecl *NDecl = T->getAs<ObjCObjectType>()->getInterface())
+              SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(NDecl);
           }
         }
 
@@ -157,6 +198,11 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
           Diag(SuperLoc, diag::err_redefinition_different_kind) << SuperName;
           Diag(PrevDecl->getLocation(), diag::note_previous_definition);
         }
+      }
+
+      if (SuperClassDecl) {
+        if (ObjCInterfaceDecl *Def = SuperClassDecl->getDefinition())
+          SuperClassDecl = Def;
       }
 
       if (!dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
@@ -530,7 +576,7 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *SuperClassname,
                       SourceLocation SuperClassLoc) {
-  ObjCInterfaceDecl* IDecl = 0;
+  ObjCInterfaceDecl *IDecl = 0, *ODecl = 0;
   // Check for another declaration kind with the same name.
   NamedDecl *PrevDecl
     = LookupSingleName(TUScope, ClassName, ClassLoc, LookupOrdinaryName,
@@ -538,11 +584,10 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-  } else if ((IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl))) {
-    // If this is a forward declaration of an interface, warn.
-    if (IDecl->isForwardDecl()) {
+  } else if ((ODecl = cast_or_null<ObjCInterfaceDecl>(PrevDecl))) {
+    // If we can't find a definition of the interface, warn.
+    if (!(IDecl = ODecl->getDefinition())) {
       Diag(ClassLoc, diag::warn_undef_interface) << ClassName;
-      IDecl = 0;
     }
   } else {
     // We did not find anything with the name ClassName; try to correct for 
@@ -552,7 +597,7 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
         (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
       // Suggest the (potentially) correct interface name. However, put the
       // fix-it hint itself in a separate note, since changing the name in 
-      // the warning would make the fix-it change semantics.However, don't
+      // the warning would make the fix-it change semantics. Also, don't
       // provide a code-modification hint or use the typo name for recovery,
       // because this is just a warning. The program may actually be correct.
       Diag(ClassLoc, diag::warn_undef_interface_suggest)
@@ -599,16 +644,11 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     // FIXME: Do we support attributes on the @implementation? If so we should
     // copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc,
-                                      ClassName, ClassLoc, false, true);
+                                      ClassName, ClassLoc, ODecl, false, true);
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
 
     PushOnScopeChains(IDecl, TUScope);
-  } else {
-    // Mark the interface as being completed, even if it was just as
-    //   @class ....;
-    // declaration; the user cannot reopen it.
-    IDecl->setForwardDecl(false);
   }
 
   ObjCImplementationDecl* IMPDecl =
@@ -619,15 +659,15 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     return DeclPtrTy::make(IMPDecl);
 
   // Check that there is no duplicate implementation of this class.
-  if (IDecl->getImplementation()) {
-    // FIXME: Don't leak everything!
+  if (IDecl && IDecl->getImplementation()) {
     Diag(ClassLoc, diag::err_dup_implementation_class) << ClassName;
     Diag(IDecl->getImplementation()->getLocation(),
          diag::note_previous_definition);
-  } else { // add it to the list.
+  } else {
     IDecl->setImplementation(IMPDecl);
     PushOnScopeChains(IMPDecl, TUScope);
   }
+
   return DeclPtrTy::make(IMPDecl);
 }
 
@@ -1029,19 +1069,18 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
           PrevDecl = OI->getInterface();
       }
     }
-    ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
-    if (!IDecl) {  // Not already seen?  Make a forward decl.
-      IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                        IdentList[i], IdentLocs[i], true);
-      
-      // Push the ObjCInterfaceDecl on the scope chain but do *not* add it to
-      // the current DeclContext.  This prevents clients that walk DeclContext
-      // from seeing the imaginary ObjCInterfaceDecl until it is actually
-      // declared later (if at all).  We also take care to explicitly make
-      // sure this declaration is visible for name lookup.
-      PushOnScopeChains(IDecl, TUScope, false);
-      CurContext->makeDeclVisibleInContext(IDecl, true);
-    }
+    ObjCInterfaceDecl *ODecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+    ObjCInterfaceDecl *IDecl =
+        ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
+                                  IdentList[i], IdentLocs[i], ODecl, true);
+
+    // Push the ObjCInterfaceDecl on the scope chain but do *not* add it to
+    // the current DeclContext.  This prevents clients that walk DeclContext
+    // from seeing the imaginary ObjCInterfaceDecl until it is actually
+    // declared later (if at all).  We also take care to explicitly make
+    // sure this declaration is visible for name lookup.
+    PushOnScopeChains(IDecl, TUScope, false);
+    CurContext->makeDeclVisibleInContext(IDecl, true);
 
     Interfaces.push_back(IDecl);
   }

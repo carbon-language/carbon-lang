@@ -2467,6 +2467,18 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
 }
 
 Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+  // If this interface has a definition in the translation unit we're coming
+  // from, but this particular declaration is not that definition, import the
+  // definition and map to that.
+  ObjCInterfaceDecl *Definition = D->getDefinition();
+  if (Definition && Definition != D) {
+    Decl *ImportedDef = Importer.Import(Definition);
+    if (!ImportedDef)
+      return 0;
+
+    return Importer.Imported(D, ImportedDef);
+  }
+
   // Import the major distinguishing characteristics of an @interface.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
@@ -2491,7 +2503,7 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
       ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(),
                                           DC, Loc,
                                           Name.getAsIdentifierInfo(),
-                                          Importer.Import(D->getClassLoc()),
+                                          Importer.Import(D->getClassLoc()), 0,
                                           D->isForwardDecl(),
                                           D->isImplicitInterfaceDecl());
       ToIface->setForwardDecl(D->isForwardDecl());

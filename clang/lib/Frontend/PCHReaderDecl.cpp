@@ -34,7 +34,7 @@ namespace clang {
     const pch::DeclID ThisDeclID;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
-    pch::TypeID TypeIDForTypeDecl;
+    pch::TypeID TypeIDForDecl;
 
     uint64_t GetCurrentCursorOffset();
 
@@ -43,7 +43,7 @@ namespace clang {
                   pch::DeclID thisDeclID, const PCHReader::RecordData &Record,
                   unsigned &Idx)
       : Reader(Reader), Cursor(Cursor), ThisDeclID(thisDeclID), Record(Record),
-        Idx(Idx), TypeIDForTypeDecl(0) { }
+        Idx(Idx), TypeIDForDecl(0) { }
 
     void Visit(Decl *D);
 
@@ -132,9 +132,11 @@ uint64_t PCHDeclReader::GetCurrentCursorOffset() {
 void PCHDeclReader::Visit(Decl *D) {
   DeclVisitor<PCHDeclReader, void>::Visit(D);
 
+  // if we have a fully initialized Decl, we can safely read its type now.
   if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
-    // if we have a fully initialized TypeDecl, we can safely read its type now.
-    TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtr());
+    TD->setTypeForDecl(Reader.GetType(TypeIDForDecl).getTypePtr());
+  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    ID->setTypeForDecl(Reader.GetType(TypeIDForDecl).getTypePtr());
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     if (Record[Idx++])
@@ -170,7 +172,7 @@ void PCHDeclReader::VisitNamedDecl(NamedDecl *ND) {
 void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
   VisitNamedDecl(TD);
   // Delay type reading until after we have fully initialized the decl.
-  TypeIDForTypeDecl = Record[Idx++];
+  TypeIDForDecl = Record[Idx++];
 }
 
 void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
@@ -367,7 +369,11 @@ void PCHDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 
 void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitObjCContainerDecl(ID);
-  ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
+  ID->setForwardDecl(Record[Idx++]);
+  ID->setImplicitInterfaceDecl(Record[Idx++]);
+  VisitRedeclarable(ID);
+  // Must delay type reading until the redecl chain is complete.
+  TypeIDForDecl = Record[Idx++];
   ID->setSuperClass(cast_or_null<ObjCInterfaceDecl>
                        (Reader.GetDecl(Record[Idx++])));
   unsigned NumProtocols = Record[Idx++];
@@ -388,8 +394,6 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     IVars.push_back(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
   ID->setCategoryList(
                cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
-  ID->setForwardDecl(Record[Idx++]);
-  ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setSuperClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -1459,7 +1463,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
                                Selector(), QualType(), 0, 0);
     break;
   case pch::DECL_OBJC_INTERFACE:
-    D = ObjCInterfaceDecl::Create(*Context, 0, SourceLocation(), 0);
+    D = ObjCInterfaceDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_OBJC_IVAR:
     D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,

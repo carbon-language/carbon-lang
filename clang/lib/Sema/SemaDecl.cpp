@@ -606,45 +606,6 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
-/// \brief Look for an Objective-C class in the translation unit.
-///
-/// \param Id The name of the Objective-C class we're looking for. If
-/// typo-correction fixes this name, the Id will be updated
-/// to the fixed name.
-///
-/// \param IdLoc The location of the name in the translation unit.
-///
-/// \param TypoCorrection If true, this routine will attempt typo correction
-/// if there is no class with the given name.
-///
-/// \returns The declaration of the named Objective-C class, or NULL if the
-/// class could not be found.
-ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
-                                              SourceLocation IdLoc,
-                                              bool TypoCorrection) {
-  // The third "scope" argument is 0 since we aren't enabling lazy built-in
-  // creation from this context.
-  NamedDecl *IDecl = LookupSingleName(TUScope, Id, IdLoc, LookupOrdinaryName);
-
-  if (!IDecl && TypoCorrection) {
-    // Perform typo correction at the given location, but only if we
-    // find an Objective-C class name.
-    LookupResult R(*this, Id, IdLoc, LookupOrdinaryName);
-    if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
-        (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
-      Diag(IdLoc, diag::err_undef_interface_suggest)
-        << Id << IDecl->getDeclName() 
-        << FixItHint::CreateReplacement(IdLoc, IDecl->getNameAsString());
-      Diag(IDecl->getLocation(), diag::note_previous_decl)
-        << IDecl->getDeclName();
-      
-      Id = IDecl->getIdentifier();
-    }
-  }
-
-  return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
-}
-
 /// getNonFieldDeclScope - Retrieves the innermost scope, starting
 /// from S, where a non-field would be declared. This routine copes
 /// with the difference between C and C++ scoping rules in structs and

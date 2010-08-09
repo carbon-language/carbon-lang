@@ -45,6 +45,14 @@ void ObjCProtocolList::set(ObjCProtocolDecl* const* InList, unsigned Elts,
 // ObjCInterfaceDecl
 //===----------------------------------------------------------------------===//
 
+ObjCInterfaceDecl *ObjCInterfaceDecl::getDefinition() {
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if (I->isDefinition())
+      return *I;
+  }
+  return 0;
+}
+
 /// getIvarDecl - This method looks up an ivar in this ContextDecl.
 ///
 ObjCIvarDecl *
@@ -432,18 +440,30 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              SourceLocation atLoc,
                                              IdentifierInfo *Id,
                                              SourceLocation ClassLoc,
+                                             ObjCInterfaceDecl *PrevDecl,
                                              bool ForwardDecl, bool isInternal){
-  return new (C) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, ForwardDecl,
-                                     isInternal);
+  ObjCInterfaceDecl *D = new (C) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc,
+                                                   PrevDecl, ForwardDecl,
+                                                   isInternal);
+  C.getObjCInterfaceType(D, PrevDecl);
+  return D;
+}
+
+ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C, EmptyShell) {
+  return new (C) ObjCInterfaceDecl(0, SourceLocation(), 0, SourceLocation(),
+                                   0, false, false);
 }
 
 ObjCInterfaceDecl::
 ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
-                  SourceLocation CLoc, bool FD, bool isInternal)
+                  SourceLocation CLoc, ObjCInterfaceDecl *PrevDecl,
+                  bool FD, bool isInternal)
   : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
     TypeForDecl(0), SuperClass(0),
     CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal),
     ClassLoc(CLoc) {
+  if (PrevDecl)
+    setPreviousDeclaration(PrevDecl);
 }
 
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {

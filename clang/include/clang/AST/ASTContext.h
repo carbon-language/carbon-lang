@@ -668,7 +668,10 @@ public:
                                                   unsigned NumArgs,
                                                   const TemplateArgument *Args);
 
-  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
+  /// getObjCInterfaceType - Return the unique reference to the type for the
+  /// specified ObjC interface decl.
+  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
+                                const ObjCInterfaceDecl *PrevDecl = 0);
 
   QualType getObjCObjectType(QualType Base,
                              ObjCProtocolDecl * const *Protocols,

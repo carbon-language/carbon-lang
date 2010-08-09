@@ -3748,20 +3748,28 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
   for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
                                DEnd = Ctx->decls_end();
        D != DEnd; ++D) {
-    // Record any interfaces we find.
-    if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*D))
-      if ((!OnlyForwardDeclarations || Class->isForwardDecl()) &&
-          (!OnlyUnimplemented || !Class->getImplementation()))
-        Results.AddResult(Result(Class, 0), CurContext, 0, false);
+    // Record any interfaces we find. Forward declarations are never registered
+    // in the lexical contest, so if we're only looking for those, don't bother.
+    if (!OnlyForwardDeclarations)
+      if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*D))
+        if (!OnlyUnimplemented || !Class->getImplementation())
+          Results.AddResult(Result(Class, 0), CurContext, 0, false);
 
     // Record any forward-declared interfaces we find.
     if (ObjCClassDecl *Forward = dyn_cast<ObjCClassDecl>(*D)) {
       for (ObjCClassDecl::iterator C = Forward->begin(), CEnd = Forward->end();
-           C != CEnd; ++C)
-        if ((!OnlyForwardDeclarations || C->getInterface()->isForwardDecl()) &&
-            (!OnlyUnimplemented || !C->getInterface()->getImplementation()))
-          Results.AddResult(Result(C->getInterface(), 0), CurContext,
+           C != CEnd; ++C) {
+        ObjCInterfaceDecl *IDecl = C->getInterface();
+        ObjCInterfaceDecl *IDef = IDecl->getDefinition();
+        // If there's a definition, and we're looking for everything, then we
+        // already added the decl in question above.
+        if (!OnlyForwardDeclarations && !OnlyUnimplemented && IDef)
+          continue;
+        if ((!OnlyForwardDeclarations || !IDef) &&
+            (!OnlyUnimplemented || !IDef || !IDef->getImplementation()))
+          Results.AddResult(Result(IDecl, 0), CurContext,
                             0, false);
+      }
     }
   }
 }

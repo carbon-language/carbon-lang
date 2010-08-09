@@ -305,7 +305,9 @@ void PCHTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
 }
 
 void PCHTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
-  Writer.AddDeclRef(T->getDecl(), Record);
+  // The stored declaration must be the first, but getDecl() returns the
+  // definition.
+  Writer.AddDeclRef(T->getDecl()->getFirstDeclaration(), Record);
   Code = pch::TYPE_OBJC_INTERFACE;
 }
 

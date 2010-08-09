@@ -727,12 +727,19 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
 
 void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   std::string I = OID->getNameAsString();
+
+  if (OID->isForwardDecl()) {
+    // These shouldn't be directly visited, but in case they are, write them
+    // as an @class declaration.
+    Out << "@class " << I;
+    return;
+  }
+
   ObjCInterfaceDecl *SID = OID->getSuperClass();
 
+  Out << "@interface " << I;
   if (SID)
-    Out << "@interface " << I << " : " << SID;
-  else
-    Out << "@interface " << I;
+    Out << " : " << SID;
 
   // Protocols?
   const ObjCList<ObjCProtocolDecl> &Protocols = OID->getReferencedProtocols();

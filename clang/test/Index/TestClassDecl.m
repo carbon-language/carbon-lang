@@ -17,7 +17,7 @@ void function(Foo * arg)
 
 // CHECK-scan: [1:1 - 8:1] Invalid Cursor => NoDeclFound
 // CHECK-scan: [8:1 - 8:8] UnexposedDecl=:8:1
-// CHECK-scan: [8:8 - 8:11] ObjCClassRef=Foo:10:12
+// CHECK-scan: [8:8 - 8:11] ObjCClassRef=Foo:8:8
 // CHECK-scan: [8:11 - 10:1] Invalid Cursor => NoDeclFound
 // CHECK-scan: [10:1 - 11:5] ObjCInterfaceDecl=Foo:10:12
 // CHECK-scan: [11:5 - 13:6] Invalid Cursor => NoDeclFound

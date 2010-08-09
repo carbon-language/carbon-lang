@@ -3038,7 +3038,7 @@ class ObjCInterfaceType : public ObjCObjectType {
   friend class ASTContext;  // ASTContext creates these.
 public:
   /// getDecl - Get the declaration of this interface.
-  ObjCInterfaceDecl *getDecl() const { return Decl; }
+  ObjCInterfaceDecl *getDecl() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

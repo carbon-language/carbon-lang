@@ -89,7 +89,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     ObjCInterfaceDecl *ProtocolDecl =
       ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
                                 &Context.Idents.get("Protocol"),
-                                SourceLocation(), true);
+                                SourceLocation(), 0, true);
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     PushOnScopeChains(ProtocolDecl, TUScope, false);
   }
