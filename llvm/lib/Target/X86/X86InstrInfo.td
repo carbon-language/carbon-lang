@@ -1169,7 +1169,7 @@ def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR32:$src),
 
 // Extra precision multiplication
 
-// AL is really implied by AX, by the registers in Defs must match the
+// AL is really implied by AX, but the registers in Defs must match the
 // SDNode results (i8, i32).
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
