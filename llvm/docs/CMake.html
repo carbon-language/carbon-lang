@@ -354,7 +354,38 @@
 
 <div class="doc_text">
 
-<p>TODO</p>
+  <p>The most difficult part of adding LLVM to the build of a project
+    is to determine the set of LLVM libraries corresponding to the set
+    of required LLVM features. What follows is an example of how to
+    obtain this information:</p>
+
+  <div class="doc_code">
+    <pre>
+    <b># A convenience variable:</b>
+    set(LLVM_ROOT "" CACHE PATH "Root of LLVM install.")
+    <b># A bit of a sanity check:</b>
+    if( NOT EXISTS ${LLVM_ROOT}/include/llvm )
+    message(FATAL_ERROR "LLVM_ROOT (${LLVM_ROOT}) is not a valid LLVM install")
+    endif()
+    <b># We incorporate the CMake features provided by LLVM:</b>
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${LLVM_ROOT}/share/llvm/cmake")
+    include(LLVM)
+    <b># Now set the header and library paths:</b>
+    include_directories( ${LLVM_ROOT}/include )
+    link_directories( ${LLVM_ROOT}/lib )
+    <b># Let's suppose we want to build a JIT compiler with support for
+    # binary code (no interpreter):</b>
+    llvm_map_components_to_libraries(REQ_LLVM_LIBRARIES jit native)
+    <b># Finally, we link the LLVM libraries to our executable:</b>
+    target_link_libraries(mycompiler ${REQ_LLVM_LIBRARIES})
+    </pre>
+  </div>
+
+  <p>This assumes that LLVM_ROOT points to an install of LLVM. The
+    procedure works too for uninstalled builds although we need to take
+    care to add an <i>include_directories</i> for the location of the
+    headers on the LLVM source directory (if we are building
+    out-of-source.)</p>
 
 </div>
 
@@ -383,7 +414,7 @@
 
   <a href="mailto:ofv@wanadoo.es">Oscar Fuentes</a><br>
   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br>
-  Last modified: $Date: 2008-12-31 03:59:36 +0100 (Wed, 31 Dec 2008) $
+  Last modified: $Date: 2010-08-09 03:59:36 +0100 (Mon, 9 Aug 2010) $
 </address>
 
 </body>
