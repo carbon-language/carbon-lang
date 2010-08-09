@@ -1190,7 +1190,7 @@ static StringRef getRealLinkageName(StringRef LinkageName) {
 DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
   // If the global variable was optmized out then no need to create debug info
   // entry.
-  if (!GV.getGlobal()) return NULL;
+  if (!GV.Verify()) return NULL;
   if (GV.getDisplayName().empty()) return NULL;
 
   DIE *GVDie = new DIE(dwarf::DW_TAG_variable);
@@ -1908,6 +1908,10 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
 
   // Add to context owner.
   DIDescriptor GVContext = DI_GV.getContext();
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+  addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+  addLabel(Block, 0, dwarf::DW_FORM_udata,
+           Asm->Mang->getSymbol(DI_GV.getGlobal()));
   // Do not create specification DIE if context is either compile unit
   // or a subprogram.
   if (DI_GV.isDefinition() && !GVContext.isCompileUnit() &&
@@ -1917,18 +1921,10 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
     addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
                 dwarf::DW_FORM_ref4, VariableDie);
-    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addLabel(Block, 0, dwarf::DW_FORM_udata,
-             Asm->Mang->getSymbol(DI_GV.getGlobal()));
     addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
     addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
     TheCU->addDie(VariableSpecDIE);
   } else {
-    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addLabel(Block, 0, dwarf::DW_FORM_udata,
-             Asm->Mang->getSymbol(DI_GV.getGlobal()));
     addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
   }
   addToContextOwner(VariableDie, GVContext);
