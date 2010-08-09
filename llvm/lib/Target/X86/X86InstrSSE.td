@@ -1126,6 +1126,31 @@ def : Pat<(int_x86_avx_cvtdq2_ps_256 VR256:$src),
 def : Pat<(int_x86_avx_cvtdq2_ps_256 (memopv8i32 addr:$src)),
           (VCVTDQ2PSYrm addr:$src)>;
 
+def : Pat<(int_x86_avx_cvt_pd2_ps_256 VR256:$src),
+          (VCVTPD2PSYrr VR256:$src)>;
+def : Pat<(int_x86_avx_cvt_pd2_ps_256 (memopv4f64 addr:$src)),
+          (VCVTPD2PSYrm addr:$src)>;
+
+def : Pat<(int_x86_avx_cvt_ps2dq_256 VR256:$src),
+          (VCVTPS2DQYrr VR256:$src)>;
+def : Pat<(int_x86_avx_cvt_ps2dq_256 (memopv8f32 addr:$src)),
+          (VCVTPS2DQYrm addr:$src)>;
+
+def : Pat<(int_x86_avx_cvt_ps2_pd_256 VR128:$src),
+          (VCVTPS2PDYrr VR128:$src)>;
+def : Pat<(int_x86_avx_cvt_ps2_pd_256 (memopv4f32 addr:$src)),
+          (VCVTPS2PDYrm addr:$src)>;
+
+def : Pat<(int_x86_avx_cvtt_pd2dq_256 VR256:$src),
+          (VCVTTPD2DQYrr VR256:$src)>;
+def : Pat<(int_x86_avx_cvtt_pd2dq_256 (memopv4f64 addr:$src)),
+          (VCVTTPD2DQYrm addr:$src)>;
+
+def : Pat<(int_x86_avx_cvtt_ps2dq_256 VR256:$src),
+          (VCVTTPS2DQYrr VR256:$src)>;
+def : Pat<(int_x86_avx_cvtt_ps2dq_256 (memopv8f32 addr:$src)),
+          (VCVTTPS2DQYrm addr:$src)>;
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Compare Instructions
 //===----------------------------------------------------------------------===//
@@ -3254,6 +3279,11 @@ def : Pat<(int_x86_avx_cvtdq2_pd_256 VR128:$src),
            (VCVTDQ2PDYrr VR128:$src)>;
 def : Pat<(int_x86_avx_cvtdq2_pd_256 (memopv4i32 addr:$src)),
            (VCVTDQ2PDYrm addr:$src)>;
+
+def : Pat<(int_x86_avx_cvt_pd2dq_256 VR256:$src),
+          (VCVTPD2DQYrr VR256:$src)>;
+def : Pat<(int_x86_avx_cvt_pd2dq_256 (memopv4f64 addr:$src)),
+          (VCVTPD2DQYrm addr:$src)>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Move Instructions
