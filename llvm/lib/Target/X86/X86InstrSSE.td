@@ -751,10 +751,10 @@ defm VCVTSS2SI   : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
 defm VCVTSS2SI64 : sse12_cvt_s<0x2D, FR32, GR64, undef, f32mem, load,
                                "cvtss2si\t{$src, $dst|$dst, $src}">, XS, VEX,
                                VEX_W;
-defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load,
+defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load,
                                "cvtdq2ps\t{$src, $dst|$dst, $src}",
                                SSEPackedSingle>, TB, VEX;
-defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, f256mem, load,
+defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, i256mem, load,
                                "cvtdq2ps\t{$src, $dst|$dst, $src}",
                                SSEPackedSingle>, TB, VEX;
 }
@@ -763,7 +763,7 @@ defm CVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load /*dummy*/,
                           "cvtss2si{l}\t{$src, $dst|$dst, $src}">, XS;
 defm CVTSS2SI64 : sse12_cvt_s<0x2D, FR32, GR64, undef, f32mem, load /*dummy*/,
                           "cvtss2si{q}\t{$src, $dst|$dst, $src}">, XS, REX_W;
-defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load /*dummy*/,
+defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load /*dummy*/,
                             "cvtdq2ps\t{$src, $dst|$dst, $src}",
                             SSEPackedSingle>, TB; /* PD SSE3 form is avaiable */
 }
@@ -893,6 +893,7 @@ def Int_CVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
                                         (bitconvert (memopv2i64 addr:$src))))]>,
                      XS, Requires<[HasSSE2]>;
+
 
 // Convert packed single/double fp to doubleword
 let isAsmParserOnly = 1 in {
@@ -1116,6 +1117,14 @@ def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                          "cvtpd2ps\t{$src, $dst|$dst, $src}",
                          [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
                                             (memop addr:$src)))]>;
+
+// AVX 256-bit register conversion intrinsics
+// FIXME: Migrate SSE conversion intrinsics matching to use patterns as below
+// whenever possible to avoid declaring two versions of each one.
+def : Pat<(int_x86_avx_cvtdq2_ps_256 VR256:$src),
+          (VCVTDQ2PSYrr VR256:$src)>;
+def : Pat<(int_x86_avx_cvtdq2_ps_256 (memopv8i32 addr:$src)),
+          (VCVTDQ2PSYrm addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Compare Instructions
@@ -3230,19 +3239,21 @@ def VCVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 def VCVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTDQ2PDYrm  : S3SI<0xE6, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
-                     "vcvtdq2pd\t{$src, $dst|$dst, $src}",
-                     [(set VR256:$dst,
-                      (int_x86_avx_cvtdq2_pd_256 (memopv4i32 addr:$src)))]>, VEX;
+                     "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTDQ2PDYrr  : S3SI<0xE6, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
-                     "vcvtdq2pd\t{$src, $dst|$dst, $src}",
-                     [(set VR256:$dst,
-                            (int_x86_avx_cvtdq2_pd_256 VR128:$src))]>, VEX;
+                     "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 }
 
 def CVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", []>;
 def CVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", []>;
+
+// AVX 256-bit register conversion intrinsics
+def : Pat<(int_x86_avx_cvtdq2_pd_256 VR128:$src),
+           (VCVTDQ2PDYrr VR128:$src)>;
+def : Pat<(int_x86_avx_cvtdq2_pd_256 (memopv4i32 addr:$src)),
+           (VCVTDQ2PDYrm addr:$src)>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Move Instructions
