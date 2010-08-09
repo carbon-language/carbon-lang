@@ -2208,5 +2208,10 @@ ProcessMacOSX::Initialize()
     }
 }
 
+uint32_t
+ProcessMacOSX::ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids)
+{
+    return Host::ListProcessesMatchingName (name, matches, pids);
+}
 
 

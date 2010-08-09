@@ -79,7 +79,7 @@ public:
                                                   &m_thread.GetProcess(), 
                                                   &m_thread, 
                                                   m_thread.GetStackFrameAtIndex(0).get(),
-                                                  false);
+                                                  true);
                 
                 m_should_stop = bp_site_sp->ShouldStop (&context);
             }

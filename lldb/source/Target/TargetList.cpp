@@ -60,30 +60,50 @@ TargetList::CreateTarget
                         file.GetFilename().AsCString(),
                         arch.AsCString(),
                         uuid_ptr);
-    ModuleSP exe_module_sp;
-    FileSpec resolved_file(file);
-    if (!Host::ResolveExecutableInBundle (&resolved_file))
-        resolved_file = file;
-
-    Error error = ModuleList::GetSharedModule(resolved_file, 
-                                              arch, 
-                                              uuid_ptr, 
-                                              NULL, 
-                                              0, 
-                                              exe_module_sp, 
-                                              NULL, 
-                                              NULL);
-    if (exe_module_sp)
+    Error error;
+    
+    if (!file)
     {
         target_sp.reset(new Target(debugger));
-        target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
+        target_sp->SetArchitecture(arch);
+    }
+    else
+    {
+        ModuleSP exe_module_sp;
+        FileSpec resolved_file(file);
+        if (!Host::ResolveExecutableInBundle (&resolved_file))
+            resolved_file = file;
 
-        if (target_sp.get())
+        error = ModuleList::GetSharedModule(resolved_file, 
+                                                  arch, 
+                                                  uuid_ptr, 
+                                                  NULL, 
+                                                  0, 
+                                                  exe_module_sp, 
+                                                  NULL, 
+                                                  NULL);
+        if (exe_module_sp)
         {
-            Mutex::Locker locker(m_target_list_mutex);
-            m_current_target_idx = m_target_list.size();
-            m_target_list.push_back(target_sp);
+            if (exe_module_sp->GetObjectFile() == NULL)
+            {
+                error.SetErrorStringWithFormat("%s%s%s: doesn't contain architecture %s",
+                                               file.GetDirectory().AsCString(),
+                                               file.GetDirectory() ? "/" : "",
+                                               file.GetFilename().AsCString(),
+                                               arch.AsCString());
+                return error;
+            }
+            target_sp.reset(new Target(debugger));
+            target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
         }
+    }
+    
+    if (target_sp.get())
+    {
+        Mutex::Locker locker(m_target_list_mutex);
+        m_current_target_idx = m_target_list.size();
+        m_target_list.push_back(target_sp);
+    }
 
 //        target_sp.reset(new Target);
 //        // Let the target resolve any funky bundle paths before we try and get
@@ -107,7 +127,6 @@ TargetList::CreateTarget
 //                m_target_list.push_back(target_sp);
 //            }
 //        }
-    }
     else
     {
         target_sp.reset();

@@ -145,6 +145,13 @@ ObjectFileELF::~ObjectFileELF()
 {
 }
 
+bool
+ObjectFileELF::IsExecutable() const
+{
+    // FIXME: How is this marked in ELF?
+    return false;
+}
+
 ByteOrder
 ObjectFileELF::GetByteOrder() const
 {

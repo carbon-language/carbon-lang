@@ -253,6 +253,27 @@ public:
 
     ArchSpec
     GetArchitecture () const;
+    
+    //------------------------------------------------------------------
+    /// Set the architecture for this target.
+    ///
+    /// If the current target has no Images read in, then this just sets the architecture, which will
+    /// be used to select the architecture of the ExecutableModule when that is set.
+    /// If the current target has an ExecutableModule, then calling SetArchitecture with a different
+    /// architecture from the currently selected one will reset the ExecutableModule to that slice
+    /// of the file backing the ExecutableModule.  If the file backing the ExecutableModule does not
+    /// contain a fork of this architecture, then this code will return false, and the architecture
+    /// won't be changed.
+    /// If the input arch_spec is the same as the already set architecture, this is a no-op.
+    ///
+    /// @param[in] arch_spec
+    ///     The new architecture.
+    ///
+    /// @return
+    ///     \b true if the architecture was successfully set, \bfalse otherwise.
+    //------------------------------------------------------------------
+    bool
+    SetArchitecture (const ArchSpec &arch_spec);
 
     Debugger &
     GetDebugger ()
@@ -300,6 +321,7 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     Debugger &      m_debugger;
+    ArchSpec        m_arch_spec;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).
     BreakpointList  m_breakpoint_list;
     BreakpointList  m_internal_breakpoint_list;

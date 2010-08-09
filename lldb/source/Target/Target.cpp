@@ -373,6 +373,10 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         m_images.Append(executable_sp); // The first image is our exectuable file
 
         ArchSpec exe_arch = executable_sp->GetArchitecture();
+        // If we haven't set an architecture yet, reset our architecture based on what we found in the executable module.
+        if (!m_arch_spec.IsValid())
+            m_arch_spec = exe_arch;
+        
         FileSpecList dependent_files;
         ObjectFile * executable_objfile = executable_sp->GetObjectFile();
         if (executable_objfile == NULL)
@@ -426,17 +430,62 @@ Target::GetImages ()
 ArchSpec
 Target::GetArchitecture () const
 {
-    ArchSpec arch;
-    if (m_images.GetSize() > 0)
-    {
-        Module *exe_module = m_images.GetModulePointerAtIndex(0);
-        if (exe_module)
-            arch = exe_module->GetArchitecture();
-    }
-    return arch;
+    return m_arch_spec;
 }
 
-
+bool
+Target::SetArchitecture (const ArchSpec &arch_spec)
+{
+    if (m_arch_spec == arch_spec)
+    {
+        // If we're setting the architecture to our current architecture, we
+        // don't need to do anything.
+        return true;
+    }
+    else if (!m_arch_spec.IsValid())
+    {
+        // If we haven't got a valid arch spec, then we just need to set it.
+        m_arch_spec = arch_spec;
+        return true;
+    }
+    else
+    {
+        // If we have an executable file, try to reset the executable to the desired architecture
+        m_arch_spec = arch_spec;
+        ModuleSP executable_sp = GetExecutableModule ();
+        m_images.Clear();
+        m_scratch_ast_context_ap.reset();
+        m_triple.Clear();
+        // Need to do something about unsetting breakpoints.
+        
+        if (executable_sp)
+        {
+            FileSpec exec_file_spec = executable_sp->GetFileSpec();
+            Error error = ModuleList::GetSharedModule(exec_file_spec, 
+                                                      arch_spec, 
+                                                      NULL, 
+                                                      NULL, 
+                                                      0, 
+                                                      executable_sp, 
+                                                      NULL, 
+                                                      NULL);
+                                          
+            if (!error.Fail() && executable_sp)
+            {
+                SetExecutableModule (executable_sp, true);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
 
 bool
 Target::GetTargetTriple(ConstString &triple)

@@ -279,110 +279,6 @@ class CommandObjectProcessAttach : public CommandObject
 {
 public:
 
-    CommandObjectProcessAttach () :
-        CommandObject ("process attach",
-                       "Attaches to a process.",
-                       "process attach <cmd-options>")
-    {
-        SetHelpLong("Currently, you must set the executable file before you can attach "
-                    "to a process.\n");
-    }
-
-    ~CommandObjectProcessAttach ()
-    {
-    }
-
-    bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
-             CommandReturnObject &result)
-    {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
-        if (target == NULL)
-        {
-            result.AppendError ("invalid target, set executable file using 'file' command");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        // If our listener is NULL, users aren't allows to launch
-
-        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
-        if (process)
-        {
-            if (process->IsAlive())
-            {
-                result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before attaching.\n", process->GetID());
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-        }
-
-        if (command.GetArgumentCount())
-        {
-            result.AppendErrorWithFormat("Invalid arguments for '%s'.\nUsage: \n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
-            result.SetStatus (eReturnStatusFailed);
-        }
-        else
-        {
-            const char *plugin_name = NULL;
-            
-            if (!m_options.plugin_name.empty())
-                plugin_name = m_options.plugin_name.c_str();
-
-            process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
-
-            if (process)
-            {
-                Error error;
-                int attach_pid = m_options.pid;
-
-                if (attach_pid != LLDB_INVALID_PROCESS_ID)
-                {
-                    error = process->Attach (attach_pid);
-                    if (error.Success())
-                    {
-                        result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                    }
-                    else
-                    {
-                        result.AppendErrorWithFormat ("Attaching to process %i failed: %s.\n", 
-                                                     attach_pid, 
-                                                     error.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-                else if (!m_options.name.empty())
-                {
-                    error = process->Attach (m_options.name.c_str(), m_options.waitfor);
-                    if (error.Success())
-                    {
-                        result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                    }
-                    else
-                    {
-                        if (m_options.waitfor)
-                            result.AppendErrorWithFormat ("Waiting for a process to launch named '%s': %s\n", 
-                                                         m_options.name.c_str(),
-                                                         error.AsCString());
-                        else
-                            result.AppendErrorWithFormat ("Failed to a process named '%s': %s\n", 
-                                                         m_options.name.c_str(),
-                                                         error.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-            }
-        }
-        return result.Succeeded();
-    }
-    
-    Options *
-    GetOptions ()
-    {
-        return &m_options;
-    }
-
     class CommandOptions : public Options
     {
     public:
@@ -448,6 +344,68 @@ public:
             return g_option_table;
         }
 
+        virtual bool
+        HandleOptionArgumentCompletion (CommandInterpreter &interpreter,
+                                        Args &input,
+                                        int cursor_index,
+                                        int char_pos,
+                                        OptionElementVector &opt_element_vector,
+                                        int opt_element_index,
+                                        int match_start_point,
+                                        int max_return_elements,
+                                        bool &word_complete,
+                                        StringList &matches)
+        {
+            int opt_arg_pos = opt_element_vector[opt_element_index].opt_arg_pos;
+            int opt_defs_index = opt_element_vector[opt_element_index].opt_defs_index;
+    
+            // We are only completing the name option for now...
+            
+            const lldb::OptionDefinition *opt_defs = GetDefinitions();
+            if (opt_defs[opt_defs_index].short_option == 'n')
+            {
+                // Are we in the name?
+                
+                // Look to see if there is a -P argument provided, and if so use that plugin, otherwise
+                // use the default plugin.
+                Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+                bool need_to_delete_process = false;
+                
+                const char *partial_name = NULL;
+                partial_name = input.GetArgumentAtIndex(opt_arg_pos);
+                
+                if (process && process->IsAlive())
+                    return true;
+                    
+                Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+                if (target == NULL)
+                {
+                    // No target has been set yet, for now do host completion.  Otherwise I don't know how we would
+                    // figure out what the right target to use is...
+                    std::vector<lldb::pid_t> pids;
+                    Host::ListProcessesMatchingName (partial_name, matches, pids);
+                    return true;
+                }
+                if (!process)
+                {
+                    process = target->CreateProcess (interpreter.GetDebugger().GetListener(), partial_name).get();
+                    need_to_delete_process = true;
+                }
+                
+                if (process)
+                {
+                    matches.Clear();
+                    std::vector<lldb::pid_t> pids;
+                    process->ListProcessesMatchingName (NULL, matches, pids);
+                    if (need_to_delete_process)
+                        target->DeleteCurrentProcess();
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         // Options table: Required for subclasses of Options.
 
         static lldb::OptionDefinition g_option_table[];
@@ -459,6 +417,211 @@ public:
         std::string name;
         bool waitfor;
     };
+
+    CommandObjectProcessAttach () :
+        CommandObject ("process attach",
+                       "Attaches to a process.",
+                       "process attach <cmd-options>")
+    {
+        SetHelpLong("Currently, you must set the executable file before you can attach "
+                    "to a process.\n");
+    }
+
+    ~CommandObjectProcessAttach ()
+    {
+    }
+
+    bool
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
+             CommandReturnObject &result)
+    {
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        if (process)
+        {
+            if (process->IsAlive())
+            {
+                result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before attaching.\n", 
+                                              process->GetID());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+
+        if (target == NULL)
+        {
+            // If there isn't a current target create one.
+            TargetSP new_target_sp;
+            FileSpec emptyFileSpec;
+            ArchSpec emptyArchSpec;
+            Error error;
+            
+            error = interpreter.GetDebugger().GetTargetList().CreateTarget(interpreter.GetDebugger(), 
+                                                                           emptyFileSpec,
+                                                                           emptyArchSpec, 
+                                                                           NULL, 
+                                                                           false,
+                                                                           new_target_sp);
+            target = new_target_sp.get();
+            if (target == NULL || error.Fail())
+            {
+                result.AppendError(error.AsCString("Error creating empty target"));
+                return false;
+            }
+            interpreter.GetDebugger().GetTargetList().SetCurrentTarget(target);
+        }
+        
+        // Record the old executable module, we want to issue a warning if the process of attaching changed the
+        // current executable (like somebody said "file foo" then attached to a PID whose executable was bar.)
+         
+        ModuleSP old_exec_module_sp = target->GetExecutableModule();
+        ArchSpec old_arch_spec = target->GetArchitecture();
+
+        if (command.GetArgumentCount())
+        {
+            result.AppendErrorWithFormat("Invalid arguments for '%s'.\nUsage: \n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
+            result.SetStatus (eReturnStatusFailed);
+        }
+        else
+        {
+            const char *plugin_name = NULL;
+            
+            if (!m_options.plugin_name.empty())
+                plugin_name = m_options.plugin_name.c_str();
+
+            process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
+
+            if (process)
+            {
+                Error error;
+                int attach_pid = m_options.pid;
+                
+                // If we are waiting for a process with this name to show up, do that first.
+                if (m_options.waitfor)
+                {
+                    if (m_options.name.empty())
+                    {
+                        result.AppendError("Invalid arguments: must supply a process name with the waitfor option.\n");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                    else
+                    {
+                        error = process->Attach (m_options.name.c_str(), m_options.waitfor);
+                        if (error.Success())
+                        {
+                            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("Waiting for a process to launch named '%s': %s\n", 
+                                                             m_options.name.c_str(),
+                                                             error.AsCString());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;                
+                        }
+                    }
+                }
+                else
+                {
+                    // If the process was specified by name look it up, so we can warn if there are multiple
+                    // processes with this pid.
+                    
+                    if (attach_pid == LLDB_INVALID_PROCESS_ID && !m_options.name.empty())
+                    {
+                        std::vector<lldb::pid_t> pids;
+                        StringList matches;
+                        
+                        process->ListProcessesMatchingName(m_options.name.c_str(), matches, pids);
+                        if (matches.GetSize() > 1)
+                        {
+                            result.AppendErrorWithFormat("More than one process named %s\n", m_options.name.c_str());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                        else if (matches.GetSize() == 0)
+                        {
+                            result.AppendErrorWithFormat("Could not find a process named %s\n", m_options.name.c_str());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                        else 
+                        {
+                            attach_pid = pids[0];
+                        }
+
+                    }
+
+                    if (attach_pid != LLDB_INVALID_PROCESS_ID)
+                    {
+                        error = process->Attach (attach_pid);
+                        if (error.Success())
+                        {
+                            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("Attaching to process %i failed: %s.\n", 
+                                                         attach_pid, 
+                                                         error.AsCString());
+                            result.SetStatus (eReturnStatusFailed);
+                        }
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("No PID specified for attach\n", 
+                                                         attach_pid, 
+                                                         error.AsCString());
+                        result.SetStatus (eReturnStatusFailed);
+                    
+                    }
+                }
+            }
+        }
+        
+        if (result.Succeeded())
+        {
+            // Okay, we're done.  Last step is to warn if the executable module has changed:
+            if (!old_exec_module_sp)
+            {
+                char new_path[PATH_MAX + 1];
+                target->GetExecutableModule()->GetFileSpec().GetPath(new_path, PATH_MAX);
+                
+                result.AppendMessageWithFormat("Executable module set to \"%s\".\n",
+                    new_path);
+            }
+            else if (old_exec_module_sp->GetFileSpec() != target->GetExecutableModule()->GetFileSpec())
+            {
+                char old_path[PATH_MAX + 1];
+                char new_path[PATH_MAX + 1];
+                
+                old_exec_module_sp->GetFileSpec().GetPath(old_path, PATH_MAX);
+                target->GetExecutableModule()->GetFileSpec().GetPath (new_path, PATH_MAX);
+                
+                result.AppendWarningWithFormat("Executable module changed from \"%s\" to \"%s\".\n",
+                                                    old_path, new_path);
+            }
+            
+            if (!old_arch_spec.IsValid())
+            {
+                result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().AsCString());
+            }
+            else if (old_arch_spec != target->GetArchitecture())
+            {
+                result.AppendWarningWithFormat("Architecture changed from %s to %s.\n", 
+                                                old_arch_spec.AsCString(), target->GetArchitecture().AsCString());
+            }
+        }
+        return result.Succeeded();
+    }
+    
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
 
 protected:
 

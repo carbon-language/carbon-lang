@@ -126,31 +126,14 @@ CommandObjectFile::Execute
 
         TargetSP target_sp;
 
-        ArchSpec arch;
-        if (m_options.m_arch.IsValid())
-            arch = m_options.m_arch;
-        else
-        {
-            arch = lldb_private::GetDefaultArchitecture ();
-            if (!arch.IsValid())
-                arch = LLDB_ARCH_DEFAULT;
-        }
+        ArchSpec arch = m_options.m_arch;
         Debugger &debugger = interpreter.GetDebugger();
-        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, arch, NULL, true, target_sp);
-
-        if (error.Fail() && !m_options.m_arch.IsValid())
-        {
-            if (arch == LLDB_ARCH_DEFAULT_32BIT)
-                arch = LLDB_ARCH_DEFAULT_64BIT;
-            else
-                arch = LLDB_ARCH_DEFAULT_32BIT;
-            error = debugger.GetTargetList().CreateTarget (debugger, file_spec, arch, NULL, true, target_sp);
-        }
+        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_options.m_arch, NULL, true, target_sp);
 
         if (target_sp)
         {
             debugger.GetTargetList().SetCurrentTarget(target_sp.get());
-            result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, arch.AsCString());
+            result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, target_sp->GetArchitecture().AsCString());
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else

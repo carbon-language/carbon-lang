@@ -199,7 +199,18 @@ ObjectFile *
 ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
 {
     uint32_t arch_idx = 0;
-    const ArchSpec arch = m_module->GetArchitecture();
+    ArchSpec arch;
+    // If the module hasn't specified an architecture yet, set it to the default 
+    // architecture:
+    if (!m_module->GetArchitecture().IsValid())
+    {
+        arch = lldb_private::GetDefaultArchitecture ();
+        if (!arch.IsValid())
+            arch = LLDB_ARCH_DEFAULT;
+    }
+    else
+        arch = m_module->GetArchitecture();
+        
     ArchSpec curr_arch;
     for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
     {

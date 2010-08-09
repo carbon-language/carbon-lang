@@ -1048,6 +1048,24 @@ Process::CompleteAttach ()
     if (state == eStateStopped || state == eStateCrashed)
     {
         DidAttach ();
+        // Figure out which one is the executable, and set that in our target:
+        ModuleList &modules = GetTarget().GetImages();
+    
+        size_t num_modules = modules.GetSize();
+        for (int i = 0; i < num_modules; i++)
+        {
+            ModuleSP module_sp = modules.GetModuleAtIndex(i);
+            if (module_sp->IsExecutable())
+            {
+                ModuleSP exec_module = GetTarget().GetExecutableModule();
+                if (!exec_module || exec_module != module_sp)
+                {
+                    
+                    GetTarget().SetExecutableModule (module_sp, false);
+                }
+                break;
+            }
+        }
 
         // This delays passing the stopped event to listeners till DidLaunch gets
         // a chance to complete...
@@ -1072,6 +1090,16 @@ Process::Attach (lldb::pid_t attach_pid)
 
     m_target_triple.Clear();
     m_abi_sp.reset();
+
+    // Find the process and its architecture.  Make sure it matches the architecture
+    // of the current Target, and if not adjust it.
+    
+    ArchSpec attach_spec = GetArchSpecForExistingProcess (attach_pid);
+    if (attach_spec != GetTarget().GetArchitecture())
+    {
+        // Set the architecture on the target.
+        GetTarget().SetArchitecture(attach_spec);
+    }
 
     Error error (WillAttachToProcessWithID(attach_pid));
     if (error.Success())
@@ -1102,6 +1130,16 @@ Process::Attach (const char *process_name, bool wait_for_launch)
 {
     m_target_triple.Clear();
     m_abi_sp.reset();
+    
+    // Find the process and its architecture.  Make sure it matches the architecture
+    // of the current Target, and if not adjust it.
+    
+    ArchSpec attach_spec = GetArchSpecForExistingProcess (process_name);
+    if (attach_spec != GetTarget().GetArchitecture())
+    {
+        // Set the architecture on the target.
+        GetTarget().SetArchitecture(attach_spec);
+    }
 
     Error error (WillAttachToProcessWithName(process_name, wait_for_launch));
     if (error.Success())
@@ -1862,4 +1900,23 @@ Process::GetObjCObjectPrinter()
 {
     return m_objc_object_printer;
 }
+
+uint32_t
+Process::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
+{
+    return 0;
+}
+    
+ArchSpec
+Process::GetArchSpecForExistingProcess (lldb::pid_t pid)
+{
+    return Host::GetArchSpecForExistingProcess (pid);
+}
+
+ArchSpec
+Process::GetArchSpecForExistingProcess (const char *process_name)
+{
+    return Host::GetArchSpecForExistingProcess (process_name);
+}
+
 

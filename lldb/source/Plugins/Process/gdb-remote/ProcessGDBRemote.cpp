@@ -93,7 +93,8 @@ ProcessGDBRemote::CanDebug(Target &target)
     ModuleSP exe_module_sp(target.GetExecutableModule());
     if (exe_module_sp.get())
         return exe_module_sp->GetFileSpec().Exists();
-    return false;
+    // However, if there is no executable module, we return true since we might be preparing to attach.
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -106,7 +107,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_stdio_communication ("gdb-remote.stdio"),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
-    m_arch_spec (),
     m_byte_order (eByteOrderHost),
     m_gdb_comm(),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
@@ -124,7 +124,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_max_memory_size (512),
     m_libunwind_target_type (UNW_TARGET_UNSPECIFIED),
     m_libunwind_addr_space (NULL),
-    m_waiting_for_attach (false)
+    m_waiting_for_attach (false),
+    m_local_debugserver (true)
 {
 }
 
@@ -563,10 +564,8 @@ ProcessGDBRemote::DidLaunchOrAttach ()
     {
         m_dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
 
-        Module * exe_module = GetTarget().GetExecutableModule ().get();
+        Module * exe_module = GetTarget().GetExecutableModule ().get();        
         assert(exe_module);
-
-        m_arch_spec = exe_module->GetArchitecture();
 
         ObjectFile *exe_objfile = exe_module->GetObjectFile();
         assert(exe_objfile);
@@ -580,8 +579,9 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         // See if the GDB server supports the qHostInfo information
         const char *vendor = m_gdb_comm.GetVendorString().AsCString();
         const char *os_type = m_gdb_comm.GetOSString().AsCString();
+        ArchSpec arch_spec = GetTarget().GetArchitecture();
         
-        if (m_arch_spec.IsValid() && m_arch_spec == ArchSpec ("arm"))
+        if (arch_spec.IsValid() && arch_spec == ArchSpec ("arm"))
         {
             // For ARM we can't trust the arch of the process as it could
             // have an armv6 object file, but be running on armv7 kernel.
@@ -589,7 +589,7 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         }
         
         if (!inferior_arch.IsValid())
-            inferior_arch = m_arch_spec;
+            inferior_arch = arch_spec;
 
         if (vendor == NULL)
             vendor = Host::GetVendorString().AsCString("apple");
@@ -622,11 +622,11 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     Error error;
     // Clear out and clean up from any current state
     Clear();
-    // HACK: require arch be set correctly at the target level until we can
-    // figure out a good way to determine the arch of what we are attaching to
-    m_arch_spec = m_target.GetArchitecture();
-
+    ArchSpec arch_spec = GetTarget().GetArchitecture();
+    
     //Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
+    
+    
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
         SetPrivateState (eStateAttaching);
@@ -638,7 +638,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
                                          NULL,
                                          LLDB_INVALID_PROCESS_ID,
                                          NULL, false,
-                                         m_arch_spec);
+                                         arch_spec);
         
         if (error.Fail())
         {
@@ -724,7 +724,6 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     Clear();
     // HACK: require arch be set correctly at the target level until we can
     // figure out a good way to determine the arch of what we are attaching to
-    m_arch_spec = m_target.GetArchitecture();
 
     //Log *log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
     if (process_name && process_name[0])
@@ -732,6 +731,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
 
         SetPrivateState (eStateAttaching);
         char host_port[128];
+        ArchSpec arch_spec = GetTarget().GetArchitecture();
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
         error = StartDebugserverProcess (host_port,
                                          NULL,
@@ -739,7 +739,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
                                          NULL,
                                          LLDB_INVALID_PROCESS_ID,
                                          NULL, false,
-                                         m_arch_spec);
+                                         arch_spec);
         if (error.Fail())
         {
             const char *error_string = error.AsCString();
@@ -840,9 +840,26 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
 void
 ProcessGDBRemote::DidAttach ()
 {
-    DidLaunchOrAttach ();
+    // If we haven't got an executable module yet, then we should make a dynamic loader, and
+    // see if it can find the executable module for us.  If we do have an executable module,
+    // make sure it matches the process we've just attached to.
+    
+    ModuleSP exe_module_sp = GetTarget().GetExecutableModule();        
+    if (!m_dynamic_loader_ap.get())
+    {
+       m_dynamic_loader_ap.reset(DynamicLoader::FindPlugin(this, "dynamic-loader.macosx-dyld"));
+    }
+
     if (m_dynamic_loader_ap.get())
         m_dynamic_loader_ap->DidAttach();
+
+    Module * new_exe_module = GetTarget().GetExecutableModule().get();        
+    if (new_exe_module == NULL)
+    {
+        
+    }
+    
+    DidLaunchOrAttach ();
 }
 
 Error
@@ -876,7 +893,7 @@ ProcessGDBRemote::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
     static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
     static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
 
-    ArchSpec::CPU arch_cpu = m_arch_spec.GetGenericCPUType();
+    ArchSpec::CPU arch_cpu = GetTarget().GetArchitecture().GetGenericCPUType();
     switch (arch_cpu)
     {
     case ArchSpec::eCPU_i386:
@@ -1060,13 +1077,16 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 void
 ProcessGDBRemote::RefreshStateAfterStop ()
 {
+    // FIXME - add a variable to tell that we're in the middle of attaching if we
+    // need to know that.
     // We must be attaching if we don't already have a valid architecture
-    if (!m_arch_spec.IsValid())
-    {
-        Module *exe_module = GetTarget().GetExecutableModule().get();
-        if (exe_module)
-            m_arch_spec = exe_module->GetArchitecture();
-    }
+//    if (!GetTarget().GetArchitecture().IsValid())
+//    {
+//        Module *exe_module = GetTarget().GetExecutableModule().get();
+//        if (exe_module)
+//            m_arch_spec = exe_module->GetArchitecture();
+//    }
+    
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
     m_thread_list.RefreshStateAfterStop();
@@ -2251,3 +2271,19 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
     return dispatch_queue_name.c_str();
 }
 
+uint32_t
+ProcessGDBRemote::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
+{
+    // If we are planning to launch the debugserver remotely, then we need to fire up a debugserver
+    // process and ask it for the list of processes. But if we are local, we can let the Host do it.
+    if (m_local_debugserver)
+    {
+        return Host::ListProcessesMatchingName (name, matches, pids);
+    }
+    else 
+    {
+        // FIXME: Implement talking to the remote debugserver.
+        return 0;
+    }
+
+}

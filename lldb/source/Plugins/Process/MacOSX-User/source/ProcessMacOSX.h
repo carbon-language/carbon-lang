@@ -18,6 +18,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ThreadSafeValue.h"
+#include "lldb/Core/StringList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
@@ -110,6 +111,9 @@ public:
 
     virtual void
     DidAttach ();
+    
+    virtual uint32_t
+    ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids);
 
     //------------------------------------------------------------------
     // PluginInterface protocol

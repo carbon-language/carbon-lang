@@ -90,3 +90,10 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, lldb::addr_t file_
     }
     return NULL;
 }
+
+bool 
+ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch)
+{
+    return m_module->SetArchitecture (new_arch);
+}
+

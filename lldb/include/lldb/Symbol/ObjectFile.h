@@ -51,6 +51,8 @@ class ObjectFile:
     public PluginInterface,
     public ModuleChild
 {
+friend class lldb_private::Module;
+
 public:
     //------------------------------------------------------------------
     /// Construct with a parent module, offset, and header data.
@@ -159,7 +161,17 @@ public:
     //------------------------------------------------------------------
     virtual uint32_t
     GetDependentModules (FileSpecList& file_list) = 0;
-
+    
+    //------------------------------------------------------------------
+    /// Tells whether this object file is capable of being the main executable
+    /// for a process.
+    ///
+    /// @return
+    ///     \b true if it is, \b false otherwise.
+    //------------------------------------------------------------------
+    virtual bool
+    IsExecutable () const = 0;
+    
     //------------------------------------------------------------------
     /// Returns the offset into a file at which this object resides.
     ///
@@ -290,6 +302,20 @@ protected:
     lldb::addr_t m_offset; ///< The offset in bytes into the file, or the address in memory
     lldb::addr_t m_length; ///< The length of this object file if it is known (can be zero if length is unknown or can't be determined).
     DataExtractor m_data; ///< The data for this object file so things can be parsed lazily.
+    
+    //------------------------------------------------------------------
+    /// Sets the architecture for a module.  At present the architecture
+    /// can only be set if it is invalid.  It is not allowed to switch from
+    /// one concrete architecture to another.
+    /// 
+    /// @param[in] new_arch
+    ///     The architecture this module will be set to.
+    ///
+    /// @return
+    ///     Returns \b true if the architecture was changed, \b
+    ///     false otherwise.
+    //------------------------------------------------------------------
+    bool SetModulesArchitecture (const ArchSpec &new_arch);
 
 private:
     DISALLOW_COPY_AND_ASSIGN (ObjectFile);

@@ -13,6 +13,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -46,6 +47,7 @@ class Module :
 {
 public:
     friend class ModuleList;
+    friend bool ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch);
 
     enum
     {
@@ -343,6 +345,16 @@ public:
 
     const TimeValue &
     GetModificationTime () const;
+   
+    //------------------------------------------------------------------
+    /// Tells whether this module is capable of being the main executable
+    /// for a process.
+    ///
+    /// @return
+    ///     \b true if it is, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsExecutable ();
 
     //------------------------------------------------------------------
     /// Get the number of compile units for this module.
@@ -547,7 +559,7 @@ protected:
     //------------------------------------------------------------------
     mutable Mutex               m_mutex;        ///< A mutex to keep this object happy in multi-threaded environments.
     TimeValue                   m_mod_time;     ///< The modification time for this module when it was created.
-    const ArchSpec              m_arch;         ///< The architecture for this module.
+    ArchSpec                    m_arch;         ///< The architecture for this module.
     UUID                        m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
     Flags                       m_flags;        ///< Flags for this module to track what has been parsed already.
@@ -592,7 +604,9 @@ protected:
     ResolveSymbolContextForAddress (lldb::addr_t vm_addr, bool vm_addr_is_file_addr, uint32_t resolve_scope, Address& so_addr, SymbolContext& sc);
 
     void SymbolIndicesToSymbolContextList (Symtab *symtab, std::vector<uint32_t> &symbol_indexes, SymbolContextList &sc_list);
-
+    
+    bool SetArchitecture (const ArchSpec &new_arch);
+    
 private:
 
     DISALLOW_COPY_AND_ASSIGN (Module);

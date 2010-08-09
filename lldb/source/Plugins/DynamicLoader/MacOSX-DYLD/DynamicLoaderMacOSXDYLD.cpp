@@ -1016,8 +1016,7 @@ DynamicLoaderMacOSXDYLD::SetNotificationBreakpoint ()
     return m_break_id != LLDB_INVALID_BREAK_ID;
 }
 
-//----------------------------------------------------------------------Target.h
-
+//----------------------------------------------------------------------
 // Member function that gets called when the process state changes.
 //----------------------------------------------------------------------
 void

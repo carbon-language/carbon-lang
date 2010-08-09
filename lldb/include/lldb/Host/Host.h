@@ -13,6 +13,7 @@
 
 
 #include "lldb/lldb-private.h"
+#include "lldb/Core/StringList.h"
 
 namespace lldb_private {
 
@@ -273,6 +274,16 @@ public:
 
     static bool
     ResolveExecutableInBundle (FileSpec *file);
+    
+    static uint32_t
+    ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
+    
+    static ArchSpec
+    GetArchSpecForExistingProcess (lldb::pid_t pid);
+    
+    static ArchSpec
+    GetArchSpecForExistingProcess (const char *process_name);
+
 };
 
 } // namespace lldb_private

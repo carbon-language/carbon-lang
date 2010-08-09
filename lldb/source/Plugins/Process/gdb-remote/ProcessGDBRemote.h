@@ -21,6 +21,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/StringList.h"
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
@@ -66,6 +67,9 @@ public:
     //------------------------------------------------------------------
     virtual bool
     CanDebug (lldb_private::Target &target);
+
+    virtual uint32_t
+    ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids);
 
     //------------------------------------------------------------------
     // Creating a new process, or attaching to an existing one
@@ -262,17 +266,6 @@ protected:
     void
     AppendSTDOUT (const char* s, size_t len);
 
-    lldb_private::ArchSpec&
-    GetArchSpec()
-    {
-        return m_arch_spec;
-    }
-    const lldb_private::ArchSpec&
-    GetArchSpec() const
-    {
-        return m_arch_spec;
-    }
-
     void
     Clear ( );
 
@@ -328,7 +321,6 @@ protected:
     lldb_private::Communication m_stdio_communication;
     lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
     std::string m_stdout_data;
-    lldb_private::ArchSpec m_arch_spec;
     lldb::ByteOrder m_byte_order;
     GDBRemoteCommunication m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
@@ -349,6 +341,7 @@ protected:
     lldb_private::unw_targettype_t m_libunwind_target_type;
     lldb_private::unw_addr_space_t m_libunwind_addr_space; // libunwind address space object for this process.
     bool m_waiting_for_attach;
+    bool m_local_debugserver;  // Is the debugserver process we are talking to local or on another machine.
 
     void
     ResetGDBRemoteState ();

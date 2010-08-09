@@ -161,7 +161,8 @@ ObjectFileMachO::ParseHeader ()
         m_data.GetU32(&offset, &m_header.cputype, 6);
 
         ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
-        if (mach_arch == m_module->GetArchitecture())
+        
+        if (SetModulesArchitecture (mach_arch))
         {
             // Read in all only the load command data
             DataBufferSP data_sp(m_file.ReadFileContents(m_offset, m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic)));
@@ -184,6 +185,11 @@ ObjectFileMachO::GetByteOrder () const
     return m_data.GetByteOrder ();
 }
 
+bool
+ObjectFileMachO::IsExecutable() const
+{
+    return m_header.filetype == HeaderFileTypeExecutable;
+}
 
 size_t
 ObjectFileMachO::GetAddressByteSize () const

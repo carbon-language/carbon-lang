@@ -43,7 +43,6 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
                      m_object_name.IsEmpty() ? "" : ")");
-
 }
 
 Module::~Module()
@@ -516,3 +515,30 @@ Module::GetModificationTime () const
 {
     return m_mod_time;
 }
+
+bool
+Module::IsExecutable ()
+{
+    if (GetObjectFile() == NULL)
+        return false;
+    else
+        return GetObjectFile()->IsExecutable();
+}
+
+bool 
+Module::SetArchitecture (const ArchSpec &new_arch)
+{
+    if (m_arch == new_arch)
+        return true;
+    else if (!m_arch.IsValid())
+    {
+        m_arch = new_arch;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+}
+

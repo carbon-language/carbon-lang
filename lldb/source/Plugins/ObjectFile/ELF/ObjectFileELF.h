@@ -86,6 +86,9 @@ public:
     virtual lldb::ByteOrder
     GetByteOrder() const;
 
+    virtual bool
+    IsExecutable () const;
+
     virtual size_t
     GetAddressByteSize() const;
 

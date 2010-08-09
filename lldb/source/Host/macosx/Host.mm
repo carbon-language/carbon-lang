@@ -15,6 +15,8 @@
 #include <stddef.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
+#include <libproc.h>
+#include <sys/proc_info.h>
 
 #include <map>
 #include <string>
@@ -802,3 +804,86 @@ Host::WillTerminate ()
     }
 }
 
+uint32_t
+Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
+{
+
+    int num_pids;
+    int size_of_pids;
+    int *pid_list;
+    uint32_t num_matches = 0;
+    
+    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (size_of_pids == -1)
+        return 0;
+        
+    num_pids = size_of_pids/sizeof(int);
+    pid_list = (int *) malloc(size_of_pids);
+    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, pid_list, size_of_pids);
+    if (size_of_pids == -1)
+        return 0;
+        
+    pid_t our_pid = getpid();
+    
+    for (int i = 0; i < num_pids; i++)
+    {
+        struct proc_bsdinfo bsd_info;
+        int error = proc_pidinfo (pid_list[i], PROC_PIDTBSDINFO, (uint64_t) 0, &bsd_info, PROC_PIDTBSDINFO_SIZE);
+        if (error == 0)
+            continue;
+        
+        // Don't offer to attach to zombie processes, already traced or exiting
+        // processes, and of course, ourselves...  It looks like passing the second arg of
+        // 0 to proc_listpids will exclude zombies anyway, but that's not documented so...
+        if ((bsd_info.pbi_flags & (PROC_FLAG_TRACED | PROC_FLAG_INEXIT) != 0)
+             || (bsd_info.pbi_status == SZOMB)
+             || (bsd_info.pbi_pid == our_pid))
+             continue;
+        char pid_name[MAXCOMLEN * 2 + 1];
+        int name_len;
+        name_len = proc_name(bsd_info.pbi_pid, pid_name, MAXCOMLEN * 2);
+        if (name_len == 0)
+            continue;
+        
+        if (strstr(pid_name, name) != pid_name)
+            continue;
+        matches.AppendString (pid_name);
+        pids.push_back (bsd_info.pbi_pid);
+        num_matches++;        
+    }
+    
+    return num_matches;
+}
+
+ArchSpec
+Host::GetArchSpecForExistingProcess (lldb::pid_t pid)
+{
+    ArchSpec return_spec;
+    
+    struct proc_bsdinfo bsd_info;
+    int error = proc_pidinfo (pid, PROC_PIDTBSDINFO, (uint64_t) 0, &bsd_info, PROC_PIDTBSDINFO_SIZE);
+    if (error == 0)
+        return return_spec;
+    if (bsd_info.pbi_flags & PROC_FLAG_LP64)
+        return_spec.SetArch(LLDB_ARCH_DEFAULT_64BIT);
+    else 
+        return_spec.SetArch(LLDB_ARCH_DEFAULT_32BIT);
+        
+    return return_spec;
+}
+
+ArchSpec
+Host::GetArchSpecForExistingProcess (const char *process_name)
+{
+    ArchSpec returnSpec;
+    StringList matches;
+    std::vector<lldb::pid_t> pids;
+    if (ListProcessesMatchingName(process_name, matches, pids))
+    {
+        if (matches.GetSize() == 1)
+        {
+            return GetArchSpecForExistingProcess(pids[0]);
+        }
+    }
+    return returnSpec;
+}
