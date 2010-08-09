@@ -143,9 +143,14 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
         if (DefArgResult.isInvalid())
           Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
         else {
-          assert(Tok.is(tok::cxx_defaultarg_end) &&
-                 "We didn't parse the whole default arg!");
-          ConsumeToken(); // Consume tok::cxx_defaultarg_end.
+          if (Tok.is(tok::cxx_defaultarg_end))
+            ConsumeToken();
+          else {
+            // Warn that there are tokens from the default arg that we left
+            // unparsed. This actually indicates a bug in clang but we avoid
+            // asserting because we want the parser robust.
+            Diag(Tok.getLocation(), diag::warn_default_arg_unparsed);
+          }
           Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
                                             move(DefArgResult));
         }
