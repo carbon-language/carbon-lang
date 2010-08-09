@@ -83,6 +83,7 @@ class ValueMap {
   MapT Map;
   ExtraData Data;
   ValueMap(const ValueMap&); // DO NOT IMPLEMENT
+  ValueMap& operator=(const ValueMap&); // DO NOT IMPLEMENT
 public:
   typedef KeyT key_type;
   typedef ValueT mapped_type;
@@ -158,12 +159,6 @@ public:
 
   ValueT &operator[](const KeyT &Key) {
     return Map[Wrap(Key)];
-  }
-
-  ValueMap& operator=(const ValueMap& Other) {
-    Map = Other.Map;
-    Data = Other.Data;
-    return *this;
   }
 
   /// isPointerIntoBucketsArray - Return true if the specified pointer points
