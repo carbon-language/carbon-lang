@@ -52,7 +52,8 @@ endfunction(explicit_llvm_config)
 # This is a variant intended for the final user:
 function(llvm_map_components_to_libraries OUT_VAR)
   explicit_map_components_to_libraries(result ${ARGN})
-  set( ${OUT_VAR} ${result} )
+  get_system_libs(sys_result)
+  set( ${OUT_VAR} ${result} ${sys_result} )
 endfunction(llvm_map_components_to_libraries)
 
 
