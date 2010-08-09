@@ -16,14 +16,14 @@ namespace llvm {
 
 class Interval {
 private:
-  uint64_t Start;
-  uint64_t End;
+  int64_t Start;
+  int64_t End;
 
 public:
-  Interval(uint64_t S, uint64_t E) : Start(S), End(E) {}
+  Interval(int64_t S, int64_t E) : Start(S), End(E) {}
 
-  uint64_t getStart() const { return Start; }
-  uint64_t getEnd() const { return End; }
+  int64_t getStart() const { return Start; }
+  int64_t getEnd() const { return End; }
 };
 
 template <typename T>
