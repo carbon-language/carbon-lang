@@ -353,8 +353,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createDeadMachineInstructionElimPass());
     printAndVerify(PM, "After codegen DCE pass");
 
-    PM.add(createOptimizeExtsPass());
-    PM.add(createOptimizeCmpsPass());
+    PM.add(createPeepholeOptimizerPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
     PM.add(createMachineCSEPass());

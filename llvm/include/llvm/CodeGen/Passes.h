@@ -172,17 +172,13 @@ namespace llvm {
   /// instructions.
   FunctionPass *createMachineSinkingPass();
 
-  /// createOptimizeExtsPass - This pass performs sign / zero extension
-  /// optimization by increasing uses of extended values.
-  FunctionPass *createOptimizeExtsPass();
+  /// createPeepholeOptimizerPass - This pass performs peephole optimizations -
+  /// like extension and comparison eliminations.
+  FunctionPass *createPeepholeOptimizerPass();
 
   /// createOptimizePHIsPass - This pass optimizes machine instruction PHIs
   /// to take advantage of opportunities created during DAG legalization.
   FunctionPass *createOptimizePHIsPass();
-
-  /// createOptimizeCmpsPass - This pass performs redundant comparison removal
-  /// optimization.
-  FunctionPass *createOptimizeCmpsPass();
 
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
   FunctionPass *createStackSlotColoringPass(bool);
