@@ -46,6 +46,10 @@ namespace llvm {
     /// getName - Get the base name of this MCDwarfFile.
     StringRef getName() const { return Name; }
 
+    /// getDirIndex - Get the dirIndex of this MCDwarfFile.
+    unsigned getDirIndex() const { return DirIndex; }
+
+
     /// print - Print the value to the stream \arg OS.
     void print(raw_ostream &OS) const;
 

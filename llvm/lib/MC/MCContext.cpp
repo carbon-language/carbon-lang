@@ -222,7 +222,7 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
   } else {
     StringRef Directory = Slash.first;
     Name = Slash.second;
-    for (DirIndex = 1; DirIndex < MCDwarfDirs.size(); DirIndex++) {
+    for (DirIndex = 0; DirIndex < MCDwarfDirs.size(); DirIndex++) {
       if (Directory == MCDwarfDirs[DirIndex])
 	break;
     }
@@ -231,6 +231,11 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
       memcpy(Buf, Directory.data(), Directory.size());
       MCDwarfDirs.push_back(StringRef(Buf, Directory.size()));
     }
+    // The DirIndex is one based, as DirIndex of 0 is used for FileNames with
+    // no directories.  MCDwarfDirs[] is unlike MCDwarfFiles[] in that the
+    // directory names are stored at MCDwarfDirs[DirIndex-1] where FileNames are
+    // stored at MCDwarfFiles[FileNumber].Name .
+    DirIndex++;
   }
   
   // Now make the MCDwarfFile entry and place it in the slot in the MCDwarfFiles

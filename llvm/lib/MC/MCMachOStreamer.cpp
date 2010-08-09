@@ -18,6 +18,8 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCMachOSymbolFlags.h"
+#include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmBackend.h"
@@ -30,6 +32,10 @@ class MCMachOStreamer : public MCObjectStreamer {
 private:
   void EmitInstToFragment(const MCInst &Inst);
   void EmitInstToData(const MCInst &Inst);
+  // FIXME: These will likely moved to a better place.
+  const MCExpr * MakeStartMinusEndExpr(MCSymbol *Start, MCSymbol *End,
+                                                        int IntVal);
+  void EmitDwarfFileTable(void);
 
 public:
   MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
@@ -424,7 +430,156 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   EmitInstToFragment(Inst);
 }
 
+//
+// This helper routine returns an expression of End - Start + IntVal for use
+// by EmitDwarfFileTable() below.
+// 
+const MCExpr * MCMachOStreamer::MakeStartMinusEndExpr(MCSymbol *Start,
+                                                      MCSymbol *End,
+                                                      int IntVal) {
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  const MCExpr *Res =
+    MCSymbolRefExpr::Create(End, Variant, getContext());
+  const MCExpr *RHS =
+    MCSymbolRefExpr::Create(Start, Variant, getContext());
+  const MCExpr *Res1 =
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, Res, RHS,getContext());
+  const MCExpr *Res2 =
+    MCConstantExpr::Create(IntVal, getContext());
+  const MCExpr *Res3 =
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, Res1, Res2, getContext());
+  return Res3;
+}
+
+//
+// This emits the Dwarf file (and eventually the line) table.
+//
+void MCMachOStreamer::EmitDwarfFileTable(void) {
+  // For now make sure we don't put out the Dwarf file table if no .file
+  // directives were seen.
+  const std::vector<MCDwarfFile *> &MCDwarfFiles =
+    getContext().getMCDwarfFiles();
+  if (MCDwarfFiles.size() == 0)
+    return;
+
+  // This is the Mach-O section, for ELF it is the .debug_line section.
+  SwitchSection(getContext().getMachOSection("__DWARF", "__debug_line",
+                                         MCSectionMachO::S_ATTR_DEBUG,
+                                         0, SectionKind::getDataRelLocal()));
+
+  // Create a symbol at the beginning of this section.
+  MCSymbol *LineStartSym = getContext().CreateTempSymbol();
+  // Set the value of the symbol, as we are at the start of the section.
+  EmitLabel(LineStartSym);
+
+  // Create a symbol for the end of the section (to be set when we get there).
+  MCSymbol *LineEndSym = getContext().CreateTempSymbol();
+
+  // The first 4 bytes is the total length of the information for this
+  // compilation unit (not including these 4 bytes for the length).
+  EmitValue(MakeStartMinusEndExpr(LineStartSym, LineEndSym, 4), 4, 0);
+
+  // Next 2 bytes is the Version, which is Dwarf 2.
+  EmitIntValue(2, 2);
+
+  // Create a symbol for the end of the prologue (to be set when we get there).
+  MCSymbol *ProEndSym = getContext().CreateTempSymbol(); // Lprologue_end
+
+  // Length of the prologue, is the next 4 bytes.  Which is the start of the
+  // section to the end of the prologue.  Not including the 4 bytes for the
+  // total length, the 2 bytes for the version, and these 4 bytes for the
+  // length of the prologue.
+  EmitValue(MakeStartMinusEndExpr(LineStartSym, ProEndSym, (4 + 2 + 4)), 4, 0);
+
+  // Parameters of the state machine, are next.
+  //  Define the architecture-dependent minimum instruction length (in
+  //  bytes).  This value should be rather too small than too big.  */
+  //  DWARF2_LINE_MIN_INSN_LENGTH
+  EmitIntValue(1, 1);
+  //  Flag that indicates the initial value of the is_stmt_start flag.
+  //  DWARF2_LINE_DEFAULT_IS_STMT
+  EmitIntValue(1, 1);
+  //  Minimum line offset in a special line info. opcode.  This value
+  //  was chosen to give a reasonable range of values.  */
+  //  DWARF2_LINE_BASE
+  EmitIntValue(-5, 1);
+  //  Range of line offsets in a special line info. opcode.
+  //  DWARF2_LINE_RANGE
+  EmitIntValue(14, 1);
+  //  First special line opcode - leave room for the standard opcodes.
+  //  DWARF2_LINE_OPCODE_BASE
+  EmitIntValue(13, 1);
+
+  // Standard opcode lengths
+  EmitIntValue(0, 1); // length of DW_LNS_copy
+  EmitIntValue(1, 1); // length of DW_LNS_advance_pc
+  EmitIntValue(1, 1); // length of DW_LNS_advance_line
+  EmitIntValue(1, 1); // length of DW_LNS_set_file
+  EmitIntValue(1, 1); // length of DW_LNS_set_column
+  EmitIntValue(0, 1); // length of DW_LNS_negate_stmt
+  EmitIntValue(0, 1); // length of DW_LNS_set_basic_block
+  EmitIntValue(0, 1); // length of DW_LNS_const_add_pc
+  EmitIntValue(1, 1); // length of DW_LNS_fixed_advance_pc
+  EmitIntValue(0, 1); // length of DW_LNS_set_prologue_end
+  EmitIntValue(0, 1); // length of DW_LNS_set_epilogue_begin
+  EmitIntValue(1, 1); // DW_LNS_set_isa
+
+  // Put out the directory and file tables.
+
+  // First the directory table.
+  const std::vector<StringRef> &MCDwarfDirs =
+    getContext().getMCDwarfDirs();
+  for (unsigned i = 0; i < MCDwarfDirs.size(); i++) {
+    EmitBytes(MCDwarfDirs[i], 0); // the DirectoryName
+    EmitBytes(StringRef("\0", 1), 0); // the null termination of the string
+  }
+  EmitIntValue(0, 1); // Terminate the directory list
+
+  // Second the file table.
+  for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
+    EmitBytes(MCDwarfFiles[i]->getName(), 0); // FileName
+    EmitBytes(StringRef("\0", 1), 0); // the null termination of the string
+    // FIXME the Directory number should be a .uleb128 not a .byte
+    EmitIntValue(MCDwarfFiles[i]->getDirIndex(), 1);
+    EmitIntValue(0, 1); // last modification timestamp (always 0)
+    EmitIntValue(0, 1); // filesize (always 0)
+  }
+  EmitIntValue(0, 1); // Terminate the file list
+
+  // This is the end of the prologue, so set the value of the symbol at the
+  // end of the prologue (that was used in a previous expression).
+  EmitLabel(ProEndSym);
+
+  // TODO: This is the point where the line tables would be emitted.
+
+  // If there are no line tables emited then we emit:
+  // The following DW_LNE_set_address sequence to set the address to zero
+  //   TODO test for 32-bit or 64-bit output
+  //     This is the sequence for 32-bit code
+  EmitIntValue(0, 1);
+  EmitIntValue(5, 1);
+  EmitIntValue(2, 1);
+  EmitIntValue(0, 1);
+  EmitIntValue(0, 1);
+  EmitIntValue(0, 1);
+  EmitIntValue(0, 1);
+
+  // Lastly emit the DW_LNE_end_sequence which consists of 3 bytes '00 01 01'
+  // (00 is the code for extended opcodes, followed by a ULEB128 length of the
+  // extended opcode (01), and the DW_LNE_end_sequence (01).
+  EmitIntValue(0, 1); // DW_LNS_extended_op
+  EmitIntValue(1, 1); // ULEB128 length of the extended opcode
+  EmitIntValue(1, 1); // DW_LNE_end_sequence
+
+  // This is the end of the section, so set the value of the symbol at the end
+  // of this section (that was used in a previous expression).
+  EmitLabel(LineEndSym);
+}
+
 void MCMachOStreamer::Finish() {
+  // Dump out the dwarf file and directory tables (soon to include line table)
+  EmitDwarfFileTable();
+
   // We have to set the fragment atom associations so we can relax properly for
   // Mach-O.
 

@@ -151,6 +151,9 @@ namespace llvm {
     const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
       return MCDwarfFiles;
     }
+    const std::vector<StringRef> &getMCDwarfDirs() {
+      return MCDwarfDirs;
+    }
 
     /// @}
 
