@@ -24,7 +24,6 @@
 #if !defined (SUPPORT_REMOTE_UNWINDING)
 #include <mach-o/dyld_priv.h>
 #endif
-#include <mach/ppc/thread_status.h>
 #include <mach/i386/thread_status.h>
 #include <Availability.h>
 

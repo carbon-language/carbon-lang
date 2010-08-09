@@ -72,14 +72,6 @@ int stepOutOfDebuggerDummyFrame (A& addressSpace, Registers_x86& registers,
     return UNW_STEP_SUCCESS;
 }
 
-template <typename A>
-int stepOutOfDebuggerDummyFrame (A& addressSpace, Registers_ppc& registers,
-                                 uint64_t ip, uint64_t sp) 
-{
-    ABORT ("stepping out of a debugger dummy frame not supported on ppc");
-    return UNW_EUNSPEC;
-}
-
 }; // namespace lldb_private
 
 #endif // SUPPORT_REMOTE_UNWINDING

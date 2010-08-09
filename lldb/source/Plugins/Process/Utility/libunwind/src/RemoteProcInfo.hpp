@@ -33,7 +33,6 @@
 #include <sys/time.h>
 #include <mach-o/loader.h>
 #include <mach-o/getsect.h>
-#include <mach/ppc/thread_status.h>
 #include <mach/i386/thread_status.h>
 #include <Availability.h>
 
@@ -975,11 +974,6 @@ void getRemoteContext (RemoteProcInfo* procinfo, Registers_x86& r, void *arg) {
     FILLREG (UNW_X86_EDI);
     FILLREG (UNW_REG_IP);
 #undef FILLREG
-}
-
-
-void getRemoteContext (RemoteProcInfo* procinfo, Registers_ppc& r, void *arg) {
-    ABORT("ppc get remote context not implemented.");
 }
 
 }; // namespace lldb_private

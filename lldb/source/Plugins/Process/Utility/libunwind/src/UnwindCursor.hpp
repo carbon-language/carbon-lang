@@ -337,8 +337,6 @@ protected:
 							{ return CompactUnwinder_x86_64<A>::stepWithCompactEncoding(fInfo.format, fInfo.start_ip, fAddressSpace, fRegisters); }
 	int					stepWithCompactEncoding(Registers_x86&) 
 							{ return CompactUnwinder_x86<A>::stepWithCompactEncoding(fInfo.format, fInfo.start_ip, fAddressSpace, fRegisters); }
-	int					stepWithCompactEncoding(Registers_ppc&) 
-							{ return UNW_EINVAL; }
 
 #if FOR_DYLD
   #if __ppc__
@@ -381,13 +379,10 @@ protected:
 #endif
 							return false;
 						}
-	virtual bool				dwarfWithOffset(Registers_ppc&, uint32_t& offset) const { return true; }
-	
 
     virtual compact_unwind_encoding_t       dwarfEncoding() const { R dummy; return dwarfEncoding(dummy); }
 	virtual compact_unwind_encoding_t		dwarfEncoding(Registers_x86_64&) const { return UNWIND_X86_64_MODE_DWARF; }
 	virtual compact_unwind_encoding_t		dwarfEncoding(Registers_x86&)	const { return UNWIND_X86_MODE_DWARF; }
-	virtual compact_unwind_encoding_t		dwarfEncoding(Registers_ppc&)	const { return 0; }
 
 	unw_proc_info_t				fInfo;
 	R							fRegisters;

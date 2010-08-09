@@ -102,13 +102,6 @@ int stepByArchitectureDefault (A& addressSpace, Registers_x86& registers,
     return stepByArchitectureDefault_x86 (addressSpace, registers, pc, 4);
 }
 
-template <typename A>
-int stepByArchitectureDefault (A& addressSpace, Registers_ppc& registers, 
-                               uint64_t pc) {
-    ABORT("Remote unwinding not supported for ppc.");
-    return UNW_EUNSPEC;
-}
-
 }; // namespace lldb_private
 
 #endif // SUPPORT_REMOTE_UNWINDING

@@ -129,15 +129,6 @@ private:
 	static compact_unwind_encoding_t createCompactEncodingFromProlog(A& addressSpace, pint_t funcAddr,
 												const Registers_x86_64&, const typename CFI_Parser<A>::PrologInfo& prolog,
 												char warningBuffer[1024]);
-	
-	// ppc specific variants
-	static int    lastRestoreReg(const Registers_ppc&);
-	static bool   isReturnAddressRegister(int regNum, const Registers_ppc&);
-	static pint_t getCFA(A& addressSpace, const typename CFI_Parser<A>::PrologInfo& prolog, const Registers_ppc&);
-	static compact_unwind_encoding_t encodeToUseDwarf(const Registers_ppc&);
-	static compact_unwind_encoding_t createCompactEncodingFromProlog(A& addressSpace, pint_t funcAddr,
-												const Registers_ppc&, const typename CFI_Parser<A>::PrologInfo& prolog,
-												char warningBuffer[1024]);
 };
 
 
@@ -1622,56 +1613,6 @@ compact_unwind_encoding_t DwarfInstructions<A,R>::createCompactEncodingFromProlo
 	}
 }
 
-
-
-
-
-
-
-//
-//	ppc specific functions
-//
-template <typename A, typename R>
-int DwarfInstructions<A,R>::lastRestoreReg(const Registers_ppc&) 
-{
-	COMPILE_TIME_ASSERT( (int)CFI_Parser<A>::kMaxRegisterNumber > (int)UNW_PPC_SPEFSCR );
-	return UNW_PPC_SPEFSCR; 
-}
-
-template <typename A, typename R>
-bool DwarfInstructions<A,R>::isReturnAddressRegister(int regNum, const Registers_ppc&) 
-{
-	return (regNum == UNW_PPC_LR); 
-}
-
-template <typename A, typename R>
-typename A::pint_t DwarfInstructions<A,R>::getCFA(A& addressSpace, const typename CFI_Parser<A>::PrologInfo& prolog, 
-										const Registers_ppc& registers)
-{	
-	if ( prolog.cfaRegister != 0 )
-		return registers.getRegister(prolog.cfaRegister) + prolog.cfaRegisterOffset;
-	else if ( prolog.cfaExpression != 0 )
-		return evaluateExpression(prolog.cfaExpression, addressSpace, registers, 0);
-	else
-		ABORT("getCFA(): unknown location for ppc cfa");
-}
-
-
-template <typename A, typename R>
-compact_unwind_encoding_t DwarfInstructions<A,R>::encodeToUseDwarf(const Registers_ppc&) 
-{
-	return UNWIND_X86_MODE_DWARF;
-}
-
-
-template <typename A, typename R>
-compact_unwind_encoding_t DwarfInstructions<A,R>::createCompactEncodingFromProlog(A& addressSpace, pint_t funcAddr,
-												const Registers_ppc& r, const typename CFI_Parser<A>::PrologInfo& prolog,
-												char warningBuffer[1024])
-{
-	warningBuffer[0] = '\0';
-	return UNWIND_X86_MODE_DWARF;
-}
 
 
 
