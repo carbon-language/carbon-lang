@@ -538,7 +538,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // X + 0 -> {X, false}
       if (RHS->isZero()) {
         Constant *V[] = {
-          UndefValue::get(II->getCalledValue()->getType()),
+          UndefValue::get(II->getArgOperand(0)->getType()),
           ConstantInt::getFalse(II->getContext())
         };
         Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);

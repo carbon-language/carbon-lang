@@ -10,16 +10,16 @@ declare i32 @llvm.ctlz.i32(i32) nounwind readnone
 declare i32 @llvm.ctpop.i32(i32) nounwind readnone
 declare i8 @llvm.ctlz.i8(i8) nounwind readnone
 
-define i8 @test1(i8 %A, i8 %B) {
+define i8 @uaddtest1(i8 %A, i8 %B) {
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
   %y = extractvalue %overflow.result %x, 0
   ret i8 %y
-; CHECK: @test1
+; CHECK: @uaddtest1
 ; CHECK-NEXT: %y = add i8 %A, %B
 ; CHECK-NEXT: ret i8 %y
 }
 
-define i8 @test2(i8 %A, i8 %B, i1* %overflowPtr) {
+define i8 @uaddtest2(i8 %A, i8 %B, i1* %overflowPtr) {
   %and.A = and i8 %A, 127
   %and.B = and i8 %B, 127
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %and.A, i8 %and.B)
@@ -27,7 +27,7 @@ define i8 @test2(i8 %A, i8 %B, i1* %overflowPtr) {
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK: @test2
+; CHECK: @uaddtest2
 ; CHECK-NEXT: %and.A = and i8 %A, 127
 ; CHECK-NEXT: %and.B = and i8 %B, 127
 ; CHECK-NEXT: %1 = add nuw i8 %and.A, %and.B
@@ -35,7 +35,7 @@ define i8 @test2(i8 %A, i8 %B, i1* %overflowPtr) {
 ; CHECK-NEXT: ret i8 %1
 }
 
-define i8 @test3(i8 %A, i8 %B, i1* %overflowPtr) {
+define i8 @uaddtest3(i8 %A, i8 %B, i1* %overflowPtr) {
   %or.A = or i8 %A, -128
   %or.B = or i8 %B, -128
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %or.A, i8 %or.B)
@@ -43,7 +43,7 @@ define i8 @test3(i8 %A, i8 %B, i1* %overflowPtr) {
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK: @test3
+; CHECK: @uaddtest3
 ; CHECK-NEXT: %or.A = or i8 %A, -128
 ; CHECK-NEXT: %or.B = or i8 %B, -128
 ; CHECK-NEXT: %1 = add i8 %or.A, %or.B
@@ -51,34 +51,44 @@ define i8 @test3(i8 %A, i8 %B, i1* %overflowPtr) {
 ; CHECK-NEXT: ret i8 %1
 }
 
-define i8 @test4(i8 %A, i1* %overflowPtr) {
+define i8 @uaddtest4(i8 %A, i1* %overflowPtr) {
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 undef, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK: @test4
+; CHECK: @uaddtest4
 ; CHECK-NEXT: ret i8 undef
 }
 
-define i8 @test5(i8 %A, i1* %overflowPtr) {
+define i8 @uaddtest5(i8 %A, i1* %overflowPtr) {
+  %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 0, i8 %A)
+  %y = extractvalue %overflow.result %x, 0
+  %z = extractvalue %overflow.result %x, 1
+  store i1 %z, i1* %overflowPtr
+  ret i8 %y
+; CHECK: @uaddtest5
+; CHECK: ret i8 %A
+}
+
+define i8 @umultest1(i8 %A, i1* %overflowPtr) {
   %x = call %overflow.result @llvm.umul.with.overflow.i8(i8 0, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK: @test5
+; CHECK: @umultest1
 ; CHECK-NEXT: store i1 false, i1* %overflowPtr
 ; CHECK-NEXT: ret i8 0
 }
 
-define i8 @test6(i8 %A, i1* %overflowPtr) {
+define i8 @umultest2(i8 %A, i1* %overflowPtr) {
   %x = call %overflow.result @llvm.umul.with.overflow.i8(i8 1, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK: @test6
+; CHECK: @umultest2
 ; CHECK-NEXT: store i1 false, i1* %overflowPtr
 ; CHECK-NEXT: ret i8 %A
 }
