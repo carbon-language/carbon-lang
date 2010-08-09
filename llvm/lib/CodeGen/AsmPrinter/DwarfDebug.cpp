@@ -221,7 +221,7 @@ public:
   const MDNode *getInlinedAt()         const { return InlinedAtLocation; }
   const MDNode *getScopeNode()         const { return Desc; }
   const SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
-  const SmallVector<DbgVariable *, 8> &getVariables() { return Variables; }
+  const SmallVector<DbgVariable *, 8> &getDbgVariables() { return Variables; }
   const SmallVector<DbgRange, 4> &getRanges() { return Ranges; }
 
   /// openInsnRange - This scope covers instruction range starting from MI.
@@ -1725,7 +1725,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   if (!ScopeDIE) return NULL;
 
   // Add variables to scope.
-  const SmallVector<DbgVariable *, 8> &Variables = Scope->getVariables();
+  const SmallVector<DbgVariable *, 8> &Variables = Scope->getDbgVariables();
   for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
     DIE *VariableDIE = constructVariableDIE(Variables[i], Scope);
     if (VariableDIE)
@@ -2060,7 +2060,7 @@ void DwarfDebug::endModule() {
       // Construct subprogram DIE and add variables DIEs.
       constructSubprogramDIE(SP);
       DIE *ScopeDIE = getCompileUnit(SP)->getDIE(SP);
-      const SmallVector<DbgVariable *, 8> &Variables = Scope->getVariables();
+      const SmallVector<DbgVariable *, 8> &Variables = Scope->getDbgVariables();
       for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
         DIE *VariableDIE = constructVariableDIE(Variables[i], Scope);
         if (VariableDIE)
