@@ -890,13 +890,13 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
 
   CIdx = clang_createIndex(0, 1);
   if (getenv("CINDEXTEST_EDITING")) {
+    unsigned I, Repeats = 5;
     TU = clang_parseTranslationUnit(CIdx, 0,
                                     argv + num_unsaved_files + 2,
                                     argc - num_unsaved_files - 2,
                                     unsaved_files,
                                     num_unsaved_files,
                                     getDefaultParsingOptions());
-    unsigned I, Repeats = 5;
     for (I = 0; I != Repeats; ++I) {
       results = clang_codeCompleteAt(TU, filename, line, column,
                                      unsaved_files, num_unsaved_files,
