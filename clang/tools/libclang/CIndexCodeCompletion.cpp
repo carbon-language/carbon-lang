@@ -20,17 +20,18 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Program.h"
 #include <cstdlib>
 #include <cstdio>
 
+
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #include "clang/Basic/Version.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/Support/raw_ostream.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -277,7 +278,16 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
 #endif
 
   bool EnableLogging = getenv("LIBCLANG_CODE_COMPLETION_LOGGING") != 0;
-  
+
+  llvm::OwningPtr<llvm::NamedRegionTimer> CCTimer;
+  if (getenv("LIBCLANG_TIMING")) {
+    llvm::SmallString<128> TimerName;
+    llvm::raw_svector_ostream TimerNameOut(TimerName);
+    TimerNameOut << "Code completion @ " << complete_filename << ":"
+      << complete_line << ":" << complete_column;
+    CCTimer.reset(new llvm::NamedRegionTimer(TimerNameOut.str()));
+  }
+
   // The indexer, which is mainly used to determine where diagnostics go.
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 

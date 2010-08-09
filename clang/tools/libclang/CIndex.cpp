@@ -1195,7 +1195,9 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   if (options & CXTranslationUnit_Editing)
     options |= CXTranslationUnit_PrecompiledPreamble;
   bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
-  
+  bool CompleteTranslationUnit
+    = ((options & CXTranslationUnit_Incomplete) == 0);
+
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
@@ -1250,7 +1252,8 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                    RemappedFiles.data(),
                                    RemappedFiles.size(),
                                    /*CaptureDiagnostics=*/true,
-                                   PrecompilePreamble));
+                                   PrecompilePreamble,
+                                   CompleteTranslationUnit));
 
     if (NumErrors != Diags->getNumErrors()) {
       // Make sure to check that 'Unit' is non-NULL.
@@ -1451,7 +1454,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
   return static_cast<ASTUnit *>(TU)->Reparse(RemappedFiles.data(),
                                              RemappedFiles.size())? 1 : 0;
 }
-  
+
 CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   if (!CTUnit)
     return createCXString("");

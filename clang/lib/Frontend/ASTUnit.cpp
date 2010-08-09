@@ -34,6 +34,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
 #include <cstdlib>
 #include <cstdio>
@@ -48,8 +49,8 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
-    ConcurrencyCheckValue(CheckUnlocked), PreambleRebuildCounter(0),
-    SavedMainFileBuffer(0) { 
+    CompleteTranslationUnit(true), ConcurrencyCheckValue(CheckUnlocked), 
+    PreambleRebuildCounter(0), SavedMainFileBuffer(0) { 
 }
 
 ASTUnit::~ASTUnit() {
@@ -334,6 +335,9 @@ public:
   TopLevelDeclTrackerAction(ASTUnit &_Unit) : Unit(_Unit) {}
 
   virtual bool hasCodeCompletionSupport() const { return false; }
+  virtual bool usesCompleteTranslationUnit()  { 
+    return Unit.isCompleteTranslationUnit(); 
+  }
 };
 
 class PrecompilePreambleConsumer : public PCHGenerator {
@@ -396,6 +400,7 @@ public:
 
   virtual bool hasCodeCompletionSupport() const { return false; }
   virtual bool hasASTFileSupport() const { return false; }
+  virtual bool usesCompleteTranslationUnit() { return false; }
 };
 
 }
@@ -567,7 +572,8 @@ static std::string GetPreamblePCHPath() {
 /// that corresponds to the main file along with a pair (bytes, start-of-line)
 /// that describes the preamble.
 std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> > 
-ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
+ASTUnit::ComputePreamble(CompilerInvocation &Invocation, 
+                         unsigned MaxLines, bool &CreatedBuffer) {
   FrontendOptions &FrontendOpts = Invocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
     = Invocation.getPreprocessorOpts();
@@ -642,7 +648,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer) {
     CreatedBuffer = true;
   }
   
-  return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer));
+  return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer, MaxLines));
 }
 
 static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
@@ -673,10 +679,19 @@ static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
 /// this routine will determine if it is still valid and, if so, avoid 
 /// rebuilding the precompiled preamble.
 ///
+/// \param AllowRebuild When true (the default), this routine is
+/// allowed to rebuild the precompiled preamble if it is found to be
+/// out-of-date.
+///
+/// \param MaxLines When non-zero, the maximum number of lines that
+/// can occur within the preamble.
+///
 /// \returns If the precompiled preamble can be used, returns a newly-allocated
 /// buffer that should be used in place of the main file when doing so.
 /// Otherwise, returns a NULL pointer.
-llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
+llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
+                                                           bool AllowRebuild,
+                                                           unsigned MaxLines) {
   CompilerInvocation PreambleInvocation(*Invocation);
   FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
@@ -684,7 +699,7 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
 
   bool CreatedPreambleBuffer = false;
   std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> > NewPreamble 
-    = ComputePreamble(PreambleInvocation, CreatedPreambleBuffer);
+    = ComputePreamble(PreambleInvocation, MaxLines, CreatedPreambleBuffer);
 
   if (!NewPreamble.second.first) {
     // We couldn't find a preamble in the main source. Clear out the current
@@ -793,12 +808,21 @@ llvm::MemoryBuffer *ASTUnit::BuildPrecompiledPreamble() {
                                           FrontendOpts.Inputs[0].second);
       }
     }
+
+    // If we aren't allowed to rebuild the precompiled preamble, just
+    // return now.
+    if (!AllowRebuild)
+      return 0;
     
     // We can't reuse the previously-computed preamble. Build a new one.
     Preamble.clear();
     llvm::sys::Path(PreambleFile).eraseFromDisk();
     PreambleRebuildCounter = 1;
-  } 
+  } else if (!AllowRebuild) {
+    // We aren't allowed to rebuild the precompiled preamble; just
+    // return now.
+    return 0;
+  }
 
   // If the preamble rebuild counter > 1, it's because we previously
   // failed to build a preamble and we're not yet ready to try
@@ -1004,7 +1028,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls,
                                              bool CaptureDiagnostics,
-                                             bool PrecompilePreamble) {
+                                             bool PrecompilePreamble,
+                                             bool CompleteTranslationUnit) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1018,6 +1043,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->Diagnostics = Diags;
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->CompleteTranslationUnit = CompleteTranslationUnit;
   AST->Invocation.reset(CI);
   CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   
@@ -1030,7 +1056,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
   if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus) {
     AST->PreambleRebuildCounter = 1;
-    OverrideMainBuffer = AST->BuildPrecompiledPreamble();
+    OverrideMainBuffer = AST->getMainBufferWithPrecompiledPreamble();
   }
   
   llvm::Timer *ParsingTimer = 0;
@@ -1055,7 +1081,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles,
                                       bool CaptureDiagnostics,
-                                      bool PrecompilePreamble) {
+                                      bool PrecompilePreamble,
+                                      bool CompleteTranslationUnit) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1116,7 +1143,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
   CI->getFrontendOpts().DisableFree = true;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
-                                    CaptureDiagnostics, PrecompilePreamble);
+                                    CaptureDiagnostics, PrecompilePreamble,
+                                    CompleteTranslationUnit);
 }
 
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
@@ -1140,7 +1168,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   // build a precompiled preamble, do so now.
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (!PreambleFile.empty() || PreambleRebuildCounter > 0)
-    OverrideMainBuffer = BuildPrecompiledPreamble();
+    OverrideMainBuffer = getMainBufferWithPrecompiledPreamble();
     
   // Clear out the diagnostics state.
   if (!OverrideMainBuffer)
@@ -1164,6 +1192,17 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                    llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics) {
   if (!Invocation.get())
     return;
+
+  llvm::Timer *CompletionTimer = 0;
+  if (TimerGroup.get()) {
+    llvm::SmallString<128> TimerName;
+    llvm::raw_svector_ostream TimerNameOut(TimerName);
+    TimerNameOut << "Code completion @ " << File << ":" << Line << ":" 
+                 << Column;
+    CompletionTimer = new llvm::Timer(TimerNameOut.str(), *TimerGroup);
+    CompletionTimer->startTimer();
+    Timers.push_back(CompletionTimer);
+  }
 
   CompilerInvocation CCInvocation(*Invocation);
   FrontendOptions &FrontendOpts = CCInvocation.getFrontendOpts();
@@ -1230,6 +1269,42 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   // Use the code completion consumer we were given.
   Clang.setCodeCompletionConsumer(&Consumer);
 
+  // If we have a precompiled preamble, try to use it. We only allow
+  // the use of the precompiled preamble if we're if the completion
+  // point is within the main file, after the end of the precompiled
+  // preamble.
+  llvm::MemoryBuffer *OverrideMainBuffer = 0;
+  if (!PreambleFile.empty()) {
+    using llvm::sys::FileStatus;
+    llvm::sys::PathWithStatus CompleteFilePath(File);
+    llvm::sys::PathWithStatus MainPath(OriginalSourceFile);
+    if (const FileStatus *CompleteFileStatus = CompleteFilePath.getFileStatus())
+      if (const FileStatus *MainStatus = MainPath.getFileStatus())
+        if (CompleteFileStatus->getUniqueID() == MainStatus->getUniqueID())
+          OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(false, 
+                                                                    Line);
+  }
+
+  // If the main file has been overridden due to the use of a preamble,
+  // make that override happen and introduce the preamble.
+  if (OverrideMainBuffer) {
+    PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
+    PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
+    PreprocessorOpts.PrecompiledPreambleBytes.second
+                                                    = PreambleEndsAtStartOfLine;
+    PreprocessorOpts.ImplicitPCHInclude = PreambleFile;
+    PreprocessorOpts.DisablePCHValidation = true;
+    
+    // The stored diagnostics have the old source manager. Copy them
+    // to our output set of stored diagnostics, updating the source
+    // manager to the one we were given.
+    for (unsigned I = 0, N = this->StoredDiagnostics.size(); I != N; ++I) {
+      StoredDiagnostics.push_back(this->StoredDiagnostics[I]);
+      FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SourceMgr);
+      StoredDiagnostics[I].setLocation(Loc);
+    }
+  }
+
   llvm::OwningPtr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
   if (Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
@@ -1237,8 +1312,12 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     Act->Execute();
     Act->EndSourceFile();
   }
+
+  if (CompletionTimer)
+    CompletionTimer->stopTimer();
   
   // Steal back our resources. 
+  delete OverrideMainBuffer;
   Clang.takeFileManager();
   Clang.takeSourceManager();
   Clang.takeInvocation();

@@ -686,7 +686,19 @@ enum CXTranslationUnit_Flags {
    * clang_reparseTranslationUnit() will re-use the implicit
    * precompiled header to improve parsing performance.
    */
-  CXTranslationUnit_PrecompiledPreamble = 0x04
+  CXTranslationUnit_PrecompiledPreamble = 0x04,
+  /**
+   * \brief Used to indicate that the translation unit is incomplete.
+   *
+   * When a translation unit is considered "incomplete", semantic
+   * analysis that is typically performed at the end of the
+   * translation unit will be suppressed. For example, this suppresses
+   * the completion of tentative declarations in C and of
+   * instantiation of implicitly-instantiation function templates in
+   * C++. This option is typically used when parsing a header with the
+   * intent of producing a precompiled header.
+   */
+  CXTranslationUnit_Incomplete = 0x08
 };
 
 /**

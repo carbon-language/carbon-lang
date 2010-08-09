@@ -311,7 +311,7 @@ namespace {
 }
 
 std::pair<unsigned, bool>
-Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
+Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer, unsigned MaxLines) {
   // Create a lexer starting at the beginning of the file. Note that we use a
   // "fake" file source location at offset 1 so that the lexer will track our
   // position within the file.
@@ -325,6 +325,8 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
   Token TheTok;
   Token IfStartTok;
   unsigned IfCount = 0;
+  unsigned Line = 0;
+
   do {
     TheLexer.LexFromRawLexer(TheTok);
 
@@ -345,6 +347,16 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
       InPreprocessorDirective = false;
     }
     
+    // Keep track of the # of lines in the preamble.
+    if (TheTok.isAtStartOfLine()) {
+      ++Line;
+
+      // If we were asked to limit the number of lines in the preamble,
+      // and we're about to exceed that limit, we're done.
+      if (MaxLines && Line >= MaxLines)
+        break;
+    }
+
     // Comments are okay; skip over them.
     if (TheTok.getKind() == tok::comment)
       continue;
@@ -418,7 +430,9 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
       TheTok = HashTok;
     }
 
-    // We hit a token
+    // We hit a token that we don't recognize as being in the
+    // "preprocessing only" part of the file, so we're no longer in
+    // the preamble.
     break;
   } while (true);
   

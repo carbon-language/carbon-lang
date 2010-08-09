@@ -78,8 +78,11 @@ private:
   /// \brief Whether to capture any diagnostics produced.
   bool CaptureDiagnostics;
   
-  /// Track whether the main file was loaded from an AST or not.
+  /// \brief Track whether the main file was loaded from an AST or not.
   bool MainFileIsAST;
+
+  /// \brief Whether this AST represents a complete translation unit.
+  bool CompleteTranslationUnit;
 
   /// Track the top-level decls which appeared in an ASTUnit which was loaded
   /// from a source file.
@@ -199,9 +202,12 @@ private:
   bool Parse(llvm::MemoryBuffer *OverrideMainBuffer);
   
   std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> >
-  ComputePreamble(CompilerInvocation &Invocation, bool &CreatedBuffer);
+  ComputePreamble(CompilerInvocation &Invocation, 
+                  unsigned MaxLines, bool &CreatedBuffer);
   
-  llvm::MemoryBuffer *BuildPrecompiledPreamble();
+  llvm::MemoryBuffer *getMainBufferWithPrecompiledPreamble(
+                                                     bool AllowRebuild = true,
+                                                        unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
 
 public:
@@ -318,6 +324,12 @@ public:
     return StoredDiagnostics; 
   }
 
+  /// \brief Whether this AST represents a complete translation unit.
+  ///
+  /// If false, this AST is only a partial translation unit, e.g., one
+  /// that might still be used as a precompiled header or preamble.
+  bool isCompleteTranslationUnit() const { return CompleteTranslationUnit; }
+
   /// \brief A mapping from a file name to the memory buffer that stores the
   /// remapped contents of that file.
   typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
@@ -352,7 +364,8 @@ public:
                                      llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                              bool OnlyLocalDecls = false,
                                              bool CaptureDiagnostics = false,
-                                             bool PrecompilePreamble = false);
+                                             bool PrecompilePreamble = false,
+                                          bool CompleteTranslationUnit = true);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -376,7 +389,8 @@ public:
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
                                       bool CaptureDiagnostics = false,
-                                      bool PrecompilePreamble = false);
+                                      bool PrecompilePreamble = false,
+                                      bool CompleteTranslationUnit = true);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.

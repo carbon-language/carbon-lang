@@ -237,11 +237,14 @@ public:
   ///
   /// \param Buffer The memory buffer containing the file's contents.
   ///
+  /// \param MaxLines If non-zero, restrict the length of the preamble
+  /// to fewer than this number of lines.
+  ///
   /// \returns The offset into the file where the preamble ends and the rest
   /// of the file begins along with a boolean value indicating whether 
   /// the preamble ends at the beginning of a new line.
   static std::pair<unsigned, bool>
-  ComputePreamble(const llvm::MemoryBuffer *Buffer);
+  ComputePreamble(const llvm::MemoryBuffer *Buffer, unsigned MaxLines = 0);
                                         
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.

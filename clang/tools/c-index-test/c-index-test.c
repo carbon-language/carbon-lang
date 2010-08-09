@@ -874,7 +874,8 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
   struct CXUnsavedFile *unsaved_files = 0;
   int num_unsaved_files = 0;
   CXCodeCompleteResults *results = 0;
-
+  CXTranslationUnit *TU = 0;
+  
   if (timing_only)
     input += strlen("-code-completion-timing=");
   else
@@ -889,15 +890,20 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
 
   CIdx = clang_createIndex(0, 1);
   if (getenv("CINDEXTEST_EDITING")) {
-    CXTranslationUnit *TU = clang_parseTranslationUnit(CIdx, 0,
-                                  argv + num_unsaved_files + 2,
-                                  argc - num_unsaved_files - 2,
-                                  unsaved_files,
-                                  num_unsaved_files,
-                                  getDefaultParsingOptions());
-    results = clang_codeCompleteAt(TU, filename, line, column,
-                                   unsaved_files, num_unsaved_files,
-                                   clang_defaultCodeCompleteOptions());
+    TU = clang_parseTranslationUnit(CIdx, 0,
+                                    argv + num_unsaved_files + 2,
+                                    argc - num_unsaved_files - 2,
+                                    unsaved_files,
+                                    num_unsaved_files,
+                                    getDefaultParsingOptions());
+    unsigned I, Repeats = 5;
+    for (I = 0; I != Repeats; ++I) {
+      results = clang_codeCompleteAt(TU, filename, line, column,
+                                     unsaved_files, num_unsaved_files,
+                                     clang_defaultCodeCompleteOptions());
+      if (I != Repeats-1)
+        clang_disposeCodeCompleteResults(results);
+    }
   } else
     results = clang_codeComplete(CIdx,
                                  argv[argc - 1], argc - num_unsaved_files - 3,
@@ -918,7 +924,7 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
     }
     clang_disposeCodeCompleteResults(results);
   }
-
+  clang_disposeTranslationUnit(TU);
   clang_disposeIndex(CIdx);
   free(filename);
 
