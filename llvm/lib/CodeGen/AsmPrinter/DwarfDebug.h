@@ -418,6 +418,9 @@ private:
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   DIE *constructEnumTypeDIE(DIEnumerator ETy);
 
+  /// createGlobalVariableDIE - Create new DIE using GV.
+  DIE *createGlobalVariableDIE(const DIGlobalVariable &GV);
+
   /// createMemberDIE - Create new member DIE.
   DIE *createMemberDIE(const DIDerivedType &DT);
 
