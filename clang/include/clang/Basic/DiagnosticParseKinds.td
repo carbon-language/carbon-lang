@@ -271,8 +271,8 @@ def err_destructor_tilde_identifier : Error<
   "expected a class name after '~' to name a destructor">;
 def err_destructor_template_id : Error<
   "destructor name %0 does not refer to a template">;
-def warn_default_arg_unparsed : Warning<
-  "parsing of default argument is incomplete">;
+def err_default_arg_unparsed : Error<
+  "unexpected end of default argument expression">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;

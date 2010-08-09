@@ -10,3 +10,7 @@ class C {
 typedef struct Inst {
   void m(int x=0);
 } *InstPtr;
+
+struct X {
+  void f(int x = 1:); // expected-error {{unexpected end of default argument expression}}
+};
