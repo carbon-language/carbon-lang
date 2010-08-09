@@ -180,6 +180,73 @@ public:
   DIE *getDIE()                      const { return TheDIE; }
   void setDotDebugLocOffset(unsigned O)    { DotDebugLocOffset = O; }
   unsigned getDotDebugLocOffset()    const { return DotDebugLocOffset; }
+  StringRef getName()                const { return Var.getName(); }
+  unsigned getTag()                  const { return Var.getTag(); }
+  bool variableHasComplexAddress()   const {
+    assert(Var.Verify() && "Invalid complex DbgVariable!");
+    return Var.hasComplexAddress();
+  }
+  bool isBlockByrefVariable()        const {
+    assert(Var.Verify() && "Invalid complex DbgVariable!");
+    return Var.isBlockByrefVariable();
+  }
+  unsigned getNumAddrElements()      const { 
+    assert(Var.Verify() && "Invalid complex DbgVariable!");
+    return Var.getNumAddrElements();
+  }
+  uint64_t getAddrElement(unsigned i) const {
+    return Var.getAddrElement(i);
+  }
+  DIType getType()               const {
+    DIType Ty = Var.getType();
+    // FIXME: isBlockByrefVariable should be reformulated in terms of complex
+    // addresses instead.
+    if (Var.isBlockByrefVariable()) {
+      /* Byref variables, in Blocks, are declared by the programmer as
+         "SomeType VarName;", but the compiler creates a
+         __Block_byref_x_VarName struct, and gives the variable VarName
+         either the struct, or a pointer to the struct, as its type.  This
+         is necessary for various behind-the-scenes things the compiler
+         needs to do with by-reference variables in blocks.
+         
+         However, as far as the original *programmer* is concerned, the
+         variable should still have type 'SomeType', as originally declared.
+         
+         The following function dives into the __Block_byref_x_VarName
+         struct to find the original type of the variable.  This will be
+         passed back to the code generating the type for the Debug
+         Information Entry for the variable 'VarName'.  'VarName' will then
+         have the original type 'SomeType' in its debug information.
+         
+         The original type 'SomeType' will be the type of the field named
+         'VarName' inside the __Block_byref_x_VarName struct.
+         
+         NOTE: In order for this to not completely fail on the debugger
+         side, the Debug Information Entry for the variable VarName needs to
+         have a DW_AT_location that tells the debugger how to unwind through
+         the pointers and __Block_byref_x_VarName struct to find the actual
+         value of the variable.  The function addBlockByrefType does this.  */
+      DIType subType = Ty;
+      unsigned tag = Ty.getTag();
+      
+      if (tag == dwarf::DW_TAG_pointer_type) {
+        DIDerivedType DTy = DIDerivedType(Ty);
+        subType = DTy.getTypeDerivedFrom();
+      }
+      
+      DICompositeType blockStruct = DICompositeType(subType);
+      DIArray Elements = blockStruct.getTypeArray();
+      
+      for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
+        DIDescriptor Element = Elements.getElement(i);
+        DIDerivedType DT = DIDerivedType(Element);
+        if (getName() == DT.getName())
+          return (DT.getTypeDerivedFrom());
+      }
+      return Ty;
+    }
+    return Ty;
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -517,55 +584,16 @@ void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace NS) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
-/* Byref variables, in Blocks, are declared by the programmer as
-   "SomeType VarName;", but the compiler creates a
-   __Block_byref_x_VarName struct, and gives the variable VarName
-   either the struct, or a pointer to the struct, as its type.  This
-   is necessary for various behind-the-scenes things the compiler
-   needs to do with by-reference variables in blocks.
-
-   However, as far as the original *programmer* is concerned, the
-   variable should still have type 'SomeType', as originally declared.
-
-   The following function dives into the __Block_byref_x_VarName
-   struct to find the original type of the variable.  This will be
-   passed back to the code generating the type for the Debug
-   Information Entry for the variable 'VarName'.  'VarName' will then
-   have the original type 'SomeType' in its debug information.
-
-   The original type 'SomeType' will be the type of the field named
-   'VarName' inside the __Block_byref_x_VarName struct.
-
-   NOTE: In order for this to not completely fail on the debugger
-   side, the Debug Information Entry for the variable VarName needs to
-   have a DW_AT_location that tells the debugger how to unwind through
-   the pointers and __Block_byref_x_VarName struct to find the actual
-   value of the variable.  The function addBlockByrefType does this.  */
-
-/// Find the type the programmer originally declared the variable to be
-/// and return that type.
-///
-DIType DwarfDebug::getBlockByrefType(DIType Ty, std::string Name) {
-
-  DIType subType = Ty;
-  unsigned tag = Ty.getTag();
-
-  if (tag == dwarf::DW_TAG_pointer_type) {
-    DIDerivedType DTy = DIDerivedType(Ty);
-    subType = DTy.getTypeDerivedFrom();
-  }
-
-  DICompositeType blockStruct = DICompositeType(subType);
-  DIArray Elements = blockStruct.getTypeArray();
-
-  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-    DIDescriptor Element = Elements.getElement(i);
-    DIDerivedType DT = DIDerivedType(Element);
-    if (Name == DT.getName())
-      return (DT.getTypeDerivedFrom());
-  }
-
-  return Ty;
+/// addVariableAddress - Add DW_AT_location attribute for a DbgVariable.
+void DwarfDebug::addVariableAddress(DbgVariable *&DV, DIE *Die,
+                                    unsigned Attribute,
+                                    const MachineLocation &Location) {
+  if (DV->variableHasComplexAddress())
+    addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
+  else if (DV->isBlockByrefVariable())
+    addBlockByrefAddress(DV, Die, dwarf::DW_AT_location, Location);
+  else
+    addAddress(Die, dwarf::DW_AT_location, Location);
 }
 
 /// addComplexAddress - Start with the address based on the location provided,
@@ -576,8 +604,7 @@ DIType DwarfDebug::getBlockByrefType(DIType Ty, std::string Name) {
 void DwarfDebug::addComplexAddress(DbgVariable *&DV, DIE *Die,
                                    unsigned Attribute,
                                    const MachineLocation &Location) {
-  const DIVariable &VD = DV->getVariable();
-  DIType Ty = VD.getType();
+  DIType Ty = DV->getType();
 
   // Decode the original location, and use that as the start of the byref
   // variable's location.
@@ -604,12 +631,12 @@ void DwarfDebug::addComplexAddress(DbgVariable *&DV, DIE *Die,
     addUInt(Block, 0, dwarf::DW_FORM_sdata, Location.getOffset());
   }
 
-  for (unsigned i = 0, N = VD.getNumAddrElements(); i < N; ++i) {
-    uint64_t Element = VD.getAddrElement(i);
+  for (unsigned i = 0, N = DV->getNumAddrElements(); i < N; ++i) {
+    uint64_t Element = DV->getAddrElement(i);
 
     if (Element == DIFactory::OpPlus) {
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-      addUInt(Block, 0, dwarf::DW_FORM_udata, VD.getAddrElement(++i));
+      addUInt(Block, 0, dwarf::DW_FORM_udata, DV->getAddrElement(++i));
     } else if (Element == DIFactory::OpDeref) {
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     } else llvm_unreachable("unknown DIFactory Opcode");
@@ -682,13 +709,12 @@ void DwarfDebug::addComplexAddress(DbgVariable *&DV, DIE *Die,
 void DwarfDebug::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
                                       unsigned Attribute,
                                       const MachineLocation &Location) {
-  const DIVariable &VD = DV->getVariable();
-  DIType Ty = VD.getType();
+  DIType Ty = DV->getType();
   DIType TmpTy = Ty;
   unsigned Tag = Ty.getTag();
   bool isPointer = false;
 
-  StringRef varName = VD.getName();
+  StringRef varName = DV->getName();
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
     DIDerivedType DTy = DIDerivedType(Ty);
@@ -1556,16 +1582,14 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
-  // Get the descriptor.
-  const DIVariable &VD = DV->getVariable();
-  StringRef Name = VD.getName();
+  StringRef Name = DV->getName();
   if (Name.empty())
     return NULL;
 
   // Translate tag to proper Dwarf tag.  The result variable is dropped for
   // now.
   unsigned Tag;
-  switch (VD.getTag()) {
+  switch (DV->getTag()) {
   case dwarf::DW_TAG_return_variable:
     return NULL;
   case dwarf::DW_TAG_arg_variable:
@@ -1591,18 +1615,13 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
                 dwarf::DW_FORM_ref4, AbsDIE);
   else {
     addString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
-    addSourceLine(VariableDie, VD);
+    addSourceLine(VariableDie, DV->getVariable());
 
     // Add variable type.
-    // FIXME: isBlockByrefVariable should be reformulated in terms of complex
-    // addresses instead.
-    if (VD.isBlockByrefVariable())
-      addType(VariableDie, getBlockByrefType(VD.getType(), Name));
-    else
-      addType(VariableDie, VD.getType());
+    addType(VariableDie, DV->getType());
   }
 
-  if (Tag == dwarf::DW_TAG_formal_parameter && VD.getType().isArtificial())
+  if (Tag == dwarf::DW_TAG_formal_parameter && DV->getType().isArtificial())
     addUInt(VariableDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
 
   if (Scope->isAbstractScope()) {
@@ -1666,13 +1685,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   if (findVariableFrameIndex(DV, &FI)) {
     int Offset = RI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
     Location.set(FrameReg, Offset);
-
-    if (VD.hasComplexAddress())
-      addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-    else if (VD.isBlockByrefVariable())
-      addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-    else
-      addAddress(VariableDie, dwarf::DW_AT_location, Location);
+    addVariableAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
   }
   DV->setDIE(VariableDie);
   return VariableDie;

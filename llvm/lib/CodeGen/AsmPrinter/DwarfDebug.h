@@ -376,6 +376,10 @@ private:
   void addBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
                             const MachineLocation &Location);
 
+  /// addVariableAddress - Add DW_AT_location attribute for a DbgVariable.
+  void addVariableAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
+                          const MachineLocation &Location);
+
   /// addToContextOwner - Add Die into the list of its context owner's children.
   void addToContextOwner(DIE *Die, DIDescriptor Context);
 
@@ -559,12 +563,6 @@ private:
 
   /// construct SubprogramDIE - Construct subprogram DIE.
   void constructSubprogramDIE(const MDNode *N);
-
-  // FIXME: This should go away in favor of complex addresses.
-  /// Find the type the programmer originally declared the variable to be
-  /// and return that type.  Obsolete, use GetComplexAddrType instead.
-  ///
-  DIType getBlockByrefType(DIType Ty, std::string Name);
 
   /// recordSourceLine - Register a source line with debug info. Returns the
   /// unique label that was emitted and which provides correspondence to
