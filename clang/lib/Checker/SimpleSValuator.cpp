@@ -461,10 +461,12 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
     case nonloc::SymbolValKind: {
       nonloc::SymbolVal *slhs = cast<nonloc::SymbolVal>(&lhs);
       SymbolRef Sym = slhs->getSymbol();
-      
+
+      ASTContext& Ctx = ValMgr.getContext();
+
       // Does the symbol simplify to a constant?  If so, "fold" the constant
       // by setting 'lhs' to a ConcreteInt and try again.
-      if (Sym->getType(ValMgr.getContext())->isIntegerType())
+      if (Sym->getType(Ctx)->isIntegerType())
         if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
           // The symbol evaluates to a constant. If necessary, promote the
           // folded constant (LHS) to the result type.
@@ -474,7 +476,7 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
           
           // Also promote the RHS (if necessary).
 
-          // For shifts, it necessary promote the RHS to the result type.
+          // For shifts, it is not necessary to promote the RHS.
           if (BinaryOperator::isShiftOp(op))
             continue;
           
@@ -486,7 +488,20 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
           
           continue;
         }
-      
+
+      // Is the RHS a symbol we can simplify?
+      if (const nonloc::SymbolVal *srhs = dyn_cast<nonloc::SymbolVal>(&rhs)) {
+        SymbolRef RSym = srhs->getSymbol();
+        if (RSym->getType(Ctx)->isIntegerType()) {
+          if (const llvm::APSInt *Constant = state->getSymVal(RSym)) {
+            // The symbol evaluates to a constant.
+            BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
+            const llvm::APSInt &rhs_I = BVF.Convert(resultTy, *Constant);
+            rhs = nonloc::ConcreteInt(rhs_I);
+          }
+        }
+      }
+
       if (isa<nonloc::ConcreteInt>(rhs)) {
         return MakeSymIntVal(slhs->getSymbol(), op,
                              cast<nonloc::ConcreteInt>(rhs).getValue(),

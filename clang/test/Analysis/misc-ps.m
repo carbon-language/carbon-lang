@@ -1027,3 +1027,21 @@ float f0(_Complex float x) {
   return  __real l0 + __imag l0;
 }
 
+
+//===----------------------------------------------------------------------===
+// Test that we can reduce symbols to constants whether they are on the left
+//  or right side of an expression.
+//===----------------------------------------------------------------------===
+
+void reduce_to_constant(int x, int y) {
+  if (x != 20)
+    return;
+
+  int a = x + y;
+  int b = y + x;
+
+  if (y == -20 && a != 0)
+    (void)*(char*)0; // no-warning
+  if (y == -20 && b != 0)
+    (void)*(char*)0; // no-warning
+}
