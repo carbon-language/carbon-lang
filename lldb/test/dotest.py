@@ -180,6 +180,10 @@ if ("LLDB_LOG" in os.environ):
     if not res.Succeeded():
         raise Exception('log enable failed (check your LLDB_LOG env variable...')
 
+# Install the control-c handler.
+unittest2.signals.installHandler()
+
+# Invoke the default TextTestRunner to run the test suite.
 unittest2.TextTestRunner(verbosity=verbose).run(suite)
 
 # Add some delay before calling SBDebugger.Terminate().
