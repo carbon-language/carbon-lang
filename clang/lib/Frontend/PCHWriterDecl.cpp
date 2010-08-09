@@ -305,8 +305,10 @@ void PCHDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   VisitNamedDecl(D);
   // FIXME: convert to LazyStmtPtr?
   // Unlike C/C++, method bodies will never be in header files.
-  Record.push_back(D->getBody() != 0);
-  if (D->getBody() != 0) {
+  bool HasBodyStuff = D->getBody() != 0     ||
+                      D->getSelfDecl() != 0 || D->getCmdDecl() != 0;
+  Record.push_back(HasBodyStuff);
+  if (HasBodyStuff) {
     Writer.AddStmt(D->getBody());
     Writer.AddDeclRef(D->getSelfDecl(), Record);
     Writer.AddDeclRef(D->getCmdDecl(), Record);
@@ -478,7 +480,8 @@ void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   Writer.AddSourceLocation(D->getLocStart(), Record);
   Writer.AddDeclRef(D->getPropertyDecl(), Record);
   Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
-  // FIXME. write GetterCXXConstructor and SetterCXXAssignment.
+  Writer.AddStmt(D->getGetterCXXConstructor());
+  Writer.AddStmt(D->getSetterCXXAssignment());
   Code = pch::DECL_OBJC_PROPERTY_IMPL;
 }
 
