@@ -514,7 +514,8 @@ void PCHDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
   D->setSuperClass(
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  // FIXME. Add reading of IvarInitializers and NumIvarInitializers.
+  llvm::tie(D->IvarInitializers, D->NumIvarInitializers)
+      = Reader.ReadCXXBaseOrMemberInitializers(Cursor, Record, Idx);
 }
 
 
@@ -1298,7 +1299,7 @@ static bool isConsumerInterestedIn(Decl *D) {
            Var->isThisDeclarationADefinition() == VarDecl::Definition;
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
     return Func->isThisDeclarationADefinition();
-  return isa<ObjCProtocolDecl>(D);
+  return isa<ObjCProtocolDecl>(D) || isa<ObjCImplementationDecl>(D);
 }
 
 /// \brief Get the correct cursor and offset for loading a type.

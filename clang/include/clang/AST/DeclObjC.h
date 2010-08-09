@@ -1238,6 +1238,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCImplementationDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCImplementation; }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,

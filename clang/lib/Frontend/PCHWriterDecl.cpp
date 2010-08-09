@@ -468,7 +468,8 @@ void PCHDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
 void PCHDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
   Writer.AddDeclRef(D->getSuperClass(), Record);
-  // FIXME add writing of IvarInitializers and NumIvarInitializers.
+  Writer.AddCXXBaseOrMemberInitializers(D->IvarInitializers,
+                                        D->NumIvarInitializers, Record);
   Code = pch::DECL_OBJC_IMPLEMENTATION;
 }
 
@@ -1096,8 +1097,8 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
 /// relatively painless since they would presumably only do it for top-level
 /// decls.
 static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
-  // File scoped assembly must be seen.
-  if (isa<FileScopeAsmDecl>(D))
+  // File scoped assembly or obj-c implementation must be seen.
+  if (isa<FileScopeAsmDecl>(D) || isa<ObjCImplementationDecl>(D))
     return true;
 
   return Context.DeclMustBeEmitted(D);

@@ -937,6 +937,8 @@ protected:
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
 
+  llvm::Function *GetMethodDefinition(const ObjCMethodDecl *MD);
+
   /// BuildIvarLayout - Builds ivar layout bitmap for the class
   /// implementation for the __strong or __weak case.
   ///
@@ -2538,8 +2540,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
 /// given method if it has been defined. The result is null if the
 /// method has not been defined. The return value has type MethodPtrTy.
 llvm::Constant *CGObjCMac::GetMethodConstant(const ObjCMethodDecl *MD) {
-  // FIXME: Use DenseMap::lookup
-  llvm::Function *Fn = MethodDefinitions[MD];
+  llvm::Function *Fn = GetMethodDefinition(MD);
   if (!Fn)
     return 0;
 
@@ -3569,6 +3570,22 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
                               1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
+}
+
+llvm::Function *CGObjCCommonMac::GetMethodDefinition(const ObjCMethodDecl *MD) {
+  llvm::DenseMap<const ObjCMethodDecl*, llvm::Function*>::iterator
+      I = MethodDefinitions.find(MD);
+  if (I != MethodDefinitions.end())
+    return I->second;
+
+  if (MD->hasBody() && MD->getPCHLevel() > 0) {
+    // MD isn't emitted yet because it comes from PCH.
+    CGM.EmitTopLevelDecl(const_cast<ObjCMethodDecl*>(MD));
+    assert(MethodDefinitions[MD] && "EmitTopLevelDecl didn't emit the method!");
+    return MethodDefinitions[MD];
+  }
+
+  return NULL;
 }
 
 /// GetIvarLayoutName - Returns a unique constant for the given
@@ -5162,8 +5179,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 /// method has not been defined. The return value has type MethodPtrTy.
 llvm::Constant *CGObjCNonFragileABIMac::GetMethodConstant(
   const ObjCMethodDecl *MD) {
-  // FIXME: Use DenseMap::lookup
-  llvm::Function *Fn = MethodDefinitions[MD];
+  llvm::Function *Fn = GetMethodDefinition(MD);
   if (!Fn)
     return 0;
 
