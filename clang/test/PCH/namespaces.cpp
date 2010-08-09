@@ -37,7 +37,6 @@ void(*funp2)() = ext;
 using N1::used_func;
 void (*pused)() = used_func;
 
-// FIXME: Disabled until CXXRecord serialization is re-added.
-// using N1::used_cls;
-// used_cls s1;
-// used_cls* ps1 = &s1;
+using N1::used_cls;
+used_cls s1;
+used_cls* ps1 = &s1;
