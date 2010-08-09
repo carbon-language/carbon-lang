@@ -357,7 +357,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Shrink 32-bit Thumb2 branch, load, and store instructions.
-  if (isThumb2)
+  if (isThumb2 && !STI->prefers32BitThumb())
     MadeChange |= OptimizeThumb2Instructions(MF);
 
   // After a while, this might be made debug-only, but it is not expensive.

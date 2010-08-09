@@ -84,6 +84,10 @@ protected:
   /// instructions.
   bool HasT2ExtractPack;
 
+  /// Pref32BitThumb - If true, codegen would prefer 32-bit Thumb instructions
+  /// over 16-bit ones.
+  bool Pref32BitThumb;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -137,6 +141,7 @@ protected:
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
   bool isFPBrccSlow() const { return SlowFPBrcc; }
+  bool prefers32BitThumb() const { return Pref32BitThumb; }
 
   bool hasFP16() const { return HasFP16; }
 

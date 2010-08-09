@@ -65,6 +65,9 @@ def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
                                         "true",
                                         "Use NEON for single precision FP">;
 
+// Disable 32-bit to 16-bit narrowing for experimentation.
+def FeaturePref32BitThumb : SubtargetFeature<"32bit", "Pref32BitThumb", "true",
+                                             "Prefer 32-bit Thumb instrs">;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.

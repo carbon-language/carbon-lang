@@ -16,16 +16,10 @@
 #include "ARM.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
-
-static cl::opt<bool>
-Prefer32BitThumbInstrs("prefer-32bit-thumb",
-                       cl::desc("Prefer 32-bit Thumb instructions"),
-                       cl::init(false));
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
@@ -143,7 +137,7 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
 
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
-  if (!Prefer32BitThumbInstrs && Subtarget.isThumb2())
+  if (Subtarget.isThumb2() && !Subtarget.prefers32BitThumb())
     PM.add(createThumb2SizeReductionPass());
 
   PM.add(createARMConstantIslandPass());
