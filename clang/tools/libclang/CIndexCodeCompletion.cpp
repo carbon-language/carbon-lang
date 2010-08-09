@@ -283,8 +283,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   if (getenv("LIBCLANG_TIMING")) {
     llvm::SmallString<128> TimerName;
     llvm::raw_svector_ostream TimerNameOut(TimerName);
-    TimerNameOut << "Code completion @ " << complete_filename << ":"
-      << complete_line << ":" << complete_column;
+    TimerNameOut << "Code completion (out-of-process) @ " << complete_filename 
+      << ":" << complete_line << ":" << complete_column;
     CCTimer.reset(new llvm::NamedRegionTimer(TimerNameOut.str()));
   }
 

@@ -30,6 +30,7 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 
@@ -1144,6 +1145,8 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
 void clang_disposeIndex(CXIndex CIdx) {
   if (CIdx)
     delete static_cast<CIndexer *>(CIdx);
+  if (getenv("LIBCLANG_TIMING"))
+    llvm::TimerGroup::printAll(llvm::errs());
 }
 
 void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
