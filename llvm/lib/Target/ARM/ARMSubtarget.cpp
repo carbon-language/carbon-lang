@@ -33,6 +33,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , ARMFPUType(None)
   , UseNEONForSinglePrecisionFP(false)
   , SlowVMLx(false)
+  , SlowFPBrcc(false)
   , IsThumb(isT)
   , ThumbMode(Thumb1)
   , PostRAScheduler(false)
@@ -41,6 +42,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , HasFP16(false)
   , HasHardwareDivide(false)
   , HasT2ExtractPack(false)
+  , Pref32BitThumb(false)
   , stackAlignment(4)
   , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.
