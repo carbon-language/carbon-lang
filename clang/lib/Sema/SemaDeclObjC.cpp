@@ -1100,13 +1100,14 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
 /// TODO: Handle protocol list; such as id<p1,p2> in type comparisons
 bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
                                       const ObjCMethodDecl *PrevMethod,
-                                      bool matchBasedOnSizeAndAlignment) {
+                                      bool matchBasedOnSizeAndAlignment,
+                                      bool matchBasedOnStrictEqulity) {
   QualType T1 = Context.getCanonicalType(Method->getResultType());
   QualType T2 = Context.getCanonicalType(PrevMethod->getResultType());
 
   if (T1 != T2) {
     // The result types are different.
-    if (!matchBasedOnSizeAndAlignment)
+    if (!matchBasedOnSizeAndAlignment || matchBasedOnStrictEqulity)
       return false;
     // Incomplete types don't have a size and alignment.
     if (T1->isIncompleteType() || T2->isIncompleteType())
@@ -1126,7 +1127,7 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
     T2 = Context.getCanonicalType((*PrevI)->getType());
     if (T1 != T2) {
       // The result types are different.
-      if (!matchBasedOnSizeAndAlignment)
+      if (!matchBasedOnSizeAndAlignment || matchBasedOnStrictEqulity)
         return false;
       // Incomplete types don't have a size and alignment.
       if (T1->isIncompleteType() || T2->isIncompleteType())
@@ -1188,8 +1189,8 @@ void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
   Entry.Next = new (Mem) ObjCMethodList(Method, Entry.Next);
 }
 
-// FIXME: Finish implementing -Wno-strict-selector-match.
 ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
+                                               bool receiverIdOrClass,
                                                bool warn, bool instance) {
   GlobalMethodPool::iterator Pos = MethodPool.find(Sel);
   if (Pos == MethodPool.end()) {
@@ -1201,15 +1202,30 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
 
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
 
+  bool strictSelectorMatch = receiverIdOrClass && warn &&
+    (Diags.getDiagnosticLevel(diag::warn_strict_multiple_method_decl) != 
+      Diagnostic::Ignored);
   if (warn && MethList.Method && MethList.Next) {
     bool issueWarning = false;
-    for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next) {
-      // This checks if the methods differ by size & alignment.
-      if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method, true))
-        issueWarning = true;
-    }
+    if (strictSelectorMatch)
+      for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next) {
+        // This checks if the methods differ in type mismatch.
+        if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method, false, true))
+          issueWarning = true;
+      }
+
+    if (!issueWarning)
+      for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next) {
+        // This checks if the methods differ by size & alignment.
+        if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method, true))
+          issueWarning = true;
+      }
+
     if (issueWarning) {
-      Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
+      if (strictSelectorMatch)
+        Diag(R.getBegin(), diag::warn_strict_multiple_method_decl) << Sel << R;
+      else
+        Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
       Diag(MethList.Method->getLocStart(), diag::note_using)
         << MethList.Method->getSourceRange();
       for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)

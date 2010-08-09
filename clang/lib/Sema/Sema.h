@@ -1677,7 +1677,8 @@ public:
   /// true, or false, accordingly.
   bool MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
                                   const ObjCMethodDecl *PrevMethod,
-                                  bool matchBasedOnSizeAndAlignment = false);
+                                  bool matchBasedOnSizeAndAlignment = false,
+                                  bool matchBasedOnStrictEqulity = false);
 
   /// MatchAllMethodDeclarations - Check methods declaraed in interface or
   /// or protocol against those declared in their implementations.
@@ -1698,6 +1699,7 @@ private:
   /// LookupMethodInGlobalPool - Returns the instance or factory method and
   /// optionally warns if there are multiple signatures.
   ObjCMethodDecl *LookupMethodInGlobalPool(Selector Sel, SourceRange R,
+                                           bool receiverIdOrClass,
                                            bool warn, bool instance);
 
 public:
@@ -1717,15 +1719,19 @@ public:
   /// LookupInstanceMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
   ObjCMethodDecl *LookupInstanceMethodInGlobalPool(Selector Sel, SourceRange R,
+                                                   bool receiverIdOrClass=false,
                                                    bool warn=true) {
-    return LookupMethodInGlobalPool(Sel, R, warn, /*instance*/true);
+    return LookupMethodInGlobalPool(Sel, R, receiverIdOrClass, 
+                                    warn, /*instance*/true);
   }
 
   /// LookupFactoryMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
   ObjCMethodDecl *LookupFactoryMethodInGlobalPool(Selector Sel, SourceRange R,
+                                                  bool receiverIdOrClass=false,
                                                   bool warn=true) {
-    return LookupMethodInGlobalPool(Sel, R, warn, /*instance*/false);
+    return LookupMethodInGlobalPool(Sel, R, receiverIdOrClass,
+                                    warn, /*instance*/false);
   }
 
   /// LookupImplementedMethodInGlobalPool - Returns the method which has an

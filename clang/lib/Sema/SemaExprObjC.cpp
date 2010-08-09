@@ -153,7 +153,7 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
   ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel,
-                             SourceRange(LParenLoc, RParenLoc), false);
+                             SourceRange(LParenLoc, RParenLoc), false, false);
   if (!Method)
     Method = LookupFactoryMethodInGlobalPool(Sel,
                                           SourceRange(LParenLoc, RParenLoc));
@@ -863,13 +863,17 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
 
   if (!Method) {
     // Handle messages to id.
-    if (ReceiverType->isObjCIdType() || ReceiverType->isBlockPointerType() ||
+    bool receiverIsId = (ReceiverType->isObjCIdType() || 
+                          ReceiverType->isObjCQualifiedIdType());
+    if (receiverIsId || ReceiverType->isBlockPointerType() ||
         (Receiver && Context.isObjCNSObjectType(Receiver->getType()))) {
       Method = LookupInstanceMethodInGlobalPool(Sel, 
-                                              SourceRange(LBracLoc, RBracLoc));
+                                                SourceRange(LBracLoc, RBracLoc),
+                                                receiverIsId);
       if (!Method)
         Method = LookupFactoryMethodInGlobalPool(Sel, 
-                                               SourceRange(LBracLoc, RBracLoc));
+                                                 SourceRange(LBracLoc, RBracLoc),
+                                                 receiverIsId);
     } else if (ReceiverType->isObjCClassType() ||
                ReceiverType->isObjCQualifiedClassType()) {
       // Handle messages to Class.
@@ -891,12 +895,14 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
         // If not messaging 'self', look for any factory method named 'Sel'.
         if (!Receiver || !isSelfExpr(Receiver)) {
           Method = LookupFactoryMethodInGlobalPool(Sel, 
-                                               SourceRange(LBracLoc, RBracLoc));
+                                               SourceRange(LBracLoc, RBracLoc),
+                                                   true);
           if (!Method) {
             // If no class (factory) method was found, check if an _instance_
             // method of the same name exists in the root class only.
             Method = LookupInstanceMethodInGlobalPool(Sel,
-                                               SourceRange(LBracLoc, RBracLoc));
+                                               SourceRange(LBracLoc, RBracLoc),
+                                                      true);
             if (Method)
                 if (const ObjCInterfaceDecl *ID =
                   dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext())) {
@@ -951,7 +957,7 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
             // compatibility. FIXME: should we deviate??
             if (OCIType->qual_empty()) {
               Method = LookupInstanceMethodInGlobalPool(Sel,
-                                                 SourceRange(LBracLoc, RBracLoc));
+                                                 SourceRange(LBracLoc, RBracLoc)); 
               if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
                 Diag(Loc, diag::warn_maynot_respond)
                   << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
