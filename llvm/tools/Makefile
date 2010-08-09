@@ -20,7 +20,7 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli llvm-extract llvm-mc \
-                 bugpoint bugpoint-passes llvm-bcanalyzer llvm-stub \
+                 bugpoint llvm-bcanalyzer llvm-stub \
                  llvmc
 
 # Let users override the set of tools to build from the command line.
@@ -44,6 +44,8 @@ ifeq ($(ENABLE_PIC),1)
     else
       PARALLEL_DIRS += lto
     endif
+
+    PARALLEL_DIRS += bugpoint-passes
 
     # The edis library is only supported if ARM and/or X86 are enabled, and if
     # LLVM is being built PIC on platforms that support dylibs.
