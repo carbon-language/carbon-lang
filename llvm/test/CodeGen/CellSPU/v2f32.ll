@@ -61,3 +61,15 @@ define %vec @test_insert(){
   ret %vec %rv
 }
 
+define void @test_unaligned_store()  {
+;CHECK:	cdd	$3, 8($3)
+;CHECK: 	lqd	
+;CHECK:	shufb
+;CHECK:	stqd
+  %data = alloca [4 x float], align 16         ; <[4 x float]*> [#uses=1]
+  %ptr = getelementptr [4 x float]* %data, i32 0, i32 2 ; <float*> [#uses=1]
+  %vptr = bitcast float* %ptr to  <2 x float>* ; <[1 x <2 x float>]*> [#uses=1]
+  store <2 x float> undef, <2 x float>* %vptr
+  ret void
+}
+

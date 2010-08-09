@@ -117,6 +117,12 @@ def SPUprefslot2vec: SDNode<"SPUISD::PREFSLOT2VEC", SDTprefslot2vec, []>;
 def SPU_vec_demote   : SDTypeProfile<1, 1, []>;
 def SPUvec2prefslot: SDNode<"SPUISD::VEC2PREFSLOT", SPU_vec_demote, []>;
 
+def SPU_half_2_vec : SDTypeProfile<1, 1, []>;
+def SPUhalf2vec: SDNode<"SPUISD::HALF2VEC", SPU_half_2_vec, []>;
+
+def SPU_vec_2_half : SDTypeProfile<1, 1, []>;
+def SPUvec2half: SDNode<"SPUISD::VEC2HALF", SPU_vec_2_half, []>;
+ 
 // Address high and low components, used for [r+r] type addressing
 def SPUhi : SDNode<"SPUISD::Hi", SDTIntBinOp, []>;
 def SPUlo : SDNode<"SPUISD::Lo", SDTIntBinOp, []>;

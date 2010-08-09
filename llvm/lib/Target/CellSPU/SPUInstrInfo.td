@@ -1468,6 +1468,9 @@ class ORCvtGPRCVec:
 class ORCvtVecGPRC:
     ORCvtForm<(outs GPRC:$rT), (ins VECREG:$rA)>;
 
+class ORCvtVecVec:
+    ORCvtForm<(outs VECREG:$rT), (ins VECREG:$rA)>;
+
 multiclass BitwiseOr
 {
   def v16i8: ORVecInst<v16i8>;
@@ -1513,6 +1516,13 @@ multiclass BitwiseOr
   def i64_v2i64: ORExtractElt<R64C>;
   def f32_v4f32: ORExtractElt<R32FP>;
   def f64_v2f64: ORExtractElt<R64FP>;
+
+  // half <-> full vector mappings
+  def v2i32_v4i32: ORCvtVecVec;
+  def v4i32_v2i32: ORCvtVecVec;
+  def v2f32_v4f32: ORCvtVecVec;
+  def v4f32_v2f32: ORCvtVecVec;
+
 
   // Conversion from vector to GPRC
   def i128_vec:  ORCvtVecGPRC;
@@ -1622,6 +1632,18 @@ def : Pat<(SPUvec2prefslot (v2f32 VECREG:$rA)),
 
 def : Pat<(SPUvec2prefslot (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA)>;
+
+// Conversions between 64 bit and 128 bit vectors. 
+
+def : Pat<(v4i32 (SPUhalf2vec (v2i32 VECREG:$rA))),
+          (ORv4i32_v2i32 (v2i32 VECREG:$rA))>;
+def : Pat<(v4f32 (SPUhalf2vec (v2f32 VECREG:$rA))),
+          (ORv4f32_v2f32 (v2f32 VECREG:$rA))>;
+
+def : Pat<(v2i32 (SPUvec2half (v4i32 VECREG:$rA))),
+          (ORv2i32_v4i32 VECREG:$rA)>;
+def : Pat<(v2f32 (SPUvec2half (v4f32 VECREG:$rA))),
+          (ORv2f32_v4f32 VECREG:$rA)>;
 
 // Load Register: This is an assembler alias for a bitwise OR of a register
 // against itself. It's here because it brings some clarity to assembly

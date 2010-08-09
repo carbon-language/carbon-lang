@@ -587,6 +587,7 @@ SPURegisterInfo::convertDFormToXForm(int dFormOpcode) const
     case SPU::LQDr32:    return SPU::LQXr32;
     case SPU::LQDr128:   return SPU::LQXr128;
     case SPU::LQDv16i8:  return SPU::LQXv16i8;
+    case SPU::LQDv4i32:  return SPU::LQXv4i32;
     case SPU::LQDv4f32:  return SPU::LQXv4f32;
     case SPU::STQDr32:   return SPU::STQXr32;
     case SPU::STQDr128:  return SPU::STQXr128;

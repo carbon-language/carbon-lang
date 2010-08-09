@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=cellspu -o %t1.s
-; RUN: grep lqx   %t1.s | count 4
-; RUN: grep il    %t1.s | grep -v file | count 7
-; RUN: grep stqx  %t1.s | count 2
+; RUN: grep lqx   %t1.s | count 3
+; RUN: grep il    %t1.s | grep -v file | count 5
+; RUN: grep stqx  %t1.s | count 1
 
 define i32 @bigstack() nounwind {
 entry:

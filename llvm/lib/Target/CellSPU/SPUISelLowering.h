@@ -54,6 +54,8 @@ namespace llvm {
       ADD64_MARKER,             ///< i64 addition marker
       SUB64_MARKER,             ///< i64 subtraction marker
       MUL64_MARKER,             ///< i64 multiply marker
+      HALF2VEC,                 ///< Promote 64 bit vector to 128 bits
+      VEC2HALF,                 ///< Extract first 64 bits from 128 bit vector
       LAST_SPUISD               ///< Last user-defined instruction
     };
   }
