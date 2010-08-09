@@ -661,16 +661,17 @@ enum CXTranslationUnit_Flags {
   CXTranslationUnit_DetailedPreprocessingRecord = 0x01,
 
   /**
-   * \brief A flag that indicates that the intent of parsing the
-   * given translation unit is for live editing of the file.
+   * \brief Used to indicate that the translation unit is incomplete.
    *
-   * This flag is essentially a meta-flag that callers can use to indicate
-   * that the translation unit is being edited and, therefore, is likely to
-   * be reparsed many times. It enables an unspecified set of optimizations
-   * (e.g., the precompiled preamble) geared toward improving the performance
-   * of \c clang_reparseTranslationUnit().
+   * When a translation unit is considered "incomplete", semantic
+   * analysis that is typically performed at the end of the
+   * translation unit will be suppressed. For example, this suppresses
+   * the completion of tentative declarations in C and of
+   * instantiation of implicitly-instantiation function templates in
+   * C++. This option is typically used when parsing a header with the
+   * intent of producing a precompiled header.
    */
-  CXTranslationUnit_Editing = 0x02,
+  CXTranslationUnit_Incomplete = 0x02,
   
   /**
    * \brief Used to indicate that the translation unit should be built with an 
@@ -686,21 +687,23 @@ enum CXTranslationUnit_Flags {
    * clang_reparseTranslationUnit() will re-use the implicit
    * precompiled header to improve parsing performance.
    */
-  CXTranslationUnit_PrecompiledPreamble = 0x04,
-  /**
-   * \brief Used to indicate that the translation unit is incomplete.
-   *
-   * When a translation unit is considered "incomplete", semantic
-   * analysis that is typically performed at the end of the
-   * translation unit will be suppressed. For example, this suppresses
-   * the completion of tentative declarations in C and of
-   * instantiation of implicitly-instantiation function templates in
-   * C++. This option is typically used when parsing a header with the
-   * intent of producing a precompiled header.
-   */
-  CXTranslationUnit_Incomplete = 0x08
+  CXTranslationUnit_PrecompiledPreamble = 0x04
 };
 
+/**
+ * \brief Returns the set of flags that is suitable for parsing a translation
+ * unit that is being edited.
+ *
+ * The set of flags returned provide options for \c clang_parseTranslationUnit()
+ * to indicate that the translation unit is likely to be reparsed many times,
+ * either explicitly (via \c clang_reparseTranslationUnit()) or implicitly
+ * (e.g., by code completion (\c clang_codeCompletionAt())). The returned flag
+ * set contains an unspecified set of optimizations (e.g., the precompiled 
+ * preamble) geared toward improving the performance of these routines. The
+ * set of optimizations enabled may change from one version to the next.
+ */
+CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions();
+  
 /**
  * \brief Parse the given source file and the translation unit corresponding
  * to that file.

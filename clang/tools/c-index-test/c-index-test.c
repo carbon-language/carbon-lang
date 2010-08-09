@@ -33,7 +33,7 @@ static unsigned getDefaultParsingOptions() {
   unsigned options = CXTranslationUnit_DetailedPreprocessingRecord;
 
   if (getenv("CINDEXTEST_EDITING"))
-    options |= CXTranslationUnit_Editing;
+    options |= clang_defaultEditingTranslationUnitOptions();
   
   return options;
 }

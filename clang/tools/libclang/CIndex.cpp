@@ -1169,6 +1169,10 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                   0, 0, true);
 }
 
+unsigned clang_defaultEditingTranslationUnitOptions() {
+  return CXTranslationUnit_PrecompiledPreamble;
+}
+  
 CXTranslationUnit
 clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           const char *source_filename,
@@ -1194,9 +1198,6 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
-  // The "editing" option implies other options.
-  if (options & CXTranslationUnit_Editing)
-    options |= CXTranslationUnit_PrecompiledPreamble;
   bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
   bool CompleteTranslationUnit
     = ((options & CXTranslationUnit_Incomplete) == 0);
