@@ -917,6 +917,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         // Tell the callee to try to recover.
         return false;
       }
+
+      R.clear();
     }
   }
 
