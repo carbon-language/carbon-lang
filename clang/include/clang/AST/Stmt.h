@@ -203,6 +203,7 @@ public:
   /// This is useful in a debugger.
   void dump() const;
   void dump(SourceManager &SM) const;
+  void dump(llvm::raw_ostream &OS, SourceManager &SM) const;
 
   /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
   void dumpAll() const;

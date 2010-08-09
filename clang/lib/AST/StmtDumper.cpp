@@ -633,30 +633,34 @@ void StmtDumper::VisitObjCSuperExpr(ObjCSuperExpr *Node) {
 /// specified node and a few nodes underneath it, but not the whole subtree.
 /// This is useful in a debugger.
 void Stmt::dump(SourceManager &SM) const {
-  StmtDumper P(&SM, llvm::outs(), 4);
+  dump(llvm::errs(), SM);
+}
+
+void Stmt::dump(llvm::raw_ostream &OS, SourceManager &SM) const {
+  StmtDumper P(&SM, OS, 4);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  llvm::outs() << "\n";
+  OS << "\n";
 }
 
 /// dump - This does a local dump of the specified AST fragment.  It dumps the
 /// specified node and a few nodes underneath it, but not the whole subtree.
 /// This is useful in a debugger.
 void Stmt::dump() const {
-  StmtDumper P(0, llvm::outs(), 4);
+  StmtDumper P(0, llvm::errs(), 4);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  llvm::outs() << "\n";
+  llvm::errs() << "\n";
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll(SourceManager &SM) const {
-  StmtDumper P(&SM, llvm::outs(), ~0U);
+  StmtDumper P(&SM, llvm::errs(), ~0U);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  llvm::outs() << "\n";
+  llvm::errs() << "\n";
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll() const {
-  StmtDumper P(0, llvm::outs(), ~0U);
+  StmtDumper P(0, llvm::errs(), ~0U);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  llvm::outs() << "\n";
+  llvm::errs() << "\n";
 }

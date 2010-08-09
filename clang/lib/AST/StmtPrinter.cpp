@@ -1354,7 +1354,7 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty(ASTContext& Context) const {
-  printPretty(llvm::outs(), Context, 0,
+  printPretty(llvm::errs(), Context, 0,
               PrintingPolicy(Context.getLangOptions()));
 }
 
@@ -1368,7 +1368,7 @@ void Stmt::printPretty(llvm::raw_ostream &OS, ASTContext& Context,
   }
 
   if (Policy.Dump && &Context) {
-    dump(Context.getSourceManager());
+    dump(OS, Context.getSourceManager());
     return;
   }
 
