@@ -4323,10 +4323,10 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       if (ObjCInterfaceDecl *lhsID = lhsOPT->getInterfaceDecl()) {
         for (ObjCObjectPointerType::qual_iterator I = rhsQID->qual_begin(),
              E = rhsQID->qual_end(); I != E; ++I) {
-          // when comparing an id<P> on lhs with a static type on rhs,
-          // see if static class implements all of id's protocols, directly or
-          // through its super class and categories.
-          if (lhsID->ClassImplementsProtocol(*I, true)) {
+          // when comparing an id<P> on rhs with a static type on lhs,
+          // static class must implement all of id's protocols directly or
+          // indirectly through its super class.
+          if (lhsID->ClassImplementsProtocol(*I, false)) {
             match = true;
             break;
           }
