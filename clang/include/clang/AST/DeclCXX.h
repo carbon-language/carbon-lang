@@ -1283,7 +1283,7 @@ public:
   /// getMember - If this is a member initializer, returns the
   /// declaration of the non-static data member being
   /// initialized. Otherwise, returns NULL.
-  FieldDecl *getMember() {
+  FieldDecl *getMember() const {
     if (isMemberInitializer())
       return BaseOrMember.get<FieldDecl*>();
     else
@@ -1361,7 +1361,7 @@ public:
     reinterpret_cast<VarDecl **>(this + 1)[I] = Index;
   }
   
-  Expr *getInit() { return static_cast<Expr *>(Init); }
+  Expr *getInit() const { return static_cast<Expr *>(Init); }
 };
 
 /// CXXConstructorDecl - Represents a C++ constructor within a

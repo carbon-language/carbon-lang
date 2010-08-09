@@ -3015,6 +3015,36 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   AddSourceRange(Base.getSourceRange(), Record);
 }
 
+void PCHWriter::AddCXXBaseOrMemberInitializers(
+                        const CXXBaseOrMemberInitializer * const *BaseOrMembers,
+                        unsigned NumBaseOrMembers, RecordData &Record) {
+  Record.push_back(NumBaseOrMembers);
+  for (unsigned i=0; i != NumBaseOrMembers; ++i) {
+    const CXXBaseOrMemberInitializer *Init = BaseOrMembers[i];
+
+    Record.push_back(Init->isBaseInitializer());
+    if (Init->isBaseInitializer()) {
+      AddTypeSourceInfo(Init->getBaseClassInfo(), Record);
+      Record.push_back(Init->isBaseVirtual());
+    } else {
+      AddDeclRef(Init->getMember(), Record);
+    }
+    AddSourceLocation(Init->getMemberLocation(), Record);
+    AddStmt(Init->getInit());
+    AddDeclRef(Init->getAnonUnionMember(), Record);
+    AddSourceLocation(Init->getLParenLoc(), Record);
+    AddSourceLocation(Init->getRParenLoc(), Record);
+    Record.push_back(Init->isWritten());
+    if (Init->isWritten()) {
+      Record.push_back(Init->getSourceOrder());
+    } else {
+      Record.push_back(Init->getNumArrayIndices());
+      for (unsigned i=0, e=Init->getNumArrayIndices(); i != e; ++i)
+        AddDeclRef(Init->getArrayIndex(i), Record);
+    }
+  }
+}
+
 void PCHWriter::SetReader(PCHReader *Reader) {
   assert(Reader && "Cannot remove chain");
   assert(FirstDeclID == NextDeclID &&

@@ -401,6 +401,11 @@ public:
   /// \brief Emit a C++ base specifier.
   void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base, RecordData &Record);
 
+  /// \brief Emit a CXXBaseOrMemberInitializer array.
+  void AddCXXBaseOrMemberInitializers(
+                        const CXXBaseOrMemberInitializer * const *BaseOrMembers,
+                        unsigned NumBaseOrMembers, RecordData &Record);
+
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);
 

@@ -760,32 +760,8 @@ void PCHDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 
   Record.push_back(D->IsExplicitSpecified);
   Record.push_back(D->ImplicitlyDefined);
-  
-  Record.push_back(D->NumBaseOrMemberInitializers);
-  for (unsigned i=0; i != D->NumBaseOrMemberInitializers; ++i) {
-    CXXBaseOrMemberInitializer *Init = D->BaseOrMemberInitializers[i];
-
-    Record.push_back(Init->isBaseInitializer());
-    if (Init->isBaseInitializer()) {
-      Writer.AddTypeSourceInfo(Init->getBaseClassInfo(), Record);
-      Record.push_back(Init->isBaseVirtual());
-    } else {
-      Writer.AddDeclRef(Init->getMember(), Record);
-    }
-    Writer.AddSourceLocation(Init->getMemberLocation(), Record);
-    Writer.AddStmt(Init->getInit());
-    Writer.AddDeclRef(Init->getAnonUnionMember(), Record);
-    Writer.AddSourceLocation(Init->getLParenLoc(), Record);
-    Writer.AddSourceLocation(Init->getRParenLoc(), Record);
-    Record.push_back(Init->isWritten());
-    if (Init->isWritten()) {
-      Record.push_back(Init->getSourceOrder());
-    } else {
-      Record.push_back(Init->getNumArrayIndices());
-      for (unsigned i=0, e=Init->getNumArrayIndices(); i != e; ++i)
-        Writer.AddDeclRef(Init->getArrayIndex(i), Record);
-    }
-  }
+  Writer.AddCXXBaseOrMemberInitializers(D->BaseOrMemberInitializers,
+                                        D->NumBaseOrMemberInitializers, Record);
 
   Code = pch::DECL_CXX_CONSTRUCTOR;
 }

@@ -876,6 +876,11 @@ public:
   CXXBaseSpecifier ReadCXXBaseSpecifier(llvm::BitstreamCursor &DeclsCursor,
                                         const RecordData &Record,unsigned &Idx);
 
+  /// \brief Read a CXXBaseOrMemberInitializer array.
+  std::pair<CXXBaseOrMemberInitializer **, unsigned>
+  ReadCXXBaseOrMemberInitializers(llvm::BitstreamCursor &DeclsCursor,
+                                  const RecordData &Record, unsigned &Idx);
+
   /// \brief Read a source location.
   SourceLocation ReadSourceLocation(const RecordData &Record, unsigned& Idx) {
     return SourceLocation::getFromRawEncoding(Record[Idx++]);

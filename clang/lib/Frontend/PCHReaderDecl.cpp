@@ -783,63 +783,8 @@ void PCHDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   
   D->IsExplicitSpecified = Record[Idx++];
   D->ImplicitlyDefined = Record[Idx++];
-  
-  unsigned NumInitializers = Record[Idx++];
-  D->NumBaseOrMemberInitializers = NumInitializers;
-  if (NumInitializers) {
-    ASTContext &C = *Reader.getContext();
-
-    D->BaseOrMemberInitializers
-        = new (C) CXXBaseOrMemberInitializer*[NumInitializers];
-    for (unsigned i=0; i != NumInitializers; ++i) {
-      TypeSourceInfo *BaseClassInfo = 0;
-      bool IsBaseVirtual = false;
-      FieldDecl *Member = 0;
-  
-      bool IsBaseInitializer = Record[Idx++];
-      if (IsBaseInitializer) {
-        BaseClassInfo = Reader.GetTypeSourceInfo(Cursor, Record, Idx);
-        IsBaseVirtual = Record[Idx++];
-      } else {
-        Member = cast<FieldDecl>(Reader.GetDecl(Record[Idx++]));
-      }
-      SourceLocation MemberLoc = Reader.ReadSourceLocation(Record, Idx);
-      Expr *Init = Reader.ReadExpr(Cursor);
-      FieldDecl *AnonUnionMember
-          = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
-      SourceLocation LParenLoc = Reader.ReadSourceLocation(Record, Idx);
-      SourceLocation RParenLoc = Reader.ReadSourceLocation(Record, Idx);
-      bool IsWritten = Record[Idx++];
-      unsigned SourceOrderOrNumArrayIndices;
-      llvm::SmallVector<VarDecl *, 8> Indices;
-      if (IsWritten) {
-        SourceOrderOrNumArrayIndices = Record[Idx++];
-      } else {
-        SourceOrderOrNumArrayIndices = Record[Idx++];
-        Indices.reserve(SourceOrderOrNumArrayIndices);
-        for (unsigned i=0; i != SourceOrderOrNumArrayIndices; ++i)
-          Indices.push_back(cast<VarDecl>(Reader.GetDecl(Record[Idx++])));
-      }
-      
-      CXXBaseOrMemberInitializer *BOMInit;
-      if (IsBaseInitializer) {
-        BOMInit = new (C) CXXBaseOrMemberInitializer(C, BaseClassInfo,
-                                                     IsBaseVirtual, LParenLoc,
-                                                     Init, RParenLoc);
-      } else if (IsWritten) {
-        BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, MemberLoc,
-                                                     LParenLoc, Init, RParenLoc);
-      } else {
-        BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, MemberLoc,
-                                                     LParenLoc, Init, RParenLoc,
-                                                     Indices.data(),
-                                                     Indices.size());
-      }
-
-      BOMInit->setAnonUnionMember(AnonUnionMember);
-      D->BaseOrMemberInitializers[i] = BOMInit;
-    }
-  }
+  llvm::tie(D->BaseOrMemberInitializers, D->NumBaseOrMemberInitializers)
+      = Reader.ReadCXXBaseOrMemberInitializers(Cursor, Record, Idx);
 }
 
 void PCHDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {

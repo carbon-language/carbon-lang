@@ -3579,6 +3579,70 @@ PCHReader::ReadCXXBaseSpecifier(llvm::BitstreamCursor &DeclsCursor,
   return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, TInfo);
 }
 
+std::pair<CXXBaseOrMemberInitializer **, unsigned>
+PCHReader::ReadCXXBaseOrMemberInitializers(llvm::BitstreamCursor &Cursor,
+                                           const RecordData &Record,
+                                           unsigned &Idx) {
+  CXXBaseOrMemberInitializer **BaseOrMemberInitializers = 0;
+  unsigned NumInitializers = Record[Idx++];
+  if (NumInitializers) {
+    ASTContext &C = *getContext();
+
+    BaseOrMemberInitializers
+        = new (C) CXXBaseOrMemberInitializer*[NumInitializers];
+    for (unsigned i=0; i != NumInitializers; ++i) {
+      TypeSourceInfo *BaseClassInfo = 0;
+      bool IsBaseVirtual = false;
+      FieldDecl *Member = 0;
+  
+      bool IsBaseInitializer = Record[Idx++];
+      if (IsBaseInitializer) {
+        BaseClassInfo = GetTypeSourceInfo(Cursor, Record, Idx);
+        IsBaseVirtual = Record[Idx++];
+      } else {
+        Member = cast<FieldDecl>(GetDecl(Record[Idx++]));
+      }
+      SourceLocation MemberLoc = ReadSourceLocation(Record, Idx);
+      Expr *Init = ReadExpr(Cursor);
+      FieldDecl *AnonUnionMember
+          = cast_or_null<FieldDecl>(GetDecl(Record[Idx++]));
+      SourceLocation LParenLoc = ReadSourceLocation(Record, Idx);
+      SourceLocation RParenLoc = ReadSourceLocation(Record, Idx);
+      bool IsWritten = Record[Idx++];
+      unsigned SourceOrderOrNumArrayIndices;
+      llvm::SmallVector<VarDecl *, 8> Indices;
+      if (IsWritten) {
+        SourceOrderOrNumArrayIndices = Record[Idx++];
+      } else {
+        SourceOrderOrNumArrayIndices = Record[Idx++];
+        Indices.reserve(SourceOrderOrNumArrayIndices);
+        for (unsigned i=0; i != SourceOrderOrNumArrayIndices; ++i)
+          Indices.push_back(cast<VarDecl>(GetDecl(Record[Idx++])));
+      }
+      
+      CXXBaseOrMemberInitializer *BOMInit;
+      if (IsBaseInitializer) {
+        BOMInit = new (C) CXXBaseOrMemberInitializer(C, BaseClassInfo,
+                                                     IsBaseVirtual, LParenLoc,
+                                                     Init, RParenLoc);
+      } else if (IsWritten) {
+        BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, MemberLoc,
+                                                     LParenLoc, Init, RParenLoc);
+      } else {
+        BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, MemberLoc,
+                                                     LParenLoc, Init, RParenLoc,
+                                                     Indices.data(),
+                                                     Indices.size());
+      }
+
+      BOMInit->setAnonUnionMember(AnonUnionMember);
+      BaseOrMemberInitializers[i] = BOMInit;
+    }
+  }
+
+  return std::make_pair(BaseOrMemberInitializers, NumInitializers);
+}
+
 NestedNameSpecifier *
 PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
   unsigned N = Record[Idx++];
