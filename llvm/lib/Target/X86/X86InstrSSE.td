@@ -3230,7 +3230,9 @@ def VCVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 def VCVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTDQ2PDYrm  : S3SI<0xE6, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
-                     "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+                     "vcvtdq2pd\t{$src, $dst|$dst, $src}",
+                     [(set VR256:$dst,
+                      (int_x86_avx_cvtdq2_pd_256 (memopv4i32 addr:$src)))]>, VEX;
 def VCVTDQ2PDYrr  : S3SI<0xE6, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}",
                      [(set VR256:$dst,
