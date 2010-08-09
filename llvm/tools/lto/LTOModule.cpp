@@ -153,6 +153,11 @@ const char* LTOModule::getTargetTriple()
     return _module->getTargetTriple().c_str();
 }
 
+void LTOModule::setTargetTriple(const char *triple)
+{
+    _module->setTargetTriple(triple);
+}
+
 void LTOModule::addDefinedFunctionSymbol(Function* f, Mangler &mangler)
 {
     // add to list of defined symbols

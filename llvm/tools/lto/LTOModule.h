@@ -55,6 +55,7 @@ struct LTOModule {
                                            std::string& errMsg);
 
     const char*              getTargetTriple();
+    void                     setTargetTriple(const char*);
     uint32_t                 getSymbolCount();
     lto_symbol_attributes    getSymbolAttributes(uint32_t index);
     const char*              getSymbolName(uint32_t index);

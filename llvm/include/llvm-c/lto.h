@@ -135,6 +135,12 @@ lto_module_dispose(lto_module_t mod);
 extern const char*
 lto_module_get_target_triple(lto_module_t mod);
 
+/**
+ * Sets triple string with which the object will be codegened.
+ */
+extern void
+lto_module_set_target_triple(lto_module_t mod, const char *triple);
+
 
 /**
  * Returns the number of symbols in the object module.

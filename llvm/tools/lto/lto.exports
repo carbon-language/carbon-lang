@@ -6,6 +6,7 @@ lto_module_get_num_symbols
 lto_module_get_symbol_attribute
 lto_module_get_symbol_name
 lto_module_get_target_triple
+lto_module_set_target_triple
 lto_module_is_object_file
 lto_module_is_object_file_for_target
 lto_module_is_object_file_in_memory

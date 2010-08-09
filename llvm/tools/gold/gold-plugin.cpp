@@ -68,6 +68,7 @@ namespace options {
   static std::string as_path;
   static std::vector<std::string> pass_through;
   static std::string extra_library_path;
+  static std::string triple;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -95,6 +96,8 @@ namespace options {
     } else if (opt.startswith("pass-through=")) {
       llvm::StringRef item = opt.substr(strlen("pass-through="));
       pass_through.push_back(item.str());
+    } else if (opt == "mtriple=") {
+      triple = opt.substr(strlen("mtriple="));
     } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
     } else if (opt == "also-emit-llvm") {
@@ -270,6 +273,10 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                lto_get_error_message());
     return LDPS_ERR;
   }
+
+  if (!options::triple.empty())
+    lto_module_set_target_triple(cf.M, options::triple.c_str());
+
   cf.handle = file->handle;
   unsigned sym_count = lto_module_get_num_symbols(cf.M);
   cf.syms.reserve(sym_count);

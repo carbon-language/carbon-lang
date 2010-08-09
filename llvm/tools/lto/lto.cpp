@@ -120,6 +120,14 @@ const char* lto_module_get_target_triple(lto_module_t mod)
     return mod->getTargetTriple();
 }
 
+//
+// sets triple string with which the object will be codegened.
+//
+void lto_module_set_target_triple(lto_module_t mod, const char *triple)
+{
+    return mod->setTargetTriple(triple);
+}
+
 
 //
 // returns the number of symbols in the object module
