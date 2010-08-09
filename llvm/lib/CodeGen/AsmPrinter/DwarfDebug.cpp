@@ -435,14 +435,14 @@ void DwarfDebug::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
+void DwarfDebug::addSourceLine(DIE *Die, const DIVariable V) {
   // Verify variable.
-  if (!V->Verify())
+  if (!V.Verify())
     return;
 
-  unsigned Line = V->getLineNumber();
-  unsigned FileID = GetOrCreateSourceID(V->getContext().getDirectory(),
-                                        V->getContext().getFilename());
+  unsigned Line = V.getLineNumber();
+  unsigned FileID = GetOrCreateSourceID(V.getContext().getDirectory(),
+                                        V.getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -450,14 +450,14 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable *G) {
+void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable G) {
   // Verify global variable.
-  if (!G->Verify())
+  if (!G.Verify())
     return;
 
-  unsigned Line = G->getLineNumber();
-  unsigned FileID = GetOrCreateSourceID(G->getContext().getDirectory(),
-                                        G->getContext().getFilename());
+  unsigned Line = G.getLineNumber();
+  unsigned FileID = GetOrCreateSourceID(G.getContext().getDirectory(),
+                                        G.getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -465,19 +465,19 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable *G) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
+void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram SP) {
   // Verify subprogram.
-  if (!SP->Verify())
+  if (!SP.Verify())
     return;
   // If the line number is 0, don't add it.
-  if (SP->getLineNumber() == 0)
+  if (SP.getLineNumber() == 0)
     return;
 
-  unsigned Line = SP->getLineNumber();
-  if (!SP->getContext().Verify())
+  unsigned Line = SP.getLineNumber();
+  if (!SP.getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(SP->getDirectory(),
-                                        SP->getFilename());
+  unsigned FileID = GetOrCreateSourceID(SP.getDirectory(),
+                                        SP.getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -485,16 +485,16 @@ void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
+void DwarfDebug::addSourceLine(DIE *Die, const DIType Ty) {
   // Verify type.
-  if (!Ty->Verify())
+  if (!Ty.Verify())
     return;
 
-  unsigned Line = Ty->getLineNumber();
-  if (!Ty->getContext().Verify())
+  unsigned Line = Ty.getLineNumber();
+  if (!Ty.getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(Ty->getContext().getDirectory(),
-                                        Ty->getContext().getFilename());
+  unsigned FileID = GetOrCreateSourceID(Ty.getContext().getDirectory(),
+                                        Ty.getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -502,14 +502,14 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace *NS) {
+void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace NS) {
   // Verify namespace.
-  if (!NS->Verify())
+  if (!NS.Verify())
     return;
 
-  unsigned Line = NS->getLineNumber();
-  StringRef FN = NS->getFilename();
-  StringRef Dir = NS->getDirectory();
+  unsigned Line = NS.getLineNumber();
+  StringRef FN = NS.getFilename();
+  StringRef Dir = NS.getDirectory();
 
   unsigned FileID = GetOrCreateSourceID(Dir, FN);
   assert(FileID && "Invalid file id");
@@ -966,7 +966,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
-    addSourceLine(&Buffer, &DTy);
+    addSourceLine(&Buffer, DTy);
 }
 
 /// constructTypeDIE - Construct type DIE from DICompositeType.
@@ -1040,7 +1040,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         addType(ElemDie, DV.getType());
         addUInt(ElemDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
         addUInt(ElemDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
-        addSourceLine(ElemDie, &DV);
+        addSourceLine(ElemDie, DV);
       } else if (Element.isDerivedType())
         ElemDie = createMemberDIE(DIDerivedType(Element));
       else
@@ -1090,7 +1090,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
     // Add source line info if available.
     if (!CTy.isForwardDecl())
-      addSourceLine(&Buffer, &CTy);
+      addSourceLine(&Buffer, CTy);
   }
 }
 
@@ -1179,7 +1179,7 @@ DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
   addType(GVDie, GV.getType());
   if (!GV.isLocalToUnit())
     addUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
-  addSourceLine(GVDie, &GV);
+  addSourceLine(GVDie, GV);
 
   return GVDie;
 }
@@ -1193,7 +1193,7 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
 
   addType(MemberDie, DT.getTypeDerivedFrom());
 
-  addSourceLine(MemberDie, &DT);
+  addSourceLine(MemberDie, DT);
 
   DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
   addUInt(MemLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
@@ -1278,7 +1278,7 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
               getRealLinkageName(LinkageName));
 
-  addSourceLine(SPDie, &SP);
+  addSourceLine(SPDie, SP);
 
   // Add prototyped tag, if C or ObjC.
   unsigned Lang = SP.getCompileUnit().getLanguage();
@@ -1591,7 +1591,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
                 dwarf::DW_FORM_ref4, AbsDIE);
   else {
     addString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
-    addSourceLine(VariableDie, &VD);
+    addSourceLine(VariableDie, VD);
 
     // Add variable type.
     // FIXME: isBlockByrefVariable should be reformulated in terms of complex
@@ -1796,7 +1796,7 @@ DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace NS) {
   TheCU->insertDIE(NS, NDie);
   if (!NS.getName().empty())
     addString(NDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, NS.getName());
-  addSourceLine(NDie, &NS);
+  addSourceLine(NDie, NS);
   addToContextOwner(NDie, NS.getContext());
   return NDie;
 }
