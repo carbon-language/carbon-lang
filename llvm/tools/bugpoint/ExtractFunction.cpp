@@ -55,13 +55,14 @@ namespace {
 /// depends on the value.  The modified module is then returned.
 ///
 Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
-                                                unsigned Simplification) const {
-  Module *Result = CloneModule(Program);
+                                                unsigned Simplification) {
+  // FIXME, use vmap?
+  Module *Clone = CloneModule(Program);
 
   const BasicBlock *PBB = I->getParent();
   const Function *PF = PBB->getParent();
 
-  Module::iterator RFI = Result->begin(); // Get iterator to corresponding fn
+  Module::iterator RFI = Clone->begin(); // Get iterator to corresponding fn
   std::advance(RFI, std::distance(PF->getParent()->begin(),
                                   Module::const_iterator(PF)));
 
@@ -79,24 +80,23 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   // Remove the instruction from the program.
   TheInst->getParent()->getInstList().erase(TheInst);
 
-  
-  //writeProgramToFile("current.bc", Result);
-    
   // Spiff up the output a little bit.
-  PassManager Passes;
-  // Make sure that the appropriate target data is always used...
-  Passes.add(new TargetData(Result));
+  std::vector<std::string> Passes;
 
-  /// FIXME: If this used runPasses() like the methods below, we could get rid
-  /// of the -disable-* options!
+  /// Can we get rid of the -disable-* options?
   if (Simplification > 1 && !NoDCE)
-    Passes.add(createDeadCodeEliminationPass());
+    Passes.push_back("dce");
   if (Simplification && !DisableSimplifyCFG)
-    Passes.add(createCFGSimplificationPass());      // Delete dead control flow
+    Passes.push_back("simplifycfg");      // Delete dead control flow
 
-  Passes.add(createVerifierPass());
-  Passes.run(*Result);
-  return Result;
+  Passes.push_back("verify");
+  Module *New = runPassesOn(Clone, Passes);
+  delete Clone;
+  if (!New) {
+    errs() << "Instruction removal failed.  Sorry. :(  Please report a bug!\n";
+    exit(1);
+  }
+  return New;
 }
 
 /// performFinalCleanups - This method clones the current Program and performs

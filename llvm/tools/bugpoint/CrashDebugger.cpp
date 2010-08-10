@@ -312,17 +312,24 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // a "persistent mapping" by turning basic blocks into <function, name> pairs.
   // This won't work well if blocks are unnamed, but that is just the risk we
   // have to take.
-  std::vector<std::pair<Function*, std::string> > BlockInfo;
+  std::vector<std::pair<std::string, std::string> > BlockInfo;
 
   for (SmallPtrSet<BasicBlock*, 8>::iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
-    BlockInfo.push_back(std::make_pair((*I)->getParent(), (*I)->getName()));
+    BlockInfo.push_back(std::make_pair((*I)->getParent()->getName(),
+                                       (*I)->getName()));
 
   // Now run the CFG simplify pass on the function...
-  PassManager Passes;
-  Passes.add(createCFGSimplificationPass());
-  Passes.add(createVerifierPass());
-  Passes.run(*M);
+  std::vector<std::string> Passes;
+  Passes.push_back("simplifycfg");
+  Passes.push_back("verify");
+  Module *New = BD.runPassesOn(M, Passes);
+  delete M;
+  if (!New) {
+    errs() << "simplifycfg failed!\n";
+    exit(1);
+  }
+  M = New;
 
   // Try running on the hacked up program...
   if (TestFn(BD, M)) {
@@ -331,8 +338,10 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
     // Make sure to use basic block pointers that point into the now-current
     // module, and that they don't include any deleted blocks.
     BBs.clear();
+    const ValueSymbolTable &GST = M->getValueSymbolTable();
     for (unsigned i = 0, e = BlockInfo.size(); i != e; ++i) {
-      ValueSymbolTable &ST = BlockInfo[i].first->getValueSymbolTable();
+      Function *F = cast<Function>(GST.lookup(BlockInfo[i].first));
+      ValueSymbolTable &ST = F->getValueSymbolTable();
       Value* V = ST.lookup(BlockInfo[i].second);
       if (V && V->getType() == Type::getLabelTy(V->getContext()))
         BBs.push_back(cast<BasicBlock>(V));

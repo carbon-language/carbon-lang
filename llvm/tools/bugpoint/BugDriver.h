@@ -214,8 +214,7 @@ public:
   /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code
   /// which depends on the value.  The modified module is then returned.
   ///
-  Module *deleteInstructionFromProgram(const Instruction *I, unsigned Simp)
-    const;
+  Module *deleteInstructionFromProgram(const Instruction *I, unsigned Simp);
 
   /// performFinalCleanups - This method clones the current Program and performs
   /// a series of cleanups intended to get rid of extra cruft on the module.  If
