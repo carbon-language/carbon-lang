@@ -37,6 +37,7 @@ struct LTOCodeGenerator {
     bool                setDebugInfo(lto_debug_model, std::string& errMsg);
     bool                setCodePICModel(lto_codegen_model, std::string& errMsg);
     void                setAssemblerPath(const char* path);
+    void                setAssemblerArgs(const char** args, int nargs);
     void                addMustPreserveSymbol(const char* sym);
     bool                writeMergedModules(const char* path, 
                                                            std::string& errMsg);
@@ -62,6 +63,7 @@ private:
     llvm::MemoryBuffer*         _nativeObjectFile;
     std::vector<const char*>    _codegenOptions;
     llvm::sys::Path*            _assemblerPath;
+    std::vector<std::string>    _assemblerArgs;
 };
 
 #endif // LTO_CODE_GENERATOR_H

@@ -66,6 +66,7 @@ namespace options {
   static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
   static std::string as_path;
+  static std::vector<std::string> as_args;
   static std::vector<std::string> pass_through;
   static std::string extra_library_path;
   static std::string triple;
@@ -91,6 +92,9 @@ namespace options {
       } else {
         as_path = opt.substr(strlen("as="));
       }
+    } else if (opt.startswith("as-arg=")) {
+      llvm::StringRef item = opt.substr(strlen("as-arg="));
+      as_args.push_back(item.str());
     } else if (opt.startswith("extra-library-path=")) {
       extra_library_path = opt.substr(strlen("extra_library_path="));
     } else if (opt.startswith("pass-through=")) {
@@ -400,6 +404,14 @@ static ld_plugin_status all_symbols_read_hook(void) {
   if (!options::as_path.empty()) {
     sys::Path p = sys::Program::FindProgramByName(options::as_path);
     lto_codegen_set_assembler_path(cg, p.c_str());
+  }
+  if (!options::as_args.empty()) {
+    std::vector<const char *> as_args_p;
+    for (std::vector<std::string>::iterator I = options::as_args.begin(),
+           E = options::as_args.end(); I != E; ++I) {
+      as_args_p.push_back(I->c_str());
+    }
+    lto_codegen_set_assembler_args(cg, &as_args_p[0], as_args_p.size());
   }
   // Pass through extra options to the code generator.
   if (!options::extra.empty()) {

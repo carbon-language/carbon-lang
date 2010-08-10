@@ -218,6 +218,16 @@ void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path)
     cg->setAssemblerPath(path);
 }
 
+
+//
+// sets extra arguments that libLTO should pass to the assembler
+//
+void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char** args,
+                                    int nargs)
+{
+  cg->setAssemblerArgs(args, nargs);
+}
+
 //
 // adds to a list of all global symbols that must exist in the final
 // generated code.  If a function is not listed there, it might be

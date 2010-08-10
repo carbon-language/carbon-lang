@@ -220,6 +220,12 @@ lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path);
 extern void
 lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path);
 
+/**
+ * Sets extra arguments that libLTO should pass to the assembler.
+ */
+extern void
+lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
+                               int nargs);
 
 /**
  * Adds to a list of all global symbols that must exist in the final
