@@ -5256,8 +5256,6 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   
   TypeSourceInfo *InnerTSI = 0;
   QualType T = GetTypeFromParser(Ty, &InnerTSI);
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
   assert(isa<TemplateSpecializationType>(T) && 
          "Expected a template specialization type");
@@ -5274,7 +5272,8 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     else
       Builder.push<TemplateSpecializationTypeLoc>(T).initialize(TemplateLoc);
 
-    T = Context.getElaboratedType(ETK_Typename, NNS, T);
+    /* Note: NNS already embedded in template specialization type T. */
+    T = Context.getElaboratedType(ETK_Typename, /*NNS=*/0, T);
     ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
     TL.setKeywordLoc(TypenameLoc);
     TL.setQualifierRange(SS.getRange());
@@ -5289,7 +5288,10 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   DependentTemplateName *DTN =
     TST->getTemplateName().getAsDependentTemplateName();
   assert(DTN && "dependent template has non-dependent name?");
-  T = Context.getDependentTemplateSpecializationType(ETK_Typename, NNS,
+  assert(DTN->getQualifier()
+         == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
+  T = Context.getDependentTemplateSpecializationType(ETK_Typename,
+                                                     DTN->getQualifier(),
                                                      DTN->getIdentifier(),
                                                      TST->getNumArgs(),
                                                      TST->getArgs());

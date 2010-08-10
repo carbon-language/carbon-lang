@@ -559,7 +559,8 @@ public:
       getDerived().RebuildTemplateSpecializationType(InstName, NameLoc, Args);
     if (T.isNull()) return QualType();
 
-    return SemaRef.Context.getElaboratedType(Keyword, NNS, T);
+    // NOTE: NNS is already recorded in template specialization type T.
+    return SemaRef.Context.getElaboratedType(Keyword, /*NNS=*/0, T);
   }
 
   /// \brief Build a new typename type that refers to an identifier.

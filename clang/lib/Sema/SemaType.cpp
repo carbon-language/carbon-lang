@@ -1317,9 +1317,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
             
         case NestedNameSpecifier::TypeSpec:
         case NestedNameSpecifier::TypeSpecWithTemplate:
+          // Note: NNSPrefix (if any) is included in ClsType
+          // (hence, no need to wrap ClsType in an elaborated type).
           ClsType = QualType(NNS->getAsType(), 0);
-          if (NNSPrefix)
-            ClsType = Context.getElaboratedType(ETK_None, NNSPrefix, ClsType);
           break;
         }
       } else {
