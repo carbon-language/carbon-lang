@@ -573,6 +573,8 @@ void SplitEditor::rewrite() {
     LiveInterval &li = *intervals_[i];
     vrai.CalculateRegClass(li.reg);
     vrai.CalculateWeightAndHint(li);
+    DEBUG(dbgs() << "new intv " << mri_.getRegClass(li.reg)->getName() << ":"
+                 << li << '\n');
   }
 }
 
