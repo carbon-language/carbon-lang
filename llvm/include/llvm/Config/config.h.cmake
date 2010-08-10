@@ -3,6 +3,9 @@
 ** Created by Kevin from config.h.in **
 ***************************************/
 
+#ifndef CONFIG_H
+#define CONFIG_H
+
 /* Define if dlopen(0) will open the symbols of the program */
 #undef CAN_DLOPEN_SELF
 
@@ -628,3 +631,5 @@
 
 /* Native LLVM architecture, short name */
 #cmakedefine LLVM_NATIVE_ARCHNAME ${LLVM_NATIVE_ARCH}
+
+#endif
