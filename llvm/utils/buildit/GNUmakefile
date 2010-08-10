@@ -78,7 +78,7 @@ EmbeddedHosted:
 # (e.g., tblgen), so set it here.
 EmbeddedSim:
 	export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`; \
-	$(MAKE) IOS_SIM_BUILD=yes PREFIX=/usr install
+	$(MAKE) IOS_SIM_BUILD=yes PREFIX=$(SDKROOT)/usr install
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
