@@ -77,23 +77,23 @@ using ::strncmp;
 using ::strcoll;
 using ::strxfrm;
 
-inline _LIBCPP_INLINE_VISIBILITY const void* memchr(const void* __s, int __c, size_t __n) {return ::memchr(__s, __c, __n);}
+using ::memchr;
 inline _LIBCPP_INLINE_VISIBILITY       void* memchr(      void* __s, int __c, size_t __n) {return ::memchr(__s, __c, __n);}
 
-inline _LIBCPP_INLINE_VISIBILITY const char* strchr(const char* __s, int __c) {return ::strchr(__s, __c);}
+using ::strchr;
 inline _LIBCPP_INLINE_VISIBILITY       char* strchr(      char* __s, int __c) {return ::strchr(__s, __c);}
 
 using ::strcspn;
 
-inline _LIBCPP_INLINE_VISIBILITY const char* strpbrk(const char* __s1, const char* __s2) {return ::strpbrk(__s1, __s2);}
+using ::strpbrk;
 inline _LIBCPP_INLINE_VISIBILITY       char* strpbrk(      char* __s1, const char* __s2) {return ::strpbrk(__s1, __s2);}
 
-inline _LIBCPP_INLINE_VISIBILITY const char* strrchr(const char* __s, int __c) {return ::strrchr(__s, __c);}
+using ::strrchr;
 inline _LIBCPP_INLINE_VISIBILITY       char* strrchr(      char* __s, int __c) {return ::strrchr(__s, __c);}
 
 using ::strspn;
 
-inline _LIBCPP_INLINE_VISIBILITY const char* strstr(const char* __s1, const char* __s2) {return ::strstr(__s1, __s2);}
+using ::strstr;
 inline _LIBCPP_INLINE_VISIBILITY       char* strstr(      char* __s1, const char* __s2) {return ::strstr(__s1, __s2);}
 
 using ::strtok;
