@@ -54,10 +54,10 @@ void BrainF::header(LLVMContext& C) {
 
   //Function prototypes
 
-  //declare void @llvm.memset.i32(i8 *, i8, i32, i32)
-  const Type *Tys[] = { Type::getInt32Ty(C) };
+  //declare void @llvm.memset.p0i8.i32(i8 *, i8, i32, i32, i1)
+  const Type *Tys[] = { Type::getInt8PtrTy(C), Type::getInt32Ty(C) };
   Function *memset_func = Intrinsic::getDeclaration(module, Intrinsic::memset,
-                                                    Tys, 1);
+                                                    Tys, 2);
 
   //declare i32 @getchar()
   getchar_func = cast<Function>(module->
@@ -88,13 +88,14 @@ void BrainF::header(LLVMContext& C) {
                                    NULL, "arr");
   BB->getInstList().push_back(cast<Instruction>(ptr_arr));
 
-  //call void @llvm.memset.i32(i8 *%arr, i8 0, i32 %d, i32 1)
+  //call void @llvm.memset.p0i8.i32(i8 *%arr, i8 0, i32 %d, i32 1, i1 0)
   {
     Value *memset_params[] = {
       ptr_arr,
       ConstantInt::get(C, APInt(8, 0)),
       val_mem,
-      ConstantInt::get(C, APInt(32, 1))
+      ConstantInt::get(C, APInt(32, 1)),
+      ConstantInt::get(C, APInt(1, 0))
     };
 
     CallInst *memset_call = builder->
