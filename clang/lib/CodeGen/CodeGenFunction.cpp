@@ -1286,15 +1286,8 @@ llvm::Value *CodeGenFunction::getEHCleanupDestSlot() {
 }
 
 void CodeGenFunction::EmitDeclRefExprDbgValue(const DeclRefExpr *E, 
-                                              const APValue &AV) {
-  CGDebugInfo *Dbg = getDebugInfo();
-  if (!Dbg) return;
-
-  llvm::Constant *C = NULL;
-  if (AV.isInt())
-    C = llvm::ConstantInt::get(getLLVMContext(), AV.getInt());
-  else if (AV.isFloat())
-    C = llvm::ConstantFP::get(getLLVMContext(), AV.getFloat());
-  if (C)
-    Dbg->EmitGlobalVariable(C, E->getDecl(), Builder);
+                                              llvm::ConstantInt *Init) {
+  assert (Init && "Invalid DeclRefExpr initializer!");
+  if (CGDebugInfo *Dbg = getDebugInfo())
+    Dbg->EmitGlobalVariable(E->getDecl(), Init, Builder);
 }

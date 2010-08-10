@@ -1801,7 +1801,9 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                     true/*definition*/, Var);
 }
 
-void CGDebugInfo::EmitGlobalVariable(llvm::Constant *C, const ValueDecl *VD,
+/// EmitGlobalVariable - Emit global variable's debug info.
+void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD, 
+                                     llvm::ConstantInt *Init,
                                      CGBuilderTy &Builder) {
   // Create the descriptor for the variable.
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
@@ -1809,7 +1811,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::Constant *C, const ValueDecl *VD,
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, Name, Unit,
                                     getLineNumber(VD->getLocation()),
                                     getOrCreateType(VD->getType(), Unit),
-                                    true, true, C);
+                                    true, true, Init);
 }
 
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
