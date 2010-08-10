@@ -1808,6 +1808,10 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   // Create the descriptor for the variable.
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::StringRef Name = VD->getName();
+  llvm::DIType Ty = getOrCreateType(VD->getType(), Unit);
+  // Do not use DIGlobalVariable for enums.
+  if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
+    return;
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, Name, Unit,
                                     getLineNumber(VD->getLocation()),
                                     getOrCreateType(VD->getType(), Unit),
