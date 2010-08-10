@@ -420,65 +420,66 @@ void LTOModule::findExternalRefs(Value *value, Mangler &mangler) {
 }
 
 void LTOModule::lazyParseSymbols() {
-  if (!_symbolsParsed) {
-    _symbolsParsed = true;
+  if (_symbolsParsed)
+    return;
 
-    // Use mangler to add GlobalPrefix to names to match linker names.
-    MCContext Context(*_target->getMCAsmInfo());
-    Mangler mangler(Context, *_target->getTargetData());
+  _symbolsParsed = true;
 
-    // add functions
-    for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
-      if (f->isDeclaration())
-        addPotentialUndefinedSymbol(f, mangler);
-      else
-        addDefinedFunctionSymbol(f, mangler);
-    }
+  // Use mangler to add GlobalPrefix to names to match linker names.
+  MCContext Context(*_target->getMCAsmInfo());
+  Mangler mangler(Context, *_target->getTargetData());
 
-    // add data
-    for (Module::global_iterator v = _module->global_begin(),
-           e = _module->global_end(); v !=  e; ++v) {
-      if (v->isDeclaration())
-        addPotentialUndefinedSymbol(v, mangler);
-      else
-        addDefinedDataSymbol(v, mangler);
-    }
+  // add functions
+  for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
+    if (f->isDeclaration())
+      addPotentialUndefinedSymbol(f, mangler);
+    else
+      addDefinedFunctionSymbol(f, mangler);
+  }
 
-    // add asm globals
-    const std::string &inlineAsm = _module->getModuleInlineAsm();
-    const std::string glbl = ".globl";
-    std::string asmSymbolName;
-    std::string::size_type pos = inlineAsm.find(glbl, 0);
-    while (pos != std::string::npos) {
-      // eat .globl
-      pos = pos + 6;
+  // add data
+  for (Module::global_iterator v = _module->global_begin(),
+         e = _module->global_end(); v !=  e; ++v) {
+    if (v->isDeclaration())
+      addPotentialUndefinedSymbol(v, mangler);
+    else
+      addDefinedDataSymbol(v, mangler);
+  }
 
-      // skip white space between .globl and symbol name
-      std::string::size_type pbegin = inlineAsm.find_first_not_of(' ', pos);
-      if (pbegin == std::string::npos)
-        break;
+  // add asm globals
+  const std::string &inlineAsm = _module->getModuleInlineAsm();
+  const std::string glbl = ".globl";
+  std::string asmSymbolName;
+  std::string::size_type pos = inlineAsm.find(glbl, 0);
+  while (pos != std::string::npos) {
+    // eat .globl
+    pos = pos + 6;
 
-      // find end-of-line
-      std::string::size_type pend = inlineAsm.find_first_of('\n', pbegin);
-      if (pend == std::string::npos)
-        break;
+    // skip white space between .globl and symbol name
+    std::string::size_type pbegin = inlineAsm.find_first_not_of(' ', pos);
+    if (pbegin == std::string::npos)
+      break;
 
-      asmSymbolName.assign(inlineAsm, pbegin, pend - pbegin);
-      addAsmGlobalSymbol(asmSymbolName.c_str());
+    // find end-of-line
+    std::string::size_type pend = inlineAsm.find_first_of('\n', pbegin);
+    if (pend == std::string::npos)
+      break;
 
-      // search next .globl
-      pos = inlineAsm.find(glbl, pend);
-    }
+    asmSymbolName.assign(inlineAsm, pbegin, pend - pbegin);
+    addAsmGlobalSymbol(asmSymbolName.c_str());
 
-    // make symbols for all undefines
-    for (StringMap<NameAndAttributes>::iterator it=_undefines.begin();
-         it != _undefines.end(); ++it) {
-      // if this symbol also has a definition, then don't make an undefine
-      // because it is a tentative definition
-      if (_defines.count(it->getKey()) == 0) {
-        NameAndAttributes info = it->getValue();
-        _symbols.push_back(info);
-      }
+    // search next .globl
+    pos = inlineAsm.find(glbl, pend);
+  }
+
+  // make symbols for all undefines
+  for (StringMap<NameAndAttributes>::iterator it=_undefines.begin();
+       it != _undefines.end(); ++it) {
+    // if this symbol also has a definition, then don't make an undefine
+    // because it is a tentative definition
+    if (_defines.count(it->getKey()) == 0) {
+      NameAndAttributes info = it->getValue();
+      _symbols.push_back(info);
     }
   }
 }
