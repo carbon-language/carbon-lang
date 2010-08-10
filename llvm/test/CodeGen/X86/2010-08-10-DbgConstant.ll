@@ -1,6 +1,6 @@
 ; RUN: llc -O0 < %s | FileCheck %s
 ; CHECK: DW_TAG_constant
-; CHECK-NEXT: .ascii	 "ro"                   # DW_AT_name
+; CHECK-NEXT: ascii	 "ro"                   #{{#?}} DW_AT_name
 
 define void @foo() nounwind ssp {
 entry:
