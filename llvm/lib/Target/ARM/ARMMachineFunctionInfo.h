@@ -43,10 +43,6 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// processFunctionBeforeCalleeSavedScan().
   bool HasStackFrame;
 
-  /// RestoreSPFromFP - True if epilogue should restore SP from FP. Set by
-  /// emitPrologue.
-  bool RestoreSPFromFP;
-
   /// LRSpilledForFarJump - True if the LR register has been for spilled to
   /// enable far jump.
   bool LRSpilledForFarJump;
@@ -99,7 +95,7 @@ public:
   ARMFunctionInfo() :
     isThumb(false),
     hasThumb2(false),
-    VarArgsRegSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
+    VarArgsRegSaveSize(0), HasStackFrame(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
@@ -110,7 +106,7 @@ public:
   explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     hasThumb2(MF.getTarget().getSubtarget<ARMSubtarget>().hasThumb2()),
-    VarArgsRegSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
+    VarArgsRegSaveSize(0), HasStackFrame(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
@@ -128,9 +124,6 @@ public:
 
   bool hasStackFrame() const { return HasStackFrame; }
   void setHasStackFrame(bool s) { HasStackFrame = s; }
-
-  bool shouldRestoreSPFromFP() const { return RestoreSPFromFP; }
-  void setShouldRestoreSPFromFP(bool s) { RestoreSPFromFP = s; }
 
   bool isLRSpilledForFarJump() const { return LRSpilledForFarJump; }
   void setLRIsSpilledForFarJump(bool s) { LRSpilledForFarJump = s; }
