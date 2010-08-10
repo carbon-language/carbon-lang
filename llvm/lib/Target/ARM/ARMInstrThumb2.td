@@ -2166,11 +2166,6 @@ defm t2TST  : T2I_cmp_irs<0b0000, "tst",
 defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
                           BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>>;
 
-// A8.6.27  CBNZ, CBZ - Compare and branch on (non)zero.
-// Short range conditional branch. Looks awesome for loops. Need to figure
-// out how to use this one.
-
-
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
