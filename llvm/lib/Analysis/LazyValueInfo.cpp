@@ -77,12 +77,18 @@ public:
 
   static LVILatticeVal get(Constant *C) {
     LVILatticeVal Res;
-    Res.markConstant(C);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+      Res.markConstantRange(ConstantRange(CI->getValue(), CI->getValue()+1));
+    else if (!isa<UndefValue>(C))
+      Res.markConstant(C);
     return Res;
   }
   static LVILatticeVal getNot(Constant *C) {
     LVILatticeVal Res;
-    Res.markNotConstant(C);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+      Res.markConstantRange(ConstantRange(CI->getValue()+1, CI->getValue()));
+    else
+      Res.markNotConstant(C);
     return Res;
   }
   
@@ -154,8 +160,6 @@ public:
       if (NewR.isEmptySet())
         return markOverdefined();
       
-      assert(Range.contains(NewR) &&
-             "Marking constant range with non-subset range!");
       bool changed = Range == NewR;
       Range = NewR;
       return changed;
@@ -202,8 +206,8 @@ public:
     
     if (RHS.isConstantRange()) {
       if (isConstantRange()) {
-        ConstantRange NewR = Range.intersectWith(RHS.getConstantRange());
-        if (NewR.isEmptySet())
+        ConstantRange NewR = Range.unionWith(RHS.getConstantRange());
+        if (NewR.isFullSet())
           return markOverdefined();
         else
           return markConstantRange(NewR);
@@ -498,7 +502,7 @@ LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
       // it is.
       if (BI->getCondition() == Val)
         return LVILatticeVal::get(ConstantInt::get(
-                               Type::getInt1Ty(Val->getContext()), isTrueDest));
+                              Type::getInt1Ty(Val->getContext()), isTrueDest));
       
       // If the condition of the branch is an equality comparison, we may be
       // able to infer the value.
@@ -679,6 +683,11 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
   
   if (Result.isConstant())
     return Result.getConstant();
+  else if (Result.isConstantRange()) {
+    ConstantRange CR = Result.getConstantRange();
+    if (const APInt *SingleVal = CR.getSingleElement())
+      return ConstantInt::get(V->getContext(), *SingleVal);
+  }
   return 0;
 }
 
@@ -696,6 +705,34 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
     Res = ConstantFoldCompareInstOperands(Pred, Result.getConstant(), C, TD);
     if (ConstantInt *ResCI = dyn_cast_or_null<ConstantInt>(Res))
       return ResCI->isZero() ? False : True;
+    return Unknown;
+  }
+  
+  if (Result.isConstantRange()) {
+    ConstantInt *CI = cast<ConstantInt>(C);
+    ConstantRange CR = Result.getConstantRange();
+    if (Pred == ICmpInst::ICMP_EQ) {
+      if (!CR.contains(CI->getValue()))
+        return False;
+      
+      if (CR.isSingleElement() && CR.contains(CI->getValue()))
+        return True;
+    } else if (Pred == ICmpInst::ICMP_NE) {
+      if (!CR.contains(CI->getValue()))
+        return True;
+      
+      if (CR.isSingleElement() && CR.contains(CI->getValue()))
+        return False;
+    }
+    
+    // Handle more complex predicates.
+    ConstantRange RHS(CI->getValue(), CI->getValue()+1);
+    ConstantRange TrueValues = ConstantRange::makeICmpRegion(Pred, RHS);
+    if (CR.intersectWith(TrueValues).isEmptySet())
+      return False;
+    else if (CR.intersectWith(TrueValues) == CR)
+      return True;
+    
     return Unknown;
   }
   
