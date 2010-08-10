@@ -352,10 +352,11 @@ namespace llvm {
     std::pair<BasicBlock *, BasicBlock *>
     getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
 
-    /// isImpliedCond - Test whether the condition described by Pred, LHS,
-    /// and RHS is true whenever the given Cond value evaluates to true.
-    bool isImpliedCond(Value *Cond, ICmpInst::Predicate Pred,
+    /// isImpliedCond - Test whether the condition described by Pred, LHS, and
+    /// RHS is true whenever the given FoundCondValue value evaluates to true.
+    bool isImpliedCond(ICmpInst::Predicate Pred,
                        const SCEV *LHS, const SCEV *RHS,
+                       Value *FoundCondValue,
                        bool Inverse);
 
     /// isImpliedCondOperands - Test whether the condition described by Pred,

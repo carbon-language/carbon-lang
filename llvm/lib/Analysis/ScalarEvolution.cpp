@@ -5223,7 +5223,8 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
       LoopContinuePredicate->isUnconditional())
     return false;
 
-  return isImpliedCond(LoopContinuePredicate->getCondition(), Pred, LHS, RHS,
+  return isImpliedCond(Pred, LHS, RHS,
+                       LoopContinuePredicate->getCondition(),
                        LoopContinuePredicate->getSuccessor(0) != L->getHeader());
 }
 
@@ -5252,7 +5253,8 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
         LoopEntryPredicate->isUnconditional())
       continue;
 
-    if (isImpliedCond(LoopEntryPredicate->getCondition(), Pred, LHS, RHS,
+    if (isImpliedCond(Pred, LHS, RHS,
+                      LoopEntryPredicate->getCondition(),
                       LoopEntryPredicate->getSuccessor(0) != Pair.second))
       return true;
   }
@@ -5262,24 +5264,24 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
 
 /// isImpliedCond - Test whether the condition described by Pred, LHS,
 /// and RHS is true whenever the given Cond value evaluates to true.
-bool ScalarEvolution::isImpliedCond(Value *CondValue,
-                                    ICmpInst::Predicate Pred,
+bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS,
+                                    Value *FoundCondValue,
                                     bool Inverse) {
   // Recursively handle And and Or conditions.
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CondValue)) {
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FoundCondValue)) {
     if (BO->getOpcode() == Instruction::And) {
       if (!Inverse)
-        return isImpliedCond(BO->getOperand(0), Pred, LHS, RHS, Inverse) ||
-               isImpliedCond(BO->getOperand(1), Pred, LHS, RHS, Inverse);
+        return isImpliedCond(Pred, LHS, RHS, BO->getOperand(0), Inverse) ||
+               isImpliedCond(Pred, LHS, RHS, BO->getOperand(1), Inverse);
     } else if (BO->getOpcode() == Instruction::Or) {
       if (Inverse)
-        return isImpliedCond(BO->getOperand(0), Pred, LHS, RHS, Inverse) ||
-               isImpliedCond(BO->getOperand(1), Pred, LHS, RHS, Inverse);
+        return isImpliedCond(Pred, LHS, RHS, BO->getOperand(0), Inverse) ||
+               isImpliedCond(Pred, LHS, RHS, BO->getOperand(1), Inverse);
     }
   }
 
-  ICmpInst *ICI = dyn_cast<ICmpInst>(CondValue);
+  ICmpInst *ICI = dyn_cast<ICmpInst>(FoundCondValue);
   if (!ICI) return false;
 
   // Bail if the ICmp's operands' types are wider than the needed type
