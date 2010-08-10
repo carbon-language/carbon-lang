@@ -1186,16 +1186,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
         Intrinsic<[llvm_v2f64_ty], [llvm_v4f64_ty], [IntrNoMem]>;
 }
 
-// Vector replicate
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_movshdup_256 : GCCBuiltin<"__builtin_ia32_movshdup256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_movsldup_256 : GCCBuiltin<"__builtin_ia32_movsldup256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_movddup_256 : GCCBuiltin<"__builtin_ia32_movddup256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty], [IntrNoMem]>;
-}
-
 // Vector unpack and interleave
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_unpckh_pd_256 : GCCBuiltin<"__builtin_ia32_unpckhpd256">,
