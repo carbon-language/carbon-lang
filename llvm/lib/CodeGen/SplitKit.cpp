@@ -571,6 +571,7 @@ void SplitEditor::rewrite() {
   VirtRegAuxInfo vrai(vrm_.getMachineFunction(), lis_, sa_.loops_);
   for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
     LiveInterval &li = *intervals_[i];
+    vrai.CalculateRegClass(li.reg);
     vrai.CalculateWeightAndHint(li);
   }
 }

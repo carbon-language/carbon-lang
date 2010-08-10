@@ -152,6 +152,12 @@ public:
     return -1;
   }
 
+  /// getRegClass - Returns the register class constraint for OpNum, or NULL.
+  const TargetRegisterClass *getRegClass(unsigned OpNum,
+                                         const TargetRegisterInfo *TRI) const {
+    return OpNum < NumOperands ? OpInfo[OpNum].getRegClass(TRI) : 0;
+  }
+
   /// getOpcode - Return the opcode number for this descriptor.
   unsigned getOpcode() const {
     return Opcode;

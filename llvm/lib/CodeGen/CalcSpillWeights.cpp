@@ -174,3 +174,44 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
   lis_.normalizeSpillWeight(li);
 }
 
+void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
+  MachineRegisterInfo &mri = mf_.getRegInfo();
+  const TargetRegisterInfo *tri = mf_.getTarget().getRegisterInfo();
+  const TargetRegisterClass *orc = mri.getRegClass(reg);
+  SmallPtrSet<const TargetRegisterClass*,8> rcs;
+
+  for (MachineRegisterInfo::reg_nodbg_iterator I = mri.reg_nodbg_begin(reg),
+       E = mri.reg_nodbg_end(); I != E; ++I)
+    if (const TargetRegisterClass *rc =
+                                I->getDesc().getRegClass(I.getOperandNo(), tri))
+      rcs.insert(rc);
+
+  // If we found no regclass constraints, just leave reg as is.
+  // In theory, we could inflate to the largest superclass of reg's existing
+  // class, but that might not be legal for the current cpu setting.
+  // This could happen if reg is only used by COPY instructions, so we may need
+  // to improve on this.
+  if (rcs.empty()) {
+    DEBUG(dbgs() << "Not inflating unconstrained" << orc->getName() << ":%reg"
+                 << reg << ".\n");
+    return;
+  }
+
+  // Compute the intersection of all classes in rcs.
+  // This ought to be independent of iteration order, but if the target register
+  // classes don't form a proper algebra, it is possible to get different
+  // results. The solution is to make sure the intersection of any two register
+  // classes is also a register class or the null set.
+  const TargetRegisterClass *rc = 0;
+  for (SmallPtrSet<const TargetRegisterClass*,8>::iterator I = rcs.begin(),
+         E = rcs.end(); I != E; ++I) {
+    rc = rc ? getCommonSubClass(rc, *I) : *I;
+    assert(rc && "Incompatible regclass constraints found");
+  }
+
+  if (rc == orc)
+    return;
+  DEBUG(dbgs() << "Inflating " << orc->getName() << ":%reg" << reg << " to "
+               << rc->getName() <<".\n");
+  mri.setRegClass(reg, rc);
+}
