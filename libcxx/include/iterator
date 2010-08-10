@@ -1615,7 +1615,7 @@ operator+(typename __debug_iter<_Container, _Iter>::difference_type __n,
 
 #endif  // _LIBCPP_DEBUG
 
-#ifdef _LIBCPP_MOVE
+#if defined(_LIBCPP_MOVE) && !defined(_LIBCPP_HAS_NO_DECLTYPE)
 
 template <class _C>
 inline

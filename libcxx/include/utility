@@ -223,6 +223,8 @@ struct pair
               second(_STD::forward<_U2>(__u2))
             {}
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
     template<class _Tuple,
              class = typename enable_if<__tuple_convertible<_Tuple, pair>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
@@ -233,7 +235,6 @@ struct pair
                                    typename __make_tuple_types<_Tuple>::type>::type>(get<1>(__p)))
             {}
 
-#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
         pair(piecewise_construct_t __pc, tuple<_Args1...> __first_args,
                                     tuple<_Args2...> __second_args)
@@ -241,7 +242,6 @@ struct pair
                    typename __make_tuple_indices<sizeof...(_Args1)>::type(),
                    typename __make_tuple_indices<sizeof...(_Args2) >::type())
             {}
-#endif
 
     template <class _Tuple,
               class = typename enable_if<__tuple_assignable<_Tuple, pair>::value>::type>
@@ -255,6 +255,8 @@ struct pair
             second = _STD::forward<_U1>(_STD::get<1>(__p));
             return *this;
         }
+
+#endif
 
 #else
     template<class _U1, class _U2>

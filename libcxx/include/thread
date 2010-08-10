@@ -178,9 +178,12 @@ class thread
 {
     pthread_t __t_;
 
-#ifndef _LIBCPP_MOVE
-    thread(const thread&); // = delete;
-    thread& operator=(const thread&); // = delete;
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    thread(const thread&) = delete;
+    thread& operator=(const thread&) = delete;
+#else
+    thread(const thread&);
+    thread& operator=(const thread&);
 #endif
 public:
     typedef __thread_id id;
@@ -201,9 +204,7 @@ public:
     ~thread();
 
 #ifdef _LIBCPP_MOVE
-    thread(const thread&) = delete;
     thread(thread&& __t) : __t_(__t.__t_) {__t.__t_ = 0;}
-    thread& operator=(const thread&) = delete;
     thread& operator=(thread&& __t);
 #endif
 

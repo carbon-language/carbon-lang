@@ -1093,10 +1093,10 @@ private:
 #else
     static _Tp __t();
     static _Up __u();
-    static bool __f();
 #endif
+    static bool __f();
 public:
-    typedef __typeof__(__f() ? __t() : __u()) type;
+    typedef decltype(__f() ? __t() : __u()) type;
 };
 
 #else
@@ -1135,7 +1135,10 @@ struct common_type<_Tp, _Up, _Vp...>
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename remove_reference<_Tp>::type&&
-move(_Tp&& __t) {return __t;}
+move(_Tp&& __t)
+{
+    return static_cast<typename remove_reference<_Tp>::type&&>(__t);
+}
 
 template <class _Tp, class _Up,
     class = typename _STD::enable_if<
@@ -1148,8 +1151,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _Tp&&
 forward(_Up&& __t)
 {
-    return __t;  // to quiet spurious warning
-//    return static_cast<_Tp&&>(__t);
+    return static_cast<_Tp&&>(__t);
 }
 
 #else  // _LIBCPP_MOVE

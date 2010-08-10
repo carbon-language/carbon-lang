@@ -1259,8 +1259,6 @@ private:
     _LIBCPP_INLINE_VISIBILITY const allocator_type& __alloc() const {return __r_.second();}
 
     _LIBCPP_INLINE_VISIBILITY bool __is_long() const {return bool(__r_.first().__s.__size_ & __short_mask);}
-    _LIBCPP_INLINE_VISIBILITY void __set_long()  {__r_.first().__s.__size_ &= __short_mask;}
-    _LIBCPP_INLINE_VISIBILITY void __set_short() {__r_.first().__s.__size_ |= ~__short_mask;}
 
     _LIBCPP_INLINE_VISIBILITY void __set_short_size(size_type __s)
 #if _LIBCPP_BIG_ENDIAN

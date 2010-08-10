@@ -73,6 +73,76 @@
 
 #define _LIBCPP_ALWAYS_INLINE  __attribute__((__always_inline__))
 
+#if defined(__clang__)
+
+#if !(__has_feature(cxx_exceptions))
+#define _LIBCPP_NO_EXCEPTIONS
+#endif
+
+#define _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#define _LIBCPP_HAS_NO_STRONG_USING
+#define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+
+#define _LIBCPP_HAS_NO_DECLTYPE
+#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define _LIBCPP_HAS_NO_NULLPTR
+#define _LIBCPP_HAS_NO_STATIC_ASSERT
+#define _LIBCPP_HAS_NO_UNICODE_CHARS
+#define _LIBCPP_HAS_NO_VARIADICS
+
+#else
+
+#if __has_feature(cxx_rvalue_references)
+#define _LIBCPP_MOVE
+#endif
+
+#if !(__has_feature(cxx_decltype))
+#define _LIBCPP_HAS_NO_DECLTYPE
+#endif
+
+#if !(__has_feature(cxx_deleted_functions))
+#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#endif
+
+#if !(__has_feature(cxx_nullptr))
+#define _LIBCPP_HAS_NO_NULLPTR
+#endif
+
+#if !(__has_feature(cxx_static_assert))
+#define _LIBCPP_HAS_NO_STATIC_ASSERT
+#endif
+
+#if !(__has_feature(cxx_variadic_templates))
+#define _LIBCPP_HAS_NO_VARIADICS
+#endif
+
+#endif
+
+#elif defined(__GNUC__)
+
+#if !__EXCEPTIONS
+#define _LIBCPP_NO_EXCEPTIONS
+#endif
+
+#define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+
+#define _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#define _LIBCPP_HAS_NO_DECLTYPE
+#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define _LIBCPP_HAS_NO_NULLPTR
+#define _LIBCPP_HAS_NO_STATIC_ASSERT
+#define _LIBCPP_HAS_NO_UNICODE_CHARS
+#define _LIBCPP_HAS_NO_VARIADICS
+
+#else
+
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
 #define _LIBCPP_MOVE
 #endif
@@ -81,23 +151,22 @@
 #define _LIBCPP_HAS_NO_STATIC_ASSERT
 #endif
 
-#define _LIBCPP_HAS_NO_NULLPTR
-
-#if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
-#define _LIBCPP_HAS_NO_VARIADICS
-#define _LIBCPP_HAS_NO_DECLTYPE
-#endif
-
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 4)
-#define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#define _LIBCPP_HAS_NO_DECLTYPE
+#define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define _LIBCPP_HAS_NO_UNICODE_CHARS
+#define _LIBCPP_HAS_NO_VARIADICS
 #endif
 
-#if defined(__clang__)
-#define _LIBCPP_HAS_NO_STRONG_USING
+#if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
+#define _LIBCPP_HAS_NO_NULLPTR
 #endif
 
-#define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+#endif
+
+#endif
 
 #ifdef _LIBCPP_HAS_NO_STRONG_USING
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
@@ -106,6 +175,7 @@
 #else
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std { namespace _LIBCPP_NAMESPACE {
 #define _LIBCPP_END_NAMESPACE_STD  } }
+#define _STD std::_LIBCPP_NAMESPACE
 
 namespace std {
 namespace _LIBCPP_NAMESPACE {
@@ -113,12 +183,11 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
-#define _STD std::_LIBCPP_NAMESPACE
 #endif
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
-    typedef unsigned short char16_t;
-    typedef unsigned int   char32_t;
+typedef unsigned short char16_t;
+typedef unsigned int   char32_t;
 #endif
 
 #ifdef _LIBCPP_HAS_NO_STATIC_ASSERT
@@ -133,13 +202,7 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #ifdef _LIBCPP_HAS_NO_DECLTYPE
-
 #define decltype(x) __typeof__(x)
-
-#endif
-
-#if !__EXCEPTIONS
-#define _LIBCPP_NO_EXCEPTIONS
 #endif
 
 #endif  // _LIBCPP_CONFIG

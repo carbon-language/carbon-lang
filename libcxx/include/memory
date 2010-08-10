@@ -1129,7 +1129,7 @@ struct uses_allocator
 {
 };
 
-#ifdef _LIBCPP_MOVE
+#if defined(_LIBCPP_MOVE) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
 
 // uses-allocator construction
 

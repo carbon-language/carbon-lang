@@ -297,6 +297,12 @@ long double    truncl(long double x);
 
 */
 
+// FIXME: work around for Clang with -std=C++0x on OSX/iOS 
+#if defined(__clang__) && defined(__APPLE__)
+# pragma push_macro("__STRICT_ANSI__")
+# undef __STRICT_ANSI__
+#endif
+
 #include <__config>
 #include <math.h>
 #include <type_traits>
@@ -1640,5 +1646,10 @@ using ::tgammal;
 using ::truncl;
 
 _LIBCPP_END_NAMESPACE_STD
+
+// FIXME: work around for Clang with -std=C++0x on OSX/iOS
+#if defined(__clang__) && defined(__APPLE__)
+# pragma pop_macro("__STRICT_ANSI__")
+#endif
 
 #endif  // _LIBCPP_CMATH
