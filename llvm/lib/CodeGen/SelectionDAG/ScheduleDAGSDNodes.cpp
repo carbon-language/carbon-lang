@@ -59,8 +59,9 @@ SUnit *ScheduleDAGSDNodes::NewSUnit(SDNode *N) {
   SUnits.back().OrigNode = &SUnits.back();
   SUnit *SU = &SUnits.back();
   const TargetLowering &TLI = DAG->getTargetLoweringInfo();
-  if (N->isMachineOpcode() &&
-      N->getMachineOpcode() == TargetOpcode::IMPLICIT_DEF)
+  if (!N ||
+      (N->isMachineOpcode() &&
+       N->getMachineOpcode() == TargetOpcode::IMPLICIT_DEF))
     SU->SchedulingPref = Sched::None;
   else
     SU->SchedulingPref = TLI.getSchedulingPreference(N);
