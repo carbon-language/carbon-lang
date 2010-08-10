@@ -251,19 +251,6 @@ def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
   let Inst{2-0} = 0b101;
 }
 
-// Pseudo instruction that will expand into a tSUBspi + a copy.
-let usesCustomInserter = 1 in { // Expanded after instruction selection.
-def tSUBspi_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs),
-               NoItinerary, "${:comment} sub\t$dst, $rhs", []>;
-
-def tADDspr_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-               NoItinerary, "${:comment} add\t$dst, $rhs", []>;
-
-let Defs = [CPSR] in
-def tANDsp : PseudoInst<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
-             NoItinerary, "${:comment} and\t$dst, $rhs", []>;
-} // usesCustomInserter
-
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
 //

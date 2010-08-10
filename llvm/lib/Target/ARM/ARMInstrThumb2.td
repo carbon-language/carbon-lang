@@ -888,20 +888,6 @@ def t2UDIV : T2I<(outs rGPR:$dst), (ins rGPR:$a, rGPR:$b), IIC_iALUi,
   let Inst{7-4} = 0b1111;
 }
 
-// Pseudo instruction that will expand into a t2SUBrSPi + a copy.
-// FIXME: Now that we have rGPR, do we need these pseudos? It seems
-//        that the coalescer will now properly know how to do the right
-//        thing without them.
-let usesCustomInserter = 1 in { // Expanded after instruction selection.
-def t2SUBrSPi_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
-                   NoItinerary, "${:comment} sub.w\t$dst, $sp, $imm", []>;
-def t2SUBrSPi12_ : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
-                   NoItinerary, "${:comment} subw\t$dst, $sp, $imm", []>;
-def t2SUBrSPs_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
-                   NoItinerary, "${:comment} sub\t$dst, $sp, $rhs", []>;
-} // usesCustomInserter
-
-
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
 //
