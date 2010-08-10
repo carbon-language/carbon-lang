@@ -181,10 +181,19 @@ void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
   SmallPtrSet<const TargetRegisterClass*,8> rcs;
 
   for (MachineRegisterInfo::reg_nodbg_iterator I = mri.reg_nodbg_begin(reg),
-       E = mri.reg_nodbg_end(); I != E; ++I)
+       E = mri.reg_nodbg_end(); I != E; ++I) {
+    // The targets don't have accurate enough regclass descriptions that we can
+    // handle subregs. We need something similar to
+    // TRI::getMatchingSuperRegClass, but returning a super class instead of a
+    // sub class.
+    if (I.getOperand().getSubReg()) {
+      DEBUG(dbgs() << "Cannot handle subregs: " << I.getOperand() << '\n');
+      return;
+    }
     if (const TargetRegisterClass *rc =
                                 I->getDesc().getRegClass(I.getOperandNo(), tri))
       rcs.insert(rc);
+  }
 
   // If we found no regclass constraints, just leave reg as is.
   // In theory, we could inflate to the largest superclass of reg's existing
