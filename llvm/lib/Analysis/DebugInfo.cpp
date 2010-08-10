@@ -923,7 +923,14 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
     ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang),
     ContainingType
   };
-  return DICompositeType(MDNode::get(VMContext, &Elts[0], 13));
+
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], 13);
+  // Create a named metadata so that we do not lose this enum info.
+  if (Tag == dwarf::DW_TAG_enumeration_type) {
+    NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.enum");
+    NMD->addOperand(Node);
+  }
+  return DICompositeType(Node);
 }
 
 
@@ -955,7 +962,13 @@ DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
   };
-  return DICompositeType(MDNode::get(VMContext, &Elts[0], 12));
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], 12);
+  // Create a named metadata so that we do not lose this enum info.
+  if (Tag == dwarf::DW_TAG_enumeration_type) {
+    NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.enum");
+    NMD->addOperand(Node);
+  }
+  return DICompositeType(Node);
 }
 
 

@@ -2019,6 +2019,11 @@ void DwarfDebug::beginModule(Module *M) {
          E = DbgFinder.global_variable_end(); I != E; ++I)
     constructGlobalVariableDIE(*I);
 
+  //getOrCreateTypeDIE
+  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+      getOrCreateTypeDIE(DIType(NMD->getOperand(i)));
+
   // Prime section data.
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());
 
