@@ -1320,16 +1320,14 @@ let isAsmParserOnly = 1 in {
                  "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
                  "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
                  SSEPackedDouble>, OpSize, VEX_4V;
-  let Pattern = []<dag> in {
-    defm VCMPPSY : sse12_cmp_packed<VR256, f256mem, int_x86_sse_cmp_ps,
-                   "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
-                   "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-                   SSEPackedSingle>, VEX_4V;
-    defm VCMPPDY : sse12_cmp_packed<VR256, f256mem, int_x86_sse2_cmp_pd,
-                   "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
-                   "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-                   SSEPackedDouble>, OpSize, VEX_4V;
-  }
+  defm VCMPPSY : sse12_cmp_packed<VR256, f256mem, int_x86_avx_cmp_ps_256,
+                 "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
+                 "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+                 SSEPackedSingle>, VEX_4V;
+  defm VCMPPDY : sse12_cmp_packed<VR256, f256mem, int_x86_avx_cmp_pd_256,
+                 "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
+                 "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+                 SSEPackedDouble>, OpSize, VEX_4V;
 }
 let Constraints = "$src1 = $dst" in {
   defm CMPPS : sse12_cmp_packed<VR128, f128mem, int_x86_sse_cmp_ps,
