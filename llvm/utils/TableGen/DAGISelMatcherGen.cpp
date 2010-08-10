@@ -689,8 +689,8 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
         !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
       // This is a predicate or optional def operand; emit the
       // 'default ops' operands.
-      const DAGDefaultOperand &DefaultOp =
-        CGP.getDefaultOperand(II.OperandList[InstOpNo].Rec);
+      const DAGDefaultOperand &DefaultOp
+	= CGP.getDefaultOperand(OperandNode);
       for (unsigned i = 0, e = DefaultOp.DefaultOps.size(); i != e; ++i)
         EmitResultOperand(DefaultOp.DefaultOps[i], InstOps);
       continue;
@@ -908,6 +908,3 @@ Matcher *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
   // Unconditional match.
   return Gen.GetMatcher();
 }
-
-
-
