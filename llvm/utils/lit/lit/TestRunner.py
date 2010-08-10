@@ -520,10 +520,16 @@ def executeTclTest(test, litConfig):
     out,err,exitCode = res
     if isXFail:
         ok = exitCode != 0 or err
-        status = Test.XFAIL if ok else Test.XPASS
+        if ok:
+            status = Test.XFAIL
+        else:
+            status = Test.XPASS
     else:
         ok = exitCode == 0 and not err
-        status = Test.PASS if ok else Test.FAIL
+        if ok:
+            status = Test.PASS
+        else:
+            status = Test.FAIL
 
     if ok:
         return (status,'')
@@ -560,10 +566,16 @@ def executeShTest(test, litConfig, useExternalSh):
     out,err,exitCode = res
     if isXFail:
         ok = exitCode != 0
-        status = Test.XFAIL if ok else Test.XPASS
+        if ok:
+            status = Test.XFAIL
+        else:
+            status = Test.XPASS
     else:
         ok = exitCode == 0
-        status = Test.PASS if ok else Test.FAIL
+        if ok:
+            status = Test.PASS
+        else:
+            status = Test.FAIL
 
     if ok:
         return (status,'')
