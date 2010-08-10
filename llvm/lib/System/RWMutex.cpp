@@ -73,6 +73,7 @@ RWMutexImpl::RWMutexImpl()
 
     // Initialize the rwlock
     int errorcode = pthread_rwlock_init(rwlock, NULL);
+    (void)errorcode;
     assert(errorcode == 0);
 
     // Assign the data member
