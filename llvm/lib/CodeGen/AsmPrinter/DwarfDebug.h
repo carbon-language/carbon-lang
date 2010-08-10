@@ -419,10 +419,10 @@ private:
   DIE *constructEnumTypeDIE(DIEnumerator ETy);
 
   /// createMemberDIE - Create new member DIE.
-  DIE *createMemberDIE(const DIDerivedType &DT);
+  DIE *createMemberDIE(DIDerivedType DT);
 
   /// createSubprogramDIE - Create new DIE using SP.
-  DIE *createSubprogramDIE(const DISubprogram &SP, bool MakeDecl = false);
+  DIE *createSubprogramDIE(DISubprogram SP, bool MakeDecl = false);
 
   /// getOrCreateDbgScope - Create DbgScope for the scope.
   DbgScope *getOrCreateDbgScope(const MDNode *Scope, const MDNode *InlinedAt);
