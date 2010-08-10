@@ -520,6 +520,15 @@ namespace llvm {
     ///
     unsigned getSize() const;
 
+    /// Returns true if the live interval is zero length, i.e. no live ranges
+    /// span instructions. It doesn't pay to spill such an interval.
+    bool isZeroLength() const {
+      for (const_iterator i = begin(), e = end(); i != e; ++i)
+        if (i->end.getPrevIndex() > i->start)
+          return false;
+      return true;
+    }
+
     /// isSpillable - Can this interval be spilled?
     bool isSpillable() const {
       return weight != HUGE_VALF;

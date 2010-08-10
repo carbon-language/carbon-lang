@@ -105,6 +105,12 @@ namespace llvm {
       return r2iMap_.count(reg);
     }
 
+    /// isAllocatable - is the physical register reg allocatable in the current
+    /// function?
+    bool isAllocatable(unsigned reg) const {
+      return allocatableRegs_.test(reg);
+    }
+
     /// getScaledIntervalSize - get the size of an interval in "units,"
     /// where every function is composed of one thousand units.  This
     /// measure scales properly with empty index slots in the function.

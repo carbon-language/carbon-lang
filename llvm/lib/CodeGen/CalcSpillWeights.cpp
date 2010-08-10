@@ -41,107 +41,136 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &fn) {
                << "********** Function: "
                << fn.getFunction()->getName() << '\n');
 
-  LiveIntervals *lis = &getAnalysis<LiveIntervals>();
-  MachineLoopInfo *loopInfo = &getAnalysis<MachineLoopInfo>();
-  MachineRegisterInfo *mri = &fn.getRegInfo();
-
-  SmallSet<unsigned, 4> processed;
-  for (MachineFunction::iterator mbbi = fn.begin(), mbbe = fn.end();
-       mbbi != mbbe; ++mbbi) {
-    MachineBasicBlock* mbb = mbbi;
-    SlotIndex mbbEnd = lis->getMBBEndIdx(mbb);
-    MachineLoop* loop = loopInfo->getLoopFor(mbb);
-    unsigned loopDepth = loop ? loop->getLoopDepth() : 0;
-    bool isExiting = loop ? loop->isLoopExiting(mbb) : false;
-
-    for (MachineBasicBlock::const_iterator mii = mbb->begin(), mie = mbb->end();
-         mii != mie; ++mii) {
-      const MachineInstr *mi = mii;
-      if (mi->isIdentityCopy() || mi->isImplicitDef() || mi->isDebugValue())
-        continue;
-
-      for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-        const MachineOperand &mopi = mi->getOperand(i);
-        if (!mopi.isReg() || mopi.getReg() == 0)
-          continue;
-        unsigned reg = mopi.getReg();
-        if (!TargetRegisterInfo::isVirtualRegister(mopi.getReg()))
-          continue;
-        // Multiple uses of reg by the same instruction. It should not
-        // contribute to spill weight again.
-        if (!processed.insert(reg))
-          continue;
-
-        bool hasDef = mopi.isDef();
-        bool hasUse = !hasDef;
-        for (unsigned j = i+1; j != e; ++j) {
-          const MachineOperand &mopj = mi->getOperand(j);
-          if (!mopj.isReg() || mopj.getReg() != reg)
-            continue;
-          hasDef |= mopj.isDef();
-          hasUse |= mopj.isUse();
-          if (hasDef && hasUse)
-            break;
-        }
-
-        LiveInterval &regInt = lis->getInterval(reg);
-        float weight = lis->getSpillWeight(hasDef, hasUse, loopDepth);
-        if (hasDef && isExiting) {
-          // Looks like this is a loop count variable update.
-          SlotIndex defIdx = lis->getInstructionIndex(mi).getDefIndex();
-          const LiveRange *dlr =
-            lis->getInterval(reg).getLiveRangeContaining(defIdx);
-          if (dlr->end >= mbbEnd)
-            weight *= 3.0F;
-        }
-        regInt.weight += weight;
-      }
-      processed.clear();
-    }
-  }
-
-  for (LiveIntervals::iterator I = lis->begin(), E = lis->end(); I != E; ++I) {
+  LiveIntervals &lis = getAnalysis<LiveIntervals>();
+  VirtRegAuxInfo vrai(fn, lis, getAnalysis<MachineLoopInfo>());
+  for (LiveIntervals::iterator I = lis.begin(), E = lis.end(); I != E; ++I) {
     LiveInterval &li = *I->second;
-    if (TargetRegisterInfo::isVirtualRegister(li.reg)) {
-      // If the live interval length is essentially zero, i.e. in every live
-      // range the use follows def immediately, it doesn't make sense to spill
-      // it and hope it will be easier to allocate for this li.
-      if (isZeroLengthInterval(&li)) {
-        li.weight = HUGE_VALF;
-        continue;
-      }
-
-      bool isLoad = false;
-      SmallVector<LiveInterval*, 4> spillIs;
-      if (lis->isReMaterializable(li, spillIs, isLoad)) {
-        // If all of the definitions of the interval are re-materializable,
-        // it is a preferred candidate for spilling. If none of the defs are
-        // loads, then it's potentially very cheap to re-materialize.
-        // FIXME: this gets much more complicated once we support non-trivial
-        // re-materialization.
-        if (isLoad)
-          li.weight *= 0.9F;
-        else
-          li.weight *= 0.5F;
-      }
-
-      // Slightly prefer live interval that has been assigned a preferred reg.
-      std::pair<unsigned, unsigned> Hint = mri->getRegAllocationHint(li.reg);
-      if (Hint.first || Hint.second)
-        li.weight *= 1.01F;
-
-      lis->normalizeSpillWeight(li);
-    }
+    if (TargetRegisterInfo::isVirtualRegister(li.reg))
+      vrai.CalculateWeightAndHint(li);
   }
-  
   return false;
 }
 
-/// Returns true if the given live interval is zero length.
-bool CalculateSpillWeights::isZeroLengthInterval(LiveInterval *li) const {
-  for (LiveInterval::Ranges::const_iterator
-       i = li->ranges.begin(), e = li->ranges.end(); i != e; ++i)
-    if (i->end.getPrevIndex() > i->start)
-      return false;
-  return true;
+// Return the preferred allocation register for reg, given a COPY instruction.
+static unsigned copyHint(const MachineInstr *mi, unsigned reg,
+                         const TargetRegisterInfo &tri,
+                         const MachineRegisterInfo &mri) {
+  unsigned sub, hreg, hsub;
+  if (mi->getOperand(0).getReg() == reg) {
+    sub = mi->getOperand(0).getSubReg();
+    hreg = mi->getOperand(1).getReg();
+    hsub = mi->getOperand(1).getSubReg();
+  } else {
+    sub = mi->getOperand(1).getSubReg();
+    hreg = mi->getOperand(0).getReg();
+    hsub = mi->getOperand(0).getSubReg();
+  }
+
+  if (!hreg)
+    return 0;
+
+  if (TargetRegisterInfo::isVirtualRegister(hreg))
+    return sub == hsub ? hreg : 0;
+
+  const TargetRegisterClass *rc = mri.getRegClass(reg);
+
+  // Only allow physreg hints in rc.
+  if (sub == 0)
+    return rc->contains(hreg) ? hreg : 0;
+
+  // reg:sub should match the physreg hreg.
+  return tri.getMatchingSuperReg(hreg, sub, rc);
 }
+
+void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
+  MachineRegisterInfo &mri = mf_.getRegInfo();
+  const TargetRegisterInfo &tri = *mf_.getTarget().getRegisterInfo();
+  MachineBasicBlock *mbb = 0;
+  MachineLoop *loop = 0;
+  unsigned loopDepth = 0;
+  bool isExiting = false;
+  float totalWeight = 0;
+  SmallPtrSet<MachineInstr*, 8> visited;
+
+  // Find the best physreg hist and the best virtreg hint.
+  float bestPhys = 0, bestVirt = 0;
+  unsigned hintPhys = 0, hintVirt = 0;
+
+  // Don't recompute a target specific hint.
+  bool noHint = mri.getRegAllocationHint(li.reg).first != 0;
+
+  for (MachineRegisterInfo::reg_iterator I = mri.reg_begin(li.reg);
+       MachineInstr *mi = I.skipInstruction();) {
+    if (mi->isIdentityCopy() || mi->isImplicitDef() || mi->isDebugValue())
+      continue;
+    if (!visited.insert(mi))
+      continue;
+
+    // Get loop info for mi.
+    if (mi->getParent() != mbb) {
+      mbb = mi->getParent();
+      loop = loops_.getLoopFor(mbb);
+      loopDepth = loop ? loop->getLoopDepth() : 0;
+      isExiting = loop ? loop->isLoopExiting(mbb) : false;
+    }
+
+    // Calculate instr weight.
+    bool reads, writes;
+    tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
+    float weight = LiveIntervals::getSpillWeight(writes, reads, loopDepth);
+
+    // Give extra weight to what looks like a loop induction variable update.
+    if (writes && isExiting && lis_.isLiveOutOfMBB(li, mbb))
+      weight *= 3;
+
+    totalWeight += weight;
+
+    // Get allocation hints from copies.
+    if (noHint || !mi->isCopy())
+      continue;
+    unsigned hint = copyHint(mi, li.reg, tri, mri);
+    if (!hint)
+      continue;
+    float hweight = hint_[hint] += weight;
+    if (TargetRegisterInfo::isPhysicalRegister(hint)) {
+      if (hweight > bestPhys && lis_.isAllocatable(hint))
+        bestPhys = hweight, hintPhys = hint;
+    } else {
+      if (hweight > bestVirt)
+        bestVirt = hweight, hintVirt = hint;
+    }
+  }
+
+  hint_.clear();
+
+  // Always prefer the physreg hint.
+  if (unsigned hint = hintPhys ? hintPhys : hintVirt) {
+    mri.setRegAllocationHint(li.reg, 0, hint);
+    // Weakly boost the spill weifght of hinted registers.
+    totalWeight *= 1.01F;
+  }
+
+  // Mark li as unspillable if all live ranges are tiny.
+  if (li.isZeroLength()) {
+    li.markNotSpillable();
+    return;
+  }
+
+  // If all of the definitions of the interval are re-materializable,
+  // it is a preferred candidate for spilling. If none of the defs are
+  // loads, then it's potentially very cheap to re-materialize.
+  // FIXME: this gets much more complicated once we support non-trivial
+  // re-materialization.
+  bool isLoad = false;
+  SmallVector<LiveInterval*, 4> spillIs;
+  if (lis_.isReMaterializable(li, spillIs, isLoad)) {
+    if (isLoad)
+      totalWeight *= 0.9F;
+    else
+      totalWeight *= 0.5F;
+  }
+
+  li.weight = totalWeight;
+  lis_.normalizeSpillWeight(li);
+}
+

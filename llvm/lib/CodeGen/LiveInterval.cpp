@@ -515,18 +515,6 @@ void LiveInterval::join(LiveInterval &Other,
   }
 
   ComputeJoinedWeight(Other);
-
-  // Update regalloc hint if currently there isn't one.
-  if (TargetRegisterInfo::isVirtualRegister(reg) &&
-      TargetRegisterInfo::isVirtualRegister(Other.reg)) {
-    std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(reg);
-    if (Hint.first == 0 && Hint.second == 0) {
-      std::pair<unsigned, unsigned> OtherHint =
-        MRI->getRegAllocationHint(Other.reg);
-      if (OtherHint.first || OtherHint.second)
-        MRI->setRegAllocationHint(reg, OtherHint.first, OtherHint.second);
-    }
-  }
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live

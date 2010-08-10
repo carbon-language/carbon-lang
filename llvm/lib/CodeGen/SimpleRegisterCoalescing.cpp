@@ -1044,7 +1044,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (CP.isPhys()) {
     DEBUG(dbgs() <<" with physreg %" << tri_->getName(CP.getDstReg()) << "\n");
     // Only coalesce to allocatable physreg.
-    if (!allocatableRegs_[CP.getDstReg()]) {
+    if (!li_->isAllocatable(CP.getDstReg())) {
       DEBUG(dbgs() << "\tRegister is an unallocatable physreg.\n");
       return false;  // Not coalescable.
     }
@@ -1093,7 +1093,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     // happens.
     if (li_->hasInterval(CP.getDstReg()) &&
         li_->getInterval(CP.getDstReg()).ranges.size() > 1000) {
-      mri_->setRegAllocationHint(CP.getSrcReg(), 0, CP.getDstReg());
       ++numAborts;
       DEBUG(dbgs()
            << "\tPhysical register live interval too complicated, abort!\n");
@@ -1112,7 +1111,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
           ReMaterializeTrivialDef(JoinVInt, CP.getDstReg(), 0, CopyMI))
         return true;
 
-      mri_->setRegAllocationHint(CP.getSrcReg(), 0, CP.getDstReg());
       ++numAborts;
       DEBUG(dbgs() << "\tMay tie down a physical register, abort!\n");
       Again = true;  // May be possible to coalesce later.
@@ -1693,7 +1691,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
                << "********** Function: "
                << ((Value*)mf_->getFunction())->getName() << '\n');
 
-  allocatableRegs_ = tri_->getAllocatableSet(fn);
   for (TargetRegisterInfo::regclass_iterator I = tri_->regclass_begin(),
          E = tri_->regclass_end(); I != E; ++I)
     allocatableRCRegs_.insert(std::make_pair(*I,

@@ -47,7 +47,6 @@ namespace llvm {
     const MachineLoopInfo* loopInfo;
     AliasAnalysis *AA;
     
-    BitVector allocatableRegs_;
     DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
 
     /// JoinedCopies - Keep track of copies eliminated due to coalescing.
