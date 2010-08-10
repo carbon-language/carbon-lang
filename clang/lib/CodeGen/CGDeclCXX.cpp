@@ -398,6 +398,10 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     EmitDeclInit(*this, D, GV);
 
   if (ThreadsafeStatics) {
+    // Pop the guard-abort cleanup if we pushed one.
+    if (Exceptions)
+      PopCleanupBlock();
+
     // Call __cxa_guard_release.  This cannot throw.
     Builder.CreateCall(getGuardReleaseFn(*this), GuardVariable);    
   } else {

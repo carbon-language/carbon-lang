@@ -17,7 +17,7 @@ void f() {
   static X x;
 
   // CHECK: call i8* @__cxa_allocate_exception
-  // CHECK: invoke void @__cxa_throw
+  // CHECK: call void @__cxa_throw
   throw Y();
 
   // Finally, the landing pad.
