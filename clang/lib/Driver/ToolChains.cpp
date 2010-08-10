@@ -1034,6 +1034,26 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   // list), but that's messy at best.
 }
 
+Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::linuxtools::Assemble(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA);
+    }
+  }
+
+  return *T;
+}
+
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
 
 DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)

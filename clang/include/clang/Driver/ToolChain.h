@@ -54,6 +54,7 @@ public:
   const Driver &getDriver() const;
   const llvm::Triple &getTriple() const { return Triple; }
 
+  llvm::Triple::ArchType getArch() const { return Triple.getArch(); }
   llvm::StringRef getArchName() const { return Triple.getArchName(); }
   llvm::StringRef getPlatform() const { return Triple.getVendorName(); }
   llvm::StringRef getOS() const { return Triple.getOSName(); }

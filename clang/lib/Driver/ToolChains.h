@@ -292,6 +292,8 @@ public:
 class LLVM_LIBRARY_VISIBILITY Linux : public Generic_GCC {
 public:
   Linux(const HostInfo &Host, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
 

@@ -3011,6 +3011,43 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
+void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                        const InputInfo &Output,
+                                        const InputInfoList &Inputs,
+                                        const ArgList &Args,
+                                        const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  // Add --32/--64 to make sure we get the format we want.
+  // This is incomplete
+  if (getToolChain().getArch() == llvm::Triple::x86) {
+    CmdArgs.push_back("--32");
+  } else if (getToolChain().getArch() == llvm::Triple::x86_64) {
+    CmdArgs.push_back("--64");
+  } else if (getToolChain().getArch() == llvm::Triple::arm) {
+    llvm::StringRef MArch = getToolChain().getArchName();
+    if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
+      CmdArgs.push_back("-mfpu=neon");
+  }
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    CmdArgs.push_back(II.getFilename());
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+
 void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                    const InputInfo &Output,
                                    const InputInfoList &Inputs,

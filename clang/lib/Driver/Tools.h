@@ -332,6 +332,22 @@ namespace freebsd {
   };
 } // end namespace freebsd
 
+  /// linux -- Directly call GNU Binutils assembler and linker
+namespace linuxtools {
+  class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
+  public:
+    Assemble(const ToolChain &TC) : Tool("linux::Assemble", "assembler",
+                                         TC) {}
+
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
+}
   /// minix -- Directly call GNU Binutils assembler and linker
 namespace minix {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
