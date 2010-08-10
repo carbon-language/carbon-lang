@@ -4646,47 +4646,52 @@ defm ROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "round",
 // the intel intrinsic that corresponds to this.
 let Defs = [EFLAGS], isAsmParserOnly = 1, Predicates = [HasAVX] in {
 def VPTESTrr  : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
-                      "vptest\t{$src2, $src1|$src1, $src2}",
-                      [(set EFLAGS, (X86ptest VR128:$src1, VR128:$src2))]>,
-                      OpSize, VEX;
-def VPTESTYrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR256:$src1, VR256:$src2),
-                      "vptest\t{$src2, $src1|$src1, $src2}", []>, OpSize, VEX;
+                "vptest\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86ptest VR128:$src1, (v4f32 VR128:$src2)))]>,
+                OpSize, VEX;
+def VPTESTrm  : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
+                "vptest\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS,(X86ptest VR128:$src1, (memopv4f32 addr:$src2)))]>,
+                OpSize, VEX;
 
-def VPTESTrm  : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
-                     "vptest\t{$src2, $src1|$src1, $src2}",
-                     [(set EFLAGS, (X86ptest VR128:$src1, (load addr:$src2)))]>,
-                     OpSize, VEX;
+def VPTESTYrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR256:$src1, VR256:$src2),
+                "vptest\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS, (X86ptest VR256:$src1, (v4i64 VR256:$src2)))]>,
+                OpSize, VEX;
 def VPTESTYrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR256:$src1, i256mem:$src2),
-                     "vptest\t{$src2, $src1|$src1, $src2}", []>, OpSize, VEX;
+                "vptest\t{$src2, $src1|$src1, $src2}",
+                [(set EFLAGS,(X86ptest VR256:$src1, (memopv4i64 addr:$src2)))]>,
+                OpSize, VEX;
 }
 
 let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
-                    "ptest \t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86ptest VR128:$src1, VR128:$src2))]>,
+              "ptest \t{$src2, $src1|$src1, $src2}",
+              [(set EFLAGS, (X86ptest VR128:$src1, (v4f32 VR128:$src2)))]>,
               OpSize;
-def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
-                    "ptest \t{$src2, $src1|$src1, $src2}",
-                    [(set EFLAGS, (X86ptest VR128:$src1, (load addr:$src2)))]>,
+def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
+              "ptest \t{$src2, $src1|$src1, $src2}",
+              [(set EFLAGS, (X86ptest VR128:$src1, (memopv4f32 addr:$src2)))]>,
               OpSize;
 }
 
 // The bit test instructions below are AVX only
 multiclass avx_bittest<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                       X86MemOperand x86memop> {
-  def rr : SS48I<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
-            !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-            []>, OpSize, VEX;
-  def rm : SS48I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
-            !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-            []>, OpSize, VEX;
+                       X86MemOperand x86memop, PatFrag mem_frag, ValueType vt> {
+  def rr : SS48I<opc, MRMSrcReg, (outs), (ins RC:$src1, RC:$src2),
+            !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
+            [(set EFLAGS, (X86testp RC:$src1, (vt RC:$src2)))]>, OpSize, VEX;
+  def rm : SS48I<opc, MRMSrcMem, (outs), (ins RC:$src1, x86memop:$src2),
+            !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
+            [(set EFLAGS, (X86testp RC:$src1, (mem_frag addr:$src2)))]>,
+            OpSize, VEX;
 }
 
 let Defs = [EFLAGS], isAsmParserOnly = 1, Predicates = [HasAVX] in {
-  defm VTESTPS  : avx_bittest<0x0E, "vtestps", VR128, f128mem>;
-  defm VTESTPSY : avx_bittest<0x0E, "vtestps", VR256, f256mem>;
-  defm VTESTPD  : avx_bittest<0x0F, "vtestpd", VR128, f128mem>;
-  defm VTESTPDY : avx_bittest<0x0F, "vtestpd", VR256, f256mem>;
+defm VTESTPS  : avx_bittest<0x0E, "vtestps", VR128, f128mem, memopv4f32, v4f32>;
+defm VTESTPSY : avx_bittest<0x0E, "vtestps", VR256, f256mem, memopv8f32, v8f32>;
+defm VTESTPD  : avx_bittest<0x0F, "vtestpd", VR128, f128mem, memopv2f64, v2f64>;
+defm VTESTPDY : avx_bittest<0x0F, "vtestpd", VR256, f256mem, memopv4f64, v4f64>;
 }
 
 //===----------------------------------------------------------------------===//

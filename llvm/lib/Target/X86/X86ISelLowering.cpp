@@ -6987,24 +6987,58 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
-  // ptest intrinsics. The intrinsic these come from are designed to return
-  // an integer value, not just an instruction so lower it to the ptest
-  // pattern and a setcc for the result.
+  // ptest and testp intrinsics. The intrinsic these come from are designed to
+  // return an integer value, not just an instruction so lower it to the ptest
+  // or testp pattern and a setcc for the result.
   case Intrinsic::x86_sse41_ptestz:
   case Intrinsic::x86_sse41_ptestc:
-  case Intrinsic::x86_sse41_ptestnzc:{
+  case Intrinsic::x86_sse41_ptestnzc:
+  case Intrinsic::x86_avx_ptestz_256:
+  case Intrinsic::x86_avx_ptestc_256:
+  case Intrinsic::x86_avx_ptestnzc_256:
+  case Intrinsic::x86_avx_vtestz_ps:
+  case Intrinsic::x86_avx_vtestc_ps:
+  case Intrinsic::x86_avx_vtestnzc_ps:
+  case Intrinsic::x86_avx_vtestz_pd:
+  case Intrinsic::x86_avx_vtestc_pd:
+  case Intrinsic::x86_avx_vtestnzc_pd:
+  case Intrinsic::x86_avx_vtestz_ps_256:
+  case Intrinsic::x86_avx_vtestc_ps_256:
+  case Intrinsic::x86_avx_vtestnzc_ps_256:
+  case Intrinsic::x86_avx_vtestz_pd_256:
+  case Intrinsic::x86_avx_vtestc_pd_256:
+  case Intrinsic::x86_avx_vtestnzc_pd_256: {
+    bool IsTestPacked = false;
     unsigned X86CC = 0;
     switch (IntNo) {
     default: llvm_unreachable("Bad fallthrough in Intrinsic lowering.");
+    case Intrinsic::x86_avx_vtestz_ps:
+    case Intrinsic::x86_avx_vtestz_pd:
+    case Intrinsic::x86_avx_vtestz_ps_256:
+    case Intrinsic::x86_avx_vtestz_pd_256:
+      IsTestPacked = true; // Fallthrough
     case Intrinsic::x86_sse41_ptestz:
+    case Intrinsic::x86_avx_ptestz_256:
       // ZF = 1
       X86CC = X86::COND_E;
       break;
+    case Intrinsic::x86_avx_vtestc_ps:
+    case Intrinsic::x86_avx_vtestc_pd:
+    case Intrinsic::x86_avx_vtestc_ps_256:
+    case Intrinsic::x86_avx_vtestc_pd_256:
+      IsTestPacked = true; // Fallthrough
     case Intrinsic::x86_sse41_ptestc:
+    case Intrinsic::x86_avx_ptestc_256:
       // CF = 1
       X86CC = X86::COND_B;
       break;
+    case Intrinsic::x86_avx_vtestnzc_ps:
+    case Intrinsic::x86_avx_vtestnzc_pd:
+    case Intrinsic::x86_avx_vtestnzc_ps_256:
+    case Intrinsic::x86_avx_vtestnzc_pd_256:
+      IsTestPacked = true; // Fallthrough
     case Intrinsic::x86_sse41_ptestnzc:
+    case Intrinsic::x86_avx_ptestnzc_256:
       // ZF and CF = 0
       X86CC = X86::COND_A;
       break;
@@ -7012,7 +7046,8 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
 
     SDValue LHS = Op.getOperand(1);
     SDValue RHS = Op.getOperand(2);
-    SDValue Test = DAG.getNode(X86ISD::PTEST, dl, MVT::i32, LHS, RHS);
+    unsigned TestOpc = IsTestPacked ? X86ISD::TESTP : X86ISD::PTEST;
+    SDValue Test = DAG.getNode(TestOpc, dl, MVT::i32, LHS, RHS);
     SDValue CC = DAG.getConstant(X86CC, MVT::i8);
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8, CC, Test);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
@@ -8033,6 +8068,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::AND:                return "X86ISD::AND";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
+  case X86ISD::TESTP:              return "X86ISD::TESTP";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::MINGW_ALLOCA:       return "X86ISD::MINGW_ALLOCA";
   }

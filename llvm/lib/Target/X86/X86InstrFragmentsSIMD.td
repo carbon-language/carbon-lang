@@ -117,9 +117,10 @@ def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
 def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
 
 def SDTX86CmpPTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
-                                          SDTCisVT<1, v4f32>,
-                                          SDTCisVT<2, v4f32>]>;
+                                          SDTCisVec<1>,
+                                          SDTCisSameAs<2, 1>]>;
 def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
+def X86testp   : SDNode<"X86ISD::TESTP", SDTX86CmpPTest>;
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns

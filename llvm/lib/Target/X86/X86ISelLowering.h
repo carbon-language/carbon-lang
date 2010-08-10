@@ -248,6 +248,9 @@ namespace llvm {
       // PTEST - Vector bitwise comparisons
       PTEST,
 
+      // TESTP - Vector packed fp sign bitwise comparisons
+      TESTP,
+
       // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
       // according to %al. An operator is needed so that this can be expanded
       // with control flow.
