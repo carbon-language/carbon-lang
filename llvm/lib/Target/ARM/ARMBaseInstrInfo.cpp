@@ -1386,7 +1386,7 @@ ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
 
     for (unsigned IO = 0, EO = Instr.getNumOperands(); IO != EO; ++IO) {
       const MachineOperand &MO = Instr.getOperand(IO);
-      if (!MO.isDef() || !MO.isReg()) continue;
+      if (!MO.isReg() || !MO.isDef()) continue;
 
       // This instruction modifies CPSR before the one we want to change. We
       // can't do this transformation.

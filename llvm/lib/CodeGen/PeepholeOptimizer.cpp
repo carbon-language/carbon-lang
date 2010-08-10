@@ -54,7 +54,7 @@ STATISTIC(NumReuse, "Number of extension results reused");
 
 // Optimize Comparisons
 static cl::opt<bool>
-EnableOptCmps("enable-optimize-cmps", cl::init(false), cl::Hidden);
+EnableOptCmps("enable-optimize-cmps", cl::init(true), cl::Hidden);
 
 STATISTIC(NumEliminated, "Number of compares eliminated");
 
