@@ -345,8 +345,20 @@ ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");
 
+  // Automatically handle some instances of -m32/-m64 we know about.
   std::string Arch = getArchName();
   ArchName = Arch.c_str();
+  if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
+    if (Triple.getArch() == llvm::Triple::x86 ||
+        Triple.getArch() == llvm::Triple::x86_64) {
+      ArchName =
+        (A->getOption().matches(options::OPT_m32)) ? "i386" : "x86_64";
+    } else if (Triple.getArch() == llvm::Triple::ppc ||
+               Triple.getArch() == llvm::Triple::ppc64) {
+      ArchName =
+        (A->getOption().matches(options::OPT_m32)) ? "powerpc" : "powerpc64";
+    }
+  }
 
   ToolChain *&TC = ToolChains[ArchName];
   if (!TC) {
