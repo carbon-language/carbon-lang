@@ -1186,30 +1186,6 @@ static StringRef getRealLinkageName(StringRef LinkageName) {
   return LinkageName;
 }
 
-/// createGlobalVariableDIE - Create new DIE using GV.
-DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
-  // If the global variable was optmized out then no need to create debug info
-  // entry.
-  if (!GV.Verify()) return NULL;
-  if (GV.getDisplayName().empty()) return NULL;
-
-  DIE *GVDie = new DIE(dwarf::DW_TAG_variable);
-  addString(GVDie, dwarf::DW_AT_name, dwarf::DW_FORM_string,
-            GV.getDisplayName());
-
-  StringRef LinkageName = GV.getLinkageName();
-  if (!LinkageName.empty())
-    addString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              getRealLinkageName(LinkageName));
-
-  addType(GVDie, GV.getType());
-  if (!GV.isLocalToUnit())
-    addUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
-  addSourceLine(GVDie, GV);
-
-  return GVDie;
-}
-
 /// createMemberDIE - Create new member DIE.
 DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
   DIE *MemberDie = new DIE(DT.getTag());
@@ -1888,57 +1864,68 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
 
 /// constructGlobalVariableDIE - Construct global variable DIE.
 void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
-  DIGlobalVariable DI_GV(N);
+  DIGlobalVariable GV(N);
 
   // If debug information is malformed then ignore it.
-  if (DI_GV.Verify() == false)
+  if (GV.Verify() == false)
     return;
 
   // Check for pre-existence.
   CompileUnit *TheCU = getCompileUnit(N);
-  if (TheCU->getDIE(DI_GV))
+  if (TheCU->getDIE(GV))
     return;
 
-  DIE *VariableDie = createGlobalVariableDIE(DI_GV);
-  if (!VariableDie)
-    return;
+  DIType GTy = GV.getType();
+  DIE *VariableDIE = new DIE(dwarf::DW_TAG_variable);
 
-  // Add to map.
-  TheCU->insertDIE(N, VariableDie);
-
-  // Add to context owner.
-  DIDescriptor GVContext = DI_GV.getContext();
-  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-  addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-  addLabel(Block, 0, dwarf::DW_FORM_udata,
-           Asm->Mang->getSymbol(DI_GV.getGlobal()));
-  // Do not create specification DIE if context is either compile unit
-  // or a subprogram.
-  if (DI_GV.isDefinition() && !GVContext.isCompileUnit() &&
-      !GVContext.isFile() &&
-      !isSubprogramContext(GVContext)) {
-    // Create specification DIE.
-    DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
-    addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
-                dwarf::DW_FORM_ref4, VariableDie);
-    addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
-    addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
-    TheCU->addDie(VariableSpecDIE);
-  } else {
-    addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
-  }
-  addToContextOwner(VariableDie, GVContext);
-
-  // Expose as global. FIXME - need to check external flag.
-  TheCU->addGlobal(DI_GV.getName(), VariableDie);
-
-  DIType GTy = DI_GV.getType();
+  // Add name.
+  addString(VariableDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string,
+            GV.getDisplayName());
+  StringRef LinkageName = GV.getLinkageName();
+  if (!LinkageName.empty())
+    addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
+              getRealLinkageName(LinkageName));
+  // Add type.
+  addType(VariableDIE, GTy);
   if (GTy.isCompositeType() && !GTy.getName().empty()
       && !GTy.isForwardDecl()) {
     DIEEntry *Entry = TheCU->getDIEEntry(GTy);
     assert(Entry && "Missing global type!");
     TheCU->addGlobalType(GTy.getName(), Entry->getEntry());
   }
+  // Add scoping info.
+  if (!GV.isLocalToUnit()) {
+    addUInt(VariableDIE, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
+    // Expose as global. 
+    TheCU->addGlobal(GV.getName(), VariableDIE);
+  }
+  // Add line number info.
+  addSourceLine(VariableDIE, GV);
+  // Add to map.
+  TheCU->insertDIE(N, VariableDIE);
+  // Add to context owner.
+  DIDescriptor GVContext = GV.getContext();
+  addToContextOwner(VariableDIE, GVContext);
+  // Add location.
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+  addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+  addLabel(Block, 0, dwarf::DW_FORM_udata,
+           Asm->Mang->getSymbol(GV.getGlobal()));
+  // Do not create specification DIE if context is either compile unit
+  // or a subprogram.
+  if (GV.isDefinition() && !GVContext.isCompileUnit() &&
+      !GVContext.isFile() && !isSubprogramContext(GVContext)) {
+    // Create specification DIE.
+    DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
+    addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
+                dwarf::DW_FORM_ref4, VariableDIE);
+    addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
+    addUInt(VariableDIE, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+    TheCU->addDie(VariableSpecDIE);
+  } else {
+    addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
+  }
+
   return;
 }
 
