@@ -2099,6 +2099,13 @@ let isAsmParserOnly = 1 in {
   }
 }
 
+def : Pat<(int_x86_avx_movnt_dq_256 addr:$dst, VR256:$src),
+          (VMOVNTDQYmr addr:$dst, VR256:$src)>;
+def : Pat<(int_x86_avx_movnt_pd_256 addr:$dst, VR256:$src),
+          (VMOVNTPDYmr addr:$dst, VR256:$src)>;
+def : Pat<(int_x86_avx_movnt_ps_256 addr:$dst, VR256:$src),
+          (VMOVNTPSYmr addr:$dst, VR256:$src)>;
+
 def MOVNTPSmr_Int : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",
                     [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>;
