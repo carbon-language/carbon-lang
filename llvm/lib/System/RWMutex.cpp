@@ -71,23 +71,8 @@ RWMutexImpl::RWMutexImpl()
     bzero(rwlock, sizeof(pthread_rwlock_t));
 #endif
 
-    pthread_rwlockattr_t attr;
-
-    // Initialize the rwlock attributes
-    int errorcode = pthread_rwlockattr_init(&attr);
-    assert(errorcode == 0);
-
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__)
-    // Make it a process local rwlock
-    errorcode = pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
-#endif
-
     // Initialize the rwlock
-    errorcode = pthread_rwlock_init(rwlock, &attr);
-    assert(errorcode == 0);
-
-    // Destroy the attributes
-    errorcode = pthread_rwlockattr_destroy(&attr);
+    int errorcode = pthread_rwlock_init(rwlock, NULL);
     assert(errorcode == 0);
 
     // Assign the data member
