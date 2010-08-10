@@ -823,7 +823,7 @@ Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vec
     if (size_of_pids == -1)
         return 0;
         
-    pid_t our_pid = getpid();
+    lldb::pid_t our_pid = getpid();
     
     for (int i = 0; i < num_pids; i++)
     {
@@ -835,7 +835,7 @@ Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vec
         // Don't offer to attach to zombie processes, already traced or exiting
         // processes, and of course, ourselves...  It looks like passing the second arg of
         // 0 to proc_listpids will exclude zombies anyway, but that's not documented so...
-        if ((bsd_info.pbi_flags & (PROC_FLAG_TRACED | PROC_FLAG_INEXIT) != 0)
+        if (((bsd_info.pbi_flags & (PROC_FLAG_TRACED | PROC_FLAG_INEXIT)) != 0)
              || (bsd_info.pbi_status == SZOMB)
              || (bsd_info.pbi_pid == our_pid))
              continue;
