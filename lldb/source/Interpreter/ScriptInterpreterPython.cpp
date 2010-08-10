@@ -211,15 +211,12 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         PyRun_SimpleString ("from embedded_interpreter import run_python_interpreter");
         PyRun_SimpleString ("import sys");
         PyRun_SimpleString ("from termios import *");
-        PyRun_SimpleString ("old_stdin = sys.stdin");
       
         StreamString run_string;
         run_string.Printf ("new_stdin = open('%s', 'r')", pty_slave_name);
         PyRun_SimpleString (run_string.GetData());
         PyRun_SimpleString ("sys.stdin = new_stdin");
 
-        PyRun_SimpleString ("old_stdout = sys.stdout");
-        
         if (out_fh != NULL)
         {
             PyObject *new_sysout = PyFile_FromFile (out_fh, (char *) "", (char *) "w", 
@@ -253,8 +250,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
 
 ScriptInterpreterPython::~ScriptInterpreterPython ()
 {
-    PyRun_SimpleString ("sys.stdin = old_stdin");
-    PyRun_SimpleString ("sys.stdout = old_stdout");
     Py_Finalize ();
 }
 
