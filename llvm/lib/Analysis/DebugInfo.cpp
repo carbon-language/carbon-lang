@@ -946,8 +946,8 @@ DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
                                                  unsigned Flags,
                                                  DIType DerivedFrom,
                                                  DIArray Elements,
-                                                 unsigned RuntimeLang) {
-
+                                                 unsigned RuntimeLang,
+                                                 MDNode *ContainingType) {
   Value *Elts[] = {
     GetTagConstant(Tag),
     Context,
@@ -960,9 +960,10 @@ DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     DerivedFrom,
     Elements,
-    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
+    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang),
+    ContainingType
   };
-  MDNode *Node = MDNode::get(VMContext, &Elts[0], 12);
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], 13);
   // Create a named metadata so that we do not lose this enum info.
   if (Tag == dwarf::DW_TAG_enumeration_type) {
     NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.enum");

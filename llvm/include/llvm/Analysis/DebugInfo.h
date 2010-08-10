@@ -668,7 +668,8 @@ namespace llvm {
                                           unsigned Flags,
                                           DIType DerivedFrom,
                                           DIArray Elements,
-                                          unsigned RunTimeLang = 0);
+                                          unsigned RunTimeLang = 0,
+                                          MDNode *ContainingType = 0);
 
     /// CreateSubprogram - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
