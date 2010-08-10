@@ -186,7 +186,8 @@ bool DIDescriptor::isSubprogram() const {
 /// isGlobalVariable - Return true if the specified tag is legal for
 /// DIGlobalVariable.
 bool DIDescriptor::isGlobalVariable() const {
-  return DbgNode && getTag() == dwarf::DW_TAG_variable;
+  return DbgNode && (getTag() == dwarf::DW_TAG_variable ||
+                     getTag() == dwarf::DW_TAG_constant);
 }
 
 /// isGlobal - Return true if the specified tag is legal for DIGlobal.
@@ -1078,7 +1079,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
                                 unsigned LineNo, DIType Ty,bool isLocalToUnit,
                                 bool isDefinition, llvm::Constant *Val) {
   Value *Elts[] = {
-    GetTagConstant(dwarf::DW_TAG_variable),
+    GetTagConstant(dwarf::DW_TAG_constant),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
     Context,
     MDString::get(VMContext, Name),
