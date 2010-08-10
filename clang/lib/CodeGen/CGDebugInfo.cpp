@@ -1814,8 +1814,7 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
     return;
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, Name, Unit,
                                     getLineNumber(VD->getLocation()),
-                                    getOrCreateType(VD->getType(), Unit),
-                                    true, true, Init);
+                                    Ty, true, true, Init);
 }
 
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
