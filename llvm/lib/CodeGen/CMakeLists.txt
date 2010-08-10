@@ -42,11 +42,10 @@ add_llvm_library(LLVMCodeGen
   MachineVerifier.cpp
   ObjectCodeEmitter.cpp
   OcamlGC.cpp
-  OptimizeCmps.cpp
-  OptimizeExts.cpp
   OptimizePHIs.cpp
   PHIElimination.cpp
   Passes.cpp
+  PeepholeOptimizer.cpp
   PostRAHazardRecognizer.cpp
   PostRASchedulerList.cpp
   PreAllocSplitting.cpp
