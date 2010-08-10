@@ -96,7 +96,7 @@ namespace options {
     } else if (opt.startswith("pass-through=")) {
       llvm::StringRef item = opt.substr(strlen("pass-through="));
       pass_through.push_back(item.str());
-    } else if (opt == "mtriple=") {
+    } else if (opt.startswith("mtriple=")) {
       triple = opt.substr(strlen("mtriple="));
     } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
