@@ -871,6 +871,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addRegisterClass(MVT::v4f64, X86::VR256RegisterClass);
     addRegisterClass(MVT::v8i32, X86::VR256RegisterClass);
     addRegisterClass(MVT::v4i64, X86::VR256RegisterClass);
+    addRegisterClass(MVT::v32i8, X86::VR256RegisterClass);
 
     setOperationAction(ISD::LOAD,               MVT::v8f32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v8i32, Legal);

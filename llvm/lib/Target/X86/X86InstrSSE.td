@@ -340,6 +340,15 @@ def VMOVUPDYmr : VPDI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
                    "movupd\t{$src, $dst|$dst, $src}",
                    [(store (v4f64 VR256:$src), addr:$dst)]>, VEX;
 }
+
+def : Pat<(int_x86_avx_loadu_ps_256 addr:$src), (VMOVUPSYrm addr:$src)>;
+def : Pat<(int_x86_avx_storeu_ps_256 addr:$dst, VR256:$src),
+          (VMOVUPSYmr addr:$dst, VR256:$src)>;
+
+def : Pat<(int_x86_avx_loadu_pd_256 addr:$src), (VMOVUPDYrm addr:$src)>;
+def : Pat<(int_x86_avx_storeu_pd_256 addr:$dst, VR256:$src),
+          (VMOVUPDYmr addr:$dst, VR256:$src)>;
+
 def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(alignedstore (v4f32 VR128:$src), addr:$dst)]>;
@@ -2291,6 +2300,10 @@ def MOVDQUmr_Int :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
 
 } // ExeDomain = SSEPackedInt
 
+def : Pat<(int_x86_avx_loadu_dq_256 addr:$src), (VMOVDQUYrm addr:$src)>;
+def : Pat<(int_x86_avx_storeu_dq_256 addr:$dst, VR256:$src),
+          (VMOVDQUYmr addr:$dst, VR256:$src)>;
+
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Arithmetic Instructions
 //===---------------------------------------------------------------------===//
@@ -3348,10 +3361,11 @@ defm MOVDDUP : sse3_replicate_dfp<"movddup">;
 // Move Unaligned Integer
 let isAsmParserOnly = 1, Predicates = [HasAVX] in {
   def VLDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
-                     "vlddqu\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>, VEX;
+                   "vlddqu\t{$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>, VEX;
   def VLDDQUYrm : S3DI<0xF0, MRMSrcMem, (outs VR256:$dst), (ins i256mem:$src),
-                     "vlddqu\t{$src, $dst|$dst, $src}", []>, VEX;
+                   "vlddqu\t{$src, $dst|$dst, $src}",
+                   [(set VR256:$dst, (int_x86_avx_ldu_dq_256 addr:$src))]>, VEX;
 }
 def LDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "lddqu\t{$src, $dst|$dst, $src}",
@@ -4833,9 +4847,8 @@ let isAsmParserOnly = 1, Predicates = [HasAVX] in {
                                    VR128, memopv16i8, i128mem, 0>, VEX_4V;
   defm VDPPD : SS41I_binop_rmi_int<0x41, "vdppd", int_x86_sse41_dppd,
                                    VR128, memopv16i8, i128mem, 0>, VEX_4V;
-  let Pattern = []<dag> in
-  defm VDPPSY : SS41I_binop_rmi_int<0x40, "vdpps", int_x86_sse41_dpps,
-                                    VR256, memopv32i8, i256mem, 0>, VEX_4V;
+  defm VDPPSY : SS41I_binop_rmi_int<0x40, "vdpps", int_x86_avx_dp_ps_256,
+                                   VR256, memopv32i8, i256mem, 0>, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in {
