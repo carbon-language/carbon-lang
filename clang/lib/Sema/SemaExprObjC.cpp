@@ -863,8 +863,7 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
 
   if (!Method) {
     // Handle messages to id.
-    bool receiverIsId = (ReceiverType->isObjCIdType() || 
-                          ReceiverType->isObjCQualifiedIdType());
+    bool receiverIsId = ReceiverType->isObjCIdType();
     if (receiverIsId || ReceiverType->isBlockPointerType() ||
         (Receiver && Context.isObjCNSObjectType(Receiver->getType()))) {
       Method = LookupInstanceMethodInGlobalPool(Sel, 

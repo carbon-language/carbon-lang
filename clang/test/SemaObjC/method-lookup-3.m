@@ -50,3 +50,8 @@ void f4(id a0, Abstract *a1) {
 void f5(id a0, Abstract *a1) { 
   [ a0 setZ: a1];
 }
+
+// pr7861
+void f6(id<A> a0) {
+  Abstract *l = [a0 x];
+}
