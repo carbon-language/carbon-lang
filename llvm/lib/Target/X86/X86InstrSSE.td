@@ -4822,12 +4822,10 @@ let isAsmParserOnly = 1, Predicates = [HasAVX] in {
                                       VR128, memopv16i8, i128mem, 0>, VEX_4V;
   defm VBLENDPD : SS41I_binop_rmi_int<0x0D, "vblendpd", int_x86_sse41_blendpd,
                                       VR128, memopv16i8, i128mem, 0>, VEX_4V;
-  let Pattern = []<dag> in {
-  defm VBLENDPSY : SS41I_binop_rmi_int<0x0C, "vblendps", int_x86_sse41_blendps,
-                                      VR256, memopv32i8, i256mem, 0>, VEX_4V;
-  defm VBLENDPDY : SS41I_binop_rmi_int<0x0D, "vblendpd", int_x86_sse41_blendpd,
-                                      VR256, memopv32i8, i256mem, 0>, VEX_4V;
-  }
+  defm VBLENDPSY : SS41I_binop_rmi_int<0x0C, "vblendps",
+            int_x86_avx_blend_ps_256, VR256, memopv32i8, i256mem, 0>, VEX_4V;
+  defm VBLENDPDY : SS41I_binop_rmi_int<0x0D, "vblendpd",
+            int_x86_avx_blend_pd_256, VR256, memopv32i8, i256mem, 0>, VEX_4V;
   defm VPBLENDW : SS41I_binop_rmi_int<0x0E, "vpblendw", int_x86_sse41_pblendw,
                                       VR128, memopv16i8, i128mem, 0>, VEX_4V;
   defm VMPSADBW : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_sse41_mpsadbw,
@@ -4888,13 +4886,10 @@ defm VBLENDVPS  : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR128, i128mem,
                                            memopv16i8, int_x86_sse41_blendvps>;
 defm VPBLENDVB  : SS41I_quaternary_int_avx<0x4C, "vpblendvb", VR128, i128mem,
                                            memopv16i8, int_x86_sse41_pblendvb>;
-
-let Pattern = []<dag> in { // FIXME: implement 256 intrinsics here.
 defm VBLENDVPDY : SS41I_quaternary_int_avx<0x4B, "vblendvpd", VR256, i256mem,
-                                           memopv32i8, int_x86_sse41_blendvpd>;
+                                         memopv32i8, int_x86_avx_blendv_pd_256>;
 defm VBLENDVPSY : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR256, i256mem,
-                                           memopv32i8, int_x86_sse41_blendvps>;
-}
+                                         memopv32i8, int_x86_avx_blendv_ps_256>;
 
 /// SS41I_ternary_int - SSE 4.1 ternary operator
 let Uses = [XMM0], Constraints = "$src1 = $dst" in {
