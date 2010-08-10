@@ -31,11 +31,13 @@ class VNInfo;
 /// SplitAnalysis - Analyze a LiveInterval, looking for live range splitting
 /// opportunities.
 class SplitAnalysis {
+public:
   const MachineFunction &mf_;
   const LiveIntervals &lis_;
   const MachineLoopInfo &loops_;
   const TargetInstrInfo &tii_;
 
+private:
   // Current live interval.
   const LiveInterval *curli_;
 

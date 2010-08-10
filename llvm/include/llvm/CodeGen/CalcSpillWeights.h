@@ -25,11 +25,11 @@ namespace llvm {
   class VirtRegAuxInfo {
     MachineFunction &mf_;
     LiveIntervals &lis_;
-    MachineLoopInfo &loops_;
+    const MachineLoopInfo &loops_;
     DenseMap<unsigned, float> hint_;
   public:
     VirtRegAuxInfo(MachineFunction &mf, LiveIntervals &lis,
-                   MachineLoopInfo &loops) :
+                   const MachineLoopInfo &loops) :
       mf_(mf), lis_(lis), loops_(loops) {}
 
     /// CalculateRegClass - recompute the register class for li from its uses.

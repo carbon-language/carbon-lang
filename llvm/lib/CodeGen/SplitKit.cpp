@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "splitter"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
+#include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -566,8 +567,12 @@ void SplitEditor::rewrite() {
     intervals_.push_back(dupli_);
   }
 
-  // FIXME: *Calculate spill weights, allocation hints, and register classes for
-  // firstInterval..
+  // Calculate spill weight and allocation hints for new intervals.
+  VirtRegAuxInfo vrai(vrm_.getMachineFunction(), lis_, sa_.loops_);
+  for (unsigned i = firstInterval, e = intervals_.size(); i != e; ++i) {
+    LiveInterval &li = *intervals_[i];
+    vrai.CalculateWeightAndHint(li);
+  }
 }
 
 
