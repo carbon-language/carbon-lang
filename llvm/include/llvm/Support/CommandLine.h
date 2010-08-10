@@ -31,7 +31,7 @@
 #include <vector>
 
 namespace llvm {
-  
+
 /// cl Namespace - This namespace contains all of the command line option
 /// processing machinery.  It is intentionally a short name to make qualified
 /// usage concise.
@@ -788,7 +788,7 @@ public:
 
   DataType &getValue() { check(); return *Location; }
   const DataType &getValue() const { check(); return *Location; }
-  
+
   operator DataType() const { return this->getValue(); }
 };
 
