@@ -835,7 +835,7 @@ public:
       // FIXME: Currently, these are never generated (see code below). I cannot
       // find a case where they are actually emitted.
       Type = RIT_Vanilla;
-    } else if (SD) {
+    } else {
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
         IsExtern = 1;
