@@ -149,6 +149,7 @@ public:
     Expr::EvalResult Result;
     if (E->Evaluate(Result, CGF.getContext()) && Result.Val.isInt()) {
       assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
+      CGF.EmitDeclRefExprDbgValue(E, Result.Val);
       return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
     }
     return EmitLoadOfLValue(E);

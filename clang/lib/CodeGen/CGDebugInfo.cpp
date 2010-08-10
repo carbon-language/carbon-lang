@@ -1801,6 +1801,17 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                     true/*definition*/, Var);
 }
 
+void CGDebugInfo::EmitGlobalVariable(llvm::Constant *C, const ValueDecl *VD,
+                                     CGBuilderTy &Builder) {
+  // Create the descriptor for the variable.
+  llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
+  llvm::StringRef Name = VD->getName();
+  DebugFactory.CreateGlobalVariable(Unit, Name, Name, Name, Unit,
+                                    getLineNumber(VD->getLocation()),
+                                    getOrCreateType(VD->getType(), Unit),
+                                    true, true, C);
+}
+
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
 /// namespace decl.
 llvm::DINameSpace 
