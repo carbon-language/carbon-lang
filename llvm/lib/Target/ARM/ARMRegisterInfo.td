@@ -294,8 +294,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
 
       if (Subtarget.isThumb1Only()) {
         I = THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
-        // Mac OS X requires FP not to be clobbered for backtracing purpose.
-        return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+        return RI->hasFP(MF) ? I-1 : I;
       }
 
       if (Subtarget.isTargetDarwin()) {
@@ -312,8 +311,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
           I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));
       }
 
-      // Mac OS X requires FP not to be clobbered for backtracing purpose.
-      return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+      return RI->hasFP(MF) ? I-1 : I;
     }
   }];
 }
@@ -403,8 +401,7 @@ def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
 
       if (Subtarget.isThumb1Only()) {
         I = THUMB_rGPRAO + (sizeof(THUMB_rGPRAO)/sizeof(unsigned));
-        // Mac OS X requires FP not to be clobbered for backtracing purpose.
-        return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+        return RI->hasFP(MF) ? I-1 : I;
       }
 
       if (Subtarget.isTargetDarwin()) {
@@ -421,8 +418,7 @@ def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
           I = ARM_rGPRAO_1 + (sizeof(ARM_rGPRAO_1)/sizeof(unsigned));
       }
 
-      // Mac OS X requires FP not to be clobbered for backtracing purpose.
-      return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+      return RI->hasFP(MF) ? I-1 : I;
     }
   }];
 }
@@ -449,11 +445,9 @@ def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
     tGPRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       tGPRClass::iterator I =
         THUMB_tGPR_AO + (sizeof(THUMB_tGPR_AO)/sizeof(unsigned));
-      // Mac OS X requires FP not to be clobbered for backtracing purpose.
-      return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+      return RI->hasFP(MF) ? I-1 : I;
     }
   }];
 }

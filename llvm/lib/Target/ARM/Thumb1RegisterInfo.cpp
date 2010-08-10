@@ -742,11 +742,11 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
       dl = MBBI->getDebugLoc();
   }
 
-  // Darwin ABI requires FP to point to the stack slot that contains the
-  // previous FP.
-  if (STI.isTargetDarwin() || hasFP(MF)) {
+  // Adjust FP so it point to the stack slot that contains the previous FP.
+  if (hasFP(MF)) {
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
+    AFI->setShouldRestoreSPFromFP(true);
   }
 
   // Determine starting offsets of spill areas.
@@ -764,10 +764,9 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, TII, dl, *this, -NumBytes);
   }
 
-  if (STI.isTargetELF() && hasFP(MF)) {
+  if (STI.isTargetELF() && hasFP(MF))
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
                              AFI->getFramePtrSpillOffset());
-  }
 
   AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
@@ -828,7 +827,7 @@ void Thumb1RegisterInfo::emitEpilogue(MachineFunction &MF,
                  AFI->getGPRCalleeSavedArea2Size() +
                  AFI->getDPRCalleeSavedAreaSize());
 
-    if (hasFP(MF)) {
+    if (AFI->shouldRestoreSPFromFP()) {
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
       // frame pointer stack slot or target is ELF and the function has FP.
