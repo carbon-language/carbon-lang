@@ -287,8 +287,17 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
       Info.setAllowsRegister();
       Info.setAllowsMemory();
       break;
-    case ',': // FIXME: Until we handle multiple alternative constraints,
-      return true;  // ignore everything after the first comma.
+    case ',': // multiple alternative constraint.  Pass it.
+      Name++;
+      // An output constraint must start with '=' or '+'
+      if (*Name != '=' && *Name != '+')
+        return false;
+      if (*Name == '+')
+        Info.setIsReadWrite();
+      break;
+    case '?': // Disparage slightly code.
+    case '!': // Disparage severly.
+      break;  // Pass them.
     }
 
     Name++;
@@ -382,8 +391,11 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       Info.setAllowsRegister();
       Info.setAllowsMemory();
       break;
-    case ',': // FIXME: Until we handle multiple alternative constraints,
-      return true;  // ignore everything after the first comma.
+    case ',': // multiple alternative constraint.  Ignore comma.
+      break;
+    case '?': // Disparage slightly code.
+    case '!': // Disparage severly.
+      break;  // Pass them.
     }
 
     Name++;

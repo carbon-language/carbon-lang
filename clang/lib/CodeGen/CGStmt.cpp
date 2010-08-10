@@ -861,16 +861,24 @@ static std::string
 SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
                  llvm::SmallVectorImpl<TargetInfo::ConstraintInfo> *OutCons=0) {
   std::string Result;
+  std::string tmp;
 
   while (*Constraint) {
     switch (*Constraint) {
     default:
-      Result += Target.convertConstraint(*Constraint);
+      tmp = Target.convertConstraint(*Constraint);
+      if (Result.find(tmp) == std::string::npos) // Combine unique constraints
+        Result += tmp;
       break;
     // Ignore these
     case '*':
     case '?':
     case '!':
+    case '=': // Will see this and the following in mult-alt constraints.
+    case '+':
+      break;
+    case ',':			// FIXME - Until the back-end properly supports
+		return Result;	// multiple alternative constraints, we stop here.
       break;
     case 'g':
       Result += "imr";
