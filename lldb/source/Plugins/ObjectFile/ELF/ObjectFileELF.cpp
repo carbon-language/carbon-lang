@@ -148,8 +148,7 @@ ObjectFileELF::~ObjectFileELF()
 bool
 ObjectFileELF::IsExecutable() const
 {
-    // FIXME: How is this marked in ELF?
-    return false;
+    return m_header.e_type == ET_EXEC;
 }
 
 ByteOrder
