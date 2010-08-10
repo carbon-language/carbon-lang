@@ -30,3 +30,10 @@ test2 10
 
 // CHECK: .globl	"1 23  $3 2"
 test3 1,2 3
+
+.macro test4
+.globl "$0 -- $1"
+.endmacro
+
+// CHECK: .globl	"ab)(,) -- (cd)"
+test4 a b)(,),(cd)

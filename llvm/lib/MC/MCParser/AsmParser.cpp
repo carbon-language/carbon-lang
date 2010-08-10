@@ -1032,12 +1032,14 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
     // list.
     if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
       MacroArguments.push_back(std::vector<AsmToken>());
-    } else if (Lexer.is(AsmToken::LParen)) {
-      ++ParenLevel;
-    } else if (Lexer.is(AsmToken::RParen)) {
-      if (ParenLevel)
-        --ParenLevel;
     } else {
+      // Adjust the current parentheses level.
+      if (Lexer.is(AsmToken::LParen))
+        ++ParenLevel;
+      else if (Lexer.is(AsmToken::RParen) && ParenLevel)
+        --ParenLevel;
+
+      // Append the token to the current argument list.
       MacroArguments.back().push_back(getTok());
     }
     Lex();
