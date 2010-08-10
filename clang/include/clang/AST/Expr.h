@@ -2752,11 +2752,13 @@ public:
 /// VAArgExpr, used for the builtin function __builtin_va_arg.
 class VAArgExpr : public Expr {
   Stmt *Val;
+  TypeSourceInfo *TInfo;
   SourceLocation BuiltinLoc, RParenLoc;
 public:
-  VAArgExpr(SourceLocation BLoc, Expr* e, QualType t, SourceLocation RPLoc)
+  VAArgExpr(SourceLocation BLoc, Expr* e, TypeSourceInfo *TInfo,
+            SourceLocation RPLoc, QualType t)
     : Expr(VAArgExprClass, t, t->isDependentType(), false),
-      Val(e),
+      Val(e), TInfo(TInfo),
       BuiltinLoc(BLoc),
       RParenLoc(RPLoc) { }
 
@@ -2766,6 +2768,9 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
   void setSubExpr(Expr *E) { Val = E; }
+
+  TypeSourceInfo *getWrittenTypeInfo() const { return TInfo; }
+  void setWrittenTypeInfo(TypeSourceInfo *TI) { TInfo = TI; }
 
   SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
   void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }

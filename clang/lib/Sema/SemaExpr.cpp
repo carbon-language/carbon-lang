@@ -7314,7 +7314,14 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                                         ExprArg expr, TypeTy *type,
                                         SourceLocation RPLoc) {
-  QualType T = GetTypeFromParser(type);
+  TypeSourceInfo *TInfo;
+  QualType T = GetTypeFromParser(type, &TInfo);
+  return BuildVAArgExpr(BuiltinLoc, move(expr), TInfo, RPLoc);
+}
+
+Sema::OwningExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
+                                            ExprArg expr, TypeSourceInfo *TInfo,
+                                            SourceLocation RPLoc) {
   Expr *E = static_cast<Expr*>(expr.get());
   Expr *OrigExpr = E;
 
@@ -7348,9 +7355,8 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   // FIXME: Warn if a non-POD type is passed in.
 
   expr.release();
-  return Owned(new (Context) VAArgExpr(BuiltinLoc, E, 
-                                       T.getNonLValueExprType(Context),
-                                       RPLoc));
+  QualType T = TInfo->getType().getNonLValueExprType(Context);
+  return Owned(new (Context) VAArgExpr(BuiltinLoc, E, TInfo, RPLoc, T));
 }
 
 Sema::OwningExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {

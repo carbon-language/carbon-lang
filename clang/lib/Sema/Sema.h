@@ -2168,6 +2168,9 @@ public:
   virtual OwningExprResult ActOnVAArg(SourceLocation BuiltinLoc,
                                       ExprArg expr, TypeTy *type,
                                       SourceLocation RPLoc);
+  OwningExprResult BuildVAArgExpr(SourceLocation BuiltinLoc,
+                                  ExprArg expr, TypeSourceInfo *TInfo,
+                                  SourceLocation RPLoc);
 
   // __null
   virtual OwningExprResult ActOnGNUNullExpr(SourceLocation TokenLoc);

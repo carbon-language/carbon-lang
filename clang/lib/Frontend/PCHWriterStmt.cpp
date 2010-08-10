@@ -695,6 +695,7 @@ void PCHStmtWriter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubExpr());
+  Writer.AddTypeSourceInfo(E->getWrittenTypeInfo(), Record);
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_VA_ARG;

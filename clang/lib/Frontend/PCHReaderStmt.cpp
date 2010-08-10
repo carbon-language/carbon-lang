@@ -710,6 +710,7 @@ void PCHStmtReader::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 void PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
   VisitExpr(E);
   E->setSubExpr(Reader.ReadSubExpr());
+  E->setWrittenTypeInfo(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }

@@ -1680,7 +1680,10 @@ DEF_TRAVERSE_STMT(ShuffleVectorExpr, { })
 DEF_TRAVERSE_STMT(StmtExpr, { })
 DEF_TRAVERSE_STMT(UnresolvedLookupExpr, { })
 DEF_TRAVERSE_STMT(UnresolvedMemberExpr, { })
-DEF_TRAVERSE_STMT(VAArgExpr, { })
+DEF_TRAVERSE_STMT(VAArgExpr, {
+    // The child-iterator will pick up the expression argument.
+    TRY_TO(TraverseTypeLoc(S->getWrittenTypeInfo()->getTypeLoc()));
+  })
 DEF_TRAVERSE_STMT(CXXConstructExpr, { })
 
 DEF_TRAVERSE_STMT(CXXTemporaryObjectExpr, {

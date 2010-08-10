@@ -1311,10 +1311,12 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildVAArgExpr(SourceLocation BuiltinLoc, ExprArg SubExpr,
-                                    QualType T, SourceLocation RParenLoc) {
-    return getSema().ActOnVAArg(BuiltinLoc, move(SubExpr), T.getAsOpaquePtr(),
-                                RParenLoc);
+  OwningExprResult RebuildVAArgExpr(SourceLocation BuiltinLoc,
+                                    ExprArg SubExpr, TypeSourceInfo *TInfo,
+                                    SourceLocation RParenLoc) {
+    return getSema().BuildVAArgExpr(BuiltinLoc,
+                                    move(SubExpr), TInfo,
+                                    RParenLoc);
   }
 
   /// \brief Build a new expression list in parentheses.
@@ -4780,14 +4782,12 @@ TreeTransform<Derived>::TransformImplicitValueInitExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformVAArgExpr(VAArgExpr *E) {
-  // FIXME: Do we want the type as written?
-  QualType T;
-
+  TypeSourceInfo *TInfo;
   {
     // FIXME: Source location isn't quite accurate.
     TemporaryBase Rebase(*this, E->getBuiltinLoc(), DeclarationName());
-    T = getDerived().TransformType(E->getType());
-    if (T.isNull())
+    TInfo = getDerived().TransformType(E->getWrittenTypeInfo());
+    if (!TInfo)
       return SemaRef.ExprError();
   }
 
@@ -4796,12 +4796,12 @@ TreeTransform<Derived>::TransformVAArgExpr(VAArgExpr *E) {
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getType() &&
+      TInfo == E->getWrittenTypeInfo() &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildVAArgExpr(E->getBuiltinLoc(), move(SubExpr),
-                                       T, E->getRParenLoc());
+                                       TInfo, E->getRParenLoc());
 }
 
 template<typename Derived>
