@@ -859,6 +859,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // Do not enable the missing -dealloc check.
       // '-analyzer-check-objc-missing-dealloc',
       CmdArgs.push_back("-analyzer-check-objc-unused-ivars");
+      CmdArgs.push_back("-analyzer-check-idempotent-operations");
     }
 
     // Set the output format. The default is plist, for (lame) historical
