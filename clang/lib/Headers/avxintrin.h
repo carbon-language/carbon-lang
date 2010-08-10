@@ -577,19 +577,19 @@ _mm256_cvttps_epi32(__m256 a)
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_movehdup_ps(__m256 a)
 {
-  return (__m256)__builtin_ia32_movshdup256((__v8sf)a);
+  return __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_moveldup_ps(__m256 a)
 {
-  return (__m256)__builtin_ia32_movsldup256((__v8sf)a);
+  return __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6);
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_movedup_pd(__m256d a)
 {
-  return (__m256d)__builtin_ia32_movddup256((__v4df)a);
+  return __builtin_shufflevector(a, a, 0, 0, 2, 2);
 }
 
 /* Unpack and Interleave */
