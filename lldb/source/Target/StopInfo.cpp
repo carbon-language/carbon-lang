@@ -96,6 +96,35 @@ public:
         }
         return m_should_stop;
     }
+    
+    virtual void
+    PerformAction (Event *event_ptr)
+    {
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        if (bp_site_sp)
+        {
+            size_t num_owners = bp_site_sp->GetNumberOfOwners();
+            for (size_t j = 0; j < num_owners; j++)
+            {
+                // The breakpoint action is an asynchronous breakpoint callback.  If we ever need to have both
+                // callbacks and actions on the same breakpoint, we'll have to split this into two.
+                lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
+                StoppointCallbackContext context (event_ptr, 
+                                                  &m_thread.GetProcess(), 
+                                                  &m_thread, 
+                                                  m_thread.GetStackFrameAtIndex(0).get(),
+                                                  false);
+                bp_loc_sp->InvokeCallback (&context);
+            }
+        }
+        else
+        {
+            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
+
+            if (log)
+                log->Printf ("Process::%s could not find breakpoint site id: %lld...", __FUNCTION__, m_value);
+        }
+    }
         
     virtual bool
     ShouldNotify (Event *event_ptr)
@@ -123,9 +152,20 @@ public:
     {
         if (m_description.empty())
         {
-            StreamString strm;
-            strm.Printf("breakpoint %lli", m_value);
-            m_description.swap (strm.GetString());
+            BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+            if (bp_site_sp)
+            {
+                StreamString strm;
+                strm.Printf("breakpoint ");
+                bp_site_sp->GetDescription(&strm, eDescriptionLevelBrief);
+                m_description.swap (strm.GetString());
+            }
+            else
+            {
+                StreamString strm;
+                strm.Printf("breakpoint site %lli", m_value);
+                m_description.swap (strm.GetString());
+            }
         }
         return m_description.c_str();
     }

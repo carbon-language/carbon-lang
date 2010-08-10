@@ -1746,8 +1746,6 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         int num_threads = m_process_sp->GetThreadList().GetSize();
         int idx;
 
-        int32_t should_stop_count = -1;
-        int32_t should_run_count = -1;
         for (idx = 0; idx < num_threads; ++idx)
         {
             lldb::ThreadSP thread_sp = m_process_sp->GetThreadList().GetThreadAtIndex(idx);
@@ -1755,25 +1753,14 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             StopInfo *stop_info = thread_sp->GetStopInfo ();
             if (stop_info)
             {
-                if (stop_info->ShouldStop(event_ptr))
-                {
-                    if (should_stop_count < 0)
-                        should_stop_count = 1;
-                    else
-                        should_stop_count++;
-                }
-                else
-                {
-                    if (should_run_count < 0)
-                        should_run_count = 1;
-                    else
-                        should_run_count++;
-                }
+                stop_info->PerformAction(event_ptr);
             }
         }
         
-        // Are we secretly watching the private state here? Should we look at the
-        // should_run_count or the "should_stop_count" and the "should_run_count"???
+        // The stop action might restart the target.  If it does, then we want to mark that in the
+        // event so that whoever is receiving it will know to wait for the running event and reflect
+        // that state appropriately.
+
         if (m_process_sp->GetPrivateState() == eStateRunning)
             SetRestarted(true);
     }

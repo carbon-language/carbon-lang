@@ -54,6 +54,13 @@ public:
 
     virtual lldb::StopReason
     GetStopReason () const = 0;
+    
+    // Perform any action that is associated with this stop.  This is done as the
+    // Event is removed from the event queue.
+    virtual void
+    PerformAction (Event *event_ptr)
+    {
+    }
 
     // Stop the thread by default. Subclasses can override this to allow
     // the thread to continue if desired.
