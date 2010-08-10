@@ -4783,14 +4783,9 @@ TreeTransform<Derived>::TransformImplicitValueInitExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformVAArgExpr(VAArgExpr *E) {
-  TypeSourceInfo *TInfo;
-  {
-    // FIXME: Source location isn't quite accurate.
-    TemporaryBase Rebase(*this, E->getBuiltinLoc(), DeclarationName());
-    TInfo = getDerived().TransformType(E->getWrittenTypeInfo());
-    if (!TInfo)
-      return SemaRef.ExprError();
-  }
+  TypeSourceInfo *TInfo = getDerived().TransformType(E->getWrittenTypeInfo());
+  if (!TInfo)
+    return SemaRef.ExprError();
 
   OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
@@ -4858,18 +4853,14 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformTypesCompatibleExpr(TypesCompatibleExpr *E) {
   TypeSourceInfo *TInfo1;
   TypeSourceInfo *TInfo2;
-  {
-    // FIXME: Source location isn't quite accurate.
-    TemporaryBase Rebase(*this, E->getBuiltinLoc(), DeclarationName());
+  
+  TInfo1 = getDerived().TransformType(E->getArgTInfo1());
+  if (!TInfo1)
+    return SemaRef.ExprError();
 
-    TInfo1 = getDerived().TransformType(E->getArgTInfo1());
-    if (!TInfo1)
-      return SemaRef.ExprError();
-
-    TInfo2 = getDerived().TransformType(E->getArgTInfo2());
-    if (!TInfo2)
-      return SemaRef.ExprError();
-  }
+  TInfo2 = getDerived().TransformType(E->getArgTInfo2());
+  if (!TInfo2)
+    return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
       TInfo1 == E->getArgTInfo1() &&
