@@ -136,14 +136,16 @@ bool Region::isSimple() const {
     return false;
 
   for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
-       ++PI)
-    if (!contains(*PI)) {
+       ++PI) {
+    BasicBlock *Pred = *PI;
+    if (DT->getNode(Pred) && !contains(Pred)) {
       if (found) {
         isSimple = false;
         break;
       }
       found = true;
     }
+  }
 
   found = false;
 
