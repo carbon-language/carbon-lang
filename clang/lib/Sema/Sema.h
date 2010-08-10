@@ -2154,6 +2154,10 @@ public:
   virtual OwningExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                                     TypeTy *arg1, TypeTy *arg2,
                                                     SourceLocation RPLoc);
+  OwningExprResult BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
+                                            TypeSourceInfo *argTInfo1,
+                                            TypeSourceInfo *argTInfo2,
+                                            SourceLocation RPLoc);
 
   // __builtin_choose_expr(constExpr, expr1, expr2)
   virtual OwningExprResult ActOnChooseExpr(SourceLocation BuiltinLoc,

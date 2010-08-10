@@ -730,8 +730,8 @@ void PCHStmtReader::VisitStmtExpr(StmtExpr *E) {
 
 void PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
   VisitExpr(E);
-  E->setArgType1(Reader.GetType(Record[Idx++]));
-  E->setArgType2(Reader.GetType(Record[Idx++]));
+  E->setArgTInfo1(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
+  E->setArgTInfo2(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }

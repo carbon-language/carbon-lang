@@ -718,8 +718,8 @@ void PCHStmtWriter::VisitStmtExpr(StmtExpr *E) {
 
 void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
   VisitExpr(E);
-  Writer.AddTypeRef(E->getArgType1(), Record);
-  Writer.AddTypeRef(E->getArgType2(), Record);
+  Writer.AddTypeSourceInfo(E->getArgTInfo1(), Record);
+  Writer.AddTypeSourceInfo(E->getArgTInfo2(), Record);
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_TYPES_COMPATIBLE;

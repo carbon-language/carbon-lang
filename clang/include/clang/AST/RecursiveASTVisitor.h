@@ -1633,8 +1633,8 @@ DEF_TRAVERSE_STMT(CXXTypeidExpr, {
   })
 
 DEF_TRAVERSE_STMT(TypesCompatibleExpr, {
-    TRY_TO(TraverseType(S->getArgType1()));
-    TRY_TO(TraverseType(S->getArgType2()));
+    TRY_TO(TraverseTypeLoc(S->getArgTInfo1()->getTypeLoc()));
+    TRY_TO(TraverseTypeLoc(S->getArgTInfo2()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {

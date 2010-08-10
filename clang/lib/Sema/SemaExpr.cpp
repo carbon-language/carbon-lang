@@ -7019,12 +7019,21 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                                       TypeTy *arg1,TypeTy *arg2,
                                                       SourceLocation RPLoc) {
-  // FIXME: Preserve type source info.
-  QualType argT1 = GetTypeFromParser(arg1);
-  QualType argT2 = GetTypeFromParser(arg2);
+  TypeSourceInfo *argTInfo1;
+  QualType argT1 = GetTypeFromParser(arg1, &argTInfo1);
+  TypeSourceInfo *argTInfo2;
+  QualType argT2 = GetTypeFromParser(arg2, &argTInfo2);
 
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
 
+  return BuildTypesCompatibleExpr(BuiltinLoc, argTInfo1, argTInfo2, RPLoc);
+}
+
+Sema::OwningExprResult
+Sema::BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
+                               TypeSourceInfo *argTInfo1,
+                               TypeSourceInfo *argTInfo2,
+                               SourceLocation RPLoc) {
   if (getLangOptions().CPlusPlus) {
     Diag(BuiltinLoc, diag::err_types_compatible_p_in_cplusplus)
       << SourceRange(BuiltinLoc, RPLoc);
@@ -7032,8 +7041,9 @@ Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
   }
 
   return Owned(new (Context) TypesCompatibleExpr(Context.IntTy, BuiltinLoc,
-                                                 argT1, argT2, RPLoc));
+                                                 argTInfo1, argTInfo2, RPLoc));
 }
+
 
 Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
                                              ExprArg cond,

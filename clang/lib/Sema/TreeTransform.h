@@ -1354,11 +1354,11 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                              QualType T1, QualType T2,
+                                              TypeSourceInfo *TInfo1,
+                                              TypeSourceInfo *TInfo2,
                                               SourceLocation RParenLoc) {
-    return getSema().ActOnTypesCompatibleExpr(BuiltinLoc,
-                                              T1.getAsOpaquePtr(),
-                                              T2.getAsOpaquePtr(),
+    return getSema().BuildTypesCompatibleExpr(BuiltinLoc,
+                                              TInfo1, TInfo2,
                                               RParenLoc);
   }
 
@@ -4855,27 +4855,29 @@ TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  QualType T1, T2;
+  TypeSourceInfo *TInfo1;
+  TypeSourceInfo *TInfo2;
   {
     // FIXME: Source location isn't quite accurate.
     TemporaryBase Rebase(*this, E->getBuiltinLoc(), DeclarationName());
 
-    T1 = getDerived().TransformType(E->getArgType1());
-    if (T1.isNull())
+    TInfo1 = getDerived().TransformType(E->getArgTInfo1());
+    if (!TInfo1)
       return SemaRef.ExprError();
 
-    T2 = getDerived().TransformType(E->getArgType2());
-    if (T2.isNull())
+    TInfo2 = getDerived().TransformType(E->getArgTInfo2());
+    if (!TInfo2)
       return SemaRef.ExprError();
   }
 
   if (!getDerived().AlwaysRebuild() &&
-      T1 == E->getArgType1() &&
-      T2 == E->getArgType2())
+      TInfo1 == E->getArgTInfo1() &&
+      TInfo2 == E->getArgTInfo2())
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildTypesCompatibleExpr(E->getBuiltinLoc(),
-                                                 T1, T2, E->getRParenLoc());
+                                                 TInfo1, TInfo2,
+                                                 E->getRParenLoc());
 }
 
 template<typename Derived>

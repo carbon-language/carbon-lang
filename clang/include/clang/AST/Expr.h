@@ -2537,23 +2537,27 @@ public:
 /// expressions) are compatible. The result of this built-in function can be
 /// used in integer constant expressions.
 class TypesCompatibleExpr : public Expr {
-  QualType Type1;
-  QualType Type2;
+  TypeSourceInfo *TInfo1;
+  TypeSourceInfo *TInfo2;
   SourceLocation BuiltinLoc, RParenLoc;
 public:
   TypesCompatibleExpr(QualType ReturnType, SourceLocation BLoc,
-                      QualType t1, QualType t2, SourceLocation RP) :
+                      TypeSourceInfo *tinfo1, TypeSourceInfo *tinfo2,
+                      SourceLocation RP) :
     Expr(TypesCompatibleExprClass, ReturnType, false, false),
-    Type1(t1), Type2(t2), BuiltinLoc(BLoc), RParenLoc(RP) {}
+    TInfo1(tinfo1), TInfo2(tinfo2), BuiltinLoc(BLoc), RParenLoc(RP) {}
 
   /// \brief Build an empty __builtin_type_compatible_p expression.
   explicit TypesCompatibleExpr(EmptyShell Empty)
     : Expr(TypesCompatibleExprClass, Empty) { }
 
-  QualType getArgType1() const { return Type1; }
-  void setArgType1(QualType T) { Type1 = T; }
-  QualType getArgType2() const { return Type2; }
-  void setArgType2(QualType T) { Type2 = T; }
+  TypeSourceInfo *getArgTInfo1() const { return TInfo1; }
+  void setArgTInfo1(TypeSourceInfo *TInfo) { TInfo1 = TInfo; }
+  TypeSourceInfo *getArgTInfo2() const { return TInfo2; }
+  void setArgTInfo2(TypeSourceInfo *TInfo) { TInfo2 = TInfo; }
+
+  QualType getArgType1() const { return TInfo1->getType(); }
+  QualType getArgType2() const { return TInfo2->getType(); }
 
   SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
   void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
