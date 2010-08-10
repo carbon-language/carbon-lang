@@ -2332,16 +2332,10 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(S, NewTD, D);
 
-  // Merge the decl with the existing one if appropriate. If the decl is
-  // in an outer scope, it isn't the same thing.
-  FilterLookupForScope(*this, Previous, DC, S, /*ConsiderLinkage*/ false);
-  if (!Previous.empty()) {
-    Redeclaration = true;
-    MergeTypeDefDecl(NewTD, Previous);
-  }
-
   // C99 6.7.7p2: If a typedef name specifies a variably modified type
   // then it shall have block scope.
+  // Note that variably modified types must be fixed before merging the decl so
+  // that redeclarations will match.
   QualType T = NewTD->getUnderlyingType();
   if (T->isVariablyModifiedType()) {
     setFunctionHasBranchProtectedScope();
@@ -2363,6 +2357,14 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         NewTD->setInvalidDecl();
       }
     }
+  }
+
+  // Merge the decl with the existing one if appropriate. If the decl is
+  // in an outer scope, it isn't the same thing.
+  FilterLookupForScope(*this, Previous, DC, S, /*ConsiderLinkage*/ false);
+  if (!Previous.empty()) {
+    Redeclaration = true;
+    MergeTypeDefDecl(NewTD, Previous);
   }
 
   // If this is the C FILE type, notify the AST context.
