@@ -338,11 +338,11 @@ private:
 
   /// addSourceLine - Add location information to specified debug information
   /// entry.
-  void addSourceLine(DIE *Die, const DIVariable V);
-  void addSourceLine(DIE *Die, const DIGlobalVariable G);
-  void addSourceLine(DIE *Die, const DISubprogram SP);
-  void addSourceLine(DIE *Die, const DIType Ty);
-  void addSourceLine(DIE *Die, const DINameSpace NS);
+  void addSourceLine(DIE *Die, DIVariable V);
+  void addSourceLine(DIE *Die, DIGlobalVariable G);
+  void addSourceLine(DIE *Die, DISubprogram SP);
+  void addSourceLine(DIE *Die, DIType Ty);
+  void addSourceLine(DIE *Die, DINameSpace NS);
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.

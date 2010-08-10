@@ -502,7 +502,7 @@ void DwarfDebug::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIVariable V) {
+void DwarfDebug::addSourceLine(DIE *Die, DIVariable V) {
   // Verify variable.
   if (!V.Verify())
     return;
@@ -517,7 +517,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIVariable V) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable G) {
+void DwarfDebug::addSourceLine(DIE *Die, DIGlobalVariable G) {
   // Verify global variable.
   if (!G.Verify())
     return;
@@ -532,7 +532,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIGlobalVariable G) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram SP) {
+void DwarfDebug::addSourceLine(DIE *Die, DISubprogram SP) {
   // Verify subprogram.
   if (!SP.Verify())
     return;
@@ -552,7 +552,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram SP) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DIType Ty) {
+void DwarfDebug::addSourceLine(DIE *Die, DIType Ty) {
   // Verify type.
   if (!Ty.Verify())
     return;
@@ -569,7 +569,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType Ty) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace NS) {
+void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
   // Verify namespace.
   if (!NS.Verify())
     return;
