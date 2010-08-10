@@ -270,7 +270,7 @@ void InlineSpiller::reMaterializeAll() {
     lis_.RemoveMachineInstrFromMaps(DefMI);
     vrm_.RemoveMachineInstrFromMaps(DefMI);
     DefMI->eraseFromParent();
-    li_->removeValNo(VNI);
+    VNI->setIsDefAccurate(false);
     anyRemoved = true;
   }
 
@@ -286,8 +286,8 @@ void InlineSpiller::reMaterializeAll() {
     MachineBasicBlock::iterator NextMI = MI;
     ++NextMI;
     if (NextMI != MI->getParent()->end() && !lis_.isNotInMIMap(NextMI)) {
-      SlotIndex NearIdx = lis_.getInstructionIndex(NextMI);
-      if (li_->liveAt(NearIdx))
+      VNInfo *VNI = li_->getVNInfoAt(lis_.getInstructionIndex(NextMI));
+      if (VNI && (VNI->hasPHIKill() || usedValues_.count(VNI)))
         continue;
     }
     DEBUG(dbgs() << "Removing debug info due to remat:" << "\t" << *MI);
