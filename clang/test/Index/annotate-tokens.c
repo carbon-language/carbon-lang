@@ -9,7 +9,14 @@ void f(void *ptr) {
   const char * hello = "Hello";
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:9:32 %s | FileCheck %s
+typedef int Int;
+void g(int i, ...) {
+  __builtin_va_list va;
+  (void)__builtin_va_arg(va, Int);
+  (void)__builtin_types_compatible_p(Int, Int);
+}
+
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:17:1 %s | FileCheck %s
 // CHECK: Identifier: "T" [4:3 - 4:4] TypeRef=T:1:13
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
 // CHECK: Identifier: "t_ptr" [4:6 - 4:11] VarDecl=t_ptr:4:6 (Definition)
@@ -61,5 +68,11 @@ void f(void *ptr) {
 // CHECK: Literal: ""Hello"" [9:24 - 9:31] UnexposedExpr=
 // CHECK: Punctuation: ";" [9:31 - 9:32] UnexposedStmt=
 // CHECK: Punctuation: "}" [10:1 - 10:2] UnexposedStmt=
+// CHECK: Keyword: "__builtin_va_arg" [15:9 - 15:25] UnexposedExpr=
+// CHECK: Identifier: "Int" [15:30 - 15:33] TypeRef=Int:12:13
+// CHECK: Keyword: "__builtin_types_compatible_p" [16:9 - 16:37] UnexposedExpr=
+// CHECK: Identifier: "Int" [16:38 - 16:41] TypeRef=Int:12:13
+// CHECK: Punctuation: "," [16:41 - 16:42] UnexposedExpr=
+// CHECK: Identifier: "Int" [16:43 - 16:46] TypeRef=Int:12:13
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 %s | FileCheck %s
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 %s | FileCheck %s

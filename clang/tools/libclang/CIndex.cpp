@@ -344,6 +344,8 @@ public:
 //  bool VisitSwitchCase(SwitchCase *S);
 
   // Expression visitors
+  // FIXME: DeclRefExpr with template arguments, nested-name-specifier
+  // FIXME: MemberExpr with template arguments, nested-name-specifier
   bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   bool VisitBlockExpr(BlockExpr *B);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
@@ -352,6 +354,11 @@ public:
   bool VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   bool VisitOffsetOfExpr(OffsetOfExpr *E);
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+  // FIXME: AddrLabelExpr (once we have cursors for labels)
+  bool VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
+  bool VisitVAArgExpr(VAArgExpr *E);
+  // FIXME: InitListExpr (for the designators)
+  // FIXME: DesignatedInitExpr
 };
 
 } // end anonymous namespace
@@ -1108,6 +1115,18 @@ bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
       return true;
 
   return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
+  return Visit(E->getArgTInfo1()->getTypeLoc()) || 
+         Visit(E->getArgTInfo2()->getTypeLoc());
+}
+
+bool CursorVisitor::VisitVAArgExpr(VAArgExpr *E) {
+  if (Visit(E->getWrittenTypeInfo()->getTypeLoc()))
+    return true;
+  
+  return Visit(MakeCXCursor(E->getSubExpr(), StmtParent, TU));
 }
 
 bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
