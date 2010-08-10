@@ -164,8 +164,9 @@ out.writeln()
 
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
-import lldb
+import lldb, atexit
 lldb.SBDebugger.Initialize()
+atexit.register(lambda: lldb.SBDebugger.Terminate())
 
 # Create a singleton SBDebugger in the lldb namespace.
 lldb.DBG = lldb.SBDebugger.Create()
@@ -184,8 +185,7 @@ if ("LLDB_LOG" in os.environ):
 unittest2.signals.installHandler()
 
 # Invoke the default TextTestRunner to run the test suite.
-unittest2.TextTestRunner(verbosity=verbose).run(suite)
+result = unittest2.TextTestRunner(verbosity=verbose).run(suite)
 
-# Add some delay before calling SBDebugger.Terminate().
-time.sleep(1)
-lldb.SBDebugger.Terminate()
+# Exiting.
+sys.exit(not result.wasSuccessful)
