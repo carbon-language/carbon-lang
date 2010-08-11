@@ -1176,22 +1176,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
         Intrinsic<[llvm_v2f64_ty], [llvm_v4f64_ty], [IntrNoMem]>;
 }
 
-// Vector unpack and interleave
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_unpckh_pd_256 : GCCBuiltin<"__builtin_ia32_unpckhpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_unpckl_pd_256 : GCCBuiltin<"__builtin_ia32_unpcklpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty], [IntrNoMem]>;
-  def int_x86_avx_unpckh_ps_256 : GCCBuiltin<"__builtin_ia32_unpckhps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-  def int_x86_avx_unpckl_ps_256 : GCCBuiltin<"__builtin_ia32_unpcklps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty], [IntrNoMem]>;
-}
-
 // Vector bit test
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_vtestz_pd : GCCBuiltin<"__builtin_ia32_vtestzpd">,
