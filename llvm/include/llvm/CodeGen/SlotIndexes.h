@@ -128,7 +128,8 @@ namespace llvm {
     friend class SlotIndexes;
     friend struct DenseMapInfo<SlotIndex>;
 
-  private:
+    enum Slot { LOAD, USE, DEF, STORE, NUM };
+
     static const unsigned PHI_BIT = 1 << 2;
 
     PointerIntPair<IndexListEntry*, 3, unsigned> lie;
@@ -146,6 +147,11 @@ namespace llvm {
       return entry().getIndex() | getSlot();
     }
 
+    /// Returns the slot for this SlotIndex.
+    Slot getSlot() const {
+      return static_cast<Slot>(lie.getInt()  & ~PHI_BIT);
+    }
+
     static inline unsigned getHashValue(const SlotIndex &v) {
       IndexListEntry *ptrVal = &v.entry();
       return (unsigned((intptr_t)ptrVal) >> 4) ^
@@ -153,11 +159,6 @@ namespace llvm {
     }
 
   public:
-
-    // FIXME: Ugh. This is public because LiveIntervalAnalysis is still using it
-    // for some spill weight stuff. Fix that, then make this private.
-    enum Slot { LOAD, USE, DEF, STORE, NUM };
-
     static inline SlotIndex getEmptyKey() {
       return SlotIndex(IndexListEntry::getEmptyKeyEntry(), 0);
     }
@@ -235,14 +236,29 @@ namespace llvm {
       return other.getIndex() - getIndex();
     }
 
-    /// Returns the slot for this SlotIndex.
-    Slot getSlot() const {
-      return static_cast<Slot>(lie.getInt()  & ~PHI_BIT);
-    }
-
     /// Returns the state of the PHI bit.
     bool isPHI() const {
       return lie.getInt() & PHI_BIT;
+    }
+
+    /// isLoad - Return true if this is a LOAD slot.
+    bool isLoad() const {
+      return getSlot() == LOAD;
+    }
+
+    /// isDef - Return true if this is a DEF slot.
+    bool isDef() const {
+      return getSlot() == DEF;
+    }
+
+    /// isUse - Return true if this is a USE slot.
+    bool isUse() const {
+      return getSlot() == USE;
+    }
+
+    /// isStore - Return true if this is a STORE slot.
+    bool isStore() const {
+      return getSlot() == STORE;
     }
 
     /// Returns the base index for associated with this index. The base index

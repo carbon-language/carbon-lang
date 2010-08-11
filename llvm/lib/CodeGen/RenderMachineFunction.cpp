@@ -551,11 +551,9 @@ namespace llvm {
           return AliveStack;
         }
       } else {
-        if (i.getSlot() == SlotIndex::DEF &&
-            mi->definesRegister(li->reg, tri)) {
+        if (i.isDef() && mi->definesRegister(li->reg, tri)) {
           return Defined;
-        } else if (i.getSlot() == SlotIndex::USE &&
-                   mi->readsRegister(li->reg)) {
+        } else if (i.isUse() && mi->readsRegister(li->reg)) {
           return Used;
         } else {
           if (vrm == 0 || 
@@ -771,7 +769,7 @@ namespace llvm {
       os << indent + s(2) << "<tr height=6ex>\n";
       
       // Render the code column.
-      if (i.getSlot() == SlotIndex::LOAD) {
+      if (i.isLoad()) {
         MachineBasicBlock *mbb = sis->getMBBFromIndex(i);
         mi = sis->getInstructionFromIndex(i);
 
