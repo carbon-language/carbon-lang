@@ -356,7 +356,7 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
 
 void LTOModule::addAsmGlobalSymbol(const char *name) {
   // only add new define if not already defined
-  if (_defines.count(name) == 0)
+  if (_defines.count(name))
     return;
 
   // string is owned by _defines
