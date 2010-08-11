@@ -26,7 +26,7 @@ class GlobalValue;
 class ARMSubtarget : public TargetSubtarget {
 protected:
   enum ARMArchEnum {
-    V4, V4T, V5T, V5TE, V6, V6T2, V7A, V7M
+    V4, V4T, V5T, V5TE, V6, V6M, V6T2, V7A, V7M
   };
 
   enum ARMFPEnum {

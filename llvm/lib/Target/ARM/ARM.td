@@ -20,20 +20,6 @@ include "llvm/Target/Target.td"
 // ARM Subtarget features.
 //
 
-def ArchV4T     : SubtargetFeature<"v4t", "ARMArchVersion", "V4T",
-                                   "ARM v4T">;
-def ArchV5T     : SubtargetFeature<"v5t", "ARMArchVersion", "V5T",
-                                   "ARM v5T">;
-def ArchV5TE    : SubtargetFeature<"v5te", "ARMArchVersion", "V5TE",
-                                   "ARM v5TE, v5TEj, v5TExp">;
-def ArchV6      : SubtargetFeature<"v6", "ARMArchVersion", "V6",
-                                   "ARM v6">;
-def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
-                                   "ARM v6t2">;
-def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
-                                   "ARM v7A">;
-def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
-                                   "ARM v7M">;
 def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
                                    "Enable VFP2 instructions">;
 def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",
@@ -46,10 +32,10 @@ def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
                                      "Enable half-precision floating point">;
 def FeatureHWDiv  : SubtargetFeature<"hwdiv", "HasHardwareDivide", "true",
                                      "Enable divide instructions">;
-def FeatureT2ExtractPack: SubtargetFeature<"t2xtpk", "HasT2ExtractPack", "true",
+def FeatureT2XtPk : SubtargetFeature<"t2xtpk", "HasT2ExtractPack", "true",
                                  "Enable Thumb2 extract and pack instructions">;
-def FeatureDB : SubtargetFeature<"db", "HasDataBarrier", "true",
-                                 "Has data barrier (dmb / dsb) instructions">;
+def FeatureDB     : SubtargetFeature<"db", "HasDataBarrier", "true",
+                                   "Has data barrier (dmb / dsb) instructions">;
 def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
                                          "FP compare + branch is slow">;
 
@@ -59,17 +45,39 @@ def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
 // FIXME: Currently, this is only flagged for Cortex-A8. It may be true for
 // others as well. We should do more benchmarking and confirm one way or
 // the other.
-def FeatureHasSlowVMLx   : SubtargetFeature<"vmlx", "SlowVMLx", "true",
-                                            "Disable VFP MAC instructions">;
+def FeatureHasSlowVMLx : SubtargetFeature<"vmlx", "SlowVMLx", "true",
+                                          "Disable VFP MAC instructions">;
 // Some processors benefit from using NEON instructions for scalar
 // single-precision FP operations.
-def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
-                                        "true",
-                                        "Use NEON for single precision FP">;
+def FeatureNEONForFP   : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
+                                          "true",
+                                          "Use NEON for single precision FP">;
 
 // Disable 32-bit to 16-bit narrowing for experimentation.
 def FeaturePref32BitThumb : SubtargetFeature<"32bit", "Pref32BitThumb", "true",
                                              "Prefer 32-bit Thumb instrs">;
+
+
+// ARM architectures.
+def ArchV4T     : SubtargetFeature<"v4t", "ARMArchVersion", "V4T",
+                                   "ARM v4T">;
+def ArchV5T     : SubtargetFeature<"v5t", "ARMArchVersion", "V5T",
+                                   "ARM v5T">;
+def ArchV5TE    : SubtargetFeature<"v5te", "ARMArchVersion", "V5TE",
+                                   "ARM v5TE, v5TEj, v5TExp">;
+def ArchV6      : SubtargetFeature<"v6", "ARMArchVersion", "V6",
+                                   "ARM v6">;
+def ArchV6M     : SubtargetFeature<"v6m", "ARMArchVersion", "V6M",
+                                   "ARM v6m",
+                                   [FeatureDB]>;
+def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
+                                   "ARM v6t2">;
+def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
+                                   "ARM v7A",
+                                   [FeatureDB]>;
+def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
+                                   "ARM v7M",
+                                   [FeatureDB]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -128,7 +136,7 @@ def : Processor<"mpcorenovfp",      ARMV6Itineraries, [ArchV6]>;
 def : Processor<"mpcore",           ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
 
 // V6M Processors.
-def : Processor<"cortex-m0",        ARMV6Itineraries, [ArchV6, FeatureDB]>;
+def : Processor<"cortex-m0",        ARMV6Itineraries, [ArchV6M]>;
 
 // V6T2 Processors.
 def : Processor<"arm1156t2-s",     ARMV6Itineraries,
@@ -139,17 +147,13 @@ def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureHasSlowVMLx,
-                 FeatureSlowFPBrcc, FeatureNEONForFP, FeatureT2ExtractPack,
-                 FeatureDB]>;
+                 FeatureSlowFPBrcc, FeatureNEONForFP, FeatureT2XtPk]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2ExtractPack,
-                 FeatureDB]>;
+                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2XtPk]>;
 
 // V7M Processors.
-def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv,
-                                     FeatureDB]>;
-def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureThumb2, FeatureHWDiv,
-                                     FeatureDB]>;
+def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;
+def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
