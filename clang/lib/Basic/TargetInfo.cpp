@@ -359,6 +359,7 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       if (!resolveSymbolicName(Name, OutputConstraints, NumOutputs, Index))
         return false;
 
+      Info.setTiedOperand(Index, OutputConstraints[Index]);
       break;
     }
     case '%': // commutative
