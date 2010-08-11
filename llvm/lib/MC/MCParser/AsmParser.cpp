@@ -916,6 +916,21 @@ bool AsmParser::ParseStatement() {
   if (!HadError && Lexer.isNot(AsmToken::EndOfStatement))
     HadError = TokError("unexpected token in argument list");
 
+  // Dump the parsed representation, if requested.
+  if (getShowParsedOperands()) {
+    SmallString<256> Str;
+    raw_svector_ostream OS(Str);
+    OS << "parsed instruction: [";
+    for (unsigned i = 0; i != ParsedOperands.size(); ++i) {
+      if (i != 0)
+        OS << ", ";
+      ParsedOperands[i]->dump(OS);
+    }
+    OS << "]";
+
+    PrintMessage(IDLoc, OS.str(), "note");
+  }
+
   // If parsing succeeded, match the instruction.
   if (!HadError) {
     MCInst Inst;

@@ -51,6 +51,10 @@ ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 static cl::opt<bool>
 ShowInst("show-inst", cl::desc("Show internal instruction representation"));
 
+static cl::opt<bool>
+ShowInstOperands("show-inst-operands",
+                 cl::desc("Show instructions operands as parsed"));
+
 static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
@@ -320,6 +324,7 @@ static int AssembleInput(const char *ProgName) {
     return 1;
   }
 
+  Parser->setShowParsedOperands(ShowInstOperands);
   Parser->setTargetParser(*TAP.get());
 
   int Res = Parser->Run(NoInitialTextSection);

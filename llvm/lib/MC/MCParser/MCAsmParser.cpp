@@ -15,7 +15,7 @@
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
-MCAsmParser::MCAsmParser() : TargetParser(0) {
+MCAsmParser::MCAsmParser() : TargetParser(0), ShowParsedOperands(0) {
 }
 
 MCAsmParser::~MCAsmParser() {
