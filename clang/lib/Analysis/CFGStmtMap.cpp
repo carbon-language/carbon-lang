@@ -31,7 +31,7 @@ CFGBlock *CFGStmtMap::getBlock(Stmt *S) {
   // If 'S' isn't in the map, walk the ParentMap to see if one of its ancestors
   // is in the map.
   while (X) {
-    SMap::iterator I = SM->find(S);
+    SMap::iterator I = SM->find(X);
     if (I != SM->end()) {
       CFGBlock *B = I->second;
       // Memoize this lookup.
