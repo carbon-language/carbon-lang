@@ -58,9 +58,13 @@ class GRCoreEngine {
   ///   number of times different CFGBlocks have been visited along a path.
   GRBlockCounter::Factory BCounterFactory;
   
-  /// A flag that indicates whether paths were halted because 
-  ///  ProcessBlockEntrace returned false. 
-  bool BlockAborted;
+  
+  typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
+          BlocksAborted;
+
+  /// The locations where we stopped doing work because we visited a location
+  ///  too many times.
+  BlocksAborted blocksAborted;
 
   void GenerateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
@@ -129,16 +133,14 @@ public:
   GRCoreEngine(GRSubEngine& subengine)
     : SubEngine(subengine), G(new ExplodedGraph()),
       WList(GRWorkList::MakeBFS()),
-      BCounterFactory(G->getAllocator()),
-      BlockAborted(false) {}
+      BCounterFactory(G->getAllocator()) {}
 
   /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GRCoreEngine object assumes ownership of 'wlist'.
   GRCoreEngine(GRWorkList* wlist, GRSubEngine& subengine)
     : SubEngine(subengine), G(new ExplodedGraph()), WList(wlist),
-      BCounterFactory(G->getAllocator()),
-      BlockAborted(false) {}
+      BCounterFactory(G->getAllocator()) {}
 
   ~GRCoreEngine() {
     delete WList;
@@ -160,10 +162,17 @@ public:
                                        ExplodedNodeSet &Dst);
 
   // Functions for external checking of whether we have unfinished work
-  bool wasBlockAborted() const { return BlockAborted; }
-  bool hasWorkRemaining() const { return BlockAborted || WList->hasWork(); }
+  bool wasBlockAborted() const { return !blocksAborted.empty(); }
+  bool hasWorkRemaining() const { return wasBlockAborted() || WList->hasWork(); }
 
   GRWorkList *getWorkList() const { return WList; }
+
+  BlocksAborted::const_iterator blocks_aborted_begin() const {
+    return blocksAborted.begin();
+  }
+  BlocksAborted::const_iterator blocks_aborted_end() const {
+    return blocksAborted.end();
+  }
 };
 
 class GRStmtNodeBuilder {

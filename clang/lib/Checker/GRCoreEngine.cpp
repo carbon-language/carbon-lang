@@ -200,7 +200,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
     }
   }
 
-  SubEngine.ProcessEndWorklist(WList->hasWork() || BlockAborted);
+  SubEngine.ProcessEndWorklist(hasWorkRemaining());
   return WList->hasWork();
 }
 
@@ -250,8 +250,9 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   if (ProcessBlockEntrance(Blk, Pred, WList->getBlockCounter()))
     GenerateNode(BlockEntrance(Blk, Pred->getLocationContext()),
                  Pred->State, Pred);
-  else
-    BlockAborted = true;
+  else {
+    blocksAborted.push_back(std::make_pair(L, Pred));
+  }
 }
 
 void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
