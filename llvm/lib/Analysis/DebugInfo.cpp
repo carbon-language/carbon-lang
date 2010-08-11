@@ -1093,7 +1093,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
                                 unsigned LineNo, DIType Ty,bool isLocalToUnit,
                                 bool isDefinition, llvm::Constant *Val) {
   Value *Elts[] = {
-    GetTagConstant(dwarf::DW_TAG_constant),
+    GetTagConstant(dwarf::DW_TAG_variable),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
     Context,
     MDString::get(VMContext, Name),
