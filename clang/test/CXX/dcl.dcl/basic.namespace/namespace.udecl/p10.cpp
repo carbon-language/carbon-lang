@@ -31,3 +31,4 @@ namespace test1 {
     using test1::foo;
   }
 }
+

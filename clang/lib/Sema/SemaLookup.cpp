@@ -311,7 +311,8 @@ void LookupResult::resolveKind() {
   if (ResultKind == Ambiguous) return;
 
   llvm::SmallPtrSet<NamedDecl*, 16> Unique;
-
+  llvm::SmallPtrSet<QualType, 16> UniqueTypes;
+  
   bool Ambiguous = false;
   bool HasTag = false, HasFunction = false, HasNonFunction = false;
   bool HasFunctionTemplate = false, HasUnresolved = false;
@@ -323,32 +324,49 @@ void LookupResult::resolveKind() {
     NamedDecl *D = Decls[I]->getUnderlyingDecl();
     D = cast<NamedDecl>(D->getCanonicalDecl());
 
+    // Redeclarations of types via typedef can occur both within a scope
+    // and, through using declarations and directives, across scopes. There is
+    // no ambiguity if they all refer to the same type, so unique based on the
+    // canonical type.
+    if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
+      if (!TD->getDeclContext()->isRecord()) {
+        QualType T = SemaRef.Context.getTypeDeclType(TD);
+        if (!UniqueTypes.insert(SemaRef.Context.getCanonicalType(T))) {
+          // The type is not unique; pull something off the back and continue
+          // at this index.
+          Decls[I] = Decls[--N];
+          continue;
+        }
+      }
+    }
+    
     if (!Unique.insert(D)) {
       // If it's not unique, pull something off the back (and
       // continue at this index).
       Decls[I] = Decls[--N];
-    } else {
-      // Otherwise, do some decl type analysis and then continue.
+      continue;
+    } 
+    
+    // Otherwise, do some decl type analysis and then continue.
 
-      if (isa<UnresolvedUsingValueDecl>(D)) {
-        HasUnresolved = true;
-      } else if (isa<TagDecl>(D)) {
-        if (HasTag)
-          Ambiguous = true;
-        UniqueTagIndex = I;
-        HasTag = true;
-      } else if (isa<FunctionTemplateDecl>(D)) {
-        HasFunction = true;
-        HasFunctionTemplate = true;
-      } else if (isa<FunctionDecl>(D)) {
-        HasFunction = true;
-      } else {
-        if (HasNonFunction)
-          Ambiguous = true;
-        HasNonFunction = true;
-      }
-      I++;
+    if (isa<UnresolvedUsingValueDecl>(D)) {
+      HasUnresolved = true;
+    } else if (isa<TagDecl>(D)) {
+      if (HasTag)
+        Ambiguous = true;
+      UniqueTagIndex = I;
+      HasTag = true;
+    } else if (isa<FunctionTemplateDecl>(D)) {
+      HasFunction = true;
+      HasFunctionTemplate = true;
+    } else if (isa<FunctionDecl>(D)) {
+      HasFunction = true;
+    } else {
+      if (HasNonFunction)
+        Ambiguous = true;
+      HasNonFunction = true;
     }
+    I++;
   }
 
   // C++ [basic.scope.hiding]p2:
