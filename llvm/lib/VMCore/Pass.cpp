@@ -141,17 +141,6 @@ Pass *FunctionPass::createPrinterPass(raw_ostream &O,
   return createPrintFunctionPass(Banner, &O);
 }
 
-// run - On a function, we simply initialize, run the function, then finalize.
-//
-bool FunctionPass::run(Function &F) {
-  // Passes are not run on external functions!
-  if (F.isDeclaration()) return false;
-
-  bool Changed = doInitialization(*F.getParent());
-  Changed |= runOnFunction(F);
-  return Changed | doFinalization(*F.getParent());
-}
-
 bool FunctionPass::doInitialization(Module &) {
   // By default, don't do anything.
   return false;

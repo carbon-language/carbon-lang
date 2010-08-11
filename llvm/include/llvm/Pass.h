@@ -295,11 +295,6 @@ public:
   ///
   virtual bool doFinalization(Module &);
 
-  /// run - On a function, we simply initialize, run the function, then
-  /// finalize.
-  ///
-  bool run(Function &F);
-
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T);
 
