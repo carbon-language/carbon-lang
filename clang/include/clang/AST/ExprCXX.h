@@ -1411,7 +1411,7 @@ class OverloadExpr : public Expr {
   unsigned NumResults;
 
   /// The common name of these declarations.
-  DeclarationName Name;
+  DeclarationNameInfo NameInfo;
 
   /// The scope specifier, if any.
   NestedNameSpecifier *Qualifier;
@@ -1419,16 +1419,13 @@ class OverloadExpr : public Expr {
   /// The source range of the scope specifier.
   SourceRange QualifierRange;
 
-  /// The location of the name.
-  SourceLocation NameLoc;
-
 protected:
   /// True if the name was a template-id.
   bool HasExplicitTemplateArgs;
 
   OverloadExpr(StmtClass K, ASTContext &C, QualType T, bool Dependent,
                NestedNameSpecifier *Qualifier, SourceRange QRange,
-               DeclarationName Name, SourceLocation NameLoc,
+               const DeclarationNameInfo &NameInfo,
                bool HasTemplateArgs,
                UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
@@ -1473,13 +1470,17 @@ public:
   /// Gets the number of declarations in the unresolved set.
   unsigned getNumDecls() const { return NumResults; }
 
+  /// Gets the full name info.
+  const DeclarationNameInfo &getNameInfo() const { return NameInfo; }
+  void setNameInfo(const DeclarationNameInfo &N) { NameInfo = N; }
+
   /// Gets the name looked up.
-  DeclarationName getName() const { return Name; }
-  void setName(DeclarationName N) { Name = N; }
+  DeclarationName getName() const { return NameInfo.getName(); }
+  void setName(DeclarationName N) { NameInfo.setName(N); }
 
   /// Gets the location of the name.
-  SourceLocation getNameLoc() const { return NameLoc; }
-  void setNameLoc(SourceLocation Loc) { NameLoc = Loc; }
+  SourceLocation getNameLoc() const { return NameInfo.getLoc(); }
+  void setNameLoc(SourceLocation Loc) { NameInfo.setLoc(Loc); }
 
   /// Fetches the nested-name qualifier, if one was given.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
@@ -1542,11 +1543,11 @@ class UnresolvedLookupExpr : public OverloadExpr {
   UnresolvedLookupExpr(ASTContext &C, QualType T, bool Dependent, 
                        CXXRecordDecl *NamingClass,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
-                       DeclarationName Name, SourceLocation NameLoc,
+                       const DeclarationNameInfo &NameInfo,
                        bool RequiresADL, bool Overloaded, bool HasTemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End)
     : OverloadExpr(UnresolvedLookupExprClass, C, T, Dependent, Qualifier, 
-                   QRange, Name, NameLoc, HasTemplateArgs, Begin, End),
+                   QRange, NameInfo, HasTemplateArgs, Begin, End),
       RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
@@ -1561,16 +1562,15 @@ public:
                                       CXXRecordDecl *NamingClass,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
-                                      DeclarationName Name,
-                                      SourceLocation NameLoc,
+                                      const DeclarationNameInfo &NameInfo,
                                       bool ADL, bool Overloaded,
                                       UnresolvedSetIterator Begin, 
                                       UnresolvedSetIterator End) {
     return new(C) UnresolvedLookupExpr(C,
                                        Dependent ? C.DependentTy : C.OverloadTy,
                                        Dependent, NamingClass,
-                                       Qualifier, QualifierRange,
-                                       Name, NameLoc, ADL, Overloaded, false,
+                                       Qualifier, QualifierRange, NameInfo,
+                                       ADL, Overloaded, false,
                                        Begin, End);
   }
 
@@ -1579,8 +1579,7 @@ public:
                                       CXXRecordDecl *NamingClass,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
-                                      DeclarationName Name,
-                                      SourceLocation NameLoc,
+                                      const DeclarationNameInfo &NameInfo,
                                       bool ADL,
                                       const TemplateArgumentListInfo &Args,
                                       UnresolvedSetIterator Begin, 
@@ -1642,7 +1641,7 @@ public:
   }
 
   virtual SourceRange getSourceRange() const {
-    SourceRange Range(getNameLoc());
+    SourceRange Range(getNameInfo().getSourceRange());
     if (getQualifier()) Range.setBegin(getQualifierRange().getBegin());
     if (hasExplicitTemplateArgs()) Range.setEnd(getRAngleLoc());
     return Range;
@@ -1673,10 +1672,7 @@ public:
 /// declaration can be found.
 class DependentScopeDeclRefExpr : public Expr {
   /// The name of the entity we will be referencing.
-  DeclarationName Name;
-
-  /// Location of the name of the declaration we're referencing.
-  SourceLocation Loc;
+  DeclarationNameInfo NameInfo;
 
   /// QualifierRange - The source range that covers the
   /// nested-name-specifier.
@@ -1692,12 +1688,10 @@ class DependentScopeDeclRefExpr : public Expr {
   DependentScopeDeclRefExpr(QualType T,
                             NestedNameSpecifier *Qualifier,
                             SourceRange QualifierRange,
-                            DeclarationName Name,
-                            SourceLocation NameLoc,
+                            const DeclarationNameInfo &NameInfo,
                             bool HasExplicitTemplateArgs)
     : Expr(DependentScopeDeclRefExprClass, T, true, true),
-      Name(Name), Loc(NameLoc),
-      QualifierRange(QualifierRange), Qualifier(Qualifier),
+      NameInfo(NameInfo), QualifierRange(QualifierRange), Qualifier(Qualifier),
       HasExplicitTemplateArgs(HasExplicitTemplateArgs)
   {}
 
@@ -1705,20 +1699,23 @@ public:
   static DependentScopeDeclRefExpr *Create(ASTContext &C,
                                            NestedNameSpecifier *Qualifier,
                                            SourceRange QualifierRange,
-                                           DeclarationName Name,
-                                           SourceLocation NameLoc,
+                                           const DeclarationNameInfo &NameInfo,
                               const TemplateArgumentListInfo *TemplateArgs = 0);
 
   static DependentScopeDeclRefExpr *CreateEmpty(ASTContext &C,
                                                 unsigned NumTemplateArgs);
 
   /// \brief Retrieve the name that this expression refers to.
-  DeclarationName getDeclName() const { return Name; }
-  void setDeclName(DeclarationName N) { Name =  N; }
+  const DeclarationNameInfo &getNameInfo() const { return NameInfo; }
+  void setNameInfo(const DeclarationNameInfo &N) { NameInfo =  N; }
+
+  /// \brief Retrieve the name that this expression refers to.
+  DeclarationName getDeclName() const { return NameInfo.getName(); }
+  void setDeclName(DeclarationName N) { NameInfo.setName(N); }
 
   /// \brief Retrieve the location of the name within the expression.
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
+  SourceLocation getLocation() const { return NameInfo.getLoc(); }
+  void setLocation(SourceLocation L) { NameInfo.setLoc(L); }
 
   /// \brief Retrieve the source range of the nested-name-specifier.
   SourceRange getQualifierRange() const { return QualifierRange; }
@@ -2003,10 +2000,7 @@ class CXXDependentScopeMemberExpr : public Expr {
   /// \brief The member to which this member expression refers, which
   /// can be name, overloaded operator, or destructor.
   /// FIXME: could also be a template-id
-  DeclarationName Member;
-
-  /// \brief The location of the member name.
-  SourceLocation MemberLoc;
+  DeclarationNameInfo MemberNameInfo;
 
   CXXDependentScopeMemberExpr(ASTContext &C,
                           Expr *Base, QualType BaseType, bool IsArrow,
@@ -2014,8 +2008,7 @@ class CXXDependentScopeMemberExpr : public Expr {
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
                           NamedDecl *FirstQualifierFoundInScope,
-                          DeclarationName Member,
-                          SourceLocation MemberLoc,
+                          DeclarationNameInfo MemberNameInfo,
                           const TemplateArgumentListInfo *TemplateArgs);
 
 public:
@@ -2026,14 +2019,13 @@ public:
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
                           NamedDecl *FirstQualifierFoundInScope,
-                          DeclarationName Member,
-                          SourceLocation MemberLoc)
+                          DeclarationNameInfo MemberNameInfo)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
     HasExplicitTemplateArgs(false), OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
-    Member(Member), MemberLoc(MemberLoc) { }
+    MemberNameInfo(MemberNameInfo) { }
 
   static CXXDependentScopeMemberExpr *
   Create(ASTContext &C,
@@ -2042,8 +2034,7 @@ public:
          NestedNameSpecifier *Qualifier,
          SourceRange QualifierRange,
          NamedDecl *FirstQualifierFoundInScope,
-         DeclarationName Member,
-         SourceLocation MemberLoc,
+         DeclarationNameInfo MemberNameInfo,
          const TemplateArgumentListInfo *TemplateArgs);
 
   static CXXDependentScopeMemberExpr *
@@ -2104,13 +2095,20 @@ public:
 
   /// \brief Retrieve the name of the member that this expression
   /// refers to.
-  DeclarationName getMember() const { return Member; }
-  void setMember(DeclarationName N) { Member = N; }
+  const DeclarationNameInfo &getMemberNameInfo() const {
+    return MemberNameInfo;
+  }
+  void setMemberNameInfo(const DeclarationNameInfo &N) { MemberNameInfo = N; }
+
+  /// \brief Retrieve the name of the member that this expression
+  /// refers to.
+  DeclarationName getMember() const { return MemberNameInfo.getName(); }
+  void setMember(DeclarationName N) { MemberNameInfo.setName(N); }
 
   // \brief Retrieve the location of the name of the member that this
   // expression refers to.
-  SourceLocation getMemberLoc() const { return MemberLoc; }
-  void setMemberLoc(SourceLocation L) { MemberLoc = L; }
+  SourceLocation getMemberLoc() const { return MemberNameInfo.getLoc(); }
+  void setMemberLoc(SourceLocation L) { MemberNameInfo.setLoc(L); }
 
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
@@ -2180,12 +2178,12 @@ public:
     else if (getQualifier())
       Range.setBegin(getQualifierRange().getBegin());
     else
-      Range.setBegin(MemberLoc);
+      Range.setBegin(MemberNameInfo.getBeginLoc());
 
     if (hasExplicitTemplateArgs())
       Range.setEnd(getRAngleLoc());
     else
-      Range.setEnd(MemberLoc);
+      Range.setEnd(MemberNameInfo.getEndLoc());
     return Range;
   }
 
@@ -2238,8 +2236,7 @@ class UnresolvedMemberExpr : public OverloadExpr {
                        SourceLocation OperatorLoc,
                        NestedNameSpecifier *Qualifier,
                        SourceRange QualifierRange,
-                       DeclarationName Member,
-                       SourceLocation MemberLoc,
+                       const DeclarationNameInfo &MemberNameInfo,
                        const TemplateArgumentListInfo *TemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End);
   
@@ -2254,8 +2251,7 @@ public:
          SourceLocation OperatorLoc,
          NestedNameSpecifier *Qualifier,
          SourceRange QualifierRange,
-         DeclarationName Member,
-         SourceLocation MemberLoc,
+         const DeclarationNameInfo &MemberNameInfo,
          const TemplateArgumentListInfo *TemplateArgs,
          UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
@@ -2298,6 +2294,11 @@ public:
 
   /// \brief Retrieves the naming class of this lookup.
   CXXRecordDecl *getNamingClass() const;
+
+  /// \brief Retrieve the full name info for the member that this expression
+  /// refers to.
+  const DeclarationNameInfo &getMemberNameInfo() const { return getNameInfo(); }
+  void setMemberNameInfo(const DeclarationNameInfo &N) { setNameInfo(N); }
 
   /// \brief Retrieve the name of the member that this expression
   /// refers to.
@@ -2353,18 +2354,14 @@ public:
   }
 
   virtual SourceRange getSourceRange() const {
-    SourceRange Range;
+    SourceRange Range = getMemberNameInfo().getSourceRange();
     if (!isImplicitAccess())
       Range.setBegin(Base->getSourceRange().getBegin());
     else if (getQualifier())
       Range.setBegin(getQualifierRange().getBegin());
-    else
-      Range.setBegin(getMemberLoc());
 
     if (hasExplicitTemplateArgs())
       Range.setEnd(getRAngleLoc());
-    else
-      Range.setEnd(getMemberLoc());
     return Range;
   }
 

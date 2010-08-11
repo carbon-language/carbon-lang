@@ -15,6 +15,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
@@ -485,3 +486,98 @@ getHashValue(clang::DeclarationName N) {
   return DenseMapInfo<void*>::getHashValue(N.getAsOpaquePtr());
 }
 
+DeclarationNameLoc::DeclarationNameLoc(DeclarationName Name) {
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+    break;
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    NamedType.TInfo = 0;
+    break;
+  case DeclarationName::CXXOperatorName:
+    CXXOperatorName.BeginOpNameLoc = SourceLocation().getRawEncoding();
+    CXXOperatorName.EndOpNameLoc = SourceLocation().getRawEncoding();
+    break;
+  case DeclarationName::CXXLiteralOperatorName:
+    CXXLiteralOperatorName.OpNameLoc = SourceLocation().getRawEncoding();
+    break;
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    // FIXME: ?
+    break;
+  case DeclarationName::CXXUsingDirective:
+    break;
+  }
+}
+
+std::string DeclarationNameInfo::getAsString() const {
+  std::string Result;
+  llvm::raw_string_ostream OS(Result);
+  printName(OS);
+  return OS.str();
+}
+
+void DeclarationNameInfo::printName(llvm::raw_ostream &OS) const {
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXOperatorName:
+  case DeclarationName::CXXLiteralOperatorName:
+  case DeclarationName::CXXUsingDirective:
+    Name.printName(OS);
+    return;
+
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    if (TypeSourceInfo *TInfo = LocInfo.NamedType.TInfo) {
+      if (Name.getNameKind() == DeclarationName::CXXDestructorName)
+        OS << '~';
+      else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
+        OS << "operator ";
+      OS << TInfo->getType().getAsString();
+    }
+    else
+      Name.printName(OS);
+    return;
+  }
+  assert(false && "Unexpected declaration name kind");
+}
+
+SourceLocation DeclarationNameInfo::getEndLoc() const {
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+    return NameLoc;
+
+  case DeclarationName::CXXOperatorName: {
+    unsigned raw = LocInfo.CXXOperatorName.EndOpNameLoc;
+    return SourceLocation::getFromRawEncoding(raw);
+  }
+
+  case DeclarationName::CXXLiteralOperatorName: {
+    unsigned raw = LocInfo.CXXLiteralOperatorName.OpNameLoc;
+    return SourceLocation::getFromRawEncoding(raw);
+  }
+
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    if (TypeSourceInfo *TInfo = LocInfo.NamedType.TInfo)
+      return TInfo->getTypeLoc().getEndLoc();
+    else
+      return NameLoc;
+
+    // DNInfo work in progress: FIXME.
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXUsingDirective:
+    return NameLoc;
+  }
+  assert(false && "Unexpected declaration name kind");
+  return SourceLocation();
+}

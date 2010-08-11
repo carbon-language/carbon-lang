@@ -785,8 +785,8 @@ public:
                                                TypeSourceInfo *ReturnTypeInfo);
   /// \brief Create a LocInfoType to hold the given QualType and TypeSourceInfo.
   QualType CreateLocInfoType(QualType T, TypeSourceInfo *TInfo);
-  DeclarationName GetNameForDeclarator(Declarator &D);
-  DeclarationName GetNameFromUnqualifiedId(const UnqualifiedId &Name);
+  DeclarationNameInfo GetNameForDeclarator(Declarator &D);
+  DeclarationNameInfo GetNameFromUnqualifiedId(const UnqualifiedId &Name);
   static QualType GetTypeFromParser(TypeTy *Ty, TypeSourceInfo **TInfo = 0);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
@@ -1916,13 +1916,15 @@ public:
                                       bool AllowBuiltinCreation=false);
 
   OwningExprResult ActOnDependentIdExpression(const CXXScopeSpec &SS,
-                                              DeclarationName Name,
-                                              SourceLocation NameLoc,
+                                const DeclarationNameInfo &NameInfo,
                                               bool isAddressOfOperand,
                                 const TemplateArgumentListInfo *TemplateArgs);
 
   OwningExprResult BuildDeclRefExpr(ValueDecl *D, QualType Ty,
                                     SourceLocation Loc,
+                                    const CXXScopeSpec *SS = 0);
+  OwningExprResult BuildDeclRefExpr(ValueDecl *D, QualType Ty,
+                                    const DeclarationNameInfo &NameInfo,
                                     const CXXScopeSpec *SS = 0);
   VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
                                     llvm::SmallVectorImpl<FieldDecl *> &Path);
@@ -1943,18 +1945,16 @@ public:
                                   bool HasTrailingLParen);
 
   OwningExprResult BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
-                                                     DeclarationName Name,
-                                                     SourceLocation NameLoc);
+                                         const DeclarationNameInfo &NameInfo);
   OwningExprResult BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
-                                             DeclarationName Name,
-                                             SourceLocation NameLoc,
+                                const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs);
 
   OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                             LookupResult &R,
                                             bool ADL);
   OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec &SS,
-                                            SourceLocation Loc,
+                                            const DeclarationNameInfo &NameInfo,
                                             NamedDecl *D);
 
   virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
@@ -2014,8 +2014,7 @@ public:
                                             bool IsArrow,
                                             CXXScopeSpec &SS,
                                             NamedDecl *FirstQualifierInScope,
-                                            DeclarationName Name,
-                                            SourceLocation NameLoc,
+                                const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs);
 
   OwningExprResult BuildMemberReferenceExpr(ExprArg Base,
@@ -2043,8 +2042,7 @@ public:
                                             SourceLocation OpLoc,
                                             const CXXScopeSpec &SS,
                                             NamedDecl *FirstQualifierInScope,
-                                            DeclarationName Name,
-                                            SourceLocation NameLoc,
+                               const DeclarationNameInfo &NameInfo,
                                const TemplateArgumentListInfo *TemplateArgs);
 
   virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
@@ -3073,8 +3071,7 @@ public:
                                        bool RequiresADL,
                                const TemplateArgumentListInfo &TemplateArgs);
   OwningExprResult BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
-                                                DeclarationName Name,
-                                                SourceLocation NameLoc,
+                               const DeclarationNameInfo &NameInfo,
                                const TemplateArgumentListInfo &TemplateArgs);
 
   virtual TemplateNameKind ActOnDependentTemplateName(Scope *S,
@@ -3974,7 +3971,9 @@ public:
   SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
                            SourceRange Range,
                            const MultiLevelTemplateArgumentList &TemplateArgs);
-
+  DeclarationNameInfo
+  SubstDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
+                           const MultiLevelTemplateArgumentList &TemplateArgs);
   TemplateName
   SubstTemplateName(TemplateName Name, SourceLocation Loc,
                     const MultiLevelTemplateArgumentList &TemplateArgs);

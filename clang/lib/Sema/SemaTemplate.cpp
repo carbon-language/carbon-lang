@@ -334,8 +334,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
 /// specifier naming a dependent type.
 Sema::OwningExprResult
 Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
-                                 DeclarationName Name,
-                                 SourceLocation NameLoc,
+                                 const DeclarationNameInfo &NameInfo,
                                  bool isAddressOfOperand,
                            const TemplateArgumentListInfo *TemplateArgs) {
   NestedNameSpecifier *Qualifier
@@ -358,22 +357,21 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                                      /*Op*/ SourceLocation(),
                                                      Qualifier, SS.getRange(),
                                                      FirstQualifierInScope,
-                                                     Name, NameLoc,
+                                                     NameInfo,
                                                      TemplateArgs));
   }
 
-  return BuildDependentDeclRefExpr(SS, Name, NameLoc, TemplateArgs);
+  return BuildDependentDeclRefExpr(SS, NameInfo, TemplateArgs);
 }
 
 Sema::OwningExprResult
 Sema::BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
-                                DeclarationName Name,
-                                SourceLocation NameLoc,
+                                const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
   return Owned(DependentScopeDeclRefExpr::Create(Context,
                static_cast<NestedNameSpecifier*>(SS.getScopeRep()),
                                                  SS.getRange(),
-                                                 Name, NameLoc,
+                                                 NameInfo,
                                                  TemplateArgs));
 }
 
@@ -1598,7 +1596,7 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context, Dependent, R.getNamingClass(),
                                    Qualifier, QualifierRange,
-                                   R.getLookupName(), R.getNameLoc(),
+                                   R.getLookupNameInfo(),
                                    RequiresADL, TemplateArgs, 
                                    R.begin(), R.end());
 
@@ -1608,17 +1606,16 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
 // We actually only call this from template instantiation.
 Sema::OwningExprResult
 Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
-                                   DeclarationName Name,
-                                   SourceLocation NameLoc,
+                                   const DeclarationNameInfo &NameInfo,
                              const TemplateArgumentListInfo &TemplateArgs) {
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) ||
       DC->isDependentContext() ||
       RequireCompleteDeclContext(SS, DC))
-    return BuildDependentDeclRefExpr(SS, Name, NameLoc, &TemplateArgs);
+    return BuildDependentDeclRefExpr(SS, NameInfo, &TemplateArgs);
 
   bool MemberOfUnknownSpecialization;
-  LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
+  LookupResult R(*this, NameInfo, LookupOrdinaryName);
   LookupTemplateName(R, (Scope*) 0, SS, QualType(), /*Entering*/ false,
                      MemberOfUnknownSpecialization);
 
@@ -1626,14 +1623,15 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
     return ExprError();
   
   if (R.empty()) {
-    Diag(NameLoc, diag::err_template_kw_refers_to_non_template)
-      << Name << SS.getRange();
+    Diag(NameInfo.getLoc(), diag::err_template_kw_refers_to_non_template)
+      << NameInfo.getName() << SS.getRange();
     return ExprError();
   }
 
   if (ClassTemplateDecl *Temp = R.getAsSingle<ClassTemplateDecl>()) {
-    Diag(NameLoc, diag::err_template_kw_refers_to_class_template)
-      << (NestedNameSpecifier*) SS.getScopeRep() << Name << SS.getRange();
+    Diag(NameInfo.getLoc(), diag::err_template_kw_refers_to_class_template)
+      << (NestedNameSpecifier*) SS.getScopeRep()
+      << NameInfo.getName() << SS.getRange();
     Diag(Temp->getLocation(), diag::note_referenced_class_template);
     return ExprError();
   }
@@ -1693,7 +1691,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
     } else if (TNK == TNK_Non_template) {
       Diag(Name.getSourceRange().getBegin(), 
            diag::err_template_kw_refers_to_non_template)
-        << GetNameFromUnqualifiedId(Name)
+        << GetNameFromUnqualifiedId(Name).getName()
         << Name.getSourceRange()
         << TemplateKWLoc;
       return TNK_Non_template;
@@ -1726,7 +1724,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
   
   Diag(Name.getSourceRange().getBegin(), 
        diag::err_template_kw_refers_to_non_template)
-    << GetNameFromUnqualifiedId(Name)
+    << GetNameFromUnqualifiedId(Name).getName()
     << Name.getSourceRange()
     << TemplateKWLoc;
   return TNK_Non_template;
@@ -2047,12 +2045,15 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
         // We have a template argument such as \c T::template X, which we
         // parsed as a template template argument. However, since we now
         // know that we need a non-type template argument, convert this
-        // template name into an expression.          
+        // template name into an expression.
+
+        DeclarationNameInfo NameInfo(DTN->getIdentifier(),
+                                     Arg.getTemplateNameLoc());
+
         Expr *E = DependentScopeDeclRefExpr::Create(Context,
                                                     DTN->getQualifier(),
                                                Arg.getTemplateQualifierRange(),
-                                                    DTN->getIdentifier(),
-                                                    Arg.getTemplateNameLoc());
+                                                    NameInfo);
         
         TemplateArgument Result;
         if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
@@ -4938,7 +4939,9 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                                   SourceLocation TemplateLoc,
                                                   Declarator &D) {
   // Explicit instantiations always require a name.
-  DeclarationName Name = GetNameForDeclarator(D);
+  // TODO: check if/when DNInfo should replace Name.
+  DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
+  DeclarationName Name = NameInfo.getName();
   if (!Name) {
     if (!D.isInvalidType())
       Diag(D.getDeclSpec().getSourceRange().getBegin(),
@@ -4988,7 +4991,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition
                            : TSK_ExplicitInstantiationDeclaration;
     
-  LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName);
+  LookupResult Previous(*this, NameInfo, LookupOrdinaryName);
   LookupParsedName(Previous, S, &D.getCXXScopeSpec());
 
   if (!R->isFunctionType()) {

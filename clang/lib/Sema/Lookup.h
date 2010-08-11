@@ -125,15 +125,34 @@ public:
 
   typedef UnresolvedSetImpl::iterator iterator;
 
-  LookupResult(Sema &SemaRef, DeclarationName Name, SourceLocation NameLoc,
+  LookupResult(Sema &SemaRef, const DeclarationNameInfo &NameInfo,
                Sema::LookupNameKind LookupKind,
                Sema::RedeclarationKind Redecl = Sema::NotForRedeclaration)
     : ResultKind(NotFound),
       Paths(0),
       NamingClass(0),
       SemaRef(SemaRef),
-      Name(Name),
-      NameLoc(NameLoc),
+      NameInfo(NameInfo),
+      LookupKind(LookupKind),
+      IDNS(0),
+      Redecl(Redecl != Sema::NotForRedeclaration),
+      HideTags(true),
+      Diagnose(Redecl == Sema::NotForRedeclaration)
+  {
+    configure();
+  }
+
+  // TODO: consider whether this constructor should be restricted to take
+  // as input a const IndentifierInfo* (instead of Name),
+  // forcing other cases towards the constructor taking a DNInfo.
+  LookupResult(Sema &SemaRef, DeclarationName Name,
+               SourceLocation NameLoc, Sema::LookupNameKind LookupKind,
+               Sema::RedeclarationKind Redecl = Sema::NotForRedeclaration)
+    : ResultKind(NotFound),
+      Paths(0),
+      NamingClass(0),
+      SemaRef(SemaRef),
+      NameInfo(Name, NameLoc),
       LookupKind(LookupKind),
       IDNS(0),
       Redecl(Redecl != Sema::NotForRedeclaration),
@@ -151,8 +170,7 @@ public:
       Paths(0),
       NamingClass(0),
       SemaRef(Other.SemaRef),
-      Name(Other.Name),
-      NameLoc(Other.NameLoc),
+      NameInfo(Other.NameInfo),
       LookupKind(Other.LookupKind),
       IDNS(Other.IDNS),
       Redecl(Other.Redecl),
@@ -165,14 +183,24 @@ public:
     if (Paths) deletePaths(Paths);
   }
 
+  /// Gets the name info to look up.
+  const DeclarationNameInfo &getLookupNameInfo() const {
+    return NameInfo;
+  }
+
+  /// \brief Sets the name info to look up.
+  void setLookupNameInfo(const DeclarationNameInfo &NameInfo) {
+    this->NameInfo = NameInfo;
+  }
+
   /// Gets the name to look up.
   DeclarationName getLookupName() const {
-    return Name;
+    return NameInfo.getName();
   }
 
   /// \brief Sets the name to look up.
   void setLookupName(DeclarationName Name) {
-    this->Name = Name;
+    NameInfo.setName(Name);
   }
 
   /// Gets the kind of lookup to perform.
@@ -444,7 +472,7 @@ public:
   /// Gets the location of the identifier.  This isn't always defined:
   /// sometimes we're doing lookups on synthesized names.
   SourceLocation getNameLoc() const {
-    return NameLoc;
+    return NameInfo.getLoc();
   }
 
   /// \brief Get the Sema object that this lookup result is searching
@@ -572,8 +600,7 @@ private:
 
   // Parameters.
   Sema &SemaRef;
-  DeclarationName Name;
-  SourceLocation NameLoc;
+  DeclarationNameInfo NameInfo;
   SourceRange NameContextRange;
   Sema::LookupNameKind LookupKind;
   unsigned IDNS; // set by configure()

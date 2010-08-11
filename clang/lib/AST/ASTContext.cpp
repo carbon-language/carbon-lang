@@ -2534,21 +2534,31 @@ bool ASTContext::UnwrapSimilarPointerTypes(QualType &T1, QualType &T2) {
   return false;
 }
 
-DeclarationName ASTContext::getNameForTemplate(TemplateName Name) {
+DeclarationNameInfo ASTContext::getNameForTemplate(TemplateName Name,
+                                                   SourceLocation NameLoc) {
   if (TemplateDecl *TD = Name.getAsTemplateDecl())
-    return TD->getDeclName();
-  
+    // DNInfo work in progress: CHECKME: what about DNLoc?
+    return DeclarationNameInfo(TD->getDeclName(), NameLoc);
+
   if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
+    DeclarationName DName;
     if (DTN->isIdentifier()) {
-      return DeclarationNames.getIdentifier(DTN->getIdentifier());
+      DName = DeclarationNames.getIdentifier(DTN->getIdentifier());
+      return DeclarationNameInfo(DName, NameLoc);
     } else {
-      return DeclarationNames.getCXXOperatorName(DTN->getOperator());
+      DName = DeclarationNames.getCXXOperatorName(DTN->getOperator());
+      // DNInfo work in progress: FIXME: source locations?
+      DeclarationNameLoc DNLoc;
+      DNLoc.CXXOperatorName.BeginOpNameLoc = SourceLocation().getRawEncoding();
+      DNLoc.CXXOperatorName.EndOpNameLoc = SourceLocation().getRawEncoding();
+      return DeclarationNameInfo(DName, NameLoc, DNLoc);
     }
   }
 
   OverloadedTemplateStorage *Storage = Name.getAsOverloadedTemplate();
   assert(Storage);
-  return (*Storage->begin())->getDeclName();
+  // DNInfo work in progress: CHECKME: what about DNLoc?
+  return DeclarationNameInfo((*Storage->begin())->getDeclName(), NameLoc);
 }
 
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {

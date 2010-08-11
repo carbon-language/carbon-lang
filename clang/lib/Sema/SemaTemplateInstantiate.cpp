@@ -1611,6 +1611,15 @@ Sema::SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
   return Instantiator.TransformNestedNameSpecifier(NNS, Range);
 }
 
+/// \brief Do template substitution on declaration name info.
+DeclarationNameInfo
+Sema::SubstDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
+                         const MultiLevelTemplateArgumentList &TemplateArgs) {
+  TemplateInstantiator Instantiator(*this, TemplateArgs, NameInfo.getLoc(),
+                                    NameInfo.getName());
+  return Instantiator.TransformDeclarationNameInfo(NameInfo);
+}
+
 TemplateName
 Sema::SubstTemplateName(TemplateName Name, SourceLocation Loc,
                         const MultiLevelTemplateArgumentList &TemplateArgs) {

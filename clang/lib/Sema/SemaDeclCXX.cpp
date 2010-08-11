@@ -893,10 +893,11 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                ExprTy *BW, ExprTy *InitExpr, bool IsDefinition,
                                bool Deleted) {
   const DeclSpec &DS = D.getDeclSpec();
-  DeclarationName Name = GetNameForDeclarator(D);
+  DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
+  DeclarationName Name = NameInfo.getName();
+  SourceLocation Loc = NameInfo.getLoc();
   Expr *BitWidth = static_cast<Expr*>(BW);
   Expr *Init = static_cast<Expr*>(InitExpr);
-  SourceLocation Loc = D.getIdentifierLoc();
 
   assert(isa<CXXRecordDecl>(CurContext));
   assert(!DS.isFriendSpecified());
@@ -3476,7 +3477,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     return DeclPtrTy();
   }
   
-  DeclarationName TargetName = GetNameFromUnqualifiedId(Name);
+  DeclarationName TargetName = GetNameFromUnqualifiedId(Name).getName();
   if (!TargetName)
     return DeclPtrTy();
 
@@ -4248,9 +4249,9 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
   DeclarationName Name
     = Context.DeclarationNames.getCXXConstructorName(ClassType);
+  DeclarationNameInfo NameInfo(Name, ClassDecl->getLocation());
   CXXConstructorDecl *DefaultCon
-    = CXXConstructorDecl::Create(Context, ClassDecl,
-                                 ClassDecl->getLocation(), Name,
+    = CXXConstructorDecl::Create(Context, ClassDecl, NameInfo,
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0,
                                        ExceptSpec.hasExceptionSpecification(),
@@ -4354,9 +4355,9 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
   DeclarationName Name
     = Context.DeclarationNames.getCXXDestructorName(ClassType);
+  DeclarationNameInfo NameInfo(Name, ClassDecl->getLocation());
   CXXDestructorDecl *Destructor
-    = CXXDestructorDecl::Create(Context, ClassDecl,
-                                ClassDecl->getLocation(), Name, Ty,
+    = CXXDestructorDecl::Create(Context, ClassDecl, NameInfo, Ty,
                                 /*isInline=*/true,
                                 /*isImplicitlyDeclared=*/true);
   Destructor->setAccess(AS_public);
@@ -4751,8 +4752,9 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   //   An implicitly-declared copy assignment operator is an inline public
   //   member of its class.
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+  DeclarationNameInfo NameInfo(Name, ClassDecl->getLocation());
   CXXMethodDecl *CopyAssignment
-    = CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
+    = CXXMethodDecl::Create(Context, ClassDecl, NameInfo,
                             Context.getFunctionType(RetType, &ArgType, 1,
                                                     false, 0,
                                          ExceptSpec.hasExceptionSpecification(),
@@ -5227,9 +5229,9 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   DeclarationName Name
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(ClassType));
+  DeclarationNameInfo NameInfo(Name, ClassDecl->getLocation());
   CXXConstructorDecl *CopyConstructor
-    = CXXConstructorDecl::Create(Context, ClassDecl,
-                                 ClassDecl->getLocation(), Name,
+    = CXXConstructorDecl::Create(Context, ClassDecl, NameInfo,
                                  Context.getFunctionType(Context.VoidTy,
                                                          &ArgType, 1,
                                                          false, 0,
@@ -6305,7 +6307,8 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   //    namespace scope are not considered.
 
   CXXScopeSpec &ScopeQual = D.getCXXScopeSpec();
-  DeclarationName Name = GetNameForDeclarator(D);
+  DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
+  DeclarationName Name = NameInfo.getName();
   assert(Name);
 
   // The context we found the declaration in, or in which we should
@@ -6315,7 +6318,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   // FIXME: handle local classes
 
   // Recover from invalid scope qualifiers as if they just weren't there.
-  LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
+  LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
   if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
     DC = computeDeclContext(ScopeQual);

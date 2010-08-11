@@ -6645,6 +6645,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   OverloadedOperatorKind Op = UnaryOperator::getOverloadedOperator(Opc);
   assert(Op != OO_None && "Invalid opcode for overloaded unary operator");
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
+  // TODO: provide better source location info.
+  DeclarationNameInfo OpNameInfo(OpName, OpLoc);
 
   Expr *Args[2] = { Input, 0 };
   unsigned NumArgs = 1;
@@ -6669,7 +6671,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
-                                     0, SourceRange(), OpName, OpLoc,
+                                     0, SourceRange(), OpNameInfo,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     input.release();
@@ -6839,9 +6841,11 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
     // FIXME: save results of ADL from here?
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
+    // TODO: provide better source location info in DNLoc component.
+    DeclarationNameInfo OpNameInfo(OpName, OpLoc);
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
-                                     0, SourceRange(), OpName, OpLoc,
+                                     0, SourceRange(), OpNameInfo,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
@@ -7036,9 +7040,12 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
   if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
 
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
+    // CHECKME: no 'operator' keyword?
+    DeclarationNameInfo OpNameInfo(OpName, LLoc);
+    OpNameInfo.setCXXOperatorNameRange(SourceRange(LLoc, RLoc));
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
-                                     0, SourceRange(), OpName, LLoc,
+                                     0, SourceRange(), OpNameInfo,
                                      /*ADL*/ true, /*Overloaded*/ false,
                                      UnresolvedSetIterator(),
                                      UnresolvedSetIterator());
@@ -7790,7 +7797,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                               MemExpr->getQualifierRange(),
                               Fn, 
                               Found,
-                              MemExpr->getMemberLoc(),
+                              MemExpr->getMemberNameInfo(),
                               TemplateArgs,
                               Fn->getType());
   }

@@ -81,6 +81,8 @@ namespace {
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
                          SourceLocation &Loc);
+    void ImportDeclarationNameLoc(const DeclarationNameInfo &From,
+                                  DeclarationNameInfo& To);
     void ImportDeclContext(DeclContext *FromDC);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
@@ -1386,6 +1388,40 @@ bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC,
   return false;
 }
 
+void
+ASTNodeImporter::ImportDeclarationNameLoc(const DeclarationNameInfo &From,
+                                          DeclarationNameInfo& To) {
+  // NOTE: To.Name and To.Loc are already imported.
+  // We only have to import To.LocInfo.
+  switch (To.getName().getNameKind()) {
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXUsingDirective:
+    return;
+
+  case DeclarationName::CXXOperatorName: {
+    SourceRange Range = From.getCXXOperatorNameRange();
+    To.setCXXOperatorNameRange(Importer.Import(Range));
+    return;
+  }
+  case DeclarationName::CXXLiteralOperatorName: {
+    SourceLocation Loc = From.getCXXLiteralOperatorNameLoc();
+    To.setCXXLiteralOperatorNameLoc(Importer.Import(Loc));
+    return;
+  }
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName: {
+    TypeSourceInfo *FromTInfo = From.getNamedTypeInfo();
+    To.setNamedTypeInfo(Importer.Import(FromTInfo));
+    return;
+  }
+    assert(0 && "Unknown name kind.");
+  }
+}
+
 void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC) {
   for (DeclContext::decl_iterator From = FromDC->decls_begin(),
                                FromEnd = FromDC->decls_end();
@@ -1823,7 +1859,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   SourceLocation Loc;
   if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
-  
+
   // Try to find a function in our own ("to") context with the same name, same
   // type, and in the same context as the function we're importing.
   if (!LexicalDC->isFunctionOrMethod()) {
@@ -1872,6 +1908,10 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
     }    
   }
 
+  DeclarationNameInfo NameInfo(Name, Loc);
+  // Import additional name location/type info.
+  ImportDeclarationNameLoc(D->getNameInfo(), NameInfo);
+
   // Import the type.
   QualType T = Importer.Import(D->getType());
   if (T.isNull())
@@ -1894,26 +1934,26 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   if (CXXConstructorDecl *FromConstructor = dyn_cast<CXXConstructorDecl>(D)) {
     ToFunction = CXXConstructorDecl::Create(Importer.getToContext(),
                                             cast<CXXRecordDecl>(DC),
-                                            Loc, Name, T, TInfo, 
+                                            NameInfo, T, TInfo, 
                                             FromConstructor->isExplicit(),
                                             D->isInlineSpecified(), 
                                             D->isImplicit());
   } else if (isa<CXXDestructorDecl>(D)) {
     ToFunction = CXXDestructorDecl::Create(Importer.getToContext(),
                                            cast<CXXRecordDecl>(DC),
-                                           Loc, Name, T, 
+                                           NameInfo, T, 
                                            D->isInlineSpecified(),
                                            D->isImplicit());
   } else if (CXXConversionDecl *FromConversion
                                            = dyn_cast<CXXConversionDecl>(D)) {
     ToFunction = CXXConversionDecl::Create(Importer.getToContext(), 
                                            cast<CXXRecordDecl>(DC),
-                                           Loc, Name, T, TInfo,
+                                           NameInfo, T, TInfo,
                                            D->isInlineSpecified(),
                                            FromConversion->isExplicit());
   } else {
-    ToFunction = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
-                                      Name, T, TInfo, D->getStorageClass(), 
+    ToFunction = FunctionDecl::Create(Importer.getToContext(), DC,
+                                      NameInfo, T, TInfo, D->getStorageClass(),
                                       D->getStorageClassAsWritten(),
                                       D->isInlineSpecified(),
                                       D->hasWrittenPrototype());

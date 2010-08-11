@@ -1294,39 +1294,27 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
   CXXMethodDecl *Method = 0;
 
-  DeclarationName Name = D->getDeclName();
+  DeclarationNameInfo NameInfo
+    = SemaRef.SubstDeclarationNameInfo(D->getNameInfo(), TemplateArgs);
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
-    QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
-    Name = SemaRef.Context.DeclarationNames.getCXXConstructorName(
-                                    SemaRef.Context.getCanonicalType(ClassTy));
     Method = CXXConstructorDecl::Create(SemaRef.Context, Record,
-                                        Constructor->getLocation(),
-                                        Name, T, TInfo,
+                                        NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
                                         false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
-    QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
-    Name = SemaRef.Context.DeclarationNames.getCXXDestructorName(
-                                   SemaRef.Context.getCanonicalType(ClassTy));
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
-                                       Destructor->getLocation(), Name,
-                                       T, Destructor->isInlineSpecified(),
+                                       NameInfo, T,
+                                       Destructor->isInlineSpecified(),
                                        false);
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
-    CanQualType ConvTy
-      = SemaRef.Context.getCanonicalType(
-                                      T->getAs<FunctionType>()->getResultType());
-    Name = SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(
-                                                                      ConvTy);
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
-                                       Conversion->getLocation(), Name,
-                                       T, TInfo,
+                                       NameInfo, T, TInfo,
                                        Conversion->isInlineSpecified(),
                                        Conversion->isExplicit());
   } else {
-    Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(),
-                                   D->getDeclName(), T, TInfo,
+    Method = CXXMethodDecl::Create(SemaRef.Context, Record,
+                                   NameInfo, T, TInfo,
                                    D->isStatic(),
                                    D->getStorageClassAsWritten(),
                                    D->isInlineSpecified());
@@ -1390,8 +1378,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   if (InitMethodInstantiation(Method, D))
     Method->setInvalidDecl();
 
-  LookupResult Previous(SemaRef, Name, SourceLocation(),
-                        Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  LookupResult Previous(SemaRef, NameInfo, Sema::LookupOrdinaryName,
+                        Sema::ForRedeclaration);
 
   if (!FunctionTemplate || TemplateParams || isFriend) {
     SemaRef.LookupQualifiedName(Previous, Record);

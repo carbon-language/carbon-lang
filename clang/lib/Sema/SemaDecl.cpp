@@ -1881,79 +1881,110 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
 /// GetNameForDeclarator - Determine the full declaration name for the
 /// given Declarator.
-DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
+DeclarationNameInfo Sema::GetNameForDeclarator(Declarator &D) {
   return GetNameFromUnqualifiedId(D.getName());
 }
 
-/// \brief Retrieves the canonicalized name from a parsed unqualified-id.
-DeclarationName Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
+/// \brief Retrieves the declaration name from a parsed unqualified-id.
+DeclarationNameInfo
+Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
+  DeclarationNameInfo NameInfo;
+  NameInfo.setLoc(Name.StartLocation);
+
   switch (Name.getKind()) {
-    case UnqualifiedId::IK_Identifier:
-      return DeclarationName(Name.Identifier);
-      
-    case UnqualifiedId::IK_OperatorFunctionId:
-      return Context.DeclarationNames.getCXXOperatorName(
-                                              Name.OperatorFunctionId.Operator);
 
-    case UnqualifiedId::IK_LiteralOperatorId:
-      return Context.DeclarationNames.getCXXLiteralOperatorName(
-                                                               Name.Identifier);
+  case UnqualifiedId::IK_Identifier:
+    NameInfo.setName(Name.Identifier);
+    NameInfo.setLoc(Name.StartLocation);
+    return NameInfo;
 
-    case UnqualifiedId::IK_ConversionFunctionId: {
-      QualType Ty = GetTypeFromParser(Name.ConversionFunctionId);
-      if (Ty.isNull())
-        return DeclarationName();
-      
-      return Context.DeclarationNames.getCXXConversionFunctionName(
-                                                  Context.getCanonicalType(Ty));
-    }
-      
-    case UnqualifiedId::IK_ConstructorName: {
-      QualType Ty = GetTypeFromParser(Name.ConstructorName);
-      if (Ty.isNull())
-        return DeclarationName();
-      
-      return Context.DeclarationNames.getCXXConstructorName(
-                                                  Context.getCanonicalType(Ty));
-    }
-      
-    case UnqualifiedId::IK_ConstructorTemplateId: {
-      // In well-formed code, we can only have a constructor
-      // template-id that refers to the current context, so go there
-      // to find the actual type being constructed.
-      CXXRecordDecl *CurClass = dyn_cast<CXXRecordDecl>(CurContext);
-      if (!CurClass || CurClass->getIdentifier() != Name.TemplateId->Name)
-        return DeclarationName();
+  case UnqualifiedId::IK_OperatorFunctionId:
+    NameInfo.setName(Context.DeclarationNames.getCXXOperatorName(
+                                           Name.OperatorFunctionId.Operator));
+    NameInfo.setLoc(Name.StartLocation);
+    NameInfo.getInfo().CXXOperatorName.BeginOpNameLoc
+      = Name.OperatorFunctionId.SymbolLocations[0];
+    NameInfo.getInfo().CXXOperatorName.EndOpNameLoc
+      = Name.EndLocation.getRawEncoding();
+    return NameInfo;
 
-      // Determine the type of the class being constructed.
-      QualType CurClassType = Context.getTypeDeclType(CurClass);
+  case UnqualifiedId::IK_LiteralOperatorId:
+    NameInfo.setName(Context.DeclarationNames.getCXXLiteralOperatorName(
+                                                           Name.Identifier));
+    NameInfo.setLoc(Name.StartLocation);
+    NameInfo.setCXXLiteralOperatorNameLoc(Name.EndLocation);
+    return NameInfo;
 
-      // FIXME: Check two things: that the template-id names the same type as
-      // CurClassType, and that the template-id does not occur when the name
-      // was qualified.
-
-      return Context.DeclarationNames.getCXXConstructorName(
-                                       Context.getCanonicalType(CurClassType));
-    }
-
-    case UnqualifiedId::IK_DestructorName: {
-      QualType Ty = GetTypeFromParser(Name.DestructorName);
-      if (Ty.isNull())
-        return DeclarationName();
-      
-      return Context.DeclarationNames.getCXXDestructorName(
-                                                           Context.getCanonicalType(Ty));
-    }
-      
-    case UnqualifiedId::IK_TemplateId: {
-      TemplateName TName
-        = TemplateName::getFromVoidPointer(Name.TemplateId->Template);
-      return Context.getNameForTemplate(TName);
-    }
+  case UnqualifiedId::IK_ConversionFunctionId: {
+    TypeSourceInfo *TInfo;
+    QualType Ty = GetTypeFromParser(Name.ConversionFunctionId, &TInfo);
+    if (Ty.isNull())
+      return DeclarationNameInfo();
+    NameInfo.setName(Context.DeclarationNames.getCXXConversionFunctionName(
+                                               Context.getCanonicalType(Ty)));
+    NameInfo.setLoc(Name.StartLocation);
+    NameInfo.setNamedTypeInfo(TInfo);
+    return NameInfo;
   }
-  
+
+  case UnqualifiedId::IK_ConstructorName: {
+    TypeSourceInfo *TInfo;
+    QualType Ty = GetTypeFromParser(Name.ConstructorName, &TInfo);
+    if (Ty.isNull())
+      return DeclarationNameInfo();
+    NameInfo.setName(Context.DeclarationNames.getCXXConstructorName(
+                                              Context.getCanonicalType(Ty)));
+    NameInfo.setLoc(Name.StartLocation);
+    NameInfo.setNamedTypeInfo(TInfo);
+    return NameInfo;
+  }
+
+  case UnqualifiedId::IK_ConstructorTemplateId: {
+    // In well-formed code, we can only have a constructor
+    // template-id that refers to the current context, so go there
+    // to find the actual type being constructed.
+    CXXRecordDecl *CurClass = dyn_cast<CXXRecordDecl>(CurContext);
+    if (!CurClass || CurClass->getIdentifier() != Name.TemplateId->Name)
+      return DeclarationNameInfo();
+
+    // Determine the type of the class being constructed.
+    QualType CurClassType = Context.getTypeDeclType(CurClass);
+
+    // FIXME: Check two things: that the template-id names the same type as
+    // CurClassType, and that the template-id does not occur when the name
+    // was qualified.
+
+    NameInfo.setName(Context.DeclarationNames.getCXXConstructorName(
+                                    Context.getCanonicalType(CurClassType)));
+    NameInfo.setLoc(Name.StartLocation);
+    // FIXME: should we retrieve TypeSourceInfo?
+    NameInfo.setNamedTypeInfo(0);
+    return NameInfo;
+  }
+
+  case UnqualifiedId::IK_DestructorName: {
+    TypeSourceInfo *TInfo;
+    QualType Ty = GetTypeFromParser(Name.DestructorName, &TInfo);
+    if (Ty.isNull())
+      return DeclarationNameInfo();
+    NameInfo.setName(Context.DeclarationNames.getCXXDestructorName(
+                                              Context.getCanonicalType(Ty)));
+    NameInfo.setLoc(Name.StartLocation);
+    NameInfo.setNamedTypeInfo(TInfo);
+    return NameInfo;
+  }
+
+  case UnqualifiedId::IK_TemplateId: {
+    TemplateName TName
+      = TemplateName::getFromVoidPointer(Name.TemplateId->Template);
+    SourceLocation TNameLoc = Name.TemplateId->TemplateNameLoc;
+    return Context.getNameForTemplate(TName, TNameLoc);
+  }
+
+  } // switch (Name.getKind())
+
   assert(false && "Unknown name kind");
-  return DeclarationName();  
+  return DeclarationNameInfo();
 }
 
 /// isNearlyMatchingFunction - Determine whether the C++ functions
@@ -2047,7 +2078,9 @@ Sema::DeclPtrTy
 Sema::HandleDeclarator(Scope *S, Declarator &D,
                        MultiTemplateParamsArg TemplateParamLists,
                        bool IsFunctionDefinition) {
-  DeclarationName Name = GetNameForDeclarator(D);
+  // TODO: consider using NameInfo for diagnostic.
+  DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
+  DeclarationName Name = NameInfo.getName();
 
   // All of these full declarators require an identifier.  If it doesn't have
   // one, the ParsedFreeStandingDeclSpec action should be used.
@@ -2111,7 +2144,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType R = TInfo->getType();
 
-  LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
+  LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
 
   // See if this is a redefinition of a variable in the same scope.
@@ -2497,7 +2530,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
                               bool &Redeclaration) {
-  DeclarationName Name = GetNameForDeclarator(D);
+  DeclarationName Name = GetNameForDeclarator(D).getName();
 
   // Check that there are no default arguments (C++ only).
   if (getLangOptions().CPlusPlus)
@@ -2961,7 +2994,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               bool IsFunctionDefinition, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
-  DeclarationName Name = GetNameForDeclarator(D);
+  // TODO: consider using NameInfo for diagnostic.
+  DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
+  DeclarationName Name = NameInfo.getName();
   FunctionDecl::StorageClass SC = FunctionDecl::None;
   switch (D.getDeclSpec().getStorageClassSpec()) {
   default: assert(0 && "Unknown storage class!");
@@ -3041,7 +3076,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Create the new declaration
     NewFD = CXXConstructorDecl::Create(Context,
                                        cast<CXXRecordDecl>(DC),
-                                       D.getIdentifierLoc(), Name, R, TInfo,
+                                       NameInfo, R, TInfo,
                                        isExplicit, isInline,
                                        /*isImplicitlyDeclared=*/false);
   } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
@@ -3051,7 +3086,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       NewFD = CXXDestructorDecl::Create(Context,
                                         cast<CXXRecordDecl>(DC),
-                                        D.getIdentifierLoc(), Name, R,
+                                        NameInfo, R,
                                         isInline,
                                         /*isImplicitlyDeclared=*/false);
       NewFD->setTypeSourceInfo(TInfo);
@@ -3076,7 +3111,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     CheckConversionDeclarator(D, R, SC);
     NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                      D.getIdentifierLoc(), Name, R, TInfo,
+                                      NameInfo, R, TInfo,
                                       isInline, isExplicit);
 
     isVirtualOkay = true;
@@ -3111,7 +3146,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                  D.getIdentifierLoc(), Name, R, TInfo,
+                                  NameInfo, R, TInfo,
                                   isStatic, SCAsWritten, isInline);
 
     isVirtualOkay = !isStatic;
@@ -3128,8 +3163,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
        (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
 
     NewFD = FunctionDecl::Create(Context, DC,
-                                 D.getIdentifierLoc(),
-                                 Name, R, TInfo, SC, SCAsWritten, isInline,
+                                 NameInfo, R, TInfo, SC, SCAsWritten, isInline,
                                  HasPrototype);
   }
 
@@ -3726,6 +3760,8 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
         DeclarationName Name
           = Context.DeclarationNames.getCXXDestructorName(
                                         Context.getCanonicalType(ClassType));
+//         NewFD->getDeclName().dump();
+//         Name.dump();
         if (NewFD->getDeclName() != Name) {
           Diag(NewFD->getLocation(), diag::err_destructor_name);
           return NewFD->setInvalidDecl();

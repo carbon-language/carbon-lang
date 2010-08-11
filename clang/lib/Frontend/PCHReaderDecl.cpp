@@ -231,6 +231,7 @@ void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitDeclaratorDecl(FD);
+  // FIXME: read DeclarationNameLoc.
 
   FD->IdentifierNamespace = Record[Idx++];
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
@@ -1403,7 +1404,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
     D = CXXRecordDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_CXX_METHOD:
-    D = CXXMethodDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
+    D = CXXMethodDecl::Create(*Context, 0, DeclarationNameInfo(),
                               QualType(), 0);
     break;
   case pch::DECL_CXX_CONSTRUCTOR:

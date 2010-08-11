@@ -159,8 +159,9 @@ UnresolvedLookupExpr *
 UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
                              CXXRecordDecl *NamingClass,
                              NestedNameSpecifier *Qualifier,
-                             SourceRange QualifierRange, DeclarationName Name,
-                             SourceLocation NameLoc, bool ADL,
+                             SourceRange QualifierRange,
+                             const DeclarationNameInfo &NameInfo,
+                             bool ADL,
                              const TemplateArgumentListInfo &Args,
                              UnresolvedSetIterator Begin, 
                              UnresolvedSetIterator End) 
@@ -171,8 +172,8 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
     = new (Mem) UnresolvedLookupExpr(C, 
                                      Dependent ? C.DependentTy : C.OverloadTy,
                                      Dependent, NamingClass,
-                                     Qualifier, QualifierRange,
-                                     Name, NameLoc, ADL,
+                                     Qualifier, QualifierRange, NameInfo,
+                                     ADL,
                                      /*Overload*/ true,
                                      /*ExplicitTemplateArgs*/ true,
                                      Begin, End);
@@ -196,14 +197,14 @@ UnresolvedLookupExpr::CreateEmpty(ASTContext &C, unsigned NumTemplateArgs) {
 
 OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, QualType T, 
                            bool Dependent, NestedNameSpecifier *Qualifier, 
-                           SourceRange QRange, DeclarationName Name, 
-                           SourceLocation NameLoc, bool HasTemplateArgs,
+                           SourceRange QRange,
+                           const DeclarationNameInfo &NameInfo,
+                           bool HasTemplateArgs,
                            UnresolvedSetIterator Begin, 
                            UnresolvedSetIterator End)
   : Expr(K, T, Dependent, Dependent),
-  Results(0), NumResults(0), Name(Name), Qualifier(Qualifier), 
-  QualifierRange(QRange), NameLoc(NameLoc), 
-  HasExplicitTemplateArgs(HasTemplateArgs)
+  Results(0), NumResults(0), NameInfo(NameInfo), Qualifier(Qualifier), 
+  QualifierRange(QRange), HasExplicitTemplateArgs(HasTemplateArgs)
 {
   initializeResults(C, Begin, End);
 }
@@ -262,8 +263,7 @@ DependentScopeDeclRefExpr *
 DependentScopeDeclRefExpr::Create(ASTContext &C,
                                   NestedNameSpecifier *Qualifier,
                                   SourceRange QualifierRange,
-                                  DeclarationName Name,
-                                  SourceLocation NameLoc,
+                                  const DeclarationNameInfo &NameInfo,
                                   const TemplateArgumentListInfo *Args) {
   std::size_t size = sizeof(DependentScopeDeclRefExpr);
   if (Args) size += ExplicitTemplateArgumentList::sizeFor(*Args);
@@ -272,8 +272,7 @@ DependentScopeDeclRefExpr::Create(ASTContext &C,
   DependentScopeDeclRefExpr *DRE
     = new (Mem) DependentScopeDeclRefExpr(C.DependentTy,
                                           Qualifier, QualifierRange,
-                                          Name, NameLoc,
-                                          Args != 0);
+                                          NameInfo, Args != 0);
 
   if (Args)
     reinterpret_cast<ExplicitTemplateArgumentList*>(DRE+1)
@@ -291,7 +290,7 @@ DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
   void *Mem = C.Allocate(size);
 
   return new (Mem) DependentScopeDeclRefExpr(QualType(), 0, SourceRange(),
-                                             DeclarationName(),SourceLocation(),
+                                             DeclarationNameInfo(),
                                              NumTemplateArgs != 0);
 }
 
@@ -750,8 +749,7 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                                                  NestedNameSpecifier *Qualifier,
                                                  SourceRange QualifierRange,
                                           NamedDecl *FirstQualifierFoundInScope,
-                                                 DeclarationName Member,
-                                                 SourceLocation MemberLoc,
+                                          DeclarationNameInfo MemberNameInfo,
                                    const TemplateArgumentListInfo *TemplateArgs)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
@@ -759,7 +757,7 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
     OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
-    Member(Member), MemberLoc(MemberLoc) {
+    MemberNameInfo(MemberNameInfo) {
   if (TemplateArgs)
     getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
 }
@@ -771,15 +769,14 @@ CXXDependentScopeMemberExpr::Create(ASTContext &C,
                                 NestedNameSpecifier *Qualifier,
                                 SourceRange QualifierRange,
                                 NamedDecl *FirstQualifierFoundInScope,
-                                DeclarationName Member,
-                                SourceLocation MemberLoc,
+                                DeclarationNameInfo MemberNameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
   if (!TemplateArgs)
     return new (C) CXXDependentScopeMemberExpr(C, Base, BaseType,
                                                IsArrow, OperatorLoc,
                                                Qualifier, QualifierRange,
                                                FirstQualifierFoundInScope,
-                                               Member, MemberLoc);
+                                               MemberNameInfo);
 
   std::size_t size = sizeof(CXXDependentScopeMemberExpr);
   if (TemplateArgs)
@@ -790,7 +787,7 @@ CXXDependentScopeMemberExpr::Create(ASTContext &C,
                                                IsArrow, OperatorLoc,
                                                Qualifier, QualifierRange,
                                                FirstQualifierFoundInScope,
-                                               Member, MemberLoc, TemplateArgs);
+                                               MemberNameInfo, TemplateArgs);
 }
 
 CXXDependentScopeMemberExpr *
@@ -800,8 +797,7 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
     return new (C) CXXDependentScopeMemberExpr(C, 0, QualType(),
                                                0, SourceLocation(), 0,
                                                SourceRange(), 0,
-                                               DeclarationName(),
-                                               SourceLocation());
+                                               DeclarationNameInfo());
 
   std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
                      ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
@@ -810,8 +806,7 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
     =  new (Mem) CXXDependentScopeMemberExpr(C, 0, QualType(),
                                              0, SourceLocation(), 0,
                                              SourceRange(), 0,
-                                             DeclarationName(),
-                                             SourceLocation(), 0);
+                                             DeclarationNameInfo(), 0);
   E->HasExplicitTemplateArgs = true;
   return E;
 }
@@ -834,13 +829,12 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, QualType T,
                                            SourceLocation OperatorLoc,
                                            NestedNameSpecifier *Qualifier,
                                            SourceRange QualifierRange,
-                                           DeclarationName MemberName,
-                                           SourceLocation MemberLoc,
+                                   const DeclarationNameInfo &MemberNameInfo,
                                    const TemplateArgumentListInfo *TemplateArgs,
                                            UnresolvedSetIterator Begin, 
                                            UnresolvedSetIterator End)
   : OverloadExpr(UnresolvedMemberExprClass, C, T, Dependent,
-                 Qualifier, QualifierRange, MemberName, MemberLoc,
+                 Qualifier, QualifierRange, MemberNameInfo,
                  TemplateArgs != 0, Begin, End),
     IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
     Base(Base), BaseType(BaseType), OperatorLoc(OperatorLoc) {
@@ -855,8 +849,7 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
                              SourceLocation OperatorLoc,
                              NestedNameSpecifier *Qualifier,
                              SourceRange QualifierRange,
-                             DeclarationName Member,
-                             SourceLocation MemberLoc,
+                             const DeclarationNameInfo &MemberNameInfo,
                              const TemplateArgumentListInfo *TemplateArgs,
                              UnresolvedSetIterator Begin, 
                              UnresolvedSetIterator End) {
@@ -869,7 +862,7 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
                              Dependent ? C.DependentTy : C.OverloadTy,
                              Dependent, HasUnresolvedUsing, Base, BaseType,
                              IsArrow, OperatorLoc, Qualifier, QualifierRange,
-                             Member, MemberLoc, TemplateArgs, Begin, End);
+                             MemberNameInfo, TemplateArgs, Begin, End);
 }
 
 UnresolvedMemberExpr *

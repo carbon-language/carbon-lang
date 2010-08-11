@@ -30,6 +30,7 @@ namespace clang {
   class IdentifierInfo;
   class MultiKeywordSelector;
   class UsingDirectiveDecl;
+  class TypeSourceInfo;
 
 /// DeclarationName - The name of a declaration. In the common case,
 /// this just stores an IdentifierInfo pointer to a normal
@@ -367,6 +368,146 @@ public:
   DeclarationName getCXXLiteralOperatorName(IdentifierInfo *II);
 };
 
+/// DeclarationNameLoc - Additional source/type location info
+/// for a declaration name. Needs a DeclarationName in order
+/// to be interpreted correctly.
+struct DeclarationNameLoc {
+  union {
+    // The source location for identifier stored elsewhere.
+    // struct {} Identifier;
+
+    // Type info for constructors, destructors and conversion functions.
+    // Locations (if any) for the tilde (destructor) or operator keyword
+    // (conversion) are stored elsewhere.
+    struct {
+      TypeSourceInfo* TInfo;
+    } NamedType;
+
+    // The location (if any) of the operator keyword is stored elsewhere.
+    struct {
+      unsigned BeginOpNameLoc;
+      unsigned EndOpNameLoc;
+    } CXXOperatorName;
+
+    // The location (if any) of the operator keyword is stored elsewhere.
+    struct {
+      unsigned OpNameLoc;
+    } CXXLiteralOperatorName;
+
+    // struct {} CXXUsingDirective;
+    // struct {} ObjCZeroArgSelector;
+    // struct {} ObjCOneArgSelector;
+    // struct {} ObjCMultiArgSelector;
+  };
+
+  DeclarationNameLoc(DeclarationName Name);
+  // FIXME: this should go away once all DNLocs are properly initialized.
+  DeclarationNameLoc() { NamedType.TInfo = 0; }
+}; // struct DeclarationNameLoc
+
+
+/// DeclarationNameInfo - A collector data type for bundling together
+/// a DeclarationName and the correspnding source/type location info.
+struct DeclarationNameInfo {
+private:
+  /// Name - The declaration name, also encoding name kind.
+  DeclarationName Name;
+  /// Loc - The main source location for the declaration name.
+  SourceLocation NameLoc;
+  /// Info - Further source/type location info for special kinds of names.
+  DeclarationNameLoc LocInfo;
+
+public:
+  // FIXME: remove it.
+  DeclarationNameInfo() {}
+
+  DeclarationNameInfo(DeclarationName Name, SourceLocation NameLoc)
+    : Name(Name), NameLoc(NameLoc), LocInfo(Name) {}
+
+  DeclarationNameInfo(DeclarationName Name, SourceLocation NameLoc,
+                      DeclarationNameLoc LocInfo)
+    : Name(Name), NameLoc(NameLoc), LocInfo(LocInfo) {}
+
+  /// getName - Returns the embedded declaration name.
+  DeclarationName getName() const { return Name; }
+  /// setName - Sets the embedded declaration name.
+  void setName(DeclarationName N) { Name = N; }
+
+  /// getLoc - Returns the main location of the declaration name.
+  SourceLocation getLoc() const { return NameLoc; }
+  /// setLoc - Sets the main location of the declaration name.
+  void setLoc(SourceLocation L) { NameLoc = L; }
+
+  const DeclarationNameLoc &getInfo() const { return LocInfo; }
+  DeclarationNameLoc &getInfo() { return LocInfo; }
+  void setInfo(const DeclarationNameLoc &Info) { LocInfo = Info; }
+
+  /// getNamedTypeInfo - Returns the source type info associated to
+  /// the name. Assumes it is a constructor, destructor or conversion.
+  TypeSourceInfo *getNamedTypeInfo() const {
+    assert(Name.getNameKind() == DeclarationName::CXXConstructorName ||
+           Name.getNameKind() == DeclarationName::CXXDestructorName ||
+           Name.getNameKind() == DeclarationName::CXXConversionFunctionName);
+    return LocInfo.NamedType.TInfo;
+  }
+  /// setNamedTypeInfo - Sets the source type info associated to
+  /// the name. Assumes it is a constructor, destructor or conversion.
+  void setNamedTypeInfo(TypeSourceInfo *TInfo) {
+    assert(Name.getNameKind() == DeclarationName::CXXConstructorName ||
+           Name.getNameKind() == DeclarationName::CXXDestructorName ||
+           Name.getNameKind() == DeclarationName::CXXConversionFunctionName);
+    LocInfo.NamedType.TInfo = TInfo;
+  }
+
+  /// getCXXOperatorNameRange - Gets the range of the operator name
+  /// (without the operator keyword). Assumes it is a (non-literal) operator.
+  SourceRange getCXXOperatorNameRange() const {
+    assert(Name.getNameKind() == DeclarationName::CXXOperatorName);
+    return SourceRange(
+     SourceLocation::getFromRawEncoding(LocInfo.CXXOperatorName.BeginOpNameLoc),
+     SourceLocation::getFromRawEncoding(LocInfo.CXXOperatorName.EndOpNameLoc)
+                       );
+  }
+  /// setCXXOperatorNameRange - Sets the range of the operator name
+  /// (without the operator keyword). Assumes it is a C++ operator.
+  void setCXXOperatorNameRange(SourceRange R) {
+    assert(Name.getNameKind() == DeclarationName::CXXOperatorName);
+    LocInfo.CXXOperatorName.BeginOpNameLoc = R.getBegin().getRawEncoding();
+    LocInfo.CXXOperatorName.EndOpNameLoc = R.getEnd().getRawEncoding();
+  }
+
+  /// getCXXLiteralOperatorNameLoc - Returns the location of the literal
+  /// operator name (not the operator keyword).
+  /// Assumes it is a literal operator.
+  SourceLocation getCXXLiteralOperatorNameLoc() const {
+    assert(Name.getNameKind() == DeclarationName::CXXLiteralOperatorName);
+    return SourceLocation::
+      getFromRawEncoding(LocInfo.CXXLiteralOperatorName.OpNameLoc);
+  }
+  /// setCXXLiteralOperatorNameLoc - Sets the location of the literal
+  /// operator name (not the operator keyword).
+  /// Assumes it is a literal operator.
+  void setCXXLiteralOperatorNameLoc(SourceLocation Loc) {
+    assert(Name.getNameKind() == DeclarationName::CXXLiteralOperatorName);
+    LocInfo.CXXLiteralOperatorName.OpNameLoc = Loc.getRawEncoding();
+  }
+
+  /// getAsString - Retrieve the human-readable string for this name.
+  std::string getAsString() const;
+
+  /// printName - Print the human-readable name to a stream.
+  void printName(llvm::raw_ostream &OS) const;
+
+  /// getBeginLoc - Retrieve the location of the first token.
+  SourceLocation getBeginLoc() const { return NameLoc; }
+  /// getEndLoc - Retrieve the location of the last token.
+  SourceLocation getEndLoc() const;
+  /// getSourceRange - The range of the declaration name.
+  SourceRange getSourceRange() const {
+    return SourceRange(getBeginLoc(), getEndLoc());
+  }
+};
+
 /// Insertion operator for diagnostics.  This allows sending DeclarationName's
 /// into a diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
@@ -383,6 +524,12 @@ inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
   PD.AddTaggedVal(N.getAsOpaqueInteger(),
                   Diagnostic::ak_declarationname);
   return PD;
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                                     DeclarationNameInfo DNInfo) {
+  DNInfo.printName(OS);
+  return OS;
 }
 
 }  // end namespace clang

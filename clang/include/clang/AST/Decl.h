@@ -1153,11 +1153,15 @@ private:
                       DependentFunctionTemplateSpecializationInfo *>
     TemplateOrSpecialization;
 
+  /// DNLoc - Provides source/type location info for the
+  /// declaration name embedded in the DeclaratorDecl base class.
+  DeclarationNameLoc DNLoc;
+
 protected:
-  FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
-               DeclarationName N, QualType T, TypeSourceInfo *TInfo,
+  FunctionDecl(Kind DK, DeclContext *DC, const DeclarationNameInfo &NameInfo,
+               QualType T, TypeSourceInfo *TInfo,
                StorageClass S, StorageClass SCAsWritten, bool isInline)
-    : DeclaratorDecl(DK, DC, L, N, T, TInfo),
+    : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo),
       DeclContext(DK),
       ParamInfo(0), Body(),
       SClass(S), SClassAsWritten(SCAsWritten), IsInline(isInline),
@@ -1165,7 +1169,9 @@ protected:
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
       IsCopyAssignment(false),
       HasImplicitReturnZero(false),
-      EndRangeLoc(L), TemplateOrSpecialization() {}
+      EndRangeLoc(NameInfo.getEndLoc()),
+      TemplateOrSpecialization(),
+      DNLoc(NameInfo.getInfo()) {}
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
   virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
@@ -1185,7 +1191,23 @@ public:
                               StorageClass S = None,
                               StorageClass SCAsWritten = None,
                               bool isInline = false,
+                              bool hasWrittenPrototype = true) {
+    DeclarationNameInfo NameInfo(N, L);
+    return FunctionDecl::Create(C, DC, NameInfo, T, TInfo, S, SCAsWritten,
+                                isInline, hasWrittenPrototype);
+  }
+
+  static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
+                              const DeclarationNameInfo &NameInfo,
+                              QualType T, TypeSourceInfo *TInfo,
+                              StorageClass S = None,
+                              StorageClass SCAsWritten = None,
+                              bool isInline = false,
                               bool hasWrittenPrototype = true);
+
+  DeclarationNameInfo getNameInfo() const {
+    return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
+  }
 
   virtual void getNameForDiagnostic(std::string &S,
                                     const PrintingPolicy &Policy,

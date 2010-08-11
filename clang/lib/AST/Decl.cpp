@@ -1706,12 +1706,11 @@ ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
-                                   SourceLocation L,
-                                   DeclarationName N, QualType T,
-                                   TypeSourceInfo *TInfo,
+                                   const DeclarationNameInfo &NameInfo,
+                                   QualType T, TypeSourceInfo *TInfo,
                                    StorageClass S, StorageClass SCAsWritten,
                                    bool isInline, bool hasWrittenPrototype) {
-  FunctionDecl *New = new (C) FunctionDecl(Function, DC, L, N, T, TInfo,
+  FunctionDecl *New = new (C) FunctionDecl(Function, DC, NameInfo, T, TInfo,
                                            S, SCAsWritten, isInline);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;

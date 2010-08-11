@@ -522,9 +522,13 @@ class DeclRefExpr : public Expr {
   // (2) the declaration's name was followed by an explicit template 
   // argument list.
   llvm::PointerIntPair<ValueDecl *, 2> DecoratedD;
-  
+
   // Loc - The location of the declaration name itself.
   SourceLocation Loc;
+
+  /// DNLoc - Provides source/type location info for the
+  /// declaration name embedded in DecoratedD.
+  DeclarationNameLoc DNLoc;
 
   /// \brief Retrieve the qualifier that preceded the declaration name, if any.
   NameQualifier *getNameQualifier() {
@@ -563,6 +567,11 @@ class DeclRefExpr : public Expr {
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T);
 
+  DeclRefExpr(NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
+              ValueDecl *D, const DeclarationNameInfo &NameInfo,
+              const TemplateArgumentListInfo *TemplateArgs,
+              QualType T);
+
   /// \brief Construct an empty declaration reference expression.
   explicit DeclRefExpr(EmptyShell Empty)
     : Expr(DeclRefExprClass, Empty) { }
@@ -585,6 +594,14 @@ public:
                              QualType T,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
 
+  static DeclRefExpr *Create(ASTContext &Context,
+                             NestedNameSpecifier *Qualifier,
+                             SourceRange QualifierRange,
+                             ValueDecl *D,
+                             const DeclarationNameInfo &NameInfo,
+                             QualType T,
+                             const TemplateArgumentListInfo *TemplateArgs = 0);
+
   /// \brief Construct an empty declaration reference expression.
   static DeclRefExpr *CreateEmpty(ASTContext &Context,
                                   bool HasQualifier, unsigned NumTemplateArgs);
@@ -592,6 +609,10 @@ public:
   ValueDecl *getDecl() { return DecoratedD.getPointer(); }
   const ValueDecl *getDecl() const { return DecoratedD.getPointer(); }
   void setDecl(ValueDecl *NewD) { DecoratedD.setPointer(NewD); }
+
+  DeclarationNameInfo getNameInfo() const {
+    return DeclarationNameInfo(getDecl()->getDeclName(), Loc, DNLoc);
+  }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -1586,6 +1607,10 @@ class MemberExpr : public Expr {
   /// MemberLoc - This is the location of the member name.
   SourceLocation MemberLoc;
 
+  /// MemberDNLoc - Provides source/type location info for the
+  /// declaration name embedded in MemberDecl.
+  DeclarationNameLoc MemberDNLoc;
+
   /// IsArrow - True if this is "X->F", false if this is "X.F".
   bool IsArrow : 1;
 
@@ -1634,16 +1659,31 @@ class MemberExpr : public Expr {
 
 public:
   MemberExpr(Expr *base, bool isarrow, ValueDecl *memberdecl,
+             const DeclarationNameInfo &NameInfo, QualType ty)
+    : Expr(MemberExprClass, ty,
+           base->isTypeDependent(), base->isValueDependent()),
+      Base(base), MemberDecl(memberdecl), MemberLoc(NameInfo.getLoc()),
+      MemberDNLoc(NameInfo.getInfo()), IsArrow(isarrow),
+      HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false) {
+    assert(memberdecl->getDeclName() == NameInfo.getName());
+  }
+
+  // NOTE: this constructor should be used only when it is known that
+  // the member name can not provide additional syntactic info
+  // (i.e., source locations for C++ operator names or type source info
+  // for constructors, destructors and conversion oeprators).
+  MemberExpr(Expr *base, bool isarrow, ValueDecl *memberdecl,
              SourceLocation l, QualType ty)
     : Expr(MemberExprClass, ty,
            base->isTypeDependent(), base->isValueDependent()),
-      Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
+      Base(base), MemberDecl(memberdecl), MemberLoc(l), MemberDNLoc(),
+      IsArrow(isarrow),
       HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false) {}
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow,
                             NestedNameSpecifier *qual, SourceRange qualrange,
                             ValueDecl *memberdecl, DeclAccessPair founddecl,
-                            SourceLocation l,
+                            DeclarationNameInfo MemberNameInfo,
                             const TemplateArgumentListInfo *targs,
                             QualType ty);
 
@@ -1739,6 +1779,12 @@ public:
     return getExplicitTemplateArgumentList()->RAngleLoc;
   }
 
+  /// \brief Retrieve the member declaration name info.
+  DeclarationNameInfo getMemberNameInfo() const {
+    return DeclarationNameInfo(MemberDecl->getDeclName(),
+                               MemberLoc, MemberDNLoc);
+  }
+
   bool isArrow() const { return IsArrow; }
   void setArrow(bool A) { IsArrow = A; }
 
@@ -1750,9 +1796,8 @@ public:
   virtual SourceRange getSourceRange() const {
     // If we have an implicit base (like a C++ implicit this),
     // make sure not to return its location
-    SourceLocation EndLoc = MemberLoc;
-    if (HasExplicitTemplateArgumentList)
-      EndLoc = getRAngleLoc();
+    SourceLocation EndLoc = (HasExplicitTemplateArgumentList)
+      ? getRAngleLoc() : getMemberNameInfo().getEndLoc();
 
     SourceLocation BaseLoc = getBase()->getLocStart();
     if (BaseLoc.isInvalid())

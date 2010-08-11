@@ -619,10 +619,10 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
 
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                      SourceLocation L, DeclarationName N,
+                      const DeclarationNameInfo &NameInfo,
                       QualType T, TypeSourceInfo *TInfo,
                       bool isStatic, StorageClass SCAsWritten, bool isInline) {
-  return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, TInfo,
+  return new (C) CXXMethodDecl(CXXMethod, RD, NameInfo, T, TInfo,
                                isStatic, SCAsWritten, isInline);
 }
 
@@ -818,20 +818,21 @@ SourceRange CXXBaseOrMemberInitializer::getSourceRange() const {
 
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXConstructorDecl(0, SourceLocation(), DeclarationName(),
+  return new (C) CXXConstructorDecl(0, DeclarationNameInfo(),
                                     QualType(), 0, false, false, false);
 }
 
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                           SourceLocation L, DeclarationName N,
+                           const DeclarationNameInfo &NameInfo,
                            QualType T, TypeSourceInfo *TInfo,
                            bool isExplicit,
                            bool isInline,
                            bool isImplicitlyDeclared) {
-  assert(N.getNameKind() == DeclarationName::CXXConstructorName &&
+  assert(NameInfo.getName().getNameKind()
+         == DeclarationName::CXXConstructorName &&
          "Name must refer to a constructor");
-  return new (C) CXXConstructorDecl(RD, L, N, T, TInfo, isExplicit,
+  return new (C) CXXConstructorDecl(RD, NameInfo, T, TInfo, isExplicit,
                                     isInline, isImplicitlyDeclared);
 }
 
@@ -926,34 +927,38 @@ bool CXXConstructorDecl::isCopyConstructorLikeSpecialization() const {
 
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXDestructorDecl(0, SourceLocation(), DeclarationName(),
+  return new (C) CXXDestructorDecl(0, DeclarationNameInfo(),
                                    QualType(), false, false);
 }
 
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                          SourceLocation L, DeclarationName N,
+                          const DeclarationNameInfo &NameInfo,
                           QualType T, bool isInline,
                           bool isImplicitlyDeclared) {
-  assert(N.getNameKind() == DeclarationName::CXXDestructorName &&
+  assert(NameInfo.getName().getNameKind()
+         == DeclarationName::CXXDestructorName &&
          "Name must refer to a destructor");
-  return new (C) CXXDestructorDecl(RD, L, N, T, isInline, isImplicitlyDeclared);
+  return new (C) CXXDestructorDecl(RD, NameInfo, T, isInline,
+                                   isImplicitlyDeclared);
 }
 
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXConversionDecl(0, SourceLocation(), DeclarationName(),
+  return new (C) CXXConversionDecl(0, DeclarationNameInfo(),
                                    QualType(), 0, false, false);
 }
 
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                          SourceLocation L, DeclarationName N,
+                          const DeclarationNameInfo &NameInfo,
                           QualType T, TypeSourceInfo *TInfo,
                           bool isInline, bool isExplicit) {
-  assert(N.getNameKind() == DeclarationName::CXXConversionFunctionName &&
+  assert(NameInfo.getName().getNameKind()
+         == DeclarationName::CXXConversionFunctionName &&
          "Name must refer to a conversion function");
-  return new (C) CXXConversionDecl(RD, L, N, T, TInfo, isInline, isExplicit);
+  return new (C) CXXConversionDecl(RD, NameInfo, T, TInfo,
+                                   isInline, isExplicit);
 }
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

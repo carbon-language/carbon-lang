@@ -276,9 +276,9 @@ public:
   /// and destructor names and then (if needed) rebuilds the declaration name.
   /// Identifiers and selectors are returned unmodified. Sublcasses may
   /// override this function to provide alternate behavior.
-  DeclarationName TransformDeclarationName(DeclarationName Name,
-                                           SourceLocation Loc,
-                                           QualType ObjectType = QualType());
+  DeclarationNameInfo
+  TransformDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
+                               QualType ObjectType = QualType());
 
   /// \brief Transform the given template name.
   ///
@@ -1032,15 +1032,16 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildDeclRefExpr(NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
-                                      ValueDecl *VD, SourceLocation Loc,
+                                      ValueDecl *VD,
+                                      const DeclarationNameInfo &NameInfo,
                                       TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
     SS.setScopeRep(Qualifier);
     SS.setRange(QualifierRange);
 
     // FIXME: loses template args.
-    
-    return getSema().BuildDeclarationNameExpr(SS, Loc, VD);
+
+    return getSema().BuildDeclarationNameExpr(SS, NameInfo, VD);
   }
 
   /// \brief Build a new expression in parentheses.
@@ -1149,7 +1150,7 @@ public:
                                      bool isArrow,
                                      NestedNameSpecifier *Qualifier,
                                      SourceRange QualifierRange,
-                                     SourceLocation MemberLoc,
+                                     const DeclarationNameInfo &MemberNameInfo,
                                      ValueDecl *Member,
                                      NamedDecl *FoundDecl,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
@@ -1165,7 +1166,7 @@ public:
 
       MemberExpr *ME =
         new (getSema().Context) MemberExpr(BaseExpr, isArrow,
-                                           Member, MemberLoc,
+                                           Member, MemberNameInfo,
                                            cast<FieldDecl>(Member)->getType());
       return getSema().Owned(ME);
     }
@@ -1182,8 +1183,7 @@ public:
 
     // FIXME: this involves duplicating earlier analysis in a lot of
     // cases; we should avoid this when possible.
-    LookupResult R(getSema(), Member->getDeclName(), MemberLoc,
-                   Sema::LookupMemberName);
+    LookupResult R(getSema(), MemberNameInfo, Sema::LookupMemberName);
     R.addDecl(FoundDecl);
     R.resolveKind();
 
@@ -1252,11 +1252,11 @@ public:
 
     CXXScopeSpec SS;
     QualType BaseType = ((Expr*) Base.get())->getType();
+    DeclarationNameInfo NameInfo(&Accessor, AccessorLoc);
     return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
                                               OpLoc, /*IsArrow*/ false,
                                               SS, /*FirstQualifierInScope*/ 0,
-                                              DeclarationName(&Accessor),
-                                              AccessorLoc,
+                                              NameInfo,
                                               /* TemplateArgs */ 0);
   }
 
@@ -1654,18 +1654,17 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildDependentScopeDeclRefExpr(NestedNameSpecifier *NNS,
                                                 SourceRange QualifierRange,
-                                                DeclarationName Name,
-                                                SourceLocation Location,
+                                       const DeclarationNameInfo &NameInfo,
                               const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
     SS.setScopeRep(NNS);
 
     if (TemplateArgs)
-      return getSema().BuildQualifiedTemplateIdExpr(SS, Name, Location,
+      return getSema().BuildQualifiedTemplateIdExpr(SS, NameInfo,
                                                     *TemplateArgs);
 
-    return getSema().BuildQualifiedDeclarationNameExpr(SS, Name, Location);
+    return getSema().BuildQualifiedDeclarationNameExpr(SS, NameInfo);
   }
 
   /// \brief Build a new template-id expression.
@@ -1745,8 +1744,7 @@ public:
                                               NestedNameSpecifier *Qualifier,
                                                   SourceRange QualifierRange,
                                             NamedDecl *FirstQualifierInScope,
-                                                  DeclarationName Name,
-                                                  SourceLocation MemberLoc,
+                                   const DeclarationNameInfo &MemberNameInfo,
                               const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
@@ -1755,7 +1753,8 @@ public:
     return SemaRef.BuildMemberReferenceExpr(move(BaseE), BaseType,
                                             OperatorLoc, IsArrow,
                                             SS, FirstQualifierInScope,
-                                            Name, MemberLoc, TemplateArgs);
+                                            MemberNameInfo,
+                                            TemplateArgs);
   }
 
   /// \brief Build a new member reference expression.
@@ -2098,12 +2097,13 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
 }
 
 template<typename Derived>
-DeclarationName
-TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
-                                                 SourceLocation Loc,
-                                                 QualType ObjectType) {
+DeclarationNameInfo
+TreeTransform<Derived>
+::TransformDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
+                               QualType ObjectType) {
+  DeclarationName Name = NameInfo.getName();
   if (!Name)
-    return Name;
+    return DeclarationNameInfo();
 
   switch (Name.getNameKind()) {
   case DeclarationName::Identifier:
@@ -2113,24 +2113,41 @@ TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
   case DeclarationName::CXXOperatorName:
   case DeclarationName::CXXLiteralOperatorName:
   case DeclarationName::CXXUsingDirective:
-    return Name;
+    return NameInfo;
 
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName: {
-    TemporaryBase Rebase(*this, Loc, Name);
-    QualType T = getDerived().TransformType(Name.getCXXNameType(), 
-                                            ObjectType);
-    if (T.isNull())
-      return DeclarationName();
+    TypeSourceInfo *NewTInfo;
+    CanQualType NewCanTy;
+    if (TypeSourceInfo *OldTInfo = NameInfo.getNamedTypeInfo()) {
+       NewTInfo = getDerived().TransformType(OldTInfo, ObjectType);
+       if (!NewTInfo)
+         return DeclarationNameInfo();
+       NewCanTy = SemaRef.Context.getCanonicalType(NewTInfo->getType());
+    }
+    else {
+      NewTInfo = 0;
+      TemporaryBase Rebase(*this, NameInfo.getLoc(), Name);
+      QualType NewT = getDerived().TransformType(Name.getCXXNameType(),
+                                                 ObjectType);
+      if (NewT.isNull())
+        return DeclarationNameInfo();
+      NewCanTy = SemaRef.Context.getCanonicalType(NewT);
+    }
 
-    return SemaRef.Context.DeclarationNames.getCXXSpecialName(
-                                                           Name.getNameKind(),
-                                          SemaRef.Context.getCanonicalType(T));
+    DeclarationName NewName
+      = SemaRef.Context.DeclarationNames.getCXXSpecialName(Name.getNameKind(),
+                                                           NewCanTy);
+    DeclarationNameInfo NewNameInfo(NameInfo);
+    NewNameInfo.setName(NewName);
+    NewNameInfo.setNamedTypeInfo(NewTInfo);
+    return NewNameInfo;
   }
   }
 
-  return DeclarationName();
+  assert(0 && "Unknown name kind.");
+  return DeclarationNameInfo();
 }
 
 template<typename Derived>
@@ -4197,9 +4214,15 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   if (!ND)
     return SemaRef.ExprError();
 
-  if (!getDerived().AlwaysRebuild() && 
+  DeclarationNameInfo NameInfo
+    = getDerived().TransformDeclarationNameInfo(E->getNameInfo());
+  if (!NameInfo.getName())
+    return SemaRef.ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
       Qualifier == E->getQualifier() &&
       ND == E->getDecl() &&
+      NameInfo.getName() == E->getDecl()->getDeclName() &&
       !E->hasExplicitTemplateArgumentList()) {
 
     // Mark it referenced in the new context regardless.
@@ -4223,7 +4246,7 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   }
 
   return getDerived().RebuildDeclRefExpr(Qualifier, E->getQualifierRange(),
-                                         ND, E->getLocation(), TemplateArgs);
+                                         ND, NameInfo, TemplateArgs);
 }
 
 template<typename Derived>
@@ -4522,7 +4545,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
                                         E->isArrow(),
                                         Qualifier,
                                         E->getQualifierRange(),
-                                        E->getMemberLoc(),
+                                        E->getMemberNameInfo(),
                                         Member,
                                         FoundDecl,
                                         (E->hasExplicitTemplateArgumentList()
@@ -5573,27 +5596,29 @@ TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
-                                                  DependentScopeDeclRefExpr *E) {
+                                               DependentScopeDeclRefExpr *E) {
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                 E->getQualifierRange());
   if (!NNS)
     return SemaRef.ExprError();
 
-  DeclarationName Name
-    = getDerived().TransformDeclarationName(E->getDeclName(), E->getLocation());
-  if (!Name)
+  DeclarationNameInfo NameInfo
+    = getDerived().TransformDeclarationNameInfo(E->getNameInfo());
+  if (!NameInfo.getName())
     return SemaRef.ExprError();
 
   if (!E->hasExplicitTemplateArgs()) {
     if (!getDerived().AlwaysRebuild() &&
         NNS == E->getQualifier() &&
-        Name == E->getDeclName())
+        // Note: it is sufficient to compare the Name component of NameInfo:
+        // if name has not changed, DNLoc has not changed either.
+        NameInfo.getName() == E->getDeclName())
       return SemaRef.Owned(E->Retain());
 
     return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
                                                          E->getQualifierRange(),
-                                                         Name, E->getLocation(),
+                                                         NameInfo,
                                                          /*TemplateArgs*/ 0);
   }
 
@@ -5607,7 +5632,7 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
 
   return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
                                                        E->getQualifierRange(),
-                                                       Name, E->getLocation(),
+                                                       NameInfo,
                                                        &TransArgs);
 }
 
@@ -5799,7 +5824,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
-                                                     CXXDependentScopeMemberExpr *E) {
+                                             CXXDependentScopeMemberExpr *E) {
   // Transform the base of the expression.
   OwningExprResult Base(SemaRef, (Expr*) 0);
   Expr *OldBase;
@@ -5847,10 +5872,10 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
       return SemaRef.ExprError();
   }
 
-  DeclarationName Name
-    = getDerived().TransformDeclarationName(E->getMember(), E->getMemberLoc(),
-                                            ObjectType);
-  if (!Name)
+  DeclarationNameInfo NameInfo
+    = getDerived().TransformDeclarationNameInfo(E->getMemberNameInfo(),
+                                                ObjectType);
+  if (!NameInfo.getName())
     return SemaRef.ExprError();
 
   if (!E->hasExplicitTemplateArgs()) {
@@ -5860,7 +5885,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
         Base.get() == OldBase &&
         BaseType == E->getBaseType() &&
         Qualifier == E->getQualifier() &&
-        Name == E->getMember() &&
+        NameInfo.getName() == E->getMember() &&
         FirstQualifierInScope == E->getFirstQualifierFoundInScope())
       return SemaRef.Owned(E->Retain());
 
@@ -5871,8 +5896,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                        Qualifier,
                                                        E->getQualifierRange(),
                                                        FirstQualifierInScope,
-                                                       Name,
-                                                       E->getMemberLoc(),
+                                                       NameInfo,
                                                        /*TemplateArgs*/ 0);
   }
 
@@ -5891,8 +5915,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                      Qualifier,
                                                      E->getQualifierRange(),
                                                      FirstQualifierInScope,
-                                                     Name,
-                                                     E->getMemberLoc(),
+                                                     NameInfo,
                                                      &TransArgs);
 }
 
@@ -5920,7 +5943,7 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
       return SemaRef.ExprError();
   }
 
-  LookupResult R(SemaRef, Old->getMemberName(), Old->getMemberLoc(),
+  LookupResult R(SemaRef, Old->getMemberNameInfo(),
                  Sema::LookupOrdinaryName);
 
   // Transform all the decls.
@@ -6265,7 +6288,7 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
                                                        E->getDecl()));
   if (!ND)
     return SemaRef.ExprError();
-  
+
   if (!getDerived().AlwaysRebuild() &&
       ND == E->getDecl()) {
     // Mark it referenced in the new context regardless.
@@ -6275,8 +6298,9 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
     return SemaRef.Owned(E->Retain());
   }
   
+  DeclarationNameInfo NameInfo(E->getDecl()->getDeclName(), E->getLocation());
   return getDerived().RebuildDeclRefExpr(Qualifier, SourceLocation(),
-                                         ND, E->getLocation(), 0);
+                                         ND, NameInfo, 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -6708,18 +6732,19 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
                                              Destroyed,
                                              /*FIXME?*/true);
   }
-  
+
   TypeSourceInfo *DestroyedType = Destroyed.getTypeSourceInfo();
-  DeclarationName Name
-    = SemaRef.Context.DeclarationNames.getCXXDestructorName(
-                SemaRef.Context.getCanonicalType(DestroyedType->getType()));
-  
+  DeclarationName Name(SemaRef.Context.DeclarationNames.getCXXDestructorName(
+                 SemaRef.Context.getCanonicalType(DestroyedType->getType())));
+  DeclarationNameInfo NameInfo(Name, Destroyed.getLocation());
+  NameInfo.setNamedTypeInfo(DestroyedType);
+
   // FIXME: the ScopeType should be tacked onto SS.
-  
+
   return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
                                             OperatorLoc, isArrow,
                                             SS, /*FIXME: FirstQualifier*/ 0,
-                                            Name, Destroyed.getLocation(),
+                                            NameInfo,
                                             /*TemplateArgs*/ 0);
 }
 

@@ -870,7 +870,8 @@ public:
     return getExtQualType(T, Qs);
   }
 
-  DeclarationName getNameForTemplate(TemplateName Name);
+  DeclarationNameInfo getNameForTemplate(TemplateName Name,
+                                         SourceLocation NameLoc);
 
   TemplateName getOverloadedTemplateName(UnresolvedSetIterator Begin,
                                          UnresolvedSetIterator End);

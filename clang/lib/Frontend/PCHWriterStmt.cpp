@@ -382,6 +382,7 @@ void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
     AddExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList());
 
   Writer.AddDeclRef(E->getDecl(), Record);
+  // FIXME: write DeclarationNameLoc.
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = pch::EXPR_DECL_REF;
 }
@@ -552,6 +553,7 @@ void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Writer.AddTypeRef(E->getType(), Record);
   Writer.AddStmt(E->getBase());
   Writer.AddDeclRef(E->getMemberDecl(), Record);
+  // FIXME: write DeclarationNameLoc.
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
   Code = pch::EXPR_MEMBER;
@@ -1178,6 +1180,7 @@ PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
   Writer.AddSourceRange(E->getQualifierRange(), Record);
   Writer.AddDeclRef(E->getFirstQualifierFoundInScope(), Record);
+  // FIXME: write whole DeclarationNameInfo.
   Writer.AddDeclarationName(E->getMember(), Record);
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Code = pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER;
@@ -1199,6 +1202,7 @@ PCHStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
     Record.push_back(0);
   }
 
+  // FIXME: write whole DeclarationNameInfo.
   Writer.AddDeclarationName(E->getDeclName(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.AddSourceRange(E->getQualifierRange(), Record);
@@ -1242,6 +1246,7 @@ void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
     Record.push_back(OvI.getAccess());
   }
 
+  // FIXME: write whole DeclarationNameInfo.
   Writer.AddDeclarationName(E->getName(), Record);
   Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
   Writer.AddSourceRange(E->getQualifierRange(), Record);

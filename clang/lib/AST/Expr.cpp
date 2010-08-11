@@ -209,11 +209,45 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
   computeDependence();
 }
 
+DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
+                         SourceRange QualifierRange,
+                         ValueDecl *D, const DeclarationNameInfo &NameInfo,
+                         const TemplateArgumentListInfo *TemplateArgs,
+                         QualType T)
+  : Expr(DeclRefExprClass, T, false, false),
+    DecoratedD(D,
+               (Qualifier? HasQualifierFlag : 0) |
+               (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
+    Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
+  if (Qualifier) {
+    NameQualifier *NQ = getNameQualifier();
+    NQ->NNS = Qualifier;
+    NQ->Range = QualifierRange;
+  }
+
+  if (TemplateArgs)
+    getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
+
+  computeDependence();
+}
+
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  NestedNameSpecifier *Qualifier,
                                  SourceRange QualifierRange,
                                  ValueDecl *D,
                                  SourceLocation NameLoc,
+                                 QualType T,
+                                 const TemplateArgumentListInfo *TemplateArgs) {
+  return Create(Context, Qualifier, QualifierRange, D,
+                DeclarationNameInfo(D->getDeclName(), NameLoc),
+                T, TemplateArgs);
+}
+
+DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
+                                 NestedNameSpecifier *Qualifier,
+                                 SourceRange QualifierRange,
+                                 ValueDecl *D,
+                                 const DeclarationNameInfo &NameInfo,
                                  QualType T,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
@@ -224,7 +258,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
     Size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
   
   void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
-  return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameLoc,
+  return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameInfo,
                                TemplateArgs, T);
 }
 
@@ -242,9 +276,7 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, bool HasQualifier,
 }
 
 SourceRange DeclRefExpr::getSourceRange() const {
-  // FIXME: Does not handle multi-token names well, e.g., operator[].
-  SourceRange R(Loc);
-  
+  SourceRange R = getNameInfo().getSourceRange();
   if (hasQualifier())
     R.setBegin(getQualifierRange().getBegin());
   if (hasExplicitTemplateArgumentList())
@@ -623,7 +655,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                SourceRange qualrange,
                                ValueDecl *memberdecl,
                                DeclAccessPair founddecl,
-                               SourceLocation l,
+                               DeclarationNameInfo nameinfo,
                                const TemplateArgumentListInfo *targs,
                                QualType ty) {
   std::size_t Size = sizeof(MemberExpr);
@@ -638,7 +670,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
     Size += ExplicitTemplateArgumentList::sizeFor(*targs);
 
   void *Mem = C.Allocate(Size, llvm::alignof<MemberExpr>());
-  MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, l, ty);
+  MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, nameinfo, ty);
 
   if (hasQualOrFound) {
     if (qual && qual->isDependent()) {

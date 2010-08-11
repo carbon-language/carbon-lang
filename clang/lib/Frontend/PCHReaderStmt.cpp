@@ -401,6 +401,7 @@ void PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
                                      NumTemplateArgs);
 
   E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
+  // FIXME: read DeclarationNameLoc.
   E->setLocation(Reader.ReadSourceLocation(Record, Idx));
 }
 
@@ -1154,6 +1155,7 @@ PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
   E->setFirstQualifierFoundInScope(
                         cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  // FIXME: read whole DeclarationNameInfo.
   E->setMember(Reader.ReadDeclarationName(Record, Idx));
   E->setMemberLoc(Reader.ReadSourceLocation(Record, Idx));
 }
@@ -1169,6 +1171,7 @@ PCHStmtReader::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
     ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
                                      NumTemplateArgs);
 
+  // FIXME: read whole DeclarationNameInfo.
   E->setDeclName(Reader.ReadDeclarationName(Record, Idx));
   E->setLocation(Reader.ReadSourceLocation(Record, Idx));
   E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
@@ -1207,6 +1210,7 @@ void PCHStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   }
   E->initializeResults(*Reader.getContext(), Decls.begin(), Decls.end());
 
+  // FIXME: read whole DeclarationNameInfo.
   E->setName(Reader.ReadDeclarationName(Record, Idx));
   E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
   E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
@@ -1475,11 +1479,13 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       QualType T = GetType(Record[Idx++]);
       Expr *Base = ReadSubExpr();
       ValueDecl *MemberD = cast<ValueDecl>(GetDecl(Record[Idx++]));
+      // FIXME: read DeclarationNameLoc.
       SourceLocation MemberLoc = ReadSourceLocation(Record, Idx);
+      DeclarationNameInfo MemberNameInfo(MemberD->getDeclName(), MemberLoc);
       bool IsArrow = Record[Idx++];
 
       S = MemberExpr::Create(*Context, Base, IsArrow, NNS, QualifierRange,
-                             MemberD, FoundDecl, MemberLoc,
+                             MemberD, FoundDecl, MemberNameInfo,
                              NumTemplateArgs ? &ArgInfo : 0, T);
       break;
     }

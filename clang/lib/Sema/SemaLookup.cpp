@@ -267,7 +267,7 @@ void LookupResult::configure() {
   // operators, make sure that the implicitly-declared new and delete
   // operators can be found.
   if (!isForRedeclaration()) {
-    switch (Name.getCXXOverloadedOperator()) {
+    switch (NameInfo.getName().getCXXOverloadedOperator()) {
     case OO_New:
     case OO_Delete:
     case OO_Array_New:

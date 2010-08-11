@@ -214,6 +214,7 @@ void PCHDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
 
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitDeclaratorDecl(D);
+  // FIXME: write DeclarationNameLoc.
 
   Record.push_back(D->getIdentifierNamespace());
   Record.push_back(D->getTemplatedKind());

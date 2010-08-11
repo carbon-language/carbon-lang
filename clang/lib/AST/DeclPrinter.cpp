@@ -347,7 +347,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
   PrintingPolicy SubPolicy(Policy);
   SubPolicy.SuppressSpecifiers = false;
-  std::string Proto = D->getNameAsString();
+  std::string Proto = D->getNameInfo().getAsString();
   if (isa<FunctionType>(D->getType().getTypePtr())) {
     const FunctionType *AFT = D->getType()->getAs<FunctionType>();
 

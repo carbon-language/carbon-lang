@@ -459,13 +459,20 @@ static bool ShouldSnapshotBlockValueReference(Sema &S, BlockScopeInfo *CurBlock,
 }
 
 
-
-/// BuildDeclRefExpr - Build a DeclRefExpr.
 Sema::OwningExprResult
 Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
                        const CXXScopeSpec *SS) {
+  DeclarationNameInfo NameInfo(D->getDeclName(), Loc);
+  return BuildDeclRefExpr(D, Ty, NameInfo, SS);
+}
+
+/// BuildDeclRefExpr - Build a DeclRefExpr.
+Sema::OwningExprResult
+Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty,
+                       const DeclarationNameInfo &NameInfo,
+                       const CXXScopeSpec *SS) {
   if (Context.getCanonicalType(Ty) == Context.UndeducedAutoTy) {
-    Diag(Loc,
+    Diag(NameInfo.getLoc(),
          diag::err_auto_variable_cannot_appear_in_own_initializer)
       << D->getDeclName();
     return ExprError();
@@ -479,7 +486,8 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
     } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (const FunctionDecl *FD = MD->getParent()->isLocalClass()) {
         if (VD->hasLocalStorage() && VD->getDeclContext() != CurContext) {
-          Diag(Loc, diag::err_reference_to_local_var_in_enclosing_function)
+          Diag(NameInfo.getLoc(),
+               diag::err_reference_to_local_var_in_enclosing_function)
             << D->getIdentifier() << FD->getDeclName();
           Diag(D->getLocation(), diag::note_local_variable_declared_here)
             << D->getIdentifier();
@@ -489,12 +497,12 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
     }
   }
 
-  MarkDeclarationReferenced(Loc, D);
+  MarkDeclarationReferenced(NameInfo.getLoc(), D);
 
   return Owned(DeclRefExpr::Create(Context,
                               SS? (NestedNameSpecifier *)SS->getScopeRep() : 0,
                                    SS? SS->getRange() : SourceRange(),
-                                   D, Loc, Ty));
+                                   D, NameInfo, Ty));
 }
 
 /// \brief Given a field that represents a member of an anonymous
@@ -639,7 +647,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   return Owned(Result);
 }
 
-/// Decomposes the given name into a DeclarationName, its location, and
+/// Decomposes the given name into a DeclarationNameInfo, its location, and
 /// possibly a list of template arguments.
 ///
 /// If this produces template arguments, it is permitted to call
@@ -651,8 +659,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
 static void DecomposeUnqualifiedId(Sema &SemaRef,
                                    const UnqualifiedId &Id,
                                    TemplateArgumentListInfo &Buffer,
-                                   DeclarationName &Name,
-                                   SourceLocation &NameLoc,
+                                   DeclarationNameInfo &NameInfo,
                              const TemplateArgumentListInfo *&TemplateArgs) {
   if (Id.getKind() == UnqualifiedId::IK_TemplateId) {
     Buffer.setLAngleLoc(Id.TemplateId->LAngleLoc);
@@ -666,13 +673,11 @@ static void DecomposeUnqualifiedId(Sema &SemaRef,
 
     TemplateName TName =
       Sema::TemplateTy::make(Id.TemplateId->Template).getAsVal<TemplateName>();
-
-    Name = SemaRef.Context.getNameForTemplate(TName);
-    NameLoc = Id.TemplateId->TemplateNameLoc;
+    SourceLocation TNameLoc = Id.TemplateId->TemplateNameLoc;
+    NameInfo = SemaRef.Context.getNameForTemplate(TName, TNameLoc);
     TemplateArgs = &Buffer;
   } else {
-    Name = SemaRef.GetNameFromUnqualifiedId(Id);
-    NameLoc = Id.StartLocation;
+    NameInfo = SemaRef.GetNameFromUnqualifiedId(Id);
     TemplateArgs = 0;
   }
 }
@@ -903,8 +908,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
           CXXDependentScopeMemberExpr *DepExpr =
               CXXDependentScopeMemberExpr::Create(
                   Context, DepThis, DepThisType, true, SourceLocation(),
-                  ULE->getQualifier(), ULE->getQualifierRange(), NULL, Name,
-                  R.getNameLoc(), &TList);
+                  ULE->getQualifier(), ULE->getQualifierRange(), NULL,
+                  R.getLookupNameInfo(), &TList);
           CallsUndergoingInstantiation.back()->setCallee(DepExpr);
         } else {
           Diag(R.getNameLoc(), diagnostic) << Name;
@@ -1066,13 +1071,13 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   TemplateArgumentListInfo TemplateArgsBuffer;
 
   // Decompose the UnqualifiedId into the following data.
-  DeclarationName Name;
-  SourceLocation NameLoc;
+  DeclarationNameInfo NameInfo;
   const TemplateArgumentListInfo *TemplateArgs;
-  DecomposeUnqualifiedId(*this, Id, TemplateArgsBuffer,
-                         Name, NameLoc, TemplateArgs);
+  DecomposeUnqualifiedId(*this, Id, TemplateArgsBuffer, NameInfo, TemplateArgs);
 
+  DeclarationName Name = NameInfo.getName();
   IdentifierInfo *II = Name.getAsIdentifierInfo();
+  SourceLocation NameLoc = NameInfo.getLoc();
 
   // C++ [temp.dep.expr]p3:
   //   An id-expression is type-dependent if it contains:
@@ -1103,13 +1108,12 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   }
 
   if (DependentID) {
-    return ActOnDependentIdExpression(SS, Name, NameLoc,
-                                      isAddressOfOperand,
+    return ActOnDependentIdExpression(SS, NameInfo, isAddressOfOperand,
                                       TemplateArgs);
   }
   bool IvarLookupFollowUp = false;
   // Perform the required lookup.
-  LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
+  LookupResult R(*this, NameInfo, LookupOrdinaryName);
   if (TemplateArgs) {
     // Lookup the template name again to correctly establish the context in
     // which it was found. This is really unfortunate as we already did the
@@ -1271,23 +1275,23 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
 /// this path.
 Sema::OwningExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
-                                        DeclarationName Name,
-                                        SourceLocation NameLoc) {
+                                        const DeclarationNameInfo &NameInfo) {
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
-    return BuildDependentDeclRefExpr(SS, Name, NameLoc, 0);
+    return BuildDependentDeclRefExpr(SS, NameInfo, 0);
 
   if (RequireCompleteDeclContext(SS, DC))
     return ExprError();
 
-  LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
+  LookupResult R(*this, NameInfo, LookupOrdinaryName);
   LookupQualifiedName(R, DC);
 
   if (R.isAmbiguous())
     return ExprError();
 
   if (R.empty()) {
-    Diag(NameLoc, diag::err_no_member) << Name << DC << SS.getRange();
+    Diag(NameInfo.getLoc(), diag::err_no_member)
+      << NameInfo.getName() << DC << SS.getRange();
     return ExprError();
   }
 
@@ -1563,7 +1567,8 @@ Sema::PerformObjectMemberConversion(Expr *&From,
 static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                                    const CXXScopeSpec &SS, ValueDecl *Member,
                                    DeclAccessPair FoundDecl,
-                                   SourceLocation Loc, QualType Ty,
+                                   const DeclarationNameInfo &MemberNameInfo,
+                                   QualType Ty,
                           const TemplateArgumentListInfo *TemplateArgs = 0) {
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;
@@ -1573,7 +1578,8 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
   }
 
   return MemberExpr::Create(C, Base, isArrow, Qualifier, QualifierRange,
-                            Member, FoundDecl, Loc, TemplateArgs, Ty);
+                            Member, FoundDecl, MemberNameInfo,
+                            TemplateArgs, Ty);
 }
 
 /// Builds an implicit member access expression.  The current context
@@ -1703,7 +1709,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // If this is a single, fully-resolved result and we don't need ADL,
   // just build an ordinary singleton decl ref.
   if (!NeedsADL && R.isSingleResult() && !R.getAsSingle<FunctionTemplateDecl>())
-    return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getFoundDecl());
+    return BuildDeclarationNameExpr(SS, R.getLookupNameInfo(),
+                                    R.getFoundDecl());
 
   // We only need to check the declaration if there's exactly one
   // result, because in the overloaded case the results can only be
@@ -1722,8 +1729,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context, Dependent, R.getNamingClass(),
                                    (NestedNameSpecifier*) SS.getScopeRep(),
-                                   SS.getRange(),
-                                   R.getLookupName(), R.getNameLoc(),
+                                   SS.getRange(), R.getLookupNameInfo(),
                                    NeedsADL, R.isOverloadedResult(),
                                    R.begin(), R.end());
 
@@ -1734,11 +1740,13 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
 /// \brief Complete semantic analysis for a reference to the given declaration.
 Sema::OwningExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
-                               SourceLocation Loc, NamedDecl *D) {
+                               const DeclarationNameInfo &NameInfo,
+                               NamedDecl *D) {
   assert(D && "Cannot refer to a NULL declaration");
   assert(!isa<FunctionTemplateDecl>(D) &&
          "Cannot refer unambiguously to a function template");
 
+  SourceLocation Loc = NameInfo.getLoc();
   if (CheckDeclInExpr(*this, Loc, D))
     return ExprError();
 
@@ -1830,7 +1838,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
 
-  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc, &SS);
+  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
+                          NameInfo, &SS);
 }
 
 Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
@@ -2534,7 +2543,7 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
                                bool IsArrow, SourceLocation OpLoc,
                                const CXXScopeSpec &SS,
                                NamedDecl *FirstQualifierInScope,
-                               DeclarationName Name, SourceLocation NameLoc,
+                               const DeclarationNameInfo &NameInfo,
                                const TemplateArgumentListInfo *TemplateArgs) {
   Expr *BaseExpr = Base.takeAs<Expr>();
 
@@ -2552,13 +2561,14 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
     if (PT && (!getLangOptions().ObjC1 ||
                PT->getPointeeType()->isRecordType())) {
       assert(BaseExpr && "cannot happen with implicit member accesses");
-      Diag(NameLoc, diag::err_typecheck_member_reference_struct_union)
+      Diag(NameInfo.getLoc(), diag::err_typecheck_member_reference_struct_union)
         << BaseType << BaseExpr->getSourceRange();
       return ExprError();
     }
   }
 
-  assert(BaseType->isDependentType() || Name.isDependentName() ||
+  assert(BaseType->isDependentType() ||
+         NameInfo.getName().isDependentName() ||
          isDependentScopeSpecifier(SS));
 
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
@@ -2568,8 +2578,7 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
                  static_cast<NestedNameSpecifier*>(SS.getScopeRep()),
                                                    SS.getRange(),
                                                    FirstQualifierInScope,
-                                                   Name, NameLoc,
-                                                   TemplateArgs));
+                                                   NameInfo, TemplateArgs));
 }
 
 /// We know that the given qualified member reference points only to
@@ -2713,7 +2722,7 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
                                SourceLocation OpLoc, bool IsArrow,
                                CXXScopeSpec &SS,
                                NamedDecl *FirstQualifierInScope,
-                               DeclarationName Name, SourceLocation NameLoc,
+                               const DeclarationNameInfo &NameInfo,
                                const TemplateArgumentListInfo *TemplateArgs) {
   Expr *Base = BaseArg.takeAs<Expr>();
 
@@ -2722,10 +2731,9 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
     return ActOnDependentMemberExpr(ExprArg(*this, Base), BaseType,
                                     IsArrow, OpLoc,
                                     SS, FirstQualifierInScope,
-                                    Name, NameLoc,
-                                    TemplateArgs);
+                                    NameInfo, TemplateArgs);
 
-  LookupResult R(*this, Name, NameLoc, LookupMemberName);
+  LookupResult R(*this, NameInfo, LookupMemberName);
 
   // Implicit member accesses.
   if (!Base) {
@@ -2777,8 +2785,9 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
 
   NestedNameSpecifier *Qualifier =
     static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-  DeclarationName MemberName = R.getLookupName();
-  SourceLocation MemberLoc = R.getNameLoc();
+  const DeclarationNameInfo &MemberNameInfo = R.getLookupNameInfo();
+  DeclarationName MemberName = MemberNameInfo.getName();
+  SourceLocation MemberLoc = MemberNameInfo.getLoc();
 
   if (R.isAmbiguous())
     return ExprError();
@@ -2827,7 +2836,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
                                      BaseExpr, BaseExprType,
                                      IsArrow, OpLoc,
                                      Qualifier, SS.getRange(),
-                                     MemberName, MemberLoc,
+                                     MemberNameInfo,
                                      TemplateArgs, R.begin(), R.end());
 
     return Owned(MemExpr);
@@ -2849,7 +2858,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   if (!BaseExpr) {
     // If this is not an instance member, convert to a non-member access.
     if (!MemberDecl->isCXXInstanceMember())
-      return BuildDeclarationNameExpr(SS, R.getNameLoc(), MemberDecl);
+      return BuildDeclarationNameExpr(SS, R.getLookupNameInfo(), MemberDecl);
 
     SourceLocation Loc = R.getNameLoc();
     if (SS.getRange().isValid())
@@ -2900,34 +2909,36 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     if (PerformObjectMemberConversion(BaseExpr, Qualifier, FoundDecl, FD))
       return ExprError();
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 FD, FoundDecl, MemberLoc, MemberType));
+                                 FD, FoundDecl, MemberNameInfo,
+                                 MemberType));
   }
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, Var);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 Var, FoundDecl, MemberLoc,
+                                 Var, FoundDecl, MemberNameInfo,
                                  Var->getType().getNonReferenceType()));
   }
 
   if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, MemberDecl);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 MemberFn, FoundDecl, MemberLoc,
+                                 MemberFn, FoundDecl, MemberNameInfo,
                                  MemberFn->getType()));
   }
 
   if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, MemberDecl);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 Enum, FoundDecl, MemberLoc, Enum->getType()));
+                                 Enum, FoundDecl, MemberNameInfo,
+                                 Enum->getType()));
   }
 
   Owned(BaseExpr);
 
   // We found something that we didn't expect. Complain.
   if (isa<TypeDecl>(MemberDecl))
-    Diag(MemberLoc,diag::err_typecheck_member_reference_type)
+    Diag(MemberLoc, diag::err_typecheck_member_reference_type)
       << MemberName << BaseType << int(IsArrow);
   else
     Diag(MemberLoc, diag::err_typecheck_member_reference_unknown)
@@ -3310,12 +3321,12 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
   TemplateArgumentListInfo TemplateArgsBuffer;
 
   // Decompose the name into its component parts.
-  DeclarationName Name;
-  SourceLocation NameLoc;
+  DeclarationNameInfo NameInfo;
   const TemplateArgumentListInfo *TemplateArgs;
   DecomposeUnqualifiedId(*this, Id, TemplateArgsBuffer,
-                         Name, NameLoc, TemplateArgs);
+                         NameInfo, TemplateArgs);
 
+  DeclarationName Name = NameInfo.getName();
   bool IsArrow = (OpKind == tok::arrow);
 
   NamedDecl *FirstQualifierInScope
@@ -3332,10 +3343,9 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
     Result = ActOnDependentMemberExpr(ExprArg(*this, Base), Base->getType(),
                                       IsArrow, OpLoc,
                                       SS, FirstQualifierInScope,
-                                      Name, NameLoc,
-                                      TemplateArgs);
+                                      NameInfo, TemplateArgs);
   } else {
-    LookupResult R(*this, Name, NameLoc, LookupMemberName);
+    LookupResult R(*this, NameInfo, LookupMemberName);
     Result = LookupMemberExpr(R, Base, IsArrow, OpLoc,
                               SS, ObjCImpDecl, TemplateArgs != 0);
 
@@ -3351,7 +3361,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
       // call now.
       if (!HasTrailingLParen &&
           Id.getKind() == UnqualifiedId::IK_DestructorName)
-        return DiagnoseDtorReference(NameLoc, move(Result));
+        return DiagnoseDtorReference(NameInfo.getLoc(), move(Result));
 
       return move(Result);
     }

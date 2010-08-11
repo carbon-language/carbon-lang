@@ -3041,7 +3041,7 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
     assert(0 && "Calling BuildCXXMemberCallExpr with invalid call?");
 
   MemberExpr *ME = 
-      new (Context) MemberExpr(Exp, /*IsArrow=*/false, Method, 
+      new (Context) MemberExpr(Exp, /*IsArrow=*/false, Method,
                                SourceLocation(), Method->getType());
   QualType ResultType = Method->getCallResultType();
   MarkDeclarationReferenced(Exp->getLocStart(), Method);

@@ -472,7 +472,7 @@ void StmtPrinter::VisitExpr(Expr *Node) {
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
-  OS << Node->getDecl();
+  OS << Node->getNameInfo();
   if (Node->hasExplicitTemplateArgumentList())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                     Node->getTemplateArgs(),
@@ -483,7 +483,7 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
 void StmtPrinter::VisitDependentScopeDeclRefExpr(
                                            DependentScopeDeclRefExpr *Node) {
   Node->getQualifier()->print(OS, Policy);
-  OS << Node->getDeclName().getAsString();
+  OS << Node->getNameInfo();
   if (Node->hasExplicitTemplateArgs())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                    Node->getTemplateArgs(),
@@ -494,7 +494,7 @@ void StmtPrinter::VisitDependentScopeDeclRefExpr(
 void StmtPrinter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
   if (Node->getQualifier())
     Node->getQualifier()->print(OS, Policy);
-  OS << Node->getName().getAsString();
+  OS << Node->getNameInfo();
   if (Node->hasExplicitTemplateArgs())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                    Node->getTemplateArgs(),
@@ -777,7 +777,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
 
-  OS << Node->getMemberDecl();
+  OS << Node->getMemberNameInfo();
 
   if (Node->hasExplicitTemplateArgumentList())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
@@ -1201,7 +1201,7 @@ void StmtPrinter::VisitCXXDependentScopeMemberExpr(
     // FIXME: Track use of "template" keyword explicitly?
     OS << "template ";
 
-  OS << Node->getMember().getAsString();
+  OS << Node->getMemberNameInfo();
 
   if (Node->hasExplicitTemplateArgs()) {
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
@@ -1221,7 +1221,7 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
 
   // FIXME: this might originally have been written with 'template'
 
-  OS << Node->getMemberName().getAsString();
+  OS << Node->getMemberNameInfo();
 
   if (Node->hasExplicitTemplateArgs()) {
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
