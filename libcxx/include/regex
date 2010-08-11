@@ -2263,8 +2263,10 @@ public:
             }
             else
             {
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (__b.size() != 1 || __e.size() != 1)
                     throw regex_error(regex_constants::error_collate);
+#endif
                 if (__icase_)
                 {
                     __b[0] = __traits_.translate_nocase(__b[0]);
@@ -2894,8 +2896,10 @@ basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
     case egrep:
         __first = __parse_egrep(__first, __last);
         break;
+#ifndef _LIBCPP_NO_EXCEPTIONS
     default:
         throw regex_error(regex_constants::__re_err_grammar);
+#endif
     }
     return __first;
 }
@@ -2926,8 +2930,10 @@ basic_regex<_CharT, _Traits>::__parse_basic_reg_exp(_ForwardIterator __first,
                 }
             }
         }
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (__first != __last)
             throw regex_error(regex_constants::__re_err_empty);
+#endif
     }
     return __first;
 }
@@ -2940,15 +2946,19 @@ basic_regex<_CharT, _Traits>::__parse_extended_reg_exp(_ForwardIterator __first,
 {
     __owns_one_state<_CharT>* __sa = __end_;
     _ForwardIterator __temp = __parse_ERE_branch(__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__temp == __first)
         throw regex_error(regex_constants::__re_err_empty);
+#endif
     __first = __temp;
     while (__first != __last && *__first == '|')
     {
         __owns_one_state<_CharT>* __sb = __end_;
         __temp = __parse_ERE_branch(++__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (__temp == __first)
             throw regex_error(regex_constants::__re_err_empty);
+#endif
         __push_alternation(__sa, __sb);
         __first = __temp;
     }
@@ -2962,8 +2972,10 @@ basic_regex<_CharT, _Traits>::__parse_ERE_branch(_ForwardIterator __first,
                                                  _ForwardIterator __last)
 {
     _ForwardIterator __temp = __parse_ERE_expression(__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__temp == __first)
         throw regex_error(regex_constants::__re_err_empty);
+#endif
     do
     {
         __first = __temp;
@@ -2998,8 +3010,10 @@ basic_regex<_CharT, _Traits>::__parse_ERE_expression(_ForwardIterator __first,
             unsigned __temp_count = __marked_count_;
             ++__open_count_;
             __temp = __parse_extended_reg_exp(++__temp, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__temp == __last || *__temp != ')')
                 throw regex_error(regex_constants::error_paren);
+#endif
             __push_end_marked_subexpression(__temp_count);
             --__open_count_;
             ++__temp;
@@ -3064,8 +3078,10 @@ basic_regex<_CharT, _Traits>::__parse_nondupl_RE(_ForwardIterator __first,
             unsigned __temp_count = __marked_count_;
             __first = __parse_RE_expression(__temp, __last);
             __temp = __parse_Back_close_paren(__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__temp == __first)
                 throw regex_error(regex_constants::error_paren);
+#endif
             __push_end_marked_subexpression(__temp_count);
             __first = __temp;
         }
@@ -3374,16 +3390,22 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                 int __min = 0;
                 __first = __temp;
                 __temp = __parse_DUP_COUNT(__first, __last, __min);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (__temp == __first)
                     throw regex_error(regex_constants::error_badbrace);
+#endif
                 __first = __temp;
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (__first == __last)
                     throw regex_error(regex_constants::error_brace);
+#endif
                 if (*__first != ',')
                 {
                     __temp = __parse_Back_close_brace(__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                     if (__temp == __first)
                         throw regex_error(regex_constants::error_brace);
+#endif
                     __push_loop(__min, __min, __s, __mexp_begin, __mexp_end,
                                     true);
                     __first = __temp;
@@ -3394,14 +3416,18 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                     int __max = -1;
                     __first = __parse_DUP_COUNT(__first, __last, __max);
                     __temp = __parse_Back_close_brace(__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                     if (__temp == __first)
                         throw regex_error(regex_constants::error_brace);
+#endif
                     if (__max == -1)
                         __push_greedy_inf_repeat(__min, __s, __mexp_begin, __mexp_end);
                     else
                     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
                         if (__max < __min)
                             throw regex_error(regex_constants::error_badbrace);
+#endif
                         __push_loop(__min, __max, __s, __mexp_begin, __mexp_end,
                                     true);
                     }
@@ -3461,11 +3487,15 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
             {
                 int __min;
                 _ForwardIterator __temp = __parse_DUP_COUNT(++__first, __last, __min);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (__temp == __first)
                     throw regex_error(regex_constants::error_badbrace);
+#endif
                 __first = __temp;
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (__first == __last)
                     throw regex_error(regex_constants::error_brace);
+#endif
                 switch (*__first)
                 {
                 case '}':
@@ -3479,8 +3509,11 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                         __push_loop(__min, __min, __s, __mexp_begin, __mexp_end);
                     break;
                 case ',':
-                    if (++__first == __last)
+                    ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+                    if (__first == __last)
                         throw regex_error(regex_constants::error_badbrace);
+#endif
                     if (*__first == '}')
                     {
                         ++__first;
@@ -3496,14 +3529,20 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                     {
                         int __max = -1;
                         __temp = __parse_DUP_COUNT(__first, __last, __max);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                         if (__temp == __first)
                             throw regex_error(regex_constants::error_brace);
+#endif
                         __first = __temp;
+#ifndef _LIBCPP_NO_EXCEPTIONS
                         if (__first == __last || *__first != '}')
                             throw regex_error(regex_constants::error_brace);
+#endif
                         ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
                         if (__max < __min)
                             throw regex_error(regex_constants::error_badbrace);
+#endif
                         if (__grammar == ECMAScript && __first != __last && *__first == '?')
                         {
                             ++__first;
@@ -3513,8 +3552,10 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                             __push_loop(__min, __max, __s, __mexp_begin, __mexp_end);
                     }
                     break;
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 default:
                     throw regex_error(regex_constants::error_badbrace);
+#endif
                 }
             }
             break;
@@ -3531,8 +3572,11 @@ basic_regex<_CharT, _Traits>::__parse_bracket_expression(_ForwardIterator __firs
 {
     if (__first != __last && *__first == '[')
     {
-        if (++__first == __last)
+        ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+        if (__first == __last)
             throw regex_error(regex_constants::error_brack);
+#endif
         bool __negate = false;
         if (*__first == '^')
         {
@@ -3541,23 +3585,29 @@ basic_regex<_CharT, _Traits>::__parse_bracket_expression(_ForwardIterator __firs
         }
         __bracket_expression<_CharT, _Traits>* __ml = __start_matching_list(__negate);
         // __ml owned by *this
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (__first == __last)
             throw regex_error(regex_constants::error_brack);
+#endif
         if ((__flags_ & 0x1F0) != ECMAScript && *__first == ']')
         {
             __ml->__add_char(']');
             ++__first;
         }
         __first = __parse_follow_list(__first, __last, __ml);
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (__first == __last)
             throw regex_error(regex_constants::error_brack);
+#endif
         if (*__first == '-')
         {
             __ml->__add_char('-');
             ++__first;
         }
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (__first == __last || *__first != ']')
             throw regex_error(regex_constants::error_brack);
+#endif
         ++__first;
     }
     return __first;
@@ -3677,8 +3727,10 @@ basic_regex<_CharT, _Traits>::__parse_class_escape(_ForwardIterator __first,
                           basic_string<_CharT>& __str,
                           __bracket_expression<_CharT, _Traits>* __ml)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__first == __last)
         throw regex_error(regex_constants::error_escape);
+#endif
     switch (*__first)
     {
     case 0:
@@ -3719,8 +3771,10 @@ basic_regex<_CharT, _Traits>::__parse_awk_escape(_ForwardIterator __first,
                           _ForwardIterator __last,
                           basic_string<_CharT>* __str)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__first == __last)
         throw regex_error(regex_constants::error_escape);
+#endif
     switch (*__first)
     {
     case '\\':
@@ -3788,8 +3842,10 @@ basic_regex<_CharT, _Traits>::__parse_awk_escape(_ForwardIterator __first,
         else
             __push_char(_CharT(__val));
     }
+#ifndef _LIBCPP_NO_EXCEPTIONS
     else
         throw regex_error(regex_constants::error_escape);
+#endif
     return __first;
 }
 
@@ -3805,14 +3861,18 @@ basic_regex<_CharT, _Traits>::__parse_equivalence_class(_ForwardIterator __first
     value_type _Equal_close[2] = {'=', ']'};
     _ForwardIterator __temp = _STD::search(__first, __last, _Equal_close,
                                                             _Equal_close+2);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__temp == __last)
         throw regex_error(regex_constants::error_brack);
+#endif
     // [__first, __temp) contains all text in [= ... =]
     typedef typename _Traits::string_type string_type;
     string_type __collate_name =
         __traits_.lookup_collatename(__first, __temp);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__collate_name.empty())
         throw regex_error(regex_constants::error_collate);
+#endif
     string_type __equiv_name =
         __traits_.transform_primary(__collate_name.begin(),
                                     __collate_name.end());
@@ -3828,8 +3888,10 @@ basic_regex<_CharT, _Traits>::__parse_equivalence_class(_ForwardIterator __first
         case 2:
             __ml->__add_digraph(__collate_name[0], __collate_name[1]);
             break;
+#ifndef _LIBCPP_NO_EXCEPTIONS
         default:
             throw regex_error(regex_constants::error_collate);
+#endif
         }
     }
     __first = next(__temp, 2);
@@ -3848,14 +3910,18 @@ basic_regex<_CharT, _Traits>::__parse_character_class(_ForwardIterator __first,
     value_type _Colon_close[2] = {':', ']'};
     _ForwardIterator __temp = _STD::search(__first, __last, _Colon_close,
                                                             _Colon_close+2);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__temp == __last)
         throw regex_error(regex_constants::error_brack);
+#endif
     // [__first, __temp) contains all text in [: ... :]
     typedef typename _Traits::char_class_type char_class_type;
     char_class_type __class_type =
         __traits_.lookup_classname(__first, __temp, __flags_ & icase);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__class_type == 0)
         throw regex_error(regex_constants::error_brack);
+#endif
     __ml->__add_class(__class_type);
     __first = next(__temp, 2);
     return __first;
@@ -3873,8 +3939,10 @@ basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
     value_type _Dot_close[2] = {'.', ']'};
     _ForwardIterator __temp = _STD::search(__first, __last, _Dot_close,
                                                             _Dot_close+2);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__temp == __last)
         throw regex_error(regex_constants::error_brack);
+#endif
     // [__first, __temp) contains all text in [. ... .]
     typedef typename _Traits::string_type string_type;
     __col_sym = __traits_.lookup_collatename(__first, __temp);
@@ -3883,8 +3951,10 @@ basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
     case 1:
     case 2:
         break;
+#ifndef _LIBCPP_NO_EXCEPTIONS
     default:
         throw regex_error(regex_constants::error_collate);
+#endif
     }
     __first = next(__temp, 2);
     return __first;
@@ -4022,8 +4092,10 @@ basic_regex<_CharT, _Traits>::__parse_assertion(_ForwardIterator __first,
                                 __temp = __exp.__parse(++__temp, __last);
                                 __exp.__push_l_anchor();
                                 __push_lookahead(_STD::move(__exp), false);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                                 if (__temp == __last || *__temp != ')')
                                     throw regex_error(regex_constants::error_paren);
+#endif
                                 __first = ++__temp;
                             }
                             break;
@@ -4034,8 +4106,10 @@ basic_regex<_CharT, _Traits>::__parse_assertion(_ForwardIterator __first,
                                 __temp = __exp.__parse(++__temp, __last);
                                 __exp.__push_l_anchor();
                                 __push_lookahead(_STD::move(__exp), true);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                                 if (__temp == __last || *__temp != ')')
                                     throw regex_error(regex_constants::error_paren);
+#endif
                                 __first = ++__temp;
                             }
                             break;
@@ -4071,15 +4145,20 @@ basic_regex<_CharT, _Traits>::__parse_atom(_ForwardIterator __first,
             break;
         case '(':
             {
-                if (++__first == __last)
+                ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+                if (__first == __last)
                     throw regex_error(regex_constants::error_paren);
+#endif
                 _ForwardIterator __temp = _STD::next(__first);
                 if (__temp != __last && *__first == '?' && *__temp == ':')
                 {
                     ++__open_count_;
                     __first = __parse_ecma_exp(++__temp, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                     if (__first == __last || *__first != ')')
                         throw regex_error(regex_constants::error_paren);
+#endif
                     --__open_count_;
                     ++__first;
                 }
@@ -4089,8 +4168,10 @@ basic_regex<_CharT, _Traits>::__parse_atom(_ForwardIterator __first,
                     unsigned __temp_count = __marked_count_;
                     ++__open_count_;
                     __first = __parse_ecma_exp(__first, __last);
+#ifndef _LIBCPP_NO_EXCEPTIONS
                     if (__first == __last || *__first != ')')
                         throw regex_error(regex_constants::error_paren);
+#endif
                     __push_end_marked_subexpression(__temp_count);
                     --__open_count_;
                     ++__first;
@@ -4151,8 +4232,10 @@ basic_regex<_CharT, _Traits>::__parse_decimal_escape(_ForwardIterator __first,
             unsigned __v = *__first - '0';
             for (++__first; '0' <= *__first && *__first <= '9'; ++__first)
                 __v = 10 * __v + *__first - '0';
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__v > mark_count())
                 throw regex_error(regex_constants::error_backref);
+#endif
             __push_back_ref(__v);
         }
     }
@@ -4270,31 +4353,51 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
             }
             break;
         case 'u':
-            if (++__first == __last)
+            ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+            if (__first == __last)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __hd = __traits_.value(*__first, 16);
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __sum = 16 * __sum + __hd;
-            if (++__first == __last)
+            ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+            if (__first == __last)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __hd = __traits_.value(*__first, 16);
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __sum = 16 * __sum + __hd;
             // drop through
         case 'x':
-            if (++__first == __last)
+            ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+            if (__first == __last)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __hd = __traits_.value(*__first, 16);
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __sum = 16 * __sum + __hd;
-            if (++__first == __last)
+            ++__first;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+            if (__first == __last)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __hd = __traits_.value(*__first, 16);
+#ifndef _LIBCPP_NO_EXCEPTIONS
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
+#endif
             __sum = 16 * __sum + __hd;
             if (__str)
                 *__str = _CharT(__sum);
@@ -4311,8 +4414,10 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
                     __push_char(*__first);
                 ++__first;
             }
+#ifndef _LIBCPP_NO_EXCEPTIONS
             else if (__str)
                 throw regex_error(regex_constants::error_escape);
+#endif
             break;
         }
     }
@@ -5206,8 +5311,11 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
                 __states.pop_back();
                 break;
             default:
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 throw regex_error(regex_constants::__re_err_unknown);
+#endif
                 break;
+
             }
         } while (!__states.empty());
     }
@@ -5274,7 +5382,9 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
                 __states.pop_back();
                 break;
             default:
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 throw regex_error(regex_constants::__re_err_unknown);
+#endif
                 break;
             }
         } while (!__states.empty());
@@ -5354,7 +5464,9 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
                 __states.pop_back();
                 break;
             default:
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 throw regex_error(regex_constants::__re_err_unknown);
+#endif
                 break;
             }
         } while (!__states.empty());

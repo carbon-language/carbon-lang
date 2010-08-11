@@ -107,11 +107,15 @@ __shared_weak_count::lock()
     return 0;
 }
 
+#ifndef _LIBCPP_NO_RTTI
+
 const void*
 __shared_weak_count::__get_deleter(const type_info&) const
 {
     return 0;
 }
+
+#endif
 
 void
 declare_reachable(void*)

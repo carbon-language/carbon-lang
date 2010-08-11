@@ -79,9 +79,11 @@ stoi(const string& str, size_t* idx, int base)
         ptr = const_cast<char*>(p);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoi: no conversion");
         throw out_of_range("stoi: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -98,9 +100,11 @@ stoi(const wstring& str, size_t* idx, int base)
         ptr = const_cast<wchar_t*>(p);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoi: no conversion");
         throw out_of_range("stoi: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -115,9 +119,11 @@ stol(const string& str, size_t* idx, int base)
     long r = strtol(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stol: no conversion");
         throw out_of_range("stol: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -132,9 +138,11 @@ stol(const wstring& str, size_t* idx, int base)
     long r = wcstol(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stol: no conversion");
         throw out_of_range("stol: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -149,9 +157,11 @@ stoul(const string& str, size_t* idx, int base)
     unsigned long r = strtoul(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoul: no conversion");
         throw out_of_range("stoul: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -166,9 +176,11 @@ stoul(const wstring& str, size_t* idx, int base)
     unsigned long r = wcstoul(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoul: no conversion");
         throw out_of_range("stoul: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -183,9 +195,11 @@ stoll(const string& str, size_t* idx, int base)
     long long r = strtoll(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoll: no conversion");
         throw out_of_range("stoll: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -200,9 +214,11 @@ stoll(const wstring& str, size_t* idx, int base)
     long long r = wcstoll(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoll: no conversion");
         throw out_of_range("stoll: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -217,9 +233,11 @@ stoull(const string& str, size_t* idx, int base)
     unsigned long long r = strtoull(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoull: no conversion");
         throw out_of_range("stoull: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -234,9 +252,11 @@ stoull(const wstring& str, size_t* idx, int base)
     unsigned long long r = wcstoull(p, &ptr, base);
     if (ptr == p)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (r == 0)
             throw invalid_argument("stoull: no conversion");
         throw out_of_range("stoull: out of range");
+#endif
     }
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
@@ -252,10 +272,12 @@ stof(const string& str, size_t* idx)
     errno = 0;
     double r = strtod(p, &ptr);
     swap(errno, errno_save);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (errno_save == ERANGE)
         throw out_of_range("stof: out of range");
     if (ptr == p)
         throw invalid_argument("stof: no conversion");
+#endif
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
     return static_cast<float>(r);
@@ -270,10 +292,12 @@ stof(const wstring& str, size_t* idx)
     errno = 0;
     double r = wcstod(p, &ptr);
     swap(errno, errno_save);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (errno_save == ERANGE)
         throw out_of_range("stof: out of range");
     if (ptr == p)
         throw invalid_argument("stof: no conversion");
+#endif
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
     return static_cast<float>(r);
@@ -288,10 +312,12 @@ stod(const string& str, size_t* idx)
     errno = 0;
     double r = strtod(p, &ptr);
     swap(errno, errno_save);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (errno_save == ERANGE)
         throw out_of_range("stod: out of range");
     if (ptr == p)
         throw invalid_argument("stod: no conversion");
+#endif
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
     return r;
@@ -306,10 +332,12 @@ stod(const wstring& str, size_t* idx)
     errno = 0;
     double r = wcstod(p, &ptr);
     swap(errno, errno_save);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (errno_save == ERANGE)
         throw out_of_range("stod: out of range");
     if (ptr == p)
         throw invalid_argument("stod: no conversion");
+#endif
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
     return r;
@@ -324,10 +352,12 @@ stold(const string& str, size_t* idx)
     errno = 0;
     long double r = strtold(p, &ptr);
     swap(errno, errno_save);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (errno_save == ERANGE)
         throw out_of_range("stold: out of range");
     if (ptr == p)
         throw invalid_argument("stold: no conversion");
+#endif
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
     return r;
@@ -342,10 +372,12 @@ stold(const wstring& str, size_t* idx)
     errno = 0;
     long double r = wcstold(p, &ptr);
     swap(errno, errno_save);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (errno_save == ERANGE)
         throw out_of_range("stold: out of range");
     if (ptr == p)
         throw invalid_argument("stold: no conversion");
+#endif
     if (idx)
         *idx = static_cast<size_t>(ptr - p);
     return r;

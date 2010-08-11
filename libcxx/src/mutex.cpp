@@ -220,8 +220,10 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
         pthread_cond_wait(&cv, &mut);
     if (flag == 0)
     {
+#ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
+#endif
             flag = 1;
             pthread_mutex_unlock(&mut);
             func(arg);
@@ -229,6 +231,7 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
             flag = ~0ul;
             pthread_mutex_unlock(&mut);
             pthread_cond_broadcast(&cv);
+#ifndef _LIBCPP_NO_EXCEPTIONS
         }
         catch (...)
         {
@@ -238,6 +241,7 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
             pthread_cond_broadcast(&cv);
             throw;
         }
+#endif
     }
     else
         pthread_mutex_unlock(&mut);

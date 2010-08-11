@@ -24,8 +24,10 @@ void
 thread::join()
 {
     int ec = pthread_join(__t_, 0);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (ec)
         throw system_error(error_code(ec, system_category()), "thread::join failed");
+#endif
     __t_ = 0;
 }
 
@@ -39,8 +41,10 @@ thread::detach()
         if (ec == 0)
             __t_ = 0;
     }
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (ec)
         throw system_error(error_code(ec, system_category()), "thread::detach failed");
+#endif
 }
 
 unsigned

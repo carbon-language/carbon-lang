@@ -90,6 +90,10 @@
 #define _LIBCPP_NO_EXCEPTIONS
 #endif
 
+#if !(__has_feature(cxx_rtti))
+#define _LIBCPP_NO_RTTI
+#endif
+
 #define _LIBCPP_HAS_NO_ADVANCED_SFINAE
 #define _LIBCPP_HAS_NO_STRONG_USING
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -137,6 +141,10 @@
 
 #if !__EXCEPTIONS
 #define _LIBCPP_NO_EXCEPTIONS
+#endif
+
+#ifndef __GXX_RTTI
+#define _LIBCPP_NO_RTTI
 #endif
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES

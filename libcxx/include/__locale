@@ -134,8 +134,10 @@ template <class _Facet>
 locale
 locale::combine(const locale& __other) const
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (!_STD::has_facet<_Facet>(__other))
         throw runtime_error("locale::combine: locale missing facet");
+#endif
     return locale(*this, &const_cast<_Facet&>(_STD::use_facet<_Facet>(__other)));
 }
 

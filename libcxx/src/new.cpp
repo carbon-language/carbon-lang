@@ -42,7 +42,11 @@ operator new(std::size_t size) throw (std::bad_alloc)
         if (__new_handler)
             __new_handler();
         else
+#ifndef _LIBCPP_NO_EXCEPTIONS
             throw std::bad_alloc();
+#else
+            break;
+#endif
     }
     return p;
 }
@@ -52,13 +56,17 @@ void*
 operator new(size_t size, const std::nothrow_t&) throw()
 {
     void* p = 0;
+#ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
+#endif
         p = ::operator new(size);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
     }
+#endif
     return p;
 }
 
@@ -74,13 +82,17 @@ void*
 operator new[](size_t size, const std::nothrow_t& nothrow) throw()
 {
     void* p = 0;
+#ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
+#endif
         p = ::operator new[](size);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
     }
+#endif
     return p;
 }
 
@@ -162,7 +174,9 @@ bad_array_new_length::what() const throw()
 void
 __throw_bad_alloc()
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     throw bad_alloc();
+#endif
 }
 
 }  // std

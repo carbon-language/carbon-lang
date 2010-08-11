@@ -54,15 +54,21 @@ std::set_terminate(std::terminate_handler func) throw()
 void
 std::terminate()
 {
-    try {
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    try
+    {
+#endif
         (*__terminate_handler)();
         // handler should not return
         ::abort ();
+#ifndef _LIBCPP_NO_EXCEPTIONS
     } 
-    catch (...) {
+    catch (...)
+    {
         // handler should not throw exception
         ::abort ();
     }
+#endif
 }
 
 

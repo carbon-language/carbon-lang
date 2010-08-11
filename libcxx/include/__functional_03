@@ -243,8 +243,10 @@ public:
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
     virtual _R operator()() = 0;
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
+#endif
 };
 
 template<class _R, class _A0>
@@ -260,8 +262,10 @@ public:
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
     virtual _R operator()(_A0) = 0;
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
+#endif
 };
 
 template<class _R, class _A0, class _A1>
@@ -277,8 +281,10 @@ public:
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
     virtual _R operator()(_A0, _A1) = 0;
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
+#endif
 };
 
 template<class _R, class _A0, class _A1, class _A2>
@@ -294,8 +300,10 @@ public:
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
     virtual _R operator()(_A0, _A1, _A2) = 0;
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
+#endif
 };
 
 template<class _FD, class _Alloc, class _FB> class __func;
@@ -313,8 +321,10 @@ public:
     virtual void destroy();
     virtual void destroy_deallocate();
     virtual _R operator()();
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
+#endif
 };
 
 template<class _F, class _Alloc, class _R>
@@ -360,6 +370,8 @@ __func<_F, _Alloc, _R()>::operator()()
     return __invoke<_R>(__f_.first());
 }
 
+#ifndef _LIBCPP_NO_RTTI
+
 template<class _F, class _Alloc, class _R>
 const void*
 __func<_F, _Alloc, _R()>::target(const type_info& __ti) const
@@ -376,6 +388,8 @@ __func<_F, _Alloc, _R()>::target_type() const
     return typeid(_F);
 }
 
+#endif
+
 template<class _F, class _Alloc, class _R, class _A0>
 class __func<_F, _Alloc, _R(_A0)>
     : public  __base<_R(_A0)>
@@ -389,8 +403,10 @@ public:
     virtual void destroy();
     virtual void destroy_deallocate();
     virtual _R operator()(_A0);
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
+#endif
 };
 
 template<class _F, class _Alloc, class _R, class _A0>
@@ -436,6 +452,8 @@ __func<_F, _Alloc, _R(_A0)>::operator()(_A0 __a0)
     return __invoke(__f_.first(), __a0);
 }
 
+#ifndef _LIBCPP_NO_RTTI
+
 template<class _F, class _Alloc, class _R, class _A0>
 const void*
 __func<_F, _Alloc, _R(_A0)>::target(const type_info& __ti) const
@@ -452,6 +470,8 @@ __func<_F, _Alloc, _R(_A0)>::target_type() const
     return typeid(_F);
 }
 
+#endif
+
 template<class _F, class _Alloc, class _R, class _A0, class _A1>
 class __func<_F, _Alloc, _R(_A0, _A1)>
     : public  __base<_R(_A0, _A1)>
@@ -465,8 +485,10 @@ public:
     virtual void destroy();
     virtual void destroy_deallocate();
     virtual _R operator()(_A0, _A1);
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
+#endif
 };
 
 template<class _F, class _Alloc, class _R, class _A0, class _A1>
@@ -512,6 +534,8 @@ __func<_F, _Alloc, _R(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1)
     return __invoke(__f_.first(), __a0, __a1);
 }
 
+#ifndef _LIBCPP_NO_RTTI
+
 template<class _F, class _Alloc, class _R, class _A0, class _A1>
 const void*
 __func<_F, _Alloc, _R(_A0, _A1)>::target(const type_info& __ti) const
@@ -528,6 +552,8 @@ __func<_F, _Alloc, _R(_A0, _A1)>::target_type() const
     return typeid(_F);
 }
 
+#endif
+
 template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
 class __func<_F, _Alloc, _R(_A0, _A1, _A2)>
     : public  __base<_R(_A0, _A1, _A2)>
@@ -541,8 +567,10 @@ public:
     virtual void destroy();
     virtual void destroy_deallocate();
     virtual _R operator()(_A0, _A1, _A2);
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
+#endif
 };
 
 template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
@@ -588,6 +616,8 @@ __func<_F, _Alloc, _R(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2)
     return __invoke(__f_.first(), __a0, __a1, __a2);
 }
 
+#ifndef _LIBCPP_NO_RTTI
+
 template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
 const void*
 __func<_F, _Alloc, _R(_A0, _A1, _A2)>::target(const type_info& __ti) const
@@ -603,6 +633,8 @@ __func<_F, _Alloc, _R(_A0, _A1, _A2)>::target_type() const
 {
     return typeid(_F);
 }
+
+#endif
 
 }  // __function
 
@@ -669,10 +701,12 @@ public:
     // 20.7.16.2.4, function invocation:
     _R operator()() const;
 
+#ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
     template <typename _T> _T* target();
     template <typename _T> const _T* target() const;
+#endif
 };
 
 template<class _R>
@@ -797,10 +831,14 @@ template<class _R>
 _R
 function<_R()>::operator()() const
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
         throw bad_function_call();
+#endif
     return (*__f_)();
 }
+
+#ifndef _LIBCPP_NO_RTTI
 
 template<class _R>
 const std::type_info&
@@ -830,6 +868,8 @@ function<_R()>::target() const
         return (const _T*)0;
     return (const _T*)__f_->target(typeid(_T));
 }
+
+#endif
 
 template<class _R, class _A0>
 class function<_R(_A0)>
@@ -905,10 +945,12 @@ public:
     // 20.7.16.2.4, function invocation:
     _R operator()(_A0) const;
 
+#ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
     template <typename _T> _T* target();
     template <typename _T> const _T* target() const;
+#endif
 };
 
 template<class _R, class _A0>
@@ -1033,10 +1075,14 @@ template<class _R, class _A0>
 _R
 function<_R(_A0)>::operator()(_A0 __a0) const
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
         throw bad_function_call();
+#endif
     return (*__f_)(__a0);
 }
+
+#ifndef _LIBCPP_NO_RTTI
 
 template<class _R, class _A0>
 const std::type_info&
@@ -1066,6 +1112,8 @@ function<_R(_A0)>::target() const
         return (const _T*)0;
     return (const _T*)__f_->target(typeid(_T));
 }
+
+#endif
 
 template<class _R, class _A0, class _A1>
 class function<_R(_A0, _A1)>
@@ -1141,10 +1189,12 @@ public:
     // 20.7.16.2.4, function invocation:
     _R operator()(_A0, _A1) const;
 
+#ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
     template <typename _T> _T* target();
     template <typename _T> const _T* target() const;
+#endif
 };
 
 template<class _R, class _A0, class _A1>
@@ -1269,10 +1319,14 @@ template<class _R, class _A0, class _A1>
 _R
 function<_R(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1) const
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
         throw bad_function_call();
+#endif
     return (*__f_)(__a0, __a1);
 }
+
+#ifndef _LIBCPP_NO_RTTI
 
 template<class _R, class _A0, class _A1>
 const std::type_info&
@@ -1302,6 +1356,8 @@ function<_R(_A0, _A1)>::target() const
         return (const _T*)0;
     return (const _T*)__f_->target(typeid(_T));
 }
+
+#endif
 
 template<class _R, class _A0, class _A1, class _A2>
 class function<_R(_A0, _A1, _A2)>
@@ -1376,10 +1432,12 @@ public:
     // 20.7.16.2.4, function invocation:
     _R operator()(_A0, _A1, _A2) const;
 
+#ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
     template <typename _T> _T* target();
     template <typename _T> const _T* target() const;
+#endif
 };
 
 template<class _R, class _A0, class _A1, class _A2>
@@ -1504,10 +1562,14 @@ template<class _R, class _A0, class _A1, class _A2>
 _R
 function<_R(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2) const
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
         throw bad_function_call();
+#endif
     return (*__f_)(__a0, __a1, __a2);
 }
+
+#ifndef _LIBCPP_NO_RTTI
 
 template<class _R, class _A0, class _A1, class _A2>
 const std::type_info&
@@ -1537,6 +1599,8 @@ function<_R(_A0, _A1, _A2)>::target() const
         return (const _T*)0;
     return (const _T*)__f_->target(typeid(_T));
 }
+
+#endif
 
 template <class _F> 
 inline _LIBCPP_INLINE_VISIBILITY

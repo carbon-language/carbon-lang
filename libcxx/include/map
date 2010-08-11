@@ -1136,8 +1136,10 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k)
 {
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_equal_key(__parent, __k);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__child == nullptr)
         throw out_of_range("map::at:  key not found");
+#endif
     return static_cast<__node_pointer>(__child)->__value_.second;
 }
 
@@ -1147,8 +1149,10 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k) const
 {
     __node_base_const_pointer __parent;
     __node_base_const_pointer __child = __find_equal_key(__parent, __k);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__child == nullptr)
         throw out_of_range("map::at:  key not found");
+#endif
     return static_cast<__node_const_pointer>(__child)->__value_.second;
 }
 

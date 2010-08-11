@@ -193,7 +193,9 @@ system_error::~system_error() throw()
 void
 __throw_system_error(int ev, const char* what_arg)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     throw system_error(error_code(ev, system_category()), what_arg);
+#endif
 }
 
 _LIBCPP_END_NAMESPACE_STD

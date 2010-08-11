@@ -132,8 +132,10 @@ locale::__imp::__imp(const string& name, size_t refs)
       name_(name),
       facets_(N)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
+#endif
         facets_ = locale::classic().__locale_->facets_;
         for (unsigned i = 0; i < facets_.size(); ++i)
             if (facets_[i])
@@ -158,6 +160,7 @@ locale::__imp::__imp(const string& name, size_t refs)
         install(new time_put_byname<wchar_t>(name_));
         install(new messages_byname<char>(name_));
         install(new messages_byname<wchar_t>(name_));
+#ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
@@ -166,6 +169,7 @@ locale::__imp::__imp(const string& name, size_t refs)
                 facets_[i]->__release_shared();
         throw;
     }
+#endif
 }
 
 locale::__imp::__imp(const __imp& other)
@@ -186,8 +190,10 @@ locale::__imp::__imp(const __imp& other, const string& name, locale::category c)
     for (unsigned i = 0; i < facets_.size(); ++i)
         if (facets_[i])
             facets_[i]->__add_shared();
+#ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
+#endif
         if (c & locale::collate)
         {
             install(new collate_byname<char>(name));
@@ -226,6 +232,7 @@ locale::__imp::__imp(const __imp& other, const string& name, locale::category c)
             install(new messages_byname<char>(name));
             install(new messages_byname<wchar_t>(name));
         }
+#ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
@@ -234,6 +241,7 @@ locale::__imp::__imp(const __imp& other, const string& name, locale::category c)
                 facets_[i]->__release_shared();
         throw;
     }
+#endif
 }
 
 template<class F>
@@ -253,8 +261,10 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
     for (unsigned i = 0; i < facets_.size(); ++i)
         if (facets_[i])
             facets_[i]->__add_shared();
+#ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
+#endif
         if (c & locale::collate)
         {
             install_from<_STD::collate<char> >(one);
@@ -301,6 +311,7 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
             install_from<_STD::messages<char> >(one);
             install_from<_STD::messages<wchar_t> >(one);
         }
+#ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
@@ -309,6 +320,7 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
                 facets_[i]->__release_shared();
         throw;
     }
+#endif
 }
 
 locale::__imp::__imp(const __imp& other, facet* f, long id)
@@ -346,8 +358,10 @@ locale::__imp::install(facet* f, long id)
 const locale::facet*
 locale::__imp::use_facet(long id) const
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (!has_facet(id))
         throw bad_cast();
+#endif
     return facets_[id];
 }
 
@@ -414,8 +428,12 @@ locale::operator=(const locale& other) throw()
 }
 
 locale::locale(const char* name)
+#ifndef _LIBCPP_NO_EXCEPTIONS
     : __locale_(name ? new __imp(name)
                      : throw runtime_error("locale constructed with null"))
+#else
+    : __locale_(new __imp(name))
+#endif
 {
     __locale_->__add_shared();
 }
@@ -427,8 +445,12 @@ locale::locale(const string& name)
 }
 
 locale::locale(const locale& other, const char* name, category c)
+#ifndef _LIBCPP_NO_EXCEPTIONS
     : __locale_(name ? new __imp(*other.__locale_, name, c)
                      : throw runtime_error("locale constructed with null"))
+#else
+    : __locale_(new __imp(*other.__locale_, name, c))
+#endif
 {
     __locale_->__add_shared();
 }
@@ -545,18 +567,22 @@ collate_byname<char>::collate_byname(const char* n, size_t refs)
     : collate<char>(refs),
       __l(newlocale(LC_ALL_MASK, n, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("collate_byname<char>::collate_byname"
                             " failed to construct for " + string(n));
+#endif
 }
 
 collate_byname<char>::collate_byname(const string& name, size_t refs)
     : collate<char>(refs),
       __l(newlocale(LC_ALL_MASK, name.c_str(), 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("collate_byname<char>::collate_byname"
                             " failed to construct for " + name);
+#endif
 }
 
 collate_byname<char>::~collate_byname()
@@ -593,18 +619,22 @@ collate_byname<wchar_t>::collate_byname(const char* n, size_t refs)
     : collate<wchar_t>(refs),
       __l(newlocale(LC_ALL_MASK, n, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("collate_byname<wchar_t>::collate_byname(size_t refs)"
                             " failed to construct for " + string(n));
+#endif
 }
 
 collate_byname<wchar_t>::collate_byname(const string& name, size_t refs)
     : collate<wchar_t>(refs),
       __l(newlocale(LC_ALL_MASK, name.c_str(), 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("collate_byname<wchar_t>::collate_byname(size_t refs)"
                             " failed to construct for " + name);
+#endif
 }
 
 collate_byname<wchar_t>::~collate_byname()
@@ -828,18 +858,22 @@ ctype_byname<char>::ctype_byname(const char* name, size_t refs)
     : ctype<char>(0, false, refs),
       __l(newlocale(LC_ALL_MASK, name, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("ctype_byname<char>::ctype_byname"
                             " failed to construct for " + string(name));
+#endif
 }
 
 ctype_byname<char>::ctype_byname(const string& name, size_t refs)
     : ctype<char>(0, false, refs),
       __l(newlocale(LC_ALL_MASK, name.c_str(), 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("ctype_byname<char>::ctype_byname"
                             " failed to construct for " + name);
+#endif
 }
 
 ctype_byname<char>::~ctype_byname()
@@ -881,18 +915,22 @@ ctype_byname<wchar_t>::ctype_byname(const char* name, size_t refs)
     : ctype<wchar_t>(refs),
       __l(newlocale(LC_ALL_MASK, name, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("ctype_byname<wchar_t>::ctype_byname"
                             " failed to construct for " + string(name));
+#endif
 }
 
 ctype_byname<wchar_t>::ctype_byname(const string& name, size_t refs)
     : ctype<wchar_t>(refs),
       __l(newlocale(LC_ALL_MASK, name.c_str(), 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("ctype_byname<wchar_t>::ctype_byname"
                             " failed to construct for " + name);
+#endif
 }
 
 ctype_byname<wchar_t>::~ctype_byname()
@@ -1092,9 +1130,11 @@ codecvt<wchar_t, char, mbstate_t>::codecvt(const char* nm, size_t refs)
     : locale::facet(refs),
       __l(newlocale(LC_ALL_MASK, nm, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__l == 0)
         throw runtime_error("codecvt_byname<wchar_t, char, mbstate_t>::codecvt_byname"
                             " failed to construct for " + string(nm));
+#endif
 }
 
 codecvt<wchar_t, char, mbstate_t>::~codecvt()
@@ -3832,9 +3872,11 @@ numpunct_byname<char>::__init(const char* nm)
     if (strcmp(nm, "C") != 0)
     {
         unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (loc == 0)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
+#endif
         lconv* lc = localeconv_l(loc.get());
         if (*lc->decimal_point)
             __decimal_point_ = *lc->decimal_point;
@@ -3869,9 +3911,11 @@ numpunct_byname<wchar_t>::__init(const char* nm)
     if (strcmp(nm, "C") != 0)
     {
         unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
+#ifndef _LIBCPP_NO_EXCEPTIONS
         if (loc == 0)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
+#endif
         lconv* lc = localeconv_l(loc.get());
         if (*lc->decimal_point)
             __decimal_point_ = *lc->decimal_point;
@@ -4274,17 +4318,21 @@ __time_get_c_storage<wchar_t>::__r() const
 __time_get::__time_get(const char* nm)
     : __loc_(newlocale(LC_ALL_MASK, nm, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__loc_ == 0)
         throw runtime_error("time_get_byname"
                             " failed to construct for " + string(nm));
+#endif
 }
 
 __time_get::__time_get(const string& nm)
     : __loc_(newlocale(LC_ALL_MASK, nm.c_str(), 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__loc_ == 0)
         throw runtime_error("time_get_byname"
                             " failed to construct for " + nm);
+#endif
 }
 
 __time_get::~__time_get()
@@ -4921,17 +4969,21 @@ __time_get_storage<wchar_t>::__do_date_order() const
 __time_put::__time_put(const char* nm)
     : __loc_(newlocale(LC_ALL_MASK, nm, 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__loc_ == 0)
         throw runtime_error("time_put_byname"
                             " failed to construct for " + string(nm));
+#endif
 }
 
 __time_put::__time_put(const string& nm)
     : __loc_(newlocale(LC_ALL_MASK, nm.c_str(), 0))
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__loc_ == 0)
         throw runtime_error("time_put_byname"
                             " failed to construct for " + nm);
+#endif
 }
 
 __time_put::~__time_put()
@@ -5210,9 +5262,11 @@ moneypunct_byname<char, false>::init(const char* nm)
 {
     typedef moneypunct<char, false> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
+#endif
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = *lc->mon_decimal_point;
@@ -5246,9 +5300,11 @@ moneypunct_byname<char, true>::init(const char* nm)
 {
     typedef moneypunct<char, true> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
+#endif
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = *lc->mon_decimal_point;
@@ -5282,9 +5338,11 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
 {
     typedef moneypunct<wchar_t, false> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
+#endif
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = static_cast<wchar_t>(*lc->mon_decimal_point);
@@ -5341,9 +5399,11 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
 {
     typedef moneypunct<wchar_t, true> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
+#endif
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = static_cast<wchar_t>(*lc->mon_decimal_point);
@@ -5398,7 +5458,9 @@ void __do_nothing(void*) {}
 
 void __throw_runtime_error(const char* msg)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     throw runtime_error(msg);
+#endif
 }
 
 template class collate<char>;

@@ -2642,7 +2642,9 @@ public:
     long use_count() const {return __shared_count::use_count();}
     __shared_weak_count* lock();
 
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* __get_deleter(const type_info&) const;
+#endif
 private:
     virtual void __on_zero_shared_weak() = 0;
 };
@@ -2656,12 +2658,16 @@ public:
     __shared_ptr_pointer(_Tp __p, _Dp __d, _Alloc __a)
         :  __data_(__compressed_pair<_Tp, _Dp>(__p, _STD::move(__d)), _STD::move(__a)) {}
 
+#ifndef _LIBCPP_NO_RTTI
     virtual const void* __get_deleter(const type_info&) const;
+#endif
 
 private:
     virtual void __on_zero_shared();
     virtual void __on_zero_shared_weak();
 };
+
+#ifndef _LIBCPP_NO_RTTI
 
 template <class _Tp, class _Dp, class _Alloc>
 const void*
@@ -2669,6 +2675,8 @@ __shared_ptr_pointer<_Tp, _Dp, _Alloc>::__get_deleter(const type_info& __t) cons
 {
     return __t == typeid(_Dp) ? &__data_.first().second() : 0;
 }
+
+#endif
 
 template <class _Tp, class _Dp, class _Alloc>
 void
@@ -2834,9 +2842,11 @@ public:
     template <class _U> bool owner_before(weak_ptr<_U> const& __p) const
         {return __cntrl_ < __p.__cntrl_;}
 
+#ifndef _LIBCPP_NO_RTTI
     template <class _Dp>
         _Dp* __get_deleter() const
             {return (_Dp*)(__cntrl_ ? __cntrl_->__get_deleter(typeid(_Dp)) : 0);}
+#endif
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -3591,6 +3601,8 @@ const_pointer_cast(const shared_ptr<_Up>& __r)
     return shared_ptr<_Tp>(__r, const_cast<_Tp*>(__r.get()));
 }
 
+#ifndef _LIBCPP_NO_RTTI
+
 template<class _Dp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 _Dp*
@@ -3598,6 +3610,8 @@ get_deleter(const shared_ptr<_Tp>& __p)
 {
     return __p.template __get_deleter<_Dp>();
 }
+
+#endif
 
 template<class _Tp>
 class weak_ptr
