@@ -40,6 +40,8 @@ def FeatureDB     : SubtargetFeature<"db", "HasDataBarrier", "true",
                                    "Has data barrier (dmb / dsb) instructions">;
 def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
                                          "FP compare + branch is slow">;
+def FeatureVFPOnlySP : SubtargetFeature<"fp-only-sp", "FPOnlySP", "true",
+                          "Floating point unit supports single precision only">;
 
 // Some processors have multiply-accumulate instructions that don't
 // play nicely with other VFP instructions, and it's generally better
@@ -155,7 +157,7 @@ def : Processor<"cortex-a9",        CortexA9Itineraries,
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [ArchV7M]>;
-def : ProcNoItin<"cortex-m4",       [ArchV7M]>;
+def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureVFP2, FeatureVFPOnlySP]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

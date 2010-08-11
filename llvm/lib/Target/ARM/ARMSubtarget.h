@@ -95,6 +95,10 @@ protected:
   /// over 16-bit ones.
   bool Pref32BitThumb;
 
+  /// FPOnlySP - If true, the floating point unit only supports single
+  /// precision.
+  bool FPOnlySP;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -151,6 +155,7 @@ protected:
   bool hasDataBarrier() const { return HasDataBarrier; }
   bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
   bool isFPBrccSlow() const { return SlowFPBrcc; }
+  bool isFPOnlySP() const { return FPOnlySP; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }
 
   bool hasFP16() const { return HasFP16; }

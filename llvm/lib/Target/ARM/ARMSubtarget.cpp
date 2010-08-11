@@ -45,6 +45,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , HasT2ExtractPack(false)
   , HasDataBarrier(false)
   , Pref32BitThumb(false)
+  , FPOnlySP(false)
   , stackAlignment(4)
   , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.
