@@ -38,6 +38,10 @@ public:
     }
 };
 
+// Commonly-used tagged types, so code using them is interoperable
+typedef TaggedASTType<0>    TypeFromParser;
+typedef TaggedASTType<1>    TypeFromUser;
+
 }
 
 #endif

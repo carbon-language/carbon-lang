@@ -19,6 +19,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Expression/ClangASTSource.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
@@ -36,17 +37,17 @@
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionDeclMap::ClangExpressionDeclMap(ExecutionContext *exe_ctx,
-                                               ClangPersistentVariables &persistent_vars) :
-    m_exe_ctx(exe_ctx),
-    m_persistent_vars(persistent_vars),
-    m_struct_laid_out(false),
+ClangExpressionDeclMap::ClangExpressionDeclMap(ExecutionContext *exe_ctx) :
+    m_exe_ctx(exe_ctx),    m_struct_laid_out(false),
     m_materialized_location(0)
 {
     if (exe_ctx && exe_ctx->frame)
         m_sym_ctx = new SymbolContext(exe_ctx->frame->GetSymbolContext(lldb::eSymbolContextEverything));
     else
         m_sym_ctx = NULL;
+    
+    if (exe_ctx && exe_ctx->process)
+        m_persistent_vars = &exe_ctx->process->GetPersistentVariables();
 }
 
 ClangExpressionDeclMap::~ClangExpressionDeclMap()
@@ -81,6 +82,31 @@ ClangExpressionDeclMap::GetIndexForDecl (uint32_t &index,
 }
 
 // Interface for IRForTarget
+
+bool 
+ClangExpressionDeclMap::AddPersistentVariable (const clang::NamedDecl *decl)
+{
+    clang::ASTContext *context(m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
+    
+    const clang::VarDecl *var(dyn_cast<clang::VarDecl>(decl));
+    
+    if (!var)
+        return false;
+    
+    TypeFromUser user_type(ClangASTContext::CopyType(context, 
+                                                     &var->getASTContext(),
+                                                     var->getType().getAsOpaquePtr()),
+                            context);
+    
+    ConstString const_name(decl->getName().str().c_str());
+    
+    ClangPersistentVariable *pvar = m_persistent_vars->CreateVariable(const_name, user_type);
+    
+    if (!pvar)
+        return false;
+    
+    return true;
+}
 
 bool 
 ClangExpressionDeclMap::AddValueToStruct (llvm::Value *value,
@@ -400,33 +426,40 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
         
         if (!GetIndexForDecl(tuple_index, iter->m_decl)) 
         {
-            if (iter->m_name.find("___clang_expr_result") == std::string::npos)
+            if (iter->m_name[0] == '$')
+            {
+                if (!DoMaterializeOnePersistentVariable(dematerialize, *exe_ctx, iter->m_name.c_str(), m_materialized_location + iter->m_offset, err))
+                    return false;
+            }
+            else if (iter->m_name.find("___clang_expr_result") != std::string::npos)
+            {
+                if (log)
+                    log->Printf("Found special result variable %s", iter->m_name.c_str());
+                
+                if (dematerialize)
+                {
+                    clang::ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
+                    
+                    if (!context)
+                    {
+                        err.SetErrorString("Couldn't find a scratch AST context to put the result type into"); 
+                    }
+                    
+                    TypeFromUser copied_type(ClangASTContext::CopyType(context, 
+                                                                       iter->m_parser_type.GetASTContext(),
+                                                                       iter->m_parser_type.GetOpaqueQualType()),
+                                             context);
+                    
+                    result_value->SetContext(Value::eContextTypeOpaqueClangQualType, copied_type.GetOpaqueQualType());
+                    
+                    result_value->SetValueType(Value::eValueTypeLoadAddress);
+                    result_value->GetScalar() = (uintptr_t)m_materialized_location + iter->m_offset;
+                }
+            }
+            else
             {
                 err.SetErrorStringWithFormat("Unexpected variable %s", iter->m_name.c_str());
                 return false;
-            }
-            
-            if (log)
-                log->Printf("Found special result variable %s", iter->m_name.c_str());
-            
-            if (dematerialize)
-            {
-                clang::ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
-                
-                if (!context)
-                {
-                    err.SetErrorString("Couldn't find a scratch AST context to put the result type into"); 
-                }
-                
-                TypeFromUser copied_type(ClangASTContext::CopyType(context, 
-                                                                   iter->m_parser_type.GetASTContext(),
-                                                                   iter->m_parser_type.GetOpaqueQualType()),
-                                         context);
-                
-                result_value->SetContext(Value::eContextTypeOpaqueClangQualType, copied_type.GetOpaqueQualType());
-                
-                result_value->SetValueType(Value::eValueTypeLoadAddress);
-                result_value->GetScalar() = (uintptr_t)m_materialized_location + iter->m_offset;
             }
             
             continue;
@@ -436,6 +469,50 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
         
         if (!DoMaterializeOneVariable(dematerialize, *exe_ctx, sym_ctx, iter->m_name.c_str(), tuple.m_user_type, m_materialized_location + iter->m_offset, err))
             return false;
+    }
+    
+    return true;
+}
+
+bool
+ClangExpressionDeclMap::DoMaterializeOnePersistentVariable(bool dematerialize,
+                                                           ExecutionContext &exe_ctx,
+                                                           const char *name,
+                                                           lldb::addr_t addr,
+                                                           Error &err)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+    if (log)
+        log->Printf("Found persistent variable %s", name);
+    
+    ClangPersistentVariable *pvar(m_persistent_vars->GetVariable(ConstString(name)));
+    
+    if (!pvar)
+    {
+        err.SetErrorStringWithFormat("Undefined persistent variable %s", name);
+        return LLDB_INVALID_ADDRESS;
+    }
+    
+    size_t pvar_size = pvar->Size();
+    uint8_t *pvar_data = pvar->Data();                
+    Error error;
+    
+    if (dematerialize)
+    {
+        if (exe_ctx.process->ReadMemory (addr, pvar_data, pvar_size, error) != pvar_size)
+        {
+            err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
+            return false;
+        }
+    }
+    else 
+    {
+        if (exe_ctx.process->WriteMemory (addr, pvar_data, pvar_size, error) != pvar_size)
+        {
+            err.SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
+            return false;
+        }
     }
     
     return true;
@@ -682,6 +759,11 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     if (var)
         AddOneVariable(context, var);
     
+    ClangPersistentVariable *pvar(m_persistent_vars->GetVariable(ConstString(name)));
+    
+    if (pvar)
+        AddOneVariable(context, pvar);
+    
     /* Commented out pending resolution of a loop when the TagType is imported
     lldb::TypeSP type = m_sym_ctx->FindTypeByName(name_cs);
     
@@ -821,6 +903,20 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (log)
         log->Printf("Found variable %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), var_decl);    
+}
+
+void
+ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
+                                       ClangPersistentVariable *pvar)
+{
+    TypeFromUser user_type = pvar->Type();
+    
+    TypeFromParser parser_type(ClangASTContext::CopyType(context.GetASTContext(), 
+                                                         user_type.GetASTContext(), 
+                                                         user_type.GetOpaqueQualType()),
+                               context.GetASTContext());
+    
+    (void)context.AddVarDecl(parser_type.GetOpaqueQualType());
 }
 
 void

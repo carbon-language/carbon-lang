@@ -337,6 +337,8 @@
 		49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */; };
 		49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */; };
 		49BB309611F79450001A4197 /* TaggedASTType.h in Headers */ = {isa = PBXBuildFile; fileRef = 49BB309511F79450001A4197 /* TaggedASTType.h */; };
+		49D4FE831210B5FB00CDB854 /* ClangPersistentVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */; };
+		49D4FE891210B61C00CDB854 /* ClangPersistentVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */; };
 		49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7072611B5AD03001AD875 /* ClangASTSource.h */; };
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
 		49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */; };
@@ -920,6 +922,8 @@
 		49BB309511F79450001A4197 /* TaggedASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaggedASTType.h; path = include/lldb/Symbol/TaggedASTType.h; sourceTree = "<group>"; };
 		49BF48DC11ADF356008863BD /* ObjCObjectPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjCObjectPrinter.cpp; path = source/Target/ObjCObjectPrinter.cpp; sourceTree = "<group>"; };
 		49BF48E011ADF37D008863BD /* ObjCObjectPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjCObjectPrinter.h; path = include/lldb/Target/ObjCObjectPrinter.h; sourceTree = "<group>"; };
+		49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangPersistentVariables.h; path = include/lldb/Expression/ClangPersistentVariables.h; sourceTree = "<group>"; };
+		49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangPersistentVariables.cpp; path = source/Expression/ClangPersistentVariables.cpp; sourceTree = "<group>"; };
 		49D7072611B5AD03001AD875 /* ClangASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTSource.h; path = include/lldb/Expression/ClangASTSource.h; sourceTree = "<group>"; };
 		49D7072811B5AD11001AD875 /* ClangASTSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTSource.cpp; path = source/Expression/ClangASTSource.cpp; sourceTree = "<group>"; };
 		49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRToDWARF.cpp; path = source/Expression/IRToDWARF.cpp; sourceTree = "<group>"; };
@@ -1851,6 +1855,8 @@
 				49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */,
 				26BC7DC110F1B79500F91463 /* ClangExpressionVariable.h */,
 				26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */,
+				49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */,
+				49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */,
 				49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */,
 				49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */,
 				26BC7DC210F1B79500F91463 /* ClangStmtVisitor.h */,
@@ -2224,6 +2230,7 @@
 				264723A611FA076E00DE380C /* CleanUp.h in Headers */,
 				2615DB851208A9C90021781D /* StopInfo.h in Headers */,
 				2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */,
+				49D4FE831210B5FB00CDB854 /* ClangPersistentVariables.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2680,6 +2687,7 @@
 				49E45FAF11F660FE008F7B28 /* ClangASTType.cpp in Sources */,
 				2615DB871208A9E40021781D /* StopInfo.cpp in Sources */,
 				2615DBCA1208B5FC0021781D /* StopInfoMachException.cpp in Sources */,
+				49D4FE891210B61C00CDB854 /* ClangPersistentVariables.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

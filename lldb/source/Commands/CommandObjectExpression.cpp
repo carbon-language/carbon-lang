@@ -19,6 +19,7 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
@@ -217,8 +218,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
         return false;
     }
     
-    ClangPersistentVariables persistent_vars; /* TODO store this somewhere sensible */
-    ClangExpressionDeclMap expr_decl_map (&m_exe_ctx, persistent_vars);
+    ClangExpressionDeclMap expr_decl_map (&m_exe_ctx);
     ClangExpression clang_expr (target_triple.AsCString (), &expr_decl_map);
     
     //////////////////////////

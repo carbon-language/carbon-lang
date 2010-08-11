@@ -46,6 +46,13 @@ private:
     bool rewriteObjCSelectors(llvm::Module &M, 
                               llvm::BasicBlock &BB);
     
+    // pass to find declarations of, and references to, persistent variables and
+    // register them for (de)materialization
+    bool RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
+                                llvm::Module &M);
+    bool rewritePersistentAllocs(llvm::Module &M,
+                                 llvm::BasicBlock &BB);
+    
     // pass to register referenced variables and redirect functions at their
     // targets in the debugged process
     bool MaybeHandleVariable(llvm::Module &M, 

@@ -239,6 +239,7 @@ ClangExpression::CreateCompilerInstance (bool &IsAST)
     m_clang_ap->getLangOpts().ObjC1 = true;
     m_clang_ap->getLangOpts().ThreadsafeStatics = false;
     m_clang_ap->getLangOpts().AccessControl = false; // Debuggers get universal access
+    m_clang_ap->getLangOpts().DollarIdents = true; // $ indicates a persistent variable name
     
     // Set CodeGen options
     m_clang_ap->getCodeGenOpts().EmitDeclMetadata = true;

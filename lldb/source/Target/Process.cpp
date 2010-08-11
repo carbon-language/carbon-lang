@@ -80,7 +80,8 @@ Process::Process(Target &target, Listener &listener) :
     m_notifications (),
     m_listener(listener),
     m_unix_signals (),
-    m_objc_object_printer(*this)
+    m_objc_object_printer(*this),
+    m_persistent_vars()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
     if (log)
@@ -1880,6 +1881,12 @@ lldb::ProcessSP
 Process::GetSP ()
 {
     return GetTarget().GetProcessSP();
+}
+
+ClangPersistentVariables &
+Process::GetPersistentVariables()
+{
+    return m_persistent_vars;
 }
 
 ObjCObjectPrinter &

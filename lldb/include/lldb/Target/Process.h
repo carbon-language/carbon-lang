@@ -25,6 +25,7 @@
 #include "lldb/Core/ThreadSafeSTLMap.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/ObjCObjectPrinter.h"
 #include "lldb/Target/ThreadList.h"
@@ -1366,6 +1367,9 @@ public:
     lldb::ProcessSP
     GetSP ();
     
+    ClangPersistentVariables &
+    GetPersistentVariables();
+    
     ObjCObjectPrinter &
     GetObjCObjectPrinter();
 
@@ -1392,6 +1396,7 @@ protected:
     Listener                    &m_listener;
     BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend
                                                         ///< to insert in the target.
+    ClangPersistentVariables    m_persistent_vars;      ///< These are the persistent variables associated with this process for the expression parser.
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     ConstString                 m_target_triple;
     lldb::ABISP                 m_abi_sp;

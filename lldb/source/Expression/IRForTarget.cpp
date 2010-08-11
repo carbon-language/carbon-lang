@@ -37,6 +37,20 @@ IRForTarget::IRForTarget(const void *pid,
 {
 }
 
+/* A handy utility function used at several places in the code */
+
+static std::string 
+PrintValue(Value *V, bool truncate = false)
+{
+    std::string s;
+    raw_string_ostream rso(s);
+    V->print(rso);
+    rso.flush();
+    if (truncate)
+        s.resize(s.length() - 1);
+    return s;
+}
+
 IRForTarget::~IRForTarget()
 {
 }
@@ -200,6 +214,97 @@ IRForTarget::rewriteObjCSelectors(Module &M,
     return true;
 }
 
+bool 
+IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
+                                    llvm::Module &M)
+{
+    AllocaInst *alloc = dyn_cast<AllocaInst>(persistent_alloc);
+    
+    MDNode *alloc_md = alloc->getMetadata("clang.decl.ptr");
+
+    if (!alloc_md || !alloc_md->getNumOperands())
+        return false;
+    
+    ConstantInt *constant_int = dyn_cast<ConstantInt>(alloc_md->getOperand(0));
+    
+    if (!constant_int)
+        return false;
+    
+    // We attempt to register this as a new persistent variable with the DeclMap.
+    
+    uintptr_t ptr = constant_int->getZExtValue();
+    
+    clang::NamedDecl *decl = reinterpret_cast<clang::NamedDecl *>(ptr);
+    
+    if (!m_decl_map->AddPersistentVariable(decl))
+        return false;
+    
+    GlobalVariable *persistent_global = new GlobalVariable(M, 
+                                                           alloc->getType()->getElementType(),
+                                                           false, /* not constant */
+                                                           GlobalValue::ExternalLinkage,
+                                                           NULL, /* no initializer */
+                                                           alloc->getName().str().c_str());
+    
+    // What we're going to do here is make believe this was a regular old external
+    // variable.  That means we need to make the metadata valid.
+    
+    NamedMDNode *named_metadata = M.getNamedMetadata("clang.global.decl.ptrs");
+    
+    llvm::Value* values[2];
+    values[0] = persistent_global;
+    values[1] = constant_int;
+
+    MDNode *persistent_global_md = MDNode::get(M.getContext(), values, 2);
+    named_metadata->addOperand(persistent_global_md);
+    
+    alloc->replaceAllUsesWith(persistent_global);
+    alloc->eraseFromParent();
+    
+    return true;
+}
+
+bool 
+IRForTarget::rewritePersistentAllocs(llvm::Module &M,
+                                     llvm::BasicBlock &BB)
+{
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    BasicBlock::iterator ii;
+    
+    typedef SmallVector <Instruction*, 2> InstrList;
+    typedef InstrList::iterator InstrIterator;
+    
+    InstrList pvar_allocs;
+    
+    for (ii = BB.begin();
+         ii != BB.end();
+         ++ii)
+    {
+        Instruction &inst = *ii;
+        
+        if (AllocaInst *alloc = dyn_cast<AllocaInst>(&inst))
+            if (alloc->getName().startswith("$"))
+                pvar_allocs.push_back(alloc);
+    }
+    
+    InstrIterator iter;
+    
+    for (iter = pvar_allocs.begin();
+         iter != pvar_allocs.end();
+         ++iter)
+    {
+        if (!RewritePersistentAlloc(*iter, M))
+        {
+            if(log)
+                log->PutCString("Couldn't rewrite the creation of a persistent variable");
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 static clang::NamedDecl *
 DeclForGlobalValue(Module &module,
                    GlobalValue *global_value)
@@ -222,7 +327,7 @@ DeclForGlobalValue(Module &module,
             return NULL;
         
         if (metadata_node->getNumOperands() != 2)
-            return NULL;
+            continue;
         
         if (metadata_node->getOperand(0) != global_value)
             continue;
@@ -400,18 +505,6 @@ IRForTarget::resolveExternals(Module &M, BasicBlock &BB)
     return true;
 }
 
-static std::string 
-PrintValue(Value *V, bool truncate = false)
-{
-    std::string s;
-    raw_string_ostream rso(s);
-    V->print(rso);
-    rso.flush();
-    if (truncate)
-        s.resize(s.length() - 1);
-    return s;
-}
-
 static bool isGuardVariableRef(Value *V)
 {
     ConstantExpr *C = dyn_cast<ConstantExpr>(V);
@@ -518,12 +611,21 @@ UnfoldConstant(Constant *C, Value *new_value, Instruction *first_entry_instructi
 
     Value::use_iterator ui;
     
+    SmallVector<User*, 16> users;
+    
+    // We do this because the use list might change, invalidating our iterator.
+    // Much better to keep a work list ourselves.
     for (ui = C->use_begin();
          ui != C->use_end();
          ++ui)
-    {
-        User *user = *ui;
+        users.push_back(*ui);
         
+    for (int i = 0;
+         i < users.size();
+         ++i)
+    {
+        User *user = users[i];
+                
         if (Constant *constant = dyn_cast<Constant>(user))
         {
             // synthesize a new non-constant equivalent of the constant
@@ -703,22 +805,18 @@ IRForTarget::runOnModule(Module &M)
          bbi != function->end();
          ++bbi)
     {
-        if (!rewriteObjCSelectors(M, *bbi))
+        if (!rewritePersistentAllocs(M, *bbi))
             return false;
         
+        if (!rewriteObjCSelectors(M, *bbi))
+            return false;
+
         if (!resolveExternals(M, *bbi))
             return false;
         
         if (!removeGuards(M, *bbi))
             return false;
     }
-    
-    ///////////////////////////////
-    // Run function-level passes
-    //
-    
-    if (!replaceVariables(M, *function))
-        return false;
     
     if (log)
     {
@@ -731,6 +829,13 @@ IRForTarget::runOnModule(Module &M)
         
         log->Printf("Module after preparing for execution: \n%s", s.c_str());
     }
+    
+    ///////////////////////////////
+    // Run function-level passes
+    //
+    
+    if (!replaceVariables(M, *function))
+        return false;
     
     return true;    
 }

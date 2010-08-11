@@ -30,6 +30,7 @@ namespace llvm {
 
 namespace lldb_private {
 
+class ClangPersistentVariable;
 class ClangPersistentVariables;
 class Error;
 class Function;
@@ -39,8 +40,7 @@ class Variable;
 class ClangExpressionDeclMap
 {
 public:
-    ClangExpressionDeclMap(ExecutionContext *exe_ctx,
-                           ClangPersistentVariables &persistent_vars);
+    ClangExpressionDeclMap(ExecutionContext *exe_ctx);
     ~ClangExpressionDeclMap();
     
     // Interface for ClangStmtVisitor
@@ -48,6 +48,7 @@ public:
                           const clang::Decl *decl);
     
     // Interface for IRForTarget
+    bool AddPersistentVariable (const clang::NamedDecl *decl);
     bool AddValueToStruct (llvm::Value *value,
                            const clang::NamedDecl *decl,
                            std::string &name,
@@ -67,7 +68,6 @@ public:
     bool GetFunctionInfo (const clang::NamedDecl *decl, 
                           llvm::Value**& value, 
                           uint64_t &ptr);
-    
     bool GetFunctionAddress (const char *name,
                              uint64_t &ptr);
     
@@ -90,9 +90,6 @@ public:
     // Interface for ClangASTSource
     void GetDecls (NameSearchContext &context,
                    const char *name);
-
-    typedef TaggedASTType<0> TypeFromParser;
-    typedef TaggedASTType<1> TypeFromUser;
 private:    
     struct Tuple
     {
@@ -124,7 +121,7 @@ private:
     StructMemberVector          m_members;
     ExecutionContext           *m_exe_ctx;
     SymbolContext              *m_sym_ctx; /* owned by ClangExpressionDeclMap */
-    ClangPersistentVariables   &m_persistent_vars;
+    ClangPersistentVariables   *m_persistent_vars;
     off_t                       m_struct_alignment;
     size_t                      m_struct_size;
     bool                        m_struct_laid_out;
@@ -142,6 +139,7 @@ private:
                             TypeFromParser *parser_type = NULL);
     
     void AddOneVariable(NameSearchContext &context, Variable *var);
+    void AddOneVariable(NameSearchContext &context, ClangPersistentVariable *pvar);
     void AddOneFunction(NameSearchContext &context, Function *fun, Symbol *sym);
     void AddOneType(NameSearchContext &context, Type *type);
     
@@ -150,6 +148,12 @@ private:
                         lldb_private::Value *result_value, /* must be non-NULL if D is set */
                         Error &err);
 
+    bool DoMaterializeOnePersistentVariable(bool dematerialize,
+                                            ExecutionContext &exe_ctx,
+                                            const char *name,
+                                            lldb::addr_t addr,
+                                            Error &err);
+    
     bool DoMaterializeOneVariable(bool dematerialize,
                                   ExecutionContext &exe_ctx,
                                   const SymbolContext &sym_ctx,
@@ -157,11 +161,6 @@ private:
                                   TypeFromUser type,
                                   lldb::addr_t addr, 
                                   Error &err);
-};
-    
-class ClangPersistentVariables
-{
-    
 };
     
 } // namespace lldb_private
