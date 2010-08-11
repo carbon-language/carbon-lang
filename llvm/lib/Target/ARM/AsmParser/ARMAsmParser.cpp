@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
@@ -234,7 +235,7 @@ public:
     addExpr(Inst, getImm());
   }
 
-  virtual void dump(raw_ostream &OS) const {}
+  virtual void dump(raw_ostream &OS) const;
 
   static void CreateToken(OwningPtr<ARMOperand> &Op, StringRef Str,
                           SMLoc S) {
@@ -295,6 +296,25 @@ public:
 
 } // end anonymous namespace.
 
+void ARMOperand::dump(raw_ostream &OS) const {
+  switch (Kind) {
+  case CondCode:
+    OS << ARMCondCodeToString(getCondCode());
+    break;
+  case Immediate:
+    getImm()->print(OS);
+    break;
+  case Memory:
+    OS << "<memory>";
+    break;
+  case Register:
+    OS << "<register " << getReg() << ">";
+    break;
+  case Token:
+    OS << "'" << getToken() << "'";
+    break;
+  }
+}
 
 /// @name Auto-generated Match Functions
 /// {
