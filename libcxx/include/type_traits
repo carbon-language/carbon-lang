@@ -1140,19 +1140,49 @@ move(_Tp&& __t)
     return static_cast<typename remove_reference<_Tp>::type&&>(__t);
 }
 
-template <class _Tp, class _Up,
-    class = typename _STD::enable_if<
-         is_lvalue_reference<_Tp>::value ? is_lvalue_reference<_Up>::value : true
-                     >::type,
-    class = typename _STD::enable_if<
-         is_convertible<typename remove_reference<_Up>::type*,
-                        typename remove_reference<_Tp>::type*>::value>::type>
+template <class _Tp,
+          class = typename enable_if<
+                     !is_lvalue_reference<_Tp>::value
+                  >::type
+         >
 inline _LIBCPP_INLINE_VISIBILITY
 _Tp&&
-forward(_Up&& __t)
+forward(typename common_type<_Tp>::type& __t)
 {
     return static_cast<_Tp&&>(__t);
 }
+
+template <class _Tp,
+          class = typename enable_if<
+                     !is_lvalue_reference<_Tp>::value
+                  >::type
+         >
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp&&
+forward(typename common_type<_Tp>::type&& __t)
+{
+    return static_cast<_Tp&&>(__t);
+}
+
+template <class _Tp,
+          class = typename enable_if<
+                     is_lvalue_reference<_Tp>::value
+                  >::type
+         >
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+forward(typename common_type<_Tp>::type __t)
+{
+    return __t;
+}
+
+template <class _Tp,
+          class = typename enable_if<
+                     is_lvalue_reference<_Tp>::value
+                  >::type
+         >
+_Tp
+forward(typename remove_reference<_Tp>::type&& __t) = delete;
 
 #else  // _LIBCPP_MOVE
 
