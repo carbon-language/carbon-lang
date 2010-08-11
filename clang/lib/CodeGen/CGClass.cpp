@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
@@ -630,6 +631,8 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   // Before we go any further, try the complete->base constructor
   // delegation optimization.
   if (CtorType == Ctor_Complete && IsConstructorDelegationValid(Ctor)) {
+    if (CGDebugInfo *DI = getDebugInfo()) 
+      DI->EmitStopPoint(Builder);
     EmitDelegateCXXConstructorCall(Ctor, Ctor_Base, Args);
     return;
   }
