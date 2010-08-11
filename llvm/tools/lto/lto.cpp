@@ -211,6 +211,14 @@ bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model)
 }
 
 //
+// sets the cpu to generate code for
+//
+void lto_codegen_set_cpu(lto_code_gen_t cg, const char* cpu)
+{
+  return cg->setCpu(cpu);
+}
+
+//
 // sets the path to the assembler tool
 //
 void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path)

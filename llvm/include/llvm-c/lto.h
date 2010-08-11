@@ -206,6 +206,13 @@ lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model);
 
 
 /**
+ * Sets the cpu to generate code for.
+ */
+extern void
+lto_codegen_set_cpu(lto_code_gen_t cg, const char *cpu);
+
+
+/**
  * Sets the location of the "gcc" to run. If not set, libLTO will search for
  * "gcc" on the path.
  */

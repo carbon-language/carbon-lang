@@ -70,6 +70,7 @@ namespace options {
   static std::vector<std::string> pass_through;
   static std::string extra_library_path;
   static std::string triple;
+  static std::string mcpu;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -85,6 +86,8 @@ namespace options {
 
     if (opt == "generate-api-file") {
       generate_api_file = true;
+    } else if (opt.startswith("mcpu=")) {
+      mcpu = opt.substr(strlen("mcpu="));
     } else if (opt.startswith("as=")) {
       if (!as_path.empty()) {
         (*message)(LDPL_WARNING, "Path to as specified twice. "
@@ -413,6 +416,9 @@ static ld_plugin_status all_symbols_read_hook(void) {
     }
     lto_codegen_set_assembler_args(cg, &as_args_p[0], as_args_p.size());
   }
+  if (!options::mcpu.empty())
+    lto_codegen_set_cpu(cg, options::mcpu.c_str());
+
   // Pass through extra options to the code generator.
   if (!options::extra.empty()) {
     for (std::vector<std::string>::iterator it = options::extra.begin();
