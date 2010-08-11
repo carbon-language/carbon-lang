@@ -2371,7 +2371,7 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
 def DMBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dmb", "",
-                  [(ARMMemBarrier)]>, Requires<[IsARM, HasV7]> {
+                  [(ARMMemBarrier)]>, Requires<[IsARM, HasDB]> {
   let Inst{31-4} = 0xf57ff05;
   // FIXME: add support for options other than a full system DMB
   // See DMB disassembly-only variants below.
@@ -2379,7 +2379,7 @@ def DMBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dmb", "",
 }
 
 def DSBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dsb", "",
-                  [(ARMSyncBarrier)]>, Requires<[IsARM, HasV7]> {
+                  [(ARMSyncBarrier)]>, Requires<[IsARM, HasDB]> {
   let Inst{31-4} = 0xf57ff04;
   // FIXME: add support for options other than a full system DSB
   // See DSB disassembly-only variants below.

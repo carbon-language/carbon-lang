@@ -2230,14 +2230,14 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$dst),
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
 def t2DMBsy : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "dmb", "",
-                    [(ARMMemBarrier)]>, Requires<[HasDB]> {
+                    [(ARMMemBarrier)]>, Requires<[IsThumb, HasDB]> {
   let Inst{31-4} = 0xF3BF8F5;
   // FIXME: add support for options other than a full system DMB
   let Inst{3-0} = 0b1111;
 }
 
 def t2DSBsy : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "dsb", "",
-                    [(ARMSyncBarrier)]>, Requires<[HasDB]> {
+                    [(ARMSyncBarrier)]>, Requires<[IsThumb, HasDB]> {
   let Inst{31-4} = 0xF3BF8F4;
   // FIXME: add support for options other than a full system DSB
   let Inst{3-0} = 0b1111;
