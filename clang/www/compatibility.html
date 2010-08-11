@@ -58,6 +58,9 @@
     <ul>
       <li><a href="#implicit-downcasts">Implicit downcasts</a></li>
     </ul>
+    <ul>
+      <li><a href="#Use of class as method name">Use of class as method name</a></li>
+    </ul>
   </li>
 </ul>
 
@@ -603,6 +606,28 @@ explicit cast:</p>
 <pre>
   f((Derived *)base);
 </pre>
+
+<!-- ======================================================================= -->
+<h3 id="Use of class as method name">Use of class as method name</h3>
+<!-- ======================================================================= -->
+
+<p>Use of 'class' name to declare a method is allowed in objective-c++ mode to
+be compatible with GCC. However, use of property dot syntax notation to call
+this method is not allowed in clang++, as [I class] is a suitable syntax that 
+will work. So, this test will fail in clang++.
+
+<pre>
+@interface I {
+int cls;
+}
++ (int)class;
+@end
+
+@implementation  I
+- (int) Meth { return I.class; }
+@end
+<pre>
+
 
 </div>
 </body>
