@@ -49,6 +49,11 @@ public:
   /// elements). Use Decl::getNextDeclarator() to walk the chain.
   virtual void HandleTopLevelDecl(DeclGroupRef D);
 
+  /// HandleInterestingDecl - Handle the specified interesting declaration. This
+  /// is called by the PCH reader when deserializing things that might interest
+  /// the consumer. The default implementation forwards to HandleTopLevelDecl.
+  virtual void HandleInterestingDecl(DeclGroupRef D);
+
   /// HandleTranslationUnit - This method is called when the ASTs for entire
   /// translation unit have been parsed.
   virtual void HandleTranslationUnit(ASTContext &Ctx) {}

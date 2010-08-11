@@ -2262,7 +2262,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
   SavedStreamPosition SavedPosition(DeclsCursor);
 
   ReadingKindTracker ReadingKind(Read_Type, *this);
-  
+
   // Note that we are loading a type record.
   Deserializing AType(this);
 
@@ -3027,7 +3027,7 @@ void PCHReader::PassInterestingDeclsToConsumer() {
   while (!InterestingDecls.empty()) {
     DeclGroupRef DG(InterestingDecls.front());
     InterestingDecls.pop_front();
-    Consumer->HandleTopLevelDecl(DG);
+    Consumer->HandleInterestingDecl(DG);
   }
 }
 
