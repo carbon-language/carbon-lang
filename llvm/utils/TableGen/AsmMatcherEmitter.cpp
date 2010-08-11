@@ -199,6 +199,14 @@ static void TokenizeAsmString(StringRef AsmString,
       break;
     }
 
+    case '.':
+      if (InTok) {
+        Tokens.push_back(AsmString.slice(Prev, i));
+      }
+      Prev = i;
+      InTok = true;
+      break;
+
     default:
       InTok = true;
     }
