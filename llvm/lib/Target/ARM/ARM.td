@@ -71,13 +71,14 @@ def ArchV6M     : SubtargetFeature<"v6m", "ARMArchVersion", "V6M",
                                    "ARM v6m",
                                    [FeatureDB]>;
 def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
-                                   "ARM v6t2">;
+                                   "ARM v6t2",
+                                   [FeatureThumb2]>;
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A",
-                                   [FeatureDB]>;
+                                   [FeatureThumb2, FeatureNEON, FeatureDB]>;
 def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
                                    "ARM v7M",
-                                   [FeatureDB]>;
+                                   [FeatureThumb2, FeatureDB]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -139,21 +140,19 @@ def : Processor<"mpcore",           ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
 def : Processor<"cortex-m0",        ARMV6Itineraries, [ArchV6M]>;
 
 // V6T2 Processors.
-def : Processor<"arm1156t2-s",     ARMV6Itineraries,
-                 [ArchV6T2, FeatureThumb2]>;
-def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
-                 [ArchV6T2, FeatureThumb2, FeatureVFP2]>;
+def : Processor<"arm1156t2-s",      ARMV6Itineraries, [ArchV6T2]>;
+def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [ArchV6T2, FeatureVFP2]>;
 
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureHasSlowVMLx,
+                [ArchV7A, FeatureHasSlowVMLx,
                  FeatureSlowFPBrcc, FeatureNEONForFP, FeatureT2XtPk]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2XtPk]>;
+                [ArchV7A, FeatureT2XtPk]>;
 
 // V7M Processors.
-def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;
-def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;
+def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureHWDiv]>;
+def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureHWDiv]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
