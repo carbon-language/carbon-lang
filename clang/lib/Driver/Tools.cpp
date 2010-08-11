@@ -1003,6 +1003,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   }
 
+  // Pass the linker version in use.
+  if (Arg *A = Args.getLastArg(options::OPT_mlinker_version_EQ)) {
+    CmdArgs.push_back("-target-linker-version");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
   // -mno-omit-leaf-frame-pointer is default.
   if (Args.hasFlag(options::OPT_momit_leaf_frame_pointer,
                    options::OPT_mno_omit_leaf_frame_pointer, false))
