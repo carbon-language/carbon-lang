@@ -384,7 +384,6 @@ namespace {
 } // end anonymous namespace
 
 void LazyValueInfoCache::LVIValueHandle::deleted() {
-  Parent->ValueCache.erase(*this);
   for (std::set<std::pair<BasicBlock*, Value*> >::iterator
        I = Parent->OverDefinedCache.begin(),
        E = Parent->OverDefinedCache.end();
@@ -394,6 +393,10 @@ void LazyValueInfoCache::LVIValueHandle::deleted() {
     if (tmp->second == getValPtr())
       Parent->OverDefinedCache.erase(tmp);
   }
+  
+  // This erasure deallocates *this, so it MUST happen after we're done
+  // using any and all members of *this.
+  Parent->ValueCache.erase(*this);
 }
 
 
