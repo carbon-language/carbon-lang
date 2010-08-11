@@ -21,7 +21,7 @@ case $TRIPLE in
   *-apple-*)
     if [ -z $RC_BUILDIT ]
     then
-      RC_CFLAGS="-arch i386 -arch x86_64 -fno-exceptions -fno-rtti"
+      RC_CFLAGS="-arch i386 -arch x86_64"
     fi
     SOEXT=dylib
     LDSHARED_FLAGS="-o libc++.1.dylib \
