@@ -360,17 +360,6 @@ const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
   return 0;
 }
 
-ObjCInterfaceDecl *ObjCInterfaceType::getDecl() const {
-  for (ObjCInterfaceDecl::redecl_iterator I = Decl->redecls_begin(),
-                                          E = Decl->redecls_end();
-       I != E; ++I) {
-    if (I->isDefinition())
-      return *I;
-  }
-  // If we can't find a definition, return whatever we have.
-  return Decl;
-}
-
 const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
   if (const PointerType *PT = getAs<PointerType>())
     if (const RecordType *RT = PT->getPointeeType()->getAs<RecordType>())

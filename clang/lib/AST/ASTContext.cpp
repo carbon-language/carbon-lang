@@ -872,7 +872,7 @@ void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
 /// CollectNonClassIvars -
 /// This routine collects all other ivars which are not declared in the class.
 /// This includes synthesized ivars (via @synthesize) and those in
-/// class's @implementation.
+//  class's @implementation.
 ///
 void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
@@ -2212,24 +2212,18 @@ QualType ASTContext::getObjCObjectPointerType(QualType ObjectT) {
   return QualType(QType, 0);
 }
 
-QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
-                                          const ObjCInterfaceDecl *PrevDecl) {
-  assert(Decl && "Passed null for Decl param");
+/// getObjCInterfaceType - Return the unique reference to the type for the
+/// specified ObjC interface decl. The list of protocols is optional.
+QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl) {
+  if (Decl->TypeForDecl)
+    return QualType(Decl->TypeForDecl, 0);
 
-  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
-
-  if (PrevDecl) {
-    assert(PrevDecl->TypeForDecl && "previous decl has no TypeForDecl");
-    Decl->TypeForDecl = PrevDecl->TypeForDecl;
-    return QualType(PrevDecl->TypeForDecl, 0);
-  }
-
-  assert(!Decl->getPreviousDeclaration() &&
-         "interface has previous declaration");
-
-  Decl->TypeForDecl = new (*this, TypeAlignment) ObjCInterfaceType(Decl);
-  Types.push_back(Decl->TypeForDecl);
-  return QualType(Decl->TypeForDecl, 0);
+  // FIXME: redeclarations?
+  void *Mem = Allocate(sizeof(ObjCInterfaceType), TypeAlignment);
+  ObjCInterfaceType *T = new (Mem) ObjCInterfaceType(Decl);
+  Decl->TypeForDecl = T;
+  Types.push_back(T);
+  return QualType(T, 0);
 }
 
 /// getTypeOfExprType - Unlike many "get<Type>" functions, we can't unique

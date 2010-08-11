@@ -17,6 +17,3 @@ using namespace clang;
 
 void ASTConsumer::HandleTopLevelDecl(DeclGroupRef D) {}
 
-void ASTConsumer::HandleInterestingDecl(DeclGroupRef D) {
-  HandleTopLevelDecl(D);
-}

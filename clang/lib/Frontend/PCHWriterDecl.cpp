@@ -340,9 +340,6 @@ void PCHDeclWriter::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 
 void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   VisitObjCContainerDecl(D);
-  Record.push_back(D->isForwardDecl());
-  Record.push_back(D->isImplicitInterfaceDecl());
-  VisitRedeclarable(D);
   Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
   Writer.AddDeclRef(D->getSuperClass(), Record);
   Record.push_back(D->protocol_size());
@@ -359,6 +356,8 @@ void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
                                      IEnd = D->ivar_end(); I != IEnd; ++I)
     Writer.AddDeclRef(*I, Record);
   Writer.AddDeclRef(D->getCategoryList(), Record);
+  Record.push_back(D->isForwardDecl());
+  Record.push_back(D->isImplicitInterfaceDecl());
   Writer.AddSourceLocation(D->getClassLoc(), Record);
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);

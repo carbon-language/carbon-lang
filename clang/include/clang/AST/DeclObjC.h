@@ -450,10 +450,7 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public ObjCContainerDecl,
-                          public Redeclarable<ObjCInterfaceDecl> {
-  typedef Redeclarable<ObjCInterfaceDecl> redeclarable_base;
-
+class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   mutable Type *TypeForDecl;
@@ -477,52 +474,15 @@ class ObjCInterfaceDecl : public ObjCContainerDecl,
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
 
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
-                    SourceLocation CLoc, ObjCInterfaceDecl *PrevDecl,
-                    bool FD, bool isInternal);
-
-protected:
-  virtual ObjCInterfaceDecl *getNextRedeclaration() {
-    return RedeclLink.getNext();
-  }
+                    SourceLocation CLoc, bool FD, bool isInternal);
 
 public:
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
-
   static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
                                    IdentifierInfo *Id,
-                                   SourceLocation ClassLoc,
-                                   ObjCInterfaceDecl *PrevDecl,
+                                   SourceLocation ClassLoc = SourceLocation(),
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
-
-  static ObjCInterfaceDecl *Create(ASTContext &C, EmptyShell Empty);
-
-  void setPreviousDeclaration(ObjCInterfaceDecl *Prev) {
-    // Adopt a type pointer if it exists.
-    TypeForDecl = Prev->TypeForDecl;
-    redeclarable_base::setPreviousDeclaration(Prev);
-  }
-
-  virtual ObjCInterfaceDecl *getCanonicalDecl() {
-    return getFirstDeclaration();
-  }
-  const ObjCInterfaceDecl *getCanonicalDecl() const {
-    return const_cast<ObjCInterfaceDecl*>(this)->getCanonicalDecl();
-  }
-
-  /// Get the interface declaration that is a definition, if there is one.
-  ObjCInterfaceDecl *getDefinition();
-  const ObjCInterfaceDecl *getDefinition() const {
-    return const_cast<ObjCInterfaceDecl*>(this)->getDefinition();
-  }
-
   const ObjCProtocolList &getReferencedProtocols() const {
     return ReferencedProtocols;
   }
@@ -575,7 +535,6 @@ public:
                                        ASTContext &C);
 
   bool isForwardDecl() const { return ForwardDecl; }
-  bool isDefinition() const { return !ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
 
   ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }

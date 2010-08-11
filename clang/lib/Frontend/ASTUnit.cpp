@@ -320,9 +320,6 @@ public:
       Unit.addTopLevelDecl(D);
     }
   }
-
-  // We're not interested in "interesting" decls.
-  void HandleInterestingDecl(DeclGroupRef) {}
 };
 
 class TopLevelDeclTrackerAction : public ASTFrontendAction {
