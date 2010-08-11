@@ -1108,16 +1108,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   llvm_v8f32_ty, llvm_i32_ty], [IntrNoMem]>;
 }
 
-// Vector shuffle
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_shuf_pd_256 : GCCBuiltin<"__builtin_ia32_shufpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
-                  llvm_v4f64_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_avx_shuf_ps_256 : GCCBuiltin<"__builtin_ia32_shufps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
-                  llvm_v8f32_ty, llvm_i8_ty], [IntrNoMem]>;
-}
-
 // Vector compare
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_cmp_pd_256 : GCCBuiltin<"__builtin_ia32_cmppd256">,
