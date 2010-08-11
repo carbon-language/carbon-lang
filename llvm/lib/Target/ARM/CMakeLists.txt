@@ -7,11 +7,12 @@ tablegen(ARMGenInstrNames.inc -gen-instr-enums)
 tablegen(ARMGenInstrInfo.inc -gen-instr-desc)
 tablegen(ARMGenCodeEmitter.inc -gen-emitter)
 tablegen(ARMGenAsmWriter.inc -gen-asm-writer)
+tablegen(ARMGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(ARMGenDAGISel.inc -gen-dag-isel)
+tablegen(ARMGenFastISel.inc -gen-fast-isel)
 tablegen(ARMGenCallingConv.inc -gen-callingconv)
 tablegen(ARMGenSubtarget.inc -gen-subtarget)
 tablegen(ARMGenEDInfo.inc -gen-enhanced-disassembly-info)
-tablegen(ARMGenFastISel.inc -gen-fast-isel)
 
 add_llvm_target(ARMCodeGen
   ARMAsmPrinter.cpp
