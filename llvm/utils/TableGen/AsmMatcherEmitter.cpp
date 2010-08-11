@@ -260,9 +260,12 @@ static bool IsAssemblerInstruction(StringRef Name,
     }
 
     if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
-      std::string Err = "'" + Name.str() + "': " +
-        "invalid assembler instruction; tied operand '" + Tokens[i].str() + "'";
-      throw TGError(CGI.TheDef->getLoc(), Err);
+      DEBUG({
+          errs() << "warning: '" << Name << "': "
+                 << "ignoring instruction with tied operand '"
+                 << Tokens[i].str() << "'\n";
+        });
+      return false;
     }
   }
 
