@@ -289,11 +289,9 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
       break;
     case ',': // multiple alternative constraint.  Pass it.
       Name++;
-      // An output constraint must start with '=' or '+'
-      if (*Name != '=' && *Name != '+')
-        return false;
-      if (*Name == '+')
-        Info.setIsReadWrite();
+      // Handle additional optional '=' or '+' modifiers.
+      if (*Name == '=' || *Name == '+')
+        Name++;
       break;
     case '?': // Disparage slightly code.
     case '!': // Disparage severly.
