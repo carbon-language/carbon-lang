@@ -127,6 +127,9 @@ def : Processor<"arm1176jzf-s",     ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
 def : Processor<"mpcorenovfp",      ARMV6Itineraries, [ArchV6]>;
 def : Processor<"mpcore",           ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
 
+// V6M Processors.
+def : Processor<"cortex-m0",        ARMV6Itineraries, [ArchV6, FeatureDB]>;
+
 // V6T2 Processors.
 def : Processor<"arm1156t2-s",     ARMV6Itineraries,
                  [ArchV6T2, FeatureThumb2]>;
@@ -141,6 +144,8 @@ def : Processor<"cortex-a8",        CortexA8Itineraries,
 def : Processor<"cortex-a9",        CortexA9Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2ExtractPack,
                  FeatureDB]>;
+
+// V7M Processors.
 def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv,
                                      FeatureDB]>;
 def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureThumb2, FeatureHWDiv,
