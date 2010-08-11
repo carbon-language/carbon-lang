@@ -138,11 +138,17 @@ def VFPNeonDomain : Domain<3>; // Instructions in both VFP & Neon domains
 // ARM special operands.
 //
 
+def CondCodeOperand : AsmOperandClass {
+  let Name = "CondCode";
+  let SuperClasses = [];
+}
+
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC
 // register whose default is 0 (no register).
 def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
                                      (ops (i32 14), (i32 zero_reg))> {
   let PrintMethod = "printPredicateOperand";
+  let ParserMatchClass = CondCodeOperand;
 }
 
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.

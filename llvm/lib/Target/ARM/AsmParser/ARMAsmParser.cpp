@@ -106,15 +106,20 @@ private:
   ARMOperand() {}
 public:
   enum KindTy {
-    Token,
-    Register,
+    CondCode,
     Immediate,
-    Memory
+    Memory,
+    Register,
+    Token
   } Kind;
 
   SMLoc StartLoc, EndLoc;
 
   union {
+    struct {
+      ARMCC::CondCodes Val;
+    } CC;
+
     struct {
       const char *Data;
       unsigned Length;
@@ -155,8 +160,11 @@ public:
     StartLoc = o.StartLoc;
     EndLoc = o.EndLoc;
     switch (Kind) {
+    case CondCode:
+      CC = o.CC;
+      break;
     case Token:
-    Tok = o.Tok;
+      Tok = o.Tok;
       break;
     case Register:
       Reg = o.Reg;
@@ -175,6 +183,11 @@ public:
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
 
+  ARMCC::CondCodes getCondCode() const {
+    assert(Kind == CondCode && "Invalid access!");
+    return CC.Val;
+  }
+
   StringRef getToken() const {
     assert(Kind == Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
@@ -190,6 +203,8 @@ public:
     return Imm.Val;
   }
 
+  bool isCondCode() const { return Kind == CondCode; }
+
   bool isImm() const { return Kind == Immediate; }
 
   bool isReg() const { return Kind == Register; }
@@ -202,6 +217,11 @@ public:
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::CreateExpr(Expr));
+  }
+
+  void addCondCodeOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
