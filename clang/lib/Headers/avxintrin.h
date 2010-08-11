@@ -598,25 +598,25 @@ _mm256_movedup_pd(__m256d a)
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_unpackhi_pd(__m256d a, __m256d b)
 {
-  return (__m256d)__builtin_ia32_unpckhpd256((__v4df)a, (__v4df)b);
+  return __builtin_shufflevector(a, b, 1, 5, 1+2, 5+2);
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_unpacklo_pd(__m256d a, __m256d b)
 {
-  return (__m256d)__builtin_ia32_unpcklpd256((__v4df)a, (__v4df)b);
+  return __builtin_shufflevector(a, b, 0, 4, 0+2, 4+2);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_unpackhi_ps(__m256 a, __m256 b)
 {
-  return (__m256)__builtin_ia32_unpckhps256((__v8sf)a, (__v8sf)b);
+  return __builtin_shufflevector(a, b, 2, 10, 2+1, 10+1, 6, 14, 6+1, 14+1);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_unpacklo_ps(__m256 a, __m256 b)
 {
-  return (__m256)__builtin_ia32_unpcklps256((__v8sf)a, (__v8sf)b);
+  return __builtin_shufflevector(a, b, 0, 8, 0+1, 8+1, 4, 12, 4+1, 12+1);
 }
 
 /* Bit Test */
