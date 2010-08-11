@@ -2262,6 +2262,22 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
                                ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
 
+  unsigned Version[3] = { 0, 0, 0 };
+  if (Arg *A = Args.getLastArg(options::OPT_mlinker_version_EQ)) {
+    bool HadExtra;
+    if (!Driver::GetReleaseVersion(A->getValue(Args), Version[0],
+                                   Version[1], Version[2], HadExtra) ||
+        HadExtra)
+      D.Diag(clang::diag::err_drv_invalid_version_number)
+        << A->getAsString(Args);
+  }
+
+  // Newer linkers support -demangle, pass it if supported and not disabled by
+  // the user.
+  if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle)) {
+    CmdArgs.push_back("-demangle");
+  }
+
   // Derived from the "link" spec.
   Args.AddAllArgs(CmdArgs, options::OPT_static);
   if (!Args.hasArg(options::OPT_static))

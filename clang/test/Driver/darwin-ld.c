@@ -82,3 +82,26 @@
 //
 // LINK_EXPLICIT_NO_PIE: ld"
 // LINK_EXPLICIT_NO_PIE: "-no_pie"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -mlinker-version=100 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_NEWER_DEMANGLE %s < %t.log
+//
+// LINK_NEWER_DEMANGLE: ld"
+// LINK_NEWER_DEMANGLE: "-demangle"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -mlinker-version=100 -Wl,--no-demangle 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_NEWER_NODEMANGLE %s < %t.log
+//
+// LINK_NEWER_NODEMANGLE: ld"
+// LINK_NEWER_NODEMANGLE-NOT: "-demangle"
+// LINK_NEWER_NODEMANGLE: "-lgcc"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -mlinker-version=95 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_OLDER_NODEMANGLE %s < %t.log
+//
+// LINK_OLDER_NODEMANGLE: ld"
+// LINK_OLDER_NODEMANGLE-NOT: "-demangle"
+// LINK_OLDER_NODEMANGLE: "-lgcc"
