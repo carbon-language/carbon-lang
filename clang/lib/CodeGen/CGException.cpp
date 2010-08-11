@@ -270,7 +270,7 @@ llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
                             false);
 
   if (CGM.getLangOptions().SjLjExceptions)
-    return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
+    return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume_or_Rethrow");
   return CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume_or_Rethrow");
 }
 
