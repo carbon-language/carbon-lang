@@ -440,12 +440,6 @@ void f0() {
   tmp_V8f = __builtin_ia32_rcpps256(tmp_V8f);
   tmp_V4d = __builtin_ia32_roundpd256(tmp_V4d, tmp_i);
   tmp_V8f = __builtin_ia32_roundps256(tmp_V8f, tmp_i);
-  tmp_V8i = __builtin_ia32_si256_si(tmp_V4i);
-  tmp_V8f = __builtin_ia32_ps256_ps(tmp_V4f);
-  tmp_V4d = __builtin_ia32_pd256_pd(tmp_V2d);
-  tmp_V4i = __builtin_ia32_si_si256(tmp_V8i);
-  tmp_V4f = __builtin_ia32_ps_ps256(tmp_V8f);
-  tmp_V2d = __builtin_ia32_pd_pd256(tmp_V4d);
   tmp_i = __builtin_ia32_vtestzpd(tmp_V2d, tmp_V2d);
   tmp_i = __builtin_ia32_vtestcpd(tmp_V2d, tmp_V2d);
   tmp_i = __builtin_ia32_vtestnzcpd(tmp_V2d, tmp_V2d);

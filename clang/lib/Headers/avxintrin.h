@@ -1122,37 +1122,40 @@ _mm256_castsi256_pd(__m256i in)
 static __inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm256_castpd256_pd128(__m256d in)
 {
-  return (__m128d)__builtin_ia32_pd_pd256((__v4df)in);
+  return __builtin_shufflevector(in, in, 0, 1);
 }
 
 static __inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm256_castps256_ps128(__m256 in)
 {
-  return (__m128)__builtin_ia32_ps_ps256((__v8sf)in);
+  return __builtin_shufflevector(in, in, 0, 1, 2, 3);
 }
 
 static __inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm256_castsi256_si128(__m256i in)
 {
-  return (__m128i)__builtin_ia32_si_si256((__v8si)in);
+  return __builtin_shufflevector(in, in, 0, 1);
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_castpd128_pd256(__m128d in)
 {
-  return (__m256d)__builtin_ia32_pd256_pd((__v2df)in);
+  __m128d zero = _mm_setzero_pd();
+  return __builtin_shufflevector(in, zero, 0, 1, 2, 2);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_castps128_ps256(__m128 in)
 {
-  return (__m256)__builtin_ia32_ps256_ps((__v4sf)in);
+  __m128 zero = _mm_setzero_ps();
+  return __builtin_shufflevector(in, zero, 0, 1, 2, 3, 4, 4, 4, 4);
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_castsi128_si256(__m128i in)
 {
-  return (__m256i)__builtin_ia32_si256_si((__v4si)in);
+  __m128i zero = _mm_setzero_si128();
+  return __builtin_shufflevector(in, zero, 0, 1, 2, 2);
 }
 
 #endif /* __AVX__ */
