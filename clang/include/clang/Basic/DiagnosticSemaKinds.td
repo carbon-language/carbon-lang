@@ -2234,7 +2234,7 @@ def ext_integer_complement_complex : Extension<
 def error_nosetter_property_assignment : Error<
   "setter method is needed to assign to object using property" " assignment syntax">;
 def error_no_subobject_property_setting : Error<
-  "expression is not assignable using property assignment syntax">;
+  "expression is not assignable">;
 
 def ext_freestanding_complex : Extension<
   "complex numbers are an extension in a freestanding C99 implementation">;
