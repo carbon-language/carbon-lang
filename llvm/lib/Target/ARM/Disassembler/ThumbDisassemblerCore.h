@@ -1629,8 +1629,8 @@ static inline bool t2MiscCtrlInstr(uint32_t insn) {
 // A8.6.26
 // t2BXJ -> Rn
 //
-// Miscellaneous control: t2Int_MemBarrierV7 (and its t2DMB variants),
-// t2Int_SyncBarrierV7 (and its t2DSB varianst), t2ISBsy, t2CLREX
+// Miscellaneous control: t2DMBsy (and its t2DMB variants),
+// t2DSBsy (and its t2DSB varianst), t2ISBsy, t2CLREX
 //   -> no operand (except pred-imm pred-ccr for CLREX, memory barrier variants)
 //
 // Hint: t2NOP, t2YIELD, t2WFE, t2WFI, t2SEV

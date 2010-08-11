@@ -2356,7 +2356,7 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
 
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
-def DMBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dmb", "",
+def DMBsy : AInoP<(outs), (ins), MiscFrm, NoItinerary, "dmb", "",
                   [(ARMMemBarrier)]>, Requires<[IsARM, HasDB]> {
   let Inst{31-4} = 0xf57ff05;
   // FIXME: add support for options other than a full system DMB
@@ -2364,7 +2364,7 @@ def DMBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dmb", "",
   let Inst{3-0} = 0b1111;
 }
 
-def DSBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dsb", "",
+def DSBsy : AInoP<(outs), (ins), MiscFrm, NoItinerary, "dsb", "",
                   [(ARMSyncBarrier)]>, Requires<[IsARM, HasDB]> {
   let Inst{31-4} = 0xf57ff04;
   // FIXME: add support for options other than a full system DSB
@@ -2372,7 +2372,7 @@ def DSBsy : AInoP<(outs), (ins), Pseudo, NoItinerary, "dsb", "",
   let Inst{3-0} = 0b1111;
 }
 
-def DMB_MCR : AInoP<(outs), (ins GPR:$zero), Pseudo, NoItinerary,
+def DMB_MCR : AInoP<(outs), (ins GPR:$zero), MiscFrm, NoItinerary,
                        "mcr", "\tp15, 0, $zero, c7, c10, 5",
                        [(ARMMemBarrierMCR GPR:$zero)]>,
                        Requires<[IsARM, HasV6]> {
@@ -2380,7 +2380,7 @@ def DMB_MCR : AInoP<(outs), (ins GPR:$zero), Pseudo, NoItinerary,
   // FIXME: add encoding
 }
 
-def DSB_MCR : AInoP<(outs), (ins GPR:$zero), Pseudo, NoItinerary,
+def DSB_MCR : AInoP<(outs), (ins GPR:$zero), MiscFrm, NoItinerary,
                         "mcr", "\tp15, 0, $zero, c7, c10, 4",
                         [(ARMSyncBarrierMCR GPR:$zero)]>,
                         Requires<[IsARM, HasV6]> {
