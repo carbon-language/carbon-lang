@@ -1,7 +1,8 @@
-; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   | grep {\{%d,+,\[^\{\}\]\*\}<%bb>}
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 
 ; ScalarEvolution should be able to understand the loop and eliminate the casts.
+
+; CHECK: {%d,+,sizeof(i32)}
 
 define void @foo(i32* nocapture %d, i32 %n) nounwind {
 entry:
@@ -32,3 +33,40 @@ bb1.return_crit_edge:		; preds = %bb1
 return:		; preds = %bb1.return_crit_edge, %entry
 	ret void
 }
+
+; ScalarEvolution should be able to find the maximum tripcount
+; of this multiple-exit loop, and if it doesn't know the exact
+; count, it should say so.
+
+; PR7845
+; CHECK: Loop %for.cond: <multiple exits> Unpredictable backedge-taken count. 
+; CHECK: Loop %for.cond: max backedge-taken count is 5
+
+@.str = private constant [4 x i8] c"%d\0A\00"     ; <[4 x i8]*> [#uses=2]
+
+define i32 @main() nounwind {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %g_4.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ] ; <i32> [#uses=5]
+  %cmp = icmp slt i32 %g_4.0, 5                   ; <i1> [#uses=1]
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %conv = trunc i32 %g_4.0 to i16                 ; <i16> [#uses=1]
+  %tobool.not = icmp eq i16 %conv, 0              ; <i1> [#uses=1]
+  %tobool3 = icmp ne i32 %g_4.0, 0                ; <i1> [#uses=1]
+  %or.cond = and i1 %tobool.not, %tobool3         ; <i1> [#uses=1]
+  br i1 %or.cond, label %for.end, label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %add = add nsw i32 %g_4.0, 1                    ; <i32> [#uses=1]
+  br label %for.cond
+
+for.end:                                          ; preds = %for.body, %for.cond
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %g_4.0) nounwind ; <i32> [#uses=0]
+  ret i32 0
+}
+
+declare i32 @printf(i8*, ...)

@@ -3854,14 +3854,13 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
         else
           MaxBECount = getUMinFromMismatchedTypes(BTI0.Max, BTI1.Max);
       } else {
-        // Both conditions must be true for the loop to exit.
+        // Both conditions must be true at the same time for the loop to exit.
+        // For now, be conservative.
         assert(L->contains(FBB) && "Loop block has no successor in loop!");
-        if (BTI0.Exact != getCouldNotCompute() &&
-            BTI1.Exact != getCouldNotCompute())
-          BECount = getUMaxFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
-        if (BTI0.Max != getCouldNotCompute() &&
-            BTI1.Max != getCouldNotCompute())
-          MaxBECount = getUMaxFromMismatchedTypes(BTI0.Max, BTI1.Max);
+        if (BTI0.Max == BTI1.Max)
+          MaxBECount = BTI0.Max;
+        if (BTI0.Exact == BTI1.Exact)
+          BECount = BTI0.Exact;
       }
 
       return BackedgeTakenInfo(BECount, MaxBECount);
@@ -3889,14 +3888,13 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
         else
           MaxBECount = getUMinFromMismatchedTypes(BTI0.Max, BTI1.Max);
       } else {
-        // Both conditions must be false for the loop to exit.
+        // Both conditions must be false at the same time for the loop to exit.
+        // For now, be conservative.
         assert(L->contains(TBB) && "Loop block has no successor in loop!");
-        if (BTI0.Exact != getCouldNotCompute() &&
-            BTI1.Exact != getCouldNotCompute())
-          BECount = getUMaxFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
-        if (BTI0.Max != getCouldNotCompute() &&
-            BTI1.Max != getCouldNotCompute())
-          MaxBECount = getUMaxFromMismatchedTypes(BTI0.Max, BTI1.Max);
+        if (BTI0.Max == BTI1.Max)
+          MaxBECount = BTI0.Max;
+        if (BTI0.Exact == BTI1.Exact)
+          BECount = BTI0.Exact;
       }
 
       return BackedgeTakenInfo(BECount, MaxBECount);
