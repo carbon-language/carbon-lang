@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fobjc-nonfragile-abi -verify -fsyntax-only %s
+// XFAIL: *
 
 @interface NSView 
   - (id)initWithView:(id)realView;

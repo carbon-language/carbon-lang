@@ -30,15 +30,6 @@ using namespace clang;
 Sema::OwningStmtResult Sema::ActOnExprStmt(FullExprArg expr) {
   Expr *E = expr->takeAs<Expr>();
   assert(E && "ActOnExprStmt(): missing expression");
-  if (E->getType()->isObjCObjectType()) {
-    if (LangOpts.ObjCNonFragileABI)
-      Diag(E->getLocEnd(), diag::err_indirection_requires_nonfragile_object)
-             << E->getType();
-    else
-      Diag(E->getLocEnd(), diag::err_direct_interface_unsupported)
-             << E->getType();
-    return StmtError();
-  }
   // C99 6.8.3p2: The expression in an expression statement is evaluated as a
   // void expression for its side effects.  Conversion to void allows any
   // operand, even incomplete types.

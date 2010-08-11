@@ -77,7 +77,7 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
 
 bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
   return T->isRecordType() || T->isArrayType() || T->isAnyComplexType() ||
-    T->isMemberFunctionPointerType();
+    T->isMemberFunctionPointerType() || T->isObjCObjectType();
 }
 
 void CodeGenFunction::EmitReturnBlock() {
