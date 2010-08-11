@@ -214,3 +214,37 @@ struct Other {
 void test_any() {
   Any any = Other(); // expected-error{{cannot pass object of non-POD type 'Other' through variadic constructor; call will abort at runtime}}
 }
+
+namespace PR7055 {
+  // Make sure that we don't allow too many conversions in an
+  // auto_ptr-like template. In particular, we can't create multiple
+  // temporary objects when binding to a reference.
+  struct auto_ptr {
+    struct auto_ptr_ref { };
+
+    auto_ptr(auto_ptr&);
+    auto_ptr(auto_ptr_ref);
+    explicit auto_ptr(int *);
+
+    operator auto_ptr_ref();
+  };
+
+  struct X {
+    X(auto_ptr);
+  };
+
+  X f() {
+    X x(auto_ptr(new int));
+    return X(auto_ptr(new int));
+  }
+
+  auto_ptr foo();
+
+  X e(foo());
+
+  struct Y {
+    Y(X);
+  };
+  
+  Y f2(foo());
+}
