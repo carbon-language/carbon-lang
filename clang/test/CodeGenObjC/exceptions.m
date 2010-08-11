@@ -119,14 +119,14 @@ void f3() {
       // duplicating the finally block.
       while (x) f3_helper(3, &x);
 
-      // It's okay for this to turn into a test against 0.
-      // CHECK:  icmp eq i32 [[DEST2]], 5
-      // CHECK:  br i1
+      // This is a switch or maybe some chained branches, but relying
+      // on a specific result from the optimizer is really unstable.
+      // CHECK:  [[DEST2]]
     }
 
-    // It's okay for this to turn into a test against 0.
-    // CHECK:    icmp eq i32 [[DEST1]], 3
-    // CHECK:    br i1
+      // This is a switch or maybe some chained branches, but relying
+      // on a specific result from the optimizer is really unstable.
+    // CHECK:    [[DEST1]]
   }
 
   // CHECK:      call void @f3_helper(i32 4, i32* [[X]])
