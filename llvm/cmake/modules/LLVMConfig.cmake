@@ -53,7 +53,7 @@ endfunction(explicit_llvm_config)
 function(llvm_map_components_to_libraries OUT_VAR)
   explicit_map_components_to_libraries(result ${ARGN})
   get_system_libs(sys_result)
-  set( ${OUT_VAR} ${result} ${sys_result} )
+  set( ${OUT_VAR} ${result} ${sys_result} PARENT_SCOPE )
 endfunction(llvm_map_components_to_libraries)
 
 
