@@ -179,10 +179,8 @@ void Clang::AddPreprocessingOptions(const Driver &D,
     const Arg *A = it;
 
     if (A->getOption().matches(options::OPT_include)) {
-      // Use PCH if the user requested it, except for C++ (for now).
+      // Use PCH if the user requested it.
       bool UsePCH = D.CCCUsePCH;
-      if (types::isCXX(Inputs[0].getType()))
-        UsePCH = false;
 
       bool FoundPTH = false;
       bool FoundPCH = false;
@@ -789,10 +787,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                       !IsOpt))
       CmdArgs.push_back("-mrelax-all");
   } else if (isa<PrecompileJobAction>(JA)) {
-    // Use PCH if the user requested it, except for C++ (for now).
+    // Use PCH if the user requested it.
     bool UsePCH = D.CCCUsePCH;
-    if (types::isCXX(Inputs[0].getType()))
-      UsePCH = false;
 
     if (UsePCH)
       CmdArgs.push_back("-emit-pch");
