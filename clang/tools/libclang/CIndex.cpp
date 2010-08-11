@@ -1459,9 +1459,14 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
     delete static_cast<ASTUnit *>(CTUnit);
 }
 
+unsigned clang_defaultReparseOptions(CXTranslationUnit TU) {
+  return CXReparse_None;
+}
+
 int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                  unsigned num_unsaved_files,
-                                 struct CXUnsavedFile *unsaved_files) {
+                                 struct CXUnsavedFile *unsaved_files,
+                                 unsigned options) {
   if (!TU)
     return 1;
   

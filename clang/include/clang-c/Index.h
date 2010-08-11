@@ -687,7 +687,17 @@ enum CXTranslationUnit_Flags {
    * clang_reparseTranslationUnit() will re-use the implicit
    * precompiled header to improve parsing performance.
    */
-  CXTranslationUnit_PrecompiledPreamble = 0x04
+  CXTranslationUnit_PrecompiledPreamble = 0x04,
+  
+  /**
+   * \brief Used to indicate that the translation unit should cache some
+   * code-completion results with each reparse of the source file.
+   *
+   * Caching of code-completion results is a performance optimization that
+   * introduces some overhead to reparsing but improves the performance of
+   * code-completion operations.
+   */
+  CXTranslationUnit_CacheCompletionResults = 0x08
 };
 
 /**
@@ -702,7 +712,7 @@ enum CXTranslationUnit_Flags {
  * preamble) geared toward improving the performance of these routines. The
  * set of optimizations enabled may change from one version to the next.
  */
-CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions();
+CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
   
 /**
  * \brief Parse the given source file and the translation unit corresponding
@@ -760,6 +770,32 @@ CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
 CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /**
+ * \brief Flags that control the reparsing of translation units.
+ *
+ * The enumerators in this enumeration type are meant to be bitwise
+ * ORed together to specify which options should be used when
+ * reparsing the translation unit.
+ */
+enum CXReparse_Flags {
+  /**
+   * \brief Used to indicate that no special reparsing options are needed.
+   */
+  CXReparse_None = 0x0
+};
+ 
+/**
+ * \brief Returns the set of flags that is suitable for reparsing a translation
+ * unit.
+ *
+ * The set of flags returned provide options for
+ * \c clang_reparseTranslationUnit() by default. The returned flag
+ * set contains an unspecified set of optimizations geared toward common uses
+ * of reparsing. The set of optimizations enabled may change from one version 
+ * to the next.
+ */
+CINDEX_LINKAGE unsigned clang_defaultReparseOptions(CXTranslationUnit TU);
+
+/**
  * \brief Reparse the source files that produced this translation unit.
  *
  * This routine can be used to re-parse the source files that originally
@@ -788,6 +824,10 @@ CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
  * CXUnsavedFile) are copied when necessary, so the client only needs to
  * guarantee their validity until the call to this function returns.
  * 
+ * \param options A bitset of options composed of the flags in CXReparse_Flags.
+ * The function \c clang_defaultReparseOptions() produces a default set of
+ * options recommended for most uses, based on the translation unit.
+ *
  * \returns 0 if the sources could be reparsed. A non-zero value will be
  * returned if reparsing was impossible, such that the translation unit is
  * invalid. In such cases, the only valid call for \p TU is 
@@ -795,7 +835,8 @@ CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
  */
 CINDEX_LINKAGE int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                                 unsigned num_unsaved_files,
-                                          struct CXUnsavedFile *unsaved_files);
+                                          struct CXUnsavedFile *unsaved_files,
+                                                unsigned options);
   
 /**
  * @}
