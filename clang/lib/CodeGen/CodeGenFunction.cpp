@@ -315,6 +315,10 @@ void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {
 /// non-existence of any throwing calls within it.  We believe this is
 /// lightweight enough to do at -O0.
 static void TryMarkNoThrow(llvm::Function *F) {
+  // LLVM treats 'nounwind' on a function as part of the type, so we
+  // can't do this on functions that can be overwritten.
+  if (F->mayBeOverridden()) return;
+
   for (llvm::Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
     for (llvm::BasicBlock::iterator
            BI = FI->begin(), BE = FI->end(); BI != BE; ++BI)

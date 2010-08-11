@@ -15,3 +15,10 @@ int test0(void) {
 int test1(void) {
   return 0;
 }
+
+// <rdar://problem/8283071>: not for weak functions
+// CHECK:       define weak [[INT:i.*]] @test2() {
+// CHECK-NOEXC: define weak [[INT:i.*]] @test2() nounwind {
+__attribute__((weak)) int test2(void) {
+  return 0;
+}
