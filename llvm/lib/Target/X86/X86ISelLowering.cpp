@@ -7210,12 +7210,13 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   SDValue Handler   = Op.getOperand(2);
   DebugLoc dl       = Op.getDebugLoc();
 
-  SDValue Frame = DAG.getRegister(Subtarget->is64Bit() ? X86::RBP : X86::EBP,
-                                  getPointerTy());
+  SDValue Frame = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
+                                     Subtarget->is64Bit() ? X86::RBP : X86::EBP,
+                                     getPointerTy());
   unsigned StoreAddrReg = (Subtarget->is64Bit() ? X86::RCX : X86::ECX);
 
-  SDValue StoreAddr = DAG.getNode(ISD::SUB, dl, getPointerTy(), Frame,
-                                  DAG.getIntPtrConstant(-TD->getPointerSize()));
+  SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), Frame,
+                                  DAG.getIntPtrConstant(TD->getPointerSize()));
   StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StoreAddr, Offset);
   Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, NULL, 0, false, false, 0);
   Chain = DAG.getCopyToReg(Chain, dl, StoreAddrReg, StoreAddr);
