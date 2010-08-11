@@ -461,6 +461,7 @@ let Constraints = "$a = $dst" in {
 
 // FP to Fixed-Point:
 
+let isCodeGenOnly = 1 in {
 def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s16.f32\t$dst, $a, $fbits",
@@ -500,9 +501,11 @@ def VTOULD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 1,
                        (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
+}
 
 // Fixed-Point to FP:
 
+let isCodeGenOnly = 1 in {
 def VSHTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.s16\t$dst, $a, $fbits",
@@ -542,6 +545,7 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
                        (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]>;
+}
 
 } // End of 'let Constraints = "$src = $dst" in'
 
