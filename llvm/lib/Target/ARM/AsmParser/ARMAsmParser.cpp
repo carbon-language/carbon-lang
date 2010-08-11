@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
@@ -221,8 +222,10 @@ public:
   }
 
   void addCondCodeOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
+    assert(N == 2 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
+    // FIXME: What belongs here?
+    Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
@@ -236,6 +239,15 @@ public:
   }
 
   virtual void dump(raw_ostream &OS) const;
+
+  static void CreateCondCode(OwningPtr<ARMOperand> &Op, ARMCC::CondCodes CC,
+                             SMLoc S) {
+    Op.reset(new ARMOperand);
+    Op->Kind = CondCode;
+    Op->CC.Val = CC;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+  }
 
   static void CreateToken(OwningPtr<ARMOperand> &Op, StringRef Str,
                           SMLoc S) {
@@ -656,9 +668,40 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   size_t Start = 0, Next = Name.find('.');
   StringRef Head = Name.slice(Start, Next);
 
+  // Determine the predicate, if any.
+  //
+  // FIXME: We need a way to check whether a prefix supports predication,
+  // otherwise we will end up with an ambiguity for instructions that happen to
+  // end with a predicate name.
+  unsigned CC = StringSwitch<unsigned>(Head.substr(Head.size()-2))
+    .Case("eq", ARMCC::EQ)
+    .Case("ne", ARMCC::NE)
+    .Case("hs", ARMCC::HS)
+    .Case("lo", ARMCC::LO)
+    .Case("mi", ARMCC::MI)
+    .Case("pl", ARMCC::PL)
+    .Case("vs", ARMCC::VS)
+    .Case("vc", ARMCC::VC)
+    .Case("hi", ARMCC::HI)
+    .Case("ls", ARMCC::LS)
+    .Case("ge", ARMCC::GE)
+    .Case("lt", ARMCC::LT)
+    .Case("gt", ARMCC::GT)
+    .Case("le", ARMCC::LE)
+    .Case("al", ARMCC::AL)
+    .Default(~0U);
+  if (CC != ~0U) {
+    Head = Head.slice(0, Head.size() - 2);
+  } else
+    CC = ARMCC::AL;
+
   ARMOperand::CreateToken(Op, Head, NameLoc);
   Operands.push_back(Op.take());
 
+  ARMOperand::CreateCondCode(Op, ARMCC::CondCodes(CC), NameLoc);
+  Operands.push_back(Op.take());
+
+  // Add the remaining tokens in the mnemonic.
   while (Next != StringRef::npos) {
     Start = Next;
     Next = Name.find('.', Start + 1);
