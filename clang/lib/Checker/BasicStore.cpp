@@ -236,7 +236,7 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
   if (isa<Loc>(V) || isa<nonloc::LocAsInteger>(V))
     if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
       // FIXME: Should check for index 0.
-      QualType T = ER->getLocationType(C);
+      QualType T = ER->getLocationType();
 
       if (isHigherOrderRawPtr(T, C))
         R = ER->getSuperRegion();
@@ -249,7 +249,7 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
 
   // Do not bind to arrays.  We need to explicitly check for this so that
   // we do not encounter any weirdness of trying to load/store from arrays.
-  if (TyR->isBoundable() && TyR->getValueType(C)->isArrayType())
+  if (TyR->isBoundable() && TyR->getValueType()->isArrayType())
     return store;
 
   if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
@@ -259,7 +259,7 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
     // a pointer.  We may wish to flag a type error here if the types
     // are incompatible.  This may also cause lots of breakage
     // elsewhere. Food for thought.
-    if (TyR->isBoundable() && Loc::IsLocType(TyR->getValueType(C)))
+    if (TyR->isBoundable() && Loc::IsLocType(TyR->getValueType()))
       V = X->getLoc();
   }
 
@@ -580,7 +580,7 @@ Store BasicStoreManager::InvalidateRegion(Store store,
     }
   }
 
-  QualType T = cast<TypedRegion>(R)->getValueType(R->getContext());
+  QualType T = cast<TypedRegion>(R)->getValueType();
   SVal V = ValMgr.getConjuredSymbolVal(R, E, T, Count);
   return Bind(store, loc::MemRegionVal(R), V);
 }

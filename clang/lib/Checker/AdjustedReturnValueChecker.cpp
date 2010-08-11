@@ -70,8 +70,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
   }
   else if (const BlockDataRegion *BD = dyn_cast<BlockDataRegion>(callee)) {
     const BlockTextRegion *BR = BD->getCodeRegion();
-    const BlockPointerType *BT =
-      BR->getLocationType(C.getASTContext())->getAs<BlockPointerType>();
+    const BlockPointerType *BT=BR->getLocationType()->getAs<BlockPointerType>();
     const FunctionType *FT = BT->getPointeeType()->getAs<FunctionType>();
     actualResultTy = FT->getResultType();
   }

@@ -114,7 +114,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
       : C(c), StoreMgr(storeMgr), MrMgr(mrMgr), store(s) {}
 
       bool Find(const TypedRegion *R) {
-        QualType T = R->getValueType(C);
+        QualType T = R->getValueType();
         if (const RecordType *RT = T->getAsStructureType()) {
           const RecordDecl *RD = RT->getDecl()->getDefinition();
           assert(RD && "Referred record has no definition");

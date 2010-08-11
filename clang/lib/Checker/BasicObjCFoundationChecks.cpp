@@ -358,7 +358,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
   if (!R)
     return false;
 
-  QualType T = Ctx.getCanonicalType(R->getValueType(Ctx));
+  QualType T = Ctx.getCanonicalType(R->getValueType());
 
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
   //  People can do weird stuff with pointers.

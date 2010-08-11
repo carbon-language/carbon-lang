@@ -145,7 +145,7 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
   if (!ER)
     return state;
 
-  assert(ER->getValueType(C.getASTContext()) == C.getASTContext().CharTy &&
+  assert(ER->getValueType() == C.getASTContext().CharTy &&
     "CheckLocation should only be called with char* ElementRegions");
 
   // Get the size of the array.
@@ -518,20 +518,16 @@ bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
     return true;
   case MemRegion::CXXThisRegionKind:
   case MemRegion::CXXObjectRegionKind:
-    os << "a C++ object of type "
-       << TR->getValueType(Ctx).getAsString();
+    os << "a C++ object of type " << TR->getValueType().getAsString();
     return true;
   case MemRegion::VarRegionKind:
-    os << "a variable of type"
-       << TR->getValueType(Ctx).getAsString();
+    os << "a variable of type" << TR->getValueType().getAsString();
     return true;
   case MemRegion::FieldRegionKind:
-    os << "a field of type "
-       << TR->getValueType(Ctx).getAsString();
+    os << "a field of type " << TR->getValueType().getAsString();
     return true;
   case MemRegion::ObjCIvarRegionKind:
-    os << "an instance variable of type "
-       << TR->getValueType(Ctx).getAsString();
+    os << "an instance variable of type " << TR->getValueType().getAsString();
     return true;
   default:
     return false;

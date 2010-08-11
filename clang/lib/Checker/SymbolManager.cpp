@@ -191,7 +191,7 @@ QualType SymbolConjured::getType(ASTContext&) const {
 }
 
 QualType SymbolDerived::getType(ASTContext& Ctx) const {
-  return R->getValueType(Ctx);
+  return R->getValueType();
 }
 
 QualType SymbolExtent::getType(ASTContext& Ctx) const {
@@ -199,7 +199,7 @@ QualType SymbolExtent::getType(ASTContext& Ctx) const {
 }
 
 QualType SymbolRegionValue::getType(ASTContext& C) const {
-  return R->getValueType(C);
+  return R->getValueType();
 }
 
 SymbolManager::~SymbolManager() {}

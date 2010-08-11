@@ -178,7 +178,7 @@ const StackFrameContext *VarRegion::getStackFrame() const {
 
 DefinedOrUnknownSVal DeclRegion::getExtent(ValueManager& ValMgr) const {
   ASTContext& Ctx = ValMgr.getContext();
-  QualType T = getDesugaredValueType(Ctx);
+  QualType T = getDesugaredValueType();
 
   if (isa<VariableArrayType>(T))
     return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
@@ -196,8 +196,7 @@ DefinedOrUnknownSVal FieldRegion::getExtent(ValueManager& ValMgr) const {
   // A zero-length array at the end of a struct often stands for dynamically-
   // allocated extra memory.
   if (Extent.isZeroConstant()) {
-    ASTContext& Ctx = ValMgr.getContext();
-    QualType T = getDesugaredValueType(Ctx);
+    QualType T = getDesugaredValueType();
 
     if (isa<ConstantArrayType>(T))
       return UnknownVal();
@@ -846,7 +845,7 @@ RegionOffset MemRegion::getAsOffset() const {
       goto Finish;
     case ElementRegionKind: {
       const ElementRegion *ER = cast<ElementRegion>(R);
-      QualType EleTy = ER->getValueType(getContext());
+      QualType EleTy = ER->getValueType();
 
       if (!IsCompleteType(getContext(), EleTy))
         return RegionOffset(0);

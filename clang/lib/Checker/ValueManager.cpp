@@ -72,7 +72,7 @@ SVal ValueManager::convertToArrayIndex(SVal V) {
 
 DefinedOrUnknownSVal 
 ValueManager::getRegionValueSymbolVal(const TypedRegion* R) {
-  QualType T = R->getValueType(SymMgr.getContext());
+  QualType T = R->getValueType();
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
@@ -121,7 +121,7 @@ DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const void *SymbolTag,
 DefinedOrUnknownSVal
 ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
                                              const TypedRegion *R) {
-  QualType T = R->getValueType(R->getContext());
+  QualType T = R->getValueType();
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();

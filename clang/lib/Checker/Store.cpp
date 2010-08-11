@@ -83,7 +83,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
   // Handle casts from compatible types.
   if (R->isBoundable())
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-      QualType ObjTy = Ctx.getCanonicalType(TR->getValueType(Ctx));
+      QualType ObjTy = Ctx.getCanonicalType(TR->getValueType());
       if (CanonPointeeTy == ObjTy)
         return R;
     }
@@ -159,7 +159,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
         // check to see if type we are casting to is the same as the base
         // region.  If so, just return the base region.
         if (const TypedRegion *TR = dyn_cast<TypedRegion>(baseR)) {
-          QualType ObjTy = Ctx.getCanonicalType(TR->getValueType(Ctx));
+          QualType ObjTy = Ctx.getCanonicalType(TR->getValueType());
           QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
           if (CanonPointeeTy == ObjTy)
             return baseR;
@@ -222,7 +222,7 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
 
   if (performTestOnly) {  
     // Automatically translate references to pointers.
-    QualType T = R->getValueType(Ctx);
+    QualType T = R->getValueType();
     if (const ReferenceType *RT = T->getAs<ReferenceType>())
       T = Ctx.getPointerType(RT->getPointeeType());
     

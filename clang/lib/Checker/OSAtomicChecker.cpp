@@ -110,7 +110,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
   QualType LoadTy;
   if (const TypedRegion *TR =
       dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-    LoadTy = TR->getValueType(Ctx);
+    LoadTy = TR->getValueType();
   }
   Engine.EvalLoad(Tmp, theValueExpr, C.getPredecessor(), 
                   state, location, OSAtomicLoadTag, LoadTy);
@@ -158,7 +158,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
       // Handle implicit value casts.
       if (const TypedRegion *R =
           dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-        val = SVator.EvalCast(val,R->getValueType(Ctx),newValueExpr->getType());
+        val = SVator.EvalCast(val,R->getValueType(), newValueExpr->getType());
       }
 
       Engine.EvalStore(TmpStore, NULL, theValueExpr, N, 

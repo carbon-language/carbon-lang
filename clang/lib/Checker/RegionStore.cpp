@@ -663,7 +663,7 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     return;
 
   const TypedRegion *TR = cast<TypedRegion>(baseR);
-  QualType T = TR->getValueType(Ctx);
+  QualType T = TR->getValueType();
 
     // Invalidate the binding.
   if (const RecordType *RT = T->getAsStructureType()) {
@@ -774,7 +774,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
     return UnknownVal();
 
   // Strip off typedefs from the ArrayRegion's ValueType.
-  QualType T = ArrayR->getValueType(getContext()).getDesugaredType();
+  QualType T = ArrayR->getValueType().getDesugaredType();
   ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
 
@@ -915,7 +915,7 @@ Optional<SVal> RegionStoreManager::getDefaultBinding(RegionBindings B,
                                                      const MemRegion *R) {
   if (R->isBoundable())
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R))
-      if (TR->getValueType(getContext())->isUnionType())
+      if (TR->getValueType()->isUnionType())
         return UnknownVal();
 
   if (const SVal *V = Lookup(B, R, BindingKey::Default))
@@ -983,7 +983,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
   const TypedRegion *R = cast<TypedRegion>(MR);
-  QualType RTy = R->getValueType(getContext());
+  QualType RTy = R->getValueType();
 
   // FIXME: We should eventually handle funny addressing.  e.g.:
   //
@@ -1115,7 +1115,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
     // FIXME: Handle loads from strings where the literal is treated as
     // an integer, e.g., *((unsigned int*)"hello")
     ASTContext &Ctx = getContext();
-    QualType T = Ctx.getAsArrayType(StrR->getValueType(Ctx))->getElementType();
+    QualType T = Ctx.getAsArrayType(StrR->getValueType())->getElementType();
     if (T != Ctx.getCanonicalType(R->getElementType()))
       return UnknownVal();
 
@@ -1141,7 +1141,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
   // FIXME: This is a hack, and doesn't do anything really intelligent yet.
   const RegionRawOffset &O = R->getAsArrayOffset();
   if (const TypedRegion *baseR = dyn_cast_or_null<TypedRegion>(O.getRegion())) {
-    QualType baseT = baseR->getValueType(Ctx);
+    QualType baseT = baseR->getValueType();
     if (baseT->isScalarType()) {
       QualType elemT = R->getElementType();
       if (elemT->isScalarType()) {
@@ -1171,7 +1171,7 @@ SVal RegionStoreManager::RetrieveField(Store store,
   if (const Optional<SVal> &V = getDirectBinding(B, R))
     return *V;
 
-  QualType Ty = R->getValueType(getContext());
+  QualType Ty = R->getValueType();
   return RetrieveFieldOrElementCommon(store, R, Ty, R->getSuperRegion());
 }
 
@@ -1238,7 +1238,7 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
       // Currently we don't reason specially about Clang-style vectors.  Check
       // if superR is a vector and if so return Unknown.
       if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
-        if (typedSuperR->getValueType(getContext())->isVectorType())
+        if (typedSuperR->getValueType()->isVectorType())
           return UnknownVal();
       }
     }
@@ -1323,21 +1323,18 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
 }
 
 SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
-
-  QualType valTy = R->getValueType(getContext());
-
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolVal(R);
 }
 
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
-  QualType T = R->getValueType(getContext());
+  QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
   return ValMgr.makeLazyCompoundVal(store, R);
 }
 
 SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
-  assert(isa<ConstantArrayType>(R->getValueType(getContext())));
+  assert(isa<ConstantArrayType>(R->getValueType()));
   return ValMgr.makeLazyCompoundVal(store, R);
 }
 
@@ -1362,7 +1359,7 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
 
   // Check if the region is a struct region.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    if (TR->getValueType(getContext())->isStructureOrClassType())
+    if (TR->getValueType()->isStructureOrClassType())
       return BindStruct(store, TR, V);
 
   // Special case: the current region represents a cast and it and the super
@@ -1375,8 +1372,8 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
       if (const TypedRegion *superR =
             dyn_cast<TypedRegion>(ER->getSuperRegion())) {
         ASTContext &Ctx = getContext();
-        QualType superTy = superR->getValueType(Ctx);
-        QualType erTy = ER->getValueType(Ctx);
+        QualType superTy = superR->getValueType();
+        QualType erTy = ER->getValueType();
 
         if (IsAnyPointerOrIntptr(superTy, Ctx) &&
             IsAnyPointerOrIntptr(erTy, Ctx)) {
@@ -1458,8 +1455,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
                                     SVal Init) {
 
   ASTContext &Ctx = getContext();
-  const ArrayType *AT =
-    cast<ArrayType>(Ctx.getCanonicalType(R->getValueType(Ctx)));
+  const ArrayType *AT =cast<ArrayType>(Ctx.getCanonicalType(R->getValueType()));
   QualType ElementTy = AT->getElementType();
   Optional<uint64_t> Size;
 
@@ -1517,7 +1513,7 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
   if (!Features.supportsFields())
     return store;
 
-  QualType T = R->getValueType(getContext());
+  QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
 
   const RecordType* RT = T->getAs<RecordType>();

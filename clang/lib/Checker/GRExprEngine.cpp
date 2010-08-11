@@ -1830,7 +1830,7 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
   if (const TypedRegion *TR =
         dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
 
-    QualType ValTy = TR->getValueType(getContext());
+    QualType ValTy = TR->getValueType();
     if (const ReferenceType *RT = ValTy->getAs<ReferenceType>()) {
       static int loadReferenceTag = 0;
       ExplodedNodeSet Tmp;
@@ -2246,7 +2246,7 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
         // FIXME: The proper thing to do is to really iterate over the
         //  container.  We will do this with dispatch logic to the store.
         //  For now, just 'conjure' up a symbolic value.
-        QualType T = R->getValueType(getContext());
+        QualType T = R->getValueType();
         assert(Loc::IsLocType(T));
         unsigned Count = Builder->getCurrentBlockCount();
         SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);

@@ -349,24 +349,24 @@ protected:
   TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
 
 public:
-  virtual QualType getValueType(ASTContext &C) const = 0;
+  virtual QualType getValueType() const = 0;
 
-  virtual QualType getLocationType(ASTContext& C) const {
+  virtual QualType getLocationType() const {
     // FIXME: We can possibly optimize this later to cache this value.
-    return C.getPointerType(getValueType(C));
+    return getContext().getPointerType(getValueType());
   }
 
-  QualType getDesugaredValueType(ASTContext& C) const {
-    QualType T = getValueType(C);
+  QualType getDesugaredValueType() const {
+    QualType T = getValueType();
     return T.getTypePtr() ? T.getDesugaredType() : T;
   }
 
-  QualType getDesugaredLocationType(ASTContext& C) const {
-    return getLocationType(C).getDesugaredType();
+  QualType getDesugaredLocationType() const {
+    return getLocationType().getDesugaredType();
   }
 
   bool isBoundable() const {
-    return !getValueType(getContext()).isNull();
+    return !getValueType().isNull();
   }
 
   static bool classof(const MemRegion* R) {
@@ -380,9 +380,8 @@ class CodeTextRegion : public TypedRegion {
 protected:
   CodeTextRegion(const MemRegion *sreg, Kind k) : TypedRegion(sreg, k) {}
 public:
-  QualType getValueType(ASTContext &C) const {
-    // Do not get the object type of a CodeTextRegion.
-    assert(0);
+  QualType getValueType() const {
+    assert(0 && "Do not get the object type of a CodeTextRegion.");
     return QualType();
   }
   
@@ -401,8 +400,8 @@ public:
   FunctionTextRegion(const FunctionDecl* fd, const MemRegion* sreg)
     : CodeTextRegion(sreg, FunctionTextRegionKind), FD(fd) {}
   
-  QualType getLocationType(ASTContext &C) const {
-    return C.getPointerType(FD->getType());
+  QualType getLocationType() const {
+    return getContext().getPointerType(FD->getType());
   }
   
   const FunctionDecl *getDecl() const {
@@ -440,7 +439,7 @@ class BlockTextRegion : public CodeTextRegion {
     : CodeTextRegion(sreg, BlockTextRegionKind), BD(bd), AC(ac), locTy(lTy) {}
 
 public:
-  QualType getLocationType(ASTContext &C) const {
+  QualType getLocationType() const {
     return locTy;
   }
   
@@ -577,7 +576,7 @@ public:
 
   const StringLiteral* getStringLiteral() const { return Str; }
 
-  QualType getValueType(ASTContext& C) const {
+  QualType getValueType() const {
     return Str->getType();
   }
 
@@ -611,8 +610,8 @@ private:
                             const CompoundLiteralExpr* CL,
                             const MemRegion* superRegion);
 public:
-  QualType getValueType(ASTContext& C) const {
-    return C.getCanonicalType(CL->getType());
+  QualType getValueType() const {
+    return CL->getType();
   }
 
   bool isBoundable() const { return !CL->isFileScope(); }
@@ -669,9 +668,9 @@ public:
 
   const StackFrameContext *getStackFrame() const;
   
-  QualType getValueType(ASTContext& C) const {
+  QualType getValueType() const {
     // FIXME: We can cache this if needed.
-    return C.getCanonicalType(getDecl()->getType());
+    return getDecl()->getType();
   }
 
   void dumpToStream(llvm::raw_ostream& os) const;
@@ -697,7 +696,7 @@ class CXXThisRegion : public TypedRegion {
   void Profile(llvm::FoldingSetNodeID &ID) const;
 
 public:  
-  QualType getValueType(ASTContext &C) const {
+  QualType getValueType() const {
     return QualType(ThisPointerTy, 0);
   }
 
@@ -723,9 +722,9 @@ public:
 
   const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
 
-  QualType getValueType(ASTContext& C) const {
+  QualType getValueType() const {
     // FIXME: We can cache this if needed.
-    return C.getCanonicalType(getDecl()->getType());
+    return getDecl()->getType();
   }
 
   DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
@@ -754,7 +753,7 @@ class ObjCIvarRegion : public DeclRegion {
 
 public:
   const ObjCIvarDecl* getDecl() const { return cast<ObjCIvarDecl>(D); }
-  QualType getValueType(ASTContext&) const { return getDecl()->getType(); }
+  QualType getValueType() const { return getDecl()->getType(); }
 
   void dumpToStream(llvm::raw_ostream& os) const;
 
@@ -808,7 +807,7 @@ public:
 
   SVal getIndex() const { return Index; }
 
-  QualType getValueType(ASTContext&) const {
+  QualType getValueType() const {
     return ElementType;
   }
 
@@ -840,7 +839,7 @@ class CXXObjectRegion : public TypedRegion {
                             Expr const *E, const MemRegion *sReg);
   
 public:
-  QualType getValueType(ASTContext& C) const {
+  QualType getValueType() const {
     return Ex->getType();
   }
 
