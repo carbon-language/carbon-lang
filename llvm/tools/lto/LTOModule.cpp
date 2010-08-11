@@ -188,7 +188,7 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
       NameAndAttributes info;
       if (_undefines.find(superclassName.c_str()) == _undefines.end()) {
         const char *symbolName = ::strdup(superclassName.c_str());
-        info.name = ::strdup(symbolName);
+        info.name = symbolName;
         info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
         // string is owned by _undefines
         _undefines[info.name] = info;
@@ -220,7 +220,7 @@ void LTOModule::addObjCCategory(GlobalVariable *clgv) {
       NameAndAttributes info;
       if (_undefines.find(targetclassName.c_str()) == _undefines.end()) {
         const char *symbolName = ::strdup(targetclassName.c_str());
-        info.name = ::strdup(symbolName);
+        info.name = symbolName;
         info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
         // string is owned by _undefines
         _undefines[info.name] = info;
@@ -237,7 +237,7 @@ void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
     NameAndAttributes info;
     if (_undefines.find(targetclassName.c_str()) == _undefines.end()) {
       const char *symbolName = ::strdup(targetclassName.c_str());
-      info.name = ::strdup(symbolName);
+      info.name = symbolName;
       info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
       // string is owned by _undefines
       _undefines[info.name] = info;
