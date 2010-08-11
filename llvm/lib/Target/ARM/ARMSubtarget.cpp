@@ -36,6 +36,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , SlowFPBrcc(false)
   , IsThumb(isT)
   , ThumbMode(Thumb1)
+  , NoARM(false)
   , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)
   , UseMovt(UseMOVT)

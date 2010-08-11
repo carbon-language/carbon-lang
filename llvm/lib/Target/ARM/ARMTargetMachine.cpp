@@ -65,6 +65,9 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
                            "v128:64:128-v64:64:64-n32")),
     TLInfo(*this),
     TSInfo(*this) {
+  if (!Subtarget.hasARMOps())
+    report_fatal_error("CPU: '" + Subtarget.getCPUString() + "' does not "
+                       "support ARM mode execution!");
 }
 
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMB
-; RUN: llc < %s -march=arm -mcpu=cortex-m3 -mattr=+thumb2 \
+; RUN: llc < %s -march=thumb -mcpu=cortex-m3 -mattr=+thumb2 \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMBV7M
 
 define i32 @f1(i32 %a, i32 %b) {

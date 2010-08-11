@@ -63,6 +63,9 @@ protected:
   /// ThumbMode - Indicates supported Thumb version.
   ThumbTypeEnum ThumbMode;
 
+  /// NoARM - True if subtarget does not support ARM mode execution.
+  bool NoARM;
+
   /// PostRAScheduler - True if using post-register-allocation scheduler.
   bool PostRAScheduler;
 
@@ -135,6 +138,8 @@ protected:
   bool hasV6Ops()   const { return ARMArchVersion >= V6;   }
   bool hasV6T2Ops() const { return ARMArchVersion >= V6T2; }
   bool hasV7Ops()   const { return ARMArchVersion >= V7A;  }
+
+  bool hasARMOps() const { return !NoARM; }
 
   bool hasVFP2() const { return ARMFPUType >= VFPv2; }
   bool hasVFP3() const { return ARMFPUType >= VFPv3; }

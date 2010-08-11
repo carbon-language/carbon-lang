@@ -28,6 +28,8 @@ def FeatureNEON : SubtargetFeature<"neon", "ARMFPUType", "NEON",
                                    "Enable NEON instructions">;
 def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
                                      "Enable Thumb2 instructions">;
+def FeatureNoARM  : SubtargetFeature<"noarm", "NoARM", "true",
+                                     "Does not support ARM mode execution">;
 def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
                                      "Enable half-precision floating point">;
 def FeatureHWDiv  : SubtargetFeature<"hwdiv", "HasHardwareDivide", "true",
@@ -69,7 +71,7 @@ def ArchV6      : SubtargetFeature<"v6", "ARMArchVersion", "V6",
                                    "ARM v6">;
 def ArchV6M     : SubtargetFeature<"v6m", "ARMArchVersion", "V6M",
                                    "ARM v6m",
-                                   [FeatureDB]>;
+                                   [FeatureNoARM, FeatureDB]>;
 def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
                                    "ARM v6t2",
                                    [FeatureThumb2]>;
@@ -78,7 +80,8 @@ def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    [FeatureThumb2, FeatureNEON, FeatureDB]>;
 def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
                                    "ARM v7M",
-                                   [FeatureThumb2, FeatureDB, FeatureHWDiv]>;
+                                   [FeatureThumb2, FeatureNoARM, FeatureDB,
+                                    FeatureHWDiv]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
