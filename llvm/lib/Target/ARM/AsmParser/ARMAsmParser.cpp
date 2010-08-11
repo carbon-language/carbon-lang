@@ -234,6 +234,8 @@ public:
     addExpr(Inst, getImm());
   }
 
+  virtual void dump(raw_ostream &OS) const {}
+
   static void CreateToken(OwningPtr<ARMOperand> &Op, StringRef Str,
                           SMLoc S) {
     Op.reset(new ARMOperand);

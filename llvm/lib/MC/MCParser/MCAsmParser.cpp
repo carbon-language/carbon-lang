@@ -41,8 +41,4 @@ bool MCAsmParser::ParseExpression(const MCExpr *&Res) {
   return ParseExpression(Res, L);
 }
 
-/// getStartLoc - Get the location of the first token of this operand.
-SMLoc MCParsedAsmOperand::getStartLoc() const { return SMLoc(); }
-SMLoc MCParsedAsmOperand::getEndLoc() const { return SMLoc(); }
-
 

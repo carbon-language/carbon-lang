@@ -12,6 +12,7 @@
 
 namespace llvm {
 class SMLoc;
+class raw_ostream;
 
 /// MCParsedAsmOperand - This abstract class represents a source-level assembly
 /// instruction operand.  It should be subclassed by target-specific code.  This
@@ -23,9 +24,12 @@ public:
   virtual ~MCParsedAsmOperand() {}
   
   /// getStartLoc - Get the location of the first token of this operand.
-  virtual SMLoc getStartLoc() const;
+  virtual SMLoc getStartLoc() const = 0;
   /// getEndLoc - Get the location of the last token of this operand.
-  virtual SMLoc getEndLoc() const;
+  virtual SMLoc getEndLoc() const = 0;
+
+  /// dump - Print a debug representation of the operand to the given stream.
+  virtual void dump(raw_ostream &OS) const = 0;
 };
 
 } // end namespace llvm.
