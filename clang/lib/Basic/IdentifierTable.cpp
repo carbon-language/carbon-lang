@@ -35,6 +35,7 @@ IdentifierInfo::IdentifierInfo() {
   IsCPPOperatorKeyword = false;
   NeedsHandleIdentifier = false;
   IsFromPCH = false;
+  RevertedTokenID = false;
   FETokenInfo = 0;
   Entry = 0;
 }
@@ -101,8 +102,7 @@ static void AddKeyword(llvm::StringRef Keyword,
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;
 
-  IdentifierInfo &Info = Table.get(Keyword);
-  Info.setTokenID(TokenCode);
+  IdentifierInfo &Info = Table.get(Keyword, TokenCode);
   Info.setIsExtensionToken(AddResult == 1);
 }
 
@@ -111,8 +111,7 @@ static void AddKeyword(llvm::StringRef Keyword,
 static void AddCXXOperatorKeyword(llvm::StringRef Keyword,
                                   tok::TokenKind TokenCode,
                                   IdentifierTable &Table) {
-  IdentifierInfo &Info = Table.get(Keyword);
-  Info.setTokenID(TokenCode);
+  IdentifierInfo &Info = Table.get(Keyword, TokenCode);
   Info.setIsCPlusPlusOperatorKeyword();
 }
 

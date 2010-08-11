@@ -661,7 +661,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // token sequence "struct __is_pod", make __is_pod into a normal
     // identifier rather than a keyword, to allow libstdc++ 4.2 to work
     // properly.
-    Tok.getIdentifierInfo()->setTokenID(tok::identifier);
+    Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
     Tok.setKind(tok::identifier);
   }
 
@@ -671,7 +671,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // token sequence "struct __is_empty", make __is_empty into a normal
     // identifier rather than a keyword, to allow libstdc++ 4.2 to work
     // properly.
-    Tok.getIdentifierInfo()->setTokenID(tok::identifier);
+    Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
     Tok.setKind(tok::identifier);
   }
 

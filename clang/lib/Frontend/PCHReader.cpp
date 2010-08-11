@@ -657,6 +657,8 @@ public:
     unsigned Bits = ReadUnalignedLE16(d);
     bool CPlusPlusOperatorKeyword = Bits & 0x01;
     Bits >>= 1;
+    bool HasRevertedTokenIDToIdentifier = Bits & 0x01;
+    Bits >>= 1;
     bool Poisoned = Bits & 0x01;
     Bits >>= 1;
     bool ExtensionToken = Bits & 0x01;
@@ -677,7 +679,9 @@ public:
     Reader.SetIdentifierInfo(ID, II);
 
     // Set or check the various bits in the IdentifierInfo structure.
-    // FIXME: Load token IDs lazily, too?
+    // Token IDs are read-only.
+    if (HasRevertedTokenIDToIdentifier)
+      II->RevertTokenIDToIdentifier();
     II->setObjCOrBuiltinID(ObjCOrBuiltinID);
     assert(II->isExtensionToken() == ExtensionToken &&
            "Incorrect extension token flag");

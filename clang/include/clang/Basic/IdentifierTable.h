@@ -61,7 +61,9 @@ class IdentifierInfo {
   bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
   bool IsFromPCH              : 1; // True if identfier first appeared in a PCH
                                    // and wasn't modified since.
-  // 8 bits left in 32-bit word.
+  bool RevertedTokenID        : 1; // True if RevertTokenIDToIdentifier was
+                                   // called.
+  // 7 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
@@ -130,11 +132,21 @@ public:
     IsFromPCH = false;
   }
 
-  /// get/setTokenID - If this is a source-language token (e.g. 'for'), this API
+  /// getTokenID - If this is a source-language token (e.g. 'for'), this API
   /// can be used to cause the lexer to map identifiers to source-language
   /// tokens.
   tok::TokenKind getTokenID() const { return (tok::TokenKind)TokenID; }
-  void setTokenID(tok::TokenKind ID) { TokenID = ID; }
+
+  /// \brief True if RevertTokenIDToIdentifier() was called.
+  bool hasRevertedTokenIDToIdentifier() const { return RevertedTokenID; }
+
+  /// \brief Revert TokenID to tok::identifier; used for GNU libstdc++ 4.2
+  /// compatibility. 
+  void RevertTokenIDToIdentifier() {
+    assert(TokenID != tok::identifier && "Already at tok::identifier");
+    TokenID = tok::identifier;
+    RevertedTokenID = true;
+  }
 
   /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
   /// For example, "define" will return tok::pp_define.
@@ -321,6 +333,12 @@ public:
     II->Entry = &Entry;
 
     return *II;
+  }
+
+  IdentifierInfo &get(llvm::StringRef Name, tok::TokenKind TokenCode) {
+    IdentifierInfo &II = get(Name);
+    II.TokenID = TokenCode;
+    return II;
   }
 
   IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
