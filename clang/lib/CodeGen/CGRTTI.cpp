@@ -390,21 +390,35 @@ static bool CanUseSingleInheritance(const CXXRecordDecl *RD) {
 }
 
 void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
-  const char *VTableName;
+  const char *VTableName = 0;
 
   switch (Ty->getTypeClass()) {
-  default: assert(0 && "Unhandled type!");
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    assert(false && "Non-canonical and dependent types shouldn't get here");
+
+  case Type::LValueReference:
+  case Type::RValueReference:
+    assert(false && "References shouldn't get here");
 
   case Type::Builtin:
-  // GCC treats vector types as fundamental types.
+  // GCC treats vector and complex types as fundamental types.
   case Type::Vector:
   case Type::ExtVector:
+  case Type::Complex:
+  // FIXME: GCC treats block pointers as fundamental types?!
+  case Type::BlockPointer:
     // abi::__fundamental_type_info.
     VTableName = "_ZTVN10__cxxabiv123__fundamental_type_infoE";
     break;
 
   case Type::ConstantArray:
   case Type::IncompleteArray:
+  case Type::VariableArray:
     // abi::__array_type_info.
     VTableName = "_ZTVN10__cxxabiv117__array_type_infoE";
     break;
@@ -437,6 +451,13 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
     
     break;
   }
+
+  case Type::ObjCObject:
+  case Type::ObjCInterface:
+  case Type::ObjCObjectPointer:
+    assert(false && "FIXME: Needs to be written!");
+    VTableName = "_ZTVN10__cxxabiv117__class_type_infoE";
+    break;
 
   case Type::Pointer:
     // abi::__pointer_type_info.
