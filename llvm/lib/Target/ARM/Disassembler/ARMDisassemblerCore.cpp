@@ -493,7 +493,7 @@ static inline ARM_AM::AMSubMode getAMSubModeForBits(unsigned bits) {
 static bool DisassemblePseudo(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO) {
 
-  if (Opcode == ARM::Int_MemBarrierV7 || Opcode == ARM::Int_SyncBarrierV7)
+  if (Opcode == ARM::DMBsy || Opcode == ARM::DSBsy)
     return true;
 
   assert(0 && "Unexpected pseudo instruction!");

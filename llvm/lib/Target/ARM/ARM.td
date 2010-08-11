@@ -48,6 +48,8 @@ def FeatureHWDiv  : SubtargetFeature<"hwdiv", "HasHardwareDivide", "true",
                                      "Enable divide instructions">;
 def FeatureT2ExtractPack: SubtargetFeature<"t2xtpk", "HasT2ExtractPack", "true",
                                  "Enable Thumb2 extract and pack instructions">;
+def FeatureDB : SubtargetFeature<"db", "HasDataBarrier", "true",
+                                 "Has data barrier (dmb / dsb) instructions">;
 def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
                                          "FP compare + branch is slow">;
 
@@ -134,11 +136,15 @@ def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureHasSlowVMLx,
-                 FeatureSlowFPBrcc, FeatureNEONForFP, FeatureT2ExtractPack]>;
+                 FeatureSlowFPBrcc, FeatureNEONForFP, FeatureT2ExtractPack,
+                 FeatureDB]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2ExtractPack]>;
-def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;
-def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;
+                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2ExtractPack,
+                 FeatureDB]>;
+def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv,
+                                     FeatureDB]>;
+def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureThumb2, FeatureHWDiv,
+                                     FeatureDB]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

@@ -42,6 +42,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , HasFP16(false)
   , HasHardwareDivide(false)
   , HasT2ExtractPack(false)
+  , HasDataBarrier(false)
   , Pref32BitThumb(false)
   , stackAlignment(4)
   , CPUString("generic")

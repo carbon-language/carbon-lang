@@ -84,6 +84,10 @@ protected:
   /// instructions.
   bool HasT2ExtractPack;
 
+  /// HasDataBarrier - True if the subtarget supports DMB / DSB data barrier
+  /// instructions.
+  bool HasDataBarrier;
+
   /// Pref32BitThumb - If true, codegen would prefer 32-bit Thumb instructions
   /// over 16-bit ones.
   bool Pref32BitThumb;
@@ -139,6 +143,7 @@ protected:
     return hasNEON() && UseNEONForSinglePrecisionFP; }
   bool hasDivide() const { return HasHardwareDivide; }
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
+  bool hasDataBarrier() const { return HasDataBarrier; }
   bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
   bool isFPBrccSlow() const { return SlowFPBrcc; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }

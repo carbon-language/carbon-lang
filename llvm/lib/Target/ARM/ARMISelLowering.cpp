@@ -412,12 +412,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // doesn't yet know how to not do that for SjLj.
   setExceptionSelectorRegister(ARM::R0);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
-  // Handle atomics directly for ARMv[67] (except for Thumb1), otherwise
-  // use the default expansion.
-  bool canHandleAtomics =
-    (Subtarget->hasV7Ops() ||
-      (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only()));
-  if (canHandleAtomics) {
+  // ARMv6 Thumb1 (except for CPUs that support dmb / dsb) and earlier use
+  // the default expansion.
+  if (Subtarget->hasDataBarrier() ||
+      (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only())) {
     // membarrier needs custom lowering; the rest are legal and handled
     // normally.
     setOperationAction(ISD::MEMBARRIER, MVT::Other, Custom);
@@ -1992,17 +1990,19 @@ static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
   DebugLoc dl = Op.getDebugLoc();
   SDValue Op5 = Op.getOperand(5);
   unsigned isDeviceBarrier = cast<ConstantSDNode>(Op5)->getZExtValue();
-  // v6 and v7 can both handle barriers directly, but need handled a bit
-  // differently. Thumb1 and pre-v6 ARM mode use a libcall instead and should
+  // Some subtargets which have dmb and dsb instructions can handle barriers
+  // directly. Some ARMv6 cpus can support them with the help of mcr
+  // instruction. Thumb1 and pre-v6 ARM mode use a libcall instead and should
   // never get here.
   unsigned Opc = isDeviceBarrier ? ARMISD::SYNCBARRIER : ARMISD::MEMBARRIER;
-  if (Subtarget->hasV7Ops())
+  if (Subtarget->hasDataBarrier())
     return DAG.getNode(Opc, dl, MVT::Other, Op.getOperand(0));
-  else if (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only())
+  else {
+    assert(Subtarget->hasV6Ops() && !Subtarget->isThumb1Only() &&
+           "Unexpected ISD::MEMBARRIER encountered. Should be libcall!");
     return DAG.getNode(Opc, dl, MVT::Other, Op.getOperand(0),
                        DAG.getConstant(0, MVT::i32));
-  assert(0 && "Unexpected ISD::MEMBARRIER encountered. Should be libcall!");
-  return SDValue();
+  }
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {
