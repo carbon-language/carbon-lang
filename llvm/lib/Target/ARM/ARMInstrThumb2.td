@@ -780,7 +780,7 @@ multiclass T2I_bin_rrot_DO<bits<3> opcod, string opc> {
 let neverHasSideEffects = 1 in {
 let isReMaterializable = 1 in
 def t2LEApcrel : T2XI<(outs rGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
-                      "adr$p.w\t$dst, #$label", []> {
+                      "adr${p}.w\t$dst, #$label", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-24} = 0b10;
   // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
@@ -792,7 +792,7 @@ def t2LEApcrel : T2XI<(outs rGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
 } // neverHasSideEffects
 def t2LEApcrelJT : T2XI<(outs rGPR:$dst),
                         (ins i32imm:$label, nohash_imm:$id, pred:$p), IIC_iALUi,
-                        "adr$p.w\t$dst, #${label}_${id}", []> {
+                        "adr${p}.w\t$dst, #${label}_${id}", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-24} = 0b10;
   // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
