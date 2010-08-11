@@ -496,7 +496,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// AI1_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
 /// patterns. Similar to AsI1_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
-let Defs = [CPSR] in {
+let isCompare = 1, Defs = [CPSR] in {
 multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
                        bit Commutable = 0> {
   def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm, IIC_iCMPi,
