@@ -469,6 +469,10 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
 /// the class at this point.
 static bool CanDeclareSpecialMemberFunction(ASTContext &Context,
                                             const CXXRecordDecl *Class) {
+  // Don't do it if the class is invalid.
+  if (Class->isInvalidDecl())
+    return false;
+  
   // We need to have a definition for the class.
   if (!Class->getDefinition() || Class->isDependentContext())
     return false;
