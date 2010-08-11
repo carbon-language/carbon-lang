@@ -78,7 +78,7 @@ def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    [FeatureThumb2, FeatureNEON, FeatureDB]>;
 def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
                                    "ARM v7M",
-                                   [FeatureThumb2, FeatureDB]>;
+                                   [FeatureThumb2, FeatureDB, FeatureHWDiv]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -151,8 +151,8 @@ def : Processor<"cortex-a9",        CortexA9Itineraries,
                 [ArchV7A, FeatureT2XtPk]>;
 
 // V7M Processors.
-def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureHWDiv]>;
-def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureHWDiv]>;
+def : ProcNoItin<"cortex-m3",       [ArchV7M]>;
+def : ProcNoItin<"cortex-m4",       [ArchV7M]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
