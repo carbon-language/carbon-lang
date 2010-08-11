@@ -340,17 +340,19 @@ _mm256_dp_ps(__m256 a, __m256 b, const int c)
 }
 
 /* Vector shuffle */
-static __inline __m256d __attribute__((__always_inline__, __nodebug__))
-_mm256_shuffle_pd(__m256d a, __m256d b, const int s)
-{
-  return (__m256d)__builtin_ia32_shufpd256((__v4df)a, (__v4df)b, s);
-}
+#define _mm256_shuffle_ps(a, b, mask) \
+        (__builtin_shufflevector((__v8sf)(a), (__v8sf)(b), \
+        (mask) & 0x3,                ((mask) & 0xc) >> 2, \
+        (((mask) & 0x30) >> 4) + 8,  (((mask) & 0xc0) >> 6) + 8 \
+        (mask) & 0x3 + 4,            (((mask) & 0xc) >> 2) + 4, \
+        (((mask) & 0x30) >> 4) + 12, (((mask) & 0xc0) >> 6) + 12))
 
-static __inline __m256 __attribute__((__always_inline__, __nodebug__))
-_mm256_shuffle_ps(__m256 a, __m256 b, const int s)
-{
-  return (__m256)__builtin_ia32_shufps256((__v8sf)a, (__v8sf)b, s);
-}
+#define _mm256_shuffle_pd(a, b, mask) \
+        (__builtin_shufflevector((__v4df)(a), (__v4df)(b), \
+        (mask) & 0x1, \
+        (((mask) & 0x2) >> 1) + 4, \
+        (((mask) & 0x4) >> 2) + 2, \
+        (((mask) & 0x8) >> 3) + 6))
 
 /* Compare */
 #define _CMP_EQ_OQ    0x00 /* Equal (ordered, non-signaling)  */
