@@ -295,12 +295,6 @@ public:
   ///
   virtual bool doFinalization(Module &);
 
-  /// runOnModule - On a module, we run this pass by initializing,
-  /// ronOnFunction'ing once for every function in the module, then by
-  /// finalizing.
-  ///
-  virtual bool runOnModule(Module &M);
-
   /// run - On a function, we simply initialize, run the function, then
   /// finalize.
   ///

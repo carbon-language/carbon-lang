@@ -141,19 +141,6 @@ Pass *FunctionPass::createPrinterPass(raw_ostream &O,
   return createPrintFunctionPass(Banner, &O);
 }
 
-// run - On a module, we run this pass by initializing, runOnFunction'ing once
-// for every function in the module, then by finalizing.
-//
-bool FunctionPass::runOnModule(Module &M) {
-  bool Changed = doInitialization(M);
-
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isDeclaration())      // Passes are not run on external functions!
-    Changed |= runOnFunction(*I);
-
-  return Changed | doFinalization(M);
-}
-
 // run - On a function, we simply initialize, run the function, then finalize.
 //
 bool FunctionPass::run(Function &F) {
