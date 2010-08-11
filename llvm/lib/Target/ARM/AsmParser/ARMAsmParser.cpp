@@ -651,12 +651,25 @@ bool ARMAsmParser::ParseOperand(OwningPtr<ARMOperand> &Op) {
 bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   OwningPtr<ARMOperand> Op;
-  ARMOperand::CreateToken(Op, Name, NameLoc);
-  
+
+  // Create the leading tokens for the mnemonic, split by '.' characters.
+  size_t Start = 0, Next = Name.find('.');
+  StringRef Head = Name.slice(Start, Next);
+
+  ARMOperand::CreateToken(Op, Head, NameLoc);
   Operands.push_back(Op.take());
 
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+  while (Next != StringRef::npos) {
+    Start = Next;
+    Next = Name.find('.', Start + 1);
+    Head = Name.slice(Start, Next);
 
+    ARMOperand::CreateToken(Op, Head, NameLoc);
+    Operands.push_back(Op.take());
+  }
+
+  // Read the remaining operands.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
     OwningPtr<ARMOperand> Op;
     if (ParseOperand(Op)) return true;
