@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
+#include "ARMSubtarget.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -77,19 +78,13 @@ private:
 
   bool ParseDirectiveSyntax(SMLoc L);
 
-  // TODO - For now hacked versions of the next two are in here in this file to
-  // allow some parser testing until the table gen versions are implemented.
-
   /// @name Auto-generated Match Functions
   /// {
+
+  unsigned ComputeAvailableFeatures(const ARMSubtarget *Subtarget) const;
+
   bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst);
-
-  /// MatchRegisterName - Match the given string to a register name and return
-  /// its register number, or -1 if there is no match.  To allow return values
-  /// to be used directly in register lists, arm registers have values between
-  /// 0 and 15.
-  int MatchRegisterName(StringRef Name);
 
   /// }
 
@@ -195,13 +190,28 @@ public:
     return Imm.Val;
   }
 
-  bool isToken() const {return Kind == Token; }
+  bool isImm() const { return Kind == Immediate; }
 
   bool isReg() const { return Kind == Register; }
+
+  bool isToken() const {return Kind == Token; }
+
+  void addExpr(MCInst &Inst, const MCExpr *Expr) const {
+    // Add as immediates when possible.
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+    else
+      Inst.addOperand(MCOperand::CreateExpr(Expr));
+  }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getReg()));
+  }
+
+  void addImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
   }
 
   static void CreateToken(OwningPtr<ARMOperand> &Op, StringRef Str,
@@ -262,6 +272,14 @@ public:
 };
 
 } // end anonymous namespace.
+
+
+/// @name Auto-generated Match Functions
+/// {
+
+static unsigned MatchRegisterName(StringRef Name);
+
+/// }
 
 /// Try to parse a register name.  The token must be an Identifier when called,
 /// and if it is a register name a Reg operand is created, the token is eaten
@@ -549,77 +567,6 @@ bool ARMAsmParser::ParseShift(ShiftType &St,
   return false;
 }
 
-/// A hack to allow some testing, to be replaced by a real table gen version.
-int ARMAsmParser::MatchRegisterName(StringRef Name) {
-  if (Name == "r0" || Name == "R0")
-    return 0;
-  else if (Name == "r1" || Name == "R1")
-    return 1;
-  else if (Name == "r2" || Name == "R2")
-    return 2;
-  else if (Name == "r3" || Name == "R3")
-    return 3;
-  else if (Name == "r3" || Name == "R3")
-    return 3;
-  else if (Name == "r4" || Name == "R4")
-    return 4;
-  else if (Name == "r5" || Name == "R5")
-    return 5;
-  else if (Name == "r6" || Name == "R6")
-    return 6;
-  else if (Name == "r7" || Name == "R7")
-    return 7;
-  else if (Name == "r8" || Name == "R8")
-    return 8;
-  else if (Name == "r9" || Name == "R9")
-    return 9;
-  else if (Name == "r10" || Name == "R10")
-    return 10;
-  else if (Name == "r11" || Name == "R11" || Name == "fp")
-    return 11;
-  else if (Name == "r12" || Name == "R12" || Name == "ip")
-    return 12;
-  else if (Name == "r13" || Name == "R13" || Name == "sp")
-    return 13;
-  else if (Name == "r14" || Name == "R14" || Name == "lr")
-      return 14;
-  else if (Name == "r15" || Name == "R15" || Name == "pc")
-    return 15;
-  return -1;
-}
-
-/// A hack to allow some testing, to be replaced by a real table gen version.
-bool ARMAsmParser::
-MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                 MCInst &Inst) {
-  ARMOperand &Op0 = *(ARMOperand*)Operands[0];
-  assert(Op0.Kind == ARMOperand::Token && "First operand not a Token");
-  StringRef Mnemonic = Op0.getToken();
-  if (Mnemonic == "add" ||
-      Mnemonic == "stmfd" ||
-      Mnemonic == "str" ||
-      Mnemonic == "ldmfd" ||
-      Mnemonic == "ldr" ||
-      Mnemonic == "mov" ||
-      Mnemonic == "sub" ||
-      Mnemonic == "bl" ||
-      Mnemonic == "push" ||
-      Mnemonic == "blx" ||
-      Mnemonic == "pop") {
-    // Hard-coded to a valid instruction, till we have a real matcher.
-    Inst = MCInst();
-    Inst.setOpcode(ARM::MOVr);
-    Inst.addOperand(MCOperand::CreateReg(2));
-    Inst.addOperand(MCOperand::CreateReg(2));
-    Inst.addOperand(MCOperand::CreateImm(0));
-    Inst.addOperand(MCOperand::CreateImm(0));
-    Inst.addOperand(MCOperand::CreateReg(0));
-    return false;
-  }
-
-  return true;
-}
-
 /// Parse a arm instruction operand.  For now this parses the operand regardless
 /// of the mnemonic.
 bool ARMAsmParser::ParseOperand(OwningPtr<ARMOperand> &Op) {
@@ -810,3 +757,5 @@ extern "C" void LLVMInitializeARMAsmParser() {
   RegisterAsmParser<ARMAsmParser> Y(TheThumbTarget);
   LLVMInitializeARMAsmLexer();
 }
+
+#include "ARMGenAsmMatcher.inc"
