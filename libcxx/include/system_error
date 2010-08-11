@@ -237,6 +237,10 @@ template <class _Tp> struct is_error_code_enum
 template <class _Tp> struct is_error_condition_enum
     : public false_type {};
 
+// Some error codes are not present on all platforms, so we provide equivalents
+// for them:
+
+
 //enum class errc
 struct errc
 {
@@ -281,18 +285,30 @@ enum _ {
     no_child_process                    = ECHILD,
     no_link                             = ENOLINK,
     no_lock_available                   = ENOLCK,
+#ifdef ENODATA
     no_message_available                = ENODATA,
+#else
+    no_message_available                = ENOMSG,
+#endif
     no_message                          = ENOMSG,
     no_protocol_option                  = ENOPROTOOPT,
     no_space_on_device                  = ENOSPC,
+#ifdef ENOSR
     no_stream_resources                 = ENOSR,
+#else
+    no_stream_resources                 = ENOMEM,
+#endif
     no_such_device_or_address           = ENXIO,
     no_such_device                      = ENODEV,
     no_such_file_or_directory           = ENOENT,
     no_such_process                     = ESRCH,
     not_a_directory                     = ENOTDIR,
     not_a_socket                        = ENOTSOCK,
+#ifdef ENOSTR
     not_a_stream                        = ENOSTR,
+#else
+    not_a_stream                        = EINVAL,
+#endif
     not_connected                       = ENOTCONN,
     not_enough_memory                   = ENOMEM,
     not_supported                       = ENOTSUP,
@@ -310,7 +326,11 @@ enum _ {
     resource_unavailable_try_again      = EAGAIN,
     result_out_of_range                 = ERANGE,
     state_not_recoverable               = ENOTRECOVERABLE,
+#ifdef ETIME
     stream_timeout                      = ETIME,
+#else
+    stream_timeout                      = ETIMEDOUT,
+#endif
     text_file_busy                      = ETXTBSY,
     timed_out                           = ETIMEDOUT,
     too_many_files_open_in_system       = ENFILE,
