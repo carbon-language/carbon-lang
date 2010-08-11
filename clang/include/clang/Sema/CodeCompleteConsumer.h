@@ -13,6 +13,7 @@
 #ifndef LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H
 #define LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H
 
+#include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <memory>
@@ -78,6 +79,84 @@ class IdentifierInfo;
 class NamedDecl;
 class NestedNameSpecifier;
 class Sema;
+
+/// \brief The context in which code completion occurred, so that the
+/// code-completion consumer can process the results accordingly.
+class CodeCompletionContext {
+public:
+  enum Kind {
+    /// \brief An unspecified code-completion context.
+    CCC_Other,
+    /// \brief Code completion occurred within a "top-level" completion context,
+    /// e.g., at namespace or global scope.
+    CCC_TopLevel,
+    /// \brief Code completion occurred within an Objective-C interface,
+    /// protocol, or category interface.
+    CCC_ObjCInterface,
+    /// \brief Code completion occurred within an Objective-C implementation
+    /// or category implementation.
+    CCC_ObjCImplementation,
+    /// \brief Code completion occurred within the instance variable list of
+    /// an Objective-C interface, implementation, or category implementation.
+    CCC_ObjCIvarList,
+    /// \brief Code completion occurred within a class, struct, or union.
+    CCC_ClassStructUnion,
+    /// \brief Code completion occurred where a statement (or declaration) is
+    /// expected in a function, method, or block.
+    CCC_Statement,
+    /// \brief Code completion occurred where an expression is expected.
+    CCC_Expression,
+    /// \brief Code completion occurred where an Objective-C message receiver
+    /// is expected.
+    CCC_ObjCMessageReceiver,
+    /// \brief Code completion occurred on the right-hand side of a member
+    /// access expression.
+    ///
+    /// The results of this completion are the members of the type being 
+    /// accessed. The type itself is available via 
+    /// \c CodeCompletionContext::getType().
+    CCC_MemberAccess,
+    /// \brief Code completion occurred after the "enum" keyword, to indicate
+    /// an enumeration name.
+    CCC_EnumTag,
+    /// \brief Code completion occurred after the "union" keyword, to indicate
+    /// a union name.
+    CCC_UnionTag,
+    /// \brief Code completion occurred after the "struct" or "class" keyword,
+    /// to indicate a struct or class name.
+    CCC_ClassOrStructTag,
+    /// \brief Code completion occurred where a protocol name is expected.
+    CCC_ObjCProtocolName
+  };
+
+private:
+  enum Kind Kind;
+
+  /// \brief The type of the base object in a member access expression.
+  QualType Type;
+  
+public:
+  /// \brief Construct a new code-completion context of the given kind.
+  CodeCompletionContext(enum Kind Kind) : Kind(Kind) { 
+    assert(Kind != CCC_MemberAccess && "Member access requires a type");
+  }
+  
+  /// \brief Construct a new code-completion context of the given kind.
+  CodeCompletionContext(enum Kind Kind, QualType T) : Kind(Kind), Type(T) { 
+    assert(Kind == CCC_MemberAccess && "Only member access has a type");
+  }
+  
+  /// \brief Retrieve the kind of code-completion context.
+  enum Kind getKind() const { return Kind; }
+  
+  /// \brief Retrieve the type of the base object in a member-access 
+  /// expression.
+  QualType getType() const { 
+    assert(Kind == CCC_MemberAccess && "Only member access has a type");
+    return Type;
+  }
+};
+
 
 /// \brief A "string" used to describe how code completion can
 /// be performed for an entity.
@@ -514,7 +593,9 @@ public:
   /// \name Code-completion callbacks
   //@{
   /// \brief Process the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
+  virtual void ProcessCodeCompleteResults(Sema &S, 
+                                          CodeCompletionContext Context,
+                                          Result *Results,
                                           unsigned NumResults) { }
 
   /// \param S the semantic-analyzer object for which code-completion is being
@@ -545,7 +626,9 @@ public:
     : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, false), OS(OS) {}
   
   /// \brief Prints the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
+  virtual void ProcessCodeCompleteResults(Sema &S, 
+                                          CodeCompletionContext Context,
+                                          Result *Results,
                                           unsigned NumResults);
   
   virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
@@ -568,7 +651,9 @@ public:
     : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, true), OS(OS) {}
   
   /// \brief Prints the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Sema &S, Result *Results, 
+  virtual void ProcessCodeCompleteResults(Sema &S, 
+                                          CodeCompletionContext Context,
+                                          Result *Results, 
                                           unsigned NumResults);
   
   virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,

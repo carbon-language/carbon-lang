@@ -734,7 +734,7 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
                                SourceLocation Loc,
                                bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Condition);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Condition);
     ConsumeCodeCompletionToken();
   }
 

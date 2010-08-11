@@ -98,7 +98,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
 
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Statement);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Statement);
     ConsumeCodeCompletionToken();
     return ParseStatementOrDeclaration(OnlyStatement);
       
@@ -994,8 +994,8 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
   
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                     C99orCXXorObjC? Action::CCC_ForInit
-                                                   : Action::CCC_Expression);
+                                     C99orCXXorObjC? Action::PCC_ForInit
+                                                   : Action::PCC_Expression);
     ConsumeCodeCompletionToken();
   }
   

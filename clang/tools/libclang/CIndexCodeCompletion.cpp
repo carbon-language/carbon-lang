@@ -557,7 +557,9 @@ namespace {
     explicit CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results)
       : CodeCompleteConsumer(true, false, false), AllocatedResults(Results) { }
 
-    virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
+    virtual void ProcessCodeCompleteResults(Sema &S, 
+                                            CodeCompletionContext Context,
+                                            Result *Results,
                                             unsigned NumResults) {
       AllocatedResults.Results = new CXCompletionResult [NumResults];
       AllocatedResults.NumResults = NumResults;

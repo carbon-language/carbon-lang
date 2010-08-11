@@ -853,14 +853,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         AccessSpecifier AS,
                                         DeclSpecContext DSContext) {
   if (Tok.is(tok::code_completion)) {
-    Action::CodeCompletionContext CCC = Action::CCC_Namespace;
+    Action::ParserCompletionContext CCC = Action::PCC_Namespace;
     if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
-      CCC = DSContext == DSC_class? Action::CCC_MemberTemplate 
-                                  : Action::CCC_Template;
+      CCC = DSContext == DSC_class? Action::PCC_MemberTemplate 
+                                  : Action::PCC_Template;
     else if (DSContext == DSC_class)
-      CCC = Action::CCC_Class;
+      CCC = Action::PCC_Class;
     else if (ObjCImpDecl)
-      CCC = Action::CCC_ObjCImplementation;
+      CCC = Action::PCC_ObjCImplementation;
     
     Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);
     ConsumeCodeCompletionToken();

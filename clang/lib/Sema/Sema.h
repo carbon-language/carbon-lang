@@ -4619,7 +4619,7 @@ public:
   /// \name Code completion
   //@{
   virtual void CodeCompleteOrdinaryName(Scope *S,
-                                     CodeCompletionContext CompletionContext);
+                                     ParserCompletionContext CompletionContext);
   virtual void CodeCompleteExpression(Scope *S, QualType T,
                                       bool IntegralConstantExpression = false);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,

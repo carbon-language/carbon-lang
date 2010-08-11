@@ -348,8 +348,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
     // Code completion within an Objective-C interface.
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                  ObjCImpDecl? Action::CCC_ObjCImplementation
-                                             : Action::CCC_ObjCInterface);
+                                  ObjCImpDecl? Action::PCC_ObjCImplementation
+                                             : Action::PCC_ObjCInterface);
       ConsumeCodeCompletionToken();
     }
     
@@ -1071,7 +1071,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                       Action::CCC_ObjCInstanceVariableList);
+                                       Action::PCC_ObjCInstanceVariableList);
       ConsumeCodeCompletionToken();
     }
     

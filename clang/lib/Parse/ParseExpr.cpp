@@ -220,7 +220,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 ///
 Parser::OwningExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Expression);
     ConsumeCodeCompletionToken();
   }
 
@@ -918,7 +918,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::caret:
     return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Expression);
     ConsumeCodeCompletionToken();
     return ParseCastExpression(isUnaryExpression, isAddressOfOperand, 
                                NotCastExpr, TypeOfCast);

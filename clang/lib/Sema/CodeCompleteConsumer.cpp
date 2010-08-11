@@ -438,6 +438,7 @@ CodeCompleteConsumer::~CodeCompleteConsumer() { }
 
 void 
 PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
+                                                 CodeCompletionContext Context,
                                                          Result *Results, 
                                                          unsigned NumResults) {
   // Print the results.
@@ -589,6 +590,7 @@ namespace clang {
 
 void 
 CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
+                                                 CodeCompletionContext Context,
                                                        Result *Results, 
                                                        unsigned NumResults) {
   // Print the results.

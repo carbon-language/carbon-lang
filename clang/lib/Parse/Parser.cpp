@@ -463,8 +463,8 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
     break;
   case tok::code_completion:
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                   ObjCImpDecl? Action::CCC_ObjCImplementation
-                                              : Action::CCC_Namespace);
+                                   ObjCImpDecl? Action::PCC_ObjCImplementation
+                                              : Action::PCC_Namespace);
     ConsumeCodeCompletionToken();
     return ParseExternalDeclaration(Attr);
   case tok::kw_using:
@@ -1101,17 +1101,17 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
 void Parser::CodeCompletionRecovery() {
   for (Scope *S = getCurScope(); S; S = S->getParent()) {
     if (S->getFlags() & Scope::FnScope) {
-      Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_RecoveryInFunction);
+      Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_RecoveryInFunction);
       return;
     }
     
     if (S->getFlags() & Scope::ClassScope) {
-      Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Class);
+      Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Class);
       return;
     }
   }
   
-  Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Namespace);
+  Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Namespace);
 }
 
 // Anchor the Parser::FieldCallback vtable to this translation unit.
