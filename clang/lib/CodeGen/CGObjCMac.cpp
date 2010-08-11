@@ -2674,11 +2674,22 @@ namespace {
 
       if (isa<ObjCAtTryStmt>(S)) {
         if (const ObjCAtFinallyStmt* FinallyStmt =
-            cast<ObjCAtTryStmt>(S).getFinallyStmt())
+              cast<ObjCAtTryStmt>(S).getFinallyStmt()) {
+          // Save the current cleanup destination in case there's
+          // control flow inside the finally statement.
+          llvm::Value *CurCleanupDest =
+            CGF.Builder.CreateLoad(CGF.getNormalCleanupDestSlot());
+
           CGF.EmitStmt(FinallyStmt->getFinallyBody());
 
-        // Currently, the end of the cleanup must always exist.
-        CGF.EnsureInsertPoint();
+          if (CGF.HaveInsertPoint()) {
+            CGF.Builder.CreateStore(CurCleanupDest,
+                                    CGF.getNormalCleanupDestSlot());
+          } else {
+            // Currently, the end of the cleanup must always exist.
+            CGF.EnsureInsertPoint();
+          }
+        }
       } else {
         // Emit objc_sync_exit(expr); as finally's sole statement for
         // @synchronized.
@@ -3030,8 +3041,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
   llvm::BasicBlock *TryHandler = CGF.createBasicBlock("try.handler");
   llvm::Value *DidCatch =
-    CGF.Builder.CreateIsNull(SetJmpResult, "did_catch_exception");
-  CGF.Builder.CreateCondBr(DidCatch, TryBlock, TryHandler);
+    CGF.Builder.CreateIsNotNull(SetJmpResult, "did_catch_exception");
+  CGF.Builder.CreateCondBr(DidCatch, TryHandler, TryBlock);
 
   // Emit the protected block.
   CGF.EmitBlock(TryBlock);

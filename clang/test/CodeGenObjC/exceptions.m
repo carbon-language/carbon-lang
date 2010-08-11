@@ -82,3 +82,54 @@ int f2() {
   }
   return x;
 }
+
+// Test that the cleanup destination is saved when entering a finally
+// block.  rdar://problem/8293901
+// CHECK: define void @f3()
+void f3() {
+  extern void f3_helper(int, int*);
+
+  // CHECK:      [[X:%.*]] = alloca i32
+  // CHECK:      store i32 0, i32* [[X]]
+  int x = 0;
+
+  // CHECK:      call void @objc_exception_try_enter(
+  // CHECK:      call i32 @_setjmp
+  // CHECK-NEXT: icmp eq
+  // CHECK-NEXT: br i1
+
+  @try {
+    // CHECK:    call void @f3_helper(i32 0, i32* [[X]])
+    // CHECK:    call void @objc_exception_try_exit(
+    f3_helper(0, &x);
+  } @finally {
+    // CHECK:    [[DEST1:%.*]] = phi i32 [ 0, {{%.*}} ], [ 3, {{%.*}} ]
+    // CHECK:    call void @objc_exception_try_enter
+    // CHECK:    call i32 @_setjmp
+    @try {
+      // CHECK:  call void @f3_helper(i32 1, i32* [[X]])
+      // CHECK:  call void @objc_exception_try_exit(
+      f3_helper(1, &x);
+    } @finally {
+      // CHECK:  [[DEST2:%.*]] = phi i32 [ 0, {{%.*}} ], [ 5, {{%.*}} ]
+      // CHECK:  call void @f3_helper(i32 2, i32* [[X]])
+      f3_helper(2, &x);
+
+      // This loop is large enough to dissuade the optimizer from just
+      // duplicating the finally block.
+      while (x) f3_helper(3, &x);
+
+      // It's okay for this to turn into a test against 0.
+      // CHECK:  icmp eq i32 [[DEST2]], 5
+      // CHECK:  br i1
+    }
+
+    // It's okay for this to turn into a test against 0.
+    // CHECK:    icmp eq i32 [[DEST1]], 3
+    // CHECK:    br i1
+  }
+
+  // CHECK:      call void @f3_helper(i32 4, i32* [[X]])
+  // CHECK-NEXT: ret void
+  f3_helper(4, &x);
+}

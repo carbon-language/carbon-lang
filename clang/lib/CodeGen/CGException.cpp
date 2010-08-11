@@ -1326,6 +1326,12 @@ namespace {
         CGF.EHStack.pushCleanup<CallEndCatchForFinally>(NormalAndEHCleanup,
                                                         ForEHVar, EndCatchFn);
 
+      // Save the current cleanup destination in case there are
+      // cleanups in the finally block.
+      llvm::Value *SavedCleanupDest =
+        CGF.Builder.CreateLoad(CGF.getNormalCleanupDestSlot(),
+                               "cleanup.dest.saved");
+
       // Emit the finally block.
       CGF.EmitStmt(Body);
 
@@ -1349,6 +1355,10 @@ namespace {
         CGF.Builder.CreateUnreachable();
 
         CGF.EmitBlock(ContBB);
+
+        // Restore the cleanup destination.
+        CGF.Builder.CreateStore(SavedCleanupDest,
+                                CGF.getNormalCleanupDestSlot());
       }
 
       // Leave the end-catch cleanup.  As an optimization, pretend that
