@@ -483,9 +483,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SETCC,     MVT::i32, Expand);
   setOperationAction(ISD::SETCC,     MVT::f32, Expand);
   setOperationAction(ISD::SETCC,     MVT::f64, Expand);
-  setOperationAction(ISD::SELECT,    MVT::i32, Expand);
-  setOperationAction(ISD::SELECT,    MVT::f32, Expand);
-  setOperationAction(ISD::SELECT,    MVT::f64, Expand);
+  setOperationAction(ISD::SELECT,    MVT::i32, Custom);
+  setOperationAction(ISD::SELECT,    MVT::f32, Custom);
+  setOperationAction(ISD::SELECT,    MVT::f64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
@@ -2314,6 +2314,52 @@ ARMTargetLowering::getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG,
   return DAG.getNode(ARMISD::FMSTAT, dl, MVT::Flag, Cmp);
 }
 
+SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Cond = Op.getOperand(0);
+  SDValue SelectTrue = Op.getOperand(1);
+  SDValue SelectFalse = Op.getOperand(2);
+  DebugLoc dl = Op.getDebugLoc();
+
+  // Convert:
+  //
+  //   (select (cmov 1, 0, cond), t, f) -> (cmov t, f, cond)
+  //   (select (cmov 0, 1, cond), t, f) -> (cmov f, t, cond)
+  //
+  if (Cond.getOpcode() == ARMISD::CMOV && Cond.hasOneUse()) {
+    const ConstantSDNode *CMOVTrue =
+      dyn_cast<ConstantSDNode>(Cond.getOperand(0));
+    const ConstantSDNode *CMOVFalse =
+      dyn_cast<ConstantSDNode>(Cond.getOperand(1));
+
+    if (CMOVTrue && CMOVFalse) {
+      unsigned CMOVTrueVal = CMOVTrue->getZExtValue();
+      unsigned CMOVFalseVal = CMOVFalse->getZExtValue();
+
+      SDValue True;
+      SDValue False;
+      if (CMOVTrueVal == 1 && CMOVFalseVal == 0) {
+        True = SelectTrue;
+        False = SelectFalse;
+      } else if (CMOVTrueVal == 0 && CMOVFalseVal == 1) {
+        True = SelectFalse;
+        False = SelectTrue;
+      }
+
+      if (True.getNode() && False.getNode()) {
+        EVT VT = Cond.getValueType();
+        SDValue ARMcc = Cond.getOperand(2);
+        SDValue CCR = Cond.getOperand(3);
+        SDValue Cmp = Cond.getOperand(4);
+        return DAG.getNode(ARMISD::CMOV, dl, VT, True, False, ARMcc, CCR, Cmp);
+      }
+    }
+  }
+
+  return DAG.getSelectCC(dl, Cond,
+                         DAG.getConstant(0, Cond.getValueType()),
+                         SelectTrue, SelectFalse, ISD::SETNE);
+}
+
 SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   SDValue LHS = Op.getOperand(0);
@@ -3687,6 +3733,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
       LowerGlobalAddressELF(Op, DAG);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
+  case ISD::SELECT:        return LowerSELECT(Op, DAG);
   case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG);
   case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);

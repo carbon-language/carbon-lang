@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s --check-prefix=CHECK-VFP
+; RUN: llc < %s -mattr=+neon,+thumb2 -mtriple=thumbv7-apple-darwin | FileCheck %s --check-prefix=CHECK-NEON
 
 define i32 @f1(i32 %a.s) {
 ;CHECK: f1:
@@ -64,4 +65,28 @@ define double @f7(double %a, double %b) {
     %tmp = fcmp olt double %a, 1.234e+00
     %tmp1 = select i1 %tmp, double -1.000e+00, double %b
     ret double %tmp1
+}
+
+; <rdar://problem/7260094>
+;
+; We used to generate really horrible code for this function. The main cause was
+; a lack of a custom lowering routine for an ISD::SELECT. This would result in
+; two "it" blocks in the code: one for the "icmp" and another to move the index
+; into the constant pool based on the value of the "icmp". If we have one "it"
+; block generated, odds are good that we have close to the ideal code for this:
+;
+; CHECK-NEON:      _f8:
+; CHECK-NEON:      movw   [[REGISTER_1:r[0-9]+]], #1123
+; CHECK-NEON-NEXT: movs   [[REGISTER_2:r[0-9]+]], #0
+; CHECK-NEON-NEXT: cmp    r0, [[REGISTER_1]]
+; CHECK-NEON-NEXT: adr    [[REGISTER_3:r[0-9]+]], #LCPI
+; CHECK-NEON-NEXT: it     eq
+; CHECK-NEON-NEXT: moveq  [[REGISTER_2]], #4
+; CHECK-NEON-NEXT: ldr
+; CHECK-NEON:      bx
+
+define arm_apcscc float @f8(i32 %a) nounwind {
+  %tmp = icmp eq i32 %a, 1123
+  %tmp1 = select i1 %tmp, float 0x3FF3BE76C0000000, float 0x40030E9A20000000
+  ret float %tmp1
 }
