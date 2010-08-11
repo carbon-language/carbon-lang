@@ -183,7 +183,7 @@ void LPPassManager::redoLoop(Loop *L) {
 void LPPassManager::cloneBasicBlockSimpleAnalysis(BasicBlock *From, 
                                                   BasicBlock *To, Loop *L) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-    LoopPass *LP = (LoopPass *)getContainedPass(Index);
+    LoopPass *LP = getContainedPass(Index);
     LP->cloneBasicBlockAnalysis(From, To, L);
   }
 }
@@ -198,7 +198,7 @@ void LPPassManager::deleteSimpleAnalysisValue(Value *V, Loop *L) {
     }
   }
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-    LoopPass *LP = (LoopPass *)getContainedPass(Index);
+    LoopPass *LP = getContainedPass(Index);
     LP->deleteAnalysisValue(V, L);
   }
 }
@@ -240,7 +240,7 @@ bool LPPassManager::runOnFunction(Function &F) {
        I != E; ++I) {
     Loop *L = *I;
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-      LoopPass *P = (LoopPass*)getContainedPass(Index);
+      LoopPass *P = getContainedPass(Index);
       Changed |= P->doInitialization(L, *this);
     }
   }
@@ -254,7 +254,7 @@ bool LPPassManager::runOnFunction(Function &F) {
 
     // Run all passes on the current Loop.
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-      LoopPass *P = (LoopPass*)getContainedPass(Index);
+      LoopPass *P = getContainedPass(Index);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG,
                    CurrentLoop->getHeader()->getName());
@@ -320,7 +320,7 @@ bool LPPassManager::runOnFunction(Function &F) {
   
   // Finalization
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
-    LoopPass *P = (LoopPass *)getContainedPass(Index);
+    LoopPass *P = getContainedPass(Index);
     Changed |= P->doFinalization();
   }
 

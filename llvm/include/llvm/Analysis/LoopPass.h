@@ -104,10 +104,10 @@ public:
   /// Print passes managed by this manager
   void dumpPassStructure(unsigned Offset);
 
-  Pass *getContainedPass(unsigned N) {
+  LoopPass *getContainedPass(unsigned N) {
     assert(N < PassVector.size() && "Pass number out of range!");
-    Pass *FP = static_cast<Pass *>(PassVector[N]);
-    return FP;
+    LoopPass *LP = static_cast<LoopPass *>(PassVector[N]);
+    return LP;
   }
 
   virtual PassManagerType getPassManagerType() const {
