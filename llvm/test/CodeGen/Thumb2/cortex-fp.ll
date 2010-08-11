@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s -check-prefix=CORTEXM3
-; RUN: llc < %s -march=thumb -mcpu=cortex-m4 | FileCheck %s -check-prefix=CORTEXM4
+; RUN_TEMPORARILY_DISABLED: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s -check-prefix=CORTEXM3
+; RUN_TEMPORARILY_DISABLED: llc < %s -march=thumb -mcpu=cortex-m4 | FileCheck %s -check-prefix=CORTEXM4
 ; RUN: llc < %s -march=thumb -mcpu=cortex-a8 | FileCheck %s -check-prefix=CORTEXA8
 
 
