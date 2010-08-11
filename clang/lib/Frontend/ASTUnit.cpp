@@ -561,10 +561,11 @@ static std::string GetPreamblePCHPath() {
     TmpDir = "/tmp";
   llvm::sys::Path P(TmpDir);
   P.appendComponent("preamble");
+  P.appendSuffix("pch");
   if (P.createTemporaryFileOnDisk())
     return std::string();
   
-  P.appendSuffix("pch");
+  fprintf(stderr, "Preamble file: %s\n", P.str().c_str());
   return P.str();
 }
 
