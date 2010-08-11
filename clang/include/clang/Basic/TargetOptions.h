@@ -37,6 +37,9 @@ public:
   /// to "itanium".
   std::string CXXABI;
 
+  /// If given, the version string of the linker in use.
+  std::string LinkerVersion;
+
   /// The list of target specific features to enable or disable -- this should
   /// be a list of strings starting with by '+' or '-'.
   std::vector<std::string> Features;

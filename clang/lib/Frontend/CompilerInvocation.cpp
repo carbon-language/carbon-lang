@@ -698,6 +698,10 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
     Res.push_back("-target-abi");
     Res.push_back(Opts.ABI);
   }
+  if (!Opts.LinkerVersion.empty()) {
+    Res.push_back("-target-linker-version");
+    Res.push_back(Opts.LinkerVersion);
+  }
   Res.push_back("-cxx-abi");
   Res.push_back(Opts.CXXABI);
   for (unsigned i = 0, e = Opts.Features.size(); i != e; ++i) {
@@ -1441,8 +1445,9 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   Opts.ABI = Args.getLastArgValue(OPT_target_abi);
   Opts.CXXABI = Args.getLastArgValue(OPT_cxx_abi);
   Opts.CPU = Args.getLastArgValue(OPT_target_cpu);
-  Opts.Triple = Args.getLastArgValue(OPT_triple);
   Opts.Features = Args.getAllArgValues(OPT_target_feature);
+  Opts.LinkerVersion = Args.getLastArgValue(OPT_target_linker_version);
+  Opts.Triple = Args.getLastArgValue(OPT_triple);
 
   // Use the host triple if unspecified.
   if (Opts.Triple.empty())

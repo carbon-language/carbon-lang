@@ -26,6 +26,8 @@ def target_cpu : Separate<"-target-cpu">,
   HelpText<"Target a specific cpu type">;
 def target_feature : Separate<"-target-feature">,
   HelpText<"Target specific attributes">;
+def target_linker_version : Separate<"-target-linker-version">,
+  HelpText<"Target linker version">;
 def triple : Separate<"-triple">,
   HelpText<"Specify target triple (e.g. i686-apple-darwin9)">;
 def triple_EQ : Joined<"-triple=">, Alias<triple>;
