@@ -50,13 +50,13 @@ enum AlignTypeEnum {
 /// padding and make the structure slightly more cache friendly.
 struct TargetAlignElem {
   AlignTypeEnum       AlignType : 8;  //< Alignment type (AlignTypeEnum)
-  unsigned char       ABIAlign;       //< ABI alignment for this type/bitw
-  unsigned char       PrefAlign;      //< Pref. alignment for this type/bitw
+  unsigned            ABIAlign;       //< ABI alignment for this type/bitw
+  unsigned            PrefAlign;      //< Pref. alignment for this type/bitw
   uint32_t            TypeBitWidth;   //< Type bit width
 
   /// Initializer
-  static TargetAlignElem get(AlignTypeEnum align_type, unsigned char abi_align,
-                             unsigned char pref_align, uint32_t bit_width);
+  static TargetAlignElem get(AlignTypeEnum align_type, unsigned abi_align,
+                             unsigned pref_align, uint32_t bit_width);
   /// Equality predicate
   bool operator==(const TargetAlignElem &rhs) const;
 };
@@ -64,9 +64,9 @@ struct TargetAlignElem {
 class TargetData : public ImmutablePass {
 private:
   bool          LittleEndian;          ///< Defaults to false
-  unsigned char PointerMemSize;        ///< Pointer size in bytes
-  unsigned char PointerABIAlign;       ///< Pointer ABI alignment
-  unsigned char PointerPrefAlign;      ///< Pointer preferred alignment
+  unsigned      PointerMemSize;        ///< Pointer size in bytes
+  unsigned      PointerABIAlign;       ///< Pointer ABI alignment
+  unsigned      PointerPrefAlign;      ///< Pointer preferred alignment
 
   SmallVector<unsigned char, 8> LegalIntWidths; ///< Legal Integers.
   
@@ -86,12 +86,12 @@ private:
   mutable void *LayoutMap;
 
   //! Set/initialize target alignments
-  void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
-                    unsigned char pref_align, uint32_t bit_width);
+  void setAlignment(AlignTypeEnum align_type, unsigned abi_align,
+                    unsigned pref_align, uint32_t bit_width);
   unsigned getAlignmentInfo(AlignTypeEnum align_type, uint32_t bit_width,
                             bool ABIAlign, const Type *Ty) const;
   //! Internal helper method that returns requested alignment for type.
-  unsigned char getAlignment(const Type *Ty, bool abi_or_pref) const;
+  unsigned getAlignment(const Type *Ty, bool abi_or_pref) const;
 
   /// Valid alignment predicate.
   ///
@@ -161,13 +161,13 @@ public:
   }
   
   /// Target pointer alignment
-  unsigned char getPointerABIAlignment() const { return PointerABIAlign; }
+  unsigned getPointerABIAlignment() const { return PointerABIAlign; }
   /// Return target's alignment for stack-based pointers
-  unsigned char getPointerPrefAlignment() const { return PointerPrefAlign; }
+  unsigned getPointerPrefAlignment() const { return PointerPrefAlign; }
   /// Target pointer size
-  unsigned char getPointerSize()         const { return PointerMemSize; }
+  unsigned getPointerSize()         const { return PointerMemSize; }
   /// Target pointer size, in bits
-  unsigned char getPointerSizeInBits()   const { return 8*PointerMemSize; }
+  unsigned getPointerSizeInBits()   const { return 8*PointerMemSize; }
 
   /// Size examples:
   ///
@@ -223,26 +223,26 @@ public:
 
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
-  unsigned char getABITypeAlignment(const Type *Ty) const;
+  unsigned getABITypeAlignment(const Type *Ty) const;
   
   /// getABIIntegerTypeAlignment - Return the minimum ABI-required alignment for
   /// an integer type of the specified bitwidth.
-  unsigned char getABIIntegerTypeAlignment(unsigned BitWidth) const;
+  unsigned getABIIntegerTypeAlignment(unsigned BitWidth) const;
   
 
   /// getCallFrameTypeAlignment - Return the minimum ABI-required alignment
   /// for the specified type when it is part of a call frame.
-  unsigned char getCallFrameTypeAlignment(const Type *Ty) const;
+  unsigned getCallFrameTypeAlignment(const Type *Ty) const;
 
 
   /// getPrefTypeAlignment - Return the preferred stack/global alignment for
   /// the specified type.  This is always at least as good as the ABI alignment.
-  unsigned char getPrefTypeAlignment(const Type *Ty) const;
+  unsigned getPrefTypeAlignment(const Type *Ty) const;
 
   /// getPreferredTypeAlignmentShift - Return the preferred alignment for the
   /// specified type, returned as log2 of the value (a shift amount).
   ///
-  unsigned char getPreferredTypeAlignmentShift(const Type *Ty) const;
+  unsigned getPreferredTypeAlignmentShift(const Type *Ty) const;
 
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
