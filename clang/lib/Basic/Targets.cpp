@@ -1788,17 +1788,16 @@ public:
 
 const char * const ARMTargetInfo::GCCRegNames[] = {
   "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+  "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"
 };
 
 void ARMTargetInfo::getGCCRegNames(const char * const *&Names,
-                                       unsigned &NumNames) const {
+                                   unsigned &NumNames) const {
   Names = GCCRegNames;
   NumNames = llvm::array_lengthof(GCCRegNames);
 }
 
 const TargetInfo::GCCRegAlias ARMTargetInfo::GCCRegAliases[] = {
-
   { { "a1" }, "r0" },
   { { "a2" }, "r1" },
   { { "a3" }, "r2" },
@@ -1812,9 +1811,9 @@ const TargetInfo::GCCRegAlias ARMTargetInfo::GCCRegAliases[] = {
   { { "sl" }, "r10" },
   { { "fp" }, "r11" },
   { { "ip" }, "r12" },
-  { { "sp" }, "r13" },
-  { { "lr" }, "r14" },
-  { { "pc" }, "r15" },
+  { { "r13" }, "sp" },
+  { { "r14" }, "lr" },
+  { { "r15" }, "pc" },
 };
 
 void ARMTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,

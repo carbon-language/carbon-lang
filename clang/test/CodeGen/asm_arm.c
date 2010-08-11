@@ -30,3 +30,11 @@ void test4(float *a, float *b) {
                     "vst1.32 {q4},        [%0,:128] \n\t"
                     :: "r"(a), "r"(b));
 }
+
+// {sp, lr, pc} are the canonical names for {r13, r14, r15}.
+//
+// CHECK: @test5
+// CHECK: call void asm sideeffect "", "~{sp},~{lr},~{pc},~{sp},~{lr},~{pc}"()
+void test5() {
+  __asm__("" : : : "r13", "r14", "r15", "sp", "lr", "pc");
+}
