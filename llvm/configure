@@ -8729,6 +8729,31 @@ fi
 done
 
 
+{ echo "$as_me:$LINENO: checking for linker version" >&5
+echo $ECHO_N "checking for linker version... $ECHO_C" >&6; }
+if test "${llvm_cv_link_version+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+   version_string="$(ld -v 2>&1 | head -1)"
+
+   # Check for ld64.
+   if (echo "$version_string" | grep -q "ld64"); then
+     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#.*ld64-\([^ ]*\)#\1#")
+   else
+     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#[^0-9]*\([0-9.]*\).*#\1#")
+   fi
+
+fi
+{ echo "$as_me:$LINENO: result: $llvm_cv_link_version" >&5
+echo "${ECHO_T}$llvm_cv_link_version" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HOST_LINK_VERSION "$llvm_cv_link_version"
+_ACEOF
+
+
+
 { echo "$as_me:$LINENO: checking for compiler -Wl,-R<path> option" >&5
 echo $ECHO_N "checking for compiler -Wl,-R<path> option... $ECHO_C" >&6; }
 if test "${llvm_cv_link_use_r+set}" = set; then
@@ -11395,7 +11420,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11398 "configure"
+#line 11423 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

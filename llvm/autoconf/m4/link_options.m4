@@ -1,4 +1,25 @@
 #
+# Get the linker version string.
+#
+# This macro is specific to LLVM.
+#
+AC_DEFUN([AC_LINK_GET_VERSION],
+  [AC_CACHE_CHECK([for linker version],[llvm_cv_link_version],
+  [
+   version_string="$(ld -v 2>&1 | head -1)"
+
+   # Check for ld64.
+   if (echo "$version_string" | grep -q "ld64"); then
+     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#.*ld64-\([^ ]*\)#\1#")
+   else
+     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#[^0-9]*\([0-9.]*\).*#\1#")
+   fi
+  ])
+  AC_DEFINE_UNQUOTED([HOST_LINK_VERSION],"$llvm_cv_link_version",
+                     [Linker version detected at compile time.])
+])
+
+#
 # Determine if the system can handle the -R option being passed to the linker.
 #
 # This macro is specific to LLVM.

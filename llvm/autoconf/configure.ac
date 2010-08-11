@@ -1041,6 +1041,9 @@ AC_PATH_PROGS(OCAMLDEP, [ocamldep])
 AC_PATH_PROGS(OCAMLDOC, [ocamldoc])
 AC_PATH_PROGS(GAS, [gas as])
 
+dnl Get the version of the linker in use.
+AC_LINK_GET_VERSION
+
 dnl Determine whether the linker supports the -R option.
 AC_LINK_USE_R
 
