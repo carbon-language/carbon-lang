@@ -1358,6 +1358,8 @@ bool ARMBaseInstrInfo::
 AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpValue) const {
   switch (MI->getOpcode()) {
   default: break;
+  case ARM::CMPri:
+  case ARM::CMPzri:
   case ARM::t2CMPri:
   case ARM::t2CMPzri:
     SrcReg = MI->getOperand(0).getReg();
@@ -1398,6 +1400,9 @@ ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
   // Set the "zero" bit in CPSR.
   switch (MI->getOpcode()) {
   default: break;
+  case ARM::ADDri:
+  case ARM::SUBri:
+  case ARM::t2ADDri:
   case ARM::t2SUBri: {
     MI->RemoveOperand(5);
     MachineInstrBuilder MB(MI);
