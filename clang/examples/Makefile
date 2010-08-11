@@ -9,6 +9,6 @@
 
 CLANG_LEVEL := ..
 
-PARALLEL_DIRS := clang-interpreter PrintFunctionNames wpa
+PARALLEL_DIRS := clang-interpreter PrintFunctionNames
 
 include $(CLANG_LEVEL)/Makefile
