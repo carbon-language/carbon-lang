@@ -346,12 +346,6 @@ public:
   ///
   virtual bool doFinalization(Module &);
 
-
-  // To run this pass on a function, we simply call runOnBasicBlock once for
-  // each function.
-  //
-  bool runOnFunction(Function &F);
-
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T);
 

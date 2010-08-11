@@ -166,16 +166,6 @@ Pass *BasicBlockPass::createPrinterPass(raw_ostream &O,
   return 0;
 }
 
-// To run this pass on a function, we simply call runOnBasicBlock once for each
-// function.
-//
-bool BasicBlockPass::runOnFunction(Function &F) {
-  bool Changed = doInitialization(F);
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    Changed |= runOnBasicBlock(*I);
-  return Changed | doFinalization(F);
-}
-
 bool BasicBlockPass::doInitialization(Module &) {
   // By default, don't do anything.
   return false;
