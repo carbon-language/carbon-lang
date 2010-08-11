@@ -511,37 +511,38 @@ LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
       
       // If the condition of the branch is an equality comparison, we may be
       // able to infer the value.
-      if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
-        if (ICI->getOperand(0) == Val && isa<Constant>(ICI->getOperand(1))) {
-          if (ICI->isEquality()) {
-            // We know that V has the RHS constant if this is a true SETEQ or
-            // false SETNE. 
-            if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
-              return LVILatticeVal::get(cast<Constant>(ICI->getOperand(1)));
-            return LVILatticeVal::getNot(cast<Constant>(ICI->getOperand(1)));
-          } else if (ConstantInt *CI =
-                                   dyn_cast<ConstantInt>(ICI->getOperand(1))) {
-            
-            // Calculate the range of values that would satisfy the comparison.
-            ConstantRange CmpRange(CI->getValue(), CI->getValue()+1);
-            ConstantRange TrueValues =
-              ConstantRange::makeICmpRegion(ICI->getPredicate(), CmpRange);
-            
-            // If we're interested in the false dest, invert the condition.
-            if (!isTrueDest) TrueValues = TrueValues.inverse();
-            
-            // Figure out the possible values of the query BEFORE this branch.  
-            LVILatticeVal InBlock = getBlockValue(BBFrom);
-            if (!InBlock.isConstantRange()) return InBlock;
-            
-            // Find all potential values that satisfy both the input and output
-            // conditions.
-            ConstantRange PossibleValues =
-              TrueValues.intersectWith(InBlock.getConstantRange());
-            
-            return LVILatticeVal::getRange(PossibleValues);
-          }
+      ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition());
+      if (ICI && ICI->getOperand(0) == Val &&
+          isa<Constant>(ICI->getOperand(1))) {
+        if (ICI->isEquality()) {
+          // We know that V has the RHS constant if this is a true SETEQ or
+          // false SETNE. 
+          if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
+            return LVILatticeVal::get(cast<Constant>(ICI->getOperand(1)));
+          return LVILatticeVal::getNot(cast<Constant>(ICI->getOperand(1)));
         }
+          
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
+          // Calculate the range of values that would satisfy the comparison.
+          ConstantRange CmpRange(CI->getValue(), CI->getValue()+1);
+          ConstantRange TrueValues =
+            ConstantRange::makeICmpRegion(ICI->getPredicate(), CmpRange);
+            
+          // If we're interested in the false dest, invert the condition.
+          if (!isTrueDest) TrueValues = TrueValues.inverse();
+          
+          // Figure out the possible values of the query BEFORE this branch.  
+          LVILatticeVal InBlock = getBlockValue(BBFrom);
+          if (!InBlock.isConstantRange()) return InBlock;
+            
+          // Find all potential values that satisfy both the input and output
+          // conditions.
+          ConstantRange PossibleValues =
+            TrueValues.intersectWith(InBlock.getConstantRange());
+            
+          return LVILatticeVal::getRange(PossibleValues);
+        }
+      }
     }
   }
 
