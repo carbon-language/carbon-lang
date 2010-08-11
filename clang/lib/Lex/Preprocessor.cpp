@@ -164,7 +164,7 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
     llvm::errs() << " [ExpandDisabled]";
   if (Tok.needsCleaning()) {
     const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
-    llvm::errs() << " [UnClean='" << std::string(Start, Start+Tok.getLength())
+    llvm::errs() << " [UnClean='" << llvm::StringRef(Start, Tok.getLength())
                  << "']";
   }
 

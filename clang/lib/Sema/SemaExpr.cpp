@@ -2436,7 +2436,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
     // We didn't get to the end of the string. This means the component names
     // didn't come from the same set *or* we encountered an illegal name.
     Diag(OpLoc, diag::err_ext_vector_component_name_illegal)
-      << std::string(compStr,compStr+1) << SourceRange(CompLoc);
+      << llvm::StringRef(compStr, 1) << SourceRange(CompLoc);
     return QualType();
   }
 

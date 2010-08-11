@@ -671,7 +671,7 @@ static char DecodeTrigraphChar(const char *CP, Lexer *L) {
   }
 
   if (!L->isLexingRawMode())
-    L->Diag(CP-2, diag::trigraph_converted) << std::string()+Res;
+    L->Diag(CP-2, diag::trigraph_converted) << llvm::StringRef(&Res, 1);
   return Res;
 }
 

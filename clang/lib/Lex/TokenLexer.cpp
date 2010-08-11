@@ -492,7 +492,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           PP.Diag(Loc,
                   PP.getLangOptions().Microsoft ? diag::err_pp_bad_paste_ms 
                                                 : diag::err_pp_bad_paste)
-            << std::string(Buffer.begin(), Buffer.end());
+            << Buffer.str();
         }
 
         // Do not consume the RHS.

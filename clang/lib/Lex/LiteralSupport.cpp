@@ -323,7 +323,7 @@ NumericLiteralParser(const char *begin, const char *end,
       // Done.
     } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
       PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
-              diag::err_invalid_decimal_digit) << std::string(s, s+1);
+              diag::err_invalid_decimal_digit) << llvm::StringRef(s, 1);
       hadError = true;
       return;
     } else if (*s == '.') {
@@ -439,7 +439,7 @@ NumericLiteralParser(const char *begin, const char *end,
     PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
             isFPConstant ? diag::err_invalid_suffix_float_constant :
                            diag::err_invalid_suffix_integer_constant)
-      << std::string(SuffixBegin, ThisTokEnd);
+      << llvm::StringRef(SuffixBegin, ThisTokEnd-SuffixBegin);
     hadError = true;
     return;
   }
@@ -510,7 +510,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       // Done.
     } else if (isxdigit(*s)) {
       PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
-              diag::err_invalid_binary_digit) << std::string(s, s+1);
+              diag::err_invalid_binary_digit) << llvm::StringRef(s, 1);
       hadError = true;
     }
     // Other suffixes will be diagnosed by the caller.
@@ -540,7 +540,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   // the code is using an incorrect base.
   if (isxdigit(*s) && *s != 'e' && *s != 'E') {
     PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
-            diag::err_invalid_octal_digit) << std::string(s, s+1);
+            diag::err_invalid_octal_digit) << llvm::StringRef(s, 1);
     hadError = true;
     return;
   }

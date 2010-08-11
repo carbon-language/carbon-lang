@@ -26,7 +26,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
@@ -315,8 +314,7 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   unsigned Val = Result.getZExtValue();
   if (Val < l || Val > (u + l))
     return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-      << llvm::utostr(l) << llvm::utostr(u+l)  
-      << TheCall->getArg(i)->getSourceRange();
+      << l << u+l << TheCall->getArg(i)->getSourceRange();
 
   // FIXME: VFP Intrinsics should error if VFP not present.
   return false;
