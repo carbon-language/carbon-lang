@@ -36,37 +36,38 @@ def LdStMulFrm    : Format<10>;
 def LdStExFrm     : Format<11>;
 
 def ArithMiscFrm  : Format<12>;
-def ExtFrm        : Format<13>;
+def SatFrm        : Format<13>;
+def ExtFrm        : Format<14>;
 
-def VFPUnaryFrm   : Format<14>;
-def VFPBinaryFrm  : Format<15>;
-def VFPConv1Frm   : Format<16>;
-def VFPConv2Frm   : Format<17>;
-def VFPConv3Frm   : Format<18>;
-def VFPConv4Frm   : Format<19>;
-def VFPConv5Frm   : Format<20>;
-def VFPLdStFrm    : Format<21>;
-def VFPLdStMulFrm : Format<22>;
-def VFPMiscFrm    : Format<23>;
+def VFPUnaryFrm   : Format<15>;
+def VFPBinaryFrm  : Format<16>;
+def VFPConv1Frm   : Format<17>;
+def VFPConv2Frm   : Format<18>;
+def VFPConv3Frm   : Format<19>;
+def VFPConv4Frm   : Format<20>;
+def VFPConv5Frm   : Format<21>;
+def VFPLdStFrm    : Format<22>;
+def VFPLdStMulFrm : Format<23>;
+def VFPMiscFrm    : Format<24>;
 
-def ThumbFrm      : Format<24>;
-def MiscFrm       : Format<25>;
+def ThumbFrm      : Format<25>;
+def MiscFrm       : Format<26>;
 
-def NGetLnFrm     : Format<26>;
-def NSetLnFrm     : Format<27>;
-def NDupFrm       : Format<28>;
-def NLdStFrm      : Format<29>;
-def N1RegModImmFrm: Format<30>;
-def N2RegFrm      : Format<31>;
-def NVCVTFrm      : Format<32>;
-def NVDupLnFrm    : Format<33>;
-def N2RegVShLFrm  : Format<34>;
-def N2RegVShRFrm  : Format<35>;
-def N3RegFrm      : Format<36>;
-def N3RegVShFrm   : Format<37>;
-def NVExtFrm      : Format<38>;
-def NVMulSLFrm    : Format<39>;
-def NVTBLFrm      : Format<40>;
+def NGetLnFrm     : Format<27>;
+def NSetLnFrm     : Format<28>;
+def NDupFrm       : Format<29>;
+def NLdStFrm      : Format<30>;
+def N1RegModImmFrm: Format<31>;
+def N2RegFrm      : Format<32>;
+def NVCVTFrm      : Format<33>;
+def NVDupLnFrm    : Format<34>;
+def N2RegVShLFrm  : Format<35>;
+def N2RegVShRFrm  : Format<36>;
+def N3RegFrm      : Format<37>;
+def N3RegVShFrm   : Format<38>;
+def NVExtFrm      : Format<39>;
+def NVMulSLFrm    : Format<40>;
+def NVTBLFrm      : Format<41>;
 
 // Misc flags.
 

@@ -1810,20 +1810,22 @@ def USADA8 : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
 // Signed/Unsigned saturate -- for disassembly only
 
 def SSATlsl : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, lsl $shamt",
+                 SatFrm, NoItinerary,
+                 "ssat", "\t$dst, $bit_pos, $a, lsl $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110101;
   let Inst{6-4} = 0b001;
 }
 
 def SSATasr : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, asr $shamt",
+                 SatFrm, NoItinerary,
+                 "ssat", "\t$dst, $bit_pos, $a, asr $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110101;
   let Inst{6-4} = 0b101;
 }
 
-def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
+def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), SatFrm,
                 NoItinerary, "ssat16", "\t$dst, $bit_pos, $a",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{27-20} = 0b01101010;
@@ -1831,20 +1833,22 @@ def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
 }
 
 def USATlsl : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, lsl $shamt",
+                 SatFrm, NoItinerary,
+                 "usat", "\t$dst, $bit_pos, $a, lsl $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110111;
   let Inst{6-4} = 0b001;
 }
 
 def USATasr : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, asr $shamt",
+                 SatFrm, NoItinerary,
+                 "usat", "\t$dst, $bit_pos, $a, asr $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110111;
   let Inst{6-4} = 0b101;
 }
 
-def USAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
+def USAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), SatFrm,
                 NoItinerary, "usat16", "\t$dst, $bit_pos, $a",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{27-20} = 0b01101110;

@@ -908,34 +908,6 @@ static inline bool getBFCInvMask(uint32_t insn, uint32_t &mask) {
   return true;
 }
 
-static inline bool SaturateOpcode(unsigned Opcode) {
-  switch (Opcode) {
-  case ARM::SSATlsl: case ARM::SSATasr: case ARM::SSAT16:
-  case ARM::USATlsl: case ARM::USATasr: case ARM::USAT16:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static inline unsigned decodeSaturatePos(unsigned Opcode, uint32_t insn) {
-  switch (Opcode) {
-  case ARM::SSATlsl:
-  case ARM::SSATasr:
-    return slice(insn, 20, 16) + 1;
-  case ARM::SSAT16:
-    return slice(insn, 19, 16) + 1;
-  case ARM::USATlsl:
-  case ARM::USATasr:
-    return slice(insn, 20, 16);
-  case ARM::USAT16:
-    return slice(insn, 19, 16);
-  default:
-    assert(0 && "Invalid opcode passed in");
-    return 0;
-  }
-}
-
 // A major complication is the fact that some of the saturating add/subtract
 // operations have Rd Rm Rn, instead of the "normal" Rd Rn Rm.
 // They are QADD, QDADD, QDSUB, and QSUB.
@@ -960,34 +932,6 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // Now disassemble the src operands.
   if (OpIdx >= NumOps)
     return false;
-
-  // SSAT/SSAT16/USAT/USAT16 has imm operand after Rd.
-  if (SaturateOpcode(Opcode)) {
-    MI.addOperand(MCOperand::CreateImm(decodeSaturatePos(Opcode, insn)));
-
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                       decodeRm(insn))));
-
-    if (Opcode == ARM::SSAT16 || Opcode == ARM::USAT16) {
-      OpIdx += 2;
-      return true;
-    }
-
-    // For SSAT operand reg (Rm) has been disassembled above.
-    // Now disassemble the shift amount.
-
-    // Inst{11-7} encodes the imm5 shift amount.
-    unsigned ShAmt = slice(insn, 11, 7);
-
-    // A8.6.183.  Possible ASR shift amount of 32...
-    if (Opcode == ARM::SSATasr && ShAmt == 0)
-      ShAmt = 32;
-
-    MI.addOperand(MCOperand::CreateImm(ShAmt));
-
-    OpIdx += 3;
-    return true;
-  }
 
   // Special-case handling of BFC/BFI/SBFX/UBFX.
   if (Opcode == ARM::BFC || Opcode == ARM::BFI) {
@@ -1506,6 +1450,39 @@ static bool DisassembleArithMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     ++OpIdx;
   }
 
+  return true;
+}
+
+/// DisassembleSatFrm - Disassemble saturate instructions:
+/// SSAT, SSAT16, USAT, and USAT16.
+static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
+    unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
+
+  const TargetInstrDesc &TID = ARMInsts[Opcode];
+  NumOpsAdded = TID.getNumOperands() - 2; // ignore predicate operands
+
+  // Disassemble register def.
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                     decodeRd(insn))));
+
+  unsigned Pos = slice(insn, 20, 16);
+  if (Opcode == ARM::SSATlsl ||
+      Opcode == ARM::SSATasr ||
+      Opcode == ARM::SSAT16)
+    Pos += 1;
+  MI.addOperand(MCOperand::CreateImm(Pos));
+
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                     decodeRm(insn))));
+
+  if (NumOpsAdded == 4) {
+    // Inst{11-7} encodes the imm5 shift amount.
+    unsigned ShAmt = slice(insn, 11, 7);
+    // A8.6.183.  Possible ASR shift amount of 32...
+    if ((Opcode == ARM::SSATasr || Opcode == ARM::USATasr) && ShAmt == 0)
+      ShAmt = 32;
+    MI.addOperand(MCOperand::CreateImm(ShAmt));
+  }
   return true;
 }
 
@@ -3085,6 +3062,7 @@ static const DisassembleFP FuncPtrs[] = {
   &DisassembleLdStMulFrm,
   &DisassembleLdStExFrm,
   &DisassembleArithMiscFrm,
+  &DisassembleSatFrm,
   &DisassembleExtFrm,
   &DisassembleVFPUnaryFrm,
   &DisassembleVFPBinaryFrm,

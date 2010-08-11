@@ -124,6 +124,8 @@ namespace {
 
     void emitMiscArithInstruction(const MachineInstr &MI);
 
+    void emitSaturateInstruction(const MachineInstr &MI);
+
     void emitBranchInstruction(const MachineInstr &MI);
 
     void emitInlineJumpTable(unsigned JTIndex);
@@ -388,6 +390,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     break;
   case ARMII::ArithMiscFrm:
     emitMiscArithInstruction(MI);
+    break;
+  case ARMII::SatFrm:
+    emitSaturateInstruction(MI);
     break;
   case ARMII::BrFrm:
     emitBranchInstruction(MI);
@@ -1224,6 +1229,46 @@ void ARMCodeEmitter::emitMiscArithInstruction(const MachineInstr &MI) {
   unsigned ShiftAmt = MI.getOperand(OpIdx).getImm();
   assert(ShiftAmt < 32 && "shift_imm range is 0 to 31!");
   Binary |= ShiftAmt << ARMII::ShiftShift;
+
+  emitWordLE(Binary);
+}
+
+void ARMCodeEmitter::emitSaturateInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  // Part of binary is determined by TableGen.
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  // Encode Rd
+  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
+
+  // Encode saturate bit position.
+  unsigned Pos = MI.getOperand(1).getImm();
+  if (TID.Opcode == ARM::SSATlsl ||
+      TID.Opcode == ARM::SSATasr ||
+      TID.Opcode == ARM::SSAT16)
+    Pos -= 1;
+  assert((Pos < 16 || (Pos < 32 &&
+                       TID.Opcode != ARM::SSAT16 &&
+                       TID.Opcode != ARM::USAT16)) &&
+         "saturate bit position out of range");
+  Binary |= Pos << 16;
+
+  // Encode Rm
+  Binary |= getMachineOpValue(MI, 2);
+
+  // Encode shift_imm.
+  if (TID.getNumOperands() == 4) {
+    unsigned ShiftAmt = MI.getOperand(3).getImm();
+    if (ShiftAmt == 32 &&
+        (TID.Opcode == ARM::SSATasr || TID.Opcode == ARM::USATasr))
+      ShiftAmt = 0;
+    assert(ShiftAmt < 32 && "shift_imm range is 0 to 31!");
+    Binary |= ShiftAmt << ARMII::ShiftShift;
+  }
 
   emitWordLE(Binary);
 }
