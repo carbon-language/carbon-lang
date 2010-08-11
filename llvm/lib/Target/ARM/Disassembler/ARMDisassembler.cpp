@@ -106,7 +106,7 @@ static unsigned decodeARMInstruction(uint32_t &insn) {
   // Ditto for STRT, which is a super-instruction for A8.6.210 Encoding A1 & A2.
   // As a result, the decoder fails to deocode SSAT properly.
   if (slice(insn, 27, 21) == 0x35 && slice(insn, 5, 4) == 1)
-    return slice(insn, 6, 6) == 0 ? ARM::SSATlsl : ARM::SSATasr;
+    return ARM::SSAT;
 
   // Ditto for RSCrs, which is a super-instruction for A8.6.146 & A8.6.147.
   // As a result, the decoder fails to decode STRHT/LDRHT/LDRSHT/LDRSBT.

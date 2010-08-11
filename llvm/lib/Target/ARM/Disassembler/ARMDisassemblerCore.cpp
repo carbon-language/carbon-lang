@@ -1466,9 +1466,7 @@ static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRd(insn))));
 
   unsigned Pos = slice(insn, 20, 16);
-  if (Opcode == ARM::SSATlsl ||
-      Opcode == ARM::SSATasr ||
-      Opcode == ARM::SSAT16)
+  if (Opcode == ARM::SSAT || Opcode == ARM::SSAT16)
     Pos += 1;
   MI.addOperand(MCOperand::CreateImm(Pos));
 
@@ -1476,12 +1474,17 @@ static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRm(insn))));
 
   if (NumOpsAdded == 4) {
+    ARM_AM::ShiftOpc Opc = (slice(insn, 6, 6) != 0 ? ARM_AM::asr : ARM_AM::lsl);
     // Inst{11-7} encodes the imm5 shift amount.
     unsigned ShAmt = slice(insn, 11, 7);
-    // A8.6.183.  Possible ASR shift amount of 32...
-    if ((Opcode == ARM::SSATasr || Opcode == ARM::USATasr) && ShAmt == 0)
-      ShAmt = 32;
-    MI.addOperand(MCOperand::CreateImm(ShAmt));
+    if (ShAmt == 0) {
+      // A8.6.183.  Possible ASR shift amount of 32...
+      if (Opc == ARM_AM::asr)
+        ShAmt = 32;
+      else
+        Opc = ARM_AM::no_shift;
+    }
+    MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShAmt)));
   }
   return true;
 }

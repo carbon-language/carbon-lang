@@ -1247,9 +1247,7 @@ void ARMCodeEmitter::emitSaturateInstruction(const MachineInstr &MI) {
 
   // Encode saturate bit position.
   unsigned Pos = MI.getOperand(1).getImm();
-  if (TID.Opcode == ARM::SSATlsl ||
-      TID.Opcode == ARM::SSATasr ||
-      TID.Opcode == ARM::SSAT16)
+  if (TID.Opcode == ARM::SSAT || TID.Opcode == ARM::SSAT16)
     Pos -= 1;
   assert((Pos < 16 || (Pos < 32 &&
                        TID.Opcode != ARM::SSAT16 &&
@@ -1262,9 +1260,12 @@ void ARMCodeEmitter::emitSaturateInstruction(const MachineInstr &MI) {
 
   // Encode shift_imm.
   if (TID.getNumOperands() == 4) {
+    unsigned ShiftOp = MI.getOperand(3).getImm();
+    ARM_AM::ShiftOpc Opc = ARM_AM::getSORegShOp(ShiftOp);
+    if (Opc == ARM_AM::asr)
+      Binary |= (1 << 6);
     unsigned ShiftAmt = MI.getOperand(3).getImm();
-    if (ShiftAmt == 32 &&
-        (TID.Opcode == ARM::SSATasr || TID.Opcode == ARM::USATasr))
+    if (ShiftAmt == 32 && Opc == ARM_AM::asr)
       ShiftAmt = 0;
     assert(ShiftAmt < 32 && "shift_imm range is 0 to 31!");
     Binary |= ShiftAmt << ARMII::ShiftShift;

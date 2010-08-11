@@ -120,8 +120,10 @@ namespace {
     void printAddrModePCOperand(const MachineInstr *MI, int OpNum,
                                 raw_ostream &O,
                                 const char *Modifier = 0);
-    void printBitfieldInvMaskImmOperand (const MachineInstr *MI, int OpNum,
-                                         raw_ostream &O);
+    void printBitfieldInvMaskImmOperand(const MachineInstr *MI, int OpNum,
+                                        raw_ostream &O);
+    void printSatShiftOperand(const MachineInstr *MI, int OpNum,
+                              raw_ostream &O);
 
     void printThumbS4ImmOperand(const MachineInstr *MI, int OpNum,
                                 raw_ostream &O);
@@ -667,6 +669,25 @@ ARMAsmPrinter::printBitfieldInvMaskImmOperand(const MachineInstr *MI, int Op,
   int32_t width = (32 - CountLeadingZeros_32 (v)) - lsb;
   assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
   O << "#" << lsb << ", #" << width;
+}
+
+void ARMAsmPrinter::printSatShiftOperand(const MachineInstr *MI, int OpNum,
+                                         raw_ostream &O) {
+  unsigned ShiftOp = MI->getOperand(OpNum).getImm();
+  ARM_AM::ShiftOpc Opc = ARM_AM::getSORegShOp(ShiftOp);
+  switch (Opc) {
+  case ARM_AM::no_shift:
+    return;
+  case ARM_AM::lsl:
+    O << ", lsl #";
+    break;
+  case ARM_AM::asr:
+    O << ", asr #";
+    break;
+  default:
+    assert(0 && "unexpected shift opcode for saturate shift operand");
+  }
+  O << ARM_AM::getSORegOffset(ShiftOp);
 }
 
 //===--------------------------------------------------------------------===//

@@ -57,6 +57,7 @@ public:
 
   void printBitfieldInvMaskImmOperand(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O);
+  void printSatShiftOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbITMask(const MCInst *MI, unsigned OpNum, raw_ostream &O);
