@@ -26,6 +26,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+//#define DEBUG(X) do { X; } while (0)
+
 /// ARMGenDecoderTables.inc - ARMDecoderTables.inc is tblgen'ed from
 /// ARMDecoderEmitter.cpp TableGen backend.  It contains:
 ///
@@ -86,6 +88,11 @@ static unsigned decodeARMInstruction(uint32_t &insn) {
     else
       return ARM::BFI;
   }
+
+  // Ditto for STRBT, which is a super-instruction for A8.6.199 Encoding A1 & A2.
+  // As a result, the decoder fails to deocode USAT properly.
+  if (slice(insn, 27, 21) == 0x37 && slice(insn, 5, 4) == 1)
+    return ARM::USAT;
 
   // Ditto for ADDSrs, which is a super-instruction for A8.6.7 & A8.6.8.
   // As a result, the decoder fails to decode UMULL properly.

@@ -20,6 +20,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+//#define DEBUG(X) do { X; } while (0)
+
 /// ARMGenInstrInfo.inc - ARMGenInstrInfo.inc contains the static const
 /// TargetInstrDesc ARMInsts[] definition and the TargetOperandInfo[]'s
 /// describing the operand info for each ARMInsts[i].
