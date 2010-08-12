@@ -2935,7 +2935,7 @@ static bool DisassembleNDupFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 // A8.6.49 ISB
 static inline bool MemBarrierInstr(uint32_t insn) {
   unsigned op7_4 = slice(insn, 7, 4);
-  if (slice(insn, 31, 20) == 0xf57 && (op7_4 >= 4 && op7_4 <= 6))
+  if (slice(insn, 31, 8) == 0xf57ff0 && (op7_4 >= 4 && op7_4 <= 6))
     return true;
 
   return false;
@@ -2992,8 +2992,15 @@ static bool DisassemblePreLoadFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  if (MemBarrierInstr(insn))
+  if (MemBarrierInstr(insn)) {
+    // DMBsy, DSBsy, and ISBsy instructions have zero operand and are taken care
+    // of within the generic ARMBasicMCBuilder::BuildIt() method.
+    //
+    // Inst{3-0} encodes the memory barrier option for the variants.
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 3, 0)));
+    NumOpsAdded = 1;
     return true;
+  }
 
   switch (Opcode) {
   case ARM::CLREX:

@@ -599,6 +599,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("cps_opt");
   IMM("vfp_f64imm");
   IMM("vfp_f32imm");
+  IMM("memb_opt");
   IMM("msr_mask");
   IMM("neg_zero");
   IMM("imm0_31");

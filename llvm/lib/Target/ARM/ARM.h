@@ -90,6 +90,33 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
   }
 }
 
+namespace ARM_MB {
+  // The Memory Barrier Option constants map directly to the 4-bit encoding of
+  // the option field for memory barrier operations.
+  enum MemBOpt {
+    ST    = 14,
+    ISH   = 11,
+    ISHST = 10,
+    NSH   = 7,
+    NSHST = 6,
+    OSH   = 3,
+    OSHST = 2
+  };
+
+  inline static const char *MemBOptToString(unsigned val) {
+    switch (val) {
+    default: llvm_unreachable("Unknown memory opetion");
+    case ST:    return "st";
+    case ISH:   return "ish";
+    case ISHST: return "ishst";
+    case NSH:   return "nsh";
+    case NSHST: return "nshst";
+    case OSH:   return "osh";
+    case OSHST: return "oshst";
+    }
+  }
+} // namespace ARM_MB
+
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
 

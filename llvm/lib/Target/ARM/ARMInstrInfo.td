@@ -2389,61 +2389,30 @@ def DSB_MCR : AInoP<(outs), (ins GPR:$zero), MiscFrm, NoItinerary,
 }
 }
 
-// Helper class for multiclass MemB -- for disassembly only
-class AMBI<string opc, string asm>
-  : AInoP<(outs), (ins), MiscFrm, NoItinerary, opc, asm,
-          [/* For disassembly only; pattern left blank */]>,
-    Requires<[IsARM, HasV7]> {
-  let Inst{31-20} = 0xf57;
+// Memory Barrier Operations Variants -- for disassembly only
+
+def memb_opt : Operand<i32> {
+  let PrintMethod = "printMemBOption";
 }
 
-multiclass MemB<bits<4> op7_4, string opc> {
-
-  def st : AMBI<opc, "\tst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b1110;
-  }
-
-  def ish : AMBI<opc, "\tish"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b1011;
-  }
-
-  def ishst : AMBI<opc, "\tishst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b1010;
-  }
-
-  def nsh : AMBI<opc, "\tnsh"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0111;
-  }
-
-  def nshst : AMBI<opc, "\tnshst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0110;
-  }
-
-  def osh : AMBI<opc, "\tosh"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0011;
-  }
-
-  def oshst : AMBI<opc, "\toshst"> {
-    let Inst{7-4} = op7_4;
-    let Inst{3-0} = 0b0010;
-  }
+class AMBI<bits<4> op7_4, string opc>
+  : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary, opc, "\t$opt",
+          [/* For disassembly only; pattern left blank */]>,
+    Requires<[IsARM, HasDB]> {
+  let Inst{31-8} = 0xf57ff0;
+  let Inst{7-4} = op7_4;
 }
 
 // These DMB variants are for disassembly only.
-defm DMB : MemB<0b0101, "dmb">;
+def DMBvar : AMBI<0b0101, "dmb">;
 
 // These DSB variants are for disassembly only.
-defm DSB : MemB<0b0100, "dsb">;
+def DSBvar : AMBI<0b0100, "dsb">;
 
 // ISB has only full system option -- for disassembly only
-def ISBsy : AMBI<"isb", ""> {
-  let Inst{7-4} = 0b0110;
+def ISBsy : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
+            Requires<[IsARM, HasDB]> {
+  let Inst{31-4} = 0xf57ff06;
   let Inst{3-0} = 0b1111;
 }
 

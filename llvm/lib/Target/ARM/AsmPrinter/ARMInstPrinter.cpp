@@ -472,6 +472,12 @@ void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
   O << '#' << lsb << ", #" << width;
 }
 
+void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
+                                     raw_ostream &O) {
+  unsigned val = MI->getOperand(OpNum).getImm();
+  O << ARM_MB::MemBOptToString(val);
+}
+
 void ARMInstPrinter::printSatShiftOperand(const MCInst *MI, unsigned OpNum,
                                           raw_ostream &O) {
   unsigned ShiftOp = MI->getOperand(OpNum).getImm();

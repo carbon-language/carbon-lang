@@ -122,6 +122,8 @@ namespace {
                                 const char *Modifier = 0);
     void printBitfieldInvMaskImmOperand(const MachineInstr *MI, int OpNum,
                                         raw_ostream &O);
+    void printMemBOption(const MachineInstr *MI, int OpNum,
+                         raw_ostream &O);
     void printSatShiftOperand(const MachineInstr *MI, int OpNum,
                               raw_ostream &O);
 
@@ -669,6 +671,13 @@ ARMAsmPrinter::printBitfieldInvMaskImmOperand(const MachineInstr *MI, int Op,
   int32_t width = (32 - CountLeadingZeros_32 (v)) - lsb;
   assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
   O << "#" << lsb << ", #" << width;
+}
+
+void
+ARMAsmPrinter::printMemBOption(const MachineInstr *MI, int OpNum,
+                               raw_ostream &O) {
+  unsigned val = MI->getOperand(OpNum).getImm();
+  O << ARM_MB::MemBOptToString(val);
 }
 
 void ARMAsmPrinter::printSatShiftOperand(const MachineInstr *MI, int OpNum,
