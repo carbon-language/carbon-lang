@@ -38,8 +38,7 @@ ThreadGDBRemote::ThreadGDBRemote (ProcessGDBRemote &process, lldb::tid_t tid) :
     Thread(process, tid),
     m_thread_name (),
     m_dispatch_queue_name (),
-    m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS),
-    m_unwinder_ap ()
+    m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS)
 {
 //    ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD | GDBR_LOG_VERBOSE, "ThreadGDBRemote::ThreadGDBRemote ( pid = %i, tid = 0x%4.4x, )", m_process.GetID(), GetID());
     ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD, "%p: ThreadGDBRemote::ThreadGDBRemote (pid = %i, tid = 0x%4.4x)", this, m_process.GetID(), GetID());
@@ -134,61 +133,6 @@ ThreadGDBRemote::GetUnwinder ()
         }
     }
     return m_unwinder_ap.get();
-}
-
-uint32_t
-ThreadGDBRemote::GetStackFrameCount()
-{
-    Unwind *unwinder = GetUnwinder ();
-    if (unwinder)
-        return unwinder->GetFrameCount();
-    return 0;
-}
-
-// Make sure that GetStackFrameAtIndex() does NOT call GetStackFrameCount() when
-// getting the stack frame at index zero! This way GetStackFrameCount() (via
-// GetStackFRameData()) can call this function to get the first frame in order
-// to provide the first frame to a lower call for efficiency sake (avoid
-// redundant lookups in the frame symbol context).
-lldb::StackFrameSP
-ThreadGDBRemote::GetStackFrameAtIndex (uint32_t idx)
-{
-
-    StackFrameSP frame_sp (m_frames.GetFrameAtIndex(idx));
-
-    if (frame_sp.get())
-        return frame_sp;
-
-    // Don't try and fetch a frame while process is running
-// FIXME: This check isn't right because IsRunning checks the Public state, but this
-// is work you need to do - for instance in ShouldStop & friends - before the public 
-// state has been changed.
-//    if (m_process.IsRunning())
-//        return frame_sp;
-
-    // Special case the first frame (idx == 0) so that we don't need to
-    // know how many stack frames there are to get it. If we need any other
-    // frames, then we do need to know if "idx" is a valid index.
-    if (idx == 0)
-    {
-        // If this is the first frame, we want to share the thread register
-        // context with the stack frame at index zero.
-        GetRegisterContext();
-        assert (m_reg_context_sp.get());
-        frame_sp.reset (new StackFrame (idx, *this, m_reg_context_sp, m_reg_context_sp->GetSP(), m_reg_context_sp->GetPC()));
-    }
-    else if (idx < GetStackFrameCount())
-    {
-        Unwind *unwinder = GetUnwinder ();
-        if (unwinder)
-        {
-            addr_t pc, cfa;
-            if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
-                frame_sp.reset (new StackFrame (idx, *this, cfa, pc));
-        }
-    }
-    m_frames.SetFrameAtIndex(idx, frame_sp);
-    return frame_sp;
 }
 
 void

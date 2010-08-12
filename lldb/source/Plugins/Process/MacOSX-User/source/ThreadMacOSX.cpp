@@ -22,6 +22,10 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Target/Unwind.h"
+#include "LibUnwindRegisterContext.h"
+#include "UnwindLibUnwind.h"
+#include "UnwindMacOSXFrameBackchain.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -203,53 +207,27 @@ ThreadMacOSX::RefreshStateAfterStop()
     m_basic_info_string.clear();
 }
 
-uint32_t
-ThreadMacOSX::GetStackFrameCount()
+Unwind *
+ThreadMacOSX::GetUnwinder ()
 {
-    if (m_fp_pc_pairs.empty())
-        GetStackFrameData(m_fp_pc_pairs);
-    return m_fp_pc_pairs.size();
+    if (m_unwinder_ap.get() == NULL)
+    {
+        const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
+#if 0 // Not sure this is the right thing to do for native, but this will all go away with Jason's new
+      // unwinder anyway...
+        if (target_arch == ArchSpec("x86_64") ||  target_arch == ArchSpec("i386"))
+        {
+            m_unwinder_ap.reset (new UnwindLibUnwind (*this, GetGDBProcess().GetLibUnwindAddressSpace()));
+        }
+        else
+#endif
+        {
+            m_unwinder_ap.reset (new UnwindMacOSXFrameBackchain (*this));
+        }
+    }
+    return m_unwinder_ap.get();
 }
 
-// Make sure that GetStackFrameAtIndex() does NOT call GetStackFrameCount() when
-// getting the stack frame at index zero! This way GetStackFrameCount() (via
-// GetStackFRameData()) can call this function to get the first frame in order
-// to provide the first frame to a lower call for efficiency sake (avoid
-// redundant lookups in the frame symbol context).
-lldb::StackFrameSP
-ThreadMacOSX::GetStackFrameAtIndex (uint32_t idx)
-{
-    StackFrameSP frame_sp(m_frames.GetFrameAtIndex(idx));
-
-    if (frame_sp)
-        return frame_sp;
-
-    // Don't try and fetch a frame while process is running
-    // Calling IsRunning isn't right here, because IsRunning reads the Public
-    // state but we need to be able to read the stack frames in the ShouldStop
-    // methods, which happen before the Public state has been updated.
-//    if (m_process.IsRunning())
-//        return frame_sp;
-
-    // Special case the first frame (idx == 0) so that we don't need to
-    // know how many stack frames there are to get it. If we need any other
-    // frames, then we do need to know if "idx" is a valid index.
-    if (idx == 0)
-    {
-        // If this is the first frame, we want to share the thread register
-        // context with the stack frame at index zero.
-        GetRegisterContext();
-        assert (m_reg_context_sp.get());
-        frame_sp.reset (new StackFrame (idx, *this, m_reg_context_sp, m_reg_context_sp->GetFP(), m_reg_context_sp->GetPC()));
-    }
-    else if (idx < GetStackFrameCount())
-    {
-        assert (idx < m_fp_pc_pairs.size());
-        frame_sp.reset (new StackFrame (idx, *this, m_fp_pc_pairs[idx].first, m_fp_pc_pairs[idx].second));
-    }
-    m_frames.SetFrameAtIndex(idx, frame_sp);
-    return frame_sp;
-}
 
 void
 ThreadMacOSX::ClearStackFrames ()

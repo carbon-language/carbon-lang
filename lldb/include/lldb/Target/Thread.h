@@ -15,6 +15,7 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/StackFrameList.h"
+#include "libunwind/include/libunwind.h"
 
 #define LLDB_THREAD_MAX_STOP_EXC_DATA 8
 
@@ -298,10 +299,10 @@ public:
     }
 
     virtual uint32_t
-    GetStackFrameCount() = 0;
+    GetStackFrameCount();
 
     virtual lldb::StackFrameSP
-    GetStackFrameAtIndex (uint32_t idx) = 0;
+    GetStackFrameAtIndex (uint32_t idx);
 
     lldb::StackFrameSP
     GetCurrentFrame ();
@@ -661,6 +662,9 @@ protected:
 
     typedef std::vector<lldb::ThreadPlanSP> plan_stack;
 
+    virtual lldb_private::Unwind *
+    GetUnwinder () = 0;
+
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------
@@ -679,6 +683,7 @@ protected:
     uint32_t            m_current_frame_idx;///< The current frame for this thread
     int                 m_resume_signal;    ///< The signal that should be used when continuing this thread.
     lldb::StateType     m_resume_state;     ///< The state that indicates what this thread should do when the process is resumed.
+    std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
 private:
     //------------------------------------------------------------------
     // For Thread only

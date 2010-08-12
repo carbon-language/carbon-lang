@@ -32,6 +32,7 @@
 #include "lldb/Target/ThreadPlanRunToAddress.h"
 #include "lldb/Target/ThreadPlanStepUntil.h"
 #include "lldb/Target/ThreadSpec.h"
+#include "lldb/Target/Unwind.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -51,7 +52,9 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_frames (),
     m_current_frame_idx (0),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
-    m_resume_state (eStateRunning)
+    m_resume_state (eStateRunning),
+    m_unwinder_ap ()
+
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT);
     if (log)
@@ -788,6 +791,56 @@ Thread::Calculate (ExecutionContext &exe_ctx)
     m_process.Calculate (exe_ctx);
     exe_ctx.thread = this;
     exe_ctx.frame = NULL;
+}
+
+uint32_t
+Thread::GetStackFrameCount()
+{
+    Unwind *unwinder = GetUnwinder ();
+    if (unwinder)
+        return unwinder->GetFrameCount();
+    return 0;
+}
+
+lldb::StackFrameSP
+Thread::GetStackFrameAtIndex (uint32_t idx)
+{
+
+    StackFrameSP frame_sp (m_frames.GetFrameAtIndex(idx));
+
+    if (frame_sp.get())
+        return frame_sp;
+
+    // Don't try and fetch a frame while process is running
+// FIXME: This check isn't right because IsRunning checks the Public state, but this
+// is work you need to do - for instance in ShouldStop & friends - before the public 
+// state has been changed.
+//    if (m_process.IsRunning())
+//        return frame_sp;
+
+    // Special case the first frame (idx == 0) so that we don't need to
+    // know how many stack frames there are to get it. If we need any other
+    // frames, then we do need to know if "idx" is a valid index.
+    if (idx == 0)
+    {
+        // If this is the first frame, we want to share the thread register
+        // context with the stack frame at index zero.
+        GetRegisterContext();
+        assert (m_reg_context_sp.get());
+        frame_sp.reset (new StackFrame (idx, *this, m_reg_context_sp, m_reg_context_sp->GetSP(), m_reg_context_sp->GetPC()));
+    }
+    else if (idx < GetStackFrameCount())
+    {
+        Unwind *unwinder = GetUnwinder ();
+        if (unwinder)
+        {
+            addr_t pc, cfa;
+            if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
+                frame_sp.reset (new StackFrame (idx, *this, cfa, pc));
+        }
+    }
+    m_frames.SetFrameAtIndex(idx, frame_sp);
+    return frame_sp;
 }
 
 lldb::StackFrameSP

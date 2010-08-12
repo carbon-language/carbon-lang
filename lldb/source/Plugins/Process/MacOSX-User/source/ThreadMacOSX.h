@@ -51,12 +51,6 @@ public:
     virtual bool
     RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
 
-    virtual uint32_t
-    GetStackFrameCount();
-
-    virtual lldb::StackFrameSP
-    GetStackFrameAtIndex (uint32_t idx);
-
     virtual void
     ClearStackFrames ();
 
@@ -138,6 +132,9 @@ protected:
 
     static bool
     GetBasicInfo (lldb::tid_t threadID, struct thread_basic_info *basic_info);
+
+    virtual lldb_private::Unwind *
+    GetUnwinder ();
 
     //------------------------------------------------------------------
     // Member variables.

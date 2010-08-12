@@ -54,12 +54,6 @@ public:
     virtual bool
     RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
 
-    virtual uint32_t
-    GetStackFrameCount();
-
-    virtual lldb::StackFrameSP
-    GetStackFrameAtIndex (uint32_t idx);
-
     virtual void
     ClearStackFrames ();
 
@@ -121,12 +115,11 @@ protected:
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
-    std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
 
-    lldb_private::Unwind *
+    virtual lldb_private::Unwind *
     GetUnwinder ();
 
     void
