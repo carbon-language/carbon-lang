@@ -23,6 +23,7 @@ class Triple;
 
 namespace clang {
 class ASTConsumer;
+class CompilerInstance;
 class Decl;
 class DependencyOutputOptions;
 class Diagnostic;
@@ -75,6 +76,13 @@ void AttachDependencyFileGen(Preprocessor &PP,
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
 void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);
+
+
+/// ExecuteCompilerInvocation - Execute the given actions described by the
+/// compiler invocation object in the given compiler instance.
+///
+/// \return - True on success.
+bool ExecuteCompilerInvocation(CompilerInstance *Clang);
 
 }  // end namespace clang
 
