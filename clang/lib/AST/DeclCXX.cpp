@@ -1010,10 +1010,11 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
-      SourceLocation L, SourceRange NNR, SourceLocation UL,
-      NestedNameSpecifier* TargetNNS, DeclarationName Name,
-      bool IsTypeNameArg) {
-  return new (C) UsingDecl(DC, L, NNR, UL, TargetNNS, Name, IsTypeNameArg);
+                             SourceRange NNR, SourceLocation UL,
+                             NestedNameSpecifier* TargetNNS,
+                             const DeclarationNameInfo &NameInfo,
+                             bool IsTypeNameArg) {
+  return new (C) UsingDecl(DC, NNR, UL, TargetNNS, NameInfo, IsTypeNameArg);
 }
 
 UnresolvedUsingValueDecl *
@@ -1021,11 +1022,9 @@ UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation UsingLoc,
                                  SourceRange TargetNNR,
                                  NestedNameSpecifier *TargetNNS,
-                                 SourceLocation TargetNameLoc,
-                                 DeclarationName TargetName) {
+                                 const DeclarationNameInfo &NameInfo) {
   return new (C) UnresolvedUsingValueDecl(DC, C.DependentTy, UsingLoc,
-                                          TargetNNR, TargetNNS,
-                                          TargetNameLoc, TargetName);
+                                          TargetNNR, TargetNNS, NameInfo);
 }
 
 UnresolvedUsingTypenameDecl *

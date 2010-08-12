@@ -626,6 +626,7 @@ void PCHDeclReader::VisitUsingDecl(UsingDecl *D) {
   D->setUsingLocation(Reader.ReadSourceLocation(Record, Idx));
   D->setNestedNameRange(Reader.ReadSourceRange(Record, Idx));
   D->setTargetNestedNameDecl(Reader.ReadNestedNameSpecifier(Record, Idx));
+  // FIXME: read the DNLoc component.
 
   // FIXME: It would probably be more efficient to read these into a vector
   // and then re-cosntruct the shadow decl set over that vector since it
@@ -668,6 +669,7 @@ void PCHDeclReader::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   D->setTargetNestedNameRange(Reader.ReadSourceRange(Record, Idx));
   D->setUsingLoc(Reader.ReadSourceLocation(Record, Idx));
   D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  // FIXME: read the DNLoc component.
 }
 
 void PCHDeclReader::VisitUnresolvedUsingTypenameDecl(
@@ -1378,8 +1380,8 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
                                    SourceLocation(), 0);
     break;
   case pch::DECL_USING:
-    D = UsingDecl::Create(*Context, 0, SourceLocation(), SourceRange(),
-                          SourceLocation(), 0, DeclarationName(), false);
+    D = UsingDecl::Create(*Context, 0, SourceRange(), SourceLocation(),
+                          0, DeclarationNameInfo(), false);
     break;
   case pch::DECL_USING_SHADOW:
     D = UsingShadowDecl::Create(*Context, 0, SourceLocation(), 0, 0);
@@ -1391,8 +1393,8 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
     break;
   case pch::DECL_UNRESOLVED_USING_VALUE:
     D = UnresolvedUsingValueDecl::Create(*Context, 0, SourceLocation(),
-                                         SourceRange(), 0, SourceLocation(),
-                                         DeclarationName());
+                                         SourceRange(), 0,
+                                         DeclarationNameInfo());
     break;
   case pch::DECL_UNRESOLVED_USING_TYPENAME:
     D = UnresolvedUsingTypenameDecl::Create(*Context, 0, SourceLocation(),

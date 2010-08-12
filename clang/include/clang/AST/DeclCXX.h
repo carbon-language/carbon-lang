@@ -1999,6 +1999,10 @@ class UsingDecl : public NamedDecl {
   /// \brief Target nested name specifier.
   NestedNameSpecifier* TargetNestedName;
 
+  /// DNLoc - Provides source/type location info for the
+  /// declaration name embedded in the ValueDecl base class.
+  DeclarationNameLoc DNLoc;
+
   /// \brief The collection of shadow declarations associated with
   /// this using declaration.  This set can change as a class is
   /// processed.
@@ -2007,40 +2011,41 @@ class UsingDecl : public NamedDecl {
   // \brief Has 'typename' keyword.
   bool IsTypeName;
 
-  UsingDecl(DeclContext *DC, SourceLocation L, SourceRange NNR,
+  UsingDecl(DeclContext *DC, SourceRange NNR,
             SourceLocation UL, NestedNameSpecifier* TargetNNS,
-            DeclarationName Name, bool IsTypeNameArg)
-    : NamedDecl(Using, DC, L, Name),
+            const DeclarationNameInfo &NameInfo, bool IsTypeNameArg)
+    : NamedDecl(Using, DC, NameInfo.getLoc(), NameInfo.getName()),
       NestedNameRange(NNR), UsingLocation(UL), TargetNestedName(TargetNNS),
-      IsTypeName(IsTypeNameArg) {
+      DNLoc(NameInfo.getInfo()), IsTypeName(IsTypeNameArg) {
   }
 
 public:
-  // FIXME: Should be const?
   /// \brief Returns the source range that covers the nested-name-specifier
   /// preceding the namespace name.
-  SourceRange getNestedNameRange() { return NestedNameRange; }
+  SourceRange getNestedNameRange() const { return NestedNameRange; }
 
   /// \brief Set the source range of the nested-name-specifier.
   void setNestedNameRange(SourceRange R) { NestedNameRange = R; }
 
-  // FIXME; Should be const?
   // FIXME: Naming is inconsistent with other get*Loc functions.
   /// \brief Returns the source location of the "using" keyword.
-  SourceLocation getUsingLocation() { return UsingLocation; }
+  SourceLocation getUsingLocation() const { return UsingLocation; }
 
   /// \brief Set the source location of the 'using' keyword.
   void setUsingLocation(SourceLocation L) { UsingLocation = L; }
 
-
   /// \brief Get the target nested name declaration.
-  NestedNameSpecifier* getTargetNestedNameDecl() {
+  NestedNameSpecifier* getTargetNestedNameDecl() const {
     return TargetNestedName;
   }
 
   /// \brief Set the target nested name declaration.
   void setTargetNestedNameDecl(NestedNameSpecifier *NNS) {
     TargetNestedName = NNS;
+  }
+
+  DeclarationNameInfo getNameInfo() const {
+    return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
 
   /// \brief Return true if the using declaration has 'typename'.
@@ -2073,8 +2078,10 @@ public:
   }
 
   static UsingDecl *Create(ASTContext &C, DeclContext *DC,
-      SourceLocation IdentL, SourceRange NNR, SourceLocation UsingL,
-      NestedNameSpecifier* TargetNNS, DeclarationName Name, bool IsTypeNameArg);
+                           SourceRange NNR, SourceLocation UsingL,
+                           NestedNameSpecifier* TargetNNS,
+                           const DeclarationNameInfo &NameInfo,
+                           bool IsTypeNameArg);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDecl *D) { return true; }
@@ -2102,14 +2109,18 @@ class UnresolvedUsingValueDecl : public ValueDecl {
 
   NestedNameSpecifier *TargetNestedNameSpecifier;
 
+  /// DNLoc - Provides source/type location info for the
+  /// declaration name embedded in the ValueDecl base class.
+  DeclarationNameLoc DNLoc;
+
   UnresolvedUsingValueDecl(DeclContext *DC, QualType Ty,
                            SourceLocation UsingLoc, SourceRange TargetNNR,
                            NestedNameSpecifier *TargetNNS,
-                           SourceLocation TargetNameLoc,
-                           DeclarationName TargetName)
-    : ValueDecl(UnresolvedUsingValue, DC, TargetNameLoc, TargetName, Ty),
-    TargetNestedNameRange(TargetNNR), UsingLocation(UsingLoc),
-    TargetNestedNameSpecifier(TargetNNS)
+                           const DeclarationNameInfo &NameInfo)
+    : ValueDecl(UnresolvedUsingValue, DC,
+                NameInfo.getLoc(), NameInfo.getName(), Ty),
+      TargetNestedNameRange(TargetNNR), UsingLocation(UsingLoc),
+      TargetNestedNameSpecifier(TargetNNS), DNLoc(NameInfo.getInfo())
   { }
 
 public:
@@ -2122,7 +2133,7 @@ public:
   void setTargetNestedNameRange(SourceRange R) { TargetNestedNameRange = R; }
 
   /// \brief Get target nested name declaration.
-  NestedNameSpecifier* getTargetNestedNameSpecifier() {
+  NestedNameSpecifier* getTargetNestedNameSpecifier() const {
     return TargetNestedNameSpecifier;
   }
 
@@ -2137,10 +2148,14 @@ public:
   /// \brief Set the source location of the 'using' keyword.
   void setUsingLoc(SourceLocation L) { UsingLocation = L; }
 
+  DeclarationNameInfo getNameInfo() const {
+    return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
+  }
+
   static UnresolvedUsingValueDecl *
     Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,
            SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
-           SourceLocation TargetNameLoc, DeclarationName TargetName);
+           const DeclarationNameInfo &NameInfo);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingValueDecl *D) { return true; }

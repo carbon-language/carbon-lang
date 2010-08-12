@@ -3476,8 +3476,9 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
       << SourceRange(Name.TemplateId->LAngleLoc, Name.TemplateId->RAngleLoc);
     return DeclPtrTy();
   }
-  
-  DeclarationName TargetName = GetNameFromUnqualifiedId(Name).getName();
+
+  DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
+  DeclarationName TargetName = TargetNameInfo.getName();
   if (!TargetName)
     return DeclPtrTy();
 
@@ -3493,8 +3494,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   }
 
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
-                                        Name.getSourceRange().getBegin(),
-                                        TargetName, AttrList,
+                                        TargetNameInfo, AttrList,
                                         /* IsInstantiation */ false,
                                         IsTypeName, TypenameLoc);
   if (UD)
@@ -3743,13 +3743,13 @@ void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
 NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                        SourceLocation UsingLoc,
                                        CXXScopeSpec &SS,
-                                       SourceLocation IdentLoc,
-                                       DeclarationName Name,
+                                       const DeclarationNameInfo &NameInfo,
                                        AttributeList *AttrList,
                                        bool IsInstantiation,
                                        bool IsTypeName,
                                        SourceLocation TypenameLoc) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
+  SourceLocation IdentLoc = NameInfo.getLoc();
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
 
   // FIXME: We ignore attributes for now.
@@ -3761,7 +3761,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   }
 
   // Do the redeclaration lookup in the current scope.
-  LookupResult Previous(*this, Name, IdentLoc, LookupUsingDeclName,
+  LookupResult Previous(*this, NameInfo, LookupUsingDeclName,
                         ForRedeclaration);
   Previous.setHideTags(false);
   if (S) {
@@ -3800,15 +3800,15 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
       D = UnresolvedUsingTypenameDecl::Create(Context, CurContext,
                                               UsingLoc, TypenameLoc,
                                               SS.getRange(), NNS,
-                                              IdentLoc, Name);
+                                              IdentLoc, NameInfo.getName());
     } else {
       D = UnresolvedUsingValueDecl::Create(Context, CurContext,
-                                           UsingLoc, SS.getRange(), NNS,
-                                           IdentLoc, Name);
+                                           UsingLoc, SS.getRange(),
+                                           NNS, NameInfo);
     }
   } else {
-    D = UsingDecl::Create(Context, CurContext, IdentLoc,
-                          SS.getRange(), UsingLoc, NNS, Name,
+    D = UsingDecl::Create(Context, CurContext,
+                          SS.getRange(), UsingLoc, NNS, NameInfo,
                           IsTypeName);
   }
   D->setAccess(AS);
@@ -3824,7 +3824,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   // Look up the target name.
 
-  LookupResult R(*this, Name, IdentLoc, LookupOrdinaryName);
+  LookupResult R(*this, NameInfo, LookupOrdinaryName);
 
   // Unlike most lookups, we don't always want to hide tag
   // declarations: tag names are visible through the using declaration
@@ -3837,7 +3837,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   if (R.empty()) {
     Diag(IdentLoc, diag::err_no_member) 
-      << Name << LookupContext << SS.getRange();
+      << NameInfo.getName() << LookupContext << SS.getRange();
     UD->setInvalidDecl();
     return UD;
   }

@@ -1544,22 +1544,22 @@ Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   // The nested name specifier is non-dependent, so no transformation
-  // is required.
+  // is required. The same holds for the name info.
+  DeclarationNameInfo NameInfo = D->getNameInfo();
 
   // We only need to do redeclaration lookups if we're in a class
   // scope (in fact, it's not really even possible in non-class
   // scopes).
   bool CheckRedeclaration = Owner->isRecord();
 
-  LookupResult Prev(SemaRef, D->getDeclName(), D->getLocation(),
-                    Sema::LookupUsingDeclName, Sema::ForRedeclaration);
+  LookupResult Prev(SemaRef, NameInfo, Sema::LookupUsingDeclName,
+                    Sema::ForRedeclaration);
 
   UsingDecl *NewUD = UsingDecl::Create(SemaRef.Context, Owner,
-                                       D->getLocation(),
                                        D->getNestedNameRange(),
                                        D->getUsingLocation(),
                                        D->getTargetNestedNameDecl(),
-                                       D->getDeclName(),
+                                       NameInfo,
                                        D->isTypeName());
 
   CXXScopeSpec SS;
@@ -1635,10 +1635,12 @@ Decl * TemplateDeclInstantiator
   SS.setRange(D->getTargetNestedNameRange());
   SS.setScopeRep(NNS);
 
+  // Since NameInfo refers to a typename, it cannot be a C++ special name.
+  // Hence, no tranformation is required for it.
+  DeclarationNameInfo NameInfo(D->getDeclName(), D->getLocation());
   NamedDecl *UD =
     SemaRef.BuildUsingDeclaration(/*Scope*/ 0, D->getAccess(),
-                                  D->getUsingLoc(), SS, D->getLocation(),
-                                  D->getDeclName(), 0,
+                                  D->getUsingLoc(), SS, NameInfo, 0,
                                   /*instantiation*/ true,
                                   /*typename*/ true, D->getTypenameLoc());
   if (UD)
@@ -1660,10 +1662,12 @@ Decl * TemplateDeclInstantiator
   SS.setRange(D->getTargetNestedNameRange());
   SS.setScopeRep(NNS);
 
+  DeclarationNameInfo NameInfo
+    = SemaRef.SubstDeclarationNameInfo(D->getNameInfo(), TemplateArgs);
+
   NamedDecl *UD =
     SemaRef.BuildUsingDeclaration(/*Scope*/ 0, D->getAccess(),
-                                  D->getUsingLoc(), SS, D->getLocation(),
-                                  D->getDeclName(), 0,
+                                  D->getUsingLoc(), SS, NameInfo, 0,
                                   /*instantiation*/ true,
                                   /*typename*/ false, SourceLocation());
   if (UD)
