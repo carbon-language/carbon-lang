@@ -18,6 +18,7 @@
 #include "ARMAddressingModes.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMInstrInfo.h"
+#include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1181,11 +1182,13 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     MachineBasicBlock::iterator MI = UserMI;
     ++MI;
     unsigned CPUIndex = CPUserIndex+1;
+    unsigned NumCPUsers = CPUsers.size();
+    MachineInstr *LastIT = 0;
     for (unsigned Offset = UserOffset+TII->GetInstSizeInBytes(UserMI);
          Offset < BaseInsertOffset;
          Offset += TII->GetInstSizeInBytes(MI),
-            MI = llvm::next(MI)) {
-      if (CPUIndex < CPUsers.size() && CPUsers[CPUIndex].MI == MI) {
+           MI = llvm::next(MI)) {
+      if (CPUIndex < NumCPUsers && CPUsers[CPUIndex].MI == MI) {
         CPUser &U = CPUsers[CPUIndex];
         if (!OffsetIsInRange(Offset, EndInsertOffset,
                              U.MaxDisp, U.NegOk, U.IsSoImm)) {
@@ -1197,9 +1200,23 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
         EndInsertOffset += CPUsers[CPUIndex].CPEMI->getOperand(2).getImm();
         CPUIndex++;
       }
+
+      // Remember the last IT instruction.
+      if (MI->getOpcode() == ARM::t2IT)
+        LastIT = MI;
     }
+
     DEBUG(errs() << "Split in middle of big block\n");
-    NewMBB = SplitBlockBeforeInstr(prior(MI));
+    --MI;
+
+    // Avoid splitting an IT block.
+    if (LastIT) {
+      unsigned PredReg = 0;
+      ARMCC::CondCodes CC = llvm::getITInstrPredicate(MI, PredReg);
+      if (CC != ARMCC::AL)
+        MI = LastIT;
+    }
+    NewMBB = SplitBlockBeforeInstr(MI);
   }
 }
 
