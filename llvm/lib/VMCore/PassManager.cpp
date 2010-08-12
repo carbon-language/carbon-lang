@@ -25,7 +25,6 @@
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
-#include "llvm/System/Threading.h"
 #include <algorithm>
 #include <cstdio>
 #include <map>
