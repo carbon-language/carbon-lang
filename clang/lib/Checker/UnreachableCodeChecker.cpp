@@ -41,6 +41,7 @@ private:
   static inline const Stmt *getUnreachableStmt(const CFGBlock *CB);
   void FindUnreachableEntryPoints(const CFGBlock *CB);
   static bool isInvalidPath(const CFGBlock *CB, const ParentMap &PM);
+  static inline bool isEmptyCFGBlock(const CFGBlock *CB);
 
   llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> reachable;
   llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> visited;
@@ -66,8 +67,8 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
   CFG *C = 0;
   ParentMap *PM = 0;
   // Iterate over ExplodedGraph
-  for (ExplodedGraph::node_iterator I = G.nodes_begin(); I != G.nodes_end();
-      ++I) {
+  for (ExplodedGraph::node_iterator I = G.nodes_begin(), E = G.nodes_end();
+      I != E; ++I) {
     const ProgramPoint &P = I->getLocation();
     const LocationContext *LC = P.getLocationContext();
 
@@ -94,6 +95,10 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
     const CFGBlock *CB = *I;
     // Check if the block is unreachable
     if (reachable.count(CB->getBlockID()))
+      continue;
+
+    // Check if the block is empty (an artificial block)
+    if (isEmptyCFGBlock(CB))
       continue;
 
     // Find the entry points for this block
@@ -194,7 +199,12 @@ bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
 
   // Get the predecessor block's terminator conditon
   const Stmt *cond = pred->getTerminatorCondition();
-  assert(cond && "CFGBlock's predecessor has a terminator condition");
+
+  //assert(cond && "CFGBlock's predecessor has a terminator condition");
+  // The previous assertion is invalid in some cases (eg do/while). Leaving
+  // reporting of these situations on at the moment to help triage these cases.
+  if (!cond)
+    return false;
 
   // Run each of the checks on the conditions
   if (containsMacro(cond) || containsEnum(cond)
@@ -203,4 +213,11 @@ bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
     return true;
 
   return false;
+}
+
+// Returns true if the given CFGBlock is empty
+bool UnreachableCodeChecker::isEmptyCFGBlock(const CFGBlock *CB) {
+  return CB->getLabel() == 0       // No labels
+      && CB->size() == 0           // No statements
+      && CB->getTerminator() == 0; // No terminator
 }
