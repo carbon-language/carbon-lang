@@ -222,6 +222,18 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
     Clang->getHeaderSearchOpts().ResourceDir =
       CompilerInvocation::GetResourcesPath(Argv0, MainAddr);
 
+  // Create the actual diagnostics engine.
+  Clang->createDiagnostics(ArgEnd - ArgBegin, const_cast<char**>(ArgBegin));
+  if (!Clang->hasDiagnostics())
+    return 1;
+
+  // Set an error handler, so that any LLVM backend diagnostics go through our
+  // error handler.
+  llvm::install_fatal_error_handler(LLVMErrorHandler,
+                                  static_cast<void*>(&Clang->getDiagnostics()));
+
+  DiagsBuffer.FlushDiagnostics(Clang->getDiagnostics());
+
   // Honor -help.
   if (Clang->getFrontendOpts().ShowHelp) {
     llvm::OwningPtr<driver::OptTable> Opts(driver::createCC1OptTable());
@@ -251,25 +263,14 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
     llvm::cl::ParseCommandLineOptions(NumArgs + 1, const_cast<char **>(Args));
   }
 
-  // Create the actual diagnostics engine.
-  Clang->createDiagnostics(ArgEnd - ArgBegin, const_cast<char**>(ArgBegin));
-  if (!Clang->hasDiagnostics())
-    return 1;
-
-  // Set an error handler, so that any LLVM backend diagnostics go through our
-  // error handler.
-  llvm::install_fatal_error_handler(LLVMErrorHandler,
-                                  static_cast<void*>(&Clang->getDiagnostics()));
-
-  DiagsBuffer.FlushDiagnostics(Clang->getDiagnostics());
-
   // Load any requested plugins.
   for (unsigned i = 0,
          e = Clang->getFrontendOpts().Plugins.size(); i != e; ++i) {
     const std::string &Path = Clang->getFrontendOpts().Plugins[i];
     std::string Error;
     if (llvm::sys::DynamicLibrary::LoadLibraryPermanently(Path.c_str(), &Error))
-      Diags.Report(diag::err_fe_unable_to_load_plugin) << Path << Error;
+      Clang->getDiagnostics().Report(diag::err_fe_unable_to_load_plugin)
+        << Path << Error;
   }
 
   // If there were errors in processing arguments, don't do anything else.
