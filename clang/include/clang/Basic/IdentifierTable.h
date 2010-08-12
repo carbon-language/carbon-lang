@@ -141,7 +141,11 @@ public:
   bool hasRevertedTokenIDToIdentifier() const { return RevertedTokenID; }
 
   /// \brief Revert TokenID to tok::identifier; used for GNU libstdc++ 4.2
-  /// compatibility. 
+  /// compatibility.
+  ///
+  /// TokenID is normally read-only but there are 2 instances where we revert it
+  /// to tok::identifier for libstdc++ 4.2. Keep track of when this happens
+  /// using this method so we can inform PCH about it.
   void RevertTokenIDToIdentifier() {
     assert(TokenID != tok::identifier && "Already at tok::identifier");
     TokenID = tok::identifier;
