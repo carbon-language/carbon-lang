@@ -104,3 +104,20 @@ void test3() {
   f4(^(NSArray<P2>* a) { });  // expected-error {{incompatible block pointer types passing 'void (^)(NSArray<P2> *)' to parameter of type 'void (^)(id<P>)'}}
 }
 
+// rdar : //8302845
+@protocol Foo @end
+
+@interface Baz @end
+
+@interface Baz(FooConformance) <Foo>
+@end
+
+@implementation Baz @end
+
+int test4 () {
+    id <Foo> (^b)() = ^{ // Doesn't work
+        return (Baz *)0;
+    };
+    return 0;
+}
+

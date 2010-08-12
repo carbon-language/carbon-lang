@@ -4336,7 +4336,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
           // when comparing an id<P> on rhs with a static type on lhs,
           // static class must implement all of id's protocols directly or
           // indirectly through its super class.
-          if (lhsID->ClassImplementsProtocol(*I, false)) {
+          if (lhsID->ClassImplementsProtocol(*I, true)) {
             match = true;
             break;
           }
