@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
-#include "AnalysisBasedWarnings.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"

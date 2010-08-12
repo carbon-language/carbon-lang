@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/BitVector.h"
-#include "Sema.h"
+#include "clang/Sema/Sema.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
+#include "llvm/ADT/BitVector.h"
 using namespace clang;
 
 namespace {

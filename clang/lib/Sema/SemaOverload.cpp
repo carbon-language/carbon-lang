@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
-#include "Lookup.h"
-#include "SemaInit.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Lookup.h"
+#include "clang/Sema/Initialization.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ASTContext.h"

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "IdentifierResolver.h"
+#include "clang/Sema/IdentifierResolver.h"
 #include "clang/Basic/LangOptions.h"
 
 using namespace clang;

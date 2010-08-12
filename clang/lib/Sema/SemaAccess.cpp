@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
-#include "SemaInit.h"
-#include "Lookup.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Initialization.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"

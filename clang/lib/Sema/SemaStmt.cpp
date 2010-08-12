@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
-#include "SemaInit.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Initialization.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"

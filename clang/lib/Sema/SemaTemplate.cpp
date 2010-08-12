@@ -9,8 +9,8 @@
 //  This file implements semantic analysis for C++ templates.
 //===----------------------------------------------------------------------===/
 
-#include "Sema.h"
-#include "Lookup.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Lookup.h"
 #include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"

@@ -15,11 +15,11 @@
 #ifndef LLVM_CLANG_AST_SEMA_H
 #define LLVM_CLANG_AST_SEMA_H
 
-#include "IdentifierResolver.h"
-#include "CXXFieldCollector.h"
-#include "SemaOverload.h"
-#include "SemaTemplate.h"
-#include "AnalysisBasedWarnings.h"
+#include "clang/Sema/IdentifierResolver.h"
+#include "clang/Sema/CXXFieldCollector.h"
+#include "clang/Sema/Overload.h"
+#include "clang/Sema/Template.h"
+#include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Decl.h"

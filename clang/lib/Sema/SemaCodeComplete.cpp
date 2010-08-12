@@ -10,8 +10,8 @@
 //  This file defines the code-completion semantic actions.
 //
 //===----------------------------------------------------------------------===//
-#include "Sema.h"
-#include "Lookup.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ExprCXX.h"

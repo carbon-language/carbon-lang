@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/Sema/Sema.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang-c/Index.h"
-#include "Sema.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>

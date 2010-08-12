@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
-#include "Lookup.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"

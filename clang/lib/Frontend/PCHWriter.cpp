@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/PCHWriter.h"
-#include "../Sema/Sema.h" // FIXME: move header into include/clang/Sema
-#include "../Sema/IdentifierResolver.h" // FIXME: move header
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/IdentifierResolver.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"

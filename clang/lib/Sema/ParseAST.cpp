@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/ParseAST.h"
-#include "Sema.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/Sema/ExternalSemaSource.h"

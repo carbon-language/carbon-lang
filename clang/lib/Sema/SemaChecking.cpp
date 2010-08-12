@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Analysis/Analyses/FormatString.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"

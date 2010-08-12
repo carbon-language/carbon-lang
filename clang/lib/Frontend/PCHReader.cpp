@@ -15,7 +15,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/PCHDeserializationListener.h"
 #include "clang/Frontend/Utils.h"
-#include "../Sema/Sema.h" // FIXME: move Sema headers elsewhere
+#include "clang/Sema/Sema.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"

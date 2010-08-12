@@ -13,8 +13,8 @@
 #ifndef LLVM_CLANG_SEMA_TREETRANSFORM_H
 #define LLVM_CLANG_SEMA_TREETRANSFORM_H
 
-#include "Sema.h"
-#include "Lookup.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
-#include "SemaInit.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Initialization.h"
 #include "clang/AST/ExprObjC.h"
 
 using namespace clang;

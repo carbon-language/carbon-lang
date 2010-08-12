@@ -10,10 +10,10 @@
 // This file provides supporting data types for initialization of objects.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_SEMA_INIT_H
-#define LLVM_CLANG_SEMA_INIT_H
+#ifndef LLVM_CLANG_SEMA_INITIALIZATION_H
+#define LLVM_CLANG_SEMA_INITIALIZATION_H
 
-#include "SemaOverload.h"
+#include "clang/Sema/Overload.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/Parse/Action.h"
@@ -777,4 +777,4 @@ public:
   
 } // end namespace clang
 
-#endif // LLVM_CLANG_SEMA_INIT_H
+#endif // LLVM_CLANG_SEMA_INITIALIZATION_H

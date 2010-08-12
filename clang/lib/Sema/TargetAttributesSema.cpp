@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sema.h"
+#include "clang/Sema/Sema.h"
 #include "TargetAttributesSema.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/Triple.h"
