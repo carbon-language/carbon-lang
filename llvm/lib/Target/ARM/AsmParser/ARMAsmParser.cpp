@@ -80,9 +80,16 @@ private:
 
   bool ParseDirectiveSyntax(SMLoc L);
 
-  bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+  bool MatchInstruction(SMLoc IDLoc,
+                        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst) {
-    return MatchInstructionImpl(Operands, Inst);
+    if (!MatchInstructionImpl(Operands, Inst))
+      return false;
+
+    // FIXME: We should give nicer diagnostics about the exact failure.
+    Error(IDLoc, "unrecognized instruction");
+
+    return true;
   }
 
   /// @name Auto-generated Match Functions

@@ -73,8 +73,12 @@ public:
   /// MatchInstruction - Recognize a series of operands of a parsed instruction
   /// as an actual MCInst.  This returns false and fills in Inst on success and
   /// returns true on failure to match.
+  ///
+  /// On failure, the target parser is responsible for emitting a diagnostic
+  /// explaining the match failure.
   virtual bool 
-  MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+  MatchInstruction(SMLoc IDLoc,
+                   const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                    MCInst &Inst) = 0;
   
 };

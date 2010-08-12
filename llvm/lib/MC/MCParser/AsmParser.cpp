@@ -934,17 +934,11 @@ bool AsmParser::ParseStatement() {
   // If parsing succeeded, match the instruction.
   if (!HadError) {
     MCInst Inst;
-    if (!getTargetParser().MatchInstruction(ParsedOperands, Inst)) {
+    if (!getTargetParser().MatchInstruction(IDLoc, ParsedOperands, Inst)) {
       // Emit the instruction on success.
       Out.EmitInstruction(Inst);
-    } else {
-      // Otherwise emit a diagnostic about the match failure and set the error
-      // flag.
-      //
-      // FIXME: We should give nicer diagnostics about the exact failure.
-      Error(IDLoc, "unrecognized instruction");
+    } else
       HadError = true;
-    }
   }
 
   // If there was no error, consume the end-of-statement token. Otherwise this

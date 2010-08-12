@@ -10,6 +10,7 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "X86.h"
 #include "X86Subtarget.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
@@ -50,7 +51,8 @@ private:
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
-  bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+  bool MatchInstruction(SMLoc IDLoc,
+                        const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst);
 
   /// @name Auto-generated Matcher Functions
@@ -871,20 +873,20 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   return false;
 }
 
+
 bool
-X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
+X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
+                                  const SmallVectorImpl<MCParsedAsmOperand*>
                                     &Operands,
                                   MCInst &Inst) {
+  assert(!Operands.empty() && "Unexpect empty operand list!");
+
+  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
+  assert(Op->isToken() && "Leading operand should always be a mnemonic!");
+
   // First, try a direct match.
   if (!MatchInstructionImpl(Operands, Inst))
     return false;
-
-  // Ignore anything which is obviously not a suffix match.
-  if (Operands.size() == 0)
-    return true;
-  X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
-  if (!Op->isToken() || Op->getToken().size() > 15)
-    return true;
 
   // FIXME: Ideally, we would only attempt suffix matches for things which are
   // valid prefixes, and we could just infer the right unambiguous
@@ -892,10 +894,11 @@ X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
   // following hack.
 
   // Change the operand to point to a temporary token.
-  char Tmp[16];
   StringRef Base = Op->getToken();
-  memcpy(Tmp, Base.data(), Base.size());
-  Op->setTokenValue(StringRef(Tmp, Base.size() + 1));
+  SmallString<16> Tmp;
+  Tmp += Base;
+  Tmp += ' ';
+  Op->setTokenValue(Tmp.str());
 
   // Check for the various suffix matches.
   Tmp[Base.size()] = 'b';
@@ -917,6 +920,10 @@ X86ATTAsmParser::MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*>
     return false;
 
   // Otherwise, the match failed.
+
+  // FIXME: We should give nicer diagnostics about the exact failure.
+  Error(IDLoc, "unrecognized instruction");
+
   return true;
 }
 
