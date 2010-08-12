@@ -201,8 +201,6 @@ void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
   // This could happen if reg is only used by COPY instructions, so we may need
   // to improve on this.
   if (rcs.empty()) {
-    DEBUG(dbgs() << "Not inflating unconstrained" << orc->getName() << ":%reg"
-                 << reg << ".\n");
     return;
   }
 
