@@ -21,6 +21,7 @@
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
@@ -921,8 +922,36 @@ X86ATTAsmParser::MatchInstruction(SMLoc IDLoc,
 
   // Otherwise, the match failed.
 
-  // FIXME: We should give nicer diagnostics about the exact failure.
-  Error(IDLoc, "unrecognized instruction");
+  // If we had multiple suffix matches, then identify this as an ambiguous
+  // match.
+  if (MatchB + MatchW + MatchL + MatchQ != 4) {
+    char MatchChars[4];
+    unsigned NumMatches = 0;
+    if (!MatchB)
+      MatchChars[NumMatches++] = 'b';
+    if (!MatchW)
+      MatchChars[NumMatches++] = 'w';
+    if (!MatchL)
+      MatchChars[NumMatches++] = 'l';
+    if (!MatchQ)
+      MatchChars[NumMatches++] = 'q';
+
+    SmallString<126> Msg;
+    raw_svector_ostream OS(Msg);
+    OS << "ambiguous instructions require an explicit suffix (could be ";
+    for (unsigned i = 0; i != NumMatches; ++i) {
+      if (i != 0)
+        OS << ", ";
+      if (i + 1 == NumMatches)
+        OS << "or ";
+      OS << "'" << Base << MatchChars[i] << "'";
+    }
+    OS << ")";
+    Error(IDLoc, OS.str());
+  } else {
+    // FIXME: We should give nicer diagnostics about the exact failure.
+    Error(IDLoc, "unrecognized instruction");
+  }
 
   return true;
 }
