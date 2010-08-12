@@ -737,7 +737,7 @@ void PMDataManager::recordAvailableAnalysis(Pass *P) {
   
   AvailableAnalysis[PI] = P;
   
-  assert(AvailableAnalysis.size());
+  assert(!AvailableAnalysis.empty());
 
   //This pass is the current implementation of all of the interfaces it
   //implements as well.
