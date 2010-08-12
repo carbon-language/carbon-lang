@@ -254,10 +254,10 @@ public:
   // Functions for external checking of whether we have unfinished work
   bool wasBlockAborted() const { return CoreEngine.wasBlockAborted(); }
   bool hasWorkRemaining() const {
-    return wasBlockAborted() || getWorkList()->hasWork();
+    return wasBlockAborted() || CoreEngine.getWorkList()->hasWork();
   }
 
-  GRWorkList *getWorkList() const { return CoreEngine.getWorkList(); }
+  const GRCoreEngine &getCoreEngine() const { return CoreEngine; }
 
 protected:
   const GRState* GetState(ExplodedNode* N) {

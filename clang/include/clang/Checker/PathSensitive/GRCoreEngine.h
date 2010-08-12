@@ -43,6 +43,11 @@ class GRCoreEngine {
   friend class GRCallEnterNodeBuilder;
   friend class GRCallExitNodeBuilder;
 
+public:
+  typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
+            BlocksAborted;
+private:
+
   GRSubEngine& SubEngine;
 
   /// G - The simulation graph.  Each node is a (location,state) pair.
@@ -57,10 +62,6 @@ class GRCoreEngine {
   ///   These are used to record for key nodes in the ExplodedGraph the
   ///   number of times different CFGBlocks have been visited along a path.
   GRBlockCounter::Factory BCounterFactory;
-  
-  
-  typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
-          BlocksAborted;
 
   /// The locations where we stopped doing work because we visited a location
   ///  too many times.

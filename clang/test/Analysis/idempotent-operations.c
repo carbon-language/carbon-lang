@@ -53,20 +53,33 @@ void basic() {
 }
 
 void floats(float x) {
-  test_f(x * 1.0); // no-warning
+  test_f(x * 1.0);  // no-warning
   test_f(x * 1.0F); // no-warning
 }
 
-// Ensure that we don't report false poitives on complex loops
+// Ensure that we don't report false poitives in complex loops
 void bailout() {
-  int unused, result = 4;
-  int numbers[5] = { 0, 32, 'x', 128, 255 };
+  int unused = 0, result = 4;
+  result = result; // expected-warning {{Assigned value is always the same as the existing value}}
 
-  for (int bg = 0; bg < 5; bg ++) {
-    result += numbers[bg]; // no-warning
+  for (unsigned bg = 0; bg < 1024; bg ++) {
+    result = bg * result; // no-warning
 
     for (int i = 0; i < 256; i++) {
-      unused = i;
+      unused *= i; // no-warning
     }
   }
 }
+
+// False positive tests
+
+unsigned false1() {
+  return (5 - 2 - 3); // no-warning
+}
+
+enum testenum { enum1 = 0, enum2 };
+unsigned false2() {
+  return enum1; // no-warning
+}
+
+extern unsigned foo();

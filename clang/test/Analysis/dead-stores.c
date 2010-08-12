@@ -150,7 +150,7 @@ void f15(unsigned x, unsigned y) {
 
 int f16(int x) {
   x = x * 2;
-  x = sizeof(int [x = (x || x + 1) * 2]) // expected-warning{{Although the value stored to 'x' is used}}
+  x = sizeof(int [x = (x || x + 1) * 2]) // expected-warning{{Although the value stored to 'x' is used}} expected-warning{{The left operand to '*' is always 1}}
       ? 5 : 8;
   return x;
 }

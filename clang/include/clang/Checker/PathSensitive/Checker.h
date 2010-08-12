@@ -165,6 +165,10 @@ public:
     Eng.getBugReporter().EmitReport(R);
   }
 
+  AnalysisContext *getCurrentAnalysisContext() const {
+    return Pred->getLocationContext()->getAnalysisContext();
+  }
+
 private:
   ExplodedNode *GenerateNodeImpl(const Stmt* stmt, const GRState *state,
                              bool markAsSink) {

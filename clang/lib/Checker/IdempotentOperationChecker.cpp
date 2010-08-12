@@ -36,26 +36,24 @@
 //  !=      |   0    |        |        |        |        |         |
 //===----------------------------------------------------------------------===//
 //
-// Ways to reduce false positives (that need to be implemented):
-// - Don't flag downsizing casts
-// - Improved handling of static/global variables
-// - Per-block marking of incomplete analysis
-// - Handling ~0 values
-// - False positives involving silencing unused variable warnings
-//
-// Other things TODO:
+// Things TODO:
 // - Improved error messages
 // - Handle mixed assumptions (which assumptions can belong together?)
 // - Finer grained false positive control (levels)
+// - Handling ~0 values
 
 #include "GRExprEngineExperimentalChecks.h"
+#include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerHelpers.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/Checker/PathSensitive/GRCoreEngine.h"
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <deque>
 
 using namespace clang;
 
@@ -79,11 +77,15 @@ class IdempotentOperationChecker
     static bool isParameterSelfAssign(const Expr *LHS, const Expr *RHS);
     static bool isTruncationExtensionAssignment(const Expr *LHS,
                                                 const Expr *RHS);
-    static bool containsZeroConstant(const Stmt *S);
-    static bool containsOneConstant(const Stmt *S);
+    static bool PathWasCompletelyAnalyzed(const CFG *C,
+                                          const CFGBlock *CB,
+                                          const GRCoreEngine &CE);
+    static bool CanVary(const Expr *Ex, ASTContext &Ctx);
 
     // Hash table
-    typedef llvm::DenseMap<const BinaryOperator *, Assumption> AssumptionMap;
+    typedef llvm::DenseMap<const BinaryOperator *,
+                           std::pair<Assumption, AnalysisContext*> >
+                           AssumptionMap;
     AssumptionMap hash;
 };
 }
@@ -103,23 +105,21 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   // Find or create an entry in the hash for this BinaryOperator instance.
   // If we haven't done a lookup before, it will get default initialized to
   // 'Possible'.
-  Assumption &A = hash[B];
+  std::pair<Assumption, AnalysisContext *> &Data = hash[B];
+  Assumption &A = Data.first;
+  Data.second = C.getCurrentAnalysisContext();
 
   // If we already have visited this node on a path that does not contain an
   // idempotent operation, return immediately.
   if (A == Impossible)
     return;
 
-  // Skip binary operators containing common false positives
-  if (containsMacro(B) || containsEnum(B) || containsStmt<SizeOfAlignOfExpr>(B)
-      || containsZeroConstant(B) || containsOneConstant(B)
-      || containsBuiltinOffsetOf(B) || containsStaticLocal(B)) {
-    A = Impossible;
-    return;
-  }
-
+  // Retrieve both sides of the operator and determine if they can vary (which
+  // may mean this is a false positive.
   const Expr *LHS = B->getLHS();
   const Expr *RHS = B->getRHS();
+  bool LHSCanVary = CanVary(LHS, C.getASTContext());
+  bool RHSCanVary = CanVary(RHS, C.getASTContext());
 
   const GRState *state = C.getState();
 
@@ -186,7 +186,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Xor:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (LHSVal != RHSVal)
+    if (LHSVal != RHSVal || !LHSCanVary || !RHSCanVary)
       break;
     UpdateAssumption(A, Equal);
     return;
@@ -204,7 +204,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
    case BinaryOperator::Div:
    case BinaryOperator::LOr:
    case BinaryOperator::LAnd:
-     if (!RHSVal.isConstant(1))
+     if (!RHSVal.isConstant(1) || !RHSCanVary)
        break;
      UpdateAssumption(A, RHSis1);
      return;
@@ -220,7 +220,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Mul:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (!LHSVal.isConstant(1))
+    if (!LHSVal.isConstant(1) || !LHSCanVary)
       break;
     UpdateAssumption(A, LHSis1);
     return;
@@ -248,7 +248,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Shr:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (!RHSVal.isConstant(0))
+    if (!RHSVal.isConstant(0) || !RHSCanVary)
       break;
     UpdateAssumption(A, RHSis0);
     return;
@@ -280,7 +280,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Shr:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (!LHSVal.isConstant(0))
+    if (!LHSVal.isConstant(0) || !LHSCanVary)
       break;
     UpdateAssumption(A, LHSis0);
     return;
@@ -293,52 +293,68 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
 void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
                                                   GRExprEngine &Eng) {
-  // If there is any work remaining we cannot be 100% sure about our warnings
-  if (Eng.hasWorkRemaining())
-    return;
-
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
-  for (AssumptionMap::const_iterator i =
-      hash.begin(); i != hash.end(); ++i) {
-    if (i->second != Impossible) {
-      // Select the error message.
-      const BinaryOperator *B = i->first;
-      llvm::SmallString<128> buf;
-      llvm::raw_svector_ostream os(buf);
+  for (AssumptionMap::const_iterator i = hash.begin(); i != hash.end(); ++i) {
+    // Unpack the hash contents
+    const std::pair<Assumption, AnalysisContext *> &Data = i->second;
+    const Assumption &A = Data.first;
+    AnalysisContext *AC = Data.second;
 
-      switch (i->second) {
-      case Equal:
-        if (B->getOpcode() == BinaryOperator::Assign)
-          os << "Assigned value is always the same as the existing value";
-        else
-          os << "Both operands to '" << B->getOpcodeStr()
-             << "' always have the same value";
-        break;
-      case LHSis1:
-        os << "The left operand to '" << B->getOpcodeStr() << "' is always 1";
-        break;
-      case RHSis1:
-        os << "The right operand to '" << B->getOpcodeStr() << "' is always 1";
-        break;
-      case LHSis0:
-        os << "The left operand to '" << B->getOpcodeStr() << "' is always 0";
-        break;
-      case RHSis0:
-        os << "The right operand to '" << B->getOpcodeStr() << "' is always 0";
-        break;
-      case Possible:
-        llvm_unreachable("Operation was never marked with an assumption");
-      case Impossible:
-        llvm_unreachable(0);
-      }
+    const BinaryOperator *B = i->first;
 
-      // Create the SourceRange Arrays
-      SourceRange S[2] = { i->first->getLHS()->getSourceRange(),
-                           i->first->getRHS()->getSourceRange() };
-      BR.EmitBasicReport("Idempotent operation", "Dead code",
-                         os.str(), i->first->getOperatorLoc(), S, 2);
+    if (A == Impossible)
+      continue;
+
+    // If the analyzer did not finish, check to see if we can still emit this
+    // warning
+    if (Eng.hasWorkRemaining()) {
+      const CFGStmtMap *CBM = CFGStmtMap::Build(AC->getCFG(),
+                                                &AC->getParentMap());
+
+      // If we can trace back
+      if (!PathWasCompletelyAnalyzed(AC->getCFG(),
+                                     CBM->getBlock(B),
+                                     Eng.getCoreEngine()))
+        continue;
+
+      delete CBM;
     }
+
+    // Select the error message.
+    llvm::SmallString<128> buf;
+    llvm::raw_svector_ostream os(buf);
+    switch (A) {
+    case Equal:
+      if (B->getOpcode() == BinaryOperator::Assign)
+        os << "Assigned value is always the same as the existing value";
+      else
+        os << "Both operands to '" << B->getOpcodeStr()
+           << "' always have the same value";
+      break;
+    case LHSis1:
+      os << "The left operand to '" << B->getOpcodeStr() << "' is always 1";
+      break;
+    case RHSis1:
+      os << "The right operand to '" << B->getOpcodeStr() << "' is always 1";
+      break;
+    case LHSis0:
+      os << "The left operand to '" << B->getOpcodeStr() << "' is always 0";
+      break;
+    case RHSis0:
+      os << "The right operand to '" << B->getOpcodeStr() << "' is always 0";
+      break;
+    case Possible:
+      llvm_unreachable("Operation was never marked with an assumption");
+    case Impossible:
+      llvm_unreachable(0);
+    }
+
+    // Create the SourceRange Arrays
+    SourceRange S[2] = { i->first->getLHS()->getSourceRange(),
+                         i->first->getRHS()->getSourceRange() };
+    BR.EmitBasicReport("Idempotent operation", "Dead code",
+                       os.str(), i->first->getOperatorLoc(), S, 2);
   }
 }
 
@@ -410,44 +426,133 @@ bool IdempotentOperationChecker::isTruncationExtensionAssignment(
   return dyn_cast<DeclRefExpr>(RHS->IgnoreParens()) == NULL;
 }
 
-// Check for a integer or float constant of 0
-bool IdempotentOperationChecker::containsZeroConstant(const Stmt *S) {
-  const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(S);
-  if (IL && IL->getValue() == 0)
-    return true;
+// Returns false if a path to this block was not completely analyzed, or true
+// otherwise.
+bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
+                                                       const CFG *C,
+                                                       const CFGBlock *CB,
+                                                       const GRCoreEngine &CE) {
+  std::deque<const CFGBlock *> WorkList;
+  llvm::SmallSet<unsigned, 8> Aborted;
+  llvm::SmallSet<unsigned, 128> Visited;
 
-  const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(S);
-  if (FL && FL->getValue().isZero())
-    return true;
+  // Create a set of all aborted blocks
+  typedef GRCoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  for (AbortedIterator I = CE.blocks_aborted_begin(),
+      E = CE.blocks_aborted_end(); I != E; ++I) {
+    const BlockEdge &BE =  I->first;
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsZeroConstant(child))
-        return true;
-
-  return false;
-}
-
-// Check for an integer or float constant of 1
-bool IdempotentOperationChecker::containsOneConstant(const Stmt *S) {
-  const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(S);
-  if (IL && IL->getValue() == 1)
-    return true;
-
-  if (const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(S)) {
-    const llvm::APFloat &val = FL->getValue();
-    const llvm::APFloat one(val.getSemantics(), 1);
-    if (val.compare(one) == llvm::APFloat::cmpEqual)
-      return true;
+    // The destination block on the BlockEdge is the first block that was not
+    // analyzed.
+    Aborted.insert(BE.getDst()->getBlockID());
   }
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsOneConstant(child))
-        return true;
+  // Save the entry block ID for early exiting
+  unsigned EntryBlockID = C->getEntry().getBlockID();
 
-  return false;
+  // Create initial node
+  WorkList.push_back(CB);
+
+  while (!WorkList.empty()) {
+    const CFGBlock *Head = WorkList.front();
+    WorkList.pop_front();
+    Visited.insert(Head->getBlockID());
+
+    // If we found the entry block, then there exists a path from the target
+    // node to the entry point of this function -> the path was completely
+    // analyzed.
+    if (Head->getBlockID() == EntryBlockID)
+      return true;
+
+    // If any of the aborted blocks are on the path to the beginning, then all
+    // paths to this block were not analyzed.
+    if (Aborted.count(Head->getBlockID()))
+      return false;
+
+    // Add the predecessors to the worklist unless we have already visited them
+    for (CFGBlock::const_pred_iterator I = Head->pred_begin();
+        I != Head->pred_end(); ++I)
+      if (!Visited.count((*I)->getBlockID()))
+        WorkList.push_back(*I);
+  }
+
+  // If we get to this point, there is no connection to the entry block or an
+  // aborted block. This path is unreachable and we can report the error.
+  return true;
+}
+
+// Recursive function that determines whether an expression contains any element
+// that varies. This could be due to a compile-time constant like sizeof. An
+// expression may also involve a variable that behaves like a constant. The
+// function returns true if the expression varies, and false otherwise.
+bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
+  // Parentheses and casts are irrelevant here
+  Ex = Ex->IgnoreParenCasts();
+
+  if (Ex->getLocStart().isMacroID())
+    return false;
+
+  switch (Ex->getStmtClass()) {
+  // Trivially true cases
+  case Stmt::ArraySubscriptExprClass:
+  case Stmt::MemberExprClass:
+  case Stmt::StmtExprClass:
+  case Stmt::CallExprClass:
+  case Stmt::VAArgExprClass:
+  case Stmt::ShuffleVectorExprClass:
+    return true;
+  default:
+    return true;
+
+  // Trivially false cases
+  case Stmt::IntegerLiteralClass:
+  case Stmt::CharacterLiteralClass:
+  case Stmt::FloatingLiteralClass:
+  case Stmt::PredefinedExprClass:
+  case Stmt::ImaginaryLiteralClass:
+  case Stmt::StringLiteralClass:
+  case Stmt::OffsetOfExprClass:
+  case Stmt::CompoundLiteralExprClass:
+  case Stmt::AddrLabelExprClass:
+  case Stmt::TypesCompatibleExprClass:
+  case Stmt::GNUNullExprClass:
+  case Stmt::InitListExprClass:
+  case Stmt::DesignatedInitExprClass:
+  case Stmt::BlockExprClass:
+  case Stmt::BlockDeclRefExprClass:
+    return false;
+
+  // Cases requiring custom logic
+  case Stmt::SizeOfAlignOfExprClass: {
+    const SizeOfAlignOfExpr *SE = cast<const SizeOfAlignOfExpr>(Ex);
+    if (!SE->isSizeOf())
+      return false;
+    return SE->getTypeOfArgument()->isVariableArrayType();
+  }
+  case Stmt::DeclRefExprClass:
+    //    return !IsPseudoConstant(cast<DeclRefExpr>(Ex));
+    return true;
+
+  // The next cases require recursion for subexpressions
+  case Stmt::BinaryOperatorClass: {
+    const BinaryOperator *B = cast<const BinaryOperator>(Ex);
+    return CanVary(B->getRHS(), Ctx) || CanVary(B->getLHS(), Ctx);
+   }
+  case Stmt::UnaryOperatorClass: {
+    const UnaryOperator *U = cast<const UnaryOperator>(Ex);
+    // Handle two trivial cases first
+    switch (U->getOpcode()) {
+    case UnaryOperator::Extension:
+    case UnaryOperator::OffsetOf:
+      return false;
+    default:
+      return CanVary(U->getSubExpr(), Ctx);
+    }
+  }
+  case Stmt::ChooseExprClass:
+    return CanVary(cast<const ChooseExpr>(Ex)->getChosenSubExpr(Ctx), Ctx);
+  case Stmt::ConditionalOperatorClass:
+      return CanVary(cast<const ConditionalOperator>(Ex)->getCond(), Ctx);
+  }
 }
 
