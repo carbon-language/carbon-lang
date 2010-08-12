@@ -100,7 +100,8 @@ private:
                               const GRState *state);
 
   void FreeMem(CheckerContext &C, const CallExpr *CE);
-  void FreeMemAttr(CheckerContext &C, const CallExpr *CE, const OwnershipAttr* Att);
+  void FreeMemAttr(CheckerContext &C, const CallExpr *CE,
+                   const OwnershipAttr* Att);
   const GRState *FreeMemAux(CheckerContext &C, const CallExpr *CE,
                             const GRState *state, unsigned Num, bool Hold);
 
@@ -176,22 +177,19 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   bool rv = false;
   if (FD->hasAttrs()) {
     for (const Attr *attr = FD->getAttrs(); attr; attr = attr->getNext()) {
-      if(const OwnershipAttr* Att = dyn_cast<OwnershipAttr>(attr)) {
-        switch (Att->getKind()) {
-        case OwnershipAttr::Returns: {
-          MallocMemReturnsAttr(C, CE, Att);
-          rv = true;
-          break;
-        }
-        case OwnershipAttr::Takes:
-        case OwnershipAttr::Holds: {
-          FreeMemAttr(C, CE, Att);
-          rv = true;
-          break;
-        }
-        default:
-          break;
-        }
+      switch (attr->getKind()) {
+      case attr::OwnershipReturns:
+        MallocMemReturnsAttr(C, CE, cast<OwnershipAttr>(attr));
+        rv = true;
+        break;
+      case attr::OwnershipTakes:
+      case attr::OwnershipHolds:
+        FreeMemAttr(C, CE, cast<OwnershipAttr>(attr));
+        rv = true;
+        break;
+      default:
+        // Ignore non-ownership attributes.
+        break;
       }
     }
   }
@@ -259,13 +257,13 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
 }
 
 void MallocChecker::FreeMemAttr(CheckerContext &C, const CallExpr *CE,
-                                     const OwnershipAttr* Att) {
+                                const OwnershipAttr* Att) {
   if (!Att->isModule("malloc"))
     return;
 
   for (const unsigned *I = Att->begin(), *E = Att->end(); I != E; ++I) {
     const GRState *state =
-        FreeMemAux(C, CE, C.getState(), *I, Att->isKind(OwnershipAttr::Holds));
+        FreeMemAux(C, CE, C.getState(), *I, isa<OwnershipHoldsAttr>(Att));
   if (state)
     C.addTransition(state);
   }

@@ -357,8 +357,8 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
   // The following arguments must be argument indexes, the arguments must be
   // of integer type for Returns, otherwise of pointer type.
   // The difference between Holds and Takes is that a pointer may still be used
-  // after being held.  free() should be __attribute((ownership_takes)), whereas a list
-  // append function may well be __attribute((ownership_holds)).
+  // after being held.  free() should be __attribute((ownership_takes)), whereas
+  // a list append function may well be __attribute((ownership_holds)).
 
   if (!AL.getParameterName()) {
     S.Diag(AL.getLoc(), diag::err_attribute_argument_n_not_string)
@@ -366,30 +366,33 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
     return;
   }
   // Figure out our Kind, and check arguments while we're at it.
-  OwnershipAttr::OwnershipKind K = OwnershipAttr::None;
-  if (AL.getName()->getName().equals("ownership_takes")) {
-    K = OwnershipAttr::Takes;
+  attr::Kind K;
+  switch (AL.getKind()) {
+  case AttributeList::AT_ownership_takes:
+    K = attr::OwnershipTakes;
     if (AL.getNumArgs() < 1) {
       S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
       return;
     }
-  } else if (AL.getName()->getName().equals("ownership_holds")) {
-    K = OwnershipAttr::Holds;
+    break;
+  case AttributeList::AT_ownership_holds:
+    K = attr::OwnershipHolds;
     if (AL.getNumArgs() < 1) {
       S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
       return;
     }
-  } else if (AL.getName()->getName().equals("ownership_returns")) {
-    K = OwnershipAttr::Returns;
+    break;
+  case AttributeList::AT_ownership_returns:
+    K = attr::OwnershipReturns;
     if (AL.getNumArgs() > 1) {
       S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
           << AL.getNumArgs() + 1;
       return;
     }
-  }
-  // This should never happen given how we are called.
-  if (K == OwnershipAttr::None) {
-    return;
+    break;
+  default:
+    // This should never happen given how we are called.
+    llvm_unreachable("Unknown ownership attribute");
   }
 
   if (!isFunction(d) || !hasFunctionProto(d)) {
@@ -408,7 +411,8 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
 
   llvm::SmallVector<unsigned, 10> OwnershipArgs;
 
-  for (AttributeList::arg_iterator I = AL.arg_begin(), E = AL.arg_end(); I != E; ++I) {
+  for (AttributeList::arg_iterator I = AL.arg_begin(), E = AL.arg_end(); I != E;
+       ++I) {
 
     Expr *IdxExpr = static_cast<Expr *>(*I);
     llvm::APSInt ArgNum(32);
@@ -428,21 +432,21 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
     }
     --x;
     switch (K) {
-    case OwnershipAttr::Takes:
-    case OwnershipAttr::Holds: {
+    case attr::OwnershipTakes:
+    case attr::OwnershipHolds: {
       // Is the function argument a pointer type?
       QualType T = getFunctionOrMethodArgType(d, x);
       if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
         // FIXME: Should also highlight argument in decl.
         S.Diag(AL.getLoc(), diag::err_ownership_type)
-            << ((K==OwnershipAttr::Takes)?"ownership_takes":"ownership_holds")
+            << ((K==attr::OwnershipTakes)?"ownership_takes":"ownership_holds")
             << "pointer"
             << IdxExpr->getSourceRange();
         continue;
       }
       break;
     }
-    case OwnershipAttr::Returns: {
+    case attr::OwnershipReturns: {
       if (AL.getNumArgs() > 1) {
           // Is the function argument an integer type?
           Expr *IdxExpr = static_cast<Expr *>(AL.getArg(0));
@@ -457,20 +461,18 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
       }
       break;
     }
-    // Should never happen, here to silence a warning.
-    default: {
-      return;
-    }
+    default:
+      llvm_unreachable("Unknown ownership attribute");
     } // switch
 
     // Check we don't have a conflict with another ownership attribute.
-    if (d->hasAttrs()) {
+    if (K != attr::OwnershipReturns && d->hasAttrs()) {
       for (const Attr *attr = d->getAttrs(); attr; attr = attr->getNext()) {
         if (const OwnershipAttr* Att = dyn_cast<OwnershipAttr>(attr)) {
           // Two ownership attributes of the same kind can't conflict,
           // except returns attributes.
-          if (K == OwnershipAttr::Returns || Att->getKind() != K) {
-            for (const unsigned *I = Att->begin(), *E = Att->end(); I != E; ++I) {
+          if (Att->getKind() != K) {
+            for (const unsigned *I = Att->begin(), *E = Att->end(); I!=E; ++I) {
               if (x == *I) {
                 S.Diag(AL.getLoc(), diag::err_attributes_are_not_compatible)
                     << AL.getName()->getName() << "ownership_*";
@@ -487,7 +489,7 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
   unsigned size = OwnershipArgs.size();
   llvm::array_pod_sort(start, start + size);
   switch (K) {
-  case OwnershipAttr::Takes: {
+  case attr::OwnershipTakes: {
     if (OwnershipArgs.empty()) {
       S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
       return;
@@ -496,7 +498,7 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
                                                     Module));
     break;
   }
-  case OwnershipAttr::Holds: {
+  case attr::OwnershipHolds: {
     if (OwnershipArgs.empty()) {
       S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
       return;
@@ -505,13 +507,13 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
                                                     Module));
     break;
   }
-  case OwnershipAttr::Returns: {
+  case attr::OwnershipReturns: {
     d->addAttr(::new (S.Context) OwnershipReturnsAttr(S.Context, start, size,
                                                       Module));
     break;
   }
   default:
-    break;
+    llvm_unreachable("Unknown ownership attribute");
   }
 }
 

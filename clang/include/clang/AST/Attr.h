@@ -379,22 +379,13 @@ class OwnershipAttr: public AttrWithString {
   unsigned* ArgNums;
   unsigned Size;
 public:
-  enum OwnershipKind { Holds, Takes, Returns, None };
-  OwnershipKind OKind;
   attr::Kind AKind;
 public:
   OwnershipAttr(attr::Kind AK, ASTContext &C, unsigned* arg_nums, unsigned size,
-                       llvm::StringRef module, OwnershipKind kind);
+                llvm::StringRef module);
 
 
   virtual void Destroy(ASTContext &C);
-
-  OwnershipKind getKind() const {
-    return OKind;
-  }
-  bool isKind(const OwnershipKind k) const {
-    return OKind == k;
-  }
 
   /// Ownership attributes have a 'module', which is the name of a kind of
   /// resource that can be checked.
@@ -423,7 +414,14 @@ public:
   virtual Attr *clone(ASTContext &C) const;
 
   static bool classof(const Attr *A) {
-    return true;
+    switch (A->getKind()) {
+    case attr::OwnershipTakes:
+    case attr::OwnershipHolds:
+    case attr::OwnershipReturns:
+      return true;
+    default:
+      return false;
+    }
   }
   static bool classof(const OwnershipAttr *A) {
     return true;
@@ -443,9 +441,6 @@ public:
   static bool classof(const OwnershipTakesAttr *A) {
     return true;
   }
-  static bool classof(const OwnershipAttr *A) {
-    return A->OKind == Takes;
-  }
 };
 
 class OwnershipHoldsAttr: public OwnershipAttr {
@@ -461,9 +456,6 @@ public:
   static bool classof(const OwnershipHoldsAttr *A) {
     return true;
   }
-  static bool classof(const OwnershipAttr *A) {
-    return A->OKind == Holds;
-  }
 };
 
 class OwnershipReturnsAttr: public OwnershipAttr {
@@ -478,9 +470,6 @@ public:
   }
   static bool classof(const OwnershipReturnsAttr *A) {
     return true;
-  }
-  static bool classof(const OwnershipAttr *A) {
-    return A->OKind == Returns;
   }
 };
 
