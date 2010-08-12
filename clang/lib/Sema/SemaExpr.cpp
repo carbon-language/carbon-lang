@@ -3995,6 +3995,10 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   }
 
   Kind = getScalarCastKind(Context, castExpr->getType(), castType);
+
+  if (Kind == CastExpr::CK_Unknown || Kind == CastExpr::CK_BitCast)
+    CheckCastAlign(castExpr, castType, TyR);
+
   return false;
 }
 

@@ -971,6 +971,10 @@ def warn_impcast_integer_64_32 : Warning<
   "implicit conversion loses integer precision: %0 to %1">,
   InGroup<DiagGroup<"shorten-64-to-32">>, DefaultIgnore;
 
+def warn_cast_align : Warning<
+  "cast from %0 to %1 increases required alignment from %2 to %3">,
+  InGroup<CastAlign>, DefaultIgnore;
+
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;
 def warn_transparent_union_attribute_field_size_align : Warning<

@@ -26,7 +26,7 @@ def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
 def BoolConversions : DiagGroup<"bool-conversions">;
 def CXXCompat: DiagGroup<"c++-compat">;
-def : DiagGroup<"cast-align">;
+def CastAlign : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;

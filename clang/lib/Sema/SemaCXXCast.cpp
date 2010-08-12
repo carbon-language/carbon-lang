@@ -468,6 +468,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Reinterpret
       << SrcExpr->getType() << DestType << OpRange;
+  else if (Kind == CastExpr::CK_Unknown || Kind == CastExpr::CK_BitCast)
+    Self.CheckCastAlign(SrcExpr, DestType, OpRange);
 }
 
 
@@ -494,6 +496,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                     Kind, BasePath) != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Static
       << SrcExpr->getType() << DestType << OpRange;
+  else if (Kind == CastExpr::CK_Unknown || Kind == CastExpr::CK_BitCast)
+    Self.CheckCastAlign(SrcExpr, DestType, OpRange);
 }
 
 /// TryStaticCast - Check if a static cast can be performed, and do so if
@@ -1303,6 +1307,8 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   if (tcr != TC_Success && msg != 0)
     Diag(R.getBegin(), msg) << (FunctionalStyle ? CT_Functional : CT_CStyle)
       << CastExpr->getType() << CastTy << R;
+  else if (Kind == CastExpr::CK_Unknown || Kind == CastExpr::CK_BitCast)
+    CheckCastAlign(CastExpr, CastTy, R);
 
   return tcr != TC_Success;
 }

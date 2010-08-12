@@ -2796,3 +2796,48 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 
   return HasInvalidParm;
 }
+
+/// CheckCastAlign - Implements -Wcast-align, which warns when a
+/// pointer cast increases the alignment requirements.
+void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
+  // This is actually a lot of work to potentially be doing on every
+  // cast; don't do it if we're ignoring -Wcast_align (as is the default).
+  if (getDiagnostics().getDiagnosticLevel(diag::warn_cast_align)
+        == Diagnostic::Ignored)
+    return;
+
+  // Ignore dependent types.
+  if (T->isDependentType() || Op->getType()->isDependentType())
+    return;
+
+  // Require that the destination be a pointer type.
+  const PointerType *DestPtr = T->getAs<PointerType>();
+  if (!DestPtr) return;
+
+  // If the destination has alignment 1, we're done.
+  QualType DestPointee = DestPtr->getPointeeType();
+  if (DestPointee->isIncompleteType()) return;
+  CharUnits DestAlign = Context.getTypeAlignInChars(DestPointee);
+  if (DestAlign.isOne()) return;
+
+  // Require that the source be a pointer type.
+  const PointerType *SrcPtr = Op->getType()->getAs<PointerType>();
+  if (!SrcPtr) return;
+  QualType SrcPointee = SrcPtr->getPointeeType();
+
+  // Whitelist casts from cv void*.  We already implicitly
+  // whitelisted casts to cv void*, since they have alignment 1.
+  // Also whitelist casts involving incomplete types, which implicitly
+  // includes 'void'.
+  if (SrcPointee->isIncompleteType()) return;
+
+  CharUnits SrcAlign = Context.getTypeAlignInChars(SrcPointee);
+  if (SrcAlign >= DestAlign) return;
+
+  Diag(TRange.getBegin(), diag::warn_cast_align)
+    << Op->getType() << T
+    << static_cast<unsigned>(SrcAlign.getQuantity())
+    << static_cast<unsigned>(DestAlign.getQuantity())
+    << TRange << Op->getSourceRange();
+}
+
