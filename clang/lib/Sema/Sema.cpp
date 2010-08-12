@@ -18,7 +18,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/APFloat.h"
 #include "clang/Sema/ExternalSemaSource.h"
-#include "clang/AST/ASTConsumer.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/DeclObjC.h"
@@ -145,7 +145,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
                   ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));
   
   // Tell the AST consumer about this Sema object.
-  Consumer.Initialize(this);
+  Consumer.Initialize(Context);
   
   // FIXME: Isn't this redundant with the initialization above?
   if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
@@ -154,7 +154,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   // Tell the external Sema source about this Sema object.
   if (ExternalSemaSource *ExternalSema
         = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
-    ExternalSema->InitializeSema(S)
+    ExternalSema->InitializeSema(*this);
 }
 
 Sema::~Sema() {

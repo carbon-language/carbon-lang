@@ -67,6 +67,8 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
     Stmt::CollectingStats(true);
   }
 
+  ASTConsumer *Consumer = &S.getASTConsumer();
+
   Parser P(S.getPreprocessor(), S);
   S.getPreprocessor().EnterMainSourceFile();
   
@@ -93,15 +95,15 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
     Consumer->HandleTopLevelDecl(DeclGroupRef(*I));
   
   // Dump record layouts, if requested.
-  if (PP.getLangOptions().DumpRecordLayouts)
-    DumpRecordLayouts(Ctx);
+  if (S.getLangOptions().DumpRecordLayouts)
+    DumpRecordLayouts(S.getASTContext());
   
-  Consumer->HandleTranslationUnit(Ctx);
+  Consumer->HandleTranslationUnit(S.getASTContext());
   
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     P.getActions().PrintStats();
-    Ctx.PrintStats();
+    S.getASTContext().PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
     Consumer->PrintStats();
