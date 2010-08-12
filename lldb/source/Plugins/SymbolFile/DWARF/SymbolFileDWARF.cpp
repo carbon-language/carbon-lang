@@ -1144,8 +1144,8 @@ SymbolFileDWARF::ParseFunctionBlocks
 
         switch (tag)
         {
-        case DW_TAG_subprogram:
         case DW_TAG_inlined_subroutine:
+        case DW_TAG_subprogram:
         case DW_TAG_lexical_block:
             {
                 DWARFDebugRanges::RangeList ranges;
@@ -1160,25 +1160,44 @@ SymbolFileDWARF::ParseFunctionBlocks
                 int call_file = 0;
                 int call_line = 0;
                 int call_column = 0;
-                if (die->GetDIENamesAndRanges(this, dwarf_cu, name, mangled_name, ranges, decl_file, decl_line, decl_column, call_file, call_line, call_column))
+                if (die->GetDIENamesAndRanges(this, dwarf_cu, name, mangled_name, ranges, 
+                                              decl_file, decl_line, decl_column,
+                                              call_file, call_line, call_column))
                 {
                     if (tag == DW_TAG_subprogram)
                     {
                         assert (subprogram_low_pc == LLDB_INVALID_ADDRESS);
                         subprogram_low_pc = ranges.LowestAddress(0);
                     }
-
+                    else if (tag == DW_TAG_inlined_subroutine)
+                    {
+                        // We get called here for inlined subroutines in two ways.  
+                        // The first time is when we are making the Function object 
+                        // for this inlined concrete instance.  Since we're creating a top level block at
+                        // here, the subprogram_low_pc will be LLDB_INVALID_ADDRESS.  So we need to 
+                        // adjust the containing address.
+                        // The second time is when we are parsing the blocks inside the function that contains
+                        // the inlined concrete instance.  Since these will be blocks inside the containing "real"
+                        // function the offset will be for that function.  
+                        if (subprogram_low_pc == LLDB_INVALID_ADDRESS)
+                        {
+                            subprogram_low_pc = ranges.LowestAddress(0);
+                        }
+                    }
+                    
                     AddRangesToBlock (blocks, blockID, ranges, subprogram_low_pc);
 
                     if (tag != DW_TAG_subprogram && (name != NULL || mangled_name != NULL))
                     {
                         std::auto_ptr<Declaration> decl_ap;
                         if (decl_file != 0 || decl_line != 0 || decl_column != 0)
-                            decl_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), decl_line, decl_column));
+                            decl_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), 
+                                                          decl_line, decl_column));
 
                         std::auto_ptr<Declaration> call_ap;
                         if (call_file != 0 || call_line != 0 || call_column != 0)
-                            call_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(call_file), call_line, call_column));
+                            call_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(call_file), 
+                                                          call_line, call_column));
 
                         blocks.SetInlinedFunctionInfo(blockID, name, mangled_name, decl_ap.get(), call_ap.get());
                     }
@@ -1187,7 +1206,8 @@ SymbolFileDWARF::ParseFunctionBlocks
 
                     if (parse_children && die->HasChildren())
                     {
-                        blocks_added += ParseFunctionBlocks(sc, blockID, dwarf_cu, die->GetFirstChild(), subprogram_low_pc, true, true);
+                        blocks_added += ParseFunctionBlocks(sc, blockID, dwarf_cu, die->GetFirstChild(), 
+                                                            subprogram_low_pc, true, true);
                     }
                 }
             }
@@ -2854,6 +2874,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                 }
                 break;
 
+            case DW_TAG_inlined_subroutine:
             case DW_TAG_subprogram:
             case DW_TAG_subroutine_type:
                 {
