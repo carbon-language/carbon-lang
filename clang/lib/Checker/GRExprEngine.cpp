@@ -527,8 +527,7 @@ const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
   if (!CO->empty()) {
     // Let the checkers have a crack at the assume before the transfer functions
     // get their turn.
-    for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
-          I != E; ++I) {
+    for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I!=E; ++I) {
 
       // If any checker declares the state infeasible (or if it starts that
       // way), bail out.
