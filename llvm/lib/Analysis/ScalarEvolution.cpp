@@ -1373,6 +1373,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   // so, merge them together into an multiply expression.  Since we sorted the
   // list, these values are required to be adjacent.
   const Type *Ty = Ops[0]->getType();
+  bool FoundMatch = false;
   for (unsigned i = 0, e = Ops.size()-1; i != e; ++i)
     if (Ops[i] == Ops[i+1]) {      //  X + Y + Y  -->  X + Y*2
       // Found a match, merge the two values into a multiply, and add any
@@ -1381,10 +1382,13 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       const SCEV *Mul = getMulExpr(Ops[i], Two);
       if (Ops.size() == 2)
         return Mul;
-      Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
-      Ops.push_back(Mul);
-      return getAddExpr(Ops, HasNUW, HasNSW);
+      Ops[i] = Mul;
+      Ops.erase(Ops.begin()+i+1);
+      --i; --e;
+      FoundMatch = true;
     }
+  if (FoundMatch)
+    return getAddExpr(Ops, HasNUW, HasNSW);
 
   // Check for truncates. If all the operands are truncated from the same
   // type, see if factoring out the truncate would permit the result to be
