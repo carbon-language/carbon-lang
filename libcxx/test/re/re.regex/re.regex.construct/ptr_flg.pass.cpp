@@ -29,9 +29,33 @@ test(const CharT* p, std::regex_constants::syntax_option_type f, unsigned mc)
 
 int main()
 {
-    test("", std::regex_constants::basic, 0);
     test("\\(a\\)", std::regex_constants::basic, 1);
     test("\\(a[bc]\\)", std::regex_constants::basic, 1);
     test("\\(a\\([bc]\\)\\)", std::regex_constants::basic, 2);
     test("(a([bc]))", std::regex_constants::basic, 0);
+
+    test("\\(a\\)", std::regex_constants::extended, 0);
+    test("\\(a[bc]\\)", std::regex_constants::extended, 0);
+    test("\\(a\\([bc]\\)\\)", std::regex_constants::extended, 0);
+    test("(a([bc]))", std::regex_constants::extended, 2);
+
+    test("\\(a\\)", std::regex_constants::ECMAScript, 0);
+    test("\\(a[bc]\\)", std::regex_constants::ECMAScript, 0);
+    test("\\(a\\([bc]\\)\\)", std::regex_constants::ECMAScript, 0);
+    test("(a([bc]))", std::regex_constants::ECMAScript, 2);
+
+    test("\\(a\\)", std::regex_constants::awk, 0);
+    test("\\(a[bc]\\)", std::regex_constants::awk, 0);
+    test("\\(a\\([bc]\\)\\)", std::regex_constants::awk, 0);
+    test("(a([bc]))", std::regex_constants::awk, 2);
+
+    test("\\(a\\)", std::regex_constants::grep, 1);
+    test("\\(a[bc]\\)", std::regex_constants::grep, 1);
+    test("\\(a\\([bc]\\)\\)", std::regex_constants::grep, 2);
+    test("(a([bc]))", std::regex_constants::grep, 0);
+
+    test("\\(a\\)", std::regex_constants::egrep, 0);
+    test("\\(a[bc]\\)", std::regex_constants::egrep, 0);
+    test("\\(a\\([bc]\\)\\)", std::regex_constants::egrep, 0);
+    test("(a([bc]))", std::regex_constants::egrep, 2);
 }

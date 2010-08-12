@@ -143,10 +143,6 @@
 #define _LIBCPP_NO_EXCEPTIONS
 #endif
 
-#ifndef __GXX_RTTI
-#define _LIBCPP_NO_RTTI
-#endif
-
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
