@@ -674,8 +674,14 @@ void SplitEditor::rewrite() {
 
   // dupli_ goes in last, after rewriting.
   if (dupli_) {
-    dupli_->RenumberValues(lis_);
-    intervals_.push_back(dupli_);
+    if (dupli_->empty()) {
+      DEBUG(dbgs() << "  dupli became empty?\n");
+      lis_.removeInterval(dupli_->reg);
+      dupli_ = 0;
+    } else {
+      dupli_->RenumberValues(lis_);
+      intervals_.push_back(dupli_);
+    }
   }
 
   // Calculate spill weight and allocation hints for new intervals.
