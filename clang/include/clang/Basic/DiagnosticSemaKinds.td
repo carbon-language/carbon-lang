@@ -845,7 +845,7 @@ def err_attribute_argument_out_of_bounds : Error<
   "'%0' attribute parameter %1 is out of bounds">;
 def err_attribute_requires_objc_interface : Error<
   "attribute may only be applied to an Objective-C interface">;
-def err_nonnull_pointers_only : Error<
+def warn_nonnull_pointers_only : Warning<
   "nonnull attribute only applies to pointer arguments">;
 def err_ownership_type : Error<
   "%0 attribute only applies to %1 arguments">;

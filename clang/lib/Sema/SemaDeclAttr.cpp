@@ -321,7 +321,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     QualType T = getFunctionOrMethodArgType(d, x);
     if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
       // FIXME: Should also highlight argument in decl.
-      S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only)
+      S.Diag(Attr.getLoc(), diag::warn_nonnull_pointers_only)
         << "nonnull" << Ex->getSourceRange();
       continue;
     }

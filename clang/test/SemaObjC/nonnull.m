@@ -43,3 +43,5 @@ foo (int i1, int i2, int i3, void (^cp1)(), void (^cp2)(), void (^cp3)())
   func6((NSObject*) 0); // no-warning
   func7((NSObject*) 0); // no-warning
 }
+
+void func5(int) __attribute__((nonnull)); // expected-warning{{'nonnull' attribute applied to function with no pointer arguments}}
