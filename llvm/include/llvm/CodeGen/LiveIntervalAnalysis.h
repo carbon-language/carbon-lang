@@ -42,7 +42,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterClass;
   class VirtRegMap;
-  
+
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
     MachineRegisterInfo* mri_;
@@ -123,7 +123,7 @@ namespace llvm {
     unsigned getFuncInstructionCount() {
       return indexes_->getFunctionSize();
     }
-    
+
     /// getApproximateInstructionCount - computes an estimate of the number
     /// of instructions in a given LiveInterval.
     unsigned getApproximateInstructionCount(LiveInterval& I) {
@@ -155,7 +155,7 @@ namespace llvm {
     /// dupInterval - Duplicate a live interval. The caller is responsible for
     /// managing the allocated memory.
     LiveInterval *dupInterval(LiveInterval *li);
-    
+
     /// addLiveRangeToEndOfBlock - Given a register and an instruction,
     /// adds a live range from that instruction to the end of its MBB.
     LiveRange addLiveRangeToEndOfBlock(unsigned reg,
@@ -187,7 +187,7 @@ namespace llvm {
     SlotIndex getInstructionIndex(const MachineInstr *instr) const {
       return indexes_->getInstructionIndex(instr);
     }
-    
+
     /// Returns the instruction associated with the given index.
     MachineInstr* getInstructionFromIndex(SlotIndex index) const {
       return indexes_->getInstructionFromIndex(index);
@@ -196,12 +196,12 @@ namespace llvm {
     /// Return the first index in the given basic block.
     SlotIndex getMBBStartIdx(const MachineBasicBlock *mbb) const {
       return indexes_->getMBBStartIdx(mbb);
-    } 
+    }
 
     /// Return the last index in the given basic block.
     SlotIndex getMBBEndIdx(const MachineBasicBlock *mbb) const {
       return indexes_->getMBBEndIdx(mbb);
-    } 
+    }
 
     bool isLiveInToMBB(const LiveInterval &li,
                        const MachineBasicBlock *mbb) const {
@@ -306,7 +306,7 @@ namespace llvm {
     /// within a single basic block.
     bool intervalIsInOneMBB(const LiveInterval &li) const;
 
-  private:      
+  private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
 
@@ -320,7 +320,7 @@ namespace llvm {
 
     /// isPartialRedef - Return true if the specified def at the specific index
     /// is partially re-defining the specified live interval. A common case of
-    /// this is a definition of the sub-register. 
+    /// this is a definition of the sub-register.
     bool isPartialRedef(SlotIndex MIIdx, MachineOperand &MO,
                         LiveInterval &interval);
 
