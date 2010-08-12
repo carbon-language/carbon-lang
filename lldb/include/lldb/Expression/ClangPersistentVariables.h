@@ -26,12 +26,14 @@ class ClangPersistentVariable
     friend class ClangPersistentVariables;
 public:
     ClangPersistentVariable () :
+        m_name(),
         m_user_type(),
         m_data()
     {
     }
     
     ClangPersistentVariable (const ClangPersistentVariable &pv) :
+        m_name(pv.m_name),
         m_user_type(pv.m_user_type),
         m_data(pv.m_data)
     {
@@ -39,6 +41,7 @@ public:
     
     ClangPersistentVariable &operator=(const ClangPersistentVariable &pv)
     {
+        m_name = pv.m_name;
         m_user_type = pv.m_user_type;
         m_data = pv.m_data;
         return *this;
@@ -58,12 +61,21 @@ public:
     {
         return m_user_type;
     }
+    
+    Error Print(Stream &output_stream,
+                ExecutionContext &exe_ctx,
+                lldb::Format format,
+                bool show_types,
+                bool show_summary,
+                bool verbose);
 private:
-    ClangPersistentVariable (TypeFromUser user_type)
+    ClangPersistentVariable (ConstString name, TypeFromUser user_type)
     {
+        m_name = name;
         m_user_type = user_type;
         m_data = lldb::DataBufferSP(new DataBufferHeap(Size(), 0));
     }
+    ConstString         m_name;
     TypeFromUser        m_user_type;
     lldb::DataBufferSP  m_data;
 };
@@ -72,8 +84,9 @@ class ClangPersistentVariables
 {
 public:
     ClangPersistentVariable *CreateVariable (ConstString name, TypeFromUser user_type);
-    ClangPersistentVariable *CreateResultVariable (TypeFromUser user_type);
     ClangPersistentVariable *GetVariable (ConstString name);
+    
+    void GetNextResultName(std::string &name);
     
     ClangPersistentVariables ();
 private:

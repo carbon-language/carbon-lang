@@ -39,6 +39,12 @@ public:
                            llvm::PassManagerType T = llvm::PMT_ModulePassManager);
     llvm::PassManagerType getPotentialPassManagerType() const;
 private:
+    // pass to find the result variable created in the result synthesizer and
+    // make a result variable out of it (or a void variable if there is no
+    // result)
+    bool createResultVariable(llvm::Module &M,
+                              llvm::Function &F);
+    
     // pass to rewrite Objective-C method calls to use the runtime function
     // sel_registerName
     bool RewriteObjCSelector(llvm::Instruction* selector_load,

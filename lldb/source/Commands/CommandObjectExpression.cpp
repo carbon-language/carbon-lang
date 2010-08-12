@@ -252,7 +252,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     bool canInterpret = false;
     
     clang::ASTContext *ast_context = clang_expr.GetASTContext ();
-    Value expr_result;
+    ClangPersistentVariable *expr_result = 0;
     Error expr_error;
     
     canInterpret = clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes);
@@ -373,79 +373,32 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
                     
         if (!expr_decl_map.Dematerialize(&m_exe_ctx, expr_result, expr_error))
         {
-            error_stream.Printf ("Couldn't dematerialize struct: %s\n", expr_error.AsCString("unknown error"));
+            error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
             return false;
         }
     }
-            
-    ///////////////////////////////////////
-    // Interpret the result and print it
-    //
     
-    lldb::Format format = m_options.format;
-    
-    // Resolve any values that are possible
-    expr_result.ResolveValue (&m_exe_ctx, ast_context);
-    
-    if (expr_result.GetContextType () == Value::eContextTypeInvalid &&
-        expr_result.GetValueType () == Value::eValueTypeScalar &&
-        format == eFormatDefault)
+    if (expr_result)
     {
-        // The expression result is just a scalar with no special formatting
-        expr_result.GetScalar ().GetValue (&output_stream, m_options.show_types);
-        output_stream.EOL ();
-        return true;
-    }
-    
-    // The expression result is more complext and requires special handling
-    DataExtractor data;
-    expr_error = expr_result.GetValueAsData (&m_exe_ctx, ast_context, data, 0);
-    
-    if (!expr_error.Success ())
-    {
-        error_stream.Printf ("error: couldn't resolve result value: %s\n", expr_error.AsCString ());
-        return false;
-    }
-    
-    if (format == eFormatDefault)
-        format = expr_result.GetValueDefaultFormat ();
-    
-    void *clang_type = expr_result.GetValueOpaqueClangQualType ();
-    
-    if (clang_type)
-    {
-        if (m_options.show_types)
-            output_stream.Printf("(%s) ", ClangASTType::GetClangTypeName (clang_type).GetCString());
+        StreamString ss;
         
-        ClangASTType::DumpValue (ast_context,               // The ASTContext that the clang type belongs to
-                                 clang_type,                // The opaque clang type we want to dump that value of
-                                 &m_exe_ctx,                // The execution context for memory and variable access
-                                 &output_stream,            // Stream to dump to
-                                 format,                    // Format to use when dumping
-                                 data,                      // A buffer containing the bytes for the clang type
-                                 0,                         // Byte offset within "data" where value is
-                                 data.GetByteSize (),       // Size in bytes of the value we are dumping
-                                 0,                         // Bitfield bit size
-                                 0,                         // Bitfield bit offset
-                                 m_options.show_types,      // Show types?
-                                 m_options.show_summary,    // Show summary?
-                                 m_options.debug,           // Debug logging output?
-                                 UINT32_MAX);               // Depth to dump in case this is an aggregate type
+        Error err = expr_result->Print (ss, 
+                                        m_exe_ctx, 
+                                        m_options.format,
+                                        m_options.show_types,
+                                        m_options.show_summary,
+                                        m_options.debug);
+        
+        if (err.Success())
+            output_stream.PutCString(ss.GetString().c_str());
+        else
+            error_stream.Printf ("Couldn't print result : %s\n", err.AsCString("unknown error"));
     }
     else
     {
-        data.Dump (&output_stream,          // Stream to dump to
-                   0,                       // Byte offset within "data"
-                   format,                  // Format to use when dumping
-                   data.GetByteSize (),     // Size in bytes of each item we are dumping
-                   1,                       // Number of items to dump
-                   UINT32_MAX,              // Number of items per line
-                   LLDB_INVALID_ADDRESS,    // Invalid address, don't show any offset/address context
-                   0,                       // Bitfield bit size
-                   0);                      // Bitfield bit offset
+        error_stream.Printf ("Expression produced no result\n");
     }
-    output_stream.EOL();
-    
+        
     return true;
 }
 

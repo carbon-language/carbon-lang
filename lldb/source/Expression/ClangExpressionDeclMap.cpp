@@ -83,22 +83,25 @@ ClangExpressionDeclMap::GetIndexForDecl (uint32_t &index,
 
 // Interface for IRForTarget
 
+void
+ClangExpressionDeclMap::GetPersistentResultName (std::string &name)
+{
+    m_persistent_vars->GetNextResultName(m_result_name);
+    
+    name = m_result_name;
+}
+
 bool 
-ClangExpressionDeclMap::AddPersistentVariable (const clang::NamedDecl *decl)
+ClangExpressionDeclMap::AddPersistentVariable (const char *name, TypeFromParser parser_type)
 {
     clang::ASTContext *context(m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     
-    const clang::VarDecl *var(dyn_cast<clang::VarDecl>(decl));
-    
-    if (!var)
-        return false;
-    
     TypeFromUser user_type(ClangASTContext::CopyType(context, 
-                                                     &var->getASTContext(),
-                                                     var->getType().getAsOpaquePtr()),
+                                                     parser_type.GetASTContext(),
+                                                     parser_type.GetOpaqueQualType()),
                             context);
     
-    ConstString const_name(decl->getName().str().c_str());
+    ConstString const_name(name);
     
     ClangPersistentVariable *pvar = m_persistent_vars->CreateVariable(const_name, user_type);
     
@@ -292,10 +295,10 @@ ClangExpressionDeclMap::Materialize (ExecutionContext *exe_ctx,
 
 bool 
 ClangExpressionDeclMap::Dematerialize (ExecutionContext *exe_ctx,
-                                       lldb_private::Value &result_value,
+                                       ClangPersistentVariable *&result,
                                        Error &err)
 {
-    return DoMaterialize(true, exe_ctx, &result_value, err);
+    return DoMaterialize(true, exe_ctx, &result, err);
 }
 
 bool
@@ -366,11 +369,11 @@ ClangExpressionDeclMap::DumpMaterializedStruct(ExecutionContext *exe_ctx,
 bool 
 ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
                                        ExecutionContext *exe_ctx,
-                                       lldb_private::Value *result_value,
+                                       ClangPersistentVariable **result,
                                        Error &err)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-
+    
     if (!m_struct_laid_out)
     {
         err.SetErrorString("Structure hasn't been laid out yet");
@@ -426,35 +429,53 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
         
         if (!GetIndexForDecl(tuple_index, iter->m_decl)) 
         {
+            if (iter->m_name.find("___clang_expr_result") != std::string::npos)
+            {
+                if (dematerialize)
+                {
+                    // Here we pick up the odd anomaly produced by 
+                    // IRForTarget::createResultVariable (and described in a comment
+                    // there).
+                    //
+                    // We rename the variable to the name of the result PVar and
+                    // incidentally drop the address of the PVar into *result
+                    // (if it's non-NULL, of course).  We then let this case fall 
+                    // through to the persistent variable handler.
+                    
+                    if (log)
+                        log->PutCString("Found result member in the struct");
+                    
+                    iter->m_name = m_result_name;
+                    
+                    if (result)
+                    {
+                        if (log)
+                            log->PutCString("Returning result PVar");
+                        
+                        *result = m_persistent_vars->GetVariable(ConstString(m_result_name.c_str()));
+                        
+                        if (!*result)
+                        {
+                            err.SetErrorStringWithFormat("Couldn't find persistent variable for result %s", m_result_name.c_str());
+                        }
+                    }
+                    else
+                    {
+                        if (log)
+                            log->PutCString("Didn't return result PVar; pointer was NULL");
+                    }
+                }
+                else
+                {
+                    // The result variable doesn't need to be materialized, ever.
+                    continue;
+                }
+            }
+            
             if (iter->m_name[0] == '$')
             {
                 if (!DoMaterializeOnePersistentVariable(dematerialize, *exe_ctx, iter->m_name.c_str(), m_materialized_location + iter->m_offset, err))
                     return false;
-            }
-            else if (iter->m_name.find("___clang_expr_result") != std::string::npos)
-            {
-                if (log)
-                    log->Printf("Found special result variable %s", iter->m_name.c_str());
-                
-                if (dematerialize)
-                {
-                    clang::ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
-                    
-                    if (!context)
-                    {
-                        err.SetErrorString("Couldn't find a scratch AST context to put the result type into"); 
-                    }
-                    
-                    TypeFromUser copied_type(ClangASTContext::CopyType(context, 
-                                                                       iter->m_parser_type.GetASTContext(),
-                                                                       iter->m_parser_type.GetOpaqueQualType()),
-                                             context);
-                    
-                    result_value->SetContext(Value::eContextTypeOpaqueClangQualType, copied_type.GetOpaqueQualType());
-                    
-                    result_value->SetValueType(Value::eValueTypeLoadAddress);
-                    result_value->GetScalar() = (uintptr_t)m_materialized_location + iter->m_offset;
-                }
             }
             else
             {

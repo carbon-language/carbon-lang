@@ -14,6 +14,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ValueSymbolTable.h"
 
 #include "clang/AST/ASTContext.h"
 
@@ -53,6 +54,129 @@ PrintValue(Value *V, bool truncate = false)
 
 IRForTarget::~IRForTarget()
 {
+}
+
+bool 
+IRForTarget::createResultVariable(llvm::Module &M,
+                                  llvm::Function &F)
+{
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    // Find the result variable
+            
+    Value *result_value = M.getNamedValue("___clang_expr_result");
+    
+    if (!result_value)
+    {
+        if (log)
+            log->PutCString("Couldn't find result variable");
+        return false;
+    }
+    
+    if (log)
+        log->Printf("Found result in the IR: %s", PrintValue(result_value, false).c_str());
+    
+    GlobalVariable *result_global = dyn_cast<GlobalVariable>(result_value);
+    
+    if (!result_global)
+    {
+        if (log)
+            log->PutCString("Result variable isn't a GlobalVariable");
+        return false;
+    }
+    
+    // Find the metadata and follow it to the VarDecl
+    
+    NamedMDNode *named_metadata = M.getNamedMetadata("clang.global.decl.ptrs");
+    
+    if (!named_metadata)
+    {
+        if (log)
+            log->PutCString("No global metadata");
+        
+        return false;
+    }
+        
+    unsigned num_nodes = named_metadata->getNumOperands();
+    unsigned node_index;
+    
+    MDNode *metadata_node = NULL;
+    
+    for (node_index = 0;
+         node_index < num_nodes;
+         ++node_index)
+    {
+        metadata_node = named_metadata->getOperand(node_index);
+        
+        if (metadata_node->getNumOperands() != 2)
+            continue;
+        
+        if (metadata_node->getOperand(0) == result_global)
+            break;
+    }
+    
+    if (!metadata_node)
+    {
+        if (log)
+            log->PutCString("Couldn't find result metadata");
+        return false;
+    }
+        
+    ConstantInt *constant_int = dyn_cast<ConstantInt>(metadata_node->getOperand(1));
+        
+    uint64_t result_decl_intptr = constant_int->getZExtValue();
+    
+    clang::VarDecl *result_decl = reinterpret_cast<clang::VarDecl *>(result_decl_intptr);
+        
+    // Get the next available result name from m_decl_map and create the persistent
+    // variable for it
+    
+    lldb_private::TypeFromParser result_decl_type (result_decl->getType().getAsOpaquePtr(),
+                                                   &result_decl->getASTContext());
+    std::string new_result_name;
+    
+    m_decl_map->GetPersistentResultName(new_result_name);
+    m_decl_map->AddPersistentVariable(new_result_name.c_str(), result_decl_type);
+    
+    if (log)
+        log->Printf("Creating a new result global: %s", new_result_name.c_str());
+        
+    // Construct a new result global and set up its metadata
+    
+    GlobalVariable *new_result_global = new GlobalVariable(M, 
+                                                           result_global->getType()->getElementType(),
+                                                           false, /* not constant */
+                                                           GlobalValue::ExternalLinkage,
+                                                           NULL, /* no initializer */
+                                                           new_result_name.c_str());
+    
+    // It's too late in compilation to create a new VarDecl for this, but we don't
+    // need to.  We point the metadata at the old VarDecl.  This creates an odd
+    // anomaly: a variable with a Value whose name is something like $0 and a
+    // Decl whose name is ___clang_expr_result.  This condition is handled in
+    // ClangExpressionDeclMap::DoMaterialize, and the name of the variable is
+    // fixed up.
+    
+    ConstantInt *new_constant_int = ConstantInt::get(constant_int->getType(), 
+                                                     result_decl_intptr,
+                                                     false);
+    
+    llvm::Value* values[2];
+    values[0] = new_result_global;
+    values[1] = new_constant_int;
+    
+    MDNode *persistent_global_md = MDNode::get(M.getContext(), values, 2);
+    named_metadata->addOperand(persistent_global_md);
+    
+    if (log)
+        log->Printf("Replacing %s with %s", 
+                    PrintValue(result_global).c_str(), 
+                    PrintValue(new_result_global).c_str());
+        
+    result_global->replaceAllUsesWith(new_result_global);
+    result_global->eraseFromParent();
+    
+    return true;
 }
 
 static bool isObjCSelectorRef(Value *V)
@@ -234,9 +358,12 @@ IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
     
     uintptr_t ptr = constant_int->getZExtValue();
     
-    clang::NamedDecl *decl = reinterpret_cast<clang::NamedDecl *>(ptr);
+    clang::VarDecl *decl = reinterpret_cast<clang::VarDecl *>(ptr);
     
-    if (!m_decl_map->AddPersistentVariable(decl))
+    lldb_private::TypeFromParser result_decl_type (decl->getType().getAsOpaquePtr(),
+                                                   &decl->getASTContext());
+    
+    if (!m_decl_map->AddPersistentVariable(decl->getName().str().c_str(), result_decl_type))
         return false;
     
     GlobalVariable *persistent_global = new GlobalVariable(M, 
@@ -760,7 +887,7 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         
         if (log)
             log->Printf("  %s (%s) placed at %d",
-                        decl->getIdentifier()->getNameStart(),
+                        value->getName().str().c_str(),
                         PrintValue(value, true).c_str(),
                         offset);
         
@@ -796,6 +923,13 @@ IRForTarget::runOnModule(Module &M)
     }
         
     Function::iterator bbi;
+    
+    ////////////////////////////////////////////////////////////
+    // Replace __clang_expr_result with a persistent variable
+    //
+    
+    if (!createResultVariable(M, *function))
+        return false;
     
     //////////////////////////////////
     // Run basic-block level passes

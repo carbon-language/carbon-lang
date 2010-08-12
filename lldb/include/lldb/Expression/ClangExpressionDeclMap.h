@@ -48,7 +48,8 @@ public:
                           const clang::Decl *decl);
     
     // Interface for IRForTarget
-    bool AddPersistentVariable (const clang::NamedDecl *decl);
+    void GetPersistentResultName (std::string &name);
+    bool AddPersistentVariable (const char *name, TypeFromParser type);
     bool AddValueToStruct (llvm::Value *value,
                            const clang::NamedDecl *decl,
                            std::string &name,
@@ -84,7 +85,7 @@ public:
                                 Error &error);
     
     bool Dematerialize(ExecutionContext *exe_ctx,
-                       lldb_private::Value &result_value,
+                       ClangPersistentVariable *&result,
                        Error &error);
     
     // Interface for ClangASTSource
@@ -127,6 +128,7 @@ private:
     bool                        m_struct_laid_out;
     lldb::addr_t                m_allocated_area;
     lldb::addr_t                m_materialized_location;
+    std::string                 m_result_name;
         
     Variable *FindVariableInScope(const SymbolContext &sym_ctx,
                                   const char *name,
@@ -145,7 +147,7 @@ private:
     
     bool DoMaterialize (bool dematerialize,
                         ExecutionContext *exe_ctx,
-                        lldb_private::Value *result_value, /* must be non-NULL if D is set */
+                        ClangPersistentVariable **result, /* must be non-NULL if D is set */
                         Error &err);
 
     bool DoMaterializeOnePersistentVariable(bool dematerialize,
