@@ -955,7 +955,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       if (ObjCInterfaceDecl *IDecl = OPT->getInterfaceDecl()) {
         if (!IDecl->isForwardDecl() && 
             !IDecl->lookupInstanceMethod(CSelector)) {
-          // Must further look into privaye implementation methods.
+          // Must further look into private implementation methods.
           if (!LookupPrivateInstanceMethod(CSelector, IDecl))
             Diag(ForLoc, diag::warn_collection_expr_type)
               << SecondType << CSelector << Second->getSourceRange();
