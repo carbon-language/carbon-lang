@@ -105,3 +105,17 @@ namespace test6 {
   class B : A<int> { B(); };
   B::B() {} // expected-note {{in instantiation of member function 'test6::A<int>::~A' requested here}}
 }
+
+// Make sure classes are marked invalid when they have invalid
+// members.  This avoids a crash-on-invalid.
+namespace test7 {
+  struct A {
+    ~A() const; // expected-error {{'const' qualifier is not allowed on a destructor}}
+  };
+  struct B : A {};
+
+  void test() {
+    B *b;
+    b->~B();
+  }
+}

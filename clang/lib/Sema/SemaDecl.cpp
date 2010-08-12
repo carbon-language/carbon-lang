@@ -3652,8 +3652,14 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                     bool &Redeclaration,
                                     bool &OverloadableAttrRequired) {
   // If NewFD is already known erroneous, don't do any of this checking.
-  if (NewFD->isInvalidDecl())
+  if (NewFD->isInvalidDecl()) {
+    // If this is a class member, mark the class invalid immediately.
+    // This avoids some consistency errors later.
+    if (isa<CXXMethodDecl>(NewFD))
+      cast<CXXMethodDecl>(NewFD)->getParent()->setInvalidDecl();
+
     return;
+  }
 
   if (NewFD->getResultType()->isVariablyModifiedType()) {
     // Functions returning a variably modified type violate C99 6.7.5.2p2
