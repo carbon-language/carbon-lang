@@ -2980,7 +2980,7 @@ unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
 // that we don't include here. We don't want to replace instructions selected
 // by intrinsics.
 static const unsigned ReplaceableInstrs[][3] = {
-  //PackedInt       PackedSingle     PackedDouble
+  //PackedSingle     PackedDouble    PackedInt
   { X86::MOVAPSmr,   X86::MOVAPDmr,  X86::MOVDQAmr  },
   { X86::MOVAPSrm,   X86::MOVAPDrm,  X86::MOVDQArm  },
   { X86::MOVAPSrr,   X86::MOVAPDrr,  X86::MOVDQArr  },
