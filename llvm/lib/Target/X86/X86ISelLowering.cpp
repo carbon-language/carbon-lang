@@ -883,7 +883,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FDIV,               MVT::v8f32, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v8f32, Legal);
     setOperationAction(ISD::FNEG,               MVT::v8f32, Custom);
-    //setOperationAction(ISD::BUILD_VECTOR,       MVT::v8f32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v8f32, Custom);
     //setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v8f32, Custom);
     //setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8f32, Custom);
     //setOperationAction(ISD::SELECT,             MVT::v8f32, Custom);
@@ -3412,18 +3412,27 @@ static SDValue getZeroVector(EVT VT, bool HasSSE2, SelectionDAG &DAG,
                              DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
 
-  // Always build zero vectors as <4 x i32> or <2 x i32> bitcasted to their dest
-  // type.  This ensures they get CSE'd.
+  // Always build zero vectors as <4 x i32> or <2 x i32> bitcasted
+  // to their dest type. This ensures they get CSE'd.
   SDValue Vec;
   if (VT.getSizeInBits() == 64) { // MMX
     SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
     Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, Cst, Cst);
-  } else if (HasSSE2) {  // SSE2
-    SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
-  } else { // SSE1
+  } else if (VT.getSizeInBits() == 128) {
+    if (HasSSE2) {  // SSE2
+      SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
+      Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
+    } else { // SSE1
+      SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
+      Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f32, Cst, Cst, Cst, Cst);
+    }
+  } else if (VT.getSizeInBits() == 256) { // AVX
+    // 256-bit logic and arithmetic instructions in AVX are
+    // all floating-point, no support for integer ops. Default
+    // to emitting fp zeroed vectors then.
     SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f32, Cst, Cst, Cst, Cst);
+    SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8f32, Ops, 8);
   }
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
 }
@@ -3437,9 +3446,9 @@ static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // type.  This ensures they get CSE'd.
   SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
   SDValue Vec;
-  if (VT.getSizeInBits() == 64)  // MMX
+  if (VT.getSizeInBits() == 64) // MMX
     Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, Cst, Cst);
-  else                                              // SSE
+  else // SSE
     Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
 }
@@ -3844,9 +3853,13 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
-  // All zero's are handled with pxor, all one's are handled with pcmpeqd.
-  if (ISD::isBuildVectorAllZeros(Op.getNode())
-      || ISD::isBuildVectorAllOnes(Op.getNode())) {
+  // All zero's are handled with pxor in SSE2 and above, xorps in SSE1 and
+  // all one's are handled with pcmpeqd. In AVX, zero's are handled with
+  // vpxor in 128-bit and xor{pd,ps} in 256-bit, but no 256 version of pcmpeqd
+  // is present, so AllOnes is ignored.
+  if (ISD::isBuildVectorAllZeros(Op.getNode()) ||
+      (Op.getValueType().getSizeInBits() != 256 &&
+       ISD::isBuildVectorAllOnes(Op.getNode()))) {
     // Canonicalize this to either <4 x i32> or <2 x i32> (SSE vs MMX) to
     // 1) ensure the zero vectors are CSE'd, and 2) ensure that i64 scalars are
     // eliminated on x86-32 hosts.

@@ -374,12 +374,14 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::MMX_V_SET0:   LowerUnaryToTwoAddr(OutMI, X86::MMX_PXORrr); break;
   case X86::MMX_V_SETALLONES:
     LowerUnaryToTwoAddr(OutMI, X86::MMX_PCMPEQDrr); break;
-  case X86::FsFLD0SS:     LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
-  case X86::FsFLD0SD:     LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
-  case X86::V_SET0PS:     LowerUnaryToTwoAddr(OutMI, X86::XORPSrr); break;
-  case X86::V_SET0PD:     LowerUnaryToTwoAddr(OutMI, X86::XORPDrr); break;
-  case X86::V_SET0PI:     LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
-  case X86::V_SETALLONES: LowerUnaryToTwoAddr(OutMI, X86::PCMPEQDrr); break;
+  case X86::FsFLD0SS:      LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
+  case X86::FsFLD0SD:      LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
+  case X86::V_SET0PS:      LowerUnaryToTwoAddr(OutMI, X86::XORPSrr); break;
+  case X86::V_SET0PSY:     LowerUnaryToTwoAddr(OutMI, X86::VXORPSYrr); break;
+  case X86::V_SET0PD:      LowerUnaryToTwoAddr(OutMI, X86::XORPDrr); break;
+  case X86::V_SET0PDY:     LowerUnaryToTwoAddr(OutMI, X86::VXORPDYrr); break;
+  case X86::V_SET0PI:      LowerUnaryToTwoAddr(OutMI, X86::PXORrr); break;
+  case X86::V_SETALLONES:  LowerUnaryToTwoAddr(OutMI, X86::PCMPEQDrr); break;
 
   case X86::MOV16r0:
     LowerSubReg32_Op0(OutMI, X86::MOV32r0);   // MOV16r0 -> MOV32r0
