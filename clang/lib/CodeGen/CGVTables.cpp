@@ -2465,6 +2465,9 @@ static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
   CGM.setGlobalVisibility(Fn, MD);
 
+  if (!CGM.getCodeGenOpts().HiddenWeakVTables)
+    return;
+
   // If the thunk has weak/linkonce linkage, but the function must be
   // emitted in every translation unit that references it, then we can
   // emit its thunks with hidden visibility, since its thunks must be
@@ -2491,7 +2494,7 @@ static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
 
   case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
-    if (!CGM.getCodeGenOpts().EmitWeakTemplatesHidden)
+    if (!CGM.getCodeGenOpts().HiddenWeakTemplateVTables)
       return;
     break;
   }

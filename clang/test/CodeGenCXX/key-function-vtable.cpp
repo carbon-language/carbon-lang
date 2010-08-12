@@ -47,5 +47,5 @@ void use_X1(X1 *x1) { x1->f(); }
 // CHECK: @_ZTV5testa = constant [3 x i8*] [i8* null
 // CHECK: @_ZTV5testc = weak_odr constant [3 x i8*] [i8* null
 // CHECK: @_ZTVN12_GLOBAL__N_15testgE = internal constant [3 x i8*] [i8* null
-// CHECK: @_ZTV5teste = weak_odr hidden constant [3 x i8*] [i8* null
-// CHECK: @_ZTV5testb = weak_odr hidden constant [3 x i8*] [i8* null
+// CHECK: @_ZTV5teste = weak_odr constant [3 x i8*] [i8* null
+// CHECK: @_ZTV5testb = weak_odr constant [3 x i8*] [i8* null

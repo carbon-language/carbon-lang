@@ -400,6 +400,8 @@ def ffreestanding : Flag<"-ffreestanding">,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_runtime : Flag<"-fgnu-runtime">,
   HelpText<"Generate output compatible with the standard GNU Objective-C runtime">;
+def fhidden_weak_vtables : Flag<"-fhidden-weak-vtables">,
+  HelpText<"Generate weak vtables and RTTI with hidden visibility">;
 def std_EQ : Joined<"-std=">,
   HelpText<"Language standard to compile for">;
 def fmath_errno : Flag<"-fmath-errno">,

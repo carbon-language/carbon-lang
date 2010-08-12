@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=HIDDEN %s
 
 namespace Test1 {
 
@@ -251,8 +252,8 @@ namespace Test10 {
   struct B { virtual void foo(); };
   struct C : A, B { void foo() {} };
 
-  // CHECK: define linkonce_odr void @_ZN6Test101C3fooEv
-  // CHECK: define linkonce_odr hidden void @_ZThn8_N6Test101C3fooEv
+  // CHECK-HIDDEN: define linkonce_odr void @_ZN6Test101C3fooEv
+  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZThn8_N6Test101C3fooEv
 
   void test() {
     C c;
@@ -262,5 +263,5 @@ namespace Test10 {
 /**** The following has to go at the end of the file ****/
 
 // This is from Test5:
-// CHECK: define linkonce_odr hidden void @_ZTv0_n24_N5Test51B1fEv
+// CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
 // CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(

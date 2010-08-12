@@ -225,6 +225,9 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
                                       bool IsForRTTI) const {
   setGlobalVisibility(GV, RD);
 
+  if (!CodeGenOpts.HiddenWeakVTables)
+    return;
+
   // We want to drop the visibility to hidden for weak type symbols.
   // This isn't possible if there might be unresolved references
   // elsewhere that rely on this symbol being visible.
@@ -260,7 +263,7 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   // to deal with mixed-visibility symbols.
   case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
-    if (!CodeGenOpts.EmitWeakTemplatesHidden)
+    if (!CodeGenOpts.HiddenWeakTemplateVTables)
       return;
     break;
   }

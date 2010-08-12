@@ -50,8 +50,10 @@ public:
                                   /// various IR entities came from.  Only useful
                                   /// when running CodeGen as a subroutine.
   unsigned FunctionSections  : 1; /// Set when -ffunction-sections is enabled
-  unsigned EmitWeakTemplatesHidden : 1;  /// Emit weak vtables and typeinfo for
+  unsigned HiddenWeakTemplateVTables : 1; /// Emit weak vtables and RTTI for
                                   /// template classes with hidden visibility
+  unsigned HiddenWeakVTables : 1; /// Emit weak vtables, RTTI, and thunks with
+                                  /// hidden visibility
   unsigned InstrumentFunctions : 1; /// Set when -finstrument-functions is enabled
   unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
@@ -112,7 +114,8 @@ public:
     DisableRedZone = 0;
     EmitDeclMetadata = 0;
     FunctionSections = 0;
-    EmitWeakTemplatesHidden = 0;
+    HiddenWeakTemplateVTables = 0;
+    HiddenWeakVTables = 0;
     MergeAllConstants = 1;
     NoCommon = 0;
     NoImplicitFloat = 0;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -o - | sort | FileCheck %s
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o - | sort | FileCheck %s
 
 // FIXME: Fails on Win32, dunno why.
 // XFAIL: win32

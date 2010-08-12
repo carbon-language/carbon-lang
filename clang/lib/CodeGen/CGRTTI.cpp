@@ -11,9 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/Type.h"
-#include "clang/AST/RecordLayout.h"
 #include "CodeGenModule.h"
+#include "clang/AST/RecordLayout.h"
+#include "clang/AST/Type.h"
+#include "clang/Frontend/CodeGenOptions.h"
+
 using namespace clang;
 using namespace CodeGen;
 
@@ -623,10 +625,13 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   // GCC only relies on the uniqueness of the type names, not the
   // type_infos themselves, so we can emit these as hidden symbols.
+  // But don't do this if we're worried about strict visibility
+  // compatibility.
   if (const RecordType *RT = dyn_cast<RecordType>(Ty))
     CGM.setTypeVisibility(GV, cast<CXXRecordDecl>(RT->getDecl()),
                           /*ForRTTI*/ true);
-  else if (Linkage == llvm::GlobalValue::WeakODRLinkage)
+  else if (CGM.getCodeGenOpts().HiddenWeakVTables &&
+           Linkage == llvm::GlobalValue::WeakODRLinkage)
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
