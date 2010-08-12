@@ -143,6 +143,18 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 
   ExprEvalContexts.push_back(
                   ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));
+  
+  // Tell the AST consumer about this Sema object.
+  Consumer.Initialize(this);
+  
+  // FIXME: Isn't this redundant with the initialization above?
+  if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
+    SC->InitializeSema(*this);
+  
+  // Tell the external Sema source about this Sema object.
+  if (ExternalSemaSource *ExternalSema
+        = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
+    ExternalSema->InitializeSema(S)
 }
 
 Sema::~Sema() {
@@ -151,6 +163,15 @@ Sema::~Sema() {
   delete TheTargetAttributesSema;
   while (!FunctionScopes.empty())
     PopFunctionOrBlockScope();
+  
+  // Tell the SemaConsumer to forget about us; we're going out of scope.
+  if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
+    SC->ForgetSema();
+
+  // Detach from the external Sema source.
+  if (ExternalSemaSource *ExternalSema
+      = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
+    ExternalSema->ForgetSema();
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.

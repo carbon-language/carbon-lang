@@ -640,7 +640,10 @@ public:
   Diagnostic &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
   const TargetAttributesSema &getTargetAttributesSema() const;
-
+  Preprocessor &getPreprocessor() const { return PP; }
+  ASTContext &getASTContext() const { return Context; }
+  ASTConsumer &getASTConsumer() const { return Consumer; }
+  
   /// \brief Helper class that creates diagnostics with optional
   /// template instantiation stacks.
   ///
