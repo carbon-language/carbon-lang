@@ -279,6 +279,33 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
   return Best;
 }
 
+/// getMultiUseBlocks - if curli has more than one use in a basic block, it
+/// may be an advantage to split curli for the duration of the block.
+bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
+  // If curli is local to one block, there is no point to splitting it.
+  if (usingBlocks_.size() <= 1)
+    return false;
+  // Add blocks with multiple uses.
+  for (BlockCountMap::iterator I = usingBlocks_.begin(), E = usingBlocks_.end();
+       I != E; ++I)
+    switch (I->second) {
+    case 0:
+    case 1:
+      continue;
+    case 2: {
+      // It doesn't pay to split a 2-instr block if it redefines curli.
+      VNInfo *VN1 = curli_->getVNInfoAt(lis_.getMBBStartIdx(I->first));
+      VNInfo *VN2 =
+        curli_->getVNInfoAt(lis_.getMBBEndIdx(I->first).getPrevIndex());
+      // live-in and live-out with a different value.
+      if (VN1 && VN2 && VN1 != VN2)
+        continue;
+    } // Fall through.
+    default:
+      Blocks.insert(I->first);
+    }
+  return !Blocks.empty();
+}
 
 //===----------------------------------------------------------------------===//
 //                               Split Editor
@@ -349,6 +376,27 @@ void SplitEditor::openIntv() {
   openli_ = createInterval();
   intervals_.push_back(openli_);
   liveThrough_ = false;
+}
+
+/// enterIntvBefore - Enter openli before the instruction at Idx. If curli is
+/// not live before Idx, a COPY is not inserted.
+void SplitEditor::enterIntvBefore(SlotIndex Idx) {
+  assert(openli_ && "openIntv not called before enterIntvBefore");
+
+  // Copy from curli_ if it is live.
+  if (VNInfo *CurVNI = curli_->getVNInfoAt(Idx.getUseIndex())) {
+    MachineInstr *MI = lis_.getInstructionFromIndex(Idx);
+    assert(MI && "enterIntvBefore called with invalid index");
+    VNInfo *VNI = insertCopy(*openli_, *MI->getParent(), MI);
+    openli_->addRange(LiveRange(VNI->def, Idx.getDefIndex(), VNI));
+
+    // Make sure CurVNI is properly mapped.
+    VNInfo *&mapVNI = valueMap_[CurVNI];
+    // We dont have SSA update yet, so only one entry per value is allowed.
+    assert(!mapVNI && "enterIntvBefore called more than once for the same value");
+    mapVNI = VNI;
+  }
+  DEBUG(dbgs() << "  enterIntvBefore " << Idx << ": " << *openli_ << '\n');
 }
 
 /// enterIntvAtEnd - Enter openli at the end of MBB.
@@ -433,6 +481,39 @@ void SplitEditor::useIntv(SlotIndex Start, SlotIndex End) {
                                 mapValue(I->valno)));
   DEBUG(dbgs() << "  added range [" << Start << ';' << End << "): " << *openli_
                << '\n');
+}
+
+/// leaveIntvAfter - Leave openli after the instruction at Idx.
+void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
+  assert(openli_ && "openIntv not called before leaveIntvAfter");
+
+  const LiveRange *CurLR = curli_->getLiveRangeContaining(Idx.getDefIndex());
+  if (!CurLR || CurLR->end <= Idx.getBoundaryIndex()) {
+    DEBUG(dbgs() << "  leaveIntvAfter at " << Idx << ": not live\n");
+    return;
+  }
+
+  // Was this value of curli live through openli?
+  if (!openli_->liveAt(CurLR->valno->def)) {
+    DEBUG(dbgs() << "  leaveIntvAfter " << Idx << ": using external value\n");
+    liveThrough_ = true;
+    return;
+  }
+
+  // We are going to insert a back copy, so we must have a dupli_.
+  LiveRange *DupLR = getDupLI()->getLiveRangeContaining(Idx.getDefIndex());
+  assert(DupLR && "dupli not live into black, but curli is?");
+
+  // Insert the COPY instruction.
+  MachineBasicBlock::iterator I = lis_.getInstructionFromIndex(Idx);
+  MachineInstr *MI = BuildMI(*I->getParent(), llvm::next(I), I->getDebugLoc(),
+                             tii_.get(TargetOpcode::COPY), dupli_->reg)
+                       .addReg(openli_->reg);
+  SlotIndex CopyIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
+  openli_->addRange(LiveRange(Idx.getDefIndex(), CopyIdx,
+                    mapValue(CurLR->valno)));
+  DupLR->valno->def = CopyIdx;
+  DEBUG(dbgs() << "  leaveIntvAfter " << Idx << ": " << *openli_ << '\n');
 }
 
 /// leaveIntvAtTop - Leave the interval at the top of MBB.
@@ -528,6 +609,7 @@ void SplitEditor::closeIntv() {
     DEBUG(dbgs() << "    dup2 " << *dupli_ << '\n');
   }
   openli_ = 0;
+  valueMap_.clear();
 }
 
 /// rewrite - after all the new live ranges have been created, rewrite
@@ -616,6 +698,52 @@ bool SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
 
   // Done.
   closeIntv();
+  rewrite();
+  return dupli_;
+}
+
+
+//===----------------------------------------------------------------------===//
+//                            Single Block Splitting
+//===----------------------------------------------------------------------===//
+
+/// splitSingleBlocks - Split curli into a separate live interval inside each
+/// basic block in Blocks. Return true if curli has been completely replaced,
+/// false if curli is still intact, and needs to be spilled or split further.
+bool SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
+  DEBUG(dbgs() << "splitSingleBlocks for " << Blocks.size() << " blocks.\n");
+  // Determine the first and last instruction using curli in each block.
+  typedef std::pair<SlotIndex,SlotIndex> IndexPair;
+  typedef DenseMap<const MachineBasicBlock*,IndexPair> IndexPairMap;
+  IndexPairMap MBBRange;
+  for (SplitAnalysis::InstrPtrSet::const_iterator I = sa_.usingInstrs_.begin(),
+       E = sa_.usingInstrs_.end(); I != E; ++I) {
+    const MachineBasicBlock *MBB = (*I)->getParent();
+    if (!Blocks.count(MBB))
+      continue;
+    SlotIndex Idx = lis_.getInstructionIndex(*I);
+    DEBUG(dbgs() << "BB#" << MBB->getNumber() << '\t' << Idx << '\t' << **I);
+    IndexPair &IP = MBBRange[MBB];
+    if (!IP.first.isValid() || Idx < IP.first)
+      IP.first = Idx;
+    if (!IP.second.isValid() || Idx > IP.second)
+      IP.second = Idx;
+  }
+
+  // Create a new interval for each block.
+  for (SplitAnalysis::BlockPtrSet::const_iterator I = Blocks.begin(),
+       E = Blocks.end(); I != E; ++I) {
+    IndexPair &IP = MBBRange[*I];
+    DEBUG(dbgs() << "Splitting for BB#" << (*I)->getNumber() << ": ["
+                 << IP.first << ';' << IP.second << ")\n");
+    assert(IP.first.isValid() && IP.second.isValid());
+
+    openIntv();
+    enterIntvBefore(IP.first);
+    useIntv(IP.first.getBaseIndex(), IP.second.getBoundaryIndex());
+    leaveIntvAfter(IP.second);
+    closeIntv();
+  }
   rewrite();
   return dupli_;
 }

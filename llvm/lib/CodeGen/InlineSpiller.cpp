@@ -118,6 +118,15 @@ bool InlineSpiller::split() {
           .splitAroundLoop(loop))
       return true;
   }
+
+  // Try splitting into single block intervals.
+  SplitAnalysis::BlockPtrSet blocks;
+  if (splitAnalysis_.getMultiUseBlocks(blocks)) {
+    if (SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+          .splitSingleBlocks(blocks))
+      return true;
+  }
+
   return false;
 }
 

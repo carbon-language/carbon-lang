@@ -37,10 +37,6 @@ public:
   const MachineLoopInfo &loops_;
   const TargetInstrInfo &tii_;
 
-private:
-  // Current live interval.
-  const LiveInterval *curli_;
-
   // Instructions using the the current register.
   typedef SmallPtrSet<const MachineInstr*, 16> InstrPtrSet;
   InstrPtrSet usingInstrs_;
@@ -52,6 +48,10 @@ private:
   // Loops where the curent interval is used.
   typedef SmallPtrSet<const MachineLoop*, 16> LoopPtrSet;
   LoopPtrSet usingLoops_;
+
+private:
+  // Current live interval.
+  const LiveInterval *curli_;
 
   // Sumarize statistics by counting instructions using curli_.
   void analyzeUses();
@@ -118,6 +118,11 @@ public:
   /// getBestSplitLoop - Return the loop where curli may best be split to a
   /// separate register, or NULL.
   const MachineLoop *getBestSplitLoop();
+
+  /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
+  /// having curli split to a new live interval. Return true if Blocks can be
+  /// passed to SplitEditor::splitSingleBlocks.
+  bool getMultiUseBlocks(BlockPtrSet &Blocks);
 };
 
 /// SplitEditor - Edit machine code and LiveIntervals for live range
@@ -156,7 +161,7 @@ class SplitEditor {
   /// getDupLI - Ensure dupli is created and return it.
   LiveInterval *getDupLI();
 
-  /// valueMap_ - Map values in dupli to values in openIntv. These are direct 1-1
+  /// valueMap_ - Map values in cupli to values in openli. These are direct 1-1
   /// mappings, and do not include values created by inserted copies.
   DenseMap<const VNInfo*, VNInfo*> valueMap_;
 
@@ -192,6 +197,10 @@ public:
   /// Create a new virtual register and live interval.
   void openIntv();
 
+  /// enterIntvBefore - Enter openli before the instruction at Idx. If curli is
+  /// not live before Idx, a COPY is not inserted.
+  void enterIntvBefore(SlotIndex Idx);
+
   /// enterIntvAtEnd - Enter openli at the end of MBB.
   /// PhiMBB is a successor inside openli where a PHI value is created.
   /// Currently, all entries must share the same PhiMBB.
@@ -202,6 +211,9 @@ public:
 
   /// useIntv - indicate that all instructions in range should use openli.
   void useIntv(SlotIndex Start, SlotIndex End);
+
+  /// leaveIntvAfter - Leave openli after the instruction at Idx.
+  void leaveIntvAfter(SlotIndex Idx);
 
   /// leaveIntvAtTop - Leave the interval at the top of MBB.
   /// Currently, only one value can leave the interval.
@@ -222,6 +234,10 @@ public:
   /// curli is still intact, and needs to be spilled or split further.
   bool splitAroundLoop(const MachineLoop*);
 
+  /// splitSingleBlocks - Split curli into a separate live interval inside each
+  /// basic block in Blocks. Return true if curli has been completely replaced,
+  /// false if curli is still intact, and needs to be spilled or split further.
+  bool splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);
 };
 
 
