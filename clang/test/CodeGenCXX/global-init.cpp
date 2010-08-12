@@ -14,6 +14,9 @@ struct D { ~D(); };
 
 // CHECK: @c = global %struct.C zeroinitializer, align 8
 
+// It's okay if we ever implement the IR-generation optimization to remove this.
+// CHECK: @_ZN5test3L3varE = internal constant i8* getelementptr inbounds ([7 x i8]* 
+
 // CHECK: call void @_ZN1AC1Ev(%struct.A* @a)
 // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @a, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
 A a;
@@ -51,6 +54,14 @@ namespace test2 {
 // CHECK: invoke void @_ZN5test21AC1ERKNS_9allocatorE(
 // CHECK: call void @_ZN5test29allocatorD1Ev(
 // CHECK: call i32 @__cxa_atexit({{.*}} @_ZN5test21AD1Ev {{.*}} @_ZN5test21aE
+}
+
+namespace test3 {
+  // Tested at the beginning of the file.
+  const char * const var = "string";
+  extern const char * const var;
+
+  const char *test() { return var; }
 }
 
 // CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
