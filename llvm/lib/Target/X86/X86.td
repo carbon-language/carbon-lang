@@ -182,7 +182,6 @@ include "X86CallingConv.td"
 // Currently the X86 assembly parser only supports ATT syntax.
 def ATTAsmParser : AsmParser {
   string AsmParserClassName = "ATTAsmParser";
-  string MatchInstructionName = "MatchInstructionImpl";
   int Variant = 0;
 
   // Discard comments in assembly strings.

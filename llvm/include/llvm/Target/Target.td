@@ -511,10 +511,6 @@ class AsmParser {
   // perform target specific instruction post-processing.
   string AsmParserInstCleanup  = "";
 
-  // MatchInstructionName - The name of the instruction matching function to
-  // generate.
-  string MatchInstructionName  = "MatchInstruction";
-
   // Variant - AsmParsers can be of multiple different variants.  Variants are
   // used to support targets that need to parser multiple formats for the
   // assembly language.

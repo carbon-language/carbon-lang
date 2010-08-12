@@ -80,13 +80,19 @@ private:
 
   bool ParseDirectiveSyntax(SMLoc L);
 
+  bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                        MCInst &Inst) {
+    return MatchInstructionImpl(Operands, Inst);
+  }
+
   /// @name Auto-generated Match Functions
   /// {
 
   unsigned ComputeAvailableFeatures(const ARMSubtarget *Subtarget) const;
 
-  bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCInst &Inst);
+  bool MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>
+                              &Operands,
+                            MCInst &Inst);
 
   /// }
 

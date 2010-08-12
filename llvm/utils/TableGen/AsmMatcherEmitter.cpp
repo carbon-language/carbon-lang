@@ -1699,13 +1699,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
        it != ie; ++it)
     MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
 
-  const std::string &MatchName =
-    AsmParser->getValueAsString("MatchInstructionName");
   OS << "bool " << Target.getName() << ClassName << "::\n"
-     << MatchName
-     << "(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
-  OS.indent(MatchName.size() + 1);
-  OS << "MCInst &Inst) {\n";
+     << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
+     << " &Operands,\n";
+  OS << "                     MCInst &Inst) {\n";
 
   // Emit the static match table; unused classes get initalized to 0 which is
   // guaranteed to be InvalidMatchClass.
