@@ -1512,8 +1512,10 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     const SCEVMulExpr *Mul = cast<SCEVMulExpr>(Ops[Idx]);
     for (unsigned MulOp = 0, e = Mul->getNumOperands(); MulOp != e; ++MulOp) {
       const SCEV *MulOpSCEV = Mul->getOperand(MulOp);
+      if (isa<SCEVConstant>(MulOpSCEV))
+        continue;
       for (unsigned AddOp = 0, e = Ops.size(); AddOp != e; ++AddOp)
-        if (MulOpSCEV == Ops[AddOp] && !isa<SCEVConstant>(Ops[AddOp])) {
+        if (MulOpSCEV == Ops[AddOp]) {
           // Fold W + X + (X * Y * Z)  -->  W + (X * ((Y*Z)+1))
           const SCEV *InnerMul = Mul->getOperand(MulOp == 0);
           if (Mul->getNumOperands() != 2) {
@@ -1525,7 +1527,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
           }
           const SCEV *One = getConstant(Ty, 1);
           const SCEV *AddOne = getAddExpr(InnerMul, One);
-          const SCEV *OuterMul = getMulExpr(AddOne, Ops[AddOp]);
+          const SCEV *OuterMul = getMulExpr(AddOne, MulOpSCEV);
           if (Ops.size() == 2) return OuterMul;
           if (AddOp < Idx) {
             Ops.erase(Ops.begin()+AddOp);
