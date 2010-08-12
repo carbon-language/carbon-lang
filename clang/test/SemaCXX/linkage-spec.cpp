@@ -57,3 +57,14 @@ extern "C"
 
 // PR6991
 extern "C" typedef int (*PutcFunc_t)(int);
+
+
+// PR7859
+extern "C" void pr7859_a(int) {} // expected-note {{previous definition}}
+extern "C" void pr7859_a(int) {} // expected-error {{redefinition}}
+
+extern "C" void pr7859_b() {} // expected-note {{previous definition}}
+extern "C" void pr7859_b(int) {} // expected-error {{conflicting}}
+
+extern "C" void pr7859_c(short) {} // expected-note {{previous definition}}
+extern "C" void pr7859_c(int) {} // expected-error {{conflicting}}
