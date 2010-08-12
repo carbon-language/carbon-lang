@@ -645,7 +645,7 @@ void SplitEditor::rewrite() {
 
   // dupli_ goes in last, after rewriting.
   if (dupli_) {
-    dupli_->RenumberValues();
+    dupli_->RenumberValues(lis_);
     intervals_.push_back(dupli_);
   }
 
