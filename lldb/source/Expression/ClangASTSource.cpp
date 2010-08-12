@@ -111,6 +111,10 @@ clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
                                                      false,
                                                      true);
     
+    // We have to do more than just synthesize the FunctionDecl.  We have to
+    // synthesize ParmVarDecls for all of the FunctionDecl's arguments.  To do
+    // this, we raid the function's FunctionProtoType for types.
+    
     QualType QT = QualType::getFromOpaquePtr(type);
     clang::Type *T = QT.getTypePtr();
     const FunctionProtoType *FPT = T->getAs<FunctionProtoType>();
