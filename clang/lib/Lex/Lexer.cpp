@@ -962,7 +962,8 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
     
     if (C == '\n' || C == '\r' ||             // Newline.
         (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode() && !Features.AsmPreprocessor)
+      if (!isLexingRawMode() && !Features.AsmPreprocessor &&
+          !PP->isCodeCompletionFile(FileLoc))
         Diag(BufferPtr, diag::err_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
@@ -1039,7 +1040,8 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode() && !Features.AsmPreprocessor)
+      if (!isLexingRawMode() && !Features.AsmPreprocessor &&
+          !PP->isCodeCompletionFile(FileLoc))
         Diag(BufferPtr, diag::err_unterminated_char);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
@@ -1564,8 +1566,9 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    PP->Diag(ConditionalStack.back().IfLoc,
-             diag::err_pp_unterminated_conditional);
+    if (!PP->isCodeCompletionFile(FileLoc))
+      PP->Diag(ConditionalStack.back().IfLoc,
+               diag::err_pp_unterminated_conditional);
     ConditionalStack.pop_back();
   }
 

@@ -146,8 +146,9 @@ bool PTHLexer::LexEndOfFile(Token &Result) {
 
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    PP->Diag(ConditionalStack.back().IfLoc,
-             diag::err_pp_unterminated_conditional);
+    if (!PP->isCodeCompletionFile(FileStartLoc))
+      PP->Diag(ConditionalStack.back().IfLoc,
+               diag::err_pp_unterminated_conditional);
     ConditionalStack.pop_back();
   }
 

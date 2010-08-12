@@ -171,8 +171,9 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       // Emit errors for each unterminated conditional on the stack, including
       // the current one.
       while (!CurPPLexer->ConditionalStack.empty()) {
-        Diag(CurPPLexer->ConditionalStack.back().IfLoc,
-             diag::err_pp_unterminated_conditional);
+        if (!isCodeCompletionFile(Tok.getLocation()))
+          Diag(CurPPLexer->ConditionalStack.back().IfLoc,
+               diag::err_pp_unterminated_conditional);
         CurPPLexer->ConditionalStack.pop_back();
       }
 
