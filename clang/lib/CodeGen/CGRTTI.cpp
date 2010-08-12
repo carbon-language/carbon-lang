@@ -45,7 +45,11 @@ class RTTIBuilder {
   
   /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct, used
   /// for pointer types.
-  void BuildPointerTypeInfo(const PointerType *Ty);
+  void BuildPointerTypeInfo(QualType PointeeTy);
+
+  /// BuildObjCObjectTypeInfo - Build the appropriate kind of
+  /// type_info for an object type.
+  void BuildObjCObjectTypeInfo(const ObjCObjectType *Ty);
   
   /// BuildPointerToMemberTypeInfo - Build an abi::__pointer_to_member_type_info 
   /// struct, used for member pointer types.
@@ -390,6 +394,16 @@ static bool CanUseSingleInheritance(const CXXRecordDecl *RD) {
 }
 
 void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
+  // abi::__class_type_info.
+  static const char * const ClassTypeInfo =
+    "_ZTVN10__cxxabiv117__class_type_infoE";
+  // abi::__si_class_type_info.
+  static const char * const SIClassTypeInfo =
+    "_ZTVN10__cxxabiv120__si_class_type_infoE";
+  // abi::__vmi_class_type_info.
+  static const char * const VMIClassTypeInfo =
+    "_ZTVN10__cxxabiv121__vmi_class_type_infoE";
+
   const char *VTableName = 0;
 
   switch (Ty->getTypeClass()) {
@@ -433,32 +447,44 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
     // abi::__enum_type_info.
     VTableName = "_ZTVN10__cxxabiv116__enum_type_infoE";
     break;
-      
+
   case Type::Record: {
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
     
     if (!RD->hasDefinition() || !RD->getNumBases()) {
-      // abi::__class_type_info.
-      VTableName = "_ZTVN10__cxxabiv117__class_type_infoE";
+      VTableName = ClassTypeInfo;
     } else if (CanUseSingleInheritance(RD)) {
-      // abi::__si_class_type_info.
-      VTableName = "_ZTVN10__cxxabiv120__si_class_type_infoE";
+      VTableName = SIClassTypeInfo;
     } else {
-      // abi::__vmi_class_type_info.
-      VTableName = "_ZTVN10__cxxabiv121__vmi_class_type_infoE";
+      VTableName = VMIClassTypeInfo;
     }
     
     break;
   }
 
   case Type::ObjCObject:
+    // Ignore protocol qualifiers.
+    Ty = cast<ObjCObjectType>(Ty)->getBaseType().getTypePtr();
+
+    // Handle id and Class.
+    if (isa<BuiltinType>(Ty)) {
+      VTableName = ClassTypeInfo;
+      break;
+    }
+
+    assert(isa<ObjCInterfaceType>(Ty));
+    // Fall through.
+
   case Type::ObjCInterface:
-  case Type::ObjCObjectPointer:
-    assert(false && "FIXME: Needs to be written!");
-    VTableName = "_ZTVN10__cxxabiv117__class_type_infoE";
+    if (cast<ObjCInterfaceType>(Ty)->getDecl()->getSuperClass()) {
+      VTableName = SIClassTypeInfo;
+    } else {
+      VTableName = ClassTypeInfo;
+    }
     break;
 
+  case Type::ObjCObjectPointer:
   case Type::Pointer:
     // abi::__pointer_type_info.
     VTableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
@@ -559,11 +585,20 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
     break;
   }
+
+  case Type::ObjCObject:
+  case Type::ObjCInterface:
+    BuildObjCObjectTypeInfo(cast<ObjCObjectType>(Ty));
+    break;
+
+  case Type::ObjCObjectPointer:
+    BuildPointerTypeInfo(cast<ObjCObjectPointerType>(Ty)->getPointeeType());
+    break; 
       
   case Type::Pointer:
-    BuildPointerTypeInfo(cast<PointerType>(Ty));
+    BuildPointerTypeInfo(cast<PointerType>(Ty)->getPointeeType());
     break;
-  
+
   case Type::MemberPointer:
     BuildPointerToMemberTypeInfo(cast<MemberPointerType>(Ty));
     break;
@@ -610,6 +645,30 @@ static unsigned ComputeQualifierFlags(Qualifiers Quals) {
     Flags |= RTTIBuilder::PTI_Restrict;
 
   return Flags;
+}
+
+/// BuildObjCObjectTypeInfo - Build the appropriate kind of type_info
+/// for the given Objective-C object type.
+void RTTIBuilder::BuildObjCObjectTypeInfo(const ObjCObjectType *OT) {
+  // Drop qualifiers.
+  const Type *T = OT->getBaseType().getTypePtr();
+  assert(isa<BuiltinType>(T) || isa<ObjCInterfaceType>(T));
+
+  // The builtin types are abi::__class_type_infos and don't require
+  // extra fields.
+  if (isa<BuiltinType>(T)) return;
+
+  ObjCInterfaceDecl *Class = cast<ObjCInterfaceType>(T)->getDecl();
+  ObjCInterfaceDecl *Super = Class->getSuperClass();
+
+  // Root classes are also __class_type_info.
+  if (!Super) return;
+
+  QualType SuperTy = CGM.getContext().getObjCInterfaceType(Super);
+
+  // Everything else is single inheritance.
+  llvm::Constant *BaseTypeInfo = RTTIBuilder(CGM).BuildTypeInfo(SuperTy);
+  Fields.push_back(BaseTypeInfo);
 }
 
 /// BuildSIClassTypeInfo - Build an abi::__si_class_type_info, used for single
@@ -767,9 +826,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
 
 /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
 /// used for pointer types.
-void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
-  QualType PointeeTy = Ty->getPointeeType();
-  
+void RTTIBuilder::BuildPointerTypeInfo(QualType PointeeTy) {  
   Qualifiers Quals;
   QualType UnqualifiedPointeeTy = 
     CGM.getContext().getUnqualifiedArrayType(PointeeTy, Quals);
