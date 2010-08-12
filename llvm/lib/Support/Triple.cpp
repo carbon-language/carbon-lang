@@ -221,63 +221,111 @@ const char *Triple::getArchNameForAssembler() {
 
 //
 
-void Triple::Parse() const {
-  assert(!isInitialized() && "Invalid parse call.");
-
-  StringRef ArchName = getArchName();
-  StringRef VendorName = getVendorName();
-  StringRef OSName = getOSName();
-
+Triple::ArchType Triple::ParseArch(StringRef ArchName) {
   if (ArchName.size() == 4 && ArchName[0] == 'i' && 
       ArchName[2] == '8' && ArchName[3] == '6' && 
       ArchName[1] - '3' < 6) // i[3-9]86
-    Arch = x86;
+    return x86;
   else if (ArchName == "amd64" || ArchName == "x86_64")
-    Arch = x86_64;
+    return x86_64;
   else if (ArchName == "bfin")
-    Arch = bfin;
+    return bfin;
   else if (ArchName == "pic16")
-    Arch = pic16;
+    return pic16;
   else if (ArchName == "powerpc")
-    Arch = ppc;
+    return ppc;
   else if ((ArchName == "powerpc64") || (ArchName == "ppu"))
-    Arch = ppc64;
+    return ppc64;
   else if (ArchName == "mblaze")
-    Arch = mblaze;
+    return mblaze;
   else if (ArchName == "arm" ||
            ArchName.startswith("armv") ||
            ArchName == "xscale")
-    Arch = arm;
+    return arm;
   else if (ArchName == "thumb" ||
            ArchName.startswith("thumbv"))
-    Arch = thumb;
+    return thumb;
   else if (ArchName.startswith("alpha"))
-    Arch = alpha;
+    return alpha;
   else if (ArchName == "spu" || ArchName == "cellspu")
-    Arch = cellspu;
+    return cellspu;
   else if (ArchName == "msp430")
-    Arch = msp430;
+    return msp430;
   else if (ArchName == "mips" || ArchName == "mipsallegrex")
-    Arch = mips;
+    return mips;
   else if (ArchName == "mipsel" || ArchName == "mipsallegrexel" ||
            ArchName == "psp")
-    Arch = mipsel;
+    return mipsel;
   else if (ArchName == "sparc")
-    Arch = sparc;
+    return sparc;
   else if (ArchName == "sparcv9")
-    Arch = sparcv9;
+    return sparcv9;
   else if (ArchName == "s390x")
-    Arch = systemz;
+    return systemz;
   else if (ArchName == "tce")
-    Arch = tce;
+    return tce;
   else if (ArchName == "xcore")
-    Arch = xcore;
+    return xcore;
   else
-    Arch = UnknownArch;
+    return UnknownArch;
+}
 
+Triple::VendorType Triple::ParseVendor(StringRef VendorName) {
+  if (VendorName == "apple")
+    return Apple;
+  else if (VendorName == "pc")
+    return PC;
+  else
+    return UnknownVendor;
+}
+
+Triple::OSType Triple::ParseOS(StringRef OSName) {
+  if (OSName.startswith("auroraux"))
+    return AuroraUX;
+  else if (OSName.startswith("cygwin"))
+    return Cygwin;
+  else if (OSName.startswith("darwin"))
+    return Darwin;
+  else if (OSName.startswith("dragonfly"))
+    return DragonFly;
+  else if (OSName.startswith("freebsd"))
+    return FreeBSD;
+  else if (OSName.startswith("linux"))
+    return Linux;
+  else if (OSName.startswith("lv2"))
+    return Lv2;
+  else if (OSName.startswith("mingw32"))
+    return MinGW32;
+  else if (OSName.startswith("mingw64"))
+    return MinGW64;
+  else if (OSName.startswith("netbsd"))
+    return NetBSD;
+  else if (OSName.startswith("openbsd"))
+    return OpenBSD;
+  else if (OSName.startswith("psp"))
+    return Psp;
+  else if (OSName.startswith("solaris"))
+    return Solaris;
+  else if (OSName.startswith("win32"))
+    return Win32;
+  else if (OSName.startswith("haiku"))
+    return Haiku;
+  else if (OSName.startswith("minix"))
+    return Minix;
+  else
+    return UnknownOS;
+}
+
+void Triple::Parse() const {
+  assert(!isInitialized() && "Invalid parse call.");
+
+  Arch = ParseArch(getArchName());
+  Vendor = ParseVendor(getVendorName());
+  OS = ParseOS(getOSName());
 
   // Handle some exceptional cases where the OS / environment components are
   // stuck into the vendor field.
+  // TODO: Remove this logic and have places that need it use 'normalize'.
   if (StringRef(getTriple()).count('-') == 1) {
     StringRef VendorName = getVendorName();
 
@@ -291,49 +339,134 @@ void Triple::Parse() const {
     // the environment.
   }
 
-  if (VendorName == "apple")
-    Vendor = Apple;
-  else if (VendorName == "pc")
-    Vendor = PC;
-  else
-    Vendor = UnknownVendor;
-
-  if (OSName.startswith("auroraux"))
-    OS = AuroraUX;
-  else if (OSName.startswith("cygwin"))
-    OS = Cygwin;
-  else if (OSName.startswith("darwin"))
-    OS = Darwin;
-  else if (OSName.startswith("dragonfly"))
-    OS = DragonFly;
-  else if (OSName.startswith("freebsd"))
-    OS = FreeBSD;
-  else if (OSName.startswith("linux"))
-    OS = Linux;
-  else if (OSName.startswith("lv2"))
-    OS = Lv2;
-  else if (OSName.startswith("mingw32"))
-    OS = MinGW32;
-  else if (OSName.startswith("mingw64"))
-    OS = MinGW64;
-  else if (OSName.startswith("netbsd"))
-    OS = NetBSD;
-  else if (OSName.startswith("openbsd"))
-    OS = OpenBSD;
-  else if (OSName.startswith("psp"))
-    OS = Psp;
-  else if (OSName.startswith("solaris"))
-    OS = Solaris;
-  else if (OSName.startswith("win32"))
-    OS = Win32;
-  else if (OSName.startswith("haiku"))
-    OS = Haiku;
-  else if (OSName.startswith("minix"))
-    OS = Minix;
-  else
-    OS = UnknownOS;
-
   assert(isInitialized() && "Failed to initialize!");
+}
+
+std::string Triple::normalize(StringRef Str) {
+  // Parse into components.
+  SmallVector<StringRef, 4> Components;
+  for (size_t First = 0, Last = 0; Last != StringRef::npos; First = Last + 1) {
+    Last = Str.find('-', First);
+    Components.push_back(Str.slice(First, Last));
+  }
+
+  // If the first component corresponds to a known architecture, preferentially
+  // use it for the architecture.  If the second component corresponds to a
+  // known vendor, preferentially use it for the vendor, etc.  This avoids silly
+  // component movement when a component parses as (eg) both a valid arch and a
+  // valid os.
+  ArchType Arch = UnknownArch;
+  if (Components.size() > 0)
+    Arch = ParseArch(Components[0]);
+  VendorType Vendor = UnknownVendor;
+  if (Components.size() > 1)
+    Vendor = ParseVendor(Components[1]);
+  OSType OS = UnknownOS;
+  if (Components.size() > 2)
+    OS = ParseOS(Components[2]);
+
+  // Note which components are already in their final position.  These will not
+  // be moved.
+  bool Found[3];
+  Found[0] = Arch != UnknownArch;
+  Found[1] = Vendor != UnknownVendor;
+  Found[2] = OS != UnknownOS;
+
+  // If they are not there already, permute the components into their canonical
+  // positions by seeing if they parse as a valid architecture, and if so moving
+  // the component to the architecture position etc.
+  for (unsigned Pos = 0; Pos != 3; ++Pos) {
+    if (Found[Pos])
+      continue; // Already in the canonical position.
+
+    for (unsigned Idx = 0; Idx != Components.size(); ++Idx) {
+      // Do not reparse any components that already matched.
+      if (Idx < 3 && Found[Idx])
+        continue;
+
+      // Does this component parse as valid for the target position?
+      bool Valid = false;
+      StringRef Comp = Components[Idx];
+      switch (Pos) {
+      default:
+        assert(false && "unexpected component type!");
+      case 0:
+        Arch = ParseArch(Comp);
+        Valid = Arch != UnknownArch;
+        break;
+      case 1:
+        Vendor = ParseVendor(Comp);
+        Valid = Vendor != UnknownVendor;
+        break;
+      case 2:
+        OS = ParseOS(Comp);
+        Valid = OS != UnknownOS;
+        break;
+      }
+      if (!Valid)
+        continue; // Nope, try the next component.
+
+      // Move the component to the target position, pushing any non-fixed
+      // components that are in the way to the right.  This tends to give
+      // good results in the common cases of a forgotten vendor component
+      // or a wrongly positioned environment.
+      if (Pos < Idx) {
+        // Insert left, pushing the existing components to the right.  For
+        // example, a-b-i386 -> i386-a-b when moving i386 to the front.
+        StringRef CurrentComponent(""); // The empty component.
+        // Replace the component we are moving with an empty component.
+        std::swap(CurrentComponent, Components[Idx]);
+        // Insert the component being moved at Pos, displacing any existing
+        // components to the right.
+        for (unsigned i = Pos; !CurrentComponent.empty(); ++i) {
+          // Skip over any fixed components.
+          while (i < 3 && Found[i]) ++i;
+          // Place the component at the new position, getting the component
+          // that was at this position - it will be moved right.
+          std::swap(CurrentComponent, Components[i]);
+        }
+      } else if (Pos > Idx) {
+        // Push right by inserting empty components until the component at Idx
+        // reaches the target position Pos.  For example, pc-a -> -pc-a when
+        // moving pc to the second position.
+        do {
+          // Insert one empty component at Idx.
+          StringRef CurrentComponent(""); // The empty component.
+          for (unsigned i = Idx; i < Components.size(); ++i) {
+            // Skip over any fixed components.
+            while (i < 3 && Found[i]) ++i;
+            // Place the component at the new position, getting the component
+            // that was at this position - it will be moved right.
+            std::swap(CurrentComponent, Components[i]);
+            // If it was placed on top of an empty component then we are done.
+            if (CurrentComponent.empty())
+              break;
+          }
+          // The last component was pushed off the end - append it.
+          if (!CurrentComponent.empty())
+            Components.push_back(CurrentComponent);
+
+          // Advance Idx to the component's new position.
+          while (++Idx < 3 && Found[Idx]) {}
+        } while (Idx < Pos); // Add more until the final position is reached.
+      }
+      assert(Pos < Components.size() && Components[Pos] == Comp &&
+             "Component moved wrong!");
+      Found[Pos] = true;
+      break;
+    }
+  }
+
+  // Special case logic goes here.  At this point Arch, Vendor and OS have the
+  // correct values for the computed components.
+
+  // Stick the corrected components back together to form the normalized string.
+  std::string Normalized;
+  for (unsigned i = 0, e = Components.size(); i != e; ++i) {
+    if (i) Normalized += '-';
+    Normalized += Components[i];
+  }
+  return Normalized;
 }
 
 StringRef Triple::getArchName() const {
