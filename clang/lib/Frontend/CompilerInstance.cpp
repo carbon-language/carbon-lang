@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Sema/Sema.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/Diagnostic.h"
@@ -41,6 +42,7 @@ CompilerInstance::CompilerInstance()
 }
 
 CompilerInstance::~CompilerInstance() {
+  TheSema.reset();
 }
 
 void CompilerInstance::setLLVMContext(llvm::LLVMContext *Value) {
@@ -77,6 +79,10 @@ void CompilerInstance::setPreprocessor(Preprocessor *Value) {
 
 void CompilerInstance::setASTContext(ASTContext *Value) {
   Context.reset(Value);
+}
+
+void CompilerInstance::setSema(Sema *S) {
+  TheSema.reset(S);
 }
 
 void CompilerInstance::setASTConsumer(ASTConsumer *Value) {
@@ -360,6 +366,12 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
     return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns, OS);
   else
     return new CIndexCodeCompleteConsumer(ShowMacros, ShowCodePatterns, OS);
+}
+
+void CompilerInstance::createSema(bool CompleteTranslationUnit,
+                                  CodeCompleteConsumer *CompletionConsumer) {
+  TheSema.reset(new Sema(getPreprocessor(), getASTContext(), getASTConsumer(),
+                         CompleteTranslationUnit, CompletionConsumer));
 }
 
 // Output Files

@@ -36,6 +36,7 @@ class FileManager;
 class FrontendAction;
 class PCHReader;
 class Preprocessor;
+class Sema;
 class SourceManager;
 class TargetInfo;
 
@@ -91,6 +92,9 @@ class CompilerInstance {
   /// The code completion consumer.
   llvm::OwningPtr<CodeCompleteConsumer> CompletionConsumer;
 
+  /// \brief The semantic analysis object.
+  llvm::OwningPtr<Sema> TheSema;
+  
   /// The frontend timer
   llvm::OwningPtr<llvm::Timer> FrontendTimer;
 
@@ -369,6 +373,10 @@ public:
   /// takes ownership of \arg Value.
   void setASTContext(ASTContext *Value);
 
+  /// \brief Replace the current Sema; the compiler instance takes ownership
+  /// of S.
+  void setSema(Sema *S);
+  
   /// }
   /// @name ASTConsumer
   /// {
@@ -388,6 +396,18 @@ public:
   /// takes ownership of \arg Value.
   void setASTConsumer(ASTConsumer *Value);
 
+  /// }
+  /// @name Semantic analysis
+  /// {
+  bool hasSema() const { return TheSema != 0; }
+  
+  Sema &getSema() const { 
+    assert(TheSema && "Compiler instance has no Sema object!");
+    return *TheSema;
+  }
+  
+  Sema *takeSema() { return TheSema.take(); }
+  
   /// }
   /// @name Code Completion
   /// {
@@ -526,6 +546,10 @@ public:
                                bool UseDebugPrinter, bool ShowMacros,
                                bool ShowCodePatterns, llvm::raw_ostream &OS);
 
+  /// \brief Create the Sema object to be used for parsing.
+  void createSema(bool CompleteTranslationUnit,
+                  CodeCompleteConsumer *CompletionConsumer);
+  
   /// Create the frontend timer and replace any existing one with it.
   void createFrontendTimer();
 

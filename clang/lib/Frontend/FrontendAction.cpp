@@ -196,12 +196,16 @@ void FrontendAction::EndSourceFile() {
   // FIXME: There is more per-file stuff we could just drop here?
   if (CI.getFrontendOpts().DisableFree) {
     CI.takeASTConsumer();
-    if (!isCurrentFileAST())
+    if (!isCurrentFileAST()) {
+      CI.takeSema();
       CI.takeASTContext();
+    }
   } else {
-    CI.setASTConsumer(0);
-    if (!isCurrentFileAST())
+    if (!isCurrentFileAST()) {
+      CI.setSema(0);
       CI.setASTContext(0);
+    }
+    CI.setASTConsumer(0);
   }
 
   // Inform the preprocessor we are done.
@@ -225,6 +229,7 @@ void FrontendAction::EndSourceFile() {
   CI.getDiagnosticClient().EndSourceFile();
 
   if (isCurrentFileAST()) {
+    CI.takeSema();
     CI.takeASTContext();
     CI.takePreprocessor();
     CI.takeSourceManager();
@@ -253,9 +258,10 @@ void ASTFrontendAction::ExecuteAction() {
   if (CI.hasCodeCompletionConsumer())
     CompletionConsumer = &CI.getCodeCompletionConsumer();
 
-  ParseAST(CI.getPreprocessor(), &CI.getASTConsumer(), CI.getASTContext(),
-           CI.getFrontendOpts().ShowStats,
-           usesCompleteTranslationUnit(), CompletionConsumer);
+  if (!CI.hasSema())
+    CI.createSema(usesCompleteTranslationUnit(), CompletionConsumer);
+
+  ParseAST(CI.getSema(), CI.getFrontendOpts().ShowStats);
 }
 
 ASTConsumer *
