@@ -23,7 +23,7 @@ void t0() {
 
   p("array.length: %d\n", [array count]);
   unsigned index = 0;
-  for (NSString *i in array) {
+  for (NSString *i in array) {	// expected-warning {{collection expression type 'NSArray *' may not respond}}
     p("element %d: %s\n", index++, [i cString]);
   }
 }
@@ -33,7 +33,7 @@ void t1() {
 
   p("array.length: %d\n", [array count]);
   unsigned index = 0;
-  for (NSString *i in array) {
+  for (NSString *i in array) {	// expected-warning {{collection expression type 'NSArray *' may not respond}}
     index++;
     if (index == 10)
       continue;

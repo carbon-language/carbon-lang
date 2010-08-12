@@ -941,6 +941,27 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
     if (!SecondType->isObjCObjectPointerType())
       Diag(ForLoc, diag::err_collection_expr_type)
         << SecondType << Second->getSourceRange();
+    else if (const ObjCObjectPointerType *OPT =
+             SecondType->getAsObjCInterfacePointerType()) {
+      llvm::SmallVector<IdentifierInfo *, 4> KeyIdents;
+      IdentifierInfo* selIdent = 
+        &Context.Idents.get("countByEnumeratingWithState");
+      KeyIdents.push_back(selIdent);
+      selIdent = &Context.Idents.get("objects");
+      KeyIdents.push_back(selIdent);
+      selIdent = &Context.Idents.get("count");
+      KeyIdents.push_back(selIdent);
+      Selector CSelector = Context.Selectors.getSelector(3, &KeyIdents[0]);
+      if (ObjCInterfaceDecl *IDecl = OPT->getInterfaceDecl()) {
+        if (!IDecl->isForwardDecl() && 
+            !IDecl->lookupInstanceMethod(CSelector)) {
+          // Must further look into privaye implementation methods.
+          if (!LookupPrivateInstanceMethod(CSelector, IDecl))
+            Diag(ForLoc, diag::warn_collection_expr_type)
+              << SecondType << CSelector << Second->getSourceRange();
+        }
+      }
+    }
   }
   first.release();
   second.release();

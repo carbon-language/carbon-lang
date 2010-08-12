@@ -3170,6 +3170,8 @@ def err_selector_element_type : Error<
   "selector element type %0 is not a valid object">;
 def err_collection_expr_type : Error<
   "collection expression type %0 is not a valid object">;
+def warn_collection_expr_type : Warning<
+  "collection expression type %0 may not respond to %1">;
 
 def err_invalid_conversion_between_ext_vectors : Error<
   "invalid conversion between ext-vector type %0 and %1">;

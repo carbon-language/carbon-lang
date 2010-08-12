@@ -25,6 +25,7 @@ template void synchronized_test(int); // expected-note{{in instantiation of}}
 
 // fast enumeration
 @interface NSArray
+- (unsigned int)countByEnumeratingWithState:  (struct __objcFastEnumerationState *)state objects:  (id *)items count:(unsigned int)stackcount;
 @end
 
 @interface NSString
