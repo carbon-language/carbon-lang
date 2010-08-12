@@ -553,7 +553,6 @@ CollectRecordFields(const RecordDecl *RD, llvm::DIFile Unit,
        I != E; ++I, ++FieldNo) {
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
-
     llvm::StringRef FieldName = Field->getName();
 
     // Ignore unnamed fields. Do not ignore unnamed records.
@@ -573,7 +572,6 @@ CollectRecordFields(const RecordDecl *RD, llvm::DIFile Unit,
       Expr *BitWidth = Field->getBitWidth();
       if (BitWidth)
         FieldSize = BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
-
       FieldAlign =  CGM.getContext().getTypeAlign(FType);
     }
 
@@ -894,6 +892,31 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
     CollectVTableInfo(CXXDecl, Unit, EltTys);
   }
+  
+  // Collect static variables with initializers.
+  for (RecordDecl::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
+       I != E; ++I)
+    if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
+      if (const Expr *Init = V->getInit()) {
+        Expr::EvalResult Result;
+        if (Init->Evaluate(Result, CGM.getContext()) && Result.Val.isInt()) {
+          llvm::ConstantInt *CI 
+            = llvm::ConstantInt::get(CGM.getLLVMContext(), Result.Val.getInt());
+          
+          // Create the descriptor for static variable.
+          llvm::DIFile VUnit = getOrCreateFile(V->getLocation());
+          llvm::StringRef VName = V->getName();
+          llvm::DIType VTy = getOrCreateType(V->getType(), VUnit);
+          // Do not use DIGlobalVariable for enums.
+          if (VTy.getTag() != llvm::dwarf::DW_TAG_enumeration_type) {
+            DebugFactory.CreateGlobalVariable(FwdDecl, VName, VName, VName, VUnit,
+                                              getLineNumber(V->getLocation()),
+                                              VTy, true, true, CI);
+          }
+        }
+      }
+    }
+
   CollectRecordFields(RD, Unit, EltTys);
   llvm::MDNode *ContainingType = NULL;
   if (CXXDecl) {
