@@ -10,7 +10,7 @@
 #ifndef liblldb_ClangPersistentVariables_h_
 #define liblldb_ClangPersistentVariables_h_
 
-#include "lldb-forward-rtti.h"
+#include "lldb/lldb-forward-rtti.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Symbol/TaggedASTType.h"
