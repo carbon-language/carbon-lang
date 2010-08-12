@@ -635,12 +635,19 @@ public:
        bool CompleteTranslationUnit = true,
        CodeCompleteConsumer *CompletionConsumer = 0);
   ~Sema();
-
+  
+  /// \brief Perform initialization that occurs after the parser has been
+  /// initialized but before it parses anything.
+  void Initialize();
+  
   const LangOptions &getLangOptions() const { return LangOpts; }
   Diagnostic &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
   const TargetAttributesSema &getTargetAttributesSema() const;
-
+  Preprocessor &getPreprocessor() const { return PP; }
+  ASTContext &getASTContext() const { return Context; }
+  ASTConsumer &getASTConsumer() const { return Consumer; }
+  
   /// \brief Helper class that creates diagnostics with optional
   /// template instantiation stacks.
   ///

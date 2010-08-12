@@ -38,6 +38,10 @@ namespace clang {
                 bool CompleteTranslationUnit = true,
                 CodeCompleteConsumer *CompletionConsumer = 0);
 
+  /// \brief Parse the main file known to the preprocessor, producing an 
+  /// abstract syntax tree.
+  void ParseAST(Sema &S, bool PrintStats = false);
+  
 }  // end namespace clang
 
 #endif

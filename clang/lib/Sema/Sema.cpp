@@ -18,7 +18,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/APFloat.h"
 #include "clang/Sema/ExternalSemaSource.h"
-#include "clang/AST/ASTConsumer.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/DeclObjC.h"
@@ -116,7 +116,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     PushOnScopeChains(ClassTypedef, TUScope);
     Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
     Context.ObjCClassRedefinitionType = Context.getObjCClassType();
-  }
+  }  
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
@@ -142,7 +142,21 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
                                        &Context);
 
   ExprEvalContexts.push_back(
-                  ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));
+                  ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));  
+}
+
+void Sema::Initialize() {
+  // Tell the AST consumer about this Sema object.
+  Consumer.Initialize(Context);
+  
+  // FIXME: Isn't this redundant with the initialization above?
+  if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
+    SC->InitializeSema(*this);
+  
+  // Tell the external Sema source about this Sema object.
+  if (ExternalSemaSource *ExternalSema
+      = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
+    ExternalSema->InitializeSema(*this);
 }
 
 Sema::~Sema() {
@@ -151,6 +165,15 @@ Sema::~Sema() {
   delete TheTargetAttributesSema;
   while (!FunctionScopes.empty())
     PopFunctionOrBlockScope();
+  
+  // Tell the SemaConsumer to forget about us; we're going out of scope.
+  if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
+    SC->ForgetSema();
+
+  // Detach from the external Sema source.
+  if (ExternalSemaSource *ExternalSema
+      = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
+    ExternalSema->ForgetSema();
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
