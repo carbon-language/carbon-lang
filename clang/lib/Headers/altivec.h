@@ -1549,13 +1549,13 @@ vec_vmhaddshs(vector signed short a, vector signed short b, vector signed short 
 /* vec_max */
 
 static vector signed char __ATTRS_o_ai
-vec_max(vector signed  char a, vector signed char b)
+vec_max(vector signed char a, vector signed char b)
 {
   return __builtin_altivec_vmaxsb(a, b);
 }
 
 static vector unsigned char __ATTRS_o_ai
-vec_max(vector unsigned  char a, vector unsigned char b)
+vec_max(vector unsigned char a, vector unsigned char b)
 {
   return __builtin_altivec_vmaxub(a, b);
 }
@@ -1593,7 +1593,7 @@ vec_max(vector float a, vector float b)
 /* vec_vmaxsb */
 
 static vector signed char __attribute__((__always_inline__))
-vec_vmaxsb(vector signed  char a, vector signed char b)
+vec_vmaxsb(vector signed char a, vector signed char b)
 {
   return __builtin_altivec_vmaxsb(a, b);
 }
@@ -1601,7 +1601,7 @@ vec_vmaxsb(vector signed  char a, vector signed char b)
 /* vec_vmaxub */
 
 static vector unsigned char __attribute__((__always_inline__))
-vec_vmaxub(vector unsigned  char a, vector unsigned char b)
+vec_vmaxub(vector unsigned char a, vector unsigned char b)
 {
   return __builtin_altivec_vmaxub(a, b);
 }
@@ -1909,13 +1909,13 @@ vec_mfvscr(void)
 /* vec_min */
 
 static vector signed char __ATTRS_o_ai
-vec_min(vector signed  char a, vector signed char b)
+vec_min(vector signed char a, vector signed char b)
 {
   return __builtin_altivec_vminsb(a, b);
 }
 
 static vector unsigned char __ATTRS_o_ai
-vec_min(vector unsigned  char a, vector unsigned char b)
+vec_min(vector unsigned char a, vector unsigned char b)
 {
   return __builtin_altivec_vminub(a, b);
 }
@@ -1953,7 +1953,7 @@ vec_min(vector float a, vector float b)
 /* vec_vminsb */
 
 static vector signed char __attribute__((__always_inline__))
-vec_vminsb(vector signed  char a, vector signed char b)
+vec_vminsb(vector signed char a, vector signed char b)
 {
   return __builtin_altivec_vminsb(a, b);
 }
@@ -1961,7 +1961,7 @@ vec_vminsb(vector signed  char a, vector signed char b)
 /* vec_vminub */
 
 static vector unsigned char __attribute__((__always_inline__))
-vec_vminub(vector unsigned  char a, vector unsigned char b)
+vec_vminub(vector unsigned char a, vector unsigned char b)
 {
   return __builtin_altivec_vminub(a, b);
 }
