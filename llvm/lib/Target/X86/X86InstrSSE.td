@@ -4052,31 +4052,62 @@ def : Pat<(v2i32 (fp_to_sint (v2f64 VR128:$src))),
           (Int_CVTTPD2PIrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
-def : Pat<(alignedloadv4i32 addr:$src),
-          (MOVAPSrm addr:$src)>;
-def : Pat<(loadv4i32 addr:$src),
-          (MOVUPSrm addr:$src)>;
-def : Pat<(alignedloadv2i64 addr:$src),
-          (MOVAPSrm addr:$src)>;
-def : Pat<(loadv2i64 addr:$src),
-          (MOVUPSrm addr:$src)>;
+let Predicates = [HasSSE1] in {
+  def : Pat<(alignedloadv4i32 addr:$src),
+            (MOVAPSrm addr:$src)>;
+  def : Pat<(loadv4i32 addr:$src),
+            (MOVUPSrm addr:$src)>;
+  def : Pat<(alignedloadv2i64 addr:$src),
+            (MOVAPSrm addr:$src)>;
+  def : Pat<(loadv2i64 addr:$src),
+            (MOVUPSrm addr:$src)>;
 
-def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v2i64 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v8i16 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v16i8 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v2i64 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v4i32 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+}
+
+// Use vmovaps/vmovups for AVX 128-bit integer load/store (one byte shorter).
+let Predicates = [HasAVX] in {
+  def : Pat<(alignedloadv4i32 addr:$src),
+            (VMOVAPSrm addr:$src)>;
+  def : Pat<(loadv4i32 addr:$src),
+            (VMOVUPSrm addr:$src)>;
+  def : Pat<(alignedloadv2i64 addr:$src),
+            (VMOVAPSrm addr:$src)>;
+  def : Pat<(loadv2i64 addr:$src),
+            (VMOVUPSrm addr:$src)>;
+
+  def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v2i64 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v4i32 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Packed Move with Sign/Zero Extend

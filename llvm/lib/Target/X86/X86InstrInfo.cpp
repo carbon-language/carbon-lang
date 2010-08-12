@@ -2380,10 +2380,17 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     Alignment = (*LoadMI->memoperands_begin())->getAlignment();
   else
     switch (LoadMI->getOpcode()) {
+    case X86::AVX_SET0PSY:
+    case X86::AVX_SET0PDY:
+      Alignment = 32;
+      break;
     case X86::V_SET0PS:
     case X86::V_SET0PD:
     case X86::V_SET0PI:
     case X86::V_SETALLONES:
+    case X86::AVX_SET0PS:
+    case X86::AVX_SET0PD:
+    case X86::AVX_SET0PI:
       Alignment = 16;
       break;
     case X86::FsFLD0SD:
@@ -2421,6 +2428,11 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   case X86::V_SET0PD:
   case X86::V_SET0PI:
   case X86::V_SETALLONES:
+  case X86::AVX_SET0PS:
+  case X86::AVX_SET0PD:
+  case X86::AVX_SET0PI:
+  case X86::AVX_SET0PSY:
+  case X86::AVX_SET0PDY:
   case X86::FsFLD0SD:
   case X86::FsFLD0SS: {
     // Folding a V_SET0P? or V_SETALLONES as a load, to ease register pressure.
@@ -2447,10 +2459,13 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     // Create a constant-pool entry.
     MachineConstantPool &MCP = *MF.getConstantPool();
     const Type *Ty;
-    if (LoadMI->getOpcode() == X86::FsFLD0SS)
+    unsigned Opc = LoadMI->getOpcode();
+    if (Opc == X86::FsFLD0SS)
       Ty = Type::getFloatTy(MF.getFunction()->getContext());
-    else if (LoadMI->getOpcode() == X86::FsFLD0SD)
+    else if (Opc == X86::FsFLD0SD)
       Ty = Type::getDoubleTy(MF.getFunction()->getContext());
+    else if (Opc == X86::AVX_SET0PSY || Opc == X86::AVX_SET0PDY)
+      Ty = VectorType::get(Type::getFloatTy(MF.getFunction()->getContext()), 8);
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
     const Constant *C = LoadMI->getOpcode() == X86::V_SETALLONES ?
@@ -2996,6 +3011,22 @@ static const unsigned ReplaceableInstrs[][3] = {
   { X86::V_SET0PS,   X86::V_SET0PD,  X86::V_SET0PI  },
   { X86::XORPSrm,    X86::XORPDrm,   X86::PXORrm    },
   { X86::XORPSrr,    X86::XORPDrr,   X86::PXORrr    },
+  // AVX 128-bit support
+  { X86::VMOVAPSmr,  X86::VMOVAPDmr,  X86::VMOVDQAmr  },
+  { X86::VMOVAPSrm,  X86::VMOVAPDrm,  X86::VMOVDQArm  },
+  { X86::VMOVAPSrr,  X86::VMOVAPDrr,  X86::VMOVDQArr  },
+  { X86::VMOVUPSmr,  X86::VMOVUPDmr,  X86::VMOVDQUmr  },
+  { X86::VMOVUPSrm,  X86::VMOVUPDrm,  X86::VMOVDQUrm  },
+  { X86::VMOVNTPSmr, X86::VMOVNTPDmr, X86::VMOVNTDQmr },
+  { X86::VANDNPSrm,  X86::VANDNPDrm,  X86::VPANDNrm   },
+  { X86::VANDNPSrr,  X86::VANDNPDrr,  X86::VPANDNrr   },
+  { X86::VANDPSrm,   X86::VANDPDrm,   X86::VPANDrm    },
+  { X86::VANDPSrr,   X86::VANDPDrr,   X86::VPANDrr    },
+  { X86::VORPSrm,    X86::VORPDrm,    X86::VPORrm     },
+  { X86::VORPSrr,    X86::VORPDrr,    X86::VPORrr     },
+  { X86::AVX_SET0PS, X86::AVX_SET0PD, X86::AVX_SET0PI },
+  { X86::VXORPSrm,   X86::VXORPDrm,   X86::VPXORrm    },
+  { X86::VXORPSrr,   X86::VXORPDrr,   X86::VPXORrr    },
 };
 
 // FIXME: Some shuffle and unpack instructions have equivalents in different
