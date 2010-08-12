@@ -1749,6 +1749,13 @@ static bool AddressIsTaken(const GlobalValue *GV) {
 bool IPSCCP::runOnModule(Module &M) {
   SCCPSolver Solver(getAnalysisIfAvailable<TargetData>());
 
+  // AddressTakenFunctions - This set keeps track of the address-taken functions
+  // that are in the input.  As IPSCCP runs through and simplifies code,
+  // functions that were address taken can end up losing their
+  // address-taken-ness.  Because of this, we keep track of their addresses from
+  // the first pass so we can use them for the later simplification pass.
+  SmallPtrSet<Function*, 32> AddressTakenFunctions;
+  
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.
   //
@@ -1764,9 +1771,13 @@ bool IPSCCP::runOnModule(Module &M) {
     // If this function only has direct calls that we can see, we can track its
     // arguments and return value aggressively, and can assume it is not called
     // unless we see evidence to the contrary.
-    if (F->hasLocalLinkage() && !AddressIsTaken(F)) {
-      Solver.AddArgumentTrackedFunction(F);
-      continue;
+    if (F->hasLocalLinkage()) {
+      if (AddressIsTaken(F))
+        AddressTakenFunctions.insert(F);
+      else {
+        Solver.AddArgumentTrackedFunction(F);
+        continue;
+      }
     }
 
     // Assume the function is called.
@@ -1951,7 +1962,7 @@ bool IPSCCP::runOnModule(Module &M) {
       continue;
   
     // We can only do this if we know that nothing else can call the function.
-    if (!F->hasLocalLinkage() || AddressIsTaken(F))
+    if (!F->hasLocalLinkage() || AddressTakenFunctions.count(F))
       continue;
     
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
