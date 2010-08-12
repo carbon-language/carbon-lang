@@ -2186,12 +2186,21 @@ def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
                  [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 }
 
+// The same as done above but for AVX. The 128-bit versions are the
+// same, but re-encoded. The 256-bit does not support PI version.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1, Predicates = [HasAVX] in {
-def V_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                 [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
-def V_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                 [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PS  : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v4f32 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PD  : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v2f64 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
+                   [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
+                   [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
+let ExeDomain = SSEPackedInt in
+def AVX_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
+                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 }
 
 def : Pat<(v2i64 immAllZerosV), (V_SET0PI)>;
