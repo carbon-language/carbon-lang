@@ -442,7 +442,7 @@ def mhard_float : Flag<"-mhard-float">, Group<m_Group>;
 def miphoneos_version_min_EQ : Joined<"-miphoneos-version-min=">, Group<m_Group>;
 def mios_version_min_EQ : Joined<"-mios-version-min=">, Alias<miphoneos_version_min_EQ>;
 def mkernel : Flag<"-mkernel">, Group<m_Group>;
-def mlinker_version_EQ : Joined<"-mlinker-version=">, Group<m_Group>;
+def mlinker_version_EQ : Joined<"-mlinker-version=">;
 def mllvm : Separate<"-mllvm">;
 def mmacosx_version_min_EQ : Joined<"-mmacosx-version-min=">, Group<m_Group>;
 def mmmx : Flag<"-mmmx">, Group<m_x86_Features_Group>;

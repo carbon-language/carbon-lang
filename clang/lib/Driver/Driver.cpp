@@ -25,6 +25,7 @@
 
 #include "clang/Basic/Version.h"
 
+#include "llvm/Config/config.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -158,6 +159,15 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
 
     DAL->append(*it);
   }
+
+  // Add a default value of -mlinker-version=, if one was given and the user
+  // didn't specify one.
+#if defined(HOST_LINK_VERSION)
+  if (!Args.hasArg(options::OPT_mlinker_version_EQ)) {
+    DAL->AddJoinedArg(0, Opts->getOption(options::OPT_mlinker_version_EQ),
+                      HOST_LINK_VERSION);
+  }
+#endif
 
   return DAL;
 }
