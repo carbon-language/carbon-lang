@@ -70,12 +70,40 @@ void SplitAnalysis::analyzeUses() {
     if (usingBlocks_[MBB]++)
       continue;
     if (MachineLoop *Loop = loops_.getLoopFor(MBB))
-      usingLoops_.insert(Loop);
+      usingLoops_[Loop]++;
   }
   DEBUG(dbgs() << "  counted "
                << usingInstrs_.size() << " instrs, "
                << usingBlocks_.size() << " blocks, "
                << usingLoops_.size()  << " loops.\n");
+}
+
+/// removeUse - Update statistics by noting that MI no longer uses curli.
+void SplitAnalysis::removeUse(const MachineInstr *MI) {
+  if (!usingInstrs_.erase(MI))
+    return;
+
+  // Decrement MBB count.
+  const MachineBasicBlock *MBB = MI->getParent();
+  BlockCountMap::iterator bi = usingBlocks_.find(MBB);
+  assert(bi != usingBlocks_.end() && "MBB missing");
+  assert(bi->second && "0 count in map");
+  if (--bi->second)
+    return;
+  // No more uses in MBB.
+  usingBlocks_.erase(bi);
+
+  // Decrement loop count.
+  MachineLoop *Loop = loops_.getLoopFor(MBB);
+  if (!Loop)
+    return;
+  LoopCountMap::iterator li = usingLoops_.find(Loop);
+  assert(li != usingLoops_.end() && "Loop missing");
+  assert(li->second && "0 count in map");
+  if (--li->second)
+    return;
+  // No more blocks in Loop.
+  usingLoops_.erase(li);
 }
 
 // Get three sets of basic blocks surrounding a loop: Blocks inside the loop,
@@ -219,13 +247,14 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
 
   // Find first-class and second class candidate loops.
   // We prefer to split around loops where curli is used outside the periphery.
-  for (LoopPtrSet::const_iterator I = usingLoops_.begin(),
+  for (LoopCountMap::const_iterator I = usingLoops_.begin(),
        E = usingLoops_.end(); I != E; ++I) {
-    getLoopBlocks(*I, Blocks);
+    const MachineLoop *Loop = I->first;
+    getLoopBlocks(Loop, Blocks);
 
     // FIXME: We need an SSA updater to properly handle multiple exit blocks.
     if (Blocks.Exits.size() > 1) {
-      DEBUG(dbgs() << "  multiple exits from " << **I);
+      DEBUG(dbgs() << "  multiple exits from " << *Loop);
       continue;
     }
 
@@ -238,21 +267,21 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
       LPS = &SecondLoops;
       break;
     case ContainedInLoop:
-      DEBUG(dbgs() << "  contained in " << **I);
+      DEBUG(dbgs() << "  contained in " << *Loop);
       continue;
     case SinglePeripheral:
-      DEBUG(dbgs() << "  single peripheral use in " << **I);
+      DEBUG(dbgs() << "  single peripheral use in " << *Loop);
       continue;
     }
     // Will it be possible to split around this loop?
     getCriticalExits(Blocks, CriticalExits);
     DEBUG(dbgs() << "  " << CriticalExits.size() << " critical exits from "
-                 << **I);
+                 << *Loop);
     if (!canSplitCriticalExits(Blocks, CriticalExits))
       continue;
     // This is a possible split.
     assert(LPS);
-    LPS->insert(*I);
+    LPS->insert(Loop);
   }
 
   DEBUG(dbgs() << "  getBestSplitLoop found " << Loops.size() << " + "

@@ -45,9 +45,9 @@ public:
   typedef DenseMap<const MachineBasicBlock*, unsigned> BlockCountMap;
   BlockCountMap usingBlocks_;
 
-  // Loops where the curent interval is used.
-  typedef SmallPtrSet<const MachineLoop*, 16> LoopPtrSet;
-  LoopPtrSet usingLoops_;
+  // The number of basic block using curli in each loop.
+  typedef DenseMap<const MachineLoop*, unsigned> LoopCountMap;
+  LoopCountMap usingLoops_;
 
 private:
   // Current live interval.
@@ -68,6 +68,9 @@ public:
   /// split.
   void analyze(const LiveInterval *li);
 
+  /// removeUse - Update statistics by noting that mi no longer uses curli.
+  void removeUse(const MachineInstr *mi);
+
   const LiveInterval *getCurLI() { return curli_; }
 
   /// clear - clear all data structures so SplitAnalysis is ready to analyze a
@@ -75,6 +78,7 @@ public:
   void clear();
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
+  typedef SmallPtrSet<const MachineLoop*, 16> LoopPtrSet;
 
   // Sets of basic blocks surrounding a machine loop.
   struct LoopBlocks {
