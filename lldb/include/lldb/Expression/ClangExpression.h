@@ -59,10 +59,6 @@ public:
                          Stream &stream, 
                          bool add_result_var = false);
     
-    unsigned
-    ConvertExpressionToDWARF (ClangExpressionVariableList &expr_local_variable_list, 
-                              StreamString &dwarf_opcode_strm);
-    
     bool
     ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_variable_list,
                       StreamString &dwarf_opcode_strm);

@@ -154,8 +154,6 @@
 		26D5B0BC11B07550009A862E /* VMRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9E10F1B85900F91463 /* VMRange.cpp */; };
 		26D5B0BD11B07550009A862E /* ClangExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED510F1B86700F91463 /* ClangExpression.cpp */; };
 		26D5B0BE11B07550009A862E /* ClangExpressionVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */; };
-		26D5B0BF11B07550009A862E /* ClangStmtVisitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED710F1B86700F91463 /* ClangStmtVisitor.cpp */; };
-		26D5B0C011B07550009A862E /* DWARFExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */; };
 		26D5B0C111B07550009A862E /* Condition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE710F1B88F00F91463 /* Condition.cpp */; };
 		26D5B0C211B07550009A862E /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
 		26D5B0C311B07550009A862E /* Mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE910F1B88F00F91463 /* Mutex.cpp */; };
@@ -347,6 +345,7 @@
 		49E45FAF11F660FE008F7B28 /* ClangASTType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */; };
 		49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
 		49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */; };
+		49FB515E121481B000DF8983 /* DWARFExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */; };
 		4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
 		4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */; };
 		4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */; };
@@ -684,7 +683,6 @@
 		26BC7D8610F1B77400F91463 /* VMRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VMRange.h; path = include/lldb/Core/VMRange.h; sourceTree = "<group>"; };
 		26BC7DC010F1B79500F91463 /* ClangExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpression.h; path = include/lldb/Expression/ClangExpression.h; sourceTree = "<group>"; };
 		26BC7DC110F1B79500F91463 /* ClangExpressionVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionVariable.h; path = include/lldb/Expression/ClangExpressionVariable.h; sourceTree = "<group>"; };
-		26BC7DC210F1B79500F91463 /* ClangStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangStmtVisitor.h; path = include/lldb/Expression/ClangStmtVisitor.h; sourceTree = "<group>"; };
 		26BC7DC310F1B79500F91463 /* DWARFExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DWARFExpression.h; path = include/lldb/Expression/DWARFExpression.h; sourceTree = "<group>"; };
 		26BC7DD210F1B7D500F91463 /* Condition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Condition.h; path = include/lldb/Host/Condition.h; sourceTree = "<group>"; };
 		26BC7DD310F1B7D500F91463 /* Endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Endian.h; path = include/lldb/Host/Endian.h; sourceTree = "<group>"; };
@@ -796,7 +794,6 @@
 		26BC7E9E10F1B85900F91463 /* VMRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VMRange.cpp; path = source/Core/VMRange.cpp; sourceTree = "<group>"; };
 		26BC7ED510F1B86700F91463 /* ClangExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpression.cpp; path = source/Expression/ClangExpression.cpp; sourceTree = "<group>"; };
 		26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionVariable.cpp; path = source/Expression/ClangExpressionVariable.cpp; sourceTree = "<group>"; };
-		26BC7ED710F1B86700F91463 /* ClangStmtVisitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangStmtVisitor.cpp; path = source/Expression/ClangStmtVisitor.cpp; sourceTree = "<group>"; };
 		26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DWARFExpression.cpp; path = source/Expression/DWARFExpression.cpp; sourceTree = "<group>"; };
 		26BC7EE710F1B88F00F91463 /* Condition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Condition.cpp; path = source/Host/posix/Condition.cpp; sourceTree = "<group>"; };
 		26BC7EE810F1B88F00F91463 /* Host.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Host.mm; path = source/Host/macosx/Host.mm; sourceTree = "<group>"; };
@@ -1859,8 +1856,6 @@
 				49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */,
 				49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */,
 				49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */,
-				26BC7DC210F1B79500F91463 /* ClangStmtVisitor.h */,
-				26BC7ED710F1B86700F91463 /* ClangStmtVisitor.cpp */,
 				26BC7DC310F1B79500F91463 /* DWARFExpression.h */,
 				26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */,
 				49307AB111DEA4F20081F992 /* IRForTarget.h */,
@@ -2487,8 +2482,6 @@
 				26D5B0BC11B07550009A862E /* VMRange.cpp in Sources */,
 				26D5B0BD11B07550009A862E /* ClangExpression.cpp in Sources */,
 				26D5B0BE11B07550009A862E /* ClangExpressionVariable.cpp in Sources */,
-				26D5B0BF11B07550009A862E /* ClangStmtVisitor.cpp in Sources */,
-				26D5B0C011B07550009A862E /* DWARFExpression.cpp in Sources */,
 				26D5B0C111B07550009A862E /* Condition.cpp in Sources */,
 				26D5B0C211B07550009A862E /* Host.mm in Sources */,
 				26D5B0C311B07550009A862E /* Mutex.cpp in Sources */,
@@ -2688,6 +2681,7 @@
 				2615DB871208A9E40021781D /* StopInfo.cpp in Sources */,
 				2615DBCA1208B5FC0021781D /* StopInfoMachException.cpp in Sources */,
 				49D4FE891210B61C00CDB854 /* ClangPersistentVariables.cpp in Sources */,
+				49FB515E121481B000DF8983 /* DWARFExpression.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

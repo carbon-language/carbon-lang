@@ -46,6 +46,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
@@ -61,7 +62,6 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangResultSynthesizer.h"
-#include "lldb/Expression/ClangStmtVisitor.h"
 #include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/IRToDWARF.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -438,29 +438,6 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text,
     }
     
     return num_errors;
-}
-
-unsigned
-ClangExpression::ConvertExpressionToDWARF (ClangExpressionVariableList& expr_local_variable_list, 
-                                           StreamString &dwarf_opcode_strm)
-{
-    CompilerInstance *compiler_instance = GetCompilerInstance();
-
-    DeclarationName hack_func_name(&compiler_instance->getASTContext().Idents.get("___clang_expr"));
-    DeclContext::lookup_result result = compiler_instance->getASTContext().getTranslationUnitDecl()->lookup(hack_func_name);
-
-    if (result.first != result.second)
-    {
-        Decl *decl = *result.first;
-        Stmt *decl_stmt = decl->getBody();
-        if (decl_stmt)
-        {
-            ClangStmtVisitor visitor(compiler_instance->getASTContext(), expr_local_variable_list, m_decl_map, dwarf_opcode_strm);
-
-            visitor.Visit (decl_stmt);
-        }
-    }
-    return 0;
 }
 
 bool
