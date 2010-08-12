@@ -2174,33 +2174,33 @@ def : Pat<(X86SFence), (SFENCE)>;
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
-// FIXME: Change encoding to pseudo!
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1 in {
-def V_SET0PS : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4f32 immAllZerosV))]>;
-def V_SET0PD : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v2f64 immAllZerosV))]>;
-let ExeDomain = SSEPackedInt in
-def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
+  let Predicates = [HasSSE1] in
+    def V_SET0PS : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                     [(set VR128:$dst, (v4f32 immAllZerosV))]>;
+  let Predicates = [HasSSE2] in {
+    def V_SET0PD : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                     [(set VR128:$dst, (v2f64 immAllZerosV))]>;
+    def V_SET0PI : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                     [(set VR128:$dst, (v4i32 immAllZerosV))], SSEPackedInt>;
+  }
 }
 
 // The same as done above but for AVX. The 128-bit versions are the
 // same, but re-encoded. The 256-bit does not support PI version.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1, Predicates = [HasAVX] in {
-def AVX_SET0PS  : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v4f32 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PD  : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v2f64 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
-let ExeDomain = SSEPackedInt in
-def AVX_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
+def AVX_SET0PS  : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v4f32 immAllZerosV))]>;
+def AVX_SET0PD  : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v2f64 immAllZerosV))]>;
+def AVX_SET0PI  : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v4i32 immAllZerosV))], SSEPackedInt>;
+def AVX_SET0PSY : I<0, Pseudo, (outs VR256:$dst), (ins), "",
+                   [(set VR256:$dst, (v8f32 immAllZerosV))]>;
+def AVX_SET0PDY : I<0, Pseudo, (outs VR256:$dst), (ins), "",
+                   [(set VR256:$dst, (v4f64 immAllZerosV))]>;
 }
 
 def : Pat<(v2i64 immAllZerosV), (V_SET0PI)>;
@@ -3249,14 +3249,13 @@ def : Pat<(X86MFence), (MFENCE)>;
 // was introduced with SSE2, it's backward compatible.
 def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
 
-// Alias instructions that map zero vector to pxor / xorp* for sse.
+// Alias instructions that map one vector to pcmpeqd for sse2 and above.
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-ones value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
-  // FIXME: Change encoding to pseudo.
-  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
-                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
+    isCodeGenOnly = 1, Predicates = [HasSSE2] in
+  def V_SETALLONES : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                       [(set VR128:$dst, (v4i32 immAllOnesV))], SSEPackedInt>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Conversion Instructions
