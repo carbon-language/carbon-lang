@@ -2619,7 +2619,7 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   // That should be enough to guarantee that this type is complete.
   // If it has a trivial destructor, we can avoid the extra copy.
   CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-  if (RD->hasTrivialDestructor())
+  if (RD->isInvalidDecl() || RD->hasTrivialDestructor())
     return Owned(E);
 
   CXXTemporary *Temp = CXXTemporary::Create(Context, LookupDestructor(RD));
