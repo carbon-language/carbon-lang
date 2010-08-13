@@ -77,9 +77,6 @@ namespace  {
       return OS;
     }
 
-    bool PrintOffsetOfDesignator(Expr *E);
-    void VisitUnaryOffsetOf(UnaryOperator *Node);
-
     void Visit(Stmt* S) {
       if (Helper && Helper->handledStmt(S,OS))
           return;
@@ -677,31 +674,6 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
 
   if (Node->isPostfix())
     OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
-}
-
-bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
-  if (isa<UnaryOperator>(E)) {
-    // Base case, print the type and comma.
-    OS << E->getType().getAsString(Policy) << ", ";
-    return true;
-  } else if (ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
-    PrintOffsetOfDesignator(ASE->getLHS());
-    OS << "[";
-    PrintExpr(ASE->getRHS());
-    OS << "]";
-    return false;
-  } else {
-    MemberExpr *ME = cast<MemberExpr>(E);
-    bool IsFirst = PrintOffsetOfDesignator(ME->getBase());
-    OS << (IsFirst ? "" : ".") << ME->getMemberDecl();
-    return false;
-  }
-}
-
-void StmtPrinter::VisitUnaryOffsetOf(UnaryOperator *Node) {
-  OS << "__builtin_offsetof(";
-  PrintOffsetOfDesignator(Node->getSubExpr());
-  OS << ")";
 }
 
 void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {

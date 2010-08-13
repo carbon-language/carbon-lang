@@ -2352,7 +2352,6 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // Operations with opaque sources are black-listed.
     case UnaryOperator::Deref:
     case UnaryOperator::AddrOf: // should be impossible
-    case UnaryOperator::OffsetOf:
       return IntRange::forType(C, E->getType());
 
     default:

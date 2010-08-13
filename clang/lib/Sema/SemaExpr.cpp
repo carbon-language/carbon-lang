@@ -6689,10 +6689,6 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   Expr *Input = (Expr *)InputArg.get();
   QualType resultType;
   switch (Opc) {
-  case UnaryOperator::OffsetOf:
-    assert(false && "Invalid unary operator");
-    break;
-      
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
   case UnaryOperator::PostInc:

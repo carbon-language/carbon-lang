@@ -447,7 +447,6 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   case Real:    return "__real";
   case Imag:    return "__imag";
   case Extension: return "__extension__";
-  case OffsetOf: return "__builtin_offsetof";
   }
 }
 

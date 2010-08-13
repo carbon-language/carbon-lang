@@ -2910,22 +2910,6 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
 
       return;
     }
-
-    case UnaryOperator::OffsetOf: {
-      Expr::EvalResult Res;
-      if (U->Evaluate(Res, getContext()) && Res.Val.isInt()) {
-          const APSInt &IV = Res.Val.getInt();
-          assert(IV.getBitWidth() == getContext().getTypeSize(U->getType()));
-          assert(U->getType()->isIntegerType());
-          assert(IV.isSigned() == U->getType()->isSignedIntegerType());
-          SVal X = ValMgr.makeIntVal(IV);
-          MakeNode(Dst, U, Pred, GetState(Pred)->BindExpr(U, X));
-          return;
-        }
-      // FIXME: Handle the case where __builtin_offsetof is not a constant.
-      Dst.Add(Pred);
-      return;
-    }
       
     case UnaryOperator::Plus: assert(!asLValue);  // FALL-THROUGH.
     case UnaryOperator::Extension: {

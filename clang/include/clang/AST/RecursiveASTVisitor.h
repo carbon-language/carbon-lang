@@ -42,7 +42,7 @@
   OPERATOR(Plus)      OPERATOR(Minus)           \
   OPERATOR(Not)       OPERATOR(LNot)            \
   OPERATOR(Real)      OPERATOR(Imag)            \
-  OPERATOR(Extension) OPERATOR(OffsetOf)
+  OPERATOR(Extension)
 
 // All binary operators (excluding compound assign operators).
 #define BINOP_LIST() \

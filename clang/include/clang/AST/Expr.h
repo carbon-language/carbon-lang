@@ -1028,10 +1028,6 @@ public:
 ///   applied to a non-complex value, the former returns its operand and the
 ///   later returns zero in the type of the operand.
 ///
-/// __builtin_offsetof(type, a.b[10]) is represented as a unary operator whose
-///   subexpression is a compound literal with the various MemberExpr and
-///   ArraySubscriptExpr's applied to it. (This is only used in C)
-///
 class UnaryOperator : public Expr {
 public:
   // Note that additions to this should also update the StmtVisitor class.
@@ -1042,8 +1038,7 @@ public:
     Plus, Minus,      // [C99 6.5.3.3] Unary arithmetic operators.
     Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
-    Extension,        // __extension__ marker.
-    OffsetOf          // __builtin_offsetof
+    Extension         // __extension__ marker.
   };
 private:
   Stmt *Val;
@@ -1053,8 +1048,7 @@ public:
 
   UnaryOperator(Expr *input, Opcode opc, QualType type, SourceLocation l)
     : Expr(UnaryOperatorClass, type,
-           opc != OffsetOf && (input->isTypeDependent() ||
-                               type->isDependentType()),
+           input->isTypeDependent() || type->isDependentType(),
            input->isValueDependent()),
       Val(input), Opc(opc), Loc(l) {}
 
@@ -1086,7 +1080,6 @@ public:
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementOp() const {return Opc==PreInc || Opc==PostInc; }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
-  bool isOffsetOfOp() const { return Opc == OffsetOf; }
   static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
   bool isArithmeticOp() const { return isArithmeticOp(Opc); }
 

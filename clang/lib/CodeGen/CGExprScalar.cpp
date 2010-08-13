@@ -254,7 +254,6 @@ public:
   Value *VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
-  Value *VisitUnaryOffsetOf(const UnaryOperator *E);
     
   // C++
   Value *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
@@ -1410,12 +1409,6 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
   else
     CGF.EmitScalarExpr(Op, true);
   return llvm::Constant::getNullValue(ConvertType(E->getType()));
-}
-
-Value *ScalarExprEmitter::VisitUnaryOffsetOf(const UnaryOperator *E) {
-  Value* ResultAsPtr = EmitLValue(E->getSubExpr()).getAddress();
-  const llvm::Type* ResultType = ConvertType(E->getType());
-  return Builder.CreatePtrToInt(ResultAsPtr, ResultType, "offsetof");
 }
 
 //===----------------------------------------------------------------------===//

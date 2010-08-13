@@ -254,7 +254,6 @@ NODE_XML(UnaryOperator, "UnaryOperator")                // op(expr) or (expr)op
     ENUM_XML(UnaryOperator::Real,    "__real")
     ENUM_XML(UnaryOperator::Imag,    "__imag")
     ENUM_XML(UnaryOperator::Extension, "__extension__")
-    ENUM_XML(UnaryOperator::OffsetOf, "__builtin_offsetof")
   END_ENUM_XML
   SUB_NODE_XML(Expr)                                    // expr
 END_NODE_XML

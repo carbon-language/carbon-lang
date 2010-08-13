@@ -540,10 +540,9 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
    }
   case Stmt::UnaryOperatorClass: {
     const UnaryOperator *U = cast<const UnaryOperator>(Ex);
-    // Handle two trivial cases first
+    // Handle trivial case first
     switch (U->getOpcode()) {
     case UnaryOperator::Extension:
-    case UnaryOperator::OffsetOf:
       return false;
     default:
       return CanVary(U->getSubExpr(), Ctx);
