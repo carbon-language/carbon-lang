@@ -702,7 +702,6 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     // base address.
     switch (Opcode) {
     default: 
-    MI.dump();
       llvm_unreachable("psuedo instructions should be removed before code"
                        " emission");
       break;
