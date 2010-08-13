@@ -106,10 +106,6 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
 /// split - try splitting the current interval into pieces that may allocate
 /// separately. Return true if successful.
 bool InlineSpiller::split() {
-  // FIXME: Add intra-MBB splitting.
-  if (lis_.intervalIsInOneMBB(*li_))
-    return false;
-
   splitAnalysis_.analyze(li_);
 
   if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
@@ -127,6 +123,15 @@ bool InlineSpiller::split() {
       return true;
   }
 
+  // Try splitting inside a basic block.
+  if (const MachineBasicBlock *MBB = splitAnalysis_.getBlockForInsideSplit()) {
+    if (SplitEditor(splitAnalysis_, lis_, vrm_, *newIntervals_)
+          .splitInsideBlock(MBB))
+      return true;
+  }
+
+  // We may have been able to split out some uses, but the original interval is
+  // intact, and it should still be spilled.
   return false;
 }
 

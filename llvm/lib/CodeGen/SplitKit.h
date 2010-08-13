@@ -127,6 +127,12 @@ public:
   /// having curli split to a new live interval. Return true if Blocks can be
   /// passed to SplitEditor::splitSingleBlocks.
   bool getMultiUseBlocks(BlockPtrSet &Blocks);
+
+  /// getBlockForInsideSplit - If curli is contained inside a single basic block,
+  /// and it wou pay to subdivide the interval inside that block, return it.
+  /// Otherwise return NULL. The returned block can be passed to
+  /// SplitEditor::splitInsideBlock.
+  const MachineBasicBlock *getBlockForInsideSplit();
 };
 
 /// SplitEditor - Edit machine code and LiveIntervals for live range
@@ -242,7 +248,11 @@ public:
   /// basic block in Blocks. Return true if curli has been completely replaced,
   /// false if curli is still intact, and needs to be spilled or split further.
   bool splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);
-};
 
+  /// splitInsideBlock - Split curli into multiple intervals inside MBB. Return
+  /// true if curli has been completely replaced, false if curli is still
+  /// intact, and needs to be spilled or split further.
+  bool splitInsideBlock(const MachineBasicBlock *);
+};
 
 }

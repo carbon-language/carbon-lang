@@ -781,3 +781,78 @@ bool SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
   return dupli_;
 }
 
+
+//===----------------------------------------------------------------------===//
+//                            Sub Block Splitting
+//===----------------------------------------------------------------------===//
+
+/// getBlockForInsideSplit - If curli is contained inside a single basic block,
+/// and it wou pay to subdivide the interval inside that block, return it.
+/// Otherwise return NULL. The returned block can be passed to
+/// SplitEditor::splitInsideBlock.
+const MachineBasicBlock *SplitAnalysis::getBlockForInsideSplit() {
+  // The interval must be exclusive to one block.
+  if (usingBlocks_.size() != 1)
+    return 0;
+  // Don't to this for less than 4 instructions. We want to be sure that
+  // splitting actually reduces the instruction count per interval.
+  if (usingInstrs_.size() < 4)
+    return 0;
+  return usingBlocks_.begin()->first;
+}
+
+/// splitInsideBlock - Split curli into multiple intervals inside MBB. Return
+/// true if curli has been completely replaced, false if curli is still
+/// intact, and needs to be spilled or split further.
+bool SplitEditor::splitInsideBlock(const MachineBasicBlock *MBB) {
+  SmallVector<SlotIndex, 32> Uses;
+  Uses.reserve(sa_.usingInstrs_.size());
+  for (SplitAnalysis::InstrPtrSet::const_iterator I = sa_.usingInstrs_.begin(),
+       E = sa_.usingInstrs_.end(); I != E; ++I)
+    if ((*I)->getParent() == MBB)
+      Uses.push_back(lis_.getInstructionIndex(*I));
+  DEBUG(dbgs() << "  splitInsideBlock BB#" << MBB->getNumber() << " for "
+               << Uses.size() << " instructions.\n");
+  assert(Uses.size() >= 3 && "Need at least 3 instructions");
+  array_pod_sort(Uses.begin(), Uses.end());
+
+  // Simple algorithm: Find the largest gap between uses as determined by slot
+  // indices. Create new intervals for instructions before the gap and after the
+  // gap.
+  unsigned bestPos = 0;
+  int bestGap = 0;
+  DEBUG(dbgs() << "    dist (" << Uses[0]);
+  for (unsigned i = 1, e = Uses.size(); i != e; ++i) {
+    int g = Uses[i-1].distance(Uses[i]);
+    DEBUG(dbgs() << ") -" << g << "- (" << Uses[i]);
+    if (g > bestGap)
+      bestPos = i, bestGap = g;
+  }
+  DEBUG(dbgs() << "), best: -" << bestGap << "-\n");
+
+  // bestPos points to the first use after the best gap.
+  assert(bestPos > 0 && "Invalid gap");
+
+  // FIXME: Don't create intervals for low densities.
+
+  // First interval before the gap. Don't create single-instr intervals.
+  if (bestPos > 1) {
+    openIntv();
+    enterIntvBefore(Uses.front());
+    useIntv(Uses.front().getBaseIndex(), Uses[bestPos-1].getBoundaryIndex());
+    leaveIntvAfter(Uses[bestPos-1]);
+    closeIntv();
+  }
+
+  // Second interval after the gap.
+  if (bestPos < Uses.size()-1) {
+    openIntv();
+    enterIntvBefore(Uses[bestPos]);
+    useIntv(Uses[bestPos].getBaseIndex(), Uses.back().getBoundaryIndex());
+    leaveIntvAfter(Uses.back());
+    closeIntv();
+  }
+
+  rewrite();
+  return dupli_;
+}
