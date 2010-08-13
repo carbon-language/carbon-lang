@@ -146,9 +146,6 @@ namespace {
   OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
                  cl::init("-"));
 
-  cl::opt<std::string>
-  InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
-
   cl::list<std::string>
   IncludeDirs("I", cl::desc("Directory of include files"),
               cl::value_desc("directory"), cl::Prefix);
@@ -161,6 +158,9 @@ namespace {
 
 
 // FIXME: Eliminate globals from tblgen.
+cl::opt<std::string>
+InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
+
 RecordKeeper llvm::Records;
 
 static SourceMgr SrcMgr;
