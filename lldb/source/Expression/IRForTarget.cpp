@@ -528,8 +528,7 @@ IRForTarget::MaybeHandleVariable(Module &M,
         if (named_decl && !m_decl_map->AddValueToStruct(V, 
                                                         named_decl,
                                                         name,
-                                                        qual_type,
-                                                        ast_context,
+                                                        lldb_private::TypeFromParser(qual_type, ast_context),
                                                         value_size, 
                                                         value_alignment))
             return false;

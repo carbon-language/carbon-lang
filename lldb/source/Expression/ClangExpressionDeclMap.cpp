@@ -115,8 +115,7 @@ bool
 ClangExpressionDeclMap::AddValueToStruct (llvm::Value *value,
                                           const clang::NamedDecl *decl,
                                           std::string &name,
-                                          void *parser_type,
-                                          clang::ASTContext *parser_ast_context,
+                                          TypeFromParser type,
                                           size_t size,
                                           off_t alignment)
 {
@@ -137,7 +136,7 @@ ClangExpressionDeclMap::AddValueToStruct (llvm::Value *value,
     member.m_value          = value;
     member.m_decl           = decl;
     member.m_name           = name;
-    member.m_parser_type    = TypeFromParser(parser_type, parser_ast_context);
+    member.m_parser_type    = type;
     member.m_offset         = 0;
     member.m_size           = size;
     member.m_alignment      = alignment;
