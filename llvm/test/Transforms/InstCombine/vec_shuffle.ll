@@ -87,3 +87,32 @@ define <4 x i8> @test9(<16 x i8> %tmp6) nounwind {
 	%tmp9 = shufflevector <4 x i8> %tmp7, <4 x i8> undef, <4 x i32> < i32 3, i32 1, i32 2, i32 0 >		; <<4 x i8>> [#uses=1]
 	ret <4 x i8> %tmp9
 }
+
+; Test fold of hi/lo vector halves
+; Test fold of unpack operation
+define void @test10(<16 x i8>* %out, <16 x i8> %r, <16 x i8> %g, <16 x i8> %b, <16 x i8> %a) nounwind ssp {
+; CHECK: @test10
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: shufflevector
+; CHECK-NEXT: store
+; CHECK-NEXT: getelementptr
+; CHECK-NEXT: store
+; CHECK-NEXT: ret
+  %tmp1 = shufflevector <16 x i8> %r, <16 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7> ; <<8 x i8>> [#uses=1]
+  %tmp3 = shufflevector <8 x i8> %tmp1, <8 x i8> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef> ; <<16 x i8>> [#uses=1]
+  %tmp4 = shufflevector <16 x i8> undef, <16 x i8> %tmp3, <16 x i32> <i32 16, i32 1, i32 17, i32 3, i32 18, i32 5, i32 19, i32 7, i32 20, i32 9, i32 21, i32 11, i32 22, i32 13, i32 23, i32 15> ; <<16 x i8>> [#uses=1]
+  %tmp6 = shufflevector <16 x i8> %b, <16 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7> ; <<8 x i8>> [#uses=1]
+  %tmp8 = shufflevector <8 x i8> %tmp6, <8 x i8> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef> ; <<16 x i8>> [#uses=1]
+  %tmp9 = shufflevector <16 x i8> %tmp4, <16 x i8> %tmp8, <16 x i32> <i32 0, i32 16, i32 2, i32 17, i32 4, i32 18, i32 6, i32 19, i32 8, i32 20, i32 10, i32 21, i32 12, i32 22, i32 14, i32 23> ; <<16 x i8>> [#uses=1]
+  %tmp11 = shufflevector <16 x i8> %r, <16 x i8> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15> ; <<8 x i8>> [#uses=1]
+  %tmp13 = shufflevector <8 x i8> %tmp11, <8 x i8> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef> ; <<16 x i8>> [#uses=1]
+  %tmp14 = shufflevector <16 x i8> undef, <16 x i8> %tmp13, <16 x i32> <i32 16, i32 1, i32 17, i32 3, i32 18, i32 5, i32 19, i32 7, i32 20, i32 9, i32 21, i32 11, i32 22, i32 13, i32 23, i32 15> ; <<16 x i8>> [#uses=1]
+  %tmp16 = shufflevector <16 x i8> %b, <16 x i8> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15> ; <<8 x i8>> [#uses=1]
+  %tmp18 = shufflevector <8 x i8> %tmp16, <8 x i8> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef> ; <<16 x i8>> [#uses=1]
+  %tmp19 = shufflevector <16 x i8> %tmp14, <16 x i8> %tmp18, <16 x i32> <i32 0, i32 16, i32 2, i32 17, i32 4, i32 18, i32 6, i32 19, i32 8, i32 20, i32 10, i32 21, i32 12, i32 22, i32 14, i32 23> ; <<16 x i8>> [#uses=1]
+  %arrayidx = getelementptr inbounds <16 x i8>* %out, i64 0 ; <<16 x i8>*> [#uses=1]
+  store <16 x i8> %tmp9, <16 x i8>* %arrayidx
+  %arrayidx24 = getelementptr inbounds <16 x i8>* %out, i64 1 ; <<16 x i8>*> [#uses=1]
+  store <16 x i8> %tmp19, <16 x i8>* %arrayidx24
+  ret void
+}
