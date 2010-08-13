@@ -51,6 +51,10 @@
 # CHECK:	rsbs	r0, r0, #0
 0x40 0x42
 
+# CHECK-NOT:	rsb	r0, r2, r0, lsl #0
+# CHECK:	rsb	r0, r2, r0
+0xc2 0xeb 0x00 0x00
+
 # CHECK-NOT:	ssat	r0, #17, r12, lsl #0
 # CHECK:	ssat	r0, #17, r12
 0x0c 0xf3 0x10 0x00

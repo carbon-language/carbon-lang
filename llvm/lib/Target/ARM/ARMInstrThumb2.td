@@ -259,9 +259,9 @@ multiclass T2I_bin_w_irs<bits<4> opcod, string opc, PatFrag opnode,
     T2I_bin_irs<opcod, opc, opnode, Commutable, ".w">;
 
 /// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are
-/// reversed. It doesn't define the 'rr' form since it's handled by its
-/// T2I_bin_irs counterpart.
-multiclass T2I_rbin_is<bits<4> opcod, string opc, PatFrag opnode> {
+/// reversed.  The 'rr' form is only defined for the disassembler; for codegen
+/// it is equivalent to the T2I_bin_irs counterpart.
+multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2sI<(outs rGPR:$dst), (ins rGPR:$rhs, t2_so_imm:$lhs), IIC_iALUi,
                  opc, ".w\t$dst, $rhs, $lhs",
@@ -271,6 +271,18 @@ multiclass T2I_rbin_is<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{24-21} = opcod;
      let Inst{20} = ?; // The S bit.
      let Inst{15} = 0;
+   }
+   // register
+   def rr : T2sI<(outs rGPR:$dst), (ins rGPR:$rhs, rGPR:$lhs), IIC_iALUr,
+                 opc, "\t$dst, $rhs, $lhs",
+                 [(set rGPR:$dst, (opnode rGPR:$lhs, rGPR:$rhs))]> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = opcod;
+     let Inst{20} = ?; // The S bit.
+     let Inst{14-12} = 0b000; // imm3
+     let Inst{7-6} = 0b00; // imm2
+     let Inst{5-4} = 0b00; // type
    }
    // shifted register
    def rs : T2sI<(outs rGPR:$dst), (ins rGPR:$rhs, t2_so_reg:$lhs), IIC_iALUsi,
@@ -461,7 +473,8 @@ multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
 }
 }
 
-/// T2I_rbin_s_is - Same as T2I_rbin_is except sets 's' bit.
+/// T2I_rbin_s_is - Same as T2I_rbin_irs except sets 's' bit and the register
+/// version is not needed since this is only for codegen.
 let Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
    // shifted imm
@@ -1387,7 +1400,7 @@ defm t2SBCS : T2I_adde_sube_s_irs<0b1011, "sbc",
                           BinOpFrag<(sube_live_carry node:$LHS, node:$RHS)>>;
 
 // RSB
-defm t2RSB  : T2I_rbin_is   <0b1110, "rsb",
+defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",
                              BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 defm t2RSBS : T2I_rbin_s_is <0b1110, "rsb",
                              BinOpFrag<(subc node:$LHS, node:$RHS)>>;
