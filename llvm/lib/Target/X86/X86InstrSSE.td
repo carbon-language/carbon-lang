@@ -2174,7 +2174,9 @@ def : Pat<(X86SFence), (SFENCE)>;
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
-// FIXME: Change encoding to pseudo!
+// FIXME: Change encoding to pseudo! This is blocked right now by the x86
+// JIT implementatioan, it does not expand the instructions below like
+// X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1 in {
 def V_SET0PS : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
@@ -2188,6 +2190,9 @@ def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
 
 // The same as done above but for AVX. The 128-bit versions are the
 // same, but re-encoded. The 256-bit does not support PI version.
+// FIXME: Change encoding to pseudo! This is blocked right now by the x86
+// JIT implementatioan, it does not expand the instructions below like
+// X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1, Predicates = [HasAVX] in {
 def AVX_SET0PS  : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
