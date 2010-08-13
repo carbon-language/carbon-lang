@@ -790,7 +790,11 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
                            Name.getString(), &CGM.getModule());
 
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);
-
+  StartFunction(BD, ResultType, Fn, Args,
+                BExpr->getBody()->getLocEnd());
+  
+  CurFuncDecl = OuterFuncDecl;
+  
   QualType FnType(BlockFunctionType, 0);
   bool HasPrototype = isa<FunctionProtoType>(BlockFunctionType);
   
@@ -802,12 +806,19 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
                                      FunctionDecl::Static,
                                      FunctionDecl::None,
                                      false, HasPrototype);
+  if (FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FnType)) {
+    const FunctionDecl *CFD = dyn_cast<FunctionDecl>(CurCodeDecl);
+    FunctionDecl *FD = const_cast<FunctionDecl *>(CFD);
+    llvm::SmallVector<ParmVarDecl*, 16> Params;
+    for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
+      Params.push_back(ParmVarDecl::Create(getContext(), FD, 
+                                           SourceLocation(), 0,
+                                           FT->getArgType(i), /*TInfo=*/0,
+                                           VarDecl::None, VarDecl::None, 0));
+    FD->setParams(Params.data(), Params.size());
+  }
   
-  StartFunction(BD, ResultType, Fn, Args,
-                BExpr->getBody()->getLocEnd());
-
-  CurFuncDecl = OuterFuncDecl;
-
+  
   // If we have a C++ 'this' reference, go ahead and force it into
   // existence now.
   if (Info.CXXThisRef) {
