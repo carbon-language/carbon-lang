@@ -27,13 +27,16 @@ namespace clang {
 class SourceManager;
 class FileEntry;
 
-class FixItPathRewriter {
+class FixItOptions {
 public:
-  virtual ~FixItPathRewriter();
+  virtual ~FixItOptions();
 
   /// \brief This file is about to be rewritten. Return the name of the file
   /// that is okay to write to.
   virtual std::string RewriteFilename(const std::string &Filename) = 0;
+
+  /// \brief Whether to abort fixing a file when not all errors could be fixed.
+  bool FixWhatYouCan;
 };
 
 class FixItRewriter : public DiagnosticClient {
@@ -50,7 +53,7 @@ class FixItRewriter : public DiagnosticClient {
 
   /// \brief Turn an input path into an output path. NULL implies overwriting
   /// the original.
-  FixItPathRewriter *PathRewriter;
+  FixItOptions *FixItOpts;
 
   /// \brief The number of rewriter failures.
   unsigned NumFailures;
@@ -60,7 +63,7 @@ public:
 
   /// \brief Initialize a new fix-it rewriter.
   FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
-                const LangOptions &LangOpts, FixItPathRewriter *PathRewriter);
+                const LangOptions &LangOpts, FixItOptions *FixItOpts);
 
   /// \brief Destroy the fix-it rewriter.
   ~FixItRewriter();

@@ -74,6 +74,8 @@ public:
   unsigned ShowTimers : 1;                 ///< Show timers for individual
                                            /// actions.
   unsigned ShowVersion : 1;                ///< Show the -version text.
+  unsigned FixWhatYouCan : 1;              ///< Apply fixes even if there are
+                                           /// unfixable errors.
 
   /// The input files and their types.
   std::vector<std::pair<InputKind, std::string> > Inputs;

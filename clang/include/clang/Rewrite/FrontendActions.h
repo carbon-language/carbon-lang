@@ -16,7 +16,7 @@
 
 namespace clang {
 class FixItRewriter;
-class FixItPathRewriter;
+class FixItOptions;
 
 //===----------------------------------------------------------------------===//
 // AST Consumer Actions
@@ -31,7 +31,7 @@ protected:
 class FixItAction : public ASTFrontendAction {
 protected:
   llvm::OwningPtr<FixItRewriter> Rewriter;
-  llvm::OwningPtr<FixItPathRewriter> PathRewriter;
+  llvm::OwningPtr<FixItOptions> FixItOpts;
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile);

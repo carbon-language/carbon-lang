@@ -358,9 +358,10 @@ def print_stats : Flag<"-print-stats">,
   HelpText<"Print performance metrics and statistics">;
 def ftime_report : Flag<"-ftime-report">,
   HelpText<"Print the amount of time each phase of compilation takes">;
-
 def fdump_record_layouts : Flag<"-fdump-record-layouts">,
   HelpText<"Dump record layout information">;
+def fix_what_you_can : Flag<"-fix-what-you-can">,
+  HelpText<"Apply fix-it advice even in the presence of unfixable errors">;
 
 // Generic forwarding to LLVM options. This should only be used for debugging
 // and experimental features.

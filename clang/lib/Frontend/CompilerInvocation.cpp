@@ -369,6 +369,8 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-ftime-report");
   if (Opts.ShowVersion)
     Res.push_back("-version");
+  if (Opts.FixWhatYouCan)
+    Res.push_back("-fix-what-you-can");
 
   bool NeedLang = false;
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i)
@@ -1051,6 +1053,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.ViewClassInheritance = Args.getLastArgValue(OPT_cxx_inheritance_view);
   Opts.ASTMergeFiles = Args.getAllArgValues(OPT_ast_merge);
   Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
+  Opts.FixWhatYouCan = Args.hasArg(OPT_fix_what_you_can);
 
   InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {

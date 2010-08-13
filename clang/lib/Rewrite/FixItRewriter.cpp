@@ -27,10 +27,10 @@ using namespace clang;
 
 FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
                              const LangOptions &LangOpts,
-                             FixItPathRewriter *PathRewriter)
+                             FixItOptions *FixItOpts)
   : Diags(Diags),
     Rewrite(SourceMgr, LangOpts),
-    PathRewriter(PathRewriter),
+    FixItOpts(FixItOpts),
     NumFailures(0) {
   Client = Diags.getClient();
   Diags.setClient(this);
@@ -49,7 +49,7 @@ bool FixItRewriter::WriteFixedFile(FileID ID, llvm::raw_ostream &OS) {
 }
 
 bool FixItRewriter::WriteFixedFiles() {
-  if (NumFailures > 0) {
+  if (NumFailures > 0 && !FixItOpts->FixWhatYouCan) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
     return true;
   }
@@ -57,8 +57,8 @@ bool FixItRewriter::WriteFixedFiles() {
   for (iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
     const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
     std::string Filename = Entry->getName();
-    if (PathRewriter)
-      Filename = PathRewriter->RewriteFilename(Filename);
+    if (FixItOpts)
+      Filename = FixItOpts->RewriteFilename(Filename);
     std::string Err;
     llvm::raw_fd_ostream OS(Filename.c_str(), Err,
                             llvm::raw_fd_ostream::F_Binary);
@@ -164,4 +164,4 @@ void FixItRewriter::Diag(FullSourceLoc Loc, unsigned DiagID) {
   Diags.setClient(this);
 }
 
-FixItPathRewriter::~FixItPathRewriter() {}
+FixItOptions::~FixItOptions() {}
