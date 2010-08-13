@@ -449,9 +449,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Diagnose unused local variables.
   if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed())
     SemaRef.DiagnoseUnusedDecl(Var);
-
-  SemaRef.MarkUnusedFileScopedDecl(Var);
-
+  
   return Var;
 }
 
@@ -1206,8 +1204,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
     PrincipalDecl->setNonMemberOperator();
 
-  SemaRef.MarkUnusedFileScopedDecl(Function);
-
   return Function;
 }
 
@@ -1419,8 +1415,6 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     else
       Owner->addDecl(DeclToAdd);
   }
-  
-  SemaRef.MarkUnusedFileScopedDecl(Method);
 
   return Method;
 }
