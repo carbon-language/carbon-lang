@@ -3513,9 +3513,8 @@ static SDValue getUnpackh(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-/// PromoteSplat - Promote a splat of v4f32, v8i16 or v16i8 to v4i32.
-static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG,
-                            bool HasSSE2) {
+/// PromoteSplat - Promote a splat of v4i32, v8i16 or v16i8 to v4f32.
+static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   if (SV->getValueType(0).getVectorNumElements() <= 4)
     return SDValue(SV, 0);
 
@@ -4796,7 +4795,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (SVOp->isSplat()) {
     if (isMMX || NumElems < 4)
       return Op;
-    return PromoteSplat(SVOp, DAG, Subtarget->hasSSE2());
+    return PromoteSplat(SVOp, DAG);
   }
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
