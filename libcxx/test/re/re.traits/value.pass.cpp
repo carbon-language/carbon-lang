@@ -13,8 +13,6 @@
 
 // int value(charT ch, int radix) const;
 
-#include <iostream>
-
 #include <regex>
 #include <cassert>
 

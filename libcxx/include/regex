@@ -2529,41 +2529,88 @@ public:
           __end_(0), __left_anchor_(false)
         {__parse(__il.begin(), __il.end());}
 
-    ~basic_regex();
+//    ~basic_regex() = default;
 
 //     basic_regex& operator=(const basic_regex&) = default;
 //     basic_regex& operator=(basic_regex&&) = default;
-    basic_regex& operator=(const value_type* __p);
-    basic_regex& operator=(initializer_list<value_type> __il);
+    basic_regex& operator=(const value_type* __p)
+        {return assign(__p);}
+    basic_regex& operator=(initializer_list<value_type> __il)
+        {return assign(__il);}
     template <class _ST, class _SA>
-        basic_regex& operator=(const basic_string<value_type, _ST, _SA>& __p);
+        basic_regex& operator=(const basic_string<value_type, _ST, _SA>& __p)
+        {return assign(__p);}
 
     // assign:
-    basic_regex& assign(const basic_regex& __that);
-#ifdef _LIBCPP_MOVE
-    basic_regex& assign(basic_regex&& __that);
-#endif
-    basic_regex& assign(const value_type* __p, flag_type __f = regex_constants::ECMAScript);
-    basic_regex& assign(const value_type* __p, size_t __len, flag_type __f);
+    basic_regex& assign(const basic_regex& __that)
+        {return *this = __that;}
+    basic_regex& assign(const value_type* __p, flag_type __f = regex_constants::ECMAScript)
+        {return assign(__p, __p + __traits_.length(__p), __f);}
+    basic_regex& assign(const value_type* __p, size_t __len, flag_type __f)
+        {return assign(__p, __p + __len, __f);}
     template <class _ST, class _SA>
         basic_regex& assign(const basic_string<value_type, _ST, _SA>& __s,
-                            flag_type __f = regex_constants::ECMAScript);
+                            flag_type __f = regex_constants::ECMAScript)
+            {return assign(__s.begin(), __s.end(), __f);}
+
     template <class _InputIterator>
-        basic_regex& assign(_InputIterator __first, _InputIterator __last,
-                            flag_type __f = regex_constants::ECMAScript);
+        typename enable_if
+        <
+             __is_input_iterator  <_InputIterator>::value &&
+            !__is_forward_iterator<_InputIterator>::value,
+            basic_regex&
+        >::type
+        assign(_InputIterator __first, _InputIterator __last,
+                            flag_type __f = regex_constants::ECMAScript)
+        {
+            basic_string<_CharT> __t(__first, __last);
+            return assign(__t.begin(), __t.end(), __f);
+        }
+
+private:
+    void __member_init(flag_type __f)
+    {
+        __flags_ = __f;
+        __marked_count_ = 0;
+        __loop_count_ = 0;
+        __open_count_ = 0;
+        __end_ = nullptr;
+        __left_anchor_ = false;
+    }
+public:
+
+    template <class _ForwardIterator>
+        typename enable_if
+        <
+            __is_forward_iterator<_ForwardIterator>::value,
+            basic_regex&
+        >::type
+        assign(_ForwardIterator __first, _ForwardIterator __last,
+                            flag_type __f = regex_constants::ECMAScript)
+        {
+            __member_init(__f);
+            __parse(__first, __last);
+        }
+
     basic_regex& assign(initializer_list<value_type> __il,
-                        flag_type = regex_constants::ECMAScript);
+                        flag_type __f = regex_constants::ECMAScript)
+        {return assign(__il.begin(), __il.end(), __f);}
 
     // const operations:
     unsigned mark_count() const {return __marked_count_;}
     flag_type flags() const {return __flags_;}
 
     // locale:
-    locale_type imbue(locale_type __loc) {return __traits_.imbue(__loc);}
+    locale_type imbue(locale_type __loc)
+    {
+        __member_init(ECMAScript);
+        __start_.reset();
+        return __traits_.imbue(__loc);
+    }
     locale_type getloc() const {return __traits_.getloc();}
 
     // swap:
-    void swap(basic_regex&);
+    void swap(basic_regex& __r);
 
 private:
     unsigned __loop_count() const {return __loop_count_;}
@@ -2810,8 +2857,26 @@ private:
 };
 
 template <class _CharT, class _Traits>
-basic_regex<_CharT, _Traits>::~basic_regex()
+void
+basic_regex<_CharT, _Traits>::swap(basic_regex& __r)
 {
+    using _STD::swap;
+    swap(__traits_, __r.__traits_);
+    swap(__flags_, __r.__flags_);
+    swap(__marked_count_, __r.__marked_count_);
+    swap(__loop_count_, __r.__loop_count_);
+    swap(__open_count_, __r.__open_count_);
+    swap(__start_, __r.__start_);
+    swap(__end_, __r.__end_);
+    swap(__left_anchor_, __r.__left_anchor_);
+}
+
+template <class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(basic_regex<_CharT, _Traits>& __x, basic_regex<_CharT, _Traits>& __y)
+{
+    return __x.swap(__y);
 }
 
 // __lookahead

@@ -15,8 +15,6 @@
 //   string_type
 //   lookup_collatename(ForwardIterator first, ForwardIterator last) const;
 
-#include <iostream>
-
 #include <regex>
 #include <iterator>
 #include <cassert>

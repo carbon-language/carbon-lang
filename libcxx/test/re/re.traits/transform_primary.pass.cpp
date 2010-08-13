@@ -16,8 +16,6 @@
 //   string_type
 //   transform_primary(ForwardIterator first, ForwardIterator last) const;
 
-#include <iostream>
-
 #include <regex>
 #include <cassert>
 #include "iterators.h"

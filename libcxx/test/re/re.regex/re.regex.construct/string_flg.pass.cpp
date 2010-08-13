@@ -15,8 +15,6 @@
 //    basic_regex(const basic_string<charT, ST, SA>& s,
 //                flag_type f = regex_constants::ECMAScript);
 
-#include <iostream>
-
 #include <regex>
 #include <cassert>
 

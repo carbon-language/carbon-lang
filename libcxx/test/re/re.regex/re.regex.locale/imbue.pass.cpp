@@ -11,24 +11,19 @@
 
 // template <class charT, class traits = regex_traits<charT>> class basic_regex;
 
-// basic_regex(const charT* p);
+// locale_type imbue(locale_type loc);
 
 #include <regex>
+#include <locale>
 #include <cassert>
-
-template <class CharT>
-void
-test(const CharT* p, unsigned mc)
-{
-    std::basic_regex<CharT> r(p);
-    assert(r.flags() == std::regex_constants::ECMAScript);
-    assert(r.mark_count() == mc);
-}
 
 int main()
 {
-    test("\\(a\\)", 0);
-    test("\\(a[bc]\\)", 0);
-    test("\\(a\\([bc]\\)\\)", 0);
-    test("(a([bc]))", 2);
+    std::regex r;
+    std::locale loc = r.imbue(std::locale("en_US"));
+    assert(loc.name() == "C");
+    assert(r.getloc().name() == "en_US");
+    loc = r.imbue(std::locale("C"));
+    assert(loc.name() == "en_US");
+    assert(r.getloc().name() == "C");
 }
