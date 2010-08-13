@@ -245,10 +245,10 @@ public:
   ///
   int getObjectIndexEnd() const { return (int)Objects.size()-NumFixedObjects; }
 
-  /// getNumFixedObjects() - Return the number of fixed objects.
+  /// getNumFixedObjects - Return the number of fixed objects.
   unsigned getNumFixedObjects() const { return NumFixedObjects; }
 
-  /// getNumObjects() - Return the number of objects.
+  /// getNumObjects - Return the number of objects.
   ///
   unsigned getNumObjects() const { return Objects.size(); }
 
