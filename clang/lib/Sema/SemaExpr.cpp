@@ -1142,6 +1142,8 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
           return ActOnIdExpression(S, SS, Id, HasTrailingLParen,
                                    isAddressOfOperand);
       }
+      // for further use, this must be set to false if in class method.
+      IvarLookupFollowUp = getCurMethodDecl()->isInstanceMethod();
     }
   }
 
@@ -1193,6 +1195,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
       if (Property) {
         Diag(NameLoc, diag::warn_ivar_variable_conflict) << Var->getDeclName();
         Diag(Property->getLocation(), diag::note_property_declare);
+        Diag(Var->getLocation(), diag::note_global_declared_at);
       }
     }
   } else if (FunctionDecl *Func = R.getAsSingle<FunctionDecl>()) {

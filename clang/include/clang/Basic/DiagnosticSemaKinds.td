@@ -2520,8 +2520,10 @@ def note_condition_assign_silence : Note<
   "place parentheses around the assignment to silence this warning">;
 
 def warn_ivar_variable_conflict : Warning<
-  "%0 lookup will access the property ivar in nonfragile-abi2 mode">, 
+  "when default property synthesis is on, "
+  "%0 lookup will access property ivar instead of global variable">, 
   InGroup<NonfragileAbi2>;
+def note_global_declared_at : Note<"global variable declared here">;
 
 // assignment related diagnostics (also for argument passing, returning, etc).
 // In most of these diagnostics the %2 is a value from the

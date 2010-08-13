@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fobjc-nonfragile-abi -verify -fsyntax-only %s
 // rdar : // 8225011
 
-int glob;
+int glob; // expected-note {{global variable declared here}}
 
 @interface I
 @property int glob; // expected-note {{property declared here}}
@@ -13,7 +13,7 @@ int glob;
 @end
 
 @implementation I
-- (int) Meth { return glob; } // expected-warning {{'glob' lookup will access the property ivar in nonfragile-abi2 mode}}
+- (int) Meth { return glob; } // expected-warning {{when default property synthesis is on, 'glob' lookup will access}}
 @synthesize glob;
 // rdar: // 8248681
 - (int) Meth1: (int) p {
