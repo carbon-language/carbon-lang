@@ -1206,36 +1206,31 @@ let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
                     "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}">, XD;
 }
 
-multiclass sse12_cmp_scalar_int<RegisterClass RC, Operand memopr,
-                         ComplexPattern mem_cpat, Intrinsic Int, string asm> {
+multiclass sse12_cmp_scalar_int<RegisterClass RC, X86MemOperand x86memop,
+                         Intrinsic Int, string asm> {
   def rr : SIi8<0xC2, MRMSrcReg, (outs VR128:$dst),
                       (ins VR128:$src1, VR128:$src, SSECC:$cc), asm,
                         [(set VR128:$dst, (Int VR128:$src1,
                                                VR128:$src, imm:$cc))]>;
   def rm : SIi8<0xC2, MRMSrcMem, (outs VR128:$dst),
-                      (ins VR128:$src1, memopr:$src, SSECC:$cc), asm,
+                      (ins VR128:$src1, f32mem:$src, SSECC:$cc), asm,
                         [(set VR128:$dst, (Int VR128:$src1,
-                                              mem_cpat:$src, imm:$cc))]>;
+                                               (load addr:$src), imm:$cc))]>;
 }
 
 // Aliases to match intrinsics which expect XMM operand(s).
-
 let isAsmParserOnly = 1 in {
-  defm Int_VCMPSS  : sse12_cmp_scalar_int<VR128, ssmem, sse_load_f32, 
-                       int_x86_sse_cmp_ss,
+  defm Int_VCMPSS  : sse12_cmp_scalar_int<VR128, f32mem, int_x86_sse_cmp_ss,
                        "cmp${cc}ss\t{$src, $src1, $dst|$dst, $src1, $src}">,
                        XS, VEX_4V;
-  defm Int_VCMPSD  : sse12_cmp_scalar_int<VR128, sdmem, sse_load_f64,
-                       int_x86_sse2_cmp_sd,
+  defm Int_VCMPSD  : sse12_cmp_scalar_int<VR128, f64mem, int_x86_sse2_cmp_sd,
                        "cmp${cc}sd\t{$src, $src1, $dst|$dst, $src1, $src}">,
                        XD, VEX_4V;
 }
 let Constraints = "$src1 = $dst" in {
-  defm Int_CMPSS  : sse12_cmp_scalar_int<VR128, ssmem, sse_load_f32,
-                       int_x86_sse_cmp_ss,
+  defm Int_CMPSS  : sse12_cmp_scalar_int<VR128, f32mem, int_x86_sse_cmp_ss,
                        "cmp${cc}ss\t{$src, $dst|$dst, $src}">, XS;
-  defm Int_CMPSD  : sse12_cmp_scalar_int<VR128, sdmem, sse_load_f64,
-                       int_x86_sse2_cmp_sd,
+  defm Int_CMPSD  : sse12_cmp_scalar_int<VR128, f64mem, int_x86_sse2_cmp_sd,
                        "cmp${cc}sd\t{$src, $dst|$dst, $src}">, XD;
 }
 
