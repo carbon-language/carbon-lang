@@ -241,15 +241,33 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
     return true;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // For functions, UnusedFileScopedDecls stores the first declaration.
+    // UnusedFileScopedDecls stores the first declaration.
+    // The declaration may have become definition so check again.
+    const FunctionDecl *DeclToCheck;
+    if (FD->hasBody(DeclToCheck))
+      return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
+
     // Later redecls may add new information resulting in not having to warn,
     // so check again.
-    const FunctionDecl *DeclToCheck;
-    if (!FD->hasBody(DeclToCheck))
-      DeclToCheck = FD->getMostRecentDeclaration();
+    DeclToCheck = FD->getMostRecentDeclaration();
     if (DeclToCheck != FD)
       return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
   }
+
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    // UnusedFileScopedDecls stores the first declaration.
+    // The declaration may have become definition so check again.
+    const VarDecl *DeclToCheck = VD->getDefinition(); 
+    if (DeclToCheck)
+      return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
+
+    // Later redecls may add new information resulting in not having to warn,
+    // so check again.
+    DeclToCheck = VD->getMostRecentDeclaration();
+    if (DeclToCheck != VD)
+      return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
+  }
+
   return false;
 }
 
@@ -358,9 +376,13 @@ void Sema::ActOnEndOfTranslationUnit() {
         DiagD = FD;
       Diag(DiagD->getLocation(), diag::warn_unused_function)
             << DiagD->getDeclName();
-    } else
-      Diag((*I)->getLocation(), diag::warn_unused_variable)
-            << cast<VarDecl>(*I)->getDeclName();
+    } else {
+      const VarDecl *DiagD = cast<VarDecl>(*I)->getDefinition();
+      if (!DiagD)
+        DiagD = cast<VarDecl>(*I);
+      Diag(DiagD->getLocation(), diag::warn_unused_variable)
+            << DiagD->getDeclName();
+    }
   }
 }
 

@@ -349,8 +349,7 @@ public:
   std::vector<VarDecl *> TentativeDefinitions;
 
   /// \brief The set of file scoped decls seen so far that have not been used
-  /// and must warn if not used. For functions only contains the first
-  /// declaration.
+  /// and must warn if not used. Only contains the first declaration.
   std::vector<const DeclaratorDecl*> UnusedFileScopedDecls;
 
   class AccessedEntity {

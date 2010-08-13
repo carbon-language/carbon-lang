@@ -523,21 +523,27 @@ static void RemoveUsingDecls(LookupResult &R) {
 
 bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   assert(D);
+
   if (D->isInvalidDecl() || D->isUsed() || D->hasAttr<UnusedAttr>())
-    return false;
-  if (D->getLinkage() == ExternalLinkage)
     return false;
 
   // Ignore class templates.
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D))
-    if (MD->getParent()->getDescribedClassTemplate())
-      return false;
+  if (D->getDeclContext()->isDependentContext())
+    return false;
+
+  // We warn for unused decls internal to the translation unit.
+  if (D->getLinkage() == ExternalLinkage)
+    return false;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isThisDeclarationADefinition())
       return !Context.DeclMustBeEmitted(FD);
     return true;
    }
+
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    if (VD->isFileVarDecl())
+      return !Context.DeclMustBeEmitted(VD);
 
    return false;
  }
@@ -549,6 +555,12 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     const FunctionDecl *First = FD->getFirstDeclaration();
     if (FD != First && ShouldWarnIfUnusedFileScopedDecl(First))
+      return; // First should already be in the vector.
+  }
+
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    const VarDecl *First = VD->getFirstDeclaration();
+    if (VD != First && ShouldWarnIfUnusedFileScopedDecl(First))
       return; // First should already be in the vector.
   }
 
@@ -2757,6 +2769,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // member, set the visibility of this variable.
   if (NewVD->getLinkage() == ExternalLinkage && !DC->isRecord())
     AddPushedVisibilityAttribute(NewVD);
+
+  MarkUnusedFileScopedDecl(NewVD);
 
   return NewVD;
 }

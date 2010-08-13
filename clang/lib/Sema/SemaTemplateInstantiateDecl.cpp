@@ -449,7 +449,9 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Diagnose unused local variables.
   if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed())
     SemaRef.DiagnoseUnusedDecl(Var);
-  
+
+  SemaRef.MarkUnusedFileScopedDecl(Var);
+
   return Var;
 }
 

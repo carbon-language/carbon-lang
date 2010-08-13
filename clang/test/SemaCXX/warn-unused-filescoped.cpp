@@ -25,3 +25,19 @@ namespace {
 }
 
 void S::m3() { }  // expected-warning{{unused}}
+
+static int x1;  // expected-warning{{unused}}
+
+namespace {
+  int x2;  // expected-warning{{unused}}
+  
+  struct S2 {
+    static int x;  // expected-warning{{unused}}
+  };
+
+  template <typename T>
+  struct TS2 {
+    static int x;
+  };
+  template <> int TS2<int>::x;  // expected-warning{{unused}}
+}
