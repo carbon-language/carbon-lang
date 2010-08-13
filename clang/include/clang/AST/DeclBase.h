@@ -222,11 +222,14 @@ protected:
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
   unsigned Access : 2;
   friend class CXXClassMemberWrapper;
-  
-  // PCHLevel - the "level" of precompiled header/AST file from which this
-  // declaration was built.
-  unsigned PCHLevel : 3;
-  
+
+  /// PCHLevel - the "level" of precompiled header/AST file from which this
+  /// declaration was built.
+  unsigned PCHLevel : 2;
+
+  /// PCHChanged - if this declaration has changed since being deserialized
+  bool PCHChanged : 1;
+
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 15;
 
@@ -243,7 +246,7 @@ protected:
     : NextDeclInContext(0), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false),
-      Access(AS_none), PCHLevel(0),
+      Access(AS_none), PCHLevel(0), PCHChanged(false),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)) {
     if (Decl::CollectingStats()) add(DK);
   }
@@ -251,7 +254,7 @@ protected:
   Decl(Kind DK, EmptyShell Empty)
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false),
-      Access(AS_none), PCHLevel(0),
+      Access(AS_none), PCHLevel(0), PCHChanged(false),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)) {
     if (Decl::CollectingStats()) add(DK);
   }
@@ -358,13 +361,24 @@ public:
   unsigned getPCHLevel() const { return PCHLevel; }
 
   /// \brief The maximum PCH level that any declaration may have.
-  static const unsigned MaxPCHLevel = 7;
+  static const unsigned MaxPCHLevel = 3;
 
   /// \brief Set the PCH level of this declaration.
   void setPCHLevel(unsigned Level) { 
     assert(Level <= MaxPCHLevel && "PCH level exceeds the maximum");
     PCHLevel = Level;
   }
+
+  /// \brief Query whether this declaration was changed in a significant way
+  /// since being loaded from a PCH file.
+  ///
+  /// In an epic violation of layering, what is "significant" is entirely
+  /// up to the PCH system, but implemented in AST and Sema.
+  bool isChangedSinceDeserialization() const { return PCHChanged; }
+
+  /// \brief Mark this declaration as having changed since deserialization, or
+  /// reset the flag.
+  void setChangedSinceDeserialization(bool Changed) { PCHChanged = Changed; }
 
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;

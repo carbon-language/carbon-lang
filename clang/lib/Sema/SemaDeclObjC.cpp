@@ -89,6 +89,9 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
       IDecl->setClassLoc(ClassLoc);
+      // If the forward decl was in a PCH, we need to write it again in a
+      // chained PCH.
+      IDecl->setChangedSinceDeserialization(true);
       
       // Since this ObjCInterfaceDecl was created by a forward declaration,
       // we now add it to the DeclContext since it wasn't added before
@@ -176,7 +179,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     IDecl->setLocEnd(ClassLoc);
   }
 
-  /// Check then save referenced protocols.
+  // Check then save referenced protocols.
   if (NumProtoRefs) {
     IDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
                            ProtoLocs, Context);
@@ -284,6 +287,9 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     // Make sure the cached decl gets a valid start location.
     PDecl->setLocation(AtProtoInterfaceLoc);
     PDecl->setForwardDecl(false);
+    CurContext->addDecl(PDecl);
+    // Repeat in dependent PCHs.
+    PDecl->setChangedSinceDeserialization(true);
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, CurContext,
                                      AtProtoInterfaceLoc,ProtocolName);
@@ -384,13 +390,18 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
     ObjCProtocolDecl *PDecl = LookupProtocol(Ident, IdentList[i].second);
+    bool isNew = false;
     if (PDecl == 0) { // Not already seen?
       PDecl = ObjCProtocolDecl::Create(Context, CurContext,
                                        IdentList[i].second, Ident);
-      PushOnScopeChains(PDecl, TUScope);
+      PushOnScopeChains(PDecl, TUScope, false);
+      isNew = true;
     }
-    if (attrList)
+    if (attrList) {
       ProcessDeclAttributeList(TUScope, PDecl, attrList);
+      if (!isNew)
+        PDecl->setChangedSinceDeserialization(true);
+    }
     Protocols.push_back(PDecl);
     ProtoLocs.push_back(IdentList[i].second);
   }

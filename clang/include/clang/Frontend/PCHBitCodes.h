@@ -256,7 +256,14 @@ namespace clang {
       WEAK_UNDECLARED_IDENTIFIERS = 31,
 
       /// \brief Record code for pending implicit instantiations.
-      PENDING_IMPLICIT_INSTANTIATIONS = 32
+      PENDING_IMPLICIT_INSTANTIATIONS = 32,
+
+      /// \brief Record code for a decl replacement block.
+      ///
+      /// If a declaration is modified after having been deserialized, and then
+      /// written to a dependent PCH file, its ID and offset must be added to
+      /// the replacement block.
+      DECL_REPLACEMENTS = 33
     };
 
     /// \brief Record types used within a source manager block.

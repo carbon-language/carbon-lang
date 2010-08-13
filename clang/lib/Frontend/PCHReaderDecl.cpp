@@ -1307,7 +1307,13 @@ static bool isConsumerInterestedIn(Decl *D) {
 }
 
 /// \brief Get the correct cursor and offset for loading a type.
-PCHReader::RecordLocation PCHReader::DeclCursorForIndex(unsigned Index) {
+PCHReader::RecordLocation
+PCHReader::DeclCursorForIndex(unsigned Index, pch::DeclID ID) {
+  // See if there's an override.
+  DeclReplacementMap::iterator It = ReplacedDecls.find(ID);
+  if (It != ReplacedDecls.end())
+    return RecordLocation(&It->second.first->DeclsCursor, It->second.second);
+
   PerFileData *F = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     F = Chain[N - I - 1];
@@ -1321,7 +1327,7 @@ PCHReader::RecordLocation PCHReader::DeclCursorForIndex(unsigned Index) {
 
 /// \brief Read the declaration at the given offset from the PCH file.
 Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
-  RecordLocation Loc = DeclCursorForIndex(Index);
+  RecordLocation Loc = DeclCursorForIndex(Index, ID);
   llvm::BitstreamCursor &DeclsCursor = *Loc.first;
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.

@@ -321,6 +321,11 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
+  typedef llvm::DenseMap<pch::DeclID, std::pair<PerFileData *, uint64_t> >
+      DeclReplacementMap;
+  /// \brief Declarations that have been replaced in a later file in the chain.
+  DeclReplacementMap ReplacedDecls;
+
   /// \brief Information about the contents of a DeclContext.
   struct DeclContextInfo {
     llvm::BitstreamCursor *Stream;
@@ -577,7 +582,7 @@ private:
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(unsigned Index, pch::DeclID ID);
-  RecordLocation DeclCursorForIndex(unsigned Index);
+  RecordLocation DeclCursorForIndex(unsigned Index, pch::DeclID ID);
 
   void PassInterestingDeclsToConsumer();
 

@@ -227,10 +227,18 @@ private:
   /// to this set, so that we can write out lexical content updates for it.
   llvm::SmallPtrSet<const NamespaceDecl *, 16> UpdatedNamespaces;
 
+  /// \brief Decls that have been replaced in the current dependent PCH.
+  ///
+  /// When a decl changes fundamentally after being deserialized (this shouldn't
+  /// happen, but the ObjC AST nodes are designed this way), it will be
+  /// serialized again. In this case, it is registered here, so that the reader
+  /// knows to read the updated version.
+  llvm::SmallVector<std::pair<pch::DeclID, uint64_t>, 16> ReplacedDecls;
+
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
   llvm::SmallVector<Stmt *, 16> StmtsToEmit;
-  
+
   /// \brief Statements collection to use for PCHWriter::AddStmt().
   /// It will point to StmtsToEmit unless it is overriden. 
   llvm::SmallVector<Stmt *, 16> *CollectedStmts;
@@ -274,6 +282,7 @@ private:
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributeRecord(const Attr *Attr);
+  void WriteDeclUpdateBlock();
 
   unsigned ParmVarDeclAbbrev;
   unsigned DeclContextLexicalAbbrev;

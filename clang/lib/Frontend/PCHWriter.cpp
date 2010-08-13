@@ -2414,6 +2414,8 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
        I != E; ++I) {
     if ((*I)->getPCHLevel() == 0)
       NewGlobalDecls.push_back(GetDeclRef(*I));
+    else if ((*I)->isChangedSinceDeserialization())
+      (void)GetDeclRef(*I); // Make sure it's written, but don't record it.
   }
   // We also need to write a lexical updates block for the TU.
   llvm::BitCodeAbbrev *Abv = new llvm::BitCodeAbbrev();
@@ -2596,8 +2598,22 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Record.push_back(NumMacros);
   Record.push_back(NumLexicalDeclContexts);
   Record.push_back(NumVisibleDeclContexts);
+  WriteDeclUpdateBlock();
   Stream.EmitRecord(pch::STATISTICS, Record);
   Stream.ExitBlock();
+}
+
+void PCHWriter::WriteDeclUpdateBlock() {
+  if (ReplacedDecls.empty())
+    return;
+
+  RecordData Record;
+  for (llvm::SmallVector<std::pair<pch::DeclID, uint64_t>, 16>::iterator
+           I = ReplacedDecls.begin(), E = ReplacedDecls.end(); I != E; ++I) {
+    Record.push_back(I->first);
+    Record.push_back(I->second);
+  }
+  Stream.EmitRecord(pch::DECL_REPLACEMENTS, Record);
 }
 
 void PCHWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
@@ -2817,6 +2833,12 @@ pch::DeclID PCHWriter::GetDeclRef(const Decl *D) {
     // enqueue it in the list of declarations to emit.
     ID = NextDeclID++;
     DeclTypesToEmit.push(const_cast<Decl *>(D));
+  } else if (ID < FirstDeclID && D->isChangedSinceDeserialization()) {
+    // We don't add it to the replacement collection here, because we don't
+    // have the offset yet.
+    DeclTypesToEmit.push(const_cast<Decl *>(D));
+    // Reset the flag, so that we don't add this decl multiple times.
+    const_cast<Decl *>(D)->setChangedSinceDeserialization(false);
   }
 
   return ID;

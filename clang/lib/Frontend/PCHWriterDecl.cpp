@@ -1126,18 +1126,24 @@ void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {
   }
 
   // Determine the ID for this declaration
-  pch::DeclID &ID = DeclIDs[D];
-  if (ID == 0)
-    ID = NextDeclID++;
+  pch::DeclID &IDR = DeclIDs[D];
+  if (IDR == 0)
+    IDR = NextDeclID++;
+  pch::DeclID ID = IDR;
 
-  unsigned Index = ID - FirstDeclID;
+  if (ID < FirstDeclID) {
+    // We're replacing a decl in a previous file.
+    ReplacedDecls.push_back(std::make_pair(ID, Stream.GetCurrentBitNo()));
+  } else {
+    unsigned Index = ID - FirstDeclID;
 
-  // Record the offset for this declaration
-  if (DeclOffsets.size() == Index)
-    DeclOffsets.push_back(Stream.GetCurrentBitNo());
-  else if (DeclOffsets.size() < Index) {
-    DeclOffsets.resize(Index+1);
-    DeclOffsets[Index] = Stream.GetCurrentBitNo();
+    // Record the offset for this declaration
+    if (DeclOffsets.size() == Index)
+      DeclOffsets.push_back(Stream.GetCurrentBitNo());
+    else if (DeclOffsets.size() < Index) {
+      DeclOffsets.resize(Index+1);
+      DeclOffsets[Index] = Stream.GetCurrentBitNo();
+    }
   }
 
   // Build and emit a record for this declaration
@@ -1164,5 +1170,5 @@ void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {
   //
   // FIXME: This should be renamed, the predicate is much more complicated.
   if (isRequiredDecl(D, Context))
-    ExternalDefinitions.push_back(Index + 1);
+    ExternalDefinitions.push_back(ID);
 }

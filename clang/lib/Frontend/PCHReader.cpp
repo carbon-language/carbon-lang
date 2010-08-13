@@ -1774,6 +1774,17 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       F.NumPreallocatedPreprocessingEntities = Record[0];
       F.LocalNumMacroDefinitions = Record[1];
       break;
+
+    case pch::DECL_REPLACEMENTS: {
+      if (Record.size() % 2 != 0) {
+        Error("invalid DECL_REPLACEMENTS block in PCH file");
+        return Failure;
+      }
+      for (unsigned I = 0, N = Record.size(); I != N; I += 2)
+        ReplacedDecls[static_cast<pch::DeclID>(Record[I])] =
+            std::make_pair(&F, Record[I+1]);
+      break;
+    }
     }
     First = false;
   }
