@@ -189,10 +189,11 @@ CommandObjectExpression::MultiLineExpressionCallback
 }
 
 bool
-CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream &output_stream, Stream &error_stream)
+CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream &output_stream, Stream &error_stream,
+                                             CommandReturnObject *result)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-    
+
     ////////////////////////////////////
     // Set up the target and compiler
     //
@@ -251,7 +252,6 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     bool success;
     bool canInterpret = false;
     
-    clang::ASTContext *ast_context = clang_expr.GetASTContext ();
     ClangPersistentVariable *expr_result = 0;
     Error expr_error;
     
@@ -382,21 +382,27 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     {
         StreamString ss;
         
-        Error err = expr_result->Print (ss, 
-                                        m_exe_ctx, 
-                                        m_options.format,
-                                        m_options.show_types,
-                                        m_options.show_summary,
-                                        m_options.debug);
+        Error rc = expr_result->Print (ss, 
+                                       m_exe_ctx, 
+                                       m_options.format,
+                                       m_options.show_types,
+                                       m_options.show_summary,
+                                       m_options.debug);
         
-        if (err.Success())
-            output_stream.PutCString(ss.GetString().c_str());
-        else
-            error_stream.Printf ("Couldn't print result : %s\n", err.AsCString("unknown error"));
+        if (rc.Fail()) {
+            error_stream.Printf ("Couldn't print result : %s\n", rc.AsCString());
+            return false;
+        }
+
+        output_stream.PutCString(ss.GetString().c_str());
+        if (result)
+            result->SetStatus (eReturnStatusSuccessFinishResult);
     }
     else
     {
         error_stream.Printf ("Expression produced no result\n");
+        if (result)
+            result->SetStatus (eReturnStatusSuccessFinishNoResult);
     }
         
     return true;
@@ -482,7 +488,11 @@ CommandObjectExpression::ExecuteRawCommandString
     if (expr == NULL)
         expr = command;
     
-    return EvaluateExpression (expr, false, result.GetOutputStream(), result.GetErrorStream());
+    if (EvaluateExpression (expr, false, result.GetOutputStream(), result.GetErrorStream(), &result))
+        return true;
+
+    result.SetStatus (eReturnStatusFailed);
+    return false;
 }
 
 lldb::OptionDefinition

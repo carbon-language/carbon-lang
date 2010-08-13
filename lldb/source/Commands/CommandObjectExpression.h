@@ -87,10 +87,11 @@ protected:
                                  size_t bytes_len);
 
     bool
-    EvaluateExpression (const char *expr, 
+    EvaluateExpression (const char *expr,
                         bool bare,
-                        Stream &output_stream, 
-                        Stream &error_stream);
+                        Stream &output_stream,
+                        Stream &error_stream,
+                        CommandReturnObject *result = NULL);
 
     CommandOptions m_options;
     ExecutionContext m_exe_ctx;
