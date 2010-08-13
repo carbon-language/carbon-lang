@@ -454,7 +454,7 @@ public:
 
   /// Determines whether this lookup is suppressing diagnostics.
   bool isSuppressingDiagnostics() const {
-    return Diagnose;
+    return !Diagnose;
   }
 
   /// Sets a 'context' source range.

@@ -130,11 +130,12 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
 
   LookupResult R(*this, TName, Name.getSourceRange().getBegin(), 
                  LookupOrdinaryName);
-  R.suppressDiagnostics();
   LookupTemplateName(R, S, SS, ObjectType, EnteringContext,
                      MemberOfUnknownSpecialization);
-  if (R.empty() || R.isAmbiguous())
+  if (R.empty() || R.isAmbiguous()) {
+    R.suppressDiagnostics();
     return TNK_Non_template;
+  }
 
   TemplateName Template;
   TemplateNameKind TemplateKind;
@@ -145,6 +146,9 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     // template name in other ways.
     Template = Context.getOverloadedTemplateName(R.begin(), R.end());
     TemplateKind = TNK_Function_template;
+
+    // We'll do this lookup again later.
+    R.suppressDiagnostics();
   } else {
     TemplateDecl *TD = cast<TemplateDecl>((*R.begin())->getUnderlyingDecl());
 
@@ -157,9 +161,12 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
       Template = TemplateName(TD);
     }
 
-    if (isa<FunctionTemplateDecl>(TD))
+    if (isa<FunctionTemplateDecl>(TD)) {
       TemplateKind = TNK_Function_template;
-    else {
+
+      // We'll do this lookup again later.
+      R.suppressDiagnostics();
+    } else {
       assert(isa<ClassTemplateDecl>(TD) || isa<TemplateTemplateParmDecl>(TD));
       TemplateKind = TNK_Type_template;
     }

@@ -427,3 +427,12 @@ namespace test16 {
   void b() { throw A(); } // expected-error{{temporary of type 'test16::A' has private destructor}} \
   // expected-error{{exception object of type 'test16::A' has private destructor}}
 }
+
+// rdar://problem/8146294
+namespace test17 {
+  class A {
+    template <typename T> class Inner { }; // expected-note {{declared private here}}
+  };
+
+  A::Inner<int> s; // expected-error {{'Inner' is a private member of 'test17::A'}}
+}
