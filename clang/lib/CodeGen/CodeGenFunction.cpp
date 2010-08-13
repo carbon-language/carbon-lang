@@ -1275,6 +1275,73 @@ void CodeGenFunction::ResolveBranchFixups(llvm::BasicBlock *Block) {
     EHStack.popNullFixups();
 }
 
+/// Activate a cleanup that was created in an inactivated state.
+void CodeGenFunction::ActivateCleanup(EHScopeStack::stable_iterator C) {
+  assert(C != EHStack.stable_end() && "activating bottom of stack?");
+  EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.find(C));
+  assert(!Scope.isActive() && "double activation");
+
+  // Calculate whether the cleanup was used:
+  bool Used = false;
+
+  //   - as a normal cleanup
+  if (Scope.isNormalCleanup()) {
+    bool NormalUsed = false;
+    if (Scope.getNormalBlock()) {
+      NormalUsed = true;
+    } else {
+      // Check whether any enclosed cleanups were needed.
+      for (EHScopeStack::stable_iterator
+             I = EHStack.getInnermostNormalCleanup(); I != C; ) {
+        assert(C.strictlyEncloses(I));
+        EHCleanupScope &S = cast<EHCleanupScope>(*EHStack.find(I));
+        if (S.getNormalBlock()) {
+          NormalUsed = true;
+          break;
+        }
+        I = S.getEnclosingNormalCleanup();
+      }
+    }
+
+    if (NormalUsed)
+      Used = true;
+    else
+      Scope.setActivatedBeforeNormalUse(true);
+  }
+
+  //  - as an EH cleanup
+  if (Scope.isEHCleanup()) {
+    bool EHUsed = false;
+    if (Scope.getEHBlock()) {
+      EHUsed = true;
+    } else {
+      // Check whether any enclosed cleanups were needed.
+      for (EHScopeStack::stable_iterator
+             I = EHStack.getInnermostEHCleanup(); I != C; ) {
+        assert(C.strictlyEncloses(I));
+        EHCleanupScope &S = cast<EHCleanupScope>(*EHStack.find(I));
+        if (S.getEHBlock()) {
+          EHUsed = true;
+          break;
+        }
+        I = S.getEnclosingEHCleanup();
+      }
+    }
+
+    if (EHUsed)
+      Used = true;
+    else
+      Scope.setActivatedBeforeEHUse(true);
+  }
+  
+  llvm::AllocaInst *Var = EHCleanupScope::activeSentinel();
+  if (Used) {
+    Var = CreateTempAlloca(Builder.getInt1Ty());
+    InitTempAlloca(Var, Builder.getFalse());
+  }
+  Scope.setActiveVar(Var);
+}
+
 llvm::Value *CodeGenFunction::getNormalCleanupDestSlot() {
   if (!NormalCleanupDest)
     NormalCleanupDest =

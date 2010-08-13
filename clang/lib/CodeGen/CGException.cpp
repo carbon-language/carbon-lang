@@ -73,11 +73,13 @@ EHScopeStack::getEnclosingEHCleanup(iterator it) const {
 void *EHScopeStack::pushCleanup(CleanupKind Kind, size_t Size) {
   assert(((Size % sizeof(void*)) == 0) && "cleanup type is misaligned");
   char *Buffer = allocate(EHCleanupScope::getSizeForCleanupSize(Size));
-  bool IsNormalCleanup = Kind != EHCleanup;
-  bool IsEHCleanup = Kind != NormalCleanup;
+  bool IsNormalCleanup = Kind & NormalCleanup;
+  bool IsEHCleanup = Kind & EHCleanup;
+  bool IsActive = !(Kind & InactiveCleanup);
   EHCleanupScope *Scope =
     new (Buffer) EHCleanupScope(IsNormalCleanup,
                                 IsEHCleanup,
+                                IsActive,
                                 Size,
                                 BranchFixups.size(),
                                 InnermostNormalCleanup,

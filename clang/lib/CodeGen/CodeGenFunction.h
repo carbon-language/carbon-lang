@@ -96,7 +96,16 @@ struct BranchFixup {
   llvm::BranchInst *InitialBranch;
 };
 
-enum CleanupKind { NormalAndEHCleanup, EHCleanup, NormalCleanup };
+enum CleanupKind {
+  EHCleanup = 0x1,
+  NormalCleanup = 0x2,
+  NormalAndEHCleanup = EHCleanup | NormalCleanup,
+
+  InactiveCleanup = 0x4,
+  InactiveEHCleanup = EHCleanup | InactiveCleanup,
+  InactiveNormalCleanup = NormalCleanup | InactiveCleanup,
+  InactiveNormalAndEHCleanup = NormalAndEHCleanup | InactiveCleanup
+};
 
 /// A stack of scopes which respond to exceptions, including cleanups
 /// and catch blocks.
@@ -519,6 +528,8 @@ public:
   /// PopCleanupBlock - Will pop the cleanup entry on the stack and
   /// process all branch fixups.
   void PopCleanupBlock(bool FallThroughIsBranchThrough = false);
+
+  void ActivateCleanup(EHScopeStack::stable_iterator Cleanup);
 
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
