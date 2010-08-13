@@ -1294,19 +1294,19 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     }
     case DeclaratorChunk::MemberPointer:
       // The scope spec must refer to a class, or be dependent.
+      CXXScopeSpec &SS = DeclType.Mem.Scope();
       QualType ClsType;
-      if (DeclType.Mem.Scope().isInvalid()) {
+      if (SS.isInvalid()) {
         // Avoid emitting extra errors if we already errored on the scope.
         D.setInvalidType(true);
-      } else if (isDependentScopeSpecifier(DeclType.Mem.Scope())
-                 || dyn_cast_or_null<CXXRecordDecl>(
-                                   computeDeclContext(DeclType.Mem.Scope()))) {
+      } else if (isDependentScopeSpecifier(SS) ||
+                 dyn_cast_or_null<CXXRecordDecl>(computeDeclContext(SS))) {
         NestedNameSpecifier *NNS
-          = (NestedNameSpecifier *)DeclType.Mem.Scope().getScopeRep();
+          = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
         NestedNameSpecifier *NNSPrefix = NNS->getPrefix();
         switch (NNS->getKind()) {
         case NestedNameSpecifier::Identifier:
-          ClsType = Context.getDependentNameType(ETK_None, NNSPrefix, 
+          ClsType = Context.getDependentNameType(ETK_None, NNSPrefix,
                                                  NNS->getAsIdentifier());
           break;
 
@@ -1314,12 +1314,16 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         case NestedNameSpecifier::Global:
           llvm_unreachable("Nested-name-specifier must name a type");
           break;
-            
+
         case NestedNameSpecifier::TypeSpec:
         case NestedNameSpecifier::TypeSpecWithTemplate:
-          // Note: NNSPrefix (if any) is included in ClsType
-          // (hence, no need to wrap ClsType in an elaborated type).
           ClsType = QualType(NNS->getAsType(), 0);
+          // Note: if NNS is dependent, then its prefix (if any) is already
+          // included in ClsType; this does not hold if the NNS is
+          // nondependent: in this case (if there is indeed a prefix)
+          // ClsType needs to be wrapped into an elaborated type.
+          if (NNSPrefix && !NNS->isDependent())
+            ClsType = Context.getElaboratedType(ETK_None, NNSPrefix, ClsType);
           break;
         }
       } else {
