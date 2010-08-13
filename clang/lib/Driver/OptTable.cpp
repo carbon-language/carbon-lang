@@ -164,6 +164,8 @@ Option *OptTable::CreateOption(unsigned id) const {
     Opt->setLinkerInput(true);
   if (info.Flags & NoArgumentUnused)
     Opt->setNoArgumentUnused(true);
+  if (info.Flags & NoForward)
+    Opt->setNoForward(true);
   if (info.Flags & RenderAsInput)
     Opt->setNoOptAsInput(true);
   if (info.Flags & RenderJoined) {

@@ -82,6 +82,9 @@ def Unsupported : OptionFlag;
 // arguments to implement hidden help groups.
 def HelpHidden : OptionFlag;
 
+// NoForward - The option should not be implicitly forwarded to other tools.
+def NoForward : OptionFlag;
+
 // Define the option group class.
 
 class OptionGroup<string name> {

@@ -20,7 +20,7 @@ Option::Option(OptionClass _Kind, OptSpecifier _ID, const char *_Name,
                const OptionGroup *_Group, const Option *_Alias)
   : Kind(_Kind), ID(_ID.getID()), Name(_Name), Group(_Group), Alias(_Alias),
     Unsupported(false), LinkerInput(false), NoOptAsInput(false),
-    DriverOption(false), NoArgumentUnused(false) {
+    DriverOption(false), NoArgumentUnused(false), NoForward(false) {
 
   // Multi-level aliases are not supported, and alias options cannot
   // have groups. This just simplifies option tracking, it is not an

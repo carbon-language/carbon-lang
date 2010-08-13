@@ -180,7 +180,8 @@ def Xarch__ : JoinedAndSeparate<"-Xarch_">, Flags<[DriverOption]>;
 def Xassembler : Separate<"-Xassembler">,
   HelpText<"Pass <arg> to the assembler">, MetaVarName<"<arg>">;
 def Xclang : Separate<"-Xclang">,
-  HelpText<"Pass <arg> to the clang compiler">, MetaVarName<"<arg>">;
+  HelpText<"Pass <arg> to the clang compiler">, MetaVarName<"<arg>">,
+  Flags<[NoForward]>;
 def Xlinker : Separate<"-Xlinker">, Flags<[LinkerInput, RenderAsInput]>,
   HelpText<"Pass <arg> to the linker">, MetaVarName<"<arg>">;
 def Xpreprocessor : Separate<"-Xpreprocessor">,
@@ -442,7 +443,7 @@ def mhard_float : Flag<"-mhard-float">, Group<m_Group>;
 def miphoneos_version_min_EQ : Joined<"-miphoneos-version-min=">, Group<m_Group>;
 def mios_version_min_EQ : Joined<"-mios-version-min=">, Alias<miphoneos_version_min_EQ>;
 def mkernel : Flag<"-mkernel">, Group<m_Group>;
-def mlinker_version_EQ : Joined<"-mlinker-version=">;
+def mlinker_version_EQ : Joined<"-mlinker-version=">, Flags<[NoForward]>;
 def mllvm : Separate<"-mllvm">;
 def mmacosx_version_min_EQ : Joined<"-mmacosx-version-min=">, Group<m_Group>;
 def mmmx : Flag<"-mmmx">, Group<m_x86_Features_Group>;

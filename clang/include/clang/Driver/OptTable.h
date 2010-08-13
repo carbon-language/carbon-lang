@@ -25,10 +25,11 @@ namespace options {
     HelpHidden       = (1 << 1),
     LinkerInput      = (1 << 2),
     NoArgumentUnused = (1 << 3),
-    RenderAsInput    = (1 << 4),
-    RenderJoined     = (1 << 5),
-    RenderSeparate   = (1 << 6),
-    Unsupported      = (1 << 7)
+    NoForward        = (1 << 4),
+    RenderAsInput    = (1 << 5),
+    RenderJoined     = (1 << 6),
+    RenderSeparate   = (1 << 7),
+    Unsupported      = (1 << 8)
   };
 }
 

@@ -92,6 +92,9 @@ namespace driver {
     /// This option should not report argument unused errors.
     bool NoArgumentUnused : 1;
 
+    /// This option should not be implicitly forwarded.
+    bool NoForward : 1;
+
   protected:
     Option(OptionClass Kind, OptSpecifier ID, const char *Name,
            const OptionGroup *Group, const Option *Alias);
@@ -124,7 +127,12 @@ namespace driver {
     bool hasNoArgumentUnused() const { return NoArgumentUnused; }
     void setNoArgumentUnused(bool Value) { NoArgumentUnused = Value; }
 
-    bool hasForwardToGCC() const { return !DriverOption && !LinkerInput; }
+    bool hasNoForward() const { return NoForward; }
+    void setNoForward(bool Value) { NoForward = Value; }
+
+    bool hasForwardToGCC() const {
+      return !NoForward && !DriverOption && !LinkerInput;
+    }
 
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).
