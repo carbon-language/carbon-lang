@@ -1,7 +1,7 @@
 // Check that hooks can be invoked from 'output_suffix'.
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: FileCheck -input-file %t %s
-// RUN: %compile_cxx -fexceptions -x c++ %t
+// RUN: %compile_cxx -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 
