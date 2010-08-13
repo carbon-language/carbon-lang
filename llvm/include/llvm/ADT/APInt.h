@@ -464,7 +464,7 @@ public:
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
       return APInt(numBits, ~0ULL << shiftAmt);
-    return (~APInt(numBits, 0)).shl(shiftAmt);
+    return getAllOnesValue(numBits).shl(shiftAmt);
   }
 
   /// Constructs an APInt value that has the bottom loBitsSet bits set.
@@ -481,7 +481,7 @@ public:
     // For small values, return quickly.
     if (numBits < APINT_BITS_PER_WORD)
       return APInt(numBits, (1ULL << loBitsSet) - 1);
-    return (~APInt(numBits, 0)).lshr(numBits - loBitsSet);
+    return getAllOnesValue(numBits).lshr(numBits - loBitsSet);
   }
 
   /// The hash value is computed as the sum of the words and the bit width.
