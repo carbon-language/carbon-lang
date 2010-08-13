@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=arm -mtriple=armv4t-unknown-linux-gnueabi  | FileCheck %s
 ; PR 7433
+; XFAIL: *
 
 %0 = type { i8*, i8* }
 %1 = type { i8*, i8*, i8* }

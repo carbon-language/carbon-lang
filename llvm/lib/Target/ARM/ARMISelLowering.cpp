@@ -51,6 +51,12 @@ using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
+// This option should go away when tail calls fully work.
+static cl::opt<bool>
+EnableARMTailCalls("arm-tail-calls", cl::Hidden,
+  cl::desc("Generate tail calls (TEMPORARY OPTION)."),
+  cl::init(false));
+
 // This option should go away when Machine LICM is smart enough to hoist a 
 // reg-to-reg VDUP.
 static cl::opt<bool>
@@ -1117,6 +1123,9 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   MachineFunction &MF = DAG.getMachineFunction();
   bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   bool IsSibCall = false;
+  // Temporarily disable tail calls so things don't break.
+  if (!EnableARMTailCalls)
+    isTailCall = false;
   if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
