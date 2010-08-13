@@ -126,6 +126,12 @@ namespace llvm {
   public:
     virtual void print(raw_ostream &OS) const;
 
+    virtual bool hasComputableLoopEvolution(const Loop *QL) const {
+      // Not computable. A truncate of an addrec is always folded into
+      // the addrec.
+      return false;
+    }
+
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVTruncateExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -294,6 +300,12 @@ namespace llvm {
     }
 
   public:
+    virtual bool hasComputableLoopEvolution(const Loop *QL) const {
+      // Not computable. An add of an addrec is always folded into the addrec
+      // if the other operands are loop-variant or loop-computable.
+      return false;
+    }
+
     virtual const char *getOperationStr() const { return " + "; }
 
     virtual const Type *getType() const {
@@ -322,6 +334,12 @@ namespace llvm {
     }
 
   public:
+    virtual bool hasComputableLoopEvolution(const Loop *QL) const {
+      // Not computable. A mul of an addrec is always folded into the addrec
+      // if the other operands are loop-variant or loop-computable.
+      return false;
+    }
+
     virtual const char *getOperationStr() const { return " * "; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
