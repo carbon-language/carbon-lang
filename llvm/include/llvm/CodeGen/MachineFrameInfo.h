@@ -30,15 +30,15 @@ class TargetFrameInfo;
 class BitVector;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
-/// callee saved register in the current frame.  
+/// callee saved register in the current frame.
 class CalleeSavedInfo {
   unsigned Reg;
   int FrameIdx;
-  
+
 public:
   explicit CalleeSavedInfo(unsigned R, int FI = 0)
   : Reg(R), FrameIdx(FI) {}
-  
+
   // Accessors.
   unsigned getReg()                        const { return Reg; }
   int getFrameIdx()                        const { return FrameIdx; }
@@ -81,7 +81,7 @@ class MachineFrameInfo {
     // SPOffset - The offset of this object from the stack pointer on entry to
     // the function.  This field has no meaning for a variable sized element.
     int64_t SPOffset;
-    
+
     // The size of this object on the stack. 0 means a variable sized object,
     // ~0ULL means a dead object.
     uint64_t Size;
@@ -138,7 +138,7 @@ class MachineFrameInfo {
   /// to be allocated on entry to the function.
   ///
   uint64_t StackSize;
-  
+
   /// OffsetAdjustment - The amount that a frame offset needs to be adjusted to
   /// have the actual offset from the stack/frame pointer.  The exact usage of
   /// this is target-dependent, but it is typically used to adjust between
@@ -149,10 +149,10 @@ class MachineFrameInfo {
   /// TargetRegisterInfo::getFrameIndexOffset); when generating code, the
   /// corresponding adjustments are performed directly.
   int OffsetAdjustment;
-  
-  /// MaxAlignment - The prolog/epilog code inserter may process objects 
+
+  /// MaxAlignment - The prolog/epilog code inserter may process objects
   /// that require greater alignment than the default alignment the target
-  /// provides. To handle this, MaxAlignment is set to the maximum alignment 
+  /// provides. To handle this, MaxAlignment is set to the maximum alignment
   /// needed by the objects on the current frame.  If this is greater than the
   /// native alignment maintained by the compiler, dynamic alignment code will
   /// be needed.
@@ -177,7 +177,7 @@ class MachineFrameInfo {
   /// insertion.
   ///
   unsigned MaxCallFrameSize;
-  
+
   /// CSInfo - The prolog/epilog code inserter fills in this vector with each
   /// callee saved register saved in the frame.  Beyond its use by the prolog/
   /// epilog code inserter, this data used for debug info and exception
@@ -231,8 +231,8 @@ public:
   bool isFrameAddressTaken() const { return FrameAddressTaken; }
   void setFrameAddressIsTaken(bool T) { FrameAddressTaken = T; }
 
-  /// isReturnAddressTaken - This method may be called any time after instruction
-  /// selection is complete to determine if there is a call to
+  /// isReturnAddressTaken - This method may be called any time after
+  /// instruction selection is complete to determine if there is a call to
   /// \@llvm.returnaddress in this function.
   bool isReturnAddressTaken() const { return ReturnAddressTaken; }
   void setReturnAddressIsTaken(bool s) { ReturnAddressTaken = s; }
@@ -321,21 +321,21 @@ public:
   /// setStackSize - Set the size of the stack...
   ///
   void setStackSize(uint64_t Size) { StackSize = Size; }
-  
+
   /// getOffsetAdjustment - Return the correction for frame offsets.
   ///
   int getOffsetAdjustment() const { return OffsetAdjustment; }
-  
+
   /// setOffsetAdjustment - Set the correction for frame offsets.
   ///
   void setOffsetAdjustment(int Adj) { OffsetAdjustment = Adj; }
 
-  /// getMaxAlignment - Return the alignment in bytes that this function must be 
-  /// aligned to, which is greater than the default stack alignment provided by 
+  /// getMaxAlignment - Return the alignment in bytes that this function must be
+  /// aligned to, which is greater than the default stack alignment provided by
   /// the target.
   ///
   unsigned getMaxAlignment() const { return MaxAlignment; }
-  
+
   /// setMaxAlignment - Set the preferred alignment.
   ///
   void setMaxAlignment(unsigned Align) { MaxAlignment = Align; }
@@ -364,8 +364,8 @@ public:
   /// index with a negative value.
   ///
   int CreateFixedObject(uint64_t Size, int64_t SPOffset, bool Immutable);
-  
-  
+
+
   /// isFixedObjectIndex - Returns true if the specified index corresponds to a
   /// fixed stack object.
   bool isFixedObjectIndex(int ObjectIdx) const {
