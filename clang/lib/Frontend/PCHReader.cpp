@@ -1637,13 +1637,13 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
                                     Record.begin(), Record.end());
       break;
 
-    case pch::UNUSED_STATIC_FUNCS:
+    case pch::UNUSED_FILESCOPED_DECLS:
       // Optimization for the first block.
-      if (UnusedStaticFuncs.empty())
-        UnusedStaticFuncs.swap(Record);
+      if (UnusedFileScopedDecls.empty())
+        UnusedFileScopedDecls.swap(Record);
       else
-        UnusedStaticFuncs.insert(UnusedStaticFuncs.end(),
-                                 Record.begin(), Record.end());
+        UnusedFileScopedDecls.insert(UnusedFileScopedDecls.end(),
+                                     Record.begin(), Record.end());
       break;
 
     case pch::WEAK_UNDECLARED_IDENTIFIERS:
@@ -3150,11 +3150,11 @@ void PCHReader::InitializeSema(Sema &S) {
     SemaObj->TentativeDefinitions.push_back(Var);
   }
 
-  // If there were any unused static functions, deserialize them and add to
-  // Sema's list of unused static functions.
-  for (unsigned I = 0, N = UnusedStaticFuncs.size(); I != N; ++I) {
-    FunctionDecl *FD = cast<FunctionDecl>(GetDecl(UnusedStaticFuncs[I]));
-    SemaObj->UnusedStaticFuncs.push_back(FD);
+  // If there were any unused file scoped decls, deserialize them and add to
+  // Sema's list of unused file scoped decls.
+  for (unsigned I = 0, N = UnusedFileScopedDecls.size(); I != N; ++I) {
+    DeclaratorDecl *D = cast<DeclaratorDecl>(GetDecl(UnusedFileScopedDecls[I]));
+    SemaObj->UnusedFileScopedDecls.push_back(D);
   }
 
   // If there were any weak undeclared identifiers, deserialize them and add to

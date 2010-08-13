@@ -626,7 +626,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SPECIAL_TYPES);
   RECORD(STATISTICS);
   RECORD(TENTATIVE_DEFINITIONS);
-  RECORD(UNUSED_STATIC_FUNCS);
+  RECORD(UNUSED_FILESCOPED_DECLS);
   RECORD(LOCALLY_SCOPED_EXTERNAL_DECLS);
   RECORD(SELECTOR_OFFSETS);
   RECORD(METHOD_POOL);
@@ -636,7 +636,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
   RECORD(VERSION_CONTROL_BRANCH_REVISION);
-  RECORD(UNUSED_STATIC_FUNCS);
   RECORD(MACRO_DEFINITION_OFFSETS);
   RECORD(CHAINED_METADATA);
   RECORD(REFERENCED_SELECTOR_POOL);
@@ -2204,10 +2203,10 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.TentativeDefinitions[i], TentativeDefinitions);
   }
 
-  // Build a record containing all of the static unused functions in this file.
-  RecordData UnusedStaticFuncs;
-  for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i)
-    AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
+  // Build a record containing all of the file scoped decls in this file.
+  RecordData UnusedFileScopedDecls;
+  for (unsigned i=0, e = SemaRef.UnusedFileScopedDecls.size(); i !=e; ++i)
+    AddDeclRef(SemaRef.UnusedFileScopedDecls[i], UnusedFileScopedDecls);
 
   RecordData WeakUndeclaredIdentifiers;
   if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
@@ -2333,9 +2332,9 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!TentativeDefinitions.empty())
     Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
 
-  // Write the record containing unused static functions.
-  if (!UnusedStaticFuncs.empty())
-    Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
+  // Write the record containing unused file scoped decls.
+  if (!UnusedFileScopedDecls.empty())
+    Stream.EmitRecord(pch::UNUSED_FILESCOPED_DECLS, UnusedFileScopedDecls);
 
   // Write the record containing weak undeclared identifiers.
   if (!WeakUndeclaredIdentifiers.empty())
@@ -2436,11 +2435,11 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       AddDeclRef(SemaRef.TentativeDefinitions[i], TentativeDefinitions);
   }
 
-  // Build a record containing all of the static unused functions in this file.
-  RecordData UnusedStaticFuncs;
-  for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i) {
-    if (SemaRef.UnusedStaticFuncs[i]->getPCHLevel() == 0)
-      AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
+  // Build a record containing all of the file scoped decls in this file.
+  RecordData UnusedFileScopedDecls;
+  for (unsigned i=0, e = SemaRef.UnusedFileScopedDecls.size(); i !=e; ++i) {
+    if (SemaRef.UnusedFileScopedDecls[i]->getPCHLevel() == 0)
+      AddDeclRef(SemaRef.UnusedFileScopedDecls[i], UnusedFileScopedDecls);
   }
 
   // We write the entire table, overwriting the tables from the chain.
@@ -2558,9 +2557,9 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!TentativeDefinitions.empty())
     Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
 
-  // Write the record containing unused static functions.
-  if (!UnusedStaticFuncs.empty())
-    Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
+  // Write the record containing unused file scoped decls.
+  if (!UnusedFileScopedDecls.empty())
+    Stream.EmitRecord(pch::UNUSED_FILESCOPED_DECLS, UnusedFileScopedDecls);
 
   // Write the record containing weak undeclared identifiers.
   if (!WeakUndeclaredIdentifiers.empty())

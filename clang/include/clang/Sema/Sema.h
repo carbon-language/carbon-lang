@@ -348,8 +348,9 @@ public:
   /// \brief All the tentative definitions encountered in the TU.
   std::vector<VarDecl *> TentativeDefinitions;
 
-  /// \brief The set of static functions seen so far that have not been used.
-  std::vector<FunctionDecl*> UnusedStaticFuncs;
+  /// \brief The set of file scoped decls seen so far that have not been used
+  /// and must warn if not used.
+  std::vector<const DeclaratorDecl*> UnusedFileScopedDecls;
 
   class AccessedEntity {
   public:
@@ -1875,6 +1876,8 @@ public:
                                             StmtArg TryBlock,
                                             MultiStmtArg Handlers);
   void DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock);
+
+  void MarkUnusedFileScopedDecl(const DeclaratorDecl *D);
 
   /// DiagnoseUnusedExprResult - If the statement passed in is an expression
   /// whose result is unused, warn.

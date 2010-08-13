@@ -221,8 +221,8 @@ namespace clang {
       /// information of the compiler used to build this PCH file.
       VERSION_CONTROL_BRANCH_REVISION = 21,
       
-      /// \brief Record code for the array of unused static functions.
-      UNUSED_STATIC_FUNCS = 22,
+      /// \brief Record code for the array of unused file scoped decls.
+      UNUSED_FILESCOPED_DECLS = 22,
       
       /// \brief Record code for the table of offsets to macro definition
       /// entries in the preprocessing record.

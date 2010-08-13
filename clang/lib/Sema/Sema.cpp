@@ -262,12 +262,12 @@ void Sema::ActOnEndOfTranslationUnit() {
         break;
     }
   
-  // Remove functions that turned out to be used.
-  UnusedStaticFuncs.erase(std::remove_if(UnusedStaticFuncs.begin(), 
-                                         UnusedStaticFuncs.end(), 
-                             std::bind2nd(std::mem_fun(&FunctionDecl::isUsed),
+  // Remove file scoped decls that turned out to be used.
+  UnusedFileScopedDecls.erase(std::remove_if(UnusedFileScopedDecls.begin(), 
+                                             UnusedFileScopedDecls.end(), 
+                             std::bind2nd(std::mem_fun(&DeclaratorDecl::isUsed),
                                           true)), 
-                          UnusedStaticFuncs.end());
+                              UnusedFileScopedDecls.end());
 
   if (!CompleteTranslationUnit)
     return;
@@ -330,14 +330,16 @@ void Sema::ActOnEndOfTranslationUnit() {
 
   }
   
-  // Output warning for unused functions.
-  for (std::vector<FunctionDecl*>::iterator
-       F = UnusedStaticFuncs.begin(),
-       FEnd = UnusedStaticFuncs.end();
-       F != FEnd;
-       ++F)
-    Diag((*F)->getLocation(), diag::warn_unused_function) << (*F)->getDeclName();
-  
+  // Output warning for unused file scoped decls.
+  for (std::vector<const DeclaratorDecl*>::iterator
+         I = UnusedFileScopedDecls.begin(),
+         E = UnusedFileScopedDecls.end(); I != E; ++I) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I))
+      Diag(FD->getLocation(), diag::warn_unused_function) << FD->getDeclName();
+    else
+      Diag((*I)->getLocation(), diag::warn_unused_variable)
+            << cast<VarDecl>(*I)->getDeclName();
+  }
 }
 
 

@@ -381,9 +381,8 @@ private:
   /// file.
   llvm::SmallVector<uint64_t, 16> TentativeDefinitions;
       
-  /// \brief The set of unused static functions stored in the the PCH
-  /// file.
-  llvm::SmallVector<uint64_t, 16> UnusedStaticFuncs;
+  /// \brief The set of unused file scoped decls stored in the the PCH file.
+  llvm::SmallVector<uint64_t, 16> UnusedFileScopedDecls;
   
   /// \brief The set of weak undeclared identifiers stored in the the PCH file.
   llvm::SmallVector<uint64_t, 64> WeakUndeclaredIdentifiers;

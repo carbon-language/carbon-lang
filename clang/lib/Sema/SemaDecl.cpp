@@ -521,6 +521,26 @@ static void RemoveUsingDecls(LookupResult &R) {
   F.done();
 }
 
+static bool ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Warn for static, non-inlined function definitions that
+    // have not been used.
+    // FIXME: Also include static functions declared but not defined.
+    return (!FD->isInvalidDecl() 
+         && !FD->isInlined() && FD->getLinkage() == InternalLinkage
+         && !FD->isUsed() && !FD->hasAttr<UnusedAttr>()
+         && !FD->hasAttr<ConstructorAttr>()
+         && !FD->hasAttr<DestructorAttr>());
+  }
+  
+  return false;
+}
+
+void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
+  if (ShouldWarnIfUnusedFileScopedDecl(D))
+    UnusedFileScopedDecls.push_back(D);
+}
+
 static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
   if (D->isInvalidDecl())
     return false;
@@ -3618,17 +3638,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (FunctionTemplate)
     return FunctionTemplate;
 
-  
-  // Keep track of static, non-inlined function definitions that
-  // have not been used. We will warn later.
-  // FIXME: Also include static functions declared but not defined.
-  if (!NewFD->isInvalidDecl() && IsFunctionDefinition 
-      && !NewFD->isInlined() && NewFD->getLinkage() == InternalLinkage
-      && !NewFD->isUsed() && !NewFD->hasAttr<UnusedAttr>()
-      && !NewFD->hasAttr<ConstructorAttr>()
-      && !NewFD->hasAttr<DestructorAttr>())
-    UnusedStaticFuncs.push_back(NewFD);
-  
+  if (IsFunctionDefinition)
+    MarkUnusedFileScopedDecl(NewFD);
+
   return NewFD;
 }
 
@@ -4891,7 +4903,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   // deletion in some later function.
   if (getDiagnostics().hasErrorOccurred())
     ExprTemporaries.clear();
-  
+
   return D;
 }
 
