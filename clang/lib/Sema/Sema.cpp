@@ -172,7 +172,7 @@ Sema::~Sema() {
 
   // Detach from the external Sema source.
   if (ExternalSemaSource *ExternalSema
-      = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
+        = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
     ExternalSema->ForgetSema();
 }
 

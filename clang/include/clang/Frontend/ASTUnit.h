@@ -16,6 +16,7 @@
 
 #include "clang/Index/ASTLocation.h"
 #include "clang/Frontend/PCHBitCodes.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
@@ -66,10 +67,18 @@ private:
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
   
+  /// \brief The AST consumer that received information about the translation
+  /// unit as it was parsed or loaded.
+  llvm::OwningPtr<ASTConsumer> Consumer;
+  
+  /// \brief The semantic analysis object used to type-check the translation
+  /// unit.
+  llvm::OwningPtr<Sema> TheSema;
+  
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
   llvm::OwningPtr<CompilerInvocation> Invocation;
-
+  
   // OnlyLocalDecls - when true, walking this AST should only visit declarations
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.
@@ -245,6 +254,12 @@ public:
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
+  bool hasSema() const { return TheSema; }
+  Sema &getSema() const { 
+    assert(TheSema && "ASTUnit does not have a Sema object!");
+    return *TheSema; 
+  }
+  
   const FileManager &getFileManager() const { return *FileMgr; }
         FileManager &getFileManager()       { return *FileMgr; }
 

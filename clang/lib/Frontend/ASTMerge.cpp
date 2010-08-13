@@ -44,6 +44,12 @@ void ASTMergeAction::ExecuteAction() {
     if (!Unit)
       continue;
 
+    // Reset the argument -> string function so that it has the AST
+    // context we want, since the Sema object created by
+    // LoadFromPCHFile will override it.
+    CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
+                                         &CI.getASTContext());
+
     ASTImporter Importer(CI.getDiagnostics(),
                          CI.getASTContext(), 
                          CI.getFileManager(),

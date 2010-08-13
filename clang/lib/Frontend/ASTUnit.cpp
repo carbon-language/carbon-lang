@@ -204,7 +204,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   AST->FileMgr.reset(new FileManager);
   AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics()));
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
-
+  
   // If requested, capture diagnostics in the ASTUnit.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, AST->getDiagnostics(),
                                     AST->StoredDiagnostics);
@@ -237,7 +237,6 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   unsigned Counter;
 
   llvm::OwningPtr<PCHReader> Reader;
-  llvm::OwningPtr<ExternalASTSource> Source;
 
   Reader.reset(new PCHReader(AST->getSourceManager(), AST->getFileManager(),
                              AST->getDiagnostics()));
@@ -294,8 +293,17 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   // Attach the PCH reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // PCH file as needed.
-  Source.reset(Reader.take());
+  PCHReader *ReaderPtr = Reader.get();
+  llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
   Context.setExternalSource(Source);
+
+  // Create an AST consumer, even though it isn't used.
+  AST->Consumer.reset(new ASTConsumer);
+  
+  // Create a semantic analysis object and tell the PCH reader about it.
+  AST->TheSema.reset(new Sema(PP, Context, *AST->Consumer));
+  AST->TheSema->Initialize();
+  ReaderPtr->InitializeSema(*AST->TheSema);
 
   return AST.take();
 }
@@ -458,6 +466,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // FIXME: Should we retain the previous file manager?
   FileMgr.reset(new FileManager);
   SourceMgr.reset(new SourceManager(getDiagnostics()));
+  TheSema.reset();
   Ctx.reset();
   PP.reset();
   
@@ -513,6 +522,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
   // Steal the created target, context, and preprocessor, and take back the
   // source and file managers.
+  TheSema.reset(Clang.takeSema());
+  Consumer.reset(Clang.takeASTConsumer());
   Ctx.reset(Clang.takeASTContext());
   PP.reset(Clang.takePreprocessor());
   Clang.takeSourceManager();
