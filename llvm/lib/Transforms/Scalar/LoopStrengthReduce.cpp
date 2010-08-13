@@ -505,12 +505,14 @@ static int64_t ExtractImmediate(const SCEV *&S, ScalarEvolution &SE) {
   } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     SmallVector<const SCEV *, 8> NewOps(Add->op_begin(), Add->op_end());
     int64_t Result = ExtractImmediate(NewOps.front(), SE);
-    S = SE.getAddExpr(NewOps);
+    if (Result != 0)
+      S = SE.getAddExpr(NewOps);
     return Result;
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     SmallVector<const SCEV *, 8> NewOps(AR->op_begin(), AR->op_end());
     int64_t Result = ExtractImmediate(NewOps.front(), SE);
-    S = SE.getAddRecExpr(NewOps, AR->getLoop());
+    if (Result != 0)
+      S = SE.getAddRecExpr(NewOps, AR->getLoop());
     return Result;
   }
   return 0;
@@ -528,12 +530,14 @@ static GlobalValue *ExtractSymbol(const SCEV *&S, ScalarEvolution &SE) {
   } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     SmallVector<const SCEV *, 8> NewOps(Add->op_begin(), Add->op_end());
     GlobalValue *Result = ExtractSymbol(NewOps.back(), SE);
-    S = SE.getAddExpr(NewOps);
+    if (Result)
+      S = SE.getAddExpr(NewOps);
     return Result;
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     SmallVector<const SCEV *, 8> NewOps(AR->op_begin(), AR->op_end());
     GlobalValue *Result = ExtractSymbol(NewOps.front(), SE);
-    S = SE.getAddRecExpr(NewOps, AR->getLoop());
+    if (Result)
+      S = SE.getAddRecExpr(NewOps, AR->getLoop());
     return Result;
   }
   return 0;
