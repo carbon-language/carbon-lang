@@ -465,9 +465,6 @@ void SplitEditor::enterIntvAtEnd(MachineBasicBlock &A, MachineBasicBlock &B) {
     VNIB = openli_->getNextValue(SlotIndex(StartB, true), 0, false,
                                  lis_.getVNInfoAllocator());
     VNIB->setIsPHIDef(true);
-    // Add a minimal range for the new value.
-    openli_->addRange(LiveRange(VNIB->def, std::min(EndB, CurB->end), VNIB));
-
     VNInfo *&mapVNI = valueMap_[CurB->valno];
     if (mapVNI) {
       // Multiple copies - must create PHI value.
@@ -496,8 +493,8 @@ void SplitEditor::useIntv(SlotIndex Start, SlotIndex End) {
 
   if (I != B) {
     --I;
-    // I begins before Start, but overlaps. openli may already have a value.
-    if (I->end > Start && !openli_->liveAt(Start))
+    // I begins before Start, but overlaps.
+    if (I->end > Start)
       openli_->addRange(LiveRange(Start, std::min(End, I->end),
                         mapValue(I->valno)));
     ++I;
