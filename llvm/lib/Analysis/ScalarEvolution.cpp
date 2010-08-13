@@ -303,6 +303,10 @@ bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   if (QueryLoop->contains(L))
     return false;
 
+  // This recurrence is invariant w.r.t. QueryLoop if L contains QueryLoop.
+  if (L->contains(QueryLoop))
+    return true;
+
   // This recurrence is variant w.r.t. QueryLoop if any of its operands
   // are variant.
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
