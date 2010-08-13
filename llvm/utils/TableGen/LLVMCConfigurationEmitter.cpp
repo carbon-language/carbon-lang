@@ -2177,8 +2177,8 @@ void EmitGenerateActionMethodHeader(const ToolDescription& D,
       << "std::vector<std::pair<unsigned, std::string> > vec;\n";
     O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
     O.indent(Indent2) << "bool no_out_file = false;\n";
-    O.indent(Indent2) << "const char* output_suffix = \""
-                      << D.OutputSuffix << "\";\n";
+    O.indent(Indent2) << "std::string output_suffix(\""
+                      << D.OutputSuffix << "\");\n";
   }
 }
 
@@ -2235,7 +2235,8 @@ void EmitGenerateActionMethod (const ToolDescription& D,
 
   O.indent(Indent3) << "out_file = this->OutFilename("
                     << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
-  O.indent(Indent4) << "TempDir, stop_compilation, output_suffix).str();\n\n";
+  O.indent(Indent4) <<
+    "TempDir, stop_compilation, output_suffix.c_str()).str();\n\n";
   O.indent(Indent3) << "vec.push_back(std::make_pair(65536, out_file));\n";
 
   O.indent(Indent2) << "}\n\n";

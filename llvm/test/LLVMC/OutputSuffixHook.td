@@ -2,7 +2,6 @@
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: FileCheck -input-file %t %s
 // RUN: %compile_cxx -fexceptions -x c++ %t
-// XFAIL: *
 
 include "llvm/CompilerDriver/Common.td"
 
@@ -13,7 +12,7 @@ def OptList : OptionList<[
 ]>;
 
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd $INFILE"),
+(command "dummy_cmd"),
 (in_language "dummy_lang"),
 (out_language "dummy_lang"),
 (actions (case
