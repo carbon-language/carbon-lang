@@ -42,7 +42,6 @@ CompilerInstance::CompilerInstance()
 }
 
 CompilerInstance::~CompilerInstance() {
-  TheSema.reset();
 }
 
 void CompilerInstance::setLLVMContext(llvm::LLVMContext *Value) {
