@@ -1,5 +1,6 @@
 // Check that multiple plugin priorities are not allowed.
 // RUN: ignore tblgen -I %p/../../include --gen-llvmc %s |& grep "More than one 'PluginPriority' instance found"
+// XFAIL: vg_leak
 
 // Disable for Darwin PPC: <rdar://problem/7598390>
 // XFAIL: powerpc-apple-darwin

@@ -2,6 +2,7 @@
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: FileCheck -input-file %t %s
 // RUN: %compile_cxx -x c++ %t
+// XFAIL: vg_leak
 
 include "llvm/CompilerDriver/Common.td"
 
