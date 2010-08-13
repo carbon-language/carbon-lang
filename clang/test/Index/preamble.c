@@ -5,7 +5,7 @@ int wibble(int);
 void f(int x) {
   
 }
-// RUN: %clang -x c-header -o %t.pch %S/Inputs/prefix.h
+// RUN: c-index-test -write-pch %t.pch -x c-header %S/Inputs/prefix.h
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -test-load-source-reparse 5 local -I %S/Inputs -include %t %s 2> %t.stderr.txt | FileCheck %s
 // RUN: FileCheck -check-prefix CHECK-DIAG %s < %t.stderr.txt
 // CHECK: preamble.h:1:12: FunctionDecl=bar:1:12 (Definition) Extent=[1:12 - 6:2]

@@ -1280,6 +1280,43 @@ int print_usrs_file(const char *file_name) {
 /******************************************************************************/
 /* Command line processing.                                                   */
 /******************************************************************************/
+int write_pch_file(const char *filename, int argc, const char *argv[]) {
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  
+  Idx = clang_createIndex(/* excludeDeclsFromPCH */1, /* displayDiagnosics=*/1);
+  
+  if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files)) {
+    clang_disposeIndex(Idx);
+    return -1;
+  }
+  
+  TU = clang_parseTranslationUnit(Idx, 0,
+                                  argv + num_unsaved_files,
+                                  argc - num_unsaved_files,
+                                  unsaved_files,
+                                  num_unsaved_files,
+                                  CXTranslationUnit_Incomplete);
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit!\n");
+    free_remapped_files(unsaved_files, num_unsaved_files);
+    clang_disposeIndex(Idx);
+    return 1;
+  }
+
+  if (clang_saveTranslationUnit(TU, filename))
+    fprintf(stderr, "Unable to write PCH file %s\n", filename);
+  clang_disposeTranslationUnit(TU);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  clang_disposeIndex(Idx);
+  return 0;  
+}
+
+/******************************************************************************/
+/* Command line processing.                                                   */
+/******************************************************************************/
 
 static CXCursorVisitor GetVisitor(const char *s) {
   if (s[0] == '\0')
@@ -1312,7 +1349,8 @@ static void print_usage(void) {
     "       c-index-test -test-print-typekind {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n");
   fprintf(stderr,
-    "       c-index-test -print-usr-file <file>\n\n");
+    "       c-index-test -print-usr-file <file>\n"
+    "       c-index-test -write-pch <file> <compiler arguments>\n\n");
   fprintf(stderr,
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
@@ -1379,7 +1417,9 @@ int main(int argc, const char **argv) {
   }
   else if (argc > 2 && strcmp(argv[1], "-print-usr-file") == 0)
     return print_usrs_file(argv[2]);
-
+  else if (argc > 2 && strcmp(argv[1], "-write-pch") == 0)
+    return write_pch_file(argv[2], argc - 3, argv + 3);
+           
   print_usage();
   return 1;
 }

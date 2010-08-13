@@ -1340,3 +1340,26 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   Clang.takeCodeCompletionConsumer();
   CCInvocation.getLangOpts().SpellChecking = SpellChecking;
 }
+
+bool ASTUnit::Save(llvm::StringRef File) {
+  if (getDiagnostics().hasErrorOccurred())
+    return true;
+  
+  // FIXME: Can we somehow regenerate the stat cache here, or do we need to 
+  // unconditionally create a stat cache when we parse the file?
+  std::string ErrorInfo;
+  llvm::raw_fd_ostream Out(File.str().c_str(), ErrorInfo);
+  if (!ErrorInfo.empty() || Out.has_error())
+    return true;
+  
+  std::vector<unsigned char> Buffer;
+  llvm::BitstreamWriter Stream(Buffer);
+  PCHWriter Writer(Stream);
+  Writer.WritePCH(getSema(), 0, 0);
+  
+  // Write the generated bitstream to "Out".
+  Out.write((char *)&Buffer.front(), Buffer.size());  
+  Out.flush();
+  Out.close();
+  return Out.has_error();
+}

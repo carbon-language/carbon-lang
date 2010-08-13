@@ -440,6 +440,11 @@ public:
                     Diagnostic &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,
                     llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics);
+
+  /// \brief Save this translation unit to a file with the given name.
+  ///
+  /// \returns True if an error occurred, false otherwise.
+  bool Save(llvm::StringRef File);
 };
 
 } // namespace clang

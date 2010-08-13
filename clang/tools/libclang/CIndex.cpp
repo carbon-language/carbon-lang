@@ -1454,6 +1454,13 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   return ATU;
 }
 
+int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName) {
+  if (!TU)
+    return 1;
+  
+  return static_cast<ASTUnit *>(TU)->Save(FileName);
+}
+  
 void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
   if (CTUnit)
     delete static_cast<ASTUnit *>(CTUnit);

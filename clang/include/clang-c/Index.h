@@ -765,6 +765,26 @@ CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                                             unsigned options);
   
 /**
+ * \brief Saves a translation unit into a serialized representation of
+ * that translation unit on disk.
+ *
+ * Any translation unit that was parsed without error can be saved
+ * into a file. The translation unit can then be deserialized into a
+ * new \c CXTranslationUnit with \c clang_createTranslationUnit() or,
+ * if it is an incomplete translation unit that corresponds to a
+ * header, used as a precompiled header when parsing other translation
+ * units.
+ *
+ * \param TU The translation unit to save.
+ * \param FileName The file to which the translation unit will be saved.
+ *
+ * \returns Zero if the translation unit was saved successfully, a
+ * non-zero value otherwise.
+ */
+CINDEX_LINKAGE int clang_saveTranslationUnit(CXTranslationUnit TU,
+                                             const char *FileName);
+
+/**
  * \brief Destroy the specified CXTranslationUnit object.
  */
 CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);

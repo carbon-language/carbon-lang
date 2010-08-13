@@ -93,6 +93,7 @@ _clang_isTranslationUnit
 _clang_isUnexposed
 _clang_parseTranslationUnit
 _clang_reparseTranslationUnit
+_clang_saveTranslationUnit
 _clang_setUseExternalASTGeneration
 _clang_tokenize
 _clang_visitChildren
