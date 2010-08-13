@@ -668,6 +668,7 @@ void SplitEditor::rewrite() {
     }
     if (LI) {
       MO.setReg(LI->reg);
+      sa_.removeUse(MI);
       DEBUG(dbgs() << "  rewrite " << Idx << '\t' << *MI);
     }
   }
