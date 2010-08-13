@@ -85,7 +85,7 @@ static bool getVerboseAsm() {
   case cl::BOU_UNSET: return TargetMachine::getAsmVerbosityDefault();
   case cl::BOU_TRUE:  return true;
   case cl::BOU_FALSE: return false;
-  }      
+  }
 }
 
 // Enable or disable FastISel. Both options are needed, because
@@ -176,12 +176,12 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);
   if (Printer == 0)
     return true;
-  
+
   // If successful, createAsmPrinter took ownership of AsmStreamer.
   AsmStreamer.take();
-  
+
   PM.add(Printer);
-  
+
   // Make sure the code model is set.
   setCodeModelForStatic();
   PM.add(createGCInfoDeleter());
@@ -200,7 +200,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    bool DisableVerify) {
   // Make sure the code model is set.
   setCodeModelForJIT();
-  
+
   // Add common CodeGen passes.
   MCContext *Ctx = 0;
   if (addCommonCodeGenPasses(PM, OptLevel, DisableVerify, Ctx))
@@ -317,13 +317,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createVerifierPass());
 
   // Standard Lower-Level Passes.
-  
+
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
   MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo());
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
-  
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
   PM.add(new MachineFunctionAnalysis(*this, OptLevel));
