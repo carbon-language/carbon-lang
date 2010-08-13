@@ -2047,9 +2047,9 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   // Canonicalize nested AddRecs in by nesting them in order of loop depth.
   if (const SCEVAddRecExpr *NestedAR = dyn_cast<SCEVAddRecExpr>(Operands[0])) {
     const Loop *NestedLoop = NestedAR->getLoop();
-    if (L->contains(NestedLoop->getHeader()) ?
+    if (L->contains(NestedLoop) ?
         (L->getLoopDepth() < NestedLoop->getLoopDepth()) :
-        (!NestedLoop->contains(L->getHeader()) &&
+        (!NestedLoop->contains(L) &&
          DT->dominates(L->getHeader(), NestedLoop->getHeader()))) {
       SmallVector<const SCEV *, 4> NestedOperands(NestedAR->op_begin(),
                                                   NestedAR->op_end());
