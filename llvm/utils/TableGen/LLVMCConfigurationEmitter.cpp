@@ -17,8 +17,6 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/System/Path.h"
 
 #include <algorithm>
 #include <cassert>
@@ -28,8 +26,6 @@
 #include <typeinfo>
 
 using namespace llvm;
-
-extern cl::opt<std::string> InputFilename;
 
 namespace {
 
@@ -2978,18 +2974,9 @@ void EmitHookDeclarations(const ToolDescriptions& ToolDescs,
   O << "}\n\n";
 }
 
-std::string GetPluginName() {
-  if (!InputFilename.empty()) {
-    return sys::Path(InputFilename).getBasename();
-  }
-
-  return "";
-}
-
 /// EmitRegisterPlugin - Emit code to register this plugin.
 void EmitRegisterPlugin(int Priority, raw_ostream& O) {
-  O << "struct Plugin" << GetPluginName()
-    << " : public llvmc::BasePlugin {\n\n";
+  O << "struct Plugin : public llvmc::BasePlugin {\n\n";
   O.indent(Indent1) << "int Priority() const { return "
                     << Priority << "; }\n\n";
   O.indent(Indent1) << "int PreprocessOptions() const\n";
@@ -3000,8 +2987,7 @@ void EmitRegisterPlugin(int Priority, raw_ostream& O) {
     << "int PopulateCompilationGraph(CompilationGraph& graph) const\n";
   O.indent(Indent1) << "{ return PopulateCompilationGraphLocal(graph); }\n"
                     << "};\n\n"
-                    << "static llvmc::RegisterPlugin<Plugin"
-                    << GetPluginName()<< "> RP;\n\n";
+                    << "static llvmc::RegisterPlugin<Plugin> RP;\n\n";
 }
 
 /// EmitIncludes - Emit necessary #include directives and some
