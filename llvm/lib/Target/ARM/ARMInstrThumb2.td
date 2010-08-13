@@ -1510,24 +1510,13 @@ def t2USADA8  : T2I_mac<0, 0b111, 0b0000, (outs rGPR:$dst),
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def t2SSATlsl:T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos,rGPR:$a,i32imm:$shamt),
-                    NoItinerary, "ssat", "\t$dst, $bit_pos, $a, lsl $shamt",
-                    [/* For disassembly only; pattern left blank */]> {
+def t2SSAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, sat_shift:$sh),
+                NoItinerary, "ssat", "\t$dst, $bit_pos, $a$sh",
+                [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1100;
   let Inst{20} = 0;
   let Inst{15} = 0;
-  let Inst{21} = 0;        // sh = '0'
-}
-
-def t2SSATasr:T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos,rGPR:$a,i32imm:$shamt),
-                    NoItinerary, "ssat", "\t$dst, $bit_pos, $a, asr $shamt",
-                    [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25-22} = 0b1100;
-  let Inst{20} = 0;
-  let Inst{15} = 0;
-  let Inst{21} = 1;        // sh = '1'
 }
 
 def t2SSAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
@@ -1542,24 +1531,13 @@ def t2SSAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
   let Inst{7-6} = 0b00;    // imm2 = '00'
 }
 
-def t2USATlsl:T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos,rGPR:$a,i32imm:$shamt),
-                     NoItinerary, "usat", "\t$dst, $bit_pos, $a, lsl $shamt",
-                     [/* For disassembly only; pattern left blank */]> {
+def t2USAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, sat_shift:$sh),
+                NoItinerary, "usat", "\t$dst, $bit_pos, $a$sh",
+                [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
   let Inst{20} = 0;
   let Inst{15} = 0;
-  let Inst{21} = 0;        // sh = '0'
-}
-
-def t2USATasr:T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos,rGPR:$a,i32imm:$shamt),
-                     NoItinerary, "usat", "\t$dst, $bit_pos, $a, asr $shamt",
-                     [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25-22} = 0b1110;
-  let Inst{20} = 0;
-  let Inst{15} = 0;
-  let Inst{21} = 1;        // sh = '1'
 }
 
 def t2USAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
@@ -1574,8 +1552,8 @@ def t2USAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
   let Inst{7-6} = 0b00;    // imm2 = '00'
 }
 
-def : T2Pat<(int_arm_ssat GPR:$a, imm:$pos), (t2SSATlsl imm:$pos, GPR:$a, 0)>;
-def : T2Pat<(int_arm_usat GPR:$a, imm:$pos), (t2USATlsl imm:$pos, GPR:$a, 0)>;
+def : T2Pat<(int_arm_ssat GPR:$a, imm:$pos), (t2SSAT imm:$pos, GPR:$a, 0)>;
+def : T2Pat<(int_arm_usat GPR:$a, imm:$pos), (t2USAT imm:$pos, GPR:$a, 0)>;
 
 //===----------------------------------------------------------------------===//
 //  Shift and rotate Instructions.

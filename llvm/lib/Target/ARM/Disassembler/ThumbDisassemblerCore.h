@@ -1462,8 +1462,8 @@ static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
 
 static inline bool Thumb2SaturateOpcode(unsigned Opcode) {
   switch (Opcode) {
-  case ARM::t2SSATlsl: case ARM::t2SSATasr: case ARM::t2SSAT16:
-  case ARM::t2USATlsl: case ARM::t2USATasr: case ARM::t2USAT16:
+  case ARM::t2SSAT: case ARM::t2SSAT16:
+  case ARM::t2USAT: case ARM::t2USAT16:
     return true;
   default:
     return false;
@@ -1471,7 +1471,7 @@ static inline bool Thumb2SaturateOpcode(unsigned Opcode) {
 }
 
 /// DisassembleThumb2Sat - Disassemble Thumb2 saturate instructions:
-/// o t2SSAT[lsl|asr], t2USAT[lsl|asr]: Rs sat_pos Rn shamt
+/// o t2SSAT, t2USAT: Rs sat_pos Rn shamt
 /// o t2SSAT16, t2USAT16: Rs sat_pos Rn
 static bool DisassembleThumb2Sat(MCInst &MI, unsigned Opcode, uint32_t insn,
                                  unsigned &NumOpsAdded, BO B) {
@@ -1483,9 +1483,7 @@ static bool DisassembleThumb2Sat(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRs(insn))));
 
   unsigned Pos = slice(insn, 4, 0);
-  if (Opcode == ARM::t2SSATlsl ||
-      Opcode == ARM::t2SSATasr ||
-      Opcode == ARM::t2SSAT16)
+  if (Opcode == ARM::t2SSAT || Opcode == ARM::t2SSAT16)
     Pos += 1;
   MI.addOperand(MCOperand::CreateImm(Pos));
 
@@ -1493,11 +1491,17 @@ static bool DisassembleThumb2Sat(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRn(insn))));
 
   if (NumOpsAdded == 4) {
+    ARM_AM::ShiftOpc Opc = (slice(insn, 21, 21) != 0 ?
+                            ARM_AM::asr : ARM_AM::lsl);
     // Inst{14-12:7-6} encodes the imm5 shift amount.
     unsigned ShAmt = slice(insn, 14, 12) << 2 | slice(insn, 7, 6);
-    if ((Opcode == ARM::t2SSATasr || Opcode == ARM::t2USATasr) && ShAmt == 0)
-      ShAmt = 32;
-    MI.addOperand(MCOperand::CreateImm(ShAmt));
+    if (ShAmt == 0) {
+      if (Opc == ARM_AM::asr)
+        ShAmt = 32;
+      else
+        Opc = ARM_AM::no_shift;
+    }
+    MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShAmt)));
   }
   return true;
 }
