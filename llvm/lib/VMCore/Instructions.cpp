@@ -1430,9 +1430,24 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
     return false;
   
   const VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
-  if (!isa<Constant>(Mask) || MaskTy == 0 ||
-      !MaskTy->getElementType()->isIntegerTy(32))
+  if (MaskTy == 0 || !MaskTy->getElementType()->isIntegerTy(32))
     return false;
+
+  // Check to see if Mask is valid.
+  if (const ConstantVector *MV = dyn_cast<ConstantVector>(Mask)) {
+    const VectorType *VTy = cast<VectorType>(V1->getType());
+    for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
+      if (ConstantInt* CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
+        if (CI->uge(VTy->getNumElements()*2))
+          return false;
+      } else if (!isa<UndefValue>(MV->getOperand(i))) {
+        return false;
+      }
+    }
+  }
+  else if (!isa<UndefValue>(Mask) && !isa<ConstantAggregateZero>(Mask))
+    return false;
+  
   return true;
 }
 

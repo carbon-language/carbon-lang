@@ -1322,27 +1322,6 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
   Assert1(ShuffleVectorInst::isValidOperands(SV.getOperand(0), SV.getOperand(1),
                                              SV.getOperand(2)),
           "Invalid shufflevector operands!", &SV);
-
-  const VectorType *VTy = dyn_cast<VectorType>(SV.getOperand(0)->getType());
-  Assert1(VTy, "Operands are not a vector type", &SV);
-
-  // Check to see if Mask is valid.
-  if (const ConstantVector *MV = dyn_cast<ConstantVector>(SV.getOperand(2))) {
-    for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
-      if (ConstantInt* CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
-        Assert1(!CI->uge(VTy->getNumElements()*2),
-                "Invalid shufflevector shuffle mask!", &SV);
-      } else {
-        Assert1(isa<UndefValue>(MV->getOperand(i)),
-                "Invalid shufflevector shuffle mask!", &SV);
-      }
-    }
-  } else {
-    Assert1(isa<UndefValue>(SV.getOperand(2)) || 
-            isa<ConstantAggregateZero>(SV.getOperand(2)),
-            "Invalid shufflevector shuffle mask!", &SV);
-  }
-
   visitInstruction(SV);
 }
 
