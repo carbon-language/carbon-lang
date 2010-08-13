@@ -1220,7 +1220,9 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
   bool CompleteTranslationUnit
     = ((options & CXTranslationUnit_Incomplete) == 0);
-
+  bool CacheCodeCompetionResults
+    = options & CXTranslationUnit_CacheCompletionResults;
+  
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
@@ -1276,7 +1278,8 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                    RemappedFiles.size(),
                                    /*CaptureDiagnostics=*/true,
                                    PrecompilePreamble,
-                                   CompleteTranslationUnit));
+                                   CompleteTranslationUnit,
+                                   CacheCodeCompetionResults));
 
     if (NumErrors != Diags->getNumErrors()) {
       // Make sure to check that 'Unit' is non-NULL.

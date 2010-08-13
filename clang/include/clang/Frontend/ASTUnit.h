@@ -20,6 +20,7 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang-c/Index.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -198,6 +199,55 @@ private:
   /// declarations parsed within the precompiled preamble.
   std::vector<pch::DeclID> TopLevelDeclsInPreamble;
 
+  ///
+  /// \defgroup CodeCompleteCaching Code-completion caching
+  ///
+  /// \{
+  ///
+
+  /// \brief Whether we should be caching code-completion results.
+  bool ShouldCacheCodeCompletionResults;
+  
+public:
+  /// \brief A cached code-completion result, which may be introduced in one of
+  /// many different contexts.
+  struct CachedCodeCompletionResult {
+    /// \brief The code-completion string corresponding to this completion
+    /// result.
+    CodeCompletionString *Completion;
+    
+    /// \brief A bitmask that indicates which code-completion contexts should
+    /// contain this completion result.
+    ///
+    /// The bits in the bitmask correspond to the values of 
+    /// CodeCompleteContext::Kind. To map from a completion context kind to a 
+    /// bit, subtract one from the completion context kind and shift 1 by that
+    /// number of bits. Many completions can occur in several different
+    /// contexts.
+    unsigned ShowInContexts;
+    
+    /// \brief The priority given to this code-completion result.
+    unsigned Priority;
+    
+    /// \brief The libclang cursor kind corresponding to this code-completion 
+    /// result.
+    CXCursorKind Kind;
+  };
+  
+private:
+  /// \brief The set of cached code-completion results.
+  std::vector<CachedCodeCompletionResult> CachedCompletionResults;
+  
+  /// \brief Cache any "global" code-completion results, so that we 
+  void CacheCodeCompletionResults();
+  
+  /// \brief Clear out and deallocate 
+  void ClearCachedCompletionResults();
+  
+  /// 
+  /// \}
+  ///
+  
   /// \brief The timers we've created from the various parses, reparses, etc.
   /// involved in this translation unit.
   std::vector<llvm::Timer *> Timers;
@@ -339,6 +389,21 @@ public:
     return StoredDiagnostics; 
   }
 
+  typedef std::vector<CachedCodeCompletionResult>::iterator
+    cached_completion_iterator;
+  
+  cached_completion_iterator cached_completion_begin() {
+    return CachedCompletionResults.begin();
+  }
+
+  cached_completion_iterator cached_completion_end() {
+    return CachedCompletionResults.end();
+  }
+
+  unsigned cached_completion_size() const { 
+    return CachedCompletionResults.size(); 
+  }
+  
   /// \brief Whether this AST represents a complete translation unit.
   ///
   /// If false, this AST is only a partial translation unit, e.g., one
@@ -380,7 +445,8 @@ public:
                                              bool OnlyLocalDecls = false,
                                              bool CaptureDiagnostics = false,
                                              bool PrecompilePreamble = false,
-                                          bool CompleteTranslationUnit = true);
+                                          bool CompleteTranslationUnit = true,
+                                       bool CacheCodeCompletionResults = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -405,7 +471,8 @@ public:
                                       unsigned NumRemappedFiles = 0,
                                       bool CaptureDiagnostics = false,
                                       bool PrecompilePreamble = false,
-                                      bool CompleteTranslationUnit = true);
+                                      bool CompleteTranslationUnit = true,
+                                      bool CacheCodeCompletionResults = false);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.

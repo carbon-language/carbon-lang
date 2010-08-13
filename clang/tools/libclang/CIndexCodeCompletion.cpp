@@ -541,14 +541,6 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
 
 } // end extern "C"
 
-namespace clang {
-  // FIXME: defined in CodeCompleteConsumer.cpp, but should be a
-  // static function here.
-  CXCursorKind 
-  getCursorKindForCompletionResult(const CodeCompleteConsumer::Result &R);
-}
-
-
 namespace {
   class CaptureCompletionResults : public CodeCompleteConsumer {
     AllocatedCXCodeCompleteResults &AllocatedResults;
@@ -567,8 +559,7 @@ namespace {
         CXStoredCodeCompletionString *StoredCompletion
           = new CXStoredCodeCompletionString(Results[I].Priority);
         (void)Results[I].CreateCodeCompletionString(S, StoredCompletion);
-        AllocatedResults.Results[I].CursorKind 
-          = getCursorKindForCompletionResult(Results[I]);
+        AllocatedResults.Results[I].CursorKind = Results[I].CursorKind;
         AllocatedResults.Results[I].CompletionString = StoredCompletion;
       }
     }

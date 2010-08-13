@@ -16,6 +16,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "clang-c/Index.h"
 #include <memory>
 #include <string>
 
@@ -419,6 +420,9 @@ public:
     /// \brief The priority of this particular code-completion result.
     unsigned Priority;
 
+    /// \brief The cursor kind that describes this result.
+    CXCursorKind CursorKind;
+    
     /// \brief Specifies which parameter (of a function, Objective-C method,
     /// macro, etc.) we should start with when formatting the result.
     unsigned StartParameter;
@@ -455,6 +459,7 @@ public:
         Hidden(false), QualifierIsInformative(QualifierIsInformative),
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         DeclaringEntity(false), Qualifier(Qualifier) { 
+      computeCursorKind();
     }
     
     /// \brief Build a result that refers to a keyword or symbol.
@@ -462,21 +467,29 @@ public:
       : Kind(RK_Keyword), Keyword(Keyword), Priority(Priority), 
         StartParameter(0), Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-        DeclaringEntity(false), Qualifier(0) { }
+        DeclaringEntity(false), Qualifier(0) {
+      computeCursorKind();
+    }
     
     /// \brief Build a result that refers to a macro.
     Result(IdentifierInfo *Macro, unsigned Priority = CCP_Macro)
-     : Kind(RK_Macro), Macro(Macro), Priority(Priority), StartParameter(0), 
-       Hidden(false), QualifierIsInformative(0), 
-       StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-       DeclaringEntity(false), Qualifier(0) { }
+      : Kind(RK_Macro), Macro(Macro), Priority(Priority), StartParameter(0), 
+        Hidden(false), QualifierIsInformative(0), 
+        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
+        DeclaringEntity(false), Qualifier(0) { 
+      computeCursorKind();
+    }
 
     /// \brief Build a result that refers to a pattern.
-    Result(CodeCompletionString *Pattern, unsigned Priority = CCP_CodePattern)
+    Result(CodeCompletionString *Pattern, unsigned Priority = CCP_CodePattern,
+           CXCursorKind CursorKind = CXCursor_NotImplemented)
       : Kind(RK_Pattern), Pattern(Pattern), Priority(Priority), 
-        StartParameter(0), Hidden(false), QualifierIsInformative(0), 
-        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-        DeclaringEntity(false), Qualifier(0) { }
+        CursorKind(CursorKind), StartParameter(0), Hidden(false), 
+        QualifierIsInformative(0), StartsNestedNameSpecifier(false), 
+        AllParametersAreInformative(false), DeclaringEntity(false), 
+        Qualifier(0) 
+    { 
+    }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {
@@ -505,6 +518,9 @@ public:
     
     /// brief Determine a base priority for the given declaration.
     static unsigned getPriorityFromDecl(NamedDecl *ND);
+    
+  private:
+    void computeCursorKind();
   };
     
   class OverloadCandidate {
@@ -571,7 +587,8 @@ public:
                                                 Sema &S) const;    
   };
   
-  CodeCompleteConsumer() : IncludeMacros(false), OutputIsBinary(false) { }
+  CodeCompleteConsumer() : IncludeMacros(false), IncludeCodePatterns(false),
+                           OutputIsBinary(false) { }
   
   CodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
                        bool OutputIsBinary)

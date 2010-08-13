@@ -4336,3 +4336,23 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
                             CodeCompletionContext::CCC_Other,
                             Results.data(),Results.size());
 }
+
+void Sema::GatherGlobalCodeCompletions(
+                 llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results) {
+  ResultBuilder Builder(*this);
+
+#if 0
+  // FIXME: We need a name lookup that means "look for everything", 
+  CodeCompletionDeclConsumer Consumer(Builder, 
+                                      Context.getTranslationUnitDecl());
+  LookupVisibleDecls(Context.getTranslationUnitDecl(), LookupOrdinaryName, 
+                     Consumer);
+#endif
+  
+  if (!CodeCompleter || CodeCompleter->includeMacros())
+    AddMacroResults(PP, Builder);
+  
+  Results.clear();
+  Results.insert(Results.end(), 
+                 Builder.data(), Builder.data() + Builder.size());
+}

@@ -50,7 +50,8 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
     CompleteTranslationUnit(true), ConcurrencyCheckValue(CheckUnlocked), 
-    PreambleRebuildCounter(0), SavedMainFileBuffer(0) { 
+    PreambleRebuildCounter(0), SavedMainFileBuffer(0),
+    ShouldCacheCodeCompletionResults(false) { 
 }
 
 ASTUnit::~ASTUnit() {
@@ -75,6 +76,8 @@ ASTUnit::~ASTUnit() {
   
   delete SavedMainFileBuffer;
   
+  ClearCachedCompletionResults();
+  
   for (unsigned I = 0, N = Timers.size(); I != N; ++I)
     delete Timers[I];
 }
@@ -83,6 +86,70 @@ void ASTUnit::CleanTemporaryFiles() {
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
     TemporaryFiles[I].eraseFromDisk();
   TemporaryFiles.clear();
+}
+
+void ASTUnit::CacheCodeCompletionResults() {
+  if (!TheSema)
+    return;
+  
+  llvm::Timer *CachingTimer = 0;
+  if (TimerGroup.get()) {
+    CachingTimer = new llvm::Timer("Cache global code completions", 
+                                   *TimerGroup);
+    CachingTimer->startTimer();
+    Timers.push_back(CachingTimer);
+  }
+
+  // Clear out the previous results.
+  ClearCachedCompletionResults();
+  
+  // Gather the set of global code completions.
+  typedef CodeCompleteConsumer::Result Result;
+  llvm::SmallVector<Result, 8> Results;
+  TheSema->GatherGlobalCodeCompletions(Results);
+  
+  // Translate global code completions into cached completions.
+  for (unsigned I = 0, N = Results.size(); I != N; ++I) {
+    switch (Results[I].Kind) {
+    case Result::RK_Declaration:
+      // FIXME: Handle declarations!
+      break;
+      
+    case Result::RK_Keyword:
+    case Result::RK_Pattern:
+      // Ignore keywords and patterns; we don't care, since they are so
+      // easily regenerated.
+      break;
+      
+    case Result::RK_Macro: {
+      CachedCodeCompletionResult CachedResult;
+      CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
+      CachedResult.ShowInContexts
+        = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCImplementation - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
+        | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
+        | (1 << (CodeCompletionContext::CCC_Statement - 1))
+        | (1 << (CodeCompletionContext::CCC_Expression - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+      CachedResult.Priority = Results[I].Priority;
+      CachedResult.Kind = Results[I].CursorKind;
+      CachedCompletionResults.push_back(CachedResult);
+      break;
+    }
+    }
+    Results[I].Destroy();
+  }
+
+  if (CachingTimer)
+    CachingTimer->stopTimer();
+}
+
+void ASTUnit::ClearCachedCompletionResults() {
+  for (unsigned I = 0, N = CachedCompletionResults.size(); I != N; ++I)
+    delete CachedCompletionResults[I].Completion;
+  CachedCompletionResults.clear();
 }
 
 namespace {
@@ -542,6 +609,12 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Clang.takeDiagnosticClient();
   
   Invocation.reset(Clang.takeInvocation());
+  
+  // If we were asked to cache code-completion results and don't have any
+  // results yet, do so now.
+  if (ShouldCacheCodeCompletionResults && CachedCompletionResults.empty())
+    CacheCodeCompletionResults();
+  
   return false;
   
 error:
@@ -579,7 +652,6 @@ static std::string GetPreamblePCHPath() {
   if (P.createTemporaryFileOnDisk())
     return std::string();
   
-  fprintf(stderr, "Preamble file: %s\n", P.str().c_str());
   return P.str();
 }
 
@@ -1044,7 +1116,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool OnlyLocalDecls,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
-                                             bool CompleteTranslationUnit) {
+                                             bool CompleteTranslationUnit,
+                                             bool CacheCodeCompletionResults) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1059,6 +1132,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
+  AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation.reset(CI);
   CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   
@@ -1097,7 +1171,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       unsigned NumRemappedFiles,
                                       bool CaptureDiagnostics,
                                       bool PrecompilePreamble,
-                                      bool CompleteTranslationUnit) {
+                                      bool CompleteTranslationUnit,
+                                      bool CacheCodeCompletionResults) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1159,7 +1234,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CI->getFrontendOpts().DisableFree = true;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
                                     CaptureDiagnostics, PrecompilePreamble,
-                                    CompleteTranslationUnit);
+                                    CompleteTranslationUnit,
+                                    CacheCodeCompletionResults);
 }
 
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
@@ -1196,6 +1272,91 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   return Result;
 }
 
+//----------------------------------------------------------------------------//
+// Code completion
+//----------------------------------------------------------------------------//
+
+namespace {
+  /// \brief Code completion consumer that combines the cached code-completion
+  /// results from an ASTUnit with the code-completion results provided to it,
+  /// then passes the result on to 
+  class AugmentedCodeCompleteConsumer : public CodeCompleteConsumer {
+    unsigned NormalContexts;
+    ASTUnit &AST;
+    CodeCompleteConsumer &Next;
+    
+  public:
+    AugmentedCodeCompleteConsumer(ASTUnit &AST, CodeCompleteConsumer &Next,
+                                  bool IncludeMacros, bool IncludeCodePatterns)
+      : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns,
+                             Next.isOutputBinary()), AST(AST), Next(Next) 
+    { 
+      // Compute the set of contexts in which we will look when we don't have
+      // any information about the specific context.
+      NormalContexts 
+        = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCImplementation - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
+        | (1 << (CodeCompletionContext::CCC_Statement - 1))
+        | (1 << (CodeCompletionContext::CCC_Expression - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
+        | (1 << (CodeCompletionContext::CCC_MemberAccess - 1))
+        | (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
+      
+      if (AST.getASTContext().getLangOptions().CPlusPlus)
+        NormalContexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1))
+                    | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
+                    | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
+    }
+    
+    virtual void ProcessCodeCompleteResults(Sema &S, 
+                                            CodeCompletionContext Context,
+                                            Result *Results,
+                                            unsigned NumResults) { 
+      // Merge the results we were given with the results we cached.
+      bool AddedResult = false;
+      unsigned InContexts = 
+        (Context.getKind() == CodeCompletionContext::CCC_Other? NormalContexts
+                                              : (1 << (Context.getKind() - 1)));
+      typedef CodeCompleteConsumer::Result Result;
+      llvm::SmallVector<Result, 8> AllResults;
+      for (ASTUnit::cached_completion_iterator 
+               C = AST.cached_completion_begin(),
+            CEnd = AST.cached_completion_end();
+           C != CEnd; ++C) {
+        // If the context we are in matches any of the contexts we are 
+        // interested in, we'll add this result.
+        if ((C->ShowInContexts & InContexts) == 0)
+          continue;
+        
+        // If we haven't added any results previously, do so now.
+        if (!AddedResult) {
+          AllResults.insert(AllResults.end(), Results, Results + NumResults);
+          AddedResult = true;
+        }
+        
+        AllResults.push_back(Result(C->Completion, C->Priority, C->Kind));
+      }
+      
+      // If we did not add any cached completion results, just forward the
+      // results we were given to the next consumer.
+      if (!AddedResult) {
+        Next.ProcessCodeCompleteResults(S, Context, Results, NumResults);
+        return;
+      }
+      
+      Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
+                                      AllResults.size());
+    }
+    
+    virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
+                                           OverloadCandidate *Candidates,
+                                           unsigned NumCandidates) { 
+      Next.ProcessOverloadCandidates(S, CurrentArg, Candidates, NumCandidates);
+    }
+  };
+}
 void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                            RemappedFile *RemappedFiles, 
                            unsigned NumRemappedFiles,
@@ -1223,7 +1384,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   FrontendOptions &FrontendOpts = CCInvocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts = CCInvocation.getPreprocessorOpts();
 
-  FrontendOpts.ShowMacrosInCodeCompletion = IncludeMacros;
+  FrontendOpts.ShowMacrosInCodeCompletion
+    = IncludeMacros && CachedCompletionResults.empty();
   FrontendOpts.ShowCodePatternsInCodeCompletion = IncludeCodePatterns;
   FrontendOpts.CodeCompletionAt.FileName = File;
   FrontendOpts.CodeCompletionAt.Line = Line;
@@ -1281,8 +1443,12 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
                                      RemappedFiles[I].second);
   
-  // Use the code completion consumer we were given.
-  Clang.setCodeCompletionConsumer(&Consumer);
+  // Use the code completion consumer we were given, but adding any cached
+  // code-completion results.
+  AugmentedCodeCompleteConsumer 
+  AugmentedConsumer(*this, Consumer, FrontendOpts.ShowMacrosInCodeCompletion,
+                    FrontendOpts.ShowCodePatternsInCodeCompletion);
+  Clang.setCodeCompletionConsumer(&AugmentedConsumer);
 
   // If we have a precompiled preamble, try to use it. We only allow
   // the use of the precompiled preamble if we're if the completion

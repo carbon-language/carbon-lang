@@ -269,8 +269,10 @@ void Sema::ActOnEndOfTranslationUnit() {
                                           true)), 
                               UnusedFileScopedDecls.end());
 
-  if (!CompleteTranslationUnit)
+  if (!CompleteTranslationUnit) {
+    TUScope = 0;
     return;
+  }
 
   // Check for #pragma weak identifiers that were never declared
   // FIXME: This will cause diagnostics to be emitted in a non-determinstic
@@ -340,6 +342,8 @@ void Sema::ActOnEndOfTranslationUnit() {
       Diag((*I)->getLocation(), diag::warn_unused_variable)
             << cast<VarDecl>(*I)->getDeclName();
   }
+
+  TUScope = 0;
 }
 
 

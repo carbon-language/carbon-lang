@@ -34,6 +34,8 @@ static unsigned getDefaultParsingOptions() {
 
   if (getenv("CINDEXTEST_EDITING"))
     options |= clang_defaultEditingTranslationUnitOptions();
+  if (getenv("CINDEXTEST_COMPLETION_CACHING"))
+    options |= CXTranslationUnit_CacheCompletionResults;
   
   return options;
 }

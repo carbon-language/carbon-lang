@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Sema/IdentifierResolver.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Template.h"
@@ -46,7 +47,6 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class ASTConsumer;
-  class CodeCompleteConsumer;
   class Preprocessor;
   class Decl;
   class DeclContext;
@@ -4701,7 +4701,8 @@ public:
                                                   TypeTy *ReturnType,
                                                   IdentifierInfo **SelIdents,
                                                   unsigned NumSelIdents);
-  
+  void GatherGlobalCodeCompletions(
+                  llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results);
   //@}
 
   //===--------------------------------------------------------------------===//
