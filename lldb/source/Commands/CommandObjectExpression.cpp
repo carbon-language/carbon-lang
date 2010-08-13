@@ -267,7 +267,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     {
         if (log)
             log->Printf("Code cannot be interpreted and must be run in the target.");
-        success = clang_expr.PrepareIRForTarget (expr_local_vars);
+        success = clang_expr.PrepareIRForTarget ();
     }
     
     if (!success)
@@ -283,7 +283,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     }
     else
     {
-        if (!clang_expr.JITFunction (m_exe_ctx, "___clang_expr"))
+        if (!clang_expr.JITFunction ())
         {
             error_stream.PutCString ("error: IR could not be JIT compiled\n");
             return false;
@@ -295,7 +295,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
             return false;
         }
         
-        lldb::addr_t function_address(clang_expr.GetFunctionAddress ("___clang_expr"));
+        lldb::addr_t function_address(clang_expr.GetFunctionAddress ());
         
         if (function_address == LLDB_INVALID_ADDRESS)
         {
@@ -318,7 +318,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
             
             StreamString insns;
 
-            Error err = clang_expr.DisassembleFunction(insns, m_exe_ctx, "___clang_expr");
+            Error err = clang_expr.DisassembleFunction(insns, m_exe_ctx);
             
             if (!err.Success())
             {

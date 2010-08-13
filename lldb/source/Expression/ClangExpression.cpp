@@ -217,7 +217,7 @@ ClangExpression::~ClangExpression()
 }
 
 bool
-ClangExpression::CreateCompilerInstance (bool &IsAST)
+ClangExpression::CreateCompilerInstance ()
 {
     // Initialize targets first, so that --version shows registered targets.
     static struct InitializeLLVM {
@@ -313,8 +313,7 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text,
 
     TextDiagnosticBuffer text_diagnostic_buffer;
 
-    bool IsAST = false;
-    if (!CreateCompilerInstance (IsAST))
+    if (!CreateCompilerInstance ())
     {
         stream.Printf("error: couldn't create compiler instance\n");
         return 1;
@@ -462,7 +461,7 @@ ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &expr_local_varia
 }
 
 bool
-ClangExpression::PrepareIRForTarget (ClangExpressionVariableList &expr_local_variable_list)
+ClangExpression::PrepareIRForTarget ()
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
@@ -498,7 +497,7 @@ ClangExpression::PrepareIRForTarget (ClangExpressionVariableList &expr_local_var
 }
 
 bool
-ClangExpression::JITFunction (const ExecutionContext &exc_context, const char *name)
+ClangExpression::JITFunction (const char *name)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
@@ -746,90 +745,4 @@ ClangExpression::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx,
     }
     
     return ret;
-}
-
-unsigned
-ClangExpression::Compile()
-{
-    Mutex::Locker locker(GetClangMutex ());
-    bool IsAST = false;
-    
-    if (CreateCompilerInstance(IsAST))
-    {
-        // Validate/process some options
-        if (m_clang_ap->getHeaderSearchOpts().Verbose)
-            llvm::errs() << "clang-cc version " CLANG_VERSION_STRING
-            << " based upon " << PACKAGE_STRING
-            << " hosted on " << llvm::sys::getHostTriple() << "\n";
-
-        // Enforce certain implications.
-        if (!m_clang_ap->getFrontendOpts().ViewClassInheritance.empty())
-            m_clang_ap->getFrontendOpts().ProgramAction = frontend::InheritanceView;
-//        if (!compiler_instance->getFrontendOpts().FixItSuffix.empty())
-//            compiler_instance->getFrontendOpts().ProgramAction = frontend::FixIt;
-
-        for (unsigned i = 0, e = m_clang_ap->getFrontendOpts().Inputs.size(); i != e; ++i) {
-
-            // If we aren't using an AST file, setup the file and source managers and
-            // the preprocessor.
-            if (!IsAST) {
-                if (!i) {
-                    // Create a file manager object to provide access to and cache the
-                    // filesystem.
-                    m_clang_ap->createFileManager();
-
-                    // Create the source manager.
-                    m_clang_ap->createSourceManager();
-                } else {
-                    // Reset the ID tables if we are reusing the SourceManager.
-                    m_clang_ap->getSourceManager().clearIDTables();
-                }
-
-                // Create the preprocessor.
-                m_clang_ap->createPreprocessor();
-            }
-
-            llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(*m_clang_ap.get()));
-            if (!Act)
-                break;
-
-            if (Act->BeginSourceFile(*m_clang_ap, 
-                                     m_clang_ap->getFrontendOpts().Inputs[i].second, 
-                                     m_clang_ap->getFrontendOpts().Inputs[i].first)) {
-                Act->Execute();
-                Act->EndSourceFile();
-            }
-        }
-
-        if (m_clang_ap->getDiagnosticOpts().ShowCarets)
-        {
-            unsigned NumWarnings = m_clang_ap->getDiagnostics().getNumWarnings();
-            unsigned NumErrors = m_clang_ap->getDiagnostics().getNumErrors() -
-            m_clang_ap->getDiagnostics().getNumErrorsSuppressed();
-
-            if (NumWarnings || NumErrors)
-            {
-                if (NumWarnings)
-                    fprintf (stderr, "%u warning%s%s", NumWarnings, (NumWarnings == 1 ? "" : "s"), (NumErrors ? " and " : ""));
-                if (NumErrors)
-                    fprintf (stderr, "%u error%s", NumErrors, (NumErrors == 1 ? "" : "s"));
-                fprintf (stderr, " generated.\n");
-            }
-        }
-
-        if (m_clang_ap->getFrontendOpts().ShowStats) {
-            m_clang_ap->getFileManager().PrintStats();
-            fprintf(stderr, "\n");
-        }
-
-        // Return the appropriate status when verifying diagnostics.
-        //
-        // FIXME: If we could make getNumErrors() do the right thing, we wouldn't need
-        // this.
-        if (m_clang_ap->getDiagnosticOpts().VerifyDiagnostics)
-            return static_cast<VerifyDiagnosticsClient&>(m_clang_ap->getDiagnosticClient()).HadErrors();
-
-        return m_clang_ap->getDiagnostics().getNumErrors();
-    }
-    return 1;
 }

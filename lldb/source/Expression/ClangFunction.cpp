@@ -258,7 +258,7 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     if (!m_JITted)
     {
         // Next we should JIT it and insert the result into the target program.
-        if (!JITFunction (exe_ctx, m_wrapper_function_name.c_str()))
+        if (!JITFunction (m_wrapper_function_name.c_str()))
             return false;
 
         if (!WriteJITCode (exe_ctx))
