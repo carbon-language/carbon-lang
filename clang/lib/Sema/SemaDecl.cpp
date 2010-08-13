@@ -521,25 +521,40 @@ static void RemoveUsingDecls(LookupResult &R) {
   F.done();
 }
 
-static bool ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // Warn for static, non-inlined function definitions that
-    // have not been used.
-    // FIXME: Also include static functions declared but not defined.
-    return (!FD->isInvalidDecl() 
-         && !FD->isInlined() && FD->getLinkage() == InternalLinkage
-         && !FD->isUsed() && !FD->hasAttr<UnusedAttr>()
-         && !FD->hasAttr<ConstructorAttr>()
-         && !FD->hasAttr<DestructorAttr>());
-  }
-  
-  return false;
-}
+bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
+  assert(D);
+  if (D->isInvalidDecl() || D->isUsed() || D->hasAttr<UnusedAttr>())
+    return false;
+  if (D->getLinkage() == ExternalLinkage)
+    return false;
 
-void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
-  if (ShouldWarnIfUnusedFileScopedDecl(D))
-    UnusedFileScopedDecls.push_back(D);
-}
+  // Ignore class templates.
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D))
+    if (MD->getParent()->getDescribedClassTemplate())
+      return false;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->isThisDeclarationADefinition())
+      return !Context.DeclMustBeEmitted(FD);
+    return true;
+   }
+
+   return false;
+ }
+
+ void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
+  if (!D)
+    return;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    const FunctionDecl *First = FD->getFirstDeclaration();
+    if (FD != First && ShouldWarnIfUnusedFileScopedDecl(First))
+      return; // First should already be in the vector.
+  }
+
+   if (ShouldWarnIfUnusedFileScopedDecl(D))
+     UnusedFileScopedDecls.push_back(D);
+ }
 
 static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
   if (D->isInvalidDecl())
@@ -3638,8 +3653,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (FunctionTemplate)
     return FunctionTemplate;
 
-  if (IsFunctionDefinition)
-    MarkUnusedFileScopedDecl(NewFD);
+  MarkUnusedFileScopedDecl(NewFD);
 
   return NewFD;
 }

@@ -35,3 +35,12 @@ void bar2(void) { }
 
 __attribute__((destructor)) static void bar3(void);
 void bar3(void) { }
+
+static void f10(void); // expected-warning{{unused}}
+static void f10(void);
+
+static void f11(void);
+static void f11(void) { }  // expected-warning{{unused}}
+
+static void f12(void) { }  // expected-warning{{unused}}
+static void f12(void);

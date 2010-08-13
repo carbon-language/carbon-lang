@@ -349,7 +349,8 @@ public:
   std::vector<VarDecl *> TentativeDefinitions;
 
   /// \brief The set of file scoped decls seen so far that have not been used
-  /// and must warn if not used.
+  /// and must warn if not used. For functions only contains the first
+  /// declaration.
   std::vector<const DeclaratorDecl*> UnusedFileScopedDecls;
 
   class AccessedEntity {
@@ -1877,6 +1878,7 @@ public:
                                             MultiStmtArg Handlers);
   void DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock);
 
+  bool ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const;
   void MarkUnusedFileScopedDecl(const DeclaratorDecl *D);
 
   /// DiagnoseUnusedExprResult - If the statement passed in is an expression

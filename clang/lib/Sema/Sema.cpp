@@ -235,6 +235,24 @@ void Sema::DeleteExpr(ExprTy *E) {
 void Sema::DeleteStmt(StmtTy *S) {
 }
 
+/// \brief Used to prune the decls of Sema's UnusedFileScopedDecls vector.
+static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
+  if (D->isUsed())
+    return true;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // For functions, UnusedFileScopedDecls stores the first declaration.
+    // Later redecls may add new information resulting in not having to warn,
+    // so check again.
+    const FunctionDecl *DeclToCheck;
+    if (!FD->hasBody(DeclToCheck))
+      DeclToCheck = FD->getMostRecentDeclaration();
+    if (DeclToCheck != FD)
+      return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
+  }
+  return false;
+}
+
 /// ActOnEndOfTranslationUnit - This is called at the very end of the
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
@@ -263,10 +281,10 @@ void Sema::ActOnEndOfTranslationUnit() {
     }
   
   // Remove file scoped decls that turned out to be used.
-  UnusedFileScopedDecls.erase(std::remove_if(UnusedFileScopedDecls.begin(), 
-                                             UnusedFileScopedDecls.end(), 
-                             std::bind2nd(std::mem_fun(&DeclaratorDecl::isUsed),
-                                          true)), 
+  UnusedFileScopedDecls.erase(std::remove_if(UnusedFileScopedDecls.begin(),
+                                             UnusedFileScopedDecls.end(),
+                              std::bind1st(std::ptr_fun(ShouldRemoveFromUnused),
+                                           this)),
                               UnusedFileScopedDecls.end());
 
   if (!CompleteTranslationUnit)
@@ -334,9 +352,13 @@ void Sema::ActOnEndOfTranslationUnit() {
   for (std::vector<const DeclaratorDecl*>::iterator
          I = UnusedFileScopedDecls.begin(),
          E = UnusedFileScopedDecls.end(); I != E; ++I) {
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I))
-      Diag(FD->getLocation(), diag::warn_unused_function) << FD->getDeclName();
-    else
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
+      const FunctionDecl *DiagD;
+      if (!FD->hasBody(DiagD))
+        DiagD = FD;
+      Diag(DiagD->getLocation(), diag::warn_unused_function)
+            << DiagD->getDeclName();
+    } else
       Diag((*I)->getLocation(), diag::warn_unused_variable)
             << cast<VarDecl>(*I)->getDeclName();
   }
