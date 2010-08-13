@@ -97,6 +97,12 @@ static Linkage getLinkageForTemplateArgumentList(const TemplateArgument *Args,
   return L;
 }
 
+static Linkage
+getLinkageForTemplateArgumentList(const TemplateArgumentList &TArgs) {
+  return getLinkageForTemplateArgumentList(TArgs.getFlatArgumentList(), 
+                                           TArgs.flat_size());
+}
+
 static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   assert(D->getDeclContext()->getLookupContext()->isFileContext() &&
          "Not a name having namespace scope");
@@ -219,10 +225,7 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
                                = Function->getTemplateSpecializationInfo()) {
       Linkage L = SpecInfo->getTemplate()->getLinkage();
       const TemplateArgumentList &TemplateArgs = *SpecInfo->TemplateArguments;
-      L = minLinkage(L, 
-                     getLinkageForTemplateArgumentList(
-                                          TemplateArgs.getFlatArgumentList(), 
-                                          TemplateArgs.flat_size()));
+      L = minLinkage(L, getLinkageForTemplateArgumentList(TemplateArgs));
       return L;
     }
 
@@ -245,9 +248,7 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       if (const ClassTemplateSpecializationDecl *Spec
             = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
         const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-        Linkage L = getLinkageForTemplateArgumentList(
-                                          TemplateArgs.getFlatArgumentList(),
-                                                 TemplateArgs.flat_size());
+        Linkage L = getLinkageForTemplateArgumentList(TemplateArgs);
         return minLinkage(L, Spec->getSpecializedTemplate()->getLinkage());
       }
 
@@ -277,6 +278,47 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
     return ExternalLinkage;
 
   return NoLinkage;
+}
+
+static Linkage getLinkageForClassMember(const NamedDecl *D) {
+  if (!(isa<CXXMethodDecl>(D) ||
+        isa<VarDecl>(D) ||
+        (isa<TagDecl>(D) &&
+         (D->getDeclName() || cast<TagDecl>(D)->getTypedefForAnonDecl()))))
+    return NoLinkage;
+
+  // Class members only have linkage if their class has external linkage.
+  Linkage L = cast<RecordDecl>(D->getDeclContext())->getLinkage();
+  if (!isExternalLinkage(L)) return NoLinkage;
+
+  // If the class already has unique-external linkage, we can't improve.
+  if (L == UniqueExternalLinkage) return UniqueExternalLinkage;
+
+  // If this is a method template specialization, use the linkage for
+  // the template parameters and arguments.
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+    if (FunctionTemplateSpecializationInfo *SpecInfo
+           = MD->getTemplateSpecializationInfo()) {
+      Linkage ArgLinkage =
+        getLinkageForTemplateArgumentList(*SpecInfo->TemplateArguments);
+      Linkage ParamLinkage =
+        getLinkageForTemplateParameterList(
+                           SpecInfo->getTemplate()->getTemplateParameters());
+      return minLinkage(ArgLinkage, ParamLinkage);
+    }
+
+  // Similarly for member class template specializations.
+  } else if (const ClassTemplateSpecializationDecl *Spec
+               = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    Linkage ArgLinkage =
+      getLinkageForTemplateArgumentList(Spec->getTemplateArgs());
+    Linkage ParamLinkage =
+      getLinkageForTemplateParameterList(
+                    Spec->getSpecializedTemplate()->getTemplateParameters());
+    return minLinkage(ArgLinkage, ParamLinkage);
+  }
+
+  return ExternalLinkage;
 }
 
 Linkage NamedDecl::getLinkage() const {
@@ -314,14 +356,8 @@ Linkage NamedDecl::getLinkage() const {
   //   that the class or enumeration has the typedef name for linkage
   //   purposes (7.1.3), has external linkage if the name of the class
   //   has external linkage.
-  if (getDeclContext()->isRecord() &&
-      (isa<CXXMethodDecl>(this) || isa<VarDecl>(this) ||
-       (isa<TagDecl>(this) &&
-        (getDeclName() || cast<TagDecl>(this)->getTypedefForAnonDecl())))) {
-    Linkage L = cast<RecordDecl>(getDeclContext())->getLinkage();
-    if (isExternalLinkage(L))
-      return L;
-  }
+  if (getDeclContext()->isRecord())
+    return getLinkageForClassMember(this);
 
   // C++ [basic.link]p6:
   //   The name of a function declared in block scope and the name of
