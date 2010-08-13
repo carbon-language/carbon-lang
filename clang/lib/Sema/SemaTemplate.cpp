@@ -88,8 +88,13 @@ static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
           filter.erase();
           continue;
         }
-          
-      filter.replace(Repl);
+
+      // FIXME: we promote access to public here as a workaround to
+      // the fact that LookupResult doesn't let us remember that we
+      // found this template through a particular injected class name,
+      // which means we end up doing nasty things to the invariants.
+      // Pretending that access is public is *much* safer.
+      filter.replace(Repl, AS_public);
     }
   }
   filter.done();

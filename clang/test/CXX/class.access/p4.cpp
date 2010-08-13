@@ -436,3 +436,17 @@ namespace test17 {
 
   A::Inner<int> s; // expected-error {{'Inner' is a private member of 'test17::A'}}
 }
+
+namespace test18 {
+  template <class T> class A {};
+  class B : A<int> {
+    A<int> member;
+  };
+
+  // FIXME: this access to A should be forbidden (because C++ is dumb),
+  // but LookupResult can't express the necessary information to do
+  // the check, so we aggressively suppress access control.
+  class C : B {
+    A<int> member;
+  };
+}
