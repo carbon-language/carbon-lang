@@ -33,14 +33,14 @@ ClangExpressionVariableList::~ClangExpressionVariableList()
 }
 
 Value *
-ValueForDecl(ASTContext &ast_context, const VarDecl *var_decl)
+ValueForDecl(const VarDecl *var_decl)
 {
     Value *ret = new Value;
         
     ret->SetContext(Value::eContextTypeOpaqueClangQualType, 
                     var_decl->getType().getAsOpaquePtr());
     
-    uint64_t bit_width = ast_context.getTypeSize(var_decl->getType());
+    uint64_t bit_width = var_decl->getASTContext().getTypeSize(var_decl->getType());
     
     uint32_t byte_size = (bit_width + 7 ) / 8;
     
@@ -50,7 +50,7 @@ ValueForDecl(ASTContext &ast_context, const VarDecl *var_decl)
 }
 
 Value *
-ClangExpressionVariableList::GetVariableForVarDecl (ASTContext &ast_context, const VarDecl *var_decl, uint32_t& idx, bool can_create)
+ClangExpressionVariableList::GetVariableForVarDecl (const VarDecl *var_decl, uint32_t& idx, bool can_create)
 {
     uint32_t num_variables = m_variables.size();
     uint32_t var_index;
@@ -71,7 +71,7 @@ ClangExpressionVariableList::GetVariableForVarDecl (ASTContext &ast_context, con
     
     ClangExpressionVariable val;
     val.m_var_decl = var_decl;
-    val.m_value = ValueForDecl(ast_context, var_decl);
+    val.m_value = ValueForDecl(var_decl);
     m_variables.push_back(val);
     
     return m_variables.back().m_value;
@@ -84,17 +84,4 @@ ClangExpressionVariableList::GetVariableAtIndex (uint32_t idx)
         return m_variables[idx].m_value;
     
     return NULL;
-}
-
-uint32_t
-ClangExpressionVariableList::AppendValue (Value *value)
-{
-    uint32_t idx = m_variables.size();
-    
-    ClangExpressionVariable val;
-    val.m_var_decl = NULL;
-    val.m_value = value;
-    
-    m_variables.push_back(val);
-    return idx;
 }
