@@ -187,5 +187,10 @@ unittest2.signals.installHandler()
 # Invoke the default TextTestRunner to run the test suite.
 result = unittest2.TextTestRunner(verbosity=verbose).run(suite)
 
+if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
+    import subprocess
+    print "Terminating Test suite..."
+    subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
+
 # Exiting.
 sys.exit(not result.wasSuccessful)
