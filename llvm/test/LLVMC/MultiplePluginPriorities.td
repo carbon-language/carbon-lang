@@ -4,6 +4,7 @@
 
 // Disable for Darwin PPC: <rdar://problem/7598390>
 // XFAIL: powerpc-apple-darwin
+// XFAIL: powerpc-darwin9
 
 // This also fails on i386-darwin9 for some reason
 // XFAIL: i386-darwin9
