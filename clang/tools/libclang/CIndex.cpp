@@ -1454,7 +1454,12 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   return ATU;
 }
 
-int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName) {
+unsigned clang_defaultSaveOptions(CXTranslationUnit TU) {
+  return CXSaveTranslationUnit_None;
+}  
+  
+int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
+                              unsigned options) {
   if (!TU)
     return 1;
   

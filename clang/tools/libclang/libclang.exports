@@ -17,6 +17,7 @@ clang_defaultCodeCompleteOptions
 clang_defaultEditingTranslationUnitOptions
 clang_defaultDiagnosticDisplayOptions
 clang_defaultReparseOptions
+clang_defaultSaveOptions
 clang_disposeCodeCompleteResults
 clang_disposeDiagnostic
 clang_disposeIndex

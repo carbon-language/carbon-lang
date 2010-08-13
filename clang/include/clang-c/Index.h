@@ -765,6 +765,31 @@ CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                                             unsigned options);
   
 /**
+ * \brief Flags that control how translation units are saved.
+ *
+ * The enumerators in this enumeration type are meant to be bitwise
+ * ORed together to specify which options should be used when
+ * saving the translation unit.
+ */
+enum CXSaveTranslationUnit_Flags {
+  /**
+   * \brief Used to indicate that no special saving options are needed.
+   */
+  CXSaveTranslationUnit_None = 0x0
+};
+
+/**
+ * \brief Returns the set of flags that is suitable for saving a translation
+ * unit.
+ *
+ * The set of flags returned provide options for
+ * \c clang_saveTranslationUnit() by default. The returned flag
+ * set contains an unspecified set of options that save translation units with
+ * the most commonly-requested data.
+ */
+CINDEX_LINKAGE unsigned clang_defaultSaveOptions(CXTranslationUnit TU);
+
+/**
  * \brief Saves a translation unit into a serialized representation of
  * that translation unit on disk.
  *
@@ -776,13 +801,19 @@ CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
  * units.
  *
  * \param TU The translation unit to save.
+ *
  * \param FileName The file to which the translation unit will be saved.
+ *
+ * \param options A bitmask of options that affects how the translation unit
+ * is saved. This should be a bitwise OR of the
+ * CXSaveTranslationUnit_XXX flags.
  *
  * \returns Zero if the translation unit was saved successfully, a
  * non-zero value otherwise.
  */
 CINDEX_LINKAGE int clang_saveTranslationUnit(CXTranslationUnit TU,
-                                             const char *FileName);
+                                             const char *FileName,
+                                             unsigned options);
 
 /**
  * \brief Destroy the specified CXTranslationUnit object.

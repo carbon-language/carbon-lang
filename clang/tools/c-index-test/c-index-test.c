@@ -1306,7 +1306,7 @@ int write_pch_file(const char *filename, int argc, const char *argv[]) {
     return 1;
   }
 
-  if (clang_saveTranslationUnit(TU, filename))
+  if (clang_saveTranslationUnit(TU, filename, clang_defaultSaveOptions(TU)))
     fprintf(stderr, "Unable to write PCH file %s\n", filename);
   clang_disposeTranslationUnit(TU);
   free_remapped_files(unsaved_files, num_unsaved_files);
