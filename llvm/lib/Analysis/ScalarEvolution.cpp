@@ -1383,7 +1383,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       // Found a match, merge the two values into a multiply, and add any
       // remaining values to the result.
       const SCEV *Two = getConstant(Ty, 2);
-      const SCEV *Mul = getMulExpr(Ops[i], Two);
+      const SCEV *Mul = getMulExpr(Two, Ops[i]);
       if (Ops.size() == 2)
         return Mul;
       Ops[i] = Mul;
@@ -1530,7 +1530,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
             InnerMul = getMulExpr(MulOps);
           }
           const SCEV *One = getConstant(Ty, 1);
-          const SCEV *AddOne = getAddExpr(InnerMul, One);
+          const SCEV *AddOne = getAddExpr(One, InnerMul);
           const SCEV *OuterMul = getMulExpr(AddOne, MulOpSCEV);
           if (Ops.size() == 2) return OuterMul;
           if (AddOp < Idx) {
@@ -3538,7 +3538,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
           const SCEV *LDiff = getMinusSCEV(LA, LS);
           const SCEV *RDiff = getMinusSCEV(RA, One);
           if (LDiff == RDiff)
-            return getAddExpr(getUMaxExpr(LS, One), LDiff);
+            return getAddExpr(getUMaxExpr(One, LS), LDiff);
         }
         break;
       case ICmpInst::ICMP_EQ:
@@ -3553,7 +3553,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
           const SCEV *LDiff = getMinusSCEV(LA, One);
           const SCEV *RDiff = getMinusSCEV(RA, LS);
           if (LDiff == RDiff)
-            return getAddExpr(getUMaxExpr(LS, One), LDiff);
+            return getAddExpr(getUMaxExpr(One, LS), LDiff);
         }
         break;
       default:
