@@ -183,7 +183,7 @@ class SplitEditor {
   bool liveThrough_;
 
   /// All the new intervals created for this split are added to intervals_.
-  std::vector<LiveInterval*> &intervals_;
+  SmallVectorImpl<LiveInterval*> &intervals_;
 
   /// The index into intervals_ of the first interval we added. There may be
   /// others from before we got it.
@@ -199,7 +199,7 @@ public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
   /// Newly created intervals will be appended to newIntervals.
   SplitEditor(SplitAnalysis &SA, LiveIntervals&, VirtRegMap&,
-              std::vector<LiveInterval*> &newIntervals);
+              SmallVectorImpl<LiveInterval*> &newIntervals);
 
   /// getAnalysis - Get the corresponding analysis.
   SplitAnalysis &getAnalysis() { return sa_; }

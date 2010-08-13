@@ -45,7 +45,7 @@ class InlineSpiller : public Spiller {
 
   // Variables that are valid during spill(), but used by multiple methods.
   LiveInterval *li_;
-  std::vector<LiveInterval*> *newIntervals_;
+  SmallVectorImpl<LiveInterval*> *newIntervals_;
   const TargetRegisterClass *rc_;
   int stackSlot_;
   const SmallVectorImpl<LiveInterval*> *spillIs_;
@@ -75,9 +75,8 @@ public:
       splitAnalysis_(mf, lis_, loops_) {}
 
   void spill(LiveInterval *li,
-             std::vector<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &spillIs,
-             SlotIndex *earliestIndex);
+             SmallVectorImpl<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &spillIs);
 
 private:
   bool split();
@@ -388,9 +387,8 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI,
 }
 
 void InlineSpiller::spill(LiveInterval *li,
-                          std::vector<LiveInterval*> &newIntervals,
-                          SmallVectorImpl<LiveInterval*> &spillIs,
-                          SlotIndex *earliestIndex) {
+                          SmallVectorImpl<LiveInterval*> &newIntervals,
+                          SmallVectorImpl<LiveInterval*> &spillIs) {
   DEBUG(dbgs() << "Inline spilling " << *li << "\n");
   assert(li->isSpillable() && "Attempting to spill already spilled value.");
   assert(!li->isStackSlot() && "Trying to spill a stack slot.");

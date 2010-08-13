@@ -1202,8 +1202,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   // linearscan.
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DEBUG(dbgs() << "\t\t\tspilling(c): " << *cur << '\n');
-    SmallVector<LiveInterval*, 8> spillIs;
-    std::vector<LiveInterval*> added;
+    SmallVector<LiveInterval*, 8> spillIs, added;
     spiller_->spill(cur, added, spillIs);
 
     std::sort(added.begin(), added.end(), LISorter());
@@ -1268,23 +1267,29 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   // in handled we need to roll back
   assert(!spillIs.empty() && "No spill intervals?"); 
   SlotIndex earliestStart = spillIs[0]->beginIndex();
-  
+
   // Spill live intervals of virtual regs mapped to the physical register we
   // want to clear (and its aliases).  We only spill those that overlap with the
   // current interval as the rest do not affect its allocation. we also keep
   // track of the earliest start of all spilled live intervals since this will
   // mark our rollback point.
-  std::vector<LiveInterval*> added;
+  SmallVector<LiveInterval*, 8> added;
   while (!spillIs.empty()) {
     LiveInterval *sli = spillIs.back();
     spillIs.pop_back();
     DEBUG(dbgs() << "\t\t\tspilling(a): " << *sli << '\n');
     if (sli->beginIndex() < earliestStart)
       earliestStart = sli->beginIndex();
-       
-    spiller_->spill(sli, added, spillIs, &earliestStart);
+    spiller_->spill(sli, added, spillIs);
     addStackInterval(sli, ls_, li_, mri_, *vrm_);
     spilled.insert(sli->reg);
+  }
+
+  // Include any added intervals in earliestStart.
+  for (unsigned i = 0, e = added.size(); i != e; ++i) {
+    SlotIndex SI = added[i]->beginIndex();
+    if (SI < earliestStart)
+      earliestStart = SI;
   }
 
   DEBUG(dbgs() << "\t\trolling back to: " << earliestStart << '\n');

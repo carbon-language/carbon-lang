@@ -342,7 +342,7 @@ bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
 
 /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
 SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
-                         std::vector<LiveInterval*> &intervals)
+                         SmallVectorImpl<LiveInterval*> &intervals)
   : sa_(sa), lis_(lis), vrm_(vrm),
     mri_(vrm.getMachineFunction().getRegInfo()),
     tii_(*vrm.getMachineFunction().getTarget().getInstrInfo()),

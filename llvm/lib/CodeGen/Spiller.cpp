@@ -74,7 +74,7 @@ protected:
   /// immediately before each use, and stores after each def. No folding or
   /// remat is attempted.
   void trivialSpillEverywhere(LiveInterval *li,
-                              std::vector<LiveInterval*> &newIntervals) {
+                              SmallVectorImpl<LiveInterval*> &newIntervals) {
     DEBUG(dbgs() << "Spilling everywhere " << *li << "\n");
 
     assert(li->weight != HUGE_VALF &&
@@ -181,9 +181,8 @@ public:
     : SpillerBase(pass, mf, vrm) {}
 
   void spill(LiveInterval *li,
-             std::vector<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &,
-             SlotIndex*) {
+             SmallVectorImpl<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &) {
     // Ignore spillIs - we don't use it.
     trivialSpillEverywhere(li, newIntervals);
   }
@@ -208,9 +207,8 @@ public:
 
   /// Falls back on LiveIntervals::addIntervalsForSpills.
   void spill(LiveInterval *li,
-             std::vector<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &spillIs,
-             SlotIndex*) {
+             SmallVectorImpl<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &spillIs) {
     std::vector<LiveInterval*> added =
       lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
     newIntervals.insert(newIntervals.end(), added.begin(), added.end());
@@ -236,13 +234,12 @@ public:
   }
 
   void spill(LiveInterval *li,
-             std::vector<LiveInterval*> &newIntervals,
-             SmallVectorImpl<LiveInterval*> &spillIs,
-             SlotIndex *earliestStart) {
+             SmallVectorImpl<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &spillIs) {
     if (worthTryingToSplit(li))
-      tryVNISplit(li, earliestStart);
+      tryVNISplit(li);
     else
-      StandardSpiller::spill(li, newIntervals, spillIs, earliestStart);
+      StandardSpiller::spill(li, newIntervals, spillIs);
   }
 
 private:
@@ -257,8 +254,7 @@ private:
   }
 
   /// Try to break a LiveInterval into its component values.
-  std::vector<LiveInterval*> tryVNISplit(LiveInterval *li,
-                                         SlotIndex *earliestStart) {
+  std::vector<LiveInterval*> tryVNISplit(LiveInterval *li) {
 
     DEBUG(dbgs() << "Trying VNI split of %reg" << *li << "\n");
 
@@ -282,10 +278,6 @@ private:
         DEBUG(dbgs() << *splitInterval << "\n");
         added.push_back(splitInterval);
         alreadySplit.insert(splitInterval);
-        if (earliestStart != 0) {
-          if (splitInterval->beginIndex() < *earliestStart)
-            *earliestStart = splitInterval->beginIndex();
-        }
       } else {
         DEBUG(dbgs() << "0\n");
       }
@@ -298,10 +290,6 @@ private:
     if (!li->empty()) {
       added.push_back(li);
       alreadySplit.insert(li);
-      if (earliestStart != 0) {
-        if (li->beginIndex() < *earliestStart)
-          *earliestStart = li->beginIndex();
-      }
     }
 
     return added;
