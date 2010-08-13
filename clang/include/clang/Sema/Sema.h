@@ -844,7 +844,7 @@ public:
   void DiagnoseUseOfUnimplementedSelectors();
 
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, CXXScopeSpec *SS,
+                              Scope *S, CXXScopeSpec *SS = 0,
                               bool isClassName = false,
                               TypeTy *ObjectType = 0);
   virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
@@ -2689,7 +2689,7 @@ public:
   // C++ Classes
   //
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
-                                  const CXXScopeSpec *SS);
+                                  const CXXScopeSpec *SS = 0);
 
   virtual DeclPtrTy ActOnAccessSpecifier(AccessSpecifier Access,
                                          SourceLocation ASLoc,
