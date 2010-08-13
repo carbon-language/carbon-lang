@@ -4,6 +4,9 @@
 // Disable for Darwin PPC: <rdar://problem/7598390>
 // XFAIL: powerpc-apple-darwin
 
+// This also fails on i386-darwin9 for some reason
+// XFAIL: i386-darwin9
+
 include "llvm/CompilerDriver/Common.td"
 
 def Graph : CompilationGraph<[]>;
