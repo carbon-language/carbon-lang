@@ -2687,7 +2687,6 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
         AdvanceToken();
         continue;
       case RangeAfter:
-        return CXChildVisit_Continue;
       case RangeOverlap:
         break;
     }
