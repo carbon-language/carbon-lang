@@ -2655,6 +2655,23 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     }
   }
 
+  // If the location of the cursor occurs within a macro instantiation, record
+  // the spelling location of the cursor in our annotation map.  We can then
+  // paper over the token labelings during a post-processing step to try and
+  // get cursor mappings for tokens that are the *arguments* of a macro
+  // instantiation.
+  if (L.isMacroID()) {
+    unsigned rawEncoding = SrcMgr.getSpellingLoc(L).getRawEncoding();
+    // Only invalidate the old annotation if it isn't part of a preprocessing
+    // directive.  Here we assume that the default construction of CXCursor
+    // results in CXCursor.kind being an initialized value (i.e., 0).  If
+    // this isn't the case, we can fix by doing lookup + insertion.
+
+    CXCursor &oldC = Annotated[rawEncoding];
+    if (!clang_isPreprocessing(oldC.kind))
+      oldC = cursor;
+  }
+  
   const enum CXCursorKind K = clang_getCursorKind(parent);
   const CXCursor updateC =
     (clang_isInvalid(K) || K == CXCursor_TranslationUnit ||
