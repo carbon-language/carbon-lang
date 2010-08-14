@@ -1831,7 +1831,7 @@ def warn_missing_field_initializers : Warning<
   InGroup<MissingFieldInitializers>, DefaultIgnore;
 def warn_braces_around_scalar_init : Warning<
   "braces around scalar initializer">;
-def err_many_braces_around_scalar_init : Error<
+def warn_many_braces_around_scalar_init : ExtWarn<
   "too many braces around scalar initializer">;
 def err_empty_scalar_initializer : Error<"scalar initializer cannot be empty">;
 def err_illegal_initializer : Error<

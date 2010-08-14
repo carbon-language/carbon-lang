@@ -740,13 +740,13 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       unsigned &StructuredIndex) {
   if (Index < IList->getNumInits()) {
     Expr *expr = IList->getInit(Index);
-    if (isa<InitListExpr>(expr)) {
-      SemaRef.Diag(IList->getLocStart(),
-                    diag::err_many_braces_around_scalar_init)
-        << IList->getSourceRange();
-      hadError = true;
-      ++Index;
-      ++StructuredIndex;
+    if (InitListExpr *SubIList = dyn_cast<InitListExpr>(expr)) {
+      SemaRef.Diag(SubIList->getLocStart(),
+                    diag::warn_many_braces_around_scalar_init)
+        << SubIList->getSourceRange();
+
+      CheckScalarType(Entity, SubIList, DeclType, Index, StructuredList,
+                      StructuredIndex);
       return;
     } else if (isa<DesignatedInitExpr>(expr)) {
       SemaRef.Diag(expr->getSourceRange().getBegin(),
