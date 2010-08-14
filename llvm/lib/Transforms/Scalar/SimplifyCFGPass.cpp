@@ -285,10 +285,9 @@ static bool IterativeSimplifyCFG(Function &F, const TargetData *TD) {
   while (LocalChange) {
     LocalChange = false;
     
-    // Loop over all of the basic blocks (except the first one) and remove them
-    // if they are unneeded...
+    // Loop over all of the basic blocks and remove them if they are unneeded...
     //
-    for (Function::iterator BBIt = ++F.begin(); BBIt != F.end(); ) {
+    for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
       if (SimplifyCFG(BBIt++, TD)) {
         LocalChange = true;
         ++NumSimpl;

@@ -54,6 +54,5 @@ bb1:                                              ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK: @test5
-; CHECK-NEXT: bb:
 ; CHECK-NEXT: ret void
 }

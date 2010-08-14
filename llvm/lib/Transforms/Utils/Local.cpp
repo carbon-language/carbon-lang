@@ -490,6 +490,9 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 /// rewriting all the predecessors to branch to the successor block and return
 /// true.  If we can't transform, return false.
 bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
+  assert(BB != &BB->getParent()->getEntryBlock() &&
+         "TryToSimplifyUncondBranchFromEmptyBlock called on entry block!");
+
   // We can't eliminate infinite loops.
   BasicBlock *Succ = cast<BranchInst>(BB->getTerminator())->getSuccessor(0);
   if (BB == Succ) return false;
