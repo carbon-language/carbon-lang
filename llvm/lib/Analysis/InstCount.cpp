@@ -45,7 +45,7 @@ namespace {
 
 #include "llvm/Instruction.def"
 
-    void visitInstruction(Instruction &I) {
+    void visitInstruction(Instruction &I) ATTRIBUTE_UNUSED {
       errs() << "Instruction Count does not know about " << I;
       llvm_unreachable(0);
     }

@@ -19,12 +19,13 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {
 class X86MCCodeEmitter : public MCCodeEmitter {
-  X86MCCodeEmitter(const X86MCCodeEmitter &); // DO NOT IMPLEMENT
-  void operator=(const X86MCCodeEmitter &); // DO NOT IMPLEMENT
+  X86MCCodeEmitter(const X86MCCodeEmitter &) ATTRIBUTE_UNUSED; // DONT IMPLEMENT
+  void operator=(const X86MCCodeEmitter &) ATTRIBUTE_UNUSED; // DO NOT IMPLEMENT
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   MCContext &Ctx;
