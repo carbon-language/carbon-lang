@@ -1842,18 +1842,30 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
 }
 
 bool FloatExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
-  ComplexValue CV;
-  if (!EvaluateComplex(E->getSubExpr(), CV, Info))
-    return false;
-  Result = CV.FloatReal;
-  return true;
+  if (E->getSubExpr()->getType()->isAnyComplexType()) {
+    ComplexValue CV;
+    if (!EvaluateComplex(E->getSubExpr(), CV, Info))
+      return false;
+    Result = CV.FloatReal;
+    return true;
+  }
+
+  return Visit(E->getSubExpr());
 }
 
 bool FloatExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
-  ComplexValue CV;
-  if (!EvaluateComplex(E->getSubExpr(), CV, Info))
-    return false;
-  Result = CV.FloatImag;
+  if (E->getSubExpr()->getType()->isAnyComplexType()) {
+    ComplexValue CV;
+    if (!EvaluateComplex(E->getSubExpr(), CV, Info))
+      return false;
+    Result = CV.FloatImag;
+    return true;
+  }
+
+  if (!E->getSubExpr()->isEvaluatable(Info.Ctx))
+    Info.EvalResult.HasSideEffects = true;
+  const llvm::fltSemantics &Sem = Info.Ctx.getFloatTypeSemantics(E->getType());
+  Result = llvm::APFloat::getZero(Sem);
   return true;
 }
 
