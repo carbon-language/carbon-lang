@@ -49,7 +49,7 @@ bool FixItRewriter::WriteFixedFile(FileID ID, llvm::raw_ostream &OS) {
 }
 
 bool FixItRewriter::WriteFixedFiles() {
-  if (NumFailures > 0 && !FixItOpts->FixWhatYouCan) {
+  if (NumFailures > 0 && (!FixItOpts || !FixItOpts->FixWhatYouCan)) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
     return true;
   }
