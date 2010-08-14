@@ -7706,10 +7706,22 @@ SDValue X86TargetLowering::LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const{
   DebugLoc dl = Op.getDebugLoc();
   
   if (!Subtarget->hasSSE2()) {
-    SDValue Zero = DAG.getConstant(0,
+    SDValue Chain = Op.getOperand(0);
+    SDValue Zero = DAG.getConstant(0, 
                                    Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
-    return DAG.getNode(X86ISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
-                       Zero);
+    SDValue Ops[] = {
+      DAG.getRegister(X86::ESP, MVT::i32), // Base
+      DAG.getTargetConstant(1, MVT::i8),   // Scale
+      DAG.getRegister(0, MVT::i32),        // Index
+      DAG.getTargetConstant(0, MVT::i32),  // Disp
+      DAG.getRegister(0, MVT::i32),        // Segment.
+      Zero,
+      Chain
+    };
+    SDNode *Res = 
+      DAG.getMachineNode(X86::OR32mrLocked, dl, MVT::Other, Ops,
+                          array_lengthof(Ops));
+    return SDValue(Res, 0);
   }
   
   unsigned isDev = cast<ConstantSDNode>(Op.getOperand(5))->getZExtValue();
