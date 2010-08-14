@@ -5222,14 +5222,27 @@ public:
     template <class _OutputIter, class _ST, class _SA>
         _OutputIter
         format(_OutputIter __out, const basic_string<char_type, _ST, _SA>& __fmt,
-               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const
+            {return format(__out, __fmt.data(), __fmt.data() + __fmt.size(), __flags);}
     template <class _ST, class _SA>
         basic_string<char_type, _ST, _SA>
         format(const basic_string<char_type, _ST, _SA>& __fmt,
-               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const
+        {
+            basic_string<char_type, _ST, _SA> __r;
+            format(back_inserter(__r), __fmt.data(), __fmt.data() + __fmt.size(),
+                   __flags);
+            return __r;
+        }
     string_type
         format(const char_type* __fmt,
-               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const
+        {
+            string_type __r;
+            format(back_inserter(__r), __fmt,
+                   __fmt + char_traits<char_type>::length(__fmt), __flags);
+            return __r;
+        }
 
     // allocator:
     allocator_type get_allocator() const {return __matches_.get_allocator();}
@@ -5272,6 +5285,11 @@ private:
     regex_match(_B, _B, match_results<_B, _A>&, const basic_regex<_C, _T>&,
                 regex_constants::match_flag_type);
 
+    template <class _B, class _A>
+    friend
+    bool
+    operator==(const match_results<_B, _A>&, const match_results<_B, _A>&);
+
     template <class, class> friend class __lookahead;
 };
 
@@ -5300,25 +5318,142 @@ match_results<_BidirectionalIterator, _Allocator>::__init(unsigned __s,
     __suffix_ = __unmatched_;
 }
 
+template <class _BidirectionalIterator, class _Allocator>
+template <class _OutputIter>
+_OutputIter
+match_results<_BidirectionalIterator, _Allocator>::format(_OutputIter __out,
+        const char_type* __fmt_first, const char_type* __fmt_last,
+        regex_constants::match_flag_type __flags) const
+{
+    if (__flags & regex_constants::format_sed)
+    {
+        for (; __fmt_first != __fmt_last; ++__fmt_first)
+        {
+            if (*__fmt_first == '&')
+                __out = _STD::copy(__matches_[0].first, __matches_[0].second,
+                                   __out);
+            else if (*__fmt_first == '\\' && __fmt_first + 1 != __fmt_last)
+            {
+                ++__fmt_first;
+                if ('0' <= *__fmt_first && *__fmt_first <= '9')
+                {
+                    size_t __i = *__fmt_first - '0';
+                    __out = _STD::copy(__matches_[__i].first,
+                                       __matches_[__i].second, __out);
+                }
+                else
+                {
+                    *__out = *__fmt_first;
+                    ++__out;
+                }
+            }
+            else
+            {
+                *__out = *__fmt_first;
+                ++__out;
+            }
+        }
+    }
+    else
+    {
+        for (; __fmt_first != __fmt_last; ++__fmt_first)
+        {
+            if (*__fmt_first == '$' && __fmt_first + 1 != __fmt_last)
+            {
+                switch (__fmt_first[1])
+                {
+                case '$':
+                    *__out = *++__fmt_first;
+                    ++__out;
+                    break;
+                case '&':
+                    ++__fmt_first;
+                    __out = _STD::copy(__matches_[0].first, __matches_[0].second,
+                                       __out);
+                    break;
+                case '`':
+                    ++__fmt_first;
+                    __out = _STD::copy(__prefix_.first, __prefix_.second, __out);
+                    break;
+                case '\'':
+                    ++__fmt_first;
+                    __out = _STD::copy(__suffix_.first, __suffix_.second, __out);
+                    break;
+                default:
+                    if ('0' <= __fmt_first[1] && __fmt_first[1] <= '9')
+                    {
+                        ++__fmt_first;
+                        size_t __i = *__fmt_first - '0';
+                        if (__fmt_first + 1 != __fmt_last &&
+                            '0' <= __fmt_first[1] && __fmt_first[1] <= '9')
+                        {
+                            ++__fmt_first;
+                            __i = 10 * __i + *__fmt_first - '0';
+                        }
+                        __out = _STD::copy(__matches_[__i].first,
+                                           __matches_[__i].second, __out);
+                    }
+                    else
+                    {
+                        *__out = *__fmt_first;
+                        ++__out;
+                    }
+                    break;
+                }
+            }
+            else
+            {
+                *__out = *__fmt_first;
+                ++__out;
+            }
+        }
+    }
+    return __out;
+}
+
+template <class _BidirectionalIterator, class _Allocator>
+void
+match_results<_BidirectionalIterator, _Allocator>::swap(match_results& __m)
+{
+    using _STD::swap;
+    swap(__matches_, __m.__matches_);
+    swap(__unmatched_, __m.__unmatched_);
+    swap(__prefix_, __m.__prefix_);
+    swap(__suffix_, __m.__suffix_);
+}
+
 typedef match_results<const char*>             cmatch;
 typedef match_results<const wchar_t*>          wcmatch;
 typedef match_results<string::const_iterator>  smatch;
 typedef match_results<wstring::const_iterator> wsmatch;
 
 template <class _BidirectionalIterator, class _Allocator>
-    bool
-    operator==(const match_results<_BidirectionalIterator, _Allocator>& __x,
-               const match_results<_BidirectionalIterator, _Allocator>& __y);
+bool
+operator==(const match_results<_BidirectionalIterator, _Allocator>& __x,
+           const match_results<_BidirectionalIterator, _Allocator>& __y)
+{
+    return __x.__matches_ == __y.__matches_ &&
+           __x.__prefix_ == __y.__prefix_ &&
+           __x.__suffix_ == __y.__suffix_;
+}
 
 template <class _BidirectionalIterator, class _Allocator>
-    bool
-    operator!=(const match_results<_BidirectionalIterator, _Allocator>& __x,
-               const match_results<_BidirectionalIterator, _Allocator>& __y);
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+operator!=(const match_results<_BidirectionalIterator, _Allocator>& __x,
+           const match_results<_BidirectionalIterator, _Allocator>& __y)
+{
+    return !(__x == __y);
+}
 
 template <class _BidirectionalIterator, class _Allocator>
-    void
-    swap(match_results<_BidirectionalIterator, _Allocator>& __x,
-         match_results<_BidirectionalIterator, _Allocator>& __y);
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(match_results<_BidirectionalIterator, _Allocator>& __x,
+     match_results<_BidirectionalIterator, _Allocator>& __y)
+{
+    __x.swap(__y);
+}
 
 // regex_search
 
