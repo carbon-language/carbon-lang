@@ -53,7 +53,7 @@ namespace options {
       const char *HelpText;
       const char *MetaVar;
       unsigned char Kind;
-      unsigned char Flags;
+      unsigned short Flags;
       unsigned char Param;
       unsigned short GroupID;
       unsigned short AliasID;
