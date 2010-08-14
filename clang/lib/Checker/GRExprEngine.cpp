@@ -557,6 +557,75 @@ const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
   return TF->EvalAssume(state, cond, assumption);
 }
 
+bool GRExprEngine::WantsRegionChangeUpdate(const GRState* state) {
+  CallbackTag K = GetCallbackTag(EvalRegionChangesCallback);
+  CheckersOrdered *CO = COCache[K];
+
+  if (!CO)
+    CO = &Checkers;
+
+  for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I != E; ++I) {
+    Checker *C = I->second;
+    if (C->WantsRegionChangeUpdate(state))
+      return true;
+  }
+
+  return false;
+}
+
+const GRState *
+GRExprEngine::ProcessRegionChanges(const GRState *state,
+                                   const MemRegion * const *Begin,
+                                   const MemRegion * const *End) {
+  // FIXME: Most of this method is copy-pasted from ProcessAssume.
+
+  // Determine if we already have a cached 'CheckersOrdered' vector
+  // specifically tailored for processing region changes.  This
+  // can reduce the number of checkers actually called.
+  CheckersOrdered *CO = &Checkers;
+  llvm::OwningPtr<CheckersOrdered> NewCO;
+
+  CallbackTag K = GetCallbackTag(EvalRegionChangesCallback);
+  CheckersOrdered *& CO_Ref = COCache[K];
+
+  if (!CO_Ref) {
+    // If we have no previously cached CheckersOrdered vector for this
+    // callback, then create one.
+    NewCO.reset(new CheckersOrdered);
+  }
+  else {
+    // Use the already cached set.
+    CO = CO_Ref;
+  }
+
+  // If there are no checkers, just return the state as is.
+  if (CO->empty())
+    return state;
+
+  for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I != E; ++I) {
+    // If any checker declares the state infeasible (or if it starts that way),
+    // bail out.
+    if (!state)
+      return NULL;
+
+    Checker *C = I->second;
+    bool respondsToCallback = true;
+
+    state = C->EvalRegionChanges(state, Begin, End, &respondsToCallback);
+
+    // See if we're building a cache of checkers that care about region changes.
+    if (NewCO.get() && respondsToCallback)
+      NewCO->push_back(*I);
+  }
+
+  // If we got through all the checkers, and we built a list of those that
+  // care about region changes, save it.
+  if (NewCO.get())
+    CO_Ref = NewCO.take();
+
+  return state;
+}
+
 void GRExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
   for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
        I != E; ++I) {

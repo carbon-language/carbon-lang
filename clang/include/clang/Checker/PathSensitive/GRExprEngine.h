@@ -78,7 +78,8 @@ class GRExprEngine : public GRSubEngine {
   enum CallbackKind {
     PreVisitStmtCallback,
     PostVisitStmtCallback,
-    ProcessAssumeCallback
+    ProcessAssumeCallback,
+    EvalRegionChangesCallback
   };
 
   typedef uint32_t CallbackTag;
@@ -227,6 +228,16 @@ public:
   /// EvalAssume - Callback function invoked by the ConstraintManager when
   ///  making assumptions about state values.
   const GRState *ProcessAssume(const GRState *state, SVal cond,bool assumption);
+
+  /// WantsRegionChangeUpdate - Called by GRStateManager to determine if a
+  ///  region change should trigger a ProcessRegionChanges update.
+  bool WantsRegionChangeUpdate(const GRState* state);
+
+  /// ProcessRegionChanges - Called by GRStateManager whenever a change is made
+  ///  to the store. Used to update checkers that track region values.
+  const GRState* ProcessRegionChanges(const GRState *state,
+                                      const MemRegion * const *Begin,
+                                      const MemRegion * const *End);
 
   virtual GRStateManager& getStateManager() { return StateMgr; }
 

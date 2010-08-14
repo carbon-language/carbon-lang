@@ -231,7 +231,8 @@ public:
                           const MemRegion * const *End,
                           const Expr *E, unsigned Count,
                           InvalidatedSymbols *IS,
-                          bool invalidateGlobals);
+                          bool invalidateGlobals,
+                          InvalidatedRegions *Regions);
 
 public:   // Made public for helper classes.
 
@@ -572,14 +573,16 @@ class InvalidateRegionsWorker : public ClusterAnalysis<InvalidateRegionsWorker>
   const Expr *Ex;
   unsigned Count;
   StoreManager::InvalidatedSymbols *IS;
+  StoreManager::InvalidatedRegions *Regions;
 public:
   InvalidateRegionsWorker(RegionStoreManager &rm,
                           GRStateManager &stateMgr,
                           RegionBindings b,
                           const Expr *ex, unsigned count,
-                          StoreManager::InvalidatedSymbols *is)
+                          StoreManager::InvalidatedSymbols *is,
+                          StoreManager::InvalidatedRegions *r)
     : ClusterAnalysis<InvalidateRegionsWorker>(rm, stateMgr, b),
-      Ex(ex), Count(count), IS(is) {}
+      Ex(ex), Count(count), IS(is), Regions(r) {}
 
   void VisitCluster(const MemRegion *baseR, BindingKey *I, BindingKey *E);
   void VisitBaseRegion(const MemRegion *baseR);
@@ -650,6 +653,10 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     return;
   }
 
+  // Otherwise, we have a normal data region. Record that we touched the region.
+  if (Regions)
+    Regions->push_back(baseR);
+
   if (isa<AllocaRegion>(baseR) || isa<SymbolicRegion>(baseR)) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
@@ -700,10 +707,11 @@ Store RegionStoreManager::InvalidateRegions(Store store,
                                             const MemRegion * const *E,
                                             const Expr *Ex, unsigned Count,
                                             InvalidatedSymbols *IS,
-                                            bool invalidateGlobals) {
+                                            bool invalidateGlobals,
+                                            InvalidatedRegions *Regions) {
   InvalidateRegionsWorker W(*this, StateMgr,
                             RegionStoreManager::GetRegionBindings(store),
-                            Ex, Count, IS);
+                            Ex, Count, IS, Regions);
 
   // Scan the bindings and generate the clusters.
   W.GenerateClusters(invalidateGlobals);
@@ -726,6 +734,11 @@ Store RegionStoreManager::InvalidateRegions(Store store,
                                   /* symbol type, doesn't matter */ Ctx.IntTy,
                                   Count);
     B = Add(B, BindingKey::Make(GS, BindingKey::Default), V);
+
+    // Even if there are no bindings in the global scope, we still need to
+    // record that we touched it.
+    if (Regions)
+      Regions->push_back(GS);
   }
 
   return B.getRoot();

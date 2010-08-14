@@ -290,6 +290,16 @@ public:
     return state;
   }
 
+  virtual bool WantsRegionChangeUpdate(const GRState *state) { return false; }
+
+  virtual const GRState *EvalRegionChanges(const GRState *state,
+                                           const MemRegion * const *Begin,
+                                           const MemRegion * const *End,
+                                           bool *respondsToCallback) {
+    *respondsToCallback = false;
+    return state;
+  }
+
   virtual void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
                                 GRExprEngine &Eng) {}
 };

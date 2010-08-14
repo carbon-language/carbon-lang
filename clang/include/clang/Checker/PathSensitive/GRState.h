@@ -16,6 +16,7 @@
 
 #include "clang/Checker/PathSensitive/ConstraintManager.h"
 #include "clang/Checker/PathSensitive/Environment.h"
+#include "clang/Checker/PathSensitive/GRSubEngine.h"
 #include "clang/Checker/PathSensitive/Store.h"
 #include "clang/Checker/PathSensitive/ValueManager.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -397,6 +398,9 @@ class GRStateManager {
   friend class GRState;
   friend class GRExprEngine; // FIXME: Remove.
 private:
+  /// Eng - The GRSubEngine that owns this state manager.
+  GRSubEngine &Eng;
+
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StoreMgr;
   llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
@@ -426,7 +430,8 @@ public:
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc,
                  GRSubEngine &subeng)
-    : EnvMgr(alloc),
+    : Eng(subeng),
+      EnvMgr(alloc),
       GDMFactory(alloc),
       ValueMgr(alloc, Ctx, *this),
       Alloc(alloc) {
@@ -469,6 +474,7 @@ public:
 
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
+  GRSubEngine& getOwningEngine() { return Eng; }
 
   const GRState* RemoveDeadBindings(const GRState* St,
                                     const StackFrameContext *LCtx,
@@ -620,7 +626,8 @@ inline const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
 
 inline const GRState *
 GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
-                             const LocationContext *LC, SVal V) const {
+                             const LocationContext *LC,
+                             SVal V) const {
   Store new_store = 
     getStateManager().StoreMgr->BindCompoundLiteral(St, CL, LC, V);
   return makeWithStore(new_store);
@@ -637,8 +644,15 @@ inline const GRState *GRState::bindDeclWithNoInit(const VarRegion* VR) const {
 }
 
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
-  Store new_store = getStateManager().StoreMgr->Bind(St, LV, V);
-  return makeWithStore(new_store);
+  GRStateManager &Mgr = getStateManager();
+  Store new_store = Mgr.StoreMgr->Bind(St, LV, V);
+  const GRState *new_state = makeWithStore(new_store);
+
+  const MemRegion *MR = LV.getAsRegion();
+  if (MR)
+    return Mgr.getOwningEngine().ProcessRegionChange(new_state, MR);
+
+  return new_state;
 }
 
 inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
@@ -646,9 +660,11 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
 }
 
 inline const GRState *GRState::bindDefault(SVal loc, SVal V) const {
+  GRStateManager &Mgr = getStateManager();
   const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
-  Store new_store = getStateManager().StoreMgr->BindDefault(St, R, V);
-  return makeWithStore(new_store);
+  Store new_store = Mgr.StoreMgr->BindDefault(St, R, V);
+  const GRState *new_state = makeWithStore(new_store);
+  return Mgr.getOwningEngine().ProcessRegionChange(new_state, R);
 }
 
 inline const GRState *
@@ -657,10 +673,27 @@ GRState::InvalidateRegions(const MemRegion * const *Begin,
                            const Expr *E, unsigned Count,
                            StoreManager::InvalidatedSymbols *IS,
                            bool invalidateGlobals) const {
-  Store new_store
-    = getStateManager().StoreMgr->InvalidateRegions(St, Begin, End,
+  GRStateManager &Mgr = getStateManager();
+  GRSubEngine &Eng = Mgr.getOwningEngine();
+
+  if (Eng.WantsRegionChangeUpdate(this)) {
+    StoreManager::InvalidatedRegions Regions;
+
+    Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
+                                                      E, Count, IS,
+                                                      invalidateGlobals,
+                                                      &Regions);
+    const GRState *new_state = makeWithStore(new_store);
+
+    return Eng.ProcessRegionChanges(new_state,
+                                    &Regions.front(),
+                                    &Regions.back()+1);
+  }
+
+  Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
                                                     E, Count, IS,
-                                                    invalidateGlobals);
+                                                    invalidateGlobals,
+                                                    NULL);
   return makeWithStore(new_store);
 }
 

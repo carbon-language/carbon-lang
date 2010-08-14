@@ -17,7 +17,7 @@
 
 namespace clang {
 
-class Stmt;
+class AnalysisManager;
 class CFGBlock;
 class CFGElement;
 class ExplodedNode;
@@ -32,6 +32,8 @@ class GREndPathNodeBuilder;
 class GRCallEnterNodeBuilder;
 class GRCallExitNodeBuilder;
 class LocationContext;
+class MemRegion;
+class Stmt;
 
 class GRSubEngine {
 public:
@@ -75,12 +77,27 @@ public:
 
   // Generate the first post callsite node.
   virtual void ProcessCallExit(GRCallExitNodeBuilder &builder) = 0;
-  
+
   /// Called by ConstraintManager. Used to call checker-specific
   /// logic for handling assumptions on symbolic values.
   virtual const GRState* ProcessAssume(const GRState *state,
                                        SVal cond, bool assumption) = 0;
-  
+
+  /// WantsRegionChangeUpdate - Called by GRStateManager to determine if a
+  ///  region change should trigger a ProcessRegionChanges update.
+  virtual bool WantsRegionChangeUpdate(const GRState* state) = 0;
+
+  /// ProcessRegionChanges - Called by GRStateManager whenever a change is made
+  ///  to the store. Used to update checkers that track region values.
+  virtual const GRState* ProcessRegionChanges(const GRState* state,
+                                              const MemRegion* const *Begin,
+                                              const MemRegion* const *End) = 0;
+
+  inline const GRState* ProcessRegionChange(const GRState* state,
+                                            const MemRegion* MR) {
+    return ProcessRegionChanges(state, &MR, &MR+1);
+  }
+
   /// Called by GRCoreEngine when the analysis worklist is either empty or the
   //  maximum number of analysis steps have been reached.
   virtual void ProcessEndWorklist(bool hasWorkRemaining) = 0;

@@ -159,13 +159,34 @@ public:
   virtual Store BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
+  typedef llvm::SmallVector<const MemRegion *, 8> InvalidatedRegions;
 
+  /// InvalidateRegions - Clears out the specified regions from the store,
+  ///  marking their values as unknown. Depending on the store, this may also
+  ///  invalidate additional regions that may have changed based on accessing
+  ///  the given regions. Optionally, invalidates non-static globals as well.
+  /// \param[in] store The initial store
+  /// \param[in] Begin A pointer to the first region to invalidate.
+  /// \param[in] End A pointer just past the last region to invalidate.
+  /// \param[in] E The current statement being evaluated. Used to conjure
+  ///   symbols to mark the values of invalidated regions.
+  /// \param[in] Count The current block count. Used to conjure
+  ///   symbols to mark the values of invalidated regions.
+  /// \param[in,out] IS A set to fill with any symbols that are no longer
+  ///   accessible. Pass \c NULL if this information will not be used.
+  /// \param[in] invalidateGlobals If \c true, any non-static global regions
+  ///   are invalidated as well.
+  /// \param[in,out] Regions A vector to fill with any regions being
+  ///   invalidated. This should include any regions explicitly invalidated
+  ///   even if they do not currently have bindings. Pass \c NULL if this
+  ///   information will not be used.
   virtual Store InvalidateRegions(Store store,
                                   const MemRegion * const *Begin,
                                   const MemRegion * const *End,
                                   const Expr *E, unsigned Count,
                                   InvalidatedSymbols *IS,
-                                  bool invalidateGlobals) = 0;
+                                  bool invalidateGlobals,
+                                  InvalidatedRegions *Regions) = 0;
 
   /// EnterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.

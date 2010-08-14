@@ -60,7 +60,7 @@ public:
   Store InvalidateRegions(Store store, const MemRegion * const *I,
                           const MemRegion * const *E, const Expr *Ex,
                           unsigned Count, InvalidatedSymbols *IS,
-                          bool invalidateGlobals);
+                          bool invalidateGlobals, InvalidatedRegions *Regions);
 
   void print(Store store, llvm::raw_ostream& Out, const char* nl, 
              const char *sep);
@@ -155,11 +155,12 @@ Store FlatStoreManager::BindDeclWithNoInit(Store store, const VarRegion *VR) {
 }
 
 Store FlatStoreManager::InvalidateRegions(Store store,
-                                            const MemRegion * const *I,
-                                            const MemRegion * const *E,
-                                            const Expr *Ex, unsigned Count,
-                                            InvalidatedSymbols *IS,
-                                            bool invalidateGlobals) {
+                                          const MemRegion * const *I,
+                                          const MemRegion * const *E,
+                                          const Expr *Ex, unsigned Count,
+                                          InvalidatedSymbols *IS,
+                                          bool invalidateGlobals,
+                                          InvalidatedRegions *Regions) {
   assert(false && "Not implemented");
   return store;
 }

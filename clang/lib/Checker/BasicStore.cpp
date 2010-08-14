@@ -52,7 +52,7 @@ public:
   Store InvalidateRegions(Store store, const MemRegion * const *Begin,
                           const MemRegion * const *End, const Expr *E,
                           unsigned Count, InvalidatedSymbols *IS,
-                          bool invalidateGlobals);
+                          bool invalidateGlobals, InvalidatedRegions *Regions);
 
   Store scanForIvars(Stmt *B, const Decl* SelfDecl,
                      const MemRegion *SelfRegion, Store St);
@@ -521,11 +521,12 @@ StoreManager::BindingsHandler::~BindingsHandler() {}
 
 
 Store BasicStoreManager::InvalidateRegions(Store store,
-                                      const MemRegion * const *I,
-                                      const MemRegion * const *End,
-                                      const Expr *E, unsigned Count,
-                                      InvalidatedSymbols *IS,
-                                      bool invalidateGlobals) {
+                                           const MemRegion * const *I,
+                                           const MemRegion * const *End,
+                                           const Expr *E, unsigned Count,
+                                           InvalidatedSymbols *IS,
+                                           bool invalidateGlobals,
+                                           InvalidatedRegions *Regions) {
   if (invalidateGlobals) {
     BindingsTy B = GetBindings(store);
     for (BindingsTy::iterator I=B.begin(), End=B.end(); I != End; ++I) {
@@ -543,6 +544,8 @@ Store BasicStoreManager::InvalidateRegions(Store store,
         continue;
     }
     store = InvalidateRegion(store, *I, E, Count, IS);
+    if (Regions)
+      Regions->push_back(R);
   }
 
   // FIXME: This is copy-and-paste from RegionStore.cpp.
@@ -556,6 +559,8 @@ Store BasicStoreManager::InvalidateRegions(Store store,
                                   Count);
 
     store = Bind(store, loc::MemRegionVal(GS), V);
+    if (Regions)
+      Regions->push_back(GS);
   }
 
   return store;
