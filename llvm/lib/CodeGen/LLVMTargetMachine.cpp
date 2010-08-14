@@ -74,6 +74,16 @@ static cl::opt<bool> EnableMCLogging("enable-mc-api-logging", cl::Hidden,
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
+// Enabled or disable local stack object block allocation. This is an
+// experimental pass that allocates locals relative to one another before
+// register allocation and then assigns them to actual stack slots as a block
+// later in PEI. This will eventually allow targets with limited index offset
+// range to allocate additional base registers (not just FP and SP) to
+// more efficiently reference locals, as well as handle situations where
+// locals cannot be referenced via SP or FP at all (dynamic stack realignment
+// together with variable sized objects, for example).
+cl::opt<bool> EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(false),
+    cl::Hidden, cl::desc("Enable pre-regalloc stack frame index allocation"));
 
 static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
@@ -343,6 +353,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // instructions dead.
   if (OptLevel != CodeGenOpt::None)
     PM.add(createOptimizePHIsPass());
+
+  // Assign local variables to stack slots relative to one another and simplify
+  // frame index references where possible. Final stack slot locations will be
+  // assigned in PEI.
+  if (EnableLocalStackAlloc)
+    PM.add(createLocalStackSlotAllocationPass());
 
   if (OptLevel != CodeGenOpt::None) {
     // With optimization, dead code should already be eliminated. However

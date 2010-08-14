@@ -198,6 +198,13 @@ namespace llvm {
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
   FunctionPass *createSjLjEHPass(const TargetLowering *tli);
 
+  /// createLocalStackSlotAllocationPass - This pass assigns local frame
+  /// indices to stack slots relative to one another and allocates
+  /// base registers to access them when it is estimated by the target to
+  /// be out of range of normal frame pointer or stack pointer index
+  /// addressing.
+  FunctionPass *createLocalStackSlotAllocationPass();
+
 } // End llvm namespace
 
 #endif

@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
 #include "llvm/ADT/SmallVector.h"
+//#include "llvm/ADT/IndexedMap.h"
 #include "llvm/System/DataTypes.h"
 #include <cassert>
 #include <vector>
@@ -103,10 +104,14 @@ class MachineFrameInfo {
     // protector.
     bool MayNeedSP;
 
+    // PreAllocated - If true, the object was mapped into the local frame
+    // block and doesn't need additional handling for allocation beyond that.
+    bool PreAllocated;
+
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM,
                 bool isSS, bool NSP)
       : SPOffset(SP), Size(Sz), Alignment(Al), isImmutable(IM),
-        isSpillSlot(isSS), MayNeedSP(NSP) {}
+        isSpillSlot(isSS), MayNeedSP(NSP), PreAllocated(false) {}
   };
 
   /// Objects - The list of stack objects allocated...
@@ -195,8 +200,20 @@ class MachineFrameInfo {
   ///
   const TargetFrameInfo &TFI;
 
+  /// LocalFrameObjects - References to frame indices which are mapped
+  /// into the local frame allocation block. <FrameIdx, LocalOffset>
+  SmallVector<std::pair<int, int64_t>, 32> LocalFrameObjects;
+
+  /// LocalFrameSize - Size of the pre-allocated local frame block.
+  int64_t LocalFrameSize;
+
+  /// LocalFrameBaseOffset - The base offset from the stack pointer at
+  /// function entry of the local frame blob. Set by PEI for use by
+  /// target in eliminateFrameIndex().
+  int64_t LocalFrameBaseOffset;
+
 public:
-  explicit MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
+    explicit MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;
@@ -206,6 +223,8 @@ public:
     StackProtectorIdx = -1;
     MaxCallFrameSize = 0;
     CSIValid = false;
+    LocalFrameSize = 0;
+    LocalFrameBaseOffset = 0;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -251,6 +270,42 @@ public:
   /// getNumObjects - Return the number of objects.
   ///
   unsigned getNumObjects() const { return Objects.size(); }
+
+  /// mapLocalFrameObject - Map a frame index into the local object block
+  void mapLocalFrameObject(int ObjectIndex, int64_t Offset) {
+    LocalFrameObjects.push_back(std::pair<int, int64_t>(ObjectIndex, Offset));
+    Objects[ObjectIndex + NumFixedObjects].PreAllocated = true;
+  }
+
+  /// getLocalFrameObjectMap - Get the local offset mapping for a for an object
+  std::pair<int, int64_t> getLocalFrameObjectMap(int i) {
+    assert (i >= 0 && (unsigned)i < LocalFrameObjects.size() &&
+            "Invalid local object reference!");
+    return LocalFrameObjects[i];
+  }
+
+  /// getLocalFrameObjectCount - Return the number of objects allocated into
+  /// the local object block.
+  int64_t getLocalFrameObjectCount() { return LocalFrameObjects.size(); }
+
+  /// setLocalFrameBaseOffset - Set the base SP offset of the local frame
+  /// blob.
+  void setLocalFrameBaseOffset(int64_t o) { LocalFrameBaseOffset = o; }
+
+  /// getLocalFrameBaseOffset - Get the base SP offset of the local frame
+  /// blob.
+  int64_t getLocalFrameBaseOffset() const { return LocalFrameBaseOffset; }
+
+  /// getLocalFrameSize - Get the size of the local object blob.
+  int64_t getLocalFrameSize() const { return LocalFrameSize; }
+
+  /// isObjectPreAllocated - Return true if the object was pre-allocated into
+  /// the local block.
+  bool isObjectPreAllocated(int ObjectIdx) const {
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
+    return Objects[ObjectIdx+NumFixedObjects].PreAllocated;
+  }
 
   /// getObjectSize - Return the size of the specified object.
   ///

@@ -19,6 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "pei"
 #include "PrologEpilogInserter.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -32,12 +33,17 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
 
 using namespace llvm;
+
+// FIXME: For testing purposes only. Remove once the pre-allocation pass
+// is done.
+extern cl::opt<bool> EnableLocalStackAlloc;
 
 char PEI::ID = 0;
 
@@ -462,8 +468,10 @@ AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx,
   Offset = (Offset + Align - 1) / Align * Align;
 
   if (StackGrowsDown) {
+    DEBUG(dbgs() << "alloc FI(" << FrameIdx << ") at SP[" << -Offset << "]\n");
     MFI->setObjectOffset(FrameIdx, -Offset); // Set the computed offset
   } else {
+    DEBUG(dbgs() << "alloc FI(" << FrameIdx << ") at SP[" << Offset << "]\n");
     MFI->setObjectOffset(FrameIdx, Offset);
     Offset += MFI->getObjectSize(FrameIdx);
   }
@@ -548,6 +556,26 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
   }
 
+  // Store the offset of the start of the local allocation block. This
+  // will be used later when resolving frame base virtual register pseudos.
+  MFI->setLocalFrameBaseOffset(Offset);
+  if (EnableLocalStackAlloc) {
+    // Allocate the local block
+    Offset += MFI->getLocalFrameSize();
+
+    // Resolve offsets for objects in the local block.
+    for (unsigned i = 0, e = MFI->getLocalFrameObjectCount(); i != e; ++i) {
+      std::pair<int, int64_t> Entry = MFI->getLocalFrameObjectMap(i);
+      int64_t FIOffset = MFI->getLocalFrameBaseOffset() + Entry.second;
+
+      AdjustStackOffset(MFI, Entry.first, StackGrowsDown, FIOffset, MaxAlign);
+    }
+  }
+  // FIXME: Allocate locals. Once the block allocation pass is turned on,
+  // this simplifies to just the second loop, since all of the large objects
+  // will have already been handled. The second loop can also simplify a
+  // bit, as the conditionals inside aren't all necessary.
+
   // Make sure that the stack protector comes before the local variables on the
   // stack.
   SmallSet<int, 16> LargeStackObjs;
@@ -557,6 +585,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
     // Assign large stack objects first.
     for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
+      if (MFI->isObjectPreAllocated(i))
+        continue;
       if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
         continue;
       if (RS && (int)i == RS->getScavengingFrameIndex())
@@ -576,6 +606,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Then assign frame offsets to stack objects that are not used to spill
   // callee saved registers.
   for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
+    if (MFI->isObjectPreAllocated(i))
+      continue;
     if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
       continue;
     if (RS && (int)i == RS->getScavengingFrameIndex())
