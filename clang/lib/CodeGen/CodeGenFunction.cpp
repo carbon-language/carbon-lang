@@ -805,6 +805,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   assert(isa<EHCleanupScope>(*EHStack.begin()) && "top not a cleanup!");
   EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.begin());
   assert(Scope.getFixupDepth() <= EHStack.getNumBranchFixups());
+  assert(Scope.isActive() && "cleanup was still inactive when popped!");
 
   // Check whether we need an EH cleanup.  This is only true if we've
   // generated a lazy EH cleanup block.
@@ -1100,11 +1101,15 @@ void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
   // Create the branch.
   llvm::BranchInst *BI = Builder.CreateBr(Dest.getBlock());
 
-  // If we're not in a cleanup scope, or if the destination scope is
-  // the current normal-cleanup scope, we don't need to worry about
-  // fixups.
-  if (!EHStack.hasNormalCleanups() ||
-      Dest.getScopeDepth() == EHStack.getInnermostNormalCleanup()) {
+  // Calculate the innermost active normal cleanup.
+  EHScopeStack::stable_iterator
+    TopCleanup = EHStack.getInnermostActiveNormalCleanup();
+
+  // If we're not in an active normal cleanup scope, or if the
+  // destination scope is within the innermost active normal cleanup
+  // scope, we don't need to worry about fixups.
+  if (TopCleanup == EHStack.stable_end() ||
+      TopCleanup.encloses(Dest.getScopeDepth())) { // works for invalid
     Builder.ClearInsertionPoint();
     return;
   }
@@ -1131,12 +1136,12 @@ void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
   // Adjust BI to point to the first cleanup block.
   {
     EHCleanupScope &Scope =
-      cast<EHCleanupScope>(*EHStack.find(EHStack.getInnermostNormalCleanup()));
+      cast<EHCleanupScope>(*EHStack.find(TopCleanup));
     BI->setSuccessor(0, CreateNormalEntry(*this, Scope));
   }
 
   // Add this destination to all the scopes involved.
-  EHScopeStack::stable_iterator I = EHStack.getInnermostNormalCleanup();
+  EHScopeStack::stable_iterator I = TopCleanup;
   EHScopeStack::stable_iterator E = Dest.getScopeDepth();
   if (E.strictlyEncloses(I)) {
     while (true) {
@@ -1173,13 +1178,17 @@ void CodeGenFunction::EmitBranchThroughEHCleanup(UnwindDest Dest) {
   // Create the branch.
   llvm::BranchInst *BI = Builder.CreateBr(Dest.getBlock());
 
+  // Calculate the innermost active cleanup.
+  EHScopeStack::stable_iterator
+    InnermostCleanup = EHStack.getInnermostActiveEHCleanup();
+
   // If the destination is in the same EH cleanup scope as us, we
   // don't need to thread through anything.
-  if (Dest.getScopeDepth() == EHStack.getInnermostEHCleanup()) {
+  if (InnermostCleanup.encloses(Dest.getScopeDepth())) {
     Builder.ClearInsertionPoint();
     return;
   }
-  assert(EHStack.hasEHCleanups());
+  assert(InnermostCleanup != EHStack.stable_end());
 
   // Store the index at the start.
   llvm::ConstantInt *Index = Builder.getInt32(Dest.getDestIndex());
@@ -1188,14 +1197,13 @@ void CodeGenFunction::EmitBranchThroughEHCleanup(UnwindDest Dest) {
   // Adjust BI to point to the first cleanup block.
   {
     EHCleanupScope &Scope =
-      cast<EHCleanupScope>(*EHStack.find(EHStack.getInnermostEHCleanup()));
+      cast<EHCleanupScope>(*EHStack.find(InnermostCleanup));
     BI->setSuccessor(0, CreateEHEntry(*this, Scope));
   }
   
   // Add this destination to all the scopes involved.
   for (EHScopeStack::stable_iterator
-         I = EHStack.getInnermostEHCleanup(),
-         E = Dest.getScopeDepth(); ; ) {
+         I = InnermostCleanup, E = Dest.getScopeDepth(); ; ) {
     assert(E.strictlyEncloses(I));
     EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.find(I));
     assert(Scope.isEHCleanup());

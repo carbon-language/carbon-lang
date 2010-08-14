@@ -127,7 +127,15 @@ public:
 
     bool isValid() const { return Size >= 0; }
 
+    /// Returns true if this scope encloses I.
+    /// Returns false if I is invalid.
+    /// This scope must be valid.
     bool encloses(stable_iterator I) const { return Size <= I.Size; }
+
+    /// Returns true if this scope strictly encloses I: that is,
+    /// if it encloses I and is not I.
+    /// Returns false is I is invalid.
+    /// This scope must be valid.
     bool strictlyEncloses(stable_iterator I) const { return Size < I.Size; }
 
     friend bool operator==(stable_iterator A, stable_iterator B) {
@@ -317,6 +325,7 @@ public:
   stable_iterator getInnermostNormalCleanup() const {
     return InnermostNormalCleanup;
   }
+  stable_iterator getInnermostActiveNormalCleanup() const; // CGException.h
 
   /// Determines whether there are any EH cleanups on the stack.
   bool hasEHCleanups() const {
@@ -328,6 +337,7 @@ public:
   stable_iterator getInnermostEHCleanup() const {
     return InnermostEHCleanup;
   }
+  stable_iterator getInnermostActiveEHCleanup() const; // CGException.h
 
   /// An unstable reference to a scope-stack depth.  Invalidated by
   /// pushes but not pops.

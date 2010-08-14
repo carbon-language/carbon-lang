@@ -565,6 +565,28 @@ EHScopeStack::stabilize(iterator ir) const {
   return stable_iterator(EndOfBuffer - ir.Ptr);
 }
 
+inline EHScopeStack::stable_iterator
+EHScopeStack::getInnermostActiveNormalCleanup() const {
+  for (EHScopeStack::stable_iterator
+         I = getInnermostNormalCleanup(), E = stable_end(); I != E; ) {
+    EHCleanupScope &S = cast<EHCleanupScope>(*find(I));
+    if (S.isActive()) return I;
+    I = S.getEnclosingNormalCleanup();
+  }
+  return stable_end();
+}
+
+inline EHScopeStack::stable_iterator
+EHScopeStack::getInnermostActiveEHCleanup() const {
+  for (EHScopeStack::stable_iterator
+         I = getInnermostEHCleanup(), E = stable_end(); I != E; ) {
+    EHCleanupScope &S = cast<EHCleanupScope>(*find(I));
+    if (S.isActive()) return I;
+    I = S.getEnclosingEHCleanup();
+  }
+  return stable_end();
+}
+
 }
 }
 
