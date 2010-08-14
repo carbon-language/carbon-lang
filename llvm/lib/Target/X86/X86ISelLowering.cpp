@@ -7713,26 +7713,25 @@ SDValue X86TargetLowering::LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const{
   }
   
   unsigned isDev = cast<ConstantSDNode>(Op.getOperand(5))->getZExtValue();
-  if(!isDev)
+  if (!isDev)
     return DAG.getNode(X86ISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0));
-  else {
-    unsigned Op1 = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-    unsigned Op2 = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
-    unsigned Op3 = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-    unsigned Op4 = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
-    
-    // def : Pat<(membarrier (i8 0), (i8 0), (i8 0), (i8 1), (i8 1)), (SFENCE)>;
-    if (!Op1 && !Op2 && !Op3 && Op4)
-      return DAG.getNode(X86ISD::SFENCE, dl, MVT::Other, Op.getOperand(0));
-    
-    // def : Pat<(membarrier (i8 1), (i8 0), (i8 0), (i8 0), (i8 1)), (LFENCE)>;
-    if (Op1 && !Op2 && !Op3 && !Op4)
-      return DAG.getNode(X86ISD::LFENCE, dl, MVT::Other, Op.getOperand(0));
-    
-    // def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm), (i8 1)), 
-    //           (MFENCE)>;
-    return DAG.getNode(X86ISD::MFENCE, dl, MVT::Other, Op.getOperand(0));
-  }
+  
+  unsigned Op1 = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  unsigned Op2 = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+  unsigned Op3 = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
+  unsigned Op4 = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
+  
+  // def : Pat<(membarrier (i8 0), (i8 0), (i8 0), (i8 1), (i8 1)), (SFENCE)>;
+  if (!Op1 && !Op2 && !Op3 && Op4)
+    return DAG.getNode(X86ISD::SFENCE, dl, MVT::Other, Op.getOperand(0));
+  
+  // def : Pat<(membarrier (i8 1), (i8 0), (i8 0), (i8 0), (i8 1)), (LFENCE)>;
+  if (Op1 && !Op2 && !Op3 && !Op4)
+    return DAG.getNode(X86ISD::LFENCE, dl, MVT::Other, Op.getOperand(0));
+  
+  // def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm), (i8 1)), 
+  //           (MFENCE)>;
+  return DAG.getNode(X86ISD::MFENCE, dl, MVT::Other, Op.getOperand(0));
 }
 
 SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) const {
