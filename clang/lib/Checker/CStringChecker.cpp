@@ -15,6 +15,7 @@
 #include "GRExprEngineExperimentalChecks.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/Checker/PathSensitive/GRStateTrait.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
@@ -28,6 +29,15 @@ public:
   static void *getTag() { static int tag; return &tag; }
 
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  void PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS);
+  void MarkLiveSymbols(const GRState *state, SymbolReaper &SR);
+  void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SR);
+  bool WantsRegionChangeUpdate(const GRState *state);
+
+  const GRState *EvalRegionChanges(const GRState *state,
+                                   const MemRegion * const *Begin,
+                                   const MemRegion * const *End,
+                                   bool*);
 
   typedef void (CStringChecker::*FnCheck)(CheckerContext &, const CallExpr *);
 
@@ -46,7 +56,9 @@ public:
   std::pair<const GRState*, const GRState*>
   AssumeZero(CheckerContext &C, const GRState *state, SVal V, QualType Ty);
 
-  SVal GetCStringLength(CheckerContext &C, const GRState *state,
+  SVal GetCStringLengthForRegion(CheckerContext &C, const GRState *&state,
+                                 const Expr *Ex, const MemRegion *MR);
+  SVal GetCStringLength(CheckerContext &C, const GRState *&state,
                         const Expr *Ex, SVal Buf);
 
   bool SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
@@ -67,7 +79,20 @@ public:
   void EmitOverlapBug(CheckerContext &C, const GRState *state,
                       const Stmt *First, const Stmt *Second);
 };
+
+class CStringLength {
+public:
+  typedef llvm::ImmutableMap<const MemRegion *, SVal> EntryMap;
+};
 } //end anonymous namespace
+
+namespace clang {
+  template <>
+  struct GRStateTrait<CStringLength> 
+    : public GRStatePartialTrait<CStringLength::EntryMap> {
+    static void *GDMIndex() { return CStringChecker::getTag(); }
+  };
+}
 
 void clang::RegisterCStringChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new CStringChecker());
@@ -382,7 +407,26 @@ void CStringChecker::EmitOverlapBug(CheckerContext &C, const GRState *state,
   C.EmitReport(report);
 }
 
-SVal CStringChecker::GetCStringLength(CheckerContext &C, const GRState *state,
+SVal CStringChecker::GetCStringLengthForRegion(CheckerContext &C,
+                                               const GRState *&state,
+                                               const Expr *Ex,
+                                               const MemRegion *MR) {
+  // If there's a recorded length, go ahead and return it.
+  const SVal *Recorded = state->get<CStringLength>(MR);
+  if (Recorded)
+    return *Recorded;
+  
+  // Otherwise, get a new symbol and update the state.
+  unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+  ValueManager &ValMgr = C.getValueManager();
+  QualType SizeTy = ValMgr.getContext().getSizeType();
+  SVal Strlen = ValMgr.getMetadataSymbolVal(getTag(), MR, Ex, SizeTy, Count);
+  
+  state = state->set<CStringLength>(MR, Strlen);
+  return Strlen;
+}
+
+SVal CStringChecker::GetCStringLength(CheckerContext &C, const GRState *&state,
                                       const Expr *Ex, SVal Buf) {
   const MemRegion *MR = Buf.getAsRegion();
   if (!MR) {
@@ -390,8 +434,7 @@ SVal CStringChecker::GetCStringLength(CheckerContext &C, const GRState *state,
     // C string. In the context of locations, the only time we can issue such
     // a warning is for labels.
     if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&Buf)) {
-      ExplodedNode *N = C.GenerateSink(state);
-      if (N) {
+      if (ExplodedNode *N = C.GenerateNode(state)) {
         if (!BT_NotCString)
           BT_NotCString = new BuiltinBug("API",
             "Argument is not a null-terminated string.");
@@ -413,86 +456,65 @@ SVal CStringChecker::GetCStringLength(CheckerContext &C, const GRState *state,
       return UndefinedVal();
     }
 
-    // If it's not a region and not a label, it may be a constant location,
-    // or it may be unknown. Just conjure a value as usual (see end of method).
-
-  } else {
-    // If we have a region, strip casts from it and see if we can figure out
-    // its length. For anything we can't figure out, just conjure a value as
-    // usual (see end of method).
-    MR = MR->StripCasts();
-
-    switch (MR->getKind()) {
-    case MemRegion::StringRegionKind: {
-      ValueManager &ValMgr = C.getValueManager();
-      ASTContext &Ctx = ValMgr.getContext();
-      const StringLiteral *Str = cast<StringRegion>(MR)->getStringLiteral();
-
-      // Non-constant string literals may have been changed, so only return a
-      // known value if we know the literal is constant.
-      if (Str->getType().isConstant(Ctx)) {
-        QualType SizeTy = Ctx.getSizeType();
-        return ValMgr.makeIntVal(Str->getByteLength(), SizeTy);        
-      }
-
-      // FIXME: Handle the non-constant case. For now, just treat it like any
-      // other initialized region.
-      // FALL-THROUGH
-    }
-    case MemRegion::SymbolicRegionKind:
-    case MemRegion::AllocaRegionKind:
-    case MemRegion::VarRegionKind:
-    case MemRegion::FieldRegionKind:
-    case MemRegion::ObjCIvarRegionKind:
-      // FIXME: These need to be tracked!
-      break;
-    case MemRegion::CompoundLiteralRegionKind:
-      // FIXME: Can we track this? Is it necessary?
-      break;
-    case MemRegion::ElementRegionKind:
-      // FIXME: How can we handle this? It's not good enough to subtract the
-      // offset from the base string length; consider "123\x00567" and &a[5].
-      break;
-    default: {
-      // Other regions (mostly non-data) can't have a reliable C string length.
-      // In this case, an error is emitted and UndefinedVal is returned.
-      // The caller should always be prepared to handle this case.
-      ExplodedNode *N = C.GenerateSink(state);
-      if (N) {
-        if (!BT_NotCString)
-          BT_NotCString = new BuiltinBug("API",
-            "Argument is not a null-terminated string.");
-
-        llvm::SmallString<120> buf;
-        llvm::raw_svector_ostream os(buf);
-
-        os << "Argument to byte string function is ";
-
-        if (SummarizeRegion(os, C.getASTContext(), MR)) {
-          os << ", which is not a null-terminated string";
-        } else {
-          os << "not a null-terminated string";
-        }
-
-        // Generate a report for this bug.
-        EnhancedBugReport *report = new EnhancedBugReport(*BT_NotCString,
-                                                          os.str(), N);
-
-        report->addRange(Ex->getSourceRange());
-        C.EmitReport(report);        
-      }
-
-      return UndefinedVal();
-    }
-    }
+    // If it's not a region and not a label, give up.
+    return UnknownVal();
   }
 
-  // If we can't track a certain region's C string length, or if we can't get a
-  // region from the SVal, conjure a value, for use in later constraints.
-  unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-  ValueManager &ValMgr = C.getValueManager();
-  QualType SizeTy = ValMgr.getContext().getSizeType();
-  return ValMgr.getConjuredSymbolVal(getTag(), Ex, SizeTy, Count);
+  // If we have a region, strip casts from it and see if we can figure out
+  // its length. For anything we can't figure out, just return UnknownVal.
+  MR = MR->StripCasts();
+
+  switch (MR->getKind()) {
+  case MemRegion::StringRegionKind: {
+    // Modifying the contents of string regions is undefined [C99 6.4.5p6],
+    // so we can assume that the byte length is the correct C string length.
+    ValueManager &ValMgr = C.getValueManager();
+    QualType SizeTy = ValMgr.getContext().getSizeType();
+    const StringLiteral *Str = cast<StringRegion>(MR)->getStringLiteral();
+    return ValMgr.makeIntVal(Str->getByteLength(), SizeTy);
+  }
+  case MemRegion::SymbolicRegionKind:
+  case MemRegion::AllocaRegionKind:
+  case MemRegion::VarRegionKind:
+  case MemRegion::FieldRegionKind:
+  case MemRegion::ObjCIvarRegionKind:
+    return GetCStringLengthForRegion(C, state, Ex, MR);
+  case MemRegion::CompoundLiteralRegionKind:
+    // FIXME: Can we track this? Is it necessary?
+    return UnknownVal();
+  case MemRegion::ElementRegionKind:
+    // FIXME: How can we handle this? It's not good enough to subtract the
+    // offset from the base string length; consider "123\x00567" and &a[5].
+    return UnknownVal();
+  default:
+    // Other regions (mostly non-data) can't have a reliable C string length.
+    // In this case, an error is emitted and UndefinedVal is returned.
+    // The caller should always be prepared to handle this case.
+    if (ExplodedNode *N = C.GenerateNode(state)) {
+      if (!BT_NotCString)
+        BT_NotCString = new BuiltinBug("API",
+          "Argument is not a null-terminated string.");
+
+      llvm::SmallString<120> buf;
+      llvm::raw_svector_ostream os(buf);
+
+      os << "Argument to byte string function is ";
+
+      if (SummarizeRegion(os, C.getASTContext(), MR))
+        os << ", which is not a null-terminated string";
+      else
+        os << "not a null-terminated string";
+
+      // Generate a report for this bug.
+      EnhancedBugReport *report = new EnhancedBugReport(*BT_NotCString,
+                                                        os.str(), N);
+
+      report->addRange(Ex->getSourceRange());
+      C.EmitReport(report);        
+    }
+
+    return UndefinedVal();
+  }
 }
 
 bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
@@ -664,19 +686,29 @@ void CStringChecker::EvalStrlen(CheckerContext &C, const CallExpr *CE) {
   state = CheckNonNull(C, state, Arg, ArgVal);
 
   if (state) {
-    // Figure out what the length is, making sure the argument is a C string
-    // (or something similar to a C string). If the argument is valid, the
-    // length will be defined, and we can then set the return value.
     SVal StrLen = GetCStringLength(C, state, Arg, ArgVal);
-    if (!StrLen.isUndef()) {
-      state = state->BindExpr(CE, StrLen);
-      C.addTransition(state);
+
+    // If the argument isn't a valid C string, there's no valid state to
+    // transition to.
+    if (StrLen.isUndef())
+      return;
+
+    // If GetCStringLength couldn't figure out the length, conjure a return
+    // value, so it can be used in constraints, at least.
+    if (StrLen.isUnknown()) {
+      ValueManager &ValMgr = C.getValueManager();
+      unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+      StrLen = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
     }
+
+    // Bind the return value.
+    state = state->BindExpr(CE, StrLen);
+    C.addTransition(state);
   }
 }
 
 //===----------------------------------------------------------------------===//
-// The driver method.
+// The driver method, and other Checker callbacks.
 //===----------------------------------------------------------------------===//
 
 bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
@@ -709,4 +741,130 @@ bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   // Check and evaluate the call.
   (this->*EvalFunction)(C, CE);
   return true;
+}
+
+void CStringChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
+  // Record string length for char a[] = "abc";
+  const GRState *state = C.getState();
+
+  for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+       I != E; ++I) {
+    const VarDecl *D = dyn_cast<VarDecl>(*I);
+    if (!D)
+      continue;
+
+    // FIXME: Handle array fields of structs.
+    if (!D->getType()->isArrayType())
+      continue;
+
+    const Expr *Init = D->getInit();
+    if (!Init)
+      continue;
+    if (!isa<StringLiteral>(Init))
+      continue;
+
+    Loc VarLoc = state->getLValue(D, C.getPredecessor()->getLocationContext());
+    const MemRegion *MR = VarLoc.getAsRegion();
+    if (!MR)
+      continue;
+
+    SVal StrVal = state->getSVal(Init);
+    assert(StrVal.isValid() && "Initializer string is unknown or undefined");
+    DefinedOrUnknownSVal StrLen
+      = cast<DefinedOrUnknownSVal>(GetCStringLength(C, state, Init, StrVal));
+
+    state = state->set<CStringLength>(MR, StrLen);
+  }
+
+  C.addTransition(state);
+}
+
+bool CStringChecker::WantsRegionChangeUpdate(const GRState *state) {
+  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  return !Entries.isEmpty();
+}
+
+const GRState *CStringChecker::EvalRegionChanges(const GRState *state,
+                                                 const MemRegion * const *Begin,
+                                                 const MemRegion * const *End,
+                                                 bool *) {
+  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  if (Entries.isEmpty())
+    return state;
+
+  llvm::SmallPtrSet<const MemRegion *, 8> Invalidated;
+  llvm::SmallPtrSet<const MemRegion *, 32> SuperRegions;
+
+  // First build sets for the changed regions and their super-regions.
+  for ( ; Begin != End; ++Begin) {
+    const MemRegion *MR = *Begin;
+    Invalidated.insert(MR);
+
+    SuperRegions.insert(MR);
+    while (const SubRegion *SR = dyn_cast<SubRegion>(MR)) {
+      MR = SR->getSuperRegion();
+      SuperRegions.insert(MR);
+    }
+  }
+
+  CStringLength::EntryMap::Factory &F = state->get_context<CStringLength>();
+
+  // Then loop over the entries in the current state.
+  for (CStringLength::EntryMap::iterator I = Entries.begin(),
+       E = Entries.end(); I != E; ++I) {
+    const MemRegion *MR = I.getKey();
+
+    // Is this entry for a super-region of a changed region?
+    if (SuperRegions.count(MR)) {
+      Entries = F.Remove(Entries, MR);
+      continue;
+    }
+
+    // Is this entry for a sub-region of a changed region?
+    const MemRegion *Super = MR;
+    while (const SubRegion *SR = dyn_cast<SubRegion>(Super)) {
+      Super = SR->getSuperRegion();
+      if (Invalidated.count(Super)) {
+        Entries = F.Remove(Entries, MR);
+        break;
+      }
+    }
+  }
+
+  return state->set<CStringLength>(Entries);
+}
+
+void CStringChecker::MarkLiveSymbols(const GRState *state, SymbolReaper &SR) {
+  // Mark all symbols in our string length map as valid.
+  CStringLength::EntryMap Entries = state->get<CStringLength>();
+
+  for (CStringLength::EntryMap::iterator I = Entries.begin(), E = Entries.end();
+       I != E; ++I) {
+    SVal Len = I.getData();
+    if (SymbolRef Sym = Len.getAsSymbol())
+      SR.markInUse(Sym);
+  }
+}
+
+void CStringChecker::EvalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
+  if (!SR.hasDeadSymbols())
+    return;
+
+  const GRState *state = C.getState();
+  CStringLength::EntryMap Entries = state->get<CStringLength>();
+  if (Entries.isEmpty())
+    return;
+
+  CStringLength::EntryMap::Factory &F = state->get_context<CStringLength>();
+  for (CStringLength::EntryMap::iterator I = Entries.begin(), E = Entries.end();
+       I != E; ++I) {
+    SVal Len = I.getData();
+    if (SymbolRef Sym = Len.getAsSymbol()) {
+      if (SR.isDead(Sym))
+        Entries = F.Remove(Entries, I.getKey());
+    }
+  }
+
+  state = state->set<CStringLength>(Entries);
+  C.GenerateNode(state);
 }
