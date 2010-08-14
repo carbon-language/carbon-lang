@@ -78,6 +78,11 @@ void SymbolExtent::dumpToStream(llvm::raw_ostream& os) const {
   os << "extent_$" << getSymbolID() << '{' << getRegion() << '}';
 }
 
+void SymbolMetadata::dumpToStream(llvm::raw_ostream& os) const {
+  os << "meta_$" << getSymbolID() << '{'
+     << getRegion() << ',' << T.getAsString() << '}';
+}
+
 void SymbolRegionValue::dumpToStream(llvm::raw_ostream& os) const {
   os << "reg_$" << getSymbolID() << "<" << R << ">";
 }
@@ -150,6 +155,24 @@ SymbolManager::getExtentSymbol(const SubRegion *R) {
   return cast<SymbolExtent>(SD);
 }
 
+const SymbolMetadata*
+SymbolManager::getMetadataSymbol(const MemRegion* R, const Stmt* S, QualType T,
+                                 unsigned Count, const void* SymbolTag) {
+
+  llvm::FoldingSetNodeID profile;
+  SymbolMetadata::Profile(profile, R, S, T, Count, SymbolTag);
+  void* InsertPos;
+  SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
+  if (!SD) {
+    SD = (SymExpr*) BPAlloc.Allocate<SymbolMetadata>();
+    new (SD) SymbolMetadata(SymbolCounter, R, S, T, Count, SymbolTag);
+    DataSet.InsertNode(SD, InsertPos);
+    ++SymbolCounter;
+  }
+
+  return cast<SymbolMetadata>(SD);
+}
+
 const SymIntExpr *SymbolManager::getSymIntExpr(const SymExpr *lhs,
                                                BinaryOperator::Opcode op,
                                                const llvm::APSInt& v,
@@ -198,6 +221,10 @@ QualType SymbolExtent::getType(ASTContext& Ctx) const {
   return Ctx.getSizeType();
 }
 
+QualType SymbolMetadata::getType(ASTContext&) const {
+  return T;
+}
+
 QualType SymbolRegionValue::getType(ASTContext& C) const {
   return R->getValueType();
 }
@@ -222,12 +249,42 @@ void SymbolReaper::markLive(SymbolRef sym) {
   TheDead.erase(sym);
 }
 
+void SymbolReaper::markInUse(SymbolRef sym) {
+  if (isa<SymbolMetadata>(sym))
+    MetadataInUse.insert(sym);
+}
+
 bool SymbolReaper::maybeDead(SymbolRef sym) {
   if (isLive(sym))
     return false;
 
   TheDead.insert(sym);
   return true;
+}
+
+static bool IsLiveRegion(SymbolReaper &Reaper, const MemRegion *MR) {
+  MR = MR->getBaseRegion();
+
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
+    return Reaper.isLive(SR->getSymbol());
+
+  if (const VarRegion *VR = dyn_cast<VarRegion>(MR))
+    return Reaper.isLive(VR);
+
+  // FIXME: This is a gross over-approximation. What we really need is a way to
+  // tell if anything still refers to this region. Unlike SymbolicRegions,
+  // AllocaRegions don't have associated symbols, though, so we don't actually
+  // have a way to track their liveness.
+  if (isa<AllocaRegion>(MR))
+    return true;
+
+  if (isa<CXXThisRegion>(MR))
+    return true;
+
+  if (isa<MemSpaceRegion>(MR))
+    return true;
+
+  return false;
 }
 
 bool SymbolReaper::isLive(SymbolRef sym) {
@@ -243,11 +300,21 @@ bool SymbolReaper::isLive(SymbolRef sym) {
   }
 
   if (const SymbolExtent *extent = dyn_cast<SymbolExtent>(sym)) {
-    const MemRegion *Base = extent->getRegion()->getBaseRegion();
-    if (const VarRegion *VR = dyn_cast<VarRegion>(Base))
-      return isLive(VR);
-    if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Base))
-      return isLive(SR->getSymbol());
+    if (IsLiveRegion(*this, extent->getRegion())) {
+      markLive(sym);
+      return true;
+    }
+    return false;
+  }
+
+  if (const SymbolMetadata *metadata = dyn_cast<SymbolMetadata>(sym)) {
+    if (MetadataInUse.count(sym)) {
+      if (IsLiveRegion(*this, metadata->getRegion())) {
+        markLive(sym);
+        MetadataInUse.erase(sym);
+        return true;
+      }
+    }
     return false;
   }
 
@@ -261,12 +328,13 @@ bool SymbolReaper::isLive(const Stmt* ExprVal) const {
 }
 
 bool SymbolReaper::isLive(const VarRegion *VR) const {
-  const StackFrameContext *SFC = VR->getStackFrame();
+  const StackFrameContext *VarContext = VR->getStackFrame();
+  const StackFrameContext *CurrentContext = LCtx->getCurrentStackFrame();
 
-  if (SFC == LCtx->getCurrentStackFrame())
+  if (VarContext == CurrentContext)
     return LCtx->getLiveVariables()->isLive(Loc, VR->getDecl());
-  else
-    return SFC->isParentOf(LCtx->getCurrentStackFrame());
+
+  return VarContext->isParentOf(CurrentContext);
 }
 
 SymbolVisitor::~SymbolVisitor() {}

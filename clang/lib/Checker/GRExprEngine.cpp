@@ -578,15 +578,23 @@ void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
     Builder->setAuditor(BatchAuditor.get());
 
   // Create the cleaned state.
-  const ExplodedNode *BasePred = Builder->getBasePredecessor();
+  const LocationContext *LC = EntryNode->getLocationContext();
+  SymbolReaper SymReaper(LC, CurrentStmt, SymMgr);
 
-  SymbolReaper SymReaper(BasePred->getLocationContext(), CurrentStmt, SymMgr);
+  if (AMgr.shouldPurgeDead()) {
+    const GRState *St = EntryNode->getState();
 
-  CleanedState = AMgr.shouldPurgeDead()
-    ? StateMgr.RemoveDeadBindings(EntryNode->getState(), 
-                         BasePred->getLocationContext()->getCurrentStackFrame(),
-                                  SymReaper)
-    : EntryNode->getState();
+    for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
+         I != E; ++I) {
+      Checker *checker = I->second;
+      checker->MarkLiveSymbols(St, SymReaper);
+    }
+
+    const StackFrameContext *SFC = LC->getCurrentStackFrame();
+    CleanedState = StateMgr.RemoveDeadBindings(St, SFC, SymReaper);
+  } else {
+    CleanedState = EntryNode->getState();
+  }
 
   // Process any special transfer function for dead symbols.
   ExplodedNodeSet Tmp;

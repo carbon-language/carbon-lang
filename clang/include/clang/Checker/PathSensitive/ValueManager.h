@@ -106,6 +106,9 @@ public:
   DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
                                                       const TypedRegion *R);
 
+  DefinedSVal getMetadataSymbolVal(const void *SymbolTag, const MemRegion *MR,
+                                   const Expr *E, QualType T, unsigned Count);
+
   DefinedSVal getFunctionPointer(const FunctionDecl *FD);
   
   DefinedSVal getBlockPointer(const BlockDecl *BD, CanQualType locTy,

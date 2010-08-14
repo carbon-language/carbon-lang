@@ -270,6 +270,8 @@ public:
   virtual void EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                            GRExprEngine &Eng) {}
 
+  virtual void MarkLiveSymbols(const GRState *state, SymbolReaper &SymReaper) {}
+
   virtual void VisitBranchCondition(GRBranchNodeBuilder &Builder,
                                     GRExprEngine &Eng,
                                     const Stmt *Condition, void *tag) {}
