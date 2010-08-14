@@ -622,6 +622,11 @@ LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
   std::vector<BasicBlock*> BackedgeBlocks;
   for (pred_iterator I = pred_begin(Header), E = pred_end(Header); I != E; ++I){
     BasicBlock *P = *I;
+
+    // Indirectbr edges cannot be split, so we must fail if we find one.
+    if (isa<IndirectBrInst>(P->getTerminator()))
+      return 0;
+
     if (P != Preheader) BackedgeBlocks.push_back(P);
   }
 
