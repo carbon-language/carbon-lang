@@ -275,7 +275,7 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
    // register
    def rr : T2sI<(outs rGPR:$dst), (ins rGPR:$rhs, rGPR:$lhs), IIC_iALUr,
                  opc, "\t$dst, $rhs, $lhs",
-                 [(set rGPR:$dst, (opnode rGPR:$lhs, rGPR:$rhs))]> {
+                 [/* For disassembly only; pattern left blank */]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
