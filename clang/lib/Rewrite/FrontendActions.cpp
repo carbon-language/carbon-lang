@@ -42,6 +42,11 @@ ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
   return new ASTConsumer();
 }
 
+class FixItRewriteInPlace : public FixItOptions {
+public:
+  std::string RewriteFilename(const std::string &Filename) { return Filename; }
+};
+
 class FixItActionSuffixInserter : public FixItOptions {
   std::string NewSuffix;
 
@@ -67,7 +72,8 @@ bool FixItAction::BeginSourceFileAction(CompilerInstance &CI,
     FixItOpts.reset(new FixItActionSuffixInserter(FEOpts.FixItSuffix,
                                                   FEOpts.FixWhatYouCan));
   } else {
-    FixItOpts.reset();
+    FixItOpts.reset(new FixItRewriteInPlace);
+    FixItOpts->FixWhatYouCan = FEOpts.FixWhatYouCan;
   }
   Rewriter.reset(new FixItRewriter(CI.getDiagnostics(), CI.getSourceManager(),
                                    CI.getLangOpts(), FixItOpts.get()));

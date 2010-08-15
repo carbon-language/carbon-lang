@@ -49,16 +49,14 @@ bool FixItRewriter::WriteFixedFile(FileID ID, llvm::raw_ostream &OS) {
 }
 
 bool FixItRewriter::WriteFixedFiles() {
-  if (NumFailures > 0 && (!FixItOpts || !FixItOpts->FixWhatYouCan)) {
+  if (NumFailures > 0 && !FixItOpts->FixWhatYouCan) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
     return true;
   }
 
   for (iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
     const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
-    std::string Filename = Entry->getName();
-    if (FixItOpts)
-      Filename = FixItOpts->RewriteFilename(Filename);
+    std::string Filename = FixItOpts->RewriteFilename(Entry->getName());
     std::string Err;
     llvm::raw_fd_ostream OS(Filename.c_str(), Err,
                             llvm::raw_fd_ostream::F_Binary);
