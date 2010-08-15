@@ -73,9 +73,6 @@ class BasicObjCFoundationChecks : public GRSimpleAPICheck {
   bool isNSString(const ObjCInterfaceType *T, llvm::StringRef suffix);
   bool AuditNSString(ExplodedNode* N, const ObjCMessageExpr* ME);
 
-  void Warn(ExplodedNode* N, const Expr* E, const std::string& s);
-  void WarnNilArg(ExplodedNode* N, const Expr* E);
-
   bool CheckNilArg(ExplodedNode* N, unsigned Arg);
 
 public:

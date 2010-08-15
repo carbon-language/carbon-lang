@@ -125,8 +125,6 @@ namespace {
     Expr *VisitCompoundAssignOperator(CompoundAssignOperator *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
     Expr *VisitCStyleCastExpr(CStyleCastExpr *E);
-
-    bool ImportCasePath(CastExpr *E, CXXCastPath &Path);
   };
 }
 

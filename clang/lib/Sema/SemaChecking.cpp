@@ -2102,7 +2102,6 @@ struct IntRange {
   /// True if the int is known not to have negative values.
   bool NonNegative;
 
-  IntRange() {}
   IntRange(unsigned Width, bool NonNegative)
     : Width(Width), NonNegative(NonNegative)
   {}

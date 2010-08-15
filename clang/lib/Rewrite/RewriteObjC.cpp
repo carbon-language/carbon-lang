@@ -229,14 +229,6 @@ namespace {
       Diags.Report(Context->getFullLoc(Loc), RewriteFailedDiag);
     }
 
-    void RemoveText(SourceLocation Loc, unsigned StrLen) {
-      // If removal succeeded or warning disabled return with no warning.
-      if (!Rewrite.RemoveText(Loc, StrLen) || SilenceRewriteMacroWarning)
-        return;
-
-      Diags.Report(Context->getFullLoc(Loc), RewriteFailedDiag);
-    }
-
     void ReplaceText(SourceLocation Start, unsigned OrigLength,
                      llvm::StringRef Str) {
       // If removal succeeded or warning disabled return with no warning.
@@ -248,9 +240,7 @@ namespace {
     }
 
     // Syntactic Rewriting.
-    void RewritePrologue(SourceLocation Loc);
     void RewriteInclude();
-    void RewriteTabs();
     void RewriteForwardClassDecl(ObjCClassDecl *Dcl);
     void RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
                                  ObjCImplementationDecl *IMD,
@@ -275,7 +265,6 @@ namespace {
     void RewriteTypeOfDecl(VarDecl *VD);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
     bool needToScanForQualifiers(QualType T);
-    bool isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
     QualType getConstantStringStructType();
     QualType convertFunctionTypeOfBlocks(const FunctionType *FT);
@@ -305,8 +294,6 @@ namespace {
     void RewriteSyncReturnStmts(Stmt *S, std::string buf);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
-    Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
-    Stmt *RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S);
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
     Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
                                        SourceLocation OrigEnd);
@@ -371,7 +358,6 @@ namespace {
     void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
 
     // Block specific rewrite rules.
-    void RewriteBlockCall(CallExpr *Exp);
     void RewriteBlockPointerDecl(NamedDecl *VD);
     void RewriteByRefVar(VarDecl *VD);
     std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD, int flag);
@@ -744,36 +730,6 @@ void RewriteObjC::RewriteInclude() {
         BufPtr += ImportLen;
       }
     }
-  }
-}
-
-void RewriteObjC::RewriteTabs() {
-  llvm::StringRef MainBuf = SM->getBufferData(MainFileID);
-  const char *MainBufStart = MainBuf.begin();
-  const char *MainBufEnd = MainBuf.end();
-
-  // Loop over the whole file, looking for tabs.
-  for (const char *BufPtr = MainBufStart; BufPtr != MainBufEnd; ++BufPtr) {
-    if (*BufPtr != '\t')
-      continue;
-
-    // Okay, we found a tab.  This tab will turn into at least one character,
-    // but it depends on which 'virtual column' it is in.  Compute that now.
-    unsigned VCol = 0;
-    while (BufPtr-VCol != MainBufStart && BufPtr[-VCol-1] != '\t' &&
-           BufPtr[-VCol-1] != '\n' && BufPtr[-VCol-1] != '\r')
-      ++VCol;
-
-    // Okay, now that we know the virtual column, we know how many spaces to
-    // insert.  We assume 8-character tab-stops.
-    unsigned Spaces = 8-(VCol & 7);
-
-    // Get the location of the tab.
-    SourceLocation TabLoc = SM->getLocForStartOfFile(MainFileID);
-    TabLoc = TabLoc.getFileLocWithOffset(BufPtr-MainBufStart);
-
-    // Rewrite the single tab character into a sequence of spaces.
-    ReplaceText(TabLoc, 1, llvm::StringRef("        ", Spaces));
   }
 }
 
@@ -2024,14 +1980,6 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   return 0;
 }
 
-Stmt *RewriteObjC::RewriteObjCCatchStmt(ObjCAtCatchStmt *S) {
-  return 0;
-}
-
-Stmt *RewriteObjC::RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S) {
-  return 0;
-}
-
 // This can't be done with ReplaceStmt(S, ThrowExpr), since
 // the throw expression is typically a message expression that's already
 // been rewritten! (which implies the SourceLocation's are invalid).
@@ -2634,12 +2582,6 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   ReplaceStmt(Exp, cast);
   // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return cast;
-}
-
-bool RewriteObjC::isSuperReceiver(Expr *recExpr) {
-  // check if we are sending a message to 'super'
-  if (!CurMethodDef || !CurMethodDef->isInstanceMethod()) return false;
-  return isa<ObjCSuperExpr>(recExpr);
 }
 
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
@@ -4694,11 +4636,6 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
                                         BlkExprs.size(),
                                         Exp->getType(), SourceLocation());
   return CE;
-}
-
-void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
-  Stmt *BlockCall = SynthesizeBlockCall(Exp, Exp->getCallee());
-  ReplaceStmt(Exp, BlockCall);
 }
 
 // We need to return the rewritten expression to handle cases where the

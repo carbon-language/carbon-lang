@@ -128,7 +128,6 @@ public:
   void VisitDeclStmt(DeclStmt *DS);
 private:
   void VisitVarDecl(VarDecl *VD);
-  void CheckStringRefBoundtoTemporaryString(VarDecl *VD);
 };
 } // end anonymous namespace
 

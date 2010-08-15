@@ -74,20 +74,6 @@ TypeLoc TypeLoc::getNextTypeLocImpl(TypeLoc TL) {
   return NextLoc().Visit(TL);
 }
 
-namespace {
-  struct TypeLocInitializer : public TypeLocVisitor<TypeLocInitializer> {
-    SourceLocation Loc;
-    TypeLocInitializer(SourceLocation Loc) : Loc(Loc) {}
-  
-#define ABSTRACT_TYPELOC(CLASS, PARENT)
-#define TYPELOC(CLASS, PARENT) \
-    void Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc) { \
-      TyLoc.initializeLocal(Loc); \
-    }
-#include "clang/AST/TypeLocNodes.def"
-  };
-}
-
 /// \brief Initializes a type location, and all of its children
 /// recursively, as if the entire tree had been written in the
 /// given location.

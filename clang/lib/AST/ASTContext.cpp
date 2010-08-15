@@ -463,20 +463,6 @@ void ASTContext::addOverriddenMethod(const CXXMethodDecl *Method,
   OverriddenMethods[Method].push_back(Overridden);
 }
 
-namespace {
-  class BeforeInTranslationUnit
-    : std::binary_function<SourceRange, SourceRange, bool> {
-    SourceManager *SourceMgr;
-
-  public:
-    explicit BeforeInTranslationUnit(SourceManager *SM) : SourceMgr(SM) { }
-
-    bool operator()(SourceRange X, SourceRange Y) {
-      return SourceMgr->isBeforeInTranslationUnit(X.getBegin(), Y.getBegin());
-    }
-  };
-}
-
 //===----------------------------------------------------------------------===//
 //                         Type Sizing and Analysis
 //===----------------------------------------------------------------------===//

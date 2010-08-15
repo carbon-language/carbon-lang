@@ -771,28 +771,6 @@ public:
                                       "objc_msgSendSuper2_stret_fixup");
   }
 
-
-
-  /// EHPersonalityPtr - LLVM value for an i8* to the Objective-C
-  /// exception personality function.
-  llvm::Value *getEHPersonalityPtr() {
-    llvm::Constant *Personality =
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty(VMContext),
-                                                        true),
-                                "__objc_personality_v0");
-    return llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
-  }
-
-  llvm::Constant *getUnwindResumeOrRethrowFn() {
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(Int8PtrTy);
-    return CGM.CreateRuntimeFunction(
-      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                              Params, false),
-      (CGM.getLangOptions().SjLjExceptions ? "_Unwind_SjLj_Resume" :
-       "_Unwind_Resume_or_Rethrow"));
-  }
-
   llvm::Constant *getObjCEndCatchFn() {
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                                                              false),
@@ -1070,15 +1048,6 @@ private:
   
   /// EmitSuperClassRef - Emits reference to class's main metadata class.
   llvm::Value *EmitSuperClassRef(const ObjCInterfaceDecl *ID);
-
-  CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
-                                  ReturnValueSlot Return,
-                                  QualType ResultType,
-                                  Selector Sel,
-                                  llvm::Value *Arg0,
-                                  QualType Arg0Ty,
-                                  bool IsSuper,
-                                  const CallArgList &CallArgs);
 
   /// EmitIvarList - Emit the ivar list for the given
   /// implementation. If ForClass is true the list of class ivars
@@ -3982,11 +3951,6 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
 // FIXME: Merge into a single cstring creation function.
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(IdentifierInfo *ID) {
   return GetMethodVarName(CGM.getContext().Selectors.getNullarySelector(ID));
-}
-
-// FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCCommonMac::GetMethodVarName(const std::string &Name) {
-  return GetMethodVarName(&CGM.getContext().Idents.get(Name));
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarType(const FieldDecl *Field) {

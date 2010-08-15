@@ -61,9 +61,6 @@ struct StaticDiagInfoRec {
   bool operator<(const StaticDiagInfoRec &RHS) const {
     return DiagID < RHS.DiagID;
   }
-  bool operator>(const StaticDiagInfoRec &RHS) const {
-    return DiagID > RHS.DiagID;
-  }
 };
 
 }
