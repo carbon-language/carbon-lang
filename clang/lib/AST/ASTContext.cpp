@@ -5640,7 +5640,8 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   // FIXME: Handle references.
   if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor())
+      if (RD->hasDefinition() &&
+          (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor()))
         return true;
     }
   }

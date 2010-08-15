@@ -449,7 +449,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Diagnose unused local variables.
   if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed())
     SemaRef.DiagnoseUnusedDecl(Var);
-  
+
   return Var;
 }
 
@@ -1415,7 +1415,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     else
       Owner->addDecl(DeclToAdd);
   }
-
+  
   return Method;
 }
 

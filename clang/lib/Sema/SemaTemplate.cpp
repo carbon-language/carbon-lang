@@ -4360,8 +4360,10 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   
   // Mark the prior declaration as an explicit specialization, so that later
   // clients know that this is an explicit specialization.
-  if (!isFriend)
+  if (!isFriend) {
     SpecInfo->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
+    MarkUnusedFileScopedDecl(Specialization);
+  }
   
   // Turn the given function declaration into a function template
   // specialization, with the template arguments from the previous
@@ -4514,6 +4516,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     cast<FunctionDecl>(Member)->setInstantiationOfMemberFunction(
                                         cast<CXXMethodDecl>(InstantiatedFrom),
                                                   TSK_ExplicitSpecialization);
+    MarkUnusedFileScopedDecl(InstantiationFunction);
   } else if (isa<VarDecl>(Member)) {
     VarDecl *InstantiationVar = cast<VarDecl>(Instantiation);
     if (InstantiationVar->getTemplateSpecializationKind() ==
@@ -4526,6 +4529,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     Context.setInstantiatedFromStaticDataMember(cast<VarDecl>(Member),
                                                 cast<VarDecl>(InstantiatedFrom),
                                                 TSK_ExplicitSpecialization);
+    MarkUnusedFileScopedDecl(InstantiationVar);
   } else {
     assert(isa<CXXRecordDecl>(Member) && "Only member classes remain");
     CXXRecordDecl *InstantiationClass = cast<CXXRecordDecl>(Instantiation);
