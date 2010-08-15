@@ -103,8 +103,6 @@ public:
 
 private:
   SVal LazyRetrieve(Store store, const TypedRegion *R);
-
-  ASTContext& getContext() { return StateMgr.getContext(); }
 };
 
 } // end anonymous namespace
@@ -228,8 +226,6 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
     return VBFactory.Add(B, R, V).getRoot();
   }
 
-  ASTContext &C = StateMgr.getContext();
-
   // Special case: handle store of pointer values (Loc) to pointers via
   // a cast to intXX_t*, void*, etc.  This is needed to handle
   // OSCompareAndSwap32Barrier/OSCompareAndSwap64Barrier.
@@ -238,7 +234,7 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
       // FIXME: Should check for index 0.
       QualType T = ER->getLocationType();
 
-      if (isHigherOrderRawPtr(T, C))
+      if (isHigherOrderRawPtr(T, Ctx))
         R = ER->getSuperRegion();
     }
 

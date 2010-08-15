@@ -386,9 +386,6 @@ public: // Part of public interface to class.
       }
     }
   }
-
-  // FIXME: Remove.
-  ASTContext& getContext() { return StateMgr.getContext(); }
 };
 
 } // end anonymous namespace
@@ -758,7 +755,7 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
     return UnknownVal();
 
   CharUnits RegionSize = CharUnits::fromQuantity(SizeInt->getSExtValue());
-  CharUnits EleSize = getContext().getTypeSizeInChars(EleTy);
+  CharUnits EleSize = Ctx.getTypeSizeInChars(EleTy);
 
   // If a variable is reinterpreted as a type that doesn't fit into a larger
   // type evenly, round it down.
@@ -792,8 +789,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   T = AT->getElementType();
 
   SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-  return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR,
-                                                  getContext()));
+  return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
 }
 
 //===----------------------------------------------------------------------===//
@@ -826,7 +822,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
     case MemRegion::SymbolicRegionKind: {
       const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
       SymbolRef Sym = SR->getSymbol();
-      QualType T = Sym->getType(getContext());
+      QualType T = Sym->getType(Ctx);
       QualType EleTy;
 
       if (const PointerType *PT = T->getAs<PointerType>())
@@ -835,14 +831,14 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
         EleTy = T->getAs<ObjCObjectPointerType>()->getPointeeType();
 
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-      ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
+      ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, Ctx);
       break;
     }
     case MemRegion::AllocaRegionKind: {
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
-      QualType EleTy = getContext().CharTy; // Create an ElementRegion of bytes.
+      QualType EleTy = Ctx.CharTy; // Create an ElementRegion of bytes.
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-      ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
+      ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, Ctx);
       break;
     }
 
@@ -897,13 +893,13 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
                 cast<nonloc::ConcreteInt>(ValMgr.convertToArrayIndex(*Offset)));
       const MemRegion* NewER =
         MRMgr.getElementRegion(ER->getElementType(), NewIdx,
-                               ER->getSuperRegion(), getContext());
+                               ER->getSuperRegion(), Ctx);
       return ValMgr.makeLoc(NewER);
     }
     if (0 == Base->getValue()) {
       const MemRegion* NewER =
         MRMgr.getElementRegion(ER->getElementType(), R,
-                               ER->getSuperRegion(), getContext());
+                               ER->getSuperRegion(), Ctx);
       return ValMgr.makeLoc(NewER);
     }
   }
@@ -983,7 +979,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   if (isa<AllocaRegion>(MR) || isa<SymbolicRegion>(MR)) {
     if (T.isNull()) {
       const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
-      T = SR->getSymbol()->getType(getContext());
+      T = SR->getSymbol()->getType(Ctx);
     }
     MR = GetElementZeroRegion(MR, T);
   }
@@ -1127,7 +1123,6 @@ SVal RegionStoreManager::RetrieveElement(Store store,
   if (const StringRegion *StrR=dyn_cast<StringRegion>(superR)) {
     // FIXME: Handle loads from strings where the literal is treated as
     // an integer, e.g., *((unsigned int*)"hello")
-    ASTContext &Ctx = getContext();
     QualType T = Ctx.getAsArrayType(StrR->getValueType())->getElementType();
     if (T != Ctx.getCanonicalType(R->getElementType()))
       return UnknownVal();
@@ -1384,7 +1379,6 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
     if (ER->getIndex().isZeroConstant()) {
       if (const TypedRegion *superR =
             dyn_cast<TypedRegion>(ER->getSuperRegion())) {
-        ASTContext &Ctx = getContext();
         QualType superTy = superR->getValueType();
         QualType erTy = ER->getValueType();
 
@@ -1403,7 +1397,7 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   else if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
     // Binding directly to a symbolic region should be treated as binding
     // to element 0.
-    QualType T = SR->getSymbol()->getType(getContext());
+    QualType T = SR->getSymbol()->getType(Ctx);
 
     // FIXME: Is this the right way to handle symbols that are references?
     if (const PointerType *PT = T->getAs<PointerType>())
@@ -1455,7 +1449,7 @@ Store RegionStoreManager::setImplicitDefaultValue(Store store,
   else if (T->isStructureOrClassType() || T->isArrayType()) {
     // Set the default value to a zero constant when it is a structure
     // or array.  The type doesn't really matter.
-    V = ValMgr.makeZeroVal(ValMgr.getContext().IntTy);
+    V = ValMgr.makeZeroVal(Ctx.IntTy);
   }
   else {
     return store;
@@ -1467,7 +1461,6 @@ Store RegionStoreManager::setImplicitDefaultValue(Store store,
 Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
                                     SVal Init) {
 
-  ASTContext &Ctx = getContext();
   const ArrayType *AT =cast<ArrayType>(Ctx.getCanonicalType(R->getValueType()));
   QualType ElementTy = AT->getElementType();
   Optional<uint64_t> Size;
@@ -1504,7 +1497,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
       break;
 
     SVal Idx = ValMgr.makeArrayIndex(i);
-    const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
+    const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, Ctx);
 
     if (ElementTy->isStructureOrClassType())
       store = BindStruct(store, ER, *VI);
