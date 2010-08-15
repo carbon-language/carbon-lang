@@ -758,6 +758,7 @@ void StmtProfiler::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *S) {
 }
 
 void StmtProfiler::VisitOverloadExpr(OverloadExpr *S) {
+  VisitExpr(S);
   VisitNestedNameSpecifier(S->getQualifier());
   VisitName(S->getName());
   ID.AddBoolean(S->hasExplicitTemplateArgs());
