@@ -1598,7 +1598,8 @@ bool ASTUnit::Save(llvm::StringRef File) {
   // FIXME: Can we somehow regenerate the stat cache here, or do we need to 
   // unconditionally create a stat cache when we parse the file?
   std::string ErrorInfo;
-  llvm::raw_fd_ostream Out(File.str().c_str(), ErrorInfo);
+  llvm::raw_fd_ostream Out(File.str().c_str(), ErrorInfo,
+                           llvm::raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty() || Out.has_error())
     return true;
   
@@ -1609,7 +1610,6 @@ bool ASTUnit::Save(llvm::StringRef File) {
   
   // Write the generated bitstream to "Out".
   Out.write((char *)&Buffer.front(), Buffer.size());  
-  Out.flush();
   Out.close();
   return Out.has_error();
 }
