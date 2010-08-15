@@ -661,7 +661,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   // FIXME: Empty Scope and AttributeList (required to handle attribute packed).
   SemaRef.ActOnEnumBody(Enum->getLocation(), SourceLocation(), SourceLocation(),
                         Sema::DeclPtrTy::make(Enum),
-                        &Enumerators[0], Enumerators.size(),
+                        Enumerators.data(), Enumerators.size(),
                         0, 0);
 
   return Enum;
