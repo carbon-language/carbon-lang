@@ -521,6 +521,24 @@ static void RemoveUsingDecls(LookupResult &R) {
   F.done();
 }
 
+/// \brief Check for this common pattern:
+/// @code
+/// class S {
+///   S(const S&); // DO NOT IMPLEMENT
+///   void operator=(const S&); // DO NOT IMPLEMENT
+/// };
+/// @endcode
+static bool IsDisallowedCopyOrAssign(const CXXMethodDecl *D) {
+  // FIXME: Should check for private access too but access is set after we get
+  // the decl here.
+  if (D->isThisDeclarationADefinition())
+    return false;
+
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
+    return CD->isCopyConstructor();
+  return D->isCopyAssignment();
+}
+
 bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   assert(D);
 
@@ -536,23 +554,23 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
     return false;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-        return false;
+    if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
+      return false;
 
-      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-        if (MD->isVirtual())
-          return false;
-      } else {
-        // 'static inline' functions are used in headers; don't warn.
-        if (FD->getStorageClass() == FunctionDecl::Static &&
-            FD->isInlineSpecified())
-          return false;
-      }
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      if (MD->isVirtual() || IsDisallowedCopyOrAssign(MD))
+        return false;
+    } else {
+      // 'static inline' functions are used in headers; don't warn.
+      if (FD->getStorageClass() == FunctionDecl::Static &&
+          FD->isInlineSpecified())
+        return false;
+    }
 
     if (FD->isThisDeclarationADefinition())
       return !Context.DeclMustBeEmitted(FD);
     return true;
-   }
+  }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (VD->isStaticDataMember() &&

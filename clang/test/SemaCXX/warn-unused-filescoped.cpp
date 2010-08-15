@@ -11,6 +11,8 @@ namespace {
     void m1() { }  // expected-warning{{unused}}
     void m2();  // expected-warning{{unused}}
     void m3();
+    S(const S&);
+    void operator=(const S&);
   };
 
   template <typename T>
