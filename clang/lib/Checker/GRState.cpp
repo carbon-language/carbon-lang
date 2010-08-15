@@ -14,6 +14,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Checker/PathSensitive/GRStateTrait.h"
 #include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/Checker/PathSensitive/GRSubEngine.h"
 #include "clang/Checker/PathSensitive/GRTransferFuncs.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -68,6 +69,73 @@ const GRState *GRStateManager::MarshalState(const GRState *state,
   return getPersistentState(State);
 }
 
+const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
+                                            const LocationContext *LC,
+                                            SVal V) const {
+  Store new_store = 
+    getStateManager().StoreMgr->BindCompoundLiteral(St, CL, LC, V);
+  return makeWithStore(new_store);
+}
+
+const GRState *GRState::bindDecl(const VarRegion* VR, SVal IVal) const {
+  Store new_store = getStateManager().StoreMgr->BindDecl(St, VR, IVal);
+  return makeWithStore(new_store);
+}
+
+const GRState *GRState::bindDeclWithNoInit(const VarRegion* VR) const {
+  Store new_store = getStateManager().StoreMgr->BindDeclWithNoInit(St, VR);
+  return makeWithStore(new_store);
+}
+
+const GRState *GRState::bindLoc(Loc LV, SVal V) const {
+  GRStateManager &Mgr = getStateManager();
+  Store new_store = Mgr.StoreMgr->Bind(St, LV, V);
+  const GRState *new_state = makeWithStore(new_store);
+
+  const MemRegion *MR = LV.getAsRegion();
+  if (MR)
+    return Mgr.getOwningEngine().ProcessRegionChange(new_state, MR);
+
+  return new_state;
+}
+
+const GRState *GRState::bindDefault(SVal loc, SVal V) const {
+  GRStateManager &Mgr = getStateManager();
+  const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
+  Store new_store = Mgr.StoreMgr->BindDefault(St, R, V);
+  const GRState *new_state = makeWithStore(new_store);
+  return Mgr.getOwningEngine().ProcessRegionChange(new_state, R);
+}
+
+const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
+                                          const MemRegion * const *End,
+                                          const Expr *E, unsigned Count,
+                                          StoreManager::InvalidatedSymbols *IS,
+                                          bool invalidateGlobals) const {
+  GRStateManager &Mgr = getStateManager();
+  GRSubEngine &Eng = Mgr.getOwningEngine();
+
+  if (Eng.WantsRegionChangeUpdate(this)) {
+    StoreManager::InvalidatedRegions Regions;
+
+    Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
+                                                      E, Count, IS,
+                                                      invalidateGlobals,
+                                                      &Regions);
+    const GRState *new_state = makeWithStore(new_store);
+
+    return Eng.ProcessRegionChanges(new_state,
+                                    &Regions.front(),
+                                    &Regions.back()+1);
+  }
+
+  Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
+                                                    E, Count, IS,
+                                                    invalidateGlobals,
+                                                    NULL);
+  return makeWithStore(new_store);
+}
+
 const GRState *GRState::unbindLoc(Loc LV) const {
   assert(!isa<loc::MemRegionVal>(LV) && "Use InvalidateRegion instead.");
 
@@ -78,6 +146,11 @@ const GRState *GRState::unbindLoc(Loc LV) const {
     return this;
 
   return makeWithStore(NewStore);
+}
+
+const GRState *GRState::EnterStackFrame(const StackFrameContext *frame) const {
+  Store new_store = getStateManager().StoreMgr->EnterStackFrame(this, frame);
+  return makeWithStore(new_store);
 }
 
 SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
