@@ -757,14 +757,18 @@ void StmtProfiler::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *S) {
   VisitType(S->getDestroyedType());
 }
 
-void
-StmtProfiler::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *S) {
-  VisitExpr(S);
+void StmtProfiler::VisitOverloadExpr(OverloadExpr *S) {
   VisitNestedNameSpecifier(S->getQualifier());
   VisitName(S->getName());
   ID.AddBoolean(S->hasExplicitTemplateArgs());
   if (S->hasExplicitTemplateArgs())
-    VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
+    VisitTemplateArguments(S->getExplicitTemplateArgs().getTemplateArgs(),
+                           S->getExplicitTemplateArgs().NumTemplateArgs);
+}
+
+void
+StmtProfiler::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *S) {
+  VisitOverloadExpr(S);
 }
 
 void StmtProfiler::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *S) {
