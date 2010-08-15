@@ -127,7 +127,12 @@ public:
     /// to indicate a struct or class name.
     CCC_ClassOrStructTag,
     /// \brief Code completion occurred where a protocol name is expected.
-    CCC_ObjCProtocolName
+    CCC_ObjCProtocolName,
+    /// \brief Code completion occurred where a namespace or namespace alias
+    /// is expected.
+    CCC_Namespace,
+    /// \brief Code completion occurred where a type name is expected.
+    CCC_Type
   };
 
 private:
@@ -382,6 +387,10 @@ protected:
   /// the completion results.
   bool IncludeCodePatterns;
   
+  /// \brief Whether to include global (top-level) declarations and names in
+  /// the completion results.
+  bool IncludeGlobals;
+  
   /// \brief Whether the output format for the code-completion consumer is
   /// binary.
   bool OutputIsBinary;
@@ -588,18 +597,21 @@ public:
   };
   
   CodeCompleteConsumer() : IncludeMacros(false), IncludeCodePatterns(false),
-                           OutputIsBinary(false) { }
+                           IncludeGlobals(true), OutputIsBinary(false) { }
   
   CodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
-                       bool OutputIsBinary)
+                       bool IncludeGlobals, bool OutputIsBinary)
     : IncludeMacros(IncludeMacros), IncludeCodePatterns(IncludeCodePatterns),
-      OutputIsBinary(OutputIsBinary) { }
+      IncludeGlobals(IncludeGlobals), OutputIsBinary(OutputIsBinary) { }
   
   /// \brief Whether the code-completion consumer wants to see macros.
   bool includeMacros() const { return IncludeMacros; }
 
   /// \brief Whether the code-completion consumer wants to see code patterns.
   bool includeCodePatterns() const { return IncludeCodePatterns; }
+  
+  /// \brief Whether to include global (top-level) declaration results.
+  bool includeGlobals() const { return IncludeGlobals; }
   
   /// \brief Determine whether the output of this consumer is binary.
   bool isOutputBinary() const { return OutputIsBinary; }
@@ -639,8 +651,10 @@ public:
   /// \brief Create a new printing code-completion consumer that prints its
   /// results to the given raw output stream.
   PrintingCodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
+                               bool IncludeGlobals,
                                llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, false), OS(OS) {}
+    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, IncludeGlobals,
+                           false), OS(OS) {}
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Sema &S, 
@@ -664,8 +678,9 @@ public:
   /// results to the given raw output stream in a format readable to the CIndex
   /// library.
   CIndexCodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
-                             llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, true), OS(OS) {}
+                             bool IncludeGlobals, llvm::raw_ostream &OS)
+    : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, IncludeGlobals,
+                           true), OS(OS) {}
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Sema &S, 

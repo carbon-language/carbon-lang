@@ -88,6 +88,79 @@ void ASTUnit::CleanTemporaryFiles() {
   TemporaryFiles.clear();
 }
 
+/// \brief Determine the set of code-completion contexts in which this 
+/// declaration should be shown.
+static unsigned getDeclShowContexts(NamedDecl *ND,
+                                    const LangOptions &LangOpts) {
+  if (isa<UsingShadowDecl>(ND))
+    ND = dyn_cast<NamedDecl>(ND->getUnderlyingDecl());
+  if (!ND)
+    return 0;
+  
+  unsigned Contexts = 0;
+  if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND) || 
+      isa<ClassTemplateDecl>(ND) || isa<TemplateTemplateParmDecl>(ND)) {
+    // Types can appear in these contexts.
+    if (LangOpts.CPlusPlus || !isa<TagDecl>(ND))
+      Contexts |= (1 << (CodeCompletionContext::CCC_TopLevel - 1))
+                | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
+                | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
+                | (1 << (CodeCompletionContext::CCC_Statement - 1))
+                | (1 << (CodeCompletionContext::CCC_Type - 1));
+
+    // In C++, types can appear in expressions contexts (for functional casts).
+    if (LangOpts.CPlusPlus)
+      Contexts |= (1 << (CodeCompletionContext::CCC_Expression - 1));
+    
+    // In Objective-C, message sends can send interfaces. In Objective-C++,
+    // all types are available due to functional casts.
+    if (LangOpts.CPlusPlus || isa<ObjCInterfaceDecl>(ND))
+      Contexts |= (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+
+    // Deal with tag names.
+    if (isa<EnumDecl>(ND)) {
+      Contexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1));
+      
+      // Part of the nested-name-specifier.
+      if (LangOpts.CPlusPlus0x)
+        Contexts |= (1 << (CodeCompletionContext::CCC_MemberAccess - 1));
+    } else if (RecordDecl *Record = dyn_cast<RecordDecl>(ND)) {
+      if (Record->isUnion())
+        Contexts |= (1 << (CodeCompletionContext::CCC_UnionTag - 1));
+      else
+        Contexts |= (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
+      
+      // Part of the nested-name-specifier.
+      if (LangOpts.CPlusPlus)
+        Contexts |= (1 << (CodeCompletionContext::CCC_MemberAccess - 1));
+    }
+  } else if (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)) {
+    // Values can appear in these contexts.
+    Contexts = (1 << (CodeCompletionContext::CCC_Statement - 1))
+             | (1 << (CodeCompletionContext::CCC_Expression - 1))
+             | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+  } else if (isa<ObjCProtocolDecl>(ND)) {
+    Contexts = (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
+  } else if (isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) {
+    Contexts = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
+             | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
+             | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
+             | (1 << (CodeCompletionContext::CCC_Statement - 1))
+             | (1 << (CodeCompletionContext::CCC_Expression - 1))
+             | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
+             | (1 << (CodeCompletionContext::CCC_Namespace - 1));
+   
+    // Part of the nested-name-specifier.
+    Contexts |= (1 << (CodeCompletionContext::CCC_MemberAccess - 1))
+             | (1 << (CodeCompletionContext::CCC_EnumTag - 1))
+             | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
+             | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1))
+             | (1 << (CodeCompletionContext::CCC_Type - 1));
+  }
+  
+  return Contexts;
+}
+
 void ASTUnit::CacheCodeCompletionResults() {
   if (!TheSema)
     return;
@@ -111,10 +184,17 @@ void ASTUnit::CacheCodeCompletionResults() {
   // Translate global code completions into cached completions.
   for (unsigned I = 0, N = Results.size(); I != N; ++I) {
     switch (Results[I].Kind) {
-    case Result::RK_Declaration:
-      // FIXME: Handle declarations!
+    case Result::RK_Declaration: {
+      CachedCodeCompletionResult CachedResult;
+      CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
+      CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
+                                                        Ctx->getLangOptions());
+      CachedResult.Priority = Results[I].Priority;
+      CachedResult.Kind = Results[I].CursorKind;
+      CachedCompletionResults.push_back(CachedResult);
       break;
-      
+    }
+        
     case Result::RK_Keyword:
     case Result::RK_Pattern:
       // Ignore keywords and patterns; we don't care, since they are so
@@ -1287,8 +1367,9 @@ namespace {
     
   public:
     AugmentedCodeCompleteConsumer(ASTUnit &AST, CodeCompleteConsumer &Next,
-                                  bool IncludeMacros, bool IncludeCodePatterns)
-      : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns,
+                                  bool IncludeMacros, bool IncludeCodePatterns,
+                                  bool IncludeGlobals)
+      : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, IncludeGlobals,
                              Next.isOutputBinary()), AST(AST), Next(Next) 
     { 
       // Compute the set of contexts in which we will look when we don't have
@@ -1387,6 +1468,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   FrontendOpts.ShowMacrosInCodeCompletion
     = IncludeMacros && CachedCompletionResults.empty();
   FrontendOpts.ShowCodePatternsInCodeCompletion = IncludeCodePatterns;
+  FrontendOpts.ShowGlobalSymbolsInCodeCompletion
+    = CachedCompletionResults.empty();
   FrontendOpts.CodeCompletionAt.FileName = File;
   FrontendOpts.CodeCompletionAt.Line = Line;
   FrontendOpts.CodeCompletionAt.Column = Column;
@@ -1447,7 +1530,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   // code-completion results.
   AugmentedCodeCompleteConsumer 
   AugmentedConsumer(*this, Consumer, FrontendOpts.ShowMacrosInCodeCompletion,
-                    FrontendOpts.ShowCodePatternsInCodeCompletion);
+                    FrontendOpts.ShowCodePatternsInCodeCompletion,
+                    FrontendOpts.ShowGlobalSymbolsInCodeCompletion);
   Clang.setCodeCompletionConsumer(&AugmentedConsumer);
 
   // If we have a precompiled preamble, try to use it. We only allow

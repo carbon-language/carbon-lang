@@ -1486,7 +1486,9 @@ public:
     /// C99 6.2.2p4-5 and C++ [basic.link]p6.
     LookupRedeclarationWithLinkage,
     /// Look up the name of an Objective-C protocol.
-    LookupObjCProtocolName
+    LookupObjCProtocolName,
+    /// \brief Look up any declaration with any name.
+    LookupAnyName
   };
 
   /// \brief Specifies whether (or how) name lookup is being performed for a
@@ -1534,9 +1536,11 @@ public:
                                ADLResult &Functions);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
-                          VisibleDeclConsumer &Consumer);
+                          VisibleDeclConsumer &Consumer,
+                          bool IncludeGlobalScope = true);
   void LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
-                          VisibleDeclConsumer &Consumer);
+                          VisibleDeclConsumer &Consumer,
+                          bool IncludeGlobalScope = true);
   
   /// \brief The context in which typo-correction occurs.
   ///

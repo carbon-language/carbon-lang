@@ -547,7 +547,8 @@ namespace {
 
   public:
     explicit CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results)
-      : CodeCompleteConsumer(true, false, false), AllocatedResults(Results) { }
+      : CodeCompleteConsumer(true, false, true, false), 
+        AllocatedResults(Results) { }
 
     virtual void ProcessCodeCompleteResults(Sema &S, 
                                             CodeCompletionContext Context,

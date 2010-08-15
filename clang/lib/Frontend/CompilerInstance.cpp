@@ -328,6 +328,7 @@ void CompilerInstance::createCodeCompletionConsumer() {
                                    getFrontendOpts().DebugCodeCompletionPrinter,
                                    getFrontendOpts().ShowMacrosInCodeCompletion,
                              getFrontendOpts().ShowCodePatternsInCodeCompletion,
+                           getFrontendOpts().ShowGlobalSymbolsInCodeCompletion,
                                    llvm::outs()));
     if (!CompletionConsumer)
       return;
@@ -356,15 +357,18 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                                bool UseDebugPrinter,
                                                bool ShowMacros,
                                                bool ShowCodePatterns,
+                                               bool ShowGlobals,
                                                llvm::raw_ostream &OS) {
   if (EnableCodeCompletion(PP, Filename, Line, Column))
     return 0;
 
   // Set up the creation routine for code-completion.
   if (UseDebugPrinter)
-    return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns, OS);
+    return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns, 
+                                            ShowGlobals, OS);
   else
-    return new CIndexCodeCompleteConsumer(ShowMacros, ShowCodePatterns, OS);
+    return new CIndexCodeCompleteConsumer(ShowMacros, ShowCodePatterns, 
+                                          ShowGlobals, OS);
 }
 
 void CompilerInstance::createSema(bool CompleteTranslationUnit,

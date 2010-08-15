@@ -254,6 +254,12 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
   case Sema::LookupObjCProtocolName:
     IDNS = Decl::IDNS_ObjCProtocol;
     break;
+      
+  case Sema::LookupAnyName:
+    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member 
+      | Decl::IDNS_Using | Decl::IDNS_Namespace | Decl::IDNS_ObjCProtocol
+      | Decl::IDNS_Type;
+    break;
   }
   return IDNS;
 }
@@ -1199,6 +1205,17 @@ static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
   return Found;
 }
 
+/// \brief Callback that looks for any member of a class with the given name.
+static bool LookupAnyMember(const CXXBaseSpecifier *Specifier, 
+                            CXXBasePath &Path,
+                            void *Name) {
+  RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
+  
+  DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
+  Path.Decls = BaseRecord->lookup(N);
+  return Path.Decls.first != Path.Decls.second;
+}
+
 /// \brief Perform qualified name lookup into a given context.
 ///
 /// Qualified name lookup (C++ [basic.lookup.qual]) is used to find
@@ -1294,6 +1311,10 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
       BaseCallback = &CXXRecordDecl::FindTagMember;
       break;
 
+    case LookupAnyName:
+      BaseCallback = &LookupAnyMember;
+      break;
+      
     case LookupUsingDeclName:
       // This lookup is for redeclarations only.
       
@@ -2223,6 +2244,10 @@ public:
     return !VisitedContexts.insert(Ctx);
   }
 
+  bool alreadyVisitedContext(DeclContext *Ctx) {
+    return VisitedContexts.count(Ctx);
+  }
+
   /// \brief Determine whether the given declaration is hidden in the
   /// current scope.
   ///
@@ -2503,7 +2528,9 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
   if (!S)
     return;
 
-  if (!S->getEntity() || !S->getParent() ||
+  if (!S->getEntity() || 
+      (!S->getParent() && 
+       !Visited.alreadyVisitedContext((DeclContext *)S->getEntity())) ||
       ((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
     // Walk through the declarations in this Scope.
     for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
@@ -2581,7 +2608,8 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
 }
 
 void Sema::LookupVisibleDecls(Scope *S, LookupNameKind Kind,
-                              VisibleDeclConsumer &Consumer) {
+                              VisibleDeclConsumer &Consumer,
+                              bool IncludeGlobalScope) {
   // Determine the set of using directives available during
   // unqualified name lookup.
   Scope *Initial = S;
@@ -2598,14 +2626,19 @@ void Sema::LookupVisibleDecls(Scope *S, LookupNameKind Kind,
   // Look for visible declarations.
   LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
   VisibleDeclsRecord Visited;
+  if (!IncludeGlobalScope)
+    Visited.visitedContext(Context.getTranslationUnitDecl());
   ShadowContextRAII Shadow(Visited);
   ::LookupVisibleDecls(Initial, Result, UDirs, Consumer, Visited);
 }
 
 void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
-                              VisibleDeclConsumer &Consumer) {
+                              VisibleDeclConsumer &Consumer,
+                              bool IncludeGlobalScope) {
   LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
   VisibleDeclsRecord Visited;
+  if (!IncludeGlobalScope)
+    Visited.visitedContext(Context.getTranslationUnitDecl());
   ShadowContextRAII Shadow(Visited);
   ::LookupVisibleDecls(Ctx, Result, /*QualifiedNameLookup=*/true, 
                        /*InBaseClass=*/false, Consumer, Visited);

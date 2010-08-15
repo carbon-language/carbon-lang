@@ -363,6 +363,8 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-code-completion-macros");
   if (Opts.ShowCodePatternsInCodeCompletion)
     Res.push_back("-code-completion-patterns");
+  if (!Opts.ShowGlobalSymbolsInCodeCompletion)
+    Res.push_back("-no-code-completion-globals");
   if (Opts.ShowStats)
     Res.push_back("-print-stats");
   if (Opts.ShowTimers)
@@ -1047,6 +1049,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
   Opts.ShowCodePatternsInCodeCompletion
     = Args.hasArg(OPT_code_completion_patterns);
+  Opts.ShowGlobalSymbolsInCodeCompletion
+    = !Args.hasArg(OPT_no_code_completion_globals);
   Opts.ShowStats = Args.hasArg(OPT_print_stats);
   Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
   Opts.ShowVersion = Args.hasArg(OPT_version);

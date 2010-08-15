@@ -69,6 +69,8 @@ public:
                                            /// results.
   unsigned ShowCodePatternsInCodeCompletion : 1; ///< Show code patterns in code
                                                  /// completion results.
+  unsigned ShowGlobalSymbolsInCodeCompletion : 1; ///< Show top-level decls in
+                                                  /// code completion results.
   unsigned ShowStats : 1;                  ///< Show frontend performance
                                            /// metrics and statistics.
   unsigned ShowTimers : 1;                 ///< Show timers for individual
@@ -122,6 +124,7 @@ public:
     ShowHelp = 0;
     ShowMacrosInCodeCompletion = 0;
     ShowCodePatternsInCodeCompletion = 0;
+    ShowGlobalSymbolsInCodeCompletion = 1;
     ShowStats = 0;
     ShowTimers = 0;
     ShowVersion = 0;

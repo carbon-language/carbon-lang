@@ -544,7 +544,8 @@ public:
   createCodeCompletionConsumer(Preprocessor &PP, const std::string &Filename,
                                unsigned Line, unsigned Column,
                                bool UseDebugPrinter, bool ShowMacros,
-                               bool ShowCodePatterns, llvm::raw_ostream &OS);
+                               bool ShowCodePatterns, bool ShowGlobals,
+                               llvm::raw_ostream &OS);
 
   /// \brief Create the Sema object to be used for parsing.
   void createSema(bool CompleteTranslationUnit,
