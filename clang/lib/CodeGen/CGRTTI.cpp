@@ -545,18 +545,31 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   Fields.push_back(BuildName(Ty, DecideHidden(Ty), Linkage));
 
   switch (Ty->getTypeClass()) {
-  default: assert(false && "Unhandled type class!");
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    assert(false && "Non-canonical and dependent types shouldn't get here");
 
   // GCC treats vector types as fundamental types.
   case Type::Builtin:
   case Type::Vector:
   case Type::ExtVector:
+  case Type::Complex:
+  case Type::BlockPointer:
     // Itanium C++ ABI 2.9.5p4:
     // abi::__fundamental_type_info adds no data members to std::type_info.
     break;
-      
+
+  case Type::LValueReference:
+  case Type::RValueReference:
+    assert(false && "References shouldn't get here");
+
   case Type::ConstantArray:
   case Type::IncompleteArray:
+  case Type::VariableArray:
     // Itanium C++ ABI 2.9.5p5:
     // abi::__array_type_info adds no data members to std::type_info.
     break;
