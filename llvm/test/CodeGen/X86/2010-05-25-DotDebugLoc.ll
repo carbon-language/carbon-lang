@@ -1,4 +1,4 @@
-; RUN: llc -O2 < %s | grep debug_loc12
+; RUN: llc -march=x86 -O2 < %s | grep debug_loc12
 ; Test to check .debug_loc support. This test case emits 13 debug_loc entries.
 
 %0 = type { double }

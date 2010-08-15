@@ -1,4 +1,4 @@
-; RUN: llc -O0 < %s | FileCheck %s
+; RUN: llc -march=x86 -O0 < %s | FileCheck %s
 ; Currently, dbg.declare generates a DEBUG_VALUE comment.  Eventually it will
 ; generate DWARF and this test will need to be modified or removed.
 
