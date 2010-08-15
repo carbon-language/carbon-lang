@@ -77,9 +77,8 @@ public:
 
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
-  const GRState *RemoveDeadBindings(GRState &state,
-                                    const StackFrameContext *LCtx,
-                                    SymbolReaper& SymReaper,
+  Store RemoveDeadBindings(Store store, const StackFrameContext *LCtx,
+                           SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
@@ -281,12 +280,11 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
   }
 }
 
-const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state,
+Store BasicStoreManager::RemoveDeadBindings(Store store,
                                             const StackFrameContext *LCtx,
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
-  Store store = state.getStore();
   BindingsTy B = GetBindings(store);
   typedef SVal::symbol_iterator symbol_iterator;
 
@@ -361,8 +359,7 @@ const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state,
     }
   }
 
-  state.setStore(store);
-  return StateMgr.getPersistentState(state);
+  return store;
 }
 
 Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl,
