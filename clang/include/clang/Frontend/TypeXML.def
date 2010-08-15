@@ -278,15 +278,7 @@ NODE_XML(UnresolvedUsingType, "UnresolvedUsing")
   ID_ATTRIBUTE_XML
 END_NODE_XML
 
-NODE_XML(DependentTypeOfExprType, "DependentTypeOfExpr")
-  ID_ATTRIBUTE_XML
-END_NODE_XML
-
 NODE_XML(DecltypeType, "Decltype")
-  ID_ATTRIBUTE_XML
-END_NODE_XML
-
-NODE_XML(DependentDecltypeType, "DependentDecltype")
   ID_ATTRIBUTE_XML
 END_NODE_XML
 
