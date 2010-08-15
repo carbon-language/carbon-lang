@@ -1,22 +1,18 @@
-include "llvm/CompilerDriver/Common.td"
+//===- Clang.td - LLVMC toolchain descriptions -------------*- tablegen -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains compilation graph description used by llvmc.
+//
+//===----------------------------------------------------------------------===//
 
-def Priority : PluginPriority<1>;
 
 def Options : OptionList<[
-// Extern options
-(switch_option "E", (extern)),
-(switch_option "S", (extern)),
-(switch_option "c", (extern)),
-(switch_option "fsyntax-only", (extern)),
-(switch_option "emit-llvm", (extern)),
-(switch_option "pthread", (extern)),
-(parameter_list_option "I", (extern)),
-(parameter_list_option "include", (extern)),
-(parameter_list_option "L", (extern)),
-(parameter_list_option "l", (extern)),
-(prefix_list_option "Wa,", (extern)),
-(prefix_list_option "Wl,", (extern)),
-
 (switch_option "clang", (help "Use Clang instead of llvm-gcc"))
 ]>;
 
@@ -71,19 +67,9 @@ def llvm_ld : Tool<
  (join)
 ]>;
 
-// Language map
-
-def LanguageMap : LanguageMap<[
-    LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
-    LangToSuffixes<"c", ["c"]>,
-    LangToSuffixes<"objective-c", ["m"]>,
-    LangToSuffixes<"c-cpp-output", ["i"]>,
-    LangToSuffixes<"objective-c-cpp-output", ["mi"]>
-]>;
-
 // Compilation graph
 
-def CompilationGraph : CompilationGraph<[
+def ClangCompilationGraph : CompilationGraph<[
     OptionalEdge<"root", "clang_c",
                          (case (switch_on "clang"), (inc_weight))>,
     OptionalEdge<"root", "clang_cpp",

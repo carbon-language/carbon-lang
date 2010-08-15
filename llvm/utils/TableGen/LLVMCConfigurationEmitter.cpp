@@ -234,10 +234,9 @@ OptionType::OptionType stringToOptionType(const std::string& T) {
 
 namespace OptionDescriptionFlags {
   enum OptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
-                                ReallyHidden = 0x4, Extern = 0x8,
-                                OneOrMore = 0x10, Optional = 0x20,
-                                CommaSeparated = 0x40, ForwardNotSplit = 0x80,
-                                ZeroOrMore = 0x100 };
+                                ReallyHidden = 0x4, OneOrMore = 0x8,
+                                Optional = 0x10, CommaSeparated = 0x20,
+                                ForwardNotSplit = 0x40, ZeroOrMore = 0x80 };
 }
 
 /// OptionDescription - Represents data contained in a single
@@ -278,9 +277,6 @@ struct OptionDescription {
 
   bool isCommaSeparated() const;
   void setCommaSeparated();
-
-  bool isExtern() const;
-  void setExtern();
 
   bool isForwardNotSplit() const;
   void setForwardNotSplit();
@@ -370,13 +366,6 @@ bool OptionDescription::isForwardNotSplit() const {
 }
 void OptionDescription::setForwardNotSplit() {
   Flags |= OptionDescriptionFlags::ForwardNotSplit;
-}
-
-bool OptionDescription::isExtern() const {
-  return Flags & OptionDescriptionFlags::Extern;
-}
-void OptionDescription::setExtern() {
-  Flags |= OptionDescriptionFlags::Extern;
 }
 
 bool OptionDescription::isRequired() const {
@@ -653,7 +642,6 @@ public:
     : optDesc_(OD)
   {
     if (!staticMembersInitialized_) {
-      AddHandler("extern", &CollectOptionProperties::onExtern);
       AddHandler("help", &CollectOptionProperties::onHelp);
       AddHandler("hidden", &CollectOptionProperties::onHidden);
       AddHandler("init", &CollectOptionProperties::onInit);
@@ -681,11 +669,6 @@ private:
 
   /// Option property handlers --
   /// Methods that handle option properties such as (help) or (hidden).
-
-  void onExtern (const DagInit& d) {
-    CheckNumberOfArguments(d, 0);
-    optDesc_.setExtern();
-  }
 
   void onHelp (const DagInit& d) {
     CheckNumberOfArguments(d, 1);
@@ -799,16 +782,17 @@ public:
 
     OptionDescription OD(Type, Name);
 
-    if (!OD.isExtern())
-      CheckNumberOfArguments(d, 2);
+
+    CheckNumberOfArguments(d, 2);
 
     if (OD.isAlias()) {
       // Aliases store the aliased option name in the 'Help' field.
       OD.Help = InitPtrToString(d.getArg(1));
     }
-    else if (!OD.isExtern()) {
+    else {
       processOptionProperties(d, OD);
     }
+
     OptDescs_.InsertDescription(OD);
   }
 
@@ -1041,22 +1025,6 @@ void FillInEdgeVector(RecordVector::const_iterator B,
     for (unsigned i = 0; i < edges->size(); ++i)
       Out.push_back(edges->getElementAsRecord(i));
   }
-}
-
-/// CalculatePriority - Calculate the priority of this plugin.
-int CalculatePriority(RecordVector::const_iterator B,
-                      RecordVector::const_iterator E) {
-  int priority = 0;
-
-  if (B != E) {
-    priority  = static_cast<int>((*B)->getValueAsInt("priority"));
-
-    if (++B != E)
-      throw "More than one 'PluginPriority' instance found: "
-        "most probably an error!";
-  }
-
-  return priority;
 }
 
 /// NotInGraph - Helper function object for FilterNotInGraph.
@@ -2382,8 +2350,7 @@ void EmitToolClassDefinition (const ToolDescription& D,
 /// EmitOptionDefinitions - Iterate over a list of option descriptions
 /// and emit registration code.
 void EmitOptionDefinitions (const OptionDescriptions& descs,
-                            bool HasSink, bool HasExterns,
-                            raw_ostream& O)
+                            bool HasSink, raw_ostream& O)
 {
   std::vector<OptionDescription> Aliases;
 
@@ -2397,16 +2364,8 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
       continue;
     }
 
-    if (val.isExtern())
-      O << "extern ";
-
     O << val.GenTypeDeclaration() << ' '
       << val.GenVariableName();
-
-    if (val.isExtern()) {
-      O << ";\n";
-      continue;
-    }
 
     O << "(\"" << val.Name << "\"\n";
 
@@ -2468,9 +2427,7 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
 
   // Emit the sink option.
   if (HasSink)
-    O << (HasExterns ? "extern cl" : "cl")
-      << "::list<std::string> " << SinkOptionName
-      << (HasExterns ? ";\n" : "(cl::Sink);\n");
+    O << "cl" << "::list<std::string> " << SinkOptionName << "(cl::Sink);\n";
 
   O << '\n';
 }
@@ -2629,11 +2586,11 @@ public:
 
 };
 
-/// EmitPreprocessOptions - Emit the PreprocessOptionsLocal() function.
+/// EmitPreprocessOptions - Emit the PreprocessOptions() function.
 void EmitPreprocessOptions (const RecordKeeper& Records,
                             const OptionDescriptions& OptDecs, raw_ostream& O)
 {
-  O << "int PreprocessOptionsLocal() {\n";
+  O << "int PreprocessOptions () {\n";
 
   const RecordVector& OptionPreprocessors =
     Records.getAllDerivedDefinitions("OptionPreprocessor");
@@ -2651,12 +2608,13 @@ void EmitPreprocessOptions (const RecordKeeper& Records,
   O << "}\n\n";
 }
 
-/// EmitPopulateLanguageMap - Emit the PopulateLanguageMapLocal() function.
+/// EmitPopulateLanguageMap - Emit the PopulateLanguageMap() function.
 void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
-  O << "int PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
+  O << "int PopulateLanguageMap (LanguageMap& langMap) {\n";
 
   // Get the relevant field out of RecordKeeper
+  // TODO: change this to getAllDerivedDefinitions.
   const Record* LangMapRecord = Records.getDef("LanguageMap");
 
   // It is allowed for a plugin to have no language map.
@@ -2758,13 +2716,12 @@ void EmitEdgeClasses (const RecordVector& EdgeVector,
   }
 }
 
-/// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraphLocal()
-/// function.
+/// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraph() function.
 void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
                                    const ToolDescriptions& ToolDescs,
                                    raw_ostream& O)
 {
-  O << "int PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
+  O << "int PopulateCompilationGraph (CompilationGraph& G) {\n";
 
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
          E = ToolDescs.end(); B != E; ++B)
@@ -2974,30 +2931,12 @@ void EmitHookDeclarations(const ToolDescriptions& ToolDescs,
   O << "}\n\n";
 }
 
-/// EmitRegisterPlugin - Emit code to register this plugin.
-void EmitRegisterPlugin(int Priority, raw_ostream& O) {
-  O << "struct Plugin : public llvmc::BasePlugin {\n\n";
-  O.indent(Indent1) << "int Priority() const { return "
-                    << Priority << "; }\n\n";
-  O.indent(Indent1) << "int PreprocessOptions() const\n";
-  O.indent(Indent1) << "{ return PreprocessOptionsLocal(); }\n\n";
-  O.indent(Indent1) << "int PopulateLanguageMap(LanguageMap& langMap) const\n";
-  O.indent(Indent1) << "{ return PopulateLanguageMapLocal(langMap); }\n\n";
-  O.indent(Indent1)
-    << "int PopulateCompilationGraph(CompilationGraph& graph) const\n";
-  O.indent(Indent1) << "{ return PopulateCompilationGraphLocal(graph); }\n"
-                    << "};\n\n"
-                    << "static llvmc::RegisterPlugin<Plugin> RP;\n\n";
-}
-
 /// EmitIncludes - Emit necessary #include directives and some
 /// additional declarations.
 void EmitIncludes(raw_ostream& O) {
   O << "#include \"llvm/CompilerDriver/BuiltinOptions.h\"\n"
     << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
     << "#include \"llvm/CompilerDriver/Error.h\"\n"
-    << "#include \"llvm/CompilerDriver/ForceLinkageMacros.h\"\n"
-    << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
     << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"
 
     << "#include \"llvm/Support/CommandLine.h\"\n"
@@ -3022,10 +2961,8 @@ void EmitIncludes(raw_ostream& O) {
 struct PluginData {
   OptionDescriptions OptDescs;
   bool HasSink;
-  bool HasExterns;
   ToolDescriptions ToolDescs;
   RecordVector Edges;
-  int Priority;
 };
 
 /// HasSink - Go through the list of tool descriptions and check if
@@ -3039,19 +2976,8 @@ bool HasSink(const ToolDescriptions& ToolDescs) {
   return false;
 }
 
-/// HasExterns - Go through the list of option descriptions and check
-/// if there are any external options.
-bool HasExterns(const OptionDescriptions& OptDescs) {
- for (OptionDescriptions::const_iterator B = OptDescs.begin(),
-         E = OptDescs.end(); B != E; ++B)
-    if (B->second.isExtern())
-      return true;
-
-  return false;
-}
-
-/// CollectPluginData - Collect tool and option properties,
-/// compilation graph edges and plugin priority from the parse tree.
+/// CollectPluginData - Collect compilation graph edges, tool properties and
+/// option properties from the parse tree.
 void CollectPluginData (const RecordKeeper& Records, PluginData& Data) {
   // Collect option properties.
   const RecordVector& OptionLists =
@@ -3063,18 +2989,12 @@ void CollectPluginData (const RecordKeeper& Records, PluginData& Data) {
   const RecordVector& Tools = Records.getAllDerivedDefinitions("Tool");
   CollectToolDescriptions(Tools.begin(), Tools.end(), Data.ToolDescs);
   Data.HasSink = HasSink(Data.ToolDescs);
-  Data.HasExterns = HasExterns(Data.OptDescs);
 
   // Collect compilation graph edges.
   const RecordVector& CompilationGraphs =
     Records.getAllDerivedDefinitions("CompilationGraph");
   FillInEdgeVector(CompilationGraphs.begin(), CompilationGraphs.end(),
                    Data.Edges);
-
-  // Calculate the priority of this plugin.
-  const RecordVector& Priorities =
-    Records.getAllDerivedDefinitions("PluginPriority");
-  Data.Priority = CalculatePriority(Priorities.begin(), Priorities.end());
 }
 
 /// CheckPluginData - Perform some sanity checks on the collected data.
@@ -3095,19 +3015,12 @@ void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
   EmitIncludes(O);
 
   // Emit global option registration code.
-  EmitOptionDefinitions(Data.OptDescs, Data.HasSink, Data.HasExterns, O);
+  EmitOptionDefinitions(Data.OptDescs, Data.HasSink, O);
 
   // Emit hook declarations.
   EmitHookDeclarations(Data.ToolDescs, Data.OptDescs, O);
 
   O << "namespace {\n\n";
-
-  // Emit PreprocessOptionsLocal() function.
-  EmitPreprocessOptions(Records, Data.OptDescs, O);
-
-  // Emit PopulateLanguageMapLocal() function
-  // (language map maps from file extensions to language names).
-  EmitPopulateLanguageMap(Records, O);
 
   // Emit Tool classes.
   for (ToolDescriptions::const_iterator B = Data.ToolDescs.begin(),
@@ -3117,18 +3030,23 @@ void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
   // Emit Edge# classes.
   EmitEdgeClasses(Data.Edges, Data.OptDescs, O);
 
-  // Emit PopulateCompilationGraphLocal() function.
-  EmitPopulateCompilationGraph(Data.Edges, Data.ToolDescs, O);
-
-  // Emit code for plugin registration.
-  EmitRegisterPlugin(Data.Priority, O);
-
   O << "} // End anonymous namespace.\n\n";
 
-  // Force linkage magic.
   O << "namespace llvmc {\n";
-  O << "LLVMC_FORCE_LINKAGE_DECL(LLVMC_PLUGIN_NAME) {}\n";
-  O << "}\n";
+  O << "namespace autogenerated {\n\n";
+
+  // Emit PreprocessOptions() function.
+  EmitPreprocessOptions(Records, Data.OptDescs, O);
+
+  // Emit PopulateLanguageMap() function
+  // (language map maps from file extensions to language names).
+  EmitPopulateLanguageMap(Records, O);
+
+  // Emit PopulateCompilationGraph() function.
+  EmitPopulateCompilationGraph(Data.Edges, Data.ToolDescs, O);
+
+  O << "} // End namespace autogenerated.\n";
+  O << "} // End namespace llvmc.\n\n";
 
   // EOF
 }
