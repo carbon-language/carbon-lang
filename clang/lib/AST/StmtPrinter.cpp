@@ -82,8 +82,16 @@ namespace  {
           return;
       else StmtVisitor<StmtPrinter>::Visit(S);
     }
+    
+    void VisitStmt(Stmt *Node) ATTRIBUTE_UNUSED {
+      Indent() << "<<unknown stmt type>>\n";
+    }
+    void VisitExpr(Expr *Node) ATTRIBUTE_UNUSED {
+      OS << "<<unknown expr type>>";
+    }
+    void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
 
-    void VisitStmt(Stmt *Node);
+#define ABSTRACT_STMT(CLASS)
 #define STMT(CLASS, PARENT) \
     void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.inc"
@@ -93,10 +101,6 @@ namespace  {
 //===----------------------------------------------------------------------===//
 //  Stmt printing methods.
 //===----------------------------------------------------------------------===//
-
-void StmtPrinter::VisitStmt(Stmt *Node) {
-  Indent() << "<<unknown stmt type>>\n";
-}
 
 /// PrintRawCompoundStmt - Print a compound stmt without indenting the {, and
 /// with no newline after the }.
@@ -462,10 +466,6 @@ void StmtPrinter::VisitCXXTryStmt(CXXTryStmt *Node) {
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//
 
-void StmtPrinter::VisitExpr(Expr *Node) {
-  OS << "<<unknown expr type>>";
-}
-
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
@@ -766,12 +766,6 @@ void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   PrintExpr(Node->getBase());
   OS << ".";
   OS << Node->getAccessor().getName();
-}
-void StmtPrinter::VisitCastExpr(CastExpr *) {
-  assert(0 && "CastExpr is an abstract class");
-}
-void StmtPrinter::VisitExplicitCastExpr(ExplicitCastExpr *) {
-  assert(0 && "ExplicitCastExpr is an abstract class");
 }
 void StmtPrinter::VisitCStyleCastExpr(CStyleCastExpr *Node) {
   OS << "(" << Node->getType().getAsString(Policy) << ")";
