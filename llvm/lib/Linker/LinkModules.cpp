@@ -78,8 +78,8 @@ class LinkerTypeMap : public AbstractTypeUser {
   typedef DenseMap<const Type*, PATypeHolder> TheMapTy;
   TheMapTy TheMap;
 
-  LinkerTypeMap(const LinkerTypeMap&) ATTRIBUTE_UNUSED; // DO NOT IMPLEMENT
-  void operator=(const LinkerTypeMap&) ATTRIBUTE_UNUSED; // DO NOT IMPLEMENT
+  LinkerTypeMap(const LinkerTypeMap&); // DO NOT IMPLEMENT
+  void operator=(const LinkerTypeMap&); // DO NOT IMPLEMENT
 public:
   LinkerTypeMap() {}
   ~LinkerTypeMap() {

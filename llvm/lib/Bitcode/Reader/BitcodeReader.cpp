@@ -135,8 +135,8 @@ namespace {
   /// @brief A class for maintaining the slot number definition
   /// as a placeholder for the actual definition for forward constants defs.
   class ConstantPlaceHolder : public ConstantExpr {
-    ConstantPlaceHolder() ATTRIBUTE_UNUSED;      // DO NOT IMPLEMENT
-    void operator=(const ConstantPlaceHolder &) ATTRIBUTE_UNUSED;//NOT IMPLEMENT
+    ConstantPlaceHolder();                       // DO NOT IMPLEMENT
+    void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
   public:
     // allocate space for exactly one operand
     void *operator new(size_t s) {

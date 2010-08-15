@@ -151,8 +151,8 @@ namespace {
     SmallSetVector<const Type *, 16> Types;
 
     // Disallow copying.
-    TypeSet(const TypeSet &) ATTRIBUTE_UNUSED;
-    TypeSet &operator=(const TypeSet &) ATTRIBUTE_UNUSED;
+    TypeSet(const TypeSet &);
+    TypeSet &operator=(const TypeSet &);
   };
 
   struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
