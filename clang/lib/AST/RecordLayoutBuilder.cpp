@@ -660,8 +660,9 @@ class RecordLayoutBuilder {
 
   void UpdateAlignment(unsigned NewAlignment);
 
-  RecordLayoutBuilder(const RecordLayoutBuilder&);   // DO NOT IMPLEMENT
-  void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
+  // DO NOT IMPLEMENT
+  RecordLayoutBuilder(const RecordLayoutBuilder&) ATTRIBUTE_UNUSED;
+  void operator=(const RecordLayoutBuilder&) ATTRIBUTE_UNUSED;
 public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };

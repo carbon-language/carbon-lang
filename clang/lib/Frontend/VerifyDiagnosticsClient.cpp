@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Compiler.h"
 using namespace clang;
 
 VerifyDiagnosticsClient::VerifyDiagnosticsClient(Diagnostic &_Diags,
@@ -100,8 +101,8 @@ protected:
     : Location(Location), Text(Text), Count(Count) { }
 
 private:
-  Directive(const Directive&); // DO NOT IMPLEMENT
-  void operator=(const Directive&); // DO NOT IMPLEMENT
+  Directive(const Directive&) ATTRIBUTE_UNUSED; // DO NOT IMPLEMENT
+  void operator=(const Directive&) ATTRIBUTE_UNUSED; // DO NOT IMPLEMENT
 };
 
 /// StandardDirective - Directive with string matching.
