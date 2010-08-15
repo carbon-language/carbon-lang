@@ -562,22 +562,23 @@ void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
 }
 
 void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
-  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-         E = SymReaper.dead_end(); I != E; ++I) {
-    SymbolRef Sym = *I;
-    const GRState *state = C.getState();
-    const RefState *RS = state->get<RegionState>(Sym);
-    if (!RS)
-      return;
+  if (!SymReaper.hasDeadSymbols())
+    return;
 
-    if (RS->isAllocated()) {
-      if (ExplodedNode *N = C.GenerateSink()) {
-        if (!BT_Leak)
-          BT_Leak = new BuiltinBug("Memory leak",
+  const GRState *state = C.getState();
+  RegionStateTy RS = state->get<RegionState>();
+
+  for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
+    if (SymReaper.isDead(I->first)) {
+      if (I->second.isAllocated()) {
+        if (ExplodedNode *N = C.GenerateSink()) {
+          if (!BT_Leak)
+            BT_Leak = new BuiltinBug("Memory leak",
                      "Allocated memory never released. Potential memory leak.");
-        // FIXME: where it is allocated.
-        BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
-        C.EmitReport(R);
+          // FIXME: where it is allocated.
+          BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
+          C.EmitReport(R);
+        }
       }
     }
   }
