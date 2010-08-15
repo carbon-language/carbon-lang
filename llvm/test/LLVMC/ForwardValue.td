@@ -7,8 +7,8 @@
 
 include "llvm/CompilerDriver/Common.td"
 
-def OptList : OptionList<[(parameter_option "a", (extern)),
-                          (prefix_list_option "b", (extern))]>;
+def OptList : OptionList<[(parameter_option "a", (help "dummy")),
+                          (prefix_list_option "b", (help "dummy"))]>;
 
 def dummy_tool : Tool<[
 (command "dummy_cmd"),

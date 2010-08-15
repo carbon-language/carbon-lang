@@ -10,7 +10,7 @@ include "llvm/CompilerDriver/Common.td"
 def OptList : OptionList<[
     // CHECK: cl::multi_val(2)
     (prefix_list_option "foo", (multi_val 2)),
-    (parameter_list_option "baz", (multi_val 2), (extern))]>;
+    (parameter_list_option "baz", (multi_val 2))]>;
 
 def dummy_tool : Tool<[
 (command "dummy_cmd"),

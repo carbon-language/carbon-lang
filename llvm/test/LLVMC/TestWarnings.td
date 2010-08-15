@@ -5,4 +5,4 @@
 
 include "llvm/CompilerDriver/Common.td"
 
-def OptList : OptionList<[(switch_option "Wall", (extern))]>;
+def OptList : OptionList<[(switch_option "Wall", (help "dummy"))]>;

@@ -1,4 +1,4 @@
-##===- tools/llvmc/driver/Makefile -------------------------*- Makefile -*-===##
+##===- tools/llvmc/src/Makefile ----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
