@@ -572,6 +572,9 @@ namespace {
     friend bool operator<(const TableEntry &TE, unsigned V) {
       return TE.from < V;
     }
+    friend bool operator<(unsigned V, const TableEntry &TE) {
+      return V < TE.from;
+    }
   };
 }
 
