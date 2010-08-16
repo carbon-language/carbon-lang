@@ -36,7 +36,7 @@ void AsmPrinter::EmitSLEB128(int Value, const char *Desc) const {
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
     
-  if (MAI->hasLEB128()) {
+  if (MAI->hasLEB128() && OutStreamer.hasRawTextSupport()) {
     // FIXME: MCize.
     OutStreamer.EmitRawText("\t.sleb128\t" + Twine(Value));
     return;
@@ -61,7 +61,7 @@ void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
  
-  if (MAI->hasLEB128() && PadTo == 0) {
+  if (MAI->hasLEB128() && PadTo == 0 && OutStreamer.hasRawTextSupport()) {
     // FIXME: MCize.
     OutStreamer.EmitRawText("\t.uleb128\t" + Twine(Value));
     return;
