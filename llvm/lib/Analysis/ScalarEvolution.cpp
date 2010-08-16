@@ -483,41 +483,6 @@ void SCEVUnknown::print(raw_ostream &OS) const {
 //                               SCEV Utilities
 //===----------------------------------------------------------------------===//
 
-static bool CompareTypes(const Type *A, const Type *B) {
-  if (A->getTypeID() != B->getTypeID())
-    return A->getTypeID() < B->getTypeID();
-  if (const IntegerType *AI = dyn_cast<IntegerType>(A)) {
-    const IntegerType *BI = cast<IntegerType>(B);
-    return AI->getBitWidth() < BI->getBitWidth();
-  }
-  if (const PointerType *AI = dyn_cast<PointerType>(A)) {
-    const PointerType *BI = cast<PointerType>(B);
-    return CompareTypes(AI->getElementType(), BI->getElementType());
-  }
-  if (const ArrayType *AI = dyn_cast<ArrayType>(A)) {
-    const ArrayType *BI = cast<ArrayType>(B);
-    if (AI->getNumElements() != BI->getNumElements())
-      return AI->getNumElements() < BI->getNumElements();
-    return CompareTypes(AI->getElementType(), BI->getElementType());
-  }
-  if (const VectorType *AI = dyn_cast<VectorType>(A)) {
-    const VectorType *BI = cast<VectorType>(B);
-    if (AI->getNumElements() != BI->getNumElements())
-      return AI->getNumElements() < BI->getNumElements();
-    return CompareTypes(AI->getElementType(), BI->getElementType());
-  }
-  if (const StructType *AI = dyn_cast<StructType>(A)) {
-    const StructType *BI = cast<StructType>(B);
-    if (AI->getNumElements() != BI->getNumElements())
-      return AI->getNumElements() < BI->getNumElements();
-    for (unsigned i = 0, e = AI->getNumElements(); i != e; ++i)
-      if (CompareTypes(AI->getElementType(i), BI->getElementType(i)) ||
-          CompareTypes(BI->getElementType(i), AI->getElementType(i)))
-        return CompareTypes(AI->getElementType(i), BI->getElementType(i));
-  }
-  return false;
-}
-
 namespace {
   /// SCEVComplexityCompare - Return true if the complexity of the LHS is less
   /// than the complexity of the RHS.  This comparator is used to canonicalize
