@@ -48,7 +48,6 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
@@ -84,7 +83,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
 
       AU.addPreserved<AliasAnalysis>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved("scalar-evolution");
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
       AU.addPreserved<DominanceFrontier>();
       AU.addPreservedID(LCSSAID);
