@@ -1667,9 +1667,9 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   assert(!Ops.empty() && "Cannot get empty mul!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
+  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
-    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
-           getEffectiveSCEVType(Ops[0]->getType()) &&
+    assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVMulExpr operand types don't match!");
 #endif
 
@@ -1989,9 +1989,9 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
                                bool HasNUW, bool HasNSW) {
   if (Operands.size() == 1) return Operands[0];
 #ifndef NDEBUG
+  const Type *ETy = getEffectiveSCEVType(Operands[0]->getType());
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
-    assert(getEffectiveSCEVType(Operands[i]->getType()) ==
-           getEffectiveSCEVType(Operands[0]->getType()) &&
+    assert(getEffectiveSCEVType(Operands[i]->getType()) == ETy &&
            "SCEVAddRecExpr operand types don't match!");
 #endif
 
@@ -2089,9 +2089,9 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   assert(!Ops.empty() && "Cannot get empty smax!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
+  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
-    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
-           getEffectiveSCEVType(Ops[0]->getType()) &&
+    assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVSMaxExpr operand types don't match!");
 #endif
 
@@ -2194,9 +2194,9 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   assert(!Ops.empty() && "Cannot get empty umax!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
+  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
-    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
-           getEffectiveSCEVType(Ops[0]->getType()) &&
+    assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVUMaxExpr operand types don't match!");
 #endif
 
