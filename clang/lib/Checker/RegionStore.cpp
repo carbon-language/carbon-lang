@@ -73,7 +73,7 @@ public:
            Offset == X.Offset;
   }
 
-  operator bool() const {
+  bool isValid() const {
     return getRegion() != NULL;
   }
 };
@@ -1618,7 +1618,7 @@ BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
 }
 
 RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K, SVal V) {
-  if (!K)
+  if (!K.isValid())
     return B;
   return RBFactory.Add(B, K, V);
 }
@@ -1629,7 +1629,7 @@ RegionBindings RegionStoreManager::Add(RegionBindings B, const MemRegion *R,
 }
 
 const SVal *RegionStoreManager::Lookup(RegionBindings B, BindingKey K) {
-  if (!K)
+  if (!K.isValid())
     return NULL;
   return B.lookup(K);
 }
@@ -1641,7 +1641,7 @@ const SVal *RegionStoreManager::Lookup(RegionBindings B,
 }
 
 RegionBindings RegionStoreManager::Remove(RegionBindings B, BindingKey K) {
-  if (!K)
+  if (!K.isValid())
     return B;
   return RBFactory.Remove(B, K);
 }
