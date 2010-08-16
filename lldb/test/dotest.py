@@ -172,7 +172,7 @@ atexit.register(lambda: lldb.SBDebugger.Terminate())
 lldb.DBG = lldb.SBDebugger.Create()
 
 # Turn on logging for debugging purposes if ${LLDB_LOG} environment variable is
-# is defined.  Use ${LLDB_LOG} to specify the log file.
+# defined.  Use ${LLDB_LOG} to specify the log file.
 ci = lldb.DBG.GetCommandInterpreter()
 res = lldb.SBCommandReturnObject()
 if ("LLDB_LOG" in os.environ):
@@ -180,6 +180,13 @@ if ("LLDB_LOG" in os.environ):
         "log enable -f " + os.environ["LLDB_LOG"] + " lldb default", res)
     if not res.Succeeded():
         raise Exception('log enable failed (check your LLDB_LOG env variable...')
+# Ditto for gdb-remote logging if ${LLDB_LOG} environment variable is defined.
+# Use ${GDB_REMOTE_LOG} to specify the log file.
+if ("GDB_REMOTE_LOG" in os.environ):
+    ci.HandleCommand(
+        "log enable -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote packets", res)
+    if not res.Succeeded():
+        raise Exception('log enable failed (check your GDB_REMOTE_LOG env variable...')
 
 # Install the control-c handler.
 unittest2.signals.installHandler()
