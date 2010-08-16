@@ -3229,6 +3229,7 @@ static bool isVTRN_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   for (unsigned i = 0; i < NumElts; i += 2) {
+    if (M[i] < 0) continue;
     if ((unsigned) M[i] != i + WhichResult ||
         (unsigned) M[i+1] != i + WhichResult)
       return false;
