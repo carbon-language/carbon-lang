@@ -769,7 +769,7 @@ public:
       IsPCRel = 1;
       FixedValue = (FixupAddress - Layout.getSymbolAddress(SD_B) +
                     Target.getConstant());
-      FixedValue += 1 << Log2Size;
+      FixedValue += 1ULL << Log2Size;
     } else {
       FixedValue = 0;
     }
