@@ -1517,8 +1517,8 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   typedef CodeCompleteConsumer::Result Result;
   llvm::SmallVector<Result, 8> AllResults;
   for (ASTUnit::cached_completion_iterator 
-       C = AST.cached_completion_begin(),
-       CEnd = AST.cached_completion_end();
+            C = AST.cached_completion_begin(),
+         CEnd = AST.cached_completion_end();
        C != CEnd; ++C) {
     // If the context we are in matches any of the contexts we are 
     // interested in, we'll add this result.
@@ -1547,15 +1547,15 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
                                Context.getPreferredType()->isAnyPointerType());
       } else if (C->Type) {
         CanQualType Expected
-        = S.Context.getCanonicalType(
+          = S.Context.getCanonicalType(
                                Context.getPreferredType().getUnqualifiedType());
         SimplifiedTypeClass ExpectedSTC = getSimplifiedTypeClass(Expected);
         if (ExpectedSTC == C->TypeClass) {
           // We know this type is similar; check for an exact match.
           llvm::StringMap<unsigned> &CachedCompletionTypes
-          = AST.getCachedCompletionTypes();
+            = AST.getCachedCompletionTypes();
           llvm::StringMap<unsigned>::iterator Pos
-          = CachedCompletionTypes.find(QualType(Expected).getAsString());
+            = CachedCompletionTypes.find(QualType(Expected).getAsString());
           if (Pos != CachedCompletionTypes.end() && Pos->second == C->Type)
             Priority /= CCF_ExactTypeMatch;
           else
