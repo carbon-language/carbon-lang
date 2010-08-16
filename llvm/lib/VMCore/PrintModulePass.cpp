@@ -58,7 +58,7 @@ namespace {
     PrintFunctionPass(const std::string &B, raw_ostream *o, bool DS)
       : FunctionPass(ID), Banner(B), Out(o), DeleteStream(DS) {}
     
-    inline ~PrintFunctionPass() {
+    ~PrintFunctionPass() {
       if (DeleteStream) delete Out;
     }
     

@@ -266,7 +266,7 @@ public:
     Info.setPreservesAll();
   }
 
-  inline void addTopLevelPass(Pass *P) {
+  void addTopLevelPass(Pass *P) {
     if (ImmutablePass *IP = P->getAsImmutablePass()) {
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
@@ -410,7 +410,7 @@ public:
     Info.setPreservesAll();
   }
 
-  inline void addTopLevelPass(Pass *P) {
+  void addTopLevelPass(Pass *P) {
     if (ImmutablePass *IP = P->getAsImmutablePass()) {
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
