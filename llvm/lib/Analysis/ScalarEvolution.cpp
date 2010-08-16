@@ -1530,8 +1530,9 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
           if (Mul->getNumOperands() != 2) {
             // If the multiply has more than two operands, we must get the
             // Y*Z term.
-            SmallVector<const SCEV *, 4> MulOps(Mul->op_begin(), Mul->op_end());
-            MulOps.erase(MulOps.begin()+MulOp);
+            SmallVector<const SCEV *, 4> MulOps(Mul->op_begin(),
+                                                Mul->op_begin()+MulOp);
+            MulOps.append(Mul->op_begin()+MulOp+1, Mul->op_end());
             InnerMul = getMulExpr(MulOps);
           }
           const SCEV *One = getConstant(Ty, 1);
@@ -1564,15 +1565,15 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
             const SCEV *InnerMul1 = Mul->getOperand(MulOp == 0);
             if (Mul->getNumOperands() != 2) {
               SmallVector<const SCEV *, 4> MulOps(Mul->op_begin(),
-                                                  Mul->op_end());
-              MulOps.erase(MulOps.begin()+MulOp);
+                                                  Mul->op_begin()+MulOp);
+              MulOps.append(Mul->op_begin()+MulOp+1, Mul->op_end());
               InnerMul1 = getMulExpr(MulOps);
             }
             const SCEV *InnerMul2 = OtherMul->getOperand(OMulOp == 0);
             if (OtherMul->getNumOperands() != 2) {
               SmallVector<const SCEV *, 4> MulOps(OtherMul->op_begin(),
-                                                  OtherMul->op_end());
-              MulOps.erase(MulOps.begin()+OMulOp);
+                                                  OtherMul->op_begin()+OMulOp);
+              MulOps.append(OtherMul->op_begin()+OMulOp+1, OtherMul->op_end());
               InnerMul2 = getMulExpr(MulOps);
             }
             const SCEV *InnerMulSum = getAddExpr(InnerMul1,InnerMul2);
