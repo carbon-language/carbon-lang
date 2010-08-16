@@ -17,3 +17,17 @@ entry:
   store <8 x i16> %1, <8 x i16>* %agg.result12.1.0, align 16
   ret void
 }
+
+; Radar 8290937: Ignore undef shuffle indices.
+; CHECK: t2
+; CHECK: vtrn.16
+define void @t2(%struct.int16x8x2_t* nocapture %ptr, <4 x i16> %a.0, <4 x i16> %b.0) nounwind {
+entry:
+  %0 = shufflevector <4 x i16> %a.0, <4 x i16> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 undef, i32 undef, i32 undef, i32 undef>
+  %1 = shufflevector <4 x i16> %a.0, <4 x i16> undef, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+  %ptr26.0 = getelementptr inbounds %struct.int16x8x2_t* %ptr, i32 0, i32 0, i32 0, i32 0
+  store <8 x i16> %0, <8 x i16>* %ptr26.0, align 16
+  %ptr20.1.0 = getelementptr inbounds %struct.int16x8x2_t* %ptr, i32 0, i32 0, i32 1, i32 0
+  store <8 x i16> %1, <8 x i16>* %ptr20.1.0, align 16
+  ret void
+}
