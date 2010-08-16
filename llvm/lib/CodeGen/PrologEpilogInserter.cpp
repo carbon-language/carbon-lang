@@ -570,6 +570,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     // will be used later when resolving frame base virtual register pseudos.
     MFI->setLocalFrameBaseOffset(Offset);
 
+    DEBUG(dbgs() << "Local frame base offset: " << Offset << "\n");
+
     // Allocate the local block
     Offset += MFI->getLocalFrameSize();
 

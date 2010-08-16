@@ -94,8 +94,6 @@ AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
 /// abstract stack objects.
 ///
 void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
-  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
-
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *MFI = Fn.getFrameInfo();
   int64_t Offset = 0;
