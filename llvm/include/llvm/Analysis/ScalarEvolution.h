@@ -45,12 +45,16 @@ namespace llvm {
   class LoopInfo;
   class Operator;
   class SCEVUnknown;
+  class SCEV;
+  template<> class FoldingSetTrait<SCEV>;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with
   /// directly.
   ///
   class SCEV : public FoldingSetNode {
+    friend class FoldingSetTrait<SCEV>;
+
     /// FastID - A reference to an Interned FoldingSetNodeID for this node.
     /// The ScalarEvolution's BumpPtrAllocator holds the data.
     FoldingSetNodeIDRef FastID;
@@ -73,9 +77,6 @@ namespace llvm {
       FastID(ID), SCEVType(SCEVTy), SubclassData(0) {}
 
     unsigned getSCEVType() const { return SCEVType; }
-
-    /// Profile - FoldingSet support.
-    void Profile(FoldingSetNodeID& ID) { ID = FastID; }
 
     /// isLoopInvariant - Return true if the value of this SCEV is unchanging in
     /// the specified loop.
@@ -124,6 +125,21 @@ namespace llvm {
     /// dump - This method is used for debugging.
     ///
     void dump() const;
+  };
+
+  // Specialize FoldingSetTrait for SCEV to avoid needing to compute
+  // temporary FoldingSetNodeID values.
+  template<> struct FoldingSetTrait<SCEV> : DefaultFoldingSetTrait<SCEV> {
+    static void Profile(const SCEV &X, FoldingSetNodeID& ID) {
+      ID = X.FastID;
+    }
+    static bool Equals(const SCEV &X, const FoldingSetNodeID &ID,
+                       FoldingSetNodeID &TempID) {
+      return ID == X.FastID;
+    }
+    static unsigned ComputeHash(const SCEV &X, FoldingSetNodeID &TempID) {
+      return X.FastID.ComputeHash();
+    }
   };
 
   inline raw_ostream &operator<<(raw_ostream &OS, const SCEV &S) {
