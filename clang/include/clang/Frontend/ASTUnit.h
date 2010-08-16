@@ -241,7 +241,8 @@ private:
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;
   
-  /// \brief Cache any "global" code-completion results, so that we 
+  /// \brief Cache any "global" code-completion results, so that we can avoid
+  /// recomputing them with each completion.
   void CacheCodeCompletionResults();
   
   /// \brief Clear out and deallocate 

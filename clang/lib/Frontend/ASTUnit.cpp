@@ -191,10 +191,14 @@ void ASTUnit::CacheCodeCompletionResults() {
                                                         Ctx->getLangOptions());
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
-      CachedResult.TypeClass
-        = getSimplifiedTypeClass(
-              Ctx->getCanonicalType(getDeclUsageType(*Ctx, 
-                                                     Results[I].Declaration)));
+
+      QualType UsageType = getDeclUsageType(*Ctx, Results[I].Declaration);
+      if (UsageType.isNull())
+        CachedResult.TypeClass = STC_Void;
+      else {
+        CachedResult.TypeClass
+          = getSimplifiedTypeClass(Ctx->getCanonicalType(UsageType));
+      }
       CachedCompletionResults.push_back(CachedResult);
       break;
     }
