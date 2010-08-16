@@ -2133,8 +2133,8 @@ def warn_indirection_through_null : Warning<
 def note_indirection_through_null : Note<
   "consider using __builtin_trap() or qualifying pointer with 'volatile'">;
 
-def err_indirection_requires_nonfragile_object : Error<
-  "indirection cannot be to an interface in non-fragile ABI (%0 invalid)">;
+def err_assignment_requires_nonfragile_object : Error<
+  "cannot assign to class object in non-fragile ABI (%0 invalid)">;
 def err_direct_interface_unsupported : Error<
   "indirection to an interface is not supported (%0 invalid)">;
 def err_typecheck_invalid_operands : Error<

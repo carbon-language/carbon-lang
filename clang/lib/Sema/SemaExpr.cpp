@@ -6538,6 +6538,11 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   }
   if (ResultTy.isNull())
     return ExprError();
+  if (ResultTy->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
+    if (Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) 
+          Diag(OpLoc, diag::err_assignment_requires_nonfragile_object)
+                << ResultTy;
+  }
   if (CompResultTy.isNull())
     return Owned(new (Context) BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
   else
