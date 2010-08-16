@@ -3244,12 +3244,37 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 
   Operator *U = cast<Operator>(V);
   switch (Opcode) {
-  case Instruction::Add:
-    return getAddExpr(getSCEV(U->getOperand(0)),
-                      getSCEV(U->getOperand(1)));
-  case Instruction::Mul:
-    return getMulExpr(getSCEV(U->getOperand(0)),
-                      getSCEV(U->getOperand(1)));
+  case Instruction::Add: {
+    // The simple thing to do would be to just call getSCEV on both operands
+    // and call getAddExpr with the result. However if we're looking at a
+    // bunch of things all added together, this can be quite inefficient,
+    // because it leads to N-1 getAddExpr calls for N ultimate operands.
+    // Instead, gather up all the operands and make a single getAddExpr call.
+    // LLVM IR canonical form means we need only traverse the left operands.
+    SmallVector<const SCEV *, 4> AddOps;
+    AddOps.push_back(getSCEV(U->getOperand(1)));
+    for (Value *Op = U->getOperand(0);
+         Op->getValueID() == Instruction::Add + Value::InstructionVal;
+         Op = U->getOperand(0)) {
+      U = cast<Operator>(Op);
+      AddOps.push_back(getSCEV(U->getOperand(1)));
+    }
+    AddOps.push_back(getSCEV(U->getOperand(0)));
+    return getAddExpr(AddOps);
+  }
+  case Instruction::Mul: {
+    // See the Add code above.
+    SmallVector<const SCEV *, 4> MulOps;
+    MulOps.push_back(getSCEV(U->getOperand(1)));
+    for (Value *Op = U->getOperand(0);
+         Op->getValueID() == Instruction::Mul + Value::InstructionVal; 
+         Op = U->getOperand(0)) {
+      U = cast<Operator>(Op);
+      MulOps.push_back(getSCEV(U->getOperand(1)));
+    }
+    MulOps.push_back(getSCEV(U->getOperand(0)));
+    return getMulExpr(MulOps);
+  }
   case Instruction::UDiv:
     return getUDivExpr(getSCEV(U->getOperand(0)),
                        getSCEV(U->getOperand(1)));
