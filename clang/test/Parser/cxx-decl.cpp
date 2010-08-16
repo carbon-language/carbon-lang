@@ -76,3 +76,10 @@ class Class2 {
 }  // no ;
 
 typedef Class1<Class2> Type1; // expected-error {{cannot combine with previous 'class' declaration specifier}}
+
+// rdar : // 8307865
+struct CodeCompleteConsumer {
+};
+
+void CodeCompleteConsumer::() { // expected-error {{xpected unqualified-id}}
+} 

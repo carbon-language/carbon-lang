@@ -2727,7 +2727,10 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       if (Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
-        DeclScopeObj.EnterDeclaratorScope();
+        // If there was an error parsing parenthesized declarator, declarator
+        // scope may have been enterred before. Don't do it again.
+        if (!D.isInvalidType())
+          DeclScopeObj.EnterDeclaratorScope();
     }
   } else if (D.mayOmitIdentifier()) {
     // This could be something simple like "int" (in which case the declarator
