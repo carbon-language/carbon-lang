@@ -226,7 +226,7 @@ public:
   static char ID;
   explicit FunctionPassManagerImpl(int Depth) :
     Pass(PT_PassManager, ID), PMDataManager(Depth),
-    PMTopLevelManager(TLM_Function), wasRun(false) { }
+    PMTopLevelManager(new FPPassManager(1)), wasRun(false) {}
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -386,7 +386,7 @@ public:
   static char ID;
   explicit PassManagerImpl(int Depth) :
     Pass(PT_PassManager, ID), PMDataManager(Depth),
-                              PMTopLevelManager(TLM_Pass) { }
+                              PMTopLevelManager(new MPPassManager(1)) {}
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -490,18 +490,10 @@ static TimingInfo *TheTimeInfo;
 // PMTopLevelManager implementation
 
 /// Initialize top level manager. Create first pass manager.
-PMTopLevelManager::PMTopLevelManager(enum TopLevelManagerType t) {
-  if (t == TLM_Pass) {
-    MPPassManager *MPP = new MPPassManager(1);
-    MPP->setTopLevelManager(this);
-    addPassManager(MPP);
-    activeStack.push(MPP);
-  } else if (t == TLM_Function) {
-    FPPassManager *FPP = new FPPassManager(1);
-    FPP->setTopLevelManager(this);
-    addPassManager(FPP);
-    activeStack.push(FPP);
-  }
+PMTopLevelManager::PMTopLevelManager(PMDataManager *PMDM) {
+  PMDM->setTopLevelManager(this);
+  addPassManager(PMDM);
+  activeStack.push(PMDM);
 }
 
 /// Set pass P as the last user of the given analysis passes.

@@ -98,13 +98,6 @@ namespace llvm {
   class Timer;
   class PMDataManager;
 
-/// FunctionPassManager and PassManager, two top level managers, serve 
-/// as the public interface of pass manager infrastructure.
-enum TopLevelManagerType {
-  TLM_Function,  // FunctionPassManager
-  TLM_Pass       // PassManager
-};
-    
 // enums for debugging strings
 enum PassDebuggingString {
   EXECUTION_MSG, // "Executing Pass '"
@@ -199,7 +192,7 @@ public:
   /// Find analysis usage information for the pass P.
   AnalysisUsage *findAnalysisUsage(Pass *P);
 
-  explicit PMTopLevelManager(enum TopLevelManagerType t);
+  explicit PMTopLevelManager(PMDataManager *PMDM);
   virtual ~PMTopLevelManager(); 
 
   /// Add immutable pass and initialize it.
