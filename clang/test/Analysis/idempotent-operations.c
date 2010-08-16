@@ -74,12 +74,14 @@ void bailout() {
 // False positive tests
 
 unsigned false1() {
-  return (5 - 2 - 3); // no-warning
+  int a = 10;
+  return a * (5 - 2 - 3); // no-warning
 }
 
 enum testenum { enum1 = 0, enum2 };
 unsigned false2() {
-  return enum1; // no-warning
+  int a = 1234;
+  return enum1 + a; // no-warning
 }
 
 extern unsigned foo();

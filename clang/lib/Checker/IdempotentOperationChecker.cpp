@@ -81,6 +81,7 @@ class IdempotentOperationChecker
                                           const CFGBlock *CB,
                                           const GRCoreEngine &CE);
     static bool CanVary(const Expr *Ex, ASTContext &Ctx);
+    static bool isPseudoConstant(const DeclRefExpr *D);
 
     // Hash table
     typedef llvm::DenseMap<const BinaryOperator *,
@@ -530,8 +531,7 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
     return SE->getTypeOfArgument()->isVariableArrayType();
   }
   case Stmt::DeclRefExprClass:
-    //    return !IsPseudoConstant(cast<DeclRefExpr>(Ex));
-    return true;
+    return !isPseudoConstant(cast<DeclRefExpr>(Ex));
 
   // The next cases require recursion for subexpressions
   case Stmt::BinaryOperatorClass: {
@@ -555,3 +555,17 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
   }
 }
 
+// Returns true if a DeclRefExpr behaves like a constant.
+bool IdempotentOperationChecker::isPseudoConstant(const DeclRefExpr *DR) {
+  // Check for an enum
+  if (isa<EnumConstantDecl>(DR->getDecl()))
+    return true;
+
+  // Check for a static variable
+  // FIXME: Analysis should model static vars
+  if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
+    if (VD->isStaticLocal())
+      return true;
+
+  return false;
+}
