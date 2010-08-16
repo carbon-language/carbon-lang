@@ -362,6 +362,9 @@ public:
       InheritedAnalysis[Index++] = (*I)->getAvailableAnalysis();
   }
 
+  /// dumpPassStructure - Implement the -debug-passes=PassStructure option.
+  virtual void dumpPassStructure(unsigned Offset) = 0;
+
 protected:
 
   // Top level manager.

@@ -192,7 +192,7 @@ public:
     llvm::dbgs() << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
-      BP->dumpPassStructure(Offset + 1);
+      BP->dumpPass(Offset + 1);
       dumpLastUses(BP, Offset+1);
     }
   }
@@ -286,6 +286,11 @@ public:
     FPPassManager *FP = static_cast<FPPassManager *>(PassManagers[N]);
     return FP;
   }
+
+  /// dumpPassStructure - Implement the -debug-passes=PassStructure option.
+  void dumpPassStructure(unsigned) {
+    llvm_unreachable("dumpPassStructure called on FunctionPassManagerImpl");
+  }
 };
 
 char FunctionPassManagerImpl::ID = 0;
@@ -348,7 +353,7 @@ public:
     llvm::dbgs() << std::string(Offset*2, ' ') << "ModulePass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
-      MP->dumpPassStructure(Offset + 1);
+      MP->dumpPass(Offset + 1);
       std::map<Pass *, FunctionPassManagerImpl *>::const_iterator I =
         OnTheFlyManagers.find(MP);
       if (I != OnTheFlyManagers.end())
@@ -431,6 +436,11 @@ public:
     assert(N < PassManagers.size() && "Pass number out of range!");
     MPPassManager *MP = static_cast<MPPassManager *>(PassManagers[N]);
     return MP;
+  }
+
+  /// dumpPassStructure - Implement the -debug-passes=PassStructure option.
+  void dumpPassStructure(unsigned) {
+    llvm_unreachable("dumpPassStructure called on PassManagerImpl");
   }
 };
 
@@ -657,16 +667,14 @@ void PMTopLevelManager::dumpPasses() const {
 
   // Print out the immutable passes
   for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
-    ImmutablePasses[i]->dumpPassStructure(0);
+    ImmutablePasses[i]->dumpPass();
   }
 
-  // Every class that derives from PMDataManager also derives from Pass
-  // (sometimes indirectly), but there's no inheritance relationship
-  // between PMDataManager and Pass, so we have to getAsPass to get
-  // from a PMDataManager* to a Pass*.
+  // Print out the normal passes. We add an extra layer of indentation here
+  // to help distinguish them visually from the immutable passes.
   for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
-    (*I)->getAsPass()->dumpPassStructure(1);
+    (*I)->dumpPassStructure(1);
 }
 
 void PMTopLevelManager::dumpArguments() const {
@@ -1041,7 +1049,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
   for (SmallVector<Pass *, 12>::iterator I = LUses.begin(),
          E = LUses.end(); I != E; ++I) {
     llvm::dbgs() << "--" << std::string(Offset*2, ' ');
-    (*I)->dumpPassStructure(0);
+    (*I)->dumpPass(0);
   }
 }
 
@@ -1409,7 +1417,7 @@ void FPPassManager::dumpPassStructure(unsigned Offset) {
   llvm::dbgs() << std::string(Offset*2, ' ') << "FunctionPass Manager\n";
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
-    FP->dumpPassStructure(Offset + 1);
+    FP->dumpPass(Offset + 1);
     dumpLastUses(FP, Offset+1);
   }
 }

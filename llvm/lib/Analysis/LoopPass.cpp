@@ -332,7 +332,7 @@ void LPPassManager::dumpPassStructure(unsigned Offset) {
   errs().indent(Offset*2) << "Loop Pass Manager\n";
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     Pass *P = getContainedPass(Index);
-    P->dumpPassStructure(Offset + 1);
+    P->dumpPass(Offset + 1);
     dumpLastUses(P, Offset+1);
   }
 }

@@ -73,7 +73,7 @@ public:
     errs().indent(Offset*2) << "Call Graph SCC Pass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
-      P->dumpPassStructure(Offset + 1);
+      P->dumpPass(Offset + 1);
       dumpLastUses(P, Offset+1);
     }
   }
