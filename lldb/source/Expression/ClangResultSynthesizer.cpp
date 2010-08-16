@@ -76,7 +76,7 @@ ClangResultSynthesizer::TransformTopLevelDecl(Decl* D)
         !strcmp(function_decl->getNameAsCString(),
                 "___clang_expr"))
     {
-        SynthesizeResult(*m_ast_context, function_decl);
+        SynthesizeResult(function_decl);
     }
 }
 
@@ -99,9 +99,10 @@ ClangResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 }
 
 bool 
-ClangResultSynthesizer::SynthesizeResult (ASTContext &Ctx,
-                                          FunctionDecl *FunDecl)
+ClangResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
 {
+    ASTContext &Ctx(*m_ast_context);
+    
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
     if (!m_sema)
