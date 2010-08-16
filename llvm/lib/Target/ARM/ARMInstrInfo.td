@@ -2257,6 +2257,8 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$shamt)),
                (PKHBT GPR:$src1, GPR:$src2, imm16_31:$shamt)>;
 
 
+// Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
+// will match the pattern below.
 def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
                                  (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
                IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2, asr $shamt",
@@ -2268,8 +2270,8 @@ def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
-def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, (i32 16))),
-               (PKHTB GPR:$src1, GPR:$src2, 16)>;
+def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, imm16_31:$sh)),
+               (PKHTB GPR:$src1, GPR:$src2, imm16_31:$sh)>;
 def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
                    (and (srl GPR:$src2, imm1_15:$shamt), 0xFFFF)),
                (PKHTB GPR:$src1, GPR:$src2, imm1_15:$shamt)>;

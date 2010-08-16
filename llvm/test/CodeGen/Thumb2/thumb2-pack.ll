@@ -86,3 +86,12 @@ define i32 @test7(i32 %X, i32 %Y) {
 	%tmp57 = or i32 %tmp4, %tmp1		; <i32> [#uses=1]
 	ret i32 %tmp57
 }
+
+; CHECK: test8
+; CHECK: pkhtb   r0, r0, r1, asr #22
+define i32 @test8(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, -65536
+	%tmp3 = lshr i32 %Y, 22
+	%tmp57 = or i32 %tmp3, %tmp1
+	ret i32 %tmp57
+}
