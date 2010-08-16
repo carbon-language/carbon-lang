@@ -1851,15 +1851,14 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
         if (AddRec->getLoop() == OtherAddRec->getLoop()) {
           // F * G  -->  {A,+,B} * {C,+,D}  -->  {A*C,+,F*D + G*B + B*D}
           const SCEVAddRecExpr *F = AddRec, *G = OtherAddRec;
-          const SCEV *NewStart = getMulExpr(F->getStart(),
-                                                 G->getStart());
+          const SCEV *NewStart = getMulExpr(F->getStart(), G->getStart());
           const SCEV *B = F->getStepRecurrence(*this);
           const SCEV *D = G->getStepRecurrence(*this);
           const SCEV *NewStep = getAddExpr(getMulExpr(F, D),
-                                          getMulExpr(G, B),
-                                          getMulExpr(B, D));
+                                           getMulExpr(G, B),
+                                           getMulExpr(B, D));
           const SCEV *NewAddRec = getAddRecExpr(NewStart, NewStep,
-                                               F->getLoop());
+                                                F->getLoop());
           if (Ops.size() == 2) return NewAddRec;
 
           Ops.erase(Ops.begin()+Idx);
