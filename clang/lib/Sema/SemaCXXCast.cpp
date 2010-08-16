@@ -1103,6 +1103,13 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
       return TC_Failed;
     }
 
+    // Don't allow casting between member pointers of different sizes.
+    if (Self.Context.getTypeSize(DestMemPtr) !=
+        Self.Context.getTypeSize(SrcMemPtr)) {
+      msg = diag::err_bad_cxx_cast_member_pointer_size;
+      return TC_Failed;
+    }
+
     // A valid member pointer cast.
     Kind = IsLValueCast? CastExpr::CK_LValueBitCast : CastExpr::CK_BitCast;
     return TC_Success;
