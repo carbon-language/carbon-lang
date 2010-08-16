@@ -590,12 +590,12 @@ namespace {
       // Compare constant values.
       if (const SCEVConstant *LC = dyn_cast<SCEVConstant>(LHS)) {
         const SCEVConstant *RC = cast<SCEVConstant>(RHS);
-        const ConstantInt *LCC = LC->getValue();
-        const ConstantInt *RCC = RC->getValue();
-        unsigned LBitWidth = LCC->getBitWidth(), RBitWidth = RCC->getBitWidth();
+        const APInt &LA = LC->getValue()->getValue();
+        const APInt &RA = RC->getValue()->getValue();
+        unsigned LBitWidth = LA.getBitWidth(), RBitWidth = RA.getBitWidth();
         if (LBitWidth != RBitWidth)
           return LBitWidth < RBitWidth;
-        return LCC->getValue().ult(RCC->getValue());
+        return LA.ult(RA);
       }
 
       // Compare addrec loop depths.
