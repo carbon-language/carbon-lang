@@ -123,10 +123,34 @@ vec_add(vector signed char a, vector signed char b)
   return a + b;
 }
 
+static vector signed char __ATTRS_o_ai
+vec_add(vector bool char a, vector signed char b)
+{
+  return (vector signed char)a + b;
+}
+
+static vector signed char __ATTRS_o_ai
+vec_add(vector signed char a, vector bool char b)
+{
+  return a + (vector signed char)b;
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_add(vector unsigned char a, vector unsigned char b)
 {
   return a + b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_add(vector bool char a, vector unsigned char b)
+{
+  return (vector unsigned char)a + b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_add(vector unsigned char a, vector bool char b)
+{
+  return a + (vector unsigned char)b;
 }
 
 static vector short __ATTRS_o_ai
@@ -135,10 +159,34 @@ vec_add(vector short a, vector short b)
   return a + b;
 }
 
+static vector short __ATTRS_o_ai
+vec_add(vector bool short a, vector short b)
+{
+  return (vector short)a + b;
+}
+
+static vector short __ATTRS_o_ai
+vec_add(vector short a, vector bool short b)
+{
+  return a + (vector short)b;
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_add(vector unsigned short a, vector unsigned short b)
 {
   return a + b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_add(vector bool short a, vector unsigned short b)
+{
+  return (vector unsigned short)a + b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_add(vector unsigned short a, vector bool short b)
+{
+  return a + (vector unsigned short)b;
 }
 
 static vector int __ATTRS_o_ai
@@ -147,10 +195,34 @@ vec_add(vector int a, vector int b)
   return a + b;
 }
 
+static vector int __ATTRS_o_ai
+vec_add(vector bool int a, vector int b)
+{
+  return (vector int)a + b;
+}
+
+static vector int __ATTRS_o_ai
+vec_add(vector int a, vector bool int b)
+{
+  return a + (vector int)b;
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_add(vector unsigned int a, vector unsigned int b)
 {
   return a + b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_add(vector bool int a, vector unsigned int b)
+{
+  return (vector unsigned int)a + b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_add(vector unsigned int a, vector bool int b)
+{
+  return a + (vector unsigned int)b;
 }
 
 static vector float __ATTRS_o_ai
@@ -169,10 +241,34 @@ vec_vaddubm(vector signed char a, vector signed char b)
   return a + b;
 }
 
+static vector signed char __ATTRS_o_ai
+vec_vaddubm(vector bool char a, vector signed char b)
+{
+  return (vector signed char)a + b;
+}
+
+static vector signed char __ATTRS_o_ai
+vec_vaddubm(vector signed char a, vector bool char b)
+{
+  return a + (vector signed char)b;
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_vaddubm(vector unsigned char a, vector unsigned char b)
 {
   return a + b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vaddubm(vector bool char a, vector unsigned char b)
+{
+  return (vector unsigned char)a + b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vaddubm(vector unsigned char a, vector bool char b)
+{
+  return a + (vector unsigned char)b;
 }
 
 /* vec_vadduhm */
@@ -185,10 +281,34 @@ vec_vadduhm(vector short a, vector short b)
   return a + b;
 }
 
+static vector short __ATTRS_o_ai
+vec_vadduhm(vector bool short a, vector short b)
+{
+  return (vector short)a + b;
+}
+
+static vector short __ATTRS_o_ai
+vec_vadduhm(vector short a, vector bool short b)
+{
+  return a + (vector short)b;
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_vadduhm(vector unsigned short a, vector unsigned short b)
 {
   return a + b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vadduhm(vector bool short a, vector unsigned short b)
+{
+  return (vector unsigned short)a + b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vadduhm(vector unsigned short a, vector bool short b)
+{
+  return a + (vector unsigned short)b;
 }
 
 /* vec_vadduwm */
@@ -201,10 +321,34 @@ vec_vadduwm(vector int a, vector int b)
   return a + b;
 }
 
+static vector int __ATTRS_o_ai
+vec_vadduwm(vector bool int a, vector int b)
+{
+  return (vector int)a + b;
+}
+
+static vector int __ATTRS_o_ai
+vec_vadduwm(vector int a, vector bool int b)
+{
+  return a + (vector int)b;
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_vadduwm(vector unsigned int a, vector unsigned int b)
 {
   return a + b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vadduwm(vector bool int a, vector unsigned int b)
+{
+  return (vector unsigned int)a + b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vadduwm(vector unsigned int a, vector bool int b)
+{
+  return a + (vector unsigned int)b;
 }
 
 /* vec_vaddfp */
@@ -241,10 +385,34 @@ vec_adds(vector signed char a, vector signed char b)
   return __builtin_altivec_vaddsbs(a, b);
 }
 
+static vector signed char __ATTRS_o_ai
+vec_adds(vector bool char a, vector signed char b)
+{
+  return __builtin_altivec_vaddsbs((vector signed char)a, b);
+}
+
+static vector signed char __ATTRS_o_ai
+vec_adds(vector signed char a, vector bool char b)
+{
+  return __builtin_altivec_vaddsbs(a, (vector signed char)b);
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_adds(vector unsigned char a, vector unsigned char b)
 {
   return __builtin_altivec_vaddubs(a, b);
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_adds(vector bool char a, vector unsigned char b)
+{
+  return __builtin_altivec_vaddubs((vector unsigned char)a, b);
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_adds(vector unsigned char a, vector bool char b)
+{
+  return __builtin_altivec_vaddubs(a, (vector unsigned char)b);
 }
 
 static vector short __ATTRS_o_ai
@@ -253,10 +421,34 @@ vec_adds(vector short a, vector short b)
   return __builtin_altivec_vaddshs(a, b);
 }
 
+static vector short __ATTRS_o_ai
+vec_adds(vector bool short a, vector short b)
+{
+  return __builtin_altivec_vaddshs((vector short)a, b);
+}
+
+static vector short __ATTRS_o_ai
+vec_adds(vector short a, vector bool short b)
+{
+  return __builtin_altivec_vaddshs(a, (vector short)b);
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_adds(vector unsigned short a, vector unsigned short b)
 {
   return __builtin_altivec_vadduhs(a, b);
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_adds(vector bool short a, vector unsigned short b)
+{
+  return __builtin_altivec_vadduhs((vector unsigned short)a, b);
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_adds(vector unsigned short a, vector bool short b)
+{
+  return __builtin_altivec_vadduhs(a, (vector unsigned short)b);
 }
 
 static vector int __ATTRS_o_ai
@@ -265,58 +457,154 @@ vec_adds(vector int a, vector int b)
   return __builtin_altivec_vaddsws(a, b);
 }
 
+static vector int __ATTRS_o_ai
+vec_adds(vector bool int a, vector int b)
+{
+  return __builtin_altivec_vaddsws((vector int)a, b);
+}
+
+static vector int __ATTRS_o_ai
+vec_adds(vector int a, vector bool int b)
+{
+  return __builtin_altivec_vaddsws(a, (vector int)b);
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_adds(vector unsigned int a, vector unsigned int b)
 {
   return __builtin_altivec_vadduws(a, b);
 }
 
+static vector unsigned int __ATTRS_o_ai
+vec_adds(vector bool int a, vector unsigned int b)
+{
+  return __builtin_altivec_vadduws((vector unsigned int)a, b);
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_adds(vector unsigned int a, vector bool int b)
+{
+  return __builtin_altivec_vadduws(a, (vector unsigned int)b);
+}
+
 /* vec_vaddsbs */
 
-static vector signed char __attribute__((__always_inline__))
+static vector signed char __ATTRS_o_ai
 vec_vaddsbs(vector signed char a, vector signed char b)
 {
   return __builtin_altivec_vaddsbs(a, b);
 }
 
+static vector signed char __ATTRS_o_ai
+vec_vaddsbs(vector bool char a, vector signed char b)
+{
+  return __builtin_altivec_vaddsbs((vector signed char)a, b);
+}
+
+static vector signed char __ATTRS_o_ai
+vec_vaddsbs(vector signed char a, vector bool char b)
+{
+  return __builtin_altivec_vaddsbs(a, (vector signed char)b);
+}
+
 /* vec_vaddubs */
 
-static vector unsigned char __attribute__((__always_inline__))
+static vector unsigned char __ATTRS_o_ai
 vec_vaddubs(vector unsigned char a, vector unsigned char b)
 {
   return __builtin_altivec_vaddubs(a, b);
 }
 
+static vector unsigned char __ATTRS_o_ai
+vec_vaddubs(vector bool char a, vector unsigned char b)
+{
+  return __builtin_altivec_vaddubs((vector unsigned char)a, b);
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vaddubs(vector unsigned char a, vector bool char b)
+{
+  return __builtin_altivec_vaddubs(a, (vector unsigned char)b);
+}
+
 /* vec_vaddshs */
 
-static vector short __attribute__((__always_inline__))
+static vector short __ATTRS_o_ai
 vec_vaddshs(vector short a, vector short b)
 {
   return __builtin_altivec_vaddshs(a, b);
 }
 
+static vector short __ATTRS_o_ai
+vec_vaddshs(vector bool short a, vector short b)
+{
+  return __builtin_altivec_vaddshs((vector short)a, b);
+}
+
+static vector short __ATTRS_o_ai
+vec_vaddshs(vector short a, vector bool short b)
+{
+  return __builtin_altivec_vaddshs(a, (vector short)b);
+}
+
 /* vec_vadduhs */
 
-static vector unsigned short __attribute__((__always_inline__))
+static vector unsigned short __ATTRS_o_ai
 vec_vadduhs(vector unsigned short a, vector unsigned short b)
 {
   return __builtin_altivec_vadduhs(a, b);
 }
 
+static vector unsigned short __ATTRS_o_ai
+vec_vadduhs(vector bool short a, vector unsigned short b)
+{
+  return __builtin_altivec_vadduhs((vector unsigned short)a, b);
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vadduhs(vector unsigned short a, vector bool short b)
+{
+  return __builtin_altivec_vadduhs(a, (vector unsigned short)b);
+}
+
 /* vec_vaddsws */
 
-static vector int __attribute__((__always_inline__))
+static vector int __ATTRS_o_ai
 vec_vaddsws(vector int a, vector int b)
 {
   return __builtin_altivec_vaddsws(a, b);
 }
 
+static vector int __ATTRS_o_ai
+vec_vaddsws(vector bool int a, vector int b)
+{
+  return __builtin_altivec_vaddsws((vector int)a, b);
+}
+
+static vector int __ATTRS_o_ai
+vec_vaddsws(vector int a, vector bool int b)
+{
+  return __builtin_altivec_vaddsws(a, (vector int)b);
+}
+
 /* vec_vadduws */
 
-static vector unsigned int __attribute__((__always_inline__))
+static vector unsigned int __ATTRS_o_ai
 vec_vadduws(vector unsigned int a, vector unsigned int b)
 {
   return __builtin_altivec_vadduws(a, b);
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vadduws(vector bool int a, vector unsigned int b)
+{
+  return __builtin_altivec_vadduws((vector unsigned int)a, b);
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vadduws(vector unsigned int a, vector bool int b)
+{
+  return __builtin_altivec_vadduws(a, (vector unsigned int)b);
 }
 
 /* vec_and */
@@ -329,8 +617,38 @@ vec_and(vector signed char a, vector signed char b)
   return a & b;
 }
 
+static vector signed char __ATTRS_o_ai
+vec_and(vector bool char a, vector signed char b)
+{
+  return (vector signed char)a & b;
+}
+
+static vector signed char __ATTRS_o_ai
+vec_and(vector signed char a, vector bool char b)
+{
+  return a & (vector signed char)b;
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_and(vector unsigned char a, vector unsigned char b)
+{
+  return a & b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_and(vector bool char a, vector unsigned char b)
+{
+  return (vector unsigned char)a & b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_and(vector unsigned char a, vector bool char b)
+{
+  return a & (vector unsigned char)b;
+}
+
+static vector bool char __ATTRS_o_ai
+vec_and(vector bool char a, vector bool char b)
 {
   return a & b;
 }
@@ -341,8 +659,38 @@ vec_and(vector short a, vector short b)
   return a & b;
 }
 
+static vector short __ATTRS_o_ai
+vec_and(vector bool short a, vector short b)
+{
+  return (vector short)a & b;
+}
+
+static vector short __ATTRS_o_ai
+vec_and(vector short a, vector bool short b)
+{
+  return a & (vector short)b;
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_and(vector unsigned short a, vector unsigned short b)
+{
+  return a & b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_and(vector bool short a, vector unsigned short b)
+{
+  return (vector unsigned short)a & b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_and(vector unsigned short a, vector bool short b)
+{
+  return a & (vector unsigned short)b;
+}
+
+static vector bool short __ATTRS_o_ai
+vec_and(vector bool short a, vector bool short b)
 {
   return a & b;
 }
@@ -353,14 +701,58 @@ vec_and(vector int a, vector int b)
   return a & b;
 }
 
+static vector int __ATTRS_o_ai
+vec_and(vector bool int a, vector int b)
+{
+  return (vector int)a & b;
+}
+
+static vector int __ATTRS_o_ai
+vec_and(vector int a, vector bool int b)
+{
+  return a & (vector int)b;
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_and(vector unsigned int a, vector unsigned int b)
 {
   return a & b;
 }
 
+static vector unsigned int __ATTRS_o_ai
+vec_and(vector bool int a, vector unsigned int b)
+{
+  return (vector unsigned int)a & b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_and(vector unsigned int a, vector bool int b)
+{
+  return a & (vector unsigned int)b;
+}
+
+static vector bool int __ATTRS_o_ai
+vec_and(vector bool int a, vector bool int b)
+{
+  return a & b;
+}
+
 static vector float __ATTRS_o_ai
 vec_and(vector float a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & (vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_and(vector bool int a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & (vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_and(vector float a, vector bool int b)
 {
   vector unsigned int res = (vector unsigned int)a & (vector unsigned int)b;
   return (vector float)res;
@@ -374,8 +766,38 @@ vec_vand(vector signed char a, vector signed char b)
   return a & b;
 }
 
+static vector signed char __ATTRS_o_ai
+vec_vand(vector bool char a, vector signed char b)
+{
+  return (vector signed char)a & b;
+}
+
+static vector signed char __ATTRS_o_ai
+vec_vand(vector signed char a, vector bool char b)
+{
+  return a & (vector signed char)b;
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_vand(vector unsigned char a, vector unsigned char b)
+{
+  return a & b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vand(vector bool char a, vector unsigned char b)
+{
+  return (vector unsigned char)a & b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vand(vector unsigned char a, vector bool char b)
+{
+  return a & (vector unsigned char)b;
+}
+
+static vector bool char __ATTRS_o_ai
+vec_vand(vector bool char a, vector bool char b)
 {
   return a & b;
 }
@@ -386,8 +808,38 @@ vec_vand(vector short a, vector short b)
   return a & b;
 }
 
+static vector short __ATTRS_o_ai
+vec_vand(vector bool short a, vector short b)
+{
+  return (vector short)a & b;
+}
+
+static vector short __ATTRS_o_ai
+vec_vand(vector short a, vector bool short b)
+{
+  return a & (vector short)b;
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_vand(vector unsigned short a, vector unsigned short b)
+{
+  return a & b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vand(vector bool short a, vector unsigned short b)
+{
+  return (vector unsigned short)a & b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vand(vector unsigned short a, vector bool short b)
+{
+  return a & (vector unsigned short)b;
+}
+
+static vector bool short __ATTRS_o_ai
+vec_vand(vector bool short a, vector bool short b)
 {
   return a & b;
 }
@@ -398,14 +850,58 @@ vec_vand(vector int a, vector int b)
   return a & b;
 }
 
+static vector int __ATTRS_o_ai
+vec_vand(vector bool int a, vector int b)
+{
+  return (vector int)a & b;
+}
+
+static vector int __ATTRS_o_ai
+vec_vand(vector int a, vector bool int b)
+{
+  return a & (vector int)b;
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_vand(vector unsigned int a, vector unsigned int b)
 {
   return a & b;
 }
 
+static vector unsigned int __ATTRS_o_ai
+vec_vand(vector bool int a, vector unsigned int b)
+{
+  return (vector unsigned int)a & b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vand(vector unsigned int a, vector bool int b)
+{
+  return a & (vector unsigned int)b;
+}
+
+static vector bool int __ATTRS_o_ai
+vec_vand(vector bool int a, vector bool int b)
+{
+  return a & b;
+}
+
 static vector float __ATTRS_o_ai
 vec_vand(vector float a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & (vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_vand(vector bool int a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & (vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_vand(vector float a, vector bool int b)
 {
   vector unsigned int res = (vector unsigned int)a & (vector unsigned int)b;
   return (vector float)res;
@@ -421,8 +917,38 @@ vec_andc(vector signed char a, vector signed char b)
   return a & ~b;
 }
 
+static vector signed char __ATTRS_o_ai
+vec_andc(vector bool char a, vector signed char b)
+{
+  return (vector signed char)a & ~b;
+}
+
+static vector signed char __ATTRS_o_ai
+vec_andc(vector signed char a, vector bool char b)
+{
+  return a & ~(vector signed char)b;
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_andc(vector unsigned char a, vector unsigned char b)
+{
+  return a & ~b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_andc(vector bool char a, vector unsigned char b)
+{
+  return (vector unsigned char)a & ~b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_andc(vector unsigned char a, vector bool char b)
+{
+  return a & ~(vector unsigned char)b;
+}
+
+static vector bool char __ATTRS_o_ai
+vec_andc(vector bool char a, vector bool char b)
 {
   return a & ~b;
 }
@@ -433,8 +959,38 @@ vec_andc(vector short a, vector short b)
   return a & ~b;
 }
 
+static vector short __ATTRS_o_ai
+vec_andc(vector bool short a, vector short b)
+{
+  return (vector short)a & ~b;
+}
+
+static vector short __ATTRS_o_ai
+vec_andc(vector short a, vector bool short b)
+{
+  return a & ~(vector short)b;
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_andc(vector unsigned short a, vector unsigned short b)
+{
+  return a & ~b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_andc(vector bool short a, vector unsigned short b)
+{
+  return (vector unsigned short)a & ~b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_andc(vector unsigned short a, vector bool short b)
+{
+  return a & ~(vector unsigned short)b;
+}
+
+static vector bool short __ATTRS_o_ai
+vec_andc(vector bool short a, vector bool short b)
 {
   return a & ~b;
 }
@@ -445,14 +1001,58 @@ vec_andc(vector int a, vector int b)
   return a & ~b;
 }
 
+static vector int __ATTRS_o_ai
+vec_andc(vector bool int a, vector int b)
+{
+  return (vector int)a & ~b;
+}
+
+static vector int __ATTRS_o_ai
+vec_andc(vector int a, vector bool int b)
+{
+  return a & ~(vector int)b;
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_andc(vector unsigned int a, vector unsigned int b)
 {
   return a & ~b;
 }
 
+static vector unsigned int __ATTRS_o_ai
+vec_andc(vector bool int a, vector unsigned int b)
+{
+  return (vector unsigned int)a & ~b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_andc(vector unsigned int a, vector bool int b)
+{
+  return a & ~(vector unsigned int)b;
+}
+
+static vector bool int __ATTRS_o_ai
+vec_andc(vector bool int a, vector bool int b)
+{
+  return a & ~b;
+}
+
 static vector float __ATTRS_o_ai
 vec_andc(vector float a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & ~(vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_andc(vector bool int a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & ~(vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_andc(vector float a, vector bool int b)
 {
   vector unsigned int res = (vector unsigned int)a & ~(vector unsigned int)b;
   return (vector float)res;
@@ -466,8 +1066,38 @@ vec_vandc(vector signed char a, vector signed char b)
   return a & ~b;
 }
 
+static vector signed char __ATTRS_o_ai
+vec_vandc(vector bool char a, vector signed char b)
+{
+  return (vector signed char)a & ~b;
+}
+
+static vector signed char __ATTRS_o_ai
+vec_vandc(vector signed char a, vector bool char b)
+{
+  return a & ~(vector signed char)b;
+}
+
 static vector unsigned char __ATTRS_o_ai
 vec_vandc(vector unsigned char a, vector unsigned char b)
+{
+  return a & ~b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vandc(vector bool char a, vector unsigned char b)
+{
+  return (vector unsigned char)a & ~b;
+}
+
+static vector unsigned char __ATTRS_o_ai
+vec_vandc(vector unsigned char a, vector bool char b)
+{
+  return a & ~(vector unsigned char)b;
+}
+
+static vector bool char __ATTRS_o_ai
+vec_vandc(vector bool char a, vector bool char b)
 {
   return a & ~b;
 }
@@ -478,8 +1108,38 @@ vec_vandc(vector short a, vector short b)
   return a & ~b;
 }
 
+static vector short __ATTRS_o_ai
+vec_vandc(vector bool short a, vector short b)
+{
+  return (vector short)a & ~b;
+}
+
+static vector short __ATTRS_o_ai
+vec_vandc(vector short a, vector bool short b)
+{
+  return a & ~(vector short)b;
+}
+
 static vector unsigned short __ATTRS_o_ai
 vec_vandc(vector unsigned short a, vector unsigned short b)
+{
+  return a & ~b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vandc(vector bool short a, vector unsigned short b)
+{
+  return (vector unsigned short)a & ~b;
+}
+
+static vector unsigned short __ATTRS_o_ai
+vec_vandc(vector unsigned short a, vector bool short b)
+{
+  return a & ~(vector unsigned short)b;
+}
+
+static vector bool short __ATTRS_o_ai
+vec_vandc(vector bool short a, vector bool short b)
 {
   return a & ~b;
 }
@@ -490,14 +1150,58 @@ vec_vandc(vector int a, vector int b)
   return a & ~b;
 }
 
+static vector int __ATTRS_o_ai
+vec_vandc(vector bool int a, vector int b)
+{
+  return (vector int)a & ~b;
+}
+
+static vector int __ATTRS_o_ai
+vec_vandc(vector int a, vector bool int b)
+{
+  return a & ~(vector int)b;
+}
+
 static vector unsigned int __ATTRS_o_ai
 vec_vandc(vector unsigned int a, vector unsigned int b)
 {
   return a & ~b;
 }
 
+static vector unsigned int __ATTRS_o_ai
+vec_vandc(vector bool int a, vector unsigned int b)
+{
+  return (vector unsigned int)a & ~b;
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_vandc(vector unsigned int a, vector bool int b)
+{
+  return a & ~(vector unsigned int)b;
+}
+
+static vector bool int __ATTRS_o_ai
+vec_vandc(vector bool int a, vector bool int b)
+{
+  return a & ~b;
+}
+
 static vector float __ATTRS_o_ai
 vec_vandc(vector float a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & ~(vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_vandc(vector bool int a, vector float b)
+{
+  vector unsigned int res = (vector unsigned int)a & ~(vector unsigned int)b;
+  return (vector float)res;
+}
+
+static vector float __ATTRS_o_ai
+vec_vandc(vector float a, vector bool int b)
 {
   vector unsigned int res = (vector unsigned int)a & ~(vector unsigned int)b;
   return (vector float)res;
