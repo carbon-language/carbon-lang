@@ -601,7 +601,7 @@ void PMTopLevelManager::schedulePass(Pass *P) {
                  AnalysisPass->getPotentialPassManagerType()) {
           // Schedule analysis pass that is managed by a new manager.
           schedulePass(AnalysisPass);
-          // Recheck analysis passes to ensure that required analysises that
+          // Recheck analysis passes to ensure that required analyses that
           // are already checked are still available.
           checkAnalysis = true;
         }
@@ -951,7 +951,7 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
     TransferLastUses.clear();
   }
 
-  // Now, take care of required analysises that are not available.
+  // Now, take care of required analyses that are not available.
   for (SmallVector<AnalysisID, 8>::iterator
          I = ReqAnalysisNotAvailable.begin(),
          E = ReqAnalysisNotAvailable.end() ;I != E; ++I) {
