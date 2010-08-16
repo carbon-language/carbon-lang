@@ -2468,6 +2468,11 @@ const SCEV *ScalarEvolution::getSCEV(Value *V) {
   std::map<SCEVCallbackVH, const SCEV *>::const_iterator I = Scalars.find(V);
   if (I != Scalars.end()) return I->second;
   const SCEV *S = createSCEV(V);
+
+  // The process of creating a SCEV for V may have caused other SCEVs
+  // to have been created, so it's necessary to insert the new entry
+  // from scratch, rather than trying to remember the insert position
+  // above.
   Scalars.insert(std::make_pair(SCEVCallbackVH(V, this), S));
   return S;
 }
