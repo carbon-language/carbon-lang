@@ -330,6 +330,12 @@ struct Elf64_Sym {
   }
 };
 
+// The size (in bytes) of symbol table entries.
+enum {
+  SYMENTRY_SIZE32 = 16, // 32-bit symbol entry size
+  SYMENTRY_SIZE64 = 24  // 64-bit symbol entry size.
+};
+
 // Symbol bindings.
 enum {
   STB_LOCAL = 0,   // Local symbol, not visible outside obj file containing def

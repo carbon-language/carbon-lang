@@ -44,9 +44,9 @@ class MCSectionELF : public MCSection {
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags,
-               SectionKind K, bool isExplicit)
+               SectionKind K, bool isExplicit, unsigned entrySize)
     : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
-      IsExplicit(isExplicit) {}
+      IsExplicit(isExplicit), EntrySize(entrySize) {}
   ~MCSectionELF();
 public:
 
@@ -174,6 +174,7 @@ public:
   StringRef getSectionName() const { return SectionName; }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
+  unsigned getEntrySize() const { return EntrySize; }
   
   void PrintSwitchToSection(const MCAsmInfo &MAI,
                             raw_ostream &OS) const;
