@@ -1425,67 +1425,7 @@ namespace {
     virtual void ProcessCodeCompleteResults(Sema &S, 
                                             CodeCompletionContext Context,
                                             Result *Results,
-                                            unsigned NumResults) { 
-      // Merge the results we were given with the results we cached.
-      bool AddedResult = false;
-      unsigned InContexts = 
-        (Context.getKind() == CodeCompletionContext::CCC_Other? NormalContexts
-                                              : (1 << (Context.getKind() - 1)));
-      typedef CodeCompleteConsumer::Result Result;
-      llvm::SmallVector<Result, 8> AllResults;
-      for (ASTUnit::cached_completion_iterator 
-               C = AST.cached_completion_begin(),
-            CEnd = AST.cached_completion_end();
-           C != CEnd; ++C) {
-        // If the context we are in matches any of the contexts we are 
-        // interested in, we'll add this result.
-        if ((C->ShowInContexts & InContexts) == 0)
-          continue;
-        
-        // If we haven't added any results previously, do so now.
-        if (!AddedResult) {
-          AllResults.insert(AllResults.end(), Results, Results + NumResults);
-          AddedResult = true;
-        }
-        
-        // Adjust priority based on similar type classes.
-        unsigned Priority = C->Priority;
-        if (!Context.getPreferredType().isNull()) {
-          if (C->Kind == CXCursor_MacroDefinition) {
-            Priority = getMacroUsagePriority(C->Completion->getTypedText(),
-                               Context.getPreferredType()->isAnyPointerType());
-          } else if (C->Type) {
-            CanQualType Expected
-              = S.Context.getCanonicalType(
-                               Context.getPreferredType().getUnqualifiedType());
-            SimplifiedTypeClass ExpectedSTC = getSimplifiedTypeClass(Expected);
-            if (ExpectedSTC == C->TypeClass) {
-              // We know this type is similar; check for an exact match.
-              llvm::StringMap<unsigned> &CachedCompletionTypes
-                = AST.getCachedCompletionTypes();
-              llvm::StringMap<unsigned>::iterator Pos
-                = CachedCompletionTypes.find(QualType(Expected).getAsString());
-              if (Pos != CachedCompletionTypes.end() && Pos->second == C->Type)
-                Priority /= CCF_ExactTypeMatch;
-              else
-                Priority /= CCF_SimilarTypeMatch;
-            }
-          }
-        }
-            
-        AllResults.push_back(Result(C->Completion, Priority, C->Kind));
-      }
-      
-      // If we did not add any cached completion results, just forward the
-      // results we were given to the next consumer.
-      if (!AddedResult) {
-        Next.ProcessCodeCompleteResults(S, Context, Results, NumResults);
-        return;
-      }
-      
-      Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
-                                      AllResults.size());
-    }
+                                            unsigned NumResults);
     
     virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
                                            OverloadCandidate *Candidates,
@@ -1494,6 +1434,74 @@ namespace {
     }
   };
 }
+
+void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
+                                            CodeCompletionContext Context,
+                                            Result *Results,
+                                            unsigned NumResults) { 
+  // Merge the results we were given with the results we cached.
+  bool AddedResult = false;
+  unsigned InContexts = 
+  (Context.getKind() == CodeCompletionContext::CCC_Other? NormalContexts
+   : (1 << (Context.getKind() - 1)));
+  typedef CodeCompleteConsumer::Result Result;
+  llvm::SmallVector<Result, 8> AllResults;
+  for (ASTUnit::cached_completion_iterator 
+       C = AST.cached_completion_begin(),
+       CEnd = AST.cached_completion_end();
+       C != CEnd; ++C) {
+    // If the context we are in matches any of the contexts we are 
+    // interested in, we'll add this result.
+    if ((C->ShowInContexts & InContexts) == 0)
+      continue;
+    
+    // If we haven't added any results previously, do so now.
+    if (!AddedResult) {
+      AllResults.insert(AllResults.end(), Results, Results + NumResults);
+      AddedResult = true;
+    }
+    
+    // Adjust priority based on similar type classes.
+    unsigned Priority = C->Priority;
+    if (!Context.getPreferredType().isNull()) {
+      if (C->Kind == CXCursor_MacroDefinition) {
+        Priority = getMacroUsagePriority(C->Completion->getTypedText(),
+                               Context.getPreferredType()->isAnyPointerType());
+      } else if (C->Type) {
+        CanQualType Expected
+        = S.Context.getCanonicalType(
+                               Context.getPreferredType().getUnqualifiedType());
+        SimplifiedTypeClass ExpectedSTC = getSimplifiedTypeClass(Expected);
+        if (ExpectedSTC == C->TypeClass) {
+          // We know this type is similar; check for an exact match.
+          llvm::StringMap<unsigned> &CachedCompletionTypes
+          = AST.getCachedCompletionTypes();
+          llvm::StringMap<unsigned>::iterator Pos
+          = CachedCompletionTypes.find(QualType(Expected).getAsString());
+          if (Pos != CachedCompletionTypes.end() && Pos->second == C->Type)
+            Priority /= CCF_ExactTypeMatch;
+          else
+            Priority /= CCF_SimilarTypeMatch;
+        }
+      }
+    }
+    
+    AllResults.push_back(Result(C->Completion, Priority, C->Kind));
+  }
+  
+  // If we did not add any cached completion results, just forward the
+  // results we were given to the next consumer.
+  if (!AddedResult) {
+    Next.ProcessCodeCompleteResults(S, Context, Results, NumResults);
+    return;
+  }
+  
+  Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
+                                  AllResults.size());
+}
+
+
+
 void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                            RemappedFile *RemappedFiles, 
                            unsigned NumRemappedFiles,
