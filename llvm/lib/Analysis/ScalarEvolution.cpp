@@ -1494,7 +1494,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       // re-generate the operands list. Group the operands by constant scale,
       // to avoid multiplying by the same constant scale multiple times.
       std::map<APInt, SmallVector<const SCEV *, 4>, APIntCompare> MulOpLists;
-      for (SmallVector<const SCEV *, 8>::iterator I = NewOps.begin(),
+      for (SmallVector<const SCEV *, 8>::const_iterator I = NewOps.begin(),
            E = NewOps.end(); I != E; ++I)
         MulOpLists[M.find(*I)->second].push_back(*I);
       // Re-generate the operands list.
@@ -2465,7 +2465,7 @@ const SCEV *ScalarEvolution::getCouldNotCompute() {
 const SCEV *ScalarEvolution::getSCEV(Value *V) {
   assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
 
-  std::map<SCEVCallbackVH, const SCEV *>::iterator I = Scalars.find(V);
+  std::map<SCEVCallbackVH, const SCEV *>::const_iterator I = Scalars.find(V);
   if (I != Scalars.end()) return I->second;
   const SCEV *S = createSCEV(V);
   Scalars.insert(std::make_pair(SCEVCallbackVH(V, this), S));
@@ -4284,7 +4284,7 @@ Constant *
 ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
                                                    const APInt &BEs,
                                                    const Loop *L) {
-  std::map<PHINode*, Constant*>::iterator I =
+  std::map<PHINode*, Constant*>::const_iterator I =
     ConstantEvolutionLoopExitValue.find(PN);
   if (I != ConstantEvolutionLoopExitValue.end())
     return I->second;
