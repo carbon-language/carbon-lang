@@ -521,12 +521,6 @@ void Lint::visitIndirectBrInst(IndirectBrInst &I) {
 
   Assert1(I.getNumDestinations() != 0,
           "Undefined behavior: indirectbr with no destinations", &I);
-
-  for (unsigned i = 0, e = I.getNumDestinations(); i != e; ++i)
-    Assert1(I.getDestination(i)->hasAddressTaken(),
-            "Unusual: indirectbr destination has not "
-            "had its address taken",
-            &I);
 }
 
 void Lint::visitExtractElementInst(ExtractElementInst &I) {

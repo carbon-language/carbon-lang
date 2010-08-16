@@ -102,7 +102,6 @@ define void @not_vararg(i8* %p) nounwind {
 }
 
 ; CHECK: Undefined behavior: Branch to non-blockaddress
-; CHECK: Unusual: indirectbr destination has not had its address taken
 define void @use_indbr() {
   indirectbr i8* bitcast (i32()* @foo to i8*), [label %block]
 block:
