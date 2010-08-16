@@ -392,6 +392,11 @@ def MOV64mr_TC : RI<0x89, MRMDestMem, (outs), (ins i64mem_TC:$dst, GR64_TC:$src)
                 []>;
 }
 
+// FIXME: These definitions are utterly broken
+// Just leave them commented out for now because they're useless outside
+// of the large code model, and most compilers won't generate the instructions
+// in question.
+/*
 def MOV64o8a : RIi8<0xA0, RawFrm, (outs), (ins offset8:$src),
                       "mov{q}\t{$src, %rax|%rax, $src}", []>;
 def MOV64o64a : RIi32<0xA1, RawFrm, (outs), (ins offset64:$src),
@@ -400,6 +405,7 @@ def MOV64ao8 : RIi8<0xA2, RawFrm, (outs offset8:$dst), (ins),
                        "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
 def MOV64ao64 : RIi32<0xA3, RawFrm, (outs offset64:$dst), (ins),
                        "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
+*/
 
 // Moves to and from segment registers
 def MOV64rs : RI<0x8C, MRMDestReg, (outs GR64:$dst), (ins SEGMENT_REG:$src),
