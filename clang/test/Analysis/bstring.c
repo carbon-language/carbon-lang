@@ -48,27 +48,30 @@ void *memcpy(void *restrict s1, const void *restrict s2, size_t n);
 
 void memcpy0 () {
   char src[] = {1, 2, 3, 4};
-  char dst[4];
+  char dst[4] = {0};
 
   memcpy(dst, src, 4); // no-warning
 
   if (memcpy(dst, src, 4) != dst) {
     (void)*(char*)0; // no-warning
   }
+
+  if (dst[0] != 0)
+    (void)*(char*)0; // expected-warning{{null}}
 }
 
 void memcpy1 () {
   char src[] = {1, 2, 3, 4};
   char dst[10];
 
-  memcpy(dst, src, 5); // expected-warning{{out-of-bound}}
+  memcpy(dst, src, 5); // expected-warning{{Byte string function accesses out-of-bound array element}}
 }
 
 void memcpy2 () {
   char src[] = {1, 2, 3, 4};
   char dst[1];
 
-  memcpy(dst, src, 4); // expected-warning{{out-of-bound}}
+  memcpy(dst, src, 4); // expected-warning{{Byte string function overflows destination buffer}}
 }
 
 void memcpy3 () {
@@ -82,14 +85,14 @@ void memcpy4 () {
   char src[] = {1, 2, 3, 4};
   char dst[10];
 
-  memcpy(dst+2, src+2, 3); // expected-warning{{out-of-bound}}
+  memcpy(dst+2, src+2, 3); // expected-warning{{Byte string function accesses out-of-bound array element}}
 }
 
 void memcpy5() {
   char src[] = {1, 2, 3, 4};
   char dst[3];
 
-  memcpy(dst+2, src+2, 2); // expected-warning{{out-of-bound}}
+  memcpy(dst+2, src+2, 2); // expected-warning{{Byte string function overflows destination buffer}}
 }
 
 void memcpy6() {
@@ -150,13 +153,16 @@ void *memmove(void *s1, const void *s2, size_t n);
 
 void memmove0 () {
   char src[] = {1, 2, 3, 4};
-  char dst[4];
+  char dst[4] = {0};
 
   memmove(dst, src, 4); // no-warning
 
   if (memmove(dst, src, 4) != dst) {
     (void)*(char*)0; // no-warning
   }
+
+  if (dst[0] != 0)
+    (void)*(char*)0; // expected-warning{{null}}
 }
 
 void memmove1 () {
@@ -170,7 +176,7 @@ void memmove2 () {
   char src[] = {1, 2, 3, 4};
   char dst[1];
 
-  memmove(dst, src, 4); // expected-warning{{out-of-bound}}
+  memmove(dst, src, 4); // expected-warning{{overflow}}
 }
 
 //===----------------------------------------------------------------------===
@@ -263,9 +269,12 @@ void bcopy(/*const*/ void *s1, void *s2, size_t n);
 
 void bcopy0 () {
   char src[] = {1, 2, 3, 4};
-  char dst[4];
+  char dst[4] = {0};
 
   bcopy(src, dst, 4); // no-warning
+
+  if (dst[0] != 0)
+    (void)*(char*)0; // expected-warning{{null}}
 }
 
 void bcopy1 () {
@@ -279,5 +288,5 @@ void bcopy2 () {
   char src[] = {1, 2, 3, 4};
   char dst[1];
 
-  bcopy(src, dst, 4); // expected-warning{{out-of-bound}}
+  bcopy(src, dst, 4); // expected-warning{{overflow}}
 }

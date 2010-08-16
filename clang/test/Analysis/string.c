@@ -24,6 +24,7 @@
 # define BUILTIN(f) f
 #endif /* USE_BUILTINS */
 
+#define NULL 0
 typedef typeof(sizeof(int)) size_t;
 
 //===----------------------------------------------------------------------===
@@ -136,4 +137,104 @@ void strlen_liveness(const char *x) {
     return;
   if (strlen(x) < 5)
     (void)*(char*)0; // no-warning
+}
+
+//===----------------------------------------------------------------------===
+// strcpy()
+//===----------------------------------------------------------------------===
+
+#ifdef VARIANT
+
+#define __strcpy_chk BUILTIN(__strcpy_chk)
+char *__strcpy_chk(char *restrict s1, const char *restrict s2, size_t destlen);
+
+#define strcpy(a,b) __strcpy_chk(a,b,(size_t)-1)
+
+#else /* VARIANT */
+
+#define strcpy BUILTIN(strcpy)
+char *strcpy(char *restrict s1, const char *restrict s2);
+
+#endif /* VARIANT */
+
+
+void strcpy_null_dst(char *x) {
+  strcpy(NULL, x); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strcpy_null_src(char *x) {
+  strcpy(x, NULL); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strcpy_fn(char *x) {
+  strcpy(x, (char*)&strcpy_fn); // expected-warning{{Argument to byte string function is the address of the function 'strcpy_fn', which is not a null-terminated string}}
+}
+
+void strcpy_effects(char *x, char *y) {
+  char a = x[0];
+
+  if (strcpy(x, y) != x)
+    (void)*(char*)0; // no-warning
+
+  if (strlen(x) != strlen(y))
+    (void)*(char*)0; // no-warning
+
+  if (a != x[0])
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strcpy_overflow(char *y) {
+  char x[4];
+  if (strlen(y) == 4)
+    strcpy(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+}
+
+void strcpy_no_overflow(char *y) {
+  char x[4];
+  if (strlen(y) == 3)
+    strcpy(x, y); // no-warning
+}
+
+//===----------------------------------------------------------------------===
+// stpcpy()
+//===----------------------------------------------------------------------===
+
+#ifdef VARIANT
+
+#define __stpcpy_chk BUILTIN(__stpcpy_chk)
+char *__stpcpy_chk(char *restrict s1, const char *restrict s2, size_t destlen);
+
+#define stpcpy(a,b) __stpcpy_chk(a,b,(size_t)-1)
+
+#else /* VARIANT */
+
+#define stpcpy BUILTIN(stpcpy)
+char *stpcpy(char *restrict s1, const char *restrict s2);
+
+#endif /* VARIANT */
+
+
+void stpcpy_effect(char *x, char *y) {
+  char a = x[0];
+
+  if (stpcpy(x, y) != &x[strlen(y)])
+    (void)*(char*)0; // no-warning
+
+  if (strlen(x) != strlen(y))
+    (void)*(char*)0; // no-warning
+
+  if (a != x[0])
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void stpcpy_overflow(char *y) {
+  char x[4];
+  if (strlen(y) == 4)
+    stpcpy(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+}
+
+void stpcpy_no_overflow(char *y) {
+  char x[4];
+  if (strlen(y) == 3)
+    stpcpy(x, y); // no-warning
 }
