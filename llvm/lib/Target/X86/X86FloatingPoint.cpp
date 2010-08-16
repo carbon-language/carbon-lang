@@ -144,11 +144,6 @@ namespace {
       dbgs() << "\n";
     }
 
-    /// isStackEmpty - Return true if the FP stack is empty.
-    bool isStackEmpty() const {
-      return StackTop == 0;
-    }
-
     /// getSlot - Return the stack slot number a particular register number is
     /// in.
     unsigned getSlot(unsigned RegNo) const {
@@ -576,9 +571,6 @@ namespace {
     bool operator<(const TableEntry &TE) const { return from < TE.from; }
     friend bool operator<(const TableEntry &TE, unsigned V) {
       return TE.from < V;
-    }
-    friend bool operator<(unsigned V, const TableEntry &TE) {
-      return V < TE.from;
     }
   };
 }
