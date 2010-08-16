@@ -35,6 +35,11 @@ class MCSectionELF : public MCSection {
   /// IsExplicit - Indicates that this section comes from globals with an
   /// explicit section specified.
   bool IsExplicit;
+
+  /// EntrySize - The size of each entry in this section. This size only
+  /// makes sense for sections that contain fixed-sized entries. If a
+  /// section does not contain fixed-sized entries 'EntrySize' will be 0.
+  unsigned EntrySize;
   
 private:
   friend class MCContext;
