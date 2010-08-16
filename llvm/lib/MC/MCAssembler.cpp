@@ -211,7 +211,8 @@ MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
   : Symbol(&_Symbol), Fragment(_Fragment), Offset(_Offset),
     IsExternal(false), IsPrivateExtern(false),
-    CommonSize(0), CommonAlign(0), Flags(0), Index(0)
+    CommonSize(0), SymbolSize(0), CommonAlign(0),
+    Flags(0), Index(0)
 {
   if (A)
     A->getSymbolList().push_back(this);
