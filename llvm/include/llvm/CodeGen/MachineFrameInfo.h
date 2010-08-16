@@ -296,6 +296,9 @@ public:
   /// blob.
   int64_t getLocalFrameBaseOffset() const { return LocalFrameBaseOffset; }
 
+  /// setLocalFrameSize - Set the size of the local object blob.
+  void setLocalFrameSize(int64_t sz) { LocalFrameSize = sz; }
+
   /// getLocalFrameSize - Get the size of the local object blob.
   int64_t getLocalFrameSize() const { return LocalFrameSize; }
 

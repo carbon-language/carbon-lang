@@ -40,8 +40,6 @@ STATISTIC(NumAllocations, "Number of frame indices processed");
 
 namespace {
   class LocalStackSlotPass: public MachineFunctionPass {
-    int64_t LocalStackSize;
-
     void calculateFrameObjectOffsets(MachineFunction &Fn);
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -68,7 +66,6 @@ FunctionPass *llvm::createLocalStackSlotAllocationPass() {
 
 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
   calculateFrameObjectOffsets(MF);
-  DEBUG(dbgs() << LocalStackSize << " bytes of local storage pre-allocated\n");
   return true;
 }
 
@@ -165,5 +162,5 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
   }
 
   // Remember how big this blob of stack space is
-  LocalStackSize = Offset;
+  MFI->setLocalFrameSize(Offset);
 }
