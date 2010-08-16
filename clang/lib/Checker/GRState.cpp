@@ -181,6 +181,50 @@ const GRState *GRState::BindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
   return getStateManager().getPersistentState(NewSt);
 }
 
+const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
+                                      DefinedOrUnknownSVal UpperBound,
+                                      bool Assumption) const {
+  if (Idx.isUnknown() || UpperBound.isUnknown())
+    return this;
+
+  // Build an expression for 0 <= Idx < UpperBound.
+  // This is the same as Idx + MIN < UpperBound + MIN, if overflow is allowed.
+  // FIXME: This should probably be part of SValuator.
+  GRStateManager &SM = getStateManager();
+  ValueManager &VM = SM.getValueManager();
+  SValuator &SV = VM.getSValuator();
+  ASTContext &Ctx = VM.getContext();
+
+  // Get the offset: the minimum value of the array index type.
+  BasicValueFactory &BVF = VM.getBasicValueFactory();
+  // FIXME: This should be using ValueManager::ArrayIndexTy...somehow.
+  QualType IndexTy = Ctx.IntTy;
+  nonloc::ConcreteInt Min = BVF.getMinValue(IndexTy);
+
+  // Adjust the index.
+  SVal NewIdx = SV.EvalBinOpNN(this, BinaryOperator::Add,
+                               cast<NonLoc>(Idx), Min, IndexTy);
+  if (NewIdx.isUnknownOrUndef())
+    return this;
+
+  // Adjust the upper bound.
+  SVal NewBound = SV.EvalBinOpNN(this, BinaryOperator::Add,
+                                 cast<NonLoc>(UpperBound), Min, IndexTy);
+  if (NewBound.isUnknownOrUndef())
+    return this;
+
+  // Build the actual comparison.
+  SVal InBound = SV.EvalBinOpNN(this, BinaryOperator::LT,
+                                cast<NonLoc>(NewIdx), cast<NonLoc>(NewBound),
+                                Ctx.IntTy);
+  if (InBound.isUnknownOrUndef())
+    return this;
+
+  // Finally, let the constraint manager take care of it.
+  ConstraintManager &CM = SM.getConstraintManager();
+  return CM.Assume(this, cast<DefinedSVal>(InBound), Assumption);
+}
+
 const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
   GRState State(this,
                 EnvMgr.getInitialEnvironment(),
