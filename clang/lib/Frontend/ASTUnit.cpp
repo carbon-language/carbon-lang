@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
@@ -182,6 +183,8 @@ void ASTUnit::CacheCodeCompletionResults() {
   TheSema->GatherGlobalCodeCompletions(Results);
   
   // Translate global code completions into cached completions.
+  llvm::DenseMap<CanQualType, unsigned> CompletionTypes;
+  
   for (unsigned I = 0, N = Results.size(); I != N; ++I) {
     switch (Results[I].Kind) {
     case Result::RK_Declaration: {
@@ -192,13 +195,30 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
 
+      // Keep track of the type of this completion in an ASTContext-agnostic 
+      // way.
       QualType UsageType = getDeclUsageType(*Ctx, Results[I].Declaration);
-      if (UsageType.isNull())
+      if (UsageType.isNull()) {
         CachedResult.TypeClass = STC_Void;
-      else {
-        CachedResult.TypeClass
-          = getSimplifiedTypeClass(Ctx->getCanonicalType(UsageType));
+        CachedResult.Type = 0;
+      } else {
+        CanQualType CanUsageType
+          = Ctx->getCanonicalType(UsageType.getUnqualifiedType());
+        CachedResult.TypeClass = getSimplifiedTypeClass(CanUsageType);
+
+        // Determine whether we have already seen this type. If so, we save
+        // ourselves the work of formatting the type string by using the 
+        // temporary, CanQualType-based hash table to find the associated value.
+        unsigned &TypeValue = CompletionTypes[CanUsageType];
+        if (TypeValue == 0) {
+          TypeValue = CompletionTypes.size();
+          CachedCompletionTypes[QualType(CanUsageType).getAsString()]
+            = TypeValue;
+        }
+        
+        CachedResult.Type = TypeValue;
       }
+      
       CachedCompletionResults.push_back(CachedResult);
       break;
     }
@@ -224,6 +244,7 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
       CachedResult.TypeClass = STC_Void;
+      CachedResult.Type = 0;
       CachedCompletionResults.push_back(CachedResult);
       break;
     }
@@ -239,6 +260,7 @@ void ASTUnit::ClearCachedCompletionResults() {
   for (unsigned I = 0, N = CachedCompletionResults.size(); I != N; ++I)
     delete CachedCompletionResults[I].Completion;
   CachedCompletionResults.clear();
+  CachedCompletionTypes.clear();
 }
 
 namespace {
@@ -1432,13 +1454,21 @@ namespace {
           if (C->Kind == CXCursor_MacroDefinition) {
             Priority = getMacroUsagePriority(C->Completion->getTypedText(),
                                Context.getPreferredType()->isAnyPointerType());
-          } else {
+          } else if (C->Type) {
             CanQualType Expected
-              = S.Context.getCanonicalType(Context.getPreferredType());
+              = S.Context.getCanonicalType(
+                               Context.getPreferredType().getUnqualifiedType());
             SimplifiedTypeClass ExpectedSTC = getSimplifiedTypeClass(Expected);
             if (ExpectedSTC == C->TypeClass) {
-              // FIXME: How can we check for an exact match?
-              Priority /= CCF_SimilarTypeMatch;
+              // We know this type is similar; check for an exact match.
+              llvm::StringMap<unsigned> &CachedCompletionTypes
+                = AST.getCachedCompletionTypes();
+              llvm::StringMap<unsigned>::iterator Pos
+                = CachedCompletionTypes.find(QualType(Expected).getAsString());
+              if (Pos != CachedCompletionTypes.end() && Pos->second == C->Type)
+                Priority /= CCF_ExactTypeMatch;
+              else
+                Priority /= CCF_SimilarTypeMatch;
             }
           }
         }

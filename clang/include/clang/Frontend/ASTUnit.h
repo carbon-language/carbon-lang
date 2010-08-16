@@ -235,11 +235,29 @@ public:
     
     /// \brief The simplified type class for a non-macro completion result.
     SimplifiedTypeClass TypeClass;
+    
+    /// \brief The type of a non-macro completion result, stored as a unique
+    /// integer used by the string map of cached completion types.
+    ///
+    /// This value will be zero if the type is not known, or a unique value
+    /// determined by the formatted type string. Se \c CachedCompletionTypes
+    /// for more information.
+    unsigned Type;
   };
+  
+  /// \brief Retrieve the mapping from formatted type names to unique type
+  /// identifiers.
+  llvm::StringMap<unsigned> &getCachedCompletionTypes() { 
+    return CachedCompletionTypes; 
+  }
   
 private:
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;
+  
+  /// \brief A mapping from the formatted type name to a unique number for that
+  /// type, which is used for type equality comparisons.
+  llvm::StringMap<unsigned> CachedCompletionTypes;
   
   /// \brief Cache any "global" code-completion results, so that we can avoid
   /// recomputing them with each completion.

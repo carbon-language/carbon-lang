@@ -703,9 +703,9 @@ inline CanQual<Type> CanQual<T>::getNonReferenceType() const {
 template<typename T>
 CanQual<T> CanQual<T>::getFromOpaquePtr(void *Ptr) {
   CanQual<T> Result;
-  Result.Stored.setFromOpaqueValue(Ptr);
-  assert((!Result || Result.Stored.isCanonical())
-         && "Type is not canonical!");
+  Result.Stored = QualType::getFromOpaquePtr(Ptr);
+  assert((!Result || Result.Stored.getAsOpaquePtr() == (void*)-1 ||
+          Result.Stored.isCanonical()) && "Type is not canonical!");
   return Result;
 }
 
