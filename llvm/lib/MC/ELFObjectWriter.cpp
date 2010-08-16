@@ -451,9 +451,23 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   }
 
   // Write out a symbol table entry for each section.
-  for (unsigned Index = 1; Index < Asm.size(); ++Index)
+  // leaving out the just added .symtab which is at
+  // the very end
+  unsigned Index = 1;
+  for (MCAssembler::const_iterator it = Asm.begin(),
+       ie = Asm.end(); it != ie; ++it, ++Index) {
+    const MCSectionData &SD = *it;
+    const MCSectionELF &Section =
+      static_cast<const MCSectionELF&>(SD.getSection());
+    // Leave out relocations so we don't have indexes within
+    // the relocations messed up
+    if (Section.getType() == ELF::SHT_RELA)
+      continue;
+    if (Index == Asm.size())
+      continue;
     WriteSymbolEntry(F, 0, ELF::STT_SECTION, 0, 0, ELF::STV_DEFAULT, Index);
-  LastLocalSymbolIndex += Asm.size() - 1;
+    LastLocalSymbolIndex++;
+  }
 
   for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = ExternalSymbolData[i];
@@ -620,12 +634,10 @@ uint64_t ELFObjectWriterImpl::getSymbolIndexInSymbolTable(MCAssembler &Asm,
       return i + /* empty symbol */ 1;
   for (unsigned i = 0, e = External.size(); i != e; ++i)
     if (&External[i].SymbolData->getSymbol() == S)
-      return i + Local.size() + Asm.size() + /* empty symbol */ 1 +
-        /* .rela.text + .rela.eh_frame */ + 2;
+      return i + Local.size() + Asm.size() + /* empty symbol */ 1;
   for (unsigned i = 0, e = Undefined.size(); i != e; ++i)
     if (&Undefined[i].SymbolData->getSymbol() == S)
-      return i + Local.size() + External.size() + Asm.size() + /* empty symbol */ 1 +
-        /* .rela.text + .rela.eh_frame */ + 2;
+      return i + Local.size() + External.size() + Asm.size() + /* empty symbol */ 1;
 
   llvm_unreachable("Cannot find symbol which should exist!");
 }
