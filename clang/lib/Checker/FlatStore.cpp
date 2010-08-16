@@ -90,8 +90,9 @@ StoreManager *clang::CreateFlatStoreManager(GRStateManager &StMgr) {
 SVal FlatStoreManager::Retrieve(Store store, Loc L, QualType T) {
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
   RegionInterval RI = RegionToInterval(R);
-
-  assert(RI.R && "should handle regions with unknown interval");
+  // FIXME: FlatStore should handle regions with unknown intervals.
+  if (!RI.R)
+    return UnknownVal();
 
   RegionBindings B = getRegionBindings(store);
   const BindingVal *BV = B.lookup(RI.R);
@@ -123,7 +124,9 @@ Store FlatStoreManager::Bind(Store store, Loc L, SVal val) {
     BV = *V;
 
   RegionInterval RI = RegionToInterval(R);
-  assert(RI.R && "should handle regions with unknown interval");
+  // FIXME: FlatStore should handle regions with unknown intervals.
+  if (!RI.R)
+    return B.getRoot();
   BV = BVFactory.Add(BV, RI.I, val);
   B = RBFactory.Add(B, RI.R, BV);
   return B.getRoot();

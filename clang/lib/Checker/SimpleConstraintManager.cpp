@@ -296,28 +296,4 @@ const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
   } // end switch
 }
 
-const GRState *SimpleConstraintManager::AssumeInBound(const GRState *state,
-                                                      DefinedSVal Idx,
-                                                      DefinedSVal UpperBound,
-                                                      bool Assumption) {
-
-  // Only support ConcreteInt for now.
-  if (!(isa<nonloc::ConcreteInt>(Idx) && isa<nonloc::ConcreteInt>(UpperBound)))
-    return state;
-
-  const llvm::APSInt& Zero = state->getBasicVals().getZeroWithPtrWidth(false);
-  llvm::APSInt IdxV = cast<nonloc::ConcreteInt>(Idx).getValue();
-  // IdxV might be too narrow.
-  if (IdxV.getBitWidth() < Zero.getBitWidth())
-    IdxV.extend(Zero.getBitWidth());
-  // UBV might be too narrow, too.
-  llvm::APSInt UBV = cast<nonloc::ConcreteInt>(UpperBound).getValue();
-  if (UBV.getBitWidth() < Zero.getBitWidth())
-    UBV.extend(Zero.getBitWidth());
-
-  bool InBound = (Zero <= IdxV) && (IdxV < UBV);
-  bool isFeasible = Assumption ? InBound : !InBound;
-  return isFeasible ? state : NULL;
-}
-
 }  // end of namespace clang

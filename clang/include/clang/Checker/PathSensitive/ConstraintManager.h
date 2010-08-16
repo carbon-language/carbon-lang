@@ -34,9 +34,6 @@ public:
   virtual const GRState *Assume(const GRState *state, DefinedSVal Cond,
                                 bool Assumption) = 0;
 
-  virtual const GRState *AssumeInBound(const GRState *state, DefinedSVal Idx,
-                                       DefinedSVal UpperBound, bool Assumption) = 0;
-
   std::pair<const GRState*, const GRState*> AssumeDual(const GRState *state,
                                                        DefinedSVal Cond) {
     return std::make_pair(Assume(state, Cond, true),

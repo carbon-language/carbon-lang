@@ -43,10 +43,6 @@ public:
                               BinaryOperator::Opcode op,
                               const llvm::APSInt& Int);
 
-  const GRState *AssumeInBound(const GRState *state, DefinedSVal Idx,
-                               DefinedSVal UpperBound,
-                               bool Assumption);
-
 protected:
 
   //===------------------------------------------------------------------===//

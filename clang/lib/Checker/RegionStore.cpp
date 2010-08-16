@@ -44,7 +44,7 @@ private:
   uint64_t Offset;
 
   explicit BindingKey(const MemRegion *r, uint64_t offset, Kind k)
-    : P(r, (unsigned) k), Offset(offset) { assert(r); }
+    : P(r, (unsigned) k), Offset(offset) {}
 public:
 
   bool isDefault() const { return P.getInt() == Default; }
@@ -71,6 +71,10 @@ public:
   bool operator==(const BindingKey &X) const {
     return P.getOpaqueValue() == X.P.getOpaqueValue() &&
            Offset == X.Offset;
+  }
+
+  operator bool() const {
+    return getRegion() != NULL;
   }
 };
 } // end anonymous namespace
@@ -1604,17 +1608,18 @@ BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
     const RegionRawOffset &O = ER->getAsArrayOffset();
 
-    if (O.getRegion())
-      return BindingKey(O.getRegion(), O.getByteOffset(), k);
-
     // FIXME: There are some ElementRegions for which we cannot compute
-    // raw offsets yet, including regions with symbolic offsets.
+    // raw offsets yet, including regions with symbolic offsets. These will be
+    // ignored by the store.
+    return BindingKey(O.getRegion(), O.getByteOffset(), k);
   }
 
   return BindingKey(R, 0, k);
 }
 
 RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K, SVal V) {
+  if (!K)
+    return B;
   return RBFactory.Add(B, K, V);
 }
 
@@ -1624,6 +1629,8 @@ RegionBindings RegionStoreManager::Add(RegionBindings B, const MemRegion *R,
 }
 
 const SVal *RegionStoreManager::Lookup(RegionBindings B, BindingKey K) {
+  if (!K)
+    return NULL;
   return B.lookup(K);
 }
 
@@ -1634,6 +1641,8 @@ const SVal *RegionStoreManager::Lookup(RegionBindings B,
 }
 
 RegionBindings RegionStoreManager::Remove(RegionBindings B, BindingKey K) {
+  if (!K)
+    return B;
   return RBFactory.Remove(B, K);
 }
 

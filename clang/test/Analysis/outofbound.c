@@ -79,3 +79,19 @@ void alloca_region(int a) {
     x[5] = 5; // expected-warning{{out-of-bound}}
   }
 }
+
+int symbolic_index(int a) {
+  int x[2] = {1, 2};
+  if (a == 2) {
+    return x[a]; // expected-warning{{out-of-bound}}
+  }
+  return 0;
+}
+
+int symbolic_index2(int a) {
+  int x[2] = {1, 2};
+  if (a < 0) {
+    return x[a]; // expected-warning{{out-of-bound}}
+  }
+  return 0;
+}

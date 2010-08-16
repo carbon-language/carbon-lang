@@ -284,10 +284,6 @@ SVal StoreManager::getLValueElement(QualType elementType, SVal Offset,
   if (Base.isUnknownOrUndef() || isa<loc::ConcreteInt>(Base))
     return Base;
 
-  // Only handle integer offsets... for now.
-  if (!isa<nonloc::ConcreteInt>(Offset))
-    return UnknownVal();
-
   const MemRegion* BaseRegion = cast<loc::MemRegionVal>(Base).getRegion();
 
   // Pointer of any type can be cast and used as array base.
@@ -316,6 +312,19 @@ SVal StoreManager::getLValueElement(QualType elementType, SVal Offset,
     return UnknownVal();
 
   const llvm::APSInt& BaseIdxI = cast<nonloc::ConcreteInt>(BaseIdx).getValue();
+
+  // Only allow non-integer offsets if the base region has no offset itself.
+  // FIXME: This is a somewhat arbitrary restriction. We should be using
+  // SValuator here to add the two offsets without checking their types.
+  if (!isa<nonloc::ConcreteInt>(Offset)) {
+    if (isa<ElementRegion>(BaseRegion->StripCasts()))
+      return UnknownVal();
+
+    return loc::MemRegionVal(MRMgr.getElementRegion(elementType, Offset,
+                                                    ElemR->getSuperRegion(),
+                                                    Ctx));
+  }
+
   const llvm::APSInt& OffI = cast<nonloc::ConcreteInt>(Offset).getValue();
   assert(BaseIdxI.isSigned());
 
