@@ -49,3 +49,16 @@ BB0:
   ret void
 }
 
+; SimplifyCFG should notice that BB0 does not have its address taken and
+; remove it from entry's successor list.
+
+; CHECK: indbrtest2
+; CHECK: entry:
+; CHECK-NEXT: unreachable
+
+define void @indbrtest2(i8* %t) {
+entry:
+  indirectbr i8* %t, [label %BB0, label %BB0]
+BB0:
+  ret void
+}

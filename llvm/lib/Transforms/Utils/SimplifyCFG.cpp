@@ -2057,12 +2057,13 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         return true;
       }
     }
-  } else if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(BB->getTerminator())) {
+  } else if (IndirectBrInst *IBI =
+               dyn_cast<IndirectBrInst>(BB->getTerminator())) {
     // Eliminate redundant destinations.
     SmallPtrSet<Value *, 8> Succs;
     for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
       BasicBlock *Dest = IBI->getDestination(i);
-      if (!Succs.insert(Dest)) {
+      if (!Dest->hasAddressTaken() || !Succs.insert(Dest)) {
         Dest->removePredecessor(BB);
         IBI->removeDestination(i);
         --i; --e;
