@@ -664,6 +664,8 @@ public:
   void WriteSectionData(const MCSectionData *Section, const MCAsmLayout &Layout,
                         MCObjectWriter *OW) const;
 
+  void AddSectionToTheEnd(MCSectionData &SD, MCAsmLayout &Layout);
+
 public:
   /// Construct a new assembler instance.
   ///
