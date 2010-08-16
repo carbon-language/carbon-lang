@@ -1855,6 +1855,9 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
             << (int)Record->isUnion() << (int)(FD->getAccess() == AS_protected);
           Invalid = true;
         }
+
+        if (CheckNontrivialField(FD))
+          Invalid = true;
       } else if ((*Mem)->isImplicit()) {
         // Any implicit members are fine.
       } else if (isa<TagDecl>(*Mem) && (*Mem)->getDeclContext() != Record) {
@@ -6044,27 +6047,8 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
         // cannot be a member of a union, nor can an array of such
         // objects.
         // TODO: C++0x alters this restriction significantly.
-        if (Record->isUnion()) {
-          // We check for copy constructors before constructors
-          // because otherwise we'll never get complaints about
-          // copy constructors.
-
-          CXXSpecialMember member = CXXInvalid;
-          if (!RDecl->hasTrivialCopyConstructor())
-            member = CXXCopyConstructor;
-          else if (!RDecl->hasTrivialConstructor())
-            member = CXXConstructor;
-          else if (!RDecl->hasTrivialCopyAssignment())
-            member = CXXCopyAssignment;
-          else if (!RDecl->hasTrivialDestructor())
-            member = CXXDestructor;
-
-          if (member != CXXInvalid) {
-            Diag(Loc, diag::err_illegal_union_member) << Name << member;
-            DiagnoseNontrivial(RT, member);
-            NewFD->setInvalidDecl();
-          }
-        }
+        if (Record->isUnion() && CheckNontrivialField(NewFD))
+          NewFD->setInvalidDecl();
       }
     }
   }
@@ -6092,6 +6076,43 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   return NewFD;
+}
+
+bool Sema::CheckNontrivialField(FieldDecl *FD) {
+  assert(FD);
+  assert(getLangOptions().CPlusPlus && "valid check only for C++");
+
+  if (FD->isInvalidDecl())
+    return true;
+
+  QualType EltTy = Context.getBaseElementType(FD->getType());
+  if (const RecordType *RT = EltTy->getAs<RecordType>()) {
+    CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
+    if (RDecl->getDefinition()) {
+      // We check for copy constructors before constructors
+      // because otherwise we'll never get complaints about
+      // copy constructors.
+
+      CXXSpecialMember member = CXXInvalid;
+      if (!RDecl->hasTrivialCopyConstructor())
+        member = CXXCopyConstructor;
+      else if (!RDecl->hasTrivialConstructor())
+        member = CXXConstructor;
+      else if (!RDecl->hasTrivialCopyAssignment())
+        member = CXXCopyAssignment;
+      else if (!RDecl->hasTrivialDestructor())
+        member = CXXDestructor;
+
+      if (member != CXXInvalid) {
+        Diag(FD->getLocation(), diag::err_illegal_union_or_anon_struct_member)
+              << (int)FD->getParent()->isUnion() << FD->getDeclName() << member;
+        DiagnoseNontrivial(RT, member);
+        return true;
+      }
+    }
+  }
+  
+  return false;
 }
 
 /// DiagnoseNontrivial - Given that a class has a non-trivial

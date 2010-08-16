@@ -1019,6 +1019,7 @@ public:
     CXXCopyAssignment = 2,
     CXXDestructor = 3
   };
+  bool CheckNontrivialField(FieldDecl *FD);
   void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);
   CXXSpecialMember getSpecialMember(const CXXMethodDecl *MD);
 

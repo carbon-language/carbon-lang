@@ -633,9 +633,9 @@ def err_missing_default_ctor : Error<
   "%select{|implicit default }0constructor for %1 must explicitly initialize "
   "the %select{base class|member}2 %3 which does not have a default "
   "constructor">;
-def err_illegal_union_member : Error<
-  "union member %0 has a non-trivial %select{constructor|"
-  "copy constructor|copy assignment operator|destructor}1">;
+def err_illegal_union_or_anon_struct_member : Error<
+  "%select{anonymous struct|union}0 member %1 has a non-trivial "
+  "%select{constructor|copy constructor|copy assignment operator|destructor}2">;
 def note_nontrivial_has_virtual : Note<
   "because type %0 has a virtual %select{member function|base class}1">;
 def note_nontrivial_has_nontrivial : Note<
