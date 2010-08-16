@@ -234,11 +234,6 @@ def bf_inv_mask_imm : Operand<i32>,
 }
 
 /// Split a 32-bit immediate into two 16 bit parts.
-def lo16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() & 0xffff,
-                                   MVT::i32);
-}]>;
-
 def hi16 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() >> 16, MVT::i32);
 }]>;
