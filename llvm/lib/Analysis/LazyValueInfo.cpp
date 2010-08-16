@@ -379,7 +379,7 @@ namespace {
     LVILatticeVal getEdgeValue(BasicBlock *FromBB, BasicBlock *ToBB);
 
   private:
-    LVILatticeVal &getCachedEntryForBlock(BasicBlock *BB);
+    LVILatticeVal getCachedEntryForBlock(BasicBlock *BB);
   };
 } // end anonymous namespace
 
@@ -402,14 +402,14 @@ void LazyValueInfoCache::LVIValueHandle::deleted() {
 
 /// getCachedEntryForBlock - See if we already have a value for this block.  If
 /// so, return it, otherwise create a new entry in the Cache map to use.
-LVILatticeVal &LVIQuery::getCachedEntryForBlock(BasicBlock *BB) {
+LVILatticeVal LVIQuery::getCachedEntryForBlock(BasicBlock *BB) {
   NewBlockInfo.insert(BB);
   return Cache[BB];
 }
 
 LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   // See if we already have a value for this block.
-  LVILatticeVal &BBLV = getCachedEntryForBlock(BB);
+  LVILatticeVal BBLV = getCachedEntryForBlock(BB);
   
   // If we've already computed this block's value, return it.
   if (!BBLV.isUndefined()) {
@@ -421,6 +421,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   // lattice value to overdefined, so that cycles will terminate and be
   // conservatively correct.
   BBLV.markOverdefined();
+  Cache[BB] = BBLV;
   
   // If V is live into BB, see if our predecessors know anything about it.
   Instruction *BBI = dyn_cast<Instruction>(Val);
@@ -453,7 +454,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
     // Return the merged value, which is more precise than 'overdefined'.
     assert(!Result.isOverdefined());
-    return getCachedEntryForBlock(BB) = Result;
+    return Cache[BB] = Result;
   }
   
   // If this value is defined by an instruction in this block, we have to
@@ -478,7 +479,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
     // Return the merged value, which is more precise than 'overdefined'.
     assert(!Result.isOverdefined());
-    return getCachedEntryForBlock(BB) = Result;
+    Cache[BB] = Result;
 
   } else {
     
@@ -489,7 +490,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
 
   LVILatticeVal Result;
   Result.markOverdefined();
-  return getCachedEntryForBlock(BB) = Result;
+  return Result;
 }
 
 
