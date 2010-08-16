@@ -252,7 +252,13 @@ static void SimplifyShortImmForm(MCInst &Inst, unsigned Opcode) {
 }
 
 /// \brief Simplify things like MOV32rm to MOV32o32a.
-static void SimplifyShortMoveForm(MCInst &Inst, unsigned Opcode) {
+static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
+                                  unsigned Opcode) {
+  // Don't make these simplifications in 64-bit mode; other assemblers don't
+  // perform them because they make the code larger.
+  if (Printer.getSubtarget().is64Bit())
+    return;
+
   bool IsStore = Inst.getOperand(0).isReg() && Inst.getOperand(1).isReg();
   unsigned AddrBase = IsStore;
   unsigned RegOp = IsStore ? 0 : 5;
@@ -458,15 +464,13 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   // MOV64ao8, MOV64o8a
   // XCHG16ar, XCHG32ar, XCHG64ar
   case X86::MOV8mr_NOREX:
-  case X86::MOV8mr:     SimplifyShortMoveForm(OutMI, X86::MOV8ao8); break;
+  case X86::MOV8mr:     SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV8ao8); break;
   case X86::MOV8rm_NOREX:
-  case X86::MOV8rm:     SimplifyShortMoveForm(OutMI, X86::MOV8o8a); break;
-  case X86::MOV16mr:    SimplifyShortMoveForm(OutMI, X86::MOV16ao16); break;
-  case X86::MOV16rm:    SimplifyShortMoveForm(OutMI, X86::MOV16o16a); break;
-  case X86::MOV32mr:    SimplifyShortMoveForm(OutMI, X86::MOV32ao32); break;
-  case X86::MOV32rm:    SimplifyShortMoveForm(OutMI, X86::MOV32o32a); break;
-  case X86::MOV64mr:    SimplifyShortMoveForm(OutMI, X86::MOV64ao64); break;
-  case X86::MOV64rm:    SimplifyShortMoveForm(OutMI, X86::MOV64o64a); break;
+  case X86::MOV8rm:     SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV8o8a); break;
+  case X86::MOV16mr:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV16ao16); break;
+  case X86::MOV16rm:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV16o16a); break;
+  case X86::MOV32mr:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV32ao32); break;
+  case X86::MOV32rm:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV32o32a); break;
 
   case X86::ADC8ri:     SimplifyShortImmForm(OutMI, X86::ADC8i8);    break;
   case X86::ADC16ri:    SimplifyShortImmForm(OutMI, X86::ADC16i16);  break;
