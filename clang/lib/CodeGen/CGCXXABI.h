@@ -21,17 +21,17 @@ namespace CodeGen {
   class MangleContext;
 
 /// Implements C++ ABI-specific code generation functions.
-class CXXABI {
+class CGCXXABI {
 public:
-  virtual ~CXXABI();
+  virtual ~CGCXXABI();
 
   /// Gets the mangle context.
   virtual MangleContext &getMangleContext() = 0;
 };
 
 /// Creates an instance of a C++ ABI class.
-CXXABI *CreateItaniumCXXABI(CodeGenModule &CGM);
-CXXABI *CreateMicrosoftCXXABI(CodeGenModule &CGM);
+CGCXXABI *CreateItaniumCXXABI(CodeGenModule &CGM);
+CGCXXABI *CreateMicrosoftCXXABI(CodeGenModule &CGM);
 }
 }
 

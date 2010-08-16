@@ -356,4 +356,4 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
   return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }
 
-CXXABI::~CXXABI() {}
+CGCXXABI::~CGCXXABI() {}

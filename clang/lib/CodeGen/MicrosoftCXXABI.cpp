@@ -110,7 +110,7 @@ public:
                              llvm::SmallVectorImpl<char> &);
 };
 
-class MicrosoftCXXABI : public CXXABI {
+class MicrosoftCXXABI : public CGCXXABI {
   MicrosoftMangleContext MangleCtx;
 public:
   MicrosoftCXXABI(CodeGenModule &CGM)
@@ -1185,7 +1185,7 @@ void MicrosoftMangleContext::mangleCXXDtor(const CXXDestructorDecl *D,
   assert(false && "Can't yet mangle destructors!");
 }
 
-CXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {
+CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {
   return new MicrosoftCXXABI(CGM);
 }
 

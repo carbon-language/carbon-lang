@@ -28,6 +28,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "CXXABI.h"
 
 using namespace clang;
 
@@ -134,6 +135,14 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
   return CanonTTP;
 }
 
+CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
+  if (!LangOpts.CPlusPlus) return NULL;
+  if (T.getCXXABI() == "microsoft")
+    return CreateMicrosoftCXXABI(*this);
+  else
+    return CreateItaniumCXXABI(*this);
+}
+
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        const TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
@@ -146,7 +155,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
   sigjmp_bufDecl(0), BlockDescriptorType(0), BlockDescriptorExtendedType(0),
   NullTypeSourceInfo(QualType()),
-  SourceMgr(SM), LangOpts(LOpts), Target(t),
+  SourceMgr(SM), LangOpts(LOpts), ABI(createCXXABI(t)), Target(t),
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins),
   DeclarationNames(*this),
@@ -700,12 +709,10 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
   case Type::MemberPointer: {
-    QualType Pointee = cast<MemberPointerType>(T)->getPointeeType();
+    const MemberPointerType *MPT = cast<MemberPointerType>(T);
     std::pair<uint64_t, unsigned> PtrDiffInfo =
       getTypeInfo(getPointerDiffType());
-    Width = PtrDiffInfo.first;
-    if (Pointee->isFunctionType())
-      Width *= 2;
+    Width = PtrDiffInfo.first * ABI->getMemberPointerSize(MPT);
     Align = PtrDiffInfo.second;
     break;
   }
@@ -5640,3 +5647,5 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
 
   return true;
 }
+
+CXXABI::~CXXABI() {}

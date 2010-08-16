@@ -116,7 +116,7 @@ class CodeGenModule : public BlockModule {
   friend class CodeGenVTables;
 
   CGObjCRuntime* Runtime;
-  CXXABI* ABI;
+  CGCXXABI* ABI;
   CGDebugInfo* DebugInfo;
 
   // WeakRefReferences - A set of references that have only been seen via
@@ -230,7 +230,7 @@ public:
 
   /// getCXXABI() - Return a reference to the configured
   /// C++ ABI.
-  CXXABI &getCXXABI() {
+  CGCXXABI &getCXXABI() {
     if (!ABI) createCXXABI();
     return *ABI;
   }

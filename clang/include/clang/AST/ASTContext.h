@@ -50,6 +50,7 @@ namespace clang {
   class SelectorTable;
   class SourceManager;
   class TargetInfo;
+  class CXXABI;
   // Decls
   class DeclContext;
   class CXXMethodDecl;
@@ -283,6 +284,10 @@ class ASTContext {
 
   /// \brief Allocator for partial diagnostics.
   PartialDiagnostic::StorageAllocator DiagAllocator;
+
+  /// \brief The current C++ ABI.
+  CXXABI *ABI;
+  CXXABI *createCXXABI(const TargetInfo &T);
   
 public:
   const TargetInfo &Target;

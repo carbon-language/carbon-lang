@@ -21,7 +21,7 @@
 using namespace clang;
 
 namespace {
-class ItaniumCXXABI : public CodeGen::CXXABI {
+class ItaniumCXXABI : public CodeGen::CGCXXABI {
   CodeGen::MangleContext MangleCtx;
 public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM) :
@@ -33,7 +33,7 @@ public:
 };
 }
 
-CodeGen::CXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
+CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
   return new ItaniumCXXABI(CGM);
 }
 
