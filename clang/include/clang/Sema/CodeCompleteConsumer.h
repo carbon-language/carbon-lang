@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H
 
 #include "clang/AST/Type.h"
+#include "clang/AST/CanonicalType.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "clang-c/Index.h"
@@ -72,7 +73,38 @@ enum {
   /// Objective-C object pointer types).
   CCF_SimilarTypeMatch = 2
 };
+
+/// \brief A simplified classification of types used when determining
+/// "similar" types for code completion.
+enum SimplifiedTypeClass {
+  STC_Arithmetic,
+  STC_Array,
+  STC_Block,
+  STC_Function,
+  STC_ObjectiveC,
+  STC_Other,
+  STC_Pointer,
+  STC_Record,
+  STC_Void
+};
   
+/// \brief Determine the simplified type class of the given canonical type.
+SimplifiedTypeClass getSimplifiedTypeClass(CanQualType T);
+  
+/// \brief Determine the type that this declaration will have if it is used
+/// as a type or in an expression.
+QualType getDeclUsageType(ASTContext &C, NamedDecl *ND);
+  
+/// \brief Determine the priority to be given to a macro code completion result
+/// with the given name.
+///
+/// \param MacroName The name of the macro.
+///
+/// \param PreferredTypeIsPointer Whether the preferred type for the context
+/// of this macro is a pointer type.
+unsigned getMacroUsagePriority(llvm::StringRef MacroName, 
+                               bool PreferredTypeIsPointer = false);
+                                 
 class FunctionDecl;
 class FunctionType;
 class FunctionTemplateDecl;
@@ -138,29 +170,36 @@ public:
 private:
   enum Kind Kind;
 
+  /// \brief The type that would prefer to see at this point (e.g., the type
+  /// of an initializer or function parameter).
+  QualType PreferredType;
+  
   /// \brief The type of the base object in a member access expression.
-  QualType Type;
+  QualType BaseType;
   
 public:
   /// \brief Construct a new code-completion context of the given kind.
-  CodeCompletionContext(enum Kind Kind) : Kind(Kind) { 
-    assert(Kind != CCC_MemberAccess && "Member access requires a type");
-  }
+  CodeCompletionContext(enum Kind Kind) : Kind(Kind) { }
   
   /// \brief Construct a new code-completion context of the given kind.
-  CodeCompletionContext(enum Kind Kind, QualType T) : Kind(Kind), Type(T) { 
-    assert(Kind == CCC_MemberAccess && "Only member access has a type");
+  CodeCompletionContext(enum Kind Kind, QualType T) : Kind(Kind) { 
+    if (Kind == CCC_MemberAccess)
+      BaseType = T;
+    else
+      PreferredType = T;
   }
   
   /// \brief Retrieve the kind of code-completion context.
   enum Kind getKind() const { return Kind; }
   
+  /// \brief Retrieve the type that this expression would prefer to have, e.g.,
+  /// if the expression is a variable initializer or a function argument, the
+  /// type of the corresponding variable or function parameter.
+  QualType getPreferredType() const { return PreferredType; }
+  
   /// \brief Retrieve the type of the base object in a member-access 
   /// expression.
-  QualType getType() const { 
-    assert(Kind == CCC_MemberAccess && "Only member access has a type");
-    return Type;
-  }
+  QualType getBaseType() const { return BaseType; }
 };
 
 

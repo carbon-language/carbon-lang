@@ -191,6 +191,10 @@ void ASTUnit::CacheCodeCompletionResults() {
                                                         Ctx->getLangOptions());
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
+      CachedResult.TypeClass
+        = getSimplifiedTypeClass(
+              Ctx->getCanonicalType(getDeclUsageType(*Ctx, 
+                                                     Results[I].Declaration)));
       CachedCompletionResults.push_back(CachedResult);
       break;
     }
@@ -215,6 +219,7 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
+      CachedResult.TypeClass = STC_Void;
       CachedCompletionResults.push_back(CachedResult);
       break;
     }
@@ -1417,7 +1422,24 @@ namespace {
           AddedResult = true;
         }
         
-        AllResults.push_back(Result(C->Completion, C->Priority, C->Kind));
+        // Adjust priority based on similar type classes.
+        unsigned Priority = C->Priority;
+        if (!Context.getPreferredType().isNull()) {
+          if (C->Kind == CXCursor_MacroDefinition) {
+            Priority = getMacroUsagePriority(C->Completion->getTypedText(),
+                               Context.getPreferredType()->isAnyPointerType());
+          } else {
+            CanQualType Expected
+              = S.Context.getCanonicalType(Context.getPreferredType());
+            SimplifiedTypeClass ExpectedSTC = getSimplifiedTypeClass(Expected);
+            if (ExpectedSTC == C->TypeClass) {
+              // FIXME: How can we check for an exact match?
+              Priority /= CCF_SimilarTypeMatch;
+            }
+          }
+        }
+            
+        AllResults.push_back(Result(C->Completion, Priority, C->Kind));
       }
       
       // If we did not add any cached completion results, just forward the

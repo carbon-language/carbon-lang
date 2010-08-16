@@ -23,7 +23,7 @@ const char *str = "Hello, \nWorld";
 // FIXME: Priorities aren't right
 // CHECK-CC1a: ParmDecl:{ResultType int}{TypedText j} (2)
 // CHECK-CC1a: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
-// CHECK-CC1a: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (50)
+// CHECK-CC1a: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (25)
 // CHECK-CC1a: macro definition:{TypedText __VERSION__} (70)
 // RUN: c-index-test -code-completion-at=%s:7:14 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:7:14 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s

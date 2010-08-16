@@ -476,21 +476,9 @@ bool ResultBuilder::CheckHiddenResult(Result &R, DeclContext *CurContext,
   return false;
 }
 
-enum SimplifiedTypeClass {
-  STC_Arithmetic,
-  STC_Array,
-  STC_Block,
-  STC_Function,
-  STC_ObjectiveC,
-  STC_Other,
-  STC_Pointer,
-  STC_Record,
-  STC_Void
-};
-
 /// \brief A simplified classification of types used to determine whether two
 /// types are "similar enough" when adjusting priorities.
-static SimplifiedTypeClass getSimplifiedTypeClass(CanQualType T) {
+SimplifiedTypeClass clang::getSimplifiedTypeClass(CanQualType T) {
   switch (T->getTypeClass()) {
   case Type::Builtin:
     switch (cast<BuiltinType>(T)->getKind()) {
@@ -561,7 +549,7 @@ static SimplifiedTypeClass getSimplifiedTypeClass(CanQualType T) {
 
 /// \brief Get the type that a given expression will have if this declaration
 /// is used as an expression in its "typical" code-completion form.
-static QualType getDeclUsageType(ASTContext &C, NamedDecl *ND) {
+QualType clang::getDeclUsageType(ASTContext &C, NamedDecl *ND) {
   ND = cast<NamedDecl>(ND->getUnderlyingDecl());
   
   if (TypeDecl *Type = dyn_cast<TypeDecl>(ND))
@@ -2202,6 +2190,20 @@ namespace {
   };
 }
 
+unsigned clang::getMacroUsagePriority(llvm::StringRef MacroName, 
+                                      bool PreferredTypeIsPointer) {
+  unsigned Priority = CCP_Macro;
+  
+  // Treat the "nil" and "NULL" macros as null pointer constants.
+  if (MacroName.equals("nil") || MacroName.equals("NULL")) {
+    Priority = CCP_Constant;
+    if (PreferredTypeIsPointer)
+      Priority = Priority / CCF_SimilarTypeMatch;
+  }
+  
+  return Priority;
+}
+
 static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
                             bool TargetTypeIsPointer = false) {
   typedef CodeCompleteConsumer::Result Result;
@@ -2210,16 +2212,9 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
                                  MEnd = PP.macro_end();
        M != MEnd; ++M) {
-    unsigned Priority = CCP_Macro;
-    
-    // Treat the "nil" and "NULL" macros as null pointer constants.
-    if (M->first->isStr("nil") || M->first->isStr("NULL")) {
-      Priority = CCP_Constant;
-      if (TargetTypeIsPointer)
-        Priority = Priority / CCF_SimilarTypeMatch;
-    }
-      
-    Results.AddResult(Result(M->first, Priority));
+    Results.AddResult(Result(M->first, 
+                             getMacroUsagePriority(M->first->getName(),
+                                                   TargetTypeIsPointer)));
   }
   Results.ExitScope();
 }
@@ -2356,7 +2351,7 @@ void Sema::CodeCompleteExpression(Scope *S, QualType T,
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results, PreferredTypeIsPointer);
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Expression,
+                CodeCompletionContext(CodeCompletionContext::CCC_Expression, T),
                             Results.data(),Results.size());
 }
 

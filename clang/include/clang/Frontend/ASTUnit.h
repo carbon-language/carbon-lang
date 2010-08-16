@@ -232,6 +232,9 @@ public:
     /// \brief The libclang cursor kind corresponding to this code-completion 
     /// result.
     CXCursorKind Kind;
+    
+    /// \brief The simplified type class for a non-macro completion result.
+    SimplifiedTypeClass TypeClass;
   };
   
 private:
