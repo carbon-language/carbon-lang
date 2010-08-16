@@ -1435,15 +1435,85 @@ namespace {
   };
 }
 
+/// \brief Helper function that computes which global names are hidden by the
+/// local code-completion results.
+void CalculateHiddenNames(const CodeCompletionContext &Context,
+                          CodeCompleteConsumer::Result *Results,
+                          unsigned NumResults,
+                          ASTContext &Ctx,
+                          llvm::StringSet<> &HiddenNames) {
+  bool OnlyTagNames = false;
+  switch (Context.getKind()) {
+  case CodeCompletionContext::CCC_Other:
+  case CodeCompletionContext::CCC_TopLevel:
+  case CodeCompletionContext::CCC_ObjCInterface:
+  case CodeCompletionContext::CCC_ObjCImplementation:
+  case CodeCompletionContext::CCC_ObjCIvarList:
+  case CodeCompletionContext::CCC_ClassStructUnion:
+  case CodeCompletionContext::CCC_Statement:
+  case CodeCompletionContext::CCC_Expression:
+  case CodeCompletionContext::CCC_ObjCMessageReceiver:
+  case CodeCompletionContext::CCC_MemberAccess:
+  case CodeCompletionContext::CCC_Namespace:
+  case CodeCompletionContext::CCC_Type:
+    break;
+    
+  case CodeCompletionContext::CCC_EnumTag:
+  case CodeCompletionContext::CCC_UnionTag:
+  case CodeCompletionContext::CCC_ClassOrStructTag:
+    OnlyTagNames = true;
+    break;
+    
+  case CodeCompletionContext::CCC_ObjCProtocolName:
+    // If we're just looking for protocol names, nothing can hide them.
+    return;
+  }
+  
+  typedef CodeCompleteConsumer::Result Result;
+  for (unsigned I = 0; I != NumResults; ++I) {
+    if (Results[I].Kind != Result::RK_Declaration)
+      continue;
+    
+    unsigned IDNS
+      = Results[I].Declaration->getUnderlyingDecl()->getIdentifierNamespace();
+
+    bool Hiding = false;
+    if (OnlyTagNames)
+      Hiding = (IDNS & Decl::IDNS_Tag);
+    else {
+      unsigned HiddenIDNS = (Decl::IDNS_Type | Decl::IDNS_Member | 
+                            Decl::IDNS_Namespace | Decl::IDNS_Ordinary |
+                            Decl::IDNS_NonMemberOperator);
+      if (Ctx.getLangOptions().CPlusPlus)
+        HiddenIDNS |= Decl::IDNS_Tag;
+      Hiding = (IDNS & HiddenIDNS);
+    }
+  
+    if (!Hiding)
+      continue;
+    
+    DeclarationName Name = Results[I].Declaration->getDeclName();
+    if (IdentifierInfo *Identifier = Name.getAsIdentifierInfo())
+      HiddenNames.insert(Identifier->getName());
+    else
+      HiddenNames.insert(Name.getAsString());
+  }
+}
+
+
 void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
                                             CodeCompletionContext Context,
                                             Result *Results,
                                             unsigned NumResults) { 
   // Merge the results we were given with the results we cached.
   bool AddedResult = false;
-  unsigned InContexts = 
-  (Context.getKind() == CodeCompletionContext::CCC_Other? NormalContexts
-   : (1 << (Context.getKind() - 1)));
+  unsigned InContexts  
+    = (Context.getKind() == CodeCompletionContext::CCC_Other? NormalContexts
+                                            : (1 << (Context.getKind() - 1)));
+
+  // Contains the set of names that are hidden by "local" completion results.
+  llvm::StringSet<> HiddenNames;
+  
   typedef CodeCompleteConsumer::Result Result;
   llvm::SmallVector<Result, 8> AllResults;
   for (ASTUnit::cached_completion_iterator 
@@ -1457,9 +1527,17 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
     
     // If we haven't added any results previously, do so now.
     if (!AddedResult) {
+      CalculateHiddenNames(Context, Results, NumResults, S.Context, 
+                           HiddenNames);
       AllResults.insert(AllResults.end(), Results, Results + NumResults);
       AddedResult = true;
     }
+    
+    // Determine whether this global completion result is hidden by a local
+    // completion result. If so, skip it.
+    if (C->Kind != CXCursor_MacroDefinition &&
+        HiddenNames.count(C->Completion->getTypedText()))
+      continue;
     
     // Adjust priority based on similar type classes.
     unsigned Priority = C->Priority;

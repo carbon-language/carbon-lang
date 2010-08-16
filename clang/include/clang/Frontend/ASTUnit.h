@@ -25,6 +25,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Timer.h"
 #include <map>
