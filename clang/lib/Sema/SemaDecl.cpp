@@ -5955,8 +5955,11 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
 
   QualType EltTy = Context.getBaseElementType(T);
   if (!EltTy->isDependentType() &&
-      RequireCompleteType(Loc, EltTy, diag::err_field_incomplete))
+      RequireCompleteType(Loc, EltTy, diag::err_field_incomplete)) {
+    // Fields of incomplete type force their record to be invalid.
+    Record->setInvalidDecl();
     InvalidDecl = true;
+  }
 
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.

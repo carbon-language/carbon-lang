@@ -97,3 +97,15 @@ void test() {
   i = a; // expected-error{{assigning to 'int' from incompatible type 'A'}}
 }
 
+// <rdar://problem/8315440>: Don't crash
+// FIXME: the recovery here is really bad.
+namespace test1 {
+  template<typename T> class A : public unknown::X { // expected-error {{undeclared identifier 'unknown'}} expected-error {{expected class name}}
+    A(UndeclaredType n) : X(n) {} // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{undeclared identifier 'n'}} expected-error {{expected ';' at end}} expected-error {{field has incomplete type}}
+  };
+  template<typename T> class B : public A<T>     {
+    virtual void foo() {}
+  };
+  extern template class A<char>; // expected-note {{in instantiation}} expected-note {{not complete}}
+  extern template class B<char>;
+}
