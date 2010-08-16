@@ -258,18 +258,16 @@ void SCEVCommutativeExpr::print(raw_ostream &OS) const {
 }
 
 bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (!getOperand(i)->dominates(BB, DT))
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    if (!(*I)->dominates(BB, DT))
       return false;
-  }
   return true;
 }
 
 bool SCEVNAryExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (!getOperand(i)->properlyDominates(BB, DT))
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    if (!(*I)->properlyDominates(BB, DT))
       return false;
-  }
   return true;
 }
 
