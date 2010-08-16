@@ -163,20 +163,25 @@ private:
 /// PMTopLevelManager manages LastUser info and collects common APIs used by
 /// top level pass managers.
 class PMTopLevelManager {
-public:
+protected:
+  explicit PMTopLevelManager(PMDataManager *PMDM);
 
   virtual unsigned getNumContainedManagers() const {
     return (unsigned)PassManagers.size();
   }
 
+  void initializeAllAnalysisInfo();
+
+private:
+  /// This is implemented by top level pass manager and used by 
+  /// schedulePass() to add analysis info passes that are not available.
+  virtual void addTopLevelPass(Pass  *P) = 0;
+
+public:
   /// Schedule pass P for execution. Make sure that passes required by
   /// P are run before P is run. Update analysis info maintained by
   /// the manager. Remove dead passes. This is a recursive function.
   void schedulePass(Pass *P);
-
-  /// This is implemented by top level pass manager and used by 
-  /// schedulePass() to add analysis info passes that are not available.
-  virtual void addTopLevelPass(Pass  *P) = 0;
 
   /// Set pass P as the last user of the given analysis passes.
   void setLastUser(SmallVector<Pass *, 12> &AnalysisPasses, Pass *P);
@@ -192,7 +197,6 @@ public:
   /// Find analysis usage information for the pass P.
   AnalysisUsage *findAnalysisUsage(Pass *P);
 
-  explicit PMTopLevelManager(PMDataManager *PMDM);
   virtual ~PMTopLevelManager(); 
 
   /// Add immutable pass and initialize it.
@@ -218,8 +222,6 @@ public:
   // Print passes managed by this top level manager.
   void dumpPasses() const;
   void dumpArguments() const;
-
-  void initializeAllAnalysisInfo();
 
   // Active Pass Managers
   PMStack activeStack;
