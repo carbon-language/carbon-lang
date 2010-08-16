@@ -11,6 +11,7 @@
 #include "X86.h"
 #include "X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/ELFObjectWriter.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -191,10 +192,6 @@ public:
     HasScatteredSymbols = true;
   }
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return 0;
-  }
-
   bool isVirtualSection(const MCSection &Section) const {
     const MCSectionELF &SE = static_cast<const MCSectionELF&>(Section);
     return SE.getType() == MCSectionELF::SHT_NOBITS;;
@@ -205,12 +202,24 @@ class ELFX86_32AsmBackend : public ELFX86AsmBackend {
 public:
   ELFX86_32AsmBackend(const Target &T)
     : ELFX86AsmBackend(T) {}
+
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    return new ELFObjectWriter(OS, /*Is64Bit=*/false,
+                               /*IsLittleEndian=*/true,
+                               /*HasRelocationAddend=*/false);
+  }
 };
 
 class ELFX86_64AsmBackend : public ELFX86AsmBackend {
 public:
   ELFX86_64AsmBackend(const Target &T)
     : ELFX86AsmBackend(T) {}
+
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    return new ELFObjectWriter(OS, /*Is64Bit=*/true,
+                               /*IsLittleEndian=*/true,
+                               /*HasRelocationAddend=*/true);
+  }
 };
 
 class WindowsX86AsmBackend : public X86AsmBackend {

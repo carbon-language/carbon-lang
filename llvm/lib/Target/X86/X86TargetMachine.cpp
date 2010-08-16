@@ -54,8 +54,7 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   case Triple::Win32:
     return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
   default:
-    // FIXME: default to ELF.
-    report_fatal_error("object emission not implemented for this target.");
+    return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
   }
 }
 
