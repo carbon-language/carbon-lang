@@ -545,14 +545,13 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   if (IsPCRel) {
     Type = ELF::R_X86_64_PC32;
   } else {
-    switch (Fixup.getKind()) {
+    switch ((unsigned)Fixup.getKind()) {
+    default: llvm_unreachable("invalid fixup kind!");
     case FK_Data_8: Type = ELF::R_X86_64_64; break;
     case X86::reloc_pcrel_4byte:
     case FK_Data_4:
-      long Offset;
-      Offset = Target.getConstant();
       // check that the offset fits within a signed long
-      if (!(((long) -1 << 31) & Offset) || (((long) -1 << 31) & Offset) == ((long) -1 << 31))
+      if (isInt<32>(Target.getConstant()))
         Type = ELF::R_X86_64_32S;
       else
         Type = ELF::R_X86_64_32;
