@@ -478,7 +478,7 @@ void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
   O << ARM_MB::MemBOptToString(val);
 }
 
-void ARMInstPrinter::printSatShiftOperand(const MCInst *MI, unsigned OpNum,
+void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
                                           raw_ostream &O) {
   unsigned ShiftOp = MI->getOperand(OpNum).getImm();
   ARM_AM::ShiftOpc Opc = ARM_AM::getSORegShOp(ShiftOp);
@@ -492,7 +492,7 @@ void ARMInstPrinter::printSatShiftOperand(const MCInst *MI, unsigned OpNum,
     O << ", asr #";
     break;
   default:
-    assert(0 && "unexpected shift opcode for saturate shift operand");
+    assert(0 && "unexpected shift opcode for shift immediate operand");
   }
   O << ARM_AM::getSORegOffset(ShiftOp);
 }

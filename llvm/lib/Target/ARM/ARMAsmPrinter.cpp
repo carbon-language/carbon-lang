@@ -124,7 +124,7 @@ namespace {
                                         raw_ostream &O);
     void printMemBOption(const MachineInstr *MI, int OpNum,
                          raw_ostream &O);
-    void printSatShiftOperand(const MachineInstr *MI, int OpNum,
+    void printShiftImmOperand(const MachineInstr *MI, int OpNum,
                               raw_ostream &O);
 
     void printThumbS4ImmOperand(const MachineInstr *MI, int OpNum,
@@ -680,7 +680,7 @@ ARMAsmPrinter::printMemBOption(const MachineInstr *MI, int OpNum,
   O << ARM_MB::MemBOptToString(val);
 }
 
-void ARMAsmPrinter::printSatShiftOperand(const MachineInstr *MI, int OpNum,
+void ARMAsmPrinter::printShiftImmOperand(const MachineInstr *MI, int OpNum,
                                          raw_ostream &O) {
   unsigned ShiftOp = MI->getOperand(OpNum).getImm();
   ARM_AM::ShiftOpc Opc = ARM_AM::getSORegShOp(ShiftOp);
@@ -694,7 +694,7 @@ void ARMAsmPrinter::printSatShiftOperand(const MachineInstr *MI, int OpNum,
     O << ", asr #";
     break;
   default:
-    assert(0 && "unexpected shift opcode for saturate shift operand");
+    assert(0 && "unexpected shift opcode for shift immediate operand");
   }
   O << ARM_AM::getSORegOffset(ShiftOp);
 }

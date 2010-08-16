@@ -1523,7 +1523,7 @@ def t2USADA8  : T2I_mac<0, 0b111, 0b0000, (outs rGPR:$dst),
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def t2SSAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, sat_shift:$sh),
+def t2SSAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, shift_imm:$sh),
                 NoItinerary, "ssat", "\t$dst, $bit_pos, $a$sh",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
@@ -1544,7 +1544,7 @@ def t2SSAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
   let Inst{7-6} = 0b00;    // imm2 = '00'
 }
 
-def t2USAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, sat_shift:$sh),
+def t2USAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, shift_imm:$sh),
                 NoItinerary, "usat", "\t$dst, $bit_pos, $a$sh",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;

@@ -608,7 +608,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("jt2block_operand");
   IMM("t_imm_s4");
   IMM("pclabel");
-  IMM("sat_shift");
+  IMM("shift_imm");
   
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
   MISC("so_reg", "kOperandTypeARMSoReg");                         // R, R, I

@@ -296,6 +296,13 @@ def pclabel : Operand<i32> {
   let PrintMethod = "printPCLabel";
 }
 
+// shift_imm: An integer that encodes a shift amount and the type of shift
+// (currently either asr or lsl) using the same encoding used for the
+// immediates in so_reg operands.
+def shift_imm : Operand<i32> {
+  let PrintMethod = "printShiftImmOperand";
+}
+
 // shifter_operand operands: so_reg and so_imm.
 def so_reg : Operand<i32>,    // reg reg imm
              ComplexPattern<i32, 3, "SelectShifterOperandReg",
@@ -1805,11 +1812,7 @@ def USADA8 : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def sat_shift : Operand<i32> {
-  let PrintMethod = "printSatShiftOperand";
-}
-
-def SSAT : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, sat_shift:$sh),
+def SSAT : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, shift_imm:$sh),
               SatFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a$sh",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110101;
@@ -1823,7 +1826,7 @@ def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), SatFrm,
   let Inst{7-4} = 0b0011;
 }
 
-def USAT : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, sat_shift:$sh),
+def USAT : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, shift_imm:$sh),
               SatFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a$sh",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110111;
