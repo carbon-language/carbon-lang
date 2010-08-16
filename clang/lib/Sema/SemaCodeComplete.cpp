@@ -426,6 +426,12 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
   if (isa<CXXConstructorDecl>(ND))
     return false;
   
+  if (Filter == &ResultBuilder::IsNestedNameSpecifier ||
+      ((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
+       Filter != &ResultBuilder::IsNamespace &&
+       Filter != &ResultBuilder::IsNamespaceOrAlias))
+    AsNestedNameSpecifier = true;
+
   // Filter out any unwanted results.
   if (Filter && !(this->*Filter)(ND)) {
     // Check whether it is interesting as a nested-name-specifier.
@@ -439,11 +445,7 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
     }
 
     return false;
-  }
-
-  if (Filter == &ResultBuilder::IsNestedNameSpecifier)
-    AsNestedNameSpecifier = true;
-  
+  }  
   // ... then it must be interesting!
   return true;
 }

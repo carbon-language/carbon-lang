@@ -92,7 +92,10 @@ void ASTUnit::CleanTemporaryFiles() {
 /// \brief Determine the set of code-completion contexts in which this 
 /// declaration should be shown.
 static unsigned getDeclShowContexts(NamedDecl *ND,
-                                    const LangOptions &LangOpts) {
+                                    const LangOptions &LangOpts,
+                                    bool &IsNestedNameSpecifier) {
+  IsNestedNameSpecifier = false;
+  
   if (isa<UsingShadowDecl>(ND))
     ND = dyn_cast<NamedDecl>(ND->getUnderlyingDecl());
   if (!ND)
@@ -122,19 +125,19 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
     if (isa<EnumDecl>(ND)) {
       Contexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1));
       
-      // Part of the nested-name-specifier.
+      // Part of the nested-name-specifier in C++0x.
       if (LangOpts.CPlusPlus0x)
-        Contexts |= (1 << (CodeCompletionContext::CCC_MemberAccess - 1));
+        IsNestedNameSpecifier = true;
     } else if (RecordDecl *Record = dyn_cast<RecordDecl>(ND)) {
       if (Record->isUnion())
         Contexts |= (1 << (CodeCompletionContext::CCC_UnionTag - 1));
       else
         Contexts |= (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
       
-      // Part of the nested-name-specifier.
       if (LangOpts.CPlusPlus)
-        Contexts |= (1 << (CodeCompletionContext::CCC_MemberAccess - 1));
-    }
+        IsNestedNameSpecifier = true;
+    } else if (isa<ClassTemplateDecl>(ND) || isa<TemplateTemplateParmDecl>(ND))
+      IsNestedNameSpecifier = true;
   } else if (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)) {
     // Values can appear in these contexts.
     Contexts = (1 << (CodeCompletionContext::CCC_Statement - 1))
@@ -143,20 +146,10 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
   } else if (isa<ObjCProtocolDecl>(ND)) {
     Contexts = (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
   } else if (isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) {
-    Contexts = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
-             | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
-             | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
-             | (1 << (CodeCompletionContext::CCC_Statement - 1))
-             | (1 << (CodeCompletionContext::CCC_Expression - 1))
-             | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-             | (1 << (CodeCompletionContext::CCC_Namespace - 1));
+    Contexts = (1 << (CodeCompletionContext::CCC_Namespace - 1));
    
     // Part of the nested-name-specifier.
-    Contexts |= (1 << (CodeCompletionContext::CCC_MemberAccess - 1))
-             | (1 << (CodeCompletionContext::CCC_EnumTag - 1))
-             | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
-             | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1))
-             | (1 << (CodeCompletionContext::CCC_Type - 1));
+    IsNestedNameSpecifier = true;
   }
   
   return Contexts;
@@ -188,10 +181,12 @@ void ASTUnit::CacheCodeCompletionResults() {
   for (unsigned I = 0, N = Results.size(); I != N; ++I) {
     switch (Results[I].Kind) {
     case Result::RK_Declaration: {
+      bool IsNestedNameSpecifier = false;
       CachedCodeCompletionResult CachedResult;
       CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
       CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
-                                                        Ctx->getLangOptions());
+                                                        Ctx->getLangOptions(),
+                                                        IsNestedNameSpecifier);
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
 
@@ -220,6 +215,41 @@ void ASTUnit::CacheCodeCompletionResults() {
       }
       
       CachedCompletionResults.push_back(CachedResult);
+      
+      /// Handle nested-name-specifiers in C++.
+      if (TheSema->Context.getLangOptions().CPlusPlus && 
+          IsNestedNameSpecifier && !Results[I].StartsNestedNameSpecifier) {
+        // The contexts in which a nested-name-specifier can appear in C++.
+        unsigned NNSContexts
+          = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
+          | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
+          | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
+          | (1 << (CodeCompletionContext::CCC_Statement - 1))
+          | (1 << (CodeCompletionContext::CCC_Expression - 1))
+          | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
+          | (1 << (CodeCompletionContext::CCC_EnumTag - 1))
+          | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
+          | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1))
+          | (1 << (CodeCompletionContext::CCC_Type - 1));
+
+        if (isa<NamespaceDecl>(Results[I].Declaration) ||
+            isa<NamespaceAliasDecl>(Results[I].Declaration))
+          NNSContexts |= (1 << (CodeCompletionContext::CCC_Namespace - 1));
+
+        if (unsigned RemainingContexts 
+                                = NNSContexts & ~CachedResult.ShowInContexts) {
+          // If there any contexts where this completion can be a 
+          // nested-name-specifier but isn't already an option, create a 
+          // nested-name-specifier completion.
+          Results[I].StartsNestedNameSpecifier = true;
+          CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
+          CachedResult.ShowInContexts = RemainingContexts;
+          CachedResult.Priority = CCP_NestedNameSpecifier;
+          CachedResult.TypeClass = STC_Void;
+          CachedResult.Type = 0;
+          CachedCompletionResults.push_back(CachedResult);
+        }
+      }
       break;
     }
         
@@ -1482,8 +1512,8 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
       Hiding = (IDNS & Decl::IDNS_Tag);
     else {
       unsigned HiddenIDNS = (Decl::IDNS_Type | Decl::IDNS_Member | 
-                            Decl::IDNS_Namespace | Decl::IDNS_Ordinary |
-                            Decl::IDNS_NonMemberOperator);
+                             Decl::IDNS_Namespace | Decl::IDNS_Ordinary |
+                             Decl::IDNS_NonMemberOperator);
       if (Ctx.getLangOptions().CPlusPlus)
         HiddenIDNS |= Decl::IDNS_Tag;
       Hiding = (IDNS & HiddenIDNS);
