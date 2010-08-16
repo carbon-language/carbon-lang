@@ -483,21 +483,6 @@ void LiveVariables::UpdatePhysRegDefs(MachineInstr *MI,
   }
 }
 
-namespace {
-  struct RegSorter {
-    const TargetRegisterInfo *TRI;
-
-    RegSorter(const TargetRegisterInfo *tri) : TRI(tri) { }
-    bool operator()(unsigned A, unsigned B) {
-      if (TRI->isSubRegister(A, B))
-        return true;
-      else if (TRI->isSubRegister(B, A))
-        return false;
-      return A < B;
-    }
-  };
-}
-
 bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   MRI = &mf.getRegInfo();
