@@ -20,6 +20,7 @@
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -881,6 +882,14 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
     Diag(Loc, diag::err_mempointer_in_nonclass_type) << Class;
     return QualType();
   }
+
+  // In the Microsoft ABI, the class is allowed to be an incomplete
+  // type. In such cases, the compiler makes a worst-case assumption.
+  // We make no such assumption right now, so emit an error if the
+  // class isn't a complete type.
+  if (Context.Target.getCXXABI() == "microsoft" &&
+      RequireCompleteType(Loc, Class, diag::err_incomplete_type))
+    return QualType();
 
   return Context.getMemberPointerType(T, Class.getTypePtr());
 }
