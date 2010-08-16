@@ -71,14 +71,14 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 EmbeddedHosted:
-	$(MAKE) ARM_HOSTED_BUILD=yes PREFIX=/usr install
+	$(MAKE) ARM_HOSTED_BUILD=yes PREFIX=/usr/local install
 
 # When building for the iOS simulator, MACOSX_DEPLOYMENT_TARGET is not set
 # by default, but it needs to be set when building tools that run on the host
 # (e.g., tblgen), so set it here.
 EmbeddedSim:
 	export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`; \
-	$(MAKE) IOS_SIM_BUILD=yes PREFIX=$(SDKROOT)/usr install
+	$(MAKE) IOS_SIM_BUILD=yes PREFIX=$(SDKROOT)/usr/local install
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
