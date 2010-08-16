@@ -46,14 +46,14 @@ namespace llvm {
   class Operator;
   class SCEVUnknown;
   class SCEV;
-  template<> class FoldingSetTrait<SCEV>;
+  template<> struct FoldingSetTrait<SCEV>;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with
   /// directly.
   ///
   class SCEV : public FoldingSetNode {
-    friend class FoldingSetTrait<SCEV>;
+    friend struct FoldingSetTrait<SCEV>;
 
     /// FastID - A reference to an Interned FoldingSetNodeID for this node.
     /// The ScalarEvolution's BumpPtrAllocator holds the data.
