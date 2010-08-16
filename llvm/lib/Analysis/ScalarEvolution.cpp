@@ -1343,8 +1343,9 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   // If HasNSW is true and all the operands are non-negative, infer HasNUW.
   if (!HasNUW && HasNSW) {
     bool All = true;
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      if (!isKnownNonNegative(Ops[i])) {
+    for (SmallVectorImpl<const SCEV *>::const_iterator I = Ops.begin(),
+         E = Ops.end(); I != E; ++I)
+      if (!isKnownNonNegative(*I)) {
         All = false;
         break;
       }
@@ -1707,8 +1708,9 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   // If HasNSW is true and all the operands are non-negative, infer HasNUW.
   if (!HasNUW && HasNSW) {
     bool All = true;
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      if (!isKnownNonNegative(Ops[i])) {
+    for (SmallVectorImpl<const SCEV *>::const_iterator I = Ops.begin(),
+         E = Ops.end(); I != E; ++I)
+      if (!isKnownNonNegative(*I)) {
         All = false;
         break;
       }
@@ -2040,8 +2042,9 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   // If HasNSW is true and all the operands are non-negative, infer HasNUW.
   if (!HasNUW && HasNSW) {
     bool All = true;
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-      if (!isKnownNonNegative(Operands[i])) {
+    for (SmallVectorImpl<const SCEV *>::const_iterator I = Operands.begin(),
+         E = Operands.end(); I != E; ++I)
+      if (!isKnownNonNegative(*I)) {
         All = false;
         break;
       }
