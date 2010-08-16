@@ -193,23 +193,23 @@ namespace {
 
     void String16(char *buf, uint16_t Value) {
       if (Writer->isLittleEndian())
-	StringLE16(buf, Value);
+        StringLE16(buf, Value);
       else
-	StringBE16(buf, Value);
+        StringBE16(buf, Value);
     }
 
     void String32(char *buf, uint32_t Value) {
       if (Writer->isLittleEndian())
-	StringLE32(buf, Value);
+        StringLE32(buf, Value);
       else
-	StringBE32(buf, Value);
+        StringBE32(buf, Value);
     }
 
     void String64(char *buf, uint64_t Value) {
       if (Writer->isLittleEndian())
-	StringLE64(buf, Value);
+        StringLE64(buf, Value);
       else
-	StringBE64(buf, Value);
+        StringBE64(buf, Value);
     }
 
     void WriteHeader(uint64_t SectionDataSize, unsigned NumberOfSections);
@@ -391,7 +391,6 @@ void ELFObjectWriterImpl::WriteSymbolEntry(MCDataFragment *F, uint64_t name,
 void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
                                       const MCAsmLayout &Layout) {
   MCSymbolData &Data = *MSD.SymbolData;
-  const MCSymbol &Symbol = Data.getSymbol();
   uint8_t Info = (Data.getFlags() & 0xff);
   uint8_t Other = ((Data.getFlags() & 0xf00) >> ELF_STV_Shift);
   uint64_t Value = 0;
@@ -627,6 +626,8 @@ uint64_t ELFObjectWriterImpl::getSymbolIndexInSymbolTable(MCAssembler &Asm,
     if (&Undefined[i].SymbolData->getSymbol() == S)
       return i + Local.size() + External.size() + Asm.size() + /* empty symbol */ 1 +
         /* .rela.text + .rela.eh_frame */ + 2;
+
+  llvm_unreachable("Cannot find symbol which should exist!");
 }
 
 void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
@@ -898,8 +899,6 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionData &SD = *it;
-    const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(SD.getSection());
 
     // Get the size of the section in the output file (including padding).
     uint64_t Size = Layout.getSectionFileSize(&SD);
@@ -946,29 +945,30 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
       break;
 
     case ELF::SHT_REL:
-    case ELF::SHT_RELA:
+    case ELF::SHT_RELA: {
       const MCSection *SymtabSection;
       const MCSection *InfoSection;
-      const StringRef *SectionName;
+      StringRef SectionName;
       const MCSectionData *SymtabSD;
       const MCSectionData *InfoSD;
 
       SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                                                      SectionKind::getReadOnly(),
-						     false);
+                                                     false);
       SymtabSD = &Asm.getSectionData(*SymtabSection);
       // we have to count the empty section in too
       sh_link = SymtabSD->getLayoutOrder() + 1;
 
-      SectionName = &Section.getSectionName();
-      SectionName = &SectionName->slice(5, SectionName->size());
-      InfoSection = Asm.getContext().getELFSection(*SectionName,
+      SectionName = Section.getSectionName();
+      SectionName = SectionName.slice(5, SectionName.size());
+      InfoSection = Asm.getContext().getELFSection(SectionName,
                                                    ELF::SHT_PROGBITS, 0,
-						   SectionKind::getReadOnly(),
-						   false);
+                                                   SectionKind::getReadOnly(),
+                                                   false);
       InfoSD = &Asm.getSectionData(*InfoSection);
       sh_info = InfoSD->getLayoutOrder() + 1;
       break;
+    }
 
     case ELF::SHT_SYMTAB:
     case ELF::SHT_DYNSYM:

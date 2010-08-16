@@ -177,6 +177,7 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_PrivateExtern:
   case MCSA_WeakReference:
   case MCSA_WeakDefinition:
+  case MCSA_WeakDefAutoPrivate:
   case MCSA_Invalid:
   case MCSA_ELF_TypeIndFunction:
   case MCSA_IndirectSymbol:
