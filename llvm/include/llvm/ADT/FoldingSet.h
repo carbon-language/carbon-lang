@@ -195,11 +195,11 @@ protected:
 
 //===----------------------------------------------------------------------===//
 /// FoldingSetTrait - This trait class is used to define behavior of how
-///  to "profile" (in the FoldingSet parlance) an object of a given type.
-///  The default behavior is to invoke a 'Profile' method on an object, but
-///  through template specialization the behavior can be tailored for specific
-///  types.  Combined with the FoldingSetNodeWrapper class, one can add objects
-///  to FoldingSets that were not originally designed to have that behavior.
+/// to "profile" (in the FoldingSet parlance) an object of a given type.
+/// The default behavior is to invoke a 'Profile' method on an object, but
+/// through template specialization the behavior can be tailored for specific
+/// types.  Combined with the FoldingSetNodeWrapper class, one can add objects
+/// to FoldingSets that were not originally designed to have that behavior.
 ///
 template<typename T> struct FoldingSetTrait {
   static inline void Profile(const T& X, FoldingSetNodeID& ID) { X.Profile(ID);}
@@ -259,11 +259,11 @@ public:
   inline void Add(const T& x) { FoldingSetTrait<T>::Profile(x, *this); }
 
   /// clear - Clear the accumulated profile, allowing this FoldingSetNodeID
-  ///  object to be used to compute a new profile.
+  /// object to be used to compute a new profile.
   inline void clear() { Bits.clear(); }
 
   /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used
-  ///  to lookup the node in the FoldingSetImpl.
+  /// to lookup the node in the FoldingSetImpl.
   unsigned ComputeHash() const;
 
   /// operator== - Used to compare two nodes to each other.
@@ -447,8 +447,8 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// FoldingSetBucketIteratorImpl - This is the common bucket iterator support
-///  shared by all folding sets, which knows how to walk a particular bucket
-///  of a folding set hash table.
+/// shared by all folding sets, which knows how to walk a particular bucket
+/// of a folding set hash table.
 
 class FoldingSetBucketIteratorImpl {
 protected:
