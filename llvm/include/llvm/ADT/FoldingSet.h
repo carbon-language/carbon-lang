@@ -54,9 +54,9 @@ namespace llvm {
 ///      void Profile(FoldingSetNodeID &ID) const {
 ///        ID.AddString(Name);
 ///        ID.AddInteger(Value);
-///       }
-///       ...
-///     };
+///      }
+///      ...
+///    };
 ///
 /// To define the folding set itself use the FoldingSet template;
 ///
