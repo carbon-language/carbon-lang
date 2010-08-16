@@ -1601,7 +1601,7 @@ ICmpInst *LSRInstance::OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse) {
   const SCEV *One = SE.getConstant(BackedgeTakenCount->getType(), 1);
 
   // Add one to the backedge-taken count to get the trip count.
-  const SCEV *IterationCount = SE.getAddExpr(BackedgeTakenCount, One);
+  const SCEV *IterationCount = SE.getAddExpr(One, BackedgeTakenCount);
   if (IterationCount != SE.getSCEV(Sel)) return Cond;
 
   // Check for a max calculation that matches the pattern. There's no check
@@ -2400,7 +2400,7 @@ void LSRInstance::GenerateConstantOffsets(LSRUse &LU, unsigned LUIdx,
       if (isLegalUse(F.AM, LU.MinOffset - *I, LU.MaxOffset - *I,
                      LU.Kind, LU.AccessTy, TLI)) {
         // Add the offset to the base register.
-        const SCEV *NewG = SE.getAddExpr(G, SE.getConstant(G->getType(), *I));
+        const SCEV *NewG = SE.getAddExpr(SE.getConstant(G->getType(), *I), G);
         // If it cancelled out, drop the base register, otherwise update it.
         if (NewG->isZero()) {
           std::swap(F.BaseRegs[i], F.BaseRegs.back());
