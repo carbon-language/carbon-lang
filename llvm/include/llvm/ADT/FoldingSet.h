@@ -217,13 +217,13 @@ template<typename T> struct FoldingSetTrait {
 /// is often much larger than necessary, and the possibility of heap
 /// allocation means it requires a non-trivial destructor call.
 class FoldingSetNodeIDRef {
-  unsigned* Data;
+  const unsigned* Data;
   size_t Size;
 public:
   FoldingSetNodeIDRef() : Data(0), Size(0) {}
-  FoldingSetNodeIDRef(unsigned *D, size_t S) : Data(D), Size(S) {}
+  FoldingSetNodeIDRef(const unsigned *D, size_t S) : Data(D), Size(S) {}
 
-  unsigned *getData() const { return Data; }
+  const unsigned *getData() const { return Data; }
   size_t getSize() const { return Size; }
 };
 
