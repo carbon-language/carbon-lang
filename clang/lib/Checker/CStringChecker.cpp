@@ -248,7 +248,7 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
   SValuator &SV = VM.getSValuator();
   ASTContext &Ctx = C.getASTContext();
 
-  QualType SizeTy = Ctx.getSizeType();
+  QualType SizeTy = Size->getType();
   QualType PtrTy = Ctx.getPointerType(Ctx.CharTy);
 
   // Check that the first buffer is non-null.
