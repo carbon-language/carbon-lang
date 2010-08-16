@@ -212,6 +212,10 @@ class MachineFrameInfo {
   /// target in eliminateFrameIndex().
   int64_t LocalFrameBaseOffset;
 
+  /// Required alignment of the local object blob, which is the strictest
+  /// alignment of any object in it.
+  unsigned LocalFrameMaxAlign;
+
 public:
     explicit MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
@@ -225,6 +229,7 @@ public:
     CSIValid = false;
     LocalFrameSize = 0;
     LocalFrameBaseOffset = 0;
+    LocalFrameMaxAlign = 0;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -301,6 +306,15 @@ public:
 
   /// getLocalFrameSize - Get the size of the local object blob.
   int64_t getLocalFrameSize() const { return LocalFrameSize; }
+
+  /// setLocalFrameMaxAlign - Required alignment of the local object blob,
+  /// which is the strictest alignment of any object in it.
+  void setLocalFrameMaxAlign(unsigned Align) { LocalFrameMaxAlign = Align; }
+
+  /// getLocalFrameMaxAlign - Return the required alignment of the local
+  /// object blob.
+  unsigned getLocalFrameMaxAlign() { return LocalFrameMaxAlign; }
+
 
   /// isObjectPreAllocated - Return true if the object was pre-allocated into
   /// the local block.

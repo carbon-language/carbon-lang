@@ -99,7 +99,7 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *MFI = Fn.getFrameInfo();
   int64_t Offset = 0;
-  unsigned MaxAlign = MFI->getMaxAlignment();
+  unsigned MaxAlign = 0;
 
   // Make sure that the stack protector comes before the local variables on the
   // stack.
@@ -134,33 +134,7 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
     AdjustStackOffset(MFI, i, Offset, MaxAlign);
   }
 
-  const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-  if (!RegInfo->targetHandlesStackFrameRounding()) {
-    // If we have reserved argument space for call sites in the function
-    // immediately on entry to the current function, count it as part of the
-    // overall stack size.
-    if (MFI->adjustsStack() && RegInfo->hasReservedCallFrame(Fn))
-      Offset += MFI->getMaxCallFrameSize();
-
-    // Round up the size to a multiple of the alignment.  If the function has
-    // any calls or alloca's, align to the target's StackAlignment value to
-    // ensure that the callee's frame or the alloca data is suitably aligned;
-    // otherwise, for leaf functions, align to the TransientStackAlignment
-    // value.
-    unsigned StackAlign;
-    if (MFI->adjustsStack() || MFI->hasVarSizedObjects() ||
-        (RegInfo->needsStackRealignment(Fn) && MFI->getObjectIndexEnd() != 0))
-      StackAlign = TFI.getStackAlignment();
-    else
-      StackAlign = TFI.getTransientStackAlignment();
-
-    // If the frame pointer is eliminated, all frame offsets will be relative to
-    // SP not FP. Align to MaxAlign so this works.
-    StackAlign = std::max(StackAlign, MaxAlign);
-    unsigned AlignMask = StackAlign - 1;
-    Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
-  }
-
   // Remember how big this blob of stack space is
   MFI->setLocalFrameSize(Offset);
+  MFI->setLocalFrameMaxAlign(MaxAlign);
 }

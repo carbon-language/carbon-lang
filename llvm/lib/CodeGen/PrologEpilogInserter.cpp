@@ -556,10 +556,20 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
   }
 
-  // Store the offset of the start of the local allocation block. This
-  // will be used later when resolving frame base virtual register pseudos.
-  MFI->setLocalFrameBaseOffset(Offset);
+  // FIXME: Once this is working, then enable flag will change to a target
+  // check for whether the frame is large enough to want to use virtual
+  // frame index registers. Functions which don't want/need this optimization
+  // will continue to use the existing code path.
   if (EnableLocalStackAlloc) {
+    unsigned Align = MFI->getLocalFrameMaxAlign();
+
+    // Adjust to alignment boundary.
+    Offset = (Offset + Align - 1) / Align * Align;
+
+    // Store the offset of the start of the local allocation block. This
+    // will be used later when resolving frame base virtual register pseudos.
+    MFI->setLocalFrameBaseOffset(Offset);
+
     // Allocate the local block
     Offset += MFI->getLocalFrameSize();
 
@@ -571,10 +581,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       AdjustStackOffset(MFI, Entry.first, StackGrowsDown, FIOffset, MaxAlign);
     }
   }
-  // FIXME: Allocate locals. Once the block allocation pass is turned on,
-  // this simplifies to just the second loop, since all of the large objects
-  // will have already been handled. The second loop can also simplify a
-  // bit, as the conditionals inside aren't all necessary.
 
   // Make sure that the stack protector comes before the local variables on the
   // stack.
