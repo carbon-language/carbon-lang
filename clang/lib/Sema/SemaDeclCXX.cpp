@@ -1798,6 +1798,9 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
           // Once we've initialized a field of an anonymous union, the union
           // field in the class is also initialized, so exit immediately.
           return false;
+        } else if ((*FA)->isAnonymousStructOrUnion()) {
+          if (CollectFieldInitializer(Info, Top, *FA))
+            return true;
         }
       }
 

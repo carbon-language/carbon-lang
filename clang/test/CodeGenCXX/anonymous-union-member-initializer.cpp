@@ -78,3 +78,15 @@ namespace test3 {
   // CHECK-NEXT: [[CVALUE:%.*]] = getelementptr inbounds {{.*}} [[STRUCT]], i32 0, i32 0
   // CHECK-NEXT: store i8* null, void i8** [[CVALUE]]
 }
+
+struct S {
+  // CHECK: store i32 42
+  // CHECK: store i32 55
+  S() : x(42), y(55) {}
+  union {
+    struct {
+      int x;
+      union { int y; };
+    };
+  };
+} s;
