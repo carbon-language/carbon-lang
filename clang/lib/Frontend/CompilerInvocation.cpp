@@ -319,6 +319,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::ASTPrintXML:            return "-ast-print-xml";
   case frontend::ASTView:                return "-ast-view";
   case frontend::BoostCon:               return "-boostcon";
+  case frontend::CreateModule:           return "-create-module";
   case frontend::DumpRawTokens:          return "-dump-raw-tokens";
   case frontend::DumpTokens:             return "-dump-tokens";
   case frontend::EmitAssembly:           return "-S";
@@ -421,6 +422,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   for (unsigned i = 0, e = Opts.ASTMergeFiles.size(); i != e; ++i) {
     Res.push_back("-ast-merge");
     Res.push_back(Opts.ASTMergeFiles[i]);
+  }
+  for (unsigned i = 0, e = Opts.Modules.size(); i != e; ++i) {
+    Res.push_back("-import-module");
+    Res.push_back(Opts.Modules[i]);
   }
   for (unsigned i = 0, e = Opts.LLVMArgs.size(); i != e; ++i) {
     Res.push_back("-mllvm");
@@ -1015,6 +1020,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::RunAnalysis; break;
     case OPT_Eonly:
       Opts.ProgramAction = frontend::RunPreprocessorOnly; break;
+    case OPT_create_module:
+      Opts.ProgramAction = frontend::CreateModule; break;
     }
   }
 
@@ -1058,6 +1065,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.ASTMergeFiles = Args.getAllArgValues(OPT_ast_merge);
   Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
   Opts.FixWhatYouCan = Args.hasArg(OPT_fix_what_you_can);
+  Opts.Modules = Args.getAllArgValues(OPT_import_module);
 
   InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {

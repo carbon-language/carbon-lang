@@ -25,6 +25,7 @@ namespace frontend {
     ASTPrintXML,            ///< Parse ASTs and print them in XML.
     ASTView,                ///< Parse ASTs and view them in Graphviz.
     BoostCon,               ///< BoostCon mode.
+    CreateModule,           ///< Create module definition
     DumpRawTokens,          ///< Dump out raw tokens.
     DumpTokens,             ///< Dump out preprocessed tokens.
     EmitAssembly,           ///< Emit a .s file.
@@ -108,6 +109,9 @@ public:
 
   /// \brief The list of AST files to merge.
   std::vector<std::string> ASTMergeFiles;
+
+  /// \brief The list of modules to import.
+  std::vector<std::string> Modules;
 
   /// \brief A list of arguments to forward to LLVM's option processing; this
   /// should only be used for debugging and experimental features.

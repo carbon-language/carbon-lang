@@ -350,7 +350,12 @@ def rewrite_objc : Flag<"-rewrite-objc">,
 def rewrite_macros : Flag<"-rewrite-macros">,
   HelpText<"Expand macros without full preprocessing">;
 
+def create_module : Flag<"-create-module">,
+  HelpText<"Create a module definition file">;
 }
+
+def import_module : Separate<"-import-module">,
+  HelpText<"Import a module definition file">;
 
 def relocatable_pch : Flag<"-relocatable-pch">,
   HelpText<"Whether to build a relocatable precompiled header">;
