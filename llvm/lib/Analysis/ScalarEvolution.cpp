@@ -271,6 +271,39 @@ bool SCEVNAryExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
   return true;
 }
 
+bool SCEVNAryExpr::isLoopInvariant(const Loop *L) const {
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    if (!(*I)->isLoopInvariant(L))
+      return false;
+  return true;
+}
+
+// hasComputableLoopEvolution - N-ary expressions have computable loop
+// evolutions iff they have at least one operand that varies with the loop,
+// but that all varying operands are computable.
+bool SCEVNAryExpr::hasComputableLoopEvolution(const Loop *L) const {
+  bool HasVarying = false;
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
+    const SCEV *S = *I;
+    if (!S->isLoopInvariant(L)) {
+      if (S->hasComputableLoopEvolution(L))
+        HasVarying = true;
+      else
+        return false;
+    }
+  }
+  return HasVarying;
+}
+
+bool SCEVNAryExpr::hasOperand(const SCEV *O) const {
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
+    const SCEV *S = *I;
+    if (O == S || S->hasOperand(O))
+      return true;
+  }
+  return false;
+}
+
 bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
 }
