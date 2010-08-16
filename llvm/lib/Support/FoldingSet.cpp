@@ -229,7 +229,7 @@ void FoldingSetImpl::GrowHashTable() {
       NodeInBucket->SetNextInBucket(0);
 
       // Insert the node into the new bucket, after recomputing the hash.
-      GetNodeProfile(ID, NodeInBucket);
+      GetNodeProfile(NodeInBucket, ID);
       InsertNode(NodeInBucket, GetBucketFor(ID, Buckets, NumBuckets));
       ID.clear();
     }
@@ -252,7 +252,7 @@ FoldingSetImpl::Node
   
   FoldingSetNodeID OtherID;
   while (Node *NodeInBucket = GetNextPtr(Probe)) {
-    GetNodeProfile(OtherID, NodeInBucket);
+    GetNodeProfile(NodeInBucket, OtherID);
     if (OtherID == ID)
       return NodeInBucket;
 
@@ -274,7 +274,7 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
   if (NumNodes+1 > NumBuckets*2) {
     GrowHashTable();
     FoldingSetNodeID ID;
-    GetNodeProfile(ID, N);
+    GetNodeProfile(N, ID);
     InsertPos = GetBucketFor(ID, Buckets, NumBuckets);
   }
 
@@ -341,7 +341,7 @@ bool FoldingSetImpl::RemoveNode(Node *N) {
 /// instead.
 FoldingSetImpl::Node *FoldingSetImpl::GetOrInsertNode(FoldingSetImpl::Node *N) {
   FoldingSetNodeID ID;
-  GetNodeProfile(ID, N);
+  GetNodeProfile(N, ID);
   void *IP;
   if (Node *E = FindNodeOrInsertPos(ID, IP))
     return E;

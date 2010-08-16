@@ -190,7 +190,7 @@ protected:
 
   /// GetNodeProfile - Instantiations of the FoldingSet template implement
   /// this function to gather data bits for the given node.
-  virtual void GetNodeProfile(FoldingSetNodeID &ID, Node *N) const = 0;
+  virtual void GetNodeProfile(Node *N, FoldingSetNodeID &ID) const = 0;
 };
 
 //===----------------------------------------------------------------------===//
@@ -290,7 +290,7 @@ template<class T> class FoldingSet : public FoldingSetImpl {
 private:
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
   /// way to convert nodes into a unique specifier.
-  virtual void GetNodeProfile(FoldingSetNodeID &ID, Node *N) const {
+  virtual void GetNodeProfile(Node *N, FoldingSetNodeID &ID) const {
     T *TN = static_cast<T *>(N);
     FoldingSetTrait<T>::Profile(*TN,ID);
   }
@@ -354,8 +354,8 @@ private:
 
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
   /// way to convert nodes into a unique specifier.
-  virtual void GetNodeProfile(FoldingSetNodeID &ID,
-                              FoldingSetImpl::Node *N) const {
+  virtual void GetNodeProfile(FoldingSetImpl::Node *N,
+                              FoldingSetNodeID &ID) const {
     T *TN = static_cast<T *>(N);
 
     // We must use explicit template arguments in case Ctx is a
