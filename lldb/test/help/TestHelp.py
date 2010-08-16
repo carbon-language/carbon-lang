@@ -17,7 +17,6 @@ class TestHelpCommand(TestBase):
         """A simple test of 'help' command and its output."""
         res = lldb.SBCommandReturnObject()
         self.ci.HandleCommand("help", res)
-        #time.sleep(0.1)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
             'The following is a list of built-in, permanent debugger commands'),
@@ -27,10 +26,8 @@ class TestHelpCommand(TestBase):
         """Command 'set term-width 0' should not hang the help command."""
         res = lldb.SBCommandReturnObject()
         self.ci.HandleCommand("set term-width 0", res)
-        #time.sleep(0.1)
         self.assertTrue(res.Succeeded(), CMD_MSG('set term-width 0'))
         self.ci.HandleCommand("help", res)
-        #time.sleep(0.1)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
             'The following is a list of built-in, permanent debugger commands'),

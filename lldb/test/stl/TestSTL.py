@@ -31,7 +31,7 @@ class TestSTL(TestBase):
                         BREAKPOINT_CREATED)
 
         self.ci.HandleCommand("run", res)
-        #time.sleep(0.1)
+        self.runStarted = True
         self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         # Stop at 'std::string hello_world ("Hello World!");'.
@@ -69,9 +69,6 @@ class TestSTL(TestBase):
                         output.find('basic_string.h') and
                         output.find('stop reason = step in,') > 0,
                         "Command 'thread backtrace' shows we stepped in STL")
-
-        self.ci.HandleCommand("continue", res)
-        self.assertTrue(res.Succeeded())
 
 
 if __name__ == '__main__':

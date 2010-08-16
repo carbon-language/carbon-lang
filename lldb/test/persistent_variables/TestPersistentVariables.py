@@ -22,6 +22,7 @@ class TestPersistentVariables(TestBase):
         self.assertTrue(res.Succeeded())
 
         self.ci.HandleCommand("run", res)
+        self.runStarted = True
         self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         self.ci.HandleCommand("expr int $i = 5; $i + 1", res)
@@ -48,6 +49,7 @@ class TestPersistentVariables(TestBase):
 
         self.ci.HandleCommand("continue", res)
         self.ci.HandleCommand("quit", res)
+        self.runStarted = False
 
 
 if __name__ == '__main__':

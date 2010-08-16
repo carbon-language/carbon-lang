@@ -24,7 +24,7 @@ class TestArrayTypes(TestBase):
                         BREAKPOINT_CREATED)
 
         self.ci.HandleCommand("run", res)
-        #time.sleep(0.1)
+        self.runStarted = True
         self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint.
@@ -72,9 +72,6 @@ class TestArrayTypes(TestBase):
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith('(long [6])'),
                         VARIABLES_DISPLAYED_CORRECTLY)
-
-        self.ci.HandleCommand("continue", res)
-        self.assertTrue(res.Succeeded())
 
 
 if __name__ == '__main__':

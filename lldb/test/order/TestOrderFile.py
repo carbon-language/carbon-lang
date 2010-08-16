@@ -31,6 +31,7 @@ class TestOrderFile(TestBase):
                         "Symbols have correct order by the order file")
 
         self.ci.HandleCommand("run", res)
+        self.runStarted = True
         self.assertTrue(res.Succeeded(), RUN_COMPLETED)
 
 

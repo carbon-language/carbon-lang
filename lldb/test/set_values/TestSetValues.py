@@ -44,7 +44,7 @@ class TestSetValues(TestBase):
                         BREAKPOINT_CREATED)
 
         self.ci.HandleCommand("run", res)
-        #time.sleep(0.1)
+        self.runStarted = True
         self.assertTrue(res.Succeeded(), RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint.
@@ -118,9 +118,6 @@ class TestSetValues(TestBase):
                         VARIABLES_DISPLAYED_CORRECTLY)
         # TODO:
         # Now set variable 'i' and check that it is correctly displayed.
-
-        self.ci.HandleCommand("continue", res)
-        self.assertTrue(res.Succeeded())
 
 
 if __name__ == '__main__':

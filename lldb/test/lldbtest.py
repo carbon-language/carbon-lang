@@ -64,6 +64,9 @@ class TestBase(unittest2.TestCase):
     # The concrete subclass should override this attribute.
     mydir = None
 
+    # State pertaining to the inferior process, if any.
+    runStarted = False
+
     def setUp(self):
         #import traceback
         #traceback.print_stack()
@@ -101,6 +104,10 @@ class TestBase(unittest2.TestCase):
 
 
     def tearDown(self):
+        # Finish the inferior process, if it was "run" previously.
+        if self.runStarted:
+            self.ci.HandleCommand("continue", self.res)
+
         del self.dbg
 
         # Restore old working directory.
