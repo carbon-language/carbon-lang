@@ -449,7 +449,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   MF->insert(llvm::next(MachineFunction::iterator(this)), NMBB);
-  DEBUG(dbgs() << "PHIElimination splitting critical edge:"
+  DEBUG(dbgs() << "Splitting critical edge:"
         " BB#" << getNumber()
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << Succ->getNumber() << '\n');
