@@ -1287,8 +1287,12 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
     FnName = FnName.substr(1);
   GlobalVarName += FnName;
 
+  const Decl *CurDecl = CurCodeDecl;
+  if (CurDecl == 0)
+    CurDecl = getContext().getTranslationUnitDecl();
+  
   std::string FunctionName =
-    PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurCodeDecl);
+    PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurDecl);
 
   llvm::Constant *C =
     CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
