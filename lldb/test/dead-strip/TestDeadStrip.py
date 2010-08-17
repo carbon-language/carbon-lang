@@ -32,7 +32,7 @@ class TestDeadStrip(TestBase):
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 2: name = 'f2', module = a.out, locations = 0 "
             "(pending)"),
-                        BREAKPOINT_CREATED)
+                        BREAKPOINT_PENDING_CREATED)
 
         # Break by function name f3 (live code).
         self.ci.HandleCommand("breakpoint set -s a.out -n f3", res)

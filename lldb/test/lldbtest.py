@@ -43,6 +43,8 @@ RUN_COMPLETED = "Process exited successfully"
 
 BREAKPOINT_CREATED = "Breakpoint created successfully"
 
+BREAKPOINT_PENDING_CREATED = "Pending breakpoint created successfully"
+
 BREAKPOINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
 
 STOPPED_DUE_TO_BREAKPOINT = "Process state is stopped due to breakpoint"
