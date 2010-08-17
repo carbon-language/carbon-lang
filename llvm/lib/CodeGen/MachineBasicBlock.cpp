@@ -439,6 +439,14 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond))
     return NULL;
 
+  // Avoid splitting backedges of loops. It would introduce small out-of-line
+  // blocks into the loop which is very bad for code placement.
+  if (this == Succ)
+    return NULL;
+  MachineLoopInfo *MLI = P->getAnalysisIfAvailable<MachineLoopInfo>();
+  if (MLI->isLoopHeader(Succ))
+    return NULL;
+
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   MF->insert(llvm::next(MachineFunction::iterator(this)), NMBB);
   DEBUG(dbgs() << "PHIElimination splitting critical edge:"
@@ -471,8 +479,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         P->getAnalysisIfAvailable<MachineDominatorTree>())
     MDT->addNewBlock(NMBB, this);
 
-  if (MachineLoopInfo *MLI =
-        P->getAnalysisIfAvailable<MachineLoopInfo>())
+  if (MLI)
     if (MachineLoop *TIL = MLI->getLoopFor(this)) {
       // If one or the other blocks were not in a loop, the new block is not
       // either, and thus LI doesn't need to be updated.

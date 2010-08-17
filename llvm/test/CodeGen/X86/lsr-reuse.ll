@@ -464,7 +464,7 @@ bb5:                                              ; preds = %bb3, %entry
 
 ; And the one at %bb68, where we want to be sure to use superhero mode:
 
-; CHECK:      BB10_10:
+; CHECK:      BB10_9:
 ; CHECK-NEXT:   movaps  48(%r{{[^,]*}}), %xmm{{.*}}
 ; CHECK-NEXT:   mulps   %xmm{{.*}}, %xmm{{.*}}
 ; CHECK-NEXT:   movaps  32(%r{{[^,]*}}), %xmm{{.*}}
@@ -484,7 +484,7 @@ bb5:                                              ; preds = %bb3, %entry
 ; CHECK-NEXT:   addq    $64, %r{{.*}}
 ; CHECK-NEXT:   addq    $64, %r{{.*}}
 ; CHECK-NEXT:   addq    $-16, %r{{.*}}
-; CHECK-NEXT: BB10_11:
+; CHECK-NEXT: BB10_10:
 ; CHECK-NEXT:   cmpq    $15, %r{{.*}}
 ; CHECK-NEXT:   jg
 

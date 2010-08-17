@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
@@ -44,9 +45,9 @@ char &llvm::PHIEliminationID = PHIElimination::ID;
 
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
+  AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineDominatorTree>();
-  // rdar://7401784 This would be nice:
-  // AU.addPreservedID(MachineLoopInfoID);
+  AU.addPreservedID(MachineLoopInfoID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -382,6 +383,7 @@ bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
   if (MBB.empty() || !MBB.front().isPHI() || MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
 
+  bool Changed = false;
   for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
        BBI != BBE && BBI->isPHI(); ++BBI) {
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
@@ -391,7 +393,7 @@ bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // (not considering PHI nodes). If the register is live in to this block
       // anyway, we would gain nothing from splitting.
       if (!LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB))
-        PreMBB->SplitCriticalEdge(&MBB, this);
+        Changed |= PreMBB->SplitCriticalEdge(&MBB, this) != 0;
     }
   }
   return true;
