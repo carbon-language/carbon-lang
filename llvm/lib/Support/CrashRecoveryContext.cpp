@@ -38,6 +38,10 @@ public:
   }
 
   void HandleCrash() {
+    // Eliminate the current context entry, to avoid re-entering in case the
+    // cleanup code crashes.
+    CurrentContext.erase();
+
     assert(!Failed && "Crash recovery context already failed!");
     Failed = true;
 
