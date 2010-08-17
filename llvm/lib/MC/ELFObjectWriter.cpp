@@ -316,12 +316,13 @@ void ELFObjectWriterImpl::WriteHeader(uint64_t SectionDataSize,
   Write16(ELF::ET_REL);             // e_type
 
   // FIXME: Make this configurable
-  Write16(ELF::EM_X86_64); // e_machine = target
+  Write16(Is64Bit ? ELF::EM_X86_64 : ELF::EM_386); // e_machine = target
 
   Write32(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
   WriteWord(0);                    // e_phoff, no program header for .o
-  WriteWord(SectionDataSize + 64);  // e_shoff = sec hdr table off in bytes
+  WriteWord(SectionDataSize + (Is64Bit ? sizeof(ELF::Elf64_Ehdr) :
+            sizeof(ELF::Elf32_Ehdr)));  // e_shoff = sec hdr table off in bytes
 
   // FIXME: Make this configurable.
   Write32(0);   // e_flags = whatever the target wants
