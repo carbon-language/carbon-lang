@@ -571,7 +571,7 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
     if (SymReaper.isDead(I->first)) {
       if (I->second.isAllocated()) {
-        if (ExplodedNode *N = C.GenerateSink()) {
+        if (ExplodedNode *N = C.GenerateNode()) {
           if (!BT_Leak)
             BT_Leak = new BuiltinBug("Memory leak",
                      "Allocated memory never released. Potential memory leak.");
