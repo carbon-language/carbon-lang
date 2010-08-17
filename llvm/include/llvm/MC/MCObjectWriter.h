@@ -10,8 +10,10 @@
 #ifndef LLVM_MC_MCOBJECTWRITER_H
 #define LLVM_MC_MCOBJECTWRITER_H
 
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/System/Host.h"
 #include <cassert>
 
 namespace llvm {
@@ -92,54 +94,57 @@ public:
   }
 
   void WriteLE16(uint16_t Value) {
-    Write8(uint8_t(Value >> 0));
-    Write8(uint8_t(Value >> 8));
+    if (sys::isBigEndianHost())
+      Value = ByteSwap_16(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void WriteLE32(uint32_t Value) {
-    WriteLE16(uint16_t(Value >> 0));
-    WriteLE16(uint16_t(Value >> 16));
+    if (sys::isBigEndianHost())
+      Value = ByteSwap_32(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void WriteLE64(uint64_t Value) {
-    WriteLE32(uint32_t(Value >> 0));
-    WriteLE32(uint32_t(Value >> 32));
+    if (sys::isBigEndianHost())
+      Value = ByteSwap_64(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void WriteBE16(uint16_t Value) {
-    Write8(uint8_t(Value >> 8));
-    Write8(uint8_t(Value >> 0));
+    if (sys::isLittleEndianHost())
+      Value = ByteSwap_16(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void WriteBE32(uint32_t Value) {
-    WriteBE16(uint16_t(Value >> 16));
-    WriteBE16(uint16_t(Value >> 0));
+    if (sys::isLittleEndianHost())
+      Value = ByteSwap_32(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void WriteBE64(uint64_t Value) {
-    WriteBE32(uint32_t(Value >> 32));
-    WriteBE32(uint32_t(Value >> 0));
+    if (sys::isLittleEndianHost())
+      Value = ByteSwap_64(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void Write16(uint16_t Value) {
-    if (IsLittleEndian)
-      WriteLE16(Value);
-    else
-      WriteBE16(Value);
+    if (IsLittleEndian != sys::isLittleEndianHost())
+      Value = ByteSwap_16(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void Write32(uint32_t Value) {
-    if (IsLittleEndian)
-      WriteLE32(Value);
-    else
-      WriteBE32(Value);
+    if (IsLittleEndian != sys::isLittleEndianHost())
+      Value = ByteSwap_32(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void Write64(uint64_t Value) {
-    if (IsLittleEndian)
-      WriteLE64(Value);
-    else
-      WriteBE64(Value);
+    if (IsLittleEndian != sys::isLittleEndianHost())
+      Value = ByteSwap_64(Value);
+    OS << StringRef((const char*)&Value, sizeof(Value));
   }
 
   void WriteZeros(unsigned N) {
