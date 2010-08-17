@@ -146,7 +146,7 @@ unsigned FastISel::getRegForValue(const Value *V) {
   return Reg;
 }
 
-/// materializeRegForValue - Helper for getRegForVale. This function is
+/// materializeRegForValue - Helper for getRegForValue. This function is
 /// called when the value isn't already available in a register and must
 /// be materialized with new instructions.
 unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
