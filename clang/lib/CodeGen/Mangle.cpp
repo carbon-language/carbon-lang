@@ -1546,8 +1546,8 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
 
 void CXXNameMangler::mangleCalledExpression(const Expr *E, unsigned Arity) {
   if (E->getType() != getASTContext().OverloadTy)
-    mangleExpression(E);
-  // propagate arity to dependent overloads?
+    return mangleExpression(E);
+  // FIXME: propagate arity to dependent overloads?
 
   llvm::PointerIntPair<OverloadExpr*,1> R
     = OverloadExpr::find(const_cast<Expr*>(E));

@@ -540,3 +540,20 @@ namespace test16 {
   static union { struct { union {}; }; };
   static union { struct { struct {}; }; };
 }
+
+// rdar://problem/8302148
+namespace test17 {
+  template <int N> struct A {};
+
+  struct B {
+    static int foo(void);
+  };
+
+  template <class T> A<sizeof(T::foo())> func(void);
+
+  // CHECK: define i32 @_ZN6test174testEv()
+  // CHECK: call {{.*}} @_ZN6test174funcINS_1BEEENS_1AIXszclsrT_3fooEEEEv()
+  int test() {
+    func<B>();  // { dg-error "sorry, unimplemented" }
+  }
+}
