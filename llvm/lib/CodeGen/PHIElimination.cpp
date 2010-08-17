@@ -53,6 +53,7 @@ void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
+  MLI = getAnalysisIfAvailable<MachineLoopInfo>();
 
   bool Changed = false;
 
@@ -392,8 +393,14 @@ bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // We break edges when registers are live out from the predecessor block
       // (not considering PHI nodes). If the register is live in to this block
       // anyway, we would gain nothing from splitting.
-      if (!LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB))
-        Changed |= PreMBB->SplitCriticalEdge(&MBB, this) != 0;
+      // Avoid splitting backedges of loops. It would introduce small
+      // out-of-line blocks into the loop which is very bad for code placement.
+      if (PreMBB != &MBB &&
+          !LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB)) {
+        if (!(MLI->getLoopFor(PreMBB) == MLI->getLoopFor(&MBB) &&
+              MLI->isLoopHeader(&MBB)))
+          Changed |= PreMBB->SplitCriticalEdge(&MBB, this) != 0;
+      }
     }
   }
   return true;

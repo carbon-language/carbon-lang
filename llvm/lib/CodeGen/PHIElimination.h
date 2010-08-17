@@ -13,15 +13,18 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 namespace llvm {
   class LiveVariables;
+  class MachineRegisterInfo;
+  class MachineLoopInfo;
   
   /// Lower PHI instructions to copies.  
   class PHIElimination : public MachineFunctionPass {
-    MachineRegisterInfo  *MRI; // Machine register information
+    MachineRegisterInfo *MRI; // Machine register information
+    MachineLoopInfo     *MLI;
 
   public:
     static char ID; // Pass identification, replacement for typeid
