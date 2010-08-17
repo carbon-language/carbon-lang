@@ -569,6 +569,8 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   ERE.r_info = ERE64.r_info;
   if (HasRelocationAddend)
     ERE.r_addend = Addend;
+  else
+    ERE.r_addend = 0; // Silence compiler warning.
 
   Relocations[Fragment->getParent()].push_back(ERE);
 }
