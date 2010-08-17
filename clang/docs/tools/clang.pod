@@ -515,7 +515,6 @@ targets.
 
 =head1 BUGS
 
-Clang currently does not have C++ support, and this manual page is incomplete.
 To report bugs, please visit L<http://llvm.org/bugs/>.  Most bug reports should
 include preprocessed source files (use the B<-E> option) and the full output of 
 the compiler, along with information to reproduce.
