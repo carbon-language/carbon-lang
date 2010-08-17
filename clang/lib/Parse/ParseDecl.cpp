@@ -2726,13 +2726,13 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // scope when parsing the parenthesized declarator, then exited
     // the scope already. Re-enter the scope, if we need to.
     if (D.getCXXScopeSpec().isSet()) {
-      if (Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
+      // If there was an error parsing parenthesized declarator, declarator
+      // scope may have been enterred before. Don't do it again.
+      if (!D.isInvalidType() &&
+          Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
-        // If there was an error parsing parenthesized declarator, declarator
-        // scope may have been enterred before. Don't do it again.
-        if (!D.isInvalidType())
-          DeclScopeObj.EnterDeclaratorScope();
+        DeclScopeObj.EnterDeclaratorScope();
     }
   } else if (D.mayOmitIdentifier()) {
     // This could be something simple like "int" (in which case the declarator
