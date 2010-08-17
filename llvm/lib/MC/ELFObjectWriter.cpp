@@ -748,9 +748,13 @@ void ELFObjectWriterImpl::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
 
     const StringRef SectionName = Section.getSectionName();
     std::string RelaSectionName = HasRelocationAddend ? ".rela" : ".rel";
-
     RelaSectionName += SectionName;
-    unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32; 
+
+    unsigned EntrySize;
+    if (HasRelocationAddend)
+      EntrySize = Is64Bit ? sizeof(ELF::Elf64_Rela) : sizeof(ELF::Elf32_Rela);
+    else
+      EntrySize = Is64Bit ? sizeof(ELF::Elf64_Rel) : sizeof(ELF::Elf32_Rel);
 
     RelaSection = Ctx.getELFSection(RelaSectionName, HasRelocationAddend ?
                                     ELF::SHT_RELA : ELF::SHT_REL, 0,
