@@ -828,6 +828,9 @@ def err_attribute_wrong_number_arguments : Error<
   "attribute requires %0 argument(s)">;
 def err_iboutletcollection_type : Error<
   "invalid type %0 as argument of iboutletcollection attribue">;
+def err_iboutletcollection_object_type : Error<
+  "%select{ivar|property}1 with iboutletcollection attribue must "
+  "have object type (invalid %0)">;
 def err_attribute_missing_parameter_name : Error<
   "attribute requires unquoted parameter">;
 def err_attribute_invalid_vector_type : Error<"invalid vector element type %0">;

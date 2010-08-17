@@ -274,9 +274,23 @@ static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
     S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet) << Attr.getName();
     return;
   }
+  if (const ValueDecl *VD = dyn_cast<ValueDecl>(d))
+    if (!VD->getType()->getAs<ObjCObjectPointerType>()) {
+      S.Diag(Attr.getLoc(), diag::err_iboutletcollection_object_type) 
+        << VD->getType() << 0;
+      return;
+    }
+  if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(d))
+    if (!PD->getType()->getAs<ObjCObjectPointerType>()) {
+      S.Diag(Attr.getLoc(), diag::err_iboutletcollection_object_type) 
+        << PD->getType() << 1;
+      return;
+    }
+  
   IdentifierInfo *II = Attr.getParameterName();
   if (!II)
     II = &S.Context.Idents.get("id");
+  
   Sema::TypeTy *TypeRep = S.getTypeName(*II, Attr.getLoc(), 
                         S.getScopeForContext(d->getDeclContext()->getParent()));
   if (!TypeRep) {
