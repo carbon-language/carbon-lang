@@ -1234,9 +1234,9 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
   }
   Token t;
   t.setKind(tok::string_literal);
-  t.setLiteralData("\"FIXME: not done\"");
+  t.setLiteralData("\"/*FIXME: not done*/\"");
   t.clearFlag(Token::NeedsCleaning);
-  t.setLength(17);
+  t.setLength(21);
   OwningExprResult AsmString(Actions.ActOnStringLiteral(&t, 1));
   ExprVector Constraints(Actions);
   ExprVector Exprs(Actions);
