@@ -401,12 +401,14 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     LowerUnaryToTwoAddr(OutMI, X86::XOR32rr); // MOV32r0 -> XOR32rr
     break;
 
-  // TAILJMPr64, CALL64r, CALL64pcrel32 - These instructions have
+  // TAILJMPr64, [WIN]CALL64r, [WIN]CALL64pcrel32 - These instructions have
   // register inputs modeled as normal uses instead of implicit uses.  As such,
   // truncate off all but the first operand (the callee).  FIXME: Change isel.
   case X86::TAILJMPr64:
   case X86::CALL64r:
-  case X86::CALL64pcrel32: {
+  case X86::CALL64pcrel32:
+  case X86::WINCALL64r:
+  case X86::WINCALL64pcrel32: {
     unsigned Opcode = OutMI.getOpcode();
     MCOperand Saved = OutMI.getOperand(0);
     OutMI = MCInst();

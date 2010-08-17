@@ -2230,8 +2230,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (!isTailCall && Subtarget->isPICStyleGOT())
     Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
 
-  // Add an implicit use of AL for x86 vararg functions.
-  if (Is64Bit && isVarArg)
+  // Add an implicit use of AL for non-Windows x86 64-bit vararg functions.
+  if (Is64Bit && isVarArg && !Subtarget->isTargetWin64())
     Ops.push_back(DAG.getRegister(X86::AL, MVT::i8));
 
   if (InFlag.getNode())
@@ -8832,6 +8832,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     = static_cast<const X86InstrInfo*>(getTargetMachine().getInstrInfo());
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction *F = BB->getParent();
+  bool IsWin64 = Subtarget->isTargetWin64();
   
   assert(MI->getOperand(3).isGlobal() && "This should be a global");
   
@@ -8843,7 +8844,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
-    MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL64m));
+    MIB = BuildMI(*BB, MI, DL, TII->get(IsWin64 ? X86::WINCALL64m : X86::CALL64m));
     addDirectMem(MIB, X86::RDI);
   } else if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
