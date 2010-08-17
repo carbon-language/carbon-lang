@@ -126,7 +126,8 @@ inline uint16_t ByteSwap_16(uint16_t Value) {
 /// ByteSwap_32 - This function returns a byte-swapped representation of the
 /// 32-bit argument, Value.
 inline uint32_t ByteSwap_32(uint32_t Value) {
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__ICC)
+#if defined(__llvm__) || \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__ICC)
   return __builtin_bswap32(Value);
 #elif defined(_MSC_VER) && !defined(_DEBUG)
   return _byteswap_ulong(Value);
@@ -142,7 +143,8 @@ inline uint32_t ByteSwap_32(uint32_t Value) {
 /// ByteSwap_64 - This function returns a byte-swapped representation of the
 /// 64-bit argument, Value.
 inline uint64_t ByteSwap_64(uint64_t Value) {
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__ICC)
+#if defined(__llvm__) || \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__ICC)
   return __builtin_bswap64(Value);
 #elif defined(_MSC_VER) && !defined(_DEBUG)
   return _byteswap_uint64(Value);
