@@ -52,6 +52,10 @@
 - (int)first:(int)x second2:(float)y third:(double)z;
 @end
 
+@implementation D
+- (int)first:(int)x second2:(float)y third:(double)z;
+@end
+
 // RUN: c-index-test -code-completion-at=%s:17:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{LeftParen (}{Text id}{RightParen )}{TypedText abc}
 // CHECK-CC1: NotImplemented:{LeftParen (}{Text int}{RightParen )}{TypedText getInt}
@@ -99,5 +103,16 @@
 // CHECK-CC9: NotImplemented:{TypedText xxx} (30)
 // RUN: c-index-test -code-completion-at=%s:52:36 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CCA %s
 // CHECK-CCA: NotImplemented:{TypedText y2} (30)
-
-
+// RUN: c-index-test -code-completion-at=%s:56:3 %s | FileCheck -check-prefix=CHECK-CCB %s
+// CHECK-CCB: NotImplemented:{LeftParen (}{Text int}{RightParen )}{TypedText first}{Colon :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{Text second2}{Colon :}{LeftParen (}{Text float}{RightParen )}{Text y}{HorizontalSpace  }{Text third}{Colon :}{LeftParen (}{Text double}{RightParen )}{Text z} (30)
+// RUN: c-index-test -code-completion-at=%s:56:8 %s | FileCheck -check-prefix=CHECK-CCC %s
+// CHECK-CCC: NotImplemented:{TypedText first}{Colon :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{Text second2}{Colon :}{LeftParen (}{Text float}{RightParen )}{Text y}{HorizontalSpace  }{Text third}{Colon :}{LeftParen (}{Text double}{RightParen )}{Text z} (30)
+// RUN: c-index-test -code-completion-at=%s:56:21 %s | FileCheck -check-prefix=CHECK-CCD %s
+// FIXME: These results could be more precise.
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y2}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second2:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (5)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y3}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
+// CHECK-CCD: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (5)
+// RUN: c-index-test -code-completion-at=%s:56:38 %s | FileCheck -check-prefix=CHECK-CCE %s
+// CHECK-CCE: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (20)
+// CHECK-CCE: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (5)
