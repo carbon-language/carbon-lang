@@ -415,15 +415,31 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
 
 raw_fd_ostream::~raw_fd_ostream() {
   if (FD < 0) return;
-  flush();
-  if (ShouldClose)
-    while (::close(FD) != 0)
-      if (errno != EINTR) {
-        error_detected();
-        break;
-      }
+  if (!ShouldClose) {
+    flush();
+    return;
+  }
+  
+  bool HadError = has_error();
+  close();
+
+  // If we had a failure closing the stream, there is no way for the client to
+  // handle it, just eat the failure.
+  if (!HadError && has_error())
+    clear_error();
 }
 
+void raw_fd_ostream::close() {
+  assert(ShouldClose);
+  ShouldClose = false;
+  flush();
+  while (::close(FD) != 0)
+    if (errno != EINTR) {
+      error_detected();
+      break;
+    }
+  FD = -1;
+}
 
 void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   assert(FD >= 0 && "File already closed.");
@@ -459,18 +475,6 @@ void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
     Ptr += ret;
     Size -= ret;
   } while (Size > 0);
-}
-
-void raw_fd_ostream::close() {
-  assert(ShouldClose);
-  ShouldClose = false;
-  flush();
-  while (::close(FD) != 0)
-    if (errno != EINTR) {
-      error_detected();
-      break;
-    }
-  FD = -1;
 }
 
 uint64_t raw_fd_ostream::seek(uint64_t off) {
