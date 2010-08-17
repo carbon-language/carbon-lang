@@ -502,7 +502,7 @@ public:
               // is therefore only safe to use `m' in an asm statement
               // if that asm statement accesses the operand exactly once.
               // The asm statement must also use `%U<opno>' as a
-              // placeholder for the “update” flag in the corresponding
+              // placeholder for the "update" flag in the corresponding
               // load or store instruction. For example: 
               // asm ("st%U0 %1,%0" : "=m" (mem) : "r" (val));
               // is correct but: 
@@ -512,7 +512,7 @@ public:
     case 'e': 
       if (Name[1] != 's')
           return false;
-              // es: A “stable” memory operand; that is, one which does not
+              // es: A "stable" memory operand; that is, one which does not
               // include any automodification of the base register. Unlike
               // `m', this constraint can be used in asm statements that
               // might access the operand several times, or that might not
