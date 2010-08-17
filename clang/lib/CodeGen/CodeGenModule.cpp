@@ -1480,18 +1480,18 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                          bool TargetIsLSB,
                          bool &IsUTF16,
                          unsigned &StringLength) {
-  unsigned NumBytes = Literal->getByteLength();
+  llvm::StringRef String = Literal->getString();
+  unsigned NumBytes = String.size();
 
   // Check for simple case.
   if (!Literal->containsNonAsciiOrNull()) {
     StringLength = NumBytes;
-    return Map.GetOrCreateValue(llvm::StringRef(Literal->getStrData(),
-                                                StringLength));
+    return Map.GetOrCreateValue(String);
   }
 
   // Otherwise, convert the UTF8 literals into a byte string.
   llvm::SmallVector<UTF16, 128> ToBuf(NumBytes);
-  const UTF8 *FromPtr = (UTF8 *)Literal->getStrData();
+  const UTF8 *FromPtr = (UTF8 *)String.data();
   UTF16 *ToPtr = &ToBuf[0];
 
   ConversionResult Result = ConvertUTF8toUTF16(&FromPtr, FromPtr + NumBytes,
@@ -1504,8 +1504,7 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
     // this duplicate code.
     assert(Result == sourceIllegal && "UTF-8 to UTF-16 conversion failed");
     StringLength = NumBytes;
-    return Map.GetOrCreateValue(llvm::StringRef(Literal->getStrData(),
-                                                StringLength));
+    return Map.GetOrCreateValue(String);
   }
 
   // ConvertUTF8toUTF16 returns the length in ToPtr.
@@ -1705,20 +1704,17 @@ CodeGenModule::GetAddrOfConstantNSString(const StringLiteral *Literal) {
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
-  const char *StrData = E->getStrData();
-  unsigned Len = E->getByteLength();
-
   const ConstantArrayType *CAT =
     getContext().getAsConstantArrayType(E->getType());
   assert(CAT && "String isn't pointer or array!");
 
   // Resize the string to the right size.
-  std::string Str(StrData, StrData+Len);
   uint64_t RealLen = CAT->getSize().getZExtValue();
 
   if (E->isWide())
     RealLen *= getContext().Target.getWCharWidth()/8;
 
+  std::string Str = E->getString().str();
   Str.resize(RealLen, '\0');
 
   return Str;

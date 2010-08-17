@@ -621,8 +621,10 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   OS << '"';
 
   // FIXME: this doesn't print wstrings right.
-  for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
-    unsigned char Char = Str->getStrData()[i];
+  llvm::StringRef StrData = Str->getString();
+  for (llvm::StringRef::iterator I = StrData.begin(), E = StrData.end(); 
+                                                             I != E; ++I) {
+    unsigned char Char = *I;
 
     switch (Char) {
     default:

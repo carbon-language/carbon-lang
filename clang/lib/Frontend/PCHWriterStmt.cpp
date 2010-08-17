@@ -417,8 +417,7 @@ void PCHStmtWriter::VisitStringLiteral(StringLiteral *E) {
   // StringLiteral. However, we can't do so now because we have no
   // provision for coping with abbreviations when we're jumping around
   // the PCH file during deserialization.
-  Record.insert(Record.end(),
-                E->getStrData(), E->getStrData() + E->getByteLength());
+  Record.append(E->getString().begin(), E->getString().end());
   for (unsigned I = 0, N = E->getNumConcatenated(); I != N; ++I)
     Writer.AddSourceLocation(E->getStrTokenLoc(I), Record);
   Code = pch::EXPR_STRING_LITERAL;

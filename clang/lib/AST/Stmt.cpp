@@ -215,8 +215,9 @@ int AsmStmt::getNamedOperand(llvm::StringRef SymbolicName) const {
 /// true, otherwise return false.
 unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
                                    ASTContext &C, unsigned &DiagOffs) const {
-  const char *StrStart = getAsmString()->getStrData();
-  const char *StrEnd = StrStart + getAsmString()->getByteLength();
+  llvm::StringRef Str = getAsmString()->getString();
+  const char *StrStart = Str.begin();
+  const char *StrEnd = Str.end();
   const char *CurPtr = StrStart;
 
   // "Simple" inline asms have no constraints or operands, just convert the asm

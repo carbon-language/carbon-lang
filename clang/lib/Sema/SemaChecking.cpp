@@ -589,16 +589,11 @@ bool Sema::CheckObjCString(Expr *Arg) {
     return true;
   }
 
-  const char *Data = Literal->getStrData();
-  unsigned Length = Literal->getByteLength();
-
-  for (unsigned i = 0; i < Length; ++i) {
-    if (!Data[i]) {
-      Diag(getLocationOfStringLiteralByte(Literal, i),
-           diag::warn_cfstring_literal_contains_nul_character)
-        << Arg->getSourceRange();
-      break;
-    }
+  size_t NulPos = Literal->getString().find('\0');
+  if (NulPos != llvm::StringRef::npos) {
+    Diag(getLocationOfStringLiteralByte(Literal, NulPos),
+         diag::warn_cfstring_literal_contains_nul_character)
+      << Arg->getSourceRange();
   }
 
   return false;
@@ -1755,11 +1750,11 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   }
   
   // Str - The format string.  NOTE: this is NOT null-terminated!
-  const char *Str = FExpr->getStrData();
+  llvm::StringRef StrRef = FExpr->getString();
+  const char *Str = StrRef.data();
+  unsigned StrLen = StrRef.size();
   
   // CHECK: empty format string?
-  unsigned StrLen = FExpr->getByteLength();
-  
   if (StrLen == 0) {
     Diag(FExpr->getLocStart(), diag::warn_empty_format_string)
     << OrigFormatExpr->getSourceRange();

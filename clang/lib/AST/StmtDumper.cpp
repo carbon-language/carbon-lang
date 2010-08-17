@@ -429,8 +429,7 @@ void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   if (Str->isWide())
     OS << "L";
   OS << '"';
-  OS.write_escaped(llvm::StringRef(Str->getStrData(),
-                                   Str->getByteLength()));
+  OS.write_escaped(Str->getString());
   OS << '"';
 }
 

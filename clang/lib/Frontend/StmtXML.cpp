@@ -32,7 +32,8 @@ namespace  {
 
 
   void addSpecialAttribute(const char* pName, StringLiteral* Str) {
-    Doc.addAttribute(pName, Doc.escapeString(Str->getStrData(), Str->getByteLength()));
+    Doc.addAttribute(pName, Doc.escapeString(Str->getString().data(),
+                                             Str->getString().size()));
   }
 
   void addSpecialAttribute(const char* pName, SizeOfAlignOfExpr* S) {

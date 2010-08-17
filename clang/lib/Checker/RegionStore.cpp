@@ -1139,7 +1139,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
       // However, such overflows should be caught before reaching this point;
       // the only time such an access would be made is if a string literal was
       // used to initialize a larger array.
-      char c = (i >= byteLength) ? '\0' : Str->getStrData()[i];
+      char c = (i >= byteLength) ? '\0' : Str->getString()[i];
       return ValMgr.makeIntVal(c, T);
     }
   }

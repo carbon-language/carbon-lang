@@ -931,8 +931,7 @@ public:
   llvm::StringRef getString() const {
     return llvm::StringRef(StrData, ByteLength);
   }
-  // FIXME: These are deprecated, replace with StringRef.
-  const char *getStrData() const { return StrData; }
+
   unsigned getByteLength() const { return ByteLength; }
 
   /// \brief Sets the string data to the given string data.

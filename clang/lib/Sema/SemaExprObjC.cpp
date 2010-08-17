@@ -50,8 +50,8 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
         return true;
       }
 
-      // Get the string data.
-      StrBuf.append(S->getStrData(), S->getStrData()+S->getByteLength());
+      // Append the string.
+      StrBuf += S->getString();
 
       // Get the locations of the string tokens.
       StrLocs.append(S->tokloc_begin(), S->tokloc_end());

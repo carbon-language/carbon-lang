@@ -449,7 +449,7 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
 /// Generate an NSConstantString object.
 llvm::Constant *CGObjCGNU::GenerateConstantString(const StringLiteral *SL) {
 
-  std::string Str(SL->getStrData(), SL->getByteLength());
+  std::string Str = SL->getString().str();
 
   // Look for an existing one
   llvm::StringMap<llvm::Constant*>::iterator old = ObjCStrings.find(Str);
