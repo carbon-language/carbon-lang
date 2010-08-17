@@ -70,6 +70,12 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
     if (ErrMsg) *ErrMsg = dlerror();
     return true;
   }
+#ifdef __CYGWIN__
+  // Cygwin searches symbols only in the main
+  // with the handle of dlopen(NULL, RTLD_GLOBAL).
+  if (Filename == NULL)
+    H = RTLD_DEFAULT;
+#endif
   if (OpenedHandles == 0)
     OpenedHandles = new std::vector<void *>();
   OpenedHandles->push_back(H);
