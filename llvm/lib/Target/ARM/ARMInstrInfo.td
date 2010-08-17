@@ -2326,8 +2326,8 @@ def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
 let usesCustomInserter = 1, isBranch = 1, isTerminator = 1,
     Defs = [CPSR] in {
 def BCCi64 : PseudoInst<(outs),
-     (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, brtarget:$dst),
-      IIC_Br,
+    (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, brtarget:$dst),
+     IIC_Br,
      "${:comment} B\t$dst GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, imm:$cc",
     [(ARMBcci64 imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, bb:$dst)]>;
 

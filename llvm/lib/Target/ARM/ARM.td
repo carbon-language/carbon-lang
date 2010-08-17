@@ -53,9 +53,9 @@ def FeatureHasSlowVMLx : SubtargetFeature<"vmlx", "SlowVMLx", "true",
                                           "Disable VFP MAC instructions">;
 // Some processors benefit from using NEON instructions for scalar
 // single-precision FP operations.
-def FeatureNEONForFP   : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
-                                          "true",
-                                          "Use NEON for single precision FP">;
+def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
+                                        "true",
+                                        "Use NEON for single precision FP">;
 
 // Disable 32-bit to 16-bit narrowing for experimentation.
 def FeaturePref32BitThumb : SubtargetFeature<"32bit", "Pref32BitThumb", "true",
