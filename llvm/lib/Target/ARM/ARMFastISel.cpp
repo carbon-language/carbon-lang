@@ -29,10 +29,16 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+static cl::opt<bool>
+EnableARMFastISel("arm-fast-isel",
+                  cl::desc("Turn on experimental ARM fast-isel support"),
+                  cl::init(false), cl::Hidden);
 
 namespace {
 
@@ -66,7 +72,7 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
 
 namespace llvm {
   llvm::FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
-    // Turn it off for now. It's not quite ready.
+    if (EnableARMFastISel) return new ARMFastISel(funcInfo);
     return 0;
   }
 }
