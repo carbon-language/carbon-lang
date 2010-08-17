@@ -38,7 +38,7 @@ define i32 @test3(i32 %X, i32 %Y) {
 }
 
 ; CHECK: test4
-; CHECK: pkhbt   r0, r0, r1, lsl #0
+; CHECK: pkhbt   r0, r0, r1
 define i32 @test4(i32 %X, i32 %Y) {
 	%tmp1 = and i32 %X, 65535		; <i32> [#uses=1]
 	%tmp3 = and i32 %Y, -65536		; <i32> [#uses=1]

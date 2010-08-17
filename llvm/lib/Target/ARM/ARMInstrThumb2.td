@@ -2085,10 +2085,10 @@ def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$dst), (ins rGPR:$src), IIC_iUNAr,
                       (or (srl (and rGPR:$src, 0xFF00), (i32 8)),
                           (shl rGPR:$src, (i32 8))), i16))]>;
 
-def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, i32imm:$shamt),
-                  IIC_iALUsi, "pkhbt", "\t$dst, $src1, $src2, lsl $shamt",
+def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
+                  IIC_iALUsi, "pkhbt", "\t$dst, $src1, $src2$sh",
                   [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF),
-                                      (and (shl rGPR:$src2, (i32 imm:$shamt)),
+                                      (and (shl rGPR:$src2, lsl_amt:$sh),
                                            0xFFFF0000)))]>,
                   Requires<[HasT2ExtractPack]> {
   let Inst{31-27} = 0b11101;
@@ -2102,17 +2102,17 @@ def t2PKHBT : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, i32imm:$shamt),
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (and rGPR:$src2, 0xFFFF0000)),
             (t2PKHBT rGPR:$src1, rGPR:$src2, 0)>,
             Requires<[HasT2ExtractPack]>;
-def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$shamt)),
-            (t2PKHBT rGPR:$src1, rGPR:$src2, imm16_31:$shamt)>,
+def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$sh)),
+            (t2PKHBT rGPR:$src1, rGPR:$src2, (lsl_shift_imm imm16_31:$sh))>,
             Requires<[HasT2ExtractPack]>;
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
-def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, i32imm:$shamt),
-                  IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2, asr $shamt",
+def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, shift_imm:$sh),
+                  IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2$sh",
                   [(set rGPR:$dst, (or (and rGPR:$src1, 0xFFFF0000),
-                                      (and (sra rGPR:$src2, imm16_31:$shamt),
-                                           0xFFFF)))]>,
+                                       (and (sra rGPR:$src2, asr_amt:$sh),
+                                            0xFFFF)))]>,
                   Requires<[HasT2ExtractPack]> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
@@ -2124,11 +2124,11 @@ def t2PKHTB : T2I<(outs rGPR:$dst), (ins rGPR:$src1, rGPR:$src2, i32imm:$shamt),
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000), (srl rGPR:$src2, imm16_31:$sh)),
-            (t2PKHTB rGPR:$src1, rGPR:$src2, imm16_31:$sh)>,
+            (t2PKHTB rGPR:$src1, rGPR:$src2, (asr_shift_imm imm16_31:$sh))>,
             Requires<[HasT2ExtractPack]>;
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
-                     (and (srl rGPR:$src2, imm1_15:$shamt), 0xFFFF)),
-            (t2PKHTB rGPR:$src1, rGPR:$src2, imm1_15:$shamt)>,
+                (and (srl rGPR:$src2, imm1_15:$sh), 0xFFFF)),
+            (t2PKHTB rGPR:$src1, rGPR:$src2, (asr_shift_imm imm1_15:$sh))>,
             Requires<[HasT2ExtractPack]>;
 
 //===----------------------------------------------------------------------===//

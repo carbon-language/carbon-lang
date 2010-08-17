@@ -456,12 +456,20 @@ static inline ARM_AM::ShiftOpc getShiftOpcForBits(unsigned bits) {
 //
 // A8-11: DecodeImmShift()
 static inline void getImmShiftSE(ARM_AM::ShiftOpc &ShOp, unsigned &ShImm) {
-  // If type == 0b11 and imm5 == 0, we have an rrx, instead.
-  if (ShOp == ARM_AM::ror && ShImm == 0)
-    ShOp = ARM_AM::rrx;
-  // If (lsr or asr) and imm5 == 0, shift amount is 32.
-  if ((ShOp == ARM_AM::lsr || ShOp == ARM_AM::asr) && ShImm == 0)
+  if (ShImm != 0)
+    return;
+  switch (ShOp) {
+  case ARM_AM::lsl:
+    ShOp = ARM_AM::no_shift;
+    break;
+  case ARM_AM::lsr:
+  case ARM_AM::asr:
     ShImm = 32;
+    break;
+  case ARM_AM::ror:
+    ShOp = ARM_AM::rrx;
+    break;
+  }
 }
 
 // getAMSubModeForBits - getAMSubModeForBits translates from the ARM encoding
@@ -1445,7 +1453,13 @@ static bool DisassembleArithMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
       && !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()) {
     // Extract the 5-bit immediate field Inst{11-7}.
     unsigned ShiftAmt = (insn >> ARMII::ShiftShift) & 0x1F;
-    MI.addOperand(MCOperand::CreateImm(ShiftAmt));
+    ARM_AM::ShiftOpc Opc = ARM_AM::no_shift;
+    if (Opcode == ARM::PKHBT)
+      Opc = ARM_AM::lsl;
+    else if (Opcode == ARM::PKHBT)
+      Opc = ARM_AM::asr;
+    getImmShiftSE(Opc, ShiftAmt);
+    MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShiftAmt)));
     ++OpIdx;
   }
 

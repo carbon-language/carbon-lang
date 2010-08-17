@@ -1227,6 +1227,11 @@ void ARMCodeEmitter::emitMiscArithInstruction(const MachineInstr &MI) {
 
   // Encode shift_imm.
   unsigned ShiftAmt = MI.getOperand(OpIdx).getImm();
+  if (TID.Opcode == ARM::PKHTB) {
+    assert(ShiftAmt != 0 && "PKHTB shift_imm is 0!");
+    if (ShiftAmt == 32)
+      ShiftAmt = 0;
+  }
   assert(ShiftAmt < 32 && "shift_imm range is 0 to 31!");
   Binary |= ShiftAmt << ARMII::ShiftShift;
 

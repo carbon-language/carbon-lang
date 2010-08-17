@@ -220,7 +220,7 @@ static inline unsigned decodeImmShift(unsigned bits2, unsigned imm5,
   switch (bits2) {
   default: assert(0 && "No such value");
   case 0:
-    ShOp = ARM_AM::lsl;
+    ShOp = (imm5 == 0 ? ARM_AM::no_shift : ARM_AM::lsl);
     return imm5;
   case 1:
     ShOp = ARM_AM::lsr;
@@ -1389,14 +1389,7 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
       unsigned imm5 = getShiftAmtBits(insn);
       ARM_AM::ShiftOpc ShOp = ARM_AM::no_shift;
       unsigned ShAmt = decodeImmShift(bits2, imm5, ShOp);
-
-      // PKHBT/PKHTB are special in that we need the decodeImmShift() call to
-      // decode the shift amount from raw imm5 and bits2, but we DO NOT need
-      // to encode the ShOp, as it's in the asm string already.
-      if (Opcode == ARM::t2PKHBT || Opcode == ARM::t2PKHTB)
-        MI.addOperand(MCOperand::CreateImm(ShAmt));
-      else
-        MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(ShOp, ShAmt)));
+      MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(ShOp, ShAmt)));
     }
     ++OpIdx;
   }
