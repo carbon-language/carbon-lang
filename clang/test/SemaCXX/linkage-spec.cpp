@@ -68,3 +68,12 @@ extern "C" void pr7859_b(int) {} // expected-error {{conflicting}}
 
 extern "C" void pr7859_c(short) {} // expected-note {{previous definition}}
 extern "C" void pr7859_c(int) {} // expected-error {{conflicting}}
+
+// <rdar://problem/8318976>
+extern "C" {
+  struct s0 {
+  private:
+    s0();
+    s0(const s0 &);
+  };
+}

@@ -989,6 +989,9 @@ bool FunctionDecl::isExternC() const {
 
       break;
     }
+    
+    if (DC->isRecord())
+      break;
   }
 
   return false;
