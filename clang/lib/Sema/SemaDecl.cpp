@@ -4789,7 +4789,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
       // emitted.
       Diag(FD->getLocation(),
            diag::warn_redeclaration_without_attribute_prev_attribute_ignored)
-        << FD->getNameAsCString() << "dllimport";
+        << FD->getName() << "dllimport";
     }
   }
   return DeclPtrTy::make(FD);

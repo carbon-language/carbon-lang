@@ -522,7 +522,7 @@ public:
                             llvm::SmallVectorImpl<const Expr *> &Layout);
 
   /// This builds the struct used for __block variables.
-  QualType BuildByRefType(const char *DeclName, QualType Ty);
+  QualType BuildByRefType(llvm::StringRef DeclName, QualType Ty);
 
   /// Returns true iff we need copy/dispose helpers for the given type.
   bool BlockRequiresCopying(QualType Ty);

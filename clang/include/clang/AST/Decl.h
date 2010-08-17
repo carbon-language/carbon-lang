@@ -118,16 +118,6 @@ public:
     return getIdentifier() ? getIdentifier()->getName() : "";
   }
 
-  /// getNameAsCString - Get the name of identifier for this declaration as a
-  /// C string (const char*).  This requires that the declaration have a name
-  /// and that it be a simple identifier.
-  //
-  // FIXME: Deprecated, move clients to getName().
-  const char *getNameAsCString() const {
-    assert(Name.isIdentifier() && "Name is not a simple identifier");
-    return getIdentifier() ? getIdentifier()->getNameStart() : "";
-  }
-
   /// getNameAsString - Get a human-readable name for the declaration, even if
   /// it is one of the special kinds of names (C++ constructor, Objective-C
   /// selector, etc).  Creating this name requires expensive string

@@ -387,7 +387,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(Scope *S,
       << property->getDeclName() << Ivar->getDeclName()
       << ClassDeclared->getDeclName();
       Diag(Ivar->getLocation(), diag::note_previous_access_declaration)
-      << Ivar << Ivar->getNameAsCString();
+      << Ivar << Ivar->getName();
       // Note! I deliberately want it to fall thru so more errors are caught.
     }
     QualType IvarType = Context.getCanonicalType(Ivar->getType());

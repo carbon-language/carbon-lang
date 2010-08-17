@@ -3923,7 +3923,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
    if (CGM.getLangOptions().ObjCGCBitmapPrint) {
     printf("\n%s ivar layout for class '%s': ",
            ForStrongLayout ? "strong" : "weak",
-           OMD->getClassInterface()->getNameAsCString());
+           OMD->getClassInterface()->getName().data());
     const unsigned char *s = (unsigned char*)BitMap.c_str();
     for (unsigned i = 0; i < BitMap.size(); i++)
       if (!(s[i] & 0xf0))
@@ -5040,7 +5040,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
                                    ObjCTypes.ExternalProtocolPtrTy);
 
   std::string ProtocolName("\01l_OBJC_PROTOCOL_REFERENCE_$_");
-  ProtocolName += PD->getNameAsCString();
+  ProtocolName += PD->getName();
 
   llvm::GlobalVariable *PTGV = CGM.getModule().getGlobalVariable(ProtocolName);
   if (PTGV)

@@ -3186,7 +3186,7 @@ bool ASTContext::BlockRequiresCopying(QualType Ty) {
   return false;
 }
 
-QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
+QualType ASTContext::BuildByRefType(llvm::StringRef DeclName, QualType Ty) {
   //  type = struct __Block_byref_1_X {
   //    void *__isa;
   //    struct __Block_byref_1_X *__forwarding;
@@ -3219,7 +3219,7 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
     Ty
   };
 
-  const char *FieldNames[] = {
+  llvm::StringRef FieldNames[] = {
     "__isa",
     "__forwarding",
     "__flags",
@@ -3296,7 +3296,7 @@ QualType ASTContext::getBlockParmType(
       const ValueDecl *D = BDRE->getDecl();
       FieldName = D->getIdentifier();
       if (BDRE->isByRef())
-        FieldType = BuildByRefType(D->getNameAsCString(), FieldType);
+        FieldType = BuildByRefType(D->getName(), FieldType);
     } else {
       // Padding.
       assert(isa<ConstantArrayType>(FieldType) &&

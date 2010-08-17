@@ -217,7 +217,7 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
   llvm::SmallString<256> sbuf;
   llvm::raw_svector_ostream os(sbuf);
 
-  os << "Variable '" << drCond->getDecl()->getNameAsCString()
+  os << "Variable '" << drCond->getDecl()->getName()
      << "' with floating point type '" << drCond->getType().getAsString()
      << "' should not be used as a loop counter";
 

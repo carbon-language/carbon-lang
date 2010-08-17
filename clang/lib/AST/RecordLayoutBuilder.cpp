@@ -1630,7 +1630,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
     if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
       if (const CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
         DumpCXXRecordLayout(OS, D, C, FieldOffset, IndentLevel,
-                            Field->getNameAsCString(),
+                            Field->getName().data(),
                             /*IncludeVirtualBases=*/true);
         continue;
       }
