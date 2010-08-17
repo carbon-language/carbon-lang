@@ -762,6 +762,33 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_i
     return comp_unit_info;
 }
 
+static void
+RemoveFunctionsWithModuleNotEqualTo (Module *module, SymbolContextList &sc_list, uint32_t start_idx)
+{
+    // We found functions in .o files. Not all functions in the .o files
+    // will have made it into the final output file. The ones that did
+    // make it into the final output file will have a section whose module
+    // matches the module from the ObjectFile for this SymbolFile. When
+    // the modules don't match, then we have something that was in a
+    // .o file, but doesn't map to anything in the final executable.
+    uint32_t i=start_idx;
+    while (i < sc_list.GetSize())
+    {
+        SymbolContext sc;
+        sc_list.GetContextAtIndex(i, sc);
+        if (sc.function)
+        {
+            const Section *section = sc.function->GetAddressRange().GetBaseAddress().GetSection();
+            if (section->GetModule() != module)
+            {
+                sc_list.RemoveContextAtIndex(i);
+                continue;
+            }
+        }
+        ++i;
+    }
+}
+
 uint32_t
 SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
@@ -779,7 +806,11 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, uint32_t name_ty
     SymbolFileDWARF *oso_dwarf;
     while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
     {
-        oso_dwarf->FindFunctions(name, name_type_mask, true, sc_list);
+        uint32_t sc_idx = sc_list.GetSize();
+        if (oso_dwarf->FindFunctions(name, name_type_mask, true, sc_list))
+        {
+            RemoveFunctionsWithModuleNotEqualTo (m_obj_file->GetModule(), sc_list, sc_idx);
+        }
     }
 
     return sc_list.GetSize() - initial_size;
@@ -803,12 +834,15 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool app
     SymbolFileDWARF *oso_dwarf;
     while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
     {
-        oso_dwarf->FindFunctions(regex, true, sc_list);
+        uint32_t sc_idx = sc_list.GetSize();
+        
+        if (oso_dwarf->FindFunctions(regex, true, sc_list))
+        {
+            RemoveFunctionsWithModuleNotEqualTo (m_obj_file->GetModule(), sc_list, sc_idx);
+        }
     }
 
     return sc_list.GetSize() - initial_size;
-
-    return 0;
 }
 
 
