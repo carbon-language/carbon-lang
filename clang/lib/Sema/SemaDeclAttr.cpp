@@ -263,7 +263,7 @@ static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
                                      Sema &S) {
 
   // The iboutletcollection attribute can have zero or one arguments.
-  if (Attr.getNumArgs() > 1) {
+  if (Attr.getParameterName() && Attr.getNumArgs() > 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
@@ -274,9 +274,26 @@ static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
     S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet) << Attr.getName();
     return;
   }
-
-  // FIXME: Eventually accept the type argument.
-  d->addAttr(::new (S.Context) IBOutletCollectionAttr());
+  IdentifierInfo *II = Attr.getParameterName();
+  if (!II)
+    II = &S.Context.Idents.get("id");
+  Sema::TypeTy *TypeRep = S.getTypeName(*II, Attr.getLoc(), 
+                        S.getScopeForContext(d->getDeclContext()->getParent()));
+  if (!TypeRep) {
+    S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
+    return;
+  }
+  QualType QT(QualType::getFromOpaquePtr(TypeRep));
+  // Diagnose use of non-object type in iboutletcollection attribute.
+  // FIXME. Gnu attribute extension ignores use of builtin types in
+  // attributes. So, __attribute__((iboutletcollection(char))) will be
+  // treated as __attribute__((iboutletcollection())).
+  if (!QT->isObjCIdType() && !QT->isObjCClassType() &&
+      !QT->isObjCObjectType()) {
+    S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
+    return;
+  }
+  d->addAttr(::new (S.Context) IBOutletCollectionAttr(QT));
 }
 
 static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {

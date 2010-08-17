@@ -2051,7 +2051,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
 
     case attr::IBOutletCollection: {
       const IBOutletCollectionAttr *ICA = cast<IBOutletCollectionAttr>(Attr);
-      AddDeclRef(ICA->getClass(), Record);
+      AddTypeRef(ICA->getType(), Record);
       break;
     }
 

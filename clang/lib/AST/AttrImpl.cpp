@@ -163,7 +163,7 @@ Attr *IBOutletAttr::clone(ASTContext &C) const {
 }
 
 Attr *IBOutletCollectionAttr::clone(ASTContext &C) const {
-  return ::new (C) IBOutletCollectionAttr(D);
+  return ::new (C) IBOutletCollectionAttr(QT);
 }
 
 Attr *IBActionAttr::clone(ASTContext &C) const {

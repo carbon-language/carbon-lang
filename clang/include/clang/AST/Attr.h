@@ -17,6 +17,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/StringRef.h"
 #include "clang/Basic/AttrKinds.h"
+#include "clang/AST/Type.h"
 #include <cassert>
 #include <cstring>
 #include <algorithm>
@@ -27,6 +28,7 @@ namespace clang {
   class IdentifierInfo;
   class ObjCInterfaceDecl;
   class Expr;
+  class QualType;
 }
 
 // Defined in ASTContext.h
@@ -286,12 +288,12 @@ public:
 };
 
 class IBOutletCollectionAttr : public Attr {
-  const ObjCInterfaceDecl *D;
+  QualType QT;
 public:
-  IBOutletCollectionAttr(const ObjCInterfaceDecl *d = 0)
-    : Attr(attr::IBOutletCollection), D(d) {}
+  IBOutletCollectionAttr(QualType qt = QualType())
+    : Attr(attr::IBOutletCollection), QT(qt) {}
 
-  const ObjCInterfaceDecl *getClass() const { return D; }
+  QualType getType() const { return QT; }
 
   virtual Attr *clone(ASTContext &C) const;
 

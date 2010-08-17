@@ -826,6 +826,8 @@ def err_attributes_are_not_compatible : Error<
   "%0 and %1 attributes are not compatible">;
 def err_attribute_wrong_number_arguments : Error<
   "attribute requires %0 argument(s)">;
+def err_iboutletcollection_type : Error<
+  "invalid type %0 as argument of iboutletcollection attribue">;
 def err_attribute_missing_parameter_name : Error<
   "attribute requires unquoted parameter">;
 def err_attribute_invalid_vector_type : Error<"invalid vector element type %0">;

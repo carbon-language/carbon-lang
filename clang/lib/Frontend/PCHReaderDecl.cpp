@@ -1190,9 +1190,8 @@ Attr *PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor) {
       break;
 
     case attr::IBOutletCollection: {
-      ObjCInterfaceDecl *D =
-        cast_or_null<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
-      New = ::new (*Context) IBOutletCollectionAttr(D);
+      QualType QT = GetType(Record[Idx++]);
+      New = ::new (*Context) IBOutletCollectionAttr(QT);
       break;
     }
 
