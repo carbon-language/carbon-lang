@@ -97,23 +97,13 @@ bool llvm::DeleteDeadPHIs(BasicBlock *BB) {
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
 bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
-  pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
-  // Can't merge the entry block.  Don't merge away blocks who have their
-  // address taken: this is a bug if the predecessor block is the entry node
-  // (because we'd end up taking the address of the entry) and undesirable in
-  // any case.
-  if (pred_begin(BB) == pred_end(BB) ||
-      BB->hasAddressTaken()) return false;
+  // Don't merge away blocks who have their address taken.
+  if (BB->hasAddressTaken()) return false;
   
-  BasicBlock *PredBB = *PI++;
-  for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
-    if (*PI != PredBB) {
-      PredBB = 0;       // There are multiple different predecessors...
-      break;
-    }
-  
-  // Can't merge if there are multiple predecessors.
+  // Can't merge if there are multiple predecessors, or no predecessors.
+  BasicBlock *PredBB = BB->getUniquePredecessor();
   if (!PredBB) return false;
+
   // Don't break self-loops.
   if (PredBB == BB) return false;
   // Don't break invokes.
