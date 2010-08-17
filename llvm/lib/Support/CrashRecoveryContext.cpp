@@ -10,6 +10,7 @@
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/ThreadLocal.h"
 #include <setjmp.h>
 #include <cstdio>
@@ -47,6 +48,7 @@ public:
 
 }
 
+static sys::Mutex gCrashRecoveryContexMutex;
 static bool gCrashRecoveryEnabled = false;
 
 CrashRecoveryContext::~CrashRecoveryContext() {
@@ -59,6 +61,8 @@ CrashRecoveryContext::~CrashRecoveryContext() {
 // FIXME: No real Win32 implementation currently.
 
 void CrashRecoveryContext::Enable() {
+  sys::ScopedLock L(gCrashRecoveryContexMutex);
+
   if (gCrashRecoveryEnabled)
     return;
 
@@ -66,6 +70,8 @@ void CrashRecoveryContext::Enable() {
 }
 
 void CrashRecoveryContext::Disable() {
+  sys::ScopedLock L(gCrashRecoveryContexMutex);
+
   if (!gCrashRecoveryEnabled)
     return;
 
@@ -121,6 +127,8 @@ static void CrashRecoverySignalHandler(int Signal) {
 }
 
 void CrashRecoveryContext::Enable() {
+  sys::ScopedLock L(gCrashRecoveryContexMutex);
+
   if (gCrashRecoveryEnabled)
     return;
 
@@ -138,6 +146,8 @@ void CrashRecoveryContext::Enable() {
 }
 
 void CrashRecoveryContext::Disable() {
+  sys::ScopedLock L(gCrashRecoveryContexMutex);
+
   if (!gCrashRecoveryEnabled)
     return;
 
