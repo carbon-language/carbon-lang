@@ -104,8 +104,8 @@ def warn_decl_in_param_list : Warning<
   "declaration of %0 will not be visible outside of this function">;
 def warn_unused_function : Warning<"unused function %0">,
   InGroup<UnusedFunction>, DefaultIgnore;
-def warn_unused_method : Warning<"unused method %0">,
-  InGroup<UnusedMethod>, DefaultIgnore;
+def warn_unused_member_function : Warning<"unused member function %0">,
+  InGroup<UnusedMemberFunction>, DefaultIgnore;
   
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,

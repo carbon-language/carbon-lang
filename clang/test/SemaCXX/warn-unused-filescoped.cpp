@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-method %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-member-function %s
 
 static void f1(); // expected-warning{{unused}}
 

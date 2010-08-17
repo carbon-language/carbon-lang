@@ -377,7 +377,7 @@ void Sema::ActOnEndOfTranslationUnit() {
       if (!FD->hasBody(DiagD))
         DiagD = FD;
       Diag(DiagD->getLocation(),
-           isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_method
+           isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function
                                      : diag::warn_unused_function)
             << DiagD->getDeclName();
     } else {
