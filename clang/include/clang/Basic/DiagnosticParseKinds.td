@@ -103,6 +103,8 @@ def err_expected_member_name_or_semi : Error<
   "expected member name or ';' after declaration specifiers">;
 def err_function_declared_typedef : Error<
   "function definition declared 'typedef'">;
+def err_iboutletcollection_builtintype : Error<
+  "type argument of iboutletcollection attribute cannot be a builtin type">;
 def err_expected_fn_body : Error<
   "expected function body after function declarator">;
 def err_expected_method_body : Error<"expected method body">;

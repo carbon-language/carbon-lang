@@ -20,6 +20,7 @@ typedef void *PV;
     __attribute__((iboutletcollection(B))) id ivar2; // expected-error {{invalid type 'B' as argument of iboutletcollection attribue}}
     __attribute__((iboutletcollection(PV))) id ivar3; // expected-error {{invalid type 'PV' as argument of iboutletcollection attribue}}
     __attribute__((iboutletcollection(PV))) void *ivar4; // expected-error {{ivar with iboutletcollection attribue must have object type (invalid 'void *')}}
+    __attribute__((iboutletcollection(int))) id ivar5; // expected-error {{type argument of iboutletcollection attribute cannot be a builtin type}}
 }
 @property (nonatomic, retain) __attribute__((iboutletcollection(I,2,3))) id prop1; // expected-error {{attribute requires 1 argument(s)}}
 @property (nonatomic, retain) __attribute__((iboutletcollection(B))) id prop2; // expected-error {{invalid type 'B' as argument of iboutletcollection attribue}}

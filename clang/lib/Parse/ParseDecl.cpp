@@ -174,11 +174,13 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
           case tok::kw_double:
           case tok::kw_void:
           case tok::kw_typeof:
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                         0, SourceLocation(), 0, 0, CurrAttr);
+            if (CurrAttr->getKind() == AttributeList::AT_IBOutletCollection)
+              Diag(Tok, diag::err_iboutletcollection_builtintype);
             // If it's a builtin type name, eat it and expect a rparen
             // __attribute__(( vec_type_hint(char) ))
             ConsumeToken();
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                                         0, SourceLocation(), 0, 0, CurrAttr);
             if (Tok.is(tok::r_paren))
               ConsumeParen();
             break;
