@@ -1350,6 +1350,7 @@ public:
     // We lost the original triple, so we use the default.
     Builder.defineMacro("_M_IX86", "600");
     Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
+    Builder.defineMacro("_STDCALL_SUPPORTED");
   }
 };
 } // end anonymous namespace
