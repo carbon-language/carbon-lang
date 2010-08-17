@@ -62,9 +62,10 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AliasAnalysis>();
   AU.addPreserved<AliasAnalysis>();
-  AU.addPreserved<LiveVariables>();
   AU.addRequired<LiveVariables>();
-  AU.addPreservedID(MachineLoopInfoID);
+  AU.addPreserved<LiveVariables>();
+  AU.addRequired<MachineLoopInfo>();
+  AU.addPreserved<MachineLoopInfo>();
   AU.addPreservedID(MachineDominatorsID);
 
   if (!StrongPHIElim) {

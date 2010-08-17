@@ -45,22 +45,22 @@ char &llvm::PHIEliminationID = PHIElimination::ID;
 
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
-  AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineDominatorTree>();
-  AU.addPreservedID(MachineLoopInfoID);
+  AU.addPreserved<MachineLoopInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
-  MLI = getAnalysisIfAvailable<MachineLoopInfo>();
 
   bool Changed = false;
 
   // Split critical edges to help the coalescer
-  if (LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>())
+  if (LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>()) {
+    MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-      Changed |= SplitPHIEdges(MF, *I, *LV);
+      Changed |= SplitPHIEdges(MF, *I, *LV, MLI);
+  }
 
   // Populate VRegPHIUseCount
   analyzePHINodes(MF);
@@ -380,7 +380,8 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& MF) {
 
 bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
                                          MachineBasicBlock &MBB,
-                                         LiveVariables &LV) {
+                                         LiveVariables &LV,
+                                         MachineLoopInfo *MLI) {
   if (MBB.empty() || !MBB.front().isPHI() || MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
 
@@ -397,7 +398,8 @@ bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // out-of-line blocks into the loop which is very bad for code placement.
       if (PreMBB != &MBB &&
           !LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB)) {
-        if (!(MLI->getLoopFor(PreMBB) == MLI->getLoopFor(&MBB) &&
+        if (!MLI ||
+            !(MLI->getLoopFor(PreMBB) == MLI->getLoopFor(&MBB) &&
               MLI->isLoopHeader(&MBB)))
           Changed |= PreMBB->SplitCriticalEdge(&MBB, this) != 0;
       }

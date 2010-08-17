@@ -24,7 +24,6 @@ namespace llvm {
   /// Lower PHI instructions to copies.  
   class PHIElimination : public MachineFunctionPass {
     MachineRegisterInfo *MRI; // Machine register information
-    MachineLoopInfo     *MLI;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -52,7 +51,7 @@ namespace llvm {
 
     /// Split critical edges where necessary for good coalescer performance.
     bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
-                       LiveVariables &LV);
+                       LiveVariables &LV, MachineLoopInfo *MLI);
 
     /// SplitCriticalEdge - Split a critical edge from A to B by
     /// inserting a new MBB. Update branches in A and PHI instructions
