@@ -84,7 +84,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDNode *Op, SDValue Addr,
 
   if (Addr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
-      if (Predicate_simm13(CN)) {
+      if (isInt<13>(CN->getSExtValue())) {
         if (FrameIndexSDNode *FIN =
                 dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
           // Constant offset from frame ref.
@@ -120,9 +120,9 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDNode *Op, SDValue Addr,
     return false;  // direct calls.
 
   if (Addr.getOpcode() == ISD::ADD) {
-    if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
-        Predicate_simm13(Addr.getOperand(1).getNode()))
-      return false;  // Let the reg+imm pattern catch this!
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
+      if (isInt<13>(CN->getSExtValue()))
+        return false;  // Let the reg+imm pattern catch this!
     if (Addr.getOperand(0).getOpcode() == SPISD::Lo ||
         Addr.getOperand(1).getOpcode() == SPISD::Lo)
       return false;  // Let the reg+imm pattern catch this!
