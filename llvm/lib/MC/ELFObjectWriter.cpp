@@ -459,7 +459,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
       static_cast<const MCSectionELF&>(it->getSection());
     // Leave out relocations so we don't have indexes within
     // the relocations messed up
-    if (Section.getType() == ELF::SHT_RELA)
+    if (Section.getType() == ELF::SHT_RELA || Section.getType() == ELF::SHT_REL)
       continue;
     if (Index == Asm.size())
       continue;
@@ -747,12 +747,13 @@ void ELFObjectWriterImpl::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
       static_cast<const MCSectionELF&>(SD.getSection());
 
     const StringRef SectionName = Section.getSectionName();
-    std::string RelaSectionName = ".rela";
+    std::string RelaSectionName = HasRelocationAddend ? ".rela" : ".rel";
 
     RelaSectionName += SectionName;
     unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32; 
 
-    RelaSection = Ctx.getELFSection(RelaSectionName, ELF::SHT_RELA, 0,
+    RelaSection = Ctx.getELFSection(RelaSectionName, HasRelocationAddend ?
+                                    ELF::SHT_RELA : ELF::SHT_REL, 0,
                                     SectionKind::getReadOnly(),
                                     false, EntrySize);
 
@@ -945,7 +946,6 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
     case ELF::SHT_RELA: {
       const MCSection *SymtabSection;
       const MCSection *InfoSection;
-      StringRef SectionName;
       const MCSectionData *SymtabSD;
       const MCSectionData *InfoSD;
 
@@ -956,8 +956,10 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
       // we have to count the empty section in too
       sh_link = SymtabSD->getLayoutOrder() + 1;
 
-      SectionName = Section.getSectionName();
-      SectionName = SectionName.slice(5, SectionName.size());
+      // Remove ".rel" and ".rela" prefixes.
+      unsigned SecNameLen = (Section.getType() == ELF::SHT_REL) ? 4 : 5;
+      StringRef SectionName = Section.getSectionName().substr(SecNameLen);
+
       InfoSection = Asm.getContext().getELFSection(SectionName,
                                                    ELF::SHT_PROGBITS, 0,
                                                    SectionKind::getReadOnly(),
