@@ -105,6 +105,7 @@ public:
 
   bool canRealignStack(const MachineFunction &MF) const;
   bool needsStackRealignment(const MachineFunction &MF) const;
+  bool needsFrameBaseReg(MachineInstr *MI, unsigned operand) const;
 
   bool cannotEliminateFrame(const MachineFunction &MF) const;
 

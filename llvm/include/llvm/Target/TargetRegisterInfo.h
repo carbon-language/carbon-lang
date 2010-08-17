@@ -636,6 +636,14 @@ public:
     return false;
   }
 
+  /// needsFrameBaseReg - Returns true if the instruction's frame index
+  /// reference would be better served by a base register other than FP
+  /// or SP. Used by LocalStackFrameAllocation to determine which frame index
+  /// references it should create new base registers for.
+  virtual bool needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
+    return false;
+  }
+
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
   /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
   /// targets use pseudo instructions in order to abstract away the difference

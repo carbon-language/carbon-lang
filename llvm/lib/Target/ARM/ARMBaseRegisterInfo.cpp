@@ -1367,6 +1367,47 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
+/// needsFrameBaseReg - Returns true if the instruction's frame index
+/// reference would be better served by a base register other than FP
+/// or SP. Used by LocalStackFrameAllocation to determine which frame index
+/// references it should create new base registers for.
+bool ARMBaseRegisterInfo::
+needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
+  assert (MI->getOperand(operand).isFI() &&
+          "needsFrameBaseReg() called on non Frame Index operand!");
+
+  // It's the load/store FI references that cause issues, as it can be difficult
+  // to materialize the offset if it won't fit in the literal field. Estimate
+  // based on the size of the local frame and some conservative assumptions
+  // about the rest of the stack frame (note, this is pre-regalloc, so
+  // we don't know everything for certain yet) whether this offset is likely
+  // to be out of range of the immediate. Return true if so.
+
+  // FIXME: For testing, return true for all loads/stores and false for
+  // everything else. We want to create lots of base regs to shake out bugs.
+  //
+  // FIXME: This is Thumb2/ARM only for now to keep it simpler.
+  ARMFunctionInfo *AFI =
+    MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
+  if (AFI->isThumb1OnlyFunction())
+    return false;
+
+  unsigned Opc = MI->getOpcode();
+
+  switch (Opc) {
+  case ARM::LDR: case ARM::LDRH: case ARM::LDRB:
+  case ARM::STR: case ARM::STRH: case ARM::STRB:
+  case ARM::t2LDRi12: case ARM::t2LDRi8:
+  case ARM::t2STRi12: case ARM::t2STRi8:
+  case ARM::VLDRS: case ARM::VLDRD:
+  case ARM::VSTRS: case ARM::VSTRD:
+    return true;
+  default:
+    return false;
+  }
+}
+
+
 unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                          int SPAdj, FrameIndexValue *Value,
