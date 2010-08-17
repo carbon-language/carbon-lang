@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/PCHReader.h"
+#include "clang/Serialization/PCHReader.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclVisitor.h"

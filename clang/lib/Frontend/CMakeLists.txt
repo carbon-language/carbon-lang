@@ -20,12 +20,6 @@ add_clang_library(clangFrontend
   InitHeaderSearch.cpp
   InitPreprocessor.cpp
   LangStandards.cpp
-  PCHReader.cpp
-  PCHReaderDecl.cpp
-  PCHReaderStmt.cpp
-  PCHWriter.cpp
-  PCHWriterDecl.cpp
-  PCHWriterStmt.cpp
   PrintPreprocessedOutput.cpp
   StmtXML.cpp
   TextDiagnosticBuffer.cpp

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/PCHWriter.h"
+#include "clang/Serialization/PCHWriter.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/AST/ASTContext.h"
@@ -20,7 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
-#include "clang/Frontend/PCHReader.h"
+#include "clang/Serialization/PCHReader.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
