@@ -89,7 +89,7 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
                                                     bool &Chaining) {
   Sysroot = CI.getHeaderSearchOpts().Sysroot;
   if (CI.getFrontendOpts().RelocatablePCH && Sysroot.empty()) {
-    CI.getDiagnostics().Report(diag::err_relocatable_without_without_isysroot);
+    CI.getDiagnostics().Report(diag::err_relocatable_without_isysroot);
     return true;
   }
 

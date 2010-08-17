@@ -99,7 +99,7 @@ def warn_fixit_no_changes : Note<
 def err_fe_invoking : Error<"error invoking%0: %1">, DefaultFatal;
 
 // PCH reader
-def err_relocatable_without_without_isysroot : Error<
+def err_relocatable_without_isysroot : Error<
     "must specify system root with -isysroot when building a relocatable "
     "PCH file">;
 def warn_pch_target_triple : Error<
