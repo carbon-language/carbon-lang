@@ -27,17 +27,9 @@ fp_t __floatunsidf(unsigned int a) {
     const int exponent = (aWidth - 1) - __builtin_clz(a);
     rep_t result;
     
-    // Shift a into the significand field, rounding if it is a right-shift
-    if (exponent <= significandBits) {
-        const int shift = significandBits - exponent;
-        result = (rep_t)a << shift ^ implicitBit;
-    } else {
-        const int shift = exponent - significandBits;
-        result = (rep_t)a >> shift ^ implicitBit;
-        rep_t round = (rep_t)a << (typeWidth - shift);
-        if (round > signBit) result++;
-        if (round == signBit) result += result & 1;
-    }
+    // Shift a into the significand field and clear the implicit bit.
+    const int shift = significandBits - exponent;
+    result = (rep_t)a << shift ^ implicitBit;
     
     // Insert the exponent
     result += (rep_t)(exponent + exponentBias) << significandBits;
