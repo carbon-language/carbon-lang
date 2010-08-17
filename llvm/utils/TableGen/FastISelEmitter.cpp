@@ -264,15 +264,6 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op);
     if (II.OperandList.empty())
       continue;
-
-    // For now ignore instructions that have predicate operands.
-    bool HasPredicate = false;
-    for (unsigned i = 0, e = II.OperandList.size(); i != e; ++i) {
-      if(II.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
-        HasPredicate = true;
-    }
-    if (HasPredicate)
-      continue;
       
     // For now, ignore multi-instruction patterns.
     bool MultiInsts = false;
