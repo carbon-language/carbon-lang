@@ -178,6 +178,11 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // what "reasonably" really means. Conservatively, can just
             // use the alignment of the local block.
 
+            // If we have a suitable base register available, use it; otherwise
+            // create a new one.
+            // FIXME: For the moment, just always create a new one.
+
+            ++NumBaseRegisters;
             ++NumReplacements;
           }
 
