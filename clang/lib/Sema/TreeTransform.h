@@ -4214,10 +4214,12 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   if (!ND)
     return SemaRef.ExprError();
 
-  DeclarationNameInfo NameInfo
-    = getDerived().TransformDeclarationNameInfo(E->getNameInfo());
-  if (!NameInfo.getName())
-    return SemaRef.ExprError();
+  DeclarationNameInfo NameInfo = E->getNameInfo();
+  if (NameInfo.getName()) {
+    NameInfo = getDerived().TransformDeclarationNameInfo(NameInfo);
+    if (!NameInfo.getName())
+      return SemaRef.ExprError();
+  }
 
   if (!getDerived().AlwaysRebuild() &&
       Qualifier == E->getQualifier() &&

@@ -95,3 +95,13 @@ namespace test0 {
   };
   void g() { X<2>(); }
 }
+
+// <rdar://problem/8302161>
+namespace test1 {
+  template <typename T> void f(T const &t) {
+    union { char c; T t_; };
+    c = 'a'; // <- this shouldn't silently fail to instantiate
+    T::foo(); // expected-error {{has no members}}
+  }
+  template void f(int const &); // expected-note {{requested here}}
+}
