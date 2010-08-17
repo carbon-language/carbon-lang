@@ -79,13 +79,18 @@ private:
   /// emit -Wunused-macros diagnostics.
   bool IsUsed : 1;
 
-  ~MacroInfo() {
+  /// AllowRedefinitionsWithoutWarning - True if this macro can be redefined
+  /// without emitting a warning.
+  bool IsAllowRedefinitionsWithoutWarning : 1;
+   
+   ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
 
 public:
   MacroInfo(SourceLocation DefLoc);
-
+  MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator);
+  
   /// FreeArgumentList - Free the argument list of the macro, restoring it to a
   /// state where it can be reused for other devious purposes.
   void FreeArgumentList(llvm::BumpPtrAllocator &PPAllocator) {
@@ -126,6 +131,12 @@ public:
   ///
   void setIsUsed(bool Val) {
     IsUsed = Val;
+  }
+
+  /// setIsAllowRedefinitionsWithoutWarning - Set the value of the 
+  /// IsAllowRedefinitionsWithoutWarning flag.
+  void setIsAllowRedefinitionsWithoutWarning(bool Val) {
+    IsAllowRedefinitionsWithoutWarning = Val;
   }
 
   /// setArgumentList - Set the specified list of identifiers as the argument
@@ -184,6 +195,12 @@ public:
   /// isUsed - Return false if this macro is defined in the main file and has
   /// not yet been used.
   bool isUsed() const { return IsUsed; }
+
+  /// isAllowRedefinitionsWithoutWarning - Return true if this macro can be
+  /// redefined without warning.
+  bool isAllowRedefinitionsWithoutWarning() const {
+    return IsAllowRedefinitionsWithoutWarning;
+  }
 
   /// getNumTokens - Return the number of tokens that this macro expands to.
   ///

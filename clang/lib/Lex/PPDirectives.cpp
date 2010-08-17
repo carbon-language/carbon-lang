@@ -25,7 +25,7 @@ using namespace clang;
 // Utility Methods for Preprocessor Directive Handling.
 //===----------------------------------------------------------------------===//
 
-MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
+MacroInfo *Preprocessor::AllocateMacroInfo() {
   MacroInfo *MI;
 
   if (!MICache.empty()) {
@@ -33,7 +33,18 @@ MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
     MICache.pop_back();
   } else
     MI = (MacroInfo*) BP.Allocate<MacroInfo>();
+  return MI;
+}
+
+MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
+  MacroInfo *MI = AllocateMacroInfo();
   new (MI) MacroInfo(L);
+  return MI;
+}
+
+MacroInfo *Preprocessor::CloneMacroInfo(const MacroInfo &MacroToClone) {
+  MacroInfo *MI = AllocateMacroInfo();
+  new (MI) MacroInfo(MacroToClone, BP);
   return MI;
 }
 
@@ -1446,15 +1457,15 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       if (!OtherMI->isUsed())
         Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
-      // Macros must be identical.  This means all tokes and whitespace
+      // Macros must be identical.  This means all tokens and whitespace
       // separation must be the same.  C99 6.10.3.2.
-      if (!MI->isIdenticalTo(*OtherMI, *this)) {
+      if (!OtherMI->isAllowRedefinitionsWithoutWarning() &&
+	      !MI->isIdenticalTo(*OtherMI, *this)) {
         Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
           << MacroNameTok.getIdentifierInfo();
         Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);
       }
     }
-
     ReleaseMacroInfo(OtherMI);
   }
 

@@ -16,6 +16,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -483,6 +484,109 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
     Callbacks->PragmaMessage(MessageLoc, MessageString);
 }
 
+/// ParsePragmaPushOrPopMacro - Handle parsing of pragma push_macro/pop_macro.  
+/// Return the IdentifierInfo* associated with the macro to push or pop.
+IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
+  // Remember the pragma token location.
+  Token PragmaTok = Tok;
+
+  // Read the '('.
+  Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
+      << getSpelling(PragmaTok);
+    return 0;
+  }
+
+  // Read the macro name string.
+  Lex(Tok);
+  if (Tok.isNot(tok::string_literal)) {
+    Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
+      << getSpelling(PragmaTok);
+    return 0;
+  }
+
+  // Remember the macro string.
+  std::string StrVal = getSpelling(Tok);
+
+  // Read the ')'.
+  Lex(Tok);
+  if (Tok.isNot(tok::r_paren)) {
+    Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
+      << getSpelling(PragmaTok);
+    return 0;
+  }
+
+  assert(StrVal[0] == '"' && StrVal[StrVal.size()-1] == '"' &&
+         "Invalid string token!");
+
+  // Create a Token from the string.
+  Token MacroTok;
+  MacroTok.startToken();
+  MacroTok.setKind(tok::identifier);
+  CreateString(&StrVal[1], StrVal.size() - 2, MacroTok);
+
+  // Get the IdentifierInfo of MacroToPushTok.
+  return LookUpIdentifierInfo(MacroTok);
+}
+
+/// HandlePragmaPushMacro - Handle #pragma push_macro.  
+/// The syntax is:
+///   #pragma push_macro("macro")
+void Preprocessor::HandlePragmaPushMacro(Token &PushMacroTok) {
+  // Parse the pragma directive and get the macro IdentifierInfo*.
+  IdentifierInfo *IdentInfo = ParsePragmaPushOrPopMacro(PushMacroTok);
+  if (!IdentInfo) return;
+
+  // Get the MacroInfo associated with IdentInfo.
+  MacroInfo *MI = getMacroInfo(IdentInfo);
+ 
+  MacroInfo *MacroCopyToPush = 0;
+  if (MI) {
+    // Make a clone of MI.
+    MacroCopyToPush = CloneMacroInfo(*MI);
+    
+    // Allow the original MacroInfo to be redefined later.
+    MI->setIsAllowRedefinitionsWithoutWarning(true);
+  }
+
+  // Push the cloned MacroInfo so we can retrieve it later.
+  PragmaPushMacroInfo[IdentInfo].push_back(MacroCopyToPush);
+}
+
+/// HandlePragmaPopMacro - Handle #pragma push_macro.  
+/// The syntax is:
+///   #pragma pop_macro("macro")
+void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
+  SourceLocation MessageLoc = PopMacroTok.getLocation();
+
+  // Parse the pragma directive and get the macro IdentifierInfo*.
+  IdentifierInfo *IdentInfo = ParsePragmaPushOrPopMacro(PopMacroTok);
+  if (!IdentInfo) return;
+
+  // Find the vector<MacroInfo*> associated with the macro.
+  llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> >::iterator iter =
+    PragmaPushMacroInfo.find(IdentInfo);
+  if (iter != PragmaPushMacroInfo.end()) {
+    // Release the MacroInfo currently associated with IdentInfo.
+    MacroInfo *CurrentMI = getMacroInfo(IdentInfo);
+    if (CurrentMI) ReleaseMacroInfo(CurrentMI);
+
+    // Get the MacroInfo we want to reinstall.
+    MacroInfo *MacroToReInstall = iter->second.back();
+
+    // Reinstall the previously pushed macro.
+    setMacroInfo(IdentInfo, MacroToReInstall);
+
+    // Pop PragmaPushMacroInfo stack.
+    iter->second.pop_back();
+    if (iter->second.size() == 0)
+      PragmaPushMacroInfo.erase(iter);
+  } else {
+    Diag(MessageLoc, diag::warn_pragma_pop_macro_no_push)
+      << IdentInfo->getName();
+  }
+}
 
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
@@ -726,6 +830,25 @@ struct PragmaMessageHandler : public PragmaHandler {
   }
 };
 
+/// PragmaPushMacroHandler - "#pragma push_macro" saves the value of the
+/// macro on the top of the stack.
+struct PragmaPushMacroHandler : public PragmaHandler {
+  PragmaPushMacroHandler() : PragmaHandler("push_macro") {}
+  virtual void HandlePragma(Preprocessor &PP, Token &PushMacroTok) {
+    PP.HandlePragmaPushMacro(PushMacroTok);
+  }
+};
+
+
+/// PragmaPopMacroHandler - "#pragma pop_macro" sets the value of the
+/// macro to the value on the top of the stack.
+struct PragmaPopMacroHandler : public PragmaHandler {
+  PragmaPopMacroHandler() : PragmaHandler("pop_macro") {}
+  virtual void HandlePragma(Preprocessor &PP, Token &PopMacroTok) {
+    PP.HandlePragmaPopMacro(PopMacroTok);
+  }
+};
+
 // Pragma STDC implementations.
 
 enum STDCSetting {
@@ -807,6 +930,8 @@ struct PragmaSTDC_UnknownHandler : public PragmaHandler {
 void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(new PragmaOnceHandler());
   AddPragmaHandler(new PragmaMarkHandler());
+  AddPragmaHandler(new PragmaPushMacroHandler());
+  AddPragmaHandler(new PragmaPopMacroHandler());
 
   // #pragma GCC ...
   AddPragmaHandler("GCC", new PragmaPoisonHandler());

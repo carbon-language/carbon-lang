@@ -198,6 +198,11 @@ class Preprocessor {
   /// reused for quick allocation.
   MacroArgs *MacroArgCache;
   friend class MacroArgs;
+ 
+  /// PragmaPushMacroInfo - For each IdentifierInfo used in a #pragma 
+  /// push_macro directive, we keep a MacroInfo stack used to restore 
+  /// previous macro value.
+  llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> > PragmaPushMacroInfo;
 
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
@@ -744,7 +749,10 @@ public:
 
   /// AllocateMacroInfo - Allocate a new MacroInfo object with the provide
   ///  SourceLocation.
-  MacroInfo* AllocateMacroInfo(SourceLocation L);
+  MacroInfo *AllocateMacroInfo(SourceLocation L);
+
+  /// CloneMacroInfo - Allocate a new MacroInfo object which is clone of MI.
+  MacroInfo *CloneMacroInfo(const MacroInfo &MI);
 
   /// GetIncludeFilenameSpelling - Turn the specified lexer token into a fully
   /// checked and spelled filename, e.g. as an operand of #include. This returns
@@ -801,6 +809,9 @@ private:
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
     IncludeMacroStack.pop_back();
   }
+
+  /// AllocateMacroInfo - Allocate a new MacroInfo object.
+  MacroInfo *AllocateMacroInfo();
 
   /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
   ///  be reused for allocating new MacroInfo objects.
@@ -948,6 +959,10 @@ public:
   void HandlePragmaDependency(Token &DependencyTok);
   void HandlePragmaComment(Token &CommentTok);
   void HandlePragmaMessage(Token &MessageTok);
+  void HandlePragmaPushMacro(Token &Tok);
+  void HandlePragmaPopMacro(Token &Tok);
+  IdentifierInfo *ParsePragmaPushOrPopMacro(Token &Tok);
+
   // Return true and store the first token only if any CommentHandler
   // has inserted some tokens and getCommentRetentionState() is false.
   bool HandleComment(Token &Token, SourceRange Comment);
