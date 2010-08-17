@@ -4270,7 +4270,10 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
     }
 
-    Results.AddResult(Result(Pattern));
+    Results.AddResult(Result(Pattern, CCP_CodePattern, 
+                             Method->isInstanceMethod()
+                               ? CXCursor_ObjCInstanceMethodDecl
+                               : CXCursor_ObjCClassMethodDecl));
   }
 
   Results.ExitScope();
