@@ -194,12 +194,6 @@ public:
   static RetEffect MakeNoRet() {
     return RetEffect(NoRet);
   }
-
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddInteger((unsigned)K);
-    ID.AddInteger((unsigned)O);
-    ID.AddInteger(index);
-  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -238,9 +232,6 @@ private:
   RefVal(Kind k, RetEffect::ObjKind o, unsigned cnt, unsigned acnt, QualType t)
   : kind(k), okind(o), Cnt(cnt), ACnt(acnt), T(t) {}
 
-  RefVal(Kind k, unsigned cnt = 0)
-  : kind(k), okind(RetEffect::AnyObj), Cnt(cnt), ACnt(0) {}
-
 public:
   Kind getKind() const { return kind; }
 
@@ -254,12 +245,6 @@ public:
   void setAutoreleaseCount(unsigned i) { ACnt = i; }
 
   QualType getType() const { return T; }
-
-  // Useful predicates.
-
-  static bool isError(Kind k) { return k >= ERROR_START; }
-
-  static bool isLeak(Kind k) { return k >= ERROR_LEAK_START; }
 
   bool isOwned() const {
     return getKind() == Owned;
@@ -275,11 +260,6 @@ public:
 
   bool isReturnedNotOwned() const {
     return getKind() == ReturnedNotOwned;
-  }
-
-  bool isNonLeakError() const {
-    Kind k = getKind();
-    return isError(k) && !isLeak(k);
   }
 
   static RefVal makeOwned(RetEffect::ObjKind o, QualType t,
@@ -473,11 +453,6 @@ public:
     DefaultArgEffect = E;
   }
 
-  /// setArg - Set the argument effect on the argument specified by idx.
-  void setArgEffect(ArgEffects::Factory& AF, unsigned idx, ArgEffect E) {
-    Args = AF.Add(Args, idx, E);
-  }
-
   /// getRetEffect - Returns the effect on the return value of the call.
   RetEffect getRetEffect() const { return Ret; }
 
@@ -491,28 +466,6 @@ public:
   /// getReceiverEffect - Returns the effect on the receiver of the call.
   ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
   ArgEffect getReceiverEffect() const { return Receiver; }
-
-  /// setReceiverEffect - Set the effect on the receiver of the call.
-  void setReceiverEffect(ArgEffect E) { Receiver = E; }
-
-  typedef ArgEffects::iterator ExprIterator;
-
-  ExprIterator begin_args() const { return Args.begin(); }
-  ExprIterator end_args()   const { return Args.end(); }
-
-  static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects A,
-                      RetEffect RetEff, ArgEffect DefaultEff,
-                      ArgEffect ReceiverEff, bool EndPath) {
-    ID.Add(A);
-    ID.Add(RetEff);
-    ID.AddInteger((unsigned) DefaultEff);
-    ID.AddInteger((unsigned) ReceiverEff);
-    ID.AddInteger((unsigned) EndPath);
-  }
-
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, Args, Ret, DefaultArgEffect, Receiver, EndPath);
-  }
 };
 } // end anonymous namespace
 
@@ -617,11 +570,6 @@ public:
     return Summ;
   }
 
-
-  RetainSummary* find(Expr* Receiver, Selector S) {
-    return find(getReceiverDecl(Receiver), S);
-  }
-
   RetainSummary* find(IdentifierInfo* II, Selector S) {
     // FIXME: Class method lookup.  Right now we dont' have a good way
     // of going between IdentifierInfo* and the class hierarchy.
@@ -631,47 +579,6 @@ public:
       I = M.find(ObjCSummaryKey(S));
 
     return I == M.end() ? NULL : I->second;
-  }
-
-  const ObjCInterfaceDecl* getReceiverDecl(Expr* E) {
-    if (const ObjCObjectPointerType* PT =
-        E->getType()->getAs<ObjCObjectPointerType>())
-      return PT->getInterfaceDecl();
-
-    return NULL;
-  }
-
-  RetainSummary*& operator[](ObjCMessageExpr* ME) {
-
-    Selector S = ME->getSelector();
-
-    const ObjCInterfaceDecl* OD = 0;
-    bool IsInstanceMessage = false;
-    switch (ME->getReceiverKind()) {
-    case ObjCMessageExpr::Instance:
-      OD = getReceiverDecl(ME->getInstanceReceiver());
-      IsInstanceMessage = true;
-      break;
-
-    case ObjCMessageExpr::SuperInstance:
-      IsInstanceMessage = true;
-      OD = ME->getSuperType()->getAs<ObjCObjectPointerType>()
-                                                        ->getInterfaceDecl();
-      break;
-
-    case ObjCMessageExpr::Class:
-      OD = ME->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
-      break;
-
-    case ObjCMessageExpr::SuperClass:
-      OD = ME->getSuperType()->getAs<ObjCObjectType>()->getInterface();
-      break;
-    }
-
-    if (IsInstanceMessage)
-      return OD ? M[ObjCSummaryKey(OD->getIdentifier(), S)] : M[S];
-
-    return M[ObjCSummaryKey(OD->getIdentifier(), S)];
   }
 
   RetainSummary*& operator[](ObjCSummaryKey K) {
@@ -796,12 +703,6 @@ public:
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
 private:
-
-  void addClsMethSummary(IdentifierInfo* ClsII, Selector S,
-                         RetainSummary* Summ) {
-    ObjCClassMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
-  }
-
   void addNSObjectClsMethSummary(Selector S, RetainSummary *Summ) {
     ObjCClassMethodSummaries[S] = Summ;
   }
@@ -1832,13 +1733,6 @@ public:
                                    const ObjCMessageExpr* ME,
                                    ExplodedNode* Pred,
                                    const GRState *state);
-
-  bool EvalObjCMessageExprAux(ExplodedNodeSet& Dst,
-                              GRExprEngine& Engine,
-                              GRStmtNodeBuilder& Builder,
-                              const ObjCMessageExpr* ME,
-                              ExplodedNode* Pred);
-
   // Stores.
   virtual void EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val);
 
@@ -1936,7 +1830,6 @@ namespace {
   public:
 
     CFRefCount& getTF() { return TF; }
-    const CFRefCount& getTF() const { return TF; }
 
     // FIXME: Eventually remove.
     virtual const char* getDescription() const = 0;
@@ -2050,9 +1943,6 @@ namespace {
 
     CFRefBug& getBugType() {
       return (CFRefBug&) RangedBugReport::getBugType();
-    }
-    const CFRefBug& getBugType() const {
-      return (const CFRefBug&) RangedBugReport::getBugType();
     }
 
     virtual void getRanges(const SourceRange*& beg, const SourceRange*& end) {
