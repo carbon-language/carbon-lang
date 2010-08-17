@@ -1135,13 +1135,16 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
     
-    ArchSpec attach_spec = GetArchSpecForExistingProcess (process_name);
-    if (attach_spec != GetTarget().GetArchitecture())
+    if (!wait_for_launch)
     {
-        // Set the architecture on the target.
-        GetTarget().SetArchitecture(attach_spec);
+        ArchSpec attach_spec = GetArchSpecForExistingProcess (process_name);
+        if (attach_spec != GetTarget().GetArchitecture())
+        {
+            // Set the architecture on the target.
+            GetTarget().SetArchitecture(attach_spec);
+        }
     }
-
+    
     Error error (WillAttachToProcessWithName(process_name, wait_for_launch));
     if (error.Success())
     {
