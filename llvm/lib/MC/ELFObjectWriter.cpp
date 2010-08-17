@@ -505,10 +505,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
 
   Value = Target.getConstant();
 
-  if (Target.isAbsolute()) {
-    Type = Is64Bit ? ELF::R_X86_64_NONE : ELF::R_386_NONE;
-    Index = 0;
-  } else {
+  if (!Target.isAbsolute()) {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
