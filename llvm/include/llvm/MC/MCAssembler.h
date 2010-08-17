@@ -164,7 +164,7 @@ class MCInstFragment : public MCFragment {
   /// Inst - The instruction this is a fragment for.
   MCInst Inst;
 
-  /// InstSize - The size of the currently encoded instruction.
+  /// Code - Binary data for the currently encoded instruction.
   SmallString<8> Code;
 
   /// Fixups - The list of fixups in this fragment.
