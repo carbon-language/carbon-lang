@@ -560,7 +560,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // check for whether the frame is large enough to want to use virtual
   // frame index registers. Functions which don't want/need this optimization
   // will continue to use the existing code path.
-  if (EnableLocalStackAlloc) {
+  if (EnableLocalStackAlloc && MFI->getLocalFrameSize()) {
     unsigned Align = MFI->getLocalFrameMaxAlign();
 
     // Adjust to alignment boundary.

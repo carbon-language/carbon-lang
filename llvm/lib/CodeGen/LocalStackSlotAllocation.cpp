@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -160,6 +161,14 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
          E = Fn.end(); BB != E; ++BB) {
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       MachineInstr *MI = I;
+      // Debug value instructions can't be out of range, so they don't need
+      // any updates.
+      // FIXME: When we extend this stuff to handle functions with both
+      // VLAs and dynamic realignment, we should update the debug values
+      // to reference the new base pointer when possible.
+      if (MI->isDebugValue())
+        continue;
+
       // For now, allocate the base register(s) within the basic block
       // where they're used, and don't try to keep them around outside
       // of that. It may be beneficial to try sharing them more broadly
@@ -169,8 +178,12 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         // Consider replacing all frame index operands that reference
         // an object allocated in the local block.
-        if (MI->getOperand(i).isFI() &&
-            MFI->isObjectPreAllocated(MI->getOperand(i).getIndex())) {
+        if (MI->getOperand(i).isFI()) {
+          int FrameIdx = MI->getOperand(i).getIndex();
+          // Don't try this with values not in the local block.
+          if (!MFI->isObjectPreAllocated(FrameIdx))
+            continue;
+
           DEBUG(dbgs() << "Considering: " << *MI);
           if (TRI->needsFrameBaseReg(MI, i)) {
             DEBUG(dbgs() << "  Replacing FI in: " << *MI);
@@ -181,6 +194,17 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // If we have a suitable base register available, use it; otherwise
             // create a new one.
             // FIXME: For the moment, just always create a new one.
+
+            const TargetRegisterClass *RC = TRI->getPointerRegClass();
+            unsigned BaseReg = Fn.getRegInfo().createVirtualRegister(RC);
+
+            // Tell the target to insert the instruction to initialize
+            // the base register.
+            TRI->materializeFrameBaseRegister(I, BaseReg, FrameIdx);
+
+            // Modify the instruction to use the new base register rather
+            // than the frame index operand.
+            TRI->resolveFrameIndex(I, BaseReg, 0);
 
             ++NumBaseRegisters;
             ++NumReplacements;

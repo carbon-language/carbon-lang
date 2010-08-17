@@ -1407,6 +1407,49 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
   }
 }
 
+/// materializeFrameBaseRegister - Insert defining instruction(s) for
+/// BaseReg to be a pointer to FrameIdx before insertion point I.
+void ARMBaseRegisterInfo::
+materializeFrameBaseRegister(MachineBasicBlock::iterator I,
+                             unsigned BaseReg, int FrameIdx) const {
+  ARMFunctionInfo *AFI =
+    I->getParent()->getParent()->getInfo<ARMFunctionInfo>();
+  unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri : ARM::t2ADDri;
+  assert(!AFI->isThumb1OnlyFunction() &&
+         "This materializeFrameBaseRegister does not support Thumb1!");
+
+  MachineInstrBuilder MIB =
+    BuildMI(*I->getParent(), I, I->getDebugLoc(), TII.get(ADDriOpc), BaseReg)
+    .addFrameIndex(FrameIdx).addImm(0);
+  AddDefaultCC(AddDefaultPred(MIB));
+}
+
+void
+ARMBaseRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
+                                       unsigned BaseReg, int64_t Offset) const {
+  MachineInstr &MI = *I;
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  int Off = Offset; // ARM doesn't need the general 64-bit offsets
+  unsigned i = 0;
+
+  assert(!AFI->isThumb1OnlyFunction() &&
+         "This resolveFrameIndex does not support Thumb1!");
+
+  while (!MI.getOperand(i).isFI()) {
+    ++i;
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  }
+  bool Done = false;
+  if (!AFI->isThumbFunction())
+    Done = rewriteARMFrameIndex(MI, i, BaseReg, Off, TII);
+  else {
+    assert(AFI->isThumb2Function());
+    Done = rewriteT2FrameIndex(MI, i, BaseReg, Off, TII);
+  }
+  assert (Done && "Unable to resolve frame index!");
+}
 
 unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
