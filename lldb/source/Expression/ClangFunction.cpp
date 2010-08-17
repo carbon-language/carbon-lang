@@ -515,7 +515,12 @@ ClangFunction::ExecuteFunction (
         timeout_ptr = &real_timeout;
     }
     
-    exe_ctx.process->Resume ();
+    Error resume_error = exe_ctx.process->Resume ();
+    if (!resume_error.Success())
+    {
+        errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
+        return eExecutionSetupError;
+    }
     
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
     
