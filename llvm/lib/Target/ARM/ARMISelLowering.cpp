@@ -3148,6 +3148,11 @@ static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
                        bool &ReverseVEXT, unsigned &Imm) {
   unsigned NumElts = VT.getVectorNumElements();
   ReverseVEXT = false;
+
+  // Assume that the first shuffle index is not UNDEF.  Fail if it is.
+  if (M[0] < 0)
+    return false;
+
   Imm = M[0];
 
   // If this is a VEXT shuffle, the immediate value is the index of the first
@@ -3163,6 +3168,7 @@ static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
       ReverseVEXT = true;
     }
 
+    if (M[i] < 0) continue; // ignore UNDEF indices
     if (ExpectedElt != static_cast<unsigned>(M[i]))
       return false;
   }
@@ -3188,13 +3194,16 @@ static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
 
   unsigned NumElts = VT.getVectorNumElements();
   unsigned BlockElts = M[0] + 1;
+  // If the first shuffle index is UNDEF, be optimistic.
+  if (M[0] < 0)
+    BlockElts = BlockSize / EltSz;
 
   if (BlockSize <= EltSz || BlockSize != BlockElts * EltSz)
     return false;
 
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned) M[i] !=
-        (i - i%BlockElts) + (BlockElts - 1 - i%BlockElts))
+    if (M[i] < 0) continue; // ignore UNDEF indices
+    if ((unsigned) M[i] != (i - i%BlockElts) + (BlockElts - 1 - i%BlockElts))
       return false;
   }
 
@@ -3210,8 +3219,8 @@ static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   for (unsigned i = 0; i < NumElts; i += 2) {
-    if ((unsigned) M[i] != i + WhichResult ||
-        (unsigned) M[i+1] != i + NumElts + WhichResult)
+    if ((M[i] >= 0 && (unsigned) M[i] != i + WhichResult) ||
+        (M[i+1] >= 0 && (unsigned) M[i+1] != i + NumElts + WhichResult))
       return false;
   }
   return true;
@@ -3229,9 +3238,8 @@ static bool isVTRN_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   for (unsigned i = 0; i < NumElts; i += 2) {
-    if (M[i] < 0) continue;
-    if ((unsigned) M[i] != i + WhichResult ||
-        (unsigned) M[i+1] != i + WhichResult)
+    if ((M[i] >= 0 && (unsigned) M[i] != i + WhichResult) ||
+        (M[i+1] >= 0 && (unsigned) M[i+1] != i + WhichResult))
       return false;
   }
   return true;
@@ -3246,6 +3254,7 @@ static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   for (unsigned i = 0; i != NumElts; ++i) {
+    if (M[i] < 0) continue; // ignore UNDEF indices
     if ((unsigned) M[i] != 2 * i + WhichResult)
       return false;
   }
@@ -3271,7 +3280,8 @@ static bool isVUZP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   for (unsigned j = 0; j != 2; ++j) {
     unsigned Idx = WhichResult;
     for (unsigned i = 0; i != Half; ++i) {
-      if ((unsigned) M[i + j * Half] != Idx)
+      int MIdx = M[i + j * Half];
+      if (MIdx >= 0 && (unsigned) MIdx != Idx)
         return false;
       Idx += 2;
     }
@@ -3294,8 +3304,8 @@ static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
   WhichResult = (M[0] == 0 ? 0 : 1);
   unsigned Idx = WhichResult * NumElts / 2;
   for (unsigned i = 0; i != NumElts; i += 2) {
-    if ((unsigned) M[i] != Idx ||
-        (unsigned) M[i+1] != Idx + NumElts)
+    if ((M[i] >= 0 && (unsigned) M[i] != Idx) ||
+        (M[i+1] >= 0 && (unsigned) M[i+1] != Idx + NumElts))
       return false;
     Idx += 1;
   }
@@ -3320,8 +3330,8 @@ static bool isVZIP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   WhichResult = (M[0] == 0 ? 0 : 1);
   unsigned Idx = WhichResult * NumElts / 2;
   for (unsigned i = 0; i != NumElts; i += 2) {
-    if ((unsigned) M[i] != Idx ||
-        (unsigned) M[i+1] != Idx)
+    if ((M[i] >= 0 && (unsigned) M[i] != Idx) ||
+        (M[i+1] >= 0 && (unsigned) M[i+1] != Idx))
       return false;
     Idx += 1;
   }

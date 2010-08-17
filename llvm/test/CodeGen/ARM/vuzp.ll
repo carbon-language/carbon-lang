@@ -73,3 +73,30 @@ define <4 x float> @vuzpQf(<4 x float>* %A, <4 x float>* %B) nounwind {
         %tmp5 = fadd <4 x float> %tmp3, %tmp4
 	ret <4 x float> %tmp5
 }
+
+; Undef shuffle indices should not prevent matching to VUZP:
+
+define <8 x i8> @vuzpi8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+;CHECK: vuzpi8_undef:
+;CHECK: vuzp.8
+;CHECK-NEXT: vadd.i8
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = load <8 x i8>* %B
+	%tmp3 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 0, i32 2, i32 undef, i32 undef, i32 8, i32 10, i32 12, i32 14>
+	%tmp4 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 undef, i32 undef, i32 13, i32 15>
+        %tmp5 = add <8 x i8> %tmp3, %tmp4
+	ret <8 x i8> %tmp5
+}
+
+define <8 x i16> @vuzpQi16_undef(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+;CHECK: vuzpQi16_undef:
+;CHECK: vuzp.16
+;CHECK-NEXT: vadd.i16
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = load <8 x i16>* %B
+	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> <i32 0, i32 undef, i32 4, i32 undef, i32 8, i32 10, i32 12, i32 14>
+	%tmp4 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> <i32 1, i32 3, i32 5, i32 undef, i32 undef, i32 11, i32 13, i32 15>
+        %tmp5 = add <8 x i16> %tmp3, %tmp4
+	ret <8 x i16> %tmp5
+}
+

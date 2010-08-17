@@ -111,3 +111,21 @@ define <16 x i8> @test_vrev16Q8(<16 x i8>* %A) nounwind {
 	%tmp2 = shufflevector <16 x i8> %tmp1, <16 x i8> undef, <16 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6, i32 9, i32 8, i32 11, i32 10, i32 13, i32 12, i32 15, i32 14>
 	ret <16 x i8> %tmp2
 }
+
+; Undef shuffle indices should not prevent matching to VREV:
+
+define <8 x i8> @test_vrev64D8_undef(<8 x i8>* %A) nounwind {
+;CHECK: test_vrev64D8_undef:
+;CHECK: vrev64.8
+	%tmp1 = load <8 x i8>* %A
+	%tmp2 = shufflevector <8 x i8> %tmp1, <8 x i8> undef, <8 x i32> <i32 7, i32 undef, i32 undef, i32 4, i32 3, i32 2, i32 1, i32 0>
+	ret <8 x i8> %tmp2
+}
+
+define <8 x i16> @test_vrev32Q16_undef(<8 x i16>* %A) nounwind {
+;CHECK: test_vrev32Q16_undef:
+;CHECK: vrev32.16
+	%tmp1 = load <8 x i16>* %A
+	%tmp2 = shufflevector <8 x i16> %tmp1, <8 x i16> undef, <8 x i32> <i32 undef, i32 0, i32 undef, i32 2, i32 5, i32 4, i32 7, i32 undef>
+	ret <8 x i16> %tmp2
+}
