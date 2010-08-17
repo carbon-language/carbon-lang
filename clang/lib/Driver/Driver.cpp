@@ -166,6 +166,7 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   if (!Args.hasArg(options::OPT_mlinker_version_EQ)) {
     DAL->AddJoinedArg(0, Opts->getOption(options::OPT_mlinker_version_EQ),
                       HOST_LINK_VERSION);
+    DAL->getLastArg(options::OPT_mlinker_version_EQ)->claim();
   }
 #endif
 
