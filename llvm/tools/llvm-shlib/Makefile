@@ -15,6 +15,17 @@ NO_BUILD_ARCHIVE = 1
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
+include $(LEVEL)/Makefile.config
+
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+    EXPORTED_SYMBOL_FILE = $(ObjDir)/$(LIBRARYNAME).exports
+
+    # It is needed to force static-stdc++.a linked.
+    # FIXME: It should be omitted when configure detects system's stdc++.dll.
+    SHLIB_FRAG_NAMES += stdc++.a.o
+
+endif
+
 include $(LEVEL)/Makefile.common
 
 # Include all archives in libLLVM.(so|dylib) except the ones that have
@@ -56,4 +67,45 @@ ifeq ($(HOST_OS), Linux)
                        -Wl,--no-whole-archive
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
+endif
+
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+
+SHLIB_STUBS := $(addprefix $(ObjDir)/, $(SHLIB_FRAG_NAMES))
+SHLIB_FRAGS := $(patsubst %.a.o, $(ObjDir)/%.syms.txt, $(LIBRARYNAME).a.o $(SHLIB_FRAG_NAMES))
+LLVMLibsOptions := $(SHLIB_STUBS) $(LLVMLibsOptions)
+
+$(LibName.SO): $(SHLIB_STUBS)
+
+%.syms.txt: %.a.o
+	$(Echo) Collecting global symbols of $(notdir $*)
+	$(Verb) $(NM_PATH) -g $< > $@
+
+$(ObjDir)/$(LIBRARYNAME).exports: $(SHLIB_FRAGS) $(ObjDir)/.dir
+	$(Echo) Generating exports for $(LIBRARYNAME)
+	$(Verb) ($(SED) -n \
+			-e "s/^.* T _\([^.][^.]*\)$$/\1/p" \
+			-e "s/^.* [BDR] _\([^.][^.]*\)$$/\1 DATA/p" \
+			$(SHLIB_FRAGS) \
+		 | sort -u) > $@
+
+$(ObjDir)/$(LIBRARYNAME).a.o: $(LLVMLibsPaths) $(ObjDir)/.dir
+	$(Echo) Linking all LLVMLibs together for $(LIBRARYNAME)
+	$(Verb) $(Link) -nostartfiles -Wl,-r -nodefaultlibs -o $@ \
+			-Wl,--whole-archive $(LLVMLibsPaths) \
+			-Wl,--no-whole-archive
+
+$(ObjDir)/stdc++.a.o: $(ObjDir)/.dir
+	$(Echo) Linking all libs together for static libstdc++.a
+	$(Verb) $(Link) -nostartfiles -Wl,-r -nodefaultlibs -o $@ \
+			-Wl,--whole-archive -lstdc++ \
+			-Wl,--no-whole-archive
+# FIXME: workaround to invalidate -lstdc++
+	$(Echo) Making dummy -lstdc++ to lib
+	$(Verb) $(AR) rc $(ToolDir)/libstdc++.dll.a
+# FIXME: Is install-local needed?
+
+clean-local::
+	$(Verb) $(RM) -f $(ToolDir)/libstdc++.dll.a
+
 endif

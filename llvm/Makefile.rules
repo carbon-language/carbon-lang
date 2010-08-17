@@ -411,6 +411,26 @@ LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
 LLVMExmplDir:= $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
 
 #--------------------------------------------------------------------
+# Locations of shared libraries
+#--------------------------------------------------------------------
+
+SharedPrefix     := lib
+SharedLibDir     := $(LibDir)
+LLVMSharedLibDir := $(LLVMLibDir)
+
+# Win32.DLL prefers to be located on the "PATH" of binaries.
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+  SharedLibDir     := $(ToolDir)
+  LLVMSharedLibDir := $(LLVMToolDir)
+
+  ifeq ($(HOST_OS),Cygwin)
+    SharedPrefix  := cyg
+  else
+    SharedPrefix  :=
+  endif
+endif
+
+#--------------------------------------------------------------------
 # LLVM Capable Compiler
 #--------------------------------------------------------------------
 
@@ -483,12 +503,7 @@ ifeq ($(HOST_OS),Darwin)
     SharedLinkOptions += -mmacosx-version-min=$(DARWIN_VERSION)
   endif
 else
-  ifeq ($(HOST_OS),Cygwin)
-    SharedLinkOptions=-shared -nostdlib -Wl,--export-all-symbols \
-                      -Wl,--enable-auto-import -Wl,--enable-auto-image-base
-  else
-    SharedLinkOptions=-shared
-  endif
+  SharedLinkOptions=-shared
 endif
 
 ifeq ($(TARGET_OS),Darwin)
@@ -498,11 +513,13 @@ ifeq ($(TARGET_OS),Darwin)
 endif
 
 ifdef SHARED_LIBRARY
+ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
 ifneq ($(HOST_OS),Darwin)
   LD.Flags += $(RPATH) -Wl,'$$ORIGIN'
 else
 ifneq ($(DARWIN_MAJVERS),4)
-  LD.Flags += $(RPATH) -Wl,$(LibDir)
+  LD.Flags += $(RPATH) -Wl,$(SharedLibDir)
+endif
 endif
 endif
 endif
@@ -873,6 +890,13 @@ LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
 endif
 
+# Win32.DLL may refer to other components.
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+  ifdef LOADABLE_MODULE
+    LINK_COMPONENTS := all
+  endif
+endif
+
 ifndef IS_CLEANING_TARGET
 ifdef LINK_COMPONENTS
 
@@ -885,8 +909,13 @@ $(LLVM_CONFIG):
 $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
 
 ifeq ($(ENABLE_SHARED), 1)
+# We can take the "auto-import" feature to get rid of using dllimport.
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+LLVMLibsOptions += -Wl,--enable-auto-import,--enable-runtime-pseudo-reloc \
+                   -L $(SharedLibDir)
+endif
 LLVMLibsOptions += -lLLVM-$(LLVMVersion)
-LLVMLibsPaths += $(LibDir)/libLLVM-$(LLVMVersion)$(SHLIBEXT)
+LLVMLibsPaths += $(SharedLibDir)/$(SharedPrefix)LLVM-$(LLVMVersion)$(SHLIBEXT)
 else
 LLVMLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
 LLVMLibsPaths   += $(LLVM_CONFIG) \
@@ -931,9 +960,26 @@ ifeq ($(HOST_OS),Darwin)
 LLVMLibsOptions += -Wl,-exported_symbols_list,$(NativeExportsFile)
 endif
 
+# GNU ld Win32 accepts .DEF files that contain "DATA" entries.
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+NativeExportsFile := $(ObjDir)/$(notdir $(EXPORTED_SYMBOL_FILE:.exports=.def))
+
+# LLVMLibsOptions is invalidated at processing tools/llvm-shlib.
+SharedLinkOptions += $(NativeExportsFile)
+
+$(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
+	$(Echo) Generating $(notdir $@)
+	$(Verb) $(ECHO) "EXPORTS" > $@
+	$(Verb) $(CAT) $< >> $@
+clean-local::
+	-$(Verb) $(RM) -f $(NativeExportsFile)
+else
+
 # gold, bfd ld, etc.
 ifeq ($(HAVE_LINK_VERSION_SCRIPT),1)
 LLVMLibsOptions += -Wl,--version-script,$(NativeExportsFile)
+endif
+
 endif
 
 endif
@@ -1010,10 +1056,10 @@ ifdef LIBRARYNAME
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 ifdef LOADABLE_MODULE
 LibName.A  := $(LibDir)/$(LIBRARYNAME).a
-LibName.SO := $(LibDir)/$(LIBRARYNAME)$(SHLIBEXT)
+LibName.SO := $(SharedLibDir)/$(LIBRARYNAME)$(SHLIBEXT)
 else
 LibName.A  := $(LibDir)/lib$(LIBRARYNAME).a
-LibName.SO := $(LibDir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+LibName.SO := $(SharedLibDir)/$(SharedPrefix)$(LIBRARYNAME)$(SHLIBEXT)
 endif
 LibName.O  := $(LibDir)/$(LIBRARYNAME).o
 LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
@@ -1038,13 +1084,13 @@ SharedLibKindMessage := "Loadable Module"
 else
 SharedLibKindMessage := "Shared Library"
 endif
-$(LibName.SO): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths) $(LibDir)/.dir
+$(LibName.SO): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths) $(SharedLibDir)/.dir
 	$(Echo) Linking $(BuildMode) $(SharedLibKindMessage) \
 	  $(notdir $@)
 	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO) \
 	  $(ProjLibsOptions) $(LLVMLibsOptions) $(LIBS)
 else
-$(LibName.SO): $(ObjectsO) $(LibDir)/.dir
+$(LibName.SO): $(ObjectsO) $(SharedLibDir)/.dir
 	$(Echo) Linking $(BuildMode) Shared Library $(notdir $@)
 	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO)
 endif
@@ -1061,21 +1107,23 @@ uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
 
-ifdef LOADABLE_MODULE
-DestSharedLib = $(DESTDIR)$(PROJ_libdir)/$(LIBRARYNAME)$(SHLIBEXT)
+# Win32.DLL prefers to be located on the "PATH" of binaries.
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+DestSharedLibDir := $(DESTDIR)$(PROJ_bindir)
 else
-DestSharedLib = $(DESTDIR)$(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+DestSharedLibDir := $(DESTDIR)$(PROJ_libdir)
 endif
+DestSharedLib := $(DestSharedLibDir)/$(SharedPrefix)$(LIBRARYNAME)$(SHLIBEXT)
 
 install-local:: $(DestSharedLib)
 
-$(DestSharedLib): $(LibName.SO) $(DESTDIR)$(PROJ_libdir)
+$(DestSharedLib): $(LibName.SO) $(DestSharedLibDir)
 	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
 	$(Verb) $(INSTALL) $(LibName.SO) $(DestSharedLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
-	-$(Verb) $(RM) -f $(DESTDIR)$(PROJ_libdir)/lib$(LIBRARYNAME).*
+	-$(Verb) $(RM) -f $(DestSharedLibDir)/$(SharedPrefix)$(LIBRARYNAME).*
 endif
 endif
 
