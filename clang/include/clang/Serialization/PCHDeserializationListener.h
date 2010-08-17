@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_FRONTEND_PCH_DESERIALIZATION_LISTENER_H
 #define LLVM_CLANG_FRONTEND_PCH_DESERIALIZATION_LISTENER_H
 
-#include "clang/Frontend/PCHBitCodes.h"
+#include "clang/Serialization/PCHBitCodes.h"
 
 namespace clang {
 

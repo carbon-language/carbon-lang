@@ -14,9 +14,6 @@
 		1A2A54B90FD1DD1C00F4CE45 /* DependencyFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A80FD1DD1C00F4CE45 /* DependencyFile.cpp */; };
 		1A2A54BA0FD1DD1C00F4CE45 /* DiagChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A90FD1DD1C00F4CE45 /* DiagChecker.cpp */; };
 		1A2A54BB0FD1DD1C00F4CE45 /* DocumentXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AA0FD1DD1C00F4CE45 /* DocumentXML.cpp */; };
-		1A2A54BC0FD1DD1C00F4CE45 /* GeneratePCH.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AB0FD1DD1C00F4CE45 /* GeneratePCH.cpp */; };
-		1A2A54BD0FD1DD1C00F4CE45 /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AC0FD1DD1C00F4CE45 /* HTMLPrint.cpp */; };
-		1A2A54BE0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AD0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp */; };
 		1A2A54BF0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */; };
 		1A2A54C40FD1DD1C00F4CE45 /* StmtXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54B30FD1DD1C00F4CE45 /* StmtXML.cpp */; };
 		1A2A54C50FD1DD1C00F4CE45 /* Warnings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54B40FD1DD1C00F4CE45 /* Warnings.cpp */; };
@@ -92,12 +89,9 @@
 		1ADF47AF0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */; };
 		1AF1B50F109A4FB800AFAFAC /* CGException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AF1B50E109A4FB800AFAFAC /* CGException.cpp */; };
 		1AFDD8721161085D00AE030A /* ASTMerge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFDD8701161085D00AE030A /* ASTMerge.cpp */; };
-		1AFDD8731161085D00AE030A /* CodeGenAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFDD8711161085D00AE030A /* CodeGenAction.cpp */; };
 		1AFF8AE31012BFC900D248DA /* CGRecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */; };
 		3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */; };
-		352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */; };
 		352246E80F5C6BE000D0D279 /* InitHeaderSearch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */; };
-		352246EA0F5C6BE000D0D279 /* PlistDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E40F5C6BE000D0D279 /* PlistDiagnostics.cpp */; };
 		352246EB0F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */; };
 		352246EC0F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */; };
 		352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352712500DAFE54700C76352 /* IdentifierResolver.cpp */; };
@@ -141,6 +135,14 @@
 		35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */; };
 		35F2A01E0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F2A01D0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
+		57EB566A121B034300ECA335 /* GeneratePCH.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5662121B034300ECA335 /* GeneratePCH.cpp */; };
+		57EB566B121B034300ECA335 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5663121B034300ECA335 /* Makefile */; };
+		57EB566C121B034300ECA335 /* PCHReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5664121B034300ECA335 /* PCHReader.cpp */; };
+		57EB566D121B034300ECA335 /* PCHReaderDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5665121B034300ECA335 /* PCHReaderDecl.cpp */; };
+		57EB566E121B034300ECA335 /* PCHReaderStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5666121B034300ECA335 /* PCHReaderStmt.cpp */; };
+		57EB566F121B034300ECA335 /* PCHWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5667121B034300ECA335 /* PCHWriter.cpp */; };
+		57EB5670121B034300ECA335 /* PCHWriterDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5668121B034300ECA335 /* PCHWriterDecl.cpp */; };
+		57EB5671121B034300ECA335 /* PCHWriterStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5669121B034300ECA335 /* PCHWriterStmt.cpp */; };
 		72D16C1F0D9975C400E6DA4A /* HTMLRewrite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */; };
 		84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84AF36A00CB17A3B00C820A5 /* DeclObjC.h */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
@@ -275,10 +277,6 @@
 		DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */; };
 		DECB6D650F9AE26600F5FBC7 /* JumpDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */; };
 		DECB6F070F9D93A800F5FBC7 /* InitPreprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */; };
-		DECB77130FA5752300F5FBC7 /* PCHReaderStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */; };
-		DECB77790FA579B000F5FBC7 /* PCHReaderDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB77780FA579B000F5FBC7 /* PCHReaderDecl.cpp */; };
-		DECB77F70FA5850200F5FBC7 /* PCHWriterDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB77F60FA5850200F5FBC7 /* PCHWriterDecl.cpp */; };
-		DECB78170FA5882F00F5FBC7 /* PCHWriterStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB78160FA5882F00F5FBC7 /* PCHWriterStmt.cpp */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
@@ -321,9 +319,6 @@
 		DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBBD430C19C5D200A9FE82 /* TODO.txt */; };
 		DEEBC3BA0C2363B800A9FE82 /* CodeGenTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */; };
 		DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */; };
-		DEF165710F8FB34D0098507F /* PCHWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF165700F8FB34D0098507F /* PCHWriter.cpp */; };
-		DEF165750F8FB3510098507F /* PCHReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF165740F8FB3510098507F /* PCHReader.cpp */; };
-		DEF168400F9548DC0098507F /* FixItRewriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF1683F0F9548DC0098507F /* FixItRewriter.cpp */; };
 		DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */; };
 		DEF2EFF30C6CDD74000C4259 /* CGExprAgg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */; };
 		DEF2F0100C6CFED5000C4259 /* SemaChecking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */; };
@@ -410,9 +405,6 @@
 		1A2A54A80FD1DD1C00F4CE45 /* DependencyFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DependencyFile.cpp; path = lib/Frontend/DependencyFile.cpp; sourceTree = "<group>"; };
 		1A2A54A90FD1DD1C00F4CE45 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = lib/Frontend/DiagChecker.cpp; sourceTree = "<group>"; };
 		1A2A54AA0FD1DD1C00F4CE45 /* DocumentXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DocumentXML.cpp; path = lib/Frontend/DocumentXML.cpp; sourceTree = "<group>"; };
-		1A2A54AB0FD1DD1C00F4CE45 /* GeneratePCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GeneratePCH.cpp; path = lib/Frontend/GeneratePCH.cpp; sourceTree = "<group>"; };
-		1A2A54AC0FD1DD1C00F4CE45 /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLPrint.cpp; path = lib/Frontend/HTMLPrint.cpp; sourceTree = "<group>"; };
-		1A2A54AD0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = lib/Frontend/PrintParserCallbacks.cpp; sourceTree = "<group>"; };
 		1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = lib/Frontend/PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
 		1A2A54B30FD1DD1C00F4CE45 /* StmtXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtXML.cpp; path = lib/Frontend/StmtXML.cpp; sourceTree = "<group>"; };
 		1A2A54B40FD1DD1C00F4CE45 /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = lib/Frontend/Warnings.cpp; sourceTree = "<group>"; };
@@ -513,15 +505,11 @@
 		1AE4EE3B103B89CA00888A23 /* TreeTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TreeTransform.h; path = lib/Sema/TreeTransform.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AF1B50E109A4FB800AFAFAC /* CGException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGException.cpp; path = lib/CodeGen/CGException.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AFDD8701161085D00AE030A /* ASTMerge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTMerge.cpp; path = lib/Frontend/ASTMerge.cpp; sourceTree = "<group>"; };
-		1AFDD8711161085D00AE030A /* CodeGenAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenAction.cpp; path = lib/Frontend/CodeGenAction.cpp; sourceTree = "<group>"; };
 		1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGRecordLayoutBuilder.cpp; path = lib/CodeGen/CGRecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
-		352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = lib/Frontend/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
 		352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitHeaderSearch.cpp; path = lib/Frontend/InitHeaderSearch.cpp; sourceTree = "<group>"; };
-		352246E40F5C6BE000D0D279 /* PlistDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlistDiagnostics.cpp; path = lib/Frontend/PlistDiagnostics.cpp; sourceTree = "<group>"; };
 		352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticBuffer.cpp; path = lib/Frontend/TextDiagnosticBuffer.cpp; sourceTree = "<group>"; };
 		352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = lib/Frontend/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
-		3527124F0DAFE54700C76352 /* IdentifierResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = IdentifierResolver.h; path = lib/Sema/IdentifierResolver.h; sourceTree = "<group>"; tabWidth = 2; };
 		352712500DAFE54700C76352 /* IdentifierResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = IdentifierResolver.cpp; path = lib/Sema/IdentifierResolver.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		352C19DC0CA321C80045DB98 /* CFGRecStmtDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtDeclVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h; sourceTree = "<group>"; };
 		352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtVisitor.h; sourceTree = "<group>"; };
@@ -604,6 +592,19 @@
 		35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicObjCFoundationChecks.cpp; path = lib/Analysis/BasicObjCFoundationChecks.cpp; sourceTree = "<group>"; };
 		35F9B1550D1C6B2E00DDFDAE /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/Analyses/LiveVariables.h; sourceTree = "<group>"; };
 		35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/Analyses/UninitializedValues.h; sourceTree = "<group>"; };
+		57EB565C121B02FC00ECA335 /* PCHBitCodes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHBitCodes.h; path = clang/Serialization/PCHBitCodes.h; sourceTree = "<group>"; };
+		57EB565D121B02FC00ECA335 /* PCHDeserializationListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHDeserializationListener.h; path = clang/Serialization/PCHDeserializationListener.h; sourceTree = "<group>"; };
+		57EB565E121B02FC00ECA335 /* PCHReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHReader.h; path = clang/Serialization/PCHReader.h; sourceTree = "<group>"; };
+		57EB565F121B02FC00ECA335 /* PCHWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHWriter.h; path = clang/Serialization/PCHWriter.h; sourceTree = "<group>"; };
+		57EB5661121B034300ECA335 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		57EB5662121B034300ECA335 /* GeneratePCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratePCH.cpp; sourceTree = "<group>"; };
+		57EB5663121B034300ECA335 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		57EB5664121B034300ECA335 /* PCHReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHReader.cpp; sourceTree = "<group>"; };
+		57EB5665121B034300ECA335 /* PCHReaderDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHReaderDecl.cpp; sourceTree = "<group>"; };
+		57EB5666121B034300ECA335 /* PCHReaderStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHReaderStmt.cpp; sourceTree = "<group>"; };
+		57EB5667121B034300ECA335 /* PCHWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHWriter.cpp; sourceTree = "<group>"; };
+		57EB5668121B034300ECA335 /* PCHWriterDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHWriterDecl.cpp; sourceTree = "<group>"; };
+		57EB5669121B034300ECA335 /* PCHWriterStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHWriterStmt.cpp; sourceTree = "<group>"; };
 		72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLRewrite.cpp; path = lib/Rewrite/HTMLRewrite.cpp; sourceTree = "<group>"; };
 		7F270AFE107A90010031B377 /* CodeCompleteConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodeCompleteConsumer.h; path = clang/Sema/CodeCompleteConsumer.h; sourceTree = "<group>"; };
 		84AF36A00CB17A3B00C820A5 /* DeclObjC.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclObjC.h; path = clang/AST/DeclObjC.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -835,14 +836,9 @@
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; tabWidth = 2; };
 		DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteRope.cpp; path = lib/Rewrite/RewriteRope.cpp; sourceTree = "<group>"; };
 		DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = JumpDiagnostics.cpp; path = lib/Sema/JumpDiagnostics.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DECB6F030F9D939A00F5FBC7 /* InitPreprocessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InitPreprocessor.h; path = clang/Frontend/InitPreprocessor.h; sourceTree = "<group>"; };
 		DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitPreprocessor.cpp; path = lib/Frontend/InitPreprocessor.cpp; sourceTree = "<group>"; };
 		DECB734E0FA3ED8400F5FBC7 /* StmtObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = StmtObjC.h; path = clang/AST/StmtObjC.h; sourceTree = "<group>"; tabWidth = 2; };
 		DECB73550FA3EE5A00F5FBC7 /* StmtCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = StmtCXX.h; path = clang/AST/StmtCXX.h; sourceTree = "<group>"; tabWidth = 2; };
-		DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = PCHReaderStmt.cpp; path = lib/Frontend/PCHReaderStmt.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DECB77780FA579B000F5FBC7 /* PCHReaderDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHReaderDecl.cpp; path = lib/Frontend/PCHReaderDecl.cpp; sourceTree = "<group>"; };
-		DECB77F60FA5850200F5FBC7 /* PCHWriterDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHWriterDecl.cpp; path = lib/Frontend/PCHWriterDecl.cpp; sourceTree = "<group>"; };
-		DECB78160FA5882F00F5FBC7 /* PCHWriterStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHWriterStmt.cpp; path = lib/Frontend/PCHWriterStmt.cpp; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -893,11 +889,7 @@
 		DEEBBD430C19C5D200A9FE82 /* TODO.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenTypes.h; path = lib/CodeGen/CodeGenTypes.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = lib/CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DEF1615E0F65C81C0098507F /* InitHeaderSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InitHeaderSearch.h; path = clang/Frontend/InitHeaderSearch.h; sourceTree = "<group>"; };
-		DEF1615F0F65C81C0098507F /* ManagerRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ManagerRegistry.h; path = clang/Frontend/ManagerRegistry.h; sourceTree = "<group>"; };
 		DEF161600F65C81C0098507F /* TextDiagnosticBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticBuffer.h; path = clang/Frontend/TextDiagnosticBuffer.h; sourceTree = "<group>"; };
-		DEF161610F65C81C0098507F /* PathDiagnosticClients.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathDiagnosticClients.h; path = clang/Frontend/PathDiagnosticClients.h; sourceTree = "<group>"; };
-		DEF161620F65C81C0098507F /* CompileOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompileOptions.h; path = clang/Frontend/CompileOptions.h; sourceTree = "<group>"; };
 		DEF161630F65C81C0098507F /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = clang/Frontend/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 		DEF165140F8D46980098507F /* Tool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tool.h; path = clang/Driver/Tool.h; sourceTree = "<group>"; };
 		DEF165150F8D46980098507F /* Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Types.h; path = clang/Driver/Types.h; sourceTree = "<group>"; };
@@ -915,13 +907,6 @@
 		DEF165220F8D46980098507F /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Util.h; path = clang/Driver/Util.h; sourceTree = "<group>"; };
 		DEF165230F8D46980098507F /* Phases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Phases.h; path = clang/Driver/Phases.h; sourceTree = "<group>"; };
 		DEF165240F8D46980098507F /* DriverDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DriverDiagnostic.h; path = clang/Driver/DriverDiagnostic.h; sourceTree = "<group>"; };
-		DEF165700F8FB34D0098507F /* PCHWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = PCHWriter.cpp; path = lib/Frontend/PCHWriter.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DEF165740F8FB3510098507F /* PCHReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = PCHReader.cpp; path = lib/Frontend/PCHReader.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DEF165780F8FB3690098507F /* PCHWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHWriter.h; path = clang/Frontend/PCHWriter.h; sourceTree = "<group>"; };
-		DEF1657B0F8FB36E0098507F /* PCHReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHReader.h; path = clang/Frontend/PCHReader.h; sourceTree = "<group>"; };
-		DEF1657E0F8FB3730098507F /* PCHBitCodes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHBitCodes.h; path = clang/Frontend/PCHBitCodes.h; sourceTree = "<group>"; };
-		DEF1683F0F9548DC0098507F /* FixItRewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FixItRewriter.cpp; path = lib/Frontend/FixItRewriter.cpp; sourceTree = "<group>"; };
-		DEF168620F9549250098507F /* FixItRewriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixItRewriter.h; path = clang/Frontend/FixItRewriter.h; sourceTree = "<group>"; };
 		DEF169220F9645960098507F /* FrontendDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FrontendDiagnostic.h; path = clang/Frontend/FrontendDiagnostic.h; sourceTree = "<group>"; };
 		DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisDiagnostic.h; path = clang/Analysis/AnalysisDiagnostic.h; sourceTree = "<group>"; };
 		DEF16BE40FA13A5B0098507F /* TypeNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = TypeNodes.def; path = clang/AST/TypeNodes.def; sourceTree = "<group>"; tabWidth = 2; };
@@ -971,6 +956,7 @@
 		08FB7795FE84155DC02AAC07 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				57EB5660121B034300ECA335 /* Serialization */,
 				BFE2F67911DA95590007EDC0 /* Rewrite */,
 				90FD6D6C103C3D2D005F5B73 /* Index */,
 				DED7D7500A5242C7003AD0FB /* Basic */,
@@ -1052,7 +1038,6 @@
 				1AFDD8701161085D00AE030A /* ASTMerge.cpp */,
 				9012911C1048068D0083456D /* ASTUnit.cpp */,
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,
-				1AFDD8711161085D00AE030A /* CodeGenAction.cpp */,
 				1A2A54A70FD1DD1C00F4CE45 /* CacheTokens.cpp */,
 				1ACB57DB1105820D0047B991 /* CompilerInstance.cpp */,
 				1ACB57DC1105820D0047B991 /* CompilerInvocation.cpp */,
@@ -1060,24 +1045,12 @@
 				1A2A54A80FD1DD1C00F4CE45 /* DependencyFile.cpp */,
 				1A2A54A90FD1DD1C00F4CE45 /* DiagChecker.cpp */,
 				1A2A54AA0FD1DD1C00F4CE45 /* DocumentXML.cpp */,
-				DEF1683F0F9548DC0098507F /* FixItRewriter.cpp */,
 				1ACB57DE1105820D0047B991 /* FrontendAction.cpp */,
 				1ACB57DF1105820D0047B991 /* FrontendActions.cpp */,
 				1ACB57E01105820D0047B991 /* FrontendOptions.cpp */,
-				1A2A54AB0FD1DD1C00F4CE45 /* GeneratePCH.cpp */,
-				352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */,
-				1A2A54AC0FD1DD1C00F4CE45 /* HTMLPrint.cpp */,
 				352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */,
 				DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */,
 				1ACB57E11105820D0047B991 /* LangStandards.cpp */,
-				DEF165740F8FB3510098507F /* PCHReader.cpp */,
-				DECB77780FA579B000F5FBC7 /* PCHReaderDecl.cpp */,
-				DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */,
-				DEF165700F8FB34D0098507F /* PCHWriter.cpp */,
-				DECB77F60FA5850200F5FBC7 /* PCHWriterDecl.cpp */,
-				DECB78160FA5882F00F5FBC7 /* PCHWriterStmt.cpp */,
-				352246E40F5C6BE000D0D279 /* PlistDiagnostics.cpp */,
-				1A2A54AD0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp */,
 				1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */,
 				352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */,
 				352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */,
@@ -1193,6 +1166,34 @@
 				35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */,
 			);
 			name = Analyses;
+			sourceTree = "<group>";
+		};
+		57EB5654121B023900ECA335 /* Serialization */ = {
+			isa = PBXGroup;
+			children = (
+				57EB565C121B02FC00ECA335 /* PCHBitCodes.h */,
+				57EB565D121B02FC00ECA335 /* PCHDeserializationListener.h */,
+				57EB565E121B02FC00ECA335 /* PCHReader.h */,
+				57EB565F121B02FC00ECA335 /* PCHWriter.h */,
+			);
+			name = Serialization;
+			sourceTree = "<group>";
+		};
+		57EB5660121B034300ECA335 /* Serialization */ = {
+			isa = PBXGroup;
+			children = (
+				57EB5661121B034300ECA335 /* CMakeLists.txt */,
+				57EB5662121B034300ECA335 /* GeneratePCH.cpp */,
+				57EB5663121B034300ECA335 /* Makefile */,
+				57EB5664121B034300ECA335 /* PCHReader.cpp */,
+				57EB5665121B034300ECA335 /* PCHReaderDecl.cpp */,
+				57EB5666121B034300ECA335 /* PCHReaderStmt.cpp */,
+				57EB5667121B034300ECA335 /* PCHWriter.cpp */,
+				57EB5668121B034300ECA335 /* PCHWriterDecl.cpp */,
+				57EB5669121B034300ECA335 /* PCHWriterStmt.cpp */,
+			);
+			name = Serialization;
+			path = lib/Serialization;
 			sourceTree = "<group>";
 		};
 		9012911210470FAF0083456D /* clang-c */ = {
@@ -1415,7 +1416,6 @@
 			children = (
 				BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */,
 				1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */,
-				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
 				DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */,
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
@@ -1649,6 +1649,7 @@
 				DE67E7260C02108300F66BC5 /* Sema */,
 				DE928B140C05659A00231DA4 /* CodeGen */,
 				356EF9AF0C8F7DA4006650F5 /* Analysis */,
+				57EB5654121B023900ECA335 /* Serialization */,
 				90FD6D5E103C3D03005F5B73 /* Index */,
 				DEF7D9F40C9C8B020001F598 /* Rewrite */,
 				DEF1615D0F65C7FC0098507F /* Frontend */,
@@ -1829,16 +1830,7 @@
 				90FD6D8F103C3D80005F5B73 /* StmtXML.def */,
 				90FD6D90103C3D80005F5B73 /* TypeXML.def */,
 				90FD6D91103C3D80005F5B73 /* Utils.h */,
-				DEF161620F65C81C0098507F /* CompileOptions.h */,
-				DEF168620F9549250098507F /* FixItRewriter.h */,
 				DEF169220F9645960098507F /* FrontendDiagnostic.h */,
-				DEF1615E0F65C81C0098507F /* InitHeaderSearch.h */,
-				DECB6F030F9D939A00F5FBC7 /* InitPreprocessor.h */,
-				DEF1615F0F65C81C0098507F /* ManagerRegistry.h */,
-				DEF1657E0F8FB3730098507F /* PCHBitCodes.h */,
-				DEF1657B0F8FB36E0098507F /* PCHReader.h */,
-				DEF165780F8FB3690098507F /* PCHWriter.h */,
-				DEF161610F65C81C0098507F /* PathDiagnosticClients.h */,
 				DEF161600F65C81C0098507F /* TextDiagnosticBuffer.h */,
 				DEF161630F65C81C0098507F /* TextDiagnosticPrinter.h */,
 			);
@@ -2051,9 +2043,7 @@
 				DEB077990F44F97800F5A2BE /* TokenConcatenation.cpp in Sources */,
 				1A2193CE0F45EEB700C0713D /* Mangle.cpp in Sources */,
 				DEB07AC80F4A427E00F5A2BE /* SemaAttr.cpp in Sources */,
-				352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */,
 				352246E80F5C6BE000D0D279 /* InitHeaderSearch.cpp in Sources */,
-				352246EA0F5C6BE000D0D279 /* PlistDiagnostics.cpp in Sources */,
 				352246EB0F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp in Sources */,
 				352246EC0F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp in Sources */,
 				35544B880F5C7FD700D92AA9 /* RangeConstraintManager.cpp in Sources */,
@@ -2078,23 +2068,13 @@
 				DEDFE6680F7B3B830035BD10 /* Driver.cpp in Sources */,
 				1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */,
 				906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */,
-				DEF165710F8FB34D0098507F /* PCHWriter.cpp in Sources */,
-				DEF165750F8FB3510098507F /* PCHReader.cpp in Sources */,
-				DEF168400F9548DC0098507F /* FixItRewriter.cpp in Sources */,
 				DECB6D650F9AE26600F5FBC7 /* JumpDiagnostics.cpp in Sources */,
 				DECB6F070F9D93A800F5FBC7 /* InitPreprocessor.cpp in Sources */,
-				DECB77130FA5752300F5FBC7 /* PCHReaderStmt.cpp in Sources */,
-				DECB77790FA579B000F5FBC7 /* PCHReaderDecl.cpp in Sources */,
-				DECB77F70FA5850200F5FBC7 /* PCHWriterDecl.cpp in Sources */,
-				DECB78170FA5882F00F5FBC7 /* PCHWriterStmt.cpp in Sources */,
 				1A2A54B60FD1DD1C00F4CE45 /* ASTConsumers.cpp in Sources */,
 				1A2A54B80FD1DD1C00F4CE45 /* CacheTokens.cpp in Sources */,
 				1A2A54B90FD1DD1C00F4CE45 /* DependencyFile.cpp in Sources */,
 				1A2A54BA0FD1DD1C00F4CE45 /* DiagChecker.cpp in Sources */,
 				1A2A54BB0FD1DD1C00F4CE45 /* DocumentXML.cpp in Sources */,
-				1A2A54BC0FD1DD1C00F4CE45 /* GeneratePCH.cpp in Sources */,
-				1A2A54BD0FD1DD1C00F4CE45 /* HTMLPrint.cpp in Sources */,
-				1A2A54BE0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp in Sources */,
 				1A2A54BF0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp in Sources */,
 				1A2A54C40FD1DD1C00F4CE45 /* StmtXML.cpp in Sources */,
 				1A2A54C50FD1DD1C00F4CE45 /* Warnings.cpp in Sources */,
@@ -2147,7 +2127,6 @@
 				BF89C3FB11595A37001C2D68 /* SemaCodeComplete.cpp in Sources */,
 				BF89C3FD11595A5D001C2D68 /* SemaExceptionSpec.cpp in Sources */,
 				1AFDD8721161085D00AE030A /* ASTMerge.cpp in Sources */,
-				1AFDD8731161085D00AE030A /* CodeGenAction.cpp in Sources */,
 				1ABD23D61182449800A48E65 /* APValue.cpp in Sources */,
 				1ABD23D71182449800A48E65 /* ASTConsumer.cpp in Sources */,
 				1ABD23D81182449800A48E65 /* ASTContext.cpp in Sources */,
@@ -2209,6 +2188,14 @@
 				BFE2F6D411DA955A0007EDC0 /* RewriteRope.cpp in Sources */,
 				BFE2F6D511DA955A0007EDC0 /* RewriteTest.cpp in Sources */,
 				BFE2F6D611DA955A0007EDC0 /* TokenRewriter.cpp in Sources */,
+				57EB566A121B034300ECA335 /* GeneratePCH.cpp in Sources */,
+				57EB566B121B034300ECA335 /* Makefile in Sources */,
+				57EB566C121B034300ECA335 /* PCHReader.cpp in Sources */,
+				57EB566D121B034300ECA335 /* PCHReaderDecl.cpp in Sources */,
+				57EB566E121B034300ECA335 /* PCHReaderStmt.cpp in Sources */,
+				57EB566F121B034300ECA335 /* PCHWriter.cpp in Sources */,
+				57EB5670121B034300ECA335 /* PCHWriterDecl.cpp in Sources */,
+				57EB5671121B034300ECA335 /* PCHWriterStmt.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
