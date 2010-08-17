@@ -487,7 +487,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   }
 }
 
-// FIXME: this is currently X86_64 only
+// FIXME: this is currently X86/X86_64 only
 void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            const MCFragment *Fragment,
@@ -495,8 +495,6 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
                                            MCValue Target,
                                            uint64_t &FixedValue) {
   unsigned IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
-  ELFRelocationEntry ERE;
-  struct ELF::Elf64_Rela ERE64;
 
   uint64_t FixupOffset =
     Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
@@ -508,7 +506,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   Value = Target.getConstant();
 
   if (Target.isAbsolute()) {
-    Type = ELF::R_X86_64_NONE;
+    Type = Is64Bit ? ELF::R_X86_64_NONE : ELF::R_386_NONE;
     Index = 0;
   } else {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
@@ -540,34 +538,57 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   }
 
   // determine the type of the relocation
-  if (IsPCRel) {
-    Type = ELF::R_X86_64_PC32;
+  if (Is64Bit) {
+    if (IsPCRel) {
+      Type = ELF::R_X86_64_PC32;
+    } else {
+      switch ((unsigned)Fixup.getKind()) {
+      default: llvm_unreachable("invalid fixup kind!");
+      case FK_Data_8: Type = ELF::R_X86_64_64; break;
+      case X86::reloc_pcrel_4byte:
+      case FK_Data_4:
+        // check that the offset fits within a signed long
+        if (isInt<32>(Target.getConstant()))
+          Type = ELF::R_X86_64_32S;
+        else
+          Type = ELF::R_X86_64_32;
+        break;
+      case FK_Data_2: Type = ELF::R_X86_64_16; break;
+      case X86::reloc_pcrel_1byte:
+      case FK_Data_1: Type = ELF::R_X86_64_8; break;
+      }
+    }
   } else {
-    switch ((unsigned)Fixup.getKind()) {
-    default: llvm_unreachable("invalid fixup kind!");
-    case FK_Data_8: Type = ELF::R_X86_64_64; break;
-    case X86::reloc_pcrel_4byte:
-    case FK_Data_4:
-      // check that the offset fits within a signed long
-      if (isInt<32>(Target.getConstant()))
-        Type = ELF::R_X86_64_32S;
-      else
-        Type = ELF::R_X86_64_32;
-      break;
-    case FK_Data_2: Type = ELF::R_X86_64_16; break;
-    case X86::reloc_pcrel_1byte:
-    case FK_Data_1:
-      Type = ELF::R_X86_64_8;
-      break;
+    if (IsPCRel) {
+      Type = ELF::R_386_PC32;
+    } else {
+      switch ((unsigned)Fixup.getKind()) {
+      default: llvm_unreachable("invalid fixup kind!");
+      case X86::reloc_pcrel_4byte:
+      case FK_Data_4: Type = ELF::R_386_32; break;
+      case FK_Data_2: Type = ELF::R_386_16; break;
+      case X86::reloc_pcrel_1byte:
+      case FK_Data_1: Type = ELF::R_386_8; break;
+      }
     }
   }
 
   FixedValue = Value;
 
-  ERE64.setSymbolAndType(Index, Type);
+  ELFRelocationEntry ERE;
+
+  if (Is64Bit) {
+    struct ELF::Elf64_Rela ERE64;
+    ERE64.setSymbolAndType(Index, Type);
+    ERE.r_info = ERE64.r_info;
+  } else {
+    struct ELF::Elf32_Rela ERE32;
+    ERE32.setSymbolAndType(Index, Type);
+    ERE.r_info = ERE32.r_info;
+  }
 
   ERE.r_offset = FixupOffset;
-  ERE.r_info = ERE64.r_info;
+
   if (HasRelocationAddend)
     ERE.r_addend = Addend;
   else
