@@ -259,6 +259,20 @@ private:
   /// type, which is used for type equality comparisons.
   llvm::StringMap<unsigned> CachedCompletionTypes;
   
+  /// \brief The number of top-level declarations present the last time we
+  /// cached code-completion results.
+  ///
+  /// The value is used to help detect when we should repopulate the global
+  /// completion cache.
+  unsigned NumTopLevelDeclsAtLastCompletionCache;
+
+  /// \brief The number of reparses left until we'll consider updating the
+  /// code-completion cache.
+  ///
+  /// This is meant to avoid thrashing during reparsing, by not allowing the
+  /// code-completion cache to be updated on every reparse.
+  unsigned CacheCodeCompletionCoolDown;
+  
   /// \brief Cache any "global" code-completion results, so that we can avoid
   /// recomputing them with each completion.
   void CacheCodeCompletionResults();

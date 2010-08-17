@@ -53,7 +53,9 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
     CompleteTranslationUnit(true), ConcurrencyCheckValue(CheckUnlocked), 
     PreambleRebuildCounter(0), SavedMainFileBuffer(0),
-    ShouldCacheCodeCompletionResults(false) { 
+    ShouldCacheCodeCompletionResults(false),
+    NumTopLevelDeclsAtLastCompletionCache(0),
+    CacheCodeCompletionCoolDown(0) { 
 }
 
 ASTUnit::~ASTUnit() {
@@ -285,6 +287,10 @@ void ASTUnit::CacheCodeCompletionResults() {
 
   if (CachingTimer)
     CachingTimer->stopTimer();
+  
+  // Make a note of the state when we performed this caching.
+  NumTopLevelDeclsAtLastCompletionCache = top_level_size();
+  CacheCodeCompletionCoolDown = 15;
 }
 
 void ASTUnit::ClearCachedCompletionResults() {
@@ -1411,6 +1417,14 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   bool Result = Parse(OverrideMainBuffer);  
   if (ReparsingTimer)
     ReparsingTimer->stopTimer();
+  
+  if (ShouldCacheCodeCompletionResults) {
+    if (CacheCodeCompletionCoolDown > 0)
+      --CacheCodeCompletionCoolDown;
+    else if (top_level_size() != NumTopLevelDeclsAtLastCompletionCache)
+      CacheCodeCompletionResults();
+  }
+  
   return Result;
 }
 
