@@ -50,8 +50,8 @@ testdirs = [ os.getcwd() ]
 # Separator string.
 separator = '-' * 70
 
-# Decorated sys.stdout.
-out = _WritelnDecorator(sys.stdout)
+# Decorated sys.stderr for our consumption.
+err = _WritelnDecorator(sys.stderr)
 
 
 def usage():
@@ -157,10 +157,10 @@ for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
 # Now that we have loaded all the test cases, run the whole test suite.
-out.writeln(separator)
-out.writeln("Collected %d test%s" % (suite.countTestCases(),
+err.writeln(separator)
+err.writeln("Collected %d test%s" % (suite.countTestCases(),
                                      suite.countTestCases() != 1 and "s" or ""))
-out.writeln()
+err.writeln()
 
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.

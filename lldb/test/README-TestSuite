@@ -11,6 +11,15 @@ o dotest.py
   directory in order to be recognized by 'dotest.py' test driver as a module
   which implements a test case, namely, Test*.py.
 
+  Some example usages:
+
+  1. ./dotest.py -v . 2> ~/Developer/Log/lldbtest.log0
+     This runs the test suite and directs the run log to a file.
+
+  2. LLDB_LOG=/tmp/lldb.log GDB_REMOTE_LOG=/tmp/gdb-remote.log ./dotest.py -v . 2> ~/Developer/Log/lldbtest.log
+     This runs the test suite, with logging turned on for the lldb as well as
+     the process.gdb-remote channels and directs the run log to a file.
+
 o lldbtest.py
 
   Provides an abstract base class of lldb test case named 'TestVase', which in
