@@ -51,10 +51,7 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // represented in the imm field in the same 12-bit form that they are encoded
 // into t2_so_imm instructions: the 8-bit immediate is the least significant
 // bits [bits 0-7], the 4-bit shift/splat amount is the next 4 bits [bits 8-11].
-def t2_so_imm : Operand<i32>,
-                PatLeaf<(imm), [{
-  return ARM_AM::getT2SOImmVal((uint32_t)N->getZExtValue()) != -1;
-}]>;
+def t2_so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_t2_so_imm(N); }]>;
 
 // t2_so_imm_not - Match an immediate that is a complement
 // of a t2_so_imm.

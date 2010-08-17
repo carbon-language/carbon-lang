@@ -316,10 +316,7 @@ def so_reg : Operand<i32>,    // reg reg imm
 // represented in the imm field in the same 12-bit form that they are encoded
 // into so_imm instructions: the 8-bit immediate is the least significant bits
 // [bits 0-7], the 4-bit shift amount is the next 4 bits [bits 8-11].
-def so_imm : Operand<i32>,
-             PatLeaf<(imm), [{
-      return ARM_AM::getSOImmVal(N->getZExtValue()) != -1;
-    }]> {
+def so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_so_imm(N); }]> {
   let PrintMethod = "printSOImmOperand";
 }
 
