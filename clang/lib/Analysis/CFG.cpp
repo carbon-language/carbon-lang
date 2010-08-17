@@ -702,7 +702,10 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
 
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
        I != E; ++I ) {
-    LastBlock = addStmt(*I);
+    // If we hit a segment of code just containing ';' (NullStmts), we can
+    // get a null block back.  In such cases, just use the LastBlock
+    if (CFGBlock *newBlock = addStmt(*I))
+      LastBlock = newBlock;
 
     if (badCFG)
       return NULL;

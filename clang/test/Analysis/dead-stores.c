@@ -462,3 +462,27 @@ void rdar8014335() {
   }
 }
 
+// <rdar://problem/8320674> NullStmts followed by do...while() can lead to disconnected CFG
+//
+// This previously caused bogus dead-stores warnings because the body of the first do...while was
+// disconnected from the entry of the function.
+typedef struct { float r; float i; } s_rdar8320674;
+typedef struct { s_rdar8320674 x[1]; } s2_rdar8320674;
+
+void rdar8320674(s_rdar8320674 *z, unsigned y, s2_rdar8320674 *st, int m)
+{
+    s_rdar8320674 * z2;
+    s_rdar8320674 * tw1 = st->x;
+    s_rdar8320674 t;
+    z2 = z + m;
+    do{
+        ; ;
+        do{ (t).r = (*z2).r*(*tw1).r - (*z2).i*(*tw1).i; (t).i = (*z2).r*(*tw1).i + (*z2).i*(*tw1).r; }while(0);
+        tw1 += y;
+        do { (*z2).r=(*z).r-(t).r; (*z2).i=(*z).i-(t).i; }while(0);
+        do { (*z).r += (t).r; (*z).i += (t).i; }while(0);
+        ++z2;
+        ++z;
+    }while (--m);
+}
+
