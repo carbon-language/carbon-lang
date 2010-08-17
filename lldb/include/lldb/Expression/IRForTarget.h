@@ -77,6 +77,9 @@ public:
     ///     The module to run on.  This module is searched for the function
     ///     ___clang_expr, and that function is passed to the passes one by 
     ///     one.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool runOnModule(llvm::Module &M);
     
@@ -105,6 +108,9 @@ private:
     ///
     /// @param[in] F
     ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool createResultVariable(llvm::Module &M,
                               llvm::Function &F);
@@ -128,6 +134,9 @@ private:
     ///
     /// @param[in] BB
     ///     The basic block currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool RewriteObjCSelector(llvm::Instruction* selector_load,
                              llvm::Module &M);
@@ -140,6 +149,9 @@ private:
     ///
     /// @param[in] BB
     ///     The basic block currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool rewriteObjCSelectors(llvm::Module &M, 
                               llvm::BasicBlock &BB);
@@ -163,6 +175,9 @@ private:
     ///
     /// @param[in] M
     ///     The module currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
                                 llvm::Module &M);
@@ -198,6 +213,9 @@ private:
     ///
     /// @param[in] Store
     ///     True if the access is a store.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool MaybeHandleVariable(llvm::Module &M, 
                              llvm::Value *V,
@@ -211,6 +229,9 @@ private:
     ///
     /// @param[in] C
     ///     The call instruction.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool MaybeHandleCall(llvm::Module &M,
                          llvm::CallInst *C);
@@ -223,6 +244,9 @@ private:
     ///
     /// @param[in] BB
     ///     The basic block currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool resolveExternals(llvm::Module &M,
                           llvm::BasicBlock &BB);
@@ -242,6 +266,9 @@ private:
     ///
     /// @param[in] BB
     ///     The basic block currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool removeGuards(llvm::Module &M,
                       llvm::BasicBlock &BB);
@@ -261,6 +288,9 @@ private:
     ///
     /// @param[in] F
     ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool replaceVariables(llvm::Module &M,
                           llvm::Function &F);
