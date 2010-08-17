@@ -769,30 +769,17 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, uint32_t name_ty
                         "SymbolFileDWARFDebugMap::FindFunctions (name = %s)",
                         name.GetCString());
 
-
-    std::vector<uint32_t> indexes;
     uint32_t initial_size = 0;
     if (append)
         initial_size = sc_list.GetSize();
     else
         sc_list.Clear();
 
-    const size_t match_count = m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType (name, eSymbolTypeFunction, indexes);
-    if (match_count > 0)
+    uint32_t oso_idx = 0;
+    SymbolFileDWARF *oso_dwarf;
+    while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
     {
-        for (size_t i=0; i<match_count; ++i)
-        {
-            uint32_t oso_idx;
-            CompileUnitInfo* comp_unit_info = GetCompileUnitInfoForSymbolWithIndex (indexes[i], &oso_idx);
-            if (comp_unit_info)
-            {
-                SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
-                if (oso_dwarf)
-                    oso_dwarf->FindFunctions(name, name_type_mask, true, sc_list);
-            }
-        }
-//      Stream s(stdout);
-//      sc_list.Dump(&s);
+        oso_dwarf->FindFunctions(name, name_type_mask, true, sc_list);
     }
 
     return sc_list.GetSize() - initial_size;
@@ -806,6 +793,20 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool app
                         "SymbolFileDWARFDebugMap::FindFunctions (regex = '%s')",
                         regex.GetText());
 
+    uint32_t initial_size = 0;
+    if (append)
+        initial_size = sc_list.GetSize();
+    else
+        sc_list.Clear();
+
+    uint32_t oso_idx = 0;
+    SymbolFileDWARF *oso_dwarf;
+    while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
+    {
+        oso_dwarf->FindFunctions(regex, true, sc_list);
+    }
+
+    return sc_list.GetSize() - initial_size;
 
     return 0;
 }
