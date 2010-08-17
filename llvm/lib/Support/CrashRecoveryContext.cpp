@@ -23,12 +23,14 @@ struct CrashRecoveryContextImpl;
 static sys::ThreadLocal<const CrashRecoveryContextImpl> CurrentContext;
 
 struct CrashRecoveryContextImpl {
+  CrashRecoveryContext *CRC;
   std::string Backtrace;
   ::jmp_buf JumpBuffer;
   volatile unsigned Failed : 1;
 
 public:
-  CrashRecoveryContextImpl() : Failed(false) {
+  CrashRecoveryContextImpl(CrashRecoveryContext *CRC) : CRC(CRC),
+                                                        Failed(false) {
     CurrentContext.set(this);
   }
   ~CrashRecoveryContextImpl() {
@@ -54,6 +56,14 @@ static bool gCrashRecoveryEnabled = false;
 CrashRecoveryContext::~CrashRecoveryContext() {
   CrashRecoveryContextImpl *CRCI = (CrashRecoveryContextImpl *) Impl;
   delete CRCI;
+}
+
+CrashRecoveryContext *CrashRecoveryContext::GetCurrent() {
+  const CrashRecoveryContextImpl *CRCI = CurrentContext.get();
+  if (!CRCI)
+    return 0;
+
+  return CRCI->CRC;
 }
 
 #ifdef LLVM_ON_WIN32
@@ -164,7 +174,7 @@ bool CrashRecoveryContext::RunSafely(void (*Fn)(void*), void *UserData) {
   // If crash recovery is disabled, do nothing.
   if (gCrashRecoveryEnabled) {
     assert(!Impl && "Crash recovery context already initialized!");
-    CrashRecoveryContextImpl *CRCI = new CrashRecoveryContextImpl;
+    CrashRecoveryContextImpl *CRCI = new CrashRecoveryContextImpl(this);
     Impl = CRCI;
 
     if (setjmp(CRCI->JumpBuffer) != 0) {
