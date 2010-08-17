@@ -49,6 +49,7 @@ namespace {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
+      AU.addPreservedID(MachineLoopInfoID);
       AU.addRequired<MachineDominatorTree>();
       AU.addPreserved<MachineDominatorTree>();
     }
