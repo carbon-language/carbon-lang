@@ -4,7 +4,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
 target triple = "i686-apple-darwin8"
 
-define i32 @foo(i32 %A, i32 %B, i32 %C) {
+define i32 @foo(i32 %A, i32 %B, i32 %C) nounwind {
 entry:
 	switch i32 %A, label %out [
 		 i32 1, label %bb
