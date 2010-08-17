@@ -365,9 +365,7 @@ public:
     return getLocationType().getDesugaredType();
   }
 
-  bool isBoundable() const {
-    return !getValueType().isNull();
-  }
+  bool isBoundable() const { return true; }
 
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
