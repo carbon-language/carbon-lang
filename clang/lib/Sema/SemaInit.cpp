@@ -2306,6 +2306,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     // The type we're converting to is a class type. Enumerate its constructors
     // to see if there is a suitable conversion.
     CXXRecordDecl *T1RecordDecl = cast<CXXRecordDecl>(T1RecordType->getDecl());
+
     DeclContext::lookup_iterator Con, ConEnd;
     for (llvm::tie(Con, ConEnd) = S.LookupConstructors(T1RecordDecl);
          Con != ConEnd; ++Con) {
@@ -2333,6 +2334,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       }
     }    
   }
+  if (T1RecordType && T1RecordType->getDecl()->isInvalidDecl())
+    return OR_No_Viable_Function;
   
   const RecordType *T2RecordType = 0;
   if ((T2RecordType = T2->getAs<RecordType>()) &&
@@ -2380,6 +2383,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       }
     }
   }
+  if (T2RecordType && T2RecordType->getDecl()->isInvalidDecl())
+    return OR_No_Viable_Function;
   
   SourceLocation DeclLoc = Initializer->getLocStart();
 

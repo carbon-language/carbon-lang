@@ -483,8 +483,10 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   //   defined class.
   if (RequireCompleteType(BaseLoc, BaseType,
                           PDiag(diag::err_incomplete_base_class)
-                            << SpecifierRange))
+                            << SpecifierRange)) {
+    Class->setInvalidDecl();
     return 0;
+  }
 
   // If the base class is polymorphic or isn't empty, the new one is/isn't, too.
   RecordDecl *BaseDecl = BaseType->getAs<RecordType>()->getDecl();
@@ -503,6 +505,9 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   }
 
   SetClassDeclAttributesFromBase(Class, CXXBaseDecl, Virtual);
+
+  if (BaseDecl->isInvalidDecl())
+    Class->setInvalidDecl();
   
   // Create the base specifier.
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
