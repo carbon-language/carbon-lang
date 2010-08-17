@@ -354,6 +354,7 @@ void ELFObjectWriterImpl::WriteSymbolEntry(MCDataFragment *F, uint64_t name,
 
     String8(buf, info);
     F->getContents() += StringRef(buf, 1);  // st_info
+
     String8(buf, other);
     F->getContents() += StringRef(buf, 1); // st_other
 
@@ -416,9 +417,7 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
         Value = Layout.getSymbolAddress(&Data);
       }
     } else if (ESize->getKind() == MCExpr::Constant) {
-      const MCConstantExpr *CE;
-      CE = static_cast<const MCConstantExpr *>(ESize);
-      Size = CE->getValue();
+      Size = static_cast<const MCConstantExpr *>(ESize)->getValue();
     } else {
       assert(0 && "Unsupported size expression");
     }
@@ -440,8 +439,7 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
 
   // The first entry is the undefined symbol entry.
   unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
-  for (unsigned i = 0; i < EntrySize; ++i)
-    F->getContents() += '\x00';
+  F->getContents().append(EntrySize, '\x00');
 
   // Write the symbol table entries.
   LastLocalSymbolIndex = LocalSymbolData.size() + 1;
@@ -456,9 +454,8 @@ void ELFObjectWriterImpl::WriteSymbolTable(MCDataFragment *F,
   unsigned Index = 1;
   for (MCAssembler::const_iterator it = Asm.begin(),
        ie = Asm.end(); it != ie; ++it, ++Index) {
-    const MCSectionData &SD = *it;
     const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(SD.getSection());
+      static_cast<const MCSectionELF&>(it->getSection());
     // Leave out relocations so we don't have indexes within
     // the relocations messed up
     if (Section.getType() == ELF::SHT_RELA)
@@ -613,15 +610,10 @@ uint64_t ELFObjectWriterImpl::getSymbolIndexInSymbolTable(MCAssembler &Asm,
     ELFSymbolData MSD;
     MSD.SymbolData = it;
 
-    if (Symbol.isUndefined()) {
+    if (Symbol.isUndefined())
       Undefined.push_back(MSD);
-    } else if (Symbol.isAbsolute()) {
+    else
       External.push_back(MSD);
-    } else if (it->isCommon()) {
-      External.push_back(MSD);
-    } else {
-      External.push_back(MSD);
-    }
   }
 
   array_pod_sort(Local.begin(), Local.end());
@@ -800,19 +792,12 @@ void ELFObjectWriterImpl::WriteRelocationsFragment(const MCAssembler &Asm,
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     ELFRelocationEntry entry = Relocs[e - i - 1];
 
-    if (Is64Bit) {
-      F->getContents() +=  StringRef((const char *)&entry.r_offset, 8);
-      F->getContents() +=  StringRef((const char *)&entry.r_info, 8);
+    unsigned WordSize = Is64Bit ? 8 : 4;
+    F->getContents() += StringRef((const char *)&entry.r_offset, WordSize);
+    F->getContents() += StringRef((const char *)&entry.r_info, WordSize);
 
-      if (HasRelocationAddend)
-        F->getContents() +=  StringRef((const char *)&entry.r_addend, 8);
-    } else {
-      F->getContents() +=  StringRef((const char *)&entry.r_offset, 4);
-      F->getContents() +=  StringRef((const char *)&entry.r_info, 4);
-
-      if (HasRelocationAddend)
-        F->getContents() +=  StringRef((const char *)&entry.r_addend, 4);
-    }
+    if (HasRelocationAddend)
+      F->getContents() += StringRef((const char *)&entry.r_addend, WordSize);
   }
 }
 
@@ -877,10 +862,8 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
 
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
-    const MCSectionData &SD = *it;
     const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(SD.getSection());
-
+      static_cast<const MCSectionELF&>(it->getSection());
 
     // Remember the index into the string table so we can write it
     // into the sh_name field of the section header table.
