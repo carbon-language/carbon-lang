@@ -305,7 +305,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::SETSr,       X86::SETSm, 0, 0 },
     { X86::TAILJMPr,    X86::TAILJMPm, 1, 0 },
     { X86::TAILJMPr64,  X86::TAILJMPm64, 1, 0 },
-    { X86::WINTAILJMPr64,X86::WINTAILJMPm64, 1, 0 },
     { X86::TEST16ri,    X86::TEST16mi, 1, 0 },
     { X86::TEST32ri,    X86::TEST32mi, 1, 0 },
     { X86::TEST64ri32,  X86::TEST64mi32, 1, 0 },
