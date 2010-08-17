@@ -219,6 +219,9 @@ ExecutionEngine *JIT::createJIT(Module *M,
                                 StringRef MArch,
                                 StringRef MCPU,
                                 const SmallVectorImpl<std::string>& MAttrs) {
+  // Try to register the program as a source of symbols to resolve against.
+  sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
+
   // Pick a target either via -march or by guessing the native arch.
   TargetMachine *TM = JIT::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
