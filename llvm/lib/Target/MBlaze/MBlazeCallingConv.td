@@ -1,4 +1,4 @@
-//===- MBlazeCallingConv.td - Calling Conventions for MBlaze ----*- C++ -*-===//
+//===- MBlazeCallingConv.td - Calling Conventions for MBlaze -*- tablegen -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
 //

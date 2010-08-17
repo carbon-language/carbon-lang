@@ -1,4 +1,4 @@
-//===- Sparc.td - Describe the Sparc Target Machine -------------*- C++ -*-===//
+//===- Sparc.td - Describe the Sparc Target Machine --------*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

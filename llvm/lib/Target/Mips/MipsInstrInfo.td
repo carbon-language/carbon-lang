@@ -1,4 +1,4 @@
-//===- MipsInstrInfo.td - Mips Register defs --------------------*- C++ -*-===//
+//===- MipsInstrInfo.td - Mips Register defs ---------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

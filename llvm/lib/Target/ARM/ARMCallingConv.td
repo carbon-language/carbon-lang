@@ -1,4 +1,4 @@
-//===- ARMCallingConv.td - Calling Conventions for ARM ----------*- C++ -*-===//
+//===- ARMCallingConv.td - Calling Conventions for ARM -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

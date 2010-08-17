@@ -1,4 +1,4 @@
-//===- MipsSchedule.td - Mips Scheduling Definitions ------------*- C++ -*-===//
+//===- MipsSchedule.td - Mips Scheduling Definitions -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- PPCCallingConv.td - Calling Conventions for PowerPC ------*- C++ -*-===//
+//===- PPCCallingConv.td - Calling Conventions for PowerPC -*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

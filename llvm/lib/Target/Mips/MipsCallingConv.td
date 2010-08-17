@@ -1,4 +1,4 @@
-//===- MipsCallingConv.td - Calling Conventions for Mips --------*- C++ -*-===//
+//===- MipsCallingConv.td - Calling Conventions for Mips ---*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

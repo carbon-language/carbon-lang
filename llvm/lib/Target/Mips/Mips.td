@@ -1,4 +1,4 @@
-//===- Mips.td - Describe the Mips Target Machine ---------------*- C++ -*-===//
+//===- Mips.td - Describe the Mips Target Machine ----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

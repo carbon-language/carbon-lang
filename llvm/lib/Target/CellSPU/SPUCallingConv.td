@@ -1,4 +1,4 @@
-//===- SPUCallingConv.td - Calling Conventions for CellSPU ------*- C++ -*-===//
+//===- SPUCallingConv.td - Calling Conventions for CellSPU -*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

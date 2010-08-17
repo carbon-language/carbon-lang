@@ -1,4 +1,4 @@
-//===- MBlazeInstrFSL.td - MBlaze FSL Instruction defs ----------*- C++ -*-===//
+//===- MBlazeInstrFSL.td - MBlaze FSL Instruction defs -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

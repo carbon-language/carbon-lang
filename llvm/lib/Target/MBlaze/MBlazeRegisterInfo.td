@@ -1,4 +1,4 @@
-//===- MBlazeRegisterInfo.td - MBlaze Register defs -------------*- C++ -*-===//
+//===- MBlazeRegisterInfo.td - MBlaze Register defs --------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

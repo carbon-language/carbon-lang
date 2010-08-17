@@ -1,4 +1,4 @@
-//===- MipsInstrFPU.td - Mips FPU Instruction Information -------*- C++ -*-===//
+//===- MipsInstrFPU.td - Mips FPU Instruction Information --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
