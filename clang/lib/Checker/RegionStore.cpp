@@ -1538,8 +1538,10 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
   // We may get non-CompoundVal accidentally due to imprecise cast logic or
   // that we are binding symbolic struct value. Kill the field values, and if
   // the value is symbolic go and bind it as a "default" binding.
-  if (V.isUnknown() || !isa<nonloc::CompoundVal>(V))
-    return KillStruct(store, R, isa<nonloc::SymbolVal>(V) ? V : UnknownVal());
+  if (V.isUnknown() || !isa<nonloc::CompoundVal>(V)) {
+    SVal SV = isa<nonloc::SymbolVal>(V) ? V : UnknownVal();
+    return KillStruct(store, R, SV);
+  }
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
