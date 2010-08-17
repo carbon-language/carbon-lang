@@ -459,6 +459,9 @@ static inline void getImmShiftSE(ARM_AM::ShiftOpc &ShOp, unsigned &ShImm) {
   if (ShImm != 0)
     return;
   switch (ShOp) {
+  case ARM_AM::no_shift:
+  case ARM_AM::rrx:
+    break;
   case ARM_AM::lsl:
     ShOp = ARM_AM::no_shift;
     break;
