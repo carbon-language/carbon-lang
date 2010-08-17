@@ -19,6 +19,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/System/Threading.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Config/config.h"
 #include <cassert>
 #include <cstdlib>
 
