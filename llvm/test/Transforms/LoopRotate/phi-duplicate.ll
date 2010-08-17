@@ -27,9 +27,21 @@ for.body:                                         ; preds = %for.cond
 for.end:                                          ; preds = %for.cond
   ret void
 }
-; Should only end up with one phi.
-; CHECK: for.body:
-; CHECK-NEXT: %j.02 = phi i64
-; CHECK-NOT: phi
-; CHECK: ret void
 
+; Should only end up with one phi. Also, the original for.cond block should
+; be moved to the end of the loop so that the new loop header pleasantly
+; ends up at the top.
+
+; CHECK:      define void @test
+; CHECK-NEXT: entry:
+; CHECK-NEXT:   icmp slt i64
+; CHECK-NEXT:   br i1
+; CHECK-NOT:  :
+; CHECK:      bb.nph:
+; CHECK-NEXT:   br label %for.body
+; CHECK-NOT:  :
+; CHECK:      for.body:
+; CHECK-NEXT:   %j.02 = phi i64
+; CHECK-NOT:    phi
+; CHECK:        ret void
+; CHECK-NEXT: }

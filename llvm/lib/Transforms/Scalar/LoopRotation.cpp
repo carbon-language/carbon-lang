@@ -261,6 +261,26 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // NewHeader is now the header of the loop.
   L->moveToHeader(NewHeader);
 
+  // Move the original header to the bottom of the loop, where it now more
+  // naturally belongs. This isn't necessary for correctness, and CodeGen can
+  // usually reorder blocks on its own to fix things like this up, but it's
+  // still nice to keep the IR readable.
+  //
+  // The original header should have only one predecessor at this point, since
+  // we checked that the loop had a proper preheader and unique backedge before
+  // we started.
+  assert(OrigHeader->getSinglePredecessor() &&
+         "Original loop header has too many predecessors after loop rotation!");
+  OrigHeader->moveAfter(OrigHeader->getSinglePredecessor());
+
+  // Also, since this original header only has one predecessor, zap its
+  // PHI nodes, which are now trivial.
+  FoldSingleEntryPHINodes(OrigHeader);
+
+  // TODO: We could just go ahead and merge OrigHeader into its predecessor
+  // at this point, if we don't mind updating dominator info.
+
+  // Establish a new preheader, update dominators, etc.
   preserveCanonicalLoopForm(LPM);
 
   ++NumRotated;
