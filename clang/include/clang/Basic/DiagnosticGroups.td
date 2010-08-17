@@ -133,6 +133,7 @@ def UnknownAttributes : DiagGroup<"unknown-attributes">;
 def UnusedArgument : DiagGroup<"unused-argument">;
 def UnusedExceptionParameter : DiagGroup<"unused-exception-parameter">;
 def UnusedFunction : DiagGroup<"unused-function">;
+def UnusedMethod : DiagGroup<"unused-method">;
 def UnusedLabel : DiagGroup<"unused-label">;
 def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
@@ -167,6 +168,7 @@ def Conversion : DiagGroup<"conversion",
 def Unused : DiagGroup<"unused",
                        [UnusedArgument, UnusedFunction, UnusedLabel,
                         // UnusedParameter, (matches GCC's behavior)
+                        // UnusedMethod, (clean-up llvm before enabling)
                         UnusedValue, UnusedVariable]>,
                         DiagCategory<"Unused Entity Issue">;
 
@@ -185,6 +187,7 @@ def Extra : DiagGroup<"extra", [
     InitializerOverrides,
     SemiBeforeMethodBody,
     SignCompare,
+    UnusedMethod,
     UnusedParameter
   ]>;
 

@@ -376,7 +376,9 @@ void Sema::ActOnEndOfTranslationUnit() {
       const FunctionDecl *DiagD;
       if (!FD->hasBody(DiagD))
         DiagD = FD;
-      Diag(DiagD->getLocation(), diag::warn_unused_function)
+      Diag(DiagD->getLocation(),
+           isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_method
+                                     : diag::warn_unused_function)
             << DiagD->getDeclName();
     } else {
       const VarDecl *DiagD = cast<VarDecl>(*I)->getDefinition();
