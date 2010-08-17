@@ -20,6 +20,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 using namespace clang;
 
@@ -697,19 +698,24 @@ struct PragmaDebugHandler : public PragmaHandler {
     }
     IdentifierInfo *II = Tok.getIdentifierInfo();
 
-    if (II->isStr("overflow_stack")) {
-      DebugOverflowStack();
+    if (II->isStr("assert")) {
+      assert(0 && "This is an assertion!");
     } else if (II->isStr("crash")) {
-      DebugCrash();
+      *(volatile int*) 0x11 = 0;
+    } else if (II->isStr("llvm_fatal_error")) {
+      llvm::report_fatal_error("#pragma clang __debug llvm_fatal_error");
+    } else if (II->isStr("llvm_unreachable")) {
+      llvm_unreachable("#pragma clang __debug llvm_unreachable");
+    } else if (II->isStr("overflow_stack")) {
+      DebugOverflowStack();
+    } else {
+      PP.Diag(Tok, diag::warn_pragma_debug_unexpected_command)
+        << II->getName();
     }
   }
 
   void DebugOverflowStack() {
     DebugOverflowStack();
-  }
-
-  void DebugCrash() {
-    *(volatile int*) 0x11 = 0;
   }
 };
 

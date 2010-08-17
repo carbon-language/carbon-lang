@@ -268,6 +268,9 @@ def warn_pragma_diagnostic_invalid_token :
 def warn_pragma_diagnostic_unknown_warning :
    ExtWarn<"unknown warning group '%0', ignored">,
    InGroup<UnknownPragmas>;
+// - #pragma __debug
+def warn_pragma_debug_unexpected_command : Warning<
+  "unexpected debug command '%0'">;
 
 def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_defined_macro_name : Error<"'defined' cannot be used as a macro name">;
