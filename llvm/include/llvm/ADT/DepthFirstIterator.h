@@ -193,6 +193,15 @@ public:
   NodeType *getPath(unsigned n) const {
     return VisitStack[n].first.getPointer();
   }
+
+  /// skipChildren - Skip all children of Node, assuming that Node is on the
+  /// current path. This allows more aggressive pruning than just skipping
+  /// children of the current node.
+  _Self& skipChildren(NodeType *Node) {
+    while (!VisitStack.empty() && **this != Node)
+      VisitStack.pop_back();
+    return skipChildren();
+  }
 };
 
 
