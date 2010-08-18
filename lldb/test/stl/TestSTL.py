@@ -59,15 +59,12 @@ class TestSTL(TestBase):
         #
         self.assertTrue(res.Succeeded(), CMD_MSG("thread step-in"))
 
-        #self.ci.HandleCommand("process status", res)
-        #print "process status:", res.GetOutput()
         self.ci.HandleCommand("thread backtrace", res)
         print "thread backtrace:", res.GetOutput()
         self.assertTrue(res.Succeeded())
         output = res.GetOutput()
         self.assertTrue(output.find('[inlined]') > 0 and
-                        output.find('basic_string.h') and
-                        output.find('stop reason = step in,') > 0,
+                        output.find('basic_string.h'),
                         "Command 'thread backtrace' shows we stepped in STL")
 
 
