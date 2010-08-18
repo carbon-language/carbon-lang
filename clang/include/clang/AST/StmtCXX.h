@@ -54,7 +54,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 };
 
 /// CXXTryStmt - A C++ try block, including all handlers.
@@ -116,7 +116,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 };
 
 

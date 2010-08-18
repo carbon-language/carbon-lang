@@ -699,7 +699,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
 
@@ -3348,7 +3348,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
 

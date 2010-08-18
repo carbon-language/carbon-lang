@@ -559,7 +559,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
 
@@ -691,7 +691,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 };
 
 /// CXXConstructExpr - Represents a call to a C++ constructor.
@@ -806,7 +806,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 };
 
 /// CXXFunctionalCastExpr - Represents an explicit C++ type conversion
@@ -890,7 +890,7 @@ public:
   }
   static bool classof(const CXXTemporaryObjectExpr *) { return true; }
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 };
 
 /// CXXScalarValueInitExpr - [C++ 5.2.3p2]
@@ -970,7 +970,7 @@ class CXXNewExpr : public Expr {
   SourceLocation StartLoc;
   SourceLocation EndLoc;
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 public:
   CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
              Expr **placementArgs, unsigned numPlaceArgs,
@@ -1397,7 +1397,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  friend class PCHStmtReader;
+  friend class ASTStmtReader;
 };
 
 /// \brief A reference to an overloaded function set, either an
