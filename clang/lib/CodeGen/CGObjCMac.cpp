@@ -730,25 +730,6 @@ public:
                                      "objc_msgSend_stret_fixup");
   }
 
-  llvm::Constant *getMessageSendIdFixupFn() {
-    // id objc_msgSendId_fixup(id, struct message_ref_t*, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(ObjectPtrTy);
-    Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, true),
-                                     "objc_msgSendId_fixup");
-  }
-
-  llvm::Constant *getMessageSendIdStretFixupFn() {
-    // id objc_msgSendId_stret_fixup(id, struct message_ref_t*, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(ObjectPtrTy);
-    Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, true),
-                                     "objc_msgSendId_stret_fixup");
-  }
   llvm::Constant *getMessageSendSuper2FixupFn() {
     // id objc_msgSendSuper2_fixup (struct objc_super *,
     //                              struct _super_message_ref_t*, ...)
@@ -894,7 +875,6 @@ protected:
   /// selector's name. The return value has type char *.
   llvm::Constant *GetMethodVarName(Selector Sel);
   llvm::Constant *GetMethodVarName(IdentifierInfo *Ident);
-  llvm::Constant *GetMethodVarName(const std::string &Name);
 
   /// GetMethodVarType - Return a unique constant for the given
   /// selector's name. The return value has type char *.
@@ -5582,40 +5562,24 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   llvm::Constant *Fn = 0;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSRet(FnInfo)) {
-#if 0
-    // unlike what is documented. gcc never generates this API!!
-    if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
-      Fn = ObjCTypes.getMessageSendIdStretFixupFn();
-      // FIXME. Is there a better way of getting these names.
-      // They are available in RuntimeFunctions vector pair.
-      Name += "objc_msgSendId_stret_fixup";
-    } else
-#endif
-      if (IsSuper) {
-        Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
-        Name += "objc_msgSendSuper2_stret_fixup";
-      } else {
-        Fn = ObjCTypes.getMessageSendStretFixupFn();
-        Name += "objc_msgSend_stret_fixup";
-      }
+    if (IsSuper) {
+      Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
+      Name += "objc_msgSendSuper2_stret_fixup";
+    } else {
+      Fn = ObjCTypes.getMessageSendStretFixupFn();
+      Name += "objc_msgSend_stret_fixup";
+    }
   } else if (!IsSuper && CGM.ReturnTypeUsesFPRet(ResultType)) {
     Fn = ObjCTypes.getMessageSendFpretFixupFn();
     Name += "objc_msgSend_fpret_fixup";
   } else {
-#if 0
-// unlike what is documented. gcc never generates this API!!
-    if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
-      Fn = ObjCTypes.getMessageSendIdFixupFn();
-      Name += "objc_msgSendId_fixup";
-    } else
-#endif
-      if (IsSuper) {
-        Fn = ObjCTypes.getMessageSendSuper2FixupFn();
-        Name += "objc_msgSendSuper2_fixup";
-      } else {
-        Fn = ObjCTypes.getMessageSendFixupFn();
-        Name += "objc_msgSend_fixup";
-      }
+    if (IsSuper) {
+      Fn = ObjCTypes.getMessageSendSuper2FixupFn();
+      Name += "objc_msgSendSuper2_fixup";
+    } else {
+      Fn = ObjCTypes.getMessageSendFixupFn();
+      Name += "objc_msgSend_fixup";
+    }
   }
   assert(Fn && "CGObjCNonFragileABIMac::EmitMessageSend");
   Name += '_';

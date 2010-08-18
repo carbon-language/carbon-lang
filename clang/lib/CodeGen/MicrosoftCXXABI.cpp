@@ -41,8 +41,6 @@ public:
   MicrosoftCXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res)
   : Context(C), Out(Res) { }
 
-  llvm::raw_svector_ostream &getStream() { return Out; }
-
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "?");
   void mangleName(const NamedDecl *ND);
   void mangleFunctionEncoding(const FunctionDecl *FD);

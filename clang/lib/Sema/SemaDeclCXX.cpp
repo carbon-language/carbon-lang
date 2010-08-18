@@ -2422,13 +2422,6 @@ struct AbstractUsageInfo {
     Invalid = true;
   }
 
-  bool HasAbstractType(QualType T) {
-    if (T->isArrayType())
-      T = S.Context.getBaseElementType(T);
-    CanQualType CT = T->getCanonicalTypeUnqualified().getUnqualifiedType();
-    return (CT == AbstractType);
-  }
-
   void CheckType(const NamedDecl *D, TypeLoc TL, Sema::AbstractDiagSelID Sel);
 };
 

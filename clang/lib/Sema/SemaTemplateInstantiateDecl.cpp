@@ -85,10 +85,6 @@ namespace {
       return 0;
     }
 
-    const LangOptions &getLangOptions() {
-      return SemaRef.getLangOptions();
-    }
-
     // Helper functions for instantiating methods.
     TypeSourceInfo *SubstFunctionType(FunctionDecl *D,
                              llvm::SmallVectorImpl<ParmVarDecl *> &Params);
