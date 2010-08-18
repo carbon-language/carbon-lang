@@ -20,7 +20,6 @@ namespace llvm {
 
 class LiveInterval;
 class LiveIntervals;
-class MachineDominatorTree;
 class MachineInstr;
 class MachineLoop;
 class MachineLoopInfo;
@@ -147,7 +146,6 @@ public:
 /// Values in parentli_ may map to any number of openli_ values, including 0.
 class LiveIntervalMap {
   LiveIntervals &lis_;
-  MachineDominatorTree &dt_;
 
   // The parent interval is never changed.
   const LiveInterval &parentli_;
@@ -174,10 +172,9 @@ class LiveIntervalMap {
 
 public:
   LiveIntervalMap(LiveIntervals &lis,
-                  MachineDominatorTree &dt,
                   const LiveInterval &parentli,
                   LiveInterval &li)
-    : lis_(lis), dt_(dt), parentli_(parentli), li_(li) {}
+    : lis_(lis), parentli_(parentli), li_(li) {}
 
   /// defValue - define a value in li_ from the parentli_ value VNI and Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within

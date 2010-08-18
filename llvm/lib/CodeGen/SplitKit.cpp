@@ -17,7 +17,6 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -423,31 +422,41 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
     // Yes, VNI dominates MBB. Track the path back to IdxMBB, creating phi-defs
     // as needed along the way.
     for (unsigned PI = IDFI.getPathLength()-1; PI != 0; --PI) {
-      // Start from MBB's immediate successor.
+      // Start from MBB's immediate successor. End at IdxMBB.
       MachineBasicBlock *Succ = IDFI.getPath(PI-1);
       std::pair<MBBValueMap::iterator, bool> InsP =
         DomValue.insert(MBBValueMap::value_type(Succ, VNI));
-      SlotIndex Start = lis_.getMBBStartIdx(Succ);
-      if (InsP.second) {
-        // This is the first time we backtrack to Succ. Verify dominance.
-        if (Succ->pred_size() == 1 || dt_.dominates(MBB, Succ))
-          continue;
-      } else if (InsP.first->second == VNI ||
-                 InsP.first->second->def == Start) {
-        // We have previously backtracked VNI to Succ, or Succ already has a
-        // phi-def. No need to backtrack further.
+
+      // This is the first time we backtrack to Succ.
+      if (InsP.second)
+        continue;
+
+      // We reached Succ again with the same VNI. Nothing is going to change.
+      VNInfo *OVNI = InsP.first->second;
+      if (OVNI == VNI)
         break;
-      }
-      // VNI does not dominate Succ, we need a new phi-def.
+
+      // Succ already has a phi-def. No need to continue.
+      SlotIndex Start = lis_.getMBBStartIdx(Succ);
+      if (OVNI->def == Start)
+        break;
+
+      // We have a collision between the old and new VNI at Succ. That means
+      // neither dominates and we need a new phi-def.
       VNI = li_.getNextValue(Start, 0, true, lis_.getVNInfoAllocator());
       VNI->setIsPHIDef(true);
       InsP.first->second = VNI;
-      MBB = Succ;
+
+      // Replace OVNI with VNI in the remaining path.
+      for (; PI > 1 ; --PI) {
+        MBBValueMap::iterator I = DomValue.find(IDFI.getPath(PI-2));
+        if (I == DomValue.end() || I->second != OVNI)
+          break;
+        I->second = VNI;
+      }
     }
 
     // No need to search the children, we found a dominating value.
-    // FIXME: We could prune up to the last phi-def we inserted, need df_iterator
-    // for that.
     IDFI.skipChildren();
   }
 
@@ -468,6 +477,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
        // Don't add full liveness to IdxMBB, stop at Idx.
        if (Start != Idx)
          li_.addRange(LiveRange(Start, Idx, VNI));
+       // The caller had better add some liveness to IdxVNI, or it leaks.
        IdxVNI = VNI;
      } else
       li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
