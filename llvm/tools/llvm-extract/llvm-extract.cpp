@@ -118,7 +118,8 @@ int main(int argc, char **argv) {
 
   // Make sure that the Output file gets unlinked from the disk if we get a
   // SIGINT
-  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  if (OutputFilename != "-")
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   std::string ErrorInfo;
   raw_fd_ostream Out(OutputFilename.c_str(), ErrorInfo,
