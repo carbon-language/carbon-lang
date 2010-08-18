@@ -6271,6 +6271,113 @@ typedef regex_token_iterator<const wchar_t*>          wcregex_token_iterator;
 typedef regex_token_iterator<string::const_iterator>  sregex_token_iterator;
 typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 
+// regex_replace
+
+template <class _OutputIterator, class _BidirectionalIterator,
+          class _Traits, class _CharT>
+_OutputIterator
+regex_replace(_OutputIterator __out,
+              _BidirectionalIterator __first, _BidirectionalIterator __last,
+              const basic_regex<_CharT, _Traits>& __e, const _CharT* __fmt,
+              regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    typedef regex_iterator<_BidirectionalIterator, _CharT, _Traits> _Iter;
+    _Iter __i(__first, __last, __e, __flags);
+    _Iter __eof;
+    if (__i == __eof)
+    {
+        if (!(__flags & regex_constants::format_no_copy))
+            __out = _STD::copy(__first, __last, __out);
+    }
+    else
+    {
+        sub_match<_BidirectionalIterator> __lm;
+        for (size_t __len = char_traits<_CharT>::length(__fmt); __i != __eof; ++__i)
+        {
+            if (!(__flags & regex_constants::format_no_copy))
+                __out = _STD::copy(__i->prefix().first, __i->prefix().second, __out);
+            __out = __i->format(__out, __fmt, __fmt + __len, __flags);
+            __lm = __i->suffix();
+            if (__flags & regex_constants::format_first_only)
+                break;
+        }
+        if (!(__flags & regex_constants::format_no_copy))
+            __out = _STD::copy(__lm.first, __lm.second, __out);
+    }
+    return __out;
+}
+
+template <class _OutputIterator, class _BidirectionalIterator,
+          class _Traits, class _CharT, class _ST, class _SA>
+inline _LIBCPP_INLINE_VISIBILITY
+_OutputIterator
+regex_replace(_OutputIterator __out,
+              _BidirectionalIterator __first, _BidirectionalIterator __last,
+              const basic_regex<_CharT, _Traits>& __e,
+              const basic_string<_CharT, _ST, _SA>& __fmt,
+              regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_replace(__out, __first, __last, __e, __fmt.c_str(), __flags);
+}
+
+template <class _Traits, class _CharT, class _ST, class _SA, class _FST,
+          class _FSA>
+inline _LIBCPP_INLINE_VISIBILITY
+basic_string<_CharT, _ST, _SA>
+regex_replace(const basic_string<_CharT, _ST, _SA>& __s,
+              const basic_regex<_CharT, _Traits>& __e,
+              const basic_string<_CharT, _FST, _FSA>& __fmt,
+              regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    basic_string<_CharT, _ST, _SA> __r;
+    _STD::regex_replace(back_inserter(__r), __s.begin(), __s.end(), __e,
+                        __fmt.c_str(), __flags);
+    return __r;
+}
+
+template <class _Traits, class _CharT, class _ST, class _SA>
+inline _LIBCPP_INLINE_VISIBILITY
+basic_string<_CharT, _ST, _SA>
+regex_replace(const basic_string<_CharT, _ST, _SA>& __s,
+              const basic_regex<_CharT, _Traits>& __e, const _CharT* __fmt,
+              regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    basic_string<_CharT, _ST, _SA> __r;
+    _STD::regex_replace(back_inserter(__r), __s.begin(), __s.end(), __e,
+                        __fmt, __flags);
+    return __r;
+}
+
+template <class _Traits, class _CharT, class _ST, class _SA>
+inline _LIBCPP_INLINE_VISIBILITY
+basic_string<_CharT>
+regex_replace(const _CharT* __s,
+              const basic_regex<_CharT, _Traits>& __e,
+              const basic_string<_CharT, _ST, _SA>& __fmt,
+              regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    basic_string<_CharT> __r;
+    _STD::regex_replace(back_inserter(__r), __s,
+                        __s + char_traits<_CharT>::length(__s), __e,
+                        __fmt.c_str(), __flags);
+    return __r;
+}
+
+template <class _Traits, class _CharT>
+inline _LIBCPP_INLINE_VISIBILITY
+basic_string<_CharT>
+regex_replace(const _CharT* __s,
+              const basic_regex<_CharT, _Traits>& __e,
+              const _CharT* __fmt,
+              regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    basic_string<_CharT> __r;
+    _STD::regex_replace(back_inserter(__r), __s,
+                        __s + char_traits<_CharT>::length(__s), __e,
+                        __fmt, __flags);
+    return __r;
+}
+
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_REGEX
