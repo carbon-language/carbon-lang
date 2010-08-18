@@ -2364,20 +2364,26 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
 /// be errors (for GCC compatibility).
 static QualType TryToFixInvalidVariablyModifiedType(QualType T,
                                                     ASTContext &Context,
-                                                    bool &SizeIsNegative) {
+                                                    bool &SizeIsNegative,
+                                                    llvm::APSInt &Oversized) {
   // This method tries to turn a variable array into a constant
   // array even when the size isn't an ICE.  This is necessary
   // for compatibility with code that depends on gcc's buggy
   // constant expression folding, like struct {char x[(int)(char*)2];}
   SizeIsNegative = false;
-
+  Oversized = 0;
+  
+  if (T->isDependentType())
+    return QualType();
+  
   QualifierCollector Qs;
   const Type *Ty = Qs.strip(T);
 
   if (const PointerType* PTy = dyn_cast<PointerType>(Ty)) {
     QualType Pointee = PTy->getPointeeType();
     QualType FixedType =
-        TryToFixInvalidVariablyModifiedType(Pointee, Context, SizeIsNegative);
+        TryToFixInvalidVariablyModifiedType(Pointee, Context, SizeIsNegative,
+                                            Oversized);
     if (FixedType.isNull()) return FixedType;
     FixedType = Context.getPointerType(FixedType);
     return Qs.apply(FixedType);
@@ -2396,15 +2402,24 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
       !EvalResult.Val.isInt())
     return QualType();
 
+  // Check whether the array size is negative.
   llvm::APSInt &Res = EvalResult.Val.getInt();
-  if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned())) {
-    // TODO: preserve the size expression in declarator info
-    return Context.getConstantArrayType(VLATy->getElementType(),
-                                        Res, ArrayType::Normal, 0);
+  if (Res.isSigned() && Res.isNegative()) {
+    SizeIsNegative = true;
+    return QualType();
   }
 
-  SizeIsNegative = true;
-  return QualType();
+  // Check whether the array is too large to be addressed.
+  unsigned ActiveSizeBits
+    = ConstantArrayType::getNumAddressingBits(Context, VLATy->getElementType(),
+                                              Res);
+  if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
+    Oversized = Res;
+    return QualType();
+  }
+  
+  return Context.getConstantArrayType(VLATy->getElementType(),
+                                      Res, ArrayType::Normal, 0);
 }
 
 /// \brief Register the given locally-scoped external C declaration so
@@ -2501,8 +2516,10 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     if (S->getFnParent() == 0) {
       bool SizeIsNegative;
+      llvm::APSInt Oversized;
       QualType FixedTy =
-          TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
+          TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative,
+                                              Oversized);
       if (!FixedTy.isNull()) {
         Diag(D.getIdentifierLoc(), diag::warn_illegal_constant_array_size);
         NewTD->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(FixedTy));
@@ -2511,6 +2528,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           Diag(D.getIdentifierLoc(), diag::err_typecheck_negative_array_size);
         else if (T->isVariableArrayType())
           Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
+        else if (Oversized.getBoolValue())
+          Diag(D.getIdentifierLoc(), diag::err_array_too_large)
+            << Oversized.toString(10);
         else
           Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
         NewTD->setInvalidDecl();
@@ -2931,8 +2951,10 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   if ((isVM && NewVD->hasLinkage()) ||
       (T->isVariableArrayType() && NewVD->hasGlobalStorage())) {
     bool SizeIsNegative;
+    llvm::APSInt Oversized;
     QualType FixedTy =
-        TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
+        TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative,
+                                            Oversized);
 
     if (FixedTy.isNull() && T->isVariableArrayType()) {
       const VariableArrayType *VAT = Context.getAsVariableArrayType(T);
@@ -5965,14 +5987,19 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   // than a variably modified type.
   if (!InvalidDecl && T->isVariablyModifiedType()) {
     bool SizeIsNegative;
+    llvm::APSInt Oversized;
     QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context,
-                                                           SizeIsNegative);
+                                                           SizeIsNegative,
+                                                           Oversized);
     if (!FixedTy.isNull()) {
       Diag(Loc, diag::warn_illegal_constant_array_size);
       T = FixedTy;
     } else {
       if (SizeIsNegative)
         Diag(Loc, diag::err_typecheck_negative_array_size);
+      else if (Oversized.getBoolValue())
+        Diag(Loc, diag::err_array_too_large)
+          << Oversized.toString(10);
       else
         Diag(Loc, diag::err_typecheck_field_variable_size);
       InvalidDecl = true;

@@ -1797,6 +1797,8 @@ def err_typecheck_field_variable_size : Error<
   "extension will never be supported">;
 def err_vm_func_decl : Error<
   "function declaration cannot have variably modified type">;
+def err_array_too_large : Error<
+  "array is too large (%0 elements)">;
 
 def err_typecheck_negative_array_size : Error<"array size is negative">;
 def warn_typecheck_function_qualifiers : Warning<

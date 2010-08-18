@@ -677,7 +677,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       << ArraySize->getType() << ArraySize->getSourceRange();
     return QualType();
   }
-  llvm::APSInt ConstVal(32);
+  llvm::APSInt ConstVal(Context.getTypeSize(Context.getSizeType()));
   if (!ArraySize) {
     if (ASM == ArrayType::Star)
       T = Context.getVariableArrayType(T, 0, ASM, Quals, Brackets);
@@ -707,7 +707,17 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
            isSFINAEContext()? diag::err_typecheck_zero_array_size
                             : diag::ext_typecheck_zero_array_size)
         << ArraySize->getSourceRange();
+    } else if (!T->isDependentType() && !T->isVariablyModifiedType() && 
+               !T->isIncompleteType()) {
+      // Is the array too large?      
+      unsigned ActiveSizeBits
+        = ConstantArrayType::getNumAddressingBits(Context, T, ConstVal);
+      if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context))
+        Diag(ArraySize->getLocStart(), diag::err_array_too_large)
+          << ConstVal.toString(10)
+          << ArraySize->getSourceRange();
     }
+    
     T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
   }
   // If this is not C99, extwarn about VLA's and C99 array size modifiers.

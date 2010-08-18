@@ -1458,6 +1458,17 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
+  
+  /// \brief Determine the number of bits required to address a member of
+  // an array with the given element type and number of elements.
+  static unsigned getNumAddressingBits(ASTContext &Context,
+                                       QualType ElementType,
+                                       const llvm::APInt &NumElements);
+  
+  /// \brief Determine the maximum number of active bits that an array's size
+  /// can require, which limits the maximum size of the array.
+  static unsigned getMaxSizeBits(ASTContext &Context);
+  
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getSize(),
             getSizeModifier(), getIndexTypeCVRQualifiers());

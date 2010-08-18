@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -21,6 +22,7 @@
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 using namespace clang;
 
 bool QualType::isConstant(QualType T, ASTContext &Ctx) {
@@ -34,6 +36,32 @@ bool QualType::isConstant(QualType T, ASTContext &Ctx) {
 }
 
 Type::~Type() { }
+
+unsigned ConstantArrayType::getNumAddressingBits(ASTContext &Context,
+                                                 QualType ElementType,
+                                               const llvm::APInt &NumElements) {
+  llvm::APSInt SizeExtended(NumElements, true);
+  unsigned SizeTypeBits = Context.getTypeSize(Context.getSizeType());
+  SizeExtended.extend(std::max(SizeTypeBits, SizeExtended.getBitWidth()) * 2);
+
+  uint64_t ElementSize
+    = Context.getTypeSizeInChars(ElementType).getQuantity();
+  llvm::APSInt TotalSize(llvm::APInt(SizeExtended.getBitWidth(), ElementSize));
+  TotalSize *= SizeExtended;  
+  
+  return TotalSize.getActiveBits();
+}
+
+unsigned ConstantArrayType::getMaxSizeBits(ASTContext &Context) {
+  unsigned Bits = Context.getTypeSize(Context.getSizeType());
+  
+  // GCC appears to only allow 63 bits worth of address space when compiling
+  // for 64-bit, so we do the same.
+  if (Bits == 64)
+    --Bits;
+  
+  return Bits;
+}
 
 void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
                                       ASTContext &Context,

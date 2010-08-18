@@ -716,8 +716,20 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                         llvm::APInt::getNullValue(Value.getBitWidth()), 
                                  Value.isUnsigned()))
           return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
-                           diag::err_typecheck_negative_array_size)
+                                diag::err_typecheck_negative_array_size)
             << ArraySize->getSourceRange());
+        
+        if (!AllocType->isDependentType()) {
+          unsigned ActiveSizeBits
+            = ConstantArrayType::getNumAddressingBits(Context, AllocType, Value);
+          if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
+            Diag(ArraySize->getSourceRange().getBegin(), 
+                 diag::err_array_too_large)
+              << Value.toString(10)
+              << ArraySize->getSourceRange();
+            return ExprError();
+          }
+        }
       } else if (TypeIdParens.isValid()) {
         // Can't have dynamic array size when the type-id is in parentheses.
         Diag(ArraySize->getLocStart(), diag::ext_new_paren_array_nonconst)
