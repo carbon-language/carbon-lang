@@ -1454,13 +1454,14 @@ CvtQTToAstBitMask(ObjCDeclSpec::ObjCDeclQualifier PQTVal) {
 }
 
 static inline
-bool containsInvalidMethodImplAttribute(const AttributeList *A) {
+bool containsInvalidMethodImplAttribute(const AttrVec &A) {
   // The 'ibaction' attribute is allowed on method definitions because of
   // how the IBAction macro is used on both method declarations and definitions.
   // If the method definitions contains any other attributes, return true.
-  while (A && A->getKind() == AttributeList::AT_IBAction)
-    A = A->getNext();
-  return A != NULL;
+  for (AttrVec::const_iterator i = A.begin(), e = A.end(); i != e; ++i)
+    if ((*i)->getKind() != attr::IBAction)
+      return true;
+  return false;
 }
 
 Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
@@ -1590,7 +1591,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     }
     InterfaceMD = ImpDecl->getClassInterface()->getMethod(Sel,
                                                    MethodType == tok::minus);
-    if (containsInvalidMethodImplAttribute(AttrList))
+    if (ObjCMethod->hasAttrs() &&
+        containsInvalidMethodImplAttribute(ObjCMethod->getAttrs()))
       Diag(EndLoc, diag::warn_attribute_method_def);
   } else if (ObjCCategoryImplDecl *CatImpDecl =
              dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
@@ -1601,7 +1603,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       PrevMethod = CatImpDecl->getClassMethod(Sel);
       CatImpDecl->addClassMethod(ObjCMethod);
     }
-    if (containsInvalidMethodImplAttribute(AttrList))
+    if (ObjCMethod->hasAttrs() &&
+        containsInvalidMethodImplAttribute(ObjCMethod->getAttrs()))
       Diag(EndLoc, diag::warn_attribute_method_def);
   }
   if (PrevMethod) {
@@ -1613,8 +1616,10 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
 
   // If the interface declared this method, and it was deprecated there,
   // mark it deprecated here.
-  if (InterfaceMD && InterfaceMD->hasAttr<DeprecatedAttr>())
-    ObjCMethod->addAttr(::new (Context) DeprecatedAttr());
+  if (InterfaceMD)
+   if (Attr *DA = InterfaceMD->getAttr<DeprecatedAttr>())
+    ObjCMethod->addAttr(::new (Context) DeprecatedAttr(DA->getLocation(),
+                                                       Context));
 
   return DeclPtrTy::make(ObjCMethod);
 }

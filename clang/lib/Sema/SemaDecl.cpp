@@ -997,19 +997,32 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
 /// DeclhasAttr - returns true if decl Declaration already has the target
 /// attribute.
 static bool
-DeclHasAttr(const Decl *decl, const Attr *target) {
-  for (const Attr *attr = decl->getAttrs(); attr; attr = attr->getNext())
-    if (attr->getKind() == target->getKind())
+DeclHasAttr(const Decl *D, const Attr *A) {
+  const OwnershipAttr *OA = dyn_cast<OwnershipAttr>(A);
+  for (Decl::attr_iterator i = D->attr_begin(), e = D->attr_end(); i != e; ++i)
+    if ((*i)->getKind() == A->getKind()) {
+      // FIXME: Don't hardcode this check
+      if (OA && isa<OwnershipAttr>(*i))
+        return OA->getOwnKind() == cast<OwnershipAttr>(*i)->getOwnKind();
       return true;
+    }
 
   return false;
 }
 
-/// MergeAttributes - append attributes from the Old decl to the New one.
-static void MergeAttributes(Decl *New, Decl *Old, ASTContext &C) {
-  for (const Attr *attr = Old->getAttrs(); attr; attr = attr->getNext()) {
-    if (!DeclHasAttr(New, attr) && attr->isMerged()) {
-      Attr *NewAttr = attr->clone(C);
+/// MergeDeclAttributes - append attributes from the Old decl to the New one.
+static void MergeDeclAttributes(Decl *New, Decl *Old, ASTContext &C) {
+  if (!Old->hasAttrs())
+    return;
+  // Ensure that any moving of objects within the allocated map is done before
+  // we process them.
+  if (!New->hasAttrs())
+    New->setAttrs(AttrVec());
+  for (Decl::attr_iterator i = Old->attr_begin(), e = Old->attr_end(); i != e;
+       ++i) {
+    // FIXME: Make this more general than just checking for Overloadable.
+    if (!DeclHasAttr(New, *i) && (*i)->getKind() != attr::Overloadable) {
+      Attr *NewAttr = (*i)->clone(C);
       NewAttr->setInherited(true);
       New->addAttr(NewAttr);
     }
@@ -1402,7 +1415,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// \returns false
 bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   // Merge the attributes
-  MergeAttributes(New, Old, Context);
+  MergeDeclAttributes(New, Old, Context);
 
   // Merge the storage class.
   if (Old->getStorageClass() != FunctionDecl::Extern &&
@@ -1447,7 +1460,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return New->setInvalidDecl();
   }
 
-  MergeAttributes(New, Old, Context);
+  MergeDeclAttributes(New, Old, Context);
 
   // Merge the types
   QualType MergedT;
@@ -1611,9 +1624,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
          
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
-    // If there are attributes in the DeclSpec, apply them to the record.
-    if (const AttributeList *AL = DS.getAttributes())
-      ProcessDeclAttributeList(S, Record, AL);
+    ProcessDeclAttributeList(S, Record, DS.getAttributes());
     
     if (!Record->getDeclName() && Record->isDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
@@ -2770,7 +2781,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    NewVD->addAttr(::new (Context) AsmLabelAttr(Context, SE->getString()));
+    NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), 
+                                                Context, SE->getString()));
   }
 
   // Diagnose shadowed variables before filtering for scope.
@@ -2810,6 +2822,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewVD->setInvalidDecl();
 
   // attributes declared post-definition are currently ignored
+  // FIXME: This should be handled in attribute merging, not
+  // here.
   if (Previous.isSingleResult()) {
     VarDecl *Def = dyn_cast<VarDecl>(Previous.getFoundDecl());
     if (Def && (Def = Def->getDefinition()) &&
@@ -3447,7 +3461,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    NewFD->addAttr(::new (Context) AsmLabelAttr(Context, SE->getString()));
+    NewFD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), Context,
+                                                SE->getString()));
   }
 
   // Copy the parameter declarations from the declarator D to the function
@@ -3673,6 +3688,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   ProcessDeclAttributes(S, NewFD, D);
 
   // attributes declared post-definition are currently ignored
+  // FIXME: This should happen during attribute merging
   if (Redeclaration && Previous.isSingleResult()) {
     const FunctionDecl *Def;
     FunctionDecl *PrevFD = dyn_cast<FunctionDecl>(Previous.getFoundDecl());
@@ -3684,7 +3700,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   AddKnownFunctionAttributes(NewFD);
 
-  if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
+  if (OverloadableAttrRequired && !NewFD->hasAttr<OverloadableAttr>()) {
     // If a function name is overloadable in C, then every function
     // with that name must be marked "overloadable".
     Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
@@ -3692,7 +3708,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (!Previous.empty())
       Diag(Previous.getRepresentativeDecl()->getLocation(),
            diag::note_attribute_overloadable_prev_overload);
-    NewFD->addAttr(::new (Context) OverloadableAttr());
+    NewFD->addAttr(::new (Context) OverloadableAttr(SourceLocation(), Context));
   }
 
   if (NewFD->hasAttr<OverloadableAttr>() && 
@@ -4792,10 +4808,10 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
 
   // Checking attributes of current function definition
   // dllimport attribute.
-  if (FD->getAttr<DLLImportAttr>() &&
-      (!FD->getAttr<DLLExportAttr>())) {
-    // dllimport attribute cannot be applied to definition.
-    if (!(FD->getAttr<DLLImportAttr>())->isInherited()) {
+  DLLImportAttr *DA = FD->getAttr<DLLImportAttr>();
+  if (DA && (!FD->getAttr<DLLExportAttr>())) {
+    // dllimport attribute cannot be directly applied to definition.
+    if (!DA->isInherited()) {
       Diag(FD->getLocation(),
            diag::err_attribute_can_be_applied_only_to_symbol_declaration)
         << "dllimport";
@@ -5041,7 +5057,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   CurContext = Context.getTranslationUnitDecl();
 
   FunctionDecl *FD =
- dyn_cast<FunctionDecl>(ActOnDeclarator(TUScope, D).getAs<Decl>());
+      dyn_cast<FunctionDecl>(ActOnDeclarator(TUScope, D).getAs<Decl>());
   FD->setImplicit();
 
   CurContext = PrevDC;
@@ -5069,13 +5085,15 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     bool HasVAListArg;
     if (Context.BuiltinInfo.isPrintfLike(BuiltinID, FormatIdx, HasVAListArg)) {
       if (!FD->getAttr<FormatAttr>())
-        FD->addAttr(::new (Context) FormatAttr(Context, "printf", FormatIdx+1,
+        FD->addAttr(::new (Context) FormatAttr(FD->getLocation(), Context,
+                                                "printf", FormatIdx+1,
                                                HasVAListArg ? 0 : FormatIdx+2));
     }
     if (Context.BuiltinInfo.isScanfLike(BuiltinID, FormatIdx,
                                              HasVAListArg)) {
      if (!FD->getAttr<FormatAttr>())
-       FD->addAttr(::new (Context) FormatAttr(Context, "scanf", FormatIdx+1,
+       FD->addAttr(::new (Context) FormatAttr(FD->getLocation(), Context,
+                                              "scanf", FormatIdx+1,
                                               HasVAListArg ? 0 : FormatIdx+2));
     }
 
@@ -5085,15 +5103,15 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     if (!getLangOptions().MathErrno &&
         Context.BuiltinInfo.isConstWithoutErrno(BuiltinID)) {
       if (!FD->getAttr<ConstAttr>())
-        FD->addAttr(::new (Context) ConstAttr());
+        FD->addAttr(::new (Context) ConstAttr(FD->getLocation(), Context));
     }
 
     if (Context.BuiltinInfo.isNoReturn(BuiltinID))
       FD->setType(Context.getNoReturnType(FD->getType()));
     if (Context.BuiltinInfo.isNoThrow(BuiltinID))
-      FD->addAttr(::new (Context) NoThrowAttr());
+      FD->addAttr(::new (Context) NoThrowAttr(FD->getLocation(), Context));
     if (Context.BuiltinInfo.isConst(BuiltinID))
-      FD->addAttr(::new (Context) ConstAttr());
+      FD->addAttr(::new (Context) ConstAttr(FD->getLocation(), Context));
   }
 
   IdentifierInfo *Name = FD->getIdentifier();
@@ -5115,13 +5133,15 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
       // FIXME: We known better than our headers.
       const_cast<FormatAttr *>(Format)->setType(Context, "printf");
     } else
-      FD->addAttr(::new (Context) FormatAttr(Context, "printf", 1,
+      FD->addAttr(::new (Context) FormatAttr(FD->getLocation(), Context,
+                                             "printf", 1,
                                              Name->isStr("NSLogv") ? 0 : 2));
   } else if (Name->isStr("asprintf") || Name->isStr("vasprintf")) {
     // FIXME: asprintf and vasprintf aren't C99 functions. Should they be
     // target-specific builtins, perhaps?
     if (!FD->getAttr<FormatAttr>())
-      FD->addAttr(::new (Context) FormatAttr(Context, "printf", 2,
+      FD->addAttr(::new (Context) FormatAttr(FD->getLocation(), Context,
+                                             "printf", 2,
                                              Name->isStr("vasprintf") ? 0 : 3));
   }
 }
@@ -7009,7 +7029,7 @@ void Sema::ActOnPragmaWeakID(IdentifierInfo* Name,
   Decl *PrevDecl = LookupSingleName(TUScope, Name, NameLoc, LookupOrdinaryName);
 
   if (PrevDecl) {
-    PrevDecl->addAttr(::new (Context) WeakAttr());
+    PrevDecl->addAttr(::new (Context) WeakAttr(PragmaLoc, Context));
   } else {
     (void)WeakUndeclaredIdentifiers.insert(
       std::pair<IdentifierInfo*,WeakInfo>

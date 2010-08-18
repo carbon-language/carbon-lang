@@ -51,8 +51,8 @@ static void HandleMSP430InterruptAttr(Decl *d,
       return;
     }
 
-    d->addAttr(::new (S.Context) MSP430InterruptAttr(Num));
-    d->addAttr(::new (S.Context) UsedAttr());
+    d->addAttr(::new (S.Context) MSP430InterruptAttr(Attr.getLoc(), S.Context, Num));
+    d->addAttr(::new (S.Context) UsedAttr(Attr.getLoc(), S.Context));
   }
 
 namespace {
@@ -97,7 +97,7 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
     return;
   }
 
-  D->addAttr(::new (S.Context) X86ForceAlignArgPointerAttr());
+  D->addAttr(::new (S.Context) X86ForceAlignArgPointerAttr(Attr.getLoc(), S.Context));
 }
 
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -109,7 +109,7 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Attribute can be applied only to functions or variables.
   if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLImportAttr());
+    D->addAttr(::new (S.Context) DLLImportAttr(Attr.getLoc(), S.Context));
     return;
   }
 
@@ -146,7 +146,7 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  D->addAttr(::new (S.Context) DLLImportAttr());
+  D->addAttr(::new (S.Context) DLLImportAttr(Attr.getLoc(), S.Context));
 }
 
 static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -158,7 +158,7 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Attribute can be applied only to functions or variables.
   if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLExportAttr());
+    D->addAttr(::new (S.Context) DLLExportAttr(Attr.getLoc(), S.Context));
     return;
   }
 
@@ -177,7 +177,7 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  D->addAttr(::new (S.Context) DLLExportAttr());
+  D->addAttr(::new (S.Context) DLLExportAttr(Attr.getLoc(), S.Context));
 }
 
 namespace {

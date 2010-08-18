@@ -13,6 +13,8 @@ add_clang_library(clangSerialization
 add_dependencies(clangSerialization
   ClangAttrClasses
   ClangAttrList
+  ClangAttrPCHRead
+  ClangAttrPCHWrite
   ClangDiagnosticFrontend
   ClangDiagnosticLex
   ClangDiagnosticSema

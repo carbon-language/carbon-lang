@@ -150,11 +150,11 @@ CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>()) {
     switch (attr->getVisibility()) {
     default: assert(0 && "Unknown visibility!");
-    case VisibilityAttr::DefaultVisibility:
+    case VisibilityAttr::Default:
       return LangOptions::Default;
-    case VisibilityAttr::HiddenVisibility:
+    case VisibilityAttr::Hidden:
       return LangOptions::Hidden;
-    case VisibilityAttr::ProtectedVisibility:
+    case VisibilityAttr::Protected:
       return LangOptions::Protected;
     }
   }
@@ -461,12 +461,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   else if (Features.getStackProtectorMode() == LangOptions::SSPReq)
     F->addFnAttr(llvm::Attribute::StackProtectReq);
   
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>()) {
-    unsigned width = Context.Target.getCharWidth();
-    F->setAlignment(AA->getAlignment() / width);
-    while ((AA = AA->getNext<AlignedAttr>()))
-      F->setAlignment(std::max(F->getAlignment(), AA->getAlignment() / width));
-  }
+  unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();
+  if (alignment)
+    F->setAlignment(alignment);
+
   // C++ ABI requires 2-byte alignment for member functions.
   if (F->getAlignment() < 2 && isa<CXXMethodDecl>(D))
     F->setAlignment(2);

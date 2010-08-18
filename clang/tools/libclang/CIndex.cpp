@@ -1144,8 +1144,9 @@ bool CursorVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
 
 
 bool CursorVisitor::VisitAttributes(Decl *D) {
-  for (const Attr *A = D->getAttrs(); A; A = A->getNext())
-    if (Visit(MakeCXCursor(A, D, TU)))
+  for (AttrVec::const_iterator i = D->attr_begin(), e = D->attr_end();
+       i != e; ++i)
+    if (Visit(MakeCXCursor(*i, D, TU)))
         return true;
 
   return false;

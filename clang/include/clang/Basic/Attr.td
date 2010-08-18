@@ -33,8 +33,8 @@ class SubsetSubject<AttrSubject base, string description, code check>
 // a possible subject.
 def NormalVar : SubsetSubject<Var, "non-register, non-parameter variable",
                               [{S->getStorageClass() != VarDecl::Register &&
-                                S->getKind() != Decl::ImplicitParam
-                                S->getKind() != Decl::ParmVar
+                                S->getKind() != Decl::ImplicitParam &&
+                                S->getKind() != Decl::ParmVar &&
                                 S->getKind() != Decl::NonTypeTemplateParm}]>;
 def CXXVirtualMethod : SubsetSubject<CXXRecord, "virtual member function",
                                      [{S->isVirtual()}]>;
@@ -51,18 +51,27 @@ class IntArgument<string name> : Argument<name>;
 class StringArgument<string name> : Argument<name>;
 class ExprArgument<string name> : Argument<name>;
 class FunctionArgument<string name> : Argument<name>;
-class ObjCInterfaceArgument<string name> : Argument<name>;
-class UnsignedIntArgument<string name> : Argument<name>;
-class UnsignedIntOrTypeArgument<string name> : Argument<name>;
+class TypeArgument<string name> : Argument<name>;
+class UnsignedArgument<string name> : Argument<name>;
+class VariadicUnsignedArgument<string name> : Argument<name>;
+
+// This one's a doozy, so it gets its own special type
+// It can be an unsigned integer, or a type. Either can
+// be dependent.
+class AlignedArgument<string name> : Argument<name>;
 
 // An integer argument with a default value
 class DefaultIntArgument<string name, int default> : IntArgument<name> {
   int Default = default;
 }
 
-// Zero or more arguments of a type
-class VariadicArgument<Argument arg> : Argument<arg.Name> {
-  Argument VariadicArg = arg;
+// This argument is more complex, it includes the enumerator type name,
+// a list of strings to accept, and a list of enumerators to map them to.
+class EnumArgument<string name, string type, list<string> values,
+                         list<string> enums> : Argument<name> {
+  string Type = type;
+  list<string> Values = values;
+  list<string> Enums = enums;
 }
 
 class Attr {
@@ -76,9 +85,8 @@ class Attr {
   // The attribute will not be permitted in C++0x attribute-specifiers if
   // this is empty; the empty string can be used as a namespace.
   list<string> Namespaces = [];
-  // A temporary development bit to tell TableGen not to emit certain
-  // information about the attribute.
-  bit DoNotEmit = 1;
+  // Any additional text that should be included verbatim in the class.
+  code AdditionalMembers = [{}];
 }
 
 //
@@ -87,13 +95,13 @@ class Attr {
 
 def Alias : Attr {
   let Spellings = ["alias"];
-  let Args = [StringArgument<"AliasName">];
+  let Args = [StringArgument<"Aliasee">];
 }
 
 def Aligned : Attr {
   let Spellings = ["align", "aligned"];
   let Subjects = [NonBitField, NormalVar, Tag];
-  let Args = [UnsignedIntOrTypeArgument<"Alignment">];
+  let Args = [AlignedArgument<"Alignment">];
   let Namespaces = ["", "std"];
 }
 
@@ -123,19 +131,17 @@ def BaseCheck : Attr {
   let Spellings = ["base_check"];
   let Subjects = [CXXRecord];
   let Namespaces = ["", "std"];
-  let DoNotEmit = 0;
 }
 
 def Blocks : Attr {
   let Spellings = ["blocks"];
-  let Args = [IdentifierArgument<"Type">];
+  let Args = [EnumArgument<"Type", "BlockType", ["byref"], ["ByRef"]>];
 }
 
 def CarriesDependency : Attr {
   let Spellings = ["carries_dependency"];
   let Subjects = [ParmVar, Function];
   let Namespaces = ["", "std"];
-  let DoNotEmit = 0;
 }
 
 def CDecl : Attr {
@@ -189,7 +195,6 @@ def Final : Attr {
   let Spellings = ["final"];
   let Subjects = [CXXRecord, CXXVirtualMethod];
   let Namespaces = ["", "std"];
-  let DoNotEmit = 0;
 }
 
 def Format : Attr {
@@ -211,7 +216,6 @@ def Hiding : Attr {
   let Spellings = ["hiding"];
   let Subjects = [Field, CXXMethod];
   let Namespaces = ["", "std"];
-  let DoNotEmit = 0;
 }
 
 def IBAction : Attr {
@@ -224,7 +228,7 @@ def IBOutlet : Attr {
 
 def IBOutletCollection : Attr {
   let Spellings = ["iboutletcollection"];
-  let Args = [ObjCInterfaceArgument<"Class">];
+  let Args = [TypeArgument<"Interface">];
 }
 
 def Malloc : Attr {
@@ -233,12 +237,12 @@ def Malloc : Attr {
 
 def MaxFieldAlignment : Attr {
   let Spellings = [];
-  let Args = [UnsignedIntArgument<"Alignment">];
+  let Args = [UnsignedArgument<"Alignment">];
 }
 
 def MSP430Interrupt : Attr {
   let Spellings = [];
-  let Args = [UnsignedIntArgument<"Number">];
+  let Args = [UnsignedArgument<"Number">];
 }
 
 def NoDebug : Attr {
@@ -251,7 +255,15 @@ def NoInline : Attr {
 
 def NonNull : Attr {
   let Spellings = ["nonnull"];
-  let Args = [VariadicArgument<UnsignedIntArgument<"Args">>];
+  let Args = [VariadicUnsignedArgument<"Args">];
+  let AdditionalMembers =
+[{bool isNonNull(unsigned idx) const {
+    for (args_iterator i = args_begin(), e = args_end();
+         i != e; ++i)
+      if (*i == idx)
+        return true;
+    return false;
+  } }];
 }
 
 def NoReturn : Attr {
@@ -290,26 +302,18 @@ def Override : Attr {
   let Spellings = ["override"];
   let Subjects = [CXXVirtualMethod];
   let Namespaces = ["", "std"];
-  let DoNotEmit = 0;
 }
 
 def Overloadable : Attr {
   let Spellings = ["overloadable"];
 }
 
-def OwnershipReturns : Attr {
-  let Spellings = ["ownership_returns"];
-  let Args = [StringArgument<"Module">, IntArgument<"SizeIdx">];
-}
-
-def OwnershipTakes : Attr {
-  let Spellings = ["ownership_takes"];
-  let Args = [StringArgument<"Module">, IntArgument<"PtrIdx">];
-}
-
-def OwnershipHolds : Attr {
-  let Spellings = ["ownership_holds"];
-  let Args = [StringArgument<"Module">, IntArgument<"PtrIdx">];
+def Ownership : Attr {
+  let Spellings = ["ownership_holds", "ownership_returns", "ownership_takes"];
+  let Args = [EnumArgument<"OwnKind", "OwnershipKind",
+                    ["ownership_holds", "ownership_returns", "ownership_takes"],
+                    ["Holds", "Returns", "Takes"]>,
+              StringArgument<"Module">, VariadicUnsignedArgument<"Args">];
 }
 
 def Packed : Attr {
@@ -322,18 +326,18 @@ def Pure : Attr {
 
 def Regparm : Attr {
   let Spellings = ["regparm"];
-  let Args = [UnsignedIntArgument<"NumParams">];
+  let Args = [UnsignedArgument<"NumParams">];
 }
 
 def ReqdWorkGroupSize : Attr {
   let Spellings = ["reqd_work_group_size"];
-  let Args = [UnsignedIntArgument<"XDim">, UnsignedIntArgument<"YDim">,
-              UnsignedIntArgument<"ZDim">];
+  let Args = [UnsignedArgument<"XDim">, UnsignedArgument<"YDim">,
+              UnsignedArgument<"ZDim">];
 }
 
 def InitPriority : Attr {
   let Spellings = ["init_priority"];
-  let Args = [UnsignedIntArgument<"Priority">];
+  let Args = [UnsignedArgument<"Priority">];
 }
 
 def Section : Attr {
@@ -343,8 +347,8 @@ def Section : Attr {
 
 def Sentinel : Attr {
   let Spellings = ["sentinel"];
-  let Args = [DefaultIntArgument<"NulPos", 0>,
-              DefaultIntArgument<"Sentinel", 0>];
+  let Args = [DefaultIntArgument<"Sentinel", 0>,
+              DefaultIntArgument<"NullPos", 0>];
 }
 
 def StdCall : Attr {
@@ -373,13 +377,14 @@ def Used : Attr {
 
 def Visibility : Attr {
   let Spellings = ["visibility"];
-  let Args = [StringArgument<"Visibility">];
+  let Args = [EnumArgument<"Visibility", "VisibilityType",
+                           ["default", "hidden", "internal", "protected"],
+                           ["Default", "Hidden", "Hidden", "Protected"]>];
 }
 
 def VecReturn : Attr {
   let Spellings = ["vecreturn"];
   let Subjects = [CXXRecord];
-  let DoNotEmit = 0;
 }
 
 def WarnUnusedResult : Attr {

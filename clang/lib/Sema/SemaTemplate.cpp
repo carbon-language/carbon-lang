@@ -4031,7 +4031,7 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 /// \brief Strips various properties off an implicit instantiation
 /// that has just been explicitly specialized.
 static void StripImplicitInstantiation(NamedDecl *D) {
-  D->invalidateAttrs();
+  D->dropAttrs();
 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     FD->setInlineSpecified(false);

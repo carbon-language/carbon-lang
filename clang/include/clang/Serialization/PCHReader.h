@@ -908,7 +908,7 @@ public:
   CXXTemporary *ReadCXXTemporary(const RecordData &Record, unsigned &Idx);
       
   /// \brief Reads attributes from the current stream position.
-  Attr *ReadAttributes(llvm::BitstreamCursor &DeclsCursor);
+  void ReadAttributes(llvm::BitstreamCursor &DeclsCursor, AttrVec &Attrs);
 
   /// \brief Reads a statement.
   Stmt *ReadStmt(llvm::BitstreamCursor &Cursor);

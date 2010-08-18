@@ -21,7 +21,6 @@ namespace clang {
 class Expr;
 class Stmt;
 class FunctionDecl;
-class AttributeList;
 class RecordDecl;
 class ObjCIvarDecl;
 class ObjCMethodDecl;

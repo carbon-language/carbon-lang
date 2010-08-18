@@ -347,9 +347,12 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     }
   }
 
-  for (const NonNullAttr *NonNull = FDecl->getAttr<NonNullAttr>(); NonNull;
-       NonNull = NonNull->getNext<NonNullAttr>())
-    CheckNonNullArguments(NonNull, TheCall);
+  specific_attr_iterator<NonNullAttr>
+    i = FDecl->specific_attr_begin<NonNullAttr>(),
+    e = FDecl->specific_attr_end<NonNullAttr>();
+
+  for (; i != e; ++i)
+    CheckNonNullArguments(*i, TheCall);
 
   return false;
 }
@@ -1041,7 +1044,8 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
 void
 Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
                             const CallExpr *TheCall) {
-  for (NonNullAttr::iterator i = NonNull->begin(), e = NonNull->end();
+  for (NonNullAttr::args_iterator i = NonNull->args_begin(),
+                                  e = NonNull->args_end();
        i != e; ++i) {
     const Expr *ArgExpr = TheCall->getArg(*i);
     if (ArgExpr->isNullPointerConstant(Context,

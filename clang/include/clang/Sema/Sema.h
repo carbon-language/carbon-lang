@@ -4265,7 +4265,8 @@ public:
 
   /// PushPragmaVisibility - Push the top element of the visibility stack; used
   ///  for '#pragma GCC visibility' and visibility attributes on namespaces.
-  void PushPragmaVisibility(VisibilityAttr::VisibilityTypes type);
+  void PushPragmaVisibility(VisibilityAttr::VisibilityType type,
+                            SourceLocation loc);
 
   /// PopPragmaVisibility - Pop the top element of the visibility stack; used
   /// for '#pragma GCC visibility' and visibility attributes on namespaces.
@@ -4276,6 +4277,7 @@ public:
 
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
   void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E);
+  void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, TypeSourceInfo *T);
 
   /// CastCategory - Get the correct forwarded implicit cast result category
   /// from the inner expression.

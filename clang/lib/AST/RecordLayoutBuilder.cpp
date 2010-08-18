@@ -1123,8 +1123,8 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
     if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
       MaxFieldAlignment = MFAA->getAlignment();
 
-    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-      UpdateAlignment(AA->getMaxAlignment());
+    if (unsigned MaxAlign = D->getMaxAlignment())
+      UpdateAlignment(MaxAlign);
   }
 }
 
@@ -1287,8 +1287,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
 
   if (FieldPacked || !Context.Target.useBitFieldTypeAlignment())
     FieldAlign = 1;
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
+  FieldAlign = std::max(FieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
   if (MaxFieldAlignment)
@@ -1357,8 +1356,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
   if (FieldPacked)
     FieldAlign = 8;
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
+  FieldAlign = std::max(FieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
   if (MaxFieldAlignment)

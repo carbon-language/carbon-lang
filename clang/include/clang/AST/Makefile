@@ -1,6 +1,6 @@
 CLANG_LEVEL := ../../..
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
-BUILT_SOURCES = Attrs.inc StmtNodes.inc DeclNodes.inc
+BUILT_SOURCES = Attrs.inc AttrImpl.inc StmtNodes.inc DeclNodes.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -10,6 +10,12 @@ $(ObjDir)/Attrs.inc.tmp : $(TD_SRC_DIR)/Attr.td $(TBLGEN) \
                               $(ObjDir)/.dir
 	$(Echo) "Building Clang attribute classes with tblgen"
 	$(Verb) $(TableGen) -gen-clang-attr-classes -o $(call SYSPATH, $@) \
+		-I $(PROJ_SRC_DIR)/../../ $<
+
+$(ObjDir)/AttrImpl.inc.tmp : $(TD_SRC_DIR)/Attr.td $(TBLGEN) \
+                              $(ObjDir)/.dir
+	$(Echo) "Building Clang attribute implementations with tblgen"
+	$(Verb) $(TableGen) -gen-clang-attr-impl -o $(call SYSPATH, $@) \
 		-I $(PROJ_SRC_DIR)/../../ $<
 
 $(ObjDir)/StmtNodes.inc.tmp : $(TD_SRC_DIR)/StmtNodes.td $(TBLGEN) \

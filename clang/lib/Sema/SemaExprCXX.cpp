@@ -1259,7 +1259,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
         // FIXME: Do we need to check for default arguments here?
         if (Func->getNumParams() == 1 && InitialParamType == Argument) {
           if(AddMallocAttr && !Func->hasAttr<MallocAttr>())
-            Func->addAttr(::new (Context) MallocAttr());
+            Func->addAttr(::new (Context) MallocAttr(SourceLocation(), Context));
           return;
         }
       }
@@ -1287,7 +1287,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   Alloc->setImplicit();
   
   if (AddMallocAttr)
-    Alloc->addAttr(::new (Context) MallocAttr());
+    Alloc->addAttr(::new (Context) MallocAttr(SourceLocation(), Context));
   
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
                                            0, Argument, /*TInfo=*/0,

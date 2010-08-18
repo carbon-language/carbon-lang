@@ -1,5 +1,5 @@
 CLANG_LEVEL := ../..
-DIRS := AST Basic Driver
+DIRS := AST Basic Driver Serialization
 
 include $(CLANG_LEVEL)/Makefile
 

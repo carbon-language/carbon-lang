@@ -18,7 +18,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/PartialDiagnostic.h"
-#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
@@ -199,7 +198,7 @@ class ASTContext {
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
   /// wasting space in the Decl class.
-  llvm::DenseMap<const Decl*, Attr*> DeclAttrs;
+  llvm::DenseMap<const Decl*, AttrVec> DeclAttrs;
 
   /// \brief Keeps track of the static data member templates from which
   /// static data members of class template specializations were instantiated.
@@ -322,7 +321,7 @@ public:
   }
 
   /// \brief Retrieve the attributes for the given declaration.
-  Attr*& getDeclAttrs(const Decl *D) { return DeclAttrs[D]; }
+  AttrVec& getDeclAttrs(const Decl *D) { return DeclAttrs[D]; }
 
   /// \brief Erase the attributes corresponding to the given declaration.
   void eraseDeclAttrs(const Decl *D) { DeclAttrs.erase(D); }

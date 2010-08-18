@@ -140,21 +140,30 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
 // FIXME: Is this still too simple?
 void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                             Decl *Tmpl, Decl *New) {
-  for (const Attr *TmplAttr = Tmpl->getAttrs(); TmplAttr;
-       TmplAttr = TmplAttr->getNext()) {
+  for (AttrVec::const_iterator i = Tmpl->attr_begin(), e = Tmpl->attr_end();
+       i != e; ++i) {
+    const Attr *TmplAttr = *i;
     // FIXME: This should be generalized to more than just the AlignedAttr.
     if (const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr)) {
-      if (Aligned->isDependent()) {
+      if (Aligned->isAlignmentDependent()) {
         // The alignment expression is not potentially evaluated.
         EnterExpressionEvaluationContext Unevaluated(*this,
                                                      Action::Unevaluated);
 
-        OwningExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
-                                            TemplateArgs);
-        if (!Result.isInvalid())
-          // FIXME: Is this the correct source location?
-          AddAlignedAttr(Aligned->getAlignmentExpr()->getExprLoc(),
-                         New, Result.takeAs<Expr>());
+        if (Aligned->isAlignmentExpr()) {
+          OwningExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
+                                              TemplateArgs);
+          if (!Result.isInvalid())
+            AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>());
+        }
+        else {
+          TypeSourceInfo *Result = SubstType(Aligned->getAlignmentType(),
+                                              TemplateArgs,
+                                              Aligned->getLocation(), 
+                                              DeclarationName());
+          if (Result)
+            AddAlignedAttr(Aligned->getLocation(), New, Result);
+        }
         continue;
       }
     }

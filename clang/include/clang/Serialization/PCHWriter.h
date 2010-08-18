@@ -281,7 +281,7 @@ private:
   void WriteSelectors(Sema &SemaRef);
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
-  void WriteAttributeRecord(const Attr *Attr);
+  void WriteAttributeRecord(const AttrVec &Attrs);
   void WriteDeclUpdateBlock();
 
   unsigned ParmVarDeclAbbrev;

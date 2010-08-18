@@ -308,24 +308,52 @@ public:
   }
 
   bool hasAttrs() const { return HasAttrs; }
-  void initAttrs(Attr *attrs);
-  void addAttr(Attr *attr);
-  const Attr *getAttrs() const {
-    if (!HasAttrs) return 0;  // common case, no attributes.
-    return getAttrsImpl();    // Uncommon case, out of line hash lookup.
+  void setAttrs(const AttrVec& Attrs);
+  AttrVec& getAttrs() {
+    return const_cast<AttrVec&>(const_cast<const Decl*>(this)->getAttrs());
   }
+  const AttrVec &getAttrs() const;
   void swapAttrs(Decl *D);
-  void invalidateAttrs();
+  void dropAttrs();
 
-  template<typename T> const T *getAttr() const {
-    for (const Attr *attr = getAttrs(); attr; attr = attr->getNext())
-      if (const T *V = dyn_cast<T>(attr))
-        return V;
-    return 0;
+  void addAttr(Attr *A) {
+    if (hasAttrs())
+      getAttrs().push_back(A);
+    else
+      setAttrs(AttrVec(1, A));
   }
 
+  typedef AttrVec::const_iterator attr_iterator;
+
+  // FIXME: Do not rely on iterators having comparable singular values.
+  //        Note that this should error out if they do not.
+  attr_iterator attr_begin() const {
+    return hasAttrs() ? getAttrs().begin() : 0;
+  }
+  attr_iterator attr_end() const {
+    return hasAttrs() ? getAttrs().end() : 0;
+  }
+
+  template <typename T>
+  specific_attr_iterator<T> specific_attr_begin() const {
+    return specific_attr_iterator<T>(attr_begin());
+  }
+  template <typename T>
+  specific_attr_iterator<T> specific_attr_end() const {
+    return specific_attr_iterator<T>(attr_end());
+  }
+
+  template<typename T> T *getAttr() const {
+    return hasAttrs() ? getSpecificAttr<T>(getAttrs()) : 0;
+  }
   template<typename T> bool hasAttr() const {
-    return getAttr<T>() != 0;
+    return hasAttrs() && hasSpecificAttr<T>(getAttrs());
+  }
+
+  /// getMaxAlignment - return the maximum alignment specified by attributes
+  /// on this decl, 0 if there are none.
+  unsigned getMaxAlignment() const {
+    return hasAttrs() ? getMaxAttrAlignment(getAttrs(), getASTContext()) : 0;
   }
 
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
@@ -346,16 +374,16 @@ public:
   /// (in addition to the "used" bit set by \c setUsed()) when determining
   /// whether the function is used.
   bool isUsed(bool CheckUsedAttr = true) const;
-  
+
   void setUsed(bool U = true) { Used = U; }
 
   /// \brief Retrieve the level of precompiled header from which this
   /// declaration was generated.
   ///
   /// The PCH level of a declaration describes where the declaration originated
-  /// from. A PCH level of 0 indicates that the declaration was not from a 
+  /// from. A PCH level of 0 indicates that the declaration was not from a
   /// precompiled header. A PCH level of 1 indicates that the declaration was
-  /// from a top-level precompiled header; 2 indicates that the declaration 
+  /// from a top-level precompiled header; 2 indicates that the declaration
   /// comes from a precompiled header on which the top-level precompiled header
   /// depends, and so on. 
   unsigned getPCHLevel() const { return PCHLevel; }

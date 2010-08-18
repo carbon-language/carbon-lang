@@ -14,6 +14,7 @@
 
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -120,9 +121,11 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
   // Otherwise, check to see if we need a max field alignment attribute.
   if (unsigned Alignment = Stack->getAlignment()) {
     if (Alignment == PackStackEntry::kMac68kAlignmentSentinel)
-      RD->addAttr(::new (Context) AlignMac68kAttr());
+      RD->addAttr(::new (Context) AlignMac68kAttr(SourceLocation(), Context));
     else
-      RD->addAttr(::new (Context) MaxFieldAlignmentAttr(Alignment * 8));
+      RD->addAttr(::new (Context) MaxFieldAlignmentAttr(SourceLocation(),
+                                                        Context,
+                                                        Alignment * 8));
   }
 }
 
@@ -285,11 +288,12 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
       continue;
     }
 
-    VD->addAttr(::new (Context) UnusedAttr());
+    VD->addAttr(::new (Context) UnusedAttr(Tok.getLocation(), Context));
   }
 }
 
-typedef std::vector<VisibilityAttr::VisibilityTypes> VisStack;
+typedef std::vector<std::pair<VisibilityAttr::VisibilityType,
+                              SourceLocation> > VisStack;
 
 void Sema::AddPushedVisibilityAttribute(Decl *D) {
   if (!VisContext)
@@ -299,9 +303,10 @@ void Sema::AddPushedVisibilityAttribute(Decl *D) {
     return;
 
   VisStack *Stack = static_cast<VisStack*>(VisContext);
-  VisibilityAttr::VisibilityTypes type = Stack->back();
+  VisibilityAttr::VisibilityType type = Stack->back().first;
+  SourceLocation loc = Stack->back().second;
 
-  D->addAttr(::new (Context) VisibilityAttr(type, true));
+  D->addAttr(::new (Context) VisibilityAttr(loc, Context, type));
 }
 
 /// FreeVisContext - Deallocate and null out VisContext.
@@ -314,33 +319,34 @@ void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
                                  SourceLocation PragmaLoc) {
   if (IsPush) {
     // Compute visibility to use.
-    VisibilityAttr::VisibilityTypes type;
+    VisibilityAttr::VisibilityType type;
     if (VisType->isStr("default"))
-      type = VisibilityAttr::DefaultVisibility;
+      type = VisibilityAttr::Default;
     else if (VisType->isStr("hidden"))
-      type = VisibilityAttr::HiddenVisibility;
+      type = VisibilityAttr::Hidden;
     else if (VisType->isStr("internal"))
-      type = VisibilityAttr::HiddenVisibility; // FIXME
+      type = VisibilityAttr::Hidden; // FIXME
     else if (VisType->isStr("protected"))
-      type = VisibilityAttr::ProtectedVisibility;
+      type = VisibilityAttr::Protected;
     else {
       Diag(PragmaLoc, diag::warn_attribute_unknown_visibility) <<
         VisType->getName();
       return;
     }
-    PushPragmaVisibility(type);
+    PushPragmaVisibility(type, PragmaLoc);
   } else {
     PopPragmaVisibility();
   }
 }
 
-void Sema::PushPragmaVisibility(VisibilityAttr::VisibilityTypes type) {
+void Sema::PushPragmaVisibility(VisibilityAttr::VisibilityType type,
+                                SourceLocation loc) {
   // Put visibility on stack.
   if (!VisContext)
     VisContext = new VisStack;
 
   VisStack *Stack = static_cast<VisStack*>(VisContext);
-  Stack->push_back(type);
+  Stack->push_back(std::make_pair(type, loc));
 }
 
 void Sema::PopPragmaVisibility() {

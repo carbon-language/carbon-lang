@@ -176,19 +176,23 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   // There can be multiple of these attributes.
   bool rv = false;
   if (FD->hasAttrs()) {
-    for (const Attr *attr = FD->getAttrs(); attr; attr = attr->getNext()) {
-      switch (attr->getKind()) {
-      case attr::OwnershipReturns:
-        MallocMemReturnsAttr(C, CE, cast<OwnershipAttr>(attr));
+    for (specific_attr_iterator<OwnershipAttr>
+                  i = FD->specific_attr_begin<OwnershipAttr>(),
+                  e = FD->specific_attr_end<OwnershipAttr>();
+         i != e; ++i) {
+      switch ((*i)->getOwnKind()) {
+      case OwnershipAttr::Returns: {
+        MallocMemReturnsAttr(C, CE, *i);
         rv = true;
         break;
-      case attr::OwnershipTakes:
-      case attr::OwnershipHolds:
-        FreeMemAttr(C, CE, cast<OwnershipAttr>(attr));
+      }
+      case OwnershipAttr::Takes:
+      case OwnershipAttr::Holds: {
+        FreeMemAttr(C, CE, *i);
         rv = true;
         break;
+      }
       default:
-        // Ignore non-ownership attributes.
         break;
       }
     }
@@ -204,10 +208,10 @@ void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
 
 void MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
                                          const OwnershipAttr* Att) {
-  if (!Att->isModule("malloc"))
+  if (Att->getModule() != "malloc")
     return;
 
-  const unsigned *I = Att->begin(), *E = Att->end();
+  OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
   if (I != E) {
     const GRState *state =
         MallocMemAux(C, CE, CE->getArg(*I), UndefinedVal(), C.getState());
@@ -258,14 +262,15 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
 
 void MallocChecker::FreeMemAttr(CheckerContext &C, const CallExpr *CE,
                                 const OwnershipAttr* Att) {
-  if (!Att->isModule("malloc"))
+  if (Att->getModule() != "malloc")
     return;
 
-  for (const unsigned *I = Att->begin(), *E = Att->end(); I != E; ++I) {
-    const GRState *state =
-        FreeMemAux(C, CE, C.getState(), *I, isa<OwnershipHoldsAttr>(Att));
-  if (state)
-    C.addTransition(state);
+  for (OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
+       I != E; ++I) {
+    const GRState *state = FreeMemAux(C, CE, C.getState(), *I,
+                                      Att->getOwnKind() == OwnershipAttr::Holds);
+    if (state)
+      C.addTransition(state);
   }
 }
 

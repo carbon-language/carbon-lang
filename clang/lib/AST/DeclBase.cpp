@@ -312,35 +312,25 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
   return 0;
 }
 
-void Decl::initAttrs(Attr *attrs) {
+void Decl::setAttrs(const AttrVec &attrs) {
   assert(!HasAttrs && "Decl already contains attrs.");
 
-  Attr *&AttrBlank = getASTContext().getDeclAttrs(this);
-  assert(AttrBlank == 0 && "HasAttrs was wrong?");
+  AttrVec &AttrBlank = getASTContext().getDeclAttrs(this);
+  assert(AttrBlank.empty() && "HasAttrs was wrong?");
 
   AttrBlank = attrs;
   HasAttrs = true;
 }
 
-void Decl::addAttr(Attr *NewAttr) {
-  Attr *&ExistingAttr = getASTContext().getDeclAttrs(this);
-
-  assert(NewAttr->getNext() == 0 && "Chain of attributes will be truncated!");
-  NewAttr->setNext(ExistingAttr);
-  ExistingAttr = NewAttr;
-
-  HasAttrs = true;
-}
-
-void Decl::invalidateAttrs() {
+void Decl::dropAttrs() {
   if (!HasAttrs) return;
 
   HasAttrs = false;
   getASTContext().eraseDeclAttrs(this);
 }
 
-const Attr *Decl::getAttrsImpl() const {
-  assert(HasAttrs && "getAttrs() should verify this!");
+const AttrVec &Decl::getAttrs() const {
+  assert(HasAttrs && "No attrs to get!");
   return getASTContext().getDeclAttrs(this);
 }
 

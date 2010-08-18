@@ -497,8 +497,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) {
   unsigned Align = Target.getCharWidth();
 
-  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
-    Align = std::max(Align, AA->getMaxAlignment());
+  Align = std::max(Align, D->getMaxAlignment());
 
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
@@ -760,12 +759,9 @@ ASTContext::getTypeInfo(const Type *T) {
 
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
-    if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>()) {
-      Align = std::max(Aligned->getMaxAlignment(),
-                       getTypeAlign(Typedef->getUnderlyingType().getTypePtr()));
-      Width = getTypeSize(Typedef->getUnderlyingType().getTypePtr());
-    } else
-      return getTypeInfo(Typedef->getUnderlyingType().getTypePtr());
+    Align = std::max(Typedef->getMaxAlignment(),
+                     getTypeAlign(Typedef->getUnderlyingType().getTypePtr()));
+    Width = getTypeSize(Typedef->getUnderlyingType().getTypePtr());
     break;
   }
 

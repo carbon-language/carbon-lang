@@ -148,8 +148,11 @@ void PCHDeclReader::VisitDecl(Decl *D) {
                      cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
   D->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   D->setInvalidDecl(Record[Idx++]);
-  if (Record[Idx++])
-    D->initAttrs(Reader.ReadAttributes(Cursor));
+  if (Record[Idx++]) {
+    AttrVec Attrs;
+    Reader.ReadAttributes(Cursor, Attrs);
+    D->setAttrs(Attrs);
+  }
   D->setImplicit(Record[Idx++]);
   D->setUsed(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
@@ -1091,7 +1094,8 @@ void PCHDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Reads attributes from the current stream position.
-Attr *PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor) {
+void PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor,
+                               AttrVec &Attrs) {
   unsigned Code = DeclsCursor.ReadCode();
   assert(Code == llvm::bitc::UNABBREV_RECORD &&
          "Expected unabbreviated record"); (void)Code;
@@ -1102,174 +1106,18 @@ Attr *PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor) {
   assert(RecCode == pch::DECL_ATTR && "Expected attribute record");
   (void)RecCode;
 
-#define SIMPLE_ATTR(Name)                       \
- case attr::Name:                               \
-   New = ::new (*Context) Name##Attr();         \
-   break
-
-#define STRING_ATTR(Name)                                       \
- case attr::Name:                                               \
-   New = ::new (*Context) Name##Attr(*Context, ReadString(Record, Idx));  \
-   break
-
-#define UNSIGNED_ATTR(Name)                             \
- case attr::Name:                                       \
-   New = ::new (*Context) Name##Attr(Record[Idx++]);    \
-   break
-
-  Attr *Attrs = 0;
   while (Idx < Record.size()) {
     Attr *New = 0;
     attr::Kind Kind = (attr::Kind)Record[Idx++];
-    bool IsInherited = Record[Idx++];
+    SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[Idx++]);
+    bool isInherited = Record[Idx++];
 
-    switch (Kind) {
-    default:
-      assert(0 && "Unknown attribute!");
-      break;
-    STRING_ATTR(Alias);
-    SIMPLE_ATTR(AlignMac68k);
-    UNSIGNED_ATTR(Aligned);
-    SIMPLE_ATTR(AlwaysInline);
-    SIMPLE_ATTR(AnalyzerNoReturn);
-    STRING_ATTR(Annotate);
-    STRING_ATTR(AsmLabel);
-    SIMPLE_ATTR(BaseCheck);
-
-    case attr::Blocks:
-      New = ::new (*Context) BlocksAttr(
-                                  (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
-      break;
-
-    SIMPLE_ATTR(CDecl);
-
-    case attr::Cleanup:
-      New = ::new (*Context) CleanupAttr(
-                                  cast<FunctionDecl>(GetDecl(Record[Idx++])));
-      break;
-
-    SIMPLE_ATTR(Const);
-    UNSIGNED_ATTR(Constructor);
-    SIMPLE_ATTR(DLLExport);
-    SIMPLE_ATTR(DLLImport);
-    SIMPLE_ATTR(Deprecated);
-    UNSIGNED_ATTR(Destructor);
-    SIMPLE_ATTR(FastCall);
-    SIMPLE_ATTR(Final);
-
-    case attr::Format: {
-      std::string Type = ReadString(Record, Idx);
-      unsigned FormatIdx = Record[Idx++];
-      unsigned FirstArg = Record[Idx++];
-      New = ::new (*Context) FormatAttr(*Context, Type, FormatIdx, FirstArg);
-      break;
-    }
-
-    case attr::FormatArg: {
-      unsigned FormatIdx = Record[Idx++];
-      New = ::new (*Context) FormatArgAttr(FormatIdx);
-      break;
-    }
-
-    case attr::Sentinel: {
-      int sentinel = Record[Idx++];
-      int nullPos = Record[Idx++];
-      New = ::new (*Context) SentinelAttr(sentinel, nullPos);
-      break;
-    }
-
-    SIMPLE_ATTR(GNUInline);
-    SIMPLE_ATTR(Hiding);
-
-    case attr::IBAction:
-      New = ::new (*Context) IBActionAttr();
-      break;
-
-    case attr::IBOutlet:
-      New = ::new (*Context) IBOutletAttr();
-      break;
-
-    case attr::IBOutletCollection: {
-      QualType QT = GetType(Record[Idx++]);
-      New = ::new (*Context) IBOutletCollectionAttr(QT);
-      break;
-    }
-
-    SIMPLE_ATTR(Malloc);
-    SIMPLE_ATTR(NoDebug);
-    SIMPLE_ATTR(NoInline);
-    SIMPLE_ATTR(NoReturn);
-    SIMPLE_ATTR(NoThrow);
-
-    case attr::NonNull: {
-      unsigned Size = Record[Idx++];
-      llvm::SmallVector<unsigned, 16> ArgNums;
-      ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
-      Idx += Size;
-      New = ::new (*Context) NonNullAttr(*Context, ArgNums.data(), Size);
-      break;
-    }
-
-    case attr::ReqdWorkGroupSize: {
-      unsigned X = Record[Idx++];
-      unsigned Y = Record[Idx++];
-      unsigned Z = Record[Idx++];
-      New = ::new (*Context) ReqdWorkGroupSizeAttr(X, Y, Z);
-      break;
-    }
-
-    SIMPLE_ATTR(ObjCException);
-    SIMPLE_ATTR(ObjCNSObject);
-    SIMPLE_ATTR(CFReturnsNotRetained);
-    SIMPLE_ATTR(CFReturnsRetained);
-    SIMPLE_ATTR(NSReturnsNotRetained);
-    SIMPLE_ATTR(NSReturnsRetained);
-    SIMPLE_ATTR(Overloadable);
-    SIMPLE_ATTR(Override);
-    SIMPLE_ATTR(Packed);
-    UNSIGNED_ATTR(MaxFieldAlignment);
-    SIMPLE_ATTR(Pure);
-    UNSIGNED_ATTR(Regparm);
-    STRING_ATTR(Section);
-    SIMPLE_ATTR(StdCall);
-    SIMPLE_ATTR(ThisCall);
-    SIMPLE_ATTR(TransparentUnion);
-    SIMPLE_ATTR(Unavailable);
-    SIMPLE_ATTR(Unused);
-    SIMPLE_ATTR(Used);
-
-    case attr::Visibility:
-      New = ::new (*Context) VisibilityAttr(
-                              (VisibilityAttr::VisibilityTypes)Record[Idx++],
-                              (bool)Record[Idx++]);
-      break;
-
-    SIMPLE_ATTR(WarnUnusedResult);
-    SIMPLE_ATTR(Weak);
-    SIMPLE_ATTR(WeakRef);
-    SIMPLE_ATTR(WeakImport);
-    }
+#include "clang/Serialization/AttrPCHRead.inc"
 
     assert(New && "Unable to decode attribute?");
-    New->setInherited(IsInherited);
-    New->setNext(Attrs);
-    Attrs = New;
+    New->setInherited(isInherited);
+    Attrs.push_back(New);
   }
-#undef UNSIGNED_ATTR
-#undef STRING_ATTR
-#undef SIMPLE_ATTR
-
-  // The list of attributes was built backwards. Reverse the list
-  // before returning it.
-  Attr *PrevAttr = 0, *NextAttr = 0;
-  while (Attrs) {
-    NextAttr = Attrs->getNext();
-    Attrs->setNext(PrevAttr);
-    PrevAttr = Attrs;
-    Attrs = NextAttr;
-  }
-
-  return PrevAttr;
 }
 
 //===----------------------------------------------------------------------===//
