@@ -21,7 +21,6 @@
 #include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
