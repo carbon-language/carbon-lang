@@ -61,6 +61,26 @@ public:
     return *this;
   }
 
+  template<unsigned N>
+  StringSwitch& EndsWith(const char (&S)[N], const T &Value) {
+    if (!Result && Str.size() >= N-1 &&
+        std::memcmp(S, Str.data() + Str.size() + 1 - N, N-1) == 0) {
+      Result = &Value;
+    }
+
+    return *this;
+  }
+
+  template<unsigned N>
+  StringSwitch& StartsWith(const char (&S)[N], const T &Value) {
+    if (!Result && Str.size() >= N-1 &&
+        std::memcmp(S, Str.data(), N-1) == 0) {
+      Result = &Value;
+    }
+
+    return *this;
+  }
+
   template<unsigned N0, unsigned N1>
   StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
                       const T& Value) {

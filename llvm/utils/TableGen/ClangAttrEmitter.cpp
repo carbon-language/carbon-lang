@@ -13,9 +13,443 @@
 
 #include "ClangAttrEmitter.h"
 #include "Record.h"
+#include "llvm/ADT/StringSwitch.h"
 #include <algorithm>
 
 using namespace llvm;
+
+static const std::vector<StringRef> getValueAsListOfStrings(Record &R,
+                                                            StringRef FieldName) {
+  ListInit *List = R.getValueAsListInit(FieldName);
+  assert (List && "Got a null ListInit");
+
+  std::vector<StringRef> Strings;
+  Strings.reserve(List->getSize());
+
+  for (ListInit::iterator i = List->begin(), e = List->end(); i != e; ++i) {
+    assert(*i && "Got a null element in a ListInit");
+    if (StringInit *S = dynamic_cast<StringInit *>(*i))
+      Strings.push_back(S->getValue());
+    else if (CodeInit *C = dynamic_cast<CodeInit *>(*i))
+      Strings.push_back(C->getValue());
+    else
+      assert(false && "Got a non-string, non-code element in a ListInit");
+  }
+
+  return Strings;
+}
+
+std::string ReadPCHRecord(StringRef type) {
+  return StringSwitch<std::string>(type)
+    .EndsWith("Decl *", "cast_or_null<" + std::string(type, 0, type.size()-1) +
+              ">(GetDecl(Record[Idx++]))")
+    .Case("QualType", "ReadTypeRecord(Idx++)")
+    .Default("Record[Idx++]");
+}
+
+// Assumes that the way to get the value is SA->getname()
+std::string WritePCHRecord(StringRef type, StringRef name) {
+  return StringSwitch<std::string>(type)
+    .EndsWith("Decl *", "AddDeclRef(" + std::string(name) +
+                        ", Record);\n")
+    .Case("QualType", "AddTypeRef(" + std::string(name) + ", Record);\n")
+    .Default("Record.push_back(" + std::string(name) + ");\n");
+}
+
+namespace {
+  class Argument {
+    std::string lowerName, upperName;
+    StringRef attrName;
+
+  public:
+    Argument(Record &Arg, StringRef Attr)
+      : lowerName(Arg.getValueAsString("Name")), upperName(lowerName),
+        attrName(Attr) {
+      if (!lowerName.empty()) {
+        lowerName[0] = std::tolower(lowerName[0]);
+        upperName[0] = std::toupper(upperName[0]);
+      }
+    }
+
+    StringRef getLowerName() const { return lowerName; };
+    StringRef getUpperName() const { return upperName; };
+    StringRef getAttrName() const { return attrName; };
+
+    // These functions print the argument contents formatted in different ways.
+    virtual void writeAccessors(raw_ostream &OS) const = 0;
+    virtual void writeAccessorDefinitions(raw_ostream &OS) const {}
+    virtual void writeCloneArgs(raw_ostream &OS) const = 0;
+    virtual void writeCtorBody(raw_ostream &OS) const {}
+    virtual void writeCtorInitializers(raw_ostream &OS) const = 0;
+    virtual void writeCtorParameters(raw_ostream &OS) const = 0;
+    virtual void writeDeclarations(raw_ostream &OS) const = 0;
+    virtual void writePCHReadArgs(raw_ostream &OS) const = 0;
+    virtual void writePCHReadDecls(raw_ostream &OS) const = 0;
+    virtual void writePCHWrite(raw_ostream &OS) const = 0;
+  };
+
+  class SimpleArgument : public Argument {
+    std::string type;
+
+  public:
+    SimpleArgument(Record &Arg, StringRef Attr, std::string T)
+      : Argument(Arg, Attr), type(T)
+    {}
+
+    std::string getType() const { return type; }
+
+    void writeAccessors(raw_ostream &OS) const {
+      OS << "  " << type << " get" << getUpperName() << "() const {\n";
+      OS << "    return " << getLowerName() << ";\n";
+      OS << "  }";
+    }
+    void writeCloneArgs(raw_ostream &OS) const {
+      OS << getLowerName();
+    }
+    void writeCtorInitializers(raw_ostream &OS) const {
+      OS << getLowerName() << "(" << getUpperName() << ")";
+    }
+    void writeCtorParameters(raw_ostream &OS) const {
+      OS << type << " " << getUpperName();
+    }
+    void writeDeclarations(raw_ostream &OS) const {
+      OS << type << " " << getLowerName() << ";";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      std::string read = ReadPCHRecord(type);
+      OS << "    " << type << " " << getLowerName() << " = " << read << ";\n";
+    }
+    void writePCHReadArgs(raw_ostream &OS) const {
+      OS << getLowerName();
+    }
+    void writePCHWrite(raw_ostream &OS) const {
+      OS << "    " << WritePCHRecord(type, "SA->get" +
+                                           std::string(getUpperName()) + "()");
+    }
+  };
+
+  class StringArgument : public Argument {
+  public:
+    StringArgument(Record &Arg, StringRef Attr)
+      : Argument(Arg, Attr)
+    {}
+
+    void writeAccessors(raw_ostream &OS) const {
+      OS << "  llvm::StringRef get" << getUpperName() << "() const {\n";
+      OS << "    return llvm::StringRef(" << getLowerName() << ", "
+         << getLowerName() << "Length);\n";
+      OS << "  }\n";
+      OS << "  unsigned get" << getUpperName() << "Length() const {\n";
+      OS << "    return " << getLowerName() << "Length;\n";
+      OS << "  }\n";
+      OS << "  void set" << getUpperName()
+         << "(ASTContext &C, llvm::StringRef S) {\n";
+      OS << "    " << getLowerName() << "Length = S.size();\n";
+      OS << "    this->" << getLowerName() << " = new (C, 1) char ["
+         << getLowerName() << "Length];\n";
+      OS << "    std::memcpy(this->" << getLowerName() << ", S.data(), "
+         << getLowerName() << "Length);\n";
+      OS << "  }";
+    }
+    void writeCloneArgs(raw_ostream &OS) const {
+      OS << "get" << getUpperName() << "()";
+    }
+    void writeCtorBody(raw_ostream &OS) const {
+      OS << "      std::memcpy(" << getLowerName() << ", " << getUpperName()
+         << ".data(), " << getLowerName() << "Length);";
+    }
+    void writeCtorInitializers(raw_ostream &OS) const {
+      OS << getLowerName() << "Length(" << getUpperName() << ".size()),"
+         << getLowerName() << "(new (Ctx, 1) char[" << getLowerName()
+         << "Length])";
+    }
+    void writeCtorParameters(raw_ostream &OS) const {
+      OS << "llvm::StringRef " << getUpperName();
+    }
+    void writeDeclarations(raw_ostream &OS) const {
+      OS << "unsigned " << getLowerName() << "Length;\n";
+      OS << "char *" << getLowerName() << ";";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      OS << "    std::string " << getLowerName() << "= ReadString(Record, Idx);\n";
+    }
+    void writePCHReadArgs(raw_ostream &OS) const {
+      OS << getLowerName();
+    }
+    void writePCHWrite(raw_ostream &OS) const {
+      OS << "    AddString(SA->get" << getUpperName() << "(), Record);\n";
+    }
+  };
+
+  class AlignedArgument : public Argument {
+  public:
+    AlignedArgument(Record &Arg, StringRef Attr)
+      : Argument(Arg, Attr)
+    {}
+
+    void writeAccessors(raw_ostream &OS) const {
+      OS << "  bool is" << getUpperName() << "Dependent() const;\n";
+
+      OS << "  unsigned get" << getUpperName() << "(ASTContext &Ctx) const;\n";
+
+      OS << "  bool is" << getUpperName() << "Expr() const {\n";
+      OS << "    return is" << getLowerName() << "Expr;\n";
+      OS << "  }\n";
+
+      OS << "  Expr *get" << getUpperName() << "Expr() const {\n";
+      OS << "    assert(is" << getLowerName() << "Expr);\n";
+      OS << "    return " << getLowerName() << "Expr;\n";
+      OS << "  }\n";
+
+      OS << "  TypeSourceInfo *get" << getUpperName() << "Type() const {\n";
+      OS << "    assert(!is" << getLowerName() << "Expr);\n";
+      OS << "    return " << getLowerName() << "Type;\n";
+      OS << "  }";
+    }
+    void writeAccessorDefinitions(raw_ostream &OS) const {
+      OS << "bool " << getAttrName() << "Attr::is" << getUpperName()
+         << "Dependent() const {\n";
+      OS << "  if (is" << getLowerName() << "Expr)\n";
+      OS << "    return " << getLowerName() << "Expr && (" << getLowerName()
+         << "Expr->isValueDependent() || " << getLowerName()
+         << "Expr->isTypeDependent());\n"; 
+      OS << "  else\n";
+      OS << "    return " << getLowerName()
+         << "Type->getType()->isDependentType();\n";
+      OS << "}\n";
+
+      // FIXME: Do not do the calculation here
+      // FIXME: Handle types correctly
+      // A null pointer means maximum alignment
+      // FIXME: Load the platform-specific maximum alignment, rather than
+      //        16, the x86 max.
+      OS << "unsigned " << getAttrName() << "Attr::get" << getUpperName()
+         << "(ASTContext &Ctx) const {\n";
+      OS << "  assert(!is" << getUpperName() << "Dependent());\n";
+      OS << "  if (is" << getLowerName() << "Expr)\n";
+      OS << "    return (" << getLowerName() << "Expr ? " << getLowerName()
+         << "Expr->EvaluateAsInt(Ctx).getZExtValue() : 16)"
+         << "* Ctx.getCharWidth();\n";
+      OS << "  else\n";
+      OS << "    return 0; // FIXME\n";
+      OS << "}\n";
+    }
+    void writeCloneArgs(raw_ostream &OS) const {
+      OS << "is" << getLowerName() << "Expr, is" << getLowerName()
+         << "Expr ? static_cast<void*>(" << getLowerName()
+         << "Expr) : " << getLowerName()
+         << "Type";
+    }
+    void writeCtorBody(raw_ostream &OS) const {
+      OS << "    if (is" << getLowerName() << "Expr)\n";
+      OS << "       " << getLowerName() << "Expr = reinterpret_cast<Expr *>("
+         << getUpperName() << ");\n";
+      OS << "    else\n";
+      OS << "       " << getLowerName()
+         << "Type = reinterpret_cast<TypeSourceInfo *>(" << getUpperName()
+         << ");";
+    }
+    void writeCtorInitializers(raw_ostream &OS) const {
+      OS << "is" << getLowerName() << "Expr(Is" << getUpperName() << "Expr)";
+    }
+    void writeCtorParameters(raw_ostream &OS) const {
+      OS << "bool Is" << getUpperName() << "Expr, void *" << getUpperName();
+    }
+    void writeDeclarations(raw_ostream &OS) const {
+      OS << "bool is" << getLowerName() << "Expr;\n";
+      OS << "union {\n";
+      OS << "Expr *" << getLowerName() << "Expr;\n";
+      OS << "TypeSourceInfo *" << getLowerName() << "Type;\n";
+      OS << "};";
+    }
+    void writePCHReadArgs(raw_ostream &OS) const {
+      OS << "is" << getLowerName() << "Expr, " << getLowerName() << "Ptr";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      OS << "    bool is" << getLowerName() << "Expr = Record[Idx++];\n";
+      OS << "    void *" << getLowerName() << "Ptr;\n";
+      OS << "    if (is" << getLowerName() << "Expr)\n";
+      OS << "      " << getLowerName() << "Ptr = ReadExpr(DeclsCursor);\n";
+      OS << "    else\n";
+      OS << "      " << getLowerName()
+         << "Ptr = GetTypeSourceInfo(DeclsCursor, Record, Idx);\n";
+    }
+    void writePCHWrite(raw_ostream &OS) const {
+      OS << "    Record.push_back(SA->is" << getUpperName() << "Expr());\n";
+      OS << "    if (SA->is" << getUpperName() << "Expr())\n";
+      OS << "      AddStmt(SA->get" << getUpperName() << "Expr());\n";
+      OS << "    else\n";
+      OS << "      AddTypeSourceInfo(SA->get" << getUpperName()
+         << "Type(), Record);\n";
+    }
+  };
+
+  class VariadicArgument : public Argument {
+    std::string type;
+
+  public:
+    VariadicArgument(Record &Arg, StringRef Attr, std::string T)
+      : Argument(Arg, Attr), type(T)
+    {}
+
+    std::string getType() const { return type; }
+
+    void writeAccessors(raw_ostream &OS) const {
+      OS << "  typedef " << type << "* " << getLowerName() << "_iterator;\n";
+      OS << "  " << getLowerName() << "_iterator " << getLowerName()
+         << "_begin() const {\n";
+      OS << "    return " << getLowerName() << ";\n";
+      OS << "  }\n";
+      OS << "  " << getLowerName() << "_iterator " << getLowerName()
+         << "_end() const {\n";
+      OS << "    return " << getLowerName() << " + " << getLowerName()
+         << "Size;\n";
+      OS << "  }\n";
+      OS << "  unsigned " << getLowerName() << "_size() const {\n"
+         << "    return " << getLowerName() << "Size;\n;";
+      OS << "  }";
+    }
+    void writeCloneArgs(raw_ostream &OS) const {
+      OS << getLowerName() << ", " << getLowerName() << "Size";
+    }
+    void writeCtorBody(raw_ostream &OS) const {
+      // FIXME: memcpy is not safe on non-trivial types.
+      OS << "    std::memcpy(" << getLowerName() << ", " << getUpperName()
+         << ", " << getLowerName() << "Size * sizeof(" << getType() << "));\n";
+    }
+    void writeCtorInitializers(raw_ostream &OS) const {
+      OS << getLowerName() << "Size(" << getUpperName() << "Size), "
+         << getLowerName() << "(new (Ctx, 16) " << getType() << "["
+         << getLowerName() << "Size])";
+    }
+    void writeCtorParameters(raw_ostream &OS) const {
+      OS << getType() << " *" << getUpperName() << ", unsigned "
+         << getUpperName() << "Size";
+    }
+    void writeDeclarations(raw_ostream &OS) const {
+      OS << "  unsigned " << getLowerName() << "Size;\n";
+      OS << "  " << getType() << " *" << getLowerName() << ";";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      OS << "  unsigned " << getLowerName() << "Size = Record[Idx++];\n";
+      OS << "  llvm::SmallVector<" << type << ", 4> " << getLowerName()
+         << ";\n";
+      OS << "  " << getLowerName() << ".reserve(" << getLowerName()
+         << "Size);\n";
+      OS << "  for (unsigned i = " << getLowerName() << "Size; i; --i)\n";
+      
+      std::string read = ReadPCHRecord(type);
+      OS << "    " << getLowerName() << ".push_back(" << read << ");\n";
+    }
+    void writePCHReadArgs(raw_ostream &OS) const {
+      OS << getLowerName() << ".data(), " << getLowerName() << "Size";
+    }
+    void writePCHWrite(raw_ostream &OS) const{
+      OS << "    Record.push_back(SA->" << getLowerName() << "_size());\n";
+      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
+         << "_iterator i = SA->" << getLowerName() << "_begin(), e = SA->"
+         << getLowerName() << "_end(); i != e; ++i)\n";
+      OS << "      " << WritePCHRecord(type, "(*i)");
+    }
+  };
+
+  class EnumArgument : public Argument {
+    StringRef type;
+    std::vector<StringRef> values, enums;
+  public:
+    EnumArgument(Record &Arg, StringRef Attr)
+      : Argument(Arg, Attr), type(Arg.getValueAsString("Type")),
+        values(getValueAsListOfStrings(Arg, "Values")),
+        enums(getValueAsListOfStrings(Arg, "Enums"))
+    {}
+
+    void writeAccessors(raw_ostream &OS) const {
+      OS << "  " << type << " get" << getUpperName() << "() const {\n";
+      OS << "    return " << getLowerName() << ";\n";
+      OS << "  }";
+    }
+    void writeCloneArgs(raw_ostream &OS) const {
+      OS << getLowerName();
+    }
+    void writeCtorInitializers(raw_ostream &OS) const {
+      OS << getLowerName() << "(" << getUpperName() << ")";
+    }
+    void writeCtorParameters(raw_ostream &OS) const {
+      OS << type << " " << getUpperName();
+    }
+    void writeDeclarations(raw_ostream &OS) const {
+      // Calculate the various enum values
+      std::vector<StringRef> uniques(enums);
+      std::sort(uniques.begin(), uniques.end());
+      uniques.erase(std::unique(uniques.begin(), uniques.end()),
+                    uniques.end());
+      // FIXME: Emit a proper error
+      assert(!uniques.empty());
+
+      std::vector<StringRef>::iterator i = uniques.begin(),
+                                       e = uniques.end();
+      // The last one needs to not have a comma.
+      --e;
+
+      OS << "public:\n";
+      OS << "  enum " << type << " {\n";
+      for (; i != e; ++i)
+        OS << "    " << *i << ",\n";
+      OS << "    " << *e << "\n";
+      OS << "  };\n";
+      OS << "private:\n";
+      OS << "  " << type << " " << getLowerName() << ";";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      OS << "    " << getAttrName() << "Attr::" << type << " " << getLowerName()
+         << "(static_cast<" << getAttrName() << "Attr::" << type
+         << ">(Record[Idx++]));\n";
+    }
+    void writePCHReadArgs(raw_ostream &OS) const {
+      OS << getLowerName();
+    }
+    void writePCHWrite(raw_ostream &OS) const {
+      OS << "Record.push_back(SA->get" << getUpperName() << "());\n";
+    }
+  };
+}
+
+static Argument *createArgument(Record &Arg, StringRef Attr,
+                                Record *Search = 0) {
+  if (!Search)
+    Search = &Arg;
+
+  Argument *Ptr = 0;
+  llvm::StringRef ArgName = Search->getName();
+
+  if (ArgName == "AlignedArgument") Ptr = new AlignedArgument(Arg, Attr);
+  else if (ArgName == "EnumArgument") Ptr = new EnumArgument(Arg, Attr);
+  else if (ArgName == "ExprArgument") Ptr = new SimpleArgument(Arg, Attr,
+                                                               "Expr *");
+  else if (ArgName == "FunctionArgument")
+    Ptr = new SimpleArgument(Arg, Attr, "FunctionDecl *");
+  else if (ArgName == "IdentifierArgument")
+    Ptr = new SimpleArgument(Arg, Attr, "IdentifierInfo *");
+  else if (ArgName == "IntArgument") Ptr = new SimpleArgument(Arg, Attr, "int");
+  else if (ArgName == "StringArgument") Ptr = new StringArgument(Arg, Attr);
+  else if (ArgName == "TypeArgument")
+    Ptr = new SimpleArgument(Arg, Attr, "QualType");
+  else if (ArgName == "UnsignedArgument")
+    Ptr = new SimpleArgument(Arg, Attr, "unsigned");
+  else if (ArgName == "VariadicUnsignedArgument")
+    Ptr = new VariadicArgument(Arg, Attr, "unsigned");
+
+  if (!Ptr) {
+    std::vector<Record*> Bases = Search->getSuperClasses();
+    for (std::vector<Record*>::iterator i = Bases.begin(), e = Bases.end();
+         i != e; ++i) {
+      Ptr = createArgument(Arg, Attr, *i);
+      if (Ptr)
+        break;
+    }
+  }
+  return Ptr;
+}
 
 void ClangAttrClassEmitter::run(raw_ostream &OS) {
   OS << "// This file is generated by TableGen. Do not edit.\n\n";
@@ -28,29 +462,63 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
        i != e; ++i) {
     Record &R = **i;
 
-    if (R.getValueAsBit("DoNotEmit"))
-      continue;
-
     OS << "class " << R.getName() << "Attr : public Attr {\n";
 
-    std::vector<Record*> Args = R.getValueAsListOfDefs("Args");
+    std::vector<Record*> ArgRecords = R.getValueAsListOfDefs("Args");
+    std::vector<Argument*> Args;
+    std::vector<Argument*>::iterator ai, ae;
+    Args.reserve(ArgRecords.size());
 
-    // FIXME: Handle arguments
-    assert(Args.empty() && "Can't yet handle arguments");
+    for (std::vector<Record*>::iterator ri = ArgRecords.begin(),
+                                        re = ArgRecords.end();
+         ri != re; ++ri) {
+      Record &ArgRecord = **ri;
+      Argument *Arg = createArgument(ArgRecord, R.getName());
+      assert(Arg);
+      Args.push_back(Arg);
+
+      Arg->writeDeclarations(OS);
+      OS << "\n\n";
+    }
+
+    ae = Args.end();
 
     OS << "\n public:\n";
-    OS << "  " << R.getName() << "Attr(";
+    OS << "  " << R.getName() << "Attr(SourceLocation L, ASTContext &Ctx\n";
     
-    // Arguments go here
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      OS << "              , ";
+      (*ai)->writeCtorParameters(OS);
+      OS << "\n";
+    }
     
-    OS << ")\n";
-    OS << "    : Attr(attr::" << R.getName() << ")";
+    OS << "             )\n";
+    OS << "    : Attr(attr::" << R.getName() << ", L)\n";
 
-    // Arguments go here
-    
-    OS << " {}\n\n";
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      OS << "              , ";
+      (*ai)->writeCtorInitializers(OS);
+      OS << "\n";
+    }
 
-    OS << "  virtual Attr *clone (ASTContext &C) const;\n";
+    OS << "  {\n";
+  
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      (*ai)->writeCtorBody(OS);
+      OS << "\n";
+    }
+    OS << "  }\n\n";
+
+    OS << "  virtual " << R.getName() << "Attr *clone (ASTContext &C) const;\n";
+
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      (*ai)->writeAccessors(OS);
+      OS << "\n\n";
+    }
+
+    OS << R.getValueAsCode("AdditionalMembers");
+    OS << "\n\n";
+
     OS << "  static bool classof(const Attr *A) { return A->getKind() == "
        << "attr::" << R.getName() << "; }\n";
     OS << "  static bool classof(const " << R.getName()
@@ -59,6 +527,34 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
   }
 
   OS << "#endif\n";
+}
+
+void ClangAttrImplEmitter::run(raw_ostream &OS) {
+  OS << "// This file is generated by TableGen. Do not edit.\n\n";
+
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
+  std::vector<Record*>::iterator i = Attrs.begin(), e = Attrs.end(), ri, re;
+  std::vector<Argument*>::iterator ai, ae;
+
+  for (; i != e; ++i) {
+    Record &R = **i;
+    std::vector<Record*> ArgRecords = R.getValueAsListOfDefs("Args");
+    std::vector<Argument*> Args;
+    for (ri = ArgRecords.begin(), re = ArgRecords.end(); ri != re; ++ri)
+      Args.push_back(createArgument(**ri, R.getName()));
+
+    for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
+      (*ai)->writeAccessorDefinitions(OS);
+
+    OS << R.getName() << "Attr *" << R.getName()
+       << "Attr::clone(ASTContext &C) const {\n";
+    OS << "  return new (C) " << R.getName() << "Attr(getLocation(), C";
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      OS << ", ";
+      (*ai)->writeCloneArgs(OS);
+    }
+    OS << ");\n}\n\n";
+  }
 }
 
 void ClangAttrListEmitter::run(raw_ostream &OS) {
@@ -81,4 +577,62 @@ void ClangAttrListEmitter::run(raw_ostream &OS) {
 
   OS << "#undef LAST_ATTR\n";
   OS << "#undef ATTR\n";
+}
+
+void ClangAttrPCHReadEmitter::run(raw_ostream &OS) {
+  OS << "// This file is generated by TableGen. Do not edi.\n\n";
+
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr"),
+                       ArgRecords;
+  std::vector<Record*>::iterator i = Attrs.begin(), e = Attrs.end(), ai, ae;
+  std::vector<Argument*> Args;
+  std::vector<Argument*>::iterator ri, re;
+
+  OS << "  switch (Kind) {\n";
+  OS << "  default:\n";
+  OS << "    assert(0 && \"Unknown attribute!\");\n";
+  OS << "    break;\n";
+  for (; i != e; ++i) {
+    Record &R = **i;
+    OS << "  case attr::" << R.getName() << ": {\n";
+    ArgRecords = R.getValueAsListOfDefs("Args");
+    Args.clear();
+    for (ai = ArgRecords.begin(), ae = ArgRecords.end(); ai != ae; ++ai) {
+      Argument *A = createArgument(**ai, R.getName());
+      Args.push_back(A);
+      A->writePCHReadDecls(OS);
+    }
+    OS << "    New = new (*Context) " << R.getName() << "Attr(Loc, *Context";
+    for (ri = Args.begin(), re = Args.end(); ri != re; ++ri) {
+      OS << ", ";
+      (*ri)->writePCHReadArgs(OS);
+    }
+    OS << ");\n";
+    OS << "    break;\n";
+    OS << "  }\n";
+  }
+  OS << "  }\n";
+}
+
+void ClangAttrPCHWriteEmitter::run(raw_ostream &OS) {
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr"), Args;
+  std::vector<Record*>::iterator i = Attrs.begin(), e = Attrs.end(), ai, ae;
+
+  OS << "  switch (A->getKind()) {\n";
+  OS << "  default:\n";
+  OS << "    llvm_unreachable(\"Unknown attribute kind!\");\n";
+  OS << "    break;\n";
+  for (; i != e; ++i) {
+    Record &R = **i;
+    OS << "  case attr::" << R.getName() << ": {\n";
+    Args = R.getValueAsListOfDefs("Args");
+    if (!Args.empty())
+      OS << "    const " << R.getName() << "Attr *SA = cast<" << R.getName()
+         << "Attr>(A);\n";
+    for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
+      createArgument(**ai, R.getName())->writePCHWrite(OS);
+    OS << "    break;\n";
+    OS << "  }\n";
+  }
+  OS << "  }\n";
 }

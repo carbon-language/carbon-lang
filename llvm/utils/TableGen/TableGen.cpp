@@ -55,7 +55,10 @@ enum ActionType {
   GenDisassembler,
   GenCallingConv,
   GenClangAttrClasses,
+  GenClangAttrImpl,
   GenClangAttrList,
+  GenClangAttrPCHRead,
+  GenClangAttrPCHWrite,
   GenClangDiagsDefs,
   GenClangDiagGroups,
   GenClangDeclNodes,
@@ -116,8 +119,14 @@ namespace {
                                "Generate target intrinsic information"),
                     clEnumValN(GenClangAttrClasses, "gen-clang-attr-classes",
                                "Generate clang attribute clases"),
+                    clEnumValN(GenClangAttrImpl, "gen-clang-attr-impl",
+                               "Generate clang attribute implementations"),
                     clEnumValN(GenClangAttrList, "gen-clang-attr-list",
                                "Generate a clang attribute list"),
+                    clEnumValN(GenClangAttrPCHRead, "gen-clang-attr-pch-read",
+                               "Generate clang PCH attribute reader"),
+                    clEnumValN(GenClangAttrPCHWrite, "gen-clang-attr-pch-write",
+                               "Generate clang PCH attribute writer"),
                     clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
                                "Generate Clang diagnostics definitions"),
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
@@ -256,8 +265,17 @@ int main(int argc, char **argv) {
     case GenClangAttrClasses:
       ClangAttrClassEmitter(Records).run(Out);
       break;
+    case GenClangAttrImpl:
+      ClangAttrImplEmitter(Records).run(Out);
+      break;
     case GenClangAttrList:
       ClangAttrListEmitter(Records).run(Out);
+      break;
+    case GenClangAttrPCHRead:
+      ClangAttrPCHReadEmitter(Records).run(Out);
+      break;
+    case GenClangAttrPCHWrite:
+      ClangAttrPCHWriteEmitter(Records).run(Out);
       break;
     case GenClangDiagsDefs:
       ClangDiagsDefsEmitter(Records, ClangComponent).run(Out);

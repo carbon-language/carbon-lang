@@ -31,6 +31,19 @@ class ClangAttrClassEmitter : public TableGenBackend {
   void run(raw_ostream &OS);
 };
 
+/// ClangAttrImplEmitter - class emits the class method defintions for
+///   attributes for clang.
+class ClangAttrImplEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+ 
+ public:
+  explicit ClangAttrImplEmitter(RecordKeeper &R)
+    : Records(R)
+    {}
+
+  void run(raw_ostream &OS);
+};
+
 /// ClangAttrListEmitter - class emits the enumeration list for attributes for
 ///   clang.
 class ClangAttrListEmitter : public TableGenBackend {
@@ -38,6 +51,32 @@ class ClangAttrListEmitter : public TableGenBackend {
 
  public:
   explicit ClangAttrListEmitter(RecordKeeper &R)
+    : Records(R)
+    {}
+
+  void run(raw_ostream &OS);
+};
+
+/// ClangAttrPCHReadEmitter - class emits the code to read an attribute from
+///   a clang precompiled header.
+class ClangAttrPCHReadEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+
+public:
+  explicit ClangAttrPCHReadEmitter(RecordKeeper &R)
+    : Records(R)
+    {}
+
+  void run(raw_ostream &OS);
+};
+
+/// ClangAttrPCHWriteEmitter - class emits the code to read an attribute from
+///   a clang precompiled header.
+class ClangAttrPCHWriteEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+
+public:
+  explicit ClangAttrPCHWriteEmitter(RecordKeeper &R)
     : Records(R)
     {}
 
