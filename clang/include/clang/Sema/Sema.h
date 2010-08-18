@@ -2961,16 +2961,16 @@ public:
     AbstractReturnType,
     AbstractParamType,
     AbstractVariableType,
-    AbstractFieldType
+    AbstractFieldType,
+    AbstractArrayType
   };
 
   bool RequireNonAbstractType(SourceLocation Loc, QualType T,
-                              const PartialDiagnostic &PD,
-                              const CXXRecordDecl *CurrentRD = 0);
+                              const PartialDiagnostic &PD);
+  void DiagnoseAbstractType(const CXXRecordDecl *RD);
 
   bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned DiagID,
-                              AbstractDiagSelID SelID = AbstractNone,
-                              const CXXRecordDecl *CurrentRD = 0);
+                              AbstractDiagSelID SelID = AbstractNone);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]

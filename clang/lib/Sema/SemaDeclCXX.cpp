@@ -2311,25 +2311,20 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
-                                  unsigned DiagID, AbstractDiagSelID SelID,
-                                  const CXXRecordDecl *CurrentRD) {
+                                  unsigned DiagID, AbstractDiagSelID SelID) {
   if (SelID == -1)
-    return RequireNonAbstractType(Loc, T,
-                                  PDiag(DiagID), CurrentRD);
+    return RequireNonAbstractType(Loc, T, PDiag(DiagID));
   else
-    return RequireNonAbstractType(Loc, T,
-                                  PDiag(DiagID) << SelID, CurrentRD);
+    return RequireNonAbstractType(Loc, T, PDiag(DiagID) << SelID);
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
-                                  const PartialDiagnostic &PD,
-                                  const CXXRecordDecl *CurrentRD) {
+                                  const PartialDiagnostic &PD) {
   if (!getLangOptions().CPlusPlus)
     return false;
 
   if (const ArrayType *AT = Context.getAsArrayType(T))
-    return RequireNonAbstractType(Loc, AT->getElementType(), PD,
-                                  CurrentRD);
+    return RequireNonAbstractType(Loc, AT->getElementType(), PD);
 
   if (const PointerType *PT = T->getAs<PointerType>()) {
     // Find the innermost pointer type.
@@ -2337,7 +2332,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
       PT = T;
 
     if (const ArrayType *AT = Context.getAsArrayType(PT->getPointeeType()))
-      return RequireNonAbstractType(Loc, AT->getElementType(), PD, CurrentRD);
+      return RequireNonAbstractType(Loc, AT->getElementType(), PD);
   }
 
   const RecordType *RT = T->getAs<RecordType>();
@@ -2346,22 +2341,27 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
 
   const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
 
-  if (CurrentRD && CurrentRD != RD)
-    return false;
-
-  // FIXME: is this reasonable?  It matches current behavior, but....
-  if (!RD->getDefinition())
+  // We can't answer whether something is abstract until it has a
+  // definition.  If it's currently being defined, we'll walk back
+  // over all the declarations when we have a full definition.
+  const CXXRecordDecl *Def = RD->getDefinition();
+  if (!Def || Def->isBeingDefined())
     return false;
 
   if (!RD->isAbstract())
     return false;
 
   Diag(Loc, PD) << RD->getDeclName();
+  DiagnoseAbstractType(RD);
 
-  // Check if we've already emitted the list of pure virtual functions for this
-  // class.
+  return true;
+}
+
+void Sema::DiagnoseAbstractType(const CXXRecordDecl *RD) {
+  // Check if we've already emitted the list of pure virtual functions
+  // for this class.
   if (PureVirtualClassDiagSet && PureVirtualClassDiagSet->count(RD))
-    return true;
+    return;
 
   CXXFinalOverriderMap FinalOverriders;
   RD->getFinalOverriders(FinalOverriders);
@@ -2401,69 +2401,175 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   if (!PureVirtualClassDiagSet)
     PureVirtualClassDiagSet.reset(new RecordDeclSetTy);
   PureVirtualClassDiagSet->insert(RD);
-
-  return true;
 }
 
 namespace {
-  class AbstractClassUsageDiagnoser
-    : public DeclVisitor<AbstractClassUsageDiagnoser, bool> {
-    Sema &SemaRef;
-    CXXRecordDecl *AbstractClass;
+struct AbstractUsageInfo {
+  Sema &S;
+  CXXRecordDecl *Record;
+  CanQualType AbstractType;
+  bool Invalid;
 
-    bool VisitDeclContext(const DeclContext *DC) {
-      bool Invalid = false;
+  AbstractUsageInfo(Sema &S, CXXRecordDecl *Record)
+    : S(S), Record(Record),
+      AbstractType(S.Context.getCanonicalType(
+                   S.Context.getTypeDeclType(Record))),
+      Invalid(false) {}
 
-      for (CXXRecordDecl::decl_iterator I = DC->decls_begin(),
-           E = DC->decls_end(); I != E; ++I)
-        Invalid |= Visit(*I);
+  void DiagnoseAbstractType() {
+    if (Invalid) return;
+    S.DiagnoseAbstractType(Record);
+    Invalid = true;
+  }
 
-      return Invalid;
+  bool HasAbstractType(QualType T) {
+    if (T->isArrayType())
+      T = S.Context.getBaseElementType(T);
+    CanQualType CT = T->getCanonicalTypeUnqualified().getUnqualifiedType();
+    return (CT == AbstractType);
+  }
+
+  void CheckType(const NamedDecl *D, TypeLoc TL, Sema::AbstractDiagSelID Sel);
+};
+
+struct CheckAbstractUsage {
+  AbstractUsageInfo &Info;
+  const NamedDecl *Ctx;
+
+  CheckAbstractUsage(AbstractUsageInfo &Info, const NamedDecl *Ctx)
+    : Info(Info), Ctx(Ctx) {}
+
+  void Visit(TypeLoc TL, Sema::AbstractDiagSelID Sel) {
+    switch (TL.getTypeLocClass()) {
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+    case TypeLoc::CLASS: Check(cast<CLASS##TypeLoc>(TL), Sel); break;
+#include "clang/AST/TypeLocNodes.def"
     }
+  }
 
-  public:
-    AbstractClassUsageDiagnoser(Sema& SemaRef, CXXRecordDecl *ac)
-      : SemaRef(SemaRef), AbstractClass(ac) {
-        Visit(SemaRef.Context.getTranslationUnitDecl());
+  void Check(FunctionProtoTypeLoc TL, Sema::AbstractDiagSelID Sel) {
+    Visit(TL.getResultLoc(), Sema::AbstractReturnType);
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      TypeSourceInfo *TSI = TL.getArg(I)->getTypeSourceInfo();
+      if (TSI) Visit(TSI->getTypeLoc(), Sema::AbstractParamType);
     }
+  }
 
-    bool VisitFunctionDecl(const FunctionDecl *FD) {
-      if (FD->isThisDeclarationADefinition()) {
-        // No need to do the check if we're in a definition, because it requires
-        // that the return/param types are complete.
-        // because that requires
-        return VisitDeclContext(FD);
-      }
+  void Check(ArrayTypeLoc TL, Sema::AbstractDiagSelID Sel) {
+    Visit(TL.getElementLoc(), Sema::AbstractArrayType);
+  }
 
-      // Check the return type.
-      QualType RTy = FD->getType()->getAs<FunctionType>()->getResultType();
-      bool Invalid =
-        SemaRef.RequireNonAbstractType(FD->getLocation(), RTy,
-                                       diag::err_abstract_type_in_decl,
-                                       Sema::AbstractReturnType,
-                                       AbstractClass);
-
-      for (FunctionDecl::param_const_iterator I = FD->param_begin(),
-           E = FD->param_end(); I != E; ++I) {
-        const ParmVarDecl *VD = *I;
-        Invalid |=
-          SemaRef.RequireNonAbstractType(VD->getLocation(),
-                                         VD->getOriginalType(),
-                                         diag::err_abstract_type_in_decl,
-                                         Sema::AbstractParamType,
-                                         AbstractClass);
-      }
-
-      return Invalid;
+  void Check(TemplateSpecializationTypeLoc TL, Sema::AbstractDiagSelID Sel) {
+    // Visit the type parameters from a permissive context.
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      TemplateArgumentLoc TAL = TL.getArgLoc(I);
+      if (TAL.getArgument().getKind() == TemplateArgument::Type)
+        if (TypeSourceInfo *TSI = TAL.getTypeSourceInfo())
+          Visit(TSI->getTypeLoc(), Sema::AbstractNone);
+      // TODO: other template argument types?
     }
+  }
 
-    bool VisitDecl(const Decl* D) {
-      if (const DeclContext *DC = dyn_cast<DeclContext>(D))
-        return VisitDeclContext(DC);
+  // Visit pointee types from a permissive context.
+#define CheckPolymorphic(Type) \
+  void Check(Type TL, Sema::AbstractDiagSelID Sel) { \
+    Visit(TL.getNextTypeLoc(), Sema::AbstractNone); \
+  }
+  CheckPolymorphic(PointerTypeLoc)
+  CheckPolymorphic(ReferenceTypeLoc)
+  CheckPolymorphic(MemberPointerTypeLoc)
+  CheckPolymorphic(BlockPointerTypeLoc)
 
-      return false;
+  /// Handle all the types we haven't given a more specific
+  /// implementation for above.
+  void Check(TypeLoc TL, Sema::AbstractDiagSelID Sel) {
+    // Every other kind of type that we haven't called out already
+    // that has an inner type is either (1) sugar or (2) contains that
+    // inner type in some way as a subobject.
+    if (TypeLoc Next = TL.getNextTypeLoc())
+      return Visit(Next, Sel);
+
+    // If there's no inner type and we're in a permissive context,
+    // don't diagnose.
+    if (Sel == Sema::AbstractNone) return;
+
+    // Check whether the type matches the abstract type.
+    QualType T = TL.getType();
+    if (T->isArrayType()) {
+      Sel = Sema::AbstractArrayType;
+      T = Info.S.Context.getBaseElementType(T);
     }
-  };
+    CanQualType CT = T->getCanonicalTypeUnqualified().getUnqualifiedType();
+    if (CT != Info.AbstractType) return;
+
+    // It matched; do some magic.
+    if (Sel == Sema::AbstractArrayType) {
+      Info.S.Diag(Ctx->getLocation(), diag::err_array_of_abstract_type)
+        << T << TL.getSourceRange();
+    } else {
+      Info.S.Diag(Ctx->getLocation(), diag::err_abstract_type_in_decl)
+        << Sel << T << TL.getSourceRange();
+    }
+    Info.DiagnoseAbstractType();
+  }
+};
+
+void AbstractUsageInfo::CheckType(const NamedDecl *D, TypeLoc TL,
+                                  Sema::AbstractDiagSelID Sel) {
+  CheckAbstractUsage(*this, D).Visit(TL, Sel);
+}
+
+}
+
+/// Check for invalid uses of an abstract type in a method declaration.
+static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
+                                    CXXMethodDecl *MD) {
+  // No need to do the check on definitions, which require that
+  // the return/param types be complete.
+  if (MD->isThisDeclarationADefinition())
+    return;
+
+  // For safety's sake, just ignore it if we don't have type source
+  // information.  This should never happen for non-implicit methods,
+  // but...
+  if (TypeSourceInfo *TSI = MD->getTypeSourceInfo())
+    Info.CheckType(MD, TSI->getTypeLoc(), Sema::AbstractNone);
+}
+
+/// Check for invalid uses of an abstract type within a class definition.
+static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
+                                    CXXRecordDecl *RD) {
+  for (CXXRecordDecl::decl_iterator
+         I = RD->decls_begin(), E = RD->decls_end(); I != E; ++I) {
+    Decl *D = *I;
+    if (D->isImplicit()) continue;
+
+    // Methods and method templates.
+    if (isa<CXXMethodDecl>(D)) {
+      CheckAbstractClassUsage(Info, cast<CXXMethodDecl>(D));
+    } else if (isa<FunctionTemplateDecl>(D)) {
+      FunctionDecl *FD = cast<FunctionTemplateDecl>(D)->getTemplatedDecl();
+      CheckAbstractClassUsage(Info, cast<CXXMethodDecl>(FD));
+
+    // Fields and static variables.
+    } else if (isa<FieldDecl>(D)) {
+      FieldDecl *FD = cast<FieldDecl>(D);
+      if (TypeSourceInfo *TSI = FD->getTypeSourceInfo())
+        Info.CheckType(FD, TSI->getTypeLoc(), Sema::AbstractFieldType);
+    } else if (isa<VarDecl>(D)) {
+      VarDecl *VD = cast<VarDecl>(D);
+      if (TypeSourceInfo *TSI = VD->getTypeSourceInfo())
+        Info.CheckType(VD, TSI->getTypeLoc(), Sema::AbstractVariableType);
+
+    // Nested classes and class templates.
+    } else if (isa<CXXRecordDecl>(D)) {
+      CheckAbstractClassUsage(Info, cast<CXXRecordDecl>(D));
+    } else if (isa<ClassTemplateDecl>(D)) {
+      CheckAbstractClassUsage(Info,
+                             cast<ClassTemplateDecl>(D)->getTemplatedDecl());
+    }
+  }
 }
 
 /// \brief Perform semantic checks on a class definition that has been
@@ -2548,8 +2654,10 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  if (Record->isAbstract() && !Record->isInvalidDecl())
-    (void)AbstractClassUsageDiagnoser(*this, Record);
+  if (Record->isAbstract() && !Record->isInvalidDecl()) {
+    AbstractUsageInfo Info(*this, Record);
+    CheckAbstractClassUsage(Info, Record);
+  }
   
   // If this is not an aggregate type and has no user-declared constructor,
   // complain about any non-static data members of reference or const scalar
