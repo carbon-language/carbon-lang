@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines the PCHDeserializationListener class, which is notified
-//  by the PCHReader whenever a type or declaration is deserialized.
+//  by the ASTReader whenever a type or declaration is deserialized.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,7 @@
 namespace clang {
 
 class Decl;
-class PCHReader;
+class ASTReader;
 class QualType;
 
 class PCHDeserializationListener {
@@ -29,7 +29,7 @@ protected:
 
 public:
   /// \brief Tell the listener about the reader.
-  virtual void SetReader(PCHReader *Reader) = 0;
+  virtual void SetReader(ASTReader *Reader) = 0;
 
   /// \brief An identifier was deserialized from the PCH.
   virtual void IdentifierRead(pch::IdentID ID, IdentifierInfo *II) = 0;

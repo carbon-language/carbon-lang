@@ -1,4 +1,4 @@
-//===--- PCHReader.cpp - Precompiled Headers Reader -------------*- C++ -*-===//
+//===--- PCHReader.cpp - AST File Reader ------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the PCHReader class, which reads a precompiled header.
+//  This file defines the ASTReader class, which reads AST files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -410,10 +410,10 @@ void PCHValidator::ReadCounter(unsigned Value) {
 }
 
 //===----------------------------------------------------------------------===//
-// PCH reader implementation
+// AST reader implementation
 //===----------------------------------------------------------------------===//
 
-PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
+ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
                      const char *isysroot, bool DisableValidation)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
@@ -429,7 +429,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
   RelocatablePCH = false;
 }
 
-PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
+ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot,
                      bool DisableValidation)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
@@ -445,12 +445,12 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
   RelocatablePCH = false;
 }
 
-PCHReader::~PCHReader() {
+ASTReader::~ASTReader() {
   for (unsigned i = 0, e = Chain.size(); i != e; ++i)
     delete Chain[e - i - 1];
 }
 
-PCHReader::PerFileData::PerFileData()
+ASTReader::PerFileData::PerFileData()
   : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
     LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
     IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
@@ -460,7 +460,7 @@ PCHReader::PerFileData::PerFileData()
 {}
 
 void
-PCHReader::setDeserializationListener(PCHDeserializationListener *Listener) {
+ASTReader::setDeserializationListener(PCHDeserializationListener *Listener) {
   DeserializationListener = Listener;
   if (DeserializationListener)
     DeserializationListener->SetReader(this);
@@ -469,7 +469,7 @@ PCHReader::setDeserializationListener(PCHDeserializationListener *Listener) {
 
 namespace {
 class PCHSelectorLookupTrait {
-  PCHReader &Reader;
+  ASTReader &Reader;
 
 public:
   struct data_type {
@@ -480,7 +480,7 @@ public:
   typedef Selector external_key_type;
   typedef external_key_type internal_key_type;
 
-  explicit PCHSelectorLookupTrait(PCHReader &Reader) : Reader(Reader) { }
+  explicit PCHSelectorLookupTrait(ASTReader &Reader) : Reader(Reader) { }
 
   static bool EqualKey(const internal_key_type& a,
                        const internal_key_type& b) {
@@ -586,7 +586,7 @@ typedef OnDiskChainedHashTable<PCHSelectorLookupTrait>
 
 namespace {
 class PCHIdentifierLookupTrait {
-  PCHReader &Reader;
+  ASTReader &Reader;
   llvm::BitstreamCursor &Stream;
 
   // If we know the IdentifierInfo in advance, it is here and we will
@@ -601,7 +601,7 @@ public:
 
   typedef external_key_type internal_key_type;
 
-  PCHIdentifierLookupTrait(PCHReader &Reader, llvm::BitstreamCursor &Stream,
+  PCHIdentifierLookupTrait(ASTReader &Reader, llvm::BitstreamCursor &Stream,
                            IdentifierInfo *II = 0)
     : Reader(Reader), Stream(Stream), KnownII(II) { }
 
@@ -721,7 +721,7 @@ public:
 typedef OnDiskChainedHashTable<PCHIdentifierLookupTrait>
   PCHIdentifierLookupTable;
 
-void PCHReader::Error(const char *Msg) {
+void ASTReader::Error(const char *Msg) {
   Diag(diag::err_fe_pch_malformed) << Msg;
 }
 
@@ -734,7 +734,7 @@ void PCHReader::Error(const char *Msg) {
 ///
 /// \returns true if there was a mismatch (in which case the PCH file
 /// should be ignored), or false otherwise.
-bool PCHReader::CheckPredefinesBuffers() {
+bool ASTReader::CheckPredefinesBuffers() {
   if (Listener)
     return Listener->ReadPredefinesBuffer(PCHPredefinesBuffers,
                                           ActualOriginalFileName,
@@ -748,7 +748,7 @@ bool PCHReader::CheckPredefinesBuffers() {
 
 /// \brief Read the line table in the source manager block.
 /// \returns true if ther was an error.
-bool PCHReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
+bool ASTReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
   unsigned Idx = 0;
   LineTableInfo &LineTable = SourceMgr.getLineTable();
 
@@ -900,7 +900,7 @@ public:
 
 
 /// \brief Read a source manager block
-PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock(PerFileData &F) {
+ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
   using namespace SrcMgr;
 
   llvm::BitstreamCursor &SLocEntryCursor = F.SLocEntryCursor;
@@ -973,7 +973,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock(PerFileData &F) {
 
 /// \brief Get a cursor that's correctly positioned for reading the source
 /// location entry with the given ID.
-llvm::BitstreamCursor &PCHReader::SLocCursorForID(unsigned ID) {
+llvm::BitstreamCursor &ASTReader::SLocCursorForID(unsigned ID) {
   assert(ID != 0 && ID <= TotalNumSLocEntries &&
          "SLocCursorForID should only be called for real IDs.");
 
@@ -992,7 +992,7 @@ llvm::BitstreamCursor &PCHReader::SLocCursorForID(unsigned ID) {
 }
 
 /// \brief Read in the source location entry with the given ID.
-PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
+ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
   if (ID == 0)
     return Success;
 
@@ -1118,7 +1118,7 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
 /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
 /// specified cursor.  Read the abbreviations that are at the top of the block
 /// and then leave the cursor pointing into the block.
-bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
+bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
                                  unsigned BlockID) {
   if (Cursor.EnterSubBlock(BlockID)) {
     Error("malformed block record in PCH file");
@@ -1135,7 +1135,7 @@ bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 }
 
-void PCHReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
+void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
   assert(PP && "Forgot to set Preprocessor ?");
 
   // Keep track of where we are in the stream, then jump back there
@@ -1307,7 +1307,7 @@ void PCHReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
   }
 }
 
-void PCHReader::ReadDefinedMacros() {
+void ASTReader::ReadDefinedMacros() {
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     llvm::BitstreamCursor &MacroCursor = Chain[N - I - 1]->MacroCursor;
 
@@ -1374,7 +1374,7 @@ void PCHReader::ReadDefinedMacros() {
   }
 }
 
-MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
+MacroDefinition *ASTReader::getMacroDefinition(pch::IdentID ID) {
   if (ID == 0 || ID >= MacroDefinitionsLoaded.size())
     return 0;
 
@@ -1397,7 +1397,7 @@ MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
 /// \brief If we are loading a relocatable PCH file, and the filename is
 /// not an absolute path, add the system root to the beginning of the file
 /// name.
-void PCHReader::MaybeAddSystemRootToFilename(std::string &Filename) {
+void ASTReader::MaybeAddSystemRootToFilename(std::string &Filename) {
   // If this is not a relocatable PCH file, there's nothing to do.
   if (!RelocatablePCH)
     return;
@@ -1418,8 +1418,8 @@ void PCHReader::MaybeAddSystemRootToFilename(std::string &Filename) {
   Filename.insert(Filename.begin(), isysroot, isysroot + Length);
 }
 
-PCHReader::PCHReadResult
-PCHReader::ReadPCHBlock(PerFileData &F) {
+ASTReader::ASTReadResult
+ASTReader::ReadPCHBlock(PerFileData &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
@@ -1698,7 +1698,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
 
     case pch::SOURCE_LOCATION_PRELOADS:
       for (unsigned I = 0, N = Record.size(); I != N; ++I) {
-        PCHReadResult Result = ReadSLocEntryRecord(Record[I]);
+        ASTReadResult Result = ReadSLocEntryRecord(Record[I]);
         if (Result != Success)
           return Result;
       }
@@ -1792,7 +1792,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
   return Failure;
 }
 
-PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
+ASTReader::ASTReadResult ASTReader::ReadPCH(const std::string &FileName) {
   switch(ReadPCHCore(FileName)) {
   case Failure: return Failure;
   case IgnorePCH: return IgnorePCH;
@@ -1882,7 +1882,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   return Success;
 }
 
-PCHReader::PCHReadResult PCHReader::ReadPCHCore(llvm::StringRef FileName) {
+ASTReader::ASTReadResult ASTReader::ReadPCHCore(llvm::StringRef FileName) {
   Chain.push_back(new PerFileData());
   PerFileData &F = *Chain.back();
 
@@ -1969,7 +1969,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCHCore(llvm::StringRef FileName) {
   return Success;
 }
 
-void PCHReader::setPreprocessor(Preprocessor &pp) {
+void ASTReader::setPreprocessor(Preprocessor &pp) {
   PP = &pp;
 
   unsigned TotalNum = 0;
@@ -1982,7 +1982,7 @@ void PCHReader::setPreprocessor(Preprocessor &pp) {
   }
 }
 
-void PCHReader::InitializeContext(ASTContext &Ctx) {
+void ASTReader::InitializeContext(ASTContext &Ctx) {
   Context = &Ctx;
   assert(Context && "Passed null context!");
 
@@ -2083,7 +2083,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
 /// \brief Retrieve the name of the original source file name
 /// directly from the PCH file, without actually loading the PCH
 /// file.
-std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName,
+std::string ASTReader::getOriginalSourceFile(const std::string &PCHFileName,
                                              Diagnostic &Diags) {
   // Open the PCH file.
   std::string ErrStr;
@@ -2174,7 +2174,7 @@ std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName,
 /// there was an error.
 ///
 /// \returns true if the PCH file is unacceptable, false otherwise.
-bool PCHReader::ParseLanguageOptions(
+bool ASTReader::ParseLanguageOptions(
                              const llvm::SmallVectorImpl<uint64_t> &Record) {
   if (Listener) {
     LangOptions LangOpts;
@@ -2245,12 +2245,12 @@ bool PCHReader::ParseLanguageOptions(
   return false;
 }
 
-void PCHReader::ReadPreprocessedEntities() {
+void ASTReader::ReadPreprocessedEntities() {
   ReadDefinedMacros();
 }
 
 /// \brief Get the correct cursor and offset for loading a type.
-PCHReader::RecordLocation PCHReader::TypeCursorForIndex(unsigned Index) {
+ASTReader::RecordLocation ASTReader::TypeCursorForIndex(unsigned Index) {
   PerFileData *F = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     F = Chain[N - I - 1];
@@ -2268,7 +2268,7 @@ PCHReader::RecordLocation PCHReader::TypeCursorForIndex(unsigned Index) {
 /// routine actually reads the record corresponding to the type at the given
 /// location. It is a helper routine for GetType, which deals with reading type
 /// IDs.
-QualType PCHReader::ReadTypeRecord(unsigned Index) {
+QualType ASTReader::ReadTypeRecord(unsigned Index) {
   RecordLocation Loc = TypeCursorForIndex(Index);
   llvm::BitstreamCursor &DeclsCursor = *Loc.first;
 
@@ -2611,14 +2611,14 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
 namespace {
 
 class TypeLocReader : public TypeLocVisitor<TypeLocReader> {
-  PCHReader &Reader;
+  ASTReader &Reader;
   llvm::BitstreamCursor &DeclsCursor;
-  const PCHReader::RecordData &Record;
+  const ASTReader::RecordData &Record;
   unsigned &Idx;
 
 public:
-  TypeLocReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
-                const PCHReader::RecordData &Record, unsigned &Idx)
+  TypeLocReader(ASTReader &Reader, llvm::BitstreamCursor &Cursor,
+                const ASTReader::RecordData &Record, unsigned &Idx)
     : Reader(Reader), DeclsCursor(Cursor), Record(Record), Idx(Idx) { }
 
   // We want compile-time assurance that we've enumerated all of
@@ -2790,7 +2790,7 @@ void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
-TypeSourceInfo *PCHReader::GetTypeSourceInfo(llvm::BitstreamCursor &DeclsCursor,
+TypeSourceInfo *ASTReader::GetTypeSourceInfo(llvm::BitstreamCursor &DeclsCursor,
                                              const RecordData &Record,
                                              unsigned &Idx) {
   QualType InfoTy = GetType(Record[Idx++]);
@@ -2804,7 +2804,7 @@ TypeSourceInfo *PCHReader::GetTypeSourceInfo(llvm::BitstreamCursor &DeclsCursor,
   return TInfo;
 }
 
-QualType PCHReader::GetType(pch::TypeID ID) {
+QualType ASTReader::GetType(pch::TypeID ID) {
   unsigned FastQuals = ID & Qualifiers::FastMask;
   unsigned Index = ID >> Qualifiers::FastWidth;
 
@@ -2865,7 +2865,7 @@ QualType PCHReader::GetType(pch::TypeID ID) {
 }
 
 TemplateArgumentLocInfo
-PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+ASTReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                       llvm::BitstreamCursor &DeclsCursor,
                                       const RecordData &Record,
                                       unsigned &Index) {
@@ -2890,7 +2890,7 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
 }
 
 TemplateArgumentLoc
-PCHReader::ReadTemplateArgumentLoc(llvm::BitstreamCursor &DeclsCursor,
+ASTReader::ReadTemplateArgumentLoc(llvm::BitstreamCursor &DeclsCursor,
                                    const RecordData &Record, unsigned &Index) {
   TemplateArgument Arg = ReadTemplateArgument(DeclsCursor, Record, Index);
 
@@ -2903,11 +2903,11 @@ PCHReader::ReadTemplateArgumentLoc(llvm::BitstreamCursor &DeclsCursor,
                                                              Record, Index));
 }
 
-Decl *PCHReader::GetExternalDecl(uint32_t ID) {
+Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }
 
-TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
+TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
   if (!DeclsLoaded[0]) {
     ReadDeclRecord(0, 0);
     if (DeserializationListener)
@@ -2917,7 +2917,7 @@ TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
   return cast<TranslationUnitDecl>(DeclsLoaded[0]);
 }
 
-Decl *PCHReader::GetDecl(pch::DeclID ID) {
+Decl *ASTReader::GetDecl(pch::DeclID ID) {
   if (ID == 0)
     return 0;
 
@@ -2941,7 +2941,7 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 /// This operation will read a new statement from the external
 /// source each time it is called, and is meant to be used via a
 /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
-Stmt *PCHReader::GetExternalDeclStmt(uint64_t Offset) {
+Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
   // Offset here is a global offset across the entire chain.
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     PerFileData &F = *Chain[N - I - 1];
@@ -2956,7 +2956,7 @@ Stmt *PCHReader::GetExternalDeclStmt(uint64_t Offset) {
   llvm_unreachable("Broken chain");
 }
 
-bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
+bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
                                          llvm::SmallVectorImpl<Decl*> &Decls) {
   assert(DC->hasExternalLexicalStorage() &&
          "DeclContext has no lexical decls in storage");
@@ -2982,7 +2982,7 @@ bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
 }
 
 DeclContext::lookup_result
-PCHReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
+ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                           DeclarationName Name) {
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
@@ -3037,7 +3037,7 @@ PCHReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   return const_cast<DeclContext*>(DC)->lookup(Name);
 }
 
-void PCHReader::PassInterestingDeclsToConsumer() {
+void ASTReader::PassInterestingDeclsToConsumer() {
   assert(Consumer);
   while (!InterestingDecls.empty()) {
     DeclGroupRef DG(InterestingDecls.front());
@@ -3046,7 +3046,7 @@ void PCHReader::PassInterestingDeclsToConsumer() {
   }
 }
 
-void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
+void ASTReader::StartTranslationUnit(ASTConsumer *Consumer) {
   this->Consumer = Consumer;
 
   if (!Consumer)
@@ -3061,7 +3061,7 @@ void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
   PassInterestingDeclsToConsumer();
 }
 
-void PCHReader::PrintStats() {
+void ASTReader::PrintStats() {
   std::fprintf(stderr, "*** PCH Statistics:\n");
 
   unsigned NumTypesLoaded
@@ -3129,7 +3129,7 @@ void PCHReader::PrintStats() {
   std::fprintf(stderr, "\n");
 }
 
-void PCHReader::InitializeSema(Sema &S) {
+void ASTReader::InitializeSema(Sema &S) {
   SemaObj = &S;
   S.ExternalSource = this;
 
@@ -3240,7 +3240,7 @@ void PCHReader::InitializeSema(Sema &S) {
   }
 }
 
-IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
+IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
   // Try to find this name within our on-disk hash tables. We start with the
   // most recent one, since that one contains the most up-to-date info.
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
@@ -3262,7 +3262,7 @@ IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
 }
 
 std::pair<ObjCMethodList, ObjCMethodList>
-PCHReader::ReadMethodPool(Selector Sel) {
+ASTReader::ReadMethodPool(Selector Sel) {
   // Find this selector in a hash table. We want to find the most recent entry.
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     PerFileData &F = *Chain[I];
@@ -3289,12 +3289,12 @@ PCHReader::ReadMethodPool(Selector Sel) {
   return std::pair<ObjCMethodList, ObjCMethodList>();
 }
 
-void PCHReader::LoadSelector(Selector Sel) {
+void ASTReader::LoadSelector(Selector Sel) {
   // It would be complicated to avoid reading the methods anyway. So don't.
   ReadMethodPool(Sel);
 }
 
-void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
+void ASTReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
   assert(ID && "Non-zero identifier ID required");
   assert(ID <= IdentifiersLoaded.size() && "identifier ID out of range");
   IdentifiersLoaded[ID - 1] = II;
@@ -3319,7 +3319,7 @@ void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
 /// this call is non-recursive, and therefore the globally-visible declarations
 /// will not be placed onto the pending queue.
 void
-PCHReader::SetGloballyVisibleDecls(IdentifierInfo *II,
+ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
                               const llvm::SmallVectorImpl<uint32_t> &DeclIDs,
                                    bool Nonrecursive) {
   if (NumCurrentElementsDeserializing && !Nonrecursive) {
@@ -3350,7 +3350,7 @@ PCHReader::SetGloballyVisibleDecls(IdentifierInfo *II,
   }
 }
 
-IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
+IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
 
@@ -3393,11 +3393,11 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   return IdentifiersLoaded[ID];
 }
 
-void PCHReader::ReadSLocEntry(unsigned ID) {
+void ASTReader::ReadSLocEntry(unsigned ID) {
   ReadSLocEntryRecord(ID);
 }
 
-Selector PCHReader::DecodeSelector(unsigned ID) {
+Selector ASTReader::DecodeSelector(unsigned ID) {
   if (ID == 0)
     return Selector();
 
@@ -3426,17 +3426,17 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   return SelectorsLoaded[ID - 1];
 }
 
-Selector PCHReader::GetExternalSelector(uint32_t ID) { 
+Selector ASTReader::GetExternalSelector(uint32_t ID) { 
   return DecodeSelector(ID);
 }
 
-uint32_t PCHReader::GetNumExternalSelectors() {
+uint32_t ASTReader::GetNumExternalSelectors() {
   // ID 0 (the null selector) is considered an external selector.
   return getTotalNumSelectors() + 1;
 }
 
 DeclarationName
-PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
   DeclarationName::NameKind Kind = (DeclarationName::NameKind)Record[Idx++];
   switch (Kind) {
   case DeclarationName::Identifier:
@@ -3476,7 +3476,7 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 }
 
 TemplateName
-PCHReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
   TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++]; 
   switch (Kind) {
   case TemplateName::Template:
@@ -3513,7 +3513,7 @@ PCHReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
 }
 
 TemplateArgument
-PCHReader::ReadTemplateArgument(llvm::BitstreamCursor &DeclsCursor,
+ASTReader::ReadTemplateArgument(llvm::BitstreamCursor &DeclsCursor,
                                 const RecordData &Record, unsigned &Idx) {
   switch ((TemplateArgument::ArgKind)Record[Idx++]) {
   case TemplateArgument::Null:
@@ -3548,7 +3548,7 @@ PCHReader::ReadTemplateArgument(llvm::BitstreamCursor &DeclsCursor,
 }
 
 TemplateParameterList *
-PCHReader::ReadTemplateParameterList(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadTemplateParameterList(const RecordData &Record, unsigned &Idx) {
   SourceLocation TemplateLoc = ReadSourceLocation(Record, Idx);
   SourceLocation LAngleLoc = ReadSourceLocation(Record, Idx);
   SourceLocation RAngleLoc = ReadSourceLocation(Record, Idx);
@@ -3566,7 +3566,7 @@ PCHReader::ReadTemplateParameterList(const RecordData &Record, unsigned &Idx) {
 }
 
 void
-PCHReader::
+ASTReader::
 ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
                          llvm::BitstreamCursor &DeclsCursor,
                          const RecordData &Record, unsigned &Idx) {
@@ -3577,7 +3577,7 @@ ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
 }
 
 /// \brief Read a UnresolvedSet structure.
-void PCHReader::ReadUnresolvedSet(UnresolvedSetImpl &Set,
+void ASTReader::ReadUnresolvedSet(UnresolvedSetImpl &Set,
                                   const RecordData &Record, unsigned &Idx) {
   unsigned NumDecls = Record[Idx++];
   while (NumDecls--) {
@@ -3588,7 +3588,7 @@ void PCHReader::ReadUnresolvedSet(UnresolvedSetImpl &Set,
 }
 
 CXXBaseSpecifier
-PCHReader::ReadCXXBaseSpecifier(llvm::BitstreamCursor &DeclsCursor,
+ASTReader::ReadCXXBaseSpecifier(llvm::BitstreamCursor &DeclsCursor,
                                 const RecordData &Record, unsigned &Idx) {
   bool isVirtual = static_cast<bool>(Record[Idx++]);
   bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
@@ -3599,7 +3599,7 @@ PCHReader::ReadCXXBaseSpecifier(llvm::BitstreamCursor &DeclsCursor,
 }
 
 std::pair<CXXBaseOrMemberInitializer **, unsigned>
-PCHReader::ReadCXXBaseOrMemberInitializers(llvm::BitstreamCursor &Cursor,
+ASTReader::ReadCXXBaseOrMemberInitializers(llvm::BitstreamCursor &Cursor,
                                            const RecordData &Record,
                                            unsigned &Idx) {
   CXXBaseOrMemberInitializer **BaseOrMemberInitializers = 0;
@@ -3663,7 +3663,7 @@ PCHReader::ReadCXXBaseOrMemberInitializers(llvm::BitstreamCursor &Cursor,
 }
 
 NestedNameSpecifier *
-PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
   unsigned N = Record[Idx++];
   NestedNameSpecifier *NNS = 0, *Prev = 0;
   for (unsigned I = 0; I != N; ++I) {
@@ -3702,14 +3702,14 @@ PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
 }
 
 SourceRange
-PCHReader::ReadSourceRange(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadSourceRange(const RecordData &Record, unsigned &Idx) {
   SourceLocation beg = SourceLocation::getFromRawEncoding(Record[Idx++]);
   SourceLocation end = SourceLocation::getFromRawEncoding(Record[Idx++]);
   return SourceRange(beg, end);
 }
 
 /// \brief Read an integral value
-llvm::APInt PCHReader::ReadAPInt(const RecordData &Record, unsigned &Idx) {
+llvm::APInt ASTReader::ReadAPInt(const RecordData &Record, unsigned &Idx) {
   unsigned BitWidth = Record[Idx++];
   unsigned NumWords = llvm::APInt::getNumWords(BitWidth);
   llvm::APInt Result(BitWidth, NumWords, &Record[Idx]);
@@ -3718,61 +3718,61 @@ llvm::APInt PCHReader::ReadAPInt(const RecordData &Record, unsigned &Idx) {
 }
 
 /// \brief Read a signed integral value
-llvm::APSInt PCHReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
+llvm::APSInt ASTReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
   bool isUnsigned = Record[Idx++];
   return llvm::APSInt(ReadAPInt(Record, Idx), isUnsigned);
 }
 
 /// \brief Read a floating-point value
-llvm::APFloat PCHReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
+llvm::APFloat ASTReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
   return llvm::APFloat(ReadAPInt(Record, Idx));
 }
 
 // \brief Read a string
-std::string PCHReader::ReadString(const RecordData &Record, unsigned &Idx) {
+std::string ASTReader::ReadString(const RecordData &Record, unsigned &Idx) {
   unsigned Len = Record[Idx++];
   std::string Result(Record.data() + Idx, Record.data() + Idx + Len);
   Idx += Len;
   return Result;
 }
 
-CXXTemporary *PCHReader::ReadCXXTemporary(const RecordData &Record,
+CXXTemporary *ASTReader::ReadCXXTemporary(const RecordData &Record,
                                           unsigned &Idx) {
   CXXDestructorDecl *Decl = cast<CXXDestructorDecl>(GetDecl(Record[Idx++]));
   return CXXTemporary::Create(*Context, Decl);
 }
 
-DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {
+DiagnosticBuilder ASTReader::Diag(unsigned DiagID) {
   return Diag(SourceLocation(), DiagID);
 }
 
-DiagnosticBuilder PCHReader::Diag(SourceLocation Loc, unsigned DiagID) {
+DiagnosticBuilder ASTReader::Diag(SourceLocation Loc, unsigned DiagID) {
   return Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
 }
 
 /// \brief Retrieve the identifier table associated with the
 /// preprocessor.
-IdentifierTable &PCHReader::getIdentifierTable() {
+IdentifierTable &ASTReader::getIdentifierTable() {
   assert(PP && "Forgot to set Preprocessor ?");
   return PP->getIdentifierTable();
 }
 
 /// \brief Record that the given ID maps to the given switch-case
 /// statement.
-void PCHReader::RecordSwitchCaseID(SwitchCase *SC, unsigned ID) {
+void ASTReader::RecordSwitchCaseID(SwitchCase *SC, unsigned ID) {
   assert(SwitchCaseStmts[ID] == 0 && "Already have a SwitchCase with this ID");
   SwitchCaseStmts[ID] = SC;
 }
 
 /// \brief Retrieve the switch-case statement with the given ID.
-SwitchCase *PCHReader::getSwitchCaseWithID(unsigned ID) {
+SwitchCase *ASTReader::getSwitchCaseWithID(unsigned ID) {
   assert(SwitchCaseStmts[ID] != 0 && "No SwitchCase with this ID");
   return SwitchCaseStmts[ID];
 }
 
 /// \brief Record that the given label statement has been
 /// deserialized and has the given ID.
-void PCHReader::RecordLabelStmt(LabelStmt *S, unsigned ID) {
+void ASTReader::RecordLabelStmt(LabelStmt *S, unsigned ID) {
   assert(LabelStmts.find(ID) == LabelStmts.end() &&
          "Deserialized label twice");
   LabelStmts[ID] = S;
@@ -3803,7 +3803,7 @@ void PCHReader::RecordLabelStmt(LabelStmt *S, unsigned ID) {
 /// referencing that label occur, this operation may complete
 /// immediately (updating the statement) or it may queue the
 /// statement to be back-patched later.
-void PCHReader::SetLabelOf(GotoStmt *S, unsigned ID) {
+void ASTReader::SetLabelOf(GotoStmt *S, unsigned ID) {
   std::map<unsigned, LabelStmt *>::iterator Label = LabelStmts.find(ID);
   if (Label != LabelStmts.end()) {
     // We've already seen this label, so set the label of the goto and
@@ -3823,7 +3823,7 @@ void PCHReader::SetLabelOf(GotoStmt *S, unsigned ID) {
 /// referencing that label occur, this operation may complete
 /// immediately (updating the statement) or it may queue the
 /// statement to be back-patched later.
-void PCHReader::SetLabelOf(AddrLabelExpr *S, unsigned ID) {
+void ASTReader::SetLabelOf(AddrLabelExpr *S, unsigned ID) {
   std::map<unsigned, LabelStmt *>::iterator Label = LabelStmts.find(ID);
   if (Label != LabelStmts.end()) {
     // We've already seen this label, so set the label of the
@@ -3836,7 +3836,7 @@ void PCHReader::SetLabelOf(AddrLabelExpr *S, unsigned ID) {
   }
 }
 
-void PCHReader::FinishedDeserializing() {
+void ASTReader::FinishedDeserializing() {
   assert(NumCurrentElementsDeserializing &&
          "FinishedDeserializing not paired with StartedDeserializing");
   if (NumCurrentElementsDeserializing == 1) {

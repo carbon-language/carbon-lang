@@ -302,7 +302,7 @@ void ASTUnit::ClearCachedCompletionResults() {
 
 namespace {
 
-/// \brief Gathers information from PCHReader that will be used to initialize
+/// \brief Gathers information from ASTReader that will be used to initialize
 /// a Preprocessor.
 class PCHInfoCollector : public PCHReaderListener {
   LangOptions &LangOpt;
@@ -400,7 +400,7 @@ const std::string &ASTUnit::getOriginalSourceFileName() {
 
 const std::string &ASTUnit::getPCHFileName() {
   assert(isMainFileAST() && "Not an ASTUnit from a PCH file!");
-  return static_cast<PCHReader *>(Ctx->getExternalSource())->getFileName();
+  return static_cast<ASTReader *>(Ctx->getExternalSource())->getFileName();
 }
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
@@ -456,19 +456,19 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   std::string Predefines;
   unsigned Counter;
 
-  llvm::OwningPtr<PCHReader> Reader;
+  llvm::OwningPtr<ASTReader> Reader;
 
-  Reader.reset(new PCHReader(AST->getSourceManager(), AST->getFileManager(),
+  Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
                              AST->getDiagnostics()));
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
   switch (Reader->ReadPCH(Filename)) {
-  case PCHReader::Success:
+  case ASTReader::Success:
     break;
 
-  case PCHReader::Failure:
-  case PCHReader::IgnorePCH:
+  case ASTReader::Failure:
+  case ASTReader::IgnorePCH:
     AST->getDiagnostics().Report(diag::err_fe_unable_to_load_pch);
     return NULL;
   }
@@ -510,17 +510,17 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   Reader->InitializeContext(Context);
 
-  // Attach the PCH reader to the AST context as an external AST
+  // Attach the AST reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // PCH file as needed.
-  PCHReader *ReaderPtr = Reader.get();
+  ASTReader *ReaderPtr = Reader.get();
   llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
   Context.setExternalSource(Source);
 
   // Create an AST consumer, even though it isn't used.
   AST->Consumer.reset(new ASTConsumer);
   
-  // Create a semantic analysis object and tell the PCH reader about it.
+  // Create a semantic analysis object and tell the AST reader about it.
   AST->TheSema.reset(new Sema(PP, Context, *AST->Consumer));
   AST->TheSema->Initialize();
   ReaderPtr->InitializeSema(*AST->TheSema);

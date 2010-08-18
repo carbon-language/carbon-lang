@@ -19,7 +19,7 @@ namespace clang {
 /// \brief Abstract interface for external sources of preprocessor 
 /// information.
 ///
-/// This abstract class allows an external sources (such as the \c PCHReader) 
+/// This abstract class allows an external sources (such as the \c ASTReader) 
 /// to provide additional macro definitions.
 class ExternalPreprocessorSource {
 public:

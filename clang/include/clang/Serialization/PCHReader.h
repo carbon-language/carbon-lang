@@ -1,4 +1,4 @@
-//===--- PCHReader.h - Precompiled Headers Reader ---------------*- C++ -*-===//
+//===--- PCHReader.h - AST File Reader --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the PCHReader class, which reads a precompiled header.
+//  This file defines the ASTReader class, which reads AST files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,8 +15,8 @@
 #define LLVM_CLANG_FRONTEND_PCH_READER_H
 
 #include "clang/Serialization/PCHBitCodes.h"
-#include "clang/AST/DeclarationName.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TemplateBase.h"
@@ -63,7 +63,7 @@ class PCHDeserializationListener;
 class Preprocessor;
 class Sema;
 class SwitchCase;
-class PCHReader;
+class ASTReader;
 class PCHDeclReader;
 struct HeaderFileInfo;
 
@@ -76,11 +76,11 @@ struct PCHPredefinesBlock {
 };
 typedef llvm::SmallVector<PCHPredefinesBlock, 2> PCHPredefinesBlocks;
 
-/// \brief Abstract interface for callback invocations by the PCHReader.
+/// \brief Abstract interface for callback invocations by the ASTReader.
 ///
-/// While reading a PCH file, the PCHReader will call the methods of the
+/// While reading an AST file, the ASTReader will call the methods of the
 /// listener to pass on specific information. Some of the listener methods can
-/// return true to indicate to the PCHReader that the information (and
+/// return true to indicate to the ASTReader that the information (and
 /// consequently the PCH file) is invalid.
 class PCHReaderListener {
 public:
@@ -128,12 +128,12 @@ public:
 /// the PCH file against an initialized Preprocessor.
 class PCHValidator : public PCHReaderListener {
   Preprocessor &PP;
-  PCHReader &Reader;
+  ASTReader &Reader;
 
   unsigned NumHeaderInfos;
 
 public:
-  PCHValidator(Preprocessor &PP, PCHReader &Reader)
+  PCHValidator(Preprocessor &PP, ASTReader &Reader)
     : PP(PP), Reader(Reader), NumHeaderInfos(0) {}
 
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts);
@@ -148,19 +148,19 @@ private:
   void Error(const char *Msg);
 };
 
-/// \brief Reads a precompiled header chain containing the contents of a
-/// translation unit.
+/// \brief Reads an AST files chain containing the contents of a translation
+/// unit.
 ///
-/// The PCHReader class reads bitstreams (produced by the ASTWriter
+/// The ASTReader class reads bitstreams (produced by the ASTWriter
 /// class) containing the serialized representation of a given
 /// abstract syntax tree and its supporting data structures. An
-/// instance of the PCHReader can be attached to an ASTContext object,
-/// which will provide access to the contents of the PCH files.
+/// instance of the ASTReader can be attached to an ASTContext object,
+/// which will provide access to the contents of the AST files.
 ///
-/// The PCH reader provides lazy de-serialization of declarations, as
+/// The AST reader provides lazy de-serialization of declarations, as
 /// required when traversing the AST. Only those AST nodes that are
 /// actually required will be de-serialized.
-class PCHReader
+class ASTReader
   : public ExternalPreprocessorSource,
     public ExternalPreprocessingRecordSource,
     public ExternalSemaSource,
@@ -168,11 +168,11 @@ class PCHReader
     public ExternalIdentifierLookup,
     public ExternalSLocEntrySource {
 public:
-  enum PCHReadResult { Success, Failure, IgnorePCH };
+  enum ASTReadResult { Success, Failure, IgnorePCH };
   friend class PCHValidator;
   friend class PCHDeclReader;
 private:
-  /// \brief The receiver of some callbacks invoked by PCHReader.
+  /// \brief The receiver of some callbacks invoked by ASTReader.
   llvm::OwningPtr<PCHReaderListener> Listener;
 
   /// \brief The receiver of deserialization events.
@@ -532,14 +532,14 @@ private:
 
   /// \brief RAII object to change the reading kind.
   class ReadingKindTracker {
-    PCHReader &Reader;
+    ASTReader &Reader;
     enum ReadingKind PrevKind;
 
     ReadingKindTracker(const ReadingKindTracker&); // do not implement
     ReadingKindTracker &operator=(const ReadingKindTracker&);// do not implement
 
   public:
-    ReadingKindTracker(enum ReadingKind newKind, PCHReader &reader)
+    ReadingKindTracker(enum ReadingKind newKind, ASTReader &reader)
       : Reader(reader), PrevKind(Reader.ReadingKind) {
       Reader.ReadingKind = newKind;
     }
@@ -566,12 +566,12 @@ private:
 
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
-  PCHReadResult ReadPCHCore(llvm::StringRef FileName);
-  PCHReadResult ReadPCHBlock(PerFileData &F);
+  ASTReadResult ReadPCHCore(llvm::StringRef FileName);
+  ASTReadResult ReadPCHBlock(PerFileData &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
-  PCHReadResult ReadSourceManagerBlock(PerFileData &F);
-  PCHReadResult ReadSLocEntryRecord(unsigned ID);
+  ASTReadResult ReadSourceManagerBlock(PerFileData &F);
+  ASTReadResult ReadSLocEntryRecord(unsigned ID);
   llvm::BitstreamCursor &SLocCursorForID(unsigned ID);
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
 
@@ -591,8 +591,8 @@ private:
   /// do with non-routine failures (e.g., corrupted PCH file).
   void Error(const char *Msg);
 
-  PCHReader(const PCHReader&); // do not implement
-  PCHReader &operator=(const PCHReader &); // do not implement
+  ASTReader(const ASTReader&); // do not implement
+  ASTReader &operator=(const ASTReader &); // do not implement
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
@@ -612,7 +612,7 @@ public:
   /// \param DisableValidation If true, the PCH reader will suppress most
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
-  PCHReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0,
+  ASTReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0,
             bool DisableValidation = false);
 
   /// \brief Load the PCH file without using any pre-initialized Preprocessor.
@@ -636,14 +636,14 @@ public:
   /// \param DisableValidation If true, the PCH reader will suppress most
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
-      PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
+      ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
             Diagnostic &Diags, const char *isysroot = 0,
             bool DisableValidation = false);
-  ~PCHReader();
+  ~ASTReader();
 
   /// \brief Load the precompiled header designated by the given file
   /// name.
-  PCHReadResult ReadPCH(const std::string &FileName);
+  ASTReadResult ReadPCH(const std::string &FileName);
 
   /// \brief Set the PCH callbacks listener.
   void setListener(PCHReaderListener *listener) {
@@ -767,12 +767,12 @@ public:
   virtual bool FindExternalLexicalDecls(const DeclContext *DC,
                                         llvm::SmallVectorImpl<Decl*> &Decls);
 
-  /// \brief Notify PCHReader that we started deserialization of
+  /// \brief Notify ASTReader that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be
   /// decls that are initializing. Must be paired with FinishedDeserializing.
   virtual void StartedDeserializing() { ++NumCurrentElementsDeserializing; }
 
-  /// \brief Notify PCHReader that we finished the deserialization of
+  /// \brief Notify ASTReader that we finished the deserialization of
   /// a decl or type. Must be paired with StartedDeserializing.
   virtual void FinishedDeserializing();
 

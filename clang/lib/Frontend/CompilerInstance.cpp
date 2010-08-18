@@ -264,25 +264,25 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                              Preprocessor &PP,
                                              ASTContext &Context,
                                              void *DeserializationListener) {
-  llvm::OwningPtr<PCHReader> Reader;
-  Reader.reset(new PCHReader(PP, &Context,
+  llvm::OwningPtr<ASTReader> Reader;
+  Reader.reset(new ASTReader(PP, &Context,
                              Sysroot.empty() ? 0 : Sysroot.c_str(),
                              DisablePCHValidation));
 
   Reader->setDeserializationListener(
             static_cast<PCHDeserializationListener *>(DeserializationListener));
   switch (Reader->ReadPCH(Path)) {
-  case PCHReader::Success:
+  case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.
     PP.setPredefines(Reader->getSuggestedPredefines());
     return Reader.take();
 
-  case PCHReader::Failure:
+  case ASTReader::Failure:
     // Unrecoverable failure: don't even try to process the input file.
     break;
 
-  case PCHReader::IgnorePCH:
+  case ASTReader::IgnorePCH:
     // No suitable PCH file could be found. Return an error.
     break;
   }

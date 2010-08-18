@@ -1039,7 +1039,7 @@ public:
   void dump() const;
   static bool classof(const Type *) { return true; }
 
-  friend class PCHReader;
+  friend class ASTReader;
   friend class ASTWriter;
 };
 
@@ -2578,8 +2578,8 @@ class InjectedClassNameType : public Type {
   QualType InjectedType;
 
   friend class ASTContext; // ASTContext creates these.
-  friend class PCHReader; // FIXME: ASTContext::getInjectedClassNameType is not
-                          // currently suitable for PCH reading, too much
+  friend class ASTReader; // FIXME: ASTContext::getInjectedClassNameType is not
+                          // currently suitable for AST reading, too much
                           // interdependencies.
   InjectedClassNameType(CXXRecordDecl *D, QualType TST)
     : Type(InjectedClassName, QualType(), true),

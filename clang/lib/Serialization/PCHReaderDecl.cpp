@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the PCHReader::ReadDeclRecord method, which is the
+// This file implements the ASTReader::ReadDeclRecord method, which is the
 // entrypoint for loading a decl.
 //
 //===----------------------------------------------------------------------===//
@@ -29,18 +29,18 @@ using namespace clang;
 
 namespace clang {
   class PCHDeclReader : public DeclVisitor<PCHDeclReader, void> {
-    PCHReader &Reader;
+    ASTReader &Reader;
     llvm::BitstreamCursor &Cursor;
     const pch::DeclID ThisDeclID;
-    const PCHReader::RecordData &Record;
+    const ASTReader::RecordData &Record;
     unsigned &Idx;
     pch::TypeID TypeIDForTypeDecl;
 
     uint64_t GetCurrentCursorOffset();
 
   public:
-    PCHDeclReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
-                  pch::DeclID thisDeclID, const PCHReader::RecordData &Record,
+    PCHDeclReader(ASTReader &Reader, llvm::BitstreamCursor &Cursor,
+                  pch::DeclID thisDeclID, const ASTReader::RecordData &Record,
                   unsigned &Idx)
       : Reader(Reader), Cursor(Cursor), ThisDeclID(thisDeclID), Record(Record),
         Idx(Idx), TypeIDForTypeDecl(0) { }
@@ -119,7 +119,7 @@ namespace clang {
 uint64_t PCHDeclReader::GetCurrentCursorOffset() {
   uint64_t Off = 0;
   for (unsigned I = 0, N = Reader.Chain.size(); I != N; ++I) {
-    PCHReader::PerFileData &F = *Reader.Chain[N - I - 1];
+    ASTReader::PerFileData &F = *Reader.Chain[N - I - 1];
     if (&Cursor == &F.DeclsCursor) {
       Off += F.DeclsCursor.GetCurrentBitNo();
       break;
@@ -874,7 +874,7 @@ void PCHDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     // redeclaration in another chained PCH, we need to update it by checking
     // the FirstLatestDeclIDs map which tracks this kind of decls.
     assert(Reader.GetDecl(ThisDeclID) == D && "Invalid ThisDeclID ?");
-    PCHReader::FirstLatestDeclIDMap::iterator I
+    ASTReader::FirstLatestDeclIDMap::iterator I
         = Reader.FirstLatestDeclIDs.find(ThisDeclID);
     if (I != Reader.FirstLatestDeclIDs.end()) {
       Decl *NewLatest = Reader.GetDecl(I->second);
@@ -1074,7 +1074,7 @@ void PCHDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   // FirstLatestDeclIDs map which tracks this kind of decls.
   assert(Reader.GetDecl(ThisDeclID) == static_cast<T*>(D) &&
          "Invalid ThisDeclID ?");
-  PCHReader::FirstLatestDeclIDMap::iterator I
+  ASTReader::FirstLatestDeclIDMap::iterator I
       = Reader.FirstLatestDeclIDs.find(ThisDeclID);
   if (I != Reader.FirstLatestDeclIDs.end()) {
     Decl *NewLatest = Reader.GetDecl(I->second);
@@ -1094,7 +1094,7 @@ void PCHDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Reads attributes from the current stream position.
-void PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor,
+void ASTReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor,
                                AttrVec &Attrs) {
   unsigned Code = DeclsCursor.ReadCode();
   assert(Code == llvm::bitc::UNABBREV_RECORD &&
@@ -1121,7 +1121,7 @@ void PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor,
 }
 
 //===----------------------------------------------------------------------===//
-// PCHReader Implementation
+// ASTReader Implementation
 //===----------------------------------------------------------------------===//
 
 /// \brief Note that we have loaded the declaration with the given
@@ -1130,7 +1130,7 @@ void PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor,
 /// This routine notes that this declaration has already been loaded,
 /// so that future GetDecl calls will return this declaration rather
 /// than trying to load a new declaration.
-inline void PCHReader::LoadedDecl(unsigned Index, Decl *D) {
+inline void ASTReader::LoadedDecl(unsigned Index, Decl *D) {
   assert(!DeclsLoaded[Index] && "Decl loaded twice?");
   DeclsLoaded[Index] = D;
 }
@@ -1154,8 +1154,8 @@ static bool isConsumerInterestedIn(Decl *D) {
 }
 
 /// \brief Get the correct cursor and offset for loading a type.
-PCHReader::RecordLocation
-PCHReader::DeclCursorForIndex(unsigned Index, pch::DeclID ID) {
+ASTReader::RecordLocation
+ASTReader::DeclCursorForIndex(unsigned Index, pch::DeclID ID) {
   // See if there's an override.
   DeclReplacementMap::iterator It = ReplacedDecls.find(ID);
   if (It != ReplacedDecls.end())
@@ -1173,7 +1173,7 @@ PCHReader::DeclCursorForIndex(unsigned Index, pch::DeclID ID) {
 }
 
 /// \brief Read the declaration at the given offset from the PCH file.
-Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
+Decl *ASTReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
   RecordLocation Loc = DeclCursorForIndex(Index, ID);
   llvm::BitstreamCursor &DeclsCursor = *Loc.first;
   // Keep track of where we are in the stream, then jump back there
@@ -1414,7 +1414,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
   return D;
 }
 
-bool PCHReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
+bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
                                    const std::pair<uint64_t, uint64_t> &Offsets,
                                        DeclContextInfo &Info) {
   SavedStreamPosition SavedPosition(Cursor);

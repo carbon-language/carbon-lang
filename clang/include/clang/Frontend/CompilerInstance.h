@@ -34,7 +34,7 @@ class DiagnosticClient;
 class ExternalASTSource;
 class FileManager;
 class FrontendAction;
-class PCHReader;
+class ASTReader;
 class Preprocessor;
 class Sema;
 class SourceManager;

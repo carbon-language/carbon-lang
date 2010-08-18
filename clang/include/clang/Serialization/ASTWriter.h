@@ -11,8 +11,8 @@
 //  containing a serialized representation of a translation unit.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_FRONTEND_PCH_WRITER_H
-#define LLVM_CLANG_FRONTEND_PCH_WRITER_H
+#ifndef LLVM_CLANG_FRONTEND_AST_WRITER_H
+#define LLVM_CLANG_FRONTEND_AST_WRITER_H
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
@@ -43,7 +43,7 @@ class CXXBaseOrMemberInitializer;
 class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
-class PCHReader;
+class ASTReader;
 class Preprocessor;
 class Sema;
 class SourceManager;
@@ -73,7 +73,7 @@ struct UnsafeQualTypeDenseMapInfo {
 /// The ASTWriter class produces a bitstream containing the serialized
 /// representation of a given abstract syntax tree and its supporting
 /// data structures. This bitstream can be de-serialized via an
-/// instance of the PCHReader class.
+/// instance of the ASTReader class.
 class ASTWriter : public PCHDeserializationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
@@ -83,8 +83,8 @@ private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
 
-  /// \brief The reader of existing PCH files, if we're chaining.
-  PCHReader *Chain;
+  /// \brief The reader of existing AST files, if we're chaining.
+  ASTReader *Chain;
 
   /// \brief Stores a declaration or a type to be written to the AST file.
   class DeclOrType {
@@ -461,7 +461,7 @@ public:
   bool hasChain() const { return Chain; }
 
   // PCHDeserializationListener implementation
-  void SetReader(PCHReader *Reader);
+  void SetReader(ASTReader *Reader);
   void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
   void TypeRead(pch::TypeID ID, QualType T);
   void DeclRead(pch::DeclID ID, const Decl *D);

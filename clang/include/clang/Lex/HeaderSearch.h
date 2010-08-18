@@ -219,7 +219,7 @@ public:
   header_file_iterator header_file_end() const { return FileInfo.end(); }
   unsigned header_file_size() const { return FileInfo.size(); }
 
-  // Used by PCHReader.
+  // Used by ASTReader.
   void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
 
   void PrintStats();

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Statement/expression deserialization.  This implements the
-// PCHReader::ReadStmt method.
+// ASTReader::ReadStmt method.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,14 +20,14 @@ using namespace clang;
 namespace clang {
 
   class PCHStmtReader : public StmtVisitor<PCHStmtReader> {
-    PCHReader &Reader;
+    ASTReader &Reader;
     llvm::BitstreamCursor &DeclsCursor;
-    const PCHReader::RecordData &Record;
+    const ASTReader::RecordData &Record;
     unsigned &Idx;
 
   public:
-    PCHStmtReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
-                  const PCHReader::RecordData &Record, unsigned &Idx)
+    PCHStmtReader(ASTReader &Reader, llvm::BitstreamCursor &Cursor,
+                  const ASTReader::RecordData &Record, unsigned &Idx)
       : Reader(Reader), DeclsCursor(Cursor), Record(Record), Idx(Idx) { }
 
     /// \brief The number of record fields required for the Stmt class
@@ -1242,7 +1242,7 @@ void PCHStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   E->QueriedType = Reader.GetType(Record[Idx++]);
 }
 
-Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
+Stmt *ASTReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
   switch (ReadingKind) {
   case Read_Decl:
   case Read_Type:
@@ -1255,11 +1255,11 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
   return 0;
 }
 
-Expr *PCHReader::ReadExpr(llvm::BitstreamCursor &Cursor) {
+Expr *ASTReader::ReadExpr(llvm::BitstreamCursor &Cursor) {
   return cast_or_null<Expr>(ReadStmt(Cursor));
 }
 
-Expr *PCHReader::ReadSubExpr() {
+Expr *ASTReader::ReadSubExpr() {
   return cast_or_null<Expr>(ReadSubStmt());
 }
 
@@ -1270,7 +1270,7 @@ Expr *PCHReader::ReadSubExpr() {
 // the stack, with expressions having operands removing those operands from the
 // stack. Evaluation terminates when we see a STMT_STOP record, and
 // the single remaining expression on the stack is our result.
-Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
+Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
 
   ReadingKindTracker ReadingKind(Read_Stmt, *this);
   

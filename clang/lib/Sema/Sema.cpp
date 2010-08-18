@@ -49,7 +49,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 
   VAListTagName = PP.getIdentifierInfo("__va_list_tag");
 
-  if (!Context.isInt128Installed() && // May be set by PCHReader.
+  if (!Context.isInt128Installed() && // May be set by ASTReader.
       PP.getTargetInfo().getPointerWidth(0) >= 64) {
     TypeSourceInfo *TInfo;
 
@@ -71,7 +71,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 
   if (!PP.getLangOptions().ObjC1) return;
 
-  // Built-in ObjC types may already be set by PCHReader (hence isNull checks).
+  // Built-in ObjC types may already be set by ASTReader (hence isNull checks).
   if (Context.getObjCSelType().isNull()) {
     // Create the built-in typedef for 'SEL'.
     QualType SelT = Context.getPointerType(Context.ObjCBuiltinSelTy);

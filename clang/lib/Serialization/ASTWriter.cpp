@@ -2911,7 +2911,7 @@ void ASTWriter::AddCXXBaseOrMemberInitializers(
   }
 }
 
-void ASTWriter::SetReader(PCHReader *Reader) {
+void ASTWriter::SetReader(ASTReader *Reader) {
   assert(Reader && "Cannot remove chain");
   assert(FirstDeclID == NextDeclID &&
          FirstTypeID == NextTypeID &&
