@@ -241,8 +241,7 @@ private:
                         NestedNameSpecifier *Qualifier,
                         DeclarationName Name,
                         unsigned KnownArity);
-  void mangleCalledExpression(const Expr *E, unsigned KnownArity);
-  void mangleExpression(const Expr *E);
+  void mangleExpression(const Expr *E, unsigned Arity = UnknownArity);
   void mangleCXXCtorType(CXXCtorType T);
   void mangleCXXDtorType(CXXDtorType T);
 
@@ -1024,24 +1023,21 @@ CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
   //              ::= da        # delete[]
   case OO_Array_Delete: Out << "da"; break;
   //              ::= ps        # + (unary)
-  //              ::= pl        # +
+  //              ::= pl        # + (binary or unknown)
   case OO_Plus:
-    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
     Out << (Arity == 1? "ps" : "pl"); break;
   //              ::= ng        # - (unary)
-  //              ::= mi        # -
+  //              ::= mi        # - (binary or unknown)
   case OO_Minus:
-    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
     Out << (Arity == 1? "ng" : "mi"); break;
   //              ::= ad        # & (unary)
-  //              ::= an        # &
+  //              ::= an        # & (binary or unknown)
   case OO_Amp:
-    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
     Out << (Arity == 1? "ad" : "an"); break;
   //              ::= de        # * (unary)
-  //              ::= ml        # *
+  //              ::= ml        # * (binary or unknown)
   case OO_Star:
-    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
+    // Use binary when unknown.
     Out << (Arity == 1? "de" : "ml"); break;
   //              ::= co        # ~
   case OO_Tilde: Out << "co"; break;
@@ -1544,25 +1540,6 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
 
 }
 
-void CXXNameMangler::mangleCalledExpression(const Expr *E, unsigned Arity) {
-  if (E->getType() != getASTContext().OverloadTy)
-    return mangleExpression(E);
-  // FIXME: propagate arity to dependent overloads?
-
-  llvm::PointerIntPair<OverloadExpr*,1> R
-    = OverloadExpr::find(const_cast<Expr*>(E));
-  if (R.getInt())
-    Out << "an"; // &
-  const OverloadExpr *Ovl = R.getPointer();
-  if (const UnresolvedMemberExpr *ME = dyn_cast<UnresolvedMemberExpr>(Ovl)) {
-    mangleMemberExpr(ME->getBase(), ME->isArrow(), ME->getQualifier(),
-                     ME->getMemberName(), Arity);
-    return;
-  }
-
-  mangleUnresolvedName(Ovl->getQualifier(), Ovl->getName(), Arity);
-}
-
 /// Mangles a member expression.  Implicit accesses are not handled,
 /// but that should be okay, because you shouldn't be able to
 /// make an implicit access in a function template declaration.
@@ -1578,7 +1555,7 @@ void CXXNameMangler::mangleMemberExpr(const Expr *Base,
   mangleUnresolvedName(Qualifier, Member, Arity);
 }
 
-void CXXNameMangler::mangleExpression(const Expr *E) {
+void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   // <expression> ::= <unary operator-name> <expression>
   //              ::= <binary operator-name> <expression> <expression>
   //              ::= <trinary operator-name> <expression> <expression> <expression>
@@ -1652,14 +1629,14 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
   }
 
   case Expr::CXXDefaultArgExprClass:
-    mangleExpression(cast<CXXDefaultArgExpr>(E)->getExpr());
+    mangleExpression(cast<CXXDefaultArgExpr>(E)->getExpr(), Arity);
     break;
 
   case Expr::CXXMemberCallExprClass: // fallthrough
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
     Out << "cl";
-    mangleCalledExpression(CE->getCallee(), CE->getNumArgs());
+    mangleExpression(CE->getCallee(), CE->getNumArgs());
     for (unsigned I = 0, N = CE->getNumArgs(); I != N; ++I)
       mangleExpression(CE->getArg(I));
     Out << 'E';
@@ -1690,7 +1667,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     const MemberExpr *ME = cast<MemberExpr>(E);
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
                      ME->getQualifier(), ME->getMemberDecl()->getDeclName(),
-                     UnknownArity);
+                     Arity);
     break;
   }
 
@@ -1698,7 +1675,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     const UnresolvedMemberExpr *ME = cast<UnresolvedMemberExpr>(E);
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
                      ME->getQualifier(), ME->getMemberName(),
-                     UnknownArity);
+                     Arity);
     break;
   }
 
@@ -1707,7 +1684,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
       = cast<CXXDependentScopeMemberExpr>(E);
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
                      ME->getQualifier(), ME->getMember(),
-                     UnknownArity);
+                     Arity);
     break;
   }
 
@@ -1716,7 +1693,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     // using something as close as possible to the original lookup
     // expression.
     const UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(E);
-    mangleUnresolvedName(ULE->getQualifier(), ULE->getName(), UnknownArity);
+    mangleUnresolvedName(ULE->getQualifier(), ULE->getName(), Arity);
     break;
   }
 
@@ -1829,13 +1806,13 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     const ConditionalOperator *CO = cast<ConditionalOperator>(E);
     mangleOperatorName(OO_Conditional, /*Arity=*/3);
     mangleExpression(CO->getCond());
-    mangleExpression(CO->getLHS());
-    mangleExpression(CO->getRHS());
+    mangleExpression(CO->getLHS(), Arity);
+    mangleExpression(CO->getRHS(), Arity);
     break;
   }
 
   case Expr::ImplicitCastExprClass: {
-    mangleExpression(cast<ImplicitCastExpr>(E)->getSubExpr());
+    mangleExpression(cast<ImplicitCastExpr>(E)->getSubExpr(), Arity);
     break;
   }
 
@@ -1863,7 +1840,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
   }
 
   case Expr::ParenExprClass:
-    mangleExpression(cast<ParenExpr>(E)->getSubExpr());
+    mangleExpression(cast<ParenExpr>(E)->getSubExpr(), Arity);
     break;
 
   case Expr::DeclRefExprClass: {
@@ -1914,10 +1891,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     // ::= sr <type> <unqualified-name>                   # dependent name
     Out << "sr";
     mangleType(QualType(QTy, 0));
-
-    assert(DRE->getDeclName().getNameKind() == DeclarationName::Identifier &&
-           "Unhandled decl name kind!");
-    mangleSourceName(DRE->getDeclName().getAsIdentifierInfo());
+    mangleUnqualifiedName(0, DRE->getDeclName(), Arity);
 
     break;
   }
@@ -1931,7 +1905,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
 
   case Expr::CXXExprWithTemporariesClass:
-    mangleExpression(cast<CXXExprWithTemporaries>(E)->getSubExpr());
+    mangleExpression(cast<CXXExprWithTemporaries>(E)->getSubExpr(), Arity);
     break;
 
   case Expr::FloatingLiteralClass: {

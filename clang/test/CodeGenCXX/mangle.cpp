@@ -557,3 +557,31 @@ namespace test17 {
     func<B>();  // { dg-error "sorry, unimplemented" }
   }
 }
+
+// PR7891
+namespace test18 {
+  struct A {
+    int operator+();
+    int operator-();
+    int operator*();
+    int operator&();
+  };
+  template <int (A::*)()> struct S {};
+
+  template <typename T> void f(S<&T::operator+>) {}
+  template void f<A>(S<&A::operator+>);
+
+  template <typename T> void f(S<&T::operator- >) {}
+  template void f<A>(S<&A::operator- >);
+
+  template <typename T> void f(S<&T::operator*>) {}
+  template void f<A>(S<&A::operator*>);
+
+  template <typename T> void f(S<&T::operator&>) {}
+  template void f<A>(S<&A::operator&>);
+
+  // CHECK: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_plEEE
+  // CHECK: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_miEEE
+  // CHECK: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_mlEEE
+  // CHECK: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_anEEE
+}
