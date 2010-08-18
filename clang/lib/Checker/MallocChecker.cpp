@@ -567,6 +567,7 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
 
   const GRState *state = C.getState();
   RegionStateTy RS = state->get<RegionState>();
+  RegionStateTy::Factory &F = state->get_context<RegionState>();
 
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
     if (SymReaper.isDead(I->first)) {
@@ -580,8 +581,14 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
           C.EmitReport(R);
         }
       }
+
+      // Remove the dead symbol from the map.
+      RS = F.Remove(RS, I->first);
     }
   }
+
+  state = state->set<RegionState>(RS);
+  C.GenerateNode(state);
 }
 
 void MallocChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
