@@ -1209,16 +1209,31 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                     unsaved_files, num_unsaved_files,
                                  CXTranslationUnit_DetailedPreprocessingRecord);
 }
+  
+struct ParseTranslationUnitInfo {
+  CXIndex CIdx;
+  const char *source_filename;
+  const char **command_line_args;
+  int num_command_line_args;
+  struct CXUnsavedFile *unsaved_files;
+  unsigned num_unsaved_files;
+  unsigned options;
+  CXTranslationUnit result;
+};
+void clang_parseTranslationUnit_Impl(void *UserData) {
+  ParseTranslationUnitInfo *PTUI =
+    static_cast<ParseTranslationUnitInfo*>(UserData);
+  CXIndex CIdx = PTUI->CIdx;
+  const char *source_filename = PTUI->source_filename;
+  const char **command_line_args = PTUI->command_line_args;
+  int num_command_line_args = PTUI->num_command_line_args;
+  struct CXUnsavedFile *unsaved_files = PTUI->unsaved_files;
+  unsigned num_unsaved_files = PTUI->num_unsaved_files;
+  unsigned options = PTUI->options;
+  PTUI->result = 0;
 
-CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
-                                             const char *source_filename,
-                                             const char **command_line_args,
-                                             int num_command_line_args,
-                                             struct CXUnsavedFile *unsaved_files,
-                                             unsigned num_unsaved_files,
-                                             unsigned options) {
   if (!CIdx)
-    return 0;
+    return;
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
@@ -1307,7 +1322,8 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
       }
     }
 
-    return Unit.take();
+    PTUI->result = Unit.take();
+    return;
   }
 
   // Build up the arguments for invoking 'clang'.
@@ -1343,7 +1359,7 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   std::vector<llvm::sys::Path> TemporaryFiles;
   std::vector<std::string> RemapArgs;
   if (RemapFiles(num_unsaved_files, unsaved_files, RemapArgs, TemporaryFiles))
-    return 0;
+    return;
 
   // The pointers into the elements of RemapArgs are stable because we
   // won't be adding anything to RemapArgs after this point.
@@ -1459,7 +1475,26 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
       TemporaryFiles[i].eraseFromDisk();
   }
   
-  return ATU;
+  PTUI->result = ATU;
+}
+CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
+                                             const char *source_filename,
+                                             const char **command_line_args,
+                                             int num_command_line_args,
+                                             struct CXUnsavedFile *unsaved_files,
+                                             unsigned num_unsaved_files,
+                                             unsigned options) {
+  ParseTranslationUnitInfo PTUI = { CIdx, source_filename, command_line_args,
+                                    num_command_line_args, unsaved_files, num_unsaved_files,
+                                    options, 0 };
+  llvm::CrashRecoveryContext CRC;
+
+  if (!CRC.RunSafely(clang_parseTranslationUnit_Impl, &PTUI)) {
+    // FIXME: Find a way to report the crash.
+    return 0;
+  }
+
+  return PTUI.result;
 }
 
 unsigned clang_defaultSaveOptions(CXTranslationUnit TU) {
@@ -1473,7 +1508,7 @@ int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
   
   return static_cast<ASTUnit *>(TU)->Save(FileName);
 }
-  
+
 void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
   if (CTUnit)
     delete static_cast<ASTUnit *>(CTUnit);
