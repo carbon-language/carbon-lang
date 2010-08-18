@@ -50,10 +50,6 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     ///
-    /// @param[in] pid
-    ///     A unique identifier for this pass.  I'm not sure what this does;
-    ///     it just gets passed down to ModulePass's constructor.
-    ///
     /// @param[in] variable_list
     ///     A list of variables to populate with the local variables this
     ///     expression uses.
@@ -65,8 +61,7 @@ public:
     /// @param[in] stream
     ///     The stream to dump DWARF bytecode onto.
     //------------------------------------------------------------------
-    IRToDWARF(const void *pid,
-              lldb_private::ClangExpressionVariableList &variable_list, 
+    IRToDWARF(lldb_private::ClangExpressionVariableList &variable_list, 
               lldb_private::ClangExpressionDeclMap *decl_map,
               lldb_private::StreamString &strm);
     

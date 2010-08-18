@@ -455,7 +455,7 @@ ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &expr_local_varia
         return 1;
     }
     
-    IRToDWARF ir_to_dwarf("IR to DWARF", expr_local_variable_list, m_decl_map, dwarf_opcode_strm);
+    IRToDWARF ir_to_dwarf(expr_local_variable_list, m_decl_map, dwarf_opcode_strm);
     
     return ir_to_dwarf.runOnModule(*module);
 }
@@ -491,7 +491,7 @@ ClangExpression::PrepareIRForTarget ()
     
     std::auto_ptr<llvm::TargetMachine> target_machine(target->createTargetMachine(m_target_triple, ""));
     
-    IRForTarget ir_for_target("IR for target", m_decl_map, target_machine->getTargetData());
+    IRForTarget ir_for_target(m_decl_map, target_machine->getTargetData());
     
     return ir_for_target.runOnModule(*module);
 }

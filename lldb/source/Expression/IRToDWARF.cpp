@@ -24,11 +24,12 @@
 
 using namespace llvm;
 
-IRToDWARF::IRToDWARF(const void *pid,
-                     lldb_private::ClangExpressionVariableList &variable_list, 
+static char ID;
+
+IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableList &variable_list, 
                      lldb_private::ClangExpressionDeclMap *decl_map,
                      lldb_private::StreamString &strm) :
-    ModulePass(pid),
+    ModulePass(ID),
     m_variable_list(variable_list),
     m_decl_map(decl_map),
     m_strm(strm)

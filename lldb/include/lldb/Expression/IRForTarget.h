@@ -61,8 +61,7 @@ public:
     ///     used to determine the sizes of types that have been lowered into
     ///     IR types.
     //------------------------------------------------------------------
-    IRForTarget(const void *pid,
-                lldb_private::ClangExpressionDeclMap *decl_map,
+    IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 const llvm::TargetData *target_data);
     
     //------------------------------------------------------------------
