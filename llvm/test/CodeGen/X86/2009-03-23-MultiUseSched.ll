@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux -relocation-model=static -stats -info-output-file - > %t
+; RUN: llc < %s -mtriple=x86_64-linux -relocation-model=static -o /dev/null -stats -info-output-file - > %t
 ; RUN: not grep spill %t
 ; RUN: not grep {%rsp} %t
 ; RUN: not grep {%rbp} %t

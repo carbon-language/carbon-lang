@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -stats -info-output-file - | grep asm-printer | grep 29
+; RUN: llc < %s -mtriple=i386-apple-darwin -o /dev/null -stats -info-output-file - | grep asm-printer | grep 29
 
 	%CC = type { %Register }
 	%II = type { %"struct.XX::II::$_74" }

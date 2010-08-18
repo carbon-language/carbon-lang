@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | grep pslldq
-; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin9 -stats -info-output-file - | grep asm-printer | grep 6
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin9 -o /dev/null -stats -info-output-file - | grep asm-printer | grep 6
 
 define <4 x float> @t3(<4 x float>* %P) nounwind  {
 	%tmp1 = load <4 x float>* %P

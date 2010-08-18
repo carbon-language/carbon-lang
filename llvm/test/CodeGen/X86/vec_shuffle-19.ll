@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin9 -stats -info-output-file - | grep asm-printer | grep 4
+; RUN: llc < %s -o /dev/null -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin9 -stats -info-output-file - | grep asm-printer | grep 4
 ; PR2485
 
 define <4 x i32> @t(<4 x i32> %a, <4 x i32> %b) nounwind  {
