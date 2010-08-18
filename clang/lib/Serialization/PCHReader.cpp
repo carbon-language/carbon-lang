@@ -46,7 +46,7 @@ using namespace clang;
 // PCH reader validator implementation
 //===----------------------------------------------------------------------===//
 
-PCHReaderListener::~PCHReaderListener() {}
+ASTReaderListener::~ASTReaderListener() {}
 
 bool
 PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
@@ -460,7 +460,7 @@ ASTReader::PerFileData::PerFileData()
 {}
 
 void
-ASTReader::setDeserializationListener(PCHDeserializationListener *Listener) {
+ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
   DeserializationListener = Listener;
   if (DeserializationListener)
     DeserializationListener->SetReader(this);
@@ -1419,7 +1419,7 @@ void ASTReader::MaybeAddSystemRootToFilename(std::string &Filename) {
 }
 
 ASTReader::ASTReadResult
-ASTReader::ReadPCHBlock(PerFileData &F) {
+ASTReader::ReadASTBlock(PerFileData &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
@@ -1528,7 +1528,7 @@ ASTReader::ReadPCHBlock(PerFileData &F) {
       }
 
       // Load the chained file.
-      switch(ReadPCHCore(llvm::StringRef(BlobStart, BlobLen))) {
+      switch(ReadASTCore(llvm::StringRef(BlobStart, BlobLen))) {
       case Failure: return Failure;
         // If we have to ignore the dependency, we'll have to ignore this too.
       case IgnorePCH: return IgnorePCH;
@@ -1792,8 +1792,8 @@ ASTReader::ReadPCHBlock(PerFileData &F) {
   return Failure;
 }
 
-ASTReader::ASTReadResult ASTReader::ReadPCH(const std::string &FileName) {
-  switch(ReadPCHCore(FileName)) {
+ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
+  switch(ReadASTCore(FileName)) {
   case Failure: return Failure;
   case IgnorePCH: return IgnorePCH;
   case Success: break;
@@ -1882,7 +1882,7 @@ ASTReader::ASTReadResult ASTReader::ReadPCH(const std::string &FileName) {
   return Success;
 }
 
-ASTReader::ASTReadResult ASTReader::ReadPCHCore(llvm::StringRef FileName) {
+ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
   Chain.push_back(new PerFileData());
   PerFileData &F = *Chain.back();
 
@@ -1934,7 +1934,7 @@ ASTReader::ASTReadResult ASTReader::ReadPCHCore(llvm::StringRef FileName) {
       }
       break;
     case pch::PCH_BLOCK_ID:
-      switch (ReadPCHBlock(F)) {
+      switch (ReadASTBlock(F)) {
       case Success:
         break;
 

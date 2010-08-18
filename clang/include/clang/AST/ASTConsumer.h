@@ -19,7 +19,7 @@ namespace clang {
   class CXXRecordDecl;
   class DeclGroupRef;
   class HandleTagDeclDefinition;
-  class PCHDeserializationListener; // layering violation because void* is ugly
+  class ASTDeserializationListener; // layering violation because void* is ugly
   class SemaConsumer; // layering violation required for safe SemaConsumer
   class TagDecl;
   class VarDecl;
@@ -87,10 +87,10 @@ public:
   virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {}
 
   /// \brief If the consumer is interested in entities being deserialized from
-  /// PCH, it should return a pointer to a PCHDeserializationListener here.
+  /// AST files, it should return a pointer to a ASTDeserializationListener here
   ///
-  /// The return type is void* because PCHDS lives in Frontend.
-  virtual PCHDeserializationListener *GetPCHDeserializationListener() { return 0; }
+  /// The return type is void* because ASTDS lives in Frontend.
+  virtual ASTDeserializationListener *GetASTDeserializationListener() { return 0; }
 
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {}

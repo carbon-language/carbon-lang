@@ -59,7 +59,7 @@ class GotoStmt;
 class LabelStmt;
 class MacroDefinition;
 class NamedDecl;
-class PCHDeserializationListener;
+class ASTDeserializationListener;
 class Preprocessor;
 class Sema;
 class SwitchCase;
@@ -81,10 +81,10 @@ typedef llvm::SmallVector<PCHPredefinesBlock, 2> PCHPredefinesBlocks;
 /// While reading an AST file, the ASTReader will call the methods of the
 /// listener to pass on specific information. Some of the listener methods can
 /// return true to indicate to the ASTReader that the information (and
-/// consequently the PCH file) is invalid.
-class PCHReaderListener {
+/// consequently the AST file) is invalid.
+class ASTReaderListener {
 public:
-  virtual ~PCHReaderListener();
+  virtual ~ASTReaderListener();
 
   /// \brief Receives the language options.
   ///
@@ -124,9 +124,9 @@ public:
   virtual void ReadCounter(unsigned Value) {}
 };
 
-/// \brief PCHReaderListener implementation to validate the information of
+/// \brief ASTReaderListener implementation to validate the information of
 /// the PCH file against an initialized Preprocessor.
-class PCHValidator : public PCHReaderListener {
+class PCHValidator : public ASTReaderListener {
   Preprocessor &PP;
   ASTReader &Reader;
 
@@ -173,10 +173,10 @@ public:
   friend class ASTDeclReader;
 private:
   /// \brief The receiver of some callbacks invoked by ASTReader.
-  llvm::OwningPtr<PCHReaderListener> Listener;
+  llvm::OwningPtr<ASTReaderListener> Listener;
 
   /// \brief The receiver of deserialization events.
-  PCHDeserializationListener *DeserializationListener;
+  ASTDeserializationListener *DeserializationListener;
 
   SourceManager &SourceMgr;
   FileManager &FileMgr;
@@ -566,8 +566,8 @@ private:
 
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
-  ASTReadResult ReadPCHCore(llvm::StringRef FileName);
-  ASTReadResult ReadPCHBlock(PerFileData &F);
+  ASTReadResult ReadASTCore(llvm::StringRef FileName);
+  ASTReadResult ReadASTBlock(PerFileData &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
   ASTReadResult ReadSourceManagerBlock(PerFileData &F);
@@ -618,7 +618,7 @@ public:
   /// \brief Load the PCH file without using any pre-initialized Preprocessor.
   ///
   /// The necessary information to initialize a Preprocessor later can be
-  /// obtained by setting a PCHReaderListener.
+  /// obtained by setting a ASTReaderListener.
   ///
   /// \param SourceMgr the source manager into which the precompiled header
   /// will be loaded.
@@ -643,15 +643,15 @@ public:
 
   /// \brief Load the precompiled header designated by the given file
   /// name.
-  ASTReadResult ReadPCH(const std::string &FileName);
+  ASTReadResult ReadAST(const std::string &FileName);
 
   /// \brief Set the PCH callbacks listener.
-  void setListener(PCHReaderListener *listener) {
+  void setListener(ASTReaderListener *listener) {
     Listener.reset(listener);
   }
 
   /// \brief Set the PCH deserialization listener.
-  void setDeserializationListener(PCHDeserializationListener *Listener);
+  void setDeserializationListener(ASTDeserializationListener *Listener);
 
   /// \brief Set the Preprocessor to use.
   void setPreprocessor(Preprocessor &pp);

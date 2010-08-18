@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the PCHDeserializationListener class, which is notified
+//  This file defines the ASTDeserializationListener class, which is notified
 //  by the ASTReader whenever a type or declaration is deserialized.
 //
 //===----------------------------------------------------------------------===//
@@ -23,9 +23,9 @@ class Decl;
 class ASTReader;
 class QualType;
 
-class PCHDeserializationListener {
+class ASTDeserializationListener {
 protected:
-  virtual ~PCHDeserializationListener() {}
+  virtual ~ASTDeserializationListener() {}
 
 public:
   /// \brief Tell the listener about the reader.

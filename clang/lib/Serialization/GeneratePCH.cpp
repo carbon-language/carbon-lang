@@ -59,6 +59,6 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   Buffer.clear();
 }
 
-PCHDeserializationListener *PCHGenerator::GetPCHDeserializationListener() {
+ASTDeserializationListener *PCHGenerator::GetASTDeserializationListener() {
   return &Writer;
 }

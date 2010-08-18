@@ -122,7 +122,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                 CI.getPreprocessorOpts().ImplicitPCHInclude,
                                 CI.getPreprocessorOpts().DisablePCHValidation,
                                 CI.getInvocation().getFrontendOpts().ChainedPCH?
-                                 Consumer->GetPCHDeserializationListener() : 0);
+                                 Consumer->GetASTDeserializationListener() : 0);
       if (!CI.getASTContext().getExternalSource())
         goto failure;
     }

@@ -74,7 +74,7 @@ struct UnsafeQualTypeDenseMapInfo {
 /// representation of a given abstract syntax tree and its supporting
 /// data structures. This bitstream can be de-serialized via an
 /// instance of the ASTReader class.
-class ASTWriter : public PCHDeserializationListener {
+class ASTWriter : public ASTDeserializationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
@@ -460,7 +460,7 @@ public:
 
   bool hasChain() const { return Chain; }
 
-  // PCHDeserializationListener implementation
+  // ASTDeserializationListener implementation
   void SetReader(ASTReader *Reader);
   void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
   void TypeRead(pch::TypeID ID, QualType T);
@@ -489,7 +489,7 @@ public:
                const char *isysroot, llvm::raw_ostream *Out);
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
-  virtual PCHDeserializationListener *GetPCHDeserializationListener();
+  virtual ASTDeserializationListener *GetASTDeserializationListener();
 };
 
 } // end namespace clang

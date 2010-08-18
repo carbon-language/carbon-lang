@@ -304,7 +304,7 @@ namespace {
 
 /// \brief Gathers information from ASTReader that will be used to initialize
 /// a Preprocessor.
-class PCHInfoCollector : public PCHReaderListener {
+class PCHInfoCollector : public ASTReaderListener {
   LangOptions &LangOpt;
   HeaderSearch &HSI;
   std::string &TargetTriple;
@@ -463,7 +463,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
-  switch (Reader->ReadPCH(Filename)) {
+  switch (Reader->ReadAST(Filename)) {
   case ASTReader::Success:
     break;
 
