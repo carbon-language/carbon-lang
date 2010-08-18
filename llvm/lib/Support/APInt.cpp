@@ -2123,15 +2123,16 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     char *BufPtr = Buffer+65;
 
     uint64_t N;
-    if (Signed) {
-      int64_t I = getSExtValue();
-      if (I < 0) {
-        Str.push_back('-');
-        I = -I;
-      }
-      N = I;
-    } else {
+    if (!Signed) {
       N = getZExtValue();
+    } else {
+      int64_t I = getSExtValue();
+      if (I >= 0) {
+        N = I;
+      } else {
+        Str.push_back('-');
+        N = -(uint64_t)I;
+      }
     }
 
     while (N) {
