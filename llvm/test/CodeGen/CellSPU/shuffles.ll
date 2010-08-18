@@ -16,3 +16,18 @@ define <4 x float> @splat(float %param1) {
   ret <4 x float> %val  
 }
 
+define void @test_insert( <2 x float>* %ptr, float %val1, float %val2 ) {
+  %sl2_17_tmp1 = insertelement <2 x float> zeroinitializer, float %val1, i32 0
+;CHECK:	lqa	$6,
+;CHECK:	shufb	$4, $4, $5, $6
+  %sl2_17 = insertelement <2 x float> %sl2_17_tmp1, float %val2, i32 1
+
+;CHECK: cdd	$5, 0($3)
+;CHECK: lqd	$6, 0($3)
+;CHECK: shufb	$4, $4, $6, $5
+;CHECK: stqd	$4, 0($3)
+;CHECK:	bi	$lr
+  store <2 x float> %sl2_17, <2 x float>* %ptr
+  ret void 
+}
+

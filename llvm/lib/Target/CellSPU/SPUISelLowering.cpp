@@ -1755,11 +1755,12 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   // If we have a single element being moved from V1 to V2, this can be handled
   // using the C*[DX] compute mask instructions, but the vector elements have
-  // to be monotonically increasing with one exception element.
+  // to be monotonically increasing with one exception element, and the source
+  // slot of the element to move must be the same as the destination.
   EVT VecVT = V1.getValueType();
   EVT EltVT = VecVT.getVectorElementType();
   unsigned EltsFromV2 = 0;
-  unsigned V2Elt = 0;
+  unsigned V2EltOffset = 0;
   unsigned V2EltIdx0 = 0;
   unsigned CurrElt = 0;
   unsigned MaxElts = VecVT.getVectorNumElements();
@@ -1792,9 +1793,13 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
     if (monotonic) {
       if (SrcElt >= V2EltIdx0) {
-        if (1 >= (++EltsFromV2)) {
-          V2Elt = (V2EltIdx0 - SrcElt) << 2;
-        }
+        // TODO: optimize for the monotonic case when several consecutive
+        // elements are taken form V2. Do we ever get such a case?
+        if (EltsFromV2 == 0 && CurrElt == (SrcElt - V2EltIdx0))
+          V2EltOffset = (SrcElt - V2EltIdx0) * (EltVT.getSizeInBits()/8);
+        else
+          monotonic = false;
+        ++EltsFromV2;
       } else if (CurrElt != SrcElt) {
         monotonic = false;
       }
@@ -1830,7 +1835,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     // R1 ($sp) is used here only as it is guaranteed to have last bits zero
     SDValue Pointer = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                 DAG.getRegister(SPU::R1, PtrVT),
-                                DAG.getConstant(V2Elt, MVT::i32));
+                                DAG.getConstant(V2EltOffset, MVT::i32));
     SDValue ShufMaskOp = DAG.getNode(SPUISD::SHUFFLE_MASK, dl, 
                                      maskVT, Pointer);
 
