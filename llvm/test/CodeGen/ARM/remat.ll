@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -stats -info-output-file - | grep "Number of re-materialization"
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -o /dev/null -stats -info-output-file - | grep "Number of re-materialization"
 
 define i32 @main(i32 %argc, i8** nocapture %argv, double %d1, double %d2) nounwind {
 entry:
