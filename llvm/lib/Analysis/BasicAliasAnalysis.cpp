@@ -215,10 +215,14 @@ namespace {
 
 /// GetLinearExpression - Analyze the specified value as a linear expression:
 /// "A*V + B", where A and B are constant integers.  Return the scale and offset
-/// values as APInts and return V as a Value*.  The incoming Value is known to
-/// have IntegerType.  Note that this looks through extends, so the high bits
-/// may not be represented in the result.
+/// values as APInts and return V as a Value*, and return whether we looked
+/// through any sign or zero extends.  The incoming Value is known to have
+/// IntegerType and it may already be sign or zero extended.
+///
+/// Note that this looks through extends, so the high bits may not be
+/// represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
+                                  ExtensionKind &Extension,
                                   const TargetData &TD, unsigned Depth) {
   assert(V->getType()->isIntegerTy() && "Not an integer value");
 
@@ -240,16 +244,19 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
           break;
         // FALL THROUGH.
       case Instruction::Add:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
+                                TD, Depth+1);
         Offset += RHSC->getValue();
         return V;
       case Instruction::Mul:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
+                                TD, Depth+1);
         Offset *= RHSC->getValue();
         Scale *= RHSC->getValue();
         return V;
       case Instruction::Shl:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
+                                TD, Depth+1);
         Offset <<= RHSC->getValue().getLimitedValue();
         Scale <<= RHSC->getValue().getLimitedValue();
         return V;
@@ -258,16 +265,22 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
   }
   
   // Since GEP indices are sign extended anyway, we don't care about the high
-  // bits of a sign extended value - just scales and offsets.
-  if (isa<SExtInst>(V)) {
+  // bits of a sign or zero extended value - just scales and offsets.  The
+  // extensions have to be consistent though.
+  if ((isa<SExtInst>(V) && Extension != EK_ZeroExt) ||
+      (isa<ZExtInst>(V) && Extension != EK_SignExt)) {
     Value *CastOp = cast<CastInst>(V)->getOperand(0);
     unsigned OldWidth = Scale.getBitWidth();
     unsigned SmallWidth = CastOp->getType()->getPrimitiveSizeInBits();
     Scale.trunc(SmallWidth);
     Offset.trunc(SmallWidth);
-    Value *Result = GetLinearExpression(CastOp, Scale, Offset, TD, Depth+1);
+    Extension = isa<SExtInst>(V) ? EK_SignExt : EK_ZeroExt;
+
+    Value *Result = GetLinearExpression(CastOp, Scale, Offset, Extension,
+                                        TD, Depth+1);
     Scale.zext(OldWidth);
     Offset.zext(OldWidth);
+    
     return Result;
   }
   
@@ -360,10 +373,16 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       uint64_t Scale = TD->getTypeAllocSize(*GTI);
       ExtensionKind Extension = EK_NotExtended;
       
-      // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
+      // If the integer type is smaller than the pointer size, it is implicitly
+      // sign extended to pointer size.
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
+      if (TD->getPointerSizeInBits() > Width)
+        Extension = EK_SignExt;
+      
+      // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset, *TD, 0);
+      Index = GetLinearExpression(Index, IndexScale, IndexOffset, Extension,
+                                  *TD, 0);
       
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
