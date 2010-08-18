@@ -29,6 +29,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Program.h"
@@ -1153,6 +1154,10 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
+  // We use crash recovery to make some of our APIs more reliable, implicitly
+  // enable it.
+  llvm::CrashRecoveryContext::Enable();
+
   CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
     CIdxr->setOnlyLocalDecls();
