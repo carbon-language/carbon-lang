@@ -627,12 +627,12 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
     return -1;
   }
   
+  /* Load the initial translation unit -- we do this without honoring remapped
+   * files, so that we have a way to test results after changing the source. */
   TU = clang_parseTranslationUnit(Idx, 0,
                                   argv + num_unsaved_files,
                                   argc - num_unsaved_files,
-                                  unsaved_files,
-                                  num_unsaved_files,
-                                  getDefaultParsingOptions());
+                                  0, 0, getDefaultParsingOptions());
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     free_remapped_files(unsaved_files, num_unsaved_files);
@@ -643,6 +643,7 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
   for (trial = 0; trial < trials; ++trial) {
     if (clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
                                      clang_defaultReparseOptions(TU))) {
+      fprintf(stderr, "Unable to reparse translation unit!\n");
       clang_disposeTranslationUnit(TU);
       free_remapped_files(unsaved_files, num_unsaved_files);
       clang_disposeIndex(Idx);
