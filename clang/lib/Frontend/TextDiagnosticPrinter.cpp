@@ -447,11 +447,11 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   if (NumHints && DiagOpts->ShowFixits) {
     for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
          Hint != LastHint; ++Hint) {
-      if (Hint->InsertionLoc.isValid()) {
+      if (!Hint->CodeToInsert.empty()) {
         // We have an insertion hint. Determine whether the inserted
         // code is on the same line as the caret.
         std::pair<FileID, unsigned> HintLocInfo
-          = SM.getDecomposedInstantiationLoc(Hint->InsertionLoc);
+          = SM.getDecomposedInstantiationLoc(Hint->RemoveRange.getBegin());
         if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
               SM.getLineNumber(FID, FileOffset)) {
           // Insert the new code into the line just below the code

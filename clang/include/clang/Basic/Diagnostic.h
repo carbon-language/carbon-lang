@@ -95,12 +95,9 @@ namespace clang {
 /// compilation.
 class FixItHint {
 public:
-  /// \brief Code that should be removed to correct the error.
+  /// \brief Code that should be replaced to correct the error. Empty for an
+  /// insertion hint.
   CharSourceRange RemoveRange;
-
-  /// \brief The location at which we should insert code to correct
-  /// the error.
-  SourceLocation InsertionLoc;
 
   /// \brief The actual code to insert at the insertion location, as a
   /// string.
@@ -108,10 +105,10 @@ public:
 
   /// \brief Empty code modification hint, indicating that no code
   /// modification is known.
-  FixItHint() : RemoveRange(), InsertionLoc() { }
+  FixItHint() : RemoveRange() { }
 
   bool isNull() const {
-    return !RemoveRange.isValid() && !InsertionLoc.isValid();
+    return !RemoveRange.isValid();
   }
   
   /// \brief Create a code modification hint that inserts the given
@@ -119,7 +116,8 @@ public:
   static FixItHint CreateInsertion(SourceLocation InsertionLoc,
                                    llvm::StringRef Code) {
     FixItHint Hint;
-    Hint.InsertionLoc = InsertionLoc;
+    Hint.RemoveRange =
+      CharSourceRange(SourceRange(InsertionLoc, InsertionLoc), false);
     Hint.CodeToInsert = Code;
     return Hint;
   }
@@ -141,7 +139,6 @@ public:
                                      llvm::StringRef Code) {
     FixItHint Hint;
     Hint.RemoveRange = RemoveRange;
-    Hint.InsertionLoc = RemoveRange.getBegin();
     Hint.CodeToInsert = Code;
     return Hint;
   }

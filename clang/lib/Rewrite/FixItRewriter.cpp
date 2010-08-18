@@ -96,12 +96,6 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
       CanRewrite = false;
       break;
     }
-
-    if (Hint.InsertionLoc.isValid() &&
-        !Rewrite.isRewritable(Hint.InsertionLoc)) {
-      CanRewrite = false;
-      break;
-    }
   }
 
   if (!CanRewrite) {
@@ -120,12 +114,6 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
   for (unsigned Idx = 0, Last = Info.getNumFixItHints();
        Idx < Last; ++Idx) {
     const FixItHint &Hint = Info.getFixItHint(Idx);
-    if (!Hint.RemoveRange.isValid()) {
-      // We're adding code.
-      if (Rewrite.InsertTextBefore(Hint.InsertionLoc, Hint.CodeToInsert))
-        Failed = true;
-      continue;
-    }
 
     if (Hint.CodeToInsert.empty()) {
       // We're removing code.

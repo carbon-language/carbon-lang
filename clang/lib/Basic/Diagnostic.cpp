@@ -1152,11 +1152,6 @@ void StoredDiagnostic::Serialize(llvm::raw_ostream &OS) const {
       break;
     }
 
-    if (F->InsertionLoc.isValid() && F->InsertionLoc.isMacroID()) {
-      NumFixIts = 0;
-      break;
-    }
-
     ++NumFixIts;
   }
 
@@ -1166,7 +1161,6 @@ void StoredDiagnostic::Serialize(llvm::raw_ostream &OS) const {
     WriteSourceLocation(OS, SM, F->RemoveRange.getBegin());
     WriteSourceLocation(OS, SM, F->RemoveRange.getEnd());
     WriteUnsigned(OS, F->RemoveRange.isTokenRange());
-    WriteSourceLocation(OS, SM, F->InsertionLoc);
     WriteString(OS, F->CodeToInsert);
   }
 }
@@ -1294,12 +1288,11 @@ StoredDiagnostic::Deserialize(FileManager &FM, SourceManager &SM,
   if (ReadUnsigned(Memory, MemoryEnd, NumFixIts))
     return Diag;
   for (unsigned I = 0; I != NumFixIts; ++I) {
-    SourceLocation RemoveBegin, RemoveEnd, InsertionLoc;
+    SourceLocation RemoveBegin, RemoveEnd;
     unsigned InsertLen = 0, RemoveIsTokenRange;
     if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, RemoveBegin) ||
         ReadSourceLocation(FM, SM, Memory, MemoryEnd, RemoveEnd) ||
         ReadUnsigned(Memory, MemoryEnd, RemoveIsTokenRange) ||
-        ReadSourceLocation(FM, SM, Memory, MemoryEnd, InsertionLoc) ||
         ReadUnsigned(Memory, MemoryEnd, InsertLen) ||
         Memory + InsertLen > MemoryEnd) {
       Diag.FixIts.clear();
@@ -1309,7 +1302,6 @@ StoredDiagnostic::Deserialize(FileManager &FM, SourceManager &SM,
     FixItHint Hint;
     Hint.RemoveRange = CharSourceRange(SourceRange(RemoveBegin, RemoveEnd),
                                        RemoveIsTokenRange);
-    Hint.InsertionLoc = InsertionLoc;
     Hint.CodeToInsert.assign(Memory, Memory + InsertLen);
     Memory += InsertLen;
     Diag.FixIts.push_back(Hint);

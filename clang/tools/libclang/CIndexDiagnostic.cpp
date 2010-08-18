@@ -204,26 +204,13 @@ CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic, unsigned FixIt,
 
   const FixItHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
   if (ReplacementRange) {
-    if (Hint.RemoveRange.isInvalid())  {
-      // Create an empty range that refers to a single source
-      // location (which is the insertion point).
-      CXSourceRange Range = { 
-        { (void *)&StoredDiag->Diag.getLocation().getManager(), 
-          (void *)&StoredDiag->LangOpts },
-        Hint.InsertionLoc.getRawEncoding(),
-        Hint.InsertionLoc.getRawEncoding() 
-      };
-
-      *ReplacementRange = Range;
-    } else {
-      // Create a range that covers the entire replacement (or
-      // removal) range, adjusting the end of the range to point to
-      // the end of the token.
-      *ReplacementRange
-          = translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
-                                 StoredDiag->LangOpts,
-                                 Hint.RemoveRange);
-    }
+    // Create a range that covers the entire replacement (or
+    // removal) range, adjusting the end of the range to point to
+    // the end of the token.
+    *ReplacementRange
+        = translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
+                                StoredDiag->LangOpts,
+                                Hint.RemoveRange);
   }
 
   return createCXString(Hint.CodeToInsert);
