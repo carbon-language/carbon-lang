@@ -181,6 +181,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
   unsigned NumSrcs = (MPhi->getNumOperands() - 1) / 2;
   unsigned DestReg = MPhi->getOperand(0).getReg();
+  assert(MPhi->getOperand(0).getSubReg() == 0 && "Can't handle sub-reg PHIs");
   bool isDead = MPhi->getOperand(0).isDead();
 
   // Create a new register for the incoming PHI arguments.
@@ -267,6 +268,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
   SmallPtrSet<MachineBasicBlock*, 8> MBBsInsertedInto;
   for (int i = NumSrcs - 1; i >= 0; --i) {
     unsigned SrcReg = MPhi->getOperand(i*2+1).getReg();
+    unsigned SrcSubReg = MPhi->getOperand(i*2+1).getSubReg();
+
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
 
@@ -296,7 +299,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     // Insert the copy.
     if (!reusedIncoming && IncomingReg)
       BuildMI(opBlock, InsertPos, MPhi->getDebugLoc(),
-              TII->get(TargetOpcode::COPY), IncomingReg).addReg(SrcReg);
+              TII->get(TargetOpcode::COPY), IncomingReg).addReg(SrcReg, 0, SrcSubReg);
 
     // Now update live variable information if we have it.  Otherwise we're done
     if (!LV) continue;
