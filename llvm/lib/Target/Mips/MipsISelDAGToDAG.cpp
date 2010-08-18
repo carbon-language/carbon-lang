@@ -137,7 +137,7 @@ SelectAddr(SDNode *Op, SDValue Addr, SDValue &Offset, SDValue &Base)
   // Operand is a result from an ADD.
   if (Addr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
-      if (Predicate_immSExt16(CN)) {
+      if (isInt<16>(CN->getSExtValue())) {
 
         // If the first operand is a FI, get the TargetFI Node
         if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
@@ -248,8 +248,8 @@ SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDNode *N) {
 
   SDValue Chain = N->getOperand(0);
 
-  if (!Predicate_unindexedstore(N) ||
-      !Predicate_store(N))
+  StoreSDNode *SN = cast<StoreSDNode>(N);
+  if (SN->isTruncatingStore() || SN->getAddressingMode() != ISD::UNINDEXED)
     return NULL;
 
   SDValue N1 = N->getOperand(1);
