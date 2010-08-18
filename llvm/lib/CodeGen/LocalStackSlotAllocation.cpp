@@ -235,7 +235,8 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             std::pair<unsigned, int64_t> RegOffset;
             if (lookupCandidateBaseReg(BaseRegisters, RegOffset,
                                        LocalOffsets[FrameIdx], MI, TRI)) {
-              DEBUG(dbgs() << "  Reusing base register " << RegOffset.first);
+              DEBUG(dbgs() << "  Reusing base register " <<
+                    RegOffset.first << "\n");
               // We found a register to reuse.
               BaseReg = RegOffset.first;
               Offset = LocalOffsets[FrameIdx] - RegOffset.second;
