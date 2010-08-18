@@ -1,4 +1,4 @@
-//===--- PCHReaderDecl.cpp - Decl Deserialization ---------------*- C++ -*-===//
+//===--- ASTReaderDecl.cpp - Decl Deserialization ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

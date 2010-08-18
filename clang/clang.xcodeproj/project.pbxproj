@@ -135,11 +135,11 @@
 		35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */; };
 		35F2A01E0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F2A01D0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
+		57AA9250121C8B9400B4AA6C /* ASTReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57AA924D121C8B9400B4AA6C /* ASTReader.cpp */; };
+		57AA9251121C8B9400B4AA6C /* ASTReaderDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57AA924E121C8B9400B4AA6C /* ASTReaderDecl.cpp */; };
+		57AA9252121C8B9400B4AA6C /* ASTReaderStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57AA924F121C8B9400B4AA6C /* ASTReaderStmt.cpp */; };
 		57EB566A121B034300ECA335 /* GeneratePCH.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5662121B034300ECA335 /* GeneratePCH.cpp */; };
 		57EB566B121B034300ECA335 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5663121B034300ECA335 /* Makefile */; };
-		57EB566C121B034300ECA335 /* PCHReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5664121B034300ECA335 /* PCHReader.cpp */; };
-		57EB566D121B034300ECA335 /* PCHReaderDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5665121B034300ECA335 /* PCHReaderDecl.cpp */; };
-		57EB566E121B034300ECA335 /* PCHReaderStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57EB5666121B034300ECA335 /* PCHReaderStmt.cpp */; };
 		57F66612121B4DE600DCE3B7 /* ASTWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57F6660F121B4DE600DCE3B7 /* ASTWriter.cpp */; };
 		57F66613121B4DE600DCE3B7 /* ASTWriterDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57F66610121B4DE600DCE3B7 /* ASTWriterDecl.cpp */; };
 		57F66614121B4DE600DCE3B7 /* ASTWriterStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57F66611121B4DE600DCE3B7 /* ASTWriterStmt.cpp */; };
@@ -593,15 +593,15 @@
 		35F9B1550D1C6B2E00DDFDAE /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/Analyses/LiveVariables.h; sourceTree = "<group>"; };
 		35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/Analyses/UninitializedValues.h; sourceTree = "<group>"; };
 		574F4C25121B4EF000AEAC20 /* ASTWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTWriter.h; path = clang/Serialization/ASTWriter.h; sourceTree = "<group>"; };
+		57AA924D121C8B9400B4AA6C /* ASTReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTReader.cpp; sourceTree = "<group>"; };
+		57AA924E121C8B9400B4AA6C /* ASTReaderDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTReaderDecl.cpp; sourceTree = "<group>"; };
+		57AA924F121C8B9400B4AA6C /* ASTReaderStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTReaderStmt.cpp; sourceTree = "<group>"; };
 		57EB565C121B02FC00ECA335 /* PCHBitCodes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHBitCodes.h; path = clang/Serialization/PCHBitCodes.h; sourceTree = "<group>"; };
 		57EB565D121B02FC00ECA335 /* PCHDeserializationListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHDeserializationListener.h; path = clang/Serialization/PCHDeserializationListener.h; sourceTree = "<group>"; };
 		57EB565E121B02FC00ECA335 /* PCHReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHReader.h; path = clang/Serialization/PCHReader.h; sourceTree = "<group>"; };
 		57EB5661121B034300ECA335 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		57EB5662121B034300ECA335 /* GeneratePCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratePCH.cpp; sourceTree = "<group>"; };
 		57EB5663121B034300ECA335 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		57EB5664121B034300ECA335 /* PCHReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHReader.cpp; sourceTree = "<group>"; };
-		57EB5665121B034300ECA335 /* PCHReaderDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHReaderDecl.cpp; sourceTree = "<group>"; };
-		57EB5666121B034300ECA335 /* PCHReaderStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PCHReaderStmt.cpp; sourceTree = "<group>"; };
 		57F6660F121B4DE600DCE3B7 /* ASTWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTWriter.cpp; sourceTree = "<group>"; };
 		57F66610121B4DE600DCE3B7 /* ASTWriterDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTWriterDecl.cpp; sourceTree = "<group>"; };
 		57F66611121B4DE600DCE3B7 /* ASTWriterStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ASTWriterStmt.cpp; sourceTree = "<group>"; };
@@ -1182,15 +1182,15 @@
 		57EB5660121B034300ECA335 /* Serialization */ = {
 			isa = PBXGroup;
 			children = (
+				57AA924D121C8B9400B4AA6C /* ASTReader.cpp */,
+				57AA924E121C8B9400B4AA6C /* ASTReaderDecl.cpp */,
+				57AA924F121C8B9400B4AA6C /* ASTReaderStmt.cpp */,
 				57F6660F121B4DE600DCE3B7 /* ASTWriter.cpp */,
 				57F66610121B4DE600DCE3B7 /* ASTWriterDecl.cpp */,
 				57F66611121B4DE600DCE3B7 /* ASTWriterStmt.cpp */,
 				57EB5661121B034300ECA335 /* CMakeLists.txt */,
 				57EB5662121B034300ECA335 /* GeneratePCH.cpp */,
 				57EB5663121B034300ECA335 /* Makefile */,
-				57EB5664121B034300ECA335 /* PCHReader.cpp */,
-				57EB5665121B034300ECA335 /* PCHReaderDecl.cpp */,
-				57EB5666121B034300ECA335 /* PCHReaderStmt.cpp */,
 			);
 			name = Serialization;
 			path = lib/Serialization;
@@ -2190,12 +2190,12 @@
 				BFE2F6D611DA955A0007EDC0 /* TokenRewriter.cpp in Sources */,
 				57EB566A121B034300ECA335 /* GeneratePCH.cpp in Sources */,
 				57EB566B121B034300ECA335 /* Makefile in Sources */,
-				57EB566C121B034300ECA335 /* PCHReader.cpp in Sources */,
-				57EB566D121B034300ECA335 /* PCHReaderDecl.cpp in Sources */,
-				57EB566E121B034300ECA335 /* PCHReaderStmt.cpp in Sources */,
 				57F66612121B4DE600DCE3B7 /* ASTWriter.cpp in Sources */,
 				57F66613121B4DE600DCE3B7 /* ASTWriterDecl.cpp in Sources */,
 				57F66614121B4DE600DCE3B7 /* ASTWriterStmt.cpp in Sources */,
+				57AA9250121C8B9400B4AA6C /* ASTReader.cpp in Sources */,
+				57AA9251121C8B9400B4AA6C /* ASTReaderDecl.cpp in Sources */,
+				57AA9252121C8B9400B4AA6C /* ASTReaderStmt.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

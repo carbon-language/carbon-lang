@@ -1,4 +1,4 @@
-//===--- PCHReaderStmt.cpp - Stmt/Expr Deserialization ----------*- C++ -*-===//
+//===--- ASTReaderStmt.cpp - Stmt/Expr Deserialization ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
