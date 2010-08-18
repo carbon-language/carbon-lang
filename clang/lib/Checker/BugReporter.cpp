@@ -177,17 +177,8 @@ public:
   }
 
   virtual NodeMapClosure& getNodeResolver() { return NMC; }
-  BugReport& getReport() { return *R; }
 
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
-
-  PathDiagnosticLocation
-  getEnclosingStmtLocation(const PathDiagnosticLocation &L) {
-    if (const Stmt *S = L.asStmt())
-      return getEnclosingStmtLocation(S);
-
-    return L;
-  }
 
   PathDiagnosticClient::PathGenerationScheme getGenerationScheme() const {
     return PDC ? PDC->getGenerationScheme() : PathDiagnosticClient::Extensive;
@@ -902,8 +893,6 @@ class EdgeBuilder {
     CLocs.pop_back();
   }
 
-  PathDiagnosticLocation IgnoreParens(const PathDiagnosticLocation &L);
-
 public:
   EdgeBuilder(PathDiagnostic &pd, PathDiagnosticBuilder &pdb)
     : PD(pd), PDB(pdb) {
@@ -934,10 +923,6 @@ public:
   }
 
   void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false);
-
-  void addEdge(const Stmt *S, bool alwaysAdd = false) {
-    addEdge(PathDiagnosticLocation(S, PDB.getSourceManager()), alwaysAdd);
-  }
 
   void rawAddEdge(PathDiagnosticLocation NewLoc);
 
@@ -1004,14 +989,6 @@ bool EdgeBuilder::containsLocation(const PathDiagnosticLocation &Container,
           (ContainerEndLine != ContaineeEndLine ||
            SM.getInstantiationColumnNumber(ContainerREnd) >=
            SM.getInstantiationColumnNumber(ContainerREnd)));
-}
-
-PathDiagnosticLocation
-EdgeBuilder::IgnoreParens(const PathDiagnosticLocation &L) {
-  if (const Expr* E = dyn_cast_or_null<Expr>(L.asStmt()))
-      return PathDiagnosticLocation(E->IgnoreParenCasts(),
-                                    PDB.getSourceManager());
-  return L;
 }
 
 void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
