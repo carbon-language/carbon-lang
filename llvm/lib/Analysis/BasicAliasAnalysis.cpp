@@ -30,7 +30,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -192,218 +191,6 @@ INITIALIZE_AG_PASS(NoAA, AliasAnalysis, "no-aa",
                    true, true, false);
 
 ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
-
-//===----------------------------------------------------------------------===//
-// GetElementPtr Instruction Decomposition and Analysis
-//===----------------------------------------------------------------------===//
-
-
-/// GetLinearExpression - Analyze the specified value as a linear expression:
-/// "A*V + B", where A and B are constant integers.  Return the scale and offset
-/// values as APInts and return V as a Value*.  The incoming Value is known to
-/// have IntegerType.  Note that this looks through extends, so the high bits
-/// may not be represented in the result.
-static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
-                                  const TargetData *TD, unsigned Depth) {
-  assert(V->getType()->isIntegerTy() && "Not an integer value");
-
-  // Limit our recursion depth.
-  if (Depth == 6) {
-    Scale = 1;
-    Offset = 0;
-    return V;
-  }
-  
-  if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(V)) {
-    if (ConstantInt *RHSC = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
-      switch (BOp->getOpcode()) {
-      default: break;
-      case Instruction::Or:
-        // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
-        // analyze it.
-        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), TD))
-          break;
-        // FALL THROUGH.
-      case Instruction::Add:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
-        Offset += RHSC->getValue();
-        return V;
-      case Instruction::Mul:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
-        Offset *= RHSC->getValue();
-        Scale *= RHSC->getValue();
-        return V;
-      case Instruction::Shl:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
-        Offset <<= RHSC->getValue().getLimitedValue();
-        Scale <<= RHSC->getValue().getLimitedValue();
-        return V;
-      }
-    }
-  }
-  
-  // Since GEP indices are sign extended anyway, we don't care about the high
-  // bits of a sign extended value - just scales and offsets.
-  if (isa<SExtInst>(V)) {
-    Value *CastOp = cast<CastInst>(V)->getOperand(0);
-    unsigned OldWidth = Scale.getBitWidth();
-    unsigned SmallWidth = CastOp->getType()->getPrimitiveSizeInBits();
-    Scale.trunc(SmallWidth);
-    Offset.trunc(SmallWidth);
-    Value *Result = GetLinearExpression(CastOp, Scale, Offset, TD, Depth+1);
-    Scale.zext(OldWidth);
-    Offset.zext(OldWidth);
-    return Result;
-  }
-  
-  Scale = 1;
-  Offset = 0;
-  return V;
-}
-
-/// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
-/// into a base pointer with a constant offset and a number of scaled symbolic
-/// offsets.
-///
-/// The scaled symbolic offsets (represented by pairs of a Value* and a scale in
-/// the VarIndices vector) are Value*'s that are known to be scaled by the
-/// specified amount, but which may have other unrepresented high bits. As such,
-/// the gep cannot necessarily be reconstructed from its decomposed form.
-///
-/// When TargetData is around, this function is capable of analyzing everything
-/// that Value::getUnderlyingObject() can look through.  When not, it just looks
-/// through pointer casts.
-///
-static const Value *
-DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
-                 SmallVectorImpl<std::pair<const Value*, int64_t> > &VarIndices,
-                       const TargetData *TD) {
-  // Limit recursion depth to limit compile time in crazy cases.
-  unsigned MaxLookup = 6;
-  
-  BaseOffs = 0;
-  do {
-    // Look through global aliases and bitcasts.
-    V = V->stripPointerCasts();
-    
-    const GEPOperator *GEPOp = dyn_cast<GEPOperator>(V);
-    if (GEPOp == 0)
-      return V;
-    
-    // Don't attempt to analyze GEPs over unsized objects.
-    if (!cast<PointerType>(GEPOp->getOperand(0)->getType())
-        ->getElementType()->isSized())
-      return V;
-    
-    // If we are lacking TargetData information, we can't compute the offets of
-    // elements computed by GEPs.  However, we can handle bitcast equivalent
-    // GEPs.
-    if (!TD) {
-      if (!GEPOp->hasAllZeroIndices())
-        return V;
-      V = GEPOp->getOperand(0);
-      continue;
-    }
-    
-    // Walk the indices of the GEP, accumulating them into BaseOff/VarIndices.
-    gep_type_iterator GTI = gep_type_begin(GEPOp);
-    for (User::const_op_iterator I = GEPOp->op_begin()+1,
-         E = GEPOp->op_end(); I != E; ++I) {
-      Value *Index = *I;
-      // Compute the (potentially symbolic) offset in bytes for this index.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
-        // For a struct, add the member offset.
-        unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
-        if (FieldNo == 0) continue;
-        
-        BaseOffs += TD->getStructLayout(STy)->getElementOffset(FieldNo);
-        continue;
-      }
-      
-      // For an array/pointer, add the element offset, explicitly scaled.
-      if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Index)) {
-        if (CIdx->isZero()) continue;
-        BaseOffs += TD->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
-        continue;
-      }
-      
-      uint64_t Scale = TD->getTypeAllocSize(*GTI);
-      
-      // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
-      unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
-      APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD, 0);
-      
-      // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
-      // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
-      BaseOffs += IndexOffset.getZExtValue()*Scale;
-      Scale *= IndexScale.getZExtValue();
-      
-      
-      // If we already had an occurrance of this index variable, merge this
-      // scale into it.  For example, we want to handle:
-      //   A[x][x] -> x*16 + x*4 -> x*20
-      // This also ensures that 'x' only appears in the index list once.
-      for (unsigned i = 0, e = VarIndices.size(); i != e; ++i) {
-        if (VarIndices[i].first == Index) {
-          Scale += VarIndices[i].second;
-          VarIndices.erase(VarIndices.begin()+i);
-          break;
-        }
-      }
-      
-      // Make sure that we have a scale that makes sense for this target's
-      // pointer size.
-      if (unsigned ShiftBits = 64-TD->getPointerSizeInBits()) {
-        Scale <<= ShiftBits;
-        Scale >>= ShiftBits;
-      }
-      
-      if (Scale)
-        VarIndices.push_back(std::make_pair(Index, Scale));
-    }
-    
-    // Analyze the base pointer next.
-    V = GEPOp->getOperand(0);
-  } while (--MaxLookup);
-  
-  // If the chain of expressions is too deep, just return early.
-  return V;
-}
-
-/// GetIndexDifference - Dest and Src are the variable indices from two
-/// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
-/// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
-/// difference between the two pointers. 
-static void GetIndexDifference(
-                      SmallVectorImpl<std::pair<const Value*, int64_t> > &Dest,
-                const SmallVectorImpl<std::pair<const Value*, int64_t> > &Src) {
-  if (Src.empty()) return;
-
-  for (unsigned i = 0, e = Src.size(); i != e; ++i) {
-    const Value *V = Src[i].first;
-    int64_t Scale = Src[i].second;
-    
-    // Find V in Dest.  This is N^2, but pointer indices almost never have more
-    // than a few variable indexes.
-    for (unsigned j = 0, e = Dest.size(); j != e; ++j) {
-      if (Dest[j].first != V) continue;
-      
-      // If we found it, subtract off Scale V's from the entry in Dest.  If it
-      // goes to zero, remove the entry.
-      if (Dest[j].second != Scale)
-        Dest[j].second -= Scale;
-      else
-        Dest.erase(Dest.begin()+j);
-      Scale = 0;
-      break;
-    }
-    
-    // If we didn't consume this entry, add it to the end of the Dest list.
-    if (Scale)
-      Dest.push_back(std::make_pair(V, -Scale));
-  }
-}
 
 //===----------------------------------------------------------------------===//
 // BasicAliasAnalysis Pass
@@ -679,6 +466,40 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   return AliasAnalysis::getModRefInfo(CS, P, Size);
 }
 
+
+/// GetIndexDifference - Dest and Src are the variable indices from two
+/// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
+/// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
+/// difference between the two pointers. 
+static void GetIndexDifference(
+                      SmallVectorImpl<std::pair<const Value*, int64_t> > &Dest,
+                const SmallVectorImpl<std::pair<const Value*, int64_t> > &Src) {
+  if (Src.empty()) return;
+
+  for (unsigned i = 0, e = Src.size(); i != e; ++i) {
+    const Value *V = Src[i].first;
+    int64_t Scale = Src[i].second;
+    
+    // Find V in Dest.  This is N^2, but pointer indices almost never have more
+    // than a few variable indexes.
+    for (unsigned j = 0, e = Dest.size(); j != e; ++j) {
+      if (Dest[j].first != V) continue;
+      
+      // If we found it, subtract off Scale V's from the entry in Dest.  If it
+      // goes to zero, remove the entry.
+      if (Dest[j].second != Scale)
+        Dest[j].second -= Scale;
+      else
+        Dest.erase(Dest.begin()+j);
+      Scale = 0;
+      break;
+    }
+    
+    // If we didn't consume this entry, add it to the end of the Dest list.
+    if (Scale)
+      Dest.push_back(std::make_pair(V, -Scale));
+  }
+}
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
