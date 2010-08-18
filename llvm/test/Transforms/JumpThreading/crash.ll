@@ -436,4 +436,28 @@ for.cond1040:                                     ; preds = %for.body1044, %for.
   ret void
 }
 
+; PR7755
+define void @test16(i1 %c, i1 %c2, i1 %c3, i1 %c4) nounwind ssp {
+entry:
+  %cmp = icmp sgt i32 undef, 1                    ; <i1> [#uses=1]
+  br i1 %c, label %land.end, label %land.rhs
+
+land.rhs:                                         ; preds = %entry
+  br i1 %c2, label %lor.lhs.false.i, label %land.end
+
+lor.lhs.false.i:                                  ; preds = %land.rhs
+  br i1 %c3, label %land.end, label %land.end
+
+land.end:                            
+  %0 = phi i1 [ true, %entry ], [ false, %land.rhs ], [false, %lor.lhs.false.i], [false, %lor.lhs.false.i] ; <i1> [#uses=1]
+  %cmp12 = and i1 %cmp, %0 
+  %xor1 = xor i1 %cmp12, %c4
+  br i1 %xor1, label %if.then, label %if.end
+
+if.then:                      
+  ret void
+
+if.end:                       
+  ret void
+}
 
