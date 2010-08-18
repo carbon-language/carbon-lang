@@ -60,7 +60,8 @@ namespace {
   private:
     bool ProcessBlock(MachineBasicBlock &MBB);
     bool SinkInstruction(MachineInstr *MI, bool &SawStore);
-    bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB) const;
+    bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB,
+                               MachineBasicBlock *DefMBB, bool &LocalUse) const;
   };
 } // end anonymous namespace
 
@@ -71,9 +72,13 @@ INITIALIZE_PASS(MachineSinking, "machine-sink",
 FunctionPass *llvm::createMachineSinkingPass() { return new MachineSinking(); }
 
 /// AllUsesDominatedByBlock - Return true if all uses of the specified register
-/// occur in blocks dominated by the specified block.
+/// occur in blocks dominated by the specified block. If any use is in the
+/// definition block, then return false since it is never legal to move def
+/// after uses.
 bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
-                                             MachineBasicBlock *MBB) const {
+                                             MachineBasicBlock *MBB,
+                                             MachineBasicBlock *DefMBB,
+                                             bool &LocalUse) const {
   assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
          "Only makes sense for vregs");
   // Ignoring debug uses is necessary so debug info doesn't affect the code.
@@ -86,6 +91,10 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
     // Determine the block of the use.
     MachineInstr *UseInst = &*I;
     MachineBasicBlock *UseBlock = UseInst->getParent();
+    if (UseBlock == DefMBB) {
+      LocalUse = true;
+      return false;
+    }
 
     if (UseInst->isPHI()) {
       // PHI nodes use the operand in the predecessor block, not the block with
@@ -189,6 +198,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // decide.
   MachineBasicBlock *SuccToSinkTo = 0;
 
+  bool LocalUse = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;  // Ignore non-register operands.
@@ -246,7 +256,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       if (SuccToSinkTo) {
         // If a previous operand picked a block to sink to, then this operand
         // must be sinkable to the same block.
-        if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo))
+        if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo, ParentBlock, LocalUse))
           return false;
 
         continue;
@@ -256,10 +266,13 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       // we should sink to.
       for (MachineBasicBlock::succ_iterator SI = ParentBlock->succ_begin(),
            E = ParentBlock->succ_end(); SI != E; ++SI) {
-        if (AllUsesDominatedByBlock(Reg, *SI)) {
+        if (AllUsesDominatedByBlock(Reg, *SI, ParentBlock, LocalUse)) {
           SuccToSinkTo = *SI;
           break;
         }
+        if (LocalUse)
+          // Def is used locally, it's never safe to move this def.
+          return false;
       }
 
       // If we couldn't find a block to sink to, ignore this instruction.
