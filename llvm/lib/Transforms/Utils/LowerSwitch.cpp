@@ -29,8 +29,7 @@ using namespace llvm;
 
 namespace {
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
-  /// instructions.  Note that this cannot be a BasicBlock pass because it
-  /// modifies the CFG!
+  /// instructions.
   class LowerSwitch : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -50,8 +49,7 @@ namespace {
       Constant* High;
       BasicBlock* BB;
 
-      CaseRange() : Low(0), High(0), BB(0) { }
-      CaseRange(Constant* low, Constant* high, BasicBlock* bb) :
+      CaseRange(Constant *low = 0, Constant *high = 0, BasicBlock *bb = 0) :
         Low(low), High(high), BB(bb) { }
     };
 

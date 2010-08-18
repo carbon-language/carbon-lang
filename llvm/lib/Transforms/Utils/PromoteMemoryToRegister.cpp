@@ -228,14 +228,6 @@ namespace {
 
     void run();
 
-    /// properlyDominates - Return true if I1 properly dominates I2.
-    ///
-    bool properlyDominates(Instruction *I1, Instruction *I2) const {
-      if (InvokeInst *II = dyn_cast<InvokeInst>(I1))
-        I1 = II->getNormalDest()->begin();
-      return DT.properlyDominates(I1->getParent(), I2->getParent());
-    }
-    
     /// dominates - Return true if BB1 dominates BB2 using the DominatorTree.
     ///
     bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {

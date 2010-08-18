@@ -275,12 +275,12 @@ public:
     return I->second;
   }
   
-  LatticeVal getStructLatticeValueFor(Value *V, unsigned i) const {
+  /*LatticeVal getStructLatticeValueFor(Value *V, unsigned i) const {
     DenseMap<std::pair<Value*, unsigned>, LatticeVal>::const_iterator I = 
       StructValueState.find(std::make_pair(V, i));
     assert(I != StructValueState.end() && "V is not in valuemap!");
     return I->second;
-  }
+  }*/
 
   /// getTrackedRetVals - Get the inferred return value map.
   ///
@@ -518,7 +518,6 @@ private:
   void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
   void visitUnreachableInst(TerminatorInst &I) { /*returns void*/ }
   void visitAllocaInst    (Instruction &I) { markOverdefined(&I); }
-  void visitVANextInst    (Instruction &I) { markOverdefined(&I); }
   void visitVAArgInst     (Instruction &I) { markAnythingOverdefined(&I); }
 
   void visitInstruction(Instruction &I) {
