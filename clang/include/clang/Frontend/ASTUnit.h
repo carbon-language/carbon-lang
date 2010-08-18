@@ -273,7 +273,11 @@ private:
   /// This is meant to avoid thrashing during reparsing, by not allowing the
   /// code-completion cache to be updated on every reparse.
   unsigned CacheCodeCompletionCoolDown;
-  
+
+  /// \brief Bit used by CIndex to mark when a translation unit may be in an
+  /// inconsistent state, and is not safe to free.
+  unsigned UnsafeToFree : 1;
+
   /// \brief Cache any "global" code-completion results, so that we can avoid
   /// recomputing them with each completion.
   void CacheCodeCompletionResults();
@@ -328,6 +332,9 @@ public:
   ~ASTUnit();
 
   bool isMainFileAST() const { return MainFileIsAST; }
+
+  bool isUnsafeToFree() const { return UnsafeToFree; }
+  void setUnsafeToFree(bool Value) { UnsafeToFree = Value; }
 
   const Diagnostic &getDiagnostics() const { return *Diagnostics; }
   Diagnostic &getDiagnostics()             { return *Diagnostics; }

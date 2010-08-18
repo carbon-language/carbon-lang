@@ -1510,20 +1510,39 @@ int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
 }
 
 void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
-  if (CTUnit)
+  if (CTUnit) {
+    // If the translation unit has been marked as unsafe to free, just discard
+    // it.
+    if (static_cast<ASTUnit *>(CTUnit)->isUnsafeToFree())
+      return;
+
     delete static_cast<ASTUnit *>(CTUnit);
+  }
 }
 
 unsigned clang_defaultReparseOptions(CXTranslationUnit TU) {
   return CXReparse_None;
 }
 
-int clang_reparseTranslationUnit(CXTranslationUnit TU,
-                                 unsigned num_unsaved_files,
-                                 struct CXUnsavedFile *unsaved_files,
-                                 unsigned options) {
+struct ReparseTranslationUnitInfo {
+  CXTranslationUnit TU;
+  unsigned num_unsaved_files;
+  struct CXUnsavedFile *unsaved_files;
+  unsigned options;
+  int result;
+};
+void clang_reparseTranslationUnit_Impl(void *UserData) {
+  ReparseTranslationUnitInfo *RTUI =
+    static_cast<ReparseTranslationUnitInfo*>(UserData);
+  CXTranslationUnit TU = RTUI->TU;
+  unsigned num_unsaved_files = RTUI->num_unsaved_files;
+  struct CXUnsavedFile *unsaved_files = RTUI->unsaved_files;
+  unsigned options = RTUI->options;
+  (void) options;
+  RTUI->result = 1;
+
   if (!TU)
-    return 1;
+    return;
   
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
@@ -1534,9 +1553,27 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                            Buffer));
   }
   
-  return static_cast<ASTUnit *>(TU)->Reparse(RemappedFiles.data(),
-                                             RemappedFiles.size())? 1 : 0;
+  if (!static_cast<ASTUnit *>(TU)->Reparse(RemappedFiles.data(),
+                                           RemappedFiles.size()))
+      RTUI->result = 0;
 }
+int clang_reparseTranslationUnit(CXTranslationUnit TU,
+                                 unsigned num_unsaved_files,
+                                 struct CXUnsavedFile *unsaved_files,
+                                 unsigned options) {
+  ReparseTranslationUnitInfo RTUI = { TU, num_unsaved_files, unsaved_files,
+                                      options, 0 };
+  llvm::CrashRecoveryContext CRC;
+
+  if (!CRC.RunSafely(clang_reparseTranslationUnit_Impl, &RTUI)) {
+    // FIXME: Find a way to report the crash.
+    static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
+    return 1;
+  }
+
+  return RTUI.result;
+}
+
 
 CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   if (!CTUnit)
