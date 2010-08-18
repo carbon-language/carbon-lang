@@ -7,6 +7,7 @@ add_clang_library(clangAnalysis
   FormatString.cpp
   LiveVariables.cpp
   PrintfFormatString.cpp
+  PsuedoConstantAnalysis.cpp
   ReachableCode.cpp
   ScanfFormatString.cpp
   UninitializedValues.cpp

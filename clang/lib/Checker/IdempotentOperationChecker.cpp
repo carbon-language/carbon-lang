@@ -44,6 +44,7 @@
 
 #include "GRExprEngineExperimentalChecks.h"
 #include "clang/Analysis/CFGStmtMap.h"
+#include "clang/Analysis/Analyses/PsuedoConstantAnalysis.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerHelpers.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
@@ -72,16 +73,16 @@ class IdempotentOperationChecker
 
     void UpdateAssumption(Assumption &A, const Assumption &New);
 
-    /// contains* - Useful recursive methods to see if a statement contains an
-    ///   element somewhere. Used in static analysis to reduce false positives.
+    // False positive reduction methods
     static bool isParameterSelfAssign(const Expr *LHS, const Expr *RHS);
     static bool isTruncationExtensionAssignment(const Expr *LHS,
                                                 const Expr *RHS);
     static bool PathWasCompletelyAnalyzed(const CFG *C,
                                           const CFGBlock *CB,
                                           const GRCoreEngine &CE);
-    static bool CanVary(const Expr *Ex, ASTContext &Ctx);
-    static bool isPseudoConstant(const DeclRefExpr *D);
+    static bool CanVary(const Expr *Ex, AnalysisContext *AC);
+    static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
+                                           AnalysisContext *AC);
 
     // Hash table
     typedef llvm::DenseMap<const BinaryOperator *,
@@ -108,7 +109,8 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   // 'Possible'.
   std::pair<Assumption, AnalysisContext *> &Data = hash[B];
   Assumption &A = Data.first;
-  Data.second = C.getCurrentAnalysisContext();
+  AnalysisContext *AC = C.getCurrentAnalysisContext();
+  Data.second = AC;
 
   // If we already have visited this node on a path that does not contain an
   // idempotent operation, return immediately.
@@ -119,8 +121,14 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   // may mean this is a false positive.
   const Expr *LHS = B->getLHS();
   const Expr *RHS = B->getRHS();
-  bool LHSCanVary = CanVary(LHS, C.getASTContext());
-  bool RHSCanVary = CanVary(RHS, C.getASTContext());
+
+  // Check if either side can vary. We only need to calculate this when we have
+  // no assumption.
+  bool LHSCanVary = true, RHSCanVary = true;
+  if (A == Possible) {
+    LHSCanVary = CanVary(LHS, AC);
+    RHSCanVary = CanVary(RHS, AC);
+  }
 
   const GRState *state = C.getState();
 
@@ -486,7 +494,8 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
 // that varies. This could be due to a compile-time constant like sizeof. An
 // expression may also involve a variable that behaves like a constant. The
 // function returns true if the expression varies, and false otherwise.
-bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
+bool IdempotentOperationChecker::CanVary(const Expr *Ex,
+                                         AnalysisContext *AC) {
   // Parentheses and casts are irrelevant here
   Ex = Ex->IgnoreParenCasts();
 
@@ -531,12 +540,13 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
     return SE->getTypeOfArgument()->isVariableArrayType();
   }
   case Stmt::DeclRefExprClass:
-    return !isPseudoConstant(cast<DeclRefExpr>(Ex));
+    return !isConstantOrPseudoConstant(cast<DeclRefExpr>(Ex), AC);
 
   // The next cases require recursion for subexpressions
   case Stmt::BinaryOperatorClass: {
     const BinaryOperator *B = cast<const BinaryOperator>(Ex);
-    return CanVary(B->getRHS(), Ctx) || CanVary(B->getLHS(), Ctx);
+    return CanVary(B->getRHS(), AC)
+        || CanVary(B->getLHS(), AC);
    }
   case Stmt::UnaryOperatorClass: {
     const UnaryOperator *U = cast<const UnaryOperator>(Ex);
@@ -545,18 +555,25 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex, ASTContext &Ctx) {
     case UnaryOperator::Extension:
       return false;
     default:
-      return CanVary(U->getSubExpr(), Ctx);
+      return CanVary(U->getSubExpr(), AC);
     }
   }
   case Stmt::ChooseExprClass:
-    return CanVary(cast<const ChooseExpr>(Ex)->getChosenSubExpr(Ctx), Ctx);
+    return CanVary(cast<const ChooseExpr>(Ex)->getChosenSubExpr(
+        AC->getASTContext()), AC);
   case Stmt::ConditionalOperatorClass:
-      return CanVary(cast<const ConditionalOperator>(Ex)->getCond(), Ctx);
+      return CanVary(cast<const ConditionalOperator>(Ex)->getCond(), AC);
   }
 }
 
-// Returns true if a DeclRefExpr behaves like a constant.
-bool IdempotentOperationChecker::isPseudoConstant(const DeclRefExpr *DR) {
+// Returns true if a DeclRefExpr is or behaves like a constant.
+bool IdempotentOperationChecker::isConstantOrPseudoConstant(
+                                                         const DeclRefExpr *DR,
+                                                         AnalysisContext *AC) {
+  // Check if the type of the Decl is const-qualified
+  if (DR->getType().isConstQualified())
+    return true;
+
   // Check for an enum
   if (isa<EnumConstantDecl>(DR->getDecl()))
     return true;
@@ -566,6 +583,11 @@ bool IdempotentOperationChecker::isPseudoConstant(const DeclRefExpr *DR) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
     if (VD->isStaticLocal())
       return true;
+
+  // Check if the Decl behaves like a constant
+  PsuedoConstantAnalysis *PCA = AC->getPsuedoConstantAnalysis();
+  if (PCA->isPsuedoConstant(DR->getDecl()))
+    return true;
 
   return false;
 }

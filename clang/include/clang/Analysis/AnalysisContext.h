@@ -30,6 +30,7 @@ class CFG;
 class CFGBlock;
 class LiveVariables;
 class ParentMap;
+class PsuedoConstantAnalysis;
 class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
@@ -49,6 +50,7 @@ class AnalysisContext {
   bool builtCFG, builtCompleteCFG;
   LiveVariables *liveness;
   ParentMap *PM;
+  PsuedoConstantAnalysis *PCA;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
   llvm::BumpPtrAllocator A;
   bool UseUnoptimizedCFG;  
@@ -59,7 +61,7 @@ public:
                   bool addehedges = false)
     : D(d), TU(tu), cfg(0), completeCFG(0),
       builtCFG(false), builtCompleteCFG(false),
-      liveness(0), PM(0),
+      liveness(0), PM(0), PCA(0),
       ReferencedBlockVars(0), UseUnoptimizedCFG(useUnoptimizedCFG),
       AddEHEdges(addehedges) {}
 
@@ -85,6 +87,7 @@ public:
   CFG *getUnoptimizedCFG();
 
   ParentMap &getParentMap();
+  PsuedoConstantAnalysis *getPsuedoConstantAnalysis();
   LiveVariables *getLiveVariables();
 
   typedef const VarDecl * const * referenced_decls_iterator;

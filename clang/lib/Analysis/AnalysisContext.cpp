@@ -18,6 +18,7 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Analyses/PsuedoConstantAnalysis.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Support/BumpVector.h"
@@ -81,6 +82,12 @@ ParentMap &AnalysisContext::getParentMap() {
   if (!PM)
     PM = new ParentMap(getBody());
   return *PM;
+}
+
+PsuedoConstantAnalysis *AnalysisContext::getPsuedoConstantAnalysis() {
+  if (!PCA)
+    PCA = new PsuedoConstantAnalysis(getBody());
+  return PCA;
 }
 
 LiveVariables *AnalysisContext::getLiveVariables() {
@@ -314,6 +321,7 @@ AnalysisContext::~AnalysisContext() {
   delete completeCFG;
   delete liveness;
   delete PM;
+  delete PCA;
   delete ReferencedBlockVars;
 }
 

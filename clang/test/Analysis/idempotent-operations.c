@@ -5,7 +5,7 @@
 extern void test(int i);
 extern void test_f(float f);
 
-void basic() {
+unsigned basic() {
   int x = 10, zero = 0, one = 1;
 
   // x op x
@@ -50,6 +50,13 @@ void basic() {
   test(zero ^ x);  // expected-warning {{The left operand to '^' is always 0}}
   test(zero << x); // expected-warning {{The left operand to '<<' is always 0}}
   test(zero >> x); // expected-warning {{The left operand to '>>' is always 0}}
+
+  // Overwrite the values so these aren't marked as psuedoconstants
+  x = 1;
+  zero = 2;
+  one = 3;
+
+  return x + zero + one;
 }
 
 void floats(float x) {
@@ -84,4 +91,23 @@ unsigned false2() {
   return enum1 + a; // no-warning
 }
 
-extern unsigned foo();
+// Self assignments of parameters are common false positives
+unsigned false3(int param) {
+  param = param; // no-warning
+
+  unsigned nonparam = 5;
+
+  nonparam = nonparam; // expected-warning{{Assigned value is always the same as the existing value}}
+
+  return nonparam;
+}
+
+// Psuedo-constants (vars only read) and constants should not be reported
+unsigned false4() {
+  // Trivial constant
+  const int height = 1; // no-warning
+  // Psuedo-constant (never changes after decl)
+  int width = height; // no-warning
+
+  return width * 10; // no-warning
+}
