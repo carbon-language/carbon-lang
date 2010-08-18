@@ -163,6 +163,11 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   // results now.  This happens in -disable-free mode.
   llvm::TimerGroup::printAll(llvm::errs());
 
+  // Our error handler depends on the Diagnostics object, which we're
+  // potentially about to delete. Uninstall the handler now so that any
+  // later errors use the default handling behavior instead.
+  llvm::remove_fatal_error_handler();
+
   // When running with -disable-free, don't do any destruction or shutdown.
   if (Clang->getFrontendOpts().DisableFree) {
     if (Clang->getFrontendOpts().ShowStats)

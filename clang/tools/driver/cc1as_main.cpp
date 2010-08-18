@@ -327,8 +327,8 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
   // error handler.
-  install_fatal_error_handler(LLVMErrorHandler,
-                                    static_cast<void*>(&Diags));
+  ScopedFatalErrorHandler FatalErrorHandler
+    (LLVMErrorHandler, static_cast<void*>(&Diags));
 
   // Parse the arguments.
   AssemblerInvocation Asm;
