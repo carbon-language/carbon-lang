@@ -1938,7 +1938,7 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   if (!hasAggregateLLVMType(E->getType())) {
     // Emit the LHS as an l-value.
     LValue LV = EmitLValue(E->getLHS());
-    // Sore the value through the l-value.
+    // Store the value through the l-value.
     EmitStoreThroughLValue(EmitAnyExpr(E->getRHS()), LV, E->getType());
     return LV;
   }
