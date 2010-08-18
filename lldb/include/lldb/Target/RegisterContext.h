@@ -100,6 +100,12 @@ public:
     lldb::tid_t
     GetThreadID() const;
 
+    Thread &
+    GetThread ()
+    {
+        return m_thread;
+    }
+
     const lldb::RegisterInfo *
     GetRegisterInfoByName (const char *reg_name, uint32_t start_idx = 0);
 
