@@ -2084,57 +2084,6 @@ namespace {
   struct SortCodeCompleteResult {
     typedef CodeCompleteConsumer::Result Result;
     
-    bool isEarlierDeclarationName(DeclarationName X, DeclarationName Y) const {
-      Selector XSel = X.getObjCSelector();
-      Selector YSel = Y.getObjCSelector();
-      if (!XSel.isNull() && !YSel.isNull()) {
-        // We are comparing two selectors.
-        unsigned N = std::min(XSel.getNumArgs(), YSel.getNumArgs());
-        if (N == 0)
-          ++N;
-        for (unsigned I = 0; I != N; ++I) {
-          IdentifierInfo *XId = XSel.getIdentifierInfoForSlot(I);
-          IdentifierInfo *YId = YSel.getIdentifierInfoForSlot(I);
-          if (!XId || !YId)
-            return XId && !YId;
-          
-          switch (XId->getName().compare_lower(YId->getName())) {
-          case -1: return true;
-          case 1: return false;
-          default: break;
-          }
-        }
-    
-        return XSel.getNumArgs() < YSel.getNumArgs();
-      }
-
-      // For non-selectors, order by kind.
-      if (X.getNameKind() != Y.getNameKind())
-        return X.getNameKind() < Y.getNameKind();
-      
-      // Order identifiers by comparison of their lowercased names.
-      if (IdentifierInfo *XId = X.getAsIdentifierInfo())
-        return XId->getName().compare_lower(
-                                     Y.getAsIdentifierInfo()->getName()) < 0;
-
-      // Order overloaded operators by the order in which they appear
-      // in our list of operators.
-      if (OverloadedOperatorKind XOp = X.getCXXOverloadedOperator())
-        return XOp < Y.getCXXOverloadedOperator();
-
-      // Order C++0x user-defined literal operators lexically by their
-      // lowercased suffixes.
-      if (IdentifierInfo *XLit = X.getCXXLiteralIdentifier())
-        return XLit->getName().compare_lower(
-                                  Y.getCXXLiteralIdentifier()->getName()) < 0;
-
-      // The only stable ordering we have is to turn the name into a
-      // string and then compare the lower-case strings. This is
-      // inefficient, but thankfully does not happen too often.
-      return llvm::StringRef(X.getAsString()).compare_lower(
-                                                 Y.getAsString()) < 0;
-    }
-    
     /// \brief Retrieve the name that should be used to order a result.
     ///
     /// If the name needs to be constructed as a string, that string will be
