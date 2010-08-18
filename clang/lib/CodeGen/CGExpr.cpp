@@ -1938,10 +1938,8 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   if (!hasAggregateLLVMType(E->getType())) {
     // Emit the LHS as an l-value.
     LValue LV = EmitLValue(E->getLHS());
-    
-    llvm::Value *RHS = EmitScalarExpr(E->getRHS());
-    EmitStoreOfScalar(RHS, LV.getAddress(), LV.isVolatileQualified(), 
-                      E->getType());
+    // Sore the value through the l-value.
+    EmitStoreThroughLValue(EmitAnyExpr(E->getRHS()), LV, E->getType());
     return LV;
   }
   
