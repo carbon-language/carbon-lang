@@ -151,7 +151,7 @@ private:
 /// \brief Reads a precompiled header chain containing the contents of a
 /// translation unit.
 ///
-/// The PCHReader class reads bitstreams (produced by the PCHWriter
+/// The PCHReader class reads bitstreams (produced by the ASTWriter
 /// class) containing the serialized representation of a given
 /// abstract syntax tree and its supporting data structures. An
 /// instance of the PCHReader can be attached to an ASTContext object,

@@ -592,10 +592,10 @@
 		35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicObjCFoundationChecks.cpp; path = lib/Analysis/BasicObjCFoundationChecks.cpp; sourceTree = "<group>"; };
 		35F9B1550D1C6B2E00DDFDAE /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/Analyses/LiveVariables.h; sourceTree = "<group>"; };
 		35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/Analyses/UninitializedValues.h; sourceTree = "<group>"; };
+		574F4C25121B4EF000AEAC20 /* ASTWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTWriter.h; path = clang/Serialization/ASTWriter.h; sourceTree = "<group>"; };
 		57EB565C121B02FC00ECA335 /* PCHBitCodes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHBitCodes.h; path = clang/Serialization/PCHBitCodes.h; sourceTree = "<group>"; };
 		57EB565D121B02FC00ECA335 /* PCHDeserializationListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHDeserializationListener.h; path = clang/Serialization/PCHDeserializationListener.h; sourceTree = "<group>"; };
 		57EB565E121B02FC00ECA335 /* PCHReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHReader.h; path = clang/Serialization/PCHReader.h; sourceTree = "<group>"; };
-		57EB565F121B02FC00ECA335 /* PCHWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PCHWriter.h; path = clang/Serialization/PCHWriter.h; sourceTree = "<group>"; };
 		57EB5661121B034300ECA335 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		57EB5662121B034300ECA335 /* GeneratePCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratePCH.cpp; sourceTree = "<group>"; };
 		57EB5663121B034300ECA335 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
@@ -1171,10 +1171,10 @@
 		57EB5654121B023900ECA335 /* Serialization */ = {
 			isa = PBXGroup;
 			children = (
+				574F4C25121B4EF000AEAC20 /* ASTWriter.h */,
 				57EB565C121B02FC00ECA335 /* PCHBitCodes.h */,
 				57EB565D121B02FC00ECA335 /* PCHDeserializationListener.h */,
 				57EB565E121B02FC00ECA335 /* PCHReader.h */,
-				57EB565F121B02FC00ECA335 /* PCHWriter.h */,
 			);
 			name = Serialization;
 			sourceTree = "<group>";

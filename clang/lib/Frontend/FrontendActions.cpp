@@ -18,7 +18,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
-#include "clang/Serialization/PCHWriter.h"
+#include "clang/Serialization/ASTWriter.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"

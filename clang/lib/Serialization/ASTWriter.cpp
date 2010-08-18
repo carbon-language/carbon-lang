@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Serialization/PCHWriter.h"
+#include "clang/Serialization/ASTWriter.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/AST/ASTContext.h"
