@@ -1406,6 +1406,11 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
 
   QualType FromPointeeType = FromTypePtr->getPointeeType();
 
+  // If the unqualified pointee types are the same, this can't be a 
+  // pointer conversion, so don't do all of the work below.
+  if (Context.hasSameUnqualifiedType(FromPointeeType, ToPointeeType))
+    return false;
+
   // An rvalue of type "pointer to cv T," where T is an object type,
   // can be converted to an rvalue of type "pointer to cv void" (C++
   // 4.10p2).

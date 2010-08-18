@@ -248,3 +248,25 @@ namespace PR7055 {
   
   Y f2(foo());
 }
+
+namespace PR7934 {
+  typedef unsigned char uint8;
+
+  struct MutablePtr {
+    MutablePtr() : ptr(0) {}
+    void *ptr;
+
+    operator void*() { return ptr; }
+
+  private:
+    operator uint8*() { return reinterpret_cast<uint8*>(ptr); }
+    operator const char*() const { return reinterpret_cast<const char*>(ptr); }
+  };
+
+  void fake_memcpy(const void *);
+
+  void use() {
+    MutablePtr ptr;
+    fake_memcpy(ptr);
+  }
+}
