@@ -187,7 +187,6 @@ def Extra : DiagGroup<"extra", [
     InitializerOverrides,
     SemiBeforeMethodBody,
     SignCompare,
-    UnusedMemberFunction,
     UnusedParameter
   ]>;
 
