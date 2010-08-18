@@ -1377,7 +1377,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
-  CI->getFrontendOpts().DisableFree = true;
+  CI->getFrontendOpts().DisableFree = false;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
                                     CaptureDiagnostics, PrecompilePreamble,
                                     CompleteTranslationUnit,
