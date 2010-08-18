@@ -53,7 +53,7 @@ InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
-               cl::value_desc("filename"), cl::init("-"));
+               cl::value_desc("filename"));
 
 static cl::opt<bool>
 Force("f", cl::desc("Enable binary output on terminals"));
@@ -381,34 +381,27 @@ int main(int argc, char **argv) {
 
   // Figure out what stream we are supposed to write to...
   raw_ostream *Out = 0;
-  bool DeleteStream = false;
-  if (!NoOutput && !AnalyzeOnly) {
-    if (OutputFilename == "-") {
-      // Print to stdout.
-      Out = &outs();
-      // If we're printing a bitcode file, switch stdout to binary mode.
-      // FIXME: This switches outs() globally, not just for the bitcode output.
-      if (!OutputAssembly)
-        sys::Program::ChangeStdoutToBinary(); 
-    } else {
-      if (NoOutput || AnalyzeOnly) {
-        errs() << "WARNING: The -o (output filename) option is ignored when\n"
-                  "the --disable-output or --analyze options are used.\n";
-      } else {
-        // Make sure that the Output file gets unlinked from the disk if we get
-        // a SIGINT.
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  if (NoOutput || AnalyzeOnly) {
+    if (!OutputFilename.empty())
+      errs() << "WARNING: The -o (output filename) option is ignored when\n"
+                "the --disable-output or --analyze options are used.\n";
+  } else {
+    // Default to standard output.
+    if (OutputFilename.empty())
+      OutputFilename = "-";
 
-        std::string ErrorInfo;
-        Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                                 raw_fd_ostream::F_Binary);
-        if (!ErrorInfo.empty()) {
-          errs() << ErrorInfo << '\n';
-          delete Out;
-          return 1;
-        }
-        DeleteStream = true;
-      }
+    // Make sure that the Output file gets unlinked from the disk if we get
+    // a SIGINT.
+    if (OutputFilename != "-")
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+    std::string ErrorInfo;
+    Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                             raw_fd_ostream::F_Binary);
+    if (!ErrorInfo.empty()) {
+      errs() << ErrorInfo << '\n';
+      delete Out;
+      return 1;
     }
   }
 
@@ -553,7 +546,6 @@ int main(int argc, char **argv) {
   Passes.run(*M.get());
 
   // Delete the raw_fd_ostream.
-  if (DeleteStream)
-    delete Out;
+  delete Out;
   return 0;
 }
