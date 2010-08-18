@@ -614,7 +614,7 @@ void ASTWriter::WriteBlockInfoBlock() {
 #define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
 
   // AST Top-Level Block.
-  BLOCK(PCH_BLOCK);
+  BLOCK(AST_BLOCK);
   RECORD(ORIGINAL_FILE_NAME);
   RECORD(TYPE_OFFSET);
   RECORD(DECL_OFFSET);
@@ -2119,7 +2119,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Write the remaining AST contents.
   RecordData Record;
-  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
+  Stream.EnterSubblock(pch::AST_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
@@ -2238,7 +2238,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Preprocessor &PP = SemaRef.PP;
 
   RecordData Record;
-  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
+  Stream.EnterSubblock(pch::AST_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls);

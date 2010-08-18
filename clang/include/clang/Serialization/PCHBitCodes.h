@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header defines Bitcode enum values for Clang precompiled header files.
+// This header defines Bitcode enum values for Clang serialized AST files.
 //
 // The enum values defined in this file should be considered permanent.  If
 // new features are added, they should have values added at the end of the
@@ -22,37 +22,37 @@
 
 namespace clang {
   namespace pch {
-    /// \brief PCH major version number supported by this version of
+    /// \brief AST file major version number supported by this version of
     /// Clang.
     ///
-    /// Whenever the PCH format changes in a way that makes it
+    /// Whenever the AST file format changes in a way that makes it
     /// incompatible with previous versions (such that a reader
     /// designed for the previous version could not support reading
     /// the new version), this number should be increased.
     ///
-    /// Version 4 of PCH files also requires that the version control branch and
+    /// Version 4 of AST files also requires that the version control branch and
     /// revision match exactly, since there is no backward compatibility of
-    /// PCH files at this time.
+    /// AST files at this time.
     const unsigned VERSION_MAJOR = 4;
 
-    /// \brief PCH minor version number supported by this version of
+    /// \brief AST file minor version number supported by this version of
     /// Clang.
     ///
-    /// Whenever the PCH format changes in a way that is still
+    /// Whenever the AST format changes in a way that is still
     /// compatible with previous versions (such that a reader designed
     /// for the previous version could still support reading the new
     /// version by ignoring new kinds of subblocks), this number
     /// should be increased.
     const unsigned VERSION_MINOR = 0;
 
-    /// \brief An ID number that refers to a declaration in a PCH file.
+    /// \brief An ID number that refers to a declaration in an AST file.
     ///
     /// The ID numbers of declarations are consecutive (in order of
     /// discovery) and start at 2. 0 is reserved for NULL, and 1 is
     /// reserved for the translation unit declaration.
     typedef uint32_t DeclID;
 
-    /// \brief An ID number that refers to a type in a PCH file.
+    /// \brief An ID number that refers to a type in an AST file.
     ///
     /// The ID of a type is partitioned into two parts: the lower
     /// three bits are used to store the const/volatile/restrict
@@ -64,18 +64,18 @@ namespace clang {
     /// other types that have serialized representations.
     typedef uint32_t TypeID;
 
-    /// \brief An ID number that refers to an identifier in a PCH
+    /// \brief An ID number that refers to an identifier in an AST
     /// file.
     typedef uint32_t IdentID;
 
     typedef uint32_t SelectorID;
 
     /// \brief Describes the various kinds of blocks that occur within
-    /// a PCH file.
+    /// an AST file.
     enum BlockIDs {
-      /// \brief The PCH block, which acts as a container around the
-      /// full PCH block.
-      PCH_BLOCK_ID = llvm::bitc::FIRST_APPLICATION_BLOCKID,
+      /// \brief The AST block, which acts as a container around the
+      /// full AST block.
+      AST_BLOCK_ID = llvm::bitc::FIRST_APPLICATION_BLOCKID,
 
       /// \brief The block containing information about the source
       /// manager.
@@ -86,16 +86,16 @@ namespace clang {
       PREPROCESSOR_BLOCK_ID,
 
       /// \brief The block containing the definitions of all of the
-      /// types and decls used within the PCH file.
+      /// types and decls used within the AST file.
       DECLTYPES_BLOCK_ID
     };
 
-    /// \brief Record types that occur within the PCH block itself.
-    enum PCHRecordTypes {
+    /// \brief Record types that occur within the AST block itself.
+    enum ASTRecordTypes {
       /// \brief Record code for the offsets of each type.
       ///
       /// The TYPE_OFFSET constant describes the record that occurs
-      /// within the PCH block. The record itself is an array of offsets that
+      /// within the AST block. The record itself is an array of offsets that
       /// point into the declarations and types block (identified by 
       /// DECLTYPES_BLOCK_ID). The index into the array is based on the ID
       /// of a type. For a given type ID @c T, the lower three bits of
@@ -110,7 +110,7 @@ namespace clang {
       ///
       /// The DECL_OFFSET constant describes the record that occurs
       /// within the block identified by DECL_OFFSETS_BLOCK_ID within
-      /// the PCH block. The record itself is an array of offsets that
+      /// the AST block. The record itself is an array of offsets that
       /// point into the declarations and types block (identified by
       /// DECLTYPES_BLOCK_ID). The declaration ID is an index into this
       /// record, after subtracting one to account for the use of
@@ -126,8 +126,8 @@ namespace clang {
       /// actually important to check.
       LANGUAGE_OPTIONS = 3,
 
-      /// \brief PCH metadata, including the PCH file version number
-      /// and the target triple used to build the PCH file.
+      /// \brief AST file metadata, including the AST file version number
+      /// and the target triple used to build the AST file.
       METADATA = 4,
 
       /// \brief Record code for the table of offsets of each
@@ -142,7 +142,7 @@ namespace clang {
       ///
       /// The identifier table is a simple blob that contains
       /// NULL-terminated strings for all of the identifiers
-      /// referenced by the PCH file. The IDENTIFIER_OFFSET table
+      /// referenced by the AST file. The IDENTIFIER_OFFSET table
       /// contains the mapping from identifier IDs to the characters
       /// in this blob. Note that the starting offsets of all of the
       /// identifiers are odd, so that, when the identifier offset
@@ -154,10 +154,10 @@ namespace clang {
 
       /// \brief Record code for the array of external definitions.
       ///
-      /// The PCH file contains a list of all of the unnamed external
+      /// The AST file contains a list of all of the unnamed external
       /// definitions present within the parsed headers, stored as an
       /// array of declaration IDs. These external definitions will be
-      /// reported to the AST consumer after the PCH file has been
+      /// reported to the AST consumer after the AST file has been
       /// read, since their presence can affect the semantics of the
       /// program (e.g., for code generation).
       EXTERNAL_DEFINITIONS = 7,
@@ -172,7 +172,7 @@ namespace clang {
       SPECIAL_TYPES = 8,
 
       /// \brief Record code for the extra statistics we gather while
-      /// generating a PCH file.
+      /// generating an AST file.
       STATISTICS = 9,
 
       /// \brief Record code for the array of tentative definitions.
@@ -198,7 +198,7 @@ namespace clang {
       SOURCE_LOCATION_OFFSETS = 15,
 
       /// \brief Record code for the set of source location entries
-      /// that need to be preloaded by the PCH reader.
+      /// that need to be preloaded by the AST reader.
       ///
       /// This set contains the source location entry for the
       /// predefines buffer and for any file entries that need to be
@@ -212,13 +212,13 @@ namespace clang {
       EXT_VECTOR_DECLS = 18,
 
       /// \brief Record code for the original file that was used to
-      /// generate the precompiled header.
+      /// generate the AST file.
       ORIGINAL_FILE_NAME = 19,
 
       /// Record #20 intentionally left blank.
       
       /// \brief Record code for the version control branch and revision
-      /// information of the compiler used to build this PCH file.
+      /// information of the compiler used to build this AST file.
       VERSION_CONTROL_BRANCH_REVISION = 21,
       
       /// \brief Record code for the array of unused file scoped decls.
@@ -234,8 +234,8 @@ namespace clang {
       /// \brief Record code for the array of dynamic classes.
       DYNAMIC_CLASSES = 25,
 
-      /// \brief Record code for the chained PCH metadata, including the
-      /// PCH version and the name of the PCH this is chained to.
+      /// \brief Record code for the chained AST metadata, including the
+      /// AST file version and the name of the PCH this depends on.
       CHAINED_METADATA = 26,
 
       /// \brief Record code for referenced selector pool.
@@ -261,7 +261,7 @@ namespace clang {
       /// \brief Record code for a decl replacement block.
       ///
       /// If a declaration is modified after having been deserialized, and then
-      /// written to a dependent PCH file, its ID and offset must be added to
+      /// written to a dependent AST file, its ID and offset must be added to
       /// the replacement block.
       DECL_REPLACEMENTS = 33
     };
@@ -312,10 +312,10 @@ namespace clang {
       PP_MACRO_DEFINITION = 5
     };
 
-    /// \defgroup PCHAST Precompiled header AST constants
+    /// \defgroup ASTAST AST file AST constants
     ///
     /// The constants in this group describe various components of the
-    /// abstract syntax tree within a precompiled header.
+    /// abstract syntax tree within an AST file.
     ///
     /// @{
 
@@ -397,7 +397,7 @@ namespace clang {
     /// \brief Record codes for each kind of type.
     ///
     /// These constants describe the type records that can occur within a
-    /// block identified by DECLTYPES_BLOCK_ID in the PCH file. Each
+    /// block identified by DECLTYPES_BLOCK_ID in the AST file. Each
     /// constant describes a record for a specific type class in the
     /// AST.
     enum TypeCode {
@@ -803,17 +803,17 @@ namespace clang {
       EXPR_CXX_CONSTRUCT,
       /// \brief A CXXTemporaryObjectExpr record.
       EXPR_CXX_TEMPORARY_OBJECT,
-      // \brief A CXXStaticCastExpr record.
+      /// \brief A CXXStaticCastExpr record.
       EXPR_CXX_STATIC_CAST,
-      // \brief A CXXDynamicCastExpr record.
+      /// \brief A CXXDynamicCastExpr record.
       EXPR_CXX_DYNAMIC_CAST,
-      // \brief A CXXReinterpretCastExpr record.
+      /// \brief A CXXReinterpretCastExpr record.
       EXPR_CXX_REINTERPRET_CAST,
-      // \brief A CXXConstCastExpr record.
+      /// \brief A CXXConstCastExpr record.
       EXPR_CXX_CONST_CAST,
-      // \brief A CXXFunctionalCastExpr record.
+      /// \brief A CXXFunctionalCastExpr record.
       EXPR_CXX_FUNCTIONAL_CAST,
-      // \brief A CXXBoolLiteralExpr record.
+      /// \brief A CXXBoolLiteralExpr record.
       EXPR_CXX_BOOL_LITERAL,
       EXPR_CXX_NULL_PTR_LITERAL,  // CXXNullPtrLiteralExpr
       EXPR_CXX_TYPEID_EXPR,       // CXXTypeidExpr (of expr).

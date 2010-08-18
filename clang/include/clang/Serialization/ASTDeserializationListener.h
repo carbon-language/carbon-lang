@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_PCH_DESERIALIZATION_LISTENER_H
-#define LLVM_CLANG_FRONTEND_PCH_DESERIALIZATION_LISTENER_H
+#ifndef LLVM_CLANG_FRONTEND_AST_DESERIALIZATION_LISTENER_H
+#define LLVM_CLANG_FRONTEND_AST_DESERIALIZATION_LISTENER_H
 
 #include "clang/Serialization/PCHBitCodes.h"
 

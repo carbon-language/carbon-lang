@@ -1411,7 +1411,7 @@ ASTReader::ASTReadResult
 ASTReader::ReadASTBlock(PerFileData &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
-  if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
+  if (Stream.EnterSubBlock(pch::AST_BLOCK_ID)) {
     Error("malformed block record in AST file");
     return Failure;
   }
@@ -1484,7 +1484,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    switch ((pch::PCHRecordTypes)Stream.ReadRecord(Code, Record,
+    switch ((pch::ASTRecordTypes)Stream.ReadRecord(Code, Record,
                                                    &BlobStart, &BlobLen)) {
     default:  // Default behavior: ignore.
       break;
@@ -1923,7 +1923,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
         return Failure;
       }
       break;
-    case pch::PCH_BLOCK_ID:
+    case pch::AST_BLOCK_ID:
       switch (ReadASTBlock(F)) {
       case Success:
         break;
@@ -2109,8 +2109,8 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
 
       // We only know the AST subblock ID.
       switch (BlockID) {
-      case pch::PCH_BLOCK_ID:
-        if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
+      case pch::AST_BLOCK_ID:
+        if (Stream.EnterSubBlock(pch::AST_BLOCK_ID)) {
           Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
           return std::string();
         }

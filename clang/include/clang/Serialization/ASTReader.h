@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_PCH_READER_H
-#define LLVM_CLANG_FRONTEND_PCH_READER_H
+#ifndef LLVM_CLANG_FRONTEND_AST_READER_H
+#define LLVM_CLANG_FRONTEND_AST_READER_H
 
 #include "clang/Serialization/PCHBitCodes.h"
 #include "clang/Sema/ExternalSemaSource.h"
