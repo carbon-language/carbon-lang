@@ -50,9 +50,9 @@ MacroInfo *Preprocessor::CloneMacroInfo(const MacroInfo &MacroToClone) {
 
 /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
 ///  be reused for allocating new MacroInfo objects.
-void Preprocessor::ReleaseMacroInfo(MacroInfo* MI) {
+void Preprocessor::ReleaseMacroInfo(MacroInfo *MI) {
   MICache.push_back(MI);
-  MI->FreeArgumentList(BP);
+  MI->FreeArgumentList();
 }
 
 

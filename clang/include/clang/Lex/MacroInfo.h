@@ -93,15 +93,14 @@ public:
   
   /// FreeArgumentList - Free the argument list of the macro, restoring it to a
   /// state where it can be reused for other devious purposes.
-  void FreeArgumentList(llvm::BumpPtrAllocator &PPAllocator) {
-    PPAllocator.Deallocate(ArgumentList);
+  void FreeArgumentList() {
     ArgumentList = 0;
     NumArguments = 0;
   }
 
   /// Destroy - destroy this MacroInfo object.
-  void Destroy(llvm::BumpPtrAllocator &PPAllocator) {
-    FreeArgumentList(PPAllocator);
+  void Destroy() {
+    FreeArgumentList();
     this->~MacroInfo();
   }
 

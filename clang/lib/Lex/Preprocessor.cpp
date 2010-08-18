@@ -111,7 +111,7 @@ Preprocessor::~Preprocessor() {
     // will be released when the BumpPtrAllocator 'BP' object gets
     // destroyed.  We still need to run the dtor, however, to free
     // memory alocated by MacroInfo.
-    I->second->Destroy(BP);
+    I->second->Destroy();
     I->first->setHasMacroDefinition(false);
   }
   for (std::vector<MacroInfo*>::iterator I = MICache.begin(),
@@ -120,7 +120,7 @@ Preprocessor::~Preprocessor() {
     // will be released when the BumpPtrAllocator 'BP' object gets
     // destroyed.  We still need to run the dtor, however, to free
     // memory alocated by MacroInfo.
-    (*I)->Destroy(BP);
+    (*I)->Destroy();
   }
 
   // Free any cached macro expanders.
