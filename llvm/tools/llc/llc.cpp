@@ -127,14 +127,11 @@ GetFileNameRoot(const std::string &InputFilename) {
 static formatted_raw_ostream *GetOutputStream(const char *TargetName,
                                               Triple::OSType OS,
                                               const char *ProgName) {
-  if (OutputFilename != "") {
-    if (OutputFilename == "-")
-      return new formatted_raw_ostream(outs(),
-                                       formatted_raw_ostream::PRESERVE_STREAM);
-
+  if (!OutputFilename.empty()) {
     // Make sure that the Out file gets unlinked from the disk if we get a
     // SIGINT
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+    if (OutputFilename != "-")
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
     std::string error;
     raw_fd_ostream *FDOut =
