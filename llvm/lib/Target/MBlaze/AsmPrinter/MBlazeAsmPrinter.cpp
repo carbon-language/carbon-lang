@@ -65,11 +65,8 @@ namespace {
     void printFSLImm(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                          const char *Modifier = 0);
-    void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                         const char *Modifier = 0);
     void printSavedRegsBitmask(raw_ostream &OS);
 
-    const char *emitCurrentABIString();
     void emitFrameDirective();
 
     void printInstruction(const MachineInstr *MI, raw_ostream &O);
@@ -290,13 +287,6 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
   printOperand(MI, opNum+1, O);
   O << ", ";
   printOperand(MI, opNum, O);
-}
-
-void MBlazeAsmPrinter::
-printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                const char *Modifier) {
-  const MachineOperand& MO = MI->getOperand(opNum);
-  O << MBlaze::MBlazeFCCToString((MBlaze::CondCode)MO.getImm());
 }
 
 // Force static initialization.

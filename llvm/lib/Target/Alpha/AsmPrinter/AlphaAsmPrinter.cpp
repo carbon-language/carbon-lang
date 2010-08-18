@@ -53,8 +53,6 @@ namespace {
 
     void printOp(const MachineOperand &MO, raw_ostream &O);
     void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
-    void printBaseOffsetPair(const MachineInstr *MI, int i, raw_ostream &O,
-                             bool brackets=true);
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd(); 
     void EmitStartOfAsmFile(Module &M);
