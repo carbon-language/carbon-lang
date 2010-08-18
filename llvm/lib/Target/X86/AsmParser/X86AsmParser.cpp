@@ -41,8 +41,6 @@ private:
 
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
-  void Warning(SMLoc L, const Twine &Msg) { Parser.Warning(L, Msg); }
-
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
@@ -272,10 +270,6 @@ struct X86Operand : public MCParsedAsmOperand {
       !getMemIndexReg() && getMemScale() == 1;
   }
 
-  bool isNoSegMem() const {
-    return Kind == Memory && !getMemSegReg();
-  }
-
   bool isReg() const { return Kind == Register; }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
@@ -308,14 +302,6 @@ struct X86Operand : public MCParsedAsmOperand {
   void addAbsMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 1) && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
-  }
-
-  void addNoSegMemOperands(MCInst &Inst, unsigned N) const {
-    assert((N == 4) && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
-    Inst.addOperand(MCOperand::CreateImm(getMemScale()));
-    Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
-    addExpr(Inst, getMemDisp());
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {
