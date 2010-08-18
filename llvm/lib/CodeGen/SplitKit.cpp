@@ -446,9 +446,9 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
     }
 
     // No need to search the children, we found a dominating value.
-    // MBB is either the found dominating value, or the last phi-def we created.
-    // Either way, the children of MBB would be shadowed, so don't search them.
-    IDFI.skipChildren(MBB);
+    // FIXME: We could prune up to the last phi-def we inserted, need df_iterator
+    // for that.
+    IDFI.skipChildren();
   }
 
   // The search should at least find a dominating value for IdxMBB.
