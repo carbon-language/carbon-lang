@@ -257,7 +257,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
   case Instruction::Switch:    // Should remove entry
   default:
   case Instruction::Ret:       // Cannot happen, has no successors!
-    llvm_unreachable("Unhandled terminator instruction type in RemoveSuccessor!");
+    llvm_unreachable("Unhandled terminator inst type in RemoveSuccessor!");
   }
 
   if (NewTI)   // If it's a different instruction, replace.
@@ -411,7 +411,8 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   DominatorTree *DT = P ? P->getAnalysisIfAvailable<DominatorTree>() : 0;
   if (DT)
     DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = P ? P->getAnalysisIfAvailable<DominanceFrontier>():0)
+  if (DominanceFrontier *DF =
+        P ? P->getAnalysisIfAvailable<DominanceFrontier>() : 0)
     DF->splitBlock(NewBB);
 
   // Insert a new PHI node into NewBB for every PHI node in BB and that new PHI
