@@ -628,8 +628,23 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
       switch (it->getKind()) {
       default:
         assert(0 && "Invalid fragment in virtual section!");
+      case MCFragment::FT_Data: {
+        // Check that we aren't trying to write a non-zero contents (or fixups)
+        // into a virtual section. This is to support clients which use standard
+        // directives to fill the contents of virtual sections.
+        MCDataFragment &DF = cast<MCDataFragment>(*it);
+        assert(DF.fixup_begin() == DF.fixup_end() &&
+               "Cannot have fixups in virtual section!");
+        for (unsigned i = 0, e = DF.getContents().size(); i != e; ++i)
+          assert(DF.getContents()[i] == 0 &&
+                 "Invalid data value for virtual section!");
+        break;
+      }
       case MCFragment::FT_Align:
-        assert(!cast<MCAlignFragment>(it)->getValueSize() &&
+        // Check that we aren't trying to write a non-zero value into a virtual
+        // section.
+        assert((!cast<MCAlignFragment>(it)->getValueSize() ||
+                !cast<MCAlignFragment>(it)->getValue()) &&
                "Invalid align in virtual section!");
         break;
       case MCFragment::FT_Fill:
