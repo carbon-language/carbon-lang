@@ -119,7 +119,7 @@ typedef llvm::ImmutableMap<SymbolRef, RefState> RegionStateTy;
 namespace clang {
   template <>
   struct GRStateTrait<RegionState> 
-    : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, RefState> > {
+    : public GRStatePartialTrait<RegionStateTy> {
     static void *GDMIndex() { return MallocChecker::getTag(); }
   };
 }
@@ -588,10 +588,9 @@ void MallocChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                                 GRExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
-  typedef llvm::ImmutableMap<SymbolRef, RefState> SymMap;
-  SymMap M = state->get<RegionState>();
+  RegionStateTy M = state->get<RegionState>();
 
-  for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+  for (RegionStateTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     RefState RS = I->second;
     if (RS.isAllocated()) {
       ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
