@@ -223,8 +223,7 @@ protected:
   unsigned Access : 2;
   friend class CXXClassMemberWrapper;
 
-  /// PCHLevel - the "level" of precompiled header/AST file from which this
-  /// declaration was built.
+  /// PCHLevel - the "level" of AST file from which this declaration was built.
   unsigned PCHLevel : 2;
 
   /// PCHChanged - if this declaration has changed since being deserialized
@@ -398,10 +397,10 @@ public:
   }
 
   /// \brief Query whether this declaration was changed in a significant way
-  /// since being loaded from a PCH file.
+  /// since being loaded from an AST file.
   ///
   /// In an epic violation of layering, what is "significant" is entirely
-  /// up to the PCH system, but implemented in AST and Sema.
+  /// up to the serialization system, but implemented in AST and Sema.
   bool isChangedSinceDeserialization() const { return PCHChanged; }
 
   /// \brief Mark this declaration as having changed since deserialization, or

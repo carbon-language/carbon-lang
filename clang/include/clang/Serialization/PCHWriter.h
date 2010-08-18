@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the ASTWriter class, which writes a precompiled
-//  header containing a serialized representation of a translation
-//  unit.
+//  This file defines the ASTWriter class, which writes an AST file
+//  containing a serialized representation of a translation unit.
 //
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_FRONTEND_PCH_WRITER_H
@@ -79,7 +78,7 @@ class ASTWriter : public PCHDeserializationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
@@ -87,7 +86,7 @@ private:
   /// \brief The reader of existing PCH files, if we're chaining.
   PCHReader *Chain;
 
-  /// \brief Stores a declaration or a type to be written to the PCH file.
+  /// \brief Stores a declaration or a type to be written to the AST file.
   class DeclOrType {
   public:
     DeclOrType(Decl *D) : Stored(D), IsType(false) { }
@@ -209,9 +208,9 @@ private:
   /// definitions.
   ///
   /// We keep track of external definitions (as well as tentative
-  /// definitions) as we are emitting declarations to the PCH
-  /// file. The PCH file contains a separate record for these external
-  /// definitions, which are provided to the AST consumer by the PCH
+  /// definitions) as we are emitting declarations to the AST
+  /// file. The AST file contains a separate record for these external
+  /// definitions, which are provided to the AST consumer by the AST
   /// reader. This is behavior is required to properly cope with,
   /// e.g., tentative variable definitions that occur within
   /// headers. The declarations themselves are stored as declaration
@@ -219,14 +218,15 @@ private:
   /// record.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
-  /// \brief Namespaces that have received extensions since their PCH form.
+  /// \brief Namespaces that have received extensions since their serialized
+  /// form.
   ///
   /// Basically, when we're chaining and encountering a namespace, we check if
   /// its primary namespace comes from the chain. If it does, we add the primary
   /// to this set, so that we can write out lexical content updates for it.
   llvm::SmallPtrSet<const NamespaceDecl *, 16> UpdatedNamespaces;
 
-  /// \brief Decls that have been replaced in the current dependent PCH.
+  /// \brief Decls that have been replaced in the current dependent AST file.
   ///
   /// When a decl changes fundamentally after being deserialized (this shouldn't
   /// happen, but the ObjC AST nodes are designed this way), it will be
@@ -248,17 +248,17 @@ private:
   /// \brief Mapping from LabelStmt statements to IDs.
   std::map<LabelStmt *, unsigned> LabelIDs;
 
-  /// \brief The number of statements written to the PCH file.
+  /// \brief The number of statements written to the AST file.
   unsigned NumStatements;
 
-  /// \brief The number of macros written to the PCH file.
+  /// \brief The number of macros written to the AST file.
   unsigned NumMacros;
 
-  /// \brief The number of lexical declcontexts written to the PCH
+  /// \brief The number of lexical declcontexts written to the AST
   /// file.
   unsigned NumLexicalDeclContexts;
 
-  /// \brief The number of visible declcontexts written to the PCH
+  /// \brief The number of visible declcontexts written to the AST
   /// file.
   unsigned NumVisibleDeclContexts;
 

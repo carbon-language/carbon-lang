@@ -93,7 +93,7 @@ public:
   static bool classofKind(Kind K) { return K == Decl::Friend; }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// An iterator over the friend declarations of a class.

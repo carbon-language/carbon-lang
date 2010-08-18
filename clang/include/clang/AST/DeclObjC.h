@@ -1239,7 +1239,7 @@ public:
   static bool classofKind(Kind K) { return K == ObjCImplementation; }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,

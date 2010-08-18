@@ -560,7 +560,7 @@ public:
   virtual child_iterator child_end();
 
   friend class PCHStmtReader;
-  friend class PCHStmtWriter;
+  friend class ASTStmtWriter;
 };
 
 /// CXXTemporary - Represents a C++ temporary.

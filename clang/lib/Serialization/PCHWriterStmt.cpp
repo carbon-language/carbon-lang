@@ -23,14 +23,14 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace clang {
-  class PCHStmtWriter : public StmtVisitor<PCHStmtWriter, void> {
+  class ASTStmtWriter : public StmtVisitor<ASTStmtWriter, void> {
     ASTWriter &Writer;
     ASTWriter::RecordData &Record;
 
   public:
     pch::StmtCode Code;
 
-    PCHStmtWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
+    ASTStmtWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
       : Writer(Writer), Record(Record) { }
     
     void
@@ -155,7 +155,7 @@ namespace clang {
   };
 }
 
-void PCHStmtWriter::
+void ASTStmtWriter::
 AddExplicitTemplateArgumentList(const ExplicitTemplateArgumentList &Args) {
   Writer.AddSourceLocation(Args.LAngleLoc, Record);
   Writer.AddSourceLocation(Args.RAngleLoc, Record);
@@ -163,16 +163,16 @@ AddExplicitTemplateArgumentList(const ExplicitTemplateArgumentList &Args) {
     Writer.AddTemplateArgumentLoc(Args.getTemplateArgs()[i], Record);
 }
 
-void PCHStmtWriter::VisitStmt(Stmt *S) {
+void ASTStmtWriter::VisitStmt(Stmt *S) {
 }
 
-void PCHStmtWriter::VisitNullStmt(NullStmt *S) {
+void ASTStmtWriter::VisitNullStmt(NullStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getSemiLoc(), Record);
   Code = pch::STMT_NULL;
 }
 
-void PCHStmtWriter::VisitCompoundStmt(CompoundStmt *S) {
+void ASTStmtWriter::VisitCompoundStmt(CompoundStmt *S) {
   VisitStmt(S);
   Record.push_back(S->size());
   for (CompoundStmt::body_iterator CS = S->body_begin(), CSEnd = S->body_end();
@@ -183,12 +183,12 @@ void PCHStmtWriter::VisitCompoundStmt(CompoundStmt *S) {
   Code = pch::STMT_COMPOUND;
 }
 
-void PCHStmtWriter::VisitSwitchCase(SwitchCase *S) {
+void ASTStmtWriter::VisitSwitchCase(SwitchCase *S) {
   VisitStmt(S);
   Record.push_back(Writer.getSwitchCaseID(S));
 }
 
-void PCHStmtWriter::VisitCaseStmt(CaseStmt *S) {
+void ASTStmtWriter::VisitCaseStmt(CaseStmt *S) {
   VisitSwitchCase(S);
   Writer.AddStmt(S->getLHS());
   Writer.AddStmt(S->getRHS());
@@ -199,7 +199,7 @@ void PCHStmtWriter::VisitCaseStmt(CaseStmt *S) {
   Code = pch::STMT_CASE;
 }
 
-void PCHStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
+void ASTStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
   VisitSwitchCase(S);
   Writer.AddStmt(S->getSubStmt());
   Writer.AddSourceLocation(S->getDefaultLoc(), Record);
@@ -207,7 +207,7 @@ void PCHStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
   Code = pch::STMT_DEFAULT;
 }
 
-void PCHStmtWriter::VisitLabelStmt(LabelStmt *S) {
+void ASTStmtWriter::VisitLabelStmt(LabelStmt *S) {
   VisitStmt(S);
   Writer.AddIdentifierRef(S->getID(), Record);
   Writer.AddStmt(S->getSubStmt());
@@ -216,7 +216,7 @@ void PCHStmtWriter::VisitLabelStmt(LabelStmt *S) {
   Code = pch::STMT_LABEL;
 }
 
-void PCHStmtWriter::VisitIfStmt(IfStmt *S) {
+void ASTStmtWriter::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
   Writer.AddDeclRef(S->getConditionVariable(), Record);
   Writer.AddStmt(S->getCond());
@@ -227,7 +227,7 @@ void PCHStmtWriter::VisitIfStmt(IfStmt *S) {
   Code = pch::STMT_IF;
 }
 
-void PCHStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
+void ASTStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
   VisitStmt(S);
   Writer.AddDeclRef(S->getConditionVariable(), Record);
   Writer.AddStmt(S->getCond());
@@ -239,7 +239,7 @@ void PCHStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
   Code = pch::STMT_SWITCH;
 }
 
-void PCHStmtWriter::VisitWhileStmt(WhileStmt *S) {
+void ASTStmtWriter::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
   Writer.AddDeclRef(S->getConditionVariable(), Record);
   Writer.AddStmt(S->getCond());
@@ -248,7 +248,7 @@ void PCHStmtWriter::VisitWhileStmt(WhileStmt *S) {
   Code = pch::STMT_WHILE;
 }
 
-void PCHStmtWriter::VisitDoStmt(DoStmt *S) {
+void ASTStmtWriter::VisitDoStmt(DoStmt *S) {
   VisitStmt(S);
   Writer.AddStmt(S->getCond());
   Writer.AddStmt(S->getBody());
@@ -258,7 +258,7 @@ void PCHStmtWriter::VisitDoStmt(DoStmt *S) {
   Code = pch::STMT_DO;
 }
 
-void PCHStmtWriter::VisitForStmt(ForStmt *S) {
+void ASTStmtWriter::VisitForStmt(ForStmt *S) {
   VisitStmt(S);
   Writer.AddStmt(S->getInit());
   Writer.AddStmt(S->getCond());
@@ -271,7 +271,7 @@ void PCHStmtWriter::VisitForStmt(ForStmt *S) {
   Code = pch::STMT_FOR;
 }
 
-void PCHStmtWriter::VisitGotoStmt(GotoStmt *S) {
+void ASTStmtWriter::VisitGotoStmt(GotoStmt *S) {
   VisitStmt(S);
   Record.push_back(Writer.GetLabelID(S->getLabel()));
   Writer.AddSourceLocation(S->getGotoLoc(), Record);
@@ -279,7 +279,7 @@ void PCHStmtWriter::VisitGotoStmt(GotoStmt *S) {
   Code = pch::STMT_GOTO;
 }
 
-void PCHStmtWriter::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
+void ASTStmtWriter::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getGotoLoc(), Record);
   Writer.AddSourceLocation(S->getStarLoc(), Record);
@@ -287,19 +287,19 @@ void PCHStmtWriter::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
   Code = pch::STMT_INDIRECT_GOTO;
 }
 
-void PCHStmtWriter::VisitContinueStmt(ContinueStmt *S) {
+void ASTStmtWriter::VisitContinueStmt(ContinueStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getContinueLoc(), Record);
   Code = pch::STMT_CONTINUE;
 }
 
-void PCHStmtWriter::VisitBreakStmt(BreakStmt *S) {
+void ASTStmtWriter::VisitBreakStmt(BreakStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getBreakLoc(), Record);
   Code = pch::STMT_BREAK;
 }
 
-void PCHStmtWriter::VisitReturnStmt(ReturnStmt *S) {
+void ASTStmtWriter::VisitReturnStmt(ReturnStmt *S) {
   VisitStmt(S);
   Writer.AddStmt(S->getRetValue());
   Writer.AddSourceLocation(S->getReturnLoc(), Record);
@@ -307,7 +307,7 @@ void PCHStmtWriter::VisitReturnStmt(ReturnStmt *S) {
   Code = pch::STMT_RETURN;
 }
 
-void PCHStmtWriter::VisitDeclStmt(DeclStmt *S) {
+void ASTStmtWriter::VisitDeclStmt(DeclStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getStartLoc(), Record);
   Writer.AddSourceLocation(S->getEndLoc(), Record);
@@ -317,7 +317,7 @@ void PCHStmtWriter::VisitDeclStmt(DeclStmt *S) {
   Code = pch::STMT_DECL;
 }
 
-void PCHStmtWriter::VisitAsmStmt(AsmStmt *S) {
+void ASTStmtWriter::VisitAsmStmt(AsmStmt *S) {
   VisitStmt(S);
   Record.push_back(S->getNumOutputs());
   Record.push_back(S->getNumInputs());
@@ -350,21 +350,21 @@ void PCHStmtWriter::VisitAsmStmt(AsmStmt *S) {
   Code = pch::STMT_ASM;
 }
 
-void PCHStmtWriter::VisitExpr(Expr *E) {
+void ASTStmtWriter::VisitExpr(Expr *E) {
   VisitStmt(E);
   Writer.AddTypeRef(E->getType(), Record);
   Record.push_back(E->isTypeDependent());
   Record.push_back(E->isValueDependent());
 }
 
-void PCHStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
+void ASTStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->getIdentType()); // FIXME: stable encoding
   Code = pch::EXPR_PREDEFINED;
 }
 
-void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
+void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
 
   Record.push_back(E->hasQualifier());
@@ -387,14 +387,14 @@ void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   Code = pch::EXPR_DECL_REF;
 }
 
-void PCHStmtWriter::VisitIntegerLiteral(IntegerLiteral *E) {
+void ASTStmtWriter::VisitIntegerLiteral(IntegerLiteral *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.AddAPInt(E->getValue(), Record);
   Code = pch::EXPR_INTEGER_LITERAL;
 }
 
-void PCHStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
+void ASTStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
   VisitExpr(E);
   Writer.AddAPFloat(E->getValue(), Record);
   Record.push_back(E->isExact());
@@ -402,13 +402,13 @@ void PCHStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
   Code = pch::EXPR_FLOATING_LITERAL;
 }
 
-void PCHStmtWriter::VisitImaginaryLiteral(ImaginaryLiteral *E) {
+void ASTStmtWriter::VisitImaginaryLiteral(ImaginaryLiteral *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubExpr());
   Code = pch::EXPR_IMAGINARY_LITERAL;
 }
 
-void PCHStmtWriter::VisitStringLiteral(StringLiteral *E) {
+void ASTStmtWriter::VisitStringLiteral(StringLiteral *E) {
   VisitExpr(E);
   Record.push_back(E->getByteLength());
   Record.push_back(E->getNumConcatenated());
@@ -416,14 +416,14 @@ void PCHStmtWriter::VisitStringLiteral(StringLiteral *E) {
   // FIXME: String data should be stored as a blob at the end of the
   // StringLiteral. However, we can't do so now because we have no
   // provision for coping with abbreviations when we're jumping around
-  // the PCH file during deserialization.
+  // the AST file during deserialization.
   Record.append(E->getString().begin(), E->getString().end());
   for (unsigned I = 0, N = E->getNumConcatenated(); I != N; ++I)
     Writer.AddSourceLocation(E->getStrTokenLoc(I), Record);
   Code = pch::EXPR_STRING_LITERAL;
 }
 
-void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
+void ASTStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
   VisitExpr(E);
   Record.push_back(E->getValue());
   Writer.AddSourceLocation(E->getLocation(), Record);
@@ -431,7 +431,7 @@ void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
   Code = pch::EXPR_CHARACTER_LITERAL;
 }
 
-void PCHStmtWriter::VisitParenExpr(ParenExpr *E) {
+void ASTStmtWriter::VisitParenExpr(ParenExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLParen(), Record);
   Writer.AddSourceLocation(E->getRParen(), Record);
@@ -439,7 +439,7 @@ void PCHStmtWriter::VisitParenExpr(ParenExpr *E) {
   Code = pch::EXPR_PAREN;
 }
 
-void PCHStmtWriter::VisitParenListExpr(ParenListExpr *E) {
+void ASTStmtWriter::VisitParenListExpr(ParenListExpr *E) {
   VisitExpr(E);
   Record.push_back(E->NumExprs);
   for (unsigned i=0; i != E->NumExprs; ++i)
@@ -449,7 +449,7 @@ void PCHStmtWriter::VisitParenListExpr(ParenListExpr *E) {
   Code = pch::EXPR_PAREN_LIST;
 }
 
-void PCHStmtWriter::VisitUnaryOperator(UnaryOperator *E) {
+void ASTStmtWriter::VisitUnaryOperator(UnaryOperator *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubExpr());
   Record.push_back(E->getOpcode()); // FIXME: stable encoding
@@ -457,7 +457,7 @@ void PCHStmtWriter::VisitUnaryOperator(UnaryOperator *E) {
   Code = pch::EXPR_UNARY_OPERATOR;
 }
 
-void PCHStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
+void ASTStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumComponents());
   Record.push_back(E->getNumExpressions());
@@ -492,7 +492,7 @@ void PCHStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   Code = pch::EXPR_OFFSETOF;
 }
 
-void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+void ASTStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isSizeOf());
   if (E->isArgumentType())
@@ -506,7 +506,7 @@ void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   Code = pch::EXPR_SIZEOF_ALIGN_OF;
 }
 
-void PCHStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
+void ASTStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getLHS());
   Writer.AddStmt(E->getRHS());
@@ -514,7 +514,7 @@ void PCHStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   Code = pch::EXPR_ARRAY_SUBSCRIPT;
 }
 
-void PCHStmtWriter::VisitCallExpr(CallExpr *E) {
+void ASTStmtWriter::VisitCallExpr(CallExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
@@ -525,7 +525,7 @@ void PCHStmtWriter::VisitCallExpr(CallExpr *E) {
   Code = pch::EXPR_CALL;
 }
 
-void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
+void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   // Don't call VisitExpr, we'll write everything here.
 
   Record.push_back(E->hasQualifier());
@@ -558,7 +558,7 @@ void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Code = pch::EXPR_MEMBER;
 }
 
-void PCHStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
+void ASTStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getBase());
   Writer.AddSourceLocation(E->getIsaMemberLoc(), Record);
@@ -566,7 +566,7 @@ void PCHStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
   Code = pch::EXPR_OBJC_ISA;
 }
 
-void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
+void ASTStmtWriter::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   Record.push_back(E->path_size());
   Writer.AddStmt(E->getSubExpr());
@@ -577,7 +577,7 @@ void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
     Writer.AddCXXBaseSpecifier(**PI, Record);
 }
 
-void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {
+void ASTStmtWriter::VisitBinaryOperator(BinaryOperator *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getLHS());
   Writer.AddStmt(E->getRHS());
@@ -586,14 +586,14 @@ void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {
   Code = pch::EXPR_BINARY_OPERATOR;
 }
 
-void PCHStmtWriter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
+void ASTStmtWriter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
   VisitBinaryOperator(E);
   Writer.AddTypeRef(E->getComputationLHSType(), Record);
   Writer.AddTypeRef(E->getComputationResultType(), Record);
   Code = pch::EXPR_COMPOUND_ASSIGN_OPERATOR;
 }
 
-void PCHStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
+void ASTStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getCond());
   Writer.AddStmt(E->getLHS());
@@ -603,25 +603,25 @@ void PCHStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
   Code = pch::EXPR_CONDITIONAL_OPERATOR;
 }
 
-void PCHStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
+void ASTStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
   Record.push_back(E->getCategory());
   Code = pch::EXPR_IMPLICIT_CAST;
 }
 
-void PCHStmtWriter::VisitExplicitCastExpr(ExplicitCastExpr *E) {
+void ASTStmtWriter::VisitExplicitCastExpr(ExplicitCastExpr *E) {
   VisitCastExpr(E);
   Writer.AddTypeSourceInfo(E->getTypeInfoAsWritten(), Record);
 }
 
-void PCHStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
+void ASTStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   VisitExplicitCastExpr(E);
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CSTYLE_CAST;
 }
 
-void PCHStmtWriter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+void ASTStmtWriter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
   Writer.AddTypeSourceInfo(E->getTypeSourceInfo(), Record);
@@ -630,7 +630,7 @@ void PCHStmtWriter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   Code = pch::EXPR_COMPOUND_LITERAL;
 }
 
-void PCHStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
+void ASTStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getBase());
   Writer.AddIdentifierRef(&E->getAccessor(), Record);
@@ -638,7 +638,7 @@ void PCHStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   Code = pch::EXPR_EXT_VECTOR_ELEMENT;
 }
 
-void PCHStmtWriter::VisitInitListExpr(InitListExpr *E) {
+void ASTStmtWriter::VisitInitListExpr(InitListExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumInits());
   for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
@@ -651,7 +651,7 @@ void PCHStmtWriter::VisitInitListExpr(InitListExpr *E) {
   Code = pch::EXPR_INIT_LIST;
 }
 
-void PCHStmtWriter::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+void ASTStmtWriter::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumSubExprs());
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I)
@@ -688,12 +688,12 @@ void PCHStmtWriter::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   Code = pch::EXPR_DESIGNATED_INIT;
 }
 
-void PCHStmtWriter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
+void ASTStmtWriter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
   VisitExpr(E);
   Code = pch::EXPR_IMPLICIT_VALUE_INIT;
 }
 
-void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
+void ASTStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubExpr());
   Writer.AddTypeSourceInfo(E->getWrittenTypeInfo(), Record);
@@ -702,7 +702,7 @@ void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
   Code = pch::EXPR_VA_ARG;
 }
 
-void PCHStmtWriter::VisitAddrLabelExpr(AddrLabelExpr *E) {
+void ASTStmtWriter::VisitAddrLabelExpr(AddrLabelExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getAmpAmpLoc(), Record);
   Writer.AddSourceLocation(E->getLabelLoc(), Record);
@@ -710,7 +710,7 @@ void PCHStmtWriter::VisitAddrLabelExpr(AddrLabelExpr *E) {
   Code = pch::EXPR_ADDR_LABEL;
 }
 
-void PCHStmtWriter::VisitStmtExpr(StmtExpr *E) {
+void ASTStmtWriter::VisitStmtExpr(StmtExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubStmt());
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
@@ -718,7 +718,7 @@ void PCHStmtWriter::VisitStmtExpr(StmtExpr *E) {
   Code = pch::EXPR_STMT;
 }
 
-void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
+void ASTStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
   VisitExpr(E);
   Writer.AddTypeSourceInfo(E->getArgTInfo1(), Record);
   Writer.AddTypeSourceInfo(E->getArgTInfo2(), Record);
@@ -727,7 +727,7 @@ void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
   Code = pch::EXPR_TYPES_COMPATIBLE;
 }
 
-void PCHStmtWriter::VisitChooseExpr(ChooseExpr *E) {
+void ASTStmtWriter::VisitChooseExpr(ChooseExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getCond());
   Writer.AddStmt(E->getLHS());
@@ -737,13 +737,13 @@ void PCHStmtWriter::VisitChooseExpr(ChooseExpr *E) {
   Code = pch::EXPR_CHOOSE;
 }
 
-void PCHStmtWriter::VisitGNUNullExpr(GNUNullExpr *E) {
+void ASTStmtWriter::VisitGNUNullExpr(GNUNullExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getTokenLocation(), Record);
   Code = pch::EXPR_GNU_NULL;
 }
 
-void PCHStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
+void ASTStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumSubExprs());
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I)
@@ -753,14 +753,14 @@ void PCHStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Code = pch::EXPR_SHUFFLE_VECTOR;
 }
 
-void PCHStmtWriter::VisitBlockExpr(BlockExpr *E) {
+void ASTStmtWriter::VisitBlockExpr(BlockExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getBlockDecl(), Record);
   Record.push_back(E->hasBlockDeclRefExprs());
   Code = pch::EXPR_BLOCK;
 }
 
-void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+void ASTStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
@@ -774,14 +774,14 @@ void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
 // Objective-C Expressions and Statements.
 //===----------------------------------------------------------------------===//
 
-void PCHStmtWriter::VisitObjCStringLiteral(ObjCStringLiteral *E) {
+void ASTStmtWriter::VisitObjCStringLiteral(ObjCStringLiteral *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getString());
   Writer.AddSourceLocation(E->getAtLoc(), Record);
   Code = pch::EXPR_OBJC_STRING_LITERAL;
 }
 
-void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
+void ASTStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   VisitExpr(E);
   Writer.AddTypeSourceInfo(E->getEncodedTypeSourceInfo(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
@@ -789,7 +789,7 @@ void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   Code = pch::EXPR_OBJC_ENCODE;
 }
 
-void PCHStmtWriter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
+void ASTStmtWriter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   VisitExpr(E);
   Writer.AddSelectorRef(E->getSelector(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
@@ -797,7 +797,7 @@ void PCHStmtWriter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   Code = pch::EXPR_OBJC_SELECTOR_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
+void ASTStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getProtocol(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
@@ -805,7 +805,7 @@ void PCHStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   Code = pch::EXPR_OBJC_PROTOCOL_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
+void ASTStmtWriter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
@@ -815,7 +815,7 @@ void PCHStmtWriter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
   Code = pch::EXPR_OBJC_IVAR_REF_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+void ASTStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getProperty(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
@@ -823,7 +823,7 @@ void PCHStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   Code = pch::EXPR_OBJC_PROPERTY_REF_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
+void ASTStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
                                   ObjCImplicitSetterGetterRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getGetterMethod(), Record);
@@ -837,7 +837,7 @@ void PCHStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
   Code = pch::EXPR_OBJC_KVC_REF_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
+void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
   Record.push_back((unsigned)E->getReceiverKind()); // FIXME: stable encoding
@@ -874,13 +874,13 @@ void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   Code = pch::EXPR_OBJC_MESSAGE_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
+void ASTStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLoc(), Record);
   Code = pch::EXPR_OBJC_SUPER_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+void ASTStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   VisitStmt(S);
   Writer.AddStmt(S->getElement());
   Writer.AddStmt(S->getCollection());
@@ -890,7 +890,7 @@ void PCHStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   Code = pch::STMT_OBJC_FOR_COLLECTION;
 }
 
-void PCHStmtWriter::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
+void ASTStmtWriter::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   Writer.AddStmt(S->getCatchBody());
   Writer.AddDeclRef(S->getCatchParamDecl(), Record);
   Writer.AddSourceLocation(S->getAtCatchLoc(), Record);
@@ -898,13 +898,13 @@ void PCHStmtWriter::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   Code = pch::STMT_OBJC_CATCH;
 }
 
-void PCHStmtWriter::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
+void ASTStmtWriter::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
   Writer.AddStmt(S->getFinallyBody());
   Writer.AddSourceLocation(S->getAtFinallyLoc(), Record);
   Code = pch::STMT_OBJC_FINALLY;
 }
 
-void PCHStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
+void ASTStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
   Record.push_back(S->getNumCatchStmts());
   Record.push_back(S->getFinallyStmt() != 0);
   Writer.AddStmt(S->getTryBody());
@@ -916,14 +916,14 @@ void PCHStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
   Code = pch::STMT_OBJC_AT_TRY;
 }
 
-void PCHStmtWriter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
+void ASTStmtWriter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   Writer.AddStmt(S->getSynchExpr());
   Writer.AddStmt(S->getSynchBody());
   Writer.AddSourceLocation(S->getAtSynchronizedLoc(), Record);
   Code = pch::STMT_OBJC_AT_SYNCHRONIZED;
 }
 
-void PCHStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
+void ASTStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   Writer.AddStmt(S->getThrowExpr());
   Writer.AddSourceLocation(S->getThrowLoc(), Record);
   Code = pch::STMT_OBJC_AT_THROW;
@@ -933,7 +933,7 @@ void PCHStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
 // C++ Expressions and Statements.
 //===----------------------------------------------------------------------===//
 
-void PCHStmtWriter::VisitCXXCatchStmt(CXXCatchStmt *S) {
+void ASTStmtWriter::VisitCXXCatchStmt(CXXCatchStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getCatchLoc(), Record);
   Writer.AddDeclRef(S->getExceptionDecl(), Record);
@@ -941,7 +941,7 @@ void PCHStmtWriter::VisitCXXCatchStmt(CXXCatchStmt *S) {
   Code = pch::STMT_CXX_CATCH;
 }
 
-void PCHStmtWriter::VisitCXXTryStmt(CXXTryStmt *S) {
+void ASTStmtWriter::VisitCXXTryStmt(CXXTryStmt *S) {
   VisitStmt(S);
   Record.push_back(S->getNumHandlers());
   Writer.AddSourceLocation(S->getTryLoc(), Record);
@@ -951,18 +951,18 @@ void PCHStmtWriter::VisitCXXTryStmt(CXXTryStmt *S) {
   Code = pch::STMT_CXX_TRY;
 }
 
-void PCHStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+void ASTStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());
   Code = pch::EXPR_CXX_OPERATOR_CALL;
 }
 
-void PCHStmtWriter::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+void ASTStmtWriter::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
   VisitCallExpr(E);
   Code = pch::EXPR_CXX_MEMBER_CALL;
 }
 
-void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
+void ASTStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
@@ -975,59 +975,59 @@ void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Code = pch::EXPR_CXX_CONSTRUCT;
 }
 
-void PCHStmtWriter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
+void ASTStmtWriter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   VisitCXXConstructExpr(E);
   Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CXX_TEMPORARY_OBJECT;
 }
 
-void PCHStmtWriter::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
+void ASTStmtWriter::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
   VisitExplicitCastExpr(E);
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
 }
 
-void PCHStmtWriter::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {
+void ASTStmtWriter::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {
   VisitCXXNamedCastExpr(E);
   Code = pch::EXPR_CXX_STATIC_CAST;
 }
 
-void PCHStmtWriter::VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E) {
+void ASTStmtWriter::VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E) {
   VisitCXXNamedCastExpr(E);
   Code = pch::EXPR_CXX_DYNAMIC_CAST;
 }
 
-void PCHStmtWriter::VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E) {
+void ASTStmtWriter::VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E) {
   VisitCXXNamedCastExpr(E);
   Code = pch::EXPR_CXX_REINTERPRET_CAST;
 }
 
-void PCHStmtWriter::VisitCXXConstCastExpr(CXXConstCastExpr *E) {
+void ASTStmtWriter::VisitCXXConstCastExpr(CXXConstCastExpr *E) {
   VisitCXXNamedCastExpr(E);
   Code = pch::EXPR_CXX_CONST_CAST;
 }
 
-void PCHStmtWriter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
+void ASTStmtWriter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
   VisitExplicitCastExpr(E);
   Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CXX_FUNCTIONAL_CAST;
 }
 
-void PCHStmtWriter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
+void ASTStmtWriter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getValue());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = pch::EXPR_CXX_BOOL_LITERAL;
 }
 
-void PCHStmtWriter::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
+void ASTStmtWriter::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = pch::EXPR_CXX_NULL_PTR_LITERAL;
 }
 
-void PCHStmtWriter::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
+void ASTStmtWriter::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   VisitExpr(E);
   Writer.AddSourceRange(E->getSourceRange(), Record);
   if (E->isTypeOperand()) {
@@ -1039,21 +1039,21 @@ void PCHStmtWriter::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   }
 }
 
-void PCHStmtWriter::VisitCXXThisExpr(CXXThisExpr *E) {
+void ASTStmtWriter::VisitCXXThisExpr(CXXThisExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isImplicit());
   Code = pch::EXPR_CXX_THIS;
 }
 
-void PCHStmtWriter::VisitCXXThrowExpr(CXXThrowExpr *E) {
+void ASTStmtWriter::VisitCXXThrowExpr(CXXThrowExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getThrowLoc(), Record);
   Writer.AddStmt(E->getSubExpr());
   Code = pch::EXPR_CXX_THROW;
 }
 
-void PCHStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
+void ASTStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   VisitExpr(E);
 
   bool HasOtherExprStored = E->Param.getInt();
@@ -1067,14 +1067,14 @@ void PCHStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   Code = pch::EXPR_CXX_DEFAULT_ARG;
 }
 
-void PCHStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
+void ASTStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   VisitExpr(E);
   Writer.AddCXXTemporary(E->getTemporary(), Record);
   Writer.AddStmt(E->getSubExpr());
   Code = pch::EXPR_CXX_BIND_TEMPORARY;
 }
 
-void PCHStmtWriter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
+void ASTStmtWriter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubExpr());
   Record.push_back(E->extendsLifetime());
@@ -1082,14 +1082,14 @@ void PCHStmtWriter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
   Code = pch::EXPR_CXX_BIND_REFERENCE;
 }
 
-void PCHStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+void ASTStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CXX_SCALAR_VALUE_INIT;
 }
 
-void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
+void ASTStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isGlobalNew());
   Record.push_back(E->hasInitializer());
@@ -1109,7 +1109,7 @@ void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   Code = pch::EXPR_CXX_NEW;
 }
 
-void PCHStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+void ASTStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isGlobalDelete());
   Record.push_back(E->isArrayForm());
@@ -1120,7 +1120,7 @@ void PCHStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   Code = pch::EXPR_CXX_DELETE;
 }
 
-void PCHStmtWriter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
+void ASTStmtWriter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   VisitExpr(E);
 
   Writer.AddStmt(E->getBase());
@@ -1142,7 +1142,7 @@ void PCHStmtWriter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   Code = pch::EXPR_CXX_PSEUDO_DESTRUCTOR;
 }
 
-void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+void ASTStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
   Record.push_back(E->getNumTemporaries());
   for (unsigned i = 0, e = E->getNumTemporaries(); i != e; ++i)
@@ -1153,7 +1153,7 @@ void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
 }
 
 void
-PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
+ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
   
   // Don't emit anything here, NumTemplateArgs must be emitted first.
@@ -1162,7 +1162,7 @@ PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
     const ExplicitTemplateArgumentList &Args
       = *E->getExplicitTemplateArgumentList();
     assert(Args.NumTemplateArgs &&
-           "Num of template args was zero! PCH reading will mess up!");
+           "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
     AddExplicitTemplateArgumentList(Args);
   } else {
@@ -1186,7 +1186,7 @@ PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
 }
 
 void
-PCHStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
+ASTStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   VisitExpr(E);
   
   // Don't emit anything here, NumTemplateArgs must be emitted first.
@@ -1194,7 +1194,7 @@ PCHStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   if (E->hasExplicitTemplateArgs()) {
     const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
     assert(Args.NumTemplateArgs &&
-           "Num of template args was zero! PCH reading will mess up!");
+           "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
     AddExplicitTemplateArgumentList(Args);
   } else {
@@ -1210,7 +1210,7 @@ PCHStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
 }
 
 void
-PCHStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
+ASTStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   VisitExpr(E);
   Record.push_back(E->arg_size());
   for (CXXUnresolvedConstructExpr::arg_iterator
@@ -1223,7 +1223,7 @@ PCHStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   Code = pch::EXPR_CXX_UNRESOLVED_CONSTRUCT;
 }
 
-void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
+void ASTStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   VisitExpr(E);
   
   // Don't emit anything here, NumTemplateArgs must be emitted first.
@@ -1231,7 +1231,7 @@ void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   if (E->hasExplicitTemplateArgs()) {
     const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
     assert(Args.NumTemplateArgs &&
-           "Num of template args was zero! PCH reading will mess up!");
+           "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
     AddExplicitTemplateArgumentList(Args);
   } else {
@@ -1252,7 +1252,7 @@ void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   Writer.AddSourceLocation(E->getNameLoc(), Record);
 }
 
-void PCHStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
+void ASTStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   VisitOverloadExpr(E);
   Record.push_back(E->isArrow());
   Record.push_back(E->hasUnresolvedUsing());
@@ -1262,7 +1262,7 @@ void PCHStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   Code = pch::EXPR_CXX_UNRESOLVED_MEMBER;
 }
 
-void PCHStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
+void ASTStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   VisitOverloadExpr(E);
   Record.push_back(E->requiresADL());
   Record.push_back(E->isOverloaded());
@@ -1270,7 +1270,7 @@ void PCHStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   Code = pch::EXPR_CXX_UNRESOLVED_LOOKUP;
 }
 
-void PCHStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+void ASTStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getTrait());
   Writer.AddSourceRange(E->getSourceRange(), Record);
@@ -1312,7 +1312,7 @@ unsigned ASTWriter::GetLabelID(LabelStmt *S) {
 /// bitstream.
 void ASTWriter::WriteSubStmt(Stmt *S) {
   RecordData Record;
-  PCHStmtWriter Writer(*this, Record);
+  ASTStmtWriter Writer(*this, Record);
   ++NumStatements;
   
   if (!S) {
@@ -1332,7 +1332,7 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
     SourceManager &SrcMgr
       = DeclIDs.begin()->first->getASTContext().getSourceManager();
     S->dump(SrcMgr);
-    assert(0 && "Unhandled sub statement writing PCH file");
+    assert(0 && "Unhandled sub statement writing AST file");
   }
 #endif
 

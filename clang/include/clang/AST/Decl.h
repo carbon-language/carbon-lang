@@ -334,7 +334,7 @@ public:
   }
   
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// ValueDecl - Represent the declaration of a variable (in which case it is
@@ -1228,7 +1228,7 @@ public:
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
   /// NOTE: For checking if there is a body, use hasBody() instead, to avoid
-  /// unnecessary PCH de-serialization of the body.
+  /// unnecessary AST de-serialization of the body.
   Stmt *getBody(const FunctionDecl *&Definition) const;
 
   virtual Stmt *getBody() const {
@@ -1616,7 +1616,7 @@ public:
   }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 
@@ -1989,7 +1989,7 @@ public:
   }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared

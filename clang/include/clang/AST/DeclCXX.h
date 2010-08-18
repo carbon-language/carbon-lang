@@ -1058,7 +1058,7 @@ public:
   }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// CXXMethodDecl - Represents a static or instance method of a
@@ -1518,7 +1518,7 @@ public:
   static bool classofKind(Kind K) { return K == CXXConstructor; }
   
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// CXXDestructorDecl - Represents a C++ destructor within a
@@ -1583,7 +1583,7 @@ public:
   static bool classofKind(Kind K) { return K == CXXDestructor; }
   
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// CXXConversionDecl - Represents a C++ conversion function within a
@@ -1640,7 +1640,7 @@ public:
   static bool classofKind(Kind K) { return K == CXXConversion; }
   
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
@@ -2088,7 +2088,7 @@ public:
   static bool classofKind(Kind K) { return K == Using; }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// UnresolvedUsingValueDecl - Represents a dependent using

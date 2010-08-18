@@ -700,7 +700,7 @@ public:
   virtual child_iterator child_end();
   
   friend class PCHStmtReader;
-  friend class PCHStmtWriter;
+  friend class ASTStmtWriter;
 };
 
 /// PredefinedExpr - [C99 6.4.2.2] - A predefined identifier such as __func__.
@@ -3349,7 +3349,7 @@ public:
   virtual child_iterator child_end();
 
   friend class PCHStmtReader;
-  friend class PCHStmtWriter;
+  friend class ASTStmtWriter;
 };
 
 

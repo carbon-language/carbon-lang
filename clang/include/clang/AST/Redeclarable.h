@@ -179,7 +179,7 @@ public:
   redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 }

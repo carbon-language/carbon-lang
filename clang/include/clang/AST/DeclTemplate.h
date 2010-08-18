@@ -686,7 +686,7 @@ public:
   }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 template <class decl_type>
@@ -866,7 +866,7 @@ public:
   static bool classofKind(Kind K) { return K == FunctionTemplate; }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 //===----------------------------------------------------------------------===//
@@ -1145,7 +1145,7 @@ public:
   static bool classofKind(Kind K) { return K == TemplateTemplateParm; }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// \brief Represents a class template specialization, which refers to
@@ -1788,7 +1788,7 @@ public:
   static bool classofKind(Kind K) { return K == ClassTemplate; }
 
   friend class PCHDeclReader;
-  friend class PCHDeclWriter;
+  friend class ASTDeclWriter;
 };
 
 /// Declaration of a friend template.  For example:

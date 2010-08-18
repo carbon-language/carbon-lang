@@ -54,7 +54,7 @@ const T *data(const std::vector<T, Allocator> &v) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class PCHTypeWriter {
+  class ASTTypeWriter {
     ASTWriter &Writer;
     ASTWriter::RecordData &Record;
 
@@ -62,7 +62,7 @@ namespace {
     /// \brief Type code that corresponds to the record generated.
     pch::TypeCode Code;
 
-    PCHTypeWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
+    ASTTypeWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
       : Writer(Writer), Record(Record), Code(pch::TYPE_EXT_QUAL) { }
 
     void VisitArrayType(const ArrayType *T);
@@ -75,59 +75,59 @@ namespace {
   };
 }
 
-void PCHTypeWriter::VisitBuiltinType(const BuiltinType *T) {
+void ASTTypeWriter::VisitBuiltinType(const BuiltinType *T) {
   assert(false && "Built-in types are never serialized");
 }
 
-void PCHTypeWriter::VisitComplexType(const ComplexType *T) {
+void ASTTypeWriter::VisitComplexType(const ComplexType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Code = pch::TYPE_COMPLEX;
 }
 
-void PCHTypeWriter::VisitPointerType(const PointerType *T) {
+void ASTTypeWriter::VisitPointerType(const PointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Code = pch::TYPE_POINTER;
 }
 
-void PCHTypeWriter::VisitBlockPointerType(const BlockPointerType *T) {
+void ASTTypeWriter::VisitBlockPointerType(const BlockPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Code = pch::TYPE_BLOCK_POINTER;
 }
 
-void PCHTypeWriter::VisitLValueReferenceType(const LValueReferenceType *T) {
+void ASTTypeWriter::VisitLValueReferenceType(const LValueReferenceType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Code = pch::TYPE_LVALUE_REFERENCE;
 }
 
-void PCHTypeWriter::VisitRValueReferenceType(const RValueReferenceType *T) {
+void ASTTypeWriter::VisitRValueReferenceType(const RValueReferenceType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Code = pch::TYPE_RVALUE_REFERENCE;
 }
 
-void PCHTypeWriter::VisitMemberPointerType(const MemberPointerType *T) {
+void ASTTypeWriter::VisitMemberPointerType(const MemberPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Writer.AddTypeRef(QualType(T->getClass(), 0), Record);
   Code = pch::TYPE_MEMBER_POINTER;
 }
 
-void PCHTypeWriter::VisitArrayType(const ArrayType *T) {
+void ASTTypeWriter::VisitArrayType(const ArrayType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Record.push_back(T->getSizeModifier()); // FIXME: stable values
   Record.push_back(T->getIndexTypeCVRQualifiers()); // FIXME: stable values
 }
 
-void PCHTypeWriter::VisitConstantArrayType(const ConstantArrayType *T) {
+void ASTTypeWriter::VisitConstantArrayType(const ConstantArrayType *T) {
   VisitArrayType(T);
   Writer.AddAPInt(T->getSize(), Record);
   Code = pch::TYPE_CONSTANT_ARRAY;
 }
 
-void PCHTypeWriter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
+void ASTTypeWriter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
   VisitArrayType(T);
   Code = pch::TYPE_INCOMPLETE_ARRAY;
 }
 
-void PCHTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
+void ASTTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
   VisitArrayType(T);
   Writer.AddSourceLocation(T->getLBracketLoc(), Record);
   Writer.AddSourceLocation(T->getRBracketLoc(), Record);
@@ -135,19 +135,19 @@ void PCHTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
   Code = pch::TYPE_VARIABLE_ARRAY;
 }
 
-void PCHTypeWriter::VisitVectorType(const VectorType *T) {
+void ASTTypeWriter::VisitVectorType(const VectorType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Record.push_back(T->getNumElements());
   Record.push_back(T->getAltiVecSpecific());
   Code = pch::TYPE_VECTOR;
 }
 
-void PCHTypeWriter::VisitExtVectorType(const ExtVectorType *T) {
+void ASTTypeWriter::VisitExtVectorType(const ExtVectorType *T) {
   VisitVectorType(T);
   Code = pch::TYPE_EXT_VECTOR;
 }
 
-void PCHTypeWriter::VisitFunctionType(const FunctionType *T) {
+void ASTTypeWriter::VisitFunctionType(const FunctionType *T) {
   Writer.AddTypeRef(T->getResultType(), Record);
   FunctionType::ExtInfo C = T->getExtInfo();
   Record.push_back(C.getNoReturn());
@@ -156,12 +156,12 @@ void PCHTypeWriter::VisitFunctionType(const FunctionType *T) {
   Record.push_back(C.getCC());
 }
 
-void PCHTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
+void ASTTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
   VisitFunctionType(T);
   Code = pch::TYPE_FUNCTION_NO_PROTO;
 }
 
-void PCHTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
+void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   VisitFunctionType(T);
   Record.push_back(T->getNumArgs());
   for (unsigned I = 0, N = T->getNumArgs(); I != N; ++I)
@@ -176,52 +176,52 @@ void PCHTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   Code = pch::TYPE_FUNCTION_PROTO;
 }
 
-void PCHTypeWriter::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
+void ASTTypeWriter::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Code = pch::TYPE_UNRESOLVED_USING;
 }
 
-void PCHTypeWriter::VisitTypedefType(const TypedefType *T) {
+void ASTTypeWriter::VisitTypedefType(const TypedefType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   assert(!T->isCanonicalUnqualified() && "Invalid typedef ?");
   Writer.AddTypeRef(T->getCanonicalTypeInternal(), Record);
   Code = pch::TYPE_TYPEDEF;
 }
 
-void PCHTypeWriter::VisitTypeOfExprType(const TypeOfExprType *T) {
+void ASTTypeWriter::VisitTypeOfExprType(const TypeOfExprType *T) {
   Writer.AddStmt(T->getUnderlyingExpr());
   Code = pch::TYPE_TYPEOF_EXPR;
 }
 
-void PCHTypeWriter::VisitTypeOfType(const TypeOfType *T) {
+void ASTTypeWriter::VisitTypeOfType(const TypeOfType *T) {
   Writer.AddTypeRef(T->getUnderlyingType(), Record);
   Code = pch::TYPE_TYPEOF;
 }
 
-void PCHTypeWriter::VisitDecltypeType(const DecltypeType *T) {
+void ASTTypeWriter::VisitDecltypeType(const DecltypeType *T) {
   Writer.AddStmt(T->getUnderlyingExpr());
   Code = pch::TYPE_DECLTYPE;
 }
 
-void PCHTypeWriter::VisitTagType(const TagType *T) {
+void ASTTypeWriter::VisitTagType(const TagType *T) {
   Record.push_back(T->isDependentType());
   Writer.AddDeclRef(T->getDecl(), Record);
   assert(!T->isBeingDefined() &&
          "Cannot serialize in the middle of a type definition");
 }
 
-void PCHTypeWriter::VisitRecordType(const RecordType *T) {
+void ASTTypeWriter::VisitRecordType(const RecordType *T) {
   VisitTagType(T);
   Code = pch::TYPE_RECORD;
 }
 
-void PCHTypeWriter::VisitEnumType(const EnumType *T) {
+void ASTTypeWriter::VisitEnumType(const EnumType *T) {
   VisitTagType(T);
   Code = pch::TYPE_ENUM;
 }
 
 void
-PCHTypeWriter::VisitSubstTemplateTypeParmType(
+ASTTypeWriter::VisitSubstTemplateTypeParmType(
                                         const SubstTemplateTypeParmType *T) {
   Writer.AddTypeRef(QualType(T->getReplacedParameter(), 0), Record);
   Writer.AddTypeRef(T->getReplacementType(), Record);
@@ -229,7 +229,7 @@ PCHTypeWriter::VisitSubstTemplateTypeParmType(
 }
 
 void
-PCHTypeWriter::VisitTemplateSpecializationType(
+ASTTypeWriter::VisitTemplateSpecializationType(
                                        const TemplateSpecializationType *T) {
   Record.push_back(T->isDependentType());
   Writer.AddTemplateName(T->getTemplateName(), Record);
@@ -244,7 +244,7 @@ PCHTypeWriter::VisitTemplateSpecializationType(
 }
 
 void
-PCHTypeWriter::VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
+ASTTypeWriter::VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
   VisitArrayType(T);
   Writer.AddStmt(T->getSizeExpr());
   Writer.AddSourceRange(T->getBracketsRange(), Record);
@@ -252,14 +252,14 @@ PCHTypeWriter::VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
 }
 
 void
-PCHTypeWriter::VisitDependentSizedExtVectorType(
+ASTTypeWriter::VisitDependentSizedExtVectorType(
                                         const DependentSizedExtVectorType *T) {
   // FIXME: Serialize this type (C++ only)
   assert(false && "Cannot serialize dependent sized extended vector types");
 }
 
 void
-PCHTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
+ASTTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
   Record.push_back(T->getDepth());
   Record.push_back(T->getIndex());
   Record.push_back(T->isParameterPack());
@@ -268,7 +268,7 @@ PCHTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
 }
 
 void
-PCHTypeWriter::VisitDependentNameType(const DependentNameType *T) {
+ASTTypeWriter::VisitDependentNameType(const DependentNameType *T) {
   Record.push_back(T->getKeyword());
   Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
   Writer.AddIdentifierRef(T->getIdentifier(), Record);
@@ -279,7 +279,7 @@ PCHTypeWriter::VisitDependentNameType(const DependentNameType *T) {
 }
 
 void
-PCHTypeWriter::VisitDependentTemplateSpecializationType(
+ASTTypeWriter::VisitDependentTemplateSpecializationType(
                                 const DependentTemplateSpecializationType *T) {
   Record.push_back(T->getKeyword());
   Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
@@ -291,25 +291,25 @@ PCHTypeWriter::VisitDependentTemplateSpecializationType(
   Code = pch::TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION;
 }
 
-void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
+void ASTTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
   Record.push_back(T->getKeyword());
   Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
   Writer.AddTypeRef(T->getNamedType(), Record);
   Code = pch::TYPE_ELABORATED;
 }
 
-void PCHTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
+void ASTTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Writer.AddTypeRef(T->getInjectedSpecializationType(), Record);
   Code = pch::TYPE_INJECTED_CLASS_NAME;
 }
 
-void PCHTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
+void ASTTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Code = pch::TYPE_OBJC_INTERFACE;
 }
 
-void PCHTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
+void ASTTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
   Writer.AddTypeRef(T->getBaseType(), Record);
   Record.push_back(T->getNumProtocols());
   for (ObjCObjectType::qual_iterator I = T->qual_begin(),
@@ -319,7 +319,7 @@ void PCHTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
 }
 
 void
-PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
+ASTTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Code = pch::TYPE_OBJC_OBJECT_POINTER;
 }
@@ -613,7 +613,7 @@ void ASTWriter::WriteBlockInfoBlock() {
 #define BLOCK(X) EmitBlockID(pch::X ## _ID, #X, Stream, Record)
 #define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
 
-  // PCH Top-Level Block.
+  // AST Top-Level Block.
   BLOCK(PCH_BLOCK);
   RECORD(ORIGINAL_FILE_NAME);
   RECORD(TYPE_OFFSET);
@@ -751,7 +751,7 @@ adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
   return Filename + Pos;
 }
 
-/// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
+/// \brief Write the AST metadata (e.g., i686-apple-darwin9).
 void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   using namespace llvm;
 
@@ -760,8 +760,8 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
   MetaAbbrev->Add(BitCodeAbbrevOp(
                     Chain ? pch::CHAINED_METADATA : pch::METADATA));
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST major
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST minor
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Relocatable
@@ -892,7 +892,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
 
 namespace {
 // Trait used for the on-disk hash table of stat cache results.
-class PCHStatCacheTrait {
+class ASTStatCacheTrait {
 public:
   typedef const char * key_type;
   typedef key_type key_type_ref;
@@ -941,11 +941,11 @@ public:
 };
 } // end anonymous namespace
 
-/// \brief Write the stat() system call cache to the PCH file.
+/// \brief Write the stat() system call cache to the AST file.
 void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   // Build the on-disk hash table containing information about every
   // stat() call.
-  OnDiskChainedHashTableGenerator<PCHStatCacheTrait> Generator;
+  OnDiskChainedHashTableGenerator<ASTStatCacheTrait> Generator;
   unsigned NumStatEntries = 0;
   for (MemorizeStatCalls::iterator Stat = StatCalls.begin(),
                                 StatEnd = StatCalls.end();
@@ -1211,7 +1211,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   if (SLocEntryOffsets.empty())
     return;
 
-  // Write the source-location offsets table into the PCH block. This
+  // Write the source-location offsets table into the AST block. This
   // table is used for lazily loading source-location information.
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
@@ -1229,7 +1229,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
                             (const char *)data(SLocEntryOffsets),
                            SLocEntryOffsets.size()*sizeof(SLocEntryOffsets[0]));
 
-  // Write the source location entry preloads array, telling the PCH
+  // Write the source location entry preloads array, telling the AST
   // reader which source locations entries it should load eagerly.
   Stream.EmitRecord(pch::SOURCE_LOCATION_PRELOADS, PreloadSLocs);
 }
@@ -1254,7 +1254,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   // Enter the preprocessor block.
   Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 2);
 
-  // If the PCH file contains __DATE__ or __TIME__ emit a warning about this.
+  // If the AST file contains __DATE__ or __TIME__ emit a warning about this.
   // FIXME: use diagnostics subsystem for localization etc.
   if (PP.SawDateOrTime())
     fprintf(stderr, "warning: precompiled header used __DATE__ or __TIME__.\n");
@@ -1268,9 +1268,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     // order so that output is reproducible.
     MacroInfo *MI = I->second;
 
-    // Don't emit builtin macros like __LINE__ to the PCH file unless they have
+    // Don't emit builtin macros like __LINE__ to the AST file unless they have
     // been redefined by the header (in which case they are not isBuiltinMacro).
-    // Also skip macros from a PCH file if we're chaining.
+    // Also skip macros from a AST file if we're chaining.
     if (MI->isBuiltinMacro() || (Chain && MI->isFromPCH()))
       continue;
 
@@ -1393,7 +1393,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
 // Type Serialization
 //===----------------------------------------------------------------------===//
 
-/// \brief Write the representation of a type to the PCH stream.
+/// \brief Write the representation of a type to the AST stream.
 void ASTWriter::WriteType(QualType T) {
   pch::TypeID &ID = TypeIDs[T];
   if (ID == 0) // we haven't seen this type before.
@@ -1411,7 +1411,7 @@ void ASTWriter::WriteType(QualType T) {
   RecordData Record;
 
   // Emit the type's representation.
-  PCHTypeWriter W(*this, Record);
+  ASTTypeWriter W(*this, Record);
 
   if (T.hasLocalNonFastQualifiers()) {
     Qualifiers Qs = T.getLocalQualifiers();
@@ -1554,7 +1554,7 @@ void ASTWriter::WriteTypeDeclOffsets() {
 
 namespace {
 // Trait used for the on-disk hash table used in the method pool.
-class PCHMethodPoolTrait {
+class ASTMethodPoolTrait {
   ASTWriter &Writer;
 
 public:
@@ -1567,7 +1567,7 @@ public:
   };
   typedef const data_type& data_type_ref;
 
-  explicit PCHMethodPoolTrait(ASTWriter &Writer) : Writer(Writer) { }
+  explicit ASTMethodPoolTrait(ASTWriter &Writer) : Writer(Writer) { }
 
   static unsigned ComputeHash(Selector Sel) {
     unsigned N = Sel.getNumArgs();
@@ -1657,7 +1657,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
   unsigned NumTableEntries = 0;
   // Create and write out the blob that contains selectors and the method pool.
   {
-    OnDiskChainedHashTableGenerator<PCHMethodPoolTrait> Generator;
+    OnDiskChainedHashTableGenerator<ASTMethodPoolTrait> Generator;
 
     // Create the on-disk hash table representation. We walk through every
     // selector we've seen and look it up in the method pool.
@@ -1667,7 +1667,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
          I != E; ++I) {
       Selector S = I->first;
       Sema::GlobalMethodPool::iterator F = SemaRef.MethodPool.find(S);
-      PCHMethodPoolTrait::data_type Data = {
+      ASTMethodPoolTrait::data_type Data = {
         I->second,
         ObjCMethodList(),
         ObjCMethodList()
@@ -1676,7 +1676,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
         Data.Instance = F->second.first;
         Data.Factory = F->second.second;
       }
-      // Only write this selector if it's not in an existing PCH or something
+      // Only write this selector if it's not in an existing AST or something
       // changed.
       if (Chain && I->second < FirstSelectorID) {
         // Selector already exists. Did it change?
@@ -1704,7 +1704,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
     llvm::SmallString<4096> MethodPool;
     uint32_t BucketOffset;
     {
-      PCHMethodPoolTrait Trait(*this);
+      ASTMethodPoolTrait Trait(*this);
       llvm::raw_svector_ostream Out(MethodPool);
       // Make sure that no bucket is at offset 0
       clang::io::Emit32(Out, 0);
@@ -1743,7 +1743,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
   }
 }
 
-/// \brief Write the selectors referenced in @selector expression into PCH file.
+/// \brief Write the selectors referenced in @selector expression into AST file.
 void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
   using namespace llvm;
   if (SemaRef.ReferencedSelectors.empty())
@@ -1751,7 +1751,7 @@ void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
 
   RecordData Record;
 
-  // Note: this writes out all references even for a dependent PCH. But it is
+  // Note: this writes out all references even for a dependent AST. But it is
   // very tricky to fix, and given that @selector shouldn't really appear in
   // headers, probably not worth it. It's not a correctness issue.
   for (DenseMap<Selector, SourceLocation>::iterator S =
@@ -1770,7 +1770,7 @@ void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class PCHIdentifierTableTrait {
+class ASTIdentifierTableTrait {
   ASTWriter &Writer;
   Preprocessor &PP;
 
@@ -1792,7 +1792,7 @@ public:
   typedef pch::IdentID data_type;
   typedef data_type data_type_ref;
 
-  PCHIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP)
+  ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP)
     : Writer(Writer), PP(PP) { }
 
   static unsigned ComputeHash(const IdentifierInfo* II) {
@@ -1870,7 +1870,7 @@ public:
 };
 } // end anonymous namespace
 
-/// \brief Write the identifier table into the PCH file.
+/// \brief Write the identifier table into the AST file.
 ///
 /// The identifier table consists of a blob containing string data
 /// (the actual identifiers themselves) and a separate "offsets" index
@@ -1881,12 +1881,12 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
   // Create and write out the blob that contains the identifier
   // strings.
   {
-    OnDiskChainedHashTableGenerator<PCHIdentifierTableTrait> Generator;
+    OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
 
     // Look for any identifiers that were named while processing the
     // headers, but are otherwise not needed. We add these to the hash
     // table to enable checking of the predefines buffer in the case
-    // where the user adds new macro definitions when building the PCH
+    // where the user adds new macro definitions when building the AST
     // file.
     for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
                                 IDEnd = PP.getIdentifierTable().end();
@@ -1908,7 +1908,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
     llvm::SmallString<4096> IdentifierTable;
     uint32_t BucketOffset;
     {
-      PCHIdentifierTableTrait Trait(*this, PP);
+      ASTIdentifierTableTrait Trait(*this, PP);
       llvm::raw_svector_ostream Out(IdentifierTable);
       // Make sure that no bucket is at offset 0
       clang::io::Emit32(Out, 0);
@@ -1973,7 +1973,7 @@ void ASTWriter::AddString(const std::string &Str, RecordData &Record) {
 /// within the identifier table.
 void ASTWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
   pch::IdentID ID = IdentifierIDs[II];
-  // Only store offsets new to this PCH file. Other identifier names are looked
+  // Only store offsets new to this AST file. Other identifier names are looked
   // up earlier in the chain and thus don't need an offset.
   if (ID >= FirstIdentID)
     IdentifierOffsets[ID - FirstIdentID] = Offset;
@@ -2070,7 +2070,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // declarations in this header file. Generally, this record will be
   // empty.
   RecordData LocallyScopedExternalDecls;
-  // FIXME: This is filling in the PCH file in densemap order which is
+  // FIXME: This is filling in the AST file in densemap order which is
   // nondeterminstic!
   for (llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
          TD = SemaRef.LocallyScopedExternalDecls.begin(),
@@ -2117,7 +2117,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.getStdBadAlloc(), SemaDeclRefs);
   }
 
-  // Write the remaining PCH contents.
+  // Write the remaining AST contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
@@ -2305,7 +2305,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // declarations in this header file. Generally, this record will be
   // empty.
   RecordData LocallyScopedExternalDecls;
-  // FIXME: This is filling in the PCH file in densemap order which is
+  // FIXME: This is filling in the AST file in densemap order which is
   // nondeterminstic!
   for (llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
          TD = SemaRef.LocallyScopedExternalDecls.begin(),
@@ -2381,7 +2381,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteTypeDeclOffsets();
 
   /// Build a record containing first declarations from a chained PCH and the
-  /// most recent declarations in this PCH that they point to.
+  /// most recent declarations in this AST that they point to.
   RecordData FirstLatestDeclIDs;
   for (FirstLatestDeclMap::iterator
         I = FirstLatestDecls.begin(), E = FirstLatestDecls.end(); I != E; ++I) {
