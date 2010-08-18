@@ -1018,9 +1018,9 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
     }
   }
   
-  // Since clients don't care about the high bits of the value, just scales and
-  // offsets, we can look through extensions.
-  if (isa<SExtInst>(V) || isa<ZExtInst>(V)) {
+  // Since GEP indices are sign extended anyway, we don't care about the high
+  // bits of a sign extended value - just scales and offsets.
+  if (isa<SExtInst>(V)) {
     Value *CastOp = cast<CastInst>(V)->getOperand(0);
     unsigned OldWidth = Scale.getBitWidth();
     unsigned SmallWidth = CastOp->getType()->getPrimitiveSizeInBits();

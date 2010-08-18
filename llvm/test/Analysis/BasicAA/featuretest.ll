@@ -104,3 +104,24 @@ define i32 @constexpr_test() {
 ; CHECK: @constexpr_test
 ; CHECK: ret i32 0
 }
+
+
+
+; PR7589
+; These two index expressions are different, this cannot be CSE'd.
+define i16 @zext_sext_confusion(i16* %row2col, i5 %j) nounwind{
+entry:
+  %sum5.cast = zext i5 %j to i64             ; <i64> [#uses=1]
+  %P1 = getelementptr i16* %row2col, i64 %sum5.cast
+  %row2col.load.1.2 = load i16* %P1, align 1 ; <i16> [#uses=1]
+  
+  %sum13.cast31 = sext i5 %j to i6          ; <i6> [#uses=1]
+  %sum13.cast = zext i6 %sum13.cast31 to i64      ; <i64> [#uses=1]
+  %P2 = getelementptr i16* %row2col, i64 %sum13.cast
+  %row2col.load.1.6 = load i16* %P2, align 1 ; <i16> [#uses=1]
+  
+  %.ret = sub i16 %row2col.load.1.6, %row2col.load.1.2 ; <i16> [#uses=1]
+  ret i16 %.ret
+; CHECK: @zext_sext_confusion
+; CHECK: ret i16 %.ret
+}
