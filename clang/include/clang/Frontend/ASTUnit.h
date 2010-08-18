@@ -15,7 +15,7 @@
 #define LLVM_CLANG_FRONTEND_ASTUNIT_H
 
 #include "clang/Index/ASTLocation.h"
-#include "clang/Serialization/PCHBitCodes.h"
+#include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"

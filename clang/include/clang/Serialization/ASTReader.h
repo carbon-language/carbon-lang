@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_AST_READER_H
 #define LLVM_CLANG_FRONTEND_AST_READER_H
 
-#include "clang/Serialization/PCHBitCodes.h"
+#include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclObjC.h"
