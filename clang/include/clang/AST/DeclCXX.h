@@ -1057,7 +1057,7 @@ public:
     return true;
   }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1517,7 +1517,7 @@ public:
   static bool classof(const CXXConstructorDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXConstructor; }
   
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1582,7 +1582,7 @@ public:
   static bool classof(const CXXDestructorDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXDestructor; }
   
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1639,7 +1639,7 @@ public:
   static bool classof(const CXXConversionDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXConversion; }
   
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -2087,7 +2087,7 @@ public:
   static bool classof(const UsingDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Using; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -2259,7 +2259,7 @@ public:
   static bool classof(StaticAssertDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == StaticAssert; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
 };
 
 /// Insertion operator for diagnostics.  This allows sending AccessSpecifier's

@@ -672,7 +672,7 @@ void ASTDeclWriter::VisitUnresolvedUsingTypenameDecl(
 }
 
 void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  // See comments at PCHDeclReader::VisitCXXRecordDecl about why this happens
+  // See comments at ASTDeclReader::VisitCXXRecordDecl about why this happens
   // before VisitRecordDecl.
   enum { Data_NoDefData, Data_Owner, Data_NotOwner };
   bool OwnsDefinitionData = false;

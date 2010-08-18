@@ -685,7 +685,7 @@ public:
     return K >= firstRedeclarableTemplate && K <= lastRedeclarableTemplate;
   }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -865,7 +865,7 @@ public:
   static bool classof(const FunctionTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == FunctionTemplate; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1144,7 +1144,7 @@ public:
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == TemplateTemplateParm; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1787,7 +1787,7 @@ public:
   static bool classof(const ClassTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ClassTemplate; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1876,7 +1876,7 @@ public:
   static bool classofKind(Kind K) { return K == Decl::FriendTemplate; }
   static bool classof(const FriendTemplateDecl *D) { return true; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
 };
 
 /// Implementation of inline functions that require the template declarations

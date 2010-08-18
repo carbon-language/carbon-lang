@@ -1238,7 +1238,7 @@ public:
   static bool classof(const ObjCImplementationDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCImplementation; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 

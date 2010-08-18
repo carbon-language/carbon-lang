@@ -92,7 +92,7 @@ public:
   static bool classof(const FriendDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Decl::Friend; }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 

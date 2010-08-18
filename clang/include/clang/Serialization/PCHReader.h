@@ -64,7 +64,7 @@ class Preprocessor;
 class Sema;
 class SwitchCase;
 class ASTReader;
-class PCHDeclReader;
+class ASTDeclReader;
 struct HeaderFileInfo;
 
 struct PCHPredefinesBlock {
@@ -170,7 +170,7 @@ class ASTReader
 public:
   enum ASTReadResult { Success, Failure, IgnorePCH };
   friend class PCHValidator;
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
 private:
   /// \brief The receiver of some callbacks invoked by ASTReader.
   llvm::OwningPtr<PCHReaderListener> Listener;

@@ -333,7 +333,7 @@ public:
     return static_cast<NamespaceDecl *>(const_cast<DeclContext*>(DC));
   }
   
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1615,7 +1615,7 @@ public:
     return static_cast<FunctionDecl *>(const_cast<DeclContext*>(DC));
   }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
@@ -1988,7 +1988,7 @@ public:
     return static_cast<TagDecl *>(const_cast<DeclContext*>(DC));
   }
 
-  friend class PCHDeclReader;
+  friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
 
