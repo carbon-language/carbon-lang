@@ -20,6 +20,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 using namespace clang;
@@ -708,6 +709,10 @@ struct PragmaDebugHandler : public PragmaHandler {
       llvm_unreachable("#pragma clang __debug llvm_unreachable");
     } else if (II->isStr("overflow_stack")) {
       DebugOverflowStack();
+    } else if (II->isStr("handle_crash")) {
+      llvm::CrashRecoveryContext *CRC =llvm::CrashRecoveryContext::GetCurrent();
+      if (CRC)
+        CRC->HandleCrash();
     } else {
       PP.Diag(Tok, diag::warn_pragma_debug_unexpected_command)
         << II->getName();
