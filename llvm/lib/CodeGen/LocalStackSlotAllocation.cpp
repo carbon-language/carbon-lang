@@ -43,8 +43,11 @@ STATISTIC(NumReplacements, "Number of frame indices references replaced");
 
 namespace {
   class LocalStackSlotPass: public MachineFunctionPass {
-    void calculateFrameObjectOffsets(MachineFunction &Fn);
+    SmallVector<int64_t,16> LocalOffsets;
 
+    void AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
+                           unsigned &MaxAlign);
+    void calculateFrameObjectOffsets(MachineFunction &Fn);
     void insertFrameReferenceRegisters(MachineFunction &Fn);
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -70,18 +73,29 @@ FunctionPass *llvm::createLocalStackSlotAllocationPass() {
 }
 
 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned LocalObjectCount = MFI->getObjectIndexEnd();
+
+  // Early exit if there are no locals to consider
+  if (!LocalObjectCount)
+    return true;
+
+  // Make sure we have enough space to store the local offsets.
+  LocalOffsets.resize(MFI->getObjectIndexEnd());
+
   // Lay out the local blob.
   calculateFrameObjectOffsets(MF);
 
   // Insert virtual base registers to resolve frame index references.
   insertFrameReferenceRegisters(MF);
+
   return true;
 }
 
 /// AdjustStackOffset - Helper function used to adjust the stack frame offset.
-static inline void
-AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
-                  unsigned &MaxAlign) {
+void LocalStackSlotPass::AdjustStackOffset(MachineFrameInfo *MFI,
+                                           int FrameIdx, int64_t &Offset,
+                                           unsigned &MaxAlign) {
   unsigned Align = MFI->getObjectAlignment(FrameIdx);
 
   // If the alignment of this object is greater than that of the stack, then
@@ -93,6 +107,9 @@ AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
 
   DEBUG(dbgs() << "Allocate FI(" << FrameIdx << ") to local offset "
         << Offset << "\n");
+  // Keep the offset available for base register allocation
+  LocalOffsets[FrameIdx] = Offset;
+  // And tell MFI about it for PEI to use later
   MFI->mapLocalFrameObject(FrameIdx, Offset);
   Offset += MFI->getObjectSize(FrameIdx);
 
@@ -149,12 +166,16 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
 static inline bool
 lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
                        std::pair<unsigned, int64_t> &RegOffset,
+                       int64_t LocalFrameOffset,
                        const MachineInstr *MI,
                        const TargetRegisterInfo *TRI) {
   unsigned e = Regs.size();
   for (unsigned i = 0; i < e; ++i) {
     RegOffset = Regs[i];
-    if (TRI->isBaseRegInRange(MI, RegOffset.first, RegOffset.second))
+    // Check if the relative offset from the where the base register references
+    // to the target address is in range for the instruction.
+    int64_t Offset = LocalFrameOffset - RegOffset.second;
+    if (TRI->isBaseRegInRange(MI, RegOffset.first, Offset))
       return true;
   }
   return false;
@@ -173,6 +194,9 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
 
   for (MachineFunction::iterator BB = Fn.begin(),
          E = Fn.end(); BB != E; ++BB) {
+    // A base register definition is a register+offset pair.
+    SmallVector<std::pair<unsigned, int64_t>, 8> BaseRegisters;
+
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       MachineInstr *MI = I;
       // Debug value instructions can't be out of range, so they don't need
@@ -182,9 +206,6 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
       // to reference the new base pointer when possible.
       if (MI->isDebugValue())
         continue;
-
-      // A base register definition is a register+offset pair.
-      SmallVector<std::pair<unsigned, int64_t>, 8> BaseRegisters;
 
       // For now, allocate the base register(s) within the basic block
       // where they're used, and don't try to keep them around outside
@@ -212,10 +233,12 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // create a new one.
 
             std::pair<unsigned, int64_t> RegOffset;
-            if (lookupCandidateBaseReg(BaseRegisters, RegOffset, MI, TRI)) {
+            if (lookupCandidateBaseReg(BaseRegisters, RegOffset,
+                                       LocalOffsets[FrameIdx], MI, TRI)) {
+              DEBUG(dbgs() << "  Reusing base register " << RegOffset.first);
               // We found a register to reuse.
               BaseReg = RegOffset.first;
-              Offset = RegOffset.second;
+              Offset = LocalOffsets[FrameIdx] - RegOffset.second;
             } else {
               // No previously defined register was in range, so create a
               // new one.

@@ -1453,6 +1453,75 @@ ARMBaseRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
 
 bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
                                            unsigned Reg, int64_t Offset) const {
+  const TargetInstrDesc &Desc = MI->getDesc();
+  unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+  unsigned i = 0;
+
+  while (!MI->getOperand(i).isFI()) {
+    ++i;
+    assert(i < MI->getNumOperands() &&"Instr doesn't have FrameIndex operand!");
+  }
+
+  // AddrMode4 and AddrMode6 cannot handle any offset.
+  if (AddrMode == ARMII::AddrMode4 || AddrMode == ARMII::AddrMode6)
+    return Offset == 0;
+
+  unsigned NumBits = 0;
+  unsigned Scale = 1;
+  unsigned ImmIdx = 0;
+  int InstrOffs;
+  switch(AddrMode) {
+  case ARMII::AddrModeT2_i8:
+  case ARMII::AddrModeT2_i12:
+    // i8 supports only negative, and i12 supports only positive, so
+    // based on Offset sign, consider the appropriate instruction
+    Offset += MI->getOperand(i+1).getImm();
+    if (Offset < 0) {
+      NumBits = 8;
+      Offset = -Offset;
+    } else {
+      NumBits = 12;
+    }
+    break;
+  case ARMII::AddrMode5: {
+    // VFP address mode.
+    const MachineOperand &OffOp = MI->getOperand(i+1);
+    int InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
+    if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
+      InstrOffs = -InstrOffs;
+    NumBits = 8;
+    Scale = 4;
+    break;
+  }
+  case ARMII::AddrMode2: {
+    ImmIdx = i+2;
+    InstrOffs = ARM_AM::getAM2Offset(MI->getOperand(ImmIdx).getImm());
+    if (ARM_AM::getAM2Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+      InstrOffs = -InstrOffs;
+    NumBits = 12;
+    break;
+  }
+  case ARMII::AddrMode3: {
+    ImmIdx = i+2;
+    InstrOffs = ARM_AM::getAM3Offset(MI->getOperand(ImmIdx).getImm());
+    if (ARM_AM::getAM3Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+      InstrOffs = -InstrOffs;
+    NumBits = 8;
+    break;
+  }
+  default:
+    llvm_unreachable("Unsupported addressing mode!");
+    break;
+  }
+
+  Offset += InstrOffs * Scale;
+  assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
+  if (Offset < 0)
+    Offset = -Offset;
+
+  unsigned Mask = (1 << NumBits) - 1;
+  if ((unsigned)Offset <= Mask * Scale)
+    return true;
 
   return false;
 }
