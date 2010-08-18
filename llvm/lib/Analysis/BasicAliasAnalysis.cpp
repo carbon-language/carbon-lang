@@ -198,6 +198,20 @@ ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 // GetElementPtr Instruction Decomposition and Analysis
 //===----------------------------------------------------------------------===//
 
+namespace {
+  enum ExtensionKind {
+    EK_NotExtended,
+    EK_SignExt,
+    EK_ZeroExt
+  };
+  
+  struct VariableGEPIndex {
+    const Value *V;
+    ExtensionKind Extension;
+    int64_t Scale;
+  };
+}
+
 
 /// GetLinearExpression - Analyze the specified value as a linear expression:
 /// "A*V + B", where A and B are constant integers.  Return the scale and offset
@@ -277,7 +291,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 ///
 static const Value *
 DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
-                 SmallVectorImpl<std::pair<const Value*, int64_t> > &VarIndices,
+                       SmallVectorImpl<VariableGEPIndex> &VarIndices,
                        const TargetData *TD) {
   // Limit recursion depth to limit compile time in crazy cases.
   unsigned MaxLookup = 6;
@@ -344,6 +358,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       }
       
       uint64_t Scale = TD->getTypeAllocSize(*GTI);
+      ExtensionKind Extension = EK_NotExtended;
       
       // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
@@ -361,8 +376,9 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       //   A[x][x] -> x*16 + x*4 -> x*20
       // This also ensures that 'x' only appears in the index list once.
       for (unsigned i = 0, e = VarIndices.size(); i != e; ++i) {
-        if (VarIndices[i].first == Index) {
-          Scale += VarIndices[i].second;
+        if (VarIndices[i].V == Index &&
+            VarIndices[i].Extension == Extension) {
+          Scale += VarIndices[i].Scale;
           VarIndices.erase(VarIndices.begin()+i);
           break;
         }
@@ -375,8 +391,10 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
         Scale >>= ShiftBits;
       }
       
-      if (Scale)
-        VarIndices.push_back(std::make_pair(Index, Scale));
+      if (Scale) {
+        VariableGEPIndex Entry = {Index, Extension, Scale};
+        VarIndices.push_back(Entry);
+      }
     }
     
     // Analyze the base pointer next.
@@ -391,24 +409,24 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
 /// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
 /// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
 /// difference between the two pointers. 
-static void GetIndexDifference(
-                      SmallVectorImpl<std::pair<const Value*, int64_t> > &Dest,
-                const SmallVectorImpl<std::pair<const Value*, int64_t> > &Src) {
+static void GetIndexDifference(SmallVectorImpl<VariableGEPIndex> &Dest,
+                               const SmallVectorImpl<VariableGEPIndex> &Src) {
   if (Src.empty()) return;
 
   for (unsigned i = 0, e = Src.size(); i != e; ++i) {
-    const Value *V = Src[i].first;
-    int64_t Scale = Src[i].second;
+    const Value *V = Src[i].V;
+    ExtensionKind Extension = Src[i].Extension;
+    int64_t Scale = Src[i].Scale;
     
     // Find V in Dest.  This is N^2, but pointer indices almost never have more
     // than a few variable indexes.
     for (unsigned j = 0, e = Dest.size(); j != e; ++j) {
-      if (Dest[j].first != V) continue;
+      if (Dest[j].V != V || Dest[j].Extension != Extension) continue;
       
       // If we found it, subtract off Scale V's from the entry in Dest.  If it
       // goes to zero, remove the entry.
-      if (Dest[j].second != Scale)
-        Dest[j].second -= Scale;
+      if (Dest[j].Scale != Scale)
+        Dest[j].Scale -= Scale;
       else
         Dest.erase(Dest.begin()+j);
       Scale = 0;
@@ -416,8 +434,10 @@ static void GetIndexDifference(
     }
     
     // If we didn't consume this entry, add it to the end of the Dest list.
-    if (Scale)
-      Dest.push_back(std::make_pair(V, -Scale));
+    if (Scale) {
+      VariableGEPIndex Entry = { V, Extension, -Scale };
+      Dest.push_back(Entry);
+    }
   }
 }
 
@@ -714,7 +734,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
     return MayAlias;
 
   int64_t GEP1BaseOffset;
-  SmallVector<std::pair<const Value*, int64_t>, 4> GEP1VariableIndices;
+  SmallVector<VariableGEPIndex, 4> GEP1VariableIndices;
 
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
@@ -734,7 +754,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
       DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
     
     int64_t GEP2BaseOffset;
-    SmallVector<std::pair<const Value*, int64_t>, 4> GEP2VariableIndices;
+    SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
     const Value *GEP2BasePtr =
       DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
     
@@ -805,8 +825,8 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
   // provides an offset of 4 bytes (assuming a <= 4 byte access).
   for (unsigned i = 0, e = GEP1VariableIndices.size();
        i != e && GEP1BaseOffset;++i)
-    if (int64_t RemovedOffset = GEP1BaseOffset/GEP1VariableIndices[i].second)
-      GEP1BaseOffset -= RemovedOffset*GEP1VariableIndices[i].second;
+    if (int64_t RemovedOffset = GEP1BaseOffset/GEP1VariableIndices[i].Scale)
+      GEP1BaseOffset -= RemovedOffset*GEP1VariableIndices[i].Scale;
   
   // If our known offset is bigger than the access size, we know we don't have
   // an alias.
