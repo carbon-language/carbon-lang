@@ -10,7 +10,7 @@
 //  This file defines the ASTReader class, which reads AST files.
 //
 //===----------------------------------------------------------------------===//
-
+                                                                          
 #ifndef LLVM_CLANG_FRONTEND_AST_READER_H
 #define LLVM_CLANG_FRONTEND_AST_READER_H
 
@@ -321,7 +321,8 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
-  typedef llvm::DenseMap<pch::DeclID, std::pair<PerFileData *, uint64_t> >
+  typedef llvm::DenseMap<serialization::DeclID,
+                         std::pair<PerFileData *, uint64_t> >
       DeclReplacementMap;
   /// \brief Declarations that have been replaced in a later file in the chain.
   DeclReplacementMap ReplacedDecls;
@@ -330,7 +331,7 @@ private:
   struct DeclContextInfo {
     llvm::BitstreamCursor *Stream;
     uint64_t OffsetToVisibleDecls;
-    const pch::DeclID *LexicalDecls;
+    const serialization::DeclID *LexicalDecls;
     unsigned NumLexicalDecls;
   };
   typedef llvm::SmallVector<DeclContextInfo, 1> DeclContextInfos;
@@ -341,7 +342,8 @@ private:
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
 
-  typedef llvm::DenseMap<pch::DeclID, pch::DeclID> FirstLatestDeclIDMap;
+  typedef llvm::DenseMap<serialization::DeclID, serialization::DeclID>
+      FirstLatestDeclIDMap;
   /// \brief Map of first declarations from a chained PCH that point to the
   /// most recent declarations in another AST file.
   FirstLatestDeclIDMap FirstLatestDeclIDs;
@@ -574,8 +576,8 @@ private:
   QualType ReadTypeRecord(unsigned Index);
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
-  Decl *ReadDeclRecord(unsigned Index, pch::DeclID ID);
-  RecordLocation DeclCursorForIndex(unsigned Index, pch::DeclID ID);
+  Decl *ReadDeclRecord(unsigned Index, serialization::DeclID ID);
+  RecordLocation DeclCursorForIndex(unsigned Index, serialization::DeclID ID);
 
   void PassInterestingDeclsToConsumer();
 
@@ -716,11 +718,11 @@ public:
 
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
-  QualType GetType(pch::TypeID ID);
+  QualType GetType(serialization::TypeID ID);
 
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
-  Decl *GetDecl(pch::DeclID ID);
+  Decl *GetDecl(serialization::DeclID ID);
   virtual Decl *GetExternalDecl(uint32_t ID);
 
   /// \brief Resolve the offset of a statement into a statement.
@@ -927,7 +929,7 @@ public:
   virtual void ReadDefinedMacros();
 
   /// \brief Retrieve the macro definition with the given ID.
-  MacroDefinition *getMacroDefinition(pch::IdentID ID);
+  MacroDefinition *getMacroDefinition(serialization::IdentID ID);
 
   /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext *getContext() { return Context; }

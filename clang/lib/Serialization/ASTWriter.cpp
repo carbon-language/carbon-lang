@@ -39,6 +39,7 @@
 #include "llvm/System/Path.h"
 #include <cstdio>
 using namespace clang;
+using namespace clang::serialization;
 
 template <typename T, typename Allocator>
 T *data(std::vector<T, Allocator> &v) {
@@ -60,10 +61,10 @@ namespace {
 
   public:
     /// \brief Type code that corresponds to the record generated.
-    pch::TypeCode Code;
+    TypeCode Code;
 
     ASTTypeWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
-      : Writer(Writer), Record(Record), Code(pch::TYPE_EXT_QUAL) { }
+      : Writer(Writer), Record(Record), Code(TYPE_EXT_QUAL) { }
 
     void VisitArrayType(const ArrayType *T);
     void VisitFunctionType(const FunctionType *T);
@@ -81,33 +82,33 @@ void ASTTypeWriter::VisitBuiltinType(const BuiltinType *T) {
 
 void ASTTypeWriter::VisitComplexType(const ComplexType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
-  Code = pch::TYPE_COMPLEX;
+  Code = TYPE_COMPLEX;
 }
 
 void ASTTypeWriter::VisitPointerType(const PointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
-  Code = pch::TYPE_POINTER;
+  Code = TYPE_POINTER;
 }
 
 void ASTTypeWriter::VisitBlockPointerType(const BlockPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
-  Code = pch::TYPE_BLOCK_POINTER;
+  Code = TYPE_BLOCK_POINTER;
 }
 
 void ASTTypeWriter::VisitLValueReferenceType(const LValueReferenceType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
-  Code = pch::TYPE_LVALUE_REFERENCE;
+  Code = TYPE_LVALUE_REFERENCE;
 }
 
 void ASTTypeWriter::VisitRValueReferenceType(const RValueReferenceType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
-  Code = pch::TYPE_RVALUE_REFERENCE;
+  Code = TYPE_RVALUE_REFERENCE;
 }
 
 void ASTTypeWriter::VisitMemberPointerType(const MemberPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Writer.AddTypeRef(QualType(T->getClass(), 0), Record);
-  Code = pch::TYPE_MEMBER_POINTER;
+  Code = TYPE_MEMBER_POINTER;
 }
 
 void ASTTypeWriter::VisitArrayType(const ArrayType *T) {
@@ -119,12 +120,12 @@ void ASTTypeWriter::VisitArrayType(const ArrayType *T) {
 void ASTTypeWriter::VisitConstantArrayType(const ConstantArrayType *T) {
   VisitArrayType(T);
   Writer.AddAPInt(T->getSize(), Record);
-  Code = pch::TYPE_CONSTANT_ARRAY;
+  Code = TYPE_CONSTANT_ARRAY;
 }
 
 void ASTTypeWriter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
   VisitArrayType(T);
-  Code = pch::TYPE_INCOMPLETE_ARRAY;
+  Code = TYPE_INCOMPLETE_ARRAY;
 }
 
 void ASTTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
@@ -132,19 +133,19 @@ void ASTTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
   Writer.AddSourceLocation(T->getLBracketLoc(), Record);
   Writer.AddSourceLocation(T->getRBracketLoc(), Record);
   Writer.AddStmt(T->getSizeExpr());
-  Code = pch::TYPE_VARIABLE_ARRAY;
+  Code = TYPE_VARIABLE_ARRAY;
 }
 
 void ASTTypeWriter::VisitVectorType(const VectorType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Record.push_back(T->getNumElements());
   Record.push_back(T->getAltiVecSpecific());
-  Code = pch::TYPE_VECTOR;
+  Code = TYPE_VECTOR;
 }
 
 void ASTTypeWriter::VisitExtVectorType(const ExtVectorType *T) {
   VisitVectorType(T);
-  Code = pch::TYPE_EXT_VECTOR;
+  Code = TYPE_EXT_VECTOR;
 }
 
 void ASTTypeWriter::VisitFunctionType(const FunctionType *T) {
@@ -158,7 +159,7 @@ void ASTTypeWriter::VisitFunctionType(const FunctionType *T) {
 
 void ASTTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
   VisitFunctionType(T);
-  Code = pch::TYPE_FUNCTION_NO_PROTO;
+  Code = TYPE_FUNCTION_NO_PROTO;
 }
 
 void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
@@ -173,34 +174,34 @@ void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   Record.push_back(T->getNumExceptions());
   for (unsigned I = 0, N = T->getNumExceptions(); I != N; ++I)
     Writer.AddTypeRef(T->getExceptionType(I), Record);
-  Code = pch::TYPE_FUNCTION_PROTO;
+  Code = TYPE_FUNCTION_PROTO;
 }
 
 void ASTTypeWriter::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
-  Code = pch::TYPE_UNRESOLVED_USING;
+  Code = TYPE_UNRESOLVED_USING;
 }
 
 void ASTTypeWriter::VisitTypedefType(const TypedefType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   assert(!T->isCanonicalUnqualified() && "Invalid typedef ?");
   Writer.AddTypeRef(T->getCanonicalTypeInternal(), Record);
-  Code = pch::TYPE_TYPEDEF;
+  Code = TYPE_TYPEDEF;
 }
 
 void ASTTypeWriter::VisitTypeOfExprType(const TypeOfExprType *T) {
   Writer.AddStmt(T->getUnderlyingExpr());
-  Code = pch::TYPE_TYPEOF_EXPR;
+  Code = TYPE_TYPEOF_EXPR;
 }
 
 void ASTTypeWriter::VisitTypeOfType(const TypeOfType *T) {
   Writer.AddTypeRef(T->getUnderlyingType(), Record);
-  Code = pch::TYPE_TYPEOF;
+  Code = TYPE_TYPEOF;
 }
 
 void ASTTypeWriter::VisitDecltypeType(const DecltypeType *T) {
   Writer.AddStmt(T->getUnderlyingExpr());
-  Code = pch::TYPE_DECLTYPE;
+  Code = TYPE_DECLTYPE;
 }
 
 void ASTTypeWriter::VisitTagType(const TagType *T) {
@@ -212,12 +213,12 @@ void ASTTypeWriter::VisitTagType(const TagType *T) {
 
 void ASTTypeWriter::VisitRecordType(const RecordType *T) {
   VisitTagType(T);
-  Code = pch::TYPE_RECORD;
+  Code = TYPE_RECORD;
 }
 
 void ASTTypeWriter::VisitEnumType(const EnumType *T) {
   VisitTagType(T);
-  Code = pch::TYPE_ENUM;
+  Code = TYPE_ENUM;
 }
 
 void
@@ -225,7 +226,7 @@ ASTTypeWriter::VisitSubstTemplateTypeParmType(
                                         const SubstTemplateTypeParmType *T) {
   Writer.AddTypeRef(QualType(T->getReplacedParameter(), 0), Record);
   Writer.AddTypeRef(T->getReplacementType(), Record);
-  Code = pch::TYPE_SUBST_TEMPLATE_TYPE_PARM;
+  Code = TYPE_SUBST_TEMPLATE_TYPE_PARM;
 }
 
 void
@@ -240,7 +241,7 @@ ASTTypeWriter::VisitTemplateSpecializationType(
   Writer.AddTypeRef(T->isCanonicalUnqualified() ? QualType()
                                                 : T->getCanonicalTypeInternal(),
                     Record);
-  Code = pch::TYPE_TEMPLATE_SPECIALIZATION;
+  Code = TYPE_TEMPLATE_SPECIALIZATION;
 }
 
 void
@@ -248,7 +249,7 @@ ASTTypeWriter::VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
   VisitArrayType(T);
   Writer.AddStmt(T->getSizeExpr());
   Writer.AddSourceRange(T->getBracketsRange(), Record);
-  Code = pch::TYPE_DEPENDENT_SIZED_ARRAY;
+  Code = TYPE_DEPENDENT_SIZED_ARRAY;
 }
 
 void
@@ -264,7 +265,7 @@ ASTTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
   Record.push_back(T->getIndex());
   Record.push_back(T->isParameterPack());
   Writer.AddIdentifierRef(T->getName(), Record);
-  Code = pch::TYPE_TEMPLATE_TYPE_PARM;
+  Code = TYPE_TEMPLATE_TYPE_PARM;
 }
 
 void
@@ -275,7 +276,7 @@ ASTTypeWriter::VisitDependentNameType(const DependentNameType *T) {
   Writer.AddTypeRef(T->isCanonicalUnqualified() ? QualType()
                                                 : T->getCanonicalTypeInternal(),
                     Record);
-  Code = pch::TYPE_DEPENDENT_NAME;
+  Code = TYPE_DEPENDENT_NAME;
 }
 
 void
@@ -288,25 +289,25 @@ ASTTypeWriter::VisitDependentTemplateSpecializationType(
   for (DependentTemplateSpecializationType::iterator
          I = T->begin(), E = T->end(); I != E; ++I)
     Writer.AddTemplateArgument(*I, Record);
-  Code = pch::TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION;
+  Code = TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION;
 }
 
 void ASTTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
   Record.push_back(T->getKeyword());
   Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
   Writer.AddTypeRef(T->getNamedType(), Record);
-  Code = pch::TYPE_ELABORATED;
+  Code = TYPE_ELABORATED;
 }
 
 void ASTTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Writer.AddTypeRef(T->getInjectedSpecializationType(), Record);
-  Code = pch::TYPE_INJECTED_CLASS_NAME;
+  Code = TYPE_INJECTED_CLASS_NAME;
 }
 
 void ASTTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
-  Code = pch::TYPE_OBJC_INTERFACE;
+  Code = TYPE_OBJC_INTERFACE;
 }
 
 void ASTTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
@@ -315,13 +316,13 @@ void ASTTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
   for (ObjCObjectType::qual_iterator I = T->qual_begin(),
        E = T->qual_end(); I != E; ++I)
     Writer.AddDeclRef(*I, Record);
-  Code = pch::TYPE_OBJC_OBJECT;
+  Code = TYPE_OBJC_OBJECT;
 }
 
 void
 ASTTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
-  Code = pch::TYPE_OBJC_OBJECT_POINTER;
+  Code = TYPE_OBJC_OBJECT_POINTER;
 }
 
 namespace {
@@ -527,7 +528,7 @@ static void EmitRecordID(unsigned ID, const char *Name,
 
 static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
                           ASTWriter::RecordData &Record) {
-#define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
+#define RECORD(X) EmitRecordID(X, #X, Stream, Record)
   RECORD(STMT_STOP);
   RECORD(STMT_NULL_PTR);
   RECORD(STMT_NULL);
@@ -610,8 +611,8 @@ void ASTWriter::WriteBlockInfoBlock() {
   RecordData Record;
   Stream.EnterSubblock(llvm::bitc::BLOCKINFO_BLOCK_ID, 3);
 
-#define BLOCK(X) EmitBlockID(pch::X ## _ID, #X, Stream, Record)
-#define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
+#define BLOCK(X) EmitBlockID(X ## _ID, #X, Stream, Record)
+#define RECORD(X) EmitRecordID(X, #X, Stream, Record)
 
   // AST Top-Level Block.
   BLOCK(AST_BLOCK);
@@ -759,7 +760,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   const TargetInfo &Target = Context.Target;
   BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
   MetaAbbrev->Add(BitCodeAbbrevOp(
-                    Chain ? pch::CHAINED_METADATA : pch::METADATA));
+                    Chain ? CHAINED_METADATA : METADATA));
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST major
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST minor
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
@@ -770,9 +771,9 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   unsigned MetaAbbrevCode = Stream.EmitAbbrev(MetaAbbrev);
 
   RecordData Record;
-  Record.push_back(Chain ? pch::CHAINED_METADATA : pch::METADATA);
-  Record.push_back(pch::VERSION_MAJOR);
-  Record.push_back(pch::VERSION_MINOR);
+  Record.push_back(Chain ? CHAINED_METADATA : METADATA);
+  Record.push_back(VERSION_MAJOR);
+  Record.push_back(VERSION_MINOR);
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(isysroot != 0);
@@ -784,7 +785,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   SourceManager &SM = Context.getSourceManager();
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
     BitCodeAbbrev *FileAbbrev = new BitCodeAbbrev();
-    FileAbbrev->Add(BitCodeAbbrevOp(pch::ORIGINAL_FILE_NAME));
+    FileAbbrev->Add(BitCodeAbbrevOp(ORIGINAL_FILE_NAME));
     FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
     unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
 
@@ -796,17 +797,17 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
     MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
                                                       isysroot);
     RecordData Record;
-    Record.push_back(pch::ORIGINAL_FILE_NAME);
+    Record.push_back(ORIGINAL_FILE_NAME);
     Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
   }
 
   // Repository branch/version information.
   BitCodeAbbrev *RepoAbbrev = new BitCodeAbbrev();
-  RepoAbbrev->Add(BitCodeAbbrevOp(pch::VERSION_CONTROL_BRANCH_REVISION));
+  RepoAbbrev->Add(BitCodeAbbrevOp(VERSION_CONTROL_BRANCH_REVISION));
   RepoAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // SVN branch/tag
   unsigned RepoAbbrevCode = Stream.EmitAbbrev(RepoAbbrev);
   Record.clear();
-  Record.push_back(pch::VERSION_CONTROL_BRANCH_REVISION);
+  Record.push_back(VERSION_CONTROL_BRANCH_REVISION);
   Stream.EmitRecordWithBlob(RepoAbbrevCode, Record,
                             getClangFullRepositoryVersion());
 }
@@ -883,7 +884,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.CatchUndefined);
   Record.push_back(LangOpts.ElideConstructors);
   Record.push_back(LangOpts.SpellChecking);
-  Stream.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
+  Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -967,7 +968,7 @@ void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   // Create a blob abbreviation
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::STAT_CACHE));
+  Abbrev->Add(BitCodeAbbrevOp(STAT_CACHE));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
@@ -975,7 +976,7 @@ void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
 
   // Write the stat cache
   RecordData Record;
-  Record.push_back(pch::STAT_CACHE);
+  Record.push_back(STAT_CACHE);
   Record.push_back(BucketOffset);
   Record.push_back(NumStatEntries);
   Stream.EmitRecordWithBlob(StatCacheAbbrev, Record, StatCacheData.str());
@@ -990,7 +991,7 @@ void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
 static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_FILE_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(SM_SLOC_FILE_ENTRY));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Include location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
@@ -1012,7 +1013,7 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
 static unsigned CreateSLocBufferAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_BUFFER_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(SM_SLOC_BUFFER_ENTRY));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Include location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
@@ -1026,7 +1027,7 @@ static unsigned CreateSLocBufferAbbrev(llvm::BitstreamWriter &Stream) {
 static unsigned CreateSLocBufferBlobAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_BUFFER_BLOB));
+  Abbrev->Add(BitCodeAbbrevOp(SM_SLOC_BUFFER_BLOB));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Blob
   return Stream.EmitAbbrev(Abbrev);
 }
@@ -1036,7 +1037,7 @@ static unsigned CreateSLocBufferBlobAbbrev(llvm::BitstreamWriter &Stream) {
 static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_INSTANTIATION_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(SM_SLOC_INSTANTIATION_ENTRY));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Spelling location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Start location
@@ -1059,7 +1060,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   RecordData Record;
 
   // Enter the source manager block.
-  Stream.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
+  Stream.EnterSubblock(SOURCE_MANAGER_BLOCK_ID, 3);
 
   // Abbreviations for the various kinds of source-location entries.
   unsigned SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
@@ -1101,7 +1102,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         Record.push_back(LE->IncludeOffset);
       }
     }
-    Stream.EmitRecord(pch::SM_LINE_TABLE, Record);
+    Stream.EmitRecord(SM_LINE_TABLE, Record);
   }
 
   // Write out the source location entry table. We skip the first
@@ -1122,11 +1123,11 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     unsigned Code;
     if (SLoc->isFile()) {
       if (SLoc->getFile().getContentCache()->Entry)
-        Code = pch::SM_SLOC_FILE_ENTRY;
+        Code = SM_SLOC_FILE_ENTRY;
       else
-        Code = pch::SM_SLOC_BUFFER_ENTRY;
+        Code = SM_SLOC_BUFFER_ENTRY;
     } else
-      Code = pch::SM_SLOC_INSTANTIATION_ENTRY;
+      Code = SM_SLOC_INSTANTIATION_ENTRY;
     Record.clear();
     Record.push_back(Code);
 
@@ -1182,7 +1183,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record,
                                   llvm::StringRef(Name, strlen(Name) + 1));
         Record.clear();
-        Record.push_back(pch::SM_SLOC_BUFFER_BLOB);
+        Record.push_back(SM_SLOC_BUFFER_BLOB);
         Stream.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
                                   llvm::StringRef(Buffer->getBufferStart(),
                                                   Buffer->getBufferSize() + 1));
@@ -1215,14 +1216,14 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   // table is used for lazily loading source-location information.
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::SOURCE_LOCATION_OFFSETS));
+  Abbrev->Add(BitCodeAbbrevOp(SOURCE_LOCATION_OFFSETS));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // # of slocs
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // next offset
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // offsets
   unsigned SLocOffsetsAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Record.clear();
-  Record.push_back(pch::SOURCE_LOCATION_OFFSETS);
+  Record.push_back(SOURCE_LOCATION_OFFSETS);
   Record.push_back(SLocEntryOffsets.size());
   Record.push_back(SourceMgr.getNextOffset());
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record,
@@ -1231,7 +1232,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 
   // Write the source location entry preloads array, telling the AST
   // reader which source locations entries it should load eagerly.
-  Stream.EmitRecord(pch::SOURCE_LOCATION_PRELOADS, PreloadSLocs);
+  Stream.EmitRecord(SOURCE_LOCATION_PRELOADS, PreloadSLocs);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1247,12 +1248,12 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   // If the preprocessor __COUNTER__ value has been bumped, remember it.
   if (PP.getCounterValue() != 0) {
     Record.push_back(PP.getCounterValue());
-    Stream.EmitRecord(pch::PP_COUNTER_VALUE, Record);
+    Stream.EmitRecord(PP_COUNTER_VALUE, Record);
     Record.clear();
   }
 
   // Enter the preprocessor block.
-  Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 2);
+  Stream.EnterSubblock(PREPROCESSOR_BLOCK_ID, 2);
 
   // If the AST file contains __DATE__ or __TIME__ emit a warning about this.
   // FIXME: use diagnostics subsystem for localization etc.
@@ -1281,9 +1282,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
 
     unsigned Code;
     if (MI->isObjectLike()) {
-      Code = pch::PP_MACRO_OBJECT_LIKE;
+      Code = PP_MACRO_OBJECT_LIKE;
     } else {
-      Code = pch::PP_MACRO_FUNCTION_LIKE;
+      Code = PP_MACRO_FUNCTION_LIKE;
 
       Record.push_back(MI->isC99Varargs());
       Record.push_back(MI->isGNUVarargs());
@@ -1320,7 +1321,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
       // FIXME: Should translate token flags to a stable encoding.
       Record.push_back(Tok.getFlags());
 
-      Stream.EmitRecord(pch::PP_TOKEN, Record);
+      Stream.EmitRecord(PP_TOKEN, Record);
       Record.clear();
     }
     ++NumMacros;
@@ -1339,13 +1340,13 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
         AddSourceLocation(MI->getSourceRange().getEnd(), Record);
         AddIdentifierRef(MI->getName(), Record);
         Record.push_back(getMacroDefinitionID(MI->getDefinition()));
-        Stream.EmitRecord(pch::PP_MACRO_INSTANTIATION, Record);
+        Stream.EmitRecord(PP_MACRO_INSTANTIATION, Record);
         continue;
       }
       
       if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
         // Record this macro definition's location.
-        pch::IdentID ID = getMacroDefinitionID(MD);
+        IdentID ID = getMacroDefinitionID(MD);
         if (ID != MacroDefinitionOffsets.size()) {
           if (ID > MacroDefinitionOffsets.size())
             MacroDefinitionOffsets.resize(ID + 1);
@@ -1360,7 +1361,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
         AddSourceLocation(MD->getSourceRange().getEnd(), Record);
         AddIdentifierRef(MD->getName(), Record);
         AddSourceLocation(MD->getLocation(), Record);
-        Stream.EmitRecord(pch::PP_MACRO_DEFINITION, Record);
+        Stream.EmitRecord(PP_MACRO_DEFINITION, Record);
         continue;
       }
     }
@@ -1373,14 +1374,14 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     // Write the offsets table for identifier IDs.
     using namespace llvm;
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(pch::MACRO_DEFINITION_OFFSETS));
+    Abbrev->Add(BitCodeAbbrevOp(MACRO_DEFINITION_OFFSETS));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of records
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macro defs
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned MacroDefOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
     
     Record.clear();
-    Record.push_back(pch::MACRO_DEFINITION_OFFSETS);
+    Record.push_back(MACRO_DEFINITION_OFFSETS);
     Record.push_back(NumPreprocessingRecords);
     Record.push_back(MacroDefinitionOffsets.size());
     Stream.EmitRecordWithBlob(MacroDefOffsetAbbrev, Record,
@@ -1395,7 +1396,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
 
 /// \brief Write the representation of a type to the AST stream.
 void ASTWriter::WriteType(QualType T) {
-  pch::TypeID &ID = TypeIDs[T];
+  TypeID &ID = TypeIDs[T];
   if (ID == 0) // we haven't seen this type before.
     ID = NextTypeID++;
 
@@ -1417,7 +1418,7 @@ void ASTWriter::WriteType(QualType T) {
     Qualifiers Qs = T.getLocalQualifiers();
     AddTypeRef(T.getLocalUnqualifiedType(), Record);
     Record.push_back(Qs.getAsOpaqueValue());
-    W.Code = pch::TYPE_EXT_QUAL;
+    W.Code = TYPE_EXT_QUAL;
   } else {
     switch (T->getTypeClass()) {
       // For all of the concrete, non-dependent types, call the
@@ -1452,15 +1453,15 @@ uint64_t ASTWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
 
   uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
-  Record.push_back(pch::DECL_CONTEXT_LEXICAL);
-  llvm::SmallVector<pch::DeclID, 64> Decls;
+  Record.push_back(DECL_CONTEXT_LEXICAL);
+  llvm::SmallVector<DeclID, 64> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
          D != DEnd; ++D)
     Decls.push_back(GetDeclRef(*D));
 
   ++NumLexicalDeclContexts;
   Stream.EmitRecordWithBlob(DeclContextLexicalAbbrev, Record,
-     reinterpret_cast<char*>(Decls.data()), Decls.size() * sizeof(pch::DeclID));
+     reinterpret_cast<char*>(Decls.data()), Decls.size() * sizeof(DeclID));
   return Offset;
 }
 
@@ -1512,7 +1513,7 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (Record.size() == 0)
     return 0;
 
-  Stream.EmitRecord(pch::DECL_CONTEXT_VISIBLE, Record);
+  Stream.EmitRecord(DECL_CONTEXT_VISIBLE, Record);
   ++NumVisibleDeclContexts;
   return Offset;
 }
@@ -1523,12 +1524,12 @@ void ASTWriter::WriteTypeDeclOffsets() {
 
   // Write the type offsets array
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::TYPE_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(TYPE_OFFSET));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of types
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // types block
   unsigned TypeOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
   Record.clear();
-  Record.push_back(pch::TYPE_OFFSET);
+  Record.push_back(TYPE_OFFSET);
   Record.push_back(TypeOffsets.size());
   Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record,
                             (const char *)data(TypeOffsets),
@@ -1536,12 +1537,12 @@ void ASTWriter::WriteTypeDeclOffsets() {
 
   // Write the declaration offsets array
   Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::DECL_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(DECL_OFFSET));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of declarations
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // declarations block
   unsigned DeclOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
   Record.clear();
-  Record.push_back(pch::DECL_OFFSET);
+  Record.push_back(DECL_OFFSET);
   Record.push_back(DeclOffsets.size());
   Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
                             (const char *)data(DeclOffsets),
@@ -1562,7 +1563,7 @@ public:
   typedef key_type key_type_ref;
 
   struct data_type {
-    pch::SelectorID ID;
+    SelectorID ID;
     ObjCMethodList Instance, Factory;
   };
   typedef const data_type& data_type_ref;
@@ -1662,7 +1663,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
     // Create the on-disk hash table representation. We walk through every
     // selector we've seen and look it up in the method pool.
     SelectorOffsets.resize(NextSelectorID - FirstSelectorID);
-    for (llvm::DenseMap<Selector, pch::SelectorID>::iterator
+    for (llvm::DenseMap<Selector, SelectorID>::iterator
              I = SelectorIDs.begin(), E = SelectorIDs.end();
          I != E; ++I) {
       Selector S = I->first;
@@ -1713,7 +1714,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
 
     // Create a blob abbreviation
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(pch::METHOD_POOL));
+    Abbrev->Add(BitCodeAbbrevOp(METHOD_POOL));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
@@ -1721,21 +1722,21 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
 
     // Write the method pool
     RecordData Record;
-    Record.push_back(pch::METHOD_POOL);
+    Record.push_back(METHOD_POOL);
     Record.push_back(BucketOffset);
     Record.push_back(NumTableEntries);
     Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, MethodPool.str());
 
     // Create a blob abbreviation for the selector table offsets.
     Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(pch::SELECTOR_OFFSETS));
+    Abbrev->Add(BitCodeAbbrevOp(SELECTOR_OFFSETS));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned SelectorOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
 
     // Write the selector offsets table.
     Record.clear();
-    Record.push_back(pch::SELECTOR_OFFSETS);
+    Record.push_back(SELECTOR_OFFSETS);
     Record.push_back(SelectorOffsets.size());
     Stream.EmitRecordWithBlob(SelectorOffsetAbbrev, Record,
                               (const char *)data(SelectorOffsets),
@@ -1762,7 +1763,7 @@ void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
     AddSelectorRef(Sel, Record);
     AddSourceLocation(Loc, Record);
   }
-  Stream.EmitRecord(pch::REFERENCED_SELECTOR_POOL, Record);
+  Stream.EmitRecord(REFERENCED_SELECTOR_POOL, Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1789,7 +1790,7 @@ public:
   typedef const IdentifierInfo* key_type;
   typedef key_type  key_type_ref;
 
-  typedef pch::IdentID data_type;
+  typedef IdentID data_type;
   typedef data_type data_type_ref;
 
   ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP)
@@ -1801,7 +1802,7 @@ public:
 
   std::pair<unsigned,unsigned>
     EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II,
-                      pch::IdentID ID) {
+                      IdentID ID) {
     unsigned KeyLen = II->getLength() + 1;
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
     if (isInterestingIdentifier(II)) {
@@ -1812,7 +1813,7 @@ public:
       for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                      DEnd = IdentifierResolver::end();
            D != DEnd; ++D)
-        DataLen += sizeof(pch::DeclID);
+        DataLen += sizeof(DeclID);
     }
     clang::io::Emit16(Out, DataLen);
     // We emit the key length after the data length so that every
@@ -1831,7 +1832,7 @@ public:
   }
 
   void EmitData(llvm::raw_ostream& Out, const IdentifierInfo* II,
-                pch::IdentID ID, unsigned) {
+                IdentID ID, unsigned) {
     if (!isInterestingIdentifier(II)) {
       clang::io::Emit32(Out, ID << 1);
       return;
@@ -1896,7 +1897,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
     // Create the on-disk hash table representation. We only store offsets
     // for identifiers that appear here for the first time.
     IdentifierOffsets.resize(NextIdentID - FirstIdentID);
-    for (llvm::DenseMap<const IdentifierInfo *, pch::IdentID>::iterator
+    for (llvm::DenseMap<const IdentifierInfo *, IdentID>::iterator
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
@@ -1917,27 +1918,27 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
 
     // Create a blob abbreviation
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_TABLE));
+    Abbrev->Add(BitCodeAbbrevOp(IDENTIFIER_TABLE));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned IDTableAbbrev = Stream.EmitAbbrev(Abbrev);
 
     // Write the identifier table
     RecordData Record;
-    Record.push_back(pch::IDENTIFIER_TABLE);
+    Record.push_back(IDENTIFIER_TABLE);
     Record.push_back(BucketOffset);
     Stream.EmitRecordWithBlob(IDTableAbbrev, Record, IdentifierTable.str());
   }
 
   // Write the offsets table for identifier IDs.
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(IDENTIFIER_OFFSET));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of identifiers
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned IdentifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
 
   RecordData Record;
-  Record.push_back(pch::IDENTIFIER_OFFSET);
+  Record.push_back(IDENTIFIER_OFFSET);
   Record.push_back(IdentifierOffsets.size());
   Stream.EmitRecordWithBlob(IdentifierOffsetAbbrev, Record,
                             (const char *)data(IdentifierOffsets),
@@ -1961,7 +1962,7 @@ void ASTWriter::WriteAttributeRecord(const AttrVec &Attrs) {
 
   }
 
-  Stream.EmitRecord(pch::DECL_ATTR, Record);
+  Stream.EmitRecord(DECL_ATTR, Record);
 }
 
 void ASTWriter::AddString(const std::string &Str, RecordData &Record) {
@@ -1972,7 +1973,7 @@ void ASTWriter::AddString(const std::string &Str, RecordData &Record) {
 /// \brief Note that the identifier II occurs at the given offset
 /// within the identifier table.
 void ASTWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
-  pch::IdentID ID = IdentifierIDs[II];
+  IdentID ID = IdentifierIDs[II];
   // Only store offsets new to this AST file. Other identifier names are looked
   // up earlier in the chain and thus don't need an offset.
   if (ID >= FirstIdentID)
@@ -1993,7 +1994,7 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 
 ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
   : Stream(Stream), Chain(0), FirstDeclID(1), NextDeclID(FirstDeclID),
-    FirstTypeID(pch::NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
+    FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(1), NextIdentID(FirstIdentID), FirstSelectorID(1),
     NextSelectorID(FirstSelectorID), CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
@@ -2119,7 +2120,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Write the remaining AST contents.
   RecordData Record;
-  Stream.EnterSubblock(pch::AST_BLOCK_ID, 5);
+  Stream.EnterSubblock(AST_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
@@ -2145,11 +2146,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.ObjCSelRedefinitionType, Record);
   AddTypeRef(Context.getRawNSConstantStringType(), Record);
   Record.push_back(Context.isInt128Installed());
-  Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
+  Stream.EmitRecord(SPECIAL_TYPES, Record);
 
   // Keep writing types and declarations until all types and
   // declarations have been written.
-  Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
+  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, 3);
   WriteDeclsBlockAbbrevs();
   while (!DeclTypesToEmit.empty()) {
     DeclOrType DOT = DeclTypesToEmit.front();
@@ -2170,46 +2171,46 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
-    Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
+    Stream.EmitRecord(EXTERNAL_DEFINITIONS, ExternalDefinitions);
 
   // Write the record containing tentative definitions.
   if (!TentativeDefinitions.empty())
-    Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
+    Stream.EmitRecord(TENTATIVE_DEFINITIONS, TentativeDefinitions);
 
   // Write the record containing unused file scoped decls.
   if (!UnusedFileScopedDecls.empty())
-    Stream.EmitRecord(pch::UNUSED_FILESCOPED_DECLS, UnusedFileScopedDecls);
+    Stream.EmitRecord(UNUSED_FILESCOPED_DECLS, UnusedFileScopedDecls);
 
   // Write the record containing weak undeclared identifiers.
   if (!WeakUndeclaredIdentifiers.empty())
-    Stream.EmitRecord(pch::WEAK_UNDECLARED_IDENTIFIERS,
+    Stream.EmitRecord(WEAK_UNDECLARED_IDENTIFIERS,
                       WeakUndeclaredIdentifiers);
 
   // Write the record containing locally-scoped external definitions.
   if (!LocallyScopedExternalDecls.empty())
-    Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS,
+    Stream.EmitRecord(LOCALLY_SCOPED_EXTERNAL_DECLS,
                       LocallyScopedExternalDecls);
 
   // Write the record containing ext_vector type names.
   if (!ExtVectorDecls.empty())
-    Stream.EmitRecord(pch::EXT_VECTOR_DECLS, ExtVectorDecls);
+    Stream.EmitRecord(EXT_VECTOR_DECLS, ExtVectorDecls);
 
   // Write the record containing VTable uses information.
   if (!VTableUses.empty())
-    Stream.EmitRecord(pch::VTABLE_USES, VTableUses);
+    Stream.EmitRecord(VTABLE_USES, VTableUses);
 
   // Write the record containing dynamic classes declarations.
   if (!DynamicClasses.empty())
-    Stream.EmitRecord(pch::DYNAMIC_CLASSES, DynamicClasses);
+    Stream.EmitRecord(DYNAMIC_CLASSES, DynamicClasses);
 
   // Write the record containing pending implicit instantiations.
   if (!PendingImplicitInstantiations.empty())
-    Stream.EmitRecord(pch::PENDING_IMPLICIT_INSTANTIATIONS,
+    Stream.EmitRecord(PENDING_IMPLICIT_INSTANTIATIONS,
                       PendingImplicitInstantiations);
 
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
-    Stream.EmitRecord(pch::SEMA_DECL_REFS, SemaDeclRefs);
+    Stream.EmitRecord(SEMA_DECL_REFS, SemaDeclRefs);
 
   // Some simple statistics
   Record.clear();
@@ -2217,7 +2218,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Record.push_back(NumMacros);
   Record.push_back(NumLexicalDeclContexts);
   Record.push_back(NumVisibleDeclContexts);
-  Stream.EmitRecord(pch::STATISTICS, Record);
+  Stream.EmitRecord(STATISTICS, Record);
   Stream.ExitBlock();
 }
 
@@ -2238,7 +2239,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Preprocessor &PP = SemaRef.PP;
 
   RecordData Record;
-  Stream.EnterSubblock(pch::AST_BLOCK_ID, 5);
+  Stream.EnterSubblock(AST_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls);
@@ -2251,7 +2252,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // We don't start with the translation unit, but with its decls that
   // don't come from the chained PCH.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
-  llvm::SmallVector<pch::DeclID, 64> NewGlobalDecls;
+  llvm::SmallVector<DeclID, 64> NewGlobalDecls;
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
                                   E = TU->noload_decls_end();
        I != E; ++I) {
@@ -2262,14 +2263,14 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   }
   // We also need to write a lexical updates block for the TU.
   llvm::BitCodeAbbrev *Abv = new llvm::BitCodeAbbrev();
-  Abv->Add(llvm::BitCodeAbbrevOp(pch::TU_UPDATE_LEXICAL));
+  Abv->Add(llvm::BitCodeAbbrevOp(TU_UPDATE_LEXICAL));
   Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
   unsigned TuUpdateLexicalAbbrev = Stream.EmitAbbrev(Abv);
   Record.clear();
-  Record.push_back(pch::TU_UPDATE_LEXICAL);
+  Record.push_back(TU_UPDATE_LEXICAL);
   Stream.EmitRecordWithBlob(TuUpdateLexicalAbbrev, Record,
                           reinterpret_cast<const char*>(NewGlobalDecls.data()),
-                          NewGlobalDecls.size() * sizeof(pch::DeclID));
+                          NewGlobalDecls.size() * sizeof(DeclID));
 
   // Build a record containing all of the new tentative definitions in this
   // file, in TentativeDefinitions order.
@@ -2362,7 +2363,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.getStdBadAlloc(), SemaDeclRefs);
   }
 
-  Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
+  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, 3);
   WriteDeclsBlockAbbrevs();
   while (!DeclTypesToEmit.empty()) {
     DeclOrType DOT = DeclTypesToEmit.front();
@@ -2391,50 +2392,50 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(I->second, FirstLatestDeclIDs);
   }
   if (!FirstLatestDeclIDs.empty())
-    Stream.EmitRecord(pch::REDECLS_UPDATE_LATEST, FirstLatestDeclIDs);
+    Stream.EmitRecord(REDECLS_UPDATE_LATEST, FirstLatestDeclIDs);
 
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
-    Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
+    Stream.EmitRecord(EXTERNAL_DEFINITIONS, ExternalDefinitions);
 
   // Write the record containing tentative definitions.
   if (!TentativeDefinitions.empty())
-    Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
+    Stream.EmitRecord(TENTATIVE_DEFINITIONS, TentativeDefinitions);
 
   // Write the record containing unused file scoped decls.
   if (!UnusedFileScopedDecls.empty())
-    Stream.EmitRecord(pch::UNUSED_FILESCOPED_DECLS, UnusedFileScopedDecls);
+    Stream.EmitRecord(UNUSED_FILESCOPED_DECLS, UnusedFileScopedDecls);
 
   // Write the record containing weak undeclared identifiers.
   if (!WeakUndeclaredIdentifiers.empty())
-    Stream.EmitRecord(pch::WEAK_UNDECLARED_IDENTIFIERS,
+    Stream.EmitRecord(WEAK_UNDECLARED_IDENTIFIERS,
                       WeakUndeclaredIdentifiers);
 
   // Write the record containing locally-scoped external definitions.
   if (!LocallyScopedExternalDecls.empty())
-    Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS,
+    Stream.EmitRecord(LOCALLY_SCOPED_EXTERNAL_DECLS,
                       LocallyScopedExternalDecls);
 
   // Write the record containing ext_vector type names.
   if (!ExtVectorDecls.empty())
-    Stream.EmitRecord(pch::EXT_VECTOR_DECLS, ExtVectorDecls);
+    Stream.EmitRecord(EXT_VECTOR_DECLS, ExtVectorDecls);
 
   // Write the record containing VTable uses information.
   if (!VTableUses.empty())
-    Stream.EmitRecord(pch::VTABLE_USES, VTableUses);
+    Stream.EmitRecord(VTABLE_USES, VTableUses);
 
   // Write the record containing dynamic classes declarations.
   if (!DynamicClasses.empty())
-    Stream.EmitRecord(pch::DYNAMIC_CLASSES, DynamicClasses);
+    Stream.EmitRecord(DYNAMIC_CLASSES, DynamicClasses);
 
   // Write the record containing pending implicit instantiations.
   if (!PendingImplicitInstantiations.empty())
-    Stream.EmitRecord(pch::PENDING_IMPLICIT_INSTANTIATIONS,
+    Stream.EmitRecord(PENDING_IMPLICIT_INSTANTIATIONS,
                       PendingImplicitInstantiations);
 
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
-    Stream.EmitRecord(pch::SEMA_DECL_REFS, SemaDeclRefs);
+    Stream.EmitRecord(SEMA_DECL_REFS, SemaDeclRefs);
 
   Record.clear();
   Record.push_back(NumStatements);
@@ -2442,7 +2443,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Record.push_back(NumLexicalDeclContexts);
   Record.push_back(NumVisibleDeclContexts);
   WriteDeclUpdateBlock();
-  Stream.EmitRecord(pch::STATISTICS, Record);
+  Stream.EmitRecord(STATISTICS, Record);
   Stream.ExitBlock();
 }
 
@@ -2451,12 +2452,12 @@ void ASTWriter::WriteDeclUpdateBlock() {
     return;
 
   RecordData Record;
-  for (llvm::SmallVector<std::pair<pch::DeclID, uint64_t>, 16>::iterator
+  for (llvm::SmallVector<std::pair<DeclID, uint64_t>, 16>::iterator
            I = ReplacedDecls.begin(), E = ReplacedDecls.end(); I != E; ++I) {
     Record.push_back(I->first);
     Record.push_back(I->second);
   }
-  Stream.EmitRecord(pch::DECL_REPLACEMENTS, Record);
+  Stream.EmitRecord(DECL_REPLACEMENTS, Record);
 }
 
 void ASTWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
@@ -2489,21 +2490,21 @@ void ASTWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {
   Record.push_back(getIdentifierRef(II));
 }
 
-pch::IdentID ASTWriter::getIdentifierRef(const IdentifierInfo *II) {
+IdentID ASTWriter::getIdentifierRef(const IdentifierInfo *II) {
   if (II == 0)
     return 0;
 
-  pch::IdentID &ID = IdentifierIDs[II];
+  IdentID &ID = IdentifierIDs[II];
   if (ID == 0)
     ID = NextIdentID++;
   return ID;
 }
 
-pch::IdentID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
+IdentID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
   if (MD == 0)
     return 0;
   
-  pch::IdentID &ID = MacroDefinitions[MD];
+  IdentID &ID = MacroDefinitions[MD];
   if (ID == 0)
     ID = MacroDefinitions.size();
   return ID;
@@ -2513,12 +2514,12 @@ void ASTWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
   Record.push_back(getSelectorRef(SelRef));
 }
 
-pch::SelectorID ASTWriter::getSelectorRef(Selector Sel) {
+SelectorID ASTWriter::getSelectorRef(Selector Sel) {
   if (Sel.getAsOpaquePtr() == 0) {
     return 0;
   }
 
-  pch::SelectorID &SID = SelectorIDs[Sel];
+  SelectorID &SID = SelectorIDs[Sel];
   if (SID == 0 && Chain) {
     // This might trigger a ReadSelector callback, which will set the ID for
     // this selector.
@@ -2585,7 +2586,7 @@ void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
 
 void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   if (T.isNull()) {
-    Record.push_back(pch::PREDEF_TYPE_NULL_ID);
+    Record.push_back(PREDEF_TYPE_NULL_ID);
     return;
   }
 
@@ -2593,7 +2594,7 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   T.removeFastQualifiers();
 
   if (T.hasLocalNonFastQualifiers()) {
-    pch::TypeID &ID = TypeIDs[T];
+    TypeID &ID = TypeIDs[T];
     if (ID == 0) {
       // We haven't seen these qualifiers applied to this type before.
       // Assign it a new ID.  This is the only time we enqueue a
@@ -2610,36 +2611,36 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   assert(!T.hasLocalQualifiers());
 
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr())) {
-    pch::TypeID ID = 0;
+    TypeID ID = 0;
     switch (BT->getKind()) {
-    case BuiltinType::Void:       ID = pch::PREDEF_TYPE_VOID_ID;       break;
-    case BuiltinType::Bool:       ID = pch::PREDEF_TYPE_BOOL_ID;       break;
-    case BuiltinType::Char_U:     ID = pch::PREDEF_TYPE_CHAR_U_ID;     break;
-    case BuiltinType::UChar:      ID = pch::PREDEF_TYPE_UCHAR_ID;      break;
-    case BuiltinType::UShort:     ID = pch::PREDEF_TYPE_USHORT_ID;     break;
-    case BuiltinType::UInt:       ID = pch::PREDEF_TYPE_UINT_ID;       break;
-    case BuiltinType::ULong:      ID = pch::PREDEF_TYPE_ULONG_ID;      break;
-    case BuiltinType::ULongLong:  ID = pch::PREDEF_TYPE_ULONGLONG_ID;  break;
-    case BuiltinType::UInt128:    ID = pch::PREDEF_TYPE_UINT128_ID;    break;
-    case BuiltinType::Char_S:     ID = pch::PREDEF_TYPE_CHAR_S_ID;     break;
-    case BuiltinType::SChar:      ID = pch::PREDEF_TYPE_SCHAR_ID;      break;
-    case BuiltinType::WChar:      ID = pch::PREDEF_TYPE_WCHAR_ID;      break;
-    case BuiltinType::Short:      ID = pch::PREDEF_TYPE_SHORT_ID;      break;
-    case BuiltinType::Int:        ID = pch::PREDEF_TYPE_INT_ID;        break;
-    case BuiltinType::Long:       ID = pch::PREDEF_TYPE_LONG_ID;       break;
-    case BuiltinType::LongLong:   ID = pch::PREDEF_TYPE_LONGLONG_ID;   break;
-    case BuiltinType::Int128:     ID = pch::PREDEF_TYPE_INT128_ID;     break;
-    case BuiltinType::Float:      ID = pch::PREDEF_TYPE_FLOAT_ID;      break;
-    case BuiltinType::Double:     ID = pch::PREDEF_TYPE_DOUBLE_ID;     break;
-    case BuiltinType::LongDouble: ID = pch::PREDEF_TYPE_LONGDOUBLE_ID; break;
-    case BuiltinType::NullPtr:    ID = pch::PREDEF_TYPE_NULLPTR_ID;    break;
-    case BuiltinType::Char16:     ID = pch::PREDEF_TYPE_CHAR16_ID;     break;
-    case BuiltinType::Char32:     ID = pch::PREDEF_TYPE_CHAR32_ID;     break;
-    case BuiltinType::Overload:   ID = pch::PREDEF_TYPE_OVERLOAD_ID;   break;
-    case BuiltinType::Dependent:  ID = pch::PREDEF_TYPE_DEPENDENT_ID;  break;
-    case BuiltinType::ObjCId:     ID = pch::PREDEF_TYPE_OBJC_ID;       break;
-    case BuiltinType::ObjCClass:  ID = pch::PREDEF_TYPE_OBJC_CLASS;    break;
-    case BuiltinType::ObjCSel:    ID = pch::PREDEF_TYPE_OBJC_SEL;      break;
+    case BuiltinType::Void:       ID = PREDEF_TYPE_VOID_ID;       break;
+    case BuiltinType::Bool:       ID = PREDEF_TYPE_BOOL_ID;       break;
+    case BuiltinType::Char_U:     ID = PREDEF_TYPE_CHAR_U_ID;     break;
+    case BuiltinType::UChar:      ID = PREDEF_TYPE_UCHAR_ID;      break;
+    case BuiltinType::UShort:     ID = PREDEF_TYPE_USHORT_ID;     break;
+    case BuiltinType::UInt:       ID = PREDEF_TYPE_UINT_ID;       break;
+    case BuiltinType::ULong:      ID = PREDEF_TYPE_ULONG_ID;      break;
+    case BuiltinType::ULongLong:  ID = PREDEF_TYPE_ULONGLONG_ID;  break;
+    case BuiltinType::UInt128:    ID = PREDEF_TYPE_UINT128_ID;    break;
+    case BuiltinType::Char_S:     ID = PREDEF_TYPE_CHAR_S_ID;     break;
+    case BuiltinType::SChar:      ID = PREDEF_TYPE_SCHAR_ID;      break;
+    case BuiltinType::WChar:      ID = PREDEF_TYPE_WCHAR_ID;      break;
+    case BuiltinType::Short:      ID = PREDEF_TYPE_SHORT_ID;      break;
+    case BuiltinType::Int:        ID = PREDEF_TYPE_INT_ID;        break;
+    case BuiltinType::Long:       ID = PREDEF_TYPE_LONG_ID;       break;
+    case BuiltinType::LongLong:   ID = PREDEF_TYPE_LONGLONG_ID;   break;
+    case BuiltinType::Int128:     ID = PREDEF_TYPE_INT128_ID;     break;
+    case BuiltinType::Float:      ID = PREDEF_TYPE_FLOAT_ID;      break;
+    case BuiltinType::Double:     ID = PREDEF_TYPE_DOUBLE_ID;     break;
+    case BuiltinType::LongDouble: ID = PREDEF_TYPE_LONGDOUBLE_ID; break;
+    case BuiltinType::NullPtr:    ID = PREDEF_TYPE_NULLPTR_ID;    break;
+    case BuiltinType::Char16:     ID = PREDEF_TYPE_CHAR16_ID;     break;
+    case BuiltinType::Char32:     ID = PREDEF_TYPE_CHAR32_ID;     break;
+    case BuiltinType::Overload:   ID = PREDEF_TYPE_OVERLOAD_ID;   break;
+    case BuiltinType::Dependent:  ID = PREDEF_TYPE_DEPENDENT_ID;  break;
+    case BuiltinType::ObjCId:     ID = PREDEF_TYPE_OBJC_ID;       break;
+    case BuiltinType::ObjCClass:  ID = PREDEF_TYPE_OBJC_CLASS;    break;
+    case BuiltinType::ObjCSel:    ID = PREDEF_TYPE_OBJC_SEL;      break;
     case BuiltinType::UndeducedAuto:
       assert(0 && "Should not see undeduced auto here");
       break;
@@ -2649,7 +2650,7 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
-  pch::TypeID &ID = TypeIDs[T];
+  TypeID &ID = TypeIDs[T];
   if (ID == 0) {
     // We haven't seen this type before. Assign it a new ID and put it
     // into the queue of types to emit.
@@ -2665,12 +2666,12 @@ void ASTWriter::AddDeclRef(const Decl *D, RecordData &Record) {
   Record.push_back(GetDeclRef(D));
 }
 
-pch::DeclID ASTWriter::GetDeclRef(const Decl *D) {
+DeclID ASTWriter::GetDeclRef(const Decl *D) {
   if (D == 0) {
     return 0;
   }
 
-  pch::DeclID &ID = DeclIDs[D];
+  DeclID &ID = DeclIDs[D];
   if (ID == 0) {
     // We haven't seen this declaration before. Give it a new ID and
     // enqueue it in the list of declarations to emit.
@@ -2687,7 +2688,7 @@ pch::DeclID ASTWriter::GetDeclRef(const Decl *D) {
   return ID;
 }
 
-pch::DeclID ASTWriter::getDeclID(const Decl *D) {
+DeclID ASTWriter::getDeclID(const Decl *D) {
   if (D == 0)
     return 0;
 
@@ -2921,18 +2922,18 @@ void ASTWriter::SetReader(ASTReader *Reader) {
   Chain = Reader;
 }
 
-void ASTWriter::IdentifierRead(pch::IdentID ID, IdentifierInfo *II) {
+void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
   IdentifierIDs[II] = ID;
 }
 
-void ASTWriter::TypeRead(pch::TypeID ID, QualType T) {
+void ASTWriter::TypeRead(TypeID ID, QualType T) {
   TypeIDs[T] = ID;
 }
 
-void ASTWriter::DeclRead(pch::DeclID ID, const Decl *D) {
+void ASTWriter::DeclRead(DeclID ID, const Decl *D) {
   DeclIDs[D] = ID;
 }
 
-void ASTWriter::SelectorRead(pch::SelectorID ID, Selector S) {
+void ASTWriter::SelectorRead(SelectorID ID, Selector S) {
   SelectorIDs[S] = ID;
 }

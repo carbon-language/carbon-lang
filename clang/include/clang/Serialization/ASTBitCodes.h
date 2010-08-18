@@ -21,7 +21,7 @@
 #include "llvm/System/DataTypes.h"
 
 namespace clang {
-  namespace pch {
+  namespace serialization {
     /// \brief AST file major version number supported by this version of
     /// Clang.
     ///

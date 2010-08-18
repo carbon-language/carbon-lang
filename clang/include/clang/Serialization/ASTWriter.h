@@ -114,10 +114,10 @@ private:
   std::queue<DeclOrType> DeclTypesToEmit;
 
   /// \brief The first ID number we can use for our own declarations.
-  pch::DeclID FirstDeclID;
+  serialization::DeclID FirstDeclID;
 
   /// \brief The decl ID that will be assigned to the next new decl.
-  pch::DeclID NextDeclID;
+  serialization::DeclID NextDeclID;
 
   /// \brief Map that provides the ID numbers of each declaration within
   /// the output stream, as well as those deserialized from a chained PCH.
@@ -125,17 +125,17 @@ private:
   /// The ID numbers of declarations are consecutive (in order of
   /// discovery) and start at 2. 1 is reserved for the translation
   /// unit, while 0 is reserved for NULL.
-  llvm::DenseMap<const Decl *, pch::DeclID> DeclIDs;
+  llvm::DenseMap<const Decl *, serialization::DeclID> DeclIDs;
 
   /// \brief Offset of each declaration in the bitstream, indexed by
   /// the declaration's ID.
   std::vector<uint32_t> DeclOffsets;
 
   /// \brief The first ID number we can use for our own types.
-  pch::TypeID FirstTypeID;
+  serialization::TypeID FirstTypeID;
 
   /// \brief The type ID that will be assigned to the next new type.
-  pch::TypeID NextTypeID;
+  serialization::TypeID NextTypeID;
 
   /// \brief Map that provides the ID numbers of each type within the
   /// output stream, plus those deserialized from a chained PCH.
@@ -146,17 +146,18 @@ private:
   /// allow for the const/volatile qualifiers.
   ///
   /// Keys in the map never have const/volatile qualifiers.
-  llvm::DenseMap<QualType, pch::TypeID, UnsafeQualTypeDenseMapInfo> TypeIDs;
+  llvm::DenseMap<QualType, serialization::TypeID, UnsafeQualTypeDenseMapInfo>
+      TypeIDs;
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.
   std::vector<uint32_t> TypeOffsets;
 
   /// \brief The first ID number we can use for our own identifiers.
-  pch::IdentID FirstIdentID;
+  serialization::IdentID FirstIdentID;
 
   /// \brief The identifier ID that will be assigned to the next new identifier.
-  pch::IdentID NextIdentID;
+  serialization::IdentID NextIdentID;
 
   /// \brief Map that provides the ID numbers of each identifier in
   /// the output stream.
@@ -164,20 +165,20 @@ private:
   /// The ID numbers for identifiers are consecutive (in order of
   /// discovery), starting at 1. An ID of zero refers to a NULL
   /// IdentifierInfo.
-  llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
+  llvm::DenseMap<const IdentifierInfo *, serialization::IdentID> IdentifierIDs;
 
   /// \brief Offsets of each of the identifier IDs into the identifier
   /// table.
   std::vector<uint32_t> IdentifierOffsets;
 
   /// \brief The first ID number we can use for our own selectors.
-  pch::SelectorID FirstSelectorID;
+  serialization::SelectorID FirstSelectorID;
 
   /// \brief The selector ID that will be assigned to the next new identifier.
-  pch::SelectorID NextSelectorID;
+  serialization::SelectorID NextSelectorID;
 
   /// \brief Map that provides the ID numbers of each Selector.
-  llvm::DenseMap<Selector, pch::SelectorID> SelectorIDs;
+  llvm::DenseMap<Selector, serialization::SelectorID> SelectorIDs;
 
   /// \brief Offset of each selector within the method pool/selector
   /// table, indexed by the Selector ID (-1).
@@ -193,7 +194,8 @@ private:
 
   /// \brief Mapping from macro definitions (as they occur in the preprocessing
   /// record) to the index into the macro definitions table.
-  llvm::DenseMap<const MacroDefinition *, pch::IdentID> MacroDefinitions;
+  llvm::DenseMap<const MacroDefinition *, serialization::IdentID>
+      MacroDefinitions;
   
   /// \brief Mapping from the macro definition indices in \c MacroDefinitions
   /// to the corresponding offsets within the preprocessor block.
@@ -232,7 +234,8 @@ private:
   /// happen, but the ObjC AST nodes are designed this way), it will be
   /// serialized again. In this case, it is registered here, so that the reader
   /// knows to read the updated version.
-  llvm::SmallVector<std::pair<pch::DeclID, uint64_t>, 16> ReplacedDecls;
+  llvm::SmallVector<std::pair<serialization::DeclID, uint64_t>, 16>
+      ReplacedDecls;
 
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
@@ -339,10 +342,10 @@ public:
   void AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record);
 
   /// \brief Get the unique number used to refer to the given selector.
-  pch::SelectorID getSelectorRef(Selector Sel);
+  serialization::SelectorID getSelectorRef(Selector Sel);
   
   /// \brief Get the unique number used to refer to the given identifier.
-  pch::IdentID getIdentifierRef(const IdentifierInfo *II);
+  serialization::IdentID getIdentifierRef(const IdentifierInfo *II);
 
   /// \brief Retrieve the offset of the macro definition for the given
   /// identifier.
@@ -356,7 +359,7 @@ public:
 
   /// \brief Retrieve the ID number corresponding to the given macro 
   /// definition.
-  pch::IdentID getMacroDefinitionID(MacroDefinition *MD);
+  serialization::IdentID getMacroDefinitionID(MacroDefinition *MD);
   
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordData &Record);
@@ -377,11 +380,11 @@ public:
   void AddDeclRef(const Decl *D, RecordData &Record);
 
   /// \brief Force a declaration to be emitted and get its ID.
-  pch::DeclID GetDeclRef(const Decl *D);
+  serialization::DeclID GetDeclRef(const Decl *D);
 
   /// \brief Determine the declaration ID of an already-emitted
   /// declaration.
-  pch::DeclID getDeclID(const Decl *D);
+  serialization::DeclID getDeclID(const Decl *D);
 
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
@@ -462,10 +465,10 @@ public:
 
   // ASTDeserializationListener implementation
   void SetReader(ASTReader *Reader);
-  void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
-  void TypeRead(pch::TypeID ID, QualType T);
-  void DeclRead(pch::DeclID ID, const Decl *D);
-  void SelectorRead(pch::SelectorID iD, Selector Sel);
+  void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
+  void TypeRead(serialization::TypeID ID, QualType T);
+  void DeclRead(serialization::DeclID ID, const Decl *D);
+  void SelectorRead(serialization::SelectorID iD, Selector Sel);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

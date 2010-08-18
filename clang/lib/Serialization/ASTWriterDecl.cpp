@@ -33,7 +33,7 @@ namespace clang {
     ASTWriter::RecordData &Record;
 
   public:
-    pch::DeclCode Code;
+    serialization::DeclCode Code;
     unsigned AbbrevToUse;
 
     ASTDeclWriter(ASTWriter &Writer, ASTContext &Context,
@@ -142,7 +142,7 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
 void ASTDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
   VisitDecl(D);
   Writer.AddDeclRef(D->getAnonymousNamespace(), Record);
-  Code = pch::DECL_TRANSLATION_UNIT;
+  Code = serialization::DECL_TRANSLATION_UNIT;
 }
 
 void ASTDeclWriter::VisitNamedDecl(NamedDecl *D) {
@@ -158,7 +158,7 @@ void ASTDeclWriter::VisitTypeDecl(TypeDecl *D) {
 void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   VisitTypeDecl(D);
   Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
-  Code = pch::DECL_TYPEDEF;
+  Code = serialization::DECL_TYPEDEF;
 }
 
 void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
@@ -181,7 +181,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
   Record.push_back(D->getNumPositiveBits());
   Record.push_back(D->getNumNegativeBits());
   Writer.AddDeclRef(D->getInstantiatedFromMemberEnum(), Record);
-  Code = pch::DECL_ENUM;
+  Code = serialization::DECL_ENUM;
 }
 
 void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
@@ -189,7 +189,7 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
   Record.push_back(D->hasFlexibleArrayMember());
   Record.push_back(D->isAnonymousStructOrUnion());
   Record.push_back(D->hasObjectMember());
-  Code = pch::DECL_RECORD;
+  Code = serialization::DECL_RECORD;
 }
 
 void ASTDeclWriter::VisitValueDecl(ValueDecl *D) {
@@ -203,7 +203,7 @@ void ASTDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   if (D->getInitExpr())
     Writer.AddStmt(D->getInitExpr());
   Writer.AddAPSInt(D->getInitVal(), Record);
-  Code = pch::DECL_ENUM_CONSTANT;
+  Code = serialization::DECL_ENUM_CONSTANT;
 }
 
 void ASTDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
@@ -299,7 +299,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
        P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
-  Code = pch::DECL_FUNCTION;
+  Code = serialization::DECL_FUNCTION;
 }
 
 void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
@@ -330,13 +330,13 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   for (ObjCMethodDecl::param_iterator P = D->param_begin(),
                                    PEnd = D->param_end(); P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
-  Code = pch::DECL_OBJC_METHOD;
+  Code = serialization::DECL_OBJC_METHOD;
 }
 
 void ASTDeclWriter::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   VisitNamedDecl(D);
   Writer.AddSourceRange(D->getAtEndRange(), Record);
-  // Abstract class (no need to define a stable pch::DECL code).
+  // Abstract class (no need to define a stable serialization::DECL code).
 }
 
 void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
@@ -362,7 +362,7 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   Writer.AddSourceLocation(D->getClassLoc(), Record);
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
-  Code = pch::DECL_OBJC_INTERFACE;
+  Code = serialization::DECL_OBJC_INTERFACE;
 }
 
 void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
@@ -370,7 +370,7 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
   // FIXME: stable encoding for @public/@private/@protected/@package
   Record.push_back(D->getAccessControl());
   Record.push_back(D->getSynthesize());
-  Code = pch::DECL_OBJC_IVAR;
+  Code = serialization::DECL_OBJC_IVAR;
 }
 
 void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
@@ -385,12 +385,12 @@ void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
          PLEnd = D->protocol_loc_end();
        PL != PLEnd; ++PL)
     Writer.AddSourceLocation(*PL, Record);
-  Code = pch::DECL_OBJC_PROTOCOL;
+  Code = serialization::DECL_OBJC_PROTOCOL;
 }
 
 void ASTDeclWriter::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
   VisitFieldDecl(D);
-  Code = pch::DECL_OBJC_AT_DEFS_FIELD;
+  Code = serialization::DECL_OBJC_AT_DEFS_FIELD;
 }
 
 void ASTDeclWriter::VisitObjCClassDecl(ObjCClassDecl *D) {
@@ -400,7 +400,7 @@ void ASTDeclWriter::VisitObjCClassDecl(ObjCClassDecl *D) {
     Writer.AddDeclRef(I->getInterface(), Record);
   for (ObjCClassDecl::iterator I = D->begin(), IEnd = D->end(); I != IEnd; ++I)
     Writer.AddSourceLocation(I->getLocation(), Record);
-  Code = pch::DECL_OBJC_CLASS;
+  Code = serialization::DECL_OBJC_CLASS;
 }
 
 void ASTDeclWriter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
@@ -413,7 +413,7 @@ void ASTDeclWriter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
          PL = D->protocol_loc_begin(), PLEnd = D->protocol_loc_end();
        PL != PLEnd; ++PL)
     Writer.AddSourceLocation(*PL, Record);
-  Code = pch::DECL_OBJC_FORWARD_PROTOCOL;
+  Code = serialization::DECL_OBJC_FORWARD_PROTOCOL;
 }
 
 void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
@@ -430,13 +430,13 @@ void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   Writer.AddDeclRef(D->getNextClassCategory(), Record);
   Writer.AddSourceLocation(D->getAtLoc(), Record);
   Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
-  Code = pch::DECL_OBJC_CATEGORY;
+  Code = serialization::DECL_OBJC_CATEGORY;
 }
 
 void ASTDeclWriter::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D) {
   VisitNamedDecl(D);
   Writer.AddDeclRef(D->getClassInterface(), Record);
-  Code = pch::DECL_OBJC_COMPATIBLE_ALIAS;
+  Code = serialization::DECL_OBJC_COMPATIBLE_ALIAS;
 }
 
 void ASTDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
@@ -453,19 +453,19 @@ void ASTDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Writer.AddDeclRef(D->getGetterMethodDecl(), Record);
   Writer.AddDeclRef(D->getSetterMethodDecl(), Record);
   Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
-  Code = pch::DECL_OBJC_PROPERTY;
+  Code = serialization::DECL_OBJC_PROPERTY;
 }
 
 void ASTDeclWriter::VisitObjCImplDecl(ObjCImplDecl *D) {
   VisitObjCContainerDecl(D);
   Writer.AddDeclRef(D->getClassInterface(), Record);
-  // Abstract class (no need to define a stable pch::DECL code).
+  // Abstract class (no need to define a stable serialization::DECL code).
 }
 
 void ASTDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   VisitObjCImplDecl(D);
   Writer.AddIdentifierRef(D->getIdentifier(), Record);
-  Code = pch::DECL_OBJC_CATEGORY_IMPL;
+  Code = serialization::DECL_OBJC_CATEGORY_IMPL;
 }
 
 void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
@@ -473,7 +473,7 @@ void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   Writer.AddDeclRef(D->getSuperClass(), Record);
   Writer.AddCXXBaseOrMemberInitializers(D->IvarInitializers,
                                         D->NumIvarInitializers, Record);
-  Code = pch::DECL_OBJC_IMPLEMENTATION;
+  Code = serialization::DECL_OBJC_IMPLEMENTATION;
 }
 
 void ASTDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
@@ -483,7 +483,7 @@ void ASTDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
   Writer.AddStmt(D->getGetterCXXConstructor());
   Writer.AddStmt(D->getSetterCXXAssignment());
-  Code = pch::DECL_OBJC_PROPERTY_IMPL;
+  Code = serialization::DECL_OBJC_PROPERTY_IMPL;
 }
 
 void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
@@ -494,7 +494,7 @@ void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
     Writer.AddStmt(D->getBitWidth());
   if (!D->getDeclName())
     Writer.AddDeclRef(Context.getInstantiatedFromUnnamedFieldDecl(D), Record);
-  Code = pch::DECL_FIELD;
+  Code = serialization::DECL_FIELD;
 }
 
 void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
@@ -519,12 +519,12 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
     Writer.AddSourceLocation(SpecInfo->getPointOfInstantiation(), Record);
   }
 
-  Code = pch::DECL_VAR;
+  Code = serialization::DECL_VAR;
 }
 
 void ASTDeclWriter::VisitImplicitParamDecl(ImplicitParamDecl *D) {
   VisitVarDecl(D);
-  Code = pch::DECL_IMPLICIT_PARAM;
+  Code = serialization::DECL_IMPLICIT_PARAM;
 }
 
 void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
@@ -534,7 +534,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   Record.push_back(D->hasUninstantiatedDefaultArg());
   if (D->hasUninstantiatedDefaultArg())
     Writer.AddStmt(D->getUninstantiatedDefaultArg());
-  Code = pch::DECL_PARM_VAR;
+  Code = serialization::DECL_PARM_VAR;
 
   // If the assumptions about the DECL_PARM_VAR abbrev are true, use it.  Here
   // we dynamically check for the properties that we optimize for, but don't
@@ -567,7 +567,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
 void ASTDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   VisitDecl(D);
   Writer.AddStmt(D->getAsmString());
-  Code = pch::DECL_FILE_SCOPE_ASM;
+  Code = serialization::DECL_FILE_SCOPE_ASM;
 }
 
 void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
@@ -578,7 +578,7 @@ void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
        P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
-  Code = pch::DECL_BLOCK;
+  Code = serialization::DECL_BLOCK;
 }
 
 void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
@@ -587,7 +587,7 @@ void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   // declaration, which don't seem to be readily available in the AST.
   Record.push_back(D->getLanguage());
   Record.push_back(D->hasBraces());
-  Code = pch::DECL_LINKAGE_SPEC;
+  Code = serialization::DECL_LINKAGE_SPEC;
 }
 
 void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
@@ -602,7 +602,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     Writer.AddDeclRef(D->getAnonymousNamespace(), Record);
   else
     Writer.AddDeclRef(D->getOriginalNamespace(), Record);
-  Code = pch::DECL_NAMESPACE;
+  Code = serialization::DECL_NAMESPACE;
 
   if (Writer.hasChain() && !D->isOriginalNamespace() &&
       D->getOriginalNamespace()->getPCHLevel() > 0) {
@@ -617,7 +617,7 @@ void ASTDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   Writer.AddNestedNameSpecifier(D->getQualifier(), Record);
   Writer.AddSourceLocation(D->getTargetNameLoc(), Record);
   Writer.AddDeclRef(D->getNamespace(), Record);
-  Code = pch::DECL_NAMESPACE_ALIAS;
+  Code = serialization::DECL_NAMESPACE_ALIAS;
 }
 
 void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
@@ -631,7 +631,7 @@ void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
     Writer.AddDeclRef(*P, Record);
   Record.push_back(D->isTypeName());
   Writer.AddDeclRef(Context.getInstantiatedFromUsingDecl(D), Record);
-  Code = pch::DECL_USING;
+  Code = serialization::DECL_USING;
 }
 
 void ASTDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
@@ -639,7 +639,7 @@ void ASTDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
   Writer.AddDeclRef(D->getTargetDecl(), Record);
   Writer.AddDeclRef(D->getUsingDecl(), Record);
   Writer.AddDeclRef(Context.getInstantiatedFromUsingShadowDecl(D), Record);
-  Code = pch::DECL_USING_SHADOW;
+  Code = serialization::DECL_USING_SHADOW;
 }
 
 void ASTDeclWriter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
@@ -650,7 +650,7 @@ void ASTDeclWriter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   Writer.AddSourceLocation(D->getIdentLocation(), Record);
   Writer.AddDeclRef(D->getNominatedNamespace(), Record);
   Writer.AddDeclRef(dyn_cast<Decl>(D->getCommonAncestor()), Record);
-  Code = pch::DECL_USING_DIRECTIVE;
+  Code = serialization::DECL_USING_DIRECTIVE;
 }
 
 void ASTDeclWriter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
@@ -658,7 +658,7 @@ void ASTDeclWriter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   Writer.AddSourceRange(D->getTargetNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLoc(), Record);
   Writer.AddNestedNameSpecifier(D->getTargetNestedNameSpecifier(), Record);
-  Code = pch::DECL_UNRESOLVED_USING_VALUE;
+  Code = serialization::DECL_UNRESOLVED_USING_VALUE;
 }
 
 void ASTDeclWriter::VisitUnresolvedUsingTypenameDecl(
@@ -668,7 +668,7 @@ void ASTDeclWriter::VisitUnresolvedUsingTypenameDecl(
   Writer.AddSourceLocation(D->getUsingLoc(), Record);
   Writer.AddSourceLocation(D->getTypenameLoc(), Record);
   Writer.AddNestedNameSpecifier(D->getTargetNestedNameSpecifier(), Record);
-  Code = pch::DECL_UNRESOLVED_USING_TYPENAME;
+  Code = serialization::DECL_UNRESOLVED_USING_TYPENAME;
 }
 
 void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -747,7 +747,7 @@ void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
     Record.push_back(CXXRecNotTemplate);
   }
 
-  Code = pch::DECL_CXX_RECORD;
+  Code = serialization::DECL_CXX_RECORD;
 }
 
 void ASTDeclWriter::VisitCXXMethodDecl(CXXMethodDecl *D) {
@@ -757,7 +757,7 @@ void ASTDeclWriter::VisitCXXMethodDecl(CXXMethodDecl *D) {
          I = D->begin_overridden_methods(), E = D->end_overridden_methods();
          I != E; ++I)
     Writer.AddDeclRef(*I, Record);
-  Code = pch::DECL_CXX_METHOD;
+  Code = serialization::DECL_CXX_METHOD;
 }
 
 void ASTDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
@@ -768,7 +768,7 @@ void ASTDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   Writer.AddCXXBaseOrMemberInitializers(D->BaseOrMemberInitializers,
                                         D->NumBaseOrMemberInitializers, Record);
 
-  Code = pch::DECL_CXX_CONSTRUCTOR;
+  Code = serialization::DECL_CXX_CONSTRUCTOR;
 }
 
 void ASTDeclWriter::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
@@ -777,19 +777,19 @@ void ASTDeclWriter::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   Record.push_back(D->ImplicitlyDefined);
   Writer.AddDeclRef(D->OperatorDelete, Record);
 
-  Code = pch::DECL_CXX_DESTRUCTOR;
+  Code = serialization::DECL_CXX_DESTRUCTOR;
 }
 
 void ASTDeclWriter::VisitCXXConversionDecl(CXXConversionDecl *D) {
   VisitCXXMethodDecl(D);
   Record.push_back(D->IsExplicitSpecified);
-  Code = pch::DECL_CXX_CONVERSION;
+  Code = serialization::DECL_CXX_CONVERSION;
 }
 
 void ASTDeclWriter::VisitAccessSpecDecl(AccessSpecDecl *D) {
   VisitDecl(D);
   Writer.AddSourceLocation(D->getColonLoc(), Record);
-  Code = pch::DECL_ACCESS_SPEC;
+  Code = serialization::DECL_ACCESS_SPEC;
 }
 
 void ASTDeclWriter::VisitFriendDecl(FriendDecl *D) {
@@ -801,7 +801,7 @@ void ASTDeclWriter::VisitFriendDecl(FriendDecl *D) {
     Writer.AddDeclRef(D->Friend.get<NamedDecl*>(), Record);
   Writer.AddDeclRef(D->NextFriend, Record);
   Writer.AddSourceLocation(D->FriendLoc, Record);
-  Code = pch::DECL_FRIEND;
+  Code = serialization::DECL_FRIEND;
 }
 
 void ASTDeclWriter::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
@@ -815,7 +815,7 @@ void ASTDeclWriter::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
   else
     Writer.AddTypeSourceInfo(D->getFriendType(), Record);
   Writer.AddSourceLocation(D->getFriendLoc(), Record);
-  Code = pch::DECL_FRIEND_TEMPLATE;
+  Code = serialization::DECL_FRIEND_TEMPLATE;
 }
 
 void ASTDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
@@ -876,7 +876,7 @@ void ASTDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
     // InjectedClassNameType is computed, no need to write it.
   }
-  Code = pch::DECL_CLASS_TEMPLATE;
+  Code = serialization::DECL_CLASS_TEMPLATE;
 }
 
 void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
@@ -910,7 +910,7 @@ void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
     Writer.AddDeclRef(D->getSpecializedTemplate()->getCanonicalDecl(), Record);
   }
 
-  Code = pch::DECL_CLASS_TEMPLATE_SPECIALIZATION;
+  Code = serialization::DECL_CLASS_TEMPLATE_SPECIALIZATION;
 }
 
 void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
@@ -931,7 +931,7 @@ void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
     Record.push_back(D->isMemberSpecialization());
   }
 
-  Code = pch::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION;
+  Code = serialization::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION;
 }
 
 void ASTDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
@@ -950,7 +950,7 @@ void ASTDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
       Writer.AddDeclRef(I->Function, Record);
     }
   }
-  Code = pch::DECL_FUNCTION_TEMPLATE;
+  Code = serialization::DECL_FUNCTION_TEMPLATE;
 }
 
 void ASTDeclWriter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
@@ -961,7 +961,7 @@ void ASTDeclWriter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
   Record.push_back(D->defaultArgumentWasInherited());
   Writer.AddTypeSourceInfo(D->getDefaultArgumentInfo(), Record);
 
-  Code = pch::DECL_TEMPLATE_TYPE_PARM;
+  Code = serialization::DECL_TEMPLATE_TYPE_PARM;
 }
 
 void ASTDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
@@ -975,7 +975,7 @@ void ASTDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
     Writer.AddStmt(D->getDefaultArgument());
     Record.push_back(D->defaultArgumentWasInherited());
   }
-  Code = pch::DECL_NON_TYPE_TEMPLATE_PARM;
+  Code = serialization::DECL_NON_TYPE_TEMPLATE_PARM;
 }
 
 void ASTDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
@@ -986,14 +986,14 @@ void ASTDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   // Rest of TemplateTemplateParmDecl.
   Writer.AddTemplateArgumentLoc(D->getDefaultArgument(), Record);
   Record.push_back(D->defaultArgumentWasInherited());
-  Code = pch::DECL_TEMPLATE_TEMPLATE_PARM;
+  Code = serialization::DECL_TEMPLATE_TEMPLATE_PARM;
 }
 
 void ASTDeclWriter::VisitStaticAssertDecl(StaticAssertDecl *D) {
   VisitDecl(D);
   Writer.AddStmt(D->getAssertExpr());
   Writer.AddStmt(D->getMessage());
-  Code = pch::DECL_STATIC_ASSERT;
+  Code = serialization::DECL_STATIC_ASSERT;
 }
 
 /// \brief Emit the DeclContext part of a declaration context decl.
@@ -1045,7 +1045,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   using namespace llvm;
   // Abbreviation for DECL_PARM_VAR.
   BitCodeAbbrev *Abv = new BitCodeAbbrev();
-  Abv->Add(BitCodeAbbrevOp(pch::DECL_PARM_VAR));
+  Abv->Add(BitCodeAbbrevOp(serialization::DECL_PARM_VAR));
 
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
@@ -1064,7 +1064,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
   // DeclaratorDecl
-  Abv->Add(BitCodeAbbrevOp(pch::PREDEF_TYPE_NULL_ID)); // InfoType
+  Abv->Add(BitCodeAbbrevOp(serialization::PREDEF_TYPE_NULL_ID)); // InfoType
   // VarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // StorageClass
   Abv->Add(BitCodeAbbrevOp(0));                       // StorageClassAsWritten
@@ -1083,7 +1083,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   ParmVarDeclAbbrev = Stream.EmitAbbrev(Abv);
 
   Abv = new BitCodeAbbrev();
-  Abv->Add(BitCodeAbbrevOp(pch::DECL_CONTEXT_LEXICAL));
+  Abv->Add(BitCodeAbbrevOp(serialization::DECL_CONTEXT_LEXICAL));
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   DeclContextLexicalAbbrev = Stream.EmitAbbrev(Abv);
 }
@@ -1126,10 +1126,10 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
   }
 
   // Determine the ID for this declaration
-  pch::DeclID &IDR = DeclIDs[D];
+  serialization::DeclID &IDR = DeclIDs[D];
   if (IDR == 0)
     IDR = NextDeclID++;
-  pch::DeclID ID = IDR;
+  serialization::DeclID ID = IDR;
 
   if (ID < FirstDeclID) {
     // We're replacing a decl in a previous file.
@@ -1148,7 +1148,7 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
 
   // Build and emit a record for this declaration
   Record.clear();
-  W.Code = (pch::DeclCode)0;
+  W.Code = (serialization::DeclCode)0;
   W.AbbrevToUse = 0;
   W.Visit(D);
   if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);

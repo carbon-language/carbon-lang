@@ -16,6 +16,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 using namespace clang;
+using namespace clang::serialization;
 
 namespace clang {
 
@@ -653,8 +654,8 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
 
   llvm::SmallVector<Designator, 4> Designators;
   while (Idx < Record.size()) {
-    switch ((pch::DesignatorTypes)Record[Idx++]) {
-    case pch::DESIG_FIELD_DECL: {
+    switch ((DesignatorTypes)Record[Idx++]) {
+    case DESIG_FIELD_DECL: {
       FieldDecl *Field = cast<FieldDecl>(Reader.GetDecl(Record[Idx++]));
       SourceLocation DotLoc
         = SourceLocation::getFromRawEncoding(Record[Idx++]);
@@ -666,7 +667,7 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
       break;
     }
 
-    case pch::DESIG_FIELD_NAME: {
+    case DESIG_FIELD_NAME: {
       const IdentifierInfo *Name = Reader.GetIdentifierInfo(Record, Idx);
       SourceLocation DotLoc
         = SourceLocation::getFromRawEncoding(Record[Idx++]);
@@ -676,7 +677,7 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
       break;
     }
 
-    case pch::DESIG_ARRAY: {
+    case DESIG_ARRAY: {
       unsigned Index = Record[Idx++];
       SourceLocation LBracketLoc
         = SourceLocation::getFromRawEncoding(Record[Idx++]);
@@ -686,7 +687,7 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
       break;
     }
 
-    case pch::DESIG_ARRAY_RANGE: {
+    case DESIG_ARRAY_RANGE: {
       unsigned Index = Record[Idx++];
       SourceLocation LBracketLoc
         = SourceLocation::getFromRawEncoding(Record[Idx++]);
@@ -1312,145 +1313,145 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
     Idx = 0;
     Record.clear();
     bool Finished = false;
-    switch ((pch::StmtCode)Cursor.ReadRecord(Code, Record)) {
-    case pch::STMT_STOP:
+    switch ((StmtCode)Cursor.ReadRecord(Code, Record)) {
+    case STMT_STOP:
       Finished = true;
       break;
 
-    case pch::STMT_NULL_PTR:
+    case STMT_NULL_PTR:
       S = 0;
       break;
 
-    case pch::STMT_NULL:
+    case STMT_NULL:
       S = new (Context) NullStmt(Empty);
       break;
 
-    case pch::STMT_COMPOUND:
+    case STMT_COMPOUND:
       S = new (Context) CompoundStmt(Empty);
       break;
 
-    case pch::STMT_CASE:
+    case STMT_CASE:
       S = new (Context) CaseStmt(Empty);
       break;
 
-    case pch::STMT_DEFAULT:
+    case STMT_DEFAULT:
       S = new (Context) DefaultStmt(Empty);
       break;
 
-    case pch::STMT_LABEL:
+    case STMT_LABEL:
       S = new (Context) LabelStmt(Empty);
       break;
 
-    case pch::STMT_IF:
+    case STMT_IF:
       S = new (Context) IfStmt(Empty);
       break;
 
-    case pch::STMT_SWITCH:
+    case STMT_SWITCH:
       S = new (Context) SwitchStmt(Empty);
       break;
 
-    case pch::STMT_WHILE:
+    case STMT_WHILE:
       S = new (Context) WhileStmt(Empty);
       break;
 
-    case pch::STMT_DO:
+    case STMT_DO:
       S = new (Context) DoStmt(Empty);
       break;
 
-    case pch::STMT_FOR:
+    case STMT_FOR:
       S = new (Context) ForStmt(Empty);
       break;
 
-    case pch::STMT_GOTO:
+    case STMT_GOTO:
       S = new (Context) GotoStmt(Empty);
       break;
 
-    case pch::STMT_INDIRECT_GOTO:
+    case STMT_INDIRECT_GOTO:
       S = new (Context) IndirectGotoStmt(Empty);
       break;
 
-    case pch::STMT_CONTINUE:
+    case STMT_CONTINUE:
       S = new (Context) ContinueStmt(Empty);
       break;
 
-    case pch::STMT_BREAK:
+    case STMT_BREAK:
       S = new (Context) BreakStmt(Empty);
       break;
 
-    case pch::STMT_RETURN:
+    case STMT_RETURN:
       S = new (Context) ReturnStmt(Empty);
       break;
 
-    case pch::STMT_DECL:
+    case STMT_DECL:
       S = new (Context) DeclStmt(Empty);
       break;
 
-    case pch::STMT_ASM:
+    case STMT_ASM:
       S = new (Context) AsmStmt(Empty);
       break;
 
-    case pch::EXPR_PREDEFINED:
+    case EXPR_PREDEFINED:
       S = new (Context) PredefinedExpr(Empty);
       break;
 
-    case pch::EXPR_DECL_REF:
+    case EXPR_DECL_REF:
       S = DeclRefExpr::CreateEmpty(*Context,
                          /*HasQualifier=*/Record[ASTStmtReader::NumExprFields],
                   /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 1]);
       break;
 
-    case pch::EXPR_INTEGER_LITERAL:
+    case EXPR_INTEGER_LITERAL:
       S = new (Context) IntegerLiteral(Empty);
       break;
 
-    case pch::EXPR_FLOATING_LITERAL:
+    case EXPR_FLOATING_LITERAL:
       S = new (Context) FloatingLiteral(Empty);
       break;
 
-    case pch::EXPR_IMAGINARY_LITERAL:
+    case EXPR_IMAGINARY_LITERAL:
       S = new (Context) ImaginaryLiteral(Empty);
       break;
 
-    case pch::EXPR_STRING_LITERAL:
+    case EXPR_STRING_LITERAL:
       S = StringLiteral::CreateEmpty(*Context,
                                      Record[ASTStmtReader::NumExprFields + 1]);
       break;
 
-    case pch::EXPR_CHARACTER_LITERAL:
+    case EXPR_CHARACTER_LITERAL:
       S = new (Context) CharacterLiteral(Empty);
       break;
 
-    case pch::EXPR_PAREN:
+    case EXPR_PAREN:
       S = new (Context) ParenExpr(Empty);
       break;
 
-    case pch::EXPR_PAREN_LIST:
+    case EXPR_PAREN_LIST:
       S = new (Context) ParenListExpr(Empty);
       break;
 
-    case pch::EXPR_UNARY_OPERATOR:
+    case EXPR_UNARY_OPERATOR:
       S = new (Context) UnaryOperator(Empty);
       break;
 
-    case pch::EXPR_OFFSETOF:
+    case EXPR_OFFSETOF:
       S = OffsetOfExpr::CreateEmpty(*Context, 
                                     Record[ASTStmtReader::NumExprFields],
                                     Record[ASTStmtReader::NumExprFields + 1]);
       break;
         
-    case pch::EXPR_SIZEOF_ALIGN_OF:
+    case EXPR_SIZEOF_ALIGN_OF:
       S = new (Context) SizeOfAlignOfExpr(Empty);
       break;
 
-    case pch::EXPR_ARRAY_SUBSCRIPT:
+    case EXPR_ARRAY_SUBSCRIPT:
       S = new (Context) ArraySubscriptExpr(Empty);
       break;
 
-    case pch::EXPR_CALL:
+    case EXPR_CALL:
       S = new (Context) CallExpr(*Context, Stmt::CallExprClass, Empty);
       break;
 
-    case pch::EXPR_MEMBER: {
+    case EXPR_MEMBER: {
       // We load everything here and fully initialize it at creation.
       // That way we can use MemberExpr::Create and don't have to duplicate its
       // logic with a MemberExpr::CreateEmpty.
@@ -1490,207 +1491,207 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
     }
 
-    case pch::EXPR_BINARY_OPERATOR:
+    case EXPR_BINARY_OPERATOR:
       S = new (Context) BinaryOperator(Empty);
       break;
 
-    case pch::EXPR_COMPOUND_ASSIGN_OPERATOR:
+    case EXPR_COMPOUND_ASSIGN_OPERATOR:
       S = new (Context) CompoundAssignOperator(Empty);
       break;
 
-    case pch::EXPR_CONDITIONAL_OPERATOR:
+    case EXPR_CONDITIONAL_OPERATOR:
       S = new (Context) ConditionalOperator(Empty);
       break;
 
-    case pch::EXPR_IMPLICIT_CAST:
+    case EXPR_IMPLICIT_CAST:
       S = ImplicitCastExpr::CreateEmpty(*Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
-    case pch::EXPR_CSTYLE_CAST:
+    case EXPR_CSTYLE_CAST:
       S = CStyleCastExpr::CreateEmpty(*Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
-    case pch::EXPR_COMPOUND_LITERAL:
+    case EXPR_COMPOUND_LITERAL:
       S = new (Context) CompoundLiteralExpr(Empty);
       break;
 
-    case pch::EXPR_EXT_VECTOR_ELEMENT:
+    case EXPR_EXT_VECTOR_ELEMENT:
       S = new (Context) ExtVectorElementExpr(Empty);
       break;
 
-    case pch::EXPR_INIT_LIST:
+    case EXPR_INIT_LIST:
       S = new (Context) InitListExpr(*getContext(), Empty);
       break;
 
-    case pch::EXPR_DESIGNATED_INIT:
+    case EXPR_DESIGNATED_INIT:
       S = DesignatedInitExpr::CreateEmpty(*Context,
                                      Record[ASTStmtReader::NumExprFields] - 1);
 
       break;
 
-    case pch::EXPR_IMPLICIT_VALUE_INIT:
+    case EXPR_IMPLICIT_VALUE_INIT:
       S = new (Context) ImplicitValueInitExpr(Empty);
       break;
 
-    case pch::EXPR_VA_ARG:
+    case EXPR_VA_ARG:
       S = new (Context) VAArgExpr(Empty);
       break;
 
-    case pch::EXPR_ADDR_LABEL:
+    case EXPR_ADDR_LABEL:
       S = new (Context) AddrLabelExpr(Empty);
       break;
 
-    case pch::EXPR_STMT:
+    case EXPR_STMT:
       S = new (Context) StmtExpr(Empty);
       break;
 
-    case pch::EXPR_TYPES_COMPATIBLE:
+    case EXPR_TYPES_COMPATIBLE:
       S = new (Context) TypesCompatibleExpr(Empty);
       break;
 
-    case pch::EXPR_CHOOSE:
+    case EXPR_CHOOSE:
       S = new (Context) ChooseExpr(Empty);
       break;
 
-    case pch::EXPR_GNU_NULL:
+    case EXPR_GNU_NULL:
       S = new (Context) GNUNullExpr(Empty);
       break;
 
-    case pch::EXPR_SHUFFLE_VECTOR:
+    case EXPR_SHUFFLE_VECTOR:
       S = new (Context) ShuffleVectorExpr(Empty);
       break;
 
-    case pch::EXPR_BLOCK:
+    case EXPR_BLOCK:
       S = new (Context) BlockExpr(Empty);
       break;
 
-    case pch::EXPR_BLOCK_DECL_REF:
+    case EXPR_BLOCK_DECL_REF:
       S = new (Context) BlockDeclRefExpr(Empty);
       break;
 
-    case pch::EXPR_OBJC_STRING_LITERAL:
+    case EXPR_OBJC_STRING_LITERAL:
       S = new (Context) ObjCStringLiteral(Empty);
       break;
-    case pch::EXPR_OBJC_ENCODE:
+    case EXPR_OBJC_ENCODE:
       S = new (Context) ObjCEncodeExpr(Empty);
       break;
-    case pch::EXPR_OBJC_SELECTOR_EXPR:
+    case EXPR_OBJC_SELECTOR_EXPR:
       S = new (Context) ObjCSelectorExpr(Empty);
       break;
-    case pch::EXPR_OBJC_PROTOCOL_EXPR:
+    case EXPR_OBJC_PROTOCOL_EXPR:
       S = new (Context) ObjCProtocolExpr(Empty);
       break;
-    case pch::EXPR_OBJC_IVAR_REF_EXPR:
+    case EXPR_OBJC_IVAR_REF_EXPR:
       S = new (Context) ObjCIvarRefExpr(Empty);
       break;
-    case pch::EXPR_OBJC_PROPERTY_REF_EXPR:
+    case EXPR_OBJC_PROPERTY_REF_EXPR:
       S = new (Context) ObjCPropertyRefExpr(Empty);
       break;
-    case pch::EXPR_OBJC_KVC_REF_EXPR:
+    case EXPR_OBJC_KVC_REF_EXPR:
       S = new (Context) ObjCImplicitSetterGetterRefExpr(Empty);
       break;
-    case pch::EXPR_OBJC_MESSAGE_EXPR:
+    case EXPR_OBJC_MESSAGE_EXPR:
       S = ObjCMessageExpr::CreateEmpty(*Context,
                                      Record[ASTStmtReader::NumExprFields]);
       break;
-    case pch::EXPR_OBJC_SUPER_EXPR:
+    case EXPR_OBJC_SUPER_EXPR:
       S = new (Context) ObjCSuperExpr(Empty);
       break;
-    case pch::EXPR_OBJC_ISA:
+    case EXPR_OBJC_ISA:
       S = new (Context) ObjCIsaExpr(Empty);
       break;
-    case pch::STMT_OBJC_FOR_COLLECTION:
+    case STMT_OBJC_FOR_COLLECTION:
       S = new (Context) ObjCForCollectionStmt(Empty);
       break;
-    case pch::STMT_OBJC_CATCH:
+    case STMT_OBJC_CATCH:
       S = new (Context) ObjCAtCatchStmt(Empty);
       break;
-    case pch::STMT_OBJC_FINALLY:
+    case STMT_OBJC_FINALLY:
       S = new (Context) ObjCAtFinallyStmt(Empty);
       break;
-    case pch::STMT_OBJC_AT_TRY:
+    case STMT_OBJC_AT_TRY:
       S = ObjCAtTryStmt::CreateEmpty(*Context, 
                                      Record[ASTStmtReader::NumStmtFields],
                                      Record[ASTStmtReader::NumStmtFields + 1]);
       break;
-    case pch::STMT_OBJC_AT_SYNCHRONIZED:
+    case STMT_OBJC_AT_SYNCHRONIZED:
       S = new (Context) ObjCAtSynchronizedStmt(Empty);
       break;
-    case pch::STMT_OBJC_AT_THROW:
+    case STMT_OBJC_AT_THROW:
       S = new (Context) ObjCAtThrowStmt(Empty);
       break;
 
-    case pch::STMT_CXX_CATCH:
+    case STMT_CXX_CATCH:
       S = new (Context) CXXCatchStmt(Empty);
       break;
 
-    case pch::STMT_CXX_TRY:
+    case STMT_CXX_TRY:
       S = CXXTryStmt::Create(*Context, Empty,
              /*NumHandlers=*/Record[ASTStmtReader::NumStmtFields]);
       break;
 
-    case pch::EXPR_CXX_OPERATOR_CALL:
+    case EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(*Context, Empty);
       break;
 
-    case pch::EXPR_CXX_MEMBER_CALL:
+    case EXPR_CXX_MEMBER_CALL:
       S = new (Context) CXXMemberCallExpr(*Context, Empty);
       break;
         
-    case pch::EXPR_CXX_CONSTRUCT:
+    case EXPR_CXX_CONSTRUCT:
       S = new (Context) CXXConstructExpr(Empty);
       break;
       
-    case pch::EXPR_CXX_TEMPORARY_OBJECT:
+    case EXPR_CXX_TEMPORARY_OBJECT:
       S = new (Context) CXXTemporaryObjectExpr(Empty);
       break;
 
-    case pch::EXPR_CXX_STATIC_CAST:
+    case EXPR_CXX_STATIC_CAST:
       S = CXXStaticCastExpr::CreateEmpty(*Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
-    case pch::EXPR_CXX_DYNAMIC_CAST:
+    case EXPR_CXX_DYNAMIC_CAST:
       S = CXXDynamicCastExpr::CreateEmpty(*Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
-    case pch::EXPR_CXX_REINTERPRET_CAST:
+    case EXPR_CXX_REINTERPRET_CAST:
       S = CXXReinterpretCastExpr::CreateEmpty(*Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
-    case pch::EXPR_CXX_CONST_CAST:
+    case EXPR_CXX_CONST_CAST:
       S = CXXConstCastExpr::CreateEmpty(*Context);
       break;
 
-    case pch::EXPR_CXX_FUNCTIONAL_CAST:
+    case EXPR_CXX_FUNCTIONAL_CAST:
       S = CXXFunctionalCastExpr::CreateEmpty(*Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
-    case pch::EXPR_CXX_BOOL_LITERAL:
+    case EXPR_CXX_BOOL_LITERAL:
       S = new (Context) CXXBoolLiteralExpr(Empty);
       break;
 
-    case pch::EXPR_CXX_NULL_PTR_LITERAL:
+    case EXPR_CXX_NULL_PTR_LITERAL:
       S = new (Context) CXXNullPtrLiteralExpr(Empty);
       break;
-    case pch::EXPR_CXX_TYPEID_EXPR:
+    case EXPR_CXX_TYPEID_EXPR:
       S = new (Context) CXXTypeidExpr(Empty, true);
       break;
-    case pch::EXPR_CXX_TYPEID_TYPE:
+    case EXPR_CXX_TYPEID_TYPE:
       S = new (Context) CXXTypeidExpr(Empty, false);
       break;
-    case pch::EXPR_CXX_THIS:
+    case EXPR_CXX_THIS:
       S = new (Context) CXXThisExpr(Empty);
       break;
-    case pch::EXPR_CXX_THROW:
+    case EXPR_CXX_THROW:
       S = new (Context) CXXThrowExpr(Empty);
       break;
-    case pch::EXPR_CXX_DEFAULT_ARG: {
+    case EXPR_CXX_DEFAULT_ARG: {
       bool HasOtherExprStored = Record[ASTStmtReader::NumExprFields];
       if (HasOtherExprStored) {
         Expr *SubExpr = ReadSubExpr();
@@ -1699,56 +1700,56 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
         S = new (Context) CXXDefaultArgExpr(Empty);
       break;
     }
-    case pch::EXPR_CXX_BIND_TEMPORARY:
+    case EXPR_CXX_BIND_TEMPORARY:
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;
-    case pch::EXPR_CXX_BIND_REFERENCE:
+    case EXPR_CXX_BIND_REFERENCE:
       S = new (Context) CXXBindReferenceExpr(Empty);
       break;
 
-    case pch::EXPR_CXX_SCALAR_VALUE_INIT:
+    case EXPR_CXX_SCALAR_VALUE_INIT:
       S = new (Context) CXXScalarValueInitExpr(Empty);
       break;
-    case pch::EXPR_CXX_NEW:
+    case EXPR_CXX_NEW:
       S = new (Context) CXXNewExpr(Empty);
       break;
-    case pch::EXPR_CXX_DELETE:
+    case EXPR_CXX_DELETE:
       S = new (Context) CXXDeleteExpr(Empty);
       break;
-    case pch::EXPR_CXX_PSEUDO_DESTRUCTOR:
+    case EXPR_CXX_PSEUDO_DESTRUCTOR:
       S = new (Context) CXXPseudoDestructorExpr(Empty);
       break;
         
-    case pch::EXPR_CXX_EXPR_WITH_TEMPORARIES:
+    case EXPR_CXX_EXPR_WITH_TEMPORARIES:
       S = new (Context) CXXExprWithTemporaries(Empty);
       break;
       
-    case pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER:
+    case EXPR_CXX_DEPENDENT_SCOPE_MEMBER:
       S = CXXDependentScopeMemberExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields]);
       break;
       
-    case pch::EXPR_CXX_DEPENDENT_SCOPE_DECL_REF:
+    case EXPR_CXX_DEPENDENT_SCOPE_DECL_REF:
       S = DependentScopeDeclRefExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields]);
       break;
       
-    case pch::EXPR_CXX_UNRESOLVED_CONSTRUCT:
+    case EXPR_CXX_UNRESOLVED_CONSTRUCT:
       S = CXXUnresolvedConstructExpr::CreateEmpty(*Context,
                               /*NumArgs=*/Record[ASTStmtReader::NumExprFields]);
       break;
       
-    case pch::EXPR_CXX_UNRESOLVED_MEMBER:
+    case EXPR_CXX_UNRESOLVED_MEMBER:
       S = UnresolvedMemberExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields]);
       break;
       
-    case pch::EXPR_CXX_UNRESOLVED_LOOKUP:
+    case EXPR_CXX_UNRESOLVED_LOOKUP:
       S = UnresolvedLookupExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields]);
       break;
       
-    case pch::EXPR_CXX_UNARY_TYPE_TRAIT:
+    case EXPR_CXX_UNARY_TYPE_TRAIT:
       S = new (Context) UnaryTypeTraitExpr(Empty);
       break;
     }

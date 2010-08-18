@@ -21,7 +21,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
-
+using namespace clang::serialization;
 
 //===----------------------------------------------------------------------===//
 // Declaration deserialization
@@ -31,16 +31,16 @@ namespace clang {
   class ASTDeclReader : public DeclVisitor<ASTDeclReader, void> {
     ASTReader &Reader;
     llvm::BitstreamCursor &Cursor;
-    const pch::DeclID ThisDeclID;
+    const DeclID ThisDeclID;
     const ASTReader::RecordData &Record;
     unsigned &Idx;
-    pch::TypeID TypeIDForTypeDecl;
+    TypeID TypeIDForTypeDecl;
 
     uint64_t GetCurrentCursorOffset();
 
   public:
     ASTDeclReader(ASTReader &Reader, llvm::BitstreamCursor &Cursor,
-                  pch::DeclID thisDeclID, const ASTReader::RecordData &Record,
+                  DeclID thisDeclID, const ASTReader::RecordData &Record,
                   unsigned &Idx)
       : Reader(Reader), Cursor(Cursor), ThisDeclID(thisDeclID), Record(Record),
         Idx(Idx), TypeIDForTypeDecl(0) { }
@@ -1103,7 +1103,7 @@ void ASTReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor,
   RecordData Record;
   unsigned Idx = 0;
   unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  assert(RecCode == pch::DECL_ATTR && "Expected attribute record");
+  assert(RecCode == DECL_ATTR && "Expected attribute record");
   (void)RecCode;
 
   while (Idx < Record.size()) {
@@ -1155,7 +1155,7 @@ static bool isConsumerInterestedIn(Decl *D) {
 
 /// \brief Get the correct cursor and offset for loading a type.
 ASTReader::RecordLocation
-ASTReader::DeclCursorForIndex(unsigned Index, pch::DeclID ID) {
+ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
   // See if there's an override.
   DeclReplacementMap::iterator It = ReplacedDecls.find(ID);
   if (It != ReplacedDecls.end())
@@ -1173,7 +1173,7 @@ ASTReader::DeclCursorForIndex(unsigned Index, pch::DeclID ID) {
 }
 
 /// \brief Read the declaration at the given offset from the AST file.
-Decl *ASTReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
+Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   RecordLocation Loc = DeclCursorForIndex(Index, ID);
   llvm::BitstreamCursor &DeclsCursor = *Loc.first;
   // Keep track of where we are in the stream, then jump back there
@@ -1192,191 +1192,191 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, pch::DeclID ID) {
   ASTDeclReader Reader(*this, DeclsCursor, ID, Record, Idx);
 
   Decl *D = 0;
-  switch ((pch::DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
-  case pch::DECL_ATTR:
-  case pch::DECL_CONTEXT_LEXICAL:
-  case pch::DECL_CONTEXT_VISIBLE:
+  switch ((DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
+  case DECL_ATTR:
+  case DECL_CONTEXT_LEXICAL:
+  case DECL_CONTEXT_VISIBLE:
     assert(false && "Record cannot be de-serialized with ReadDeclRecord");
     break;
-  case pch::DECL_TRANSLATION_UNIT:
+  case DECL_TRANSLATION_UNIT:
     assert(Index == 0 && "Translation unit must be at index 0");
     D = Context->getTranslationUnitDecl();
     break;
-  case pch::DECL_TYPEDEF:
+  case DECL_TYPEDEF:
     D = TypedefDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
-  case pch::DECL_ENUM:
+  case DECL_ENUM:
     D = EnumDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_RECORD:
+  case DECL_RECORD:
     D = RecordDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_ENUM_CONSTANT:
+  case DECL_ENUM_CONSTANT:
     D = EnumConstantDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
                                  0, llvm::APSInt());
     break;
-  case pch::DECL_FUNCTION:
+  case DECL_FUNCTION:
     D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
                              QualType(), 0);
     break;
-  case pch::DECL_LINKAGE_SPEC:
+  case DECL_LINKAGE_SPEC:
     D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(),
                                 (LinkageSpecDecl::LanguageIDs)0,
                                 false);
     break;
-  case pch::DECL_NAMESPACE:
+  case DECL_NAMESPACE:
     D = NamespaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
-  case pch::DECL_NAMESPACE_ALIAS:
+  case DECL_NAMESPACE_ALIAS:
     D = NamespaceAliasDecl::Create(*Context, 0, SourceLocation(),
                                    SourceLocation(), 0, SourceRange(), 0,
                                    SourceLocation(), 0);
     break;
-  case pch::DECL_USING:
+  case DECL_USING:
     D = UsingDecl::Create(*Context, 0, SourceRange(), SourceLocation(),
                           0, DeclarationNameInfo(), false);
     break;
-  case pch::DECL_USING_SHADOW:
+  case DECL_USING_SHADOW:
     D = UsingShadowDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
-  case pch::DECL_USING_DIRECTIVE:
+  case DECL_USING_DIRECTIVE:
     D = UsingDirectiveDecl::Create(*Context, 0, SourceLocation(),
                                    SourceLocation(), SourceRange(), 0,
                                    SourceLocation(), 0, 0);
     break;
-  case pch::DECL_UNRESOLVED_USING_VALUE:
+  case DECL_UNRESOLVED_USING_VALUE:
     D = UnresolvedUsingValueDecl::Create(*Context, 0, SourceLocation(),
                                          SourceRange(), 0,
                                          DeclarationNameInfo());
     break;
-  case pch::DECL_UNRESOLVED_USING_TYPENAME:
+  case DECL_UNRESOLVED_USING_TYPENAME:
     D = UnresolvedUsingTypenameDecl::Create(*Context, 0, SourceLocation(),
                                             SourceLocation(), SourceRange(),
                                             0, SourceLocation(),
                                             DeclarationName());
     break;
-  case pch::DECL_CXX_RECORD:
+  case DECL_CXX_RECORD:
     D = CXXRecordDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_CXX_METHOD:
+  case DECL_CXX_METHOD:
     D = CXXMethodDecl::Create(*Context, 0, DeclarationNameInfo(),
                               QualType(), 0);
     break;
-  case pch::DECL_CXX_CONSTRUCTOR:
+  case DECL_CXX_CONSTRUCTOR:
     D = CXXConstructorDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_CXX_DESTRUCTOR:
+  case DECL_CXX_DESTRUCTOR:
     D = CXXDestructorDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_CXX_CONVERSION:
+  case DECL_CXX_CONVERSION:
     D = CXXConversionDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_ACCESS_SPEC:
+  case DECL_ACCESS_SPEC:
     D = AccessSpecDecl::Create(*Context, AS_none, 0, SourceLocation(),
                                SourceLocation());
     break;
-  case pch::DECL_FRIEND:
+  case DECL_FRIEND:
     D = FriendDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_FRIEND_TEMPLATE:
+  case DECL_FRIEND_TEMPLATE:
     D = FriendTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_CLASS_TEMPLATE:
+  case DECL_CLASS_TEMPLATE:
     D = ClassTemplateDecl::Create(*Context, 0, SourceLocation(),
                                   DeclarationName(), 0, 0, 0);
     break;
-  case pch::DECL_CLASS_TEMPLATE_SPECIALIZATION:
+  case DECL_CLASS_TEMPLATE_SPECIALIZATION:
     D = ClassTemplateSpecializationDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
+  case DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
     D = ClassTemplatePartialSpecializationDecl::Create(*Context,
                                                             Decl::EmptyShell());
     break;
-  case pch::DECL_FUNCTION_TEMPLATE:
+  case DECL_FUNCTION_TEMPLATE:
     D = FunctionTemplateDecl::Create(*Context, 0, SourceLocation(),
                                      DeclarationName(), 0, 0);
     break;
-  case pch::DECL_TEMPLATE_TYPE_PARM:
+  case DECL_TEMPLATE_TYPE_PARM:
     D = TemplateTypeParmDecl::Create(*Context, Decl::EmptyShell());
     break;
-  case pch::DECL_NON_TYPE_TEMPLATE_PARM:
+  case DECL_NON_TYPE_TEMPLATE_PARM:
     D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,
                                         QualType(),0);
     break;
-  case pch::DECL_TEMPLATE_TEMPLATE_PARM:
+  case DECL_TEMPLATE_TEMPLATE_PARM:
     D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(),0,0,0,0);
     break;
-  case pch::DECL_STATIC_ASSERT:
+  case DECL_STATIC_ASSERT:
     D = StaticAssertDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
 
-  case pch::DECL_OBJC_METHOD:
+  case DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(),
                                Selector(), QualType(), 0, 0);
     break;
-  case pch::DECL_OBJC_INTERFACE:
+  case DECL_OBJC_INTERFACE:
     D = ObjCInterfaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
-  case pch::DECL_OBJC_IVAR:
+  case DECL_OBJC_IVAR:
     D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                              ObjCIvarDecl::None);
     break;
-  case pch::DECL_OBJC_PROTOCOL:
+  case DECL_OBJC_PROTOCOL:
     D = ObjCProtocolDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
-  case pch::DECL_OBJC_AT_DEFS_FIELD:
+  case DECL_OBJC_AT_DEFS_FIELD:
     D = ObjCAtDefsFieldDecl::Create(*Context, 0, SourceLocation(), 0,
                                     QualType(), 0);
     break;
-  case pch::DECL_OBJC_CLASS:
+  case DECL_OBJC_CLASS:
     D = ObjCClassDecl::Create(*Context, 0, SourceLocation());
     break;
-  case pch::DECL_OBJC_FORWARD_PROTOCOL:
+  case DECL_OBJC_FORWARD_PROTOCOL:
     D = ObjCForwardProtocolDecl::Create(*Context, 0, SourceLocation());
     break;
-  case pch::DECL_OBJC_CATEGORY:
+  case DECL_OBJC_CATEGORY:
     D = ObjCCategoryDecl::Create(*Context, 0, SourceLocation(), 
                                  SourceLocation(), SourceLocation(), 0);
     break;
-  case pch::DECL_OBJC_CATEGORY_IMPL:
+  case DECL_OBJC_CATEGORY_IMPL:
     D = ObjCCategoryImplDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
-  case pch::DECL_OBJC_IMPLEMENTATION:
+  case DECL_OBJC_IMPLEMENTATION:
     D = ObjCImplementationDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
-  case pch::DECL_OBJC_COMPATIBLE_ALIAS:
+  case DECL_OBJC_COMPATIBLE_ALIAS:
     D = ObjCCompatibleAliasDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
-  case pch::DECL_OBJC_PROPERTY:
+  case DECL_OBJC_PROPERTY:
     D = ObjCPropertyDecl::Create(*Context, 0, SourceLocation(), 0, SourceLocation(),
                                  0);
     break;
-  case pch::DECL_OBJC_PROPERTY_IMPL:
+  case DECL_OBJC_PROPERTY_IMPL:
     D = ObjCPropertyImplDecl::Create(*Context, 0, SourceLocation(),
                                      SourceLocation(), 0,
                                      ObjCPropertyImplDecl::Dynamic, 0);
     break;
-  case pch::DECL_FIELD:
+  case DECL_FIELD:
     D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0,
                           false);
     break;
-  case pch::DECL_VAR:
+  case DECL_VAR:
     D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                         VarDecl::None, VarDecl::None);
     break;
 
-  case pch::DECL_IMPLICIT_PARAM:
+  case DECL_IMPLICIT_PARAM:
     D = ImplicitParamDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
     break;
 
-  case pch::DECL_PARM_VAR:
+  case DECL_PARM_VAR:
     D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                             VarDecl::None, VarDecl::None, 0);
     break;
-  case pch::DECL_FILE_SCOPE_ASM:
+  case DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
-  case pch::DECL_BLOCK:
+  case DECL_BLOCK:
     D = BlockDecl::Create(*Context, 0, SourceLocation());
     break;
   }
@@ -1427,13 +1427,13 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
     unsigned BlobLen;
     unsigned Code = Cursor.ReadCode();
     unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
-    if (RecCode != pch::DECL_CONTEXT_LEXICAL) {
+    if (RecCode != DECL_CONTEXT_LEXICAL) {
       Error("Expected lexical block");
       return true;
     }
 
-    Info.LexicalDecls = reinterpret_cast<const pch::DeclID*>(Blob);
-    Info.NumLexicalDecls = BlobLen / sizeof(pch::DeclID);
+    Info.LexicalDecls = reinterpret_cast<const DeclID*>(Blob);
+    Info.NumLexicalDecls = BlobLen / sizeof(DeclID);
   } else {
     Info.LexicalDecls = 0;
     Info.NumLexicalDecls = 0;

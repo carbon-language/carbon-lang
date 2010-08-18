@@ -32,15 +32,16 @@ public:
   virtual void SetReader(ASTReader *Reader) = 0;
 
   /// \brief An identifier was deserialized from the AST file.
-  virtual void IdentifierRead(pch::IdentID ID, IdentifierInfo *II) = 0;
+  virtual void IdentifierRead(serialization::IdentID ID,
+                              IdentifierInfo *II) = 0;
   /// \brief A type was deserialized from the AST file. The ID here has the
   ///        qualifier bits already removed, and T is guaranteed to be locally
   ///        unqualified.
-  virtual void TypeRead(pch::TypeID ID, QualType T) = 0;
+  virtual void TypeRead(serialization::TypeID ID, QualType T) = 0;
   /// \brief A decl was deserialized from the AST file.
-  virtual void DeclRead(pch::DeclID ID, const Decl *D) = 0;
+  virtual void DeclRead(serialization::DeclID ID, const Decl *D) = 0;
   /// \brief A selector was read from the AST file.
-  virtual void SelectorRead(pch::SelectorID iD, Selector Sel) = 0;
+  virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) = 0;
 };
 
 }

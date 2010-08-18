@@ -41,6 +41,7 @@
 #include <cstdio>
 #include <sys/stat.h>
 using namespace clang;
+using namespace clang::serialization;
 
 //===----------------------------------------------------------------------===//
 // PCH validator implementation
@@ -470,7 +471,7 @@ class ASTSelectorLookupTrait {
 
 public:
   struct data_type {
-    pch::SelectorID ID;
+    SelectorID ID;
     ObjCMethodList Instance, Factory;
   };
 
@@ -634,7 +635,7 @@ public:
                            const unsigned char* d,
                            unsigned DataLen) {
     using namespace clang::io;
-    pch::IdentID ID = ReadUnalignedLE32(d);
+    IdentID ID = ReadUnalignedLE32(d);
     bool IsInteresting = ID & 0x01;
 
     // Wipe out the "is interesting" bit.
@@ -907,7 +908,7 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
   }
 
   // Enter the source manager block.
-  if (SLocEntryCursor.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID)) {
+  if (SLocEntryCursor.EnterSubBlock(SOURCE_MANAGER_BLOCK_ID)) {
     Error("malformed source manager block record in AST file");
     return Failure;
   }
@@ -946,14 +947,14 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
     default:  // Default behavior: ignore.
       break;
 
-    case pch::SM_LINE_TABLE:
+    case SM_LINE_TABLE:
       if (ParseLineTable(Record))
         return Failure;
       break;
 
-    case pch::SM_SLOC_FILE_ENTRY:
-    case pch::SM_SLOC_BUFFER_ENTRY:
-    case pch::SM_SLOC_INSTANTIATION_ENTRY:
+    case SM_SLOC_FILE_ENTRY:
+    case SM_SLOC_BUFFER_ENTRY:
+    case SM_SLOC_INSTANTIATION_ENTRY:
       // Once we hit one of the source location entries, we're done.
       return Success;
     }
@@ -1009,7 +1010,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     Error("incorrectly-formatted source location entry in AST file");
     return Failure;
 
-  case pch::SM_SLOC_FILE_ENTRY: {
+  case SM_SLOC_FILE_ENTRY: {
     std::string Filename(BlobStart, BlobStart + BlobLen);
     MaybeAddSystemRootToFilename(Filename);
     const FileEntry *File = FileMgr.getFile(Filename);
@@ -1059,7 +1060,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     break;
   }
 
-  case pch::SM_SLOC_BUFFER_ENTRY: {
+  case SM_SLOC_BUFFER_ENTRY: {
     const char *Name = BlobStart;
     unsigned Offset = Record[0];
     unsigned Code = SLocEntryCursor.ReadCode();
@@ -1067,7 +1068,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     unsigned RecCode
       = SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen);
 
-    if (RecCode != pch::SM_SLOC_BUFFER_BLOB) {
+    if (RecCode != SM_SLOC_BUFFER_BLOB) {
       Error("AST record has invalid code");
       return Failure;
     }
@@ -1088,7 +1089,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     break;
   }
 
-  case pch::SM_SLOC_INSTANTIATION_ENTRY: {
+  case SM_SLOC_INSTANTIATION_ENTRY: {
     SourceLocation SpellingLoc
       = SourceLocation::getFromRawEncoding(Record[1]);
     SourceMgr.createInstantiationLoc(SpellingLoc,
@@ -1159,11 +1160,11 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
 
     // Read a record.
     Record.clear();
-    pch::PreprocessorRecordTypes RecType =
-      (pch::PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
+    PreprocessorRecordTypes RecType =
+      (PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
     switch (RecType) {
-    case pch::PP_MACRO_OBJECT_LIKE:
-    case pch::PP_MACRO_FUNCTION_LIKE: {
+    case PP_MACRO_OBJECT_LIKE:
+    case PP_MACRO_FUNCTION_LIKE: {
       // If we already have a macro, that means that we've hit the end
       // of the definition of the macro we were looking for. We're
       // done.
@@ -1183,7 +1184,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       MI->setIsFromAST();
 
       unsigned NextIndex = 3;
-      if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {
+      if (RecType == PP_MACRO_FUNCTION_LIKE) {
         // Decode function-like macro info.
         bool isC99VarArgs = Record[3];
         bool isGNUVarArgs = Record[4];
@@ -1218,7 +1219,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       break;
     }
 
-    case pch::PP_TOKEN: {
+    case PP_TOKEN: {
       // If we see a TOKEN before a PP_MACRO_*, then the file is
       // erroneous, just pretend we didn't see this.
       if (Macro == 0) break;
@@ -1235,7 +1236,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       break;
     }
         
-    case pch::PP_MACRO_INSTANTIATION: {
+    case PP_MACRO_INSTANTIATION: {
       // If we already have a macro, that means that we've hit the end
       // of the definition of the macro we were looking for. We're
       // done.
@@ -1261,7 +1262,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       return;
     }
 
-    case pch::PP_MACRO_DEFINITION: {
+    case PP_MACRO_DEFINITION: {
       // If we already have a macro, that means that we've hit the end
       // of the definition of the macro we were looking for. We're
       // done.
@@ -1305,7 +1306,7 @@ void ASTReader::ReadDefinedMacros() {
       continue;
 
     llvm::BitstreamCursor Cursor = MacroCursor;
-    if (Cursor.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID)) {
+    if (Cursor.EnterSubBlock(PREPROCESSOR_BLOCK_ID)) {
       Error("malformed preprocessor block record in AST file");
       return;
     }
@@ -1344,17 +1345,17 @@ void ASTReader::ReadDefinedMacros() {
       default:  // Default behavior: ignore.
         break;
 
-      case pch::PP_MACRO_OBJECT_LIKE:
-      case pch::PP_MACRO_FUNCTION_LIKE:
+      case PP_MACRO_OBJECT_LIKE:
+      case PP_MACRO_FUNCTION_LIKE:
         DecodeIdentifierInfo(Record[0]);
         break;
 
-      case pch::PP_TOKEN:
+      case PP_TOKEN:
         // Ignore tokens.
         break;
         
-      case pch::PP_MACRO_INSTANTIATION:
-      case pch::PP_MACRO_DEFINITION:
+      case PP_MACRO_INSTANTIATION:
+      case PP_MACRO_DEFINITION:
         // Read the macro record.
         ReadMacroRecord(Chain[N - I - 1]->Stream, Cursor.GetCurrentBitNo());
         break;
@@ -1363,7 +1364,7 @@ void ASTReader::ReadDefinedMacros() {
   }
 }
 
-MacroDefinition *ASTReader::getMacroDefinition(pch::IdentID ID) {
+MacroDefinition *ASTReader::getMacroDefinition(IdentID ID) {
   if (ID == 0 || ID >= MacroDefinitionsLoaded.size())
     return 0;
 
@@ -1411,7 +1412,7 @@ ASTReader::ASTReadResult
 ASTReader::ReadASTBlock(PerFileData &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
-  if (Stream.EnterSubBlock(pch::AST_BLOCK_ID)) {
+  if (Stream.EnterSubBlock(AST_BLOCK_ID)) {
     Error("malformed block record in AST file");
     return Failure;
   }
@@ -1432,7 +1433,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       switch (Stream.ReadSubBlockID()) {
-      case pch::DECLTYPES_BLOCK_ID:
+      case DECLTYPES_BLOCK_ID:
         // We lazily load the decls block, but we want to set up the
         // DeclsCursor cursor to point into it.  Clone our current bitcode
         // cursor to it, enter the block and read the abbrevs in that block.
@@ -1440,13 +1441,13 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         F.DeclsCursor = Stream;
         if (Stream.SkipBlock() ||  // Skip with the main cursor.
             // Read the abbrevs.
-            ReadBlockAbbrevs(F.DeclsCursor, pch::DECLTYPES_BLOCK_ID)) {
+            ReadBlockAbbrevs(F.DeclsCursor, DECLTYPES_BLOCK_ID)) {
           Error("malformed block record in AST file");
           return Failure;
         }
         break;
 
-      case pch::PREPROCESSOR_BLOCK_ID:
+      case PREPROCESSOR_BLOCK_ID:
         F.MacroCursor = Stream;
         if (PP)
           PP->setExternalSource(this);
@@ -1457,7 +1458,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         }
         break;
 
-      case pch::SOURCE_MANAGER_BLOCK_ID:
+      case SOURCE_MANAGER_BLOCK_ID:
         switch (ReadSourceManagerBlock(F)) {
         case Success:
           break;
@@ -1484,14 +1485,14 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    switch ((pch::ASTRecordTypes)Stream.ReadRecord(Code, Record,
+    switch ((ASTRecordTypes)Stream.ReadRecord(Code, Record,
                                                    &BlobStart, &BlobLen)) {
     default:  // Default behavior: ignore.
       break;
 
-    case pch::METADATA: {
-      if (Record[0] != pch::VERSION_MAJOR && !DisableValidation) {
-        Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
+    case METADATA: {
+      if (Record[0] != VERSION_MAJOR && !DisableValidation) {
+        Diag(Record[0] < VERSION_MAJOR? diag::warn_pch_version_too_old
                                            : diag::warn_pch_version_too_new);
         return IgnorePCH;
       }
@@ -1505,13 +1506,13 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
     }
 
-    case pch::CHAINED_METADATA: {
+    case CHAINED_METADATA: {
       if (!First) {
         Error("CHAINED_METADATA is not first record in block");
         return Failure;
       }
-      if (Record[0] != pch::VERSION_MAJOR && !DisableValidation) {
-        Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
+      if (Record[0] != VERSION_MAJOR && !DisableValidation) {
+        Diag(Record[0] < VERSION_MAJOR? diag::warn_pch_version_too_old
                                            : diag::warn_pch_version_too_new);
         return IgnorePCH;
       }
@@ -1526,7 +1527,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
     }
 
-    case pch::TYPE_OFFSET:
+    case TYPE_OFFSET:
       if (F.LocalNumTypes != 0) {
         Error("duplicate TYPE_OFFSET record in AST file");
         return Failure;
@@ -1535,7 +1536,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.LocalNumTypes = Record[0];
       break;
 
-    case pch::DECL_OFFSET:
+    case DECL_OFFSET:
       if (F.LocalNumDecls != 0) {
         Error("duplicate DECL_OFFSET record in AST file");
         return Failure;
@@ -1544,20 +1545,20 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.LocalNumDecls = Record[0];
       break;
 
-    case pch::TU_UPDATE_LEXICAL: {
+    case TU_UPDATE_LEXICAL: {
       DeclContextInfo Info = {
         /* No visible information */ 0, 0,
-        reinterpret_cast<const pch::DeclID *>(BlobStart),
-        BlobLen / sizeof(pch::DeclID)
+        reinterpret_cast<const DeclID *>(BlobStart),
+        BlobLen / sizeof(DeclID)
       };
       DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
       break;
     }
 
-    case pch::REDECLS_UPDATE_LATEST: {
+    case REDECLS_UPDATE_LATEST: {
       assert(Record.size() % 2 == 0 && "Expected pairs of DeclIDs");
       for (unsigned i = 0, e = Record.size(); i < e; i += 2) {
-        pch::DeclID First = Record[i], Latest = Record[i+1];
+        DeclID First = Record[i], Latest = Record[i+1];
         assert((FirstLatestDeclIDs.find(First) == FirstLatestDeclIDs.end() ||
                 Latest > FirstLatestDeclIDs[First]) &&
                "The new latest is supposed to come after the previous latest");
@@ -1566,12 +1567,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
     }
 
-    case pch::LANGUAGE_OPTIONS:
+    case LANGUAGE_OPTIONS:
       if (ParseLanguageOptions(Record) && !DisableValidation)
         return IgnorePCH;
       break;
 
-    case pch::IDENTIFIER_TABLE:
+    case IDENTIFIER_TABLE:
       F.IdentifierTableData = BlobStart;
       if (Record[0]) {
         F.IdentifierLookupTable
@@ -1584,7 +1585,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       }
       break;
 
-    case pch::IDENTIFIER_OFFSET:
+    case IDENTIFIER_OFFSET:
       if (F.LocalNumIdentifiers != 0) {
         Error("duplicate IDENTIFIER_OFFSET record in AST file");
         return Failure;
@@ -1593,7 +1594,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.LocalNumIdentifiers = Record[0];
       break;
 
-    case pch::EXTERNAL_DEFINITIONS:
+    case EXTERNAL_DEFINITIONS:
       // Optimization for the first block.
       if (ExternalDefinitions.empty())
         ExternalDefinitions.swap(Record);
@@ -1602,7 +1603,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                                    Record.begin(), Record.end());
       break;
 
-    case pch::SPECIAL_TYPES:
+    case SPECIAL_TYPES:
       // Optimization for the first block
       if (SpecialTypes.empty())
         SpecialTypes.swap(Record);
@@ -1610,14 +1611,14 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         SpecialTypes.insert(SpecialTypes.end(), Record.begin(), Record.end());
       break;
 
-    case pch::STATISTICS:
+    case STATISTICS:
       TotalNumStatements += Record[0];
       TotalNumMacros += Record[1];
       TotalLexicalDeclContexts += Record[2];
       TotalVisibleDeclContexts += Record[3];
       break;
 
-    case pch::TENTATIVE_DEFINITIONS:
+    case TENTATIVE_DEFINITIONS:
       // Optimization for the first block.
       if (TentativeDefinitions.empty())
         TentativeDefinitions.swap(Record);
@@ -1626,7 +1627,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                                     Record.begin(), Record.end());
       break;
 
-    case pch::UNUSED_FILESCOPED_DECLS:
+    case UNUSED_FILESCOPED_DECLS:
       // Optimization for the first block.
       if (UnusedFileScopedDecls.empty())
         UnusedFileScopedDecls.swap(Record);
@@ -1635,12 +1636,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                                      Record.begin(), Record.end());
       break;
 
-    case pch::WEAK_UNDECLARED_IDENTIFIERS:
+    case WEAK_UNDECLARED_IDENTIFIERS:
       // Later blocks overwrite earlier ones.
       WeakUndeclaredIdentifiers.swap(Record);
       break;
 
-    case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
+    case LOCALLY_SCOPED_EXTERNAL_DECLS:
       // Optimization for the first block.
       if (LocallyScopedExternalDecls.empty())
         LocallyScopedExternalDecls.swap(Record);
@@ -1649,12 +1650,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                                           Record.begin(), Record.end());
       break;
 
-    case pch::SELECTOR_OFFSETS:
+    case SELECTOR_OFFSETS:
       F.SelectorOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSelectors = Record[0];
       break;
 
-    case pch::METHOD_POOL:
+    case METHOD_POOL:
       F.SelectorLookupTableData = (const unsigned char *)BlobStart;
       if (Record[0])
         F.SelectorLookupTable
@@ -1665,18 +1666,18 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       TotalNumMethodPoolEntries += Record[1];
       break;
 
-    case pch::REFERENCED_SELECTOR_POOL: {
+    case REFERENCED_SELECTOR_POOL: {
       ReferencedSelectorsData.insert(ReferencedSelectorsData.end(),
           Record.begin(), Record.end());
       break;
     }
 
-    case pch::PP_COUNTER_VALUE:
+    case PP_COUNTER_VALUE:
       if (!Record.empty() && Listener)
         Listener->ReadCounter(Record[0]);
       break;
 
-    case pch::SOURCE_LOCATION_OFFSETS:
+    case SOURCE_LOCATION_OFFSETS:
       F.SLocOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSLocEntries = Record[0];
       // We cannot delay this until the entire chain is loaded, because then
@@ -1686,7 +1687,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, Record[1]);
       break;
 
-    case pch::SOURCE_LOCATION_PRELOADS:
+    case SOURCE_LOCATION_PRELOADS:
       for (unsigned I = 0, N = Record.size(); I != N; ++I) {
         ASTReadResult Result = ReadSLocEntryRecord(Record[I]);
         if (Result != Success)
@@ -1694,7 +1695,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       }
       break;
 
-    case pch::STAT_CACHE: {
+    case STAT_CACHE: {
       ASTStatCache *MyStatCache =
         new ASTStatCache((const unsigned char *)BlobStart + Record[0],
                          (const unsigned char *)BlobStart,
@@ -1704,7 +1705,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
     }
 
-    case pch::EXT_VECTOR_DECLS:
+    case EXT_VECTOR_DECLS:
       // Optimization for the first block.
       if (ExtVectorDecls.empty())
         ExtVectorDecls.swap(Record);
@@ -1713,12 +1714,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                               Record.begin(), Record.end());
       break;
 
-    case pch::VTABLE_USES:
+    case VTABLE_USES:
       // Later tables overwrite earlier ones.
       VTableUses.swap(Record);
       break;
 
-    case pch::DYNAMIC_CLASSES:
+    case DYNAMIC_CLASSES:
       // Optimization for the first block.
       if (DynamicClasses.empty())
         DynamicClasses.swap(Record);
@@ -1727,7 +1728,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                               Record.begin(), Record.end());
       break;
 
-    case pch::PENDING_IMPLICIT_INSTANTIATIONS:
+    case PENDING_IMPLICIT_INSTANTIATIONS:
       // Optimization for the first block.
       if (PendingImplicitInstantiations.empty())
         PendingImplicitInstantiations.swap(Record);
@@ -1736,12 +1737,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
              PendingImplicitInstantiations.end(), Record.begin(), Record.end());
       break;
 
-    case pch::SEMA_DECL_REFS:
+    case SEMA_DECL_REFS:
       // Later tables overwrite earlier ones.
       SemaDeclRefs.swap(Record);
       break;
 
-    case pch::ORIGINAL_FILE_NAME:
+    case ORIGINAL_FILE_NAME:
       // The primary AST will be the last to get here, so it will be the one
       // that's used.
       ActualOriginalFileName.assign(BlobStart, BlobLen);
@@ -1749,7 +1750,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       MaybeAddSystemRootToFilename(OriginalFileName);
       break;
 
-    case pch::VERSION_CONTROL_BRANCH_REVISION: {
+    case VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
       llvm::StringRef ASTBranch(BlobStart, BlobLen);
       if (llvm::StringRef(CurBranch) != ASTBranch && !DisableValidation) {
@@ -1759,19 +1760,19 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
     }
 
-    case pch::MACRO_DEFINITION_OFFSETS:
+    case MACRO_DEFINITION_OFFSETS:
       F.MacroDefinitionOffsets = (const uint32_t *)BlobStart;
       F.NumPreallocatedPreprocessingEntities = Record[0];
       F.LocalNumMacroDefinitions = Record[1];
       break;
 
-    case pch::DECL_REPLACEMENTS: {
+    case DECL_REPLACEMENTS: {
       if (Record.size() % 2 != 0) {
         Error("invalid DECL_REPLACEMENTS block in AST file");
         return Failure;
       }
       for (unsigned I = 0, N = Record.size(); I != N; I += 2)
-        ReplacedDecls[static_cast<pch::DeclID>(Record[I])] =
+        ReplacedDecls[static_cast<DeclID>(Record[I])] =
             std::make_pair(&F, Record[I+1]);
       break;
     }
@@ -1923,7 +1924,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
         return Failure;
       }
       break;
-    case pch::AST_BLOCK_ID:
+    case AST_BLOCK_ID:
       switch (ReadASTBlock(F)) {
       case Success:
         break;
@@ -1986,22 +1987,22 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
 
   // Load the special types.
   Context->setBuiltinVaListType(
-    GetType(SpecialTypes[pch::SPECIAL_TYPE_BUILTIN_VA_LIST]));
-  if (unsigned Id = SpecialTypes[pch::SPECIAL_TYPE_OBJC_ID])
+    GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
+  if (unsigned Id = SpecialTypes[SPECIAL_TYPE_OBJC_ID])
     Context->setObjCIdType(GetType(Id));
-  if (unsigned Sel = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SELECTOR])
+  if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR])
     Context->setObjCSelType(GetType(Sel));
-  if (unsigned Proto = SpecialTypes[pch::SPECIAL_TYPE_OBJC_PROTOCOL])
+  if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL])
     Context->setObjCProtoType(GetType(Proto));
-  if (unsigned Class = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS])
+  if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS])
     Context->setObjCClassType(GetType(Class));
 
-  if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_CF_CONSTANT_STRING])
+  if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING])
     Context->setCFConstantStringType(GetType(String));
   if (unsigned FastEnum
-        = SpecialTypes[pch::SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
+        = SpecialTypes[SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
     Context->setObjCFastEnumerationStateType(GetType(FastEnum));
-  if (unsigned File = SpecialTypes[pch::SPECIAL_TYPE_FILE]) {
+  if (unsigned File = SpecialTypes[SPECIAL_TYPE_FILE]) {
     QualType FileType = GetType(File);
     if (FileType.isNull()) {
       Error("FILE type is NULL");
@@ -2018,7 +2019,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       Context->setFILEDecl(Tag->getDecl());
     }
   }
-  if (unsigned Jmp_buf = SpecialTypes[pch::SPECIAL_TYPE_jmp_buf]) {
+  if (unsigned Jmp_buf = SpecialTypes[SPECIAL_TYPE_jmp_buf]) {
     QualType Jmp_bufType = GetType(Jmp_buf);
     if (Jmp_bufType.isNull()) {
       Error("jmp_bug type is NULL");
@@ -2035,7 +2036,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       Context->setjmp_bufDecl(Tag->getDecl());
     }
   }
-  if (unsigned Sigjmp_buf = SpecialTypes[pch::SPECIAL_TYPE_sigjmp_buf]) {
+  if (unsigned Sigjmp_buf = SpecialTypes[SPECIAL_TYPE_sigjmp_buf]) {
     QualType Sigjmp_bufType = GetType(Sigjmp_buf);
     if (Sigjmp_bufType.isNull()) {
       Error("sigjmp_buf type is NULL");
@@ -2050,23 +2051,23 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     }
   }
   if (unsigned ObjCIdRedef
-        = SpecialTypes[pch::SPECIAL_TYPE_OBJC_ID_REDEFINITION])
+        = SpecialTypes[SPECIAL_TYPE_OBJC_ID_REDEFINITION])
     Context->ObjCIdRedefinitionType = GetType(ObjCIdRedef);
   if (unsigned ObjCClassRedef
-      = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
+      = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
     Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
-  if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_DESCRIPTOR])
+  if (unsigned String = SpecialTypes[SPECIAL_TYPE_BLOCK_DESCRIPTOR])
     Context->setBlockDescriptorType(GetType(String));
   if (unsigned String
-      = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
+      = SpecialTypes[SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
     Context->setBlockDescriptorExtendedType(GetType(String));
   if (unsigned ObjCSelRedef
-      = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
+      = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
     Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
-  if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_NS_CONSTANT_STRING])
+  if (unsigned String = SpecialTypes[SPECIAL_TYPE_NS_CONSTANT_STRING])
     Context->setNSConstantStringType(GetType(String));
 
-  if (SpecialTypes[pch::SPECIAL_TYPE_INT128_INSTALLED])
+  if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
     Context->setInt128Installed();
 }
 
@@ -2109,8 +2110,8 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
 
       // We only know the AST subblock ID.
       switch (BlockID) {
-      case pch::AST_BLOCK_ID:
-        if (Stream.EnterSubBlock(pch::AST_BLOCK_ID)) {
+      case AST_BLOCK_ID:
+        if (Stream.EnterSubBlock(AST_BLOCK_ID)) {
           Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
           return std::string();
         }
@@ -2143,7 +2144,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
     if (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen)
-          == pch::ORIGINAL_FILE_NAME)
+          == ORIGINAL_FILE_NAME)
       return std::string(BlobStart, BlobLen);
   }
 
@@ -2267,8 +2268,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   DeclsCursor.JumpToBit(Loc.second);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
-  switch ((pch::TypeCode)DeclsCursor.ReadRecord(Code, Record)) {
-  case pch::TYPE_EXT_QUAL: {
+  switch ((TypeCode)DeclsCursor.ReadRecord(Code, Record)) {
+  case TYPE_EXT_QUAL: {
     if (Record.size() != 2) {
       Error("Incorrect encoding of extended qualifier type");
       return QualType();
@@ -2278,7 +2279,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getQualifiedType(Base, Quals);
   }
 
-  case pch::TYPE_COMPLEX: {
+  case TYPE_COMPLEX: {
     if (Record.size() != 1) {
       Error("Incorrect encoding of complex type");
       return QualType();
@@ -2287,7 +2288,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getComplexType(ElemType);
   }
 
-  case pch::TYPE_POINTER: {
+  case TYPE_POINTER: {
     if (Record.size() != 1) {
       Error("Incorrect encoding of pointer type");
       return QualType();
@@ -2296,7 +2297,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getPointerType(PointeeType);
   }
 
-  case pch::TYPE_BLOCK_POINTER: {
+  case TYPE_BLOCK_POINTER: {
     if (Record.size() != 1) {
       Error("Incorrect encoding of block pointer type");
       return QualType();
@@ -2305,7 +2306,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getBlockPointerType(PointeeType);
   }
 
-  case pch::TYPE_LVALUE_REFERENCE: {
+  case TYPE_LVALUE_REFERENCE: {
     if (Record.size() != 1) {
       Error("Incorrect encoding of lvalue reference type");
       return QualType();
@@ -2314,7 +2315,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getLValueReferenceType(PointeeType);
   }
 
-  case pch::TYPE_RVALUE_REFERENCE: {
+  case TYPE_RVALUE_REFERENCE: {
     if (Record.size() != 1) {
       Error("Incorrect encoding of rvalue reference type");
       return QualType();
@@ -2323,7 +2324,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getRValueReferenceType(PointeeType);
   }
 
-  case pch::TYPE_MEMBER_POINTER: {
+  case TYPE_MEMBER_POINTER: {
     if (Record.size() != 2) {
       Error("Incorrect encoding of member pointer type");
       return QualType();
@@ -2333,7 +2334,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getMemberPointerType(PointeeType, ClassType.getTypePtr());
   }
 
-  case pch::TYPE_CONSTANT_ARRAY: {
+  case TYPE_CONSTANT_ARRAY: {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
@@ -2343,14 +2344,14 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                          ASM, IndexTypeQuals);
   }
 
-  case pch::TYPE_INCOMPLETE_ARRAY: {
+  case TYPE_INCOMPLETE_ARRAY: {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
     return Context->getIncompleteArrayType(ElementType, ASM, IndexTypeQuals);
   }
 
-  case pch::TYPE_VARIABLE_ARRAY: {
+  case TYPE_VARIABLE_ARRAY: {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
@@ -2361,7 +2362,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                          SourceRange(LBLoc, RBLoc));
   }
 
-  case pch::TYPE_VECTOR: {
+  case TYPE_VECTOR: {
     if (Record.size() != 3) {
       Error("incorrect encoding of vector type in AST file");
       return QualType();
@@ -2374,7 +2375,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                   (VectorType::AltiVecSpecific)AltiVecSpec);
   }
 
-  case pch::TYPE_EXT_VECTOR: {
+  case TYPE_EXT_VECTOR: {
     if (Record.size() != 3) {
       Error("incorrect encoding of extended vector type in AST file");
       return QualType();
@@ -2385,7 +2386,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getExtVectorType(ElementType, NumElements);
   }
 
-  case pch::TYPE_FUNCTION_NO_PROTO: {
+  case TYPE_FUNCTION_NO_PROTO: {
     if (Record.size() != 4) {
       Error("incorrect encoding of no-proto function type");
       return QualType();
@@ -2395,7 +2396,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getFunctionNoProtoType(ResultType, Info);
   }
 
-  case pch::TYPE_FUNCTION_PROTO: {
+  case TYPE_FUNCTION_PROTO: {
     QualType ResultType = GetType(Record[0]);
     bool NoReturn = Record[1];
     unsigned RegParm = Record[2];
@@ -2421,11 +2422,11 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                                           CallConv));
   }
 
-  case pch::TYPE_UNRESOLVED_USING:
+  case TYPE_UNRESOLVED_USING:
     return Context->getTypeDeclType(
              cast<UnresolvedUsingTypenameDecl>(GetDecl(Record[0])));
 
-  case pch::TYPE_TYPEDEF: {
+  case TYPE_TYPEDEF: {
     if (Record.size() != 2) {
       Error("incorrect encoding of typedef type");
       return QualType();
@@ -2435,10 +2436,10 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getTypedefType(Decl, Canonical);
   }
 
-  case pch::TYPE_TYPEOF_EXPR:
+  case TYPE_TYPEOF_EXPR:
     return Context->getTypeOfExprType(ReadExpr(DeclsCursor));
 
-  case pch::TYPE_TYPEOF: {
+  case TYPE_TYPEOF: {
     if (Record.size() != 1) {
       Error("incorrect encoding of typeof(type) in AST file");
       return QualType();
@@ -2447,10 +2448,10 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getTypeOfType(UnderlyingType);
   }
 
-  case pch::TYPE_DECLTYPE:
+  case TYPE_DECLTYPE:
     return Context->getDecltypeType(ReadExpr(DeclsCursor));
 
-  case pch::TYPE_RECORD: {
+  case TYPE_RECORD: {
     if (Record.size() != 2) {
       Error("incorrect encoding of record type");
       return QualType();
@@ -2461,7 +2462,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return T;
   }
 
-  case pch::TYPE_ENUM: {
+  case TYPE_ENUM: {
     if (Record.size() != 2) {
       Error("incorrect encoding of enum type");
       return QualType();
@@ -2472,7 +2473,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return T;
   }
 
-  case pch::TYPE_ELABORATED: {
+  case TYPE_ELABORATED: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
@@ -2480,13 +2481,13 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getElaboratedType(Keyword, NNS, NamedType);
   }
 
-  case pch::TYPE_OBJC_INTERFACE: {
+  case TYPE_OBJC_INTERFACE: {
     unsigned Idx = 0;
     ObjCInterfaceDecl *ItfD = cast<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
     return Context->getObjCInterfaceType(ItfD);
   }
 
-  case pch::TYPE_OBJC_OBJECT: {
+  case TYPE_OBJC_OBJECT: {
     unsigned Idx = 0;
     QualType Base = GetType(Record[Idx++]);
     unsigned NumProtos = Record[Idx++];
@@ -2496,13 +2497,13 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getObjCObjectType(Base, Protos.data(), NumProtos);    
   }
 
-  case pch::TYPE_OBJC_OBJECT_POINTER: {
+  case TYPE_OBJC_OBJECT_POINTER: {
     unsigned Idx = 0;
     QualType Pointee = GetType(Record[Idx++]);
     return Context->getObjCObjectPointerType(Pointee);
   }
 
-  case pch::TYPE_SUBST_TEMPLATE_TYPE_PARM: {
+  case TYPE_SUBST_TEMPLATE_TYPE_PARM: {
     unsigned Idx = 0;
     QualType Parm = GetType(Record[Idx++]);
     QualType Replacement = GetType(Record[Idx++]);
@@ -2511,7 +2512,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                             Replacement);
   }
 
-  case pch::TYPE_INJECTED_CLASS_NAME: {
+  case TYPE_INJECTED_CLASS_NAME: {
     CXXRecordDecl *D = cast<CXXRecordDecl>(GetDecl(Record[0]));
     QualType TST = GetType(Record[1]); // probably derivable
     // FIXME: ASTContext::getInjectedClassNameType is not currently suitable
@@ -2520,7 +2521,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       QualType(new (*Context, TypeAlignment) InjectedClassNameType(D, TST), 0);
   }
   
-  case pch::TYPE_TEMPLATE_TYPE_PARM: {
+  case TYPE_TEMPLATE_TYPE_PARM: {
     unsigned Idx = 0;
     unsigned Depth = Record[Idx++];
     unsigned Index = Record[Idx++];
@@ -2529,7 +2530,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getTemplateTypeParmType(Depth, Index, Pack, Name);
   }
   
-  case pch::TYPE_DEPENDENT_NAME: {
+  case TYPE_DEPENDENT_NAME: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
@@ -2538,7 +2539,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getDependentNameType(Keyword, NNS, Name, Canon);
   }
   
-  case pch::TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION: {
+  case TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
@@ -2552,7 +2553,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                                       Args.size(), Args.data());
   }
   
-  case pch::TYPE_DEPENDENT_SIZED_ARRAY: {
+  case TYPE_DEPENDENT_SIZED_ARRAY: {
     unsigned Idx = 0;
 
     // ArrayType
@@ -2569,7 +2570,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
                                                IndexTypeQuals, Brackets);
   }
 
-  case pch::TYPE_TEMPLATE_SPECIALIZATION: {
+  case TYPE_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
     bool IsDependent = Record[Idx++];
     TemplateName Name = ReadTemplateName(Record, Idx);
@@ -2787,54 +2788,54 @@ TypeSourceInfo *ASTReader::GetTypeSourceInfo(llvm::BitstreamCursor &DeclsCursor,
   return TInfo;
 }
 
-QualType ASTReader::GetType(pch::TypeID ID) {
+QualType ASTReader::GetType(TypeID ID) {
   unsigned FastQuals = ID & Qualifiers::FastMask;
   unsigned Index = ID >> Qualifiers::FastWidth;
 
-  if (Index < pch::NUM_PREDEF_TYPE_IDS) {
+  if (Index < NUM_PREDEF_TYPE_IDS) {
     QualType T;
-    switch ((pch::PredefinedTypeIDs)Index) {
-    case pch::PREDEF_TYPE_NULL_ID: return QualType();
-    case pch::PREDEF_TYPE_VOID_ID: T = Context->VoidTy; break;
-    case pch::PREDEF_TYPE_BOOL_ID: T = Context->BoolTy; break;
+    switch ((PredefinedTypeIDs)Index) {
+    case PREDEF_TYPE_NULL_ID: return QualType();
+    case PREDEF_TYPE_VOID_ID: T = Context->VoidTy; break;
+    case PREDEF_TYPE_BOOL_ID: T = Context->BoolTy; break;
 
-    case pch::PREDEF_TYPE_CHAR_U_ID:
-    case pch::PREDEF_TYPE_CHAR_S_ID:
+    case PREDEF_TYPE_CHAR_U_ID:
+    case PREDEF_TYPE_CHAR_S_ID:
       // FIXME: Check that the signedness of CharTy is correct!
       T = Context->CharTy;
       break;
 
-    case pch::PREDEF_TYPE_UCHAR_ID:      T = Context->UnsignedCharTy;     break;
-    case pch::PREDEF_TYPE_USHORT_ID:     T = Context->UnsignedShortTy;    break;
-    case pch::PREDEF_TYPE_UINT_ID:       T = Context->UnsignedIntTy;      break;
-    case pch::PREDEF_TYPE_ULONG_ID:      T = Context->UnsignedLongTy;     break;
-    case pch::PREDEF_TYPE_ULONGLONG_ID:  T = Context->UnsignedLongLongTy; break;
-    case pch::PREDEF_TYPE_UINT128_ID:    T = Context->UnsignedInt128Ty;   break;
-    case pch::PREDEF_TYPE_SCHAR_ID:      T = Context->SignedCharTy;       break;
-    case pch::PREDEF_TYPE_WCHAR_ID:      T = Context->WCharTy;            break;
-    case pch::PREDEF_TYPE_SHORT_ID:      T = Context->ShortTy;            break;
-    case pch::PREDEF_TYPE_INT_ID:        T = Context->IntTy;              break;
-    case pch::PREDEF_TYPE_LONG_ID:       T = Context->LongTy;             break;
-    case pch::PREDEF_TYPE_LONGLONG_ID:   T = Context->LongLongTy;         break;
-    case pch::PREDEF_TYPE_INT128_ID:     T = Context->Int128Ty;           break;
-    case pch::PREDEF_TYPE_FLOAT_ID:      T = Context->FloatTy;            break;
-    case pch::PREDEF_TYPE_DOUBLE_ID:     T = Context->DoubleTy;           break;
-    case pch::PREDEF_TYPE_LONGDOUBLE_ID: T = Context->LongDoubleTy;       break;
-    case pch::PREDEF_TYPE_OVERLOAD_ID:   T = Context->OverloadTy;         break;
-    case pch::PREDEF_TYPE_DEPENDENT_ID:  T = Context->DependentTy;        break;
-    case pch::PREDEF_TYPE_NULLPTR_ID:    T = Context->NullPtrTy;          break;
-    case pch::PREDEF_TYPE_CHAR16_ID:     T = Context->Char16Ty;           break;
-    case pch::PREDEF_TYPE_CHAR32_ID:     T = Context->Char32Ty;           break;
-    case pch::PREDEF_TYPE_OBJC_ID:       T = Context->ObjCBuiltinIdTy;    break;
-    case pch::PREDEF_TYPE_OBJC_CLASS:    T = Context->ObjCBuiltinClassTy; break;
-    case pch::PREDEF_TYPE_OBJC_SEL:      T = Context->ObjCBuiltinSelTy;   break;
+    case PREDEF_TYPE_UCHAR_ID:      T = Context->UnsignedCharTy;     break;
+    case PREDEF_TYPE_USHORT_ID:     T = Context->UnsignedShortTy;    break;
+    case PREDEF_TYPE_UINT_ID:       T = Context->UnsignedIntTy;      break;
+    case PREDEF_TYPE_ULONG_ID:      T = Context->UnsignedLongTy;     break;
+    case PREDEF_TYPE_ULONGLONG_ID:  T = Context->UnsignedLongLongTy; break;
+    case PREDEF_TYPE_UINT128_ID:    T = Context->UnsignedInt128Ty;   break;
+    case PREDEF_TYPE_SCHAR_ID:      T = Context->SignedCharTy;       break;
+    case PREDEF_TYPE_WCHAR_ID:      T = Context->WCharTy;            break;
+    case PREDEF_TYPE_SHORT_ID:      T = Context->ShortTy;            break;
+    case PREDEF_TYPE_INT_ID:        T = Context->IntTy;              break;
+    case PREDEF_TYPE_LONG_ID:       T = Context->LongTy;             break;
+    case PREDEF_TYPE_LONGLONG_ID:   T = Context->LongLongTy;         break;
+    case PREDEF_TYPE_INT128_ID:     T = Context->Int128Ty;           break;
+    case PREDEF_TYPE_FLOAT_ID:      T = Context->FloatTy;            break;
+    case PREDEF_TYPE_DOUBLE_ID:     T = Context->DoubleTy;           break;
+    case PREDEF_TYPE_LONGDOUBLE_ID: T = Context->LongDoubleTy;       break;
+    case PREDEF_TYPE_OVERLOAD_ID:   T = Context->OverloadTy;         break;
+    case PREDEF_TYPE_DEPENDENT_ID:  T = Context->DependentTy;        break;
+    case PREDEF_TYPE_NULLPTR_ID:    T = Context->NullPtrTy;          break;
+    case PREDEF_TYPE_CHAR16_ID:     T = Context->Char16Ty;           break;
+    case PREDEF_TYPE_CHAR32_ID:     T = Context->Char32Ty;           break;
+    case PREDEF_TYPE_OBJC_ID:       T = Context->ObjCBuiltinIdTy;    break;
+    case PREDEF_TYPE_OBJC_CLASS:    T = Context->ObjCBuiltinClassTy; break;
+    case PREDEF_TYPE_OBJC_SEL:      T = Context->ObjCBuiltinSelTy;   break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");
     return T.withFastQualifiers(FastQuals);
   }
 
-  Index -= pch::NUM_PREDEF_TYPE_IDS;
+  Index -= NUM_PREDEF_TYPE_IDS;
   assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (TypesLoaded[Index].isNull()) {
     TypesLoaded[Index] = ReadTypeRecord(Index);
@@ -2900,7 +2901,7 @@ TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
   return cast<TranslationUnitDecl>(DeclsLoaded[0]);
 }
 
-Decl *ASTReader::GetDecl(pch::DeclID ID) {
+Decl *ASTReader::GetDecl(DeclID ID) {
   if (ID == 0)
     return 0;
 
@@ -2954,7 +2955,7 @@ bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
       continue;
 
     // Load all of the declaration IDs
-    for (const pch::DeclID *ID = I->LexicalDecls,
+    for (const DeclID *ID = I->LexicalDecls,
                            *IDE = ID + I->NumLexicalDecls;
          ID != IDE; ++ID)
       Decls.push_back(GetDecl(*ID));
@@ -2992,7 +2993,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     RecordData Record;
     unsigned Code = DeclsCursor.ReadCode();
     unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-    if (RecCode != pch::DECL_CONTEXT_VISIBLE) {
+    if (RecCode != DECL_CONTEXT_VISIBLE) {
       Error("Expected visible block");
       return DeclContext::lookup_result(DeclContext::lookup_iterator(),
                                         DeclContext::lookup_iterator());

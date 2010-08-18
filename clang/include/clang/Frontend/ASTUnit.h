@@ -198,7 +198,7 @@ private:
 
   /// \brief A list of the serialization ID numbers for each of the top-level
   /// declarations parsed within the precompiled preamble.
-  std::vector<pch::DeclID> TopLevelDeclsInPreamble;
+  std::vector<serialization::DeclID> TopLevelDeclsInPreamble;
 
   ///
   /// \defgroup CodeCompleteCaching Code-completion caching
@@ -409,7 +409,7 @@ public:
 
   /// \brief Add a new top-level declaration, identified by its ID in
   /// the precompiled preamble.
-  void addTopLevelDeclFromPreamble(pch::DeclID D) {
+  void addTopLevelDeclFromPreamble(serialization::DeclID D) {
     TopLevelDeclsInPreamble.push_back(D);
   }
 
