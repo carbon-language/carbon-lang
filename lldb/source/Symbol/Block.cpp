@@ -323,6 +323,76 @@ Block::SetInlinedFunctionInfo(const char *name, const char *mangled, const Decla
     m_inlineInfoSP.reset(new InlineFunctionInfo(name, mangled, decl_ptr, call_decl_ptr));
 }
 
+
+
+VariableListSP
+Block::GetVariableList (bool get_child_variables, bool can_create)
+{
+    VariableListSP variable_list_sp;
+    if (m_variables.get() == NULL && can_create)
+    {
+        SymbolContext sc;
+        CalculateSymbolContext(&sc);
+        assert(sc.module_sp);
+        sc.module_sp->GetSymbolVendor()->ParseVariablesForContext(sc);
+    }
+
+    if (m_variables.get())
+    {
+        variable_list_sp.reset(new VariableList());
+        if (variable_list_sp.get())
+            variable_list_sp->AddVariables(m_variables.get());
+
+        if (get_child_variables)
+        {
+            Block *child_block = GetFirstChild();
+            while (child_block)
+            {
+                VariableListSP child_block_variable_list(child_block->GetVariableList(get_child_variables, can_create));
+                if (child_block_variable_list.get())
+                    variable_list_sp->AddVariables(child_block_variable_list.get());
+                child_block = child_block->GetSibling();
+            }
+        }
+    }
+
+    return variable_list_sp;
+}
+
+uint32_t
+Block::AppendVariables (bool can_create, bool get_parent_variables, VariableList *variable_list)
+{
+    uint32_t num_variables_added = 0;
+    VariableListSP variable_list_sp(GetVariableList(false, can_create));
+
+    if (variable_list_sp.get())
+    {
+        num_variables_added = variable_list_sp->GetSize();
+        variable_list->AddVariables(variable_list_sp.get());
+    }
+
+    if (get_parent_variables)
+    {
+        Block* parent_block = GetParent();
+        if (parent_block)
+            num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, variable_list);
+    }
+    return num_variables_added;
+}
+
+
+void
+Block::SetVariableList(VariableListSP& variables)
+{
+    m_variables = variables;
+}
+
+uint32_t
+Block::Depth () const
+{
+    return m_depth;
+}
+
 BlockList::BlockList(Function *function, const AddressRange& range) :
     m_function(function),
     m_range(range),
@@ -599,73 +669,3 @@ BlockList::SetVariableList(user_id_t blockID, VariableListSP& variables)
     return false;
 
 }
-
-
-VariableListSP
-Block::GetVariableList (bool get_child_variables, bool can_create)
-{
-    VariableListSP variable_list_sp;
-    if (m_variables.get() == NULL && can_create)
-    {
-        SymbolContext sc;
-        CalculateSymbolContext(&sc);
-        assert(sc.module_sp);
-        sc.module_sp->GetSymbolVendor()->ParseVariablesForContext(sc);
-    }
-
-    if (m_variables.get())
-    {
-        variable_list_sp.reset(new VariableList());
-        if (variable_list_sp.get())
-            variable_list_sp->AddVariables(m_variables.get());
-
-        if (get_child_variables)
-        {
-            Block *child_block = GetFirstChild();
-            while (child_block)
-            {
-                VariableListSP child_block_variable_list(child_block->GetVariableList(get_child_variables, can_create));
-                if (child_block_variable_list.get())
-                    variable_list_sp->AddVariables(child_block_variable_list.get());
-                child_block = child_block->GetSibling();
-            }
-        }
-    }
-
-    return variable_list_sp;
-}
-
-uint32_t
-Block::AppendVariables (bool can_create, bool get_parent_variables, VariableList *variable_list)
-{
-    uint32_t num_variables_added = 0;
-    VariableListSP variable_list_sp(GetVariableList(false, can_create));
-
-    if (variable_list_sp.get())
-    {
-        num_variables_added = variable_list_sp->GetSize();
-        variable_list->AddVariables(variable_list_sp.get());
-    }
-
-    if (get_parent_variables)
-    {
-        Block* parent_block = GetParent();
-        if (parent_block)
-            num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, variable_list);
-    }
-    return num_variables_added;
-}
-
-
-void
-Block::SetVariableList(VariableListSP& variables)
-{
-    m_variables = variables;
-}
-
-uint32_t
-Block::Depth () const
-{
-    return m_depth;
-}
-
