@@ -73,6 +73,10 @@ void t8(int n) {
   new U[n];
 }
 
+// noalias
+// CHECK: declare noalias i8* @_Znam
+void *operator new[](size_t);
+
 void t9() {
   bool b;
 

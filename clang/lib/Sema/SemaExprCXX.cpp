@@ -1257,8 +1257,11 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
           Context.getCanonicalType(
             Func->getParamDecl(0)->getType().getUnqualifiedType());
         // FIXME: Do we need to check for default arguments here?
-        if (Func->getNumParams() == 1 && InitialParamType == Argument)
+        if (Func->getNumParams() == 1 && InitialParamType == Argument) {
+          if(AddMallocAttr && !Func->hasAttr<MallocAttr>())
+            Func->addAttr(::new (Context) MallocAttr());
           return;
+        }
       }
     }
   }
