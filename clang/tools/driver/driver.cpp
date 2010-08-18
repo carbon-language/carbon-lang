@@ -285,10 +285,10 @@ int main(int argc_, const char **argv_) {
 
   llvm::sys::Path Path = GetExecutablePath(argv[0], CanonicalPrefixes);
 
-  TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
-  DiagClient.setPrefix(Path.getBasename());
-
-  Diagnostic Diags(&DiagClient);
+  TextDiagnosticPrinter *DiagClient
+    = new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
+  DiagClient->setPrefix(Path.getBasename());
+  Diagnostic Diags(DiagClient);
 
 #ifdef CLANG_IS_PRODUCTION
   const bool IsProduction = true;

@@ -56,10 +56,6 @@ void CompilerInstance::setDiagnostics(Diagnostic *Value) {
   Diagnostics = Value;
 }
 
-void CompilerInstance::setDiagnosticClient(DiagnosticClient *Value) {
-  DiagClient.reset(Value);
-}
-
 void CompilerInstance::setTarget(TargetInfo *Value) {
   Target.reset(Value);
 }
@@ -131,14 +127,11 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   // Chain in a diagnostic client which will log the diagnostics.
   DiagnosticClient *Logger =
     new TextDiagnosticPrinter(*OS.take(), DiagOpts, /*OwnsOutputStream=*/true);
-  Diags.setClient(new ChainedDiagnosticClient(Diags.getClient(), Logger));
+  Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
 }
 
 void CompilerInstance::createDiagnostics(int Argc, char **Argv) {
   Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv);
-
-  if (Diagnostics)
-    DiagClient.reset(Diagnostics->getClient());
 }
 
 llvm::IntrusiveRefCntPtr<Diagnostic> 
@@ -155,22 +148,20 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
       // bit of a problem. So, just create a text diagnostic printer
       // to complain about this problem, and pretend that the user
       // didn't try to use binary output.
-      DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
-      Diags->setClient(DiagClient.take());
+      Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
       Diags->Report(diag::err_fe_stderr_binary);
       return Diags;
     } else {
-      DiagClient.reset(new BinaryDiagnosticSerializer(llvm::errs()));
+      Diags->setClient(new BinaryDiagnosticSerializer(llvm::errs()));
     }
   } else {
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
+    Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
   }
 
   // Chain in -verify checker, if requested.
   if (Opts.VerifyDiagnostics)
-    DiagClient.reset(new VerifyDiagnosticsClient(*Diags, DiagClient.take()));
+    Diags->setClient(new VerifyDiagnosticsClient(*Diags, Diags->takeClient()));
 
-  Diags->setClient(DiagClient.take());
   if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
 

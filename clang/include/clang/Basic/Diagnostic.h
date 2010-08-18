@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/type_traits.h"
 #include <string>
@@ -202,8 +203,8 @@ private:
   unsigned TemplateBacktraceLimit; // Cap on depth of template backtrace stack,
                                    // 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
-  DiagnosticClient *Client;
-
+  llvm::OwningPtr<DiagnosticClient> Client;
+  
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into four bits per diagnostic.  The low three bits are the mapping
   /// (an instance of diag::Mapping), or zero if unset.  The high bit is set
@@ -285,8 +286,12 @@ public:
   //  Diagnostic characterization methods, used by a client to customize how
   //
 
-  DiagnosticClient *getClient() { return Client; }
-  const DiagnosticClient *getClient() const { return Client; }
+  DiagnosticClient *getClient() { return Client.get(); }
+  const DiagnosticClient *getClient() const { return Client.get(); }
+  
+  /// \brief Return the current diagnostic client along with ownership of that
+  /// client.
+  DiagnosticClient *takeClient() { return Client.take(); }
 
   /// pushMappings - Copies the current DiagMappings and pushes the new copy
   /// onto the top of the stack.
@@ -298,7 +303,10 @@ public:
   /// stack.
   bool popMappings();
 
-  void setClient(DiagnosticClient* client) { Client = client; }
+  /// \brief Set the diagnostic client associated with this diagnostic object.
+  ///
+  /// The diagnostic object takes ownership of \c client.
+  void setClient(DiagnosticClient* client) { Client.reset(client); }
 
   /// setErrorLimit - Specify a limit for the number of errors we should
   /// emit before giving up.  Zero disables the limit.

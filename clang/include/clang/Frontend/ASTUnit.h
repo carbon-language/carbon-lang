@@ -59,6 +59,7 @@ class ASTUnit {
 public:
   typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
     PreprocessedEntitiesByFileMap;
+  
 private:
   llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
   llvm::OwningPtr<FileManager>      FileMgr;

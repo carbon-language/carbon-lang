@@ -121,8 +121,8 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // Run clang -cc1 test.
   if (ArgBegin != ArgEnd && llvm::StringRef(ArgBegin[0]) == "-cc1test") {
-    TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
-    Diagnostic Diags(&DiagClient);
+    Diagnostic Diags(new TextDiagnosticPrinter(llvm::errs(), 
+                                               DiagnosticOptions()));
     return cc1_test(Diags, ArgBegin + 1, ArgEnd);
   }
 
@@ -133,8 +133,8 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // Buffer diagnostics from argument parsing so that we can output them using a
   // well formed diagnostic object.
-  TextDiagnosticBuffer DiagsBuffer;
-  Diagnostic Diags(&DiagsBuffer);
+  TextDiagnosticBuffer *DiagsBuffer = new TextDiagnosticBuffer;
+  Diagnostic Diags(DiagsBuffer);
   CompilerInvocation::CreateFromArgs(Clang->getInvocation(), ArgBegin, ArgEnd,
                                      Diags);
 
@@ -154,7 +154,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   llvm::install_fatal_error_handler(LLVMErrorHandler,
                                   static_cast<void*>(&Clang->getDiagnostics()));
 
-  DiagsBuffer.FlushDiagnostics(Clang->getDiagnostics());
+  DiagsBuffer->FlushDiagnostics(Clang->getDiagnostics());
 
   // Execute the frontend actions.
   bool Success = ExecuteCompilerInvocation(Clang.get());

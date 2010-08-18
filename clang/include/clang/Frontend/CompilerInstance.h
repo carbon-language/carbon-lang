@@ -68,9 +68,6 @@ class CompilerInstance {
   /// The diagnostics engine instance.
   llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
 
-  /// The diagnostics client instance.
-  llvm::OwningPtr<DiagnosticClient> DiagClient;
-
   /// The target being compiled for.
   llvm::OwningPtr<TargetInfo> Target;
 
@@ -266,17 +263,10 @@ public:
   void setDiagnostics(Diagnostic *Value);
 
   DiagnosticClient &getDiagnosticClient() const {
-    assert(DiagClient && "Compiler instance has no diagnostic client!");
-    return *DiagClient;
+    assert(Diagnostics && Diagnostics->getClient() && 
+           "Compiler instance has no diagnostic client!");
+    return *Diagnostics->getClient();
   }
-
-  /// takeDiagnosticClient - Remove the current diagnostics client and give
-  /// ownership to the caller.
-  DiagnosticClient *takeDiagnosticClient() { return DiagClient.take(); }
-
-  /// setDiagnosticClient - Replace the current diagnostics client; the compiler
-  /// instance takes ownership of \arg Value.
-  void setDiagnosticClient(DiagnosticClient *Value);
 
   /// }
   /// @name Target Info

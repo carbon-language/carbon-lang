@@ -484,7 +484,7 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
   ExpectedData ED;
 
   // Ensure any diagnostics go to the primary client.
-  DiagnosticClient *CurClient = Diags.getClient();
+  DiagnosticClient *CurClient = Diags.takeClient();
   Diags.setClient(PrimaryClient.get());
 
   // If we have a preprocessor, scan the source for expected diagnostic
@@ -507,6 +507,7 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
                                "note", false));
   }
 
+  Diags.takeClient();
   Diags.setClient(CurClient);
 
   // Reset the buffer, we have processed all the diagnostics in it.

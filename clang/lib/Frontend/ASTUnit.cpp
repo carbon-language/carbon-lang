@@ -371,14 +371,19 @@ class CaptureDroppedDiagnostics {
 public:
   CaptureDroppedDiagnostics(bool RequestCapture, Diagnostic &Diags, 
                            llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
-    : Diags(Diags), Client(StoredDiags), PreviousClient(Diags.getClient()) 
+    : Diags(Diags), Client(StoredDiags), PreviousClient(0)
   {
-    if (RequestCapture || Diags.getClient() == 0)
+    if (RequestCapture || Diags.getClient() == 0) {
+      PreviousClient = Diags.takeClient();
       Diags.setClient(&Client);
+    }
   }
 
   ~CaptureDroppedDiagnostics() {
-    Diags.setClient(PreviousClient);
+    if (Diags.getClient() == &Client) {
+      Diags.takeClient();
+      Diags.setClient(PreviousClient);
+    }
   }
 };
 
@@ -654,15 +659,12 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
                                     getDiagnostics(),
                                     StoredDiagnostics);
-  Clang.setDiagnosticClient(getDiagnostics().getClient());
   
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
-  if (!Clang.hasTarget()) {
-    Clang.takeDiagnosticClient();
+  if (!Clang.hasTarget())
     return true;
-  }
   
   // Inform the target of the language options.
   //
@@ -754,8 +756,6 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
   }
 
-  Clang.takeDiagnosticClient();
-  
   Invocation.reset(Clang.takeInvocation());
   
   // If we were asked to cache code-completion results and don't have any
@@ -776,7 +776,6 @@ error:
   
   Clang.takeSourceManager();
   Clang.takeFileManager();
-  Clang.takeDiagnosticClient();
   Invocation.reset(Clang.takeInvocation());
   return true;
 }
@@ -1123,13 +1122,11 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
                                     getDiagnostics(),
                                     StoredDiagnostics);
-  Clang.setDiagnosticClient(getDiagnostics().getClient());
   
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
-    Clang.takeDiagnosticClient();
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
     if (CreatedPreambleBuffer)
@@ -1168,7 +1165,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
                             Clang.getFrontendOpts().Inputs[0].first)) {
-    Clang.takeDiagnosticClient();
     Clang.takeInvocation();
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
@@ -1183,7 +1179,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   Act->Execute();
   Act->EndSourceFile();
-  Clang.takeDiagnosticClient();
   Clang.takeInvocation();
   
   if (Diagnostics->hasErrorOccurred()) {
@@ -1321,11 +1316,14 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool PrecompilePreamble,
                                       bool CompleteTranslationUnit,
                                       bool CacheCodeCompletionResults) {
+  bool CreatedDiagnosticsObject = false;
+  
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
     Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
+    CreatedDiagnosticsObject = true;
   }
   
   llvm::SmallVector<const char *, 16> Args;
@@ -1678,14 +1676,14 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   CaptureDroppedDiagnostics Capture(true, 
                                     Clang.getDiagnostics(),
                                     StoredDiagnostics);
-  Clang.setDiagnosticClient(Diag.getClient());
   
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
-    Clang.takeDiagnosticClient();
     Clang.takeInvocation();
+    CCInvocation.getLangOpts().SpellChecking = SpellChecking;
+    return;
   }
   
   // Inform the target of the language options.
@@ -1773,7 +1771,6 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   Clang.takeFileManager();
   Clang.takeSourceManager();
   Clang.takeInvocation();
-  Clang.takeDiagnosticClient();
   Clang.takeCodeCompletionConsumer();
   CCInvocation.getLangOpts().SpellChecking = SpellChecking;
 }
@@ -1796,7 +1793,8 @@ bool ASTUnit::Save(llvm::StringRef File) {
   Writer.WritePCH(getSema(), 0, 0);
   
   // Write the generated bitstream to "Out".
-  Out.write((char *)&Buffer.front(), Buffer.size());  
+  if (!Buffer.empty())
+    Out.write((char *)&Buffer.front(), Buffer.size());  
   Out.close();
   return Out.has_error();
 }

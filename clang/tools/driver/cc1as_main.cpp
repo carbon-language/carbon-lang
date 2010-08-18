@@ -321,9 +321,10 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   InitializeAllAsmParsers();
 
   // Construct our diagnostic client.
-  TextDiagnosticPrinter DiagClient(errs(), DiagnosticOptions());
-  DiagClient.setPrefix("clang -cc1as");
-  Diagnostic Diags(&DiagClient);
+  TextDiagnosticPrinter *DiagClient
+    = new TextDiagnosticPrinter(errs(), DiagnosticOptions());
+  DiagClient->setPrefix("clang -cc1as");
+  Diagnostic Diags(DiagClient);
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
   // error handler.

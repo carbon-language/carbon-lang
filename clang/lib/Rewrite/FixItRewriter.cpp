@@ -32,11 +32,12 @@ FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
     Rewrite(SourceMgr, LangOpts),
     FixItOpts(FixItOpts),
     NumFailures(0) {
-  Client = Diags.getClient();
+  Client = Diags.takeClient();
   Diags.setClient(this);
 }
 
 FixItRewriter::~FixItRewriter() {
+  Diags.takeClient();
   Diags.setClient(Client);
 }
 
@@ -144,9 +145,11 @@ void FixItRewriter::Diag(FullSourceLoc Loc, unsigned DiagID) {
   // When producing this diagnostic, we temporarily bypass ourselves,
   // clear out any current diagnostic, and let the downstream client
   // format the diagnostic.
+  Diags.takeClient();
   Diags.setClient(Client);
   Diags.Clear();
   Diags.Report(Loc, DiagID);
+  Diags.takeClient();
   Diags.setClient(this);
 }
 
