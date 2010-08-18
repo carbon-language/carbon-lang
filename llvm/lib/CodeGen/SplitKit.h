@@ -20,6 +20,7 @@ namespace llvm {
 
 class LiveInterval;
 class LiveIntervals;
+class MachineDominatorTree;
 class MachineInstr;
 class MachineLoop;
 class MachineLoopInfo;
@@ -134,6 +135,71 @@ public:
   /// SplitEditor::splitInsideBlock.
   const MachineBasicBlock *getBlockForInsideSplit();
 };
+
+
+/// LiveIntervalMap - Map values from a large LiveInterval into a small
+/// interval that is a subset. Insert phi-def values as needed. This class is
+/// used by SplitEditor to create new smaller LiveIntervals.
+///
+/// parentli_ is the larger interval, li_ is the subset interval. Every value
+/// in li_ corresponds to exactly one value in parentli_, and the live range
+/// of the value is contained within the live range of the parentli_ value.
+/// Values in parentli_ may map to any number of openli_ values, including 0.
+class LiveIntervalMap {
+  LiveIntervals &lis_;
+  MachineDominatorTree &dt_;
+
+  // The parent interval is never changed.
+  const LiveInterval &parentli_;
+
+  // The child interval's values are fully contained inside parentli_ values.
+  LiveInterval &li_;
+
+  typedef DenseMap<const VNInfo*, VNInfo*> ValueMap;
+
+  // Map parentli_ values to simple values in li_ that are defined at the same
+  // SlotIndex, or NULL for parentli_ values that have complex li_ defs.
+  // Note there is a difference between values mapping to NULL (complex), and
+  // values not present (unknown/unmapped).
+  ValueMap valueMap_;
+
+  // extendTo - Find the last li_ value defined in MBB at or before Idx. The
+  // parentli_ is assumed to be live at Idx. Extend the live range to Idx.
+  // Return the found VNInfo, or NULL.
+  VNInfo *extendTo(MachineBasicBlock *MBB, SlotIndex Idx);
+
+  // addSimpleRange - Add a simple range from parentli_ to li_.
+  // ParentVNI must be live in the [Start;End) interval.
+  void addSimpleRange(SlotIndex Start, SlotIndex End, const VNInfo *ParentVNI);
+
+public:
+  LiveIntervalMap(LiveIntervals &lis,
+                  MachineDominatorTree &dt,
+                  const LiveInterval &parentli,
+                  LiveInterval &li)
+    : lis_(lis), dt_(dt), parentli_(parentli), li_(li) {}
+
+  /// defValue - define a value in li_ from the parentli_ value VNI and Idx.
+  /// Idx does not have to be ParentVNI->def, but it must be contained within
+  /// ParentVNI's live range in parentli_.
+  /// Return the new li_ value.
+  VNInfo *defValue(const VNInfo *ParentVNI, SlotIndex Idx);
+
+  /// mapValue - map ParentVNI to the corresponding li_ value at Idx. It is
+  /// assumed that ParentVNI is live at Idx.
+  /// If ParentVNI has not been defined by defValue, it is assumed that
+  /// ParentVNI->def dominates Idx.
+  /// If ParentVNI has been defined by defValue one or more times, a value that
+  /// dominates Idx will be returned. This may require creating extra phi-def
+  /// values and adding live ranges to li_.
+  VNInfo *mapValue(const VNInfo *ParentVNI, SlotIndex Idx);
+
+  /// addRange - Add live ranges to li_ where [Start;End) intersects parentli_.
+  /// All needed values whose def is not inside [Start;End) must be defined
+  /// beforehand so mapValue will work.
+  void addRange(SlotIndex Start, SlotIndex End);
+};
+
 
 /// SplitEditor - Edit machine code and LiveIntervals for live range
 /// splitting.

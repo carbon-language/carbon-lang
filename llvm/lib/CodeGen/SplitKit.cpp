@@ -17,7 +17,7 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -334,6 +334,218 @@ bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
       Blocks.insert(I->first);
     }
   return !Blocks.empty();
+}
+
+//===----------------------------------------------------------------------===//
+//                               LiveIntervalMap
+//===----------------------------------------------------------------------===//
+
+// defValue - Introduce a li_ def for ParentVNI that could be later than
+// ParentVNI->def.
+VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
+  assert(ParentVNI && "Mapping  NULL value");
+  assert(Idx.isValid() && "Invalid SlotIndex");
+  assert(parentli_.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
+
+  // Is this a simple 1-1 mapping? Not likely.
+  if (Idx == ParentVNI->def)
+    return mapValue(ParentVNI, Idx);
+
+  // This is a complex def. Mark with a NULL in valueMap.
+  VNInfo *OldVNI =
+    valueMap_.insert(ValueMap::value_type(ParentVNI, 0)).first->second;
+  (void)OldVNI;
+  assert(OldVNI == 0 && "Simple/Complex values mixed");
+
+  // Should we insert a minimal snippet of VNI LiveRange, or can we count on
+  // callers to do that? We need it for lookups of complex values.
+  VNInfo *VNI = li_.getNextValue(Idx, 0, true, lis_.getVNInfoAllocator());
+  return VNI;
+}
+
+// mapValue - Find the mapped value for ParentVNI at Idx.
+// Potentially create phi-def values.
+VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
+  assert(ParentVNI && "Mapping  NULL value");
+  assert(Idx.isValid() && "Invalid SlotIndex");
+  assert(parentli_.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
+
+  // Use insert for lookup, so we can add missing values with a second lookup.
+  std::pair<ValueMap::iterator,bool> InsP =
+    valueMap_.insert(ValueMap::value_type(ParentVNI, 0));
+
+  // This was an unknown value. Create a simple mapping.
+  if (InsP.second)
+    return InsP.first->second = li_.createValueCopy(ParentVNI,
+                                                    lis_.getVNInfoAllocator());
+  // This was a simple mapped value.
+  if (InsP.first->second)
+    return InsP.first->second;
+
+  // This is a complex mapped value. There may be multiple defs, and we may need
+  // to create phi-defs.
+  MachineBasicBlock *IdxMBB = lis_.getMBBFromIndex(Idx);
+  assert(IdxMBB && "No MBB at Idx");
+
+  // Is there a def in the same MBB we can extend?
+  if (VNInfo *VNI = extendTo(IdxMBB, Idx))
+    return VNI;
+
+  // Now for the fun part. We know that ParentVNI potentially has multiple defs,
+  // and we may need to create even more phi-defs to preserve VNInfo SSA form.
+  // Perform a depth-first search for predecessor blocks where we know the
+  // dominating VNInfo. Insert phi-def VNInfos along the path back to IdxMBB.
+
+  // Track MBBs where we have created or learned the dominating value.
+  // This may change during the DFS as we create new phi-defs.
+  typedef DenseMap<MachineBasicBlock*, VNInfo*> MBBValueMap;
+  MBBValueMap DomValue;
+
+  for (idf_iterator<MachineBasicBlock*>
+         IDFI = idf_begin(IdxMBB),
+         IDFE = idf_end(IdxMBB); IDFI != IDFE;) {
+    MachineBasicBlock *MBB = *IDFI;
+    SlotIndex End = lis_.getMBBEndIdx(MBB);
+
+    // We are operating on the restricted CFG where ParentVNI is live.
+    if (parentli_.getVNInfoAt(End.getPrevSlot()) != ParentVNI) {
+      IDFI.skipChildren();
+      continue;
+    }
+
+    // Do we have a dominating value in this block?
+    VNInfo *VNI = extendTo(MBB, End);
+    if (!VNI) {
+      ++IDFI;
+      continue;
+    }
+
+    // Yes, VNI dominates MBB. Track the path back to IdxMBB, creating phi-defs
+    // as needed along the way.
+    for (unsigned PI = IDFI.getPathLength()-1; PI != 0; --PI) {
+      // Start from MBB's immediate successor.
+      MachineBasicBlock *Succ = IDFI.getPath(PI-1);
+      std::pair<MBBValueMap::iterator, bool> InsP =
+        DomValue.insert(MBBValueMap::value_type(Succ, VNI));
+      SlotIndex Start = lis_.getMBBStartIdx(Succ);
+      if (InsP.second) {
+        // This is the first time we backtrack to Succ. Verify dominance.
+        if (Succ->pred_size() == 1 || dt_.dominates(MBB, Succ))
+          continue;
+      } else if (InsP.first->second == VNI ||
+                 InsP.first->second->def == Start) {
+        // We have previously backtracked VNI to Succ, or Succ already has a
+        // phi-def. No need to backtrack further.
+        break;
+      }
+      // VNI does not dominate Succ, we need a new phi-def.
+      VNI = li_.getNextValue(Start, 0, true, lis_.getVNInfoAllocator());
+      VNI->setIsPHIDef(true);
+      InsP.first->second = VNI;
+      MBB = Succ;
+    }
+
+    // No need to search the children, we found a dominating value.
+    // FIXME: We could prune up to the last phi-def we inserted, need df_iterator
+    // for that.
+    IDFI.skipChildren();
+  }
+
+  // The search should at least find a dominating value for IdxMBB.
+  assert(!DomValue.empty() && "Couldn't find a reaching definition");
+
+  // Since we went through the trouble of a full DFS visiting all reaching defs,
+  // the values in DomValue are now accurate. No more phi-defs are needed for
+  // these blocks, so we can color the live ranges.
+  // This makes the next mapValue call much faster.
+  VNInfo *IdxVNI = 0;
+  for (MBBValueMap::iterator I = DomValue.begin(), E = DomValue.end(); I != E;
+       ++I) {
+     MachineBasicBlock *MBB = I->first;
+     VNInfo *VNI = I->second;
+     SlotIndex Start = lis_.getMBBStartIdx(MBB);
+     if (MBB == IdxMBB) {
+       // Don't add full liveness to IdxMBB, stop at Idx.
+       if (Start != Idx)
+         li_.addRange(LiveRange(Start, Idx, VNI));
+       IdxVNI = VNI;
+     } else
+      li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
+  }
+
+  assert(IdxVNI && "Didn't find value for Idx");
+  return IdxVNI;
+}
+
+// extendTo - Find the last li_ value defined in MBB at or before Idx. The
+// parentli_ is assumed to be live at Idx. Extend the live range to Idx.
+// Return the found VNInfo, or NULL.
+VNInfo *LiveIntervalMap::extendTo(MachineBasicBlock *MBB, SlotIndex Idx) {
+  LiveInterval::iterator I = std::upper_bound(li_.begin(), li_.end(), Idx);
+  if (I == li_.begin())
+    return 0;
+  --I;
+  if (I->start < lis_.getMBBStartIdx(MBB))
+    return 0;
+  if (I->end < Idx)
+    I->end = Idx;
+  return I->valno;
+}
+
+// addSimpleRange - Add a simple range from parentli_ to li_.
+// ParentVNI must be live in the [Start;End) interval.
+void LiveIntervalMap::addSimpleRange(SlotIndex Start, SlotIndex End,
+                                     const VNInfo *ParentVNI) {
+  VNInfo *VNI = mapValue(ParentVNI, Start);
+  // A simple mappoing is easy.
+  if (VNI->def == ParentVNI->def) {
+    li_.addRange(LiveRange(Start, End, VNI));
+    return;
+  }
+
+  // ParentVNI is a complex value. We must map per MBB.
+  MachineFunction::iterator MBB = lis_.getMBBFromIndex(Start);
+  MachineFunction::iterator MBBE = lis_.getMBBFromIndex(End);
+
+  if (MBB == MBBE) {
+    li_.addRange(LiveRange(Start, End, VNI));
+    return;
+  }
+
+  // First block.
+  li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB), VNI));
+
+  // Run sequence of full blocks.
+  for (++MBB; MBB != MBBE; ++MBB) {
+    Start = lis_.getMBBStartIdx(MBB);
+    li_.addRange(LiveRange(Start, lis_.getMBBEndIdx(MBB),
+                           mapValue(ParentVNI, Start)));
+  }
+
+  // Final block.
+  Start = lis_.getMBBStartIdx(MBB);
+  if (Start != End)
+    li_.addRange(LiveRange(Start, End, mapValue(ParentVNI, Start)));
+}
+
+/// addRange - Add live ranges to li_ where [Start;End) intersects parentli_.
+/// All needed values whose def is not inside [Start;End) must be defined
+/// beforehand so mapValue will work.
+void LiveIntervalMap::addRange(SlotIndex Start, SlotIndex End) {
+  LiveInterval::const_iterator B = parentli_.begin(), E = parentli_.end();
+  LiveInterval::const_iterator I = std::lower_bound(B, E, Start);
+
+  // Check if --I begins before Start and overlaps.
+  if (I != B) {
+    --I;
+    if (I->end > Start)
+      addSimpleRange(Start, std::min(End, I->end), I->valno);
+    ++I;
+  }
+
+  // The remaining ranges begin after Start.
+  for (;I != E && I->start < End; ++I)
+    addSimpleRange(I->start, std::min(End, I->end), I->valno);
 }
 
 //===----------------------------------------------------------------------===//
