@@ -28,6 +28,8 @@ public:
     static SBDebugger
     Create();
 
+    SBDebugger();
+
     ~SBDebugger();
 
     bool
@@ -136,9 +138,6 @@ public:
     FindDebuggerWithID (int id);
 
 private:
-
-    // Use the static function: SBDebugger::Create();
-    SBDebugger();
 
 #ifndef SWIG
 
