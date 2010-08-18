@@ -52,6 +52,18 @@ namespace llvm {
   /// llvm_stop_multithreaded().
   void remove_fatal_error_handler();
 
+  /// ScopedFatalErrorHandler - This is a simple helper class which just
+  /// calls install_fatal_error_handler in its constructor and
+  /// remove_fatal_error_handler in its destructor.
+  struct ScopedFatalErrorHandler {
+    explicit ScopedFatalErrorHandler(fatal_error_handler_t handler,
+                                     void *user_data = 0) {
+      install_fatal_error_handler(handler, user_data);
+    }
+
+    ~ScopedFatalErrorHandler() { remove_fatal_error_handler(); }
+  };
+
   /// Reports a serious error, calling any installed error handler. These
   /// functions are intended to be used for error conditions which are outside
   /// the control of the compiler (I/O errors, invalid user input, etc.)
