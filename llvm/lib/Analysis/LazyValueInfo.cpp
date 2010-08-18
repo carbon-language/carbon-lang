@@ -503,13 +503,92 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     // Return the merged value, which is more precise than 'overdefined'.
     assert(!Result.isOverdefined());
     return Cache[BB] = Result;
-  } else {
-    
   }
 
+  assert(Cache[BB].isOverdefined() && "Recursive query changed our cache?");
+
+  // We can only analyze the definitions of certain classes of instructions
+  // (integral binops and casts at the moment), so bail if this isn't one.
   LVILatticeVal Result;
-  Result.markOverdefined();
-  return Result;
+  if ((!isa<BinaryOperator>(BBI) && !isa<CastInst>(BBI)) ||
+     !BBI->getType()->isIntegerTy()) {
+    DEBUG(dbgs() << " compute BB '" << BB->getName()
+                 << "' - overdefined because inst def found.\n");
+    Result.markOverdefined();
+    return Result;
+  }
+   
+  // FIXME: We're currently limited to binops with a constant RHS.  This should
+  // be improved.
+  BinaryOperator *BO = dyn_cast<BinaryOperator>(BBI);
+  if (BO && !isa<ConstantInt>(BO->getOperand(1))) { 
+    DEBUG(dbgs() << " compute BB '" << BB->getName()
+                 << "' - overdefined because inst def found.\n");
+
+    Result.markOverdefined();
+    return Result;
+  }  
+
+  // Figure out the range of the LHS.  If that fails, bail.
+  LVILatticeVal LHSVal = Parent.getValueInBlock(BBI->getOperand(0), BB);
+  if (!LHSVal.isConstantRange()) {
+    Result.markOverdefined();
+    return Result;
+  }
+  
+  ConstantInt *RHS = 0;
+  ConstantRange LHSRange = LHSVal.getConstantRange();
+  ConstantRange RHSRange(1);
+  const IntegerType *ResultTy = cast<IntegerType>(BBI->getType());
+  if (isa<BinaryOperator>(BBI)) {
+    RHS = cast<ConstantInt>(BBI->getOperand(1));
+    RHSRange = ConstantRange(RHS->getValue(), RHS->getValue()+1);
+  }
+      
+  // NOTE: We're currently limited by the set of operations that ConstantRange
+  // can evaluate symbolically.  Enhancing that set will allows us to analyze
+  // more definitions.
+  switch (BBI->getOpcode()) {
+  case Instruction::Add:
+    Result.markConstantRange(LHSRange.add(RHSRange));
+    break;
+  case Instruction::Sub:
+    Result.markConstantRange(LHSRange.sub(RHSRange));
+    break;
+  case Instruction::Mul:
+    Result.markConstantRange(LHSRange.multiply(RHSRange));
+    break;
+  case Instruction::UDiv:
+    Result.markConstantRange(LHSRange.udiv(RHSRange));
+    break;
+  case Instruction::Shl:
+    Result.markConstantRange(LHSRange.shl(RHSRange));
+    break;
+  case Instruction::LShr:
+    Result.markConstantRange(LHSRange.lshr(RHSRange));
+    break;
+  case Instruction::Trunc:
+    Result.markConstantRange(LHSRange.truncate(ResultTy->getBitWidth()));
+    break;
+  case Instruction::SExt:
+    Result.markConstantRange(LHSRange.signExtend(ResultTy->getBitWidth()));
+    break;
+  case Instruction::ZExt:
+    Result.markConstantRange(LHSRange.zeroExtend(ResultTy->getBitWidth()));
+    break;
+  case Instruction::BitCast:
+    Result.markConstantRange(LHSRange);
+    break;
+  
+  // Unhandled instructions are overdefined.
+  default:
+    DEBUG(dbgs() << " compute BB '" << BB->getName()
+                 << "' - overdefined because inst def found.\n");
+    Result.markOverdefined();
+    break;
+  }
+  
+  return Cache[BB] = Result;
 }
 
 
