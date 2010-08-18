@@ -5,9 +5,9 @@ add_clang_library(clangSerialization
   PCHReader.cpp
   PCHReaderDecl.cpp
   PCHReaderStmt.cpp
-  PCHWriter.cpp
-  PCHWriterDecl.cpp
-  PCHWriterStmt.cpp
+  ASTWriter.cpp
+  ASTWriterDecl.cpp
+  ASTWriterStmt.cpp
   )
 
 add_dependencies(clangSerialization

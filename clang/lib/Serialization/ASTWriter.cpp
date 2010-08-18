@@ -1,4 +1,4 @@
-//===--- PCHWriter.cpp - AST File Writer ----------------------------------===//
+//===--- ASTWriter.cpp - AST File Writer ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

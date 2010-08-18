@@ -1,4 +1,4 @@
-//===--- PCHWriterDecl.cpp - Declaration Serialization --------------------===//
+//===--- ASTWriterDecl.cpp - Declaration Serialization --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

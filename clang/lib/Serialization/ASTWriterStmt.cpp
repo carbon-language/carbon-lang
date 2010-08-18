@@ -1,4 +1,4 @@
-//===--- PCHWriterStmt.cpp - Statement and Expression Serialization -------===//
+//===--- ASTWriterStmt.cpp - Statement and Expression Serialization -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
