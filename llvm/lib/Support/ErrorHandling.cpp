@@ -66,11 +66,10 @@ void llvm::report_fatal_error(const Twine &Reason) {
     // succeeds (e.g. handling EINTR) and we can't use errs() here because
     // raw ostreams can call report_fatal_error.
     SmallVector<char, 64> Buffer;
-    StringRef ReasonStr = Reason.toStringRef(Buffer);
-    
-    ::write(2, "LLVM ERROR: ", 12);
-    ::write(2, ReasonStr.data(), ReasonStr.size());
-    ::write(2, "\n", 1);
+    raw_svector_ostream OS(Buffer);
+    OS << "LLVM ERROR: " << Reason << "\n";
+    StringRef MessageStr = OS.str();
+    (void)::write(2, MessageStr.data(), MessageStr.size());
   }
 
   // If we reached here, we are failing ungracefully. Run the interrupt handlers
