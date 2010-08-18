@@ -219,7 +219,7 @@ namespace {
 /// have IntegerType.  Note that this looks through extends, so the high bits
 /// may not be represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
-                                  const TargetData *TD, unsigned Depth) {
+                                  const TargetData &TD, unsigned Depth) {
   assert(V->getType()->isIntegerTy() && "Not an integer value");
 
   // Limit our recursion depth.
@@ -236,7 +236,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
       case Instruction::Or:
         // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
         // analyze it.
-        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), TD))
+        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), &TD))
           break;
         // FALL THROUGH.
       case Instruction::Add:
@@ -328,7 +328,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
     // If we are lacking TargetData information, we can't compute the offets of
     // elements computed by GEPs.  However, we can handle bitcast equivalent
     // GEPs.
-    if (!TD) {
+    if (TD == 0) {
       if (!GEPOp->hasAllZeroIndices())
         return V;
       V = GEPOp->getOperand(0);
@@ -363,7 +363,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD, 0);
+      Index = GetLinearExpression(Index, IndexScale, IndexOffset, *TD, 0);
       
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
