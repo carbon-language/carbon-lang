@@ -353,8 +353,11 @@ public:
   /// be immediately destroyed; the string will be empty if no error occurred.
   /// This allows optional flags to control how the file will be opened.
   ///
-  /// \param Filename - The file to open. If this is "-" then the
-  /// stream will use stdout instead.
+  /// As a special case, if Filename is "-", then the stream will use
+  /// STDOUT_FILENO instead of opening a file. Note that it will still consider
+  /// itself to own the file descriptor. In particular, it will close the
+  /// file descriptor when it is done (this is necessary to detect
+  /// output errors).
   raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
                  unsigned Flags = 0);
 
