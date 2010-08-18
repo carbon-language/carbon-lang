@@ -576,11 +576,11 @@ bool Diagnostic::ProcessDiag() {
   // If a fatal error has already been emitted, silence all subsequent
   // diagnostics.
   if (FatalErrorOccurred) {
-    if (DiagLevel >= Diagnostic::Error) {
+    if (DiagLevel >= Diagnostic::Error && Client->IncludeInDiagnosticCounts()) {
       ++NumErrors;
       ++NumErrorsSuppressed;
     }
-    
+
     return false;
   }
 
@@ -601,9 +601,11 @@ bool Diagnostic::ProcessDiag() {
   }
 
   if (DiagLevel >= Diagnostic::Error) {
-    ErrorOccurred = true;
-    ++NumErrors;
-    
+    if (Client->IncludeInDiagnosticCounts()) {
+      ErrorOccurred = true;
+      ++NumErrors;
+    }
+
     // If we've emitted a lot of errors, emit a fatal error after it to stop a
     // flood of bogus errors.
     if (ErrorLimit && NumErrors >= ErrorLimit &&
