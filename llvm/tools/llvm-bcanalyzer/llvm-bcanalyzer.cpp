@@ -46,9 +46,6 @@ using namespace llvm;
 static cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
-static cl::opt<std::string>
-  OutputFilename("-o", cl::init("-"), cl::desc("<output file>"));
-
 static cl::opt<bool> Dump("dump", cl::desc("Dump low level bitcode trace"));
 
 //===----------------------------------------------------------------------===//
