@@ -18,7 +18,7 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Serialization/PCHBitCodes.h"
-#include "clang/Serialization/PCHDeserializationListener.h"
+#include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"

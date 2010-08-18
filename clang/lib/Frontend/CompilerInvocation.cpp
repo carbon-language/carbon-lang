@@ -18,7 +18,7 @@
 #include "clang/Driver/Option.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/LangStandard.h"
-#include "clang/Serialization/PCHReader.h"
+#include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"

@@ -25,7 +25,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Frontend/Utils.h"
-#include "clang/Serialization/PCHReader.h"
+#include "clang/Serialization/ASTReader.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"

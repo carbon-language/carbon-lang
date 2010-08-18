@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Serialization/PCHReader.h"
-#include "clang/Serialization/PCHDeserializationListener.h"
+#include "clang/Serialization/ASTReader.h"
+#include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Sema/Sema.h"

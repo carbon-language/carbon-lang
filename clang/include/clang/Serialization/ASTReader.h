@@ -1,4 +1,4 @@
-//===--- PCHReader.h - AST File Reader --------------------------*- C++ -*-===//
+//===--- ASTReader.h - AST File Reader --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
