@@ -560,7 +560,16 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
                             Address so_addr(file_addr, objfile->GetSectionList());
                             address = so_addr.GetLoadAddress (exe_ctx->process);
                             if (address != LLDB_INVALID_ADDRESS)
+                            {
                                 address_type = eAddressTypeLoad;
+                                data.SetByteOrder(exe_ctx->process->GetByteOrder());
+                                data.SetAddressByteSize(exe_ctx->process->GetAddressByteSize());
+                            }
+                            else
+                            {
+                                data.SetByteOrder(objfile->GetByteOrder());
+                                data.SetAddressByteSize(objfile->GetAddressByteSize());
+                            }
                         }
                         if (address_type == eAddressTypeFile)
                             error.SetErrorStringWithFormat ("%s is not loaded.\n", var_sc.module_sp->GetFileSpec().GetFilename().AsCString());
