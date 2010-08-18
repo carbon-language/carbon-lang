@@ -28,16 +28,16 @@ using namespace clang;
 namespace clang {
   class PCHDeclWriter : public DeclVisitor<PCHDeclWriter, void> {
 
-    PCHWriter &Writer;
+    ASTWriter &Writer;
     ASTContext &Context;
-    PCHWriter::RecordData &Record;
+    ASTWriter::RecordData &Record;
 
   public:
     pch::DeclCode Code;
     unsigned AbbrevToUse;
 
-    PCHDeclWriter(PCHWriter &Writer, ASTContext &Context,
-                  PCHWriter::RecordData &Record)
+    PCHDeclWriter(ASTWriter &Writer, ASTContext &Context,
+                  ASTWriter::RecordData &Record)
       : Writer(Writer), Context(Context), Record(Record) {
     }
     
@@ -1038,10 +1038,10 @@ void PCHDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
 }
 
 //===----------------------------------------------------------------------===//
-// PCHWriter Implementation
+// ASTWriter Implementation
 //===----------------------------------------------------------------------===//
 
-void PCHWriter::WriteDeclsBlockAbbrevs() {
+void ASTWriter::WriteDeclsBlockAbbrevs() {
   using namespace llvm;
   // Abbreviation for DECL_PARM_VAR.
   BitCodeAbbrev *Abv = new BitCodeAbbrev();
@@ -1108,7 +1108,7 @@ static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
   return Context.DeclMustBeEmitted(D);
 }
 
-void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {
+void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
   RecordData Record;
   PCHDeclWriter W(*this, Context, Record);
 

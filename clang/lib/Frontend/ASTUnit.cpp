@@ -1789,8 +1789,8 @@ bool ASTUnit::Save(llvm::StringRef File) {
   
   std::vector<unsigned char> Buffer;
   llvm::BitstreamWriter Stream(Buffer);
-  PCHWriter Writer(Stream);
-  Writer.WritePCH(getSema(), 0, 0);
+  ASTWriter Writer(Stream);
+  Writer.WriteAST(getSema(), 0, 0);
   
   // Write the generated bitstream to "Out".
   if (!Buffer.empty())

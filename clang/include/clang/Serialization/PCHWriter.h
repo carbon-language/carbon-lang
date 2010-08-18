@@ -1,4 +1,4 @@
-//===--- PCHWriter.h - Precompiled Headers Writer ---------------*- C++ -*-===//
+//===--- PCHWriter.h - AST File Writer --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the PCHWriter class, which writes a precompiled
+//  This file defines the ASTWriter class, which writes a precompiled
 //  header containing a serialized representation of a translation
 //  unit.
 //
@@ -69,14 +69,13 @@ struct UnsafeQualTypeDenseMapInfo {
   }
 };
 
-/// \brief Writes a precompiled header containing the contents of a
-/// translation unit.
+/// \brief Writes an AST file containing the contents of a translation unit.
 ///
-/// The PCHWriter class produces a bitstream containing the serialized
+/// The ASTWriter class produces a bitstream containing the serialized
 /// representation of a given abstract syntax tree and its supporting
 /// data structures. This bitstream can be de-serialized via an
 /// instance of the PCHReader class.
-class PCHWriter : public PCHDeserializationListener {
+class ASTWriter : public PCHDeserializationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
@@ -239,7 +238,7 @@ private:
   /// declaration or type.
   llvm::SmallVector<Stmt *, 16> StmtsToEmit;
 
-  /// \brief Statements collection to use for PCHWriter::AddStmt().
+  /// \brief Statements collection to use for ASTWriter::AddStmt().
   /// It will point to StmtsToEmit unless it is overriden. 
   llvm::SmallVector<Stmt *, 16> *CollectedStmts;
 
@@ -289,15 +288,15 @@ private:
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
 
-  void WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+  void WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                     const char* isysroot);
-  void WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+  void WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                      const char* isysroot);
   
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
-  PCHWriter(llvm::BitstreamWriter &Stream);
+  ASTWriter(llvm::BitstreamWriter &Stream);
 
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
@@ -312,7 +311,7 @@ public:
   ///
   /// \param PPRec Record of the preprocessing actions that occurred while
   /// preprocessing this file, e.g., macro instantiations
-  void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+  void WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const char* isysroot);
 
   /// \brief Emit a source location.
@@ -479,11 +478,11 @@ class PCHGenerator : public SemaConsumer {
   MemorizeStatCalls *StatCalls; // owned by the FileManager
   std::vector<unsigned char> Buffer;
   llvm::BitstreamWriter Stream;
-  PCHWriter Writer;
+  ASTWriter Writer;
 
 protected:
-  PCHWriter &getWriter() { return Writer; }
-  const PCHWriter &getWriter() const { return Writer; }
+  ASTWriter &getWriter() { return Writer; }
+  const ASTWriter &getWriter() const { return Writer; }
 
 public:
   PCHGenerator(const Preprocessor &PP, bool Chaining,

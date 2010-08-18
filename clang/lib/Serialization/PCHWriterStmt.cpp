@@ -24,13 +24,13 @@ using namespace clang;
 
 namespace clang {
   class PCHStmtWriter : public StmtVisitor<PCHStmtWriter, void> {
-    PCHWriter &Writer;
-    PCHWriter::RecordData &Record;
+    ASTWriter &Writer;
+    ASTWriter::RecordData &Record;
 
   public:
     pch::StmtCode Code;
 
-    PCHStmtWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
+    PCHStmtWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
       : Writer(Writer), Record(Record) { }
     
     void
@@ -1279,10 +1279,10 @@ void PCHStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
 }
 
 //===----------------------------------------------------------------------===//
-// PCHWriter Implementation
+// ASTWriter Implementation
 //===----------------------------------------------------------------------===//
 
-unsigned PCHWriter::RecordSwitchCaseID(SwitchCase *S) {
+unsigned ASTWriter::RecordSwitchCaseID(SwitchCase *S) {
   assert(SwitchCaseIDs.find(S) == SwitchCaseIDs.end() &&
          "SwitchCase recorded twice");
   unsigned NextID = SwitchCaseIDs.size();
@@ -1290,7 +1290,7 @@ unsigned PCHWriter::RecordSwitchCaseID(SwitchCase *S) {
   return NextID;
 }
 
-unsigned PCHWriter::getSwitchCaseID(SwitchCase *S) {
+unsigned ASTWriter::getSwitchCaseID(SwitchCase *S) {
   assert(SwitchCaseIDs.find(S) != SwitchCaseIDs.end() &&
          "SwitchCase hasn't been seen yet");
   return SwitchCaseIDs[S];
@@ -1298,7 +1298,7 @@ unsigned PCHWriter::getSwitchCaseID(SwitchCase *S) {
 
 /// \brief Retrieve the ID for the given label statement, which may
 /// or may not have been emitted yet.
-unsigned PCHWriter::GetLabelID(LabelStmt *S) {
+unsigned ASTWriter::GetLabelID(LabelStmt *S) {
   std::map<LabelStmt *, unsigned>::iterator Pos = LabelIDs.find(S);
   if (Pos != LabelIDs.end())
     return Pos->second;
@@ -1310,7 +1310,7 @@ unsigned PCHWriter::GetLabelID(LabelStmt *S) {
 
 /// \brief Write the given substatement or subexpression to the
 /// bitstream.
-void PCHWriter::WriteSubStmt(Stmt *S) {
+void ASTWriter::WriteSubStmt(Stmt *S) {
   RecordData Record;
   PCHStmtWriter Writer(*this, Record);
   ++NumStatements;
@@ -1320,7 +1320,7 @@ void PCHWriter::WriteSubStmt(Stmt *S) {
     return;
   }
 
-  // Redirect PCHWriter::AddStmt to collect sub stmts.
+  // Redirect ASTWriter::AddStmt to collect sub stmts.
   llvm::SmallVector<Stmt *, 16> SubStmts;
   CollectedStmts = &SubStmts;
 
@@ -1336,7 +1336,7 @@ void PCHWriter::WriteSubStmt(Stmt *S) {
   }
 #endif
 
-  // Revert PCHWriter::AddStmt.
+  // Revert ASTWriter::AddStmt.
   CollectedStmts = &StmtsToEmit;
 
   // Write the sub stmts in reverse order, last to first. When reading them back
@@ -1351,7 +1351,7 @@ void PCHWriter::WriteSubStmt(Stmt *S) {
 
 /// \brief Flush all of the statements that have been added to the
 /// queue via AddStmt().
-void PCHWriter::FlushStmts() {
+void ASTWriter::FlushStmts() {
   RecordData Record;
 
   for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {

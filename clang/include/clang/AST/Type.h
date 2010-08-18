@@ -1040,7 +1040,7 @@ public:
   static bool classof(const Type *) { return true; }
 
   friend class PCHReader;
-  friend class PCHWriter;
+  friend class ASTWriter;
 };
 
 template <> inline const TypedefType *Type::getAs() const {

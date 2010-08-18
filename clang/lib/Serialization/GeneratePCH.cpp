@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines the CreatePCHGenerate function, which creates an
-//  ASTConsume that generates a PCH file.
+//  ASTConsumeR that generates a PCH file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,7 +47,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
-  Writer.WritePCH(*SemaPtr, StatCalls, isysroot);
+  Writer.WriteAST(*SemaPtr, StatCalls, isysroot);
 
   // Write the generated bitstream to "Out".
   Out->write((char *)&Buffer.front(), Buffer.size());

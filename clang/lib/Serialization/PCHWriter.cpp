@@ -1,4 +1,4 @@
-//===--- PCHWriter.cpp - Precompiled Headers Writer -----------------------===//
+//===--- PCHWriter.cpp - AST File Writer ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the PCHWriter class, which writes a precompiled header.
+//  This file defines the ASTWriter class, which writes AST files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,14 +55,14 @@ const T *data(const std::vector<T, Allocator> &v) {
 
 namespace {
   class PCHTypeWriter {
-    PCHWriter &Writer;
-    PCHWriter::RecordData &Record;
+    ASTWriter &Writer;
+    ASTWriter::RecordData &Record;
 
   public:
     /// \brief Type code that corresponds to the record generated.
     pch::TypeCode Code;
 
-    PCHTypeWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
+    PCHTypeWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
       : Writer(Writer), Record(Record), Code(pch::TYPE_EXT_QUAL) { }
 
     void VisitArrayType(const ArrayType *T);
@@ -327,11 +327,11 @@ PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
 namespace {
 
 class TypeLocWriter : public TypeLocVisitor<TypeLocWriter> {
-  PCHWriter &Writer;
-  PCHWriter::RecordData &Record;
+  ASTWriter &Writer;
+  ASTWriter::RecordData &Record;
 
 public:
-  TypeLocWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
+  TypeLocWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
     : Writer(Writer), Record(Record) { }
 
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
@@ -497,12 +497,12 @@ void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
 }
 
 //===----------------------------------------------------------------------===//
-// PCHWriter Implementation
+// ASTWriter Implementation
 //===----------------------------------------------------------------------===//
 
 static void EmitBlockID(unsigned ID, const char *Name,
                         llvm::BitstreamWriter &Stream,
-                        PCHWriter::RecordData &Record) {
+                        ASTWriter::RecordData &Record) {
   Record.clear();
   Record.push_back(ID);
   Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETBID, Record);
@@ -517,7 +517,7 @@ static void EmitBlockID(unsigned ID, const char *Name,
 
 static void EmitRecordID(unsigned ID, const char *Name,
                          llvm::BitstreamWriter &Stream,
-                         PCHWriter::RecordData &Record) {
+                         ASTWriter::RecordData &Record) {
   Record.clear();
   Record.push_back(ID);
   while (*Name)
@@ -526,7 +526,7 @@ static void EmitRecordID(unsigned ID, const char *Name,
 }
 
 static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
-                          PCHWriter::RecordData &Record) {
+                          ASTWriter::RecordData &Record) {
 #define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
   RECORD(STMT_STOP);
   RECORD(STMT_NULL_PTR);
@@ -606,7 +606,7 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
 #undef RECORD
 }
 
-void PCHWriter::WriteBlockInfoBlock() {
+void ASTWriter::WriteBlockInfoBlock() {
   RecordData Record;
   Stream.EnterSubblock(llvm::bitc::BLOCKINFO_BLOCK_ID, 3);
 
@@ -752,7 +752,7 @@ adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
 }
 
 /// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
-void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
+void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   using namespace llvm;
 
   // Metadata
@@ -812,7 +812,7 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
 }
 
 /// \brief Write the LangOptions structure.
-void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
+void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   RecordData Record;
   Record.push_back(LangOpts.Trigraphs);
   Record.push_back(LangOpts.BCPLComment);  // BCPL-style '//' comments.
@@ -942,7 +942,7 @@ public:
 } // end anonymous namespace
 
 /// \brief Write the stat() system call cache to the PCH file.
-void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
+void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   // Build the on-disk hash table containing information about every
   // stat() call.
   OnDiskChainedHashTableGenerator<PCHStatCacheTrait> Generator;
@@ -1053,7 +1053,7 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
 /// entries for files that we actually need. In the common case (no
 /// errors), we probably won't have to create file entries for any of
 /// the files in the AST.
-void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
+void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
                                         const Preprocessor &PP,
                                         const char *isysroot) {
   RecordData Record;
@@ -1241,7 +1241,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 /// \brief Writes the block containing the serialized form of the
 /// preprocessor.
 ///
-void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
+void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   RecordData Record;
 
   // If the preprocessor __COUNTER__ value has been bumped, remember it.
@@ -1394,7 +1394,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Write the representation of a type to the PCH stream.
-void PCHWriter::WriteType(QualType T) {
+void ASTWriter::WriteType(QualType T) {
   pch::TypeID &ID = TypeIDs[T];
   if (ID == 0) // we haven't seen this type before.
     ID = NextTypeID++;
@@ -1445,7 +1445,7 @@ void PCHWriter::WriteType(QualType T) {
 ///
 /// \returns the offset of the DECL_CONTEXT_LEXICAL block within the
 /// bistream, or 0 if no block was written.
-uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
+uint64_t ASTWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
                                                  DeclContext *DC) {
   if (DC->decls_empty())
     return 0;
@@ -1469,7 +1469,7 @@ uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
 ///
 /// \returns the offset of the DECL_CONTEXT_VISIBLE block within the
 /// bistream, or 0 if no block was written.
-uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
+uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
                                                  DeclContext *DC) {
   if (DC->getPrimaryContext() != DC)
     return 0;
@@ -1517,7 +1517,7 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   return Offset;
 }
 
-void PCHWriter::WriteTypeDeclOffsets() {
+void ASTWriter::WriteTypeDeclOffsets() {
   using namespace llvm;
   RecordData Record;
 
@@ -1555,7 +1555,7 @@ void PCHWriter::WriteTypeDeclOffsets() {
 namespace {
 // Trait used for the on-disk hash table used in the method pool.
 class PCHMethodPoolTrait {
-  PCHWriter &Writer;
+  ASTWriter &Writer;
 
 public:
   typedef Selector key_type;
@@ -1567,7 +1567,7 @@ public:
   };
   typedef const data_type& data_type_ref;
 
-  explicit PCHMethodPoolTrait(PCHWriter &Writer) : Writer(Writer) { }
+  explicit PCHMethodPoolTrait(ASTWriter &Writer) : Writer(Writer) { }
 
   static unsigned ComputeHash(Selector Sel) {
     unsigned N = Sel.getNumArgs();
@@ -1648,7 +1648,7 @@ public:
 /// The method pool contains both instance and factory methods, stored
 /// in an on-disk hash table indexed by the selector. The hash table also
 /// contains an empty entry for every other selector known to Sema.
-void PCHWriter::WriteSelectors(Sema &SemaRef) {
+void ASTWriter::WriteSelectors(Sema &SemaRef) {
   using namespace llvm;
 
   // Do we have to do anything at all?
@@ -1744,7 +1744,7 @@ void PCHWriter::WriteSelectors(Sema &SemaRef) {
 }
 
 /// \brief Write the selectors referenced in @selector expression into PCH file.
-void PCHWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
+void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
   using namespace llvm;
   if (SemaRef.ReferencedSelectors.empty())
     return;
@@ -1771,7 +1771,7 @@ void PCHWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
 
 namespace {
 class PCHIdentifierTableTrait {
-  PCHWriter &Writer;
+  ASTWriter &Writer;
   Preprocessor &PP;
 
   /// \brief Determines whether this is an "interesting" identifier
@@ -1792,7 +1792,7 @@ public:
   typedef pch::IdentID data_type;
   typedef data_type data_type_ref;
 
-  PCHIdentifierTableTrait(PCHWriter &Writer, Preprocessor &PP)
+  PCHIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP)
     : Writer(Writer), PP(PP) { }
 
   static unsigned ComputeHash(const IdentifierInfo* II) {
@@ -1875,7 +1875,7 @@ public:
 /// The identifier table consists of a blob containing string data
 /// (the actual identifiers themselves) and a separate "offsets" index
 /// that maps identifier IDs to locations within the blob.
-void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
+void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
   using namespace llvm;
 
   // Create and write out the blob that contains the identifier
@@ -1949,7 +1949,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Write a record containing the given attributes.
-void PCHWriter::WriteAttributeRecord(const AttrVec &Attrs) {
+void ASTWriter::WriteAttributeRecord(const AttrVec &Attrs) {
   RecordData Record;
   for (AttrVec::const_iterator i = Attrs.begin(), e = Attrs.end(); i != e; ++i){
     const Attr * A = *i;
@@ -1964,14 +1964,14 @@ void PCHWriter::WriteAttributeRecord(const AttrVec &Attrs) {
   Stream.EmitRecord(pch::DECL_ATTR, Record);
 }
 
-void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
+void ASTWriter::AddString(const std::string &Str, RecordData &Record) {
   Record.push_back(Str.size());
   Record.insert(Record.end(), Str.begin(), Str.end());
 }
 
 /// \brief Note that the identifier II occurs at the given offset
 /// within the identifier table.
-void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
+void ASTWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
   pch::IdentID ID = IdentifierIDs[II];
   // Only store offsets new to this PCH file. Other identifier names are looked
   // up earlier in the chain and thus don't need an offset.
@@ -1981,7 +1981,7 @@ void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
 
 /// \brief Note that the selector Sel occurs at the given offset
 /// within the method pool/selector table.
-void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
+void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
   unsigned ID = SelectorIDs[Sel];
   assert(ID && "Unknown selector");
   // Don't record offsets for selectors that are also available in a different
@@ -1991,7 +1991,7 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
   SelectorOffsets[ID - FirstSelectorID] = Offset;
 }
 
-PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
+ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
   : Stream(Stream), Chain(0), FirstDeclID(1), NextDeclID(FirstDeclID),
     FirstTypeID(pch::NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(1), NextIdentID(FirstIdentID), FirstSelectorID(1),
@@ -2000,7 +2000,7 @@ PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
     NumVisibleDeclContexts(0) {
 }
 
-void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const char *isysroot) {
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
@@ -2011,12 +2011,12 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteBlockInfoBlock();
 
   if (Chain)
-    WritePCHChain(SemaRef, StatCalls, isysroot);
+    WriteASTChain(SemaRef, StatCalls, isysroot);
   else
-    WritePCHCore(SemaRef, StatCalls, isysroot);
+    WriteASTCore(SemaRef, StatCalls, isysroot);
 }
 
-void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                              const char *isysroot) {
   using namespace llvm;
 
@@ -2221,7 +2221,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.ExitBlock();
 }
 
-void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                               const char *isysroot) {
   using namespace llvm;
 
@@ -2446,7 +2446,7 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.ExitBlock();
 }
 
-void PCHWriter::WriteDeclUpdateBlock() {
+void ASTWriter::WriteDeclUpdateBlock() {
   if (ReplacedDecls.empty())
     return;
 
@@ -2459,16 +2459,16 @@ void PCHWriter::WriteDeclUpdateBlock() {
   Stream.EmitRecord(pch::DECL_REPLACEMENTS, Record);
 }
 
-void PCHWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
+void ASTWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
   Record.push_back(Loc.getRawEncoding());
 }
 
-void PCHWriter::AddSourceRange(SourceRange Range, RecordData &Record) {
+void ASTWriter::AddSourceRange(SourceRange Range, RecordData &Record) {
   AddSourceLocation(Range.getBegin(), Record);
   AddSourceLocation(Range.getEnd(), Record);
 }
 
-void PCHWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
+void ASTWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
   Record.push_back(Value.getBitWidth());
   unsigned N = Value.getNumWords();
   const uint64_t* Words = Value.getRawData();
@@ -2476,20 +2476,20 @@ void PCHWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
     Record.push_back(Words[I]);
 }
 
-void PCHWriter::AddAPSInt(const llvm::APSInt &Value, RecordData &Record) {
+void ASTWriter::AddAPSInt(const llvm::APSInt &Value, RecordData &Record) {
   Record.push_back(Value.isUnsigned());
   AddAPInt(Value, Record);
 }
 
-void PCHWriter::AddAPFloat(const llvm::APFloat &Value, RecordData &Record) {
+void ASTWriter::AddAPFloat(const llvm::APFloat &Value, RecordData &Record) {
   AddAPInt(Value.bitcastToAPInt(), Record);
 }
 
-void PCHWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {
+void ASTWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {
   Record.push_back(getIdentifierRef(II));
 }
 
-pch::IdentID PCHWriter::getIdentifierRef(const IdentifierInfo *II) {
+pch::IdentID ASTWriter::getIdentifierRef(const IdentifierInfo *II) {
   if (II == 0)
     return 0;
 
@@ -2499,7 +2499,7 @@ pch::IdentID PCHWriter::getIdentifierRef(const IdentifierInfo *II) {
   return ID;
 }
 
-pch::IdentID PCHWriter::getMacroDefinitionID(MacroDefinition *MD) {
+pch::IdentID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
   if (MD == 0)
     return 0;
   
@@ -2509,11 +2509,11 @@ pch::IdentID PCHWriter::getMacroDefinitionID(MacroDefinition *MD) {
   return ID;
 }
 
-void PCHWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
+void ASTWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
   Record.push_back(getSelectorRef(SelRef));
 }
 
-pch::SelectorID PCHWriter::getSelectorRef(Selector Sel) {
+pch::SelectorID ASTWriter::getSelectorRef(Selector Sel) {
   if (Sel.getAsOpaquePtr() == 0) {
     return 0;
   }
@@ -2530,11 +2530,11 @@ pch::SelectorID PCHWriter::getSelectorRef(Selector Sel) {
   return SID;
 }
 
-void PCHWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record) {
+void ASTWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record) {
   AddDeclRef(Temp->getDestructor(), Record);
 }
 
-void PCHWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                            const TemplateArgumentLocInfo &Arg,
                                            RecordData &Record) {
   switch (Kind) {
@@ -2556,7 +2556,7 @@ void PCHWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   }
 }
 
-void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
+void ASTWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                                        RecordData &Record) {
   AddTemplateArgument(Arg.getArgument(), Record);
 
@@ -2571,7 +2571,7 @@ void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                              Record);
 }
 
-void PCHWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
+void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
   if (TInfo == 0) {
     AddTypeRef(QualType(), Record);
     return;
@@ -2583,7 +2583,7 @@ void PCHWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
     TLW.Visit(TL);
 }
 
-void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
+void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   if (T.isNull()) {
     Record.push_back(pch::PREDEF_TYPE_NULL_ID);
     return;
@@ -2661,11 +2661,11 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
   Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
 }
 
-void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
+void ASTWriter::AddDeclRef(const Decl *D, RecordData &Record) {
   Record.push_back(GetDeclRef(D));
 }
 
-pch::DeclID PCHWriter::GetDeclRef(const Decl *D) {
+pch::DeclID ASTWriter::GetDeclRef(const Decl *D) {
   if (D == 0) {
     return 0;
   }
@@ -2687,7 +2687,7 @@ pch::DeclID PCHWriter::GetDeclRef(const Decl *D) {
   return ID;
 }
 
-pch::DeclID PCHWriter::getDeclID(const Decl *D) {
+pch::DeclID ASTWriter::getDeclID(const Decl *D) {
   if (D == 0)
     return 0;
 
@@ -2695,7 +2695,7 @@ pch::DeclID PCHWriter::getDeclID(const Decl *D) {
   return DeclIDs[D];
 }
 
-void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
+void ASTWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   // FIXME: Emit a stable enum for NameKind.  0 = Identifier etc.
   Record.push_back(Name.getNameKind());
   switch (Name.getNameKind()) {
@@ -2729,7 +2729,7 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   }
 }
 
-void PCHWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
+void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
                                        RecordData &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would
   // typically accomodate the vast majority.
@@ -2768,7 +2768,7 @@ void PCHWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
   }
 }
 
-void PCHWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
+void ASTWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
   TemplateName::NameKind Kind = Name.getKind(); 
   Record.push_back(Kind);
   switch (Kind) {
@@ -2806,7 +2806,7 @@ void PCHWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
   }
 }
 
-void PCHWriter::AddTemplateArgument(const TemplateArgument &Arg, 
+void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg, 
                                     RecordData &Record) {
   Record.push_back(Arg.getKind());
   switch (Arg.getKind()) {
@@ -2838,7 +2838,7 @@ void PCHWriter::AddTemplateArgument(const TemplateArgument &Arg,
 }
 
 void
-PCHWriter::AddTemplateParameterList(const TemplateParameterList *TemplateParams,
+ASTWriter::AddTemplateParameterList(const TemplateParameterList *TemplateParams,
                                     RecordData &Record) {
   assert(TemplateParams && "No TemplateParams!");
   AddSourceLocation(TemplateParams->getTemplateLoc(), Record);
@@ -2853,7 +2853,7 @@ PCHWriter::AddTemplateParameterList(const TemplateParameterList *TemplateParams,
 
 /// \brief Emit a template argument list.
 void
-PCHWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
+ASTWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
                                    RecordData &Record) {
   assert(TemplateArgs && "No TemplateArgs!");
   Record.push_back(TemplateArgs->flat_size());
@@ -2863,7 +2863,7 @@ PCHWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
 
 
 void
-PCHWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
+ASTWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
   Record.push_back(Set.size());
   for (UnresolvedSetImpl::const_iterator
          I = Set.begin(), E = Set.end(); I != E; ++I) {
@@ -2872,7 +2872,7 @@ PCHWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
   }
 }
 
-void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
+void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
                                     RecordData &Record) {
   Record.push_back(Base.isVirtual());
   Record.push_back(Base.isBaseOfClass());
@@ -2881,7 +2881,7 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   AddSourceRange(Base.getSourceRange(), Record);
 }
 
-void PCHWriter::AddCXXBaseOrMemberInitializers(
+void ASTWriter::AddCXXBaseOrMemberInitializers(
                         const CXXBaseOrMemberInitializer * const *BaseOrMembers,
                         unsigned NumBaseOrMembers, RecordData &Record) {
   Record.push_back(NumBaseOrMembers);
@@ -2911,7 +2911,7 @@ void PCHWriter::AddCXXBaseOrMemberInitializers(
   }
 }
 
-void PCHWriter::SetReader(PCHReader *Reader) {
+void ASTWriter::SetReader(PCHReader *Reader) {
   assert(Reader && "Cannot remove chain");
   assert(FirstDeclID == NextDeclID &&
          FirstTypeID == NextTypeID &&
@@ -2921,18 +2921,18 @@ void PCHWriter::SetReader(PCHReader *Reader) {
   Chain = Reader;
 }
 
-void PCHWriter::IdentifierRead(pch::IdentID ID, IdentifierInfo *II) {
+void ASTWriter::IdentifierRead(pch::IdentID ID, IdentifierInfo *II) {
   IdentifierIDs[II] = ID;
 }
 
-void PCHWriter::TypeRead(pch::TypeID ID, QualType T) {
+void ASTWriter::TypeRead(pch::TypeID ID, QualType T) {
   TypeIDs[T] = ID;
 }
 
-void PCHWriter::DeclRead(pch::DeclID ID, const Decl *D) {
+void ASTWriter::DeclRead(pch::DeclID ID, const Decl *D) {
   DeclIDs[D] = ID;
 }
 
-void PCHWriter::SelectorRead(pch::SelectorID ID, Selector S) {
+void ASTWriter::SelectorRead(pch::SelectorID ID, Selector S) {
   SelectorIDs[S] = ID;
 }
