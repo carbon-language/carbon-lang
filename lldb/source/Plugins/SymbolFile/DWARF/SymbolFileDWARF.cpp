@@ -2620,17 +2620,14 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         if (type_name_dbstr == g_objc_type_name_id)
                         {
                             clang_type = type_list->GetClangASTContext().GetBuiltInType_objc_id();
-                            ResolveTypeUID (encoding_uid);
                         }
                         else if (type_name_dbstr == g_objc_type_name_Class)
                         {
                             clang_type = type_list->GetClangASTContext().GetBuiltInType_objc_Class();
-                            ResolveTypeUID (encoding_uid);
                         }
                         else if (type_name_dbstr == g_objc_type_name_selector)
                         {
                             clang_type = type_list->GetClangASTContext().GetBuiltInType_objc_selector();
-                            ResolveTypeUID (encoding_uid);
                         }
                     }
                         
