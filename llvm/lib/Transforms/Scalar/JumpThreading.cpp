@@ -147,6 +147,7 @@ bool JumpThreading::runOnFunction(Function &F) {
         DEBUG(dbgs() << "  JT: Deleting dead block '" << BB->getName()
               << "' with terminator: " << *BB->getTerminator() << '\n');
         LoopHeaders.erase(BB);
+        if (LVI) LVI->eraseBlock(BB);
         DeleteDeadBlock(BB);
         Changed = true;
       } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
@@ -167,6 +168,11 @@ bool JumpThreading::runOnFunction(Function &F) {
             bool ErasedFromLoopHeaders = LoopHeaders.erase(BB);
             BasicBlock *Succ = BI->getSuccessor(0);
             
+            // FIXME: It is always conservatively correct to drop the info
+            // for a block even if it doesn't get erased.  This isn't totally
+            // awesome, but it allows us to use AssertingVH to prevent nasty
+            // dangling pointer issues within LazyValueInfo.
+            if (LVI) LVI->eraseBlock(BB);
             if (TryToSimplifyUncondBranchFromEmptyBlock(BB)) {
               Changed = true;
               // If we deleted BB and BB was the header of a loop, then the
@@ -489,6 +495,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       // Remember if SinglePred was the entry block of the function.  If so, we
       // will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
+      if (LVI) LVI->eraseBlock(SinglePred);
       MergeBasicBlockIntoOnlyPred(BB);
       
       if (isEntry && BB != &BB->getParent()->getEntryBlock())

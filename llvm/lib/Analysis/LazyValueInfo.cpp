@@ -274,12 +274,12 @@ namespace {
   public:
     /// BlockCacheEntryTy - This is a computed lattice value at the end of the
     /// specified basic block for a Value* that depends on context.
-    typedef std::pair<BasicBlock*, LVILatticeVal> BlockCacheEntryTy;
+    typedef std::pair<AssertingVH<BasicBlock>, LVILatticeVal> BlockCacheEntryTy;
     
     /// ValueCacheEntryTy - This is all of the cached block information for
     /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
-    typedef std::map<BasicBlock*, LVILatticeVal> ValueCacheEntryTy;
+    typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
 
   private:
      /// LVIValueHandle - A callback value handle update the cache when
@@ -307,7 +307,7 @@ namespace {
     /// OverDefinedCache - This tracks, on a per-block basis, the set of 
     /// values that are over-defined at the end of that block.  This is required
     /// for cache updating.
-    std::set<std::pair<BasicBlock*, Value*> > OverDefinedCache;
+    std::set<std::pair<AssertingVH<BasicBlock>, Value*> > OverDefinedCache;
 
   public:
     
@@ -323,6 +323,16 @@ namespace {
     /// edge from PredBB to OldSucc has been threaded to be from PredBB to
     /// NewSucc.
     void threadEdge(BasicBlock *PredBB,BasicBlock *OldSucc,BasicBlock *NewSucc);
+    
+    /// eraseBlock - This is part of the update interface to inform the cache
+    /// that a block has been deleted.
+    void eraseBlock(BasicBlock *BB);
+    
+    /// clear - Empty the cache.
+    void clear() {
+      ValueCache.clear();
+      OverDefinedCache.clear();
+    }
   };
 } // end anonymous namespace
 
@@ -350,7 +360,7 @@ namespace {
     ValueCacheEntryTy &Cache;
     
     /// This tracks, for each block, what values are overdefined.
-    std::set<std::pair<BasicBlock*, Value*> > &OverDefinedCache;
+    std::set<std::pair<AssertingVH<BasicBlock>, Value*> > &OverDefinedCache;
     
     ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
     /// added to cache but that are not in sorted order.
@@ -359,7 +369,7 @@ namespace {
     
     LVIQuery(Value *V, LazyValueInfoCache &P,
              ValueCacheEntryTy &VC,
-             std::set<std::pair<BasicBlock*, Value*> > &ODC)
+             std::set<std::pair<AssertingVH<BasicBlock>, Value*> > &ODC)
       : Val(V), Parent(P), Cache(VC), OverDefinedCache(ODC) {
     }
 
@@ -384,11 +394,11 @@ namespace {
 } // end anonymous namespace
 
 void LazyValueInfoCache::LVIValueHandle::deleted() {
-  for (std::set<std::pair<BasicBlock*, Value*> >::iterator
+  for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
        I = Parent->OverDefinedCache.begin(),
        E = Parent->OverDefinedCache.end();
        I != E; ) {
-    std::set<std::pair<BasicBlock*, Value*> >::iterator tmp = I;
+    std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator tmp = I;
     ++I;
     if (tmp->second == getValPtr())
       Parent->OverDefinedCache.erase(tmp);
@@ -399,6 +409,19 @@ void LazyValueInfoCache::LVIValueHandle::deleted() {
   Parent->ValueCache.erase(*this);
 }
 
+void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
+  for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
+       I = OverDefinedCache.begin(), E = OverDefinedCache.end(); I != E; ) {
+    std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator tmp = I;
+    ++I;
+    if (tmp->first == BB)
+      OverDefinedCache.erase(tmp);
+  }
+
+  for (std::map<LVIValueHandle, ValueCacheEntryTy>::iterator
+       I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
+    I->second.erase(BB);
+}
 
 /// getCachedEntryForBlock - See if we already have a value for this block.  If
 /// so, return it, otherwise create a new entry in the Cache map to use.
@@ -479,14 +502,10 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
     // Return the merged value, which is more precise than 'overdefined'.
     assert(!Result.isOverdefined());
-    Cache[BB] = Result;
-
+    return Cache[BB] = Result;
   } else {
     
   }
-  
-  DEBUG(dbgs() << " compute BB '" << BB->getName()
-               << "' - overdefined because inst def found.\n");
 
   LVILatticeVal Result;
   Result.markOverdefined();
@@ -630,7 +649,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   worklist.push_back(OldSucc);
   
   DenseSet<Value*> ClearSet;
-  for (std::set<std::pair<BasicBlock*, Value*> >::iterator
+  for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
        I = OverDefinedCache.begin(), E = OverDefinedCache.end(); I != E; ++I) {
     if (I->first == OldSucc)
       ClearSet.insert(I->second);
@@ -651,7 +670,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     for (DenseSet<Value*>::iterator I = ClearSet.begin(),E = ClearSet.end();
          I != E; ++I) {
       // If a value was marked overdefined in OldSucc, and is here too...
-      std::set<std::pair<BasicBlock*, Value*> >::iterator OI =
+      std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator OI =
         OverDefinedCache.find(std::make_pair(ToUpdate, *I));
       if (OI == OverDefinedCache.end()) continue;
 
@@ -678,17 +697,20 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
 //                            LazyValueInfo Impl
 //===----------------------------------------------------------------------===//
 
-bool LazyValueInfo::runOnFunction(Function &F) {
-  TD = getAnalysisIfAvailable<TargetData>();
-  // Fully lazy.
-  return false;
-}
-
 /// getCache - This lazily constructs the LazyValueInfoCache.
 static LazyValueInfoCache &getCache(void *&PImpl) {
   if (!PImpl)
     PImpl = new LazyValueInfoCache();
   return *static_cast<LazyValueInfoCache*>(PImpl);
+}
+
+bool LazyValueInfo::runOnFunction(Function &F) {
+  if (PImpl)
+    getCache(PImpl).clear();
+  
+  TD = getAnalysisIfAvailable<TargetData>();
+  // Fully lazy.
+  return false;
 }
 
 void LazyValueInfo::releaseMemory() {
@@ -792,5 +814,9 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
 
 void LazyValueInfo::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
                                BasicBlock* NewSucc) {
-  getCache(PImpl).threadEdge(PredBB, OldSucc, NewSucc);
+  if (PImpl) getCache(PImpl).threadEdge(PredBB, OldSucc, NewSucc);
+}
+
+void LazyValueInfo::eraseBlock(BasicBlock *BB) {
+  if (PImpl) getCache(PImpl).eraseBlock(BB);
 }

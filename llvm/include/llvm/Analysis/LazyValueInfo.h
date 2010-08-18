@@ -61,6 +61,8 @@ public:
   /// PredBB to OldSucc to be from PredBB to NewSucc instead.
   void threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc, BasicBlock *NewSucc);
   
+  /// eraseBlock - Inform the analysis cache that we have erased a block.
+  void eraseBlock(BasicBlock *BB);
   
   // Implementation boilerplate.
   
