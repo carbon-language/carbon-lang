@@ -205,3 +205,47 @@ namespace test2 {
     void g(X2 parm11[2]);     // expected-error {{array of abstract class type 'X2<N>'}}
   };
 }
+
+namespace test3 {
+  struct A { // expected-note {{not complete until}}
+    A x; // expected-error {{field has incomplete type}}
+    virtual void abstract() = 0;
+  };
+
+  struct B { // expected-note {{not complete until}}
+    virtual void abstract() = 0;
+    B x; // expected-error {{field has incomplete type}}
+  };
+
+  struct C {
+    static C x; // expected-error {{abstract class}}
+    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+  };
+
+  struct D {
+    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    static D x; // expected-error {{abstract class}}
+  };
+}
+
+namespace test4 {
+  template <class T> struct A {
+    A x; // expected-error {{abstract class}}
+    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+  };
+
+  template <class T> struct B {
+    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    B x; // expected-error {{abstract class}}
+  };
+
+  template <class T> struct C {
+    static C x; // expected-error {{abstract class}}
+    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+  };
+
+  template <class T> struct D {
+    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    static D x; // expected-error {{abstract class}}
+  };
+}
