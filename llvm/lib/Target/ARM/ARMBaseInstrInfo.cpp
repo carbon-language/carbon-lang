@@ -1403,13 +1403,12 @@ ConvertToSetZeroFlag(MachineInstr *MI, MachineInstr *CmpInstr) const {
   case ARM::ADDri:
   case ARM::SUBri:
   case ARM::t2ADDri:
-  case ARM::t2SUBri: {
+  case ARM::t2SUBri:
     MI->RemoveOperand(5);
-    MachineInstrBuilder MB(MI);
-    MB.addReg(ARM::CPSR, RegState::Define | RegState::Implicit);
+    MachineInstrBuilder(MI)
+      .addReg(ARM::CPSR, RegState::Define | RegState::Implicit);
     CmpInstr->eraseFromParent();
     return true;
-  }
   }
 
   return false;
