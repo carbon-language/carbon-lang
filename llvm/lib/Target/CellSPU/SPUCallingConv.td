@@ -21,8 +21,7 @@ class CCIfSubtarget<string F, CCAction A>
 
 // Return-value convention for Cell SPU: return value to be passed in reg 3-74
 def RetCC_SPU : CallingConv<[
-  CCIfType<[i8,i16,i32,i64,i128,f32,f64,v16i8,v8i16,v4i32,v2i64,v4f32,v2f64, 
-            v2i32, v2f32],
+  CCIfType<[i8,i16,i32,i64,i128,f32,f64,v16i8,v8i16,v4i32,v2i64,v4f32,v2f64],
   CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
                  R12, R13, R14, R15, R16, R17, R18, R19, R20,
                  R21, R22, R23, R24, R25, R26, R27, R28, R29,
@@ -39,7 +38,7 @@ def RetCC_SPU : CallingConv<[
 //===----------------------------------------------------------------------===//
 def CCC_SPU : CallingConv<[
   CCIfType<[i8, i16, i32, i64, i128, f32, f64, 
-            v16i8, v8i16, v4i32, v4f32, v2i64, v2f64, v2i32, v2f32],
+            v16i8, v8i16, v4i32, v4f32, v2i64, v2f64],
             CCAssignToReg<[R3,   R4,  R5,  R6,  R7,  R8,  R9, R10, R11,
                            R12, R13, R14, R15, R16, R17, R18, R19, R20,
                            R21, R22, R23, R24, R25, R26, R27, R28, R29,

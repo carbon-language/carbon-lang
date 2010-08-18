@@ -9,7 +9,7 @@ define %vec @test_ret(%vec %param)
 
 define %vec @test_add(%vec %param)
 {
-;CHECK: fa $3, $3, $3
+;CHECK: fa {{\$.}}, $3, $3
  %1 = fadd %vec %param, %param
 ;CHECK: bi $lr
  ret %vec %1
@@ -17,7 +17,7 @@ define %vec @test_add(%vec %param)
 
 define %vec @test_sub(%vec %param)
 {
-;CHECK: fs $3, $3, $3
+;CHECK: fs {{\$.}}, $3, $3
  %1 = fsub %vec %param, %param
 
 ;CHECK: bi $lr
@@ -26,7 +26,7 @@ define %vec @test_sub(%vec %param)
 
 define %vec @test_mul(%vec %param)
 {
-;CHECK: fm $3, $3, $3
+;CHECK: fm {{\$.}}, $3, $3
  %1 = fmul %vec %param, %param
 
 ;CHECK: bi $lr
@@ -47,7 +47,7 @@ define void @test_store(%vec %val, %vec* %ptr){
 ;CHECK: stqd 
   store %vec undef, %vec* null
 
-;CHECK: stqd $3, 0($4)
+;CHECK: stqd $3, 0(${{.}})
 ;CHECK: bi $lr
   store %vec %val, %vec* %ptr
   ret void

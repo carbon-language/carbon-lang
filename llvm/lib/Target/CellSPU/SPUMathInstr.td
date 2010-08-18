@@ -39,7 +39,7 @@ def : Pat<(mul (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)),
                      (FSMBIv8i16 0xcccc))>;
                  
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
-// v4i32, v2i32, i32 multiply instruction sequence:
+// v4i32, i32 multiply instruction sequence:
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 def MPYv4i32:
@@ -48,14 +48,6 @@ def MPYv4i32:
         (v4i32 (Av4i32 (v4i32 (MPYHv4i32 VECREG:$rA, VECREG:$rB)),
                        (v4i32 (MPYHv4i32 VECREG:$rB, VECREG:$rA)))),
         (v4i32 (MPYUv4i32 VECREG:$rA, VECREG:$rB)))>;
-
-def MPYv2i32:
-  Pat<(mul (v2i32 VECREG:$rA), (v2i32 VECREG:$rB)),
-      (Av2i32
-        (v2i32 (Av2i32 (v2i32 (MPYHv2i32 VECREG:$rA, VECREG:$rB)),
-                       (v2i32 (MPYHv2i32 VECREG:$rB, VECREG:$rA)))),
-        (v2i32 (MPYUv2i32 VECREG:$rA, VECREG:$rB)))>;
-
 
 def MPYi32:
   Pat<(mul R32C:$rA, R32C:$rB),

@@ -9,7 +9,7 @@ define %vec @test_ret(%vec %param)
 
 define %vec @test_add(%vec %param)
 {
-;CHECK: a $3, $3, $3
+;CHECK: a {{\$.}}, $3, $3
   %1 = add %vec %param, %param
 ;CHECK: bi $lr
   ret %vec %1
@@ -17,7 +17,7 @@ define %vec @test_add(%vec %param)
 
 define %vec @test_sub(%vec %param)
 {
-;CHECK: sf $3, $4, $3
+;CHECK: sf {{\$.}}, $4, $3
   %1 = sub %vec %param, <i32 1, i32 1>
 
 ;CHECK: bi $lr
@@ -28,8 +28,8 @@ define %vec @test_mul(%vec %param)
 {
 ;CHECK: mpyu
 ;CHECK: mpyh
-;CHECK: a
-;CHECK: a $3
+;CHECK: a {{\$., \$., \$.}}
+;CHECK: a {{\$., \$., \$.}}
   %1 = mul %vec %param, %param
 
 ;CHECK: bi $lr
@@ -57,7 +57,7 @@ define i32 @test_extract() {
 
 define void @test_store( %vec %val, %vec* %ptr)
 {
-;CHECK: stqd $3, 0($4)
+;CHECK: stqd $3, 0(${{.}})
 ;CHECK: bi $lr
   store %vec %val, %vec* %ptr
   ret void

@@ -394,7 +394,7 @@ def R8C : RegisterClass<"SPU", [i8], 128,
 
 // The SPU's registers as vector registers:
 def VECREG : RegisterClass<"SPU",
-                           [v16i8,v8i16,v2i32,v2f32,v4i32,v4f32,v2i64,v2f64],
+                           [v16i8,v8i16,v4i32,v4f32,v2i64,v2f64],
                            128,
  [
    /* volatile register */

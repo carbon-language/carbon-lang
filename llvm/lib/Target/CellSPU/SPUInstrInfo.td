@@ -62,9 +62,6 @@ let canFoldAsLoad = 1 in {
     def v4f32: LoadDFormVec<v4f32>;
     def v2f64: LoadDFormVec<v2f64>;
 
-    def v2i32: LoadDFormVec<v2i32>;
-    def v2f32: LoadDFormVec<v2f32>;
-
     def r128:  LoadDForm<GPRC>;
     def r64:   LoadDForm<R64C>;
     def r32:   LoadDForm<R32C>;
@@ -97,9 +94,6 @@ let canFoldAsLoad = 1 in {
     def v4f32: LoadAFormVec<v4f32>;
     def v2f64: LoadAFormVec<v2f64>;
 
-    def v2i32: LoadAFormVec<v2i32>;
-    def v2f32: LoadAFormVec<v2f32>;
-
     def r128:  LoadAForm<GPRC>;
     def r64:   LoadAForm<R64C>;
     def r32:   LoadAForm<R32C>;
@@ -131,9 +125,6 @@ let canFoldAsLoad = 1 in {
     def v2i64: LoadXFormVec<v2i64>;
     def v4f32: LoadXFormVec<v4f32>;
     def v2f64: LoadXFormVec<v2f64>;
-
-    def v2i32: LoadXFormVec<v2i32>;
-    def v2f32: LoadXFormVec<v2f32>;
 
     def r128:  LoadXForm<GPRC>;
     def r64:   LoadXForm<R64C>;
@@ -183,9 +174,6 @@ multiclass StoreDForms
   def v4f32: StoreDFormVec<v4f32>;
   def v2f64: StoreDFormVec<v2f64>;
 
-  def v2i32: StoreDFormVec<v2i32>;
-  def v2f32: StoreDFormVec<v2f32>;
-
   def r128:  StoreDForm<GPRC>;
   def r64:   StoreDForm<R64C>;
   def r32:   StoreDForm<R32C>;
@@ -215,9 +203,6 @@ multiclass StoreAForms
   def v2i64: StoreAFormVec<v2i64>;
   def v4f32: StoreAFormVec<v4f32>;
   def v2f64: StoreAFormVec<v2f64>;
-
-  def v2i32: StoreAFormVec<v2i32>;
-  def v2f32: StoreAFormVec<v2f32>;
 
   def r128:  StoreAForm<GPRC>;
   def r64:   StoreAForm<R64C>;
@@ -250,9 +235,6 @@ multiclass StoreXForms
   def v2i64: StoreXFormVec<v2i64>;
   def v4f32: StoreXFormVec<v4f32>;
   def v2f64: StoreXFormVec<v2f64>;
-
-  def v2i32: StoreXFormVec<v2i32>;
-  def v2f32: StoreXFormVec<v2f32>;
 
   def r128:  StoreXForm<GPRC>;
   def r64:   StoreXForm<R64C>;
@@ -613,7 +595,6 @@ class ARegInst<RegisterClass rclass>:
 multiclass AddInstruction {
   def v4i32: AVecInst<v4i32>;
   def v16i8: AVecInst<v16i8>;
-  def v2i32: AVecInst<v2i32>;
   def r32:   ARegInst<R32C>;
 }
 
@@ -677,11 +658,6 @@ def SFvec : RRForm<0b00000010000, (outs VECREG:$rT),
                                   (ins VECREG:$rA, VECREG:$rB),
   "sf\t$rT, $rA, $rB", IntegerOp,
   [(set (v4i32 VECREG:$rT), (sub (v4i32 VECREG:$rB), (v4i32 VECREG:$rA)))]>;
-
-def SF2vec : RRForm<0b00000010000, (outs VECREG:$rT),
-                                  (ins VECREG:$rA, VECREG:$rB),
-  "sf\t$rT, $rA, $rB", IntegerOp,
-  [(set (v2i32 VECREG:$rT), (sub (v2i32 VECREG:$rB), (v2i32 VECREG:$rA)))]>;
 
 
 def SFr32 : RRForm<0b00000010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
@@ -841,10 +817,6 @@ def MPYUv4i32:
   MPYUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
            [/* no pattern */]>;
 
-def MPYUv2i32:
-  MPYUInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-           [/* no pattern */]>;
-
 def MPYUr16:
   MPYUInst<(outs R32C:$rT), (ins R16C:$rA, R16C:$rB),
            [(set R32C:$rT, (mul (zext R16C:$rA), (zext R16C:$rB)))]>;
@@ -921,10 +893,6 @@ class MPYHInst<dag OOL, dag IOL, list<dag> pattern>:
          pattern>;
          
 def MPYHv4i32:
-    MPYHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-             [/* no pattern */]>;
-
-def MPYHv2i32:
     MPYHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
              [/* no pattern */]>;
 
@@ -1517,13 +1485,6 @@ multiclass BitwiseOr
   def f32_v4f32: ORExtractElt<R32FP>;
   def f64_v2f64: ORExtractElt<R64FP>;
 
-  // half <-> full vector mappings
-  def v2i32_v4i32: ORCvtVecVec;
-  def v4i32_v2i32: ORCvtVecVec;
-  def v2f32_v4f32: ORCvtVecVec;
-  def v4f32_v2f32: ORCvtVecVec;
-
-
   // Conversion from vector to GPRC
   def i128_vec:  ORCvtVecGPRC;
 
@@ -1591,16 +1552,10 @@ def : Pat<(v8i16 (SPUprefslot2vec R16C:$rA)),
 def : Pat<(v4i32 (SPUprefslot2vec R32C:$rA)),
           (ORv4i32_i32 R32C:$rA)>;
 
-def : Pat<(v2i32 (SPUprefslot2vec R32C:$rA)),
-          (ORv4i32_i32 R32C:$rA)>;
-
 def : Pat<(v2i64 (SPUprefslot2vec R64C:$rA)),
           (ORv2i64_i64 R64C:$rA)>;
 
 def : Pat<(v4f32 (SPUprefslot2vec R32FP:$rA)),
-          (ORv4f32_f32 R32FP:$rA)>;
-
-def : Pat<(v2f32 (SPUprefslot2vec R32FP:$rA)),
           (ORv4f32_f32 R32FP:$rA)>;
 
 def : Pat<(v2f64 (SPUprefslot2vec R64FP:$rA)),
@@ -1618,32 +1573,14 @@ def : Pat<(SPUvec2prefslot (v8i16 VECREG:$rA)),
 def : Pat<(SPUvec2prefslot (v4i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA)>;
 
-def : Pat<(SPUvec2prefslot (v2i32 VECREG:$rA)),
-          (ORi32_v4i32 VECREG:$rA)>;
-
 def : Pat<(SPUvec2prefslot (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA)>;
 
 def : Pat<(SPUvec2prefslot (v4f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA)>;
 
-def : Pat<(SPUvec2prefslot (v2f32 VECREG:$rA)),
-          (ORf32_v4f32 VECREG:$rA)>;
-
 def : Pat<(SPUvec2prefslot (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA)>;
-
-// Conversions between 64 bit and 128 bit vectors. 
-
-def : Pat<(v4i32 (SPUhalf2vec (v2i32 VECREG:$rA))),
-          (ORv4i32_v2i32 (v2i32 VECREG:$rA))>;
-def : Pat<(v4f32 (SPUhalf2vec (v2f32 VECREG:$rA))),
-          (ORv4f32_v2f32 (v2f32 VECREG:$rA))>;
-
-def : Pat<(v2i32 (SPUvec2half (v4i32 VECREG:$rA))),
-          (ORv2i32_v4i32 VECREG:$rA)>;
-def : Pat<(v2f32 (SPUvec2half (v4f32 VECREG:$rA))),
-          (ORv2f32_v4f32 VECREG:$rA)>;
 
 // Load Register: This is an assembler alias for a bitwise OR of a register
 // against itself. It's here because it brings some clarity to assembly
@@ -2177,15 +2114,11 @@ multiclass ShuffleBytes
   def v8i16_m32 : SHUFBVecInst<v8i16, v4i32>;
   def v4i32     : SHUFBVecInst<v4i32, v16i8>;
   def v4i32_m32 : SHUFBVecInst<v4i32, v4i32>;
-  def v2i32     : SHUFBVecInst<v2i32, v16i8>;
-  def v2i32_m32 : SHUFBVecInst<v2i32, v4i32>;
   def v2i64     : SHUFBVecInst<v2i64, v16i8>;
   def v2i64_m32 : SHUFBVecInst<v2i64, v4i32>;
 
   def v4f32     : SHUFBVecInst<v4f32, v16i8>;
   def v4f32_m32 : SHUFBVecInst<v4f32, v4i32>;
-  def v2f32     : SHUFBVecInst<v2f32, v16i8>;
-  def v2f32_m32 : SHUFBVecInst<v2f32, v4i32>;
 
   def v2f64     : SHUFBVecInst<v2f64, v16i8>;
   def v2f64_m32 : SHUFBVecInst<v2f64, v4i32>;
@@ -3928,7 +3861,6 @@ class FAVecInst<ValueType vectype>:
 multiclass SFPAdd
 {
   def v4f32: FAVecInst<v4f32>;
-  def v2f32: FAVecInst<v2f32>;
   def f32:   FAInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
                     [(set R32FP:$rT, (fadd R32FP:$rA, R32FP:$rB))]>;
 }
@@ -3947,7 +3879,6 @@ class FSVecInst<ValueType vectype>:
 multiclass SFPSub
 {
   def v4f32: FSVecInst<v4f32>;
-  def v2f32: FSVecInst<v2f32>;
   def f32:   FSInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
                     [(set R32FP:$rT, (fsub R32FP:$rA, R32FP:$rB))]>;
 }
@@ -3967,7 +3898,6 @@ class FMVecInst<ValueType type>:
 multiclass SFPMul
 {
   def v4f32: FMVecInst<v4f32>;
-  def v2f32: FMVecInst<v2f32>;
   def f32:   FMInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
                      [(set R32FP:$rT, (fmul R32FP:$rA, R32FP:$rB))]>; 
 }

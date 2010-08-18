@@ -426,10 +426,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::v4f32, SPU::VECREGRegisterClass);
   addRegisterClass(MVT::v2f64, SPU::VECREGRegisterClass);
 
-  // "Odd size" vector classes that we're willing to support:
-  addRegisterClass(MVT::v2i32, SPU::VECREGRegisterClass);
-  addRegisterClass(MVT::v2f32, SPU::VECREGRegisterClass);
-
   for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
     MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
@@ -469,9 +465,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
 
   setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
-
-  setOperationAction(ISD::STORE, MVT::v2i32, Custom);
-  setOperationAction(ISD::STORE, MVT::v2f32, Custom);
 
   setShiftAmountType(MVT::i32);
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
@@ -1085,8 +1078,6 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       case MVT::v4i32:
       case MVT::v8i16:
       case MVT::v16i8:
-      case MVT::v2i32:
-      case MVT::v2f32:
         ArgRegClass = &SPU::VECREGRegClass;
         break;
       }
@@ -1641,10 +1632,6 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     SDValue T = DAG.getConstant(unsigned(SplatBits), VT.getVectorElementType());
     return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T, T, T);
   }
-  case MVT::v2f32:
-  case MVT::v2i32: {
-    return SDValue();
-  }
   case MVT::v2i64: {
     return SPU::LowerV2I64Splat(VT, DAG, SplatBits, dl);
   }
@@ -1788,9 +1775,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   } else if (EltVT == MVT::i16) {
     V2EltIdx0 = 8;
     maskVT = MVT::v8i16;
-  } else if (VecVT == MVT::v2i32 || VecVT == MVT::v2f32 ) {
-    V2EltIdx0 = 2;
-    maskVT = MVT::v4i32;
   } else if (EltVT == MVT::i32 || EltVT == MVT::f32) {
     V2EltIdx0 = 4;
     maskVT = MVT::v4i32;
@@ -1870,16 +1854,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       for (unsigned j = 0; j < BytesPerElement; ++j)
         ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,MVT::i8));
     }
-    // For half vectors padd the mask with zeros for the second half.
-    // This is needed because mask is assumed to be full vector elsewhere in 
-    // the SPU backend. 
-    if(VecVT == MVT::v2i32 || VecVT == MVT::v2f32)
-    for( unsigned i = 0; i < 2; ++i )
-    {
-      for (unsigned j = 0; j < BytesPerElement; ++j)
-        ResultMask.push_back(DAG.getConstant(0,MVT::i8));
-    }
-
     SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8,
                                     &ResultMask[0], ResultMask.size());
     return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V1, V2, VPermMask);
@@ -1909,7 +1883,6 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
     case MVT::v4f32: n_copies = 4; VT = MVT::f32; break;
     case MVT::v2i64: n_copies = 2; VT = MVT::i64; break;
     case MVT::v2f64: n_copies = 2; VT = MVT::f64; break;
-    case MVT::v2i32: n_copies = 2; VT = MVT::i32; break;
     }
 
     SDValue CValue = DAG.getConstant(CN->getZExtValue(), VT);
