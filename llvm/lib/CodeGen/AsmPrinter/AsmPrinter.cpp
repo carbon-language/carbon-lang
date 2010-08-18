@@ -1250,6 +1250,7 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
   
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
     return MCSymbolRefExpr::Create(AP.Mang->getSymbol(GV), Ctx);
+
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV))
     return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);
   
@@ -1543,7 +1544,7 @@ static void EmitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
     case 8:
       if (AP.isVerbose())
         AP.OutStreamer.GetCommentOS() << format("0x%llx\n", CI->getZExtValue());
-        AP.OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
+      AP.OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
       return;
     default:
       EmitGlobalConstantLargeInt(CI, AddrSpace, AP);
