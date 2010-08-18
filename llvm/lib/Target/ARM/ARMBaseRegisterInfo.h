@@ -110,6 +110,8 @@ public:
                                     unsigned BaseReg, int FrameIdx) const;
   void resolveFrameIndex(MachineBasicBlock::iterator I,
                          unsigned BaseReg, int64_t Offset) const;
+  bool isBaseRegInRange(const MachineInstr *MI, unsigned Reg,
+                        int64_t Offset) const;
 
   bool cannotEliminateFrame(const MachineFunction &MF) const;
 

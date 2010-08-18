@@ -659,6 +659,13 @@ public:
     assert(0 && "resolveFrameIndex does not exist on this target");
   }
 
+  /// isBaseRegInRange - Determine whether a given base register definition
+  /// is in range to resolve a frame index.
+  virtual bool isBaseRegInRange(const MachineInstr *MI, unsigned Reg,
+                                int64_t Offset) const {
+    assert(0 && "isBaseRegInRange does not exist on this target");
+    return false; // Must return a value in order to compile with VS 2005
+  }
 
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
   /// frame setup/destroy instructions if they exist (-1 otherwise).  Some

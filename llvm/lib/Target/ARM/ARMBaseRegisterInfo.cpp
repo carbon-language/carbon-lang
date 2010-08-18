@@ -1451,6 +1451,12 @@ ARMBaseRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
   assert (Done && "Unable to resolve frame index!");
 }
 
+bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
+                                           unsigned Reg, int64_t Offset) const {
+
+  return false;
+}
+
 unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                          int SPAdj, FrameIndexValue *Value,

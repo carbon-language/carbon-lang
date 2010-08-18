@@ -146,6 +146,20 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
   MFI->setLocalFrameMaxAlign(MaxAlign);
 }
 
+static inline bool
+lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
+                       std::pair<unsigned, int64_t> &RegOffset,
+                       const MachineInstr *MI,
+                       const TargetRegisterInfo *TRI) {
+  unsigned e = Regs.size();
+  for (unsigned i = 0; i < e; ++i) {
+    RegOffset = Regs[i];
+    if (TRI->isBaseRegInRange(MI, RegOffset.first, RegOffset.second))
+      return true;
+  }
+  return false;
+}
+
 void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
   // Scan the function's instructions looking for frame index references.
   // For each, ask the target if it wants a virtual base register for it
@@ -169,6 +183,9 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
       if (MI->isDebugValue())
         continue;
 
+      // A base register definition is a register+offset pair.
+      SmallVector<std::pair<unsigned, int64_t>, 8> BaseRegisters;
+
       // For now, allocate the base register(s) within the basic block
       // where they're used, and don't try to keep them around outside
       // of that. It may be beneficial to try sharing them more broadly
@@ -186,27 +203,39 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
 
           DEBUG(dbgs() << "Considering: " << *MI);
           if (TRI->needsFrameBaseReg(MI, i)) {
+            unsigned BaseReg = 0;
+            unsigned Offset = 0;
+
             DEBUG(dbgs() << "  Replacing FI in: " << *MI);
-            // FIXME: Make sure any new base reg is aligned reasonably. TBD
-            // what "reasonably" really means. Conservatively, can just
-            // use the alignment of the local block.
 
             // If we have a suitable base register available, use it; otherwise
             // create a new one.
-            // FIXME: For the moment, just always create a new one.
 
-            const TargetRegisterClass *RC = TRI->getPointerRegClass();
-            unsigned BaseReg = Fn.getRegInfo().createVirtualRegister(RC);
+            std::pair<unsigned, int64_t> RegOffset;
+            if (lookupCandidateBaseReg(BaseRegisters, RegOffset, MI, TRI)) {
+              // We found a register to reuse.
+              BaseReg = RegOffset.first;
+              Offset = RegOffset.second;
+            } else {
+              // No previously defined register was in range, so create a
+              // new one.
+              const TargetRegisterClass *RC = TRI->getPointerRegClass();
+              BaseReg = Fn.getRegInfo().createVirtualRegister(RC);
 
-            // Tell the target to insert the instruction to initialize
-            // the base register.
-            TRI->materializeFrameBaseRegister(I, BaseReg, FrameIdx);
+              // Tell the target to insert the instruction to initialize
+              // the base register.
+              TRI->materializeFrameBaseRegister(I, BaseReg, FrameIdx);
+
+              BaseRegisters.push_back(std::pair<unsigned, int64_t>(BaseReg,
+                                                                   Offset));
+              ++NumBaseRegisters;
+            }
+            assert(BaseReg != 0 && "Unable to allocate virtual base register!");
 
             // Modify the instruction to use the new base register rather
             // than the frame index operand.
-            TRI->resolveFrameIndex(I, BaseReg, 0);
+            TRI->resolveFrameIndex(I, BaseReg, Offset);
 
-            ++NumBaseRegisters;
             ++NumReplacements;
           }
 
