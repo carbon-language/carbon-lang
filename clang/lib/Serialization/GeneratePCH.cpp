@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines the CreatePCHGenerate function, which creates an
-//  ASTConsumeR that generates a PCH file.
+//  ASTConsumer that generates a PCH file.
 //
 //===----------------------------------------------------------------------===//
 

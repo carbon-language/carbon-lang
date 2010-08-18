@@ -53,7 +53,7 @@ class TargetInfo;
 
 using namespace idx;
   
-/// \brief Utility class for loading a ASTContext from a PCH file.
+/// \brief Utility class for loading a ASTContext from an AST file.
 ///
 class ASTUnit {
 public:
@@ -196,7 +196,7 @@ private:
   /// \brief The group of timers associated with this translation unit.
   llvm::OwningPtr<llvm::TimerGroup> TimerGroup;  
 
-  /// \brief A list of the PCH ID numbers for each of the top-level
+  /// \brief A list of the serialization ID numbers for each of the top-level
   /// declarations parsed within the precompiled preamble.
   std::vector<pch::DeclID> TopLevelDeclsInPreamble;
 
@@ -358,7 +358,7 @@ public:
         FileManager &getFileManager()       { return *FileMgr; }
 
   const std::string &getOriginalSourceFileName();
-  const std::string &getPCHFileName();
+  const std::string &getASTFileName();
 
   /// \brief Add a temporary file that the ASTUnit depends on.
   ///
@@ -458,15 +458,15 @@ public:
   /// remapped contents of that file.
   typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
   
-  /// \brief Create a ASTUnit from a PCH file.
+  /// \brief Create a ASTUnit from an AST file.
   ///
-  /// \param Filename - The PCH file to load.
+  /// \param Filename - The AST file to load.
   ///
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
   ///
-  /// \returns - The initialized ASTUnit or null if the PCH failed to load.
-  static ASTUnit *LoadFromPCHFile(const std::string &Filename,
+  /// \returns - The initialized ASTUnit or null if the AST failed to load.
+  static ASTUnit *LoadFromASTFile(const std::string &Filename,
                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,

@@ -50,7 +50,7 @@ public:
   virtual void HandleTopLevelDecl(DeclGroupRef D);
 
   /// HandleInterestingDecl - Handle the specified interesting declaration. This
-  /// is called by the PCH reader when deserializing things that might interest
+  /// is called by the AST reader when deserializing things that might interest
   /// the consumer. The default implementation forwards to HandleTopLevelDecl.
   virtual void HandleInterestingDecl(DeclGroupRef D);
 

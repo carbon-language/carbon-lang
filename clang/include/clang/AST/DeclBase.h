@@ -226,8 +226,8 @@ protected:
   /// PCHLevel - the "level" of AST file from which this declaration was built.
   unsigned PCHLevel : 2;
 
-  /// PCHChanged - if this declaration has changed since being deserialized
-  bool PCHChanged : 1;
+  /// ChangedAfterLoad - if this declaration has changed since being loaded
+  bool ChangedAfterLoad : 1;
 
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 15;
@@ -245,7 +245,7 @@ protected:
     : NextDeclInContext(0), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false),
-      Access(AS_none), PCHLevel(0), PCHChanged(false),
+      Access(AS_none), PCHLevel(0), ChangedAfterLoad(false),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)) {
     if (Decl::CollectingStats()) add(DK);
   }
@@ -253,7 +253,7 @@ protected:
   Decl(Kind DK, EmptyShell Empty)
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false),
-      Access(AS_none), PCHLevel(0), PCHChanged(false),
+      Access(AS_none), PCHLevel(0), ChangedAfterLoad(false),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)) {
     if (Decl::CollectingStats()) add(DK);
   }
@@ -380,11 +380,10 @@ public:
   /// declaration was generated.
   ///
   /// The PCH level of a declaration describes where the declaration originated
-  /// from. A PCH level of 0 indicates that the declaration was not from a
-  /// precompiled header. A PCH level of 1 indicates that the declaration was
-  /// from a top-level precompiled header; 2 indicates that the declaration
-  /// comes from a precompiled header on which the top-level precompiled header
-  /// depends, and so on. 
+  /// from. A PCH level of 0 indicates that the declaration was parsed from
+  /// source. A PCH level of 1 indicates that the declaration was loaded from
+  /// a top-level AST file. A PCH level 2 indicates that the declaration was
+  /// loaded from a PCH file the AST file depends on, and so on.
   unsigned getPCHLevel() const { return PCHLevel; }
 
   /// \brief The maximum PCH level that any declaration may have.
@@ -401,11 +400,13 @@ public:
   ///
   /// In an epic violation of layering, what is "significant" is entirely
   /// up to the serialization system, but implemented in AST and Sema.
-  bool isChangedSinceDeserialization() const { return PCHChanged; }
+  bool isChangedSinceDeserialization() const { return ChangedAfterLoad; }
 
   /// \brief Mark this declaration as having changed since deserialization, or
   /// reset the flag.
-  void setChangedSinceDeserialization(bool Changed) { PCHChanged = Changed; }
+  void setChangedSinceDeserialization(bool Changed) {
+    ChangedAfterLoad = Changed;
+  }
 
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;

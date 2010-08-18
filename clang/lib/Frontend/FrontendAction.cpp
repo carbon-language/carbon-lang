@@ -51,7 +51,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
     std::string Error;
-    ASTUnit *AST = ASTUnit::LoadFromPCHFile(Filename, Diags);
+    ASTUnit *AST = ASTUnit::LoadFromASTFile(Filename, Diags);
     if (!AST)
       goto failure;
 

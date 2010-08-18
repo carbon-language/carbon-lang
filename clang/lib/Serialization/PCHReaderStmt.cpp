@@ -1287,7 +1287,7 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
     unsigned Code = Cursor.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
       if (Cursor.ReadBlockEnd()) {
-        Error("error at end of block in PCH file");
+        Error("error at end of block in AST file");
         return 0;
       }
       break;
@@ -1297,7 +1297,7 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       // No known subblocks, always skip them.
       Cursor.ReadSubBlockID();
       if (Cursor.SkipBlock()) {
-        Error("malformed block record in PCH file");
+        Error("malformed block record in AST file");
         return 0;
       }
       continue;

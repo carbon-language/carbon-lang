@@ -31,14 +31,15 @@ public:
   /// \brief Tell the listener about the reader.
   virtual void SetReader(ASTReader *Reader) = 0;
 
-  /// \brief An identifier was deserialized from the PCH.
+  /// \brief An identifier was deserialized from the AST file.
   virtual void IdentifierRead(pch::IdentID ID, IdentifierInfo *II) = 0;
-  /// \brief A type was deserialized from the PCH. The ID here has the qualifier
-  ///        bits already removed, and T is guaranteed to be locally unqualified
+  /// \brief A type was deserialized from the AST file. The ID here has the
+  ///        qualifier bits already removed, and T is guaranteed to be locally
+  ///        unqualified.
   virtual void TypeRead(pch::TypeID ID, QualType T) = 0;
-  /// \brief A decl was deserialized from the PCH.
+  /// \brief A decl was deserialized from the AST file.
   virtual void DeclRead(pch::DeclID ID, const Decl *D) = 0;
-  /// \brief A selector was read from the PCH.
+  /// \brief A selector was read from the AST file.
   virtual void SelectorRead(pch::SelectorID iD, Selector Sel) = 0;
 };
 

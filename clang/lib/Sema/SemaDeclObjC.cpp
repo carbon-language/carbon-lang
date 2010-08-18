@@ -90,7 +90,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setForwardDecl(false);
       IDecl->setClassLoc(ClassLoc);
       // If the forward decl was in a PCH, we need to write it again in a
-      // chained PCH.
+      // dependent AST file.
       IDecl->setChangedSinceDeserialization(true);
       
       // Since this ObjCInterfaceDecl was created by a forward declaration,
@@ -288,7 +288,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     PDecl->setLocation(AtProtoInterfaceLoc);
     PDecl->setForwardDecl(false);
     CurContext->addDecl(PDecl);
-    // Repeat in dependent PCHs.
+    // Repeat in dependent AST files.
     PDecl->setChangedSinceDeserialization(true);
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, CurContext,

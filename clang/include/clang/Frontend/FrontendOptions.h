@@ -60,10 +60,10 @@ public:
                                            /// completion results.
   unsigned DisableFree : 1;                ///< Disable memory freeing on exit.
   unsigned RelocatablePCH : 1;             ///< When generating PCH files,
-                                           /// instruct the PCH writer to create
+                                           /// instruct the AST writer to create
                                            /// relocatable PCH files.
   unsigned ChainedPCH : 1;                 ///< When generating PCH files,
-                                           /// instruct the PCH writer to create
+                                           /// instruct the AST writer to create
                                            /// chained PCH files.
   unsigned ShowHelp : 1;                   ///< Show the -help text.
   unsigned ShowMacrosInCodeCompletion : 1; ///< Show macros in code completion

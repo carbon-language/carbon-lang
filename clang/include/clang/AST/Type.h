@@ -787,12 +787,12 @@ private:
   /// \brief Linkage of this type.
   mutable unsigned CachedLinkage : 2;
 
-  /// \brief FromPCH - Whether this type comes from a PCH file.
-  mutable bool FromPCH : 1;
+  /// \brief FromAST - Whether this type comes from an AST file.
+  mutable bool FromAST : 1;
 
-  /// \brief Set whether this type comes from a PCH file.
-  void setFromPCH(bool V = true) const { 
-    FromPCH = V;
+  /// \brief Set whether this type comes from an AST file.
+  void setFromAST(bool V = true) const { 
+    FromAST = V;
   }
 
 protected:
@@ -806,15 +806,15 @@ protected:
   Type(TypeClass tc, QualType Canonical, bool dependent)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
       TC(tc), Dependent(dependent), LinkageKnown(false), 
-      CachedLinkage(NoLinkage), FromPCH(false) {}
+      CachedLinkage(NoLinkage), FromAST(false) {}
   virtual ~Type();
   friend class ASTContext;
 
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
 
-  /// \brief Whether this type comes from a PCH file.
-  bool isFromPCH() const { return FromPCH; }
+  /// \brief Whether this type comes from an AST file.
+  bool isFromAST() const { return FromAST; }
 
   bool isCanonicalUnqualified() const {
     return CanonicalType.getTypePtr() == this;
@@ -1856,13 +1856,13 @@ class FunctionType : public Type {
   // * FunctionNoProtoType::Profile
   // * FunctionProtoType::Profile
   // * TypePrinter::PrintFunctionProto
-  // * PCH read and write
+  // * AST read and write
   // * Codegen
 
   class ExtInfo {
    public:
     // Constructor with no defaults. Use this when you know that you
-    // have all the elements (when reading a PCH file for example).
+    // have all the elements (when reading an AST file for example).
     ExtInfo(bool noReturn, unsigned regParm, CallingConv cc) :
         NoReturn(noReturn), RegParm(regParm), CC(cc) {}
 

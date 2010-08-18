@@ -42,7 +42,7 @@ enum Linkage {
 };
 
 /// \brief A more specific kind of linkage. This is relevant to CodeGen and
-/// PCH reading.
+/// AST file reading.
 enum GVALinkage {
   GVA_Internal,
   GVA_C99Inline,

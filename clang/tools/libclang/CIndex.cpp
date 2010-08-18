@@ -1189,7 +1189,7 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
-  return ASTUnit::LoadFromPCHFile(ast_filename, Diags,
+  return ASTUnit::LoadFromASTFile(ast_filename, Diags,
                                   CXXIdx->getOnlyLocalDecls(),
                                   0, 0, true);
 }
@@ -1422,7 +1422,7 @@ void clang_parseTranslationUnit_Impl(void *UserData) {
     Diags->Report(diag::err_fe_invoking) << AllArgs << ErrMsg;
   }
 
-  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, Diags,
+  ASTUnit *ATU = ASTUnit::LoadFromASTFile(astTmpFile, Diags,
                                           CXXIdx->getOnlyLocalDecls(),
                                           RemappedFiles.data(),
                                           RemappedFiles.size(),
@@ -1467,7 +1467,7 @@ void clang_parseTranslationUnit_Impl(void *UserData) {
     // Make the translation unit responsible for destroying all temporary files.
     for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
       ATU->addTemporaryFile(TemporaryFiles[i]);
-    ATU->addTemporaryFile(llvm::sys::Path(ATU->getPCHFileName()));
+    ATU->addTemporaryFile(llvm::sys::Path(ATU->getASTFileName()));
   } else {
     // Destroy all of the temporary files now; they can't be referenced any
     // longer.

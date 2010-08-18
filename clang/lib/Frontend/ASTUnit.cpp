@@ -304,7 +304,7 @@ namespace {
 
 /// \brief Gathers information from ASTReader that will be used to initialize
 /// a Preprocessor.
-class PCHInfoCollector : public ASTReaderListener {
+class ASTInfoCollector : public ASTReaderListener {
   LangOptions &LangOpt;
   HeaderSearch &HSI;
   std::string &TargetTriple;
@@ -314,7 +314,7 @@ class PCHInfoCollector : public ASTReaderListener {
   unsigned NumHeaderInfos;
 
 public:
-  PCHInfoCollector(LangOptions &LangOpt, HeaderSearch &HSI,
+  ASTInfoCollector(LangOptions &LangOpt, HeaderSearch &HSI,
                    std::string &TargetTriple, std::string &Predefines,
                    unsigned &Counter)
     : LangOpt(LangOpt), HSI(HSI), TargetTriple(TargetTriple),
@@ -398,12 +398,12 @@ const std::string &ASTUnit::getOriginalSourceFileName() {
   return OriginalSourceFile;
 }
 
-const std::string &ASTUnit::getPCHFileName() {
-  assert(isMainFileAST() && "Not an ASTUnit from a PCH file!");
+const std::string &ASTUnit::getASTFileName() {
+  assert(isMainFileAST() && "Not an ASTUnit from an AST file!");
   return static_cast<ASTReader *>(Ctx->getExternalSource())->getFileName();
 }
 
-ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
+ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
                                   bool OnlyLocalDecls,
                                   RemappedFile *RemappedFiles,
@@ -460,7 +460,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
                              AST->getDiagnostics()));
-  Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
+  Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
   switch (Reader->ReadAST(Filename)) {
@@ -475,11 +475,11 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   AST->OriginalSourceFile = Reader->getOriginalSourceFile();
 
-  // PCH loaded successfully. Now create the preprocessor.
+  // AST file loaded successfully. Now create the preprocessor.
 
   // Get information about the target being compiled for.
   //
-  // FIXME: This is broken, we should store the TargetOptions in the PCH.
+  // FIXME: This is broken, we should store the TargetOptions in the AST file.
   TargetOptions TargetOpts;
   TargetOpts.ABI = "";
   TargetOpts.CXXABI = "itanium";
@@ -512,7 +512,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   // Attach the AST reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
-  // PCH file as needed.
+  // AST file as needed.
   ASTReader *ReaderPtr = Reader.get();
   llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
   Context.setExternalSource(Source);

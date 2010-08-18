@@ -140,7 +140,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
 void IdentifierResolver::AddDecl(NamedDecl *D) {
   DeclarationName Name = D->getDeclName();
   if (IdentifierInfo *II = Name.getAsIdentifierInfo())
-    II->setIsFromPCH(false);
+    II->setIsFromAST(false);
 
   void *Ptr = Name.getFETokenInfo<void>();
 
@@ -168,7 +168,7 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
   assert(D && "null param passed");
   DeclarationName Name = D->getDeclName();
   if (IdentifierInfo *II = Name.getAsIdentifierInfo())
-    II->setIsFromPCH(false);
+    II->setIsFromAST(false);
 
   void *Ptr = Name.getFETokenInfo<void>();
 
@@ -189,7 +189,7 @@ bool IdentifierResolver::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
 
   DeclarationName Name = Old->getDeclName();
   if (IdentifierInfo *II = Name.getAsIdentifierInfo())
-    II->setIsFromPCH(false);
+    II->setIsFromAST(false);
 
   void *Ptr = Name.getFETokenInfo<void>();
 
@@ -227,7 +227,7 @@ IdentifierResolver::begin(DeclarationName Name) {
 
 void IdentifierResolver::AddDeclToIdentifierChain(IdentifierInfo *II,
                                                   NamedDecl *D) {
-  II->setIsFromPCH(false);
+  II->setIsFromAST(false);
   void *Ptr = II->getFETokenInfo<void>();
 
   if (!Ptr) {

@@ -43,7 +43,7 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// PCH reader validator implementation
+// PCH validator implementation
 //===----------------------------------------------------------------------===//
 
 ASTReaderListener::~ASTReaderListener() {}
@@ -242,9 +242,6 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
 
   // If the concatenation of all the PCH buffers is equal to the adjusted
   // command line, we're done.
-  // We build a SmallVector of the command line here, because we'll eventually
-  // need to support an arbitrary amount of pieces anyway (when we have chained
-  // PCH reading).
   llvm::SmallVector<llvm::StringRef, 2> CommandLine;
   CommandLine.push_back(Left);
   CommandLine.push_back(Right);
@@ -468,7 +465,7 @@ ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
 
 
 namespace {
-class PCHSelectorLookupTrait {
+class ASTSelectorLookupTrait {
   ASTReader &Reader;
 
 public:
@@ -480,7 +477,7 @@ public:
   typedef Selector external_key_type;
   typedef external_key_type internal_key_type;
 
-  explicit PCHSelectorLookupTrait(ASTReader &Reader) : Reader(Reader) { }
+  explicit ASTSelectorLookupTrait(ASTReader &Reader) : Reader(Reader) { }
 
   static bool EqualKey(const internal_key_type& a,
                        const internal_key_type& b) {
@@ -581,17 +578,17 @@ public:
 } // end anonymous namespace
 
 /// \brief The on-disk hash table used for the global method pool.
-typedef OnDiskChainedHashTable<PCHSelectorLookupTrait>
-  PCHSelectorLookupTable;
+typedef OnDiskChainedHashTable<ASTSelectorLookupTrait>
+  ASTSelectorLookupTable;
 
 namespace {
-class PCHIdentifierLookupTrait {
+class ASTIdentifierLookupTrait {
   ASTReader &Reader;
   llvm::BitstreamCursor &Stream;
 
   // If we know the IdentifierInfo in advance, it is here and we will
   // not build a new one. Used when deserializing information about an
-  // identifier that was constructed before the PCH file was read.
+  // identifier that was constructed before the AST file was read.
   IdentifierInfo *KnownII;
 
 public:
@@ -601,7 +598,7 @@ public:
 
   typedef external_key_type internal_key_type;
 
-  PCHIdentifierLookupTrait(ASTReader &Reader, llvm::BitstreamCursor &Stream,
+  ASTIdentifierLookupTrait(ASTReader &Reader, llvm::BitstreamCursor &Stream,
                            IdentifierInfo *II = 0)
     : Reader(Reader), Stream(Stream), KnownII(II) { }
 
@@ -650,7 +647,7 @@ public:
       if (!II)
         II = &Reader.getIdentifierTable().getOwn(k.first, k.first + k.second);
       Reader.SetIdentifierInfo(ID, II);
-      II->setIsFromPCH();
+      II->setIsFromAST();
       return II;
     }
 
@@ -709,7 +706,7 @@ public:
       Reader.SetGloballyVisibleDecls(II, DeclIDs);
     }
 
-    II->setIsFromPCH();
+    II->setIsFromAST();
     return II;
   }
 };
@@ -718,22 +715,14 @@ public:
 
 /// \brief The on-disk hash table used to contain information about
 /// all of the identifiers in the program.
-typedef OnDiskChainedHashTable<PCHIdentifierLookupTrait>
-  PCHIdentifierLookupTable;
+typedef OnDiskChainedHashTable<ASTIdentifierLookupTrait>
+  ASTIdentifierLookupTable;
 
 void ASTReader::Error(const char *Msg) {
   Diag(diag::err_fe_pch_malformed) << Msg;
 }
 
-/// \brief Check the contents of the concatenation of all predefines buffers in
-/// the PCH chain against the contents of the predefines buffer of the current
-/// compiler invocation.
-///
-/// The contents should be the same. If not, then some command-line option
-/// changed the preprocessor state and we must probably reject the PCH file.
-///
-/// \returns true if there was a mismatch (in which case the PCH file
-/// should be ignored), or false otherwise.
+/// \brief Tell the AST listener about the predefines buffers in the chain.
 bool ASTReader::CheckPredefinesBuffers() {
   if (Listener)
     return Listener->ReadPredefinesBuffer(PCHPredefinesBuffers,
@@ -792,7 +781,7 @@ bool ASTReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
 
 namespace {
 
-class PCHStatData {
+class ASTStatData {
 public:
   const bool hasStat;
   const ino_t ino;
@@ -801,19 +790,19 @@ public:
   const time_t mtime;
   const off_t size;
 
-  PCHStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
+  ASTStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
   : hasStat(true), ino(i), dev(d), mode(mo), mtime(m), size(s) {}
 
-  PCHStatData()
+  ASTStatData()
     : hasStat(false), ino(0), dev(0), mode(0), mtime(0), size(0) {}
 };
 
-class PCHStatLookupTrait {
+class ASTStatLookupTrait {
  public:
   typedef const char *external_key_type;
   typedef const char *internal_key_type;
 
-  typedef PCHStatData data_type;
+  typedef ASTStatData data_type;
 
   static unsigned ComputeHash(const char *path) {
     return llvm::HashString(path);
@@ -856,13 +845,13 @@ class PCHStatLookupTrait {
 ///
 /// This cache is very similar to the stat cache used by pretokenized
 /// headers.
-class PCHStatCache : public StatSysCallCache {
-  typedef OnDiskChainedHashTable<PCHStatLookupTrait> CacheTy;
+class ASTStatCache : public StatSysCallCache {
+  typedef OnDiskChainedHashTable<ASTStatLookupTrait> CacheTy;
   CacheTy *Cache;
 
   unsigned &NumStatHits, &NumStatMisses;
 public:
-  PCHStatCache(const unsigned char *Buckets,
+  ASTStatCache(const unsigned char *Buckets,
                const unsigned char *Base,
                unsigned &NumStatHits,
                unsigned &NumStatMisses)
@@ -870,20 +859,20 @@ public:
     Cache = CacheTy::Create(Buckets, Base);
   }
 
-  ~PCHStatCache() { delete Cache; }
+  ~ASTStatCache() { delete Cache; }
 
   int stat(const char *path, struct stat *buf) {
-    // Do the lookup for the file's data in the PCH file.
+    // Do the lookup for the file's data in the AST file.
     CacheTy::iterator I = Cache->find(path);
 
-    // If we don't get a hit in the PCH file just forward to 'stat'.
+    // If we don't get a hit in the AST file just forward to 'stat'.
     if (I == Cache->end()) {
       ++NumStatMisses;
       return StatSysCallCache::stat(path, buf);
     }
 
     ++NumStatHits;
-    PCHStatData Data = *I;
+    ASTStatData Data = *I;
 
     if (!Data.hasStat)
       return 1;
@@ -913,13 +902,13 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
 
   // The stream itself is going to skip over the source manager block.
   if (F.Stream.SkipBlock()) {
-    Error("malformed block record in PCH file");
+    Error("malformed block record in AST file");
     return Failure;
   }
 
   // Enter the source manager block.
   if (SLocEntryCursor.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID)) {
-    Error("malformed source manager block record in PCH file");
+    Error("malformed source manager block record in AST file");
     return Failure;
   }
 
@@ -928,7 +917,7 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
     unsigned Code = SLocEntryCursor.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
       if (SLocEntryCursor.ReadBlockEnd()) {
-        Error("error at end of Source Manager block in PCH file");
+        Error("error at end of Source Manager block in AST file");
         return Failure;
       }
       return Success;
@@ -938,7 +927,7 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
       // No known subblocks, always skip them.
       SLocEntryCursor.ReadSubBlockID();
       if (SLocEntryCursor.SkipBlock()) {
-        Error("malformed block record in PCH file");
+        Error("malformed block record in AST file");
         return Failure;
       }
       continue;
@@ -997,7 +986,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     return Success;
 
   if (ID > TotalNumSLocEntries) {
-    Error("source location entry ID out-of-range for PCH file");
+    Error("source location entry ID out-of-range for AST file");
     return Failure;
   }
 
@@ -1008,7 +997,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
   if (Code == llvm::bitc::END_BLOCK ||
       Code == llvm::bitc::ENTER_SUBBLOCK ||
       Code == llvm::bitc::DEFINE_ABBREV) {
-    Error("incorrectly-formatted source location entry in PCH file");
+    Error("incorrectly-formatted source location entry in AST file");
     return Failure;
   }
 
@@ -1017,7 +1006,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
   unsigned BlobLen;
   switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
   default:
-    Error("incorrectly-formatted source location entry in PCH file");
+    Error("incorrectly-formatted source location entry in AST file");
     return Failure;
 
   case pch::SM_SLOC_FILE_ENTRY: {
@@ -1027,7 +1016,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     if (File == 0) {
       std::string ErrorStr = "could not find file '";
       ErrorStr += Filename;
-      ErrorStr += "' referenced by PCH file";
+      ErrorStr += "' referenced by AST file";
       Error(ErrorStr.c_str());
       return Failure;
     }
@@ -1079,7 +1068,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
       = SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen);
 
     if (RecCode != pch::SM_SLOC_BUFFER_BLOB) {
-      Error("PCH record has invalid code");
+      Error("AST record has invalid code");
       return Failure;
     }
 
@@ -1121,7 +1110,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
 bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
                                  unsigned BlockID) {
   if (Cursor.EnterSubBlock(BlockID)) {
-    Error("malformed block record in PCH file");
+    Error("malformed block record in AST file");
     return Failure;
   }
 
@@ -1157,7 +1146,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
       // No known subblocks, always skip them.
       Stream.ReadSubBlockID();
       if (Stream.SkipBlock()) {
-        Error("malformed block record in PCH file");
+        Error("malformed block record in AST file");
         return;
       }
       continue;
@@ -1183,7 +1172,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
 
       IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
       if (II == 0) {
-        Error("macro must have a name in PCH file");
+        Error("macro must have a name in AST file");
         return;
       }
       SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[1]);
@@ -1191,7 +1180,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
 
       MacroInfo *MI = PP->AllocateMacroInfo(Loc);
       MI->setIsUsed(isUsed);
-      MI->setIsFromPCH();
+      MI->setIsFromAST();
 
       unsigned NextIndex = 3;
       if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {
@@ -1254,7 +1243,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
         return;
       
       if (!PP->getPreprocessingRecord()) {
-        Error("missing preprocessing record in PCH file");
+        Error("missing preprocessing record in AST file");
         return;
       }
         
@@ -1280,7 +1269,7 @@ void ASTReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
         return;
       
       if (!PP->getPreprocessingRecord()) {
-        Error("missing preprocessing record in PCH file");
+        Error("missing preprocessing record in AST file");
         return;
       }
       
@@ -1317,7 +1306,7 @@ void ASTReader::ReadDefinedMacros() {
 
     llvm::BitstreamCursor Cursor = MacroCursor;
     if (Cursor.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID)) {
-      Error("malformed preprocessor block record in PCH file");
+      Error("malformed preprocessor block record in AST file");
       return;
     }
 
@@ -1326,7 +1315,7 @@ void ASTReader::ReadDefinedMacros() {
       unsigned Code = Cursor.ReadCode();
       if (Code == llvm::bitc::END_BLOCK) {
         if (Cursor.ReadBlockEnd()) {
-          Error("error at end of preprocessor block in PCH file");
+          Error("error at end of preprocessor block in AST file");
           return;
         }
         break;
@@ -1336,7 +1325,7 @@ void ASTReader::ReadDefinedMacros() {
         // No known subblocks, always skip them.
         Cursor.ReadSubBlockID();
         if (Cursor.SkipBlock()) {
-          Error("malformed block record in PCH file");
+          Error("malformed block record in AST file");
           return;
         }
         continue;
@@ -1423,18 +1412,18 @@ ASTReader::ReadASTBlock(PerFileData &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
-    Error("malformed block record in PCH file");
+    Error("malformed block record in AST file");
     return Failure;
   }
 
-  // Read all of the records and blocks for the PCH file.
+  // Read all of the records and blocks for the ASt file.
   RecordData Record;
   bool First = true;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
       if (Stream.ReadBlockEnd()) {
-        Error("error at end of module block in PCH file");
+        Error("error at end of module block in AST file");
         return Failure;
       }
 
@@ -1452,7 +1441,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         if (Stream.SkipBlock() ||  // Skip with the main cursor.
             // Read the abbrevs.
             ReadBlockAbbrevs(F.DeclsCursor, pch::DECLTYPES_BLOCK_ID)) {
-          Error("malformed block record in PCH file");
+          Error("malformed block record in AST file");
           return Failure;
         }
         break;
@@ -1463,7 +1452,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
           PP->setExternalSource(this);
 
         if (Stream.SkipBlock()) {
-          Error("malformed block record in PCH file");
+          Error("malformed block record in AST file");
           return Failure;
         }
         break;
@@ -1474,7 +1463,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
           break;
 
         case Failure:
-          Error("malformed source manager block in PCH file");
+          Error("malformed source manager block in AST file");
           return Failure;
 
         case IgnorePCH:
@@ -1539,7 +1528,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case pch::TYPE_OFFSET:
       if (F.LocalNumTypes != 0) {
-        Error("duplicate TYPE_OFFSET record in PCH file");
+        Error("duplicate TYPE_OFFSET record in AST file");
         return Failure;
       }
       F.TypeOffsets = (const uint32_t *)BlobStart;
@@ -1548,7 +1537,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case pch::DECL_OFFSET:
       if (F.LocalNumDecls != 0) {
-        Error("duplicate DECL_OFFSET record in PCH file");
+        Error("duplicate DECL_OFFSET record in AST file");
         return Failure;
       }
       F.DeclOffsets = (const uint32_t *)BlobStart;
@@ -1586,10 +1575,10 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.IdentifierTableData = BlobStart;
       if (Record[0]) {
         F.IdentifierLookupTable
-          = PCHIdentifierLookupTable::Create(
+          = ASTIdentifierLookupTable::Create(
                        (const unsigned char *)F.IdentifierTableData + Record[0],
                        (const unsigned char *)F.IdentifierTableData,
-                       PCHIdentifierLookupTrait(*this, F.Stream));
+                       ASTIdentifierLookupTrait(*this, F.Stream));
         if (PP)
           PP->getIdentifierTable().setExternalIdentifierLookup(this);
       }
@@ -1597,7 +1586,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case pch::IDENTIFIER_OFFSET:
       if (F.LocalNumIdentifiers != 0) {
-        Error("duplicate IDENTIFIER_OFFSET record in PCH file");
+        Error("duplicate IDENTIFIER_OFFSET record in AST file");
         return Failure;
       }
       F.IdentifierOffsets = (const uint32_t *)BlobStart;
@@ -1669,10 +1658,10 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.SelectorLookupTableData = (const unsigned char *)BlobStart;
       if (Record[0])
         F.SelectorLookupTable
-          = PCHSelectorLookupTable::Create(
+          = ASTSelectorLookupTable::Create(
                         F.SelectorLookupTableData + Record[0],
                         F.SelectorLookupTableData,
-                        PCHSelectorLookupTrait(*this));
+                        ASTSelectorLookupTrait(*this));
       TotalNumMethodPoolEntries += Record[1];
       break;
 
@@ -1690,8 +1679,9 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     case pch::SOURCE_LOCATION_OFFSETS:
       F.SLocOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSLocEntries = Record[0];
-      // We cannot delay this until all PCHs are loaded, because then source
-      // location preloads would also have to be delayed.
+      // We cannot delay this until the entire chain is loaded, because then
+      // source location preloads would also have to be delayed.
+      // FIXME: Is there a reason not to do that?
       TotalNumSLocEntries += F.LocalNumSLocEntries;
       SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, Record[1]);
       break;
@@ -1705,8 +1695,8 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
 
     case pch::STAT_CACHE: {
-      PCHStatCache *MyStatCache =
-        new PCHStatCache((const unsigned char *)BlobStart + Record[0],
+      ASTStatCache *MyStatCache =
+        new ASTStatCache((const unsigned char *)BlobStart + Record[0],
                          (const unsigned char *)BlobStart,
                          NumStatHits, NumStatMisses);
       FileMgr.addStatCache(MyStatCache);
@@ -1752,7 +1742,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
 
     case pch::ORIGINAL_FILE_NAME:
-      // The primary PCH will be the last to get here, so it will be the one
+      // The primary AST will be the last to get here, so it will be the one
       // that's used.
       ActualOriginalFileName.assign(BlobStart, BlobLen);
       OriginalFileName = ActualOriginalFileName;
@@ -1761,9 +1751,9 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case pch::VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
-      llvm::StringRef PCHBranch(BlobStart, BlobLen);
-      if (llvm::StringRef(CurBranch) != PCHBranch && !DisableValidation) {
-        Diag(diag::warn_pch_different_branch) << PCHBranch << CurBranch;
+      llvm::StringRef ASTBranch(BlobStart, BlobLen);
+      if (llvm::StringRef(CurBranch) != ASTBranch && !DisableValidation) {
+        Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
         return IgnorePCH;
       }
       break;
@@ -1777,7 +1767,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case pch::DECL_REPLACEMENTS: {
       if (Record.size() % 2 != 0) {
-        Error("invalid DECL_REPLACEMENTS block in PCH file");
+        Error("invalid DECL_REPLACEMENTS block in AST file");
         return Failure;
       }
       for (unsigned I = 0, N = Record.size(); I != N; I += 2)
@@ -1788,7 +1778,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     }
     First = false;
   }
-  Error("premature end of bitstream in PCH file");
+  Error("premature end of bitstream in AST file");
   return Failure;
 }
 
@@ -1836,7 +1826,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
 
   if (PP) {
     // Initialization of keywords and pragmas occurs before the
-    // PCH file is read, so there may be some identifiers that were
+    // AST file is read, so there may be some identifiers that were
     // loaded into the IdentifierTable before we intercepted the
     // creation of identifiers. Iterate through the list of known
     // identifiers and determine whether we have to establish
@@ -1854,18 +1844,18 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName) {
       Identifiers.push_back(Id->second);
     // We need to search the tables in all files.
     for (unsigned J = 0, M = Chain.size(); J != M; ++J) {
-      PCHIdentifierLookupTable *IdTable
-        = (PCHIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;
-      // Not all PCH files necessarily have identifier tables, only the useful
+      ASTIdentifierLookupTable *IdTable
+        = (ASTIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;
+      // Not all AST files necessarily have identifier tables, only the useful
       // ones.
       if (!IdTable)
         continue;
       for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
         IdentifierInfo *II = Identifiers[I];
         // Look in the on-disk hash tables for an entry for this identifier
-        PCHIdentifierLookupTrait Info(*this, Chain[J]->Stream, II);
+        ASTIdentifierLookupTrait Info(*this, Chain[J]->Stream, II);
         std::pair<const char*,unsigned> Key(II->getNameStart(),II->getLength());
-        PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
+        ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
         if (Pos == IdTable->end())
           continue;
 
@@ -1886,10 +1876,10 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
   Chain.push_back(new PerFileData());
   PerFileData &F = *Chain.back();
 
-  // Set the PCH file name.
+  // Set the AST file name.
   F.FileName = FileName;
 
-  // Open the PCH file.
+  // Open the AST file.
   //
   // FIXME: This shouldn't be here, we should just take a raw_ostream.
   std::string ErrStr;
@@ -1919,17 +1909,17 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
     unsigned Code = Stream.ReadCode();
 
     if (Code != llvm::bitc::ENTER_SUBBLOCK) {
-      Error("invalid record at top-level of PCH file");
+      Error("invalid record at top-level of AST file");
       return Failure;
     }
 
     unsigned BlockID = Stream.ReadSubBlockID();
 
-    // We only know the PCH subblock ID.
+    // We only know the AST subblock ID.
     switch (BlockID) {
     case llvm::bitc::BLOCKINFO_BLOCK_ID:
       if (Stream.ReadBlockInfoBlock()) {
-        Error("malformed BlockInfoBlock in PCH file");
+        Error("malformed BlockInfoBlock in AST file");
         return Failure;
       }
       break;
@@ -1943,8 +1933,8 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
 
       case IgnorePCH:
         // FIXME: We could consider reading through to the end of this
-        // PCH block, skipping subblocks, to see if there are other
-        // PCH blocks elsewhere.
+        // AST block, skipping subblocks, to see if there are other
+        // AST blocks elsewhere.
 
         // Clear out any preallocated source location entries, so that
         // the source manager does not try to resolve them later.
@@ -1952,14 +1942,14 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName) {
 
         // Remove the stat cache.
         if (F.StatCache)
-          FileMgr.removeStatCache((PCHStatCache*)F.StatCache);
+          FileMgr.removeStatCache((ASTStatCache*)F.StatCache);
 
         return IgnorePCH;
       }
       break;
     default:
       if (Stream.SkipBlock()) {
-        Error("malformed block record in PCH file");
+        Error("malformed block record in AST file");
         return Failure;
       }
       break;
@@ -2022,7 +2012,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     else {
       const TagType *Tag = FileType->getAs<TagType>();
       if (!Tag) {
-        Error("Invalid FILE type in PCH file");
+        Error("Invalid FILE type in AST file");
         return;
       }
       Context->setFILEDecl(Tag->getDecl());
@@ -2039,7 +2029,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     else {
       const TagType *Tag = Jmp_bufType->getAs<TagType>();
       if (!Tag) {
-        Error("Invalid jmp_bug type in PCH file");
+        Error("Invalid jmp_buf type in AST file");
         return;
       }
       Context->setjmp_bufDecl(Tag->getDecl());
@@ -2055,7 +2045,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       Context->setsigjmp_bufDecl(Typedef->getDecl());
     else {
       const TagType *Tag = Sigjmp_bufType->getAs<TagType>();
-      assert(Tag && "Invalid sigjmp_buf type in PCH file");
+      assert(Tag && "Invalid sigjmp_buf type in AST file");
       Context->setsigjmp_bufDecl(Tag->getDecl());
     }
   }
@@ -2081,14 +2071,14 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
 }
 
 /// \brief Retrieve the name of the original source file name
-/// directly from the PCH file, without actually loading the PCH
+/// directly from the AST file, without actually loading the AST
 /// file.
-std::string ASTReader::getOriginalSourceFile(const std::string &PCHFileName,
+std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
                                              Diagnostic &Diags) {
-  // Open the PCH file.
+  // Open the AST file.
   std::string ErrStr;
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
-  Buffer.reset(llvm::MemoryBuffer::getFile(PCHFileName.c_str(), &ErrStr));
+  Buffer.reset(llvm::MemoryBuffer::getFile(ASTFileName.c_str(), &ErrStr));
   if (!Buffer) {
     Diags.Report(diag::err_fe_unable_to_read_pch_file) << ErrStr;
     return std::string();
@@ -2106,7 +2096,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &PCHFileName,
       Stream.Read(8) != 'P' ||
       Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'H') {
-    Diags.Report(diag::err_fe_not_a_pch_file) << PCHFileName;
+    Diags.Report(diag::err_fe_not_a_pch_file) << ASTFileName;
     return std::string();
   }
 
@@ -2117,18 +2107,18 @@ std::string ASTReader::getOriginalSourceFile(const std::string &PCHFileName,
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       unsigned BlockID = Stream.ReadSubBlockID();
 
-      // We only know the PCH subblock ID.
+      // We only know the AST subblock ID.
       switch (BlockID) {
       case pch::PCH_BLOCK_ID:
         if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
-          Diags.Report(diag::err_fe_pch_malformed_block) << PCHFileName;
+          Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
           return std::string();
         }
         break;
 
       default:
         if (Stream.SkipBlock()) {
-          Diags.Report(diag::err_fe_pch_malformed_block) << PCHFileName;
+          Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
           return std::string();
         }
         break;
@@ -2138,7 +2128,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &PCHFileName,
 
     if (Code == llvm::bitc::END_BLOCK) {
       if (Stream.ReadBlockEnd()) {
-        Diags.Report(diag::err_fe_pch_error_at_end_block) << PCHFileName;
+        Diags.Report(diag::err_fe_pch_error_at_end_block) << ASTFileName;
         return std::string();
       }
       continue;
@@ -2163,17 +2153,10 @@ std::string ASTReader::getOriginalSourceFile(const std::string &PCHFileName,
 /// \brief Parse the record that corresponds to a LangOptions data
 /// structure.
 ///
-/// This routine compares the language options used to generate the
-/// PCH file against the language options set for the current
-/// compilation. For each option, we classify differences between the
-/// two compiler states as either "benign" or "important". Benign
-/// differences don't matter, and we accept them without complaint
-/// (and without modifying the language options). Differences between
-/// the states for important options cause the PCH file to be
-/// unusable, so we emit a warning and return true to indicate that
-/// there was an error.
+/// This routine parses the language options from the AST file and then gives
+/// them to the AST listener if one is set.
 ///
-/// \returns true if the PCH file is unacceptable, false otherwise.
+/// \returns true if the listener deems the file unacceptable, false otherwise.
 bool ASTReader::ParseLanguageOptions(
                              const llvm::SmallVectorImpl<uint64_t> &Record) {
   if (Listener) {
@@ -2380,7 +2363,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case pch::TYPE_VECTOR: {
     if (Record.size() != 3) {
-      Error("incorrect encoding of vector type in PCH file");
+      Error("incorrect encoding of vector type in AST file");
       return QualType();
     }
 
@@ -2393,7 +2376,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case pch::TYPE_EXT_VECTOR: {
     if (Record.size() != 3) {
-      Error("incorrect encoding of extended vector type in PCH file");
+      Error("incorrect encoding of extended vector type in AST file");
       return QualType();
     }
 
@@ -2457,7 +2440,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case pch::TYPE_TYPEOF: {
     if (Record.size() != 1) {
-      Error("incorrect encoding of typeof(type) in PCH file");
+      Error("incorrect encoding of typeof(type) in AST file");
       return QualType();
     }
     QualType UnderlyingType = GetType(Record[0]);
@@ -2532,7 +2515,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     CXXRecordDecl *D = cast<CXXRecordDecl>(GetDecl(Record[0]));
     QualType TST = GetType(Record[1]); // probably derivable
     // FIXME: ASTContext::getInjectedClassNameType is not currently suitable
-    // for PCH reading, too much interdependencies.
+    // for AST reading, too much interdependencies.
     return
       QualType(new (*Context, TypeAlignment) InjectedClassNameType(D, TST), 0);
   }
@@ -2855,7 +2838,7 @@ QualType ASTReader::GetType(pch::TypeID ID) {
   assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (TypesLoaded[Index].isNull()) {
     TypesLoaded[Index] = ReadTypeRecord(Index);
-    TypesLoaded[Index]->setFromPCH();
+    TypesLoaded[Index]->setFromAST();
     if (DeserializationListener)
       DeserializationListener->TypeRead(ID >> Qualifiers::FastWidth,
                                         TypesLoaded[Index]);
@@ -2922,7 +2905,7 @@ Decl *ASTReader::GetDecl(pch::DeclID ID) {
     return 0;
 
   if (ID > DeclsLoaded.size()) {
-    Error("declaration ID out-of-range for PCH file");
+    Error("declaration ID out-of-range for AST file");
     return 0;
   }
 
@@ -3062,7 +3045,7 @@ void ASTReader::StartTranslationUnit(ASTConsumer *Consumer) {
 }
 
 void ASTReader::PrintStats() {
-  std::fprintf(stderr, "*** PCH Statistics:\n");
+  std::fprintf(stderr, "*** AST File Statistics:\n");
 
   unsigned NumTypesLoaded
     = TypesLoaded.size() - std::count(TypesLoaded.begin(), TypesLoaded.end(),
@@ -3244,12 +3227,12 @@ IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
   // Try to find this name within our on-disk hash tables. We start with the
   // most recent one, since that one contains the most up-to-date info.
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    PCHIdentifierLookupTable *IdTable
-        = (PCHIdentifierLookupTable *)Chain[I]->IdentifierLookupTable;
+    ASTIdentifierLookupTable *IdTable
+        = (ASTIdentifierLookupTable *)Chain[I]->IdentifierLookupTable;
     if (!IdTable)
       continue;
     std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
-    PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key);
+    ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key);
     if (Pos == IdTable->end())
       continue;
 
@@ -3269,16 +3252,16 @@ ASTReader::ReadMethodPool(Selector Sel) {
     if (!F.SelectorLookupTable)
       continue;
 
-    PCHSelectorLookupTable *PoolTable
-      = (PCHSelectorLookupTable*)F.SelectorLookupTable;
-    PCHSelectorLookupTable::iterator Pos = PoolTable->find(Sel);
+    ASTSelectorLookupTable *PoolTable
+      = (ASTSelectorLookupTable*)F.SelectorLookupTable;
+    ASTSelectorLookupTable::iterator Pos = PoolTable->find(Sel);
     if (Pos != PoolTable->end()) {
       ++NumSelectorsRead;
       // FIXME: Not quite happy with the statistics here. We probably should
       // disable this tracking when called via LoadSelector.
       // Also, should entries without methods count as misses?
       ++NumMethodPoolEntriesRead;
-      PCHSelectorLookupTrait::data_type Data = *Pos;
+      ASTSelectorLookupTrait::data_type Data = *Pos;
       if (DeserializationListener)
         DeserializationListener->SelectorRead(Data.ID, Sel);
       return std::make_pair(Data.Instance, Data.Factory);
@@ -3305,7 +3288,7 @@ void ASTReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
 /// \brief Set the globally-visible declarations associated with the given
 /// identifier.
 ///
-/// If the PCH reader is currently in a state where the given declaration IDs
+/// If the AST reader is currently in a state where the given declaration IDs
 /// cannot safely be resolved, they are queued until it is safe to resolve
 /// them.
 ///
@@ -3355,7 +3338,7 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
     return 0;
 
   if (IdentifiersLoaded.empty()) {
-    Error("no identifier table in PCH file");
+    Error("no identifier table in AST file");
     return 0;
   }
 
@@ -3375,9 +3358,8 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
     }
     assert(Str && "Broken Chain");
 
-    // All of the strings in the PCH file are preceded by a 16-bit
-    // length. Extract that 16-bit length to avoid having to execute
-    // strlen().
+    // All of the strings in the AST file are preceded by a 16-bit length.
+    // Extract that 16-bit length to avoid having to execute strlen().
     // NOTE: 'StrLenPtr' is an 'unsigned char*' so that we load bytes as
     //  unsigned integers.  This is important to avoid integer overflow when
     //  we cast them to 'unsigned'.
@@ -3402,7 +3384,7 @@ Selector ASTReader::DecodeSelector(unsigned ID) {
     return Selector();
 
   if (ID > SelectorsLoaded.size()) {
-    Error("selector ID out of range in PCH file");
+    Error("selector ID out of range in AST file");
     return Selector();
   }
 
@@ -3412,7 +3394,7 @@ Selector ASTReader::DecodeSelector(unsigned ID) {
     for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
       PerFileData &F = *Chain[N - I - 1];
       if (Idx < F.LocalNumSelectors) {
-        PCHSelectorLookupTrait Trait(*this);
+        ASTSelectorLookupTrait Trait(*this);
         SelectorsLoaded[ID - 1] =
            Trait.ReadKey(F.SelectorLookupTableData + F.SelectorOffsets[Idx], 0);
         if (DeserializationListener)

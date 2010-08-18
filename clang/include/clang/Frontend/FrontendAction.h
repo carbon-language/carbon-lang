@@ -145,8 +145,8 @@ public:
   /// @{
 
   /// usesPreprocessorOnly - Does this action only use the preprocessor? If so
-  /// no AST context will be created and this action will be invalid with PCH
-  /// inputs.
+  /// no AST context will be created and this action will be invalid with AST
+  /// file inputs.
   virtual bool usesPreprocessorOnly() const = 0;
 
   /// usesCompleteTranslationUnit - For AST based actions, should the

@@ -104,8 +104,8 @@ public:
   ///
   /// \param Buffers Information about the predefines buffers.
   ///
-  /// \param OriginalFileName The original file name for the PCH, which will
-  /// appear as an entry in the predefines buffer.
+  /// \param OriginalFileName The original file name for the AST file, which
+  /// will appear as an entry in the predefines buffer.
   ///
   /// \param SuggestedPredefines If necessary, additional definitions are added
   /// here.
@@ -183,13 +183,13 @@ private:
   Diagnostic &Diags;
 
   /// \brief The semantic analysis object that will be processing the
-  /// PCH files and the translation unit that uses it.
+  /// AST files and the translation unit that uses it.
   Sema *SemaObj;
 
   /// \brief The preprocessor that will be loading the source file.
   Preprocessor *PP;
 
-  /// \brief The AST context into which we'll read the PCH files.
+  /// \brief The AST context into which we'll read the AST files.
   ASTContext *Context;
       
   /// \brief The AST consumer.
@@ -199,12 +199,12 @@ private:
   struct PerFileData {
     PerFileData();
 
-    /// \brief The PCH stat cache installed for this file, if any.
+    /// \brief The AST stat cache installed for this file, if any.
     ///
-    /// The dynamic type of this stat cache is always PCHStatCache
+    /// The dynamic type of this stat cache is always ASTStatCache
     void *StatCache;
 
-    /// \brief The bitstream reader from which we'll read the PCH file.
+    /// \brief The bitstream reader from which we'll read the AST file.
     llvm::BitstreamReader StreamFile;
     llvm::BitstreamCursor Stream;
 
@@ -220,38 +220,38 @@ private:
     /// jump around with these in context.
     llvm::BitstreamCursor DeclsCursor;
 
-    /// \brief The file name of the PCH file.
+    /// \brief The file name of the AST file.
     std::string FileName;
 
     /// \brief The memory buffer that stores the data associated with
-    /// this PCH file.
+    /// this AST file.
     llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
 
     /// \brief Cursor used to read source location entries.
     llvm::BitstreamCursor SLocEntryCursor;
 
-    /// \brief The number of source location entries in this PCH file.
+    /// \brief The number of source location entries in this AST file.
     unsigned LocalNumSLocEntries;
 
     /// \brief Offsets for all of the source location entries in the
-    /// PCH file.
+    /// AST file.
     const uint32_t *SLocOffsets;
 
-    /// \brief The number of types in this PCH file.
+    /// \brief The number of types in this AST file.
     unsigned LocalNumTypes;
 
     /// \brief Offset of each type within the bitstream, indexed by the
     /// type ID, or the representation of a Type*.
     const uint32_t *TypeOffsets;
 
-    /// \brief The number of declarations in this PCH file.
+    /// \brief The number of declarations in this AST file.
     unsigned LocalNumDecls;
 
     /// \brief Offset of each declaration within the bitstream, indexed
     /// by the declaration ID (-1).
     const uint32_t *DeclOffsets;
 
-    /// \brief The number of identifiers in this PCH file.
+    /// \brief The number of identifiers in this AST file.
     unsigned LocalNumIdentifiers;
 
     /// \brief Offsets into the identifier table data.
@@ -275,7 +275,7 @@ private:
     unsigned LocalNumMacroDefinitions;
 
     /// \brief Offsets of all of the macro definitions in the preprocessing
-    /// record in the PCH file.
+    /// record in the AST file.
     const uint32_t *MacroDefinitionOffsets;
       
     /// \brief The number of preallocated preprocessing entities in the
@@ -283,7 +283,7 @@ private:
     unsigned NumPreallocatedPreprocessingEntities;
 
     /// \brief A pointer to an on-disk hash table of opaque type
-    /// PCHSelectorLookupTable.
+    /// ASTSelectorLookupTable.
     ///
     /// This hash table provides the IDs of all selectors, and the associated
     /// instance and factory methods.
@@ -304,18 +304,18 @@ private:
     unsigned LocalNumSelectors;
   };
 
-  /// \brief The chain of PCH files. The first entry is the one named by the
+  /// \brief The chain of AST files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
   /// That is, the entry I was created with -include-pch I+1.
   llvm::SmallVector<PerFileData*, 2> Chain;
 
-  /// \brief Types that have already been loaded from the PCH file.
+  /// \brief Types that have already been loaded from the chain.
   ///
   /// When the pointer at index I is non-NULL, the type with
-  /// ID = (I + 1) << FastQual::Width has already been loaded from the PCH chain
+  /// ID = (I + 1) << FastQual::Width has already been loaded
   std::vector<QualType> TypesLoaded;
 
-  /// \brief Declarations that have already been loaded from the PCH file.
+  /// \brief Declarations that have already been loaded from the chain.
   ///
   /// When the pointer at index I is non-NULL, the declaration with ID
   /// = I + 1 has already been loaded.
@@ -343,7 +343,7 @@ private:
 
   typedef llvm::DenseMap<pch::DeclID, pch::DeclID> FirstLatestDeclIDMap;
   /// \brief Map of first declarations from a chained PCH that point to the
-  /// most recent declarations in another PCH.
+  /// most recent declarations in another AST file.
   FirstLatestDeclIDMap FirstLatestDeclIDs;
 
   /// \brief Read the records that describe the contents of declcontexts.
@@ -373,49 +373,45 @@ private:
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
       
-  /// \brief The set of external definitions stored in the the PCH
-  /// file.
+  /// \brief The set of external definitions stored in the the chain.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
-  /// \brief The set of tentative definitions stored in the the PCH
-  /// file.
+  /// \brief The set of tentative definitions stored in the the chain.
   llvm::SmallVector<uint64_t, 16> TentativeDefinitions;
       
-  /// \brief The set of unused file scoped decls stored in the the PCH file.
+  /// \brief The set of unused file scoped decls stored in the the chain.
   llvm::SmallVector<uint64_t, 16> UnusedFileScopedDecls;
   
-  /// \brief The set of weak undeclared identifiers stored in the the PCH file.
+  /// \brief The set of weak undeclared identifiers stored in the chain.
   llvm::SmallVector<uint64_t, 64> WeakUndeclaredIdentifiers;
 
-  /// \brief The set of locally-scoped external declarations stored in
-  /// the the PCH file.
+  /// \brief The set of locally-scoped external declarations stored in the chain
   llvm::SmallVector<uint64_t, 16> LocallyScopedExternalDecls;
 
-  /// \brief The set of ext_vector type declarations stored in the the
-  /// PCH file.
+  /// \brief The set of ext_vector type declarations stored in the the chain.
   llvm::SmallVector<uint64_t, 4> ExtVectorDecls;
 
-  /// \brief The set of VTable uses of CXXRecordDecls stored in the PCH file.
+  /// \brief The set of VTable uses of CXXRecordDecls stored in the chain.
   llvm::SmallVector<uint64_t, 64> VTableUses;
 
-  /// \brief The set of dynamic CXXRecord declarations stored in the PCH file.
+  /// \brief The set of dynamic CXXRecord declarations stored in the chain.
   llvm::SmallVector<uint64_t, 16> DynamicClasses;
 
-  /// \brief The set of pending implicit instantiations stored in the PCH file.
+  /// \brief The set of pending implicit instantiations stored in the chain.
   llvm::SmallVector<uint64_t, 64> PendingImplicitInstantiations;
 
-  /// \brief The set of Sema declaration references, stored in PCH.
+  /// \brief The set of Sema declaration references stored in the chain.
   llvm::SmallVector<uint64_t, 4> SemaDeclRefs;
 
-  /// \brief The set of Objective-C category definitions stored in the
-  /// the PCH file.
+  /// \brief The set of Objective-C category definitions stored in the the chain
   llvm::SmallVector<uint64_t, 4> ObjCCategoryImpls;
 
-  /// \brief The original file name that was used to build the PCH file, which
-  /// may have been modified for relocatable-pch support.
+  /// \brief The original file name that was used to build the primary AST file,
+  /// which may have been modified for relocatable-pch support.
   std::string OriginalFileName;
 
-  /// \brief The actual original file name that was used to build the PCH file.
+  /// \brief The actual original file name that was used to build the primary
+  /// AST file.
   std::string ActualOriginalFileName;
 
   /// \brief Whether this precompiled header is a relocatable PCH file.
@@ -429,12 +425,10 @@ private:
   /// headers when they are loaded.
   bool DisableValidation;
       
-  /// \brief Mapping from switch-case IDs in the PCH file to
-  /// switch-case statements.
+  /// \brief Mapping from switch-case IDs in the chain to switch-case statements
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
 
-  /// \brief Mapping from label statement IDs in the PCH file to label
-  /// statements.
+  /// \brief Mapping from label statement IDs in the chain to label statements.
   std::map<unsigned, LabelStmt *> LabelStmts;
 
   /// \brief Mapping from label IDs to the set of "goto" statements
@@ -455,21 +449,21 @@ private:
   /// the PCH file.
   unsigned NumSLocEntriesRead;
 
-  /// \brief The number of source location entries in all PCH files.
+  /// \brief The number of source location entries in the chain.
   unsigned TotalNumSLocEntries;
 
   /// \brief The number of statements (and expressions) de-serialized
-  /// from the PCH file.
+  /// from the chain.
   unsigned NumStatementsRead;
 
   /// \brief The total number of statements (and expressions) stored
-  /// in the PCH file.
+  /// in the chain.
   unsigned TotalNumStatements;
 
-  /// \brief The number of macros de-serialized from the PCH file.
+  /// \brief The number of macros de-serialized from the chain.
   unsigned NumMacrosRead;
 
-  /// \brief The total number of macros stored in the PCH file.
+  /// \brief The total number of macros stored in the chain.
   unsigned TotalNumMacros;
 
   /// \brief The number of selectors that have been read.
@@ -501,7 +495,7 @@ private:
     llvm::SmallVector<uint32_t, 4> DeclIDs;
   };
 
-  /// \brief The set of identifiers that were read while the PCH reader was
+  /// \brief The set of identifiers that were read while the AST reader was
   /// (recursively) loading declarations.
   ///
   /// The declarations on the identifier chain for these identifiers will be
@@ -547,7 +541,7 @@ private:
     ~ReadingKindTracker() { Reader.ReadingKind = PrevKind; }
   };
 
-  /// \brief All predefines buffers in all PCH files, to be treated as if
+  /// \brief All predefines buffers in the chain, to be treated as if
   /// concatenated.
   PCHPredefinesBlocks PCHPredefinesBuffers;
 
@@ -588,7 +582,7 @@ private:
   /// \brief Produce an error diagnostic and return true.
   ///
   /// This routine should only be used for fatal errors that have to
-  /// do with non-routine failures (e.g., corrupted PCH file).
+  /// do with non-routine failures (e.g., corrupted AST file).
   void Error(const char *Msg);
 
   ASTReader(const ASTReader&); // do not implement
@@ -596,7 +590,7 @@ private:
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  /// \brief Load the PCH file and validate its contents against the given
+  /// \brief Load the AST file and validate its contents against the given
   /// Preprocessor.
   ///
   /// \param PP the preprocessor associated with the context in which this
@@ -609,31 +603,29 @@ public:
   /// user. This is only used with relocatable PCH files. If non-NULL,
   /// a relocatable PCH file will use the default path "/".
   ///
-  /// \param DisableValidation If true, the PCH reader will suppress most
+  /// \param DisableValidation If true, the AST reader will suppress most
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
   ASTReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0,
             bool DisableValidation = false);
 
-  /// \brief Load the PCH file without using any pre-initialized Preprocessor.
+  /// \brief Load the AST file without using any pre-initialized Preprocessor.
   ///
   /// The necessary information to initialize a Preprocessor later can be
   /// obtained by setting a ASTReaderListener.
   ///
-  /// \param SourceMgr the source manager into which the precompiled header
-  /// will be loaded.
+  /// \param SourceMgr the source manager into which the AST file will be loaded
   ///
-  /// \param FileMgr the file manager into which the precompiled header will
-  /// be loaded.
+  /// \param FileMgr the file manager into which the AST file will be loaded.
   ///
   /// \param Diags the diagnostics system to use for reporting errors and
-  /// warnings relevant to loading the precompiled header.
+  /// warnings relevant to loading the AST file.
   ///
   /// \param isysroot If non-NULL, the system include path specified by the
   /// user. This is only used with relocatable PCH files. If non-NULL,
   /// a relocatable PCH file will use the default path "/".
   ///
-  /// \param DisableValidation If true, the PCH reader will suppress most
+  /// \param DisableValidation If true, the AST reader will suppress most
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
       ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
@@ -645,12 +637,12 @@ public:
   /// name.
   ASTReadResult ReadAST(const std::string &FileName);
 
-  /// \brief Set the PCH callbacks listener.
+  /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
     Listener.reset(listener);
   }
 
-  /// \brief Set the PCH deserialization listener.
+  /// \brief Set the AST deserialization listener.
   void setDeserializationListener(ASTDeserializationListener *Listener);
 
   /// \brief Set the Preprocessor to use.
@@ -659,16 +651,15 @@ public:
   /// \brief Sets and initializes the given Context.
   void InitializeContext(ASTContext &Context);
 
-  /// \brief Retrieve the name of the named (primary) PCH file
+  /// \brief Retrieve the name of the named (primary) AST file
   const std::string &getFileName() const { return Chain[0]->FileName; }
 
   /// \brief Retrieve the name of the original source file name
   const std::string &getOriginalSourceFile() { return OriginalFileName; }
 
-  /// \brief Retrieve the name of the original source file name
-  /// directly from the PCH file, without actually loading the PCH
-  /// file.
-  static std::string getOriginalSourceFile(const std::string &PCHFileName,
+  /// \brief Retrieve the name of the original source file name directly from
+  /// the AST file, without actually loading the AST file.
+  static std::string getOriginalSourceFile(const std::string &ASTFileName,
                                            Diagnostic &Diags);
 
   /// \brief Returns the suggested contents of the predefines buffer,
@@ -783,7 +774,7 @@ public:
   /// the ASTConsumer.
   virtual void StartTranslationUnit(ASTConsumer *Consumer);
 
-  /// \brief Print some statistics about PCH usage.
+  /// \brief Print some statistics about AST usage.
   virtual void PrintStats();
 
   /// \brief Initialize the semantic source with the Sema instance
@@ -938,8 +929,7 @@ public:
   /// \brief Retrieve the macro definition with the given ID.
   MacroDefinition *getMacroDefinition(pch::IdentID ID);
 
-  /// \brief Retrieve the AST context that this PCH reader
-  /// supplements.
+  /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext *getContext() { return Context; }
 
   // \brief Contains declarations that were loaded before we have

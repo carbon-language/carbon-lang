@@ -870,8 +870,8 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
         cast_or_null<RedeclarableTemplateDecl>(Reader.GetDecl(Record[Idx++]));
   
     // This decl is a first one and the latest declaration that it points to is
-    // in the same PCH. However, if this actually needs to point to a
-    // redeclaration in another chained PCH, we need to update it by checking
+    // in the same AST file. However, if this actually needs to point to a
+    // redeclaration in another AST file, we need to update it by checking
     // the FirstLatestDeclIDs map which tracks this kind of decls.
     assert(Reader.GetDecl(ThisDeclID) == D && "Invalid ThisDeclID ?");
     ASTReader::FirstLatestDeclIDMap::iterator I
@@ -1069,8 +1069,8 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     return;
 
   // This decl is a first one and the latest declaration that it points to is in
-  // the same PCH. However, if this actually needs to point to a redeclaration
-  // in another chained PCH, we need to update it by checking the
+  // the same AST file. However, if this actually needs to point to a
+  // redeclaration in another AST file, we need to update it by checking the
   // FirstLatestDeclIDs map which tracks this kind of decls.
   assert(Reader.GetDecl(ThisDeclID) == static_cast<T*>(D) &&
          "Invalid ThisDeclID ?");

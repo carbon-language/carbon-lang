@@ -1247,7 +1247,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   }
 
   // There is no common ancestor, most probably because one location is in the
-  // predefines buffer or a PCH file.
+  // predefines buffer or an AST file.
   // FIXME: We should rearrange the external interface so this simply never
   // happens; it can't conceptually happen. Also see PR5662.
   IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.

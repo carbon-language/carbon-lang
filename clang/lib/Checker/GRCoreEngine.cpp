@@ -696,7 +696,7 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
 
     // Create a new AnalysisManager with components of the callee's
     // TranslationUnit.
-    // The Diagnostic is actually shared when we create ASTUnits from PCH files.
+    // The Diagnostic is actually shared when we create ASTUnits from AST files.
     AnalysisManager AMgr(TU->getASTContext(), TU->getDiagnostic(), 
                          OldMgr.getLangOptions(), 
                          OldMgr.getPathDiagnosticClient(),

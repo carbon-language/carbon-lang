@@ -20,7 +20,7 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsC99Varargs = false;
   IsGNUVarargs = false;
   IsBuiltinMacro = false;
-  IsFromPCH = false;
+  IsFromAST = false;
   IsDisabled = false;
   IsUsed = true;
   IsAllowRedefinitionsWithoutWarning = false;
@@ -37,7 +37,7 @@ MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator) {
   IsC99Varargs = MI.IsC99Varargs;
   IsGNUVarargs = MI.IsGNUVarargs;
   IsBuiltinMacro = MI.IsBuiltinMacro;
-  IsFromPCH = MI.IsFromPCH;
+  IsFromAST = MI.IsFromAST;
   IsDisabled = MI.IsDisabled;
   IsUsed = MI.IsUsed;
   IsAllowRedefinitionsWithoutWarning = MI.IsAllowRedefinitionsWithoutWarning;

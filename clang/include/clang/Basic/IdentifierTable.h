@@ -59,8 +59,8 @@ class IdentifierInfo {
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
-  bool IsFromPCH              : 1; // True if identfier first appeared in a PCH
-                                   // and wasn't modified since.
+  bool IsFromAST              : 1; // True if identfier first appeared in an AST
+                                   // file and wasn't modified since.
   bool RevertedTokenID        : 1; // True if RevertTokenIDToIdentifier was
                                    // called.
   // 7 bits left in 32-bit word.
@@ -129,7 +129,7 @@ public:
       NeedsHandleIdentifier = 1;
     else
       RecomputeNeedsHandleIdentifier();
-    IsFromPCH = false;
+    IsFromAST = false;
   }
 
   /// getTokenID - If this is a source-language token (e.g. 'for'), this API
@@ -145,7 +145,7 @@ public:
   ///
   /// TokenID is normally read-only but there are 2 instances where we revert it
   /// to tok::identifier for libstdc++ 4.2. Keep track of when this happens
-  /// using this method so we can inform PCH about it.
+  /// using this method so we can inform serialization about it.
   void RevertTokenIDToIdentifier() {
     assert(TokenID != tok::identifier && "Already at tok::identifier");
     TokenID = tok::identifier;
@@ -205,7 +205,7 @@ public:
       NeedsHandleIdentifier = 1;
     else
       RecomputeNeedsHandleIdentifier();
-    IsFromPCH = false;
+    IsFromAST = false;
   }
 
   /// isPoisoned - Return true if this token has been poisoned.
@@ -233,11 +233,11 @@ public:
   /// know that HandleIdentifier will not affect the token.
   bool isHandleIdentifierCase() const { return NeedsHandleIdentifier; }
 
-  /// isFromPCH - Return true if the identifier in its current state was loaded
-  /// from a PCH file.
-  bool isFromPCH() const { return IsFromPCH; }
+  /// isFromAST - Return true if the identifier in its current state was loaded
+  /// from an AST file.
+  bool isFromAST() const { return IsFromAST; }
 
-  void setIsFromPCH(bool FromPCH = true) { IsFromPCH = FromPCH; }
+  void setIsFromAST(bool FromAST = true) { IsFromAST = FromAST; }
 
 private:
   /// RecomputeNeedsHandleIdentifier - The Preprocessor::HandleIdentifier does

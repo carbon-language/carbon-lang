@@ -1271,7 +1271,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     // Don't emit builtin macros like __LINE__ to the AST file unless they have
     // been redefined by the header (in which case they are not isBuiltinMacro).
     // Also skip macros from a AST file if we're chaining.
-    if (MI->isBuiltinMacro() || (Chain && MI->isFromPCH()))
+    if (MI->isBuiltinMacro() || (Chain && MI->isFromAST()))
       continue;
 
     AddIdentifierRef(I->first, Record);
@@ -1900,7 +1900,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
-      if (!Chain || !ID->first->isFromPCH())
+      if (!Chain || !ID->first->isFromAST())
         Generator.insert(ID->first, ID->second);
     }
 
@@ -2249,7 +2249,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // The special types are in the chained PCH.
 
   // We don't start with the translation unit, but with its decls that
-  // don't come from the other PCH.
+  // don't come from the chained PCH.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
   llvm::SmallVector<pch::DeclID, 64> NewGlobalDecls;
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),

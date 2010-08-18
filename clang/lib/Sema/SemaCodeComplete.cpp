@@ -3581,7 +3581,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
     // We're messaging "id" as a type; provide all class/factory methods.
 
     // If we have an external source, load the entire class method
-    // pool from the PCH file.
+    // pool from the AST file.
     if (ExternalSource) {
       for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
            I != N; ++I) {
@@ -3682,7 +3682,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
     // about as code-completion results.
 
     // If we have an external source, load the entire class method
-    // pool from the PCH file.
+    // pool from the AST file.
     if (ExternalSource) {
       for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
            I != N; ++I) {
@@ -4239,7 +4239,7 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
                                               IdentifierInfo **SelIdents,
                                               unsigned NumSelIdents) {
   // If we have an external source, load the entire class method
-  // pool from the PCH file.
+  // pool from the AST file.
   if (ExternalSource) {
     for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
          I != N; ++I) {
