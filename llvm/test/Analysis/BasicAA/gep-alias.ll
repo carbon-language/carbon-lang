@@ -115,13 +115,13 @@ define i32 @test7(i32* %p, i64 %i) {
 ; CHECK: ret i32 0
 }
 
-; P[zext(i)] != p[zext(i+1)]
+; P[sext(i)] != p[sext(i+1)]
 ; PR1143
 define i32 @test8(i32* %p, i32 %i) {
-  %i1 = zext i32 %i to i64
+  %i1 = sext i32 %i to i64
   %pi = getelementptr i32* %p, i64 %i1
   %i.next = add i32 %i, 1
-  %i.next2 = zext i32 %i.next to i64
+  %i.next2 = sext i32 %i.next to i64
   %pi.next = getelementptr i32* %p, i64 %i.next2
   %x = load i32* %pi
   store i32 42, i32* %pi.next
