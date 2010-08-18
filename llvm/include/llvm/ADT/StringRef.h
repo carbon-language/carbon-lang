@@ -149,7 +149,10 @@ namespace llvm {
     unsigned edit_distance(StringRef Other, bool AllowReplacements = true);
 
     /// str - Get the contents as an std::string.
-    std::string str() const { return std::string(Data, Length); }
+    std::string str() const {
+      if (Data == 0) return "";
+      return std::string(Data, Length);
+    }
 
     /// @}
     /// @name Operator Overloads
