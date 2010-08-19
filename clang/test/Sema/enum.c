@@ -96,3 +96,9 @@ char * s = (an_enum) an_enumerator; // expected-warning {{incompatible integer t
 // PR4515
 enum PR4515 {PR4515a=1u,PR4515b=(PR4515a-2)/2};
 int CheckPR4515[PR4515b==0?1:-1];
+
+// PR7911
+extern enum PR7911T PR7911V; // expected-warning{{ISO C forbids forward references to 'enum' types}}
+void PR7911F() {
+  switch (PR7911V); // expected-error {{statement requires expression of integer type}}
+}

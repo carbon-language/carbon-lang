@@ -460,10 +460,13 @@ bool Type::isIntegralOrEnumerationType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::Int128;
-  
-  if (isa<EnumType>(CanonicalType))
-    return true;
-  
+
+  // Check for a complete enum type; incomplete enum types are not properly an
+  // enumeration type in the sense required here.
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
+      return true;
+
   return false;  
 }
 
