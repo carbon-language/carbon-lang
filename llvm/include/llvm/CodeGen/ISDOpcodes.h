@@ -633,7 +633,6 @@ namespace ISD {
   ///              (the result of the load and the result of the base +/- offset
   ///              computation); a post-indexed store produces one value (the
   ///              the result of the base +/- offset computation).
-  ///
   enum MemIndexedMode {
     UNINDEXED = 0,
     PRE_INC,
@@ -651,10 +650,8 @@ namespace ISD {
   ///          integer result type.
   /// ZEXTLOAD loads the integer operand and zero extends it to a larger
   ///          integer result type.
-  /// EXTLOAD  is used for three things: floating point extending loads,
-  ///          integer extending loads [the top bits are undefined], and vector
-  ///          extending loads [load into low elt].
-  ///
+  /// EXTLOAD  is used for two things: floating point extending loads and
+  ///          integer extending loads [the top bits are undefined].
   enum LoadExtType {
     NON_EXTLOAD = 0,
     EXTLOAD,
