@@ -1,4 +1,4 @@
-//===-- MachineVerifier.cpp - Machine Code Verifier -------------*- C++ -*-===//
+//===-- MachineVerifier.cpp - Machine Code Verifier -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
