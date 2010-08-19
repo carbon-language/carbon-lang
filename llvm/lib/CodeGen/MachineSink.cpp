@@ -391,20 +391,20 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     bool TryBreak = false;
     bool store = true;
     if (!MI->isSafeToMove(TII, AA, store)) {
-      DEBUG(dbgs() << " *** PUNTING: Won't sink load along critical edge.\n");
+      DEBUG(dbgs() << " *** NOTE: Won't sink load along critical edge.\n");
       TryBreak = true;
     }
 
     // We don't want to sink across a critical edge if we don't dominate the
     // successor. We could be introducing calculations to new code paths.
     if (!TryBreak && !DT->dominates(ParentBlock, SuccToSinkTo)) {
-      DEBUG(dbgs() << " *** PUNTING: Critical edge found\n");
+      DEBUG(dbgs() << " *** NOTE: Critical edge found\n");
       TryBreak = true;
     }
 
     // Don't sink instructions into a loop.
     if (!TryBreak && LI->isLoopHeader(SuccToSinkTo)) {
-      DEBUG(dbgs() << " *** PUNTING: Loop header found\n");
+      DEBUG(dbgs() << " *** NOTE: Loop header found\n");
       TryBreak = true;
     }
 
@@ -418,7 +418,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
               " *** PUNTING: Not legal or profitable to break critical edge\n");
         return false;
       } else {
-        DEBUG(dbgs() << "*** Splitting critical edge:"
+        DEBUG(dbgs() << " *** Splitting critical edge:"
               " BB#" << ParentBlock->getNumber()
               << " -- BB#" << NewSucc->getNumber()
               << " -- BB#" << SuccToSinkTo->getNumber() << '\n');
