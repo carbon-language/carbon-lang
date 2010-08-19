@@ -2950,8 +2950,6 @@ void EmitIncludes(raw_ostream& O) {
     << "using namespace llvm;\n"
     << "using namespace llvmc;\n\n"
 
-    << "extern cl::opt<std::string> OutputFilename;\n\n"
-
     << "inline const char* checkCString(const char* s)\n"
     << "{ return s == NULL ? \"\" : s; }\n\n";
 }

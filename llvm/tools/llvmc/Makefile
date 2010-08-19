@@ -11,4 +11,8 @@ LEVEL = ../..
 
 DIRS = src
 
+ifeq ($(BUILD_EXAMPLES),1)
+  OPTIONAL_DIRS += examples
+endif
+
 include $(LEVEL)/Makefile.common

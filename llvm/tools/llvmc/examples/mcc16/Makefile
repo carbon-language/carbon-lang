@@ -1,4 +1,4 @@
-##===- tools/llvmc/plugins/Hello/Makefile ------------------*- Makefile -*-===##
+##===- llvmc/examples/mcc16/Makefile -----------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,6 +9,7 @@
 
 LEVEL = ../../../..
 
-LLVMC_PLUGIN = Hello
+LLVMC_BASED_DRIVER = mcc16
+BUILT_SOURCES = PIC16.inc
 
 include $(LEVEL)/Makefile.common

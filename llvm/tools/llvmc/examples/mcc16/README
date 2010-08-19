@@ -1,5 +1,5 @@
 This is a basic compiler driver for the PIC16 toolchain that shows how to create
-your own llvmc-based drivers. It is based on the example/Skeleton template.
+your own llvmc-based drivers. It is based on the examples/Skeleton template.
 
 The PIC16 toolchain looks like this:
 

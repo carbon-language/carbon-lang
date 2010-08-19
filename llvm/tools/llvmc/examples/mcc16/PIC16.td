@@ -1,4 +1,4 @@
-//===- PIC16Base.td - PIC16 toolchain driver ---------------*- tablegen -*-===//
+//===- PIC16.td - PIC16 toolchain driver -------------------*- tablegen -*-===//
 //
 // A basic driver for the PIC16 toolchain.
 //
