@@ -103,12 +103,6 @@ template <class... Types, class Alloc>
 template <class... Types>
   void swap(tuple<Types...>& x, tuple<Types...>& y);
 
-template <class InputIterator>
-  InputIterator begin(const std::tuple<InputIterator, InputIterator>& t);
-
-template <class InputIterator>
-  InputIterator end(const std::tuple<InputIterator, InputIterator>& t);
-
 }  // std
 
 */
@@ -792,22 +786,6 @@ tuple_cat(tuple<_Tp...>&& __x, tuple<_Up...>&& __y)
 template <class ..._Tp, class _Alloc>
 struct uses_allocator<tuple<_Tp...>, _Alloc>
     : true_type {};
-
-template <class _InputIterator>
-inline
-_InputIterator
-begin(const std::tuple<_InputIterator, _InputIterator>& __t)
-{
-    return get<0>(__t);
-}
-
-template <class _InputIterator>
-inline
-_InputIterator
-end(const std::tuple<_InputIterator, _InputIterator>& __t)
-{
-    return get<1>(__t);
-}
 
 template <class _T1, class _T2>
 template <class... _Args1, class... _Args2, size_t ..._I1, size_t ..._I2>

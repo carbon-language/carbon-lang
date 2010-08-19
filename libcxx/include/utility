@@ -100,11 +100,6 @@ template<size_t I, class T1, class T2>
     const typename const tuple_element<I, std::pair<T1, T2> >::type&
     get(const std::pair<T1, T2>&);
 
-template <class InputIterator>
-    InputIterator begin(const std::pair<InputIterator, InputIterator>& p);
-template <class InputIterator>
-    InputIterator end(const std::pair<InputIterator, InputIterator>& p);
-
 }  // std
 
 */
@@ -461,22 +456,6 @@ get(const pair<_T1, _T2>& __p)
 }
 
 #endif
-
-template <class _InputIterator>
-_LIBCPP_INLINE_VISIBILITY inline
-_InputIterator
-begin(const pair<_InputIterator, _InputIterator>& __p)
-{
-    return __p.first;
-}
-
-template <class _InputIterator>
-_LIBCPP_INLINE_VISIBILITY inline
-_InputIterator
-end(const pair<_InputIterator, _InputIterator>& __p)
-{
-    return __p.second;
-}
 
 _LIBCPP_END_NAMESPACE_STD
 
