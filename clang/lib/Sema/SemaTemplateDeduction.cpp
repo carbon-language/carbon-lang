@@ -530,10 +530,11 @@ DeduceTemplateArguments(Sema &S,
       if (!IncompleteArrayArg)
         return Sema::TDK_NonDeducedMismatch;
 
+      unsigned SubTDF = TDF & TDF_IgnoreQualifiers;
       return DeduceTemplateArguments(S, TemplateParams,
                      S.Context.getAsIncompleteArrayType(Param)->getElementType(),
                                      IncompleteArrayArg->getElementType(),
-                                     Info, Deduced, 0);
+                                     Info, Deduced, SubTDF);
     }
 
     //     T [integer-constant]
@@ -548,10 +549,11 @@ DeduceTemplateArguments(Sema &S,
       if (ConstantArrayArg->getSize() != ConstantArrayParm->getSize())
         return Sema::TDK_NonDeducedMismatch;
 
+      unsigned SubTDF = TDF & TDF_IgnoreQualifiers;
       return DeduceTemplateArguments(S, TemplateParams,
                                      ConstantArrayParm->getElementType(),
                                      ConstantArrayArg->getElementType(),
-                                     Info, Deduced, 0);
+                                     Info, Deduced, SubTDF);
     }
 
     //     type [i]
@@ -560,6 +562,8 @@ DeduceTemplateArguments(Sema &S,
       if (!ArrayArg)
         return Sema::TDK_NonDeducedMismatch;
 
+      unsigned SubTDF = TDF & TDF_IgnoreQualifiers;
+
       // Check the element type of the arrays
       const DependentSizedArrayType *DependentArrayParm
         = S.Context.getAsDependentSizedArrayType(Param);
@@ -567,7 +571,7 @@ DeduceTemplateArguments(Sema &S,
             = DeduceTemplateArguments(S, TemplateParams,
                                       DependentArrayParm->getElementType(),
                                       ArrayArg->getElementType(),
-                                      Info, Deduced, 0))
+                                      Info, Deduced, SubTDF))
         return Result;
 
       // Determine the array bound is something we can deduce.

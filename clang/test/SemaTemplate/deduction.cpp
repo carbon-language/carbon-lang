@@ -113,3 +113,11 @@ namespace test0 {
     make(char_maker); // expected-error {{no matching function for call to 'make'}}
   }
 }
+
+namespace test1 {
+  template<typename T> void foo(const T a[3][3]);
+  void test() {
+    int a[3][3];
+    foo(a);
+  }
+}
