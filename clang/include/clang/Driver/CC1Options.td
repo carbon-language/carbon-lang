@@ -215,6 +215,8 @@ def W : Joined<"-W">;
 
 def fdiagnostics_print_source_range_info : Flag<"-fdiagnostics-print-source-range-info">,
   HelpText<"Print source range spans in numeric form">;
+def fdiagnostics_parseable_fixits : Flag<"-fdiagnostics-parseable-fixits">,
+  HelpText<"Print fix-its in machine parseable form">;
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print diagnostic name with mappable diagnostics">;
 def fdiagnostics_show_category : Separate<"-fdiagnostics-show-category">,

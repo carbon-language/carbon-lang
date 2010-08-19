@@ -244,6 +244,8 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-fno-diagnostics-fixit-info");
   if (Opts.ShowSourceRanges)
     Res.push_back("-fdiagnostics-print-source-range-info");
+  if (Opts.ShowParseableFixits)
+    Res.push_back("-fdiagnostics-parseable-fixits");
   if (Opts.ShowColors)
     Res.push_back("-fcolor-diagnostics");
   if (Opts.VerifyDiagnostics)
@@ -933,6 +935,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << ShowCategory;
   
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
+  Opts.ShowParseableFixits = Args.hasArg(OPT_fdiagnostics_parseable_fixits);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.BinaryOutput = Args.hasArg(OPT_fdiagnostics_binary);
   Opts.ErrorLimit = Args.getLastArgIntValue(OPT_ferror_limit, 0, Diags);

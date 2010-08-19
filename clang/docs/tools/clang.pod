@@ -395,6 +395,7 @@ Show commands to run and use verbose output.
 B<-fshow-source-location>
 B<-fcaret-diagnostics>
 B<-fdiagnostics-fixit-info>
+B<-fdiagnostics-parseable-fixits>
 B<-fdiagnostics-print-source-range-info>
 B<-fprint-source-range-info>
 B<-fdiagnostics-show-option>

@@ -30,6 +30,7 @@ public:
   unsigned ShowCarets : 1;       /// Show carets in diagnostics.
   unsigned ShowFixits : 1;       /// Show fixit information.
   unsigned ShowSourceRanges : 1; /// Show source ranges in numeric form.
+  unsigned ShowParseableFixits : 1; /// Show machine parseable fix-its.
   unsigned ShowOptionNames : 1;  /// Show the diagnostic name for mappable
                                  /// diagnostics.
   unsigned ShowCategories : 2;   /// Show categories: 0 -> none, 1 -> Number,
@@ -83,6 +84,7 @@ public:
     ShowOptionNames = 0;
     ShowCategories = 0;
     ShowSourceRanges = 0;
+    ShowParseableFixits = 0;
     VerifyDiagnostics = 0;
     BinaryOutput = 0;
     ErrorLimit = 0;
