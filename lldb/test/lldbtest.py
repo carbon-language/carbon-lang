@@ -104,7 +104,6 @@ class TestBase(unittest2.TestCase):
         # And the result object.
         self.res = lldb.SBCommandReturnObject()
 
-
     def tearDown(self):
         # Finish the inferior process, if it was "run" previously.
         if self.runStarted:
@@ -114,3 +113,43 @@ class TestBase(unittest2.TestCase):
 
         # Restore old working directory.
         os.chdir(self.oldcwd)
+
+    def runCmd(self, cmd, msg=None, check=True):
+        """
+        Ask the command interpreter to handle the command and then check its
+        return status.
+        """
+        # Fail fast if 'cmd' is not meaningful.
+        if not cmd or len(cmd) == 0:
+            raise Exception("Bad 'cmd' parameter encountered")
+        self.ci.HandleCommand(cmd, self.res)
+        if cmd == "run":
+            self.runStarted = True
+        if check:
+            self.assertTrue(self.res.Succeeded(),
+                            msg if msg else CMD_MSG(cmd))
+
+    def expect(self, cmd, msg, startstr=None, substrs=None):
+        """
+        Similar to runCmd; with additional expect style output matching ability.
+
+        Ask the command interpreter to handle the command and then check its
+        return status.  The 'msg' parameter specifies an informational assert
+        message.  We expect the output from running the command to start with
+        'startstr' and matches the substrings contained in 'substrs'.
+        """
+        # Fail fast if 'msg' is not meaningful.
+        if not msg or len(msg) == 0:
+            raise Exception("Bad 'msg' parameter encountered")
+        self.runCmd(cmd)
+
+        output = self.res.GetOutput()
+        matched = output.startswith(startstr) if startstr else True
+        if substrs:
+            for str in substrs:
+                matched = output.find(str) > 0
+                if not matched:
+                    break
+
+        self.assertTrue(matched, msg)
+
