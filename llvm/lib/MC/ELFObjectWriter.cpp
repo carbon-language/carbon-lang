@@ -932,10 +932,15 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
   // ... then all of the sections ...
   DenseMap<const MCSection*, uint64_t> SectionOffsetMap;
 
+  DenseMap<const MCSection*, uint8_t> SectionIndexMap;
+
+  unsigned Index = 1;
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     // Remember the offset into the file for this section.
     SectionOffsetMap[&it->getSection()] = FileOff;
+
+    SectionIndexMap[&it->getSection()] = Index++;
 
     const MCSectionData &SD = *it;
     FileOff += Layout.getSectionFileSize(&SD);
@@ -968,15 +973,11 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
     case ELF::SHT_RELA: {
       const MCSection *SymtabSection;
       const MCSection *InfoSection;
-      const MCSectionData *SymtabSD;
-      const MCSectionData *InfoSD;
 
       SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                                                      SectionKind::getReadOnly(),
                                                      false);
-      SymtabSD = &Asm.getSectionData(*SymtabSection);
-      // we have to count the empty section in too
-      sh_link = SymtabSD->getLayoutOrder() + 1;
+      sh_link = SectionIndexMap[SymtabSection];
 
       // Remove ".rel" and ".rela" prefixes.
       unsigned SecNameLen = (Section.getType() == ELF::SHT_REL) ? 4 : 5;
@@ -986,8 +987,7 @@ void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
                                                    ELF::SHT_PROGBITS, 0,
                                                    SectionKind::getReadOnly(),
                                                    false);
-      InfoSD = &Asm.getSectionData(*InfoSection);
-      sh_info = InfoSD->getLayoutOrder() + 1;
+      sh_info = SectionIndexMap[InfoSection];
       break;
     }
 
