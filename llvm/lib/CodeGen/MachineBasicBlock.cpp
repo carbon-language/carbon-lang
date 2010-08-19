@@ -468,8 +468,31 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     LV->addNewBlock(NMBB, this, Succ);
 
   if (MachineDominatorTree *MDT =
-        P->getAnalysisIfAvailable<MachineDominatorTree>())
-    MDT->addNewBlock(NMBB, this);
+      P->getAnalysisIfAvailable<MachineDominatorTree>()) {
+    // Update dominator information.
+    MachineDomTreeNode *SucccDTNode = MDT->getNode(Succ);
+
+    bool IsNewIDom = true;
+    for (const_pred_iterator PI = Succ->pred_begin(), E = Succ->pred_end();
+         PI != E; ++PI) {
+      MachineBasicBlock *PredBB = *PI;
+      if (PredBB == NMBB)
+        continue;
+      if (!MDT->dominates(SucccDTNode, MDT->getNode(PredBB))) {
+        IsNewIDom = false;
+        break;
+      }
+    }
+
+    // We know "this" dominates the newly created basic block.
+    MachineDomTreeNode *NewDTNode = MDT->addNewBlock(NMBB, this);
+
+    // If all the other predecessors of "Succ" are dominated by "Succ" itself
+    // then the new block is the new immediate dominator of "Succ". Otherwise,
+    // the new block doesn't dominate anything.
+    if (IsNewIDom)
+      MDT->changeImmediateDominator(SucccDTNode, NewDTNode);
+  }
 
   if (MachineLoopInfo *MLI = P->getAnalysisIfAvailable<MachineLoopInfo>())
     if (MachineLoop *TIL = MLI->getLoopFor(this)) {
