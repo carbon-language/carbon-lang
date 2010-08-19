@@ -62,3 +62,6 @@ double t1[] = {
   -1.9e500,  // expected-warning {{too large}}
   -1.9e-500  // expected-warning {{too small}}
 };
+
+// PR7888
+double g = 1e100000000; // expected-warning {{too large}}
