@@ -216,6 +216,11 @@ class MachineFrameInfo {
   /// alignment of any object in it.
   unsigned LocalFrameMaxAlign;
 
+  /// Whether the local object blob needs to be allocated together. If not,
+  /// PEI should ignore the isPreAllocated flags on the stack objects and
+  /// just allocate them normally.
+  bool UseLocalStackAllocationBlock;
+
 public:
     explicit MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
@@ -315,6 +320,17 @@ public:
   /// object blob.
   unsigned getLocalFrameMaxAlign() { return LocalFrameMaxAlign; }
 
+  /// getUseLocalStackAllocationBlock - Get whether the local allocation blob
+  /// should be allocated together or let PEI allocate the locals in it
+  /// directly.
+  bool getUseLocalStackAllocationBlock() {return UseLocalStackAllocationBlock;}
+
+  /// setUseLocalStackAllocationBlock - Set whether the local allocation blob
+  /// should be allocated together or let PEI allocate the locals in it
+  /// directly.
+  void setUseLocalStackAllocationBlock(bool v) {
+    UseLocalStackAllocationBlock = v;
+  }
 
   /// isObjectPreAllocated - Return true if the object was pre-allocated into
   /// the local block.

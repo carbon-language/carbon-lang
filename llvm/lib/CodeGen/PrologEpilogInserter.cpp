@@ -560,7 +560,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // check for whether the frame is large enough to want to use virtual
   // frame index registers. Functions which don't want/need this optimization
   // will continue to use the existing code path.
-  if (EnableLocalStackAlloc && MFI->getLocalFrameSize()) {
+  if (EnableLocalStackAlloc && MFI->getUseLocalStackAllocationBlock()) {
     unsigned Align = MFI->getLocalFrameMaxAlign();
 
     // Adjust to alignment boundary.
@@ -593,7 +593,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
     // Assign large stack objects first.
     for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
-      if (MFI->isObjectPreAllocated(i))
+      if (MFI->isObjectPreAllocated(i) &&
+          MFI->getUseLocalStackAllocationBlock())
         continue;
       if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
         continue;
@@ -614,7 +615,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Then assign frame offsets to stack objects that are not used to spill
   // callee saved registers.
   for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
-    if (MFI->isObjectPreAllocated(i))
+    if (MFI->isObjectPreAllocated(i) &&
+        MFI->getUseLocalStackAllocationBlock())
       continue;
     if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
       continue;

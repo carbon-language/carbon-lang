@@ -89,6 +89,13 @@ bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
   // Insert virtual base registers to resolve frame index references.
   insertFrameReferenceRegisters(MF);
 
+  // Tell MFI whether any base registers were allocated. PEI will only
+  // want to use the local block allocations from this pass if there were any.
+  // Otherwise, PEI can do a bit better job of getting the alignment right
+  // without a hole at the start since it knows the alignment of the stack
+  // at the start of local allocation, and this pass doesn't.
+  MFI->setUseLocalStackAllocationBlock(NumBaseRegisters > 0);
+
   return true;
 }
 
