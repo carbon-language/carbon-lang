@@ -15,6 +15,7 @@
 #include "Record.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <algorithm>
+#include <cctype>
 
 using namespace llvm;
 
