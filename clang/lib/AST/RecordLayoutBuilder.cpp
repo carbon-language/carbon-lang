@@ -73,21 +73,10 @@ class EmptySubobjectMap {
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
   
-  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
-                                 uint64_t Offset) const;
-
   void AddSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
   
-  bool CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
-                                     uint64_t Offset);
   void UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
                                  uint64_t Offset, bool PlacingEmptyBase);
-  
-  bool CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
-                                      const CXXRecordDecl *Class,
-                                      uint64_t Offset) const;
-  bool CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
-                                      uint64_t Offset) const;
   
   void UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD, 
                                   const CXXRecordDecl *Class,
@@ -99,6 +88,19 @@ class EmptySubobjectMap {
   bool AnyEmptySubobjectsBeyondOffset(uint64_t Offset) const {
     return Offset <= MaxEmptyClassOffset;
   }
+
+protected:
+  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                 uint64_t Offset) const;
+
+  bool CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
+                                     uint64_t Offset);
+
+  bool CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                      const CXXRecordDecl *Class,
+                                      uint64_t Offset) const;
+  bool CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
+                                      uint64_t Offset) const;
 
 public:
   /// This holds the size of the largest empty subobject (either a base
@@ -513,6 +515,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const FieldDecl *FD,
 }
 
 class RecordLayoutBuilder {
+protected:
   // FIXME: Remove this and make the appropriate fields public.
   friend class clang::ASTContext;
 
@@ -623,12 +626,14 @@ class RecordLayoutBuilder {
 
   void SelectPrimaryVBase(const CXXRecordDecl *RD);
 
+  virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
+
   /// IdentifyPrimaryBases - Identify all virtual base classes, direct or
   /// indirect, that are primary base classes for some other direct or indirect
   /// base class.
   void IdentifyPrimaryBases(const CXXRecordDecl *RD);
 
-  bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
+  virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
 
   /// LayoutNonVirtualBases - Determines the primary base class (if any) and
   /// lays it out. Will then proceed to lay out all non-virtual base clasess.
@@ -638,7 +643,7 @@ class RecordLayoutBuilder {
   void LayoutNonVirtualBase(const BaseSubobjectInfo *Base);
 
   void AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info, 
-                                    uint64_t Offset);
+                                            uint64_t Offset);
 
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *RD,
@@ -734,6 +739,11 @@ RecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
   }
 }
 
+uint64_t
+RecordLayoutBuilder::GetVirtualPointersSize(const CXXRecordDecl *RD) const {
+  return Context.Target.getPointerWidth(0);
+}
+
 /// DeterminePrimaryBase - Determine the primary base of the given class.
 void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   // If the class isn't dynamic, it won't have a primary base.
@@ -794,7 +804,7 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
 
   // Update the size.
-  Size += Context.Target.getPointerWidth(0);
+  Size += GetVirtualPointersSize(RD);
   DataSize = Size;
 
   // Update the alignment.
@@ -1451,6 +1461,38 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   return 0;
 }
 
+// This class implements layout specific to the Microsoft ABI.
+class MSRecordLayoutBuilder: public RecordLayoutBuilder {
+  friend class ASTContext;
+
+  MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects):
+    RecordLayoutBuilder(Ctx, EmptySubobjects) {}
+
+  virtual bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
+  virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
+};
+
+bool MSRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
+  // FIXME: Audit the corners
+  if (!RD->isDynamicClass())
+    return false;
+  const ASTRecordLayout &BaseInfo = Context.getASTRecordLayout(RD);
+  // In the Microsoft ABI, classes can have one or two vtable pointers.
+  if (BaseInfo.getNonVirtualSize() == Context.Target.getPointerWidth(0) ||
+      BaseInfo.getNonVirtualSize() == Context.Target.getPointerWidth(0) * 2)
+    return true;
+  return false;
+}
+
+uint64_t
+MSRecordLayoutBuilder::GetVirtualPointersSize(const CXXRecordDecl *RD) const {
+  // We should reserve space for two pointers if the class has both
+  // virtual functions and virtual bases.
+  if (RD->isPolymorphic() && RD->getNumVBases() > 0)
+    return 2 * Context.Target.getPointerWidth(0);
+  return Context.Target.getPointerWidth(0);
+}
+
 /// getASTRecordLayout - Get or compute information about the layout of the
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
@@ -1469,8 +1511,13 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     EmptySubobjectMap EmptySubobjects(*this, RD);
 
-    RecordLayoutBuilder Builder(*this, &EmptySubobjects);
-    Builder.Layout(RD);
+    // When compiling for Microsoft, use the special MS builder.
+    RecordLayoutBuilder *Builder;
+    if (Target.getCXXABI() == "microsoft")
+      Builder = new MSRecordLayoutBuilder(*this, &EmptySubobjects);
+    else
+      Builder = new RecordLayoutBuilder(*this, &EmptySubobjects);
+    Builder->Layout(RD);
 
     // FIXME: This is not always correct. See the part about bitfields at
     // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
@@ -1479,20 +1526,21 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 
     // FIXME: This should be done in FinalizeLayout.
     uint64_t DataSize =
-      IsPODForThePurposeOfLayout ? Builder.Size : Builder.DataSize;
+      IsPODForThePurposeOfLayout ? Builder->Size : Builder->DataSize;
     uint64_t NonVirtualSize =
-      IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
+      IsPODForThePurposeOfLayout ? DataSize : Builder->NonVirtualSize;
 
     NewEntry =
-      new (*this) ASTRecordLayout(*this, Builder.Size, Builder.Alignment,
-                                  DataSize, Builder.FieldOffsets.data(),
-                                  Builder.FieldOffsets.size(),
+      new (*this) ASTRecordLayout(*this, Builder->Size, Builder->Alignment,
+                                  DataSize, Builder->FieldOffsets.data(),
+                                  Builder->FieldOffsets.size(),
                                   NonVirtualSize,
-                                  Builder.NonVirtualAlignment,
+                                  Builder->NonVirtualAlignment,
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
-                                  Builder.PrimaryBase,
-                                  Builder.PrimaryBaseIsVirtual,
-                                  Builder.Bases, Builder.VBases);
+                                  Builder->PrimaryBase,
+                                  Builder->PrimaryBaseIsVirtual,
+                                  Builder->Bases, Builder->VBases);
+    delete Builder;
   } else {
     RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
     Builder.Layout(D);
