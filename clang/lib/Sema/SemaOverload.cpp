@@ -3741,25 +3741,45 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.FinalConversion.setAsIdentityConversion();
   Candidate.FinalConversion.setFromType(ConvType);
   Candidate.FinalConversion.setAllToTypes(ToType);
-
-  // Determine the implicit conversion sequence for the implicit
-  // object parameter.
   Candidate.Viable = true;
   Candidate.Conversions.resize(1);
-  Candidate.Conversions[0]
-    = TryObjectArgumentInitialization(From->getType(), Conversion,
-                                      ActingContext);
-  
+
   // C++ [over.match.funcs]p4:
   //   For conversion functions, the function is considered to be a member of 
   //   the class of the implicit implied object argument for the purpose of 
   //   defining the type of the implicit object parameter.
-  if (Candidate.Conversions[0].Standard.Second == ICK_Derived_To_Base)
-    Candidate.Conversions[0].Standard.Second = ICK_Identity;
+  //
+  // Determine the implicit conversion sequence for the implicit
+  // object parameter.
+  QualType ImplicitParamType = From->getType();
+  if (const PointerType *FromPtrType = ImplicitParamType->getAs<PointerType>())
+    ImplicitParamType = FromPtrType->getPointeeType();
+  CXXRecordDecl *ConversionContext
+    = cast<CXXRecordDecl>(ImplicitParamType->getAs<RecordType>()->getDecl());
+  
+  Candidate.Conversions[0]
+    = TryObjectArgumentInitialization(From->getType(), Conversion,
+                                      ConversionContext);
+  
   if (Candidate.Conversions[0].isBad()) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_bad_conversion;
     return;
+  }
+
+  // Make sure that the actual object argument initialization will work, when
+  // it comes down to it. This takes into account the actual acting context.
+  if (ConversionContext->getCanonicalDecl()
+                                        != ActingContext->getCanonicalDecl()) {
+    ImplicitConversionSequence ObjectConvertICS
+      = TryObjectArgumentInitialization(From->getType(), Conversion, 
+                                        ActingContext);
+    if (ObjectConvertICS.isBad()) {
+      Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_bad_conversion;
+      Candidate.Conversions[0] = ObjectConvertICS;
+      return;
+    }
   }
   
   // We won't go through a user-define type conversion function to convert a 

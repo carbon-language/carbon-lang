@@ -270,3 +270,40 @@ namespace PR7934 {
     fake_memcpy(ptr);
   }
 }
+
+namespace rdar8018274 {
+  struct X { };
+  struct Y {
+    operator const struct X *() const;
+  };
+
+  struct Z : Y {
+    operator struct X * ();
+  };
+
+  void test() {
+    Z x;
+    (void) (x != __null);
+  }
+
+
+  struct Base {
+    operator int();
+  };
+
+  struct Derived1 : Base { };
+
+  struct Derived2 : Base { };
+
+  struct SuperDerived : Derived1, Derived2 { 
+    using Derived1::operator int;
+  };
+
+  struct UeberDerived : SuperDerived {
+    operator long();
+  };
+
+  void test2(UeberDerived ud) {
+    int i = ud; // expected-error{{ambiguous conversion from derived class 'rdar8018274::SuperDerived' to base class 'rdar8018274::Base'}}
+  }
+}
