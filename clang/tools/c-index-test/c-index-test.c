@@ -64,6 +64,7 @@ void free_remapped_files(struct CXUnsavedFile *unsaved_files,
     free((char *)unsaved_files[i].Filename);
     free((char *)unsaved_files[i].Contents);
   }
+  free(unsaved_files);
 }
 
 int parse_remapped_files(int argc, const char **argv, int start_arg,
@@ -87,8 +88,8 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
     return 0;
 
   *unsaved_files
-  = (struct CXUnsavedFile *)malloc(sizeof(struct CXUnsavedFile) *
-                                   *num_unsaved_files);
+    = (struct CXUnsavedFile *)malloc(sizeof(struct CXUnsavedFile) *
+                                     *num_unsaved_files);
   for (arg = start_arg, i = 0; i != *num_unsaved_files; ++i, ++arg) {
     struct CXUnsavedFile *unsaved = *unsaved_files + i;
     const char *arg_string = argv[arg] + prefix_len;
