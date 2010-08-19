@@ -103,15 +103,14 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
     // Determine the block of the use.
     MachineInstr *UseInst = &*I;
     MachineBasicBlock *UseBlock = UseInst->getParent();
-    if (UseBlock == DefMBB) {
-      LocalUse = true;
-      return false;
-    }
 
     if (UseInst->isPHI()) {
       // PHI nodes use the operand in the predecessor block, not the block with
       // the PHI.
       UseBlock = UseInst->getOperand(I.getOperandNo()+1).getMBB();
+    } else if (UseBlock == DefMBB) {
+      LocalUse = true;
+      return false;
     }
 
     // Check that it dominates.
@@ -270,7 +269,6 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // decide.
   MachineBasicBlock *SuccToSinkTo = 0;
 
-  bool LocalUse = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;  // Ignore non-register operands.
@@ -328,6 +326,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       if (SuccToSinkTo) {
         // If a previous operand picked a block to sink to, then this operand
         // must be sinkable to the same block.
+        bool LocalUse = false;
         if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo, ParentBlock, LocalUse))
           return false;
 
@@ -338,6 +337,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       // we should sink to.
       for (MachineBasicBlock::succ_iterator SI = ParentBlock->succ_begin(),
            E = ParentBlock->succ_end(); SI != E; ++SI) {
+        bool LocalUse = false;
         if (AllUsesDominatedByBlock(Reg, *SI, ParentBlock, LocalUse)) {
           SuccToSinkTo = *SI;
           break;
