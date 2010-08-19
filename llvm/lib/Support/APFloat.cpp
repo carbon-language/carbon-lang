@@ -153,6 +153,7 @@ readExponent(StringRef::iterator begin, StringRef::iterator end)
     value += absExponent * 10;
     if (absExponent >= overlargeExponent) {
       absExponent = overlargeExponent;
+      p = end;  /* outwit assert below */
       break;
     }
     absExponent = value;
