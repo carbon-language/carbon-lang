@@ -13,6 +13,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Compiler.h"
 #include <stdarg.h>
 #include <list>
 
@@ -76,7 +77,8 @@ public:
     return c0.getValue() == c1.getValue();
   }
 
-  friend bool operator!=(const Constructable & c0, const Constructable & c1) {
+  friend bool ATTRIBUTE_UNUSED
+  operator!=(const Constructable & c0, const Constructable & c1) {
     return c0.getValue() != c1.getValue();
   }
 };
