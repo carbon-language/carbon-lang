@@ -355,7 +355,7 @@ namespace {
   };
 
   class EnumArgument : public Argument {
-    StringRef type;
+    std::string type;
     std::vector<StringRef> values, enums;
   public:
     EnumArgument(Record &Arg, StringRef Attr)
