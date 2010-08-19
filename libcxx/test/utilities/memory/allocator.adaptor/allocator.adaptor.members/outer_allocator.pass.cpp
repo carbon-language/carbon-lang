@@ -15,7 +15,7 @@
 // outer_allocator_type& outer_allocator();
 // const outer_allocator_type& outer_allocator() const;
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

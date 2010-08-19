@@ -14,7 +14,7 @@
 
 // typedef see below inner_allocator_type;
 
-#include <memory>
+#include <scoped_allocator>
 #include <type_traits>
 
 #include "../allocators.h"

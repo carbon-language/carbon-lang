@@ -14,7 +14,7 @@
 
 // template <class T> void destroy(T* p);
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 #include <string>
 

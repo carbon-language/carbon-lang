@@ -14,7 +14,7 @@
 
 // size_type max_size() const;
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

@@ -14,7 +14,7 @@
 
 // pointer allocate(size_type n, const_void_pointer hint);
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

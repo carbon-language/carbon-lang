@@ -14,7 +14,7 @@
 
 // void deallocate(pointer p, size_type n);
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

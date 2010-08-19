@@ -181,6 +181,332 @@ public:
     template<class Y> operator auto_ptr<Y>() throw();
 };
 
+template <class T>
+struct default_delete
+{
+    constexpr default_delete();
+    template <class U> default_delete(const default_delete<U>&);
+
+    void operator()(T*) const;
+};
+
+template <class T>
+struct default_delete<T[]>
+{
+    constexpr default_delete();
+    void operator()(T*) const;
+    template <class U> void operator()(U*) const = delete;
+};
+
+template <class T, class D = default_delete<T>> class unique_ptr;
+
+template <class T, class D = default_delete<T>>
+class unique_ptr
+{
+public:
+    typedef see below pointer;
+    typedef T element_type;
+    typedef D deleter_type;
+
+    // constructors
+    constexpr unique_ptr();
+    explicit unique_ptr(pointer p);
+    unique_ptr(pointer p, implementation-defined d1);
+    unique_ptr(pointer p, implementation-defined d2);
+    unique_ptr(unique_ptr&& u);
+    unique_ptr(nullptr_t) : unique_ptr() { }
+    template <class U, class E>
+        unique_ptr(unique_ptr<U, E>&& u);
+    template <class U>
+        explicit unique_ptr(auto_ptr<U>& u);
+    template <class U>
+        unique_ptr(auto_ptr<U>&& u);
+
+    // destructor
+    ~unique_ptr();
+
+    // assignment
+    unique_ptr& operator=(unique_ptr&& u);
+    template <class U, class E> unique_ptr& operator=(unique_ptr<U, E>&& u);
+    unique_ptr& operator=(nullptr_t);
+
+    // observers
+    typename add_lvalue_reference<T>::type operator*() const;
+    pointer operator->() const;
+    pointer get() const;
+    deleter_type& get_deleter();
+    const deleter_type& get_deleter() const;
+    explicit operator bool() const;
+
+    // modifiers
+    pointer release();
+    void reset(pointer p = pointer());
+    void swap(unique_ptr& u);
+};
+
+template <class T, class D>
+class unique_ptr<T[], D>
+{
+public:
+    typedef implementation-defined pointer;
+    typedef T element_type;
+    typedef D deleter_type;
+
+    // constructors
+    constexpr unique_ptr();
+    explicit unique_ptr(pointer p);
+    unique_ptr(pointer p, implementation-defined d);
+    unique_ptr(pointer p, implementation-defined d);
+    unique_ptr(unique_ptr&& u);
+    unique_ptr(nullptr_t) : unique_ptr() { }
+
+    // destructor
+    ∼unique_ptr();
+
+    // assignment
+    unique_ptr& operator=(unique_ptr&& u);
+    unique_ptr& operator=(nullptr_t);
+
+    // observers
+    T& operator[](size_t i) const;
+    pointer get() const;
+    deleter_type& get_deleter();
+    const deleter_type& get_deleter() const;
+    explicit operator bool() const;
+
+    // modifiers
+    pointer release();
+    void reset(pointer p = pointer());
+    void reset(nullptr_t);
+    template <class U> void reset(U) = delete;
+    void swap(unique_ptr& u);
+};
+
+template <class T, class D>
+    void swap(unique_ptr<T, D>& x, unique_ptr<T, D>& y);
+
+template <class T1, class D1, class T2, class D2>
+    bool operator==(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+template <class T1, class D1, class T2, class D2>
+    bool operator!=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+template <class T1, class D1, class T2, class D2>
+    bool operator<(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+template <class T1, class D1, class T2, class D2>
+    bool operator<=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+template <class T1, class D1, class T2, class D2>
+    bool operator>(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+template <class T1, class D1, class T2, class D2>
+    bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+
+class bad_weak_ptr
+    : public std::exception
+{
+    bad_weak_ptr();
+};
+
+template<class T>
+class shared_ptr
+{
+public:
+    typedef T element_type;
+
+    // constructors:
+    constexpr shared_ptr();
+    template<class Y> explicit shared_ptr(Y* p);
+    template<class Y, class D> shared_ptr(Y* p, D d);
+    template<class Y, class D, class A> shared_ptr(Y* p, D d, A a);
+    template <class D> shared_ptr(nullptr_t p, D d);
+    template <class D, class A> shared_ptr(nullptr_t p, D d, A a);
+    template<class Y> shared_ptr(const shared_ptr<Y>& r, T *p);
+    shared_ptr(const shared_ptr& r);
+    template<class Y> shared_ptr(const shared_ptr<Y>& r);
+    shared_ptr(shared_ptr&& r);
+    template<class Y> shared_ptr(shared_ptr<Y>&& r);
+    template<class Y> explicit shared_ptr(const weak_ptr<Y>& r);
+    template<class Y> shared_ptr(auto_ptr<Y>&& r);
+    template <class Y, class D> shared_ptr(unique_ptr<Y, D>&& r);
+    shared_ptr(nullptr_t) : shared_ptr() { }
+
+    // destructor:
+    ~shared_ptr();
+
+    // assignment:
+    shared_ptr& operator=(const shared_ptr& r);
+    template<class Y> shared_ptr& operator=(const shared_ptr<Y>& r);
+    shared_ptr& operator=(shared_ptr&& r);
+    template<class Y> shared_ptr& operator=(shared_ptr<Y>&& r);
+    template<class Y> shared_ptr& operator=(auto_ptr<Y>&& r);
+    template <class Y, class D> shared_ptr& operator=(unique_ptr<Y, D>&& r);
+
+    // modifiers:
+    void swap(shared_ptr& r);
+    void reset();
+    template<class Y> void reset(Y* p);
+    template<class Y, class D> void reset(Y* p, D d);
+    template<class Y, class D, class A> void reset(Y* p, D d, A a);
+
+    // observers: T* get() const;
+    T& operator*() const;
+    T* operator->() const;
+    long use_count() const;
+    bool unique() const;
+    explicit operator bool() const;
+    template<class U> bool owner_before(shared_ptr<U> const& b) const;
+    template<class U> bool owner_before(weak_ptr<U> const& b) const;
+};
+
+// shared_ptr comparisons:
+template<class T, class U>
+    bool operator==(shared_ptr<T> const& a, shared_ptr<U> const& b);
+template<class T, class U>
+    bool operator!=(shared_ptr<T> const& a, shared_ptr<U> const& b);
+template<class T, class U>
+    bool operator<(shared_ptr<T> const& a, shared_ptr<U> const& b);
+template<class T, class U>
+    bool operator>(shared_ptr<T> const& a, shared_ptr<U> const& b);
+template<class T, class U>
+    bool operator<=(shared_ptr<T> const& a, shared_ptr<U> const& b);
+template<class T, class U>
+    bool operator>=(shared_ptr<T> const& a, shared_ptr<U> const& b);
+
+// shared_ptr specialized algorithms:
+template<class T> void swap(shared_ptr<T>& a, shared_ptr<T>& b);
+
+// shared_ptr casts:
+template<class T, class U>
+    shared_ptr<T> static_pointer_cast(shared_ptr<U> const& r);
+template<class T, class U>
+    shared_ptr<T> dynamic_pointer_cast(shared_ptr<U> const& r);
+template<class T, class U>
+    shared_ptr<T> const_pointer_cast(shared_ptr<U> const& r);
+
+// shared_ptr I/O:
+template<class E, class T, class Y>
+    basic_ostream<E, T>& operator<< (basic_ostream<E, T>& os, shared_ptr<Y> const& p);
+
+// shared_ptr get_deleter:
+template<class D, class T> D* get_deleter(shared_ptr<T> const& p);
+
+template<class T, class... Args>
+    shared_ptr<T> make_shared(Args&&... args);
+template<class T, class A, class... Args>
+    shared_ptr<T> allocate_shared(const A& a, Args&&... args);
+
+template<class T>
+class weak_ptr
+{
+public:
+    typedef T element_type;
+
+    // constructors
+    constexpr weak_ptr();
+    template<class Y> weak_ptr(shared_ptr<Y> const& r);
+    weak_ptr(weak_ptr const& r);
+    template<class Y> weak_ptr(weak_ptr<Y> const& r);
+
+    // destructor
+    ~weak_ptr();
+
+    // assignment
+    weak_ptr& operator=(weak_ptr const& r);
+    template<class Y> weak_ptr& operator=(weak_ptr<Y> const& r);
+    template<class Y> weak_ptr& operator=(shared_ptr<Y> const& r);
+
+    // modifiers
+    void swap(weak_ptr& r);
+    void reset();
+
+    // observers
+    long use_count() const;
+    bool expired() const;
+    shared_ptr<T> lock() const;
+    template<class U> bool owner_before(shared_ptr<U> const& b);
+    template<class U> bool owner_before(weak_ptr<U> const& b);
+};
+
+// weak_ptr specialized algorithms:
+template<class T> void swap(weak_ptr<T>& a, weak_ptr<T>& b);
+
+// class owner_less:
+template<class T> struct owner_less;
+
+template<class T>
+struct owner_less<shared_ptr<T>>
+    : binary_function<shared_ptr<T>, shared_ptr<T>, bool>
+{
+    typedef bool result_type;
+    bool operator()(shared_ptr<T> const&, shared_ptr<T> const&) const;
+    bool operator()(shared_ptr<T> const&, weak_ptr<T> const&) const;
+    bool operator()(weak_ptr<T> const&, shared_ptr<T> const&) const;
+};
+
+template<class T>
+struct owner_less<weak_ptr<T>>
+    : binary_function<weak_ptr<T>, weak_ptr<T>, bool>
+{
+    typedef bool result_type;
+    bool operator()(weak_ptr<T> const&, weak_ptr<T> const&) const;
+    bool operator()(shared_ptr<T> const&, weak_ptr<T> const&) const;
+    bool operator()(weak_ptr<T> const&, shared_ptr<T> const&) const;
+};
+
+template<class T>
+class enable_shared_from_this
+{
+protected:
+    constexpr enable_shared_from_this();
+    enable_shared_from_this(enable_shared_from_this const&);
+    enable_shared_from_this& operator=(enable_shared_from_this const&);
+    ~enable_shared_from_this();
+public:
+    shared_ptr<T> shared_from_this();
+    shared_ptr<T const> shared_from_this() const;
+};
+
+template<class T>
+    bool atomic_is_lock_free(const shared_ptr<T>* p);
+template<class T>
+    shared_ptr<T> atomic_load(const shared_ptr<T>* p);
+template<class T>
+    shared_ptr<T> atomic_load_explicit(const shared_ptr<T>* p, memory_order mo);
+template<class T>
+    void atomic_store(shared_ptr<T>* p, shared_ptr<T> r);
+template<class T>
+    void atomic_store_explicit(shared_ptr<T>* p, shared_ptr<T> r, memory_order mo);
+template<class T>
+    shared_ptr<T> atomic_exchange(shared_ptr<T>* p, shared_ptr<T> r);
+template<class T>
+    shared_ptr<T>
+    atomic_exchange_explicit(shared_ptr<T>* p, shared_ptr<T> r, memory_order mo);
+template<class T>
+    bool
+    atomic_compare_exchange_weak(shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w);
+template<class T>
+    bool
+    atomic_compare_exchange_strong( shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w);
+template<class T>
+    bool
+    atomic_compare_exchange_weak_explicit(shared_ptr<T>* p, shared_ptr<T>* v,
+                                          shared_ptr<T> w, memory_order success,
+                                          memory_order failure);
+template<class T>
+    bool
+    atomic_compare_exchange_strong_explicit(shared_ptr<T>* p, shared_ptr<T>* v,
+                                            shared_ptr<T> w, memory_order success,
+                                            memory_order failure);
+// Hash support
+template <class T> struct hash;
+template <class T, class D> struct hash<unique_ptr<T, D> >;
+template <class T> struct hash<shared_ptr<T> >;
+
+// Pointer safety
+enum class pointer_safety { relaxed, preferred, strict };
+void declare_reachable(void *p);
+template <class T> T *undeclare_reachable(T *p);
+void declare_no_pointers(char *p, size_t n);
+void undeclare_no_pointers(char *p, size_t n);
+pointer_safety get_pointer_safety();
+
 void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 
 }  // std
@@ -1146,423 +1472,6 @@ template <class _Tp, class _Alloc, class ..._Args>
 struct __uses_alloc_ctor
     : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
     {};
-
-// scoped_allocator_adaptor
-
-template <class ..._Allocs>
-class scoped_allocator_adaptor;
-
-template <class ..._Allocs> struct __get_poc_copy_assignment;
-
-template <class _A0>
-struct __get_poc_copy_assignment<_A0>
-{
-    static const bool value = allocator_traits<_A0>::
-                              propagate_on_container_copy_assignment::value;
-};
-
-template <class _A0, class ..._Allocs>
-struct __get_poc_copy_assignment<_A0, _Allocs...>
-{
-    static const bool value =
-        allocator_traits<_A0>::propagate_on_container_copy_assignment::value ||
-        __get_poc_copy_assignment<_Allocs...>::value;
-};
-
-template <class ..._Allocs> struct __get_poc_move_assignment;
-
-template <class _A0>
-struct __get_poc_move_assignment<_A0>
-{
-    static const bool value = allocator_traits<_A0>::
-                              propagate_on_container_move_assignment::value;
-};
-
-template <class _A0, class ..._Allocs>
-struct __get_poc_move_assignment<_A0, _Allocs...>
-{
-    static const bool value =
-        allocator_traits<_A0>::propagate_on_container_move_assignment::value ||
-        __get_poc_move_assignment<_Allocs...>::value;
-};
-
-template <class ..._Allocs> struct __get_poc_swap;
-
-template <class _A0>
-struct __get_poc_swap<_A0>
-{
-    static const bool value = allocator_traits<_A0>::
-                              propagate_on_container_swap::value;
-};
-
-template <class _A0, class ..._Allocs>
-struct __get_poc_swap<_A0, _Allocs...>
-{
-    static const bool value =
-        allocator_traits<_A0>::propagate_on_container_swap::value ||
-        __get_poc_swap<_Allocs...>::value;
-};
-
-template <class ..._Allocs>
-class __scoped_allocator_storage;
-
-template <class _OuterAlloc, class... _InnerAllocs>
-class __scoped_allocator_storage<_OuterAlloc, _InnerAllocs...>
-    : public _OuterAlloc
-{
-    typedef _OuterAlloc outer_allocator_type;
-protected:
-    typedef scoped_allocator_adaptor<_InnerAllocs...> inner_allocator_type;
-
-private:
-    inner_allocator_type __inner_;
-
-protected:
-    
-    __scoped_allocator_storage() {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-        __scoped_allocator_storage(_OuterA2&& __outerAlloc,
-                                   const _InnerAllocs& ...__innerAllocs)
-            : outer_allocator_type(_STD::forward<_OuterA2>(__outerAlloc)),
-              __inner_(__innerAllocs...) {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, const _OuterA2&>::value
-                      >::type>
-        __scoped_allocator_storage(
-            const __scoped_allocator_storage<_OuterA2, _InnerAllocs...>& __other)
-            : outer_allocator_type(__other.outer_allocator()),
-              __inner_(__other.inner_allocator()) {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-        __scoped_allocator_storage(
-            __scoped_allocator_storage<_OuterA2, _InnerAllocs...>&& __other)
-            : outer_allocator_type(_STD::move(__other.outer_allocator())),
-              __inner_(_STD::move(__other.inner_allocator())) {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-    __scoped_allocator_storage(_OuterA2&& __o,
-                               const inner_allocator_type& __i)
-        : outer_allocator_type(_STD::forward<_OuterA2>(__o)),
-          __inner_(__i)
-    {
-    }
-
-    inner_allocator_type& inner_allocator()             {return __inner_;}
-    const inner_allocator_type& inner_allocator() const {return __inner_;}
-
-    outer_allocator_type& outer_allocator()
-        {return static_cast<outer_allocator_type&>(*this);}
-    const outer_allocator_type& outer_allocator() const
-        {return static_cast<const outer_allocator_type&>(*this);}
-
-    scoped_allocator_adaptor<outer_allocator_type, _InnerAllocs...>
-    select_on_container_copy_construction() const
-        {
-            return scoped_allocator_adaptor<outer_allocator_type, _InnerAllocs...>
-            (
-                allocator_traits<outer_allocator_type>::
-                    select_on_container_copy_construction(outer_allocator()),
-                allocator_traits<inner_allocator_type>::
-                    select_on_container_copy_construction(inner_allocator())
-            );
-        }
-
-    template <class...> friend class __scoped_allocator_storage;
-};
-
-template <class _OuterAlloc>
-class __scoped_allocator_storage<_OuterAlloc>
-    : public _OuterAlloc
-{
-    typedef _OuterAlloc outer_allocator_type;
-protected:
-    typedef scoped_allocator_adaptor<_OuterAlloc> inner_allocator_type;
-
-    __scoped_allocator_storage() {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-        __scoped_allocator_storage(_OuterA2&& __outerAlloc)
-            : outer_allocator_type(_STD::forward<_OuterA2>(__outerAlloc)) {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, const _OuterA2&>::value
-                      >::type>
-        __scoped_allocator_storage(
-            const __scoped_allocator_storage<_OuterA2>& __other)
-            : outer_allocator_type(__other.outer_allocator()) {}
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-        __scoped_allocator_storage(
-            __scoped_allocator_storage<_OuterA2>&& __other)
-            : outer_allocator_type(_STD::move(__other.outer_allocator())) {}
-
-    inner_allocator_type& inner_allocator()
-        {return static_cast<inner_allocator_type&>(*this);}
-    const inner_allocator_type& inner_allocator() const
-        {return static_cast<const inner_allocator_type&>(*this);}
-
-    outer_allocator_type& outer_allocator()
-        {return static_cast<outer_allocator_type&>(*this);}
-    const outer_allocator_type& outer_allocator() const
-        {return static_cast<const outer_allocator_type&>(*this);}
-
-    scoped_allocator_adaptor<outer_allocator_type>
-    select_on_container_copy_construction() const
-        {return scoped_allocator_adaptor<outer_allocator_type>(
-            allocator_traits<outer_allocator_type>::
-                select_on_container_copy_construction(outer_allocator())
-        );}
-
-    __scoped_allocator_storage(const outer_allocator_type& __o,
-                               const inner_allocator_type& __i);
-
-    template <class...> friend class __scoped_allocator_storage;
-};
-
-// __outermost
-
-template <class _Alloc>
-decltype(declval<_Alloc>().outer_allocator(), true_type())
-__has_outer_allocator_test(_Alloc&& __a);
-
-template <class _Alloc>
-false_type
-__has_outer_allocator_test(const volatile _Alloc& __a);
-
-template <class _Alloc>
-struct __has_outer_allocator
-    : public common_type
-             <
-                 decltype(__has_outer_allocator_test(declval<_Alloc&>()))
-             >::type
-{
-};
-
-template <class _Alloc, bool = __has_outer_allocator<_Alloc>::value>
-struct __outermost
-{
-    typedef _Alloc type;
-    type& operator()(type& __a) const {return __a;}
-};
-
-template <class _Alloc>
-struct __outermost<_Alloc, true>
-{
-    typedef typename remove_reference
-                     <
-                        decltype(_STD::declval<_Alloc>().outer_allocator())
-                     >::type                                    _OuterAlloc;
-    typedef typename __outermost<_OuterAlloc>::type             type;
-    type& operator()(_Alloc& __a) const
-        {return __outermost<_OuterAlloc>()(__a.outer_allocator());}
-};
-
-template <class _OuterAlloc, class... _InnerAllocs>
-class scoped_allocator_adaptor<_OuterAlloc, _InnerAllocs...>
-    : public __scoped_allocator_storage<_OuterAlloc, _InnerAllocs...>
-{
-    typedef __scoped_allocator_storage<_OuterAlloc, _InnerAllocs...> base;
-    typedef allocator_traits<_OuterAlloc>             _OuterTraits;
-public:
-    typedef _OuterAlloc                               outer_allocator_type;
-    typedef typename base::inner_allocator_type       inner_allocator_type;
-    typedef typename _OuterTraits::size_type          size_type;
-    typedef typename _OuterTraits::difference_type    difference_type;
-    typedef typename _OuterTraits::pointer            pointer;
-    typedef typename _OuterTraits::const_pointer      const_pointer;
-    typedef typename _OuterTraits::void_pointer       void_pointer;
-    typedef typename _OuterTraits::const_void_pointer const_void_pointer;
-
-    typedef integral_constant
-            <
-                bool,
-                __get_poc_copy_assignment<outer_allocator_type,
-                                          _InnerAllocs...>::value
-            > propagate_on_container_copy_assignment;
-    typedef integral_constant
-            <
-                bool,
-                __get_poc_move_assignment<outer_allocator_type,
-                                          _InnerAllocs...>::value
-            > propagate_on_container_move_assignment;
-    typedef integral_constant
-            <
-                bool,
-                __get_poc_swap<outer_allocator_type, _InnerAllocs...>::value
-            > propagate_on_container_swap;
-
-    template <class _Tp>
-    struct rebind
-    {
-        typedef scoped_allocator_adaptor
-        <
-            typename _OuterTraits::template rebind_alloc<_Tp>, _InnerAllocs...
-        > other;
-    };
-
-    scoped_allocator_adaptor() {}
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-        scoped_allocator_adaptor(_OuterA2&& __outerAlloc,
-                                 const _InnerAllocs& ...__innerAllocs)
-            : base(_STD::forward<_OuterA2>(__outerAlloc), __innerAllocs...) {}
-    // scoped_allocator_adaptor(const scoped_allocator_adaptor& __other) = default;
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, const _OuterA2&>::value
-                      >::type>
-        scoped_allocator_adaptor(
-            const scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>& __other)
-                : base(__other) {}
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-        scoped_allocator_adaptor(
-            scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>&& __other)
-                : base(_STD::move(__other)) {}
-
-    // ~scoped_allocator_adaptor() = default;
-
-    inner_allocator_type& inner_allocator()
-        {return base::inner_allocator();}
-    const inner_allocator_type& inner_allocator() const
-        {return base::inner_allocator();}
-
-    outer_allocator_type& outer_allocator()
-        {return base::outer_allocator();}
-    const outer_allocator_type& outer_allocator() const
-        {return base::outer_allocator();}
-
-    pointer allocate(size_type __n)
-        {return allocator_traits<outer_allocator_type>::
-            allocate(outer_allocator(), __n);}
-    pointer allocate(size_type __n, const_void_pointer __hint)
-        {return allocator_traits<outer_allocator_type>::
-            allocate(outer_allocator(), __n, __hint);}
-
-    void deallocate(pointer __p, size_type __n)
-        {allocator_traits<outer_allocator_type>::
-            deallocate(outer_allocator(), __p, __n);}
-
-    size_type max_size() const
-        {allocator_traits<outer_allocator_type>::max_size(outer_allocator());}
-
-    template <class _Tp, class... _Args>
-        void construct(_Tp* __p, _Args&& ...__args)
-            {__construct(__uses_alloc_ctor<_Tp, inner_allocator_type, _Args...>(),
-                         __p, _STD::forward<_Args>(__args)...);}
-    template <class _Tp>
-        void destroy(_Tp* __p)
-            {
-                typedef __outermost<outer_allocator_type> _OM;
-                allocator_traits<typename _OM::type>::
-                                         destroy(_OM()(outer_allocator()), __p);
-            }
-
-    scoped_allocator_adaptor select_on_container_copy_construction() const
-        {return base::select_on_container_copy_construction();}
-
-private:
-
-    template <class _OuterA2,
-              class = typename enable_if<
-                        is_constructible<outer_allocator_type, _OuterA2>::value
-                      >::type>
-    scoped_allocator_adaptor(_OuterA2&& __o,
-                             const inner_allocator_type& __i)
-        : base(_STD::forward<_OuterA2>(__o), __i) {}
-
-    template <class _Tp, class... _Args>
-        void __construct(integral_constant<int, 0>, _Tp* __p, _Args&& ...__args)
-            {
-                typedef __outermost<outer_allocator_type> _OM;
-                allocator_traits<typename _OM::type>::construct
-                (
-                    _OM()(outer_allocator()),
-                    __p,
-                    _STD::forward<_Args>(__args)...
-                );
-            }
-
-    template <class _Tp, class... _Args>
-        void __construct(integral_constant<int, 1>, _Tp* __p, _Args&& ...__args)
-            {
-                typedef __outermost<outer_allocator_type> _OM;
-                allocator_traits<typename _OM::type>::construct
-                (
-                    _OM()(outer_allocator()),
-                    __p,
-                    allocator_arg,
-                    inner_allocator(),
-                    _STD::forward<_Args>(__args)...
-                );
-            }
-
-    template <class _Tp, class... _Args>
-        void __construct(integral_constant<int, 2>, _Tp* __p, _Args&& ...__args)
-            {
-                typedef __outermost<outer_allocator_type> _OM;
-                allocator_traits<typename _OM::type>::construct
-                (
-                    _OM()(outer_allocator()),
-                    __p,
-                    _STD::forward<_Args>(__args)...,
-                    inner_allocator()
-                );
-            }
-
-    template <class...> friend class __scoped_allocator_storage;
-};
-
-template <class _OuterA1, class _OuterA2>
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-operator==(const scoped_allocator_adaptor<_OuterA1>& __a,
-           const scoped_allocator_adaptor<_OuterA2>& __b)
-{
-    return __a.outer_allocator() == __b.outer_allocator();
-}
-
-template <class _OuterA1, class _OuterA2, class... _InnerAllocs>
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-operator==(const scoped_allocator_adaptor<_OuterA1, _InnerAllocs...>& __a,
-           const scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>& __b)
-{
-    return __a.outer_allocator() == __b.outer_allocator() &&
-           __a.inner_allocator() == __b.inner_allocator();
-}
-
-template <class _OuterA1, class _OuterA2, class... _InnerAllocs>
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-operator!=(const scoped_allocator_adaptor<_OuterA1, _InnerAllocs...>& __a,
-           const scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>& __b)
-{
-    return !(__a == __b);
-}
 
 #endif
 

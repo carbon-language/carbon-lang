@@ -14,7 +14,7 @@
 
 // scoped_allocator_adaptor select_on_container_copy_construction() const;
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

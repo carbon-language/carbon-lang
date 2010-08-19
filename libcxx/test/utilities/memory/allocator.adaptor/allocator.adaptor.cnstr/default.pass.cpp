@@ -14,7 +14,7 @@
 
 // scoped_allocator_adaptor();
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

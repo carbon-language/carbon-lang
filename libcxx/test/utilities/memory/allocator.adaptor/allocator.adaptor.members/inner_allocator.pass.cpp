@@ -15,7 +15,7 @@
 // inner_allocator_type& inner_allocator();
 // const inner_allocator_type& inner_allocator() const;
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"

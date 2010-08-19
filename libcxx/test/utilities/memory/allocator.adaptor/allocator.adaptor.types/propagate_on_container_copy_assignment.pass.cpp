@@ -14,7 +14,7 @@
 
 // typedef see below propagate_on_container_copy_assignment;
 
-#include <memory>
+#include <scoped_allocator>
 #include <type_traits>
 
 #include "../allocators.h"

@@ -14,7 +14,7 @@
 
 // template <class T, class... Args> void construct(T* p, Args&&... args);
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 #include <string>
 

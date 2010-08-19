@@ -16,7 +16,7 @@
 //   scoped_allocator_adaptor(const scoped_allocator_adaptor<OuterA2,
 //                                                           InnerAllocs...>& other);
 
-#include <memory>
+#include <scoped_allocator>
 #include <cassert>
 
 #include "../allocators.h"
