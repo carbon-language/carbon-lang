@@ -163,7 +163,7 @@ public:
   virtual void verifyAnalysis() const;
 
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
-  void dumpPass(unsigned Offset = 0);
+  virtual void dumpPassStructure(unsigned Offset = 0);
 
   // lookupPassInfo - Return the pass info object for the specified pass class,
   // or null if it is not known.
