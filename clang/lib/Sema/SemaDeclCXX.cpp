@@ -3283,8 +3283,9 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
                                              IdentifierInfo *II,
                                              SourceLocation LBrace,
                                              AttributeList *AttrList) {
-  NamespaceDecl *Namespc =
-      NamespaceDecl::Create(Context, CurContext, IdentLoc, II);
+  // anonymous namespace starts at its left brace
+  NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext,
+    (II ? IdentLoc : LBrace) , II);
   Namespc->setLBracLoc(LBrace);
 
   Scope *DeclRegionScope = NamespcScope->getParent();
