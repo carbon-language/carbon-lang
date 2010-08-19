@@ -666,29 +666,6 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
 }
 
-static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
-                                     Sema &S) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return false;
-  }
-
-  if (!isFunctionOrMethod(d) && !isa<BlockDecl>(d)) {
-    ValueDecl *VD = dyn_cast<ValueDecl>(d);
-    if (VD == 0 || (!VD->getType()->isBlockPointerType()
-                    && !VD->getType()->isFunctionPointerType())) {
-      S.Diag(Attr.getLoc(),
-             Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                     : diag::warn_attribute_wrong_decl_type)
-        << Attr.getName() << 0 /*function*/;
-      return false;
-    }
-  }
-
-  return true;
-}
-
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   /* Diagnostics (if any) was emitted by Sema::ProcessFnAttr(). */
   assert(Attr.isInvalid() == false);
@@ -697,8 +674,28 @@ static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
                                        Sema &S) {
-  if (HandleCommonNoReturnAttr(d, Attr, S))
-    d->addAttr(::new (S.Context) AnalyzerNoReturnAttr(Attr.getLoc(), S.Context));
+  
+  // The checking path for 'noreturn' and 'analyzer_noreturn' are different
+  // because 'analyzer_noreturn' does not impact the type.
+  
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  if (!isFunctionOrMethod(d) && !isa<BlockDecl>(d)) {
+    ValueDecl *VD = dyn_cast<ValueDecl>(d);
+    if (VD == 0 || (!VD->getType()->isBlockPointerType()
+                    && !VD->getType()->isFunctionPointerType())) {
+      S.Diag(Attr.getLoc(),
+             Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+             : diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 0 /*function*/;
+      return;
+    }
+  }
+  
+  d->addAttr(::new (S.Context) AnalyzerNoReturnAttr(Attr.getLoc(), S.Context));
 }
 
 // PS3 PPU-specific.
