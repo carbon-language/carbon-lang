@@ -1385,13 +1385,6 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
 
   // FIXME: For testing, return true for all loads/stores and false for
   // everything else. We want to create lots of base regs to shake out bugs.
-  //
-  // FIXME: This is Thumb2/ARM only for now to keep it simpler.
-  ARMFunctionInfo *AFI =
-    MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
-  if (AFI->isThumb1OnlyFunction())
-    return false;
-
   unsigned Opc = MI->getOpcode();
 
   switch (Opc) {
@@ -1401,6 +1394,7 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
   case ARM::t2STRi12: case ARM::t2STRi8:
   case ARM::VLDRS: case ARM::VLDRD:
   case ARM::VSTRS: case ARM::VSTRD:
+  case ARM::tSTRspi: case ARM::tLDRspi:
     return true;
   default:
     return false;
@@ -1414,14 +1408,14 @@ materializeFrameBaseRegister(MachineBasicBlock::iterator I,
                              unsigned BaseReg, int FrameIdx) const {
   ARMFunctionInfo *AFI =
     I->getParent()->getParent()->getInfo<ARMFunctionInfo>();
-  unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri : ARM::t2ADDri;
-  assert(!AFI->isThumb1OnlyFunction() &&
-         "This materializeFrameBaseRegister does not support Thumb1!");
+  unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri :
+    (AFI->isThumb1OnlyFunction() ? ARM::tADDrSPi : ARM::t2ADDri);
 
   MachineInstrBuilder MIB =
     BuildMI(*I->getParent(), I, I->getDebugLoc(), TII.get(ADDriOpc), BaseReg)
     .addFrameIndex(FrameIdx).addImm(0);
-  AddDefaultCC(AddDefaultPred(MIB));
+  if (!AFI->isThumb1OnlyFunction())
+    AddDefaultCC(AddDefaultPred(MIB));
 }
 
 void
@@ -1469,13 +1463,14 @@ bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
   unsigned NumBits = 0;
   unsigned Scale = 1;
   unsigned ImmIdx = 0;
-  int InstrOffs;
+  int InstrOffs = 0;;
   switch(AddrMode) {
   case ARMII::AddrModeT2_i8:
   case ARMII::AddrModeT2_i12:
     // i8 supports only negative, and i12 supports only positive, so
     // based on Offset sign, consider the appropriate instruction
-    Offset += MI->getOperand(i+1).getImm();
+    InstrOffs = MI->getOperand(i+1).getImm();
+    Scale = 1;
     if (Offset < 0) {
       NumBits = 8;
       Offset = -Offset;
@@ -1507,6 +1502,13 @@ bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
     if (ARM_AM::getAM3Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
       InstrOffs = -InstrOffs;
     NumBits = 8;
+    break;
+  }
+  case ARMII::AddrModeT1_s: {
+    ImmIdx = i+1;
+    InstrOffs = MI->getOperand(ImmIdx).getImm();
+    NumBits = 5;
+    Scale = 4;
     break;
   }
   default:

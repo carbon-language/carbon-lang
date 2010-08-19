@@ -44,13 +44,14 @@ public:
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  // rewrite MI to access 'Offset' bytes from the FP. Return the offset that
-  // could not be handled directly in MI.
-  int rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                        unsigned FrameReg, int Offset,
-                        unsigned MOVOpc, unsigned ADDriOpc,
-                        unsigned SUBriOpc) const;
-
+  // rewrite MI to access 'Offset' bytes from the FP. Update Offset to be
+  // however much remains to be handled. Return 'true' if no further
+  // work is required.
+  bool rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
+                         unsigned FrameReg, int &Offset,
+                         const ARMBaseInstrInfo &TII) const;
+  void resolveFrameIndex(MachineBasicBlock::iterator I,
+                         unsigned BaseReg, int64_t Offset) const;
   bool saveScavengerRegister(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator I,
                              MachineBasicBlock::iterator &UseMI,
