@@ -942,7 +942,7 @@ typename forward_list<_Tp, _Alloc>::iterator
 forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
                                         const value_type& __v)
 {
-    __node_pointer const __r = const_cast<__node_pointer>(__p.__ptr_);
+    __node_pointer __r = const_cast<__node_pointer>(__p.__ptr_);
     if (__n > 0)
     {
         __node_allocator& __a = base::__alloc();
@@ -977,6 +977,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
 #endif
         __last->__next_ = __r->__next_;
         __r->__next_ = __first;
+        __r = __last;
     }
     return iterator(__r);
 }
@@ -991,7 +992,7 @@ typename enable_if
 forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
                                         _InputIterator __f, _InputIterator __l)
 {
-    __node_pointer const __r = const_cast<__node_pointer>(__p.__ptr_);
+    __node_pointer __r = const_cast<__node_pointer>(__p.__ptr_);
     if (__f != __l)
     {
         __node_allocator& __a = base::__alloc();
@@ -1026,6 +1027,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
 #endif
         __last->__next_ = __r->__next_;
         __r->__next_ = __first;
+        __r = __last;
     }
     return iterator(__r);
 }

@@ -32,14 +32,14 @@ int main()
         assert(distance(c.begin(), c.end()) == 0);
 
         i = c.insert_after(c.cbefore_begin(), J(t), J(t+3));
-        assert(i == c.before_begin());
+        assert(i == next(c.before_begin(), 3));
         assert(distance(c.begin(), c.end()) == 3);
         assert(*next(c.begin(), 0) == 0);
         assert(*next(c.begin(), 1) == 1);
         assert(*next(c.begin(), 2) == 2);
 
         i = c.insert_after(c.begin(), J(t+3), J(t+5));
-        assert(i == c.begin());
+        assert(i == next(c.begin(), 2));
         assert(distance(c.begin(), c.end()) == 5);
         assert(*next(c.begin(), 0) == 0);
         assert(*next(c.begin(), 1) == 3);
