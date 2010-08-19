@@ -137,7 +137,7 @@ ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
   
   // Do we optionally set a predicate?  Preds is size > 0 iff the predicate
   // defines CPSR. All other OptionalDefines in ARM are the CCR register.
-  bool CPSR;
+  bool CPSR = false;
   if (DefinesOptionalPredicate(MI, &CPSR)) {
     if (CPSR)
       AddDefaultT1CC(MIB);
