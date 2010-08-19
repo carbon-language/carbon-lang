@@ -47,7 +47,7 @@ Threshold("jump-threading-threshold",
 static cl::opt<bool>
 EnableLVI("enable-jump-threading-lvi",
           cl::desc("Use LVI for jump threading"),
-          cl::init(true),
+          cl::init(false),
           cl::ReallyHidden);
 
 
