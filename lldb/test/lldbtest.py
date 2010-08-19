@@ -123,7 +123,7 @@ class TestBase(unittest2.TestCase):
         if not cmd or len(cmd) == 0:
             raise Exception("Bad 'cmd' parameter encountered")
         self.ci.HandleCommand(cmd, self.res)
-        if cmd == "run":
+        if cmd.startswith("run"):
             self.runStarted = True
         if check:
             self.assertTrue(self.res.Succeeded(),
