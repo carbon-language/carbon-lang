@@ -72,6 +72,7 @@ public:
 const unspecified ignore;
 
 template <class... T> tuple<V...>  make_tuple(T&&...);
+template <class... T> tuple<ATypes...> forward_as_tuple(T&&...);
 template <class... T> tuple<T&...> tie(T&...);
 template <class... T, class... U> tuple<T..., U...> tuple_cat(const tuple<T...>&, const tuple<U...>&);
 template <class... T, class... U> tuple<T..., U...> tuple_cat(tuple<T...>&&, const tuple<U...>&);
@@ -619,6 +620,14 @@ tuple<typename __make_tuple_return<_Tp>::type...>
 make_tuple(_Tp&&... __t)
 {
     return tuple<typename __make_tuple_return<_Tp>::type...>(_STD::forward<_Tp>(__t)...);
+}
+
+template <class... _Tp>
+inline
+tuple<_Tp&&...>
+forward_as_tuple(_Tp&&... __t)
+{
+    return tuple<_Tp&&...>(_STD::forward<_Tp>(__t)...);
 }
 
 template <size_t _I>
