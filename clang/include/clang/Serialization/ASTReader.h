@@ -198,6 +198,7 @@ private:
   /// \brief Information that is needed for every file in the chain.
   struct PerFileData {
     PerFileData();
+    ~PerFileData();
 
     /// \brief The AST stat cache installed for this file, if any.
     ///

@@ -448,15 +448,6 @@ ASTReader::~ASTReader() {
     delete Chain[e - i - 1];
 }
 
-ASTReader::PerFileData::PerFileData()
-  : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
-    LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
-    IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
-    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0),
-    NumPreallocatedPreprocessingEntities(0), SelectorLookupTable(0),
-    SelectorLookupTableData(0), SelectorOffsets(0), LocalNumSelectors(0)
-{}
-
 void
 ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
   DeserializationListener = Listener;
@@ -3838,3 +3829,18 @@ void ASTReader::FinishedDeserializing() {
   }
   --NumCurrentElementsDeserializing;
 }
+
+ASTReader::PerFileData::PerFileData()
+  : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
+    LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
+    IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
+    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0),
+    NumPreallocatedPreprocessingEntities(0), SelectorLookupTable(0),
+    SelectorLookupTableData(0), SelectorOffsets(0), LocalNumSelectors(0)
+{}
+
+ASTReader::PerFileData::~PerFileData() {
+  delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
+  delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
+}
+
