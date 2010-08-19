@@ -116,6 +116,7 @@ public:
     FunctionSections = 0;
     HiddenWeakTemplateVTables = 0;
     HiddenWeakVTables = 0;
+    InstrumentFunctions = 0;
     MergeAllConstants = 1;
     NoCommon = 0;
     NoImplicitFloat = 0;
