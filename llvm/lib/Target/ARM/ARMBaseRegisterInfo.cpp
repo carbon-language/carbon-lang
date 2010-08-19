@@ -1367,6 +1367,59 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
+
+int64_t ARMBaseRegisterInfo::
+getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const {
+  const TargetInstrDesc &Desc = MI->getDesc();
+  unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+  int64_t InstrOffs = 0;;
+  int Scale = 1;
+  unsigned ImmIdx = 0;
+  switch(AddrMode) {
+  case ARMII::AddrModeT2_i8:
+  case ARMII::AddrModeT2_i12:
+    // i8 supports only negative, and i12 supports only positive, so
+    // based on Offset sign, consider the appropriate instruction
+    InstrOffs = MI->getOperand(Idx+1).getImm();
+    Scale = 1;
+    break;
+  case ARMII::AddrMode5: {
+    // VFP address mode.
+    const MachineOperand &OffOp = MI->getOperand(Idx+1);
+    int InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
+    if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
+      InstrOffs = -InstrOffs;
+    Scale = 4;
+    break;
+  }
+  case ARMII::AddrMode2: {
+    ImmIdx = Idx+2;
+    InstrOffs = ARM_AM::getAM2Offset(MI->getOperand(ImmIdx).getImm());
+    if (ARM_AM::getAM2Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+      InstrOffs = -InstrOffs;
+    break;
+  }
+  case ARMII::AddrMode3: {
+    ImmIdx = Idx+2;
+    InstrOffs = ARM_AM::getAM3Offset(MI->getOperand(ImmIdx).getImm());
+    if (ARM_AM::getAM3Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+      InstrOffs = -InstrOffs;
+    break;
+  }
+  case ARMII::AddrModeT1_s: {
+    ImmIdx = Idx+1;
+    InstrOffs = MI->getOperand(ImmIdx).getImm();
+    Scale = 4;
+    break;
+  }
+  default:
+    llvm_unreachable("Unsupported addressing mode!");
+    break;
+  }
+
+  return InstrOffs * Scale;
+}
+
 /// needsFrameBaseReg - Returns true if the instruction's frame index
 /// reference would be better served by a base register other than FP
 /// or SP. Used by LocalStackFrameAllocation to determine which frame index
@@ -1404,8 +1457,8 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
 /// materializeFrameBaseRegister - Insert defining instruction(s) for
 /// BaseReg to be a pointer to FrameIdx before insertion point I.
 void ARMBaseRegisterInfo::
-materializeFrameBaseRegister(MachineBasicBlock::iterator I,
-                             unsigned BaseReg, int FrameIdx) const {
+materializeFrameBaseRegister(MachineBasicBlock::iterator I, unsigned BaseReg,
+                             int FrameIdx, int64_t Offset) const {
   ARMFunctionInfo *AFI =
     I->getParent()->getParent()->getInfo<ARMFunctionInfo>();
   unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri :
@@ -1413,7 +1466,7 @@ materializeFrameBaseRegister(MachineBasicBlock::iterator I,
 
   MachineInstrBuilder MIB =
     BuildMI(*I->getParent(), I, I->getDebugLoc(), TII.get(ADDriOpc), BaseReg)
-    .addFrameIndex(FrameIdx).addImm(0);
+    .addFrameIndex(FrameIdx).addImm(Offset);
   if (!AFI->isThumb1OnlyFunction())
     AddDefaultCC(AddDefaultPred(MIB));
 }
@@ -1445,8 +1498,8 @@ ARMBaseRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
   assert (Done && "Unable to resolve frame index!");
 }
 
-bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
-                                           unsigned Reg, int64_t Offset) const {
+bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
+                                             int64_t Offset) const {
   const TargetInstrDesc &Desc = MI->getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   unsigned i = 0;
@@ -1464,6 +1517,7 @@ bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
   unsigned Scale = 1;
   unsigned ImmIdx = 0;
   int InstrOffs = 0;;
+  bool isSigned = true;
   switch(AddrMode) {
   case ARMII::AddrModeT2_i8:
   case ARMII::AddrModeT2_i12:
@@ -1509,6 +1563,7 @@ bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
     InstrOffs = MI->getOperand(ImmIdx).getImm();
     NumBits = 5;
     Scale = 4;
+    isSigned = false;
     break;
   }
   default:
@@ -1518,7 +1573,7 @@ bool ARMBaseRegisterInfo::isBaseRegInRange(const MachineInstr *MI,
 
   Offset += InstrOffs * Scale;
   assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
-  if (Offset < 0)
+  if (isSigned && Offset < 0)
     Offset = -Offset;
 
   unsigned Mask = (1 << NumBits) - 1;

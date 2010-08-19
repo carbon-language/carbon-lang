@@ -105,13 +105,14 @@ public:
 
   bool canRealignStack(const MachineFunction &MF) const;
   bool needsStackRealignment(const MachineFunction &MF) const;
+  int64_t getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const;
   bool needsFrameBaseReg(MachineInstr *MI, unsigned operand) const;
   void materializeFrameBaseRegister(MachineBasicBlock::iterator I,
-                                    unsigned BaseReg, int FrameIdx) const;
+                                    unsigned BaseReg, int FrameIdx,
+                                    int64_t Offset) const;
   void resolveFrameIndex(MachineBasicBlock::iterator I,
                          unsigned BaseReg, int64_t Offset) const;
-  bool isBaseRegInRange(const MachineInstr *MI, unsigned Reg,
-                        int64_t Offset) const;
+  bool isFrameOffsetLegal(const MachineInstr *MI, int64_t Offset) const;
 
   bool cannotEliminateFrame(const MachineFunction &MF) const;
 

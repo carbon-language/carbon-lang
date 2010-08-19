@@ -636,6 +636,12 @@ public:
     return false;
   }
 
+  /// getFrameIndexInstrOffset - Get the offset from the referenced frame
+  /// index in the instruction, if the is one.
+  virtual int64_t getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const {
+    return 0;
+  }
+
   /// needsFrameBaseReg - Returns true if the instruction's frame index
   /// reference would be better served by a base register other than FP
   /// or SP. Used by LocalStackFrameAllocation to determine which frame index
@@ -647,8 +653,8 @@ public:
   /// materializeFrameBaseRegister - Insert defining instruction(s) for
   /// BaseReg to be a pointer to FrameIdx before insertion point I.
   virtual void materializeFrameBaseRegister(MachineBasicBlock::iterator I,
-                                            unsigned BaseReg,
-                                            int FrameIdx) const {
+                                            unsigned BaseReg, int FrameIdx,
+                                            int64_t Offset) const {
     assert(0 && "materializeFrameBaseRegister does not exist on this target");
   }
 
@@ -659,11 +665,11 @@ public:
     assert(0 && "resolveFrameIndex does not exist on this target");
   }
 
-  /// isBaseRegInRange - Determine whether a given base register definition
-  /// is in range to resolve a frame index.
-  virtual bool isBaseRegInRange(const MachineInstr *MI, unsigned Reg,
-                                int64_t Offset) const {
-    assert(0 && "isBaseRegInRange does not exist on this target");
+  /// isFrameOffsetLegal - Determine whether a given offset immediate is
+  /// encodable to resolve a frame index.
+  virtual bool isFrameOffsetLegal(const MachineInstr *MI,
+                                  int64_t Offset) const {
+    assert(0 && "isFrameOffsetLegal does not exist on this target");
     return false; // Must return a value in order to compile with VS 2005
   }
 
