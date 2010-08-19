@@ -253,3 +253,37 @@ void llvm::sys::PrintStackTraceOnErrorSignal() {
   AddSignalHandler(PrintStackTrace, 0);
 }
 
+
+/***/
+
+// On Darwin, raise sends a signal to the main thread instead of the current
+// thread. This has the unfortunate effect that assert() and abort() will end up
+// bypassing our crash recovery attempts. We work around this for anything in
+// the same linkage unit by just defining our own versions of the assert handler
+// and abort.
+
+#ifdef __APPLE__
+
+void __assert_rtn(const char *func,
+                  const char *file,
+                  int line,
+                  const char *expr) {
+  if (func)
+    fprintf(stderr, "Assertion failed: (%s), function %s, file %s, line %d.\n",
+            expr, func, file, line);
+  else
+    fprintf(stderr, "Assertion failed: (%s), file %s, line %d.\n",
+            expr, file, line);
+  abort();
+}
+
+#include <signal.h>
+#include <pthread.h>
+
+void abort() {
+  pthread_kill(pthread_self(), SIGABRT);
+  usleep(1000);
+  __builtin_trap();
+}
+
+#endif
