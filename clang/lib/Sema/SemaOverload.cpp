@@ -3767,21 +3767,6 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     return;
   }
 
-  // Make sure that the actual object argument initialization will work, when
-  // it comes down to it. This takes into account the actual acting context.
-  if (ConversionContext->getCanonicalDecl()
-                                        != ActingContext->getCanonicalDecl()) {
-    ImplicitConversionSequence ObjectConvertICS
-      = TryObjectArgumentInitialization(From->getType(), Conversion, 
-                                        ActingContext);
-    if (ObjectConvertICS.isBad()) {
-      Candidate.Viable = false;
-      Candidate.FailureKind = ovl_fail_bad_conversion;
-      Candidate.Conversions[0] = ObjectConvertICS;
-      return;
-    }
-  }
-  
   // We won't go through a user-define type conversion function to convert a 
   // derived to base as such conversions are given Conversion Rank. They only
   // go through a copy constructor. 13.3.3.1.2-p4 [over.ics.user]

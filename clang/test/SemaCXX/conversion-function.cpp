@@ -306,4 +306,22 @@ namespace rdar8018274 {
   void test2(UeberDerived ud) {
     int i = ud; // expected-error{{ambiguous conversion from derived class 'rdar8018274::SuperDerived' to base class 'rdar8018274::Base'}}
   }
+
+  struct Base2 {
+    operator int();
+  };
+
+  struct Base3 {
+    operator int();
+  };
+
+  struct Derived23 : Base2, Base3 { 
+    using Base2::operator int;
+  };
+
+  struct ExtraDerived23 : Derived23 { };
+
+  void test3(ExtraDerived23 ed) {
+    int i = ed;
+  }
 }
