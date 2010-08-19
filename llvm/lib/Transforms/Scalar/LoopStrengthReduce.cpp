@@ -441,12 +441,12 @@ static const SCEV *getExactSDiv(const SCEV *LHS, const SCEV *RHS,
   // Distribute the sdiv over addrec operands, if the addrec doesn't overflow.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS)) {
     if (IgnoreSignificantBits || isAddRecSExtable(AR, SE)) {
-      const SCEV *Start = getExactSDiv(AR->getStart(), RHS, SE,
-                                       IgnoreSignificantBits);
-      if (!Start) return 0;
       const SCEV *Step = getExactSDiv(AR->getStepRecurrence(SE), RHS, SE,
                                       IgnoreSignificantBits);
       if (!Step) return 0;
+      const SCEV *Start = getExactSDiv(AR->getStart(), RHS, SE,
+                                       IgnoreSignificantBits);
+      if (!Start) return 0;
       return SE.getAddRecExpr(Start, Step, AR->getLoop());
     }
     return 0;
