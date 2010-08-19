@@ -18,7 +18,7 @@ class TestFunctionTypes(TestBase):
 
         # Break inside the main.
         self.ci.HandleCommand("breakpoint set -f main.c -l 21", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.c', line = 21, locations = 1"),
                         BREAKPOINT_CREATED)
@@ -37,13 +37,13 @@ class TestFunctionTypes(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 
         # Check that the 'callback' variable display properly.
         self.ci.HandleCommand("variable list callback", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         output = res.GetOutput()
         self.assertTrue(output.startswith('(int (*)(char const *)) callback ='),
                         VARIABLES_DISPLAYED_CORRECTLY)
@@ -52,11 +52,11 @@ class TestFunctionTypes(TestBase):
         self.ci.HandleCommand("breakpoint set -n string_not_empty", res);
         self.assertTrue(res.Succeeded(), BREAKPOINT_CREATED)
         self.ci.HandleCommand("continue", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('continue'))
 
         # Check that we do indeed stop on the string_not_empty function.
         self.ci.HandleCommand("process status", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('process status'))
         output = res.GetOutput()
         #print "process status =", output
         self.assertTrue(output.find('where = a.out`string_not_empty') > 0 and

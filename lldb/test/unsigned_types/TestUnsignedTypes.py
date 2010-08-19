@@ -21,7 +21,7 @@ class TestUnsignedTypes(TestBase):
 
         # Break on line 19 in main() aftre the variables are assigned values.
         self.ci.HandleCommand("breakpoint set -f main.cpp -l 19", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.cpp', line = 19, locations = 1"
             ),
@@ -40,14 +40,14 @@ class TestUnsignedTypes(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 
         # Test that unsigned types display correctly.
         self.ci.HandleCommand("variable list -a", res)
         #print "variable list -a ->", res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list -a'))
         output = res.GetOutput()
         self.assertTrue(
             output.startswith("the_unsigned_char = (unsigned char) 'c'")

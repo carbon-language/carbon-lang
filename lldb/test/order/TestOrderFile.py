@@ -21,7 +21,7 @@ class TestOrderFile(TestBase):
 
         # Test that the debug symbols have Function f3 before Function f1.
         self.ci.HandleCommand("image dump symtab a.out", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('image dump'))
         output = res.GetOutput()
         mo_f3 = re.search("Function +.+f3", output)
         mo_f1 = re.search("Function +.+f1", output)

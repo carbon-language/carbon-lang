@@ -22,7 +22,7 @@ class TestStructTypes(TestBase):
 
         # Break on the ctor function of class C.
         self.ci.HandleCommand("breakpoint set -f main.c -l 14", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.c', line = 14, locations = 1"),
                         BREAKPOINT_CREATED)
@@ -35,7 +35,7 @@ class TestStructTypes(TestBase):
         # function where the original breakpoint was attempted.
         self.ci.HandleCommand("thread backtrace", res)
         #print "thread backtrace ->", res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread backtarce'))
         output = res.GetOutput()
         self.assertTrue(output.find('main.c:20') > 0 and
                         output.find('stop reason = breakpoint') > 0,

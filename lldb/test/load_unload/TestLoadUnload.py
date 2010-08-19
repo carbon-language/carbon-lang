@@ -20,7 +20,7 @@ class TestLoadUnload(TestBase):
 
         # Break by function name a_function (not yet loaded).
         self.ci.HandleCommand("breakpoint set -n a_function", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: name = 'a_function', locations = 0 "
             "(pending)"
@@ -43,7 +43,7 @@ class TestLoadUnload(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 

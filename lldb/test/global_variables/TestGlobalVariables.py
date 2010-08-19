@@ -18,7 +18,7 @@ class TestGlobalVariables(TestBase):
 
         # Break inside the main.
         self.ci.HandleCommand("breakpoint set -f main.c -l 20", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.c', line = 20, locations = 1"),
                         BREAKPOINT_CREATED)
@@ -37,13 +37,13 @@ class TestGlobalVariables(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 
         # Check that GLOBAL scopes are indicated for the variables.
         self.ci.HandleCommand("variable list -s -a", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         output = res.GetOutput()
         self.assertTrue(output.find('GLOBAL: g_file_static_cstr') > 0 and
                         output.find('g_file_static_cstr') > 0 and

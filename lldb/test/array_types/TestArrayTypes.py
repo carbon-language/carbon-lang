@@ -18,7 +18,7 @@ class TestArrayTypes(TestBase):
 
         # Break on line 42 inside main().
         self.ci.HandleCommand("breakpoint set -f main.c -l 42", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.c', line = 42, locations = 1"),
                         BREAKPOINT_CREATED)
@@ -44,7 +44,7 @@ class TestArrayTypes(TestBase):
         # Issue 'variable list' command on several array-type variables.
 
         self.ci.HandleCommand("variable list strings", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         output = res.GetOutput()
         self.assertTrue(output.startswith('(char *[4])') and
                         output.find('(char *) strings[0]') > 0 and
@@ -58,18 +58,18 @@ class TestArrayTypes(TestBase):
                         VARIABLES_DISPLAYED_CORRECTLY)
 
         self.ci.HandleCommand("variable list char_16", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         self.assertTrue(res.GetOutput().find('(char) char_16[0]') > 0 and
                         res.GetOutput().find('(char) char_16[15]') > 0,
                         VARIABLES_DISPLAYED_CORRECTLY)
 
         self.ci.HandleCommand("variable list ushort_matrix", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         self.assertTrue(res.GetOutput().startswith('(unsigned short [2][3])'),
                         VARIABLES_DISPLAYED_CORRECTLY)
 
         self.ci.HandleCommand("variable list long_6", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         self.assertTrue(res.GetOutput().startswith('(long [6])'),
                         VARIABLES_DISPLAYED_CORRECTLY)
 

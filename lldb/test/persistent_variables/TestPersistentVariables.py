@@ -19,7 +19,7 @@ class TestPersistentVariables(TestBase):
         self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
 
         self.ci.HandleCommand("breakpoint set --name main", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
 
         self.ci.HandleCommand("run", res)
         self.runStarted = True
@@ -46,10 +46,6 @@ class TestPersistentVariables(TestBase):
                         CMD_MSG('expr $2'))
         #print res.GetOutput()
         # $3 = (int)14
-
-        self.ci.HandleCommand("continue", res)
-        self.ci.HandleCommand("quit", res)
-        self.runStarted = False
 
 
 if __name__ == '__main__':

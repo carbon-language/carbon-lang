@@ -17,9 +17,9 @@ class TestHelpCommand(TestBase):
         """A simple test of 'help' command and its output."""
         res = lldb.SBCommandReturnObject()
         self.ci.HandleCommand("help", res)
-        self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().startswith(
-            'The following is a list of built-in, permanent debugger commands'),
+        self.assertTrue(res.Succeeded() and
+                        res.GetOutput().startswith(
+                'The following is a list of built-in, permanent debugger commands'),
                         CMD_MSG('help'))
 
     def test_help_should_not_hang_emacsshell(self):
@@ -28,9 +28,9 @@ class TestHelpCommand(TestBase):
         self.ci.HandleCommand("set term-width 0", res)
         self.assertTrue(res.Succeeded(), CMD_MSG('set term-width 0'))
         self.ci.HandleCommand("help", res)
-        self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().startswith(
-            'The following is a list of built-in, permanent debugger commands'),
+        self.assertTrue(res.Succeeded() and
+                        res.GetOutput().startswith(
+                'The following is a list of built-in, permanent debugger commands'),
                         CMD_MSG('help'))
 
 

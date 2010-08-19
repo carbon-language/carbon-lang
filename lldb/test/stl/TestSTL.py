@@ -24,7 +24,7 @@ class TestSTL(TestBase):
 
         # Break on line 13 of main.cpp.
         self.ci.HandleCommand("breakpoint set -f main.cpp -l 13", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.cpp', line = 13, locations = 1"
             ),
@@ -37,7 +37,7 @@ class TestSTL(TestBase):
         # Stop at 'std::string hello_world ("Hello World!");'.
         self.ci.HandleCommand("thread list", res)
         #print "thread list ->", res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
         output = res.GetOutput()
         self.assertTrue(output.find('main.cpp:13') > 0 and
                         output.find('stop reason = breakpoint') > 0,
@@ -45,7 +45,7 @@ class TestSTL(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 
@@ -61,7 +61,7 @@ class TestSTL(TestBase):
 
         self.ci.HandleCommand("thread backtrace", res)
         print "thread backtrace:", res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread backtarce'))
         output = res.GetOutput()
         self.assertTrue(output.find('[inlined]') > 0 and
                         output.find('basic_string.h'),

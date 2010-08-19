@@ -20,7 +20,7 @@ class TestDeadStrip(TestBase):
 
         # Break by function name f1 (live code).
         self.ci.HandleCommand("breakpoint set -s a.out -n f1", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: name = 'f1', module = a.out, locations = 1"
             ),
@@ -28,7 +28,7 @@ class TestDeadStrip(TestBase):
 
         # Break by function name f2 (dead code).
         self.ci.HandleCommand("breakpoint set -s a.out -n f2", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 2: name = 'f2', module = a.out, locations = 0 "
             "(pending)"),
@@ -36,7 +36,7 @@ class TestDeadStrip(TestBase):
 
         # Break by function name f3 (live code).
         self.ci.HandleCommand("breakpoint set -s a.out -n f3", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 3: name = 'f3', module = a.out, locations = 1"
             ),
@@ -49,7 +49,7 @@ class TestDeadStrip(TestBase):
         # The stop reason of the thread should be breakpoint (breakpoint #1).
         self.ci.HandleCommand("thread list", res)
         output = res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
         self.assertTrue(output.find('state is Stopped') > 0 and
                         output.find('main.c:20') > 0 and
                         output.find('where = a.out`f1') > 0 and
@@ -58,17 +58,17 @@ class TestDeadStrip(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list 1", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 
         self.ci.HandleCommand("continue", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('continue'))
 
         # The stop reason of the thread should be breakpoint (breakpoint #3).
         self.ci.HandleCommand("thread list", res)
         output = res.GetOutput()
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
         self.assertTrue(output.find('state is Stopped') > 0 and
                         output.find('main.c:40') > 0 and
                         output.find('where = a.out`f3') > 0 and
@@ -77,7 +77,7 @@ class TestDeadStrip(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list 3", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 

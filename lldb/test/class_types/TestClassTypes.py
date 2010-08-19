@@ -18,7 +18,7 @@ class TestClassTypes(TestBase):
 
         # Break on the ctor function of class C.
         self.ci.HandleCommand("breakpoint set -f main.cpp -l 73", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().startswith(
             "Breakpoint created: 1: file ='main.cpp', line = 73, locations = 1"),
                         BREAKPOINT_CREATED)
@@ -37,13 +37,13 @@ class TestClassTypes(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
         self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
                         BREAKPOINT_HIT_ONCE)
 
         # We should be stopped on the ctor function of class C.
         self.ci.HandleCommand("variable list this", res);
-        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
         self.assertTrue(res.GetOutput().startswith('(class C *const) this = '),
                         VARIABLES_DISPLAYED_CORRECTLY)
 
