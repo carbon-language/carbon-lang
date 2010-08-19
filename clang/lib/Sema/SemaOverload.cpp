@@ -3749,9 +3749,11 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.Conversions[0]
     = TryObjectArgumentInitialization(From->getType(), Conversion,
                                       ActingContext);
-  // Conversion functions to a different type in the base class is visible in 
-  // the derived class.  So, a derived to base conversion should not participate
-  // in overload resolution. 
+  
+  // C++ [over.match.funcs]p4:
+  //   For conversion functions, the function is considered to be a member of 
+  //   the class of the implicit implied object argument for the purpose of 
+  //   defining the type of the implicit object parameter.
   if (Candidate.Conversions[0].Standard.Second == ICK_Derived_To_Base)
     Candidate.Conversions[0].Standard.Second = ICK_Identity;
   if (Candidate.Conversions[0].isBad()) {
