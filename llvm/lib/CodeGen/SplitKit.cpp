@@ -352,7 +352,16 @@ VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
 
   // This is a complex def. Mark with a NULL in valueMap.
   VNInfo *OldVNI =
-    valueMap_.insert(ValueMap::value_type(ParentVNI, 0)).first->second;
+    valueMap_.insert(
+      ValueMap::value_type(ParentVNI, static_cast<VNInfo *>(0))).first->second;
+      // The static_cast<VNInfo *> is only needed to work around a bug in an
+      // old version of the C++0x standard which the following compilers
+      // implemented and have yet to fix:
+      //
+      // Microsoft Visual Studio 2010 Version 10.0.30319.1 RTMRel
+      // Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 16.00.30319.01
+      //
+      // If/When we move to C++0x, this can be replaced by nullptr.
   (void)OldVNI;
   assert(OldVNI == 0 && "Simple/Complex values mixed");
 
@@ -371,7 +380,15 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx) {
 
   // Use insert for lookup, so we can add missing values with a second lookup.
   std::pair<ValueMap::iterator,bool> InsP =
-    valueMap_.insert(ValueMap::value_type(ParentVNI, 0));
+    valueMap_.insert(ValueMap::value_type(ParentVNI, static_cast<VNInfo *>(0)));
+    // The static_cast<VNInfo *> is only needed to work around a bug in an
+    // old version of the C++0x standard which the following compilers
+    // implemented and have yet to fix:
+    //
+    // Microsoft Visual Studio 2010 Version 10.0.30319.1 RTMRel
+    // Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 16.00.30319.01
+    //
+    // If/When we move to C++0x, this can be replaced by nullptr.
 
   // This was an unknown value. Create a simple mapping.
   if (InsP.second)
