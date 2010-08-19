@@ -16,6 +16,7 @@
 
 // FIXME: Daniel isn't smart enough to use a prototype for this.
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/System/DataTypes.h"
 #include <cassert>
@@ -36,6 +37,13 @@ class SourceManager;
 class TargetOptions;
 
 namespace Builtin { struct Info; }
+
+/// TargetCXXABI - The types of C++ ABIs for which we can generate code.
+enum TargetCXXABI {
+  CXXABI_Unknown = -1,
+  CXXABI_Itanium,
+  CXXABI_Microsoft
+};
 
 /// TargetInfo - This class exposes information about the current target.
 ///
@@ -58,7 +66,7 @@ protected:
   const char *UserLabelPrefix;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
   unsigned char RegParmMax, SSERegParmMax;
-  std::string CXXABI;
+  TargetCXXABI CXXABI;
 
   unsigned HasAlignMac68kSupport : 1;
   unsigned RealTypeUsesObjCFPRet : 3;
@@ -412,7 +420,7 @@ public:
   }
 
   /// getCXXABI - Get the C++ ABI in use.
-  virtual llvm::StringRef getCXXABI() const {
+  virtual TargetCXXABI getCXXABI() const {
     return CXXABI;
   }
 
@@ -434,11 +442,13 @@ public:
 
   /// setCXXABI - Use this specific C++ ABI.
   ///
-  /// \return - False on error (invalid ABI name).
+  /// \return - False on error (invalid C++ ABI name).
   virtual bool setCXXABI(const std::string &Name) {
-    if (Name != "itanium" && Name != "microsoft")
-      return false;
-    CXXABI = Name;
+    CXXABI = llvm::StringSwitch<TargetCXXABI>(Name)
+      .Case("itanium", CXXABI_Itanium)
+      .Case("microsoft", CXXABI_Microsoft)
+      .Default(CXXABI_Unknown);
+    if (CXXABI == CXXABI_Unknown) return false;
     return true;
   }
 

@@ -137,10 +137,12 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
 
 CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
   if (!LangOpts.CPlusPlus) return NULL;
-  if (T.getCXXABI() == "microsoft")
-    return CreateMicrosoftCXXABI(*this);
-  else
+  switch (T.getCXXABI()) {
+  default:
     return CreateItaniumCXXABI(*this);
+  case CXXABI_Microsoft:
+    return CreateMicrosoftCXXABI(*this);
+  }
 }
 
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,

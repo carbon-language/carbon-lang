@@ -1463,8 +1463,6 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
 
 // This class implements layout specific to the Microsoft ABI.
 class MSRecordLayoutBuilder: public RecordLayoutBuilder {
-  friend class ASTContext;
-
 public:
   MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects):
     RecordLayoutBuilder(Ctx, EmptySubobjects) {}
@@ -1514,10 +1512,13 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 
     // When compiling for Microsoft, use the special MS builder.
     RecordLayoutBuilder *Builder;
-    if (Target.getCXXABI() == "microsoft")
-      Builder = new MSRecordLayoutBuilder(*this, &EmptySubobjects);
-    else
+    switch (Target.getCXXABI()) {
+    default:
       Builder = new RecordLayoutBuilder(*this, &EmptySubobjects);
+      break;
+    case CXXABI_Microsoft:
+      Builder = new MSRecordLayoutBuilder(*this, &EmptySubobjects);
+    }
     Builder->Layout(RD);
 
     // FIXME: This is not always correct. See the part about bitfields at

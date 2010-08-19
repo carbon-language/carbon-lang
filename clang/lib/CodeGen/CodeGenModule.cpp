@@ -90,10 +90,13 @@ void CodeGenModule::createObjCRuntime() {
 }
 
 void CodeGenModule::createCXXABI() {
-  if (Context.Target.getCXXABI() == "microsoft")
-    ABI = CreateMicrosoftCXXABI(*this);
-  else
+  switch (Context.Target.getCXXABI()) {
+  default:
     ABI = CreateItaniumCXXABI(*this);
+    break;
+  case CXXABI_Microsoft:
+    ABI = CreateMicrosoftCXXABI(*this);
+  }
 }
 
 void CodeGenModule::Release() {
