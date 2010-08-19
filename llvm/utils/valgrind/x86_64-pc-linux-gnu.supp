@@ -28,6 +28,12 @@
 }
 
 {
+   We don't care if grep leaks
+   Memcheck:Leak
+   obj:/bin/grep
+}
+
+{
    We don't care if python leaks
    Memcheck:Leak
    fun:malloc
