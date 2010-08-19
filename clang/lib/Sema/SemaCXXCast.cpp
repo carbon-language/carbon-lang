@@ -468,8 +468,6 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Reinterpret
       << SrcExpr->getType() << DestType << OpRange;
-  else if (Kind == CastExpr::CK_Unknown || Kind == CastExpr::CK_BitCast)
-    Self.CheckCastAlign(SrcExpr, DestType, OpRange);
 }
 
 

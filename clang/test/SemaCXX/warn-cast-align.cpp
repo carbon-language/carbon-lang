@@ -11,12 +11,12 @@ void test0(char *P) {
   a = CharPtr(P);
 
   b = (short*) P; // expected-warning {{cast from 'char *' to 'short *' increases required alignment from 1 to 2}}
-  b = reinterpret_cast<short*>(P); // expected-warning {{cast from 'char *' to 'short *' increases required alignment from 1 to 2}}
+  b = reinterpret_cast<short*>(P);
   typedef short *ShortPtr;
   b = ShortPtr(P); // expected-warning {{cast from 'char *' to 'ShortPtr' (aka 'short *') increases required alignment from 1 to 2}}
 
   c = (int*) P; // expected-warning {{cast from 'char *' to 'int *' increases required alignment from 1 to 4}}
-  c = reinterpret_cast<int*>(P); // expected-warning {{cast from 'char *' to 'int *' increases required alignment from 1 to 4}}
+  c = reinterpret_cast<int*>(P);
   typedef int *IntPtr;
   c = IntPtr(P); // expected-warning {{cast from 'char *' to 'IntPtr' (aka 'int *') increases required alignment from 1 to 4}}
 }
