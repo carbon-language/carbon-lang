@@ -100,10 +100,10 @@ int (*funcptr3[5])(long);
 int sz8 = sizeof(^int (*[5])(long) {return funcptr3;}); // expected-error {{block declared as returning an array}}
 
 void foo6() {
-  int (^b)(int) __attribute__((noreturn));
+  int (^b)(int) __attribute__((noreturn)); // expected-warning{{blocks declared 'noreturn' should have a 'void' result type}}
   b = ^ (int i) __attribute__((noreturn)) { return 1; };  // expected-error {{block declared 'noreturn' should not return}}
   b(1);
-  int (^c)(void) __attribute__((noreturn)) = ^ __attribute__((noreturn)) { return 100; }; // expected-error {{block declared 'noreturn' should not return}}
+  int (^c)(void) __attribute__((noreturn)) = ^ __attribute__((noreturn)) { return 100; }; // expected-error {{block declared 'noreturn' should not return}} expected-warning{{blocks declared 'noreturn' should have a 'void' result type}}
 }
 
 

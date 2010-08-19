@@ -60,7 +60,7 @@ int test8() {
   (void)(1 + unknown());
 } // expected-warning {{control reaches end of non-void function}}
 
-int halt3() __attribute__((noreturn));
+int halt3() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
 
 int test9() {
   (void)(halt3() + unknown());

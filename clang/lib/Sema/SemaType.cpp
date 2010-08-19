@@ -1833,6 +1833,14 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
   Type = S.Context.getObjCGCQualType(Type, GCAttr);
 }
 
+static QualType GetResultType(QualType T) {
+  if (const PointerType *PT = T->getAs<PointerType>())
+    T = PT->getPointeeType();
+  else if (const BlockPointerType *BT = T->getAs<BlockPointerType>())
+    T = BT->getPointeeType();
+  return T->getAs<FunctionType>()->getResultType();
+}
+
 /// Process an individual function attribute.  Returns true if the
 /// attribute does not make sense to apply to this type.
 bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
@@ -1849,7 +1857,12 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
         && !Type->isBlockPointerType()
         && !Type->isFunctionType())
       return true;
-
+    
+    if (!GetResultType(Type)->isVoidType()) {
+      S.Diag(Attr.getLoc(), diag::warn_noreturn_function_has_nonvoid_result)
+        << (Type->isBlockPointerType() ? /* blocks */ 1 : /* functions */ 0);
+    }
+    
     // Otherwise we can process right away.
     Type = S.Context.getNoReturnType(Type);
     return false;

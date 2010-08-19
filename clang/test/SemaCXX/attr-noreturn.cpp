@@ -31,7 +31,7 @@ void test_f3() {
 
 
 class xpto {
-  int blah() __attribute__((noreturn));
+  int blah() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
 };
 
 int xpto::blah() {

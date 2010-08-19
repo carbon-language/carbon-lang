@@ -9,7 +9,7 @@ static void __attribute__((noreturn)) f0(void) {
 } // expected-warning {{function declared 'noreturn' should not return}}
 
 // On K&R
-int f1() __attribute__((noreturn));
+int f1() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
 
 int g0 __attribute__((noreturn)); // expected-warning {{'noreturn' only applies to function types; type here is 'int'}}
 

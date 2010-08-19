@@ -3135,6 +3135,9 @@ def ext_return_has_void_expr : Extension<
 def warn_noreturn_function_has_return_expr : Warning<
   "function %0 declared 'noreturn' should not return">,
   InGroup<DiagGroup<"invalid-noreturn">>;
+def warn_noreturn_function_has_nonvoid_result : Warning<
+  "%select{functions|blocks}0 declared 'noreturn' should have a 'void' result type">,
+  InGroup<DiagGroup<"invalid-noreturn">>;
 def warn_falloff_noreturn_function : Warning<
   "function declared 'noreturn' should not return">,
   InGroup<DiagGroup<"invalid-noreturn">>;

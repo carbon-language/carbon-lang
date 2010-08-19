@@ -323,7 +323,7 @@ int test_invalidate_by_ref() {
 // was the block containing the merge for '?', which would trigger an
 // assertion failure.
 int rdar_7027684_aux();
-int rdar_7027684_aux_2() __attribute__((noreturn));
+int rdar_7027684_aux_2() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
 void rdar_7027684(int x, int y) {
   {}; // this empty compound statement is critical.
   (rdar_7027684_aux() ? rdar_7027684_aux_2() : (void) 0);

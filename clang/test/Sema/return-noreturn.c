@@ -20,11 +20,11 @@ void test2_positive() {
 // This test case illustrates that we don't warn about the missing return
 // because the function is marked noreturn and there is an infinite loop.
 extern int foo_test_3();
-__attribute__((__noreturn__)) void* test3(int arg) {
+__attribute__((__noreturn__)) void* test3(int arg) { // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
   while (1) foo_test_3();
 }
 
-__attribute__((__noreturn__)) void* test3_positive(int arg) {
+__attribute__((__noreturn__)) void* test3_positive(int arg) { // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
   while (0) foo_test_3();
 } // expected-warning{{function declared 'noreturn' should not return}}
 

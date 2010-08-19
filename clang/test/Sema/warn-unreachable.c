@@ -1,6 +1,6 @@
 // RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code -Wno-unused-value
 
-int halt() __attribute__((noreturn));
+int halt() __attribute__((noreturn)); // expected-warning{{functions declared 'noreturn' should have a 'void' result type}}
 int live();
 int dead();
 
