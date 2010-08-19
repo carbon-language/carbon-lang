@@ -84,7 +84,7 @@ public:
 
 protected:
   Attr(attr::Kind AK, SourceLocation L)
-    : Loc(L), AttrKind(AK) {}
+    : Loc(L), AttrKind(AK), Inherited(false) {}
 
 public:
 
