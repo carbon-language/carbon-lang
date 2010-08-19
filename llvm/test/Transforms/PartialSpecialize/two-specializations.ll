@@ -1,8 +1,8 @@
 ; If there are two specializations of a function, make sure each callsite
 ; calls the right one.
 ;
-; RN: opt -S -partialspecialization %s | FileCheck %s
-; RUN: true
+; RUN: opt -S -partialspecialization -disable-inlining %s | opt -S -inline | FileCheck %s -check-prefix=CORRECT
+; RUN: opt -S -partialspecialization -disable-inlining %s | FileCheck %s 
 declare void @callback1()
 declare void @callback2()
 
@@ -14,14 +14,18 @@ define internal void @UseCallback(void()* %pCallback) {
 define void @foo(void()* %pNonConstCallback)
 {
 Entry:
+; CORRECT: Entry
+; CORRECT-NEXT: call void @callback1()
+; CORRECT-NEXT: call void @callback1()
+; CORRECT-NEXT: call void @callback2()
+; CORRECT-NEXT: call void %pNonConstCallback()
+; CORRECT-NEXT: call void @callback1()
+; CORRECT-NEXT: call void @callback2()
+; CORRECT-NEXT: call void @callback2()
 ; CHECK: Entry
-; CHECK-NEXT: call void @callback1()
-; CHECK-NEXT: call void @callback1()
-; CHECK-NEXT: call void @callback2()
-; CHECK-NEXT: call void %pNonConstCallback()
-; CHECK-NEXT: call void @callback1()
-; CHECK-NEXT: call void @callback2()
-; CHECK-NEXT: call void @callback2()
+; CHECK-NOT: call void @UseCallback(void ()* @callback1)
+; CHECK-NOT: call void @UseCallback(void ()* @callback2)
+; CHECK: ret void
   call void @UseCallback(void()* @callback1)
   call void @UseCallback(void()* @callback1)
   call void @UseCallback(void()* @callback2)
