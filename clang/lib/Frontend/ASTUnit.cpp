@@ -52,7 +52,7 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
     CompleteTranslationUnit(true), ConcurrencyCheckValue(CheckUnlocked), 
-    PreambleRebuildCounter(0), SavedMainFileBuffer(0),
+    PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     ShouldCacheCodeCompletionResults(false),
     NumTopLevelDeclsAtLastCompletionCache(0),
     CacheCodeCompletionCoolDown(0),
@@ -80,7 +80,8 @@ ASTUnit::~ASTUnit() {
   }
   
   delete SavedMainFileBuffer;
-  
+  delete PreambleBuffer;
+
   ClearCachedCompletionResults();
   
   for (unsigned I = 0, N = Timers.size(); I != N; ++I)
@@ -646,8 +647,10 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   delete SavedMainFileBuffer;
   SavedMainFileBuffer = 0;
   
-  if (!Invocation.get())
+  if (!Invocation.get()) {
+    delete OverrideMainBuffer;
     return true;
+  }
   
   // Create the compiler instance to use for building the AST.
   CompilerInstance Clang;
@@ -664,9 +667,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
-  if (!Clang.hasTarget())
+  if (!Clang.hasTarget()) {
+    delete OverrideMainBuffer;
     return true;
-  
+  }
+
   // Inform the target of the language options.
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
@@ -773,6 +778,7 @@ error:
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
     PreprocessorOpts.DisablePCHValidation = true;
     PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
+    delete OverrideMainBuffer;
   }
   
   Clang.takeSourceManager();
@@ -1092,7 +1098,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
                                                   + NewPreamble.second.first);
   PreambleEndsAtStartOfLine = NewPreamble.second.second;
 
-  llvm::MemoryBuffer *PreambleBuffer
+  delete PreambleBuffer;
+  PreambleBuffer
     = llvm::MemoryBuffer::getNewUninitMemBuffer(PreambleReservedSize,
                                                 FrontendOpts.Inputs[0].second);
   memcpy(const_cast<char*>(PreambleBuffer->getBufferStart()), 
@@ -1135,6 +1142,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     if (PreambleTimer)
       PreambleTimer->stopTimer();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
+    PreprocessorOpts.eraseRemappedFile(
+                               PreprocessorOpts.remapped_file_buffer_end() - 1);
     return 0;
   }
   
@@ -1174,7 +1183,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     if (PreambleTimer)
       PreambleTimer->stopTimer();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
-
+    PreprocessorOpts.eraseRemappedFile(
+                               PreprocessorOpts.remapped_file_buffer_end() - 1);
     return 0;
   }
   
@@ -1194,6 +1204,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
       PreambleTimer->stopTimer();
     TopLevelDeclsInPreamble.clear();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
+    PreprocessorOpts.eraseRemappedFile(
+                               PreprocessorOpts.remapped_file_buffer_end() - 1);
     return 0;
   }
   
@@ -1224,6 +1236,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     PreambleTimer->stopTimer();
   
   PreambleRebuildCounter = 1;
+  PreprocessorOpts.eraseRemappedFile(
+                               PreprocessorOpts.remapped_file_buffer_end() - 1);
   return CreatePaddedMainFileBuffer(NewPreamble.first, 
                                     CreatedPreambleBuffer,
                                     PreambleReservedSize,

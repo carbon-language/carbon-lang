@@ -177,6 +177,11 @@ private:
   /// preamble.
   llvm::MemoryBuffer *SavedMainFileBuffer;
 
+  /// \brief When non-NULL, this is the buffer used to store the
+  /// contents of the preamble when it has been padded to build the
+  /// precompiled preamble.
+  llvm::MemoryBuffer *PreambleBuffer;
+
   /// \brief The number of warnings that occurred while parsing the preamble.
   ///
   /// This value will be used to restore the state of the \c Diagnostic object
