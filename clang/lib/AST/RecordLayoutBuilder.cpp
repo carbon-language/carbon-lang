@@ -1465,6 +1465,7 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
 class MSRecordLayoutBuilder: public RecordLayoutBuilder {
   friend class ASTContext;
 
+public:
   MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects):
     RecordLayoutBuilder(Ctx, EmptySubobjects) {}
 
