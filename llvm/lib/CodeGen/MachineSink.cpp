@@ -422,8 +422,6 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
               " BB#" << ParentBlock->getNumber()
               << " -- BB#" << NewSucc->getNumber()
               << " -- BB#" << SuccToSinkTo->getNumber() << '\n');
-        //assert(DT->dominates(NewSucc, SuccToSinkTo) &&
-        //"New BB doesn't dominate all uses!");
         SuccToSinkTo = NewSucc;
         ++NumSplit;
       }
