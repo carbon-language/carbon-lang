@@ -850,6 +850,8 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
           // Remove this remapping. We've captured the buffer already.
           M = PreprocessorOpts.eraseRemappedFile(M);
           E = PreprocessorOpts.remapped_file_end();
+          if (M == E)
+            break;
         }
       }
     }
@@ -875,6 +877,8 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
           // Remove this remapping. We've captured the buffer already.
           M = PreprocessorOpts.eraseRemappedFile(M);
           E = PreprocessorOpts.remapped_file_buffer_end();
+          if (M == E)
+            break;
         }
       }
     }
