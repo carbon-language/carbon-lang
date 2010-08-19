@@ -1119,7 +1119,7 @@ public:
     typedef _R result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
-    explicit function() : __f_(0) {}
+    function() : __f_(0) {}
     function(nullptr_t) : __f_(0) {}
     function(const function&);
 #ifdef _LIBCPP_MOVE
