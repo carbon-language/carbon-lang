@@ -6,6 +6,7 @@ vector unsigned char vuc = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 
 vector bool short vbs = { 1, 0, 1, 0, 1, 0, 1, 0 };
 vector short vs = { -1, 2, -3, 4, -5, 6, -7, 8 };
 vector unsigned short vus = { 1, 2, 3, 4, 5, 6, 7, 8 };
+vector pixel vp = { 1, 2, 3, 4, 5, 6, 7, 8 };
 vector bool int vbi = { 1, 0, 1, 0 };
 vector int vi = { -1, 2, -3, 4 };
 vector unsigned int vui = { 1, 2, 3, 4 };
@@ -550,33 +551,49 @@ int test6() {
   /* vec_mergeh */
   res_vsc = vec_mergeh(vsc, vsc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_mergeh(vuc, vuc);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_mergeh(vbc, vbc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_mergeh(vs, vs);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_mergeh(vp, vp);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_mergeh(vus, vus);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_mergeh(vbs, vbs);               // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_mergeh(vi, vi);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_mergeh(vui, vui);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_mergeh(vbi, vbi);               // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_mergeh(vf, vf);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vsc = vec_vmrghb(vsc, vsc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_vmrghb(vuc, vuc);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_vmrghb(vbc, vbc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_vmrghh(vs, vs);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_vmrghh(vp, vp);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_vmrghh(vus, vus);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_vmrghh(vbs, vbs);               // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_vmrghw(vi, vi);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_vmrghw(vui, vui);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_vmrghw(vbi, vbi);               // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_vmrghw(vf, vf);                 // CHECK: @llvm.ppc.altivec.vperm
 
   /* vec_mergel */
   res_vsc = vec_mergel(vsc, vsc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_mergel(vuc, vuc);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_mergel(vbc, vbc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_mergel(vs, vs);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_mergeh(vp, vp);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_mergel(vus, vus);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_mergel(vbs, vbs);               // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_mergel(vi, vi);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_mergel(vui, vui);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_mergel(vbi, vbi);               // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_mergel(vf, vf);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vsc = vec_vmrglb(vsc, vsc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_vmrglb(vuc, vuc);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_vmrglb(vbc, vbc);               // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_vmrglh(vs, vs);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_vmrglh(vp, vp);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_vmrglh(vus, vus);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_vmrglh(vbs, vbs);               // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_vmrglw(vi, vi);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_vmrglw(vui, vui);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_vmrglw(vbi, vbi);               // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_vmrglw(vf, vf);                 // CHECK: @llvm.ppc.altivec.vperm
 
   /* vec_mfvscr */
@@ -720,12 +737,16 @@ int test6() {
   /* vec_pack */
   res_vsc = vec_pack(vs, vs);                   // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_pack(vus, vus);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_pack(vbs, vbs);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_pack(vi, vi);                   // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_pack(vui, vui);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_pack(vbi, vbi);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vsc = vec_vpkuhum(vs, vs);                // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_vpkuhum(vus, vus);              // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_vpkuhum(vbs, vbs);              // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_vpkuwum(vi, vi);                // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_vpkuwum(vui, vui);              // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_vpkuwum(vbi, vbi);              // CHECK: @llvm.ppc.altivec.vperm
 
   /* vec_packpx */
   res_vp = vec_packpx(vui, vui);                // CHECK: @llvm.ppc.altivec.vpkpx
@@ -754,17 +775,25 @@ int test6() {
   /* vec_perm */
   res_vsc = vec_perm(vsc, vsc, vuc);            // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_perm(vuc, vuc, vuc);            // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_perm(vbc, vbc, vuc);            // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_perm(vs, vs, vuc);              // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_perm(vus, vus, vuc);            // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_perm(vbs, vbs, vuc);            // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_perm(vp, vp, vuc);              // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_perm(vi, vi, vuc);              // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_perm(vui, vui, vuc);            // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_perm(vbi, vbi, vuc);            // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_perm(vf, vf, vuc);              // CHECK: @llvm.ppc.altivec.vperm
   res_vsc = vec_vperm(vsc, vsc, vuc);           // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_vperm(vuc, vuc, vuc);           // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_vperm(vbc, vbc, vuc);           // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_vperm(vs, vs, vuc);             // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_vperm(vus, vus, vuc);           // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_vperm(vbs, vbs, vuc);           // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_vperm(vp, vp, vuc);             // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_vperm(vi, vi, vuc);             // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_vperm(vui, vui, vuc);           // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_vperm(vbi, vbi, vuc);           // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_vperm(vf, vf, vuc);             // CHECK: @llvm.ppc.altivec.vperm
 
   /* vec_re */
@@ -890,6 +919,7 @@ int test6() {
   res_vuc = vec_sld(vuc, vuc, 0);               // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_sld(vs, vs, 0);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_sld(vus, vus, 0);               // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_sld(vp, vp, 0);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_sld(vi, vi, 0);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_sld(vui, vui, 0);               // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_sld(vf, vf, 0);                 // CHECK: @llvm.ppc.altivec.vperm
@@ -897,6 +927,7 @@ int test6() {
   res_vuc = vec_vsldoi(vuc, vuc, 0);            // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_vsldoi(vs, vs, 0);              // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_vsldoi(vus, vus, 0);            // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_vsldoi(vp, vp, 0);              // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_vsldoi(vi, vi, 0);              // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_vsldoi(vui, vui, 0);            // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_vsldoi(vf, vf, 0);              // CHECK: @llvm.ppc.altivec.vperm
@@ -972,17 +1003,25 @@ int test6() {
   /* vec_splat */
   res_vsc = vec_splat(vsc, 0);                  // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_splat(vuc, 0);                  // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_splat(vbc, 0);                  // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_splat(vs, 0);                   // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_splat(vus, 0);                  // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_splat(vbs, 0);                  // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_splat(vp, 0);                   // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_splat(vi, 0);                   // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_splat(vui, 0);                  // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_splat(vbi, 0);                  // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_splat(vf, 0);                   // CHECK: @llvm.ppc.altivec.vperm
   res_vsc = vec_vspltb(vsc, 0);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vuc = vec_vspltb(vuc, 0);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vbc = vec_vspltb(vbc, 0);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vs  = vec_vsplth(vs, 0);                  // CHECK: @llvm.ppc.altivec.vperm
   res_vus = vec_vsplth(vus, 0);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vbs = vec_vsplth(vbs, 0);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vp  = vec_vsplth(vp, 0);                  // CHECK: @llvm.ppc.altivec.vperm
   res_vi  = vec_vspltw(vi, 0);                  // CHECK: @llvm.ppc.altivec.vperm
   res_vui = vec_vspltw(vui, 0);                 // CHECK: @llvm.ppc.altivec.vperm
+  res_vbi = vec_vspltw(vbi, 0);                 // CHECK: @llvm.ppc.altivec.vperm
   res_vf  = vec_vspltw(vf, 0);                  // CHECK: @llvm.ppc.altivec.vperm
 
   /* vec_splat_s8 */
