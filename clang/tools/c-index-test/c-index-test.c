@@ -900,10 +900,18 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
                                     argv + num_unsaved_files + 2,
                                     argc - num_unsaved_files - 2,
                                     0, 0, getDefaultParsingOptions());
+    if (!TU) {
+      fprintf(stderr, "Unable to load translation unit!\n");
+      return 1;
+    }
     for (I = 0; I != Repeats; ++I) {
       results = clang_codeCompleteAt(TU, filename, line, column,
                                      unsaved_files, num_unsaved_files,
                                      clang_defaultCodeCompleteOptions());
+      if (!results) {
+        fprintf(stderr, "Unable to perform code completion!\n");
+        return 1;
+      }
       if (I != Repeats-1)
         clang_disposeCodeCompleteResults(results);
     }
