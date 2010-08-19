@@ -542,26 +542,7 @@ class DeclRefExpr : public Expr {
   const NameQualifier *getNameQualifier() const {
     return const_cast<DeclRefExpr *>(this)->getNameQualifier();
   }
-  
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
-    if ((DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag) == 0)
-      return 0;
-    
-    if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
-      return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
-    
-    return reinterpret_cast<ExplicitTemplateArgumentList *>(
-                                                      getNameQualifier() + 1);
-  }
-  
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
-    return const_cast<DeclRefExpr *>(this)->getExplicitTemplateArgumentList();
-  }
-  
+
   DeclRefExpr(NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
               ValueDecl *D, SourceLocation NameLoc,
               const TemplateArgumentListInfo *TemplateArgs,
@@ -641,53 +622,77 @@ public:
     return getNameQualifier()->NNS;
   }
   
-  /// \brief Determines whether this member expression actually had a C++
-  /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgumentList() const {
-    return DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag;
+  bool hasExplicitTemplateArgs() const {
+    return (DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag);
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name.
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+    assert(hasExplicitTemplateArgs());
+
+    if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
+      return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    
+    return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+                                                      getNameQualifier() + 1);
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name.
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+    return const_cast<DeclRefExpr *>(this)->getExplicitTemplateArgs();
   }
 
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getExplicitTemplateArgsOpt() const {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
+  }
+  
   /// \brief Copies the template arguments (if present) into the given
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    if (hasExplicitTemplateArgumentList())
-      getExplicitTemplateArgumentList()->copyInto(List);
+    if (hasExplicitTemplateArgs())
+      getExplicitTemplateArgs().copyInto(List);
   }
   
   /// \brief Retrieve the location of the left angle bracket following the
   /// member name ('<'), if any.
   SourceLocation getLAngleLoc() const {
-    if (!hasExplicitTemplateArgumentList())
+    if (!hasExplicitTemplateArgs())
       return SourceLocation();
     
-    return getExplicitTemplateArgumentList()->LAngleLoc;
+    return getExplicitTemplateArgs().LAngleLoc;
   }
   
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    if (!hasExplicitTemplateArgumentList())
+    if (!hasExplicitTemplateArgs())
       return 0;
     
-    return getExplicitTemplateArgumentList()->getTemplateArgs();
+    return getExplicitTemplateArgs().getTemplateArgs();
   }
   
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const {
-    if (!hasExplicitTemplateArgumentList())
+    if (!hasExplicitTemplateArgs())
       return 0;
     
-    return getExplicitTemplateArgumentList()->NumTemplateArgs;
+    return getExplicitTemplateArgs().NumTemplateArgs;
   }
   
   /// \brief Retrieve the location of the right angle bracket following the
   /// template arguments ('>').
   SourceLocation getRAngleLoc() const {
-    if (!hasExplicitTemplateArgumentList())
+    if (!hasExplicitTemplateArgs())
       return SourceLocation();
     
-    return getExplicitTemplateArgumentList()->RAngleLoc;
+    return getExplicitTemplateArgs().RAngleLoc;
   }
   
   static bool classof(const Stmt *T) {
@@ -1630,25 +1635,6 @@ class MemberExpr : public Expr {
     return const_cast<MemberExpr *>(this)->getMemberQualifier();
   }
 
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
-    if (!HasExplicitTemplateArgumentList)
-      return 0;
-
-    if (!HasQualifierOrFoundDecl)
-      return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
-
-    return reinterpret_cast<ExplicitTemplateArgumentList *>(
-                                                      getMemberQualifier() + 1);
-  }
-
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
-    return const_cast<MemberExpr *>(this)->getExplicitTemplateArgumentList();
-  }
-
 public:
   MemberExpr(Expr *base, bool isarrow, ValueDecl *memberdecl,
              const DeclarationNameInfo &NameInfo, QualType ty)
@@ -1724,15 +1710,42 @@ public:
 
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgumentList() const {
+  bool hasExplicitTemplateArgs() const {
     return HasExplicitTemplateArgumentList;
   }
 
   /// \brief Copies the template arguments (if present) into the given
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    if (hasExplicitTemplateArgumentList())
-      getExplicitTemplateArgumentList()->copyInto(List);
+    if (hasExplicitTemplateArgs())
+      getExplicitTemplateArgs().copyInto(List);
+  }
+
+  /// \brief Retrieve the explicit template argument list that
+  /// follow the member template name.  This must only be called on an
+  /// expression with explicit template arguments.
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+    assert(HasExplicitTemplateArgumentList);
+    if (!HasQualifierOrFoundDecl)
+      return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+
+    return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+                                                      getMemberQualifier() + 1);
+  }
+
+  /// \brief Retrieve the explicit template argument list that
+  /// followed the member template name.  This must only be called on
+  /// an expression with explicit template arguments.
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+    return const_cast<MemberExpr *>(this)->getExplicitTemplateArgs();
+  }
+
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() const {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
   }
   
   /// \brief Retrieve the location of the left angle bracket following the
@@ -1741,7 +1754,7 @@ public:
     if (!HasExplicitTemplateArgumentList)
       return SourceLocation();
 
-    return getExplicitTemplateArgumentList()->LAngleLoc;
+    return getExplicitTemplateArgs().LAngleLoc;
   }
 
   /// \brief Retrieve the template arguments provided as part of this
@@ -1750,7 +1763,7 @@ public:
     if (!HasExplicitTemplateArgumentList)
       return 0;
 
-    return getExplicitTemplateArgumentList()->getTemplateArgs();
+    return getExplicitTemplateArgs().getTemplateArgs();
   }
 
   /// \brief Retrieve the number of template arguments provided as part of this
@@ -1759,7 +1772,7 @@ public:
     if (!HasExplicitTemplateArgumentList)
       return 0;
 
-    return getExplicitTemplateArgumentList()->NumTemplateArgs;
+    return getExplicitTemplateArgs().NumTemplateArgs;
   }
 
   /// \brief Retrieve the location of the right angle bracket following the
@@ -1768,7 +1781,7 @@ public:
     if (!HasExplicitTemplateArgumentList)
       return SourceLocation();
 
-    return getExplicitTemplateArgumentList()->RAngleLoc;
+    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   /// \brief Retrieve the member declaration name info.

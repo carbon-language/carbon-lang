@@ -759,7 +759,7 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
     MemberNameInfo(MemberNameInfo) {
   if (TemplateArgs)
-    getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
+    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
 }
 
 CXXDependentScopeMemberExpr *

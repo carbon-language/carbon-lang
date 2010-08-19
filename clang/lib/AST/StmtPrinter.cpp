@@ -470,7 +470,7 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
   OS << Node->getNameInfo();
-  if (Node->hasExplicitTemplateArgumentList())
+  if (Node->hasExplicitTemplateArgs())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                     Node->getTemplateArgs(),
                                                     Node->getNumTemplateArgs(),
@@ -753,7 +753,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
 
   OS << Node->getMemberNameInfo();
 
-  if (Node->hasExplicitTemplateArgumentList())
+  if (Node->hasExplicitTemplateArgs())
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                     Node->getTemplateArgs(),
                                                     Node->getNumTemplateArgs(),

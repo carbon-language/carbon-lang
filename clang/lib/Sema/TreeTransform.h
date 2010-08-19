@@ -4225,7 +4225,7 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
       Qualifier == E->getQualifier() &&
       ND == E->getDecl() &&
       NameInfo.getName() == E->getDecl()->getDeclName() &&
-      !E->hasExplicitTemplateArgumentList()) {
+      !E->hasExplicitTemplateArgs()) {
 
     // Mark it referenced in the new context regardless.
     // FIXME: this is a bit instantiation-specific.
@@ -4235,7 +4235,7 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   }
 
   TemplateArgumentListInfo TransArgs, *TemplateArgs = 0;
-  if (E->hasExplicitTemplateArgumentList()) {
+  if (E->hasExplicitTemplateArgs()) {
     TemplateArgs = &TransArgs;
     TransArgs.setLAngleLoc(E->getLAngleLoc());
     TransArgs.setRAngleLoc(E->getRAngleLoc());
@@ -4513,7 +4513,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
       Qualifier == E->getQualifier() &&
       Member == E->getMemberDecl() &&
       FoundDecl == E->getFoundDecl() &&
-      !E->hasExplicitTemplateArgumentList()) {
+      !E->hasExplicitTemplateArgs()) {
     
     // Mark it referenced in the new context regardless.
     // FIXME: this is a bit instantiation-specific.
@@ -4522,7 +4522,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   }
 
   TemplateArgumentListInfo TransArgs;
-  if (E->hasExplicitTemplateArgumentList()) {
+  if (E->hasExplicitTemplateArgs()) {
     TransArgs.setLAngleLoc(E->getLAngleLoc());
     TransArgs.setRAngleLoc(E->getRAngleLoc());
     for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
@@ -4550,7 +4550,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
                                         E->getMemberNameInfo(),
                                         Member,
                                         FoundDecl,
-                                        (E->hasExplicitTemplateArgumentList()
+                                        (E->hasExplicitTemplateArgs()
                                            ? &TransArgs : 0),
                                         FirstQualifierInScope);
 }

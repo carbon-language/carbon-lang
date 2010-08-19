@@ -1500,10 +1500,12 @@ public:
     return const_cast<OverloadExpr*>(this)->getExplicitTemplateArgs();
   }
 
-  ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
-    if (hasExplicitTemplateArgs())
-      return &getExplicitTemplateArgs();
-    return 0;
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
   }
 
   static bool classof(const Stmt *T) {
@@ -1616,6 +1618,14 @@ public:
   const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
     assert(hasExplicitTemplateArgs());
     return *reinterpret_cast<const ExplicitTemplateArgumentList*>(this + 1);
+  }
+
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
   }
 
   /// \brief Copies the template arguments (if present) into the given
@@ -1742,6 +1752,14 @@ public:
   const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
     assert(hasExplicitTemplateArgs());
     return *reinterpret_cast<const ExplicitTemplateArgumentList*>(this + 1);
+  }
+
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
   }
 
   /// \brief Copies the template arguments (if present) into the given
@@ -2118,57 +2136,59 @@ public:
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
-  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
     assert(HasExplicitTemplateArgs);
-    return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
-  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
     return const_cast<CXXDependentScopeMemberExpr *>(this)
-             ->getExplicitTemplateArgumentList();
+             ->getExplicitTemplateArgs();
+  }
+
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
   }
 
   /// \brief Copies the template arguments (if present) into the given
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    assert(HasExplicitTemplateArgs);
-    getExplicitTemplateArgumentList()->copyInto(List);
+    getExplicitTemplateArgs().copyInto(List);
   }
 
   /// \brief Initializes the template arguments using the given structure.
   void initializeTemplateArgumentsFrom(const TemplateArgumentListInfo &List) {
-    assert(HasExplicitTemplateArgs);
-    getExplicitTemplateArgumentList()->initializeFrom(List);
+    getExplicitTemplateArgs().initializeFrom(List);
   }
 
   /// \brief Retrieve the location of the left angle bracket following the
   /// member name ('<'), if any.
   SourceLocation getLAngleLoc() const {
-    assert(HasExplicitTemplateArgs);
-    return getExplicitTemplateArgumentList()->LAngleLoc;
+    return getExplicitTemplateArgs().LAngleLoc;
   }
 
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    assert(HasExplicitTemplateArgs);
-    return getExplicitTemplateArgumentList()->getTemplateArgs();
+    return getExplicitTemplateArgs().getTemplateArgs();
   }
 
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const {
-    assert(HasExplicitTemplateArgs);
-    return getExplicitTemplateArgumentList()->NumTemplateArgs;
+    return getExplicitTemplateArgs().NumTemplateArgs;
   }
 
   /// \brief Retrieve the location of the right angle bracket following the
   /// template arguments ('>').
   SourceLocation getRAngleLoc() const {
-    assert(HasExplicitTemplateArgs);
-    return getExplicitTemplateArgumentList()->RAngleLoc;
+    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   virtual SourceRange getSourceRange() const {
@@ -2322,6 +2342,14 @@ public:
   const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
     assert(hasExplicitTemplateArgs());
     return *reinterpret_cast<const ExplicitTemplateArgumentList *>(this + 1);
+  }
+
+  /// \brief Retrieves the optional explicit template arguments.
+  /// This points to the same data as getExplicitTemplateArgs(), but
+  /// returns null if there are no explicit template arguments.
+  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+    if (!hasExplicitTemplateArgs()) return 0;
+    return &getExplicitTemplateArgs();
   }
 
   /// \brief Copies the template arguments into the given structure.

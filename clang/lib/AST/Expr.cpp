@@ -151,7 +151,7 @@ void DeclRefExpr::computeDependence() {
     ValueDependent = true;
   }
   //  (TD)  - a template-id that is dependent,
-  else if (hasExplicitTemplateArgumentList() && 
+  else if (hasExplicitTemplateArgs() && 
            TemplateSpecializationType::anyDependentTemplateArguments(
                                                        getTemplateArgs(), 
                                                        getNumTemplateArgs())) {
@@ -204,7 +204,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
   }
       
   if (TemplateArgs)
-    getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
+    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
 
   computeDependence();
 }
@@ -226,7 +226,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
   }
 
   if (TemplateArgs)
-    getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
+    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
 
   computeDependence();
 }
@@ -279,7 +279,7 @@ SourceRange DeclRefExpr::getSourceRange() const {
   SourceRange R = getNameInfo().getSourceRange();
   if (hasQualifier())
     R.setBegin(getQualifierRange().getBegin());
-  if (hasExplicitTemplateArgumentList())
+  if (hasExplicitTemplateArgs())
     R.setEnd(getRAngleLoc());
   return R;
 }
@@ -686,7 +686,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
 
   if (targs) {
     E->HasExplicitTemplateArgumentList = true;
-    E->getExplicitTemplateArgumentList()->initializeFrom(*targs);
+    E->getExplicitTemplateArgs().initializeFrom(*targs);
   }
 
   return E;

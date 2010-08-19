@@ -398,7 +398,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   }
 
   if (NumTemplateArgs)
-    ReadExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList(),
+    ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
                                      NumTemplateArgs);
 
   E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
@@ -1145,7 +1145,7 @@ ASTStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
          "Read wrong record during creation ?");
   if (E->hasExplicitTemplateArgs())
-    ReadExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList(),
+    ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
                                      NumTemplateArgs);
 
   E->setBase(Reader.ReadSubExpr());

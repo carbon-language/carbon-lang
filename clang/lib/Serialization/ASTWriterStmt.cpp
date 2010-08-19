@@ -369,7 +369,7 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
 
   Record.push_back(E->hasQualifier());
   unsigned NumTemplateArgs = E->getNumTemplateArgs();
-  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgumentList() &&
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
          "Template args list with no args ?");
   Record.push_back(NumTemplateArgs);
 
@@ -379,7 +379,7 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   }
 
   if (NumTemplateArgs)
-    AddExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList());
+    AddExplicitTemplateArgumentList(E->getExplicitTemplateArgs());
 
   Writer.AddDeclRef(E->getDecl(), Record);
   // FIXME: write DeclarationNameLoc.
@@ -535,7 +535,7 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   }
 
   unsigned NumTemplateArgs = E->getNumTemplateArgs();
-  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgumentList() &&
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
          "Template args list with no args ?");
   Record.push_back(NumTemplateArgs);
   if (NumTemplateArgs) {
@@ -1159,8 +1159,7 @@ ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   // Don't emit anything here, NumTemplateArgs must be emitted first.
 
   if (E->hasExplicitTemplateArgs()) {
-    const ExplicitTemplateArgumentList &Args
-      = *E->getExplicitTemplateArgumentList();
+    const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
     assert(Args.NumTemplateArgs &&
            "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
