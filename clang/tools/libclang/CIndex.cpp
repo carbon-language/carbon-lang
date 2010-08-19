@@ -1221,7 +1221,7 @@ struct ParseTranslationUnitInfo {
   unsigned options;
   CXTranslationUnit result;
 };
-void clang_parseTranslationUnit_Impl(void *UserData) {
+static void clang_parseTranslationUnit_Impl(void *UserData) {
   ParseTranslationUnitInfo *PTUI =
     static_cast<ParseTranslationUnitInfo*>(UserData);
   CXIndex CIdx = PTUI->CIdx;
@@ -1491,7 +1491,7 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   llvm::CrashRecoveryContext CRC;
 
   if (!CRC.RunSafely(clang_parseTranslationUnit_Impl, &PTUI)) {
-    // FIXME: Find a way to report the crash.
+    fprintf(stderr, "libclang: crash detected during parsing");
     return 0;
   }
 
@@ -1532,7 +1532,7 @@ struct ReparseTranslationUnitInfo {
   unsigned options;
   int result;
 };
-void clang_reparseTranslationUnit_Impl(void *UserData) {
+static void clang_reparseTranslationUnit_Impl(void *UserData) {
   ReparseTranslationUnitInfo *RTUI =
     static_cast<ReparseTranslationUnitInfo*>(UserData);
   CXTranslationUnit TU = RTUI->TU;
@@ -1567,7 +1567,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
   llvm::CrashRecoveryContext CRC;
 
   if (!CRC.RunSafely(clang_reparseTranslationUnit_Impl, &RTUI)) {
-    // FIXME: Find a way to report the crash.
+    fprintf(stderr, "libclang: crash detected during reparsing\n");
     static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
     return 1;
   }

@@ -22,6 +22,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -568,13 +569,27 @@ namespace {
 }
 
 extern "C" {
-CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
-                                            const char *complete_filename,
-                                            unsigned complete_line,
-                                            unsigned complete_column,
-                                            struct CXUnsavedFile *unsaved_files,
-                                            unsigned num_unsaved_files,
-                                            unsigned options) {
+struct CodeCompleteAtInfo {
+  CXTranslationUnit TU;
+  const char *complete_filename;
+  unsigned complete_line;
+  unsigned complete_column;
+  struct CXUnsavedFile *unsaved_files;
+  unsigned num_unsaved_files;
+  unsigned options;
+  CXCodeCompleteResults *result;
+};
+void clang_codeCompleteAt_Impl(void *UserData) {
+  CodeCompleteAtInfo *CCAI = static_cast<CodeCompleteAtInfo*>(UserData);
+  CXTranslationUnit TU = CCAI->TU;
+  const char *complete_filename = CCAI->complete_filename;
+  unsigned complete_line = CCAI->complete_line;
+  unsigned complete_column = CCAI->complete_column;
+  struct CXUnsavedFile *unsaved_files = CCAI->unsaved_files;
+  unsigned num_unsaved_files = CCAI->num_unsaved_files;
+  unsigned options = CCAI->options;
+  CCAI->result = 0;
+
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #ifdef UDP_CODE_COMPLETION_LOGGER_PORT
   const llvm::TimeRecord &StartTime =  llvm::TimeRecord::getCurrentTime();
@@ -585,7 +600,7 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
   
   ASTUnit *AST = static_cast<ASTUnit *>(TU);
   if (!AST)
-    return 0;
+    return;
 
   // Perform the remapping of source files.
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
@@ -697,7 +712,27 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
   }
 #endif
 #endif
-  return Results;
+  CCAI->result = Results;
+}
+CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
+                                            const char *complete_filename,
+                                            unsigned complete_line,
+                                            unsigned complete_column,
+                                            struct CXUnsavedFile *unsaved_files,
+                                            unsigned num_unsaved_files,
+                                            unsigned options) {
+  CodeCompleteAtInfo CCAI = { TU, complete_filename, complete_line,
+                              complete_column, unsaved_files, num_unsaved_files,
+                              options, 0 };
+  llvm::CrashRecoveryContext CRC;
+
+  if (!CRC.RunSafely(clang_codeCompleteAt_Impl, &CCAI)) {
+    fprintf(stderr, "libclang: crash detected in code completion\n");
+    static_cast<ASTUnit *>(TU)->setUnsafeToFree(true);
+    return 0;
+  }
+
+  return CCAI.result;
 }
 
 unsigned clang_defaultCodeCompleteOptions(void) {
