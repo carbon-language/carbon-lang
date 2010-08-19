@@ -61,11 +61,6 @@ public:
   Store Remove(Store St, Loc loc);
   Store getInitialStore(const LocationContext *InitLoc);
 
-  // FIXME: Investigate what is using this. This method should be removed.
-  virtual Loc getLoc(const VarDecl* VD, const LocationContext *LC) {
-    return ValMgr.makeLoc(MRMgr.getVarRegion(VD, LC));
-  }
-
   Store BindCompoundLiteral(Store store, const CompoundLiteralExpr*,
                             const LocationContext*, SVal val) {
     return store;
