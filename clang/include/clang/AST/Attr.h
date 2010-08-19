@@ -78,7 +78,7 @@ public:
     return ::operator new(Bytes, C, Alignment);
   }
   void operator delete(void *Ptr, ASTContext &C,
-                       size_t Alignment = 16) throw() {
+                       size_t Alignment) throw() {
     return ::operator delete(Ptr, C, Alignment);
   }
 
