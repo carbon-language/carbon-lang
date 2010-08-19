@@ -71,9 +71,9 @@ namespace {
       }
     }
 
-    StringRef getLowerName() const { return lowerName; };
-    StringRef getUpperName() const { return upperName; };
-    StringRef getAttrName() const { return attrName; };
+    StringRef getLowerName() const { return lowerName; }
+    StringRef getUpperName() const { return upperName; }
+    StringRef getAttrName() const { return attrName; }
 
     // These functions print the argument contents formatted in different ways.
     virtual void writeAccessors(raw_ostream &OS) const = 0;
