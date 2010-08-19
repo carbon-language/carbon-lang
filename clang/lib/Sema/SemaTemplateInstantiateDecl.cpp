@@ -2559,7 +2559,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
   DeclContext *ParentDC = D->getDeclContext();
   if (isa<ParmVarDecl>(D) || isa<NonTypeTemplateParmDecl>(D) ||
       isa<TemplateTypeParmDecl>(D) || isa<TemplateTemplateParmDecl>(D) ||
-      ParentDC->isFunctionOrMethod()) {
+      (ParentDC->isFunctionOrMethod() && ParentDC->isDependentContext())) {
     // D is a local of some kind. Look into the map of local
     // declarations to their instantiations.
     return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));

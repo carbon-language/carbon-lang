@@ -203,3 +203,43 @@ namespace PR6964 {
   struct as_nview<Sequence, I0>  // expected-note{{while checking a default template argument used here}}
   { };
 }
+
+// rdar://problem/8302138
+namespace test8 {
+  template <int* ip> struct A {
+    int* p;
+    A() : p(ip) {}
+  };
+
+  void test0() {
+    extern int i00;
+    A<&i00> a00;
+  }
+
+  extern int i01;
+  void test1() {
+    A<&i01> a01;
+  }
+
+
+  struct C {
+    int x;
+    char y;
+    double z;
+  };
+  
+  template <C* cp> struct B {
+    C* p;
+    B() : p(cp) {}
+  };
+
+  void test2() {
+    extern C c02;
+    B<&c02> b02;
+  }
+
+  extern C c03;
+  void test3() {
+    B<&c03> b03;
+  }
+}
