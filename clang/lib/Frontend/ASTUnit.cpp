@@ -55,7 +55,8 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     PreambleRebuildCounter(0), SavedMainFileBuffer(0),
     ShouldCacheCodeCompletionResults(false),
     NumTopLevelDeclsAtLastCompletionCache(0),
-    CacheCodeCompletionCoolDown(0) { 
+    CacheCodeCompletionCoolDown(0),
+    UnsafeToFree(false) { 
 }
 
 ASTUnit::~ASTUnit() {
