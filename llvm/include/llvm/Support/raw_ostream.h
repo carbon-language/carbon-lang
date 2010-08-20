@@ -370,10 +370,11 @@ public:
   ~raw_fd_ostream();
 
   /// close - Manually flush the stream and close the file.
+  /// Note that this does not call fsync.
   void close();
 
   /// seek - Flushes the stream and repositions the underlying file descriptor
-  ///  positition to the offset specified from the beginning of the file.
+  /// positition to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
 
   virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
@@ -482,6 +483,25 @@ class raw_null_ostream : public raw_ostream {
 public:
   explicit raw_null_ostream() {}
   ~raw_null_ostream();
+};
+
+/// tool_output_file - This class behaves like a raw_fd_ostream but adds a
+/// few extra features commonly needed for compiler-like tool output files:
+///   - The file is automatically deleted if the process is killed.
+///   - The file is automatically deleted when the tool_output_file
+///     object is destroyed unless the client calls keep().
+class tool_output_file : public raw_fd_ostream {
+  std::string Filename;
+  bool Keep;
+public:
+  tool_output_file(const char *filename, std::string &ErrorInfo,
+                   unsigned Flags = 0);
+
+  ~tool_output_file();
+
+  /// keep - Indicate that the tool's job wrt this output file has been
+  /// successful and the file should not be deleted.
+  void keep() { Keep = true; }
 };
 
 } // end llvm namespace

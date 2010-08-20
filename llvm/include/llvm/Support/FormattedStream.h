@@ -19,10 +19,14 @@
 
 namespace llvm 
 {
+  class formatted_tool_output_file;
+
   /// formatted_raw_ostream - Formatted raw_fd_ostream to handle
   /// asm-specific constructs.
   ///
   class formatted_raw_ostream : public raw_ostream {
+    friend class formatted_tool_output_file;
+
   public:
     /// DELETE_STREAM - Tell the destructor to delete the held stream.
     ///
@@ -134,6 +138,25 @@ namespace llvm
       else
         TheStream->SetUnbuffered();
     }
+  };
+
+  /// formatted_tool_output_file - This is a subclass of formatted_raw_ostream
+  /// for use when the underlying stream is a tool_output_file. It exposes
+  /// the keep() member function.
+  class formatted_tool_output_file : public formatted_raw_ostream {
+  public:
+    formatted_tool_output_file(tool_output_file &Stream, bool Delete = false) 
+      : formatted_raw_ostream(Stream, Delete) {}
+
+    formatted_tool_output_file() {}
+
+    ~formatted_tool_output_file();
+
+    void setStream(tool_output_file &Stream, bool Delete = false) {
+      return formatted_raw_ostream::setStream(Stream, Delete);
+    }
+
+    void keep() { return static_cast<tool_output_file *>(TheStream)->keep(); }
   };
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for

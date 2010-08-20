@@ -19,6 +19,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/System/Signals.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cctype>
 #include <cerrno>
@@ -668,4 +669,31 @@ void raw_null_ostream::write_impl(const char *Ptr, size_t Size) {
 
 uint64_t raw_null_ostream::current_pos() const {
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+//  tool_output_file
+//===----------------------------------------------------------------------===//
+
+/// SetupRemoveOnSignal - This is a helper for tool_output_file's constructor
+/// to allow the signal handlers to be installed before constructing the
+/// base class raw_fd_ostream.
+static const char *SetupRemoveOnSignal(const char *Filename) {
+  // Arrange for the file to be deleted if the process is killed.
+  if (strcmp(Filename, "-") != 0)
+    sys::RemoveFileOnSignal(sys::Path(Filename));
+  return Filename;
+}
+
+tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo, 
+                                   unsigned Flags)
+  : raw_fd_ostream(SetupRemoveOnSignal(filename), ErrorInfo, Flags),
+    Filename(filename),
+    Keep(!ErrorInfo.empty() /* If open fails, no cleanup is needed. */) {
+}
+
+tool_output_file::~tool_output_file() {
+  // Delete the file if the client hasn't told us not to.
+  if (!Keep && Filename != "-")
+    sys::Path(Filename).eraseFromDisk();
 }
