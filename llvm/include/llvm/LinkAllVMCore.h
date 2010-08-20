@@ -33,7 +33,6 @@
 #include "llvm/System/TimeValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/SlowOperationInformer.h"
 #include <cstdlib>
 
 namespace {
