@@ -1976,11 +1976,7 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
                 // We found the function, so we should find the line table
                 // and line table entry as well
                 LineTable *line_table = sc.comp_unit->GetLineTable();
-                if (line_table == NULL)
-                {
-                    if (ParseCompileUnitLineTable(sc))
-                        line_table = sc.comp_unit->GetLineTable();
-                }
+                
                 if (line_table != NULL)
                     line_table->FindLineEntryByAddress (sc.function->GetAddressRange().GetBaseAddress(), sc.line_entry);
 
