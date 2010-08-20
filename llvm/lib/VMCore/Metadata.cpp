@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "SymbolTableListTraitsImpl.h"
+#include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ValueHandle.h"
 using namespace llvm;
 
@@ -242,6 +243,28 @@ MDNode *MDNode::getWhenValsUnresolved(LLVMContext &Context, Value *const *Vals,
 MDNode *MDNode::getIfExists(LLVMContext &Context, Value *const *Vals,
                             unsigned NumVals) {
   return getMDNode(Context, Vals, NumVals, FL_Unknown, false);
+}
+
+MDNode *MDNode::getTemporary(LLVMContext &Context, Value *const *Vals,
+                             unsigned NumVals) {
+  MDNode *N = (MDNode *)malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
+  N = new (N) MDNode(Context, Vals, NumVals, FL_No);
+  N->setValueSubclassData(N->getSubclassDataFromValue() |
+                          NotUniquedBit);
+  LeakDetector::addGarbageObject(N);
+  return N;
+}
+
+void MDNode::deleteTemporary(MDNode *N) {
+  assert(N->use_empty() && "Temporary MDNode has uses!");
+  assert((N->getSubclassDataFromValue() & NotUniquedBit) &&
+         "Temporary MDNode does not have NotUniquedBit set!");
+  assert((N->getSubclassDataFromValue() & DestroyFlag) == 0 &&
+         "Temporary MDNode does has DestroyFlag set!");
+  N->setValueSubclassData(N->getSubclassDataFromValue() |
+                          DestroyFlag);
+  LeakDetector::removeGarbageObject(N);
+  delete N;
 }
 
 /// getOperand - Return specified operand.

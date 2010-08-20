@@ -22,6 +22,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
@@ -260,7 +261,7 @@ unsigned DIArray::getNumElements() const {
 
 /// replaceAllUsesWith - Replace all uses of debug info referenced by
 /// this descriptor.
-void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
+void DIType::replaceAllUsesWith(DIDescriptor &D) {
   if (!DbgNode)
     return;
 
@@ -274,6 +275,7 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
     const MDNode *DN = D;
     const Value *V = cast_or_null<Value>(DN);
     Node->replaceAllUsesWith(const_cast<Value*>(V));
+    MDNode::deleteTemporary(Node);
   }
 }
 
@@ -931,6 +933,18 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
     NMD->addOperand(Node);
   }
   return DICompositeType(Node);
+}
+
+
+/// CreateTemporaryType - Create a temporary forward-declared type.
+DIType DIFactory::CreateTemporaryType(DIDescriptor Context) {
+  // Give the temporary MDNode a tag. It doesn't matter what tag we
+  // use here as long as DIType accepts it.
+  Value *Elts[] = {
+    GetTagConstant(DW_TAG_base_type)
+  };
+  MDNode *Node = MDNode::getTemporary(VMContext, Elts, array_lengthof(Elts));
+  return DIType(Node);
 }
 
 

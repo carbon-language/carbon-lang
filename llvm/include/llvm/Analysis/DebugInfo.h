@@ -272,6 +272,10 @@ namespace llvm {
     StringRef getFilename() const    { return getCompileUnit().getFilename();}
     StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
 
+    /// replaceAllUsesWith - Replace all uses of debug info referenced by
+    /// this descriptor.
+    void replaceAllUsesWith(DIDescriptor &D);
+
     /// print - print type.
     void print(raw_ostream &OS) const;
 
@@ -314,10 +318,6 @@ namespace llvm {
 
     /// dump - print derived type to dbgs() with a newline.
     void dump() const;
-
-    /// replaceAllUsesWith - Replace all uses of debug info referenced by
-    /// this descriptor.
-    void replaceAllUsesWith(DIDescriptor &D);
   };
 
   /// DICompositeType - This descriptor holds a type that can refer to multiple
@@ -653,6 +653,9 @@ namespace llvm {
                                         DIArray Elements,
                                         unsigned RunTimeLang = 0,
                                         MDNode *ContainingType = 0);
+
+    /// CreateTemporaryType - Create a temporary forward-declared type.
+    DIType CreateTemporaryType(DIDescriptor Context);
 
     /// CreateArtificialType - Create a new DIType with "artificial" flag set.
     DIType CreateArtificialType(DIType Ty);

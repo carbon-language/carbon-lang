@@ -128,6 +128,16 @@ public:
                                        
   static MDNode *getIfExists(LLVMContext &Context, Value *const *Vals,
                              unsigned NumVals);
+
+  /// getTemporary - Return a temporary MDNode, for use in constructing
+  /// cyclic MDNode structures. A temporary MDNode is not uniqued,
+  /// may be RAUW'd, and must be manually deleted with deleteTemporary.
+  static MDNode *getTemporary(LLVMContext &Context, Value *const *Vals,
+                              unsigned NumVals);
+
+  /// deleteTemporary - Deallocate a node created by getTemporary. The
+  /// node must not have any users.
+  static void deleteTemporary(MDNode *N);
   
   /// getOperand - Return specified operand.
   Value *getOperand(unsigned i) const;

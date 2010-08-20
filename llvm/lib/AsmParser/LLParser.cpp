@@ -517,11 +517,7 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   if (Result) return false;
 
   // Otherwise, create MDNode forward reference.
-
-  // FIXME: This is not unique enough!
-  std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
-  Value *V = MDString::get(Context, FwdRefName);
-  MDNode *FwdNode = MDNode::get(Context, &V, 1);
+  MDNode *FwdNode = MDNode::getTemporary(Context, 0, 0);
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
   
   if (NumberedMetadata.size() <= MID)
@@ -585,7 +581,9 @@ bool LLParser::ParseStandaloneMetadata() {
   std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MetadataID);
   if (FI != ForwardRefMDNodes.end()) {
-    FI->second.first->replaceAllUsesWith(Init);
+    MDNode *Temp = FI->second.first;
+    Temp->replaceAllUsesWith(Init);
+    MDNode::deleteTemporary(Temp);
     ForwardRefMDNodes.erase(FI);
     
     assert(NumberedMetadata[MetadataID] == Init && "Tracking VH didn't work");
