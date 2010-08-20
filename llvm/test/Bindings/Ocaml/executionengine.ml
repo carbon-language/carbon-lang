@@ -1,5 +1,5 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_target.cmxa llvm_executionengine.cmxa %s -o %t
- * RUN: ./%t %t.bc
+ * RUN: %t %t.bc
  *)
 
 open Llvm

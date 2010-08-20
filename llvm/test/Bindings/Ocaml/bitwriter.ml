@@ -1,5 +1,5 @@
 (* RUN: %ocamlopt -warn-error A unix.cmxa llvm.cmxa llvm_bitwriter.cmxa %s -o %t
- * RUN: ./%t %t.bc
+ * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc | grep caml_int_ty
  *)
 
