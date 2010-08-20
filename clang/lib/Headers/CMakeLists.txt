@@ -8,12 +8,12 @@ set(files
   mm_malloc.h	
   mmintrin.h	
   pmmintrin.h	
+  smmintrin.h
   stdarg.h	
   stdbool.h	
   stddef.h	
   stdint.h	
   tgmath.h
-  smmintrin.h
   tmmintrin.h
   xmmintrin.h)
 
