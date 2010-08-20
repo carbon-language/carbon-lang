@@ -964,8 +964,8 @@ CAMLprim LLVMValueRef llvm_param(LLVMValueRef Fn, value Index) {
   return LLVMGetParam(Fn, Int_val(Index));
 }
 
-/* llvalue -> int -> llvalue */
-CAMLprim value llvm_params(LLVMValueRef Fn, value Index) {
+/* llvalue -> llvalue */
+CAMLprim value llvm_params(LLVMValueRef Fn) {
   value Params = alloc(LLVMCountParams(Fn), 0);
   LLVMGetParams(Fn, (LLVMValueRef *) Op_val(Params));
   return Params;
