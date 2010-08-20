@@ -1,4 +1,4 @@
-/*===---- xmmintrin.h - SSE intrinsics -------------------------------------===
+/*===---- emmintrin.h - SSE2 intrinsics ------------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  *
  *===-----------------------------------------------------------------------===
  */
- 
+
 #ifndef __EMMINTRIN_H
 #define __EMMINTRIN_H
 
