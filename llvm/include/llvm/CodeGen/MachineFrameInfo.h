@@ -235,6 +235,7 @@ public:
     LocalFrameSize = 0;
     LocalFrameBaseOffset = 0;
     LocalFrameMaxAlign = 0;
+    UseLocalStackAllocationBlock = false;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
