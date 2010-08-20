@@ -17,6 +17,46 @@
 
 using namespace clang;
 
+serialization::TypeIdx
+serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
+  unsigned ID = 0;
+  switch (BT->getKind()) {
+  case BuiltinType::Void:       ID = PREDEF_TYPE_VOID_ID;       break;
+  case BuiltinType::Bool:       ID = PREDEF_TYPE_BOOL_ID;       break;
+  case BuiltinType::Char_U:     ID = PREDEF_TYPE_CHAR_U_ID;     break;
+  case BuiltinType::UChar:      ID = PREDEF_TYPE_UCHAR_ID;      break;
+  case BuiltinType::UShort:     ID = PREDEF_TYPE_USHORT_ID;     break;
+  case BuiltinType::UInt:       ID = PREDEF_TYPE_UINT_ID;       break;
+  case BuiltinType::ULong:      ID = PREDEF_TYPE_ULONG_ID;      break;
+  case BuiltinType::ULongLong:  ID = PREDEF_TYPE_ULONGLONG_ID;  break;
+  case BuiltinType::UInt128:    ID = PREDEF_TYPE_UINT128_ID;    break;
+  case BuiltinType::Char_S:     ID = PREDEF_TYPE_CHAR_S_ID;     break;
+  case BuiltinType::SChar:      ID = PREDEF_TYPE_SCHAR_ID;      break;
+  case BuiltinType::WChar:      ID = PREDEF_TYPE_WCHAR_ID;      break;
+  case BuiltinType::Short:      ID = PREDEF_TYPE_SHORT_ID;      break;
+  case BuiltinType::Int:        ID = PREDEF_TYPE_INT_ID;        break;
+  case BuiltinType::Long:       ID = PREDEF_TYPE_LONG_ID;       break;
+  case BuiltinType::LongLong:   ID = PREDEF_TYPE_LONGLONG_ID;   break;
+  case BuiltinType::Int128:     ID = PREDEF_TYPE_INT128_ID;     break;
+  case BuiltinType::Float:      ID = PREDEF_TYPE_FLOAT_ID;      break;
+  case BuiltinType::Double:     ID = PREDEF_TYPE_DOUBLE_ID;     break;
+  case BuiltinType::LongDouble: ID = PREDEF_TYPE_LONGDOUBLE_ID; break;
+  case BuiltinType::NullPtr:    ID = PREDEF_TYPE_NULLPTR_ID;    break;
+  case BuiltinType::Char16:     ID = PREDEF_TYPE_CHAR16_ID;     break;
+  case BuiltinType::Char32:     ID = PREDEF_TYPE_CHAR32_ID;     break;
+  case BuiltinType::Overload:   ID = PREDEF_TYPE_OVERLOAD_ID;   break;
+  case BuiltinType::Dependent:  ID = PREDEF_TYPE_DEPENDENT_ID;  break;
+  case BuiltinType::ObjCId:     ID = PREDEF_TYPE_OBJC_ID;       break;
+  case BuiltinType::ObjCClass:  ID = PREDEF_TYPE_OBJC_CLASS;    break;
+  case BuiltinType::ObjCSel:    ID = PREDEF_TYPE_OBJC_SEL;      break;
+  case BuiltinType::UndeducedAuto:
+    assert(0 && "Should not see undeduced auto here");
+    break;
+  }
+
+  return TypeIdx(ID);
+}
+
 unsigned serialization::ComputeHash(Selector Sel) {
   unsigned N = Sel.getNumArgs();
   if (N == 0)

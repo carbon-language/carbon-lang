@@ -367,6 +367,9 @@ public:
   /// \brief Force a type to be emitted and get its ID.
   serialization::TypeID GetOrCreateTypeID(QualType T);
 
+  /// \brief Determine the type ID of an already-emitted type.
+  serialization::TypeID getTypeID(QualType T);
+
   /// \brief Force a type to be emitted and get its index.
   serialization::TypeIdx GetOrCreateTypeIdx(QualType T);
 
