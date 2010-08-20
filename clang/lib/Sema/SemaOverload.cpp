@@ -4269,9 +4269,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   if (Ty->isArrayType())
     Ty = SemaRef.Context.getArrayDecayedType(Ty);
 
-  if (const PointerType *PointerTy = Ty->getAs<PointerType>()) {
-    QualType PointeeTy = PointerTy->getPointeeType();
-
+  if (Ty->getAs<PointerType>()) {
     // Insert our type, and its more-qualified variants, into the set
     // of types.
     if (!AddPointerWithMoreQualifiedTypeVariants(Ty, VisibleQuals))
