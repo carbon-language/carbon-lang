@@ -155,8 +155,8 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
 
   // create output file
   std::string ErrInfo;
-  raw_fd_ostream Out(path, ErrInfo,
-                     raw_fd_ostream::F_Binary);
+  tool_output_file Out(path, ErrInfo,
+                       raw_fd_ostream::F_Binary);
   if (!ErrInfo.empty()) {
     errMsg = "could not open bitcode file for writing: ";
     errMsg += path;
@@ -174,6 +174,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
     return true;
   }
   
+  Out.keep();
   return false;
 }
 
@@ -189,11 +190,17 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     // generate assembly code
     bool genResult = false;
     {
-      raw_fd_ostream asmFD(uniqueAsmPath.c_str(), errMsg);
-      formatted_raw_ostream asmFile(asmFD);
+      tool_output_file asmFD(uniqueAsmPath.c_str(), errMsg);
+      formatted_tool_output_file asmFile(asmFD);
       if (!errMsg.empty())
         return NULL;
       genResult = this->generateAssemblyCode(asmFile, errMsg);
+      asmFile.close();
+      if (asmFile.has_error()) {
+        asmFile.clear_error();
+        return NULL;
+      }
+      asmFile.keep();
     }
     if ( genResult ) {
         uniqueAsmPath.eraseFromDisk();

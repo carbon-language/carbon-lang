@@ -325,7 +325,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   sys::RemoveFileOnSignal(uniqueFilename);
 
   std::string ErrorInfo;
-  raw_fd_ostream BlocksToNotExtractFile(uniqueFilename.c_str(), ErrorInfo);
+  tool_output_file BlocksToNotExtractFile(uniqueFilename.c_str(), ErrorInfo);
   if (!ErrorInfo.empty()) {
     outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error writing list of blocks to not extract: " << ErrorInfo
@@ -343,6 +343,14 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
                            << BB->getName() << "\n";
   }
   BlocksToNotExtractFile.close();
+  if (BlocksToNotExtractFile.has_error()) {
+    errs() << "Error writing list of blocks to not extract: " << ErrorInfo
+           << "\n";
+    EmitProgressBitcode(M, "basicblockextractfail", true);
+    BlocksToNotExtractFile.clear_error();
+    return 0;
+  }
+  BlocksToNotExtractFile.keep();
 
   std::string uniqueFN = "--extract-blocks-file=" + uniqueFilename.str();
   const char *ExtraArg = uniqueFN.c_str();

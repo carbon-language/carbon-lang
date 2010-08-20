@@ -54,12 +54,18 @@ namespace {
 bool BugDriver::writeProgramToFile(const std::string &Filename,
                                    const Module *M) const {
   std::string ErrInfo;
-  raw_fd_ostream Out(Filename.c_str(), ErrInfo,
-                     raw_fd_ostream::F_Binary);
-  if (!ErrInfo.empty()) return true;
-  
-  WriteBitcodeToFile(M, Out);
-  return false;
+  tool_output_file Out(Filename.c_str(), ErrInfo,
+                       raw_fd_ostream::F_Binary);
+  if (ErrInfo.empty()) {
+    WriteBitcodeToFile(M, Out);
+    Out.close();
+    if (!Out.has_error()) {
+      Out.keep();
+      return false;
+    }
+  }
+  Out.clear_error();
+  return true;
 }
 
 
@@ -125,8 +131,8 @@ bool BugDriver::runPasses(Module *Program,
   }
   
   std::string ErrInfo;
-  raw_fd_ostream InFile(inputFilename.c_str(), ErrInfo,
-                        raw_fd_ostream::F_Binary);
+  tool_output_file InFile(inputFilename.c_str(), ErrInfo,
+                          raw_fd_ostream::F_Binary);
   
   
   if (!ErrInfo.empty()) {
@@ -135,6 +141,12 @@ bool BugDriver::runPasses(Module *Program,
   }
   WriteBitcodeToFile(Program, InFile);
   InFile.close();
+  if (InFile.has_error()) {
+    errs() << "Error writing bitcode file: " << inputFilename.str() << "\n";
+    InFile.clear_error();
+    return 1;
+  }
+  InFile.keep();
 
   // setup the child process' arguments
   SmallVector<const char*, 8> Args;

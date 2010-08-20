@@ -236,13 +236,16 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
 
   // Create the output file.
   std::string ErrorInfo;
-  raw_fd_ostream Out(FileName.c_str(), ErrorInfo,
-                     raw_fd_ostream::F_Binary);
-  if (!ErrorInfo.empty())
+  tool_output_file Out(FileName.c_str(), ErrorInfo,
+                       raw_fd_ostream::F_Binary);
+  if (!ErrorInfo.empty()) {
     PrintAndExit(ErrorInfo, M);
+    return;
+  }
 
   // Write it out
   WriteBitcodeToFile(M, Out);
+  Out.keep();
 }
 
 /// GenerateAssembly - generates a native assembly language source file from the
@@ -425,7 +428,7 @@ static void EmitShellScript(char **argv, Module *M) {
 
   // Output the script to start the program...
   std::string ErrorInfo;
-  raw_fd_ostream Out2(OutputFilename.c_str(), ErrorInfo);
+  tool_output_file Out2(OutputFilename.c_str(), ErrorInfo);
   if (!ErrorInfo.empty())
     PrintAndExit(ErrorInfo, M);
 
@@ -466,6 +469,7 @@ static void EmitShellScript(char **argv, Module *M) {
       Out2 << "    -load=" << FullLibraryPath.str() << " \\\n";
   }
   Out2 << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
+  Out2.keep();
 }
 
 // BuildLinkItems -- This function generates a LinkItemList for the LinkItems
