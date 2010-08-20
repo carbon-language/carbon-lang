@@ -868,8 +868,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   // A RD->getName() is not unique. However, the debug info descriptors 
   // are uniqued so use type name to ensure uniquness.
-  llvm::DIType FwdDecl =
-    DebugFactory.CreateTemporaryType(FDContext);
+  llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType();
 
   llvm::MDNode *MN = FwdDecl;
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
@@ -986,7 +985,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
-  llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType(Unit);
+  llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType();
 
   // If this is just a forward declaration, return it.
   if (ID->isForwardDecl())
