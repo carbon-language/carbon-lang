@@ -372,7 +372,8 @@ public:
 
   /// has_error - Return the value of the flag in this raw_fd_ostream indicating
   /// whether an output error has been encountered.
-  /// This doesn't implicitly flush any pending output.
+  /// This doesn't implicitly flush any pending output.  Also, it doesn't
+  /// guarantee to detect all errors unless the the stream has been closed.
   bool has_error() const {
     return Error;
   }
