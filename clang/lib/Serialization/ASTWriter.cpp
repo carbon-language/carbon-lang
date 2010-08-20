@@ -2032,7 +2032,10 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
     return 0;
 
   // Force the DeclContext to build a its name-lookup table.
-  DC->lookup(DeclarationName());
+  if (DC->hasExternalVisibleStorage())
+    DC->MaterializeVisibleDeclsFromExternalStorage();
+  else
+    DC->lookup(DeclarationName());
 
   // Serialize the contents of the mapping used for lookup. Note that,
   // although we have two very different code paths, the serialized

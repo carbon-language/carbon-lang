@@ -763,6 +763,8 @@ public:
   FindExternalVisibleDeclsByName(const DeclContext *DC,
                                  DeclarationName Name);
 
+  virtual void MaterializeVisibleDecls(const DeclContext *DC);
+
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.
   ///

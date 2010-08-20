@@ -790,6 +790,44 @@ public:
     return Key;
   }
 
+  external_key_type GetExternalKey(const internal_key_type& Key) const {
+    ASTContext *Context = Reader.getContext();
+    switch (Key.Kind) {
+    case DeclarationName::Identifier:
+      return DeclarationName((IdentifierInfo*)Key.Data);
+
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+      return DeclarationName(Selector(Key.Data));
+
+    case DeclarationName::CXXConstructorName:
+      return Context->DeclarationNames.getCXXConstructorName(
+                           Context->getCanonicalType(Reader.GetType(Key.Data)));
+
+    case DeclarationName::CXXDestructorName:
+      return Context->DeclarationNames.getCXXDestructorName(
+                           Context->getCanonicalType(Reader.GetType(Key.Data)));
+
+    case DeclarationName::CXXConversionFunctionName:
+      return Context->DeclarationNames.getCXXConversionFunctionName(
+                           Context->getCanonicalType(Reader.GetType(Key.Data)));
+
+    case DeclarationName::CXXOperatorName:
+      return Context->DeclarationNames.getCXXOperatorName(
+                                         (OverloadedOperatorKind)Key.Data);
+
+    case DeclarationName::CXXLiteralOperatorName:
+      return Context->DeclarationNames.getCXXLiteralOperatorName(
+                                                     (IdentifierInfo*)Key.Data);
+
+    case DeclarationName::CXXUsingDirective:
+      return DeclarationName::getUsingDirectiveName();
+    }
+
+    llvm_unreachable("Invalid Name Kind ?");
+  }
+
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d) {
     using namespace clang::io;
@@ -3195,6 +3233,35 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
 
   SetExternalVisibleDeclsForName(DC, Name, Decls);
   return const_cast<DeclContext*>(DC)->lookup(Name);
+}
+
+void ASTReader::MaterializeVisibleDecls(const DeclContext *DC) {
+  assert(DC->hasExternalVisibleStorage() &&
+         "DeclContext has no visible decls in storage");
+
+  llvm::SmallVector<NamedDecl *, 64> Decls;
+  // There might be visible decls in multiple parts of the chain, for the TU
+  // and namespaces.
+  DeclContextInfos &Infos = DeclContextOffsets[DC];
+  for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
+       I != E; ++I) {
+    if (!I->NameLookupTableData)
+      continue;
+
+    ASTDeclContextNameLookupTable *LookupTable =
+        (ASTDeclContextNameLookupTable*)I->NameLookupTableData;
+    for (ASTDeclContextNameLookupTable::item_iterator
+           ItemI = LookupTable->item_begin(),
+           ItemEnd = LookupTable->item_end() ; ItemI != ItemEnd; ++ItemI) {
+      ASTDeclContextNameLookupTable::item_iterator::value_type Val
+          = *ItemI;
+      ASTDeclContextNameLookupTrait::data_type Data = Val.second;
+      Decls.clear();
+      for (; Data.first != Data.second; ++Data.first)
+        Decls.push_back(cast<NamedDecl>(GetDecl(*Data.first)));
+      MaterializeVisibleDeclsForName(DC, Val.first, Decls);
+    }
+  }
 }
 
 void ASTReader::PassInterestingDeclsToConsumer() {
