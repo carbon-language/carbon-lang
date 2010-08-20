@@ -245,6 +245,7 @@ private:
   void mangleCXXCtorType(CXXCtorType T);
   void mangleCXXDtorType(CXXDtorType T);
 
+  void mangleTemplateArgs(const ExplicitTemplateArgumentList &TemplateArgs);
   void mangleTemplateArgs(TemplateName Template,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);  
@@ -1676,6 +1677,8 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
                      ME->getQualifier(), ME->getMemberName(),
                      Arity);
+    if (ME->hasExplicitTemplateArgs())
+      mangleTemplateArgs(ME->getExplicitTemplateArgs());
     break;
   }
 
@@ -1685,6 +1688,8 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
                      ME->getQualifier(), ME->getMember(),
                      Arity);
+    if (ME->hasExplicitTemplateArgs())
+      mangleTemplateArgs(ME->getExplicitTemplateArgs());
     break;
   }
 
@@ -1694,6 +1699,8 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     // expression.
     const UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(E);
     mangleUnresolvedName(ULE->getQualifier(), ULE->getName(), Arity);
+    if (ULE->hasExplicitTemplateArgs())
+      mangleTemplateArgs(ULE->getExplicitTemplateArgs());
     break;
   }
 
@@ -1888,10 +1895,13 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     }
     assert(QTy && "Qualifier was not type!");
 
-    // ::= sr <type> <unqualified-name>                   # dependent name
+    // ::= sr <type> <unqualified-name>                  # dependent name
+    // ::= sr <type> <unqualified-name> <template-args>  # dependent template-id
     Out << "sr";
     mangleType(QualType(QTy, 0));
     mangleUnqualifiedName(0, DRE->getDeclName(), Arity);
+    if (DRE->hasExplicitTemplateArgs())
+      mangleTemplateArgs(DRE->getExplicitTemplateArgs());
 
     break;
   }
@@ -2018,6 +2028,15 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
     Out << "D2";
     break;
   }
+}
+
+void CXXNameMangler::mangleTemplateArgs(
+                          const ExplicitTemplateArgumentList &TemplateArgs) {
+  // <template-args> ::= I <template-arg>+ E
+  Out << 'I';
+  for (unsigned I = 0, E = TemplateArgs.NumTemplateArgs; I != E; ++I)
+    mangleTemplateArg(0, TemplateArgs.getTemplateArgs()[I].getArgument());
+  Out << 'E';
 }
 
 void CXXNameMangler::mangleTemplateArgs(TemplateName Template,
