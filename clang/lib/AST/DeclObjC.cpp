@@ -442,7 +442,8 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                   SourceLocation CLoc, bool FD, bool isInternal)
   : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
     TypeForDecl(0), SuperClass(0),
-    CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal),
+    CategoryList(0), IvarList(0), 
+    ForwardDecl(FD), InternalInterface(isInternal),
     ClassLoc(CLoc) {
 }
 
@@ -455,6 +456,49 @@ void ObjCInterfaceDecl::setImplementation(ObjCImplementationDecl *ImplD) {
   getASTContext().setObjCImplementation(this, ImplD);
 }
 
+/// all_declared_ivar_begin - return first ivar declared in this class,
+/// its extensions and its implementation. Lazily build the list on first
+/// access.
+ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
+  if (IvarList)
+    return IvarList;
+  
+  ObjCIvarDecl *curIvar = 0;
+  if (!ivar_empty()) {
+    ObjCInterfaceDecl::ivar_iterator I = ivar_begin(), E = ivar_end();
+    IvarList = (*I); ++I;
+    for (curIvar = IvarList; I != E; curIvar = *I, ++I)
+      curIvar->setNextIvar(*I);
+  }
+  
+  for (const ObjCCategoryDecl *CDecl = getFirstClassExtension(); CDecl;
+       CDecl = CDecl->getNextClassExtension()) {
+    if (!CDecl->ivar_empty()) {
+      ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
+                                          E = CDecl->ivar_end();
+      if (!IvarList) {
+        IvarList = (*I); ++I;
+        curIvar = IvarList;
+      }
+      for ( ;I != E; curIvar = *I, ++I)
+        curIvar->setNextIvar(*I);
+    }
+  }
+  
+  if (ObjCImplementationDecl *ImplDecl = getImplementation()) {
+    if (!ImplDecl->ivar_empty()) {
+      ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
+                                            E = ImplDecl->ivar_end();
+      if (!IvarList) {
+        IvarList = (*I); ++I;
+        curIvar = IvarList;
+      }
+      for ( ;I != E; curIvar = *I, ++I)
+        curIvar->setNextIvar(*I);
+    }
+  }
+  return IvarList;
+}
 
 /// FindCategoryDeclaration - Finds category declaration in the list of
 /// categories for this class and returns it. Name of the category is passed
@@ -556,6 +600,16 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
     assert((isa<ObjCInterfaceDecl>(DC) || isa<ObjCImplementationDecl>(DC) ||
             isa<ObjCCategoryDecl>(DC)) &&
            "Invalid ivar decl context!");
+    // Once a new ivar is created in any of class/class-extension/implementation
+    // decl contexts, the previously built IvarList must be rebuilt.
+    ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(DC);
+    if (!ID) {
+      if (ObjCImplementationDecl *IM = dyn_cast<ObjCImplementationDecl>(DC))
+        ID = IM->getClassInterface();
+      else
+        ID = (cast<ObjCCategoryDecl>(DC))->getClassInterface();
+    }
+    ID->setIvarList(0);
   }
 
   return new (C) ObjCIvarDecl(DC, L, Id, T, TInfo, ac, BW, synthesized);

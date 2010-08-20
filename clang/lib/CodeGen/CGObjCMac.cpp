@@ -3871,13 +3871,11 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
     return llvm::Constant::getNullValue(PtrTy);
 
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
+  llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
   const ObjCInterfaceDecl *OI = OMD->getClassInterface();
-  CGM.getContext().CollectObjCIvars(OI, RecFields);
+  CGM.getContext().DeepCollectObjCIvars(OI, true, Ivars);
 
-  // Add this implementations synthesized ivars.
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  CGM.getContext().CollectNonClassIvars(OI, Ivars);
+  llvm::SmallVector<FieldDecl*, 32> RecFields;
   for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
     RecFields.push_back(cast<FieldDecl>(Ivars[k]));
 

@@ -1009,13 +1009,12 @@ public:
   /// of class definition.
   const CXXMethodDecl *getKeyFunction(const CXXRecordDecl *RD);
 
-  void CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                        llvm::SmallVectorImpl<FieldDecl*> &Fields);
-
   void ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
-  void CollectNonClassIvars(const ObjCInterfaceDecl *OI,
-                               llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
+  
+  void DeepCollectObjCIvars(const ObjCInterfaceDecl *OI, bool leafClass,
+                            llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
+  
   unsigned CountNonClassIvars(const ObjCInterfaceDecl *OI);
   void CollectInheritedProtocols(const Decl *CDecl,
                           llvm::SmallPtrSet<ObjCProtocolDecl*, 8> &Protocols);

@@ -1395,6 +1395,7 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         DefaultSynthesizeProperties(S, IC, IDecl);
       ImplMethodsVsClassMethods(S, IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
+  
       if (LangOpts.ObjCNonFragileABI2)
         while (IDecl->getSuperClass()) {
           DiagnoseDuplicateIvars(IDecl, IDecl->getSuperClass());
@@ -1651,11 +1652,11 @@ void Sema::ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
   }
 
   // Collect the instance variables
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
-  Context.CollectObjCIvars(Class, RecFields);
+  llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
+  Context.DeepCollectObjCIvars(Class, true, Ivars);
   // For each ivar, create a fresh ObjCAtDefsFieldDecl.
-  for (unsigned i = 0; i < RecFields.size(); i++) {
-    FieldDecl* ID = RecFields[i];
+  for (unsigned i = 0; i < Ivars.size(); i++) {
+    FieldDecl* ID = cast<FieldDecl>(Ivars[i]);
     RecordDecl *Record = dyn_cast<RecordDecl>(TagD.getAs<Decl>());
     Decl *FD = ObjCAtDefsFieldDecl::Create(Context, Record, ID->getLocation(),
                                            ID->getIdentifier(), ID->getType(),
@@ -1770,38 +1771,13 @@ Sema::DeclPtrTy Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
 
 /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
 /// initialization.
-void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
+void Sema::CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I) {
-    ObjCIvarDecl *Iv = (*I);
+  for (ObjCIvarDecl *Iv = OI->all_declared_ivar_begin(); Iv; 
+       Iv= Iv->getNextIvar()) {
     QualType QT = Context.getBaseElementType(Iv->getType());
     if (QT->isRecordType())
-      Ivars.push_back(*I);
-  }
-  
-  // Find ivars to construct/destruct in class extension.
-  for (const ObjCCategoryDecl *CDecl = OI->getFirstClassExtension(); CDecl;
-      CDecl = CDecl->getNextClassExtension()) {
-    for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
-         E = CDecl->ivar_end(); I != E; ++I) {
-      ObjCIvarDecl *Iv = (*I);
-      QualType QT = Context.getBaseElementType(Iv->getType());
-      if (QT->isRecordType())
-        Ivars.push_back(*I);
-    }
-  }
-  
-  // Also add any ivar defined in this class's implementation.  This
-  // includes synthesized ivars.
-  if (ObjCImplementationDecl *ImplDecl = OI->getImplementation()) {
-    for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
-         E = ImplDecl->ivar_end(); I != E; ++I) {
-      ObjCIvarDecl *Iv = (*I);
-      QualType QT = Context.getBaseElementType(Iv->getType());
-      if (QT->isRecordType())
-        Ivars.push_back(*I);
-    }
+      Ivars.push_back(Iv);
   }
 }
 

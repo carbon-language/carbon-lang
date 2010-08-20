@@ -464,6 +464,10 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// List of categories defined for this class.
   /// FIXME: Why is this a linked list??
   ObjCCategoryDecl *CategoryList;
+  
+  /// IvarList - List of all ivars defined by this class; including class
+  /// extensions and implementation. This list is built lazily.
+  ObjCIvarDecl *IvarList;
 
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
@@ -518,7 +522,10 @@ public:
     return std::distance(ivar_begin(), ivar_end());
   }
   bool ivar_empty() const { return ivar_begin() == ivar_end(); }
-
+  
+  ObjCIvarDecl  *all_declared_ivar_begin();
+  void setIvarList(ObjCIvarDecl *ivar) { IvarList = ivar; }
+  
   /// setProtocolList - Set the list of protocols that this interface
   /// implements.
   void setProtocolList(ObjCProtocolDecl *const* List, unsigned Num,
@@ -640,7 +647,7 @@ private:
                QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW,
                bool synthesized)
     : FieldDecl(ObjCIvar, DC, L, Id, T, TInfo, BW, /*Mutable=*/false),
-      DeclAccess(ac),  Synthesized(synthesized) {}
+      NextIvar(0), DeclAccess(ac),  Synthesized(synthesized) {}
 
 public:
   static ObjCIvarDecl *Create(ASTContext &C, ObjCContainerDecl *DC,
@@ -654,6 +661,9 @@ public:
   /// interface the ivar is conceptually a part of in the case of synthesized
   /// ivars.
   const ObjCInterfaceDecl *getContainingInterface() const;
+  
+  ObjCIvarDecl *getNextIvar() { return NextIvar; }
+  void setNextIvar(ObjCIvarDecl *ivar) { NextIvar = ivar; }
 
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }
 
@@ -671,6 +681,10 @@ public:
   static bool classof(const ObjCIvarDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCIvar; }
 private:
+  /// NextIvar - Next Ivar in the list of ivars declared in class; class's 
+  /// extensions and class's implementation
+  ObjCIvarDecl *NextIvar;
+  
   // NOTE: VC++ treats enums as signed, avoid using the AccessControl enum
   unsigned DeclAccess : 3;
   unsigned Synthesized : 1;

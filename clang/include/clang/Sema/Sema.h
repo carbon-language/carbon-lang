@@ -1754,7 +1754,7 @@ public:
 
   /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
   /// initialization.
-  void CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
+  void CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
                                   llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

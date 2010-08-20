@@ -829,60 +829,37 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) {
   return ABIAlign;
 }
 
-static void CollectLocalObjCIvars(ASTContext *Ctx,
-                                  const ObjCInterfaceDecl *OI,
-                                  llvm::SmallVectorImpl<FieldDecl*> &Fields) {
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I) {
-    ObjCIvarDecl *IVDecl = *I;
-    if (!IVDecl->isInvalidDecl())
-      Fields.push_back(cast<FieldDecl>(IVDecl));
-  }
-}
-
-void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                             llvm::SmallVectorImpl<FieldDecl*> &Fields) {
-  if (const ObjCInterfaceDecl *SuperClass = OI->getSuperClass())
-    CollectObjCIvars(SuperClass, Fields);
-  CollectLocalObjCIvars(this, OI, Fields);
-}
-
 /// ShallowCollectObjCIvars -
 /// Collect all ivars, including those synthesized, in the current class.
 ///
 void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
                                  llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-         E = OI->ivar_end(); I != E; ++I) {
-     Ivars.push_back(*I);
-  }
-
-  CollectNonClassIvars(OI, Ivars);
+  // FIXME. This need be removed but there are two many places which
+  // assume const-ness of ObjCInterfaceDecl
+  ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(OI);
+  for (ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 
+        Iv= Iv->getNextIvar())
+    Ivars.push_back(Iv);
 }
 
-/// CollectNonClassIvars -
-/// This routine collects all other ivars which are not declared in the class.
-/// This includes synthesized ivars (via @synthesize) and those in
-//  class's @implementation.
+/// DeepCollectObjCIvars -
+/// This routine first collects all declared, but not synthesized, ivars in
+/// super class and then collects all ivars, including those synthesized for
+/// current class. This routine is used for implementation of current class
+/// when all ivars, declared and synthesized are known.
 ///
-void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
+void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
+                                      bool leafClass,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
-  // Find ivars declared in class extension.
-  for (const ObjCCategoryDecl *CDecl = OI->getFirstClassExtension(); CDecl;
-       CDecl = CDecl->getNextClassExtension()) {
-    for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
-         E = CDecl->ivar_end(); I != E; ++I) {
-      Ivars.push_back(*I);
-    }
-  }
-
-  // Also add any ivar defined in this class's implementation.  This
-  // includes synthesized ivars.
-  if (ObjCImplementationDecl *ImplDecl = OI->getImplementation()) {
-    for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
-         E = ImplDecl->ivar_end(); I != E; ++I)
+  if (const ObjCInterfaceDecl *SuperClass = OI->getSuperClass())
+    DeepCollectObjCIvars(SuperClass, false, Ivars);
+  if (!leafClass) {
+    for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
+         E = OI->ivar_end(); I != E; ++I)
       Ivars.push_back(*I);
   }
+  else
+    ShallowCollectObjCIvars(OI, Ivars);
 }
 
 /// CollectInheritedProtocols - Collect all protocols in current class and
@@ -3853,15 +3830,14 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     const IdentifierInfo *II = OI->getIdentifier();
     S += II->getName();
     S += '=';
-    llvm::SmallVector<FieldDecl*, 32> RecFields;
-    CollectObjCIvars(OI, RecFields);
-    for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
-      if (RecFields[i]->isBitField())
-        getObjCEncodingForTypeImpl(RecFields[i]->getType(), S, false, true,
-                                   RecFields[i]);
+    llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
+    DeepCollectObjCIvars(OI, true, Ivars);
+    for (unsigned i = 0, e = Ivars.size(); i != e; ++i) {
+      FieldDecl *Field = cast<FieldDecl>(Ivars[i]);
+      if (Field->isBitField())
+        getObjCEncodingForTypeImpl(Field->getType(), S, false, true, Field);
       else
-        getObjCEncodingForTypeImpl(RecFields[i]->getType(), S, false, true,
-                                   FD);
+        getObjCEncodingForTypeImpl(Field->getType(), S, false, true, FD);
     }
     S += '}';
     return;

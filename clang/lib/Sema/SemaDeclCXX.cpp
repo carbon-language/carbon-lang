@@ -6921,7 +6921,7 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,
 void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
   if (!getLangOptions().CPlusPlus)
     return;
-  if (const ObjCInterfaceDecl *OID = ObjCImplementation->getClassInterface()) {
+  if (ObjCInterfaceDecl *OID = ObjCImplementation->getClassInterface()) {
     llvm::SmallVector<ObjCIvarDecl*, 8> ivars;
     CollectIvarsToConstructOrDestruct(OID, ivars);
     if (ivars.empty())

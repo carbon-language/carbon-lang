@@ -392,6 +392,8 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     IVars.push_back(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
   ID->setCategoryList(
                cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
+  // We will rebuild this list lazily.
+  ID->setIvarList(0);
   ID->setForwardDecl(Record[Idx++]);
   ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -402,6 +404,8 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
 void ASTDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
   VisitFieldDecl(IVD);
   IVD->setAccessControl((ObjCIvarDecl::AccessControl)Record[Idx++]);
+  // This field will be built lazily.
+  IVD->setNextIvar(0);
   bool synth = Record[Idx++];
   IVD->setSynthesize(synth);
 }
