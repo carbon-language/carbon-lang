@@ -142,8 +142,13 @@ namespace llvm
 
   /// formatted_tool_output_file - This is a subclass of formatted_raw_ostream
   /// for use when the underlying stream is a tool_output_file. It exposes
-  /// the keep() member function.
+  /// keep() and several other member functions.
   class formatted_tool_output_file : public formatted_raw_ostream {
+  private:
+    tool_output_file &get_tool_output_file() const {
+      return *static_cast<tool_output_file *>(TheStream);
+    }
+
   public:
     formatted_tool_output_file(tool_output_file &Stream, bool Delete = false) 
       : formatted_raw_ostream(Stream, Delete) {}
@@ -156,7 +161,10 @@ namespace llvm
       return formatted_raw_ostream::setStream(Stream, Delete);
     }
 
-    void keep() { return static_cast<tool_output_file *>(TheStream)->keep(); }
+    void keep()            { return get_tool_output_file().keep(); }
+    bool has_error() const { return get_tool_output_file().has_error(); }
+    void clear_error()     { return get_tool_output_file().clear_error(); }
+    void close()           { return get_tool_output_file().close(); }
   };
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for
