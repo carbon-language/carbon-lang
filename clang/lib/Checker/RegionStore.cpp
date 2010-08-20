@@ -1504,6 +1504,8 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
 
     if (ElementTy->isStructureOrClassType())
       store = BindStruct(store, ER, *VI);
+    else if (ElementTy->isArrayType())
+      store = BindArray(store, ER, *VI);
     else
       store = Bind(store, ValMgr.makeLoc(ER), *VI);
   }
