@@ -1,7 +1,7 @@
 // RUN: %llvmgcc %s -m32 -S -o - | FileCheck %s
 // Misaligned parameter must be memcpy'd to correctly aligned temporary.
 // XFAIL: *
-// XTARGET: x86_64-apple-darwin,i386-apple-darwin
+// XTARGET: i386,i686,x86_64
 
 struct s { int x; long double y; };
 long double foo(struct s x, int i, struct s y) {
