@@ -174,6 +174,7 @@ static inline bool
 lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
                        std::pair<unsigned, int64_t> &RegOffset,
                        int64_t LocalFrameOffset,
+                       bool StackGrowsDown,
                        const MachineInstr *MI,
                        const TargetRegisterInfo *TRI) {
   unsigned e = Regs.size();
@@ -182,6 +183,8 @@ lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
     // Check if the relative offset from the where the base register references
     // to the target address is in range for the instruction.
     int64_t Offset = LocalFrameOffset - RegOffset.second;
+    if (StackGrowsDown)
+      Offset = -Offset;
     if (TRI->isFrameOffsetLegal(MI, Offset))
       return true;
   }
@@ -199,6 +202,9 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
 
   MachineFrameInfo *MFI = Fn.getFrameInfo();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
+  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
+  bool StackGrowsDown =
+    TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
 
   for (MachineFunction::iterator BB = Fn.begin(),
          E = Fn.end(); BB != E; ++BB) {
@@ -245,12 +251,15 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // register.
             std::pair<unsigned, int64_t> RegOffset;
             if (lookupCandidateBaseReg(BaseRegisters, RegOffset,
-                                       LocalOffsets[FrameIdx], MI, TRI)) {
+                                       LocalOffsets[FrameIdx],
+                                       StackGrowsDown, MI, TRI)) {
               DEBUG(dbgs() << "  Reusing base register " <<
                     RegOffset.first << "\n");
               // We found a register to reuse.
               BaseReg = RegOffset.first;
               Offset = LocalOffsets[FrameIdx] - RegOffset.second;
+              if (StackGrowsDown)
+                Offset = -Offset;
             } else {
               // No previously defined register was in range, so create a
               // new one.
