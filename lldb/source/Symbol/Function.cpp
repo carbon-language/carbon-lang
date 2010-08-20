@@ -237,6 +237,70 @@ Function::GetAddressRange()
     return GetBlocks(true).GetAddressRange();
 }
 
+bool
+Function::IsInlined()
+{
+    Block *root_block = GetBlocks(true).GetBlockByID(Block::RootID);
+    if (root_block)
+    {
+        if (root_block->InlinedFunctionInfo() != NULL)
+            return true;
+    }
+    return false;
+
+}
+void
+Function::GetStartLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
+{
+    line_no = 0;
+    source_file.Clear();
+    
+    if (m_comp_unit == NULL)
+        return;
+        
+    if (m_type != NULL && m_type->GetDeclaration().GetLine() != 0)
+    {
+        source_file = m_type->GetDeclaration().GetFile();
+        line_no = m_type->GetDeclaration().GetLine();
+    }
+    else 
+    {
+        LineTable *line_table = m_comp_unit->GetLineTable();
+        if (line_table == NULL)
+            return;
+            
+        LineEntry line_entry;
+        if (line_table->FindLineEntryByAddress (GetAddressRange().GetBaseAddress(), line_entry, NULL))
+        {
+            line_no = line_entry.line;
+            source_file = line_entry.file;
+        }
+    }
+}
+
+void
+Function::GetEndLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
+{
+    line_no = 0;
+    source_file.Clear();
+    
+    // The -1 is kind of cheesy, but I want to get the last line entry for the given function, not the 
+    // first entry of the next.
+    Address scratch_addr(GetAddressRange().GetBaseAddress());
+    scratch_addr.SetOffset (scratch_addr.GetOffset() + GetAddressRange().GetByteSize() - 1);
+    
+    LineTable *line_table = m_comp_unit->GetLineTable();
+    if (line_table == NULL)
+        return;
+        
+    LineEntry line_entry;
+    if (line_table->FindLineEntryByAddress (scratch_addr, line_entry, NULL))
+    {
+        line_no = line_entry.line;
+        source_file = line_entry.file;
+    }
+}
+
 BlockList &
 Function::GetBlocks(bool can_create)
 {

@@ -420,6 +420,44 @@ public:
 
     const AddressRange &
     GetAddressRange();
+    
+    //------------------------------------------------------------------
+    /// Find the file and line number of the source location of the start
+    /// of the function.  This will use the declaration if present and fall
+    /// back on the line table if that fails.  So there may NOT be a line
+    /// table entry for this source file/line combo.
+    ///
+    /// @param[out] source_file
+    ///     The source file.
+    ///
+    /// @param[out] line_no
+    ///     The line number.
+    //------------------------------------------------------------------
+    void
+    GetStartLineSourceInfo (FileSpec &source_file, uint32_t &line_no);
+    
+     //------------------------------------------------------------------
+    /// Find the file and line number of the source location of the end
+    /// of the function.
+    ///
+    ///
+    /// @param[out] source_file
+    ///     The source file.
+    ///
+    /// @param[out] line_no
+    ///     The line number.
+    //------------------------------------------------------------------
+   void
+    GetEndLineSourceInfo (FileSpec &source_file, uint32_t &line_no);
+
+     //------------------------------------------------------------------
+    /// Return whether this Function represents an inlined version of the
+    /// original function.
+    ///
+    /// @return
+    ///     \b true if inlined, \b false otherwise.
+    //------------------------------------------------------------------
+    bool IsInlined();
 
     //------------------------------------------------------------------
     /// Get accessor for the block list.
