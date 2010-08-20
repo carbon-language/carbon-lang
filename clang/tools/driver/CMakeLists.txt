@@ -5,13 +5,13 @@ set( LLVM_USED_LIBS
   clangDriver
   clangSerialization
   clangCodeGen
+  clangParse
   clangSema
   clangChecker
   clangAnalysis
   clangIndex
   clangRewrite
   clangAST
-  clangParse
   clangLex
   clangBasic
   )

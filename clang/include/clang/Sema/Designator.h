@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_DESIGNATOR_H
-#define LLVM_CLANG_PARSE_DESIGNATOR_H
+#ifndef LLVM_CLANG_SEMA_DESIGNATOR_H
+#define LLVM_CLANG_SEMA_DESIGNATOR_H
 
-#include "clang/Parse/Action.h"
+#include "clang/Sema/Action.h"
 
 namespace clang {
 

@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/Parser.h"
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Scope.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Parser.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Scope.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
 

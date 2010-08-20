@@ -17,7 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Sema/DeclSpec.h"
 using namespace clang;
 
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible

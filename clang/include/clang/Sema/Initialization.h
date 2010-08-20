@@ -13,10 +13,10 @@
 #ifndef LLVM_CLANG_SEMA_INITIALIZATION_H
 #define LLVM_CLANG_SEMA_INITIALIZATION_H
 
+#include "clang/Sema/Action.h"
 #include "clang/Sema/Overload.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
-#include "clang/Parse/Action.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"

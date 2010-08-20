@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Sema/Sema.h"
 #include "clang/AST/DeclCXX.h"
-#include "clang/Parse/Scope.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang-c/Index.h"
 #include "llvm/ADT/STLExtras.h"

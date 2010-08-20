@@ -16,7 +16,7 @@
 #define LLVM_CLANG_AST_SEMA_IDENTIFIERRESOLVER_H
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Parse/Scope.h"
+#include "clang/Sema/Scope.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclCXX.h"

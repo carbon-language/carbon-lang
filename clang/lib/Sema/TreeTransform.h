@@ -24,8 +24,8 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/TypeLocBuilder.h"
-#include "clang/Parse/Ownership.h"
-#include "clang/Parse/Designator.h"
+#include "clang/Sema/Ownership.h"
+#include "clang/Sema/Designator.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>

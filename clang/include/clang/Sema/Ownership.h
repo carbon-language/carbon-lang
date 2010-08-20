@@ -1,4 +1,4 @@
-//===--- Ownership.h - Parser Ownership Helpers -----------------*- C++ -*-===//
+//===--- Ownership.h - Parser ownership helpers -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_OWNERSHIP_H
-#define LLVM_CLANG_PARSE_OWNERSHIP_H
+#ifndef LLVM_CLANG_SEMA_OWNERSHIP_H
+#define LLVM_CLANG_SEMA_OWNERSHIP_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/PointerIntPair.h"

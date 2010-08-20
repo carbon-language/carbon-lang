@@ -13,9 +13,9 @@
 
 #include "ParsePragma.h"
 #include "clang/Parse/ParseDiagnostic.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Sema/Action.h"
 using namespace clang;
 
 

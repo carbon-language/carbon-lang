@@ -14,7 +14,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
-#include "clang/Parse/Template.h"
+#include "clang/Sema/ParsedTemplate.h"
 using namespace clang;
 
 /// isCXXDeclarationStatement - C++-specialized function that disambiguates

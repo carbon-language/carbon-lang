@@ -13,7 +13,7 @@
 
 #include "clang/Frontend/Utils.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
-#include "clang/Sema/ParseAST.h"
+#include "clang/Parse/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"

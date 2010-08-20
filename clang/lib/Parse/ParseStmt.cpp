@@ -14,8 +14,8 @@
 
 #include "clang/Parse/Parser.h"
 #include "RAIIObjectsForParser.h"
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Scope.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/SourceManager.h"

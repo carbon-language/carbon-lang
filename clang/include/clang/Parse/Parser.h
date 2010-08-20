@@ -16,8 +16,8 @@
 
 #include "clang/Basic/Specifiers.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/Action.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Sema/Action.h"
+#include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <stack>
 #include <list>

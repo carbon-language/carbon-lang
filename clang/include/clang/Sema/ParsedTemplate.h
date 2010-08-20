@@ -1,4 +1,4 @@
-//===--- Template.h - Template Parsing Data Types -------------------------===//
+//===--- ParsedTemplate.h - Template Parsing Data Types -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,11 +11,11 @@
 //  templates.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_PARSE_TEMPLATE_H
-#define LLVM_CLANG_PARSE_TEMPLATE_H
+#ifndef LLVM_CLANG_SEMA_PARSEDTEMPLATE_H
+#define LLVM_CLANG_SEMA_PARSEDTEMPLATE_H
 
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Ownership.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Ownership.h"
 #include <cassert>
 
 namespace clang {  

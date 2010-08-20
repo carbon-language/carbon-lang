@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/AttributeList.h"
+#include "clang/Sema/AttributeList.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;

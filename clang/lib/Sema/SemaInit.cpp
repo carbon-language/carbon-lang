@@ -15,11 +15,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Sema/Designator.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"

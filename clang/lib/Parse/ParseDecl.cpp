@@ -13,8 +13,8 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
-#include "clang/Parse/Scope.h"
-#include "clang/Parse/Template.h"
+#include "clang/Sema/Scope.h"
+#include "clang/Sema/ParsedTemplate.h"
 #include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;

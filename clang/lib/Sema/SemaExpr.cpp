@@ -29,10 +29,10 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Designator.h"
-#include "clang/Parse/Scope.h"
-#include "clang/Parse/Template.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Designator.h"
+#include "clang/Sema/Scope.h"
+#include "clang/Sema/ParsedTemplate.h"
 using namespace clang;
 
 

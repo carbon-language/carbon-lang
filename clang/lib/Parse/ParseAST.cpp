@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/ParseAST.h"
+#include "clang/Parse/ParseAST.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/SemaConsumer.h"

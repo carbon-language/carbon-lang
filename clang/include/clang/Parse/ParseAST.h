@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_PARSEAST_H
-#define LLVM_CLANG_SEMA_PARSEAST_H
+#ifndef LLVM_CLANG_PARSE_PARSEAST_H
+#define LLVM_CLANG_PARSE_PARSEAST_H
 
 namespace clang {
   class Preprocessor;

@@ -1,4 +1,4 @@
-//===--- AttributeList.h ----------------------------------------*- C++ -*-===//
+//===--- AttributeList.h - Parsed attribute sets ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the AttributeList class interface.
+// This file defines the AttributeList class, which is used to collect
+// parsed attributes.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ATTRLIST_H
-#define LLVM_CLANG_ATTRLIST_H
+#ifndef LLVM_CLANG_SEMA_ATTRLIST_H
+#define LLVM_CLANG_SEMA_ATTRLIST_H
 
-#include "clang/Parse/Ownership.h"
+#include "clang/Sema/Ownership.h"
 #include "clang/Basic/SourceLocation.h"
 #include <cassert>
 

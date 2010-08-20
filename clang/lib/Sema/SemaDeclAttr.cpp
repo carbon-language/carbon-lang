@@ -17,7 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 

@@ -1,4 +1,4 @@
-//===--- SemaDeclSpec.h - Declaration Specifier Semantic Analys -*- C++ -*-===//
+//===--- DeclSpec.h - Parsed declaration specifiers -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines interfaces used for Declaration Specifiers and Declarators.
+// This file defines the classes used to store parsed information about
+// declaration-specifiers and declarators.
+//
+//   static const int volatile x, *y, *(*(*z)[10])(const void *x);
+//   ------------------------- -  --  ---------------------------
+//     declaration-specifiers  \  |   /
+//                            declarators
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_DECLSPEC_H
-#define LLVM_CLANG_PARSE_DECLSPEC_H
+#ifndef LLVM_CLANG_SEMA_DECLSPEC_H
+#define LLVM_CLANG_SEMA_DECLSPEC_H
 
-#include "clang/Parse/AttributeList.h"
+#include "clang/Sema/AttributeList.h"
 #include "clang/Lex/Token.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"

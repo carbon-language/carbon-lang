@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/ParseDiagnostic.h"
-#include "clang/Parse/Template.h"
+#include "clang/Parse/ParseDiagnostic.h" // FIXME: remove this back-dependency!
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/ParsedTemplate.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"

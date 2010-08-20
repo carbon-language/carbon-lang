@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_AST_SEMA_H
 #define LLVM_CLANG_AST_SEMA_H
 
+#include "clang/Sema/Action.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/CXXFieldCollector.h"
@@ -28,7 +29,6 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/FullExpr.h"
-#include "clang/Parse/Action.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"

@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_SCOPE_H
-#define LLVM_CLANG_PARSE_SCOPE_H
+#ifndef LLVM_CLANG_SEMA_SCOPE_H
+#define LLVM_CLANG_SEMA_SCOPE_H
 
-#include "clang/Parse/Action.h"
+#include "clang/Sema/Action.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang {

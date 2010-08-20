@@ -21,7 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;

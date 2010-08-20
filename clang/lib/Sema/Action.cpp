@@ -11,9 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/Parser.h"
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Scope.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"

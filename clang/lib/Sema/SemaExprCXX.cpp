@@ -22,8 +22,8 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Template.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/ParsedTemplate.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
