@@ -567,13 +567,13 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
         // We specifically do not do word-wrapping or tab-expansion here,
         // because this is supposed to be easy to parse.
-        OS << " fix-it: \"";
+        OS << "fix-it:\"";
         OS.write_escaped(SM.getPresumedLoc(B).getFilename());
         OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
           << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
           << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
           << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
-          << "}: \"";
+          << "}:\"";
         OS.write_escaped(Hint->CodeToInsert);
         OS << "\"\n";
       }

@@ -365,10 +365,10 @@ Print Fix-Its in a machine parseable form.</dt>
 <dd><p>This option makes Clang print available Fix-Its in a machine parseable format at the end of diagnostics. The following example illustrates the format:</p>
 
 <pre>
- fix-it: "t.cpp":{7:25-7:29}: "Gamma"
+ fix-it:"t.cpp":{7:25-7:29}:"Gamma"
 </pre>
 
-<p>The range printed is a half-open range, so in this example the characters at column 25 up to but not including column 29 on line 7 in t.cpp should be replaced with the string "Gamma". Either the range or the replacement string may be empty (representing strict insertions and strict erasures, respectively). Both the file name and the insertion string escape '\', tabs (as "\t"), newlines (as "\n"), double quotes(as "\"") and non-printable characters (as octal "\xxx").</p>
+<p>The range printed is a half-open range, so in this example the characters at column 25 up to but not including column 29 on line 7 in t.cpp should be replaced with the string "Gamma". Either the range or the replacement string may be empty (representing strict insertions and strict erasures, respectively). Both the file name and the insertion string escape backslash (as "\"), tabs (as "\t"), newlines (as "\n"), double quotes(as "\"") and non-printable characters (as octal "\xxx").</p>
 </dd>
 
 </dl>
