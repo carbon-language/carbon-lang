@@ -16,7 +16,10 @@
 #include <functional>
 #include <cassert>
 
+#include "../test_allocator.h"
+
 int main()
 {
-#error template<class A> function(allocator_arg_t, const A&); not implemented
+    std::function<int(int)> f(std::allocator_arg, test_allocator<int>());
+    assert(!f);
 }

@@ -32,7 +32,7 @@ struct binary_function
     typedef Result result_type;
 };
 
-template <ObjectType T>
+template <class T>
 class reference_wrapper
     : public unary_function<T1, R> // if wrapping a unary functor
     : public binary_function<T1, T2, R> // if wraping a binary functor
@@ -56,18 +56,17 @@ public:
 
     // invoke
     template <class... ArgTypes>
-      requires Callable<T, ArgTypes&&...>
-        Callable<T, ArgTypes&&...>::result_type
+      typename result_of<T(ArgTypes...)>::type
           operator() (ArgTypes&&...) const;
 };
 
-template <ObjectType T> reference_wrapper<T> ref(T& t);
-template <ObjectType T> void ref(const T&& t) = delete; // LWG 688
-template <ObjectType T> reference_wrapper<T> ref(reference_wrapper<T>t);
+template <class T> reference_wrapper<T> ref(T& t);
+template <class T> void ref(const T&& t) = delete;
+template <class T> reference_wrapper<T> ref(reference_wrapper<T>t);
 
-template <ObjectType T> reference_wrapper<const T> cref(const T& t);
-template <ObjectType T> void cref(const T&& t) = delete; // LWG 688
-template <ObjectType T> reference_wrapper<const T> cref(reference_wrapper<T> t);
+template <class T> reference_wrapper<const T> cref(const T& t);
+template <class T> void cref(const T&& t) = delete;
+template <class T> reference_wrapper<const T> cref(reference_wrapper<T> t);
 
 template <class T>
 struct plus : binary_function<T, T, T>
@@ -187,10 +186,10 @@ template <class Predicate> binary_negate<Predicate> not2(const Predicate& pred);
 template<class T> struct is_bind_expression;
 template<class T> struct is_placeholder;
 
-template<CopyConstructible Fn, CopyConstructible... Types> 
-  unspecified bind(Fn, Types...);
-template<Returnable R, CopyConstructible Fn, CopyConstructible... Types> 
-  unspecified bind(Fn, Types...);
+template<class Fn, class... BoundArgs> 
+  unspecified bind(Fn&&, BoundArgs&&...);
+template<class R, class Fn, class... BoundArgs> 
+  unspecified bind(Fn&&, BoundArgs&&...);
 
 namespace placeholders { 
   // M is the implementation-defined number of placeholders 
@@ -334,24 +333,28 @@ public:
 template <class S, class T>          const_mem_fun_ref_t<S,T>    mem_fun_ref(S (T::*f)() const);
 template <class S, class T, class A> const_mem_fun1_ref_t<S,T,A> mem_fun_ref(S (T::*f)(A) const);
 
+template<class R, class T> unspecified mem_fn(R T::*);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...));
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) const);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) volatile);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) const volatile);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) &);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) const &);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) volatile &);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) const volatile &);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) &&);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) const &&);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) volatile &&);
+template<class R, class T, class... Args> unspecified mem_fn(R (T::*)(Args...) const volatile &&);
+
 class bad_function_call
     : public exception
 {
 };
 
-template<Returnable R, class T> unspecified mem_fn(R T::* pm);
-template<Returnable R, class T, CopyConstructible... Args> 
-  unspecified mem_fn(R (T::* pm)(Args...));
-template<Returnable R, class T, CopyConstructible... Args> 
-  unspecified mem_fn(R (T::* pm)(Args...) const);
-template<Returnable R, class T, CopyConstructible... Args> 
-  unspecified mem_fn(R (T::* pm)(Args...) volatile);
-template<Returnable R, class T, CopyConstructible... Args> 
-  unspecified mem_fn(R (T::* pm)(Args...) const volatile);
+template<class> class function; // undefined
 
-template<FunctionType> class function; // undefined
-
-template<Returnable R, CopyConstructible... ArgTypes>
+template<class R, class... ArgTypes>
 class function<R(ArgTypes...)>
   : public unary_function<T1, R>      // iff sizeof...(ArgTypes) == 1 and
                                       // ArgTypes contains T1
@@ -361,19 +364,13 @@ class function<R(ArgTypes...)>
 public:
     typedef R result_type;
 
-    // 20.7.16.2.1, construct/copy/destroy:
-    explicit function();
+    // construct/copy/destroy:
+    function();
     function(nullptr_t);
     function(const function&);
     function(function&&);
     template<class F>
-      requires CopyConstructible<F> && Callable<F, ArgTypes...>
-            && Convertible<Callable<F, ArgTypes...>::result_type, R>
       function(F);
-//     template<class F>
-//       requires CopyConstructible<F> && Callable<F, ArgTypes...>
-//             && Convertible<Callable<F, ArgTypes...>::result_type, R>
-//       function(F&&);
     template<Allocator Alloc>
       function(allocator_arg_t, const Alloc&);
     template<Allocator Alloc>
@@ -384,35 +381,23 @@ public:
       function(allocator_arg_t, const Alloc&, function&&);
     template<class F, Allocator Alloc>
       function(allocator_arg_t, const Alloc&, F);
-//     template<class F, Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, F&&);
 
     function& operator=(const function&);
     function& operator=(function&&);
     function& operator=(nullptr_t);
     template<class F>
-      requires CopyConstructible<F> && Callable<F, ArgTypes..>
-            && Convertible<Callable<F, ArgTypes...>::result_type
-      function& operator=(F);
-//     template<class F>
-//       requires CopyConstructible<F> && Callable<F, ArgTypes...>
-//             && Convertible<Callable<F, ArgTypes...>::result_type, R>
-//       function& operator=(F&&);
+      function& operator=(F&&);
     template<class F>
-      requires Callable<F, ArgTypes...>
-            && Convertible<Callable<F, ArgTypes...>::result_type, R>
       function& operator=(reference_wrapper<F>);
 
     ~function();
 
-    // 20.7.16.2.2, function modifiers:
+    // function modifiers:
     void swap(function&);
-    template<class F, Allocator Alloc>
-      requires Callable<F, ArgTypes...>
-            && Convertible<Callable<F, ArgTypes...>::result_type, R>
-      void assign(F, const Alloc&);
+    template<class F, class Alloc>
+      void assign(F&&, const Alloc&);
 
-    // 20.7.16.2.3, function capacity:
+    // function capacity:
     explicit operator bool() const;
 
     // deleted overloads close possible hole in the type system
@@ -421,36 +406,30 @@ public:
     template<class R2, class... ArgTypes2>
       bool operator!=(const function<R2(ArgTypes2...)>&) = delete;
 
-    // 20.7.16.2.4, function invocation:
+    // function invocation:
     R operator()(ArgTypes...) const;
 
-    // 20.7.16.2.5, function target access:
+    // function target access:
     const std::type_info& target_type() const;
-    template <typename T>
-      requires Callable<T, ArgTypes...>
-            && Convertible<Callable<T, ArgTypes...>::result_type, R>
-      T* target();
-    template <typename T>
-      requires Callable<T, ArgTypes...>
-            && Convertible<Callable<T, ArgTypes...>::result_type, R>
-      const T* target() const;
+    template <typename T>       T* target();
+    template <typename T> const T* target() const;
 };
 
-// 20.7.16.2.6, Null pointer comparisons: 
-template <MoveConstructible R, MoveConstructible ... ArgTypes> 
+// Null pointer comparisons: 
+template <class R, class ... ArgTypes> 
   bool operator==(const function<R(ArgTypes...)>&, nullptr_t);
 
-template <MoveConstructible R, MoveConstructible ... ArgTypes> 
+template <class R, class ... ArgTypes> 
   bool operator==(nullptr_t, const function<R(ArgTypes...)>&);
 
-template <MoveConstructible R, MoveConstructible ... ArgTypes> 
+template <class R, class ... ArgTypes> 
   bool operator!=(const function<R(ArgTypes...)>&, nullptr_t);
 
-template <MoveConstructible  R, MoveConstructible ... ArgTypes> 
+template <class  R, class ... ArgTypes> 
   bool operator!=(nullptr_t, const function<R(ArgTypes...)>&);
 
-// 20.7.16.2.7, specialized algorithms: 
-template <MoveConstructible  R, MoveConstructible ... ArgTypes> 
+// specialized algorithms: 
+template <class  R, class ... ArgTypes> 
   void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&);
 
 template <class T> struct hash;
@@ -1118,27 +1097,26 @@ class function<_R(_ArgTypes...)>
 public:
     typedef _R result_type;
 
-    // 20.7.16.2.1, construct/copy/destroy:
+    // construct/copy/destroy:
     function() : __f_(0) {}
     function(nullptr_t) : __f_(0) {}
     function(const function&);
-#ifdef _LIBCPP_MOVE
     function(function&&);
-#endif
     template<class _F>
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
-//     template<class _Alloc>
-//       function(allocator_arg_t, const _Alloc&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, nullptr_t);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, const function&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, function&&);
-//     template<class F, Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, F);
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, const function&);
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, function&&);
+    template<class _F, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _F __f,
+               typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(function&&);
@@ -1153,26 +1131,26 @@ public:
 
     ~function();
 
-    // 20.7.16.2.2, function modifiers:
+    // function modifiers:
     void swap(function&);
-//     template<class _F, class _Alloc>
-//       void assign(_F, const _Alloc&);
+    template<class _F, class _Alloc>
+      void assign(_F&& __f, const _Alloc& __a)
+        {function(allocator_arg, __a, _STD::forward<_F>(__f)).swap(*this);}
 
-    // 20.7.16.2.3, function capacity:
+    // function capacity:
     /*explicit*/ operator bool() const {return __f_;}
 
-private:
     // deleted overloads close possible hole in the type system
     template<class _R2, class... _ArgTypes2>
-      bool operator==(const function<_R2(_ArgTypes2...)>&);// = delete;
+      bool operator==(const function<_R2(_ArgTypes2...)>&) = delete;
     template<class _R2, class... _ArgTypes2>
-      bool operator!=(const function<_R2(_ArgTypes2...)>&);// = delete;
+      bool operator!=(const function<_R2(_ArgTypes2...)>&) = delete;
 public:
-    // 20.7.16.2.4, function invocation:
+    // function invocation:
     _R operator()(_ArgTypes...) const;
 
 #ifndef _LIBCPP_NO_RTTI
-    // 20.7.16.2.5, function target access:
+    // function target access:
     const std::type_info& target_type() const;
     template <typename _T> _T* target();
     template <typename _T> const _T* target() const;
@@ -1194,7 +1172,42 @@ function<_R(_ArgTypes...)>::function(const function& __f)
 }
 
 template<class _R, class ..._ArgTypes>
+template <class _Alloc>
+function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc&,
+                                     const function& __f)
+{
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if (__f.__f_ == (const __base*)&__f.__buf_)
+    {
+        __f_ = (__base*)&__buf_;
+        __f.__f_->__clone(__f_);
+    }
+    else
+        __f_ = __f.__f_->__clone();
+}
+
+template<class _R, class ..._ArgTypes>
 function<_R(_ArgTypes...)>::function(function&& __f)
+{
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if (__f.__f_ == (__base*)&__f.__buf_)
+    {
+        __f_ = (__base*)&__buf_;
+        __f.__f_->__clone(__f_);
+    }
+    else
+    {
+        __f_ = __f.__f_;
+        __f.__f_ = 0;
+    }
+}
+
+template<class _R, class ..._ArgTypes>
+template <class _Alloc>
+function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc&,
+                                     function&& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1231,6 +1244,39 @@ function<_R(_ArgTypes...)>::function(_F __f,
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
             ::new (__hold.get()) _FF(_STD::move(__f), allocator<_F>(__a));
+            __f_ = __hold.release();
+        }
+    }
+}
+
+template<class _R, class ..._ArgTypes>
+template <class _F, class _Alloc>
+function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
+                                     typename enable_if<!is_integral<_F>::value>::type*)
+    : __f_(0)
+{
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    if (__not_null(__f))
+    {
+        typedef __function::__func<_F, _Alloc, _R(_ArgTypes...)> _FF;
+        if (sizeof(_FF) <= sizeof(__buf_))
+        {
+            __f_ = (__base*)&__buf_;
+            ::new (__f_) _FF(_STD::move(__f));
+        }
+        else
+        {
+            typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+                rebind_alloc<_FF>
+#else
+                rebind_alloc<_FF>::other
+#endif
+                                                         _A;
+            _A __a(__a0);
+            typedef __allocator_destructor<_A> _D;
+            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+            ::new (__hold.get()) _FF(_STD::move(__f), _Alloc(__a));
             __f_ = __hold.release();
         }
     }

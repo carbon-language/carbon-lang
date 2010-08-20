@@ -367,7 +367,7 @@ template<class _F, class _Alloc, class _R>
 _R
 __func<_F, _Alloc, _R()>::operator()()
 {
-    return __invoke<_R>(__f_.first());
+    return __invoke(__f_.first());
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -660,16 +660,15 @@ public:
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
-//     template<class _Alloc>
-//       function(allocator_arg_t, const _Alloc&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, nullptr_t);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, const function&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, function&&);
-//     template<class F, Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, F);
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, const function&);
+    template<class _F, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _F __f,
+               typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
@@ -685,8 +684,9 @@ public:
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-//     template<class _F, class _Alloc>
-//       void assign(_F, const _Alloc&);
+    template<class _F, class _Alloc>
+      void assign(_F __f, const _Alloc& __a)
+        {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
     operator bool() const {return __f_;}
@@ -724,6 +724,21 @@ function<_R()>::function(const function& __f)
 }
 
 template<class _R>
+template<class _Alloc>
+function<_R()>::function(allocator_arg_t, const _Alloc&, const function& __f)
+{
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if (__f.__f_ == (const __base*)&__f.__buf_)
+    {
+        __f_ = (__base*)&__buf_;
+        __f.__f_->__clone(__f_);
+    }
+    else
+        __f_ = __f.__f_->__clone();
+}
+
+template<class _R>
 template <class _F>
 function<_R()>::function(_F __f,
                                      typename enable_if<!is_integral<_F>::value>::type*)
@@ -744,6 +759,39 @@ function<_R()>::function(_F __f,
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
             ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            __f_ = __hold.release();
+        }
+    }
+}
+
+template<class _R>
+template <class _F, class _Alloc>
+function<_R()>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
+                                     typename enable_if<!is_integral<_F>::value>::type*)
+    : __f_(0)
+{
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    if (__not_null(__f))
+    {
+        typedef __function::__func<_F, _Alloc, _R()> _FF;
+        if (sizeof(_FF) <= sizeof(__buf_))
+        {
+            __f_ = (__base*)&__buf_;
+            ::new (__f_) _FF(__f);
+        }
+        else
+        {
+            typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+                rebind_alloc<_FF>
+#else
+                rebind_alloc<_FF>::other
+#endif
+                                                         _A;
+            _A __a(__a0);
+            typedef __allocator_destructor<_A> _D;
+            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+            ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
@@ -904,16 +952,15 @@ public:
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
-//     template<class _Alloc>
-//       function(allocator_arg_t, const _Alloc&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, nullptr_t);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, const function&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, function&&);
-//     template<class F, Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, F);
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, const function&);
+    template<class _F, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _F __f,
+               typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
@@ -929,8 +976,9 @@ public:
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-//     template<class _F, class _Alloc>
-//       void assign(_F, const _Alloc&);
+    template<class _F, class _Alloc>
+      void assign(_F __f, const _Alloc& __a)
+        {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
     operator bool() const {return __f_;}
@@ -968,6 +1016,21 @@ function<_R(_A0)>::function(const function& __f)
 }
 
 template<class _R, class _A0>
+template<class _Alloc>
+function<_R(_A0)>::function(allocator_arg_t, const _Alloc&, const function& __f)
+{
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if (__f.__f_ == (const __base*)&__f.__buf_)
+    {
+        __f_ = (__base*)&__buf_;
+        __f.__f_->__clone(__f_);
+    }
+    else
+        __f_ = __f.__f_->__clone();
+}
+
+template<class _R, class _A0>
 template <class _F>
 function<_R(_A0)>::function(_F __f,
                                      typename enable_if<!is_integral<_F>::value>::type*)
@@ -988,6 +1051,39 @@ function<_R(_A0)>::function(_F __f,
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
             ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            __f_ = __hold.release();
+        }
+    }
+}
+
+template<class _R, class _A0>
+template <class _F, class _Alloc>
+function<_R(_A0)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
+                                     typename enable_if<!is_integral<_F>::value>::type*)
+    : __f_(0)
+{
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    if (__not_null(__f))
+    {
+        typedef __function::__func<_F, _Alloc, _R(_A0)> _FF;
+        if (sizeof(_FF) <= sizeof(__buf_))
+        {
+            __f_ = (__base*)&__buf_;
+            ::new (__f_) _FF(__f);
+        }
+        else
+        {
+            typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+                rebind_alloc<_FF>
+#else
+                rebind_alloc<_FF>::other
+#endif
+                                                         _A;
+            _A __a(__a0);
+            typedef __allocator_destructor<_A> _D;
+            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+            ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
@@ -1148,16 +1244,15 @@ public:
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
-//     template<class _Alloc>
-//       function(allocator_arg_t, const _Alloc&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, nullptr_t);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, const function&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, function&&);
-//     template<class F, Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, F);
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, const function&);
+    template<class _F, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _F __f,
+               typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
@@ -1173,8 +1268,9 @@ public:
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-//     template<class _F, class _Alloc>
-//       void assign(_F, const _Alloc&);
+    template<class _F, class _Alloc>
+      void assign(_F __f, const _Alloc& __a)
+        {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
     operator bool() const {return __f_;}
@@ -1212,9 +1308,24 @@ function<_R(_A0, _A1)>::function(const function& __f)
 }
 
 template<class _R, class _A0, class _A1>
+template<class _Alloc>
+function<_R(_A0, _A1)>::function(allocator_arg_t, const _Alloc&, const function& __f)
+{
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if (__f.__f_ == (const __base*)&__f.__buf_)
+    {
+        __f_ = (__base*)&__buf_;
+        __f.__f_->__clone(__f_);
+    }
+    else
+        __f_ = __f.__f_->__clone();
+}
+
+template<class _R, class _A0, class _A1>
 template <class _F>
 function<_R(_A0, _A1)>::function(_F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+                                 typename enable_if<!is_integral<_F>::value>::type*)
     : __f_(0)
 {
     if (__not_null(__f))
@@ -1232,6 +1343,39 @@ function<_R(_A0, _A1)>::function(_F __f,
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
             ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            __f_ = __hold.release();
+        }
+    }
+}
+
+template<class _R, class _A0, class _A1>
+template <class _F, class _Alloc>
+function<_R(_A0, _A1)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
+                                 typename enable_if<!is_integral<_F>::value>::type*)
+    : __f_(0)
+{
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    if (__not_null(__f))
+    {
+        typedef __function::__func<_F, _Alloc, _R(_A0, _A1)> _FF;
+        if (sizeof(_FF) <= sizeof(__buf_))
+        {
+            __f_ = (__base*)&__buf_;
+            ::new (__f_) _FF(__f);
+        }
+        else
+        {
+            typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+                rebind_alloc<_FF>
+#else
+                rebind_alloc<_FF>::other
+#endif
+                                                         _A;
+            _A __a(__a0);
+            typedef __allocator_destructor<_A> _D;
+            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+            ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
@@ -1391,16 +1535,15 @@ public:
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
-//     template<class _Alloc>
-//       function(allocator_arg_t, const _Alloc&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, nullptr_t);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, const function&);
-//     template<Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, function&&);
-//     template<class F, Allocator Alloc>
-//       function(allocator_arg_t, const Alloc&, F);
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
+    template<class _Alloc>
+      function(allocator_arg_t, const _Alloc&, const function&);
+    template<class _F, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _F __f,
+               typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
@@ -1416,8 +1559,9 @@ public:
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-//     template<class _F, class _Alloc>
-//       void assign(_F, const _Alloc&);
+    template<class _F, class _Alloc>
+      void assign(_F __f, const _Alloc& __a)
+        {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
     operator bool() const {return __f_;}
@@ -1455,6 +1599,22 @@ function<_R(_A0, _A1, _A2)>::function(const function& __f)
 }
 
 template<class _R, class _A0, class _A1, class _A2>
+template<class _Alloc>
+function<_R(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc&,
+                                      const function& __f)
+{
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if (__f.__f_ == (const __base*)&__f.__buf_)
+    {
+        __f_ = (__base*)&__buf_;
+        __f.__f_->__clone(__f_);
+    }
+    else
+        __f_ = __f.__f_->__clone();
+}
+
+template<class _R, class _A0, class _A1, class _A2>
 template <class _F>
 function<_R(_A0, _A1, _A2)>::function(_F __f,
                                      typename enable_if<!is_integral<_F>::value>::type*)
@@ -1475,6 +1635,39 @@ function<_R(_A0, _A1, _A2)>::function(_F __f,
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
             ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            __f_ = __hold.release();
+        }
+    }
+}
+
+template<class _R, class _A0, class _A1, class _A2>
+template <class _F, class _Alloc>
+function<_R(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
+                                     typename enable_if<!is_integral<_F>::value>::type*)
+    : __f_(0)
+{
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    if (__not_null(__f))
+    {
+        typedef __function::__func<_F, _Alloc, _R(_A0, _A1, _A2)> _FF;
+        if (sizeof(_FF) <= sizeof(__buf_))
+        {
+            __f_ = (__base*)&__buf_;
+            ::new (__f_) _FF(__f);
+        }
+        else
+        {
+            typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+                rebind_alloc<_FF>
+#else
+                rebind_alloc<_FF>::other
+#endif
+                                                         _A;
+            _A __a(__a0);
+            typedef __allocator_destructor<_A> _D;
+            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+            ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
