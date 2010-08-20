@@ -28,6 +28,7 @@ $
 """
 
 import os
+import sys
 import unittest2
 import lldb
 
@@ -37,7 +38,7 @@ import lldb
 
 CURRENT_EXECUTABLE_SET = "Current executable set successfully"
 
-RUN_STOPPED = "Process is stopped successfully"
+RUN_STOPPED = "Process is launched and then stopped successfully"
 
 RUN_COMPLETED = "Process exited successfully"
 
@@ -124,18 +125,18 @@ class TestBase(unittest2.TestCase):
             raise Exception("Bad 'cmd' parameter encountered")
 
         if verbose:
-            print "runCmd:", cmd
+            print >> sys.stderr, "runCmd:", cmd
 
         self.ci.HandleCommand(cmd, self.res)
 
         if cmd.startswith("run"):
             self.runStarted = True
 
-        if not self.res.Succeeded():
-            print self.res.GetError()
-
         if verbose:
-            print "output:", self.res.GetOutput()
+            if self.res.Succeeded():
+                print >> sys.stderr, "output:", self.res.GetOutput()
+            else:
+                print >> sys.stderr, self.res.GetError()
 
         if check:
             self.assertTrue(self.res.Succeeded(),
@@ -159,14 +160,14 @@ class TestBase(unittest2.TestCase):
         matched = output.startswith(startstr) if startstr else True
 
         if not matched and startstr and verbose:
-            print "Startstr not matched:", startstr
+            print >> sys.stderr, "Startstr not matched:", startstr
 
         if substrs:
             for str in substrs:
                 matched = output.find(str) > 0
                 if not matched:
                     if verbose:
-                        print "Substring not matched:", str
+                        print >> sys.stderr, "Substring not matched:", str
                     break
 
         self.assertTrue(matched, msg if msg else CMD_MSG(cmd))

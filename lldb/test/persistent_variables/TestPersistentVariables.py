@@ -13,38 +13,23 @@ class TestPersistentVariables(TestBase):
 
     def test_persistent_variables(self):
         """Test that lldb persistent variables works correctly."""
-        res = self.res
+        self.runCmd("file ../array_types/a.out", CURRENT_EXECUTABLE_SET)
 
-        self.ci.HandleCommand("file ../array_types/a.out", res)
-        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
+        self.runCmd("breakpoint set --name main")
 
-        self.ci.HandleCommand("breakpoint set --name main", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
+        self.runCmd("run", RUN_STOPPED)
 
-        self.ci.HandleCommand("run", res)
-        self.runStarted = True
-        self.assertTrue(res.Succeeded(), RUN_STOPPED)
-
-        self.ci.HandleCommand("expr int $i = 5; $i + 1", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('expr int $i = 5; $i + 1'))
-        #print res.GetOutput()
+        self.runCmd("expr int $i = 5; $i + 1")
         # $0 = (int)6
 
-        self.ci.HandleCommand("expr $i + 3", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('expr $i + 3'))
-        #print res.GetOutput()
+        self.runCmd("expr $i + 3")
         # $1 = (int)8
 
-        self.ci.HandleCommand("expr $1 + $0", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('expr $1 + $0'))
-        #print res.GetOutput()
+        self.runCmd("expr $1 + $0")
         # $2 = (int)14
 
-        self.ci.HandleCommand("expr $2", res)
-        self.assertTrue(res.Succeeded() and
-                        res.GetOutput().startswith("$3 = (int) 14"),
-                        CMD_MSG('expr $2'))
-        #print res.GetOutput()
+        self.expect("expr $2",
+            startstr = "$3 = (int) 14")
         # $3 = (int)14
 
 

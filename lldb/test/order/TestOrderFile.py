@@ -14,15 +14,12 @@ class TestOrderFile(TestBase):
 
     def test_order_file(self):
         """Test debug symbols follow the correct order by the order file."""
-        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
-        self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Test that the debug symbols have Function f3 before Function f1.
-        self.ci.HandleCommand("image dump symtab a.out", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('image dump'))
-        output = res.GetOutput()
+        self.runCmd("image dump symtab a.out")
+        output = self.res.GetOutput()
         mo_f3 = re.search("Function +.+f3", output)
         mo_f1 = re.search("Function +.+f1", output)
         
@@ -30,9 +27,7 @@ class TestOrderFile(TestBase):
         self.assertTrue(mo_f3 and mo_f1 and mo_f3.start() < mo_f1.start(),
                         "Symbols have correct order by the order file")
 
-        self.ci.HandleCommand("run", res)
-        self.runStarted = True
-        self.assertTrue(res.Succeeded(), RUN_COMPLETED)
+        self.runCmd("run", RUN_COMPLETED)
 
 
 if __name__ == '__main__':

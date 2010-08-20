@@ -13,57 +13,38 @@ class TestLoadUnload(TestBase):
 
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""
-        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
-        self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break by function name a_function (not yet loaded).
-        self.ci.HandleCommand("breakpoint set -n a_function", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
-        self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 1: name = 'a_function', locations = 0 "
-            "(pending)"
-            ),
-                        BREAKPOINT_CREATED)
+        self.expect("breakpoint set -n a_function", BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: name = 'a_function', locations = 0 (pending)")
 
-        self.ci.HandleCommand("run", res)
-        self.runStarted = True
-        self.assertTrue(res.Succeeded(), RUN_STOPPED)
+        self.runCmd("run", RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint and at a_function.
-        self.ci.HandleCommand("thread list", res)
-        output = res.GetOutput()
-        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
-        self.assertTrue(output.find('state is Stopped') > 0 and
-                        output.find('a_function') > 0 and
-                        output.find('a.c:14') > 0 and
-                        output.find('stop reason = breakpoint') > 0,
-                        STOPPED_DUE_TO_BREAKPOINT)
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['state is Stopped',
+                       'a_function',
+                       'a.c:14',
+                       'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
-        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
-                        BREAKPOINT_HIT_ONCE)
+        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+            substrs = [' resolved, hit count = 1'])
 
-#         # We should stop agaian at a_function.
+#         # Issue the 'contnue' command.  We should stop agaian at a_function.
 #         # The stop reason of the thread should be breakpoint and at a_function.
-#         self.ci.HandleCommand("thread list", res)
-#         output = res.GetOutput()
-#         self.assertTrue(res.Succeeded())
-#         self.assertTrue(output.find('state is Stopped') > 0 and
-#                         output.find('a_function') > 0 and
-#                         output.find('a.c:14') > 0 and
-#                         output.find('stop reason = breakpoint') > 0)
-
+#         self.runCmd("continue")
+#         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+#             substrs = ['state is Stopped',
+#                        'a_function',
+#                        'a.c:14',
+#                        'stop reason = breakpoint'])
+#
 #         # The breakpoint should have a hit count of 2.
-#         self.ci.HandleCommand("breakpoint list", res)
-#         self.assertTrue(res.Succeeded())
-#         self.assertTrue(res.GetOutput().find(' resolved, hit count = 2') > 0)
-
-#         self.ci.HandleCommand("continue", res)
-#         self.assertTrue(res.Succeeded())
+#         self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+#             substrs = [' resolved, hit count = 2'])
 
 
 if __name__ == '__main__':
