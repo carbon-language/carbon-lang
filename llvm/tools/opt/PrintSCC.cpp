@@ -61,15 +61,15 @@ namespace {
       AU.addRequired<CallGraph>();
     }
   };
-
-  char CFGSCC::ID = 0;
-  RegisterPass<CFGSCC>
-  Y("print-cfg-sccs", "Print SCCs of each function CFG");
-
-  char CallGraphSCC::ID = 0;
-  RegisterPass<CallGraphSCC>
-  Z("print-callgraph-sccs", "Print SCCs of the Call Graph");
 }
+
+char CFGSCC::ID = 0;
+static RegisterPass<CFGSCC>
+Y("print-cfg-sccs", "Print SCCs of each function CFG");
+
+char CallGraphSCC::ID = 0;
+static RegisterPass<CallGraphSCC>
+Z("print-callgraph-sccs", "Print SCCs of the Call Graph");
 
 bool CFGSCC::runOnFunction(Function &F) {
   unsigned sccNum = 0;
