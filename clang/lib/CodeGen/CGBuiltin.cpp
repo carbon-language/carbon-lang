@@ -1377,8 +1377,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Int = usgn ? Intrinsic::arm_neon_vmlslu : Intrinsic::arm_neon_vmlsls;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlsl", splat);
   case ARM::BI__builtin_neon_vmovl_v:
-    Int = usgn ? Intrinsic::arm_neon_vmovlu : Intrinsic::arm_neon_vmovls;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmovl");
+    if (usgn)
+      return Builder.CreateZExt(Ops[0], Ty, "vmovl");
+    return Builder.CreateSExt(Ops[0], Ty, "vmovl");
   case ARM::BI__builtin_neon_vmovn_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmovn, &Ty, 1),
                         Ops, "vmovn");
