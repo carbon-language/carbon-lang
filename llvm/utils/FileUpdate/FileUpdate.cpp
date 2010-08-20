@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
       memcmp(In->getBufferStart(), Out->getBufferStart(),
              Out->getBufferSize()) == 0) {
     if (!Quiet)
-      outs() << argv[0] << ": Not updating '" << OutputFilename
+      errs() << argv[0] << ": Not updating '" << OutputFilename
              << "', contents match input.\n";
     return 0;
   }
@@ -63,10 +63,10 @@ int main(int argc, char **argv) {
 
   // Otherwise, overwrite the output.
   if (!Quiet)
-    outs() << argv[0] << ": Updating '" << OutputFilename
+    errs() << argv[0] << ": Updating '" << OutputFilename
            << "', contents changed.\n";
-  raw_fd_ostream OutStream(OutputFilename.c_str(), ErrorStr,
-                           raw_fd_ostream::F_Binary);
+  tool_output_file OutStream(OutputFilename.c_str(), ErrorStr,
+                             raw_fd_ostream::F_Binary);
   if (!ErrorStr.empty()) {
     errs() << argv[0] << ": Unable to write output '"
            << OutputFilename << "': " << ErrorStr << '\n';
@@ -74,14 +74,9 @@ int main(int argc, char **argv) {
   }
 
   OutStream.write(In->getBufferStart(), In->getBufferSize());
-  OutStream.close();
 
-  if (OutStream.has_error()) {
-    errs() << argv[0] << ": Could not open output file '"
-           << OutputFilename << "': " << ErrorStr << '\n';
-    OutStream.clear_error();
-    return 1;
-  }
+  // Declare success.
+  OutStream.keep();
 
   return 0;
 }
