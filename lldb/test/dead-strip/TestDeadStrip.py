@@ -13,73 +13,46 @@ class TestDeadStrip(TestBase):
 
     def test_dead_strip(self):
         """Test breakpoint works correctly with dead-code stripping."""
-        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
-        self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break by function name f1 (live code).
-        self.ci.HandleCommand("breakpoint set -s a.out -n f1", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
-        self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 1: name = 'f1', module = a.out, locations = 1"
-            ),
-                        BREAKPOINT_CREATED)
+        self.expect("breakpoint set -s a.out -n f1", BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: name = 'f1', module = a.out, locations = 1")
 
         # Break by function name f2 (dead code).
-        self.ci.HandleCommand("breakpoint set -s a.out -n f2", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
-        self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 2: name = 'f2', module = a.out, locations = 0 "
-            "(pending)"),
-                        BREAKPOINT_PENDING_CREATED)
+        self.expect("breakpoint set -s a.out -n f2", BREAKPOINT_PENDING_CREATED,
+            startstr = "Breakpoint created: 2: name = 'f2', module = a.out, locations = 0 (pending)")
 
         # Break by function name f3 (live code).
-        self.ci.HandleCommand("breakpoint set -s a.out -n f3", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
-        self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 3: name = 'f3', module = a.out, locations = 1"
-            ),
-                        BREAKPOINT_CREATED)
+        self.expect("breakpoint set -s a.out -n f3", BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 3: name = 'f3', module = a.out, locations = 1")
 
-        self.ci.HandleCommand("run", res)
-        self.runStarted = True
-        self.assertTrue(res.Succeeded(), RUN_STOPPED)
+        self.runCmd("run", RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint (breakpoint #1).
-        self.ci.HandleCommand("thread list", res)
-        output = res.GetOutput()
-        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
-        self.assertTrue(output.find('state is Stopped') > 0 and
-                        output.find('main.c:20') > 0 and
-                        output.find('where = a.out`f1') > 0 and
-                        output.find('stop reason = breakpoint') > 0,
-                        STOPPED_DUE_TO_BREAKPOINT)
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['state is Stopped',
+                       'main.c:20',
+                       'where = a.out`f1',
+                       'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.ci.HandleCommand("breakpoint list 1", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
-        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
-                        BREAKPOINT_HIT_ONCE)
+        self.expect("breakpoint list 1", BREAKPOINT_HIT_ONCE,
+            substrs = [' resolved, hit count = 1'])
 
-        self.ci.HandleCommand("continue", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('continue'))
+        self.runCmd("continue")
 
         # The stop reason of the thread should be breakpoint (breakpoint #3).
-        self.ci.HandleCommand("thread list", res)
-        output = res.GetOutput()
-        self.assertTrue(res.Succeeded(), CMD_MSG('thread list'))
-        self.assertTrue(output.find('state is Stopped') > 0 and
-                        output.find('main.c:40') > 0 and
-                        output.find('where = a.out`f3') > 0 and
-                        output.find('stop reason = breakpoint') > 0,
-                        STOPPED_DUE_TO_BREAKPOINT)
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['state is Stopped',
+                       'main.c:40',
+                       'where = a.out`f3',
+                       'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.ci.HandleCommand("breakpoint list 3", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint list'))
-        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0,
-                        BREAKPOINT_HIT_ONCE)
+        self.expect("breakpoint list 3", BREAKPOINT_HIT_ONCE,
+            substrs = [' resolved, hit count = 1'])
 
 
 if __name__ == '__main__':

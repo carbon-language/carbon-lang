@@ -126,6 +126,8 @@ class TestBase(unittest2.TestCase):
         if cmd.startswith("run"):
             self.runStarted = True
         if check:
+            if (not self.res.Succeeded()):
+                print self.res.GetError()
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
