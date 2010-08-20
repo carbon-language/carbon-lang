@@ -320,8 +320,14 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
       InitType = getContext().getBaseElementType(Array);
     const CXXRecordDecl *RD =
     cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
-    if (RD->hasTrivialConstructor())
+    if (RD->hasTrivialConstructor()) {
+      // The constructor is trivial, but we may still need to zero-initialize
+      // the class.
+      if (E->requiresZeroInitialization())
+        EmitNullInitialization(Dest, E->getType());
+      
       return;
+    }
   }
   // Code gen optimization to eliminate copy constructor and return
   // its first argument instead, if in fact that argument is a temporary 

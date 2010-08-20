@@ -67,3 +67,30 @@ namespace test1 {
     B();
   }
 }
+
+namespace ptrmem {
+  struct S {
+    int mem1;
+    int S::*mem2;
+  };
+
+  // CHECK: define i32 @_ZN6ptrmem4testEPNS_1SE
+  int test(S *s) {
+    // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+    // CHECK: getelementptr
+    // CHECK: ret
+    return s->*S().mem2;
+  }
+}
+
+namespace zeroinit {
+  struct S { int i; };
+
+  // CHECK: define i32 @_ZN8zeroinit4testEv()
+  int test() {
+    // CHECK: call void @llvm.memset.p0i8.i64
+    // CHECK: getelementptr
+    // CHECK: ret i32
+    return S().i;
+  }
+}
