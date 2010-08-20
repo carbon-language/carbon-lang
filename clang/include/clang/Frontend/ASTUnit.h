@@ -311,6 +311,7 @@ private:
                   unsigned MaxLines, bool &CreatedBuffer);
   
   llvm::MemoryBuffer *getMainBufferWithPrecompiledPreamble(
+                                         CompilerInvocation PreambleInvocation,
                                                      bool AllowRebuild = true,
                                                         unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
@@ -546,16 +547,16 @@ public:
   /// \param IncludeCodePatterns Whether to include code patterns (such as a 
   /// for loop) in the code-completion results.
   ///
-  /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, and
-  /// StoredDiagnostics parameters are all disgusting hacks. They will
-  /// go away.
+  /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, StoredDiagnostics, and
+  /// OwnedBuffers parameters are all disgusting hacks. They will go away.
   void CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                     RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
                     bool IncludeMacros, bool IncludeCodePatterns,
                     CodeCompleteConsumer &Consumer,
                     Diagnostic &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,
-                    llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics);
+                    llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
+              llvm::SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers);
 
   /// \brief Save this translation unit to a file with the given name.
   ///

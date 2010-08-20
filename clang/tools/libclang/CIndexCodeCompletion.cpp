@@ -624,11 +624,6 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   // Create a code-completion consumer to capture the results.
   CaptureCompletionResults Capture(*Results);
 
-  // Make sure that we free the temporary buffers when the
-  // code-completion constructor is freed.
-  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I)
-    Results->TemporaryBuffers.push_back(RemappedFiles[I].second);
-
   // Perform completion.
   AST->CodeComplete(complete_filename, complete_line, complete_column,
                     RemappedFiles.data(), RemappedFiles.size(), 
@@ -636,7 +631,8 @@ void clang_codeCompleteAt_Impl(void *UserData) {
                     (options & CXCodeComplete_IncludeCodePatterns),
                     Capture,
                     *Results->Diag, Results->LangOpts, Results->SourceMgr,
-                    Results->FileMgr, Results->Diagnostics);
+                    Results->FileMgr, Results->Diagnostics,
+                    Results->TemporaryBuffers);
 
   
 

@@ -940,9 +940,9 @@ static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
 /// buffer that should be used in place of the main file when doing so.
 /// Otherwise, returns a NULL pointer.
 llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
+                                          CompilerInvocation PreambleInvocation,
                                                            bool AllowRebuild,
                                                            unsigned MaxLines) {
-  CompilerInvocation PreambleInvocation(*Invocation);
   FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
     = PreambleInvocation.getPreprocessorOpts();
@@ -1312,7 +1312,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // FIXME: When C++ PCH is ready, allow use of it for a precompiled preamble.
   if (PrecompilePreamble && !CI->getLangOpts().CPlusPlus) {
     AST->PreambleRebuildCounter = 1;
-    OverrideMainBuffer = AST->getMainBufferWithPrecompiledPreamble();
+    OverrideMainBuffer
+      = AST->getMainBufferWithPrecompiledPreamble(*AST->Invocation);
   }
   
   llvm::Timer *ParsingTimer = 0;
@@ -1437,7 +1438,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   // build a precompiled preamble, do so now.
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (!PreambleFile.empty() || PreambleRebuildCounter > 0)
-    OverrideMainBuffer = getMainBufferWithPrecompiledPreamble();
+    OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(*Invocation);
     
   // Clear out the diagnostics state.
   if (!OverrideMainBuffer)
@@ -1663,7 +1664,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                            CodeCompleteConsumer &Consumer,
                            Diagnostic &Diag, LangOptions &LangOpts,
                            SourceManager &SourceMgr, FileManager &FileMgr,
-                   llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics) {
+                   llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
+             llvm::SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers) {
   if (!Invocation.get())
     return;
 
@@ -1739,9 +1741,11 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   // Remap files.
   PreprocessorOpts.clearRemappedFiles();
   PreprocessorOpts.RetainRemappedFileBuffers = true;
-  for (unsigned I = 0; I != NumRemappedFiles; ++I)
+  for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
                                      RemappedFiles[I].second);
+    OwnedBuffers.push_back(RemappedFiles[I].second);
+  }
   
   // Use the code completion consumer we were given, but adding any cached
   // code-completion results.
@@ -1763,8 +1767,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     if (const FileStatus *CompleteFileStatus = CompleteFilePath.getFileStatus())
       if (const FileStatus *MainStatus = MainPath.getFileStatus())
         if (CompleteFileStatus->getUniqueID() == MainStatus->getUniqueID())
-          OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(false, 
-                                                                    Line);
+          OverrideMainBuffer
+            = getMainBufferWithPrecompiledPreamble(CCInvocation, false, Line);
   }
 
   // If the main file has been overridden due to the use of a preamble,
@@ -1785,6 +1789,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
       FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SourceMgr);
       StoredDiagnostics[I].setLocation(Loc);
     }
+    
+    OwnedBuffers.push_back(OverrideMainBuffer);
   } else {
     PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;
@@ -1802,7 +1808,6 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     CompletionTimer->stopTimer();
   
   // Steal back our resources. 
-  delete OverrideMainBuffer;
   Clang.takeFileManager();
   Clang.takeSourceManager();
   Clang.takeInvocation();
