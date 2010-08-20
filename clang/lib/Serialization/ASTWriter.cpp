@@ -2579,21 +2579,18 @@ void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
 }
 
 void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
-  if (T.isNull()) {
-    Record.push_back(PREDEF_TYPE_NULL_ID);
-    return;
-  }
+  Record.push_back(GetOrCreateTypeID(T));
+}
+
+TypeID ASTWriter::GetOrCreateTypeID(QualType T) {
+  if (T.isNull())
+    return PREDEF_TYPE_NULL_ID;
 
   unsigned FastQuals = T.getLocalFastQualifiers();
   T.removeFastQualifiers();
 
-  if (T.hasLocalNonFastQualifiers()) {
-    TypeIdx Idx = GetOrCreateTypeIdx(T);
-
-    // Encode the type qualifiers in the type reference.
-    Record.push_back(Idx.asTypeID(FastQuals));
-    return;
-  }
+  if (T.hasLocalNonFastQualifiers())
+    return GetOrCreateTypeIdx(T).asTypeID(FastQuals);
 
   assert(!T.hasLocalQualifiers());
 
@@ -2633,14 +2630,10 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
       break;
     }
 
-    Record.push_back(TypeIdx(ID).asTypeID(FastQuals));
-    return;
+    return TypeIdx(ID).asTypeID(FastQuals);
   }
 
-  TypeIdx Idx = GetOrCreateTypeIdx(T);
-
-  // Encode the type qualifiers in the type reference.
-  Record.push_back(Idx.asTypeID(FastQuals));
+  return GetOrCreateTypeIdx(T).asTypeID(FastQuals);
 }
 
 TypeIdx ASTWriter::GetOrCreateTypeIdx(QualType T) {
