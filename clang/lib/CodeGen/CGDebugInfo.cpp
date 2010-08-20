@@ -38,7 +38,7 @@ using namespace clang::CodeGen;
 
 CGDebugInfo::CGDebugInfo(CodeGenModule &CGM)
   : CGM(CGM), DebugFactory(CGM.getModule()),
-    FwdDeclCount(0), BlockLiteralGenericSet(false) {
+    BlockLiteralGenericSet(false) {
   CreateCompileUnit();
 }
 
@@ -649,7 +649,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
 llvm::DISubprogram
 CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                      llvm::DIFile Unit,
-                                     llvm::DICompositeType &RecordTy) {
+                                     llvm::DIType RecordTy) {
   bool IsCtorOrDtor = 
     isa<CXXConstructorDecl>(Method) || isa<CXXDestructorDecl>(Method);
   
@@ -708,7 +708,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
 void CGDebugInfo::
 CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
                           llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
-                          llvm::DICompositeType &RecordTy) {
+                          llvm::DIType RecordTy) {
   for(CXXRecordDecl::method_iterator I = RD->method_begin(),
         E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *Method = *I;
@@ -726,7 +726,7 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
 void CGDebugInfo::
 CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
                 llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
-                llvm::DICompositeType &RecordTy) {
+                llvm::DIType RecordTy) {
 
   const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
   for (CXXRecordDecl::base_class_const_iterator BI = RD->bases_begin(),
@@ -868,12 +868,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   // A RD->getName() is not unique. However, the debug info descriptors 
   // are uniqued so use type name to ensure uniquness.
-  llvm::SmallString<128> FwdDeclName;
-  llvm::raw_svector_ostream(FwdDeclName) << "fwd.type." << FwdDeclCount++;
-  llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, FDContext, FwdDeclName,
-                                     DefUnit, Line, 0, 0, 0, 0,
-                                     llvm::DIType(), llvm::DIArray());
+  llvm::DIType FwdDecl =
+    DebugFactory.CreateTemporaryType(FDContext);
 
   llvm::MDNode *MN = FwdDecl;
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
@@ -961,7 +957,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  llvm::DIDerivedType(FwdDeclNode).replaceAllUsesWith(RealDecl);
+  llvm::DIType(FwdDeclNode).replaceAllUsesWith(RealDecl);
   RegionMap[RD] = llvm::WeakVH(RealDecl);
   return RealDecl;
 }
@@ -990,11 +986,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
-  llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, ID->getName(),
-                                     DefUnit, Line, 0, 0, 0, 0,
-                                     llvm::DIType(), llvm::DIArray(),
-                                     RuntimeLang);
+  llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType(Unit);
 
   // If this is just a forward declaration, return it.
   if (ID->isForwardDecl())
@@ -1093,7 +1085,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  llvm::DIDerivedType(FwdDeclNode).replaceAllUsesWith(RealDecl);
+  llvm::DIType(FwdDeclNode).replaceAllUsesWith(RealDecl);
   RegionMap[ID] = llvm::WeakVH(RealDecl);
 
   return RealDecl;

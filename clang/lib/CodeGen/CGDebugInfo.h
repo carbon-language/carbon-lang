@@ -46,9 +46,6 @@ class CGDebugInfo {
   llvm::DICompileUnit TheCU;
   SourceLocation CurLoc, PrevLoc;
   llvm::DIType VTablePtrType;
-  /// FwdDeclCount - This counter is used to ensure unique names for forward
-  /// record decls.
-  unsigned FwdDeclCount;
   
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
@@ -107,16 +104,16 @@ class CGDebugInfo {
   
   llvm::DISubprogram CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                              llvm::DIFile F,
-                                             llvm::DICompositeType &RecordTy);
+                                             llvm::DIType RecordTy);
   
   void CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
                                  llvm::DIFile F,
                                  llvm::SmallVectorImpl<llvm::DIDescriptor> &E,
-                                 llvm::DICompositeType &T);
+                                 llvm::DIType T);
   void CollectCXXBases(const CXXRecordDecl *Decl,
                        llvm::DIFile F,
                        llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
-                       llvm::DICompositeType &RecordTy);
+                       llvm::DIType RecordTy);
 
 
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
