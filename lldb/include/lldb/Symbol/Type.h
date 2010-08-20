@@ -168,6 +168,9 @@ public:
         m_context = context;
     }
 
+    const lldb_private::Declaration &
+    GetDeclaration () const;
+
     void *
     GetOpaqueClangQualType ();
 

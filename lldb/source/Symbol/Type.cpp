@@ -389,6 +389,11 @@ lldb_private::Type::GetTypeList()
     return GetSymbolFile()->GetObjectFile()->GetModule()->GetTypeList();
 }
 
+const lldb_private::Declaration &
+lldb_private::Type::GetDeclaration () const
+{
+    return m_decl;
+}
 
 bool
 lldb_private::Type::ResolveClangType()
