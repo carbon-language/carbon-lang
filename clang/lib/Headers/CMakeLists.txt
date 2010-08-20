@@ -13,6 +13,7 @@ set(files
   stddef.h	
   stdint.h	
   tgmath.h
+  smmintrin.h
   tmmintrin.h
   xmmintrin.h)
 
