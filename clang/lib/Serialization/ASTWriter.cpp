@@ -2588,14 +2588,7 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   T.removeFastQualifiers();
 
   if (T.hasLocalNonFastQualifiers()) {
-    TypeIdx &Idx = TypeIdxs[T];
-    if (Idx.getIndex() == 0) {
-      // We haven't seen these qualifiers applied to this type before.
-      // Assign it a new ID.  This is the only time we enqueue a
-      // qualified type, and it has no CV qualifiers.
-      Idx = TypeIdx(NextTypeID++);
-      DeclTypesToEmit.push(T);
-    }
+    TypeIdx Idx = GetOrCreateTypeIdx(T);
 
     // Encode the type qualifiers in the type reference.
     Record.push_back(Idx.asTypeID(FastQuals));
@@ -2644,6 +2637,17 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
+  TypeIdx Idx = GetOrCreateTypeIdx(T);
+
+  // Encode the type qualifiers in the type reference.
+  Record.push_back(Idx.asTypeID(FastQuals));
+}
+
+TypeIdx ASTWriter::GetOrCreateTypeIdx(QualType T) {
+  if (T.isNull())
+    return TypeIdx();
+  assert(!T.getLocalFastQualifiers());
+
   TypeIdx &Idx = TypeIdxs[T];
   if (Idx.getIndex() == 0) {
     // We haven't seen this type before. Assign it a new ID and put it
@@ -2651,9 +2655,16 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
     Idx = TypeIdx(NextTypeID++);
     DeclTypesToEmit.push(T);
   }
+  return Idx;
+}
 
-  // Encode the type qualifiers in the type reference.
-  Record.push_back(Idx.asTypeID(FastQuals));
+TypeIdx ASTWriter::getTypeIdx(QualType T) {
+  if (T.isNull())
+    return TypeIdx();
+  assert(!T.getLocalFastQualifiers());
+
+  assert(TypeIdxs.find(T) != TypeIdxs.end() && "Type not emitted!");
+  return TypeIdxs[T];
 }
 
 void ASTWriter::AddDeclRef(const Decl *D, RecordData &Record) {

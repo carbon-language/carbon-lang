@@ -364,6 +364,12 @@ public:
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordData &Record);
 
+  /// \brief Force a type to be emitted and get its index.
+  serialization::TypeIdx GetOrCreateTypeIdx(QualType T);
+
+  /// \brief Determine the type index of an already-emitted type.
+  serialization::TypeIdx getTypeIdx(QualType T);
+
   /// \brief Emits a reference to a declarator info.
   void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record);
 
