@@ -13,6 +13,7 @@
 
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
+#include "ASTCommon.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Sema/Sema.h"
@@ -477,14 +478,7 @@ public:
   }
 
   static unsigned ComputeHash(Selector Sel) {
-    unsigned N = Sel.getNumArgs();
-    if (N == 0)
-      ++N;
-    unsigned R = 5381;
-    for (unsigned I = 0; I != N; ++I)
-      if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
-        R = llvm::HashString(II->getName(), R);
-    return R;
+    return serialization::ComputeHash(Sel);
   }
 
   // This hopefully will just get inlined and removed by the optimizer.

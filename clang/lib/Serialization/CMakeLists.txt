@@ -2,6 +2,7 @@ set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangSerialization
   GeneratePCH.cpp
+  ASTCommon.cpp
   ASTReader.cpp
   ASTReaderDecl.cpp
   ASTReaderStmt.cpp

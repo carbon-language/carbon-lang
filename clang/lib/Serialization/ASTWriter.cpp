@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Serialization/ASTWriter.h"
+#include "ASTCommon.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/AST/ASTContext.h"
@@ -1571,14 +1572,7 @@ public:
   explicit ASTMethodPoolTrait(ASTWriter &Writer) : Writer(Writer) { }
 
   static unsigned ComputeHash(Selector Sel) {
-    unsigned N = Sel.getNumArgs();
-    if (N == 0)
-      ++N;
-    unsigned R = 5381;
-    for (unsigned I = 0; I != N; ++I)
-      if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
-        R = llvm::HashString(II->getName(), R);
-    return R;
+    return serialization::ComputeHash(Sel);
   }
 
   std::pair<unsigned,unsigned>
