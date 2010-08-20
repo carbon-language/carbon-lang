@@ -892,25 +892,30 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         // TODO: fixit for inserting 'Base<T>::' in the other cases.
         // Actually quite difficult!
         if (isInstance) {
-          Diag(R.getNameLoc(), diagnostic) << Name
-            << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
-
           UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(
               CallsUndergoingInstantiation.back()->getCallee());
-          CXXMethodDecl *DepMethod = cast<CXXMethodDecl>(
+          CXXMethodDecl *DepMethod = cast_or_null<CXXMethodDecl>(
               CurMethod->getInstantiatedFromMemberFunction());
-          QualType DepThisType = DepMethod->getThisType(Context);
-          CXXThisExpr *DepThis = new (Context) CXXThisExpr(R.getNameLoc(),
-                                                           DepThisType, false);
-          TemplateArgumentListInfo TList;
-          if (ULE->hasExplicitTemplateArgs())
-            ULE->copyTemplateArgumentsInto(TList);
-          CXXDependentScopeMemberExpr *DepExpr =
-              CXXDependentScopeMemberExpr::Create(
-                  Context, DepThis, DepThisType, true, SourceLocation(),
-                  ULE->getQualifier(), ULE->getQualifierRange(), NULL,
-                  R.getLookupNameInfo(), &TList);
-          CallsUndergoingInstantiation.back()->setCallee(DepExpr);
+	  if (DepMethod) {
+            Diag(R.getNameLoc(), diagnostic) << Name
+              << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
+            QualType DepThisType = DepMethod->getThisType(Context);
+            CXXThisExpr *DepThis = new (Context) CXXThisExpr(
+                                       R.getNameLoc(), DepThisType, false);
+            TemplateArgumentListInfo TList;
+            if (ULE->hasExplicitTemplateArgs())
+              ULE->copyTemplateArgumentsInto(TList);
+            CXXDependentScopeMemberExpr *DepExpr =
+                CXXDependentScopeMemberExpr::Create(
+                    Context, DepThis, DepThisType, true, SourceLocation(),
+                    ULE->getQualifier(), ULE->getQualifierRange(), NULL,
+                    R.getLookupNameInfo(), &TList);
+            CallsUndergoingInstantiation.back()->setCallee(DepExpr);
+	  } else {
+            // FIXME: we should be able to handle this case too. It is correct
+            // to add this-> here. This is a workaround for PR7947.
+            Diag(R.getNameLoc(), diagnostic) << Name;
+	  }
         } else {
           Diag(R.getNameLoc(), diagnostic) << Name;
         }
