@@ -216,15 +216,12 @@ int main(int argc, char **argv) {
     return 1;
 
   std::string Error;
-  raw_fd_ostream Out(OutputFilename.c_str(), Error);
+  tool_output_file Out(OutputFilename.c_str(), Error);
   if (!Error.empty()) {
     errs() << argv[0] << ": error opening " << OutputFilename
            << ":" << Error << "\n";
     return 1;
   }
-
-  // Make sure the file gets removed if *gasp* tablegen crashes...
-  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   try {
     switch (Action) {
@@ -339,6 +336,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
+    // Declare success.
+    Out.keep();
     return 0;
 
   } catch (const TGError &Error) {
@@ -353,7 +352,5 @@ int main(int argc, char **argv) {
     errs() << argv[0] << ": Unknown unexpected exception occurred.\n";
   }
 
-  if (OutputFilename != "-")
-    std::remove(OutputFilename.c_str());    // Remove the file, it's broken
   return 1;
 }
