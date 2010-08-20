@@ -2427,7 +2427,7 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
     const OptionDescription& val = *B;
 
     O << val.GenTypeDeclaration() << ' '
-      << val.GenVariableName()
+      << val.GenPlainVariableName()
       << "(\"" << val.Name << '\"';
 
     const OptionDescription& D = descs.FindOption(val.Help);
