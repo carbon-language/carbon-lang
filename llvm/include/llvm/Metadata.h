@@ -175,8 +175,9 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-/// NamedMDNode - a tuple of MDNodes.
-/// NamedMDNode is always named. All NamedMDNode operand has a type of metadata.
+/// NamedMDNode - a tuple of MDNodes. Despite its name, a NamedMDNode isn't
+/// itself an MDNode. NamedMDNodes belong to modules, have names, and contain
+/// lists of MDNodes.
 class NamedMDNode : public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
   friend struct ilist_traits<NamedMDNode>;
