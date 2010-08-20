@@ -20,6 +20,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/Bitcode/BitCodes.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
   namespace serialization {
@@ -80,6 +81,36 @@ namespace clang {
         return TypeIdx(ID >> Qualifiers::FastWidth);
       }
     };
+
+    /// A structure for putting "fast"-unqualified QualTypes into a
+    /// DenseMap.  This uses the standard pointer hash function.
+    struct UnsafeQualTypeDenseMapInfo {
+      static inline bool isEqual(QualType A, QualType B) { return A == B; }
+      static inline QualType getEmptyKey() {
+        return QualType::getFromOpaquePtr((void*) 1);
+      }
+      static inline QualType getTombstoneKey() {
+        return QualType::getFromOpaquePtr((void*) 2);
+      }
+      static inline unsigned getHashValue(QualType T) {
+        assert(!T.getLocalFastQualifiers() && 
+               "hash invalid for types with fast quals");
+        uintptr_t v = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+        return (unsigned(v) >> 4) ^ (unsigned(v) >> 9);
+      }
+    };
+
+    /// \brief Map that provides the ID numbers of each type within the
+    /// output stream, plus those deserialized from a chained PCH.
+    ///
+    /// The ID numbers of types are consecutive (in order of discovery)
+    /// and start at 1. 0 is reserved for NULL. When types are actually
+    /// stored in the stream, the ID number is shifted by 2 bits to
+    /// allow for the const/volatile qualifiers.
+    ///
+    /// Keys in the map never have const/volatile qualifiers.
+    typedef llvm::DenseMap<QualType, TypeIdx, UnsafeQualTypeDenseMapInfo>
+        TypeIdxMap;
 
     /// \brief An ID number that refers to an identifier in an AST
     /// file.

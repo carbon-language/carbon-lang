@@ -704,6 +704,148 @@ public:
 typedef OnDiskChainedHashTable<ASTIdentifierLookupTrait>
   ASTIdentifierLookupTable;
 
+namespace {
+class ASTDeclContextNameLookupTrait {
+  ASTReader &Reader;
+
+public:
+  /// \brief Pair of begin/end iterators for DeclIDs.
+  typedef std::pair<DeclID *, DeclID *> data_type;
+
+  /// \brief Special internal key for declaration names.
+  /// The hash table creates keys for comparison; we do not create
+  /// a DeclarationName for the internal key to avoid deserializing types.
+  struct DeclNameKey {
+    DeclarationName::NameKind Kind;
+    uint64_t Data;
+    DeclNameKey() : Kind((DeclarationName::NameKind)0), Data(0) { }
+  };
+
+  typedef DeclarationName external_key_type;
+  typedef DeclNameKey internal_key_type;
+
+  explicit ASTDeclContextNameLookupTrait(ASTReader &Reader) : Reader(Reader) { }
+
+  static bool EqualKey(const internal_key_type& a,
+                       const internal_key_type& b) {
+    return a.Kind == b.Kind && a.Data == b.Data;
+  }
+
+  unsigned ComputeHash(const DeclNameKey &Key) const {
+    llvm::FoldingSetNodeID ID;
+    ID.AddInteger(Key.Kind);
+
+    switch (Key.Kind) {
+    case DeclarationName::Identifier:
+    case DeclarationName::CXXLiteralOperatorName:
+      ID.AddString(((IdentifierInfo*)Key.Data)->getName());
+      break;
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+      ID.AddInteger(serialization::ComputeHash(Selector(Key.Data)));
+      break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
+      ID.AddInteger((TypeID)Key.Data);
+      break;
+    case DeclarationName::CXXOperatorName:
+      ID.AddInteger((OverloadedOperatorKind)Key.Data);
+      break;
+    case DeclarationName::CXXUsingDirective:
+      break;
+    }
+
+    return ID.ComputeHash();
+  }
+
+  internal_key_type GetInternalKey(const external_key_type& Name) const {
+    DeclNameKey Key;
+    Key.Kind = Name.getNameKind();
+    switch (Name.getNameKind()) {
+    case DeclarationName::Identifier:
+      Key.Data = (uint64_t)Name.getAsIdentifierInfo();
+      break;
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+      Key.Data = (uint64_t)Name.getObjCSelector().getAsOpaquePtr();
+      break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
+      Key.Data = Reader.GetTypeID(Name.getCXXNameType());
+      break;
+    case DeclarationName::CXXOperatorName:
+      Key.Data = Name.getCXXOverloadedOperator();
+      break;
+    case DeclarationName::CXXLiteralOperatorName:
+      Key.Data = (uint64_t)Name.getCXXLiteralIdentifier();
+      break;
+    case DeclarationName::CXXUsingDirective:
+      break;
+    }
+    
+    return Key;
+  }
+
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    using namespace clang::io;
+    unsigned KeyLen = ReadUnalignedLE16(d);
+    unsigned DataLen = ReadUnalignedLE16(d);
+    return std::make_pair(KeyLen, DataLen);
+  }
+
+  internal_key_type ReadKey(const unsigned char* d, unsigned) {
+    using namespace clang::io;
+
+    DeclNameKey Key;
+    Key.Kind = (DeclarationName::NameKind)*d++;
+    switch (Key.Kind) {
+    case DeclarationName::Identifier:
+      Key.Data = (uint64_t)Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
+      break;
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+      Key.Data = 
+         (uint64_t)Reader.DecodeSelector(ReadUnalignedLE32(d)).getAsOpaquePtr();
+      break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
+      Key.Data = ReadUnalignedLE32(d); // TypeID
+      break;
+    case DeclarationName::CXXOperatorName:
+      Key.Data = *d++; // OverloadedOperatorKind
+      break;
+    case DeclarationName::CXXLiteralOperatorName:
+      Key.Data = (uint64_t)Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
+      break;
+    case DeclarationName::CXXUsingDirective:
+      break;
+    }
+    
+    return Key;
+  }
+
+  data_type ReadData(internal_key_type, const unsigned char* d,
+                     unsigned DataLen) {
+    using namespace clang::io;
+    unsigned NumDecls = ReadUnalignedLE16(d);
+    DeclID *Start = (DeclID *)d;
+    return std::make_pair(Start, Start + NumDecls);
+  }
+};
+
+} // end anonymous namespace
+
+/// \brief The on-disk hash table used for the DeclContext's Name lookup table.
+typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
+  ASTDeclContextNameLookupTable;
+
 void ASTReader::Error(const char *Msg) {
   Diag(diag::err_fe_pch_malformed) << Msg;
 }
@@ -2825,12 +2967,34 @@ QualType ASTReader::GetType(TypeID ID) {
   if (TypesLoaded[Index].isNull()) {
     TypesLoaded[Index] = ReadTypeRecord(Index);
     TypesLoaded[Index]->setFromAST();
+    TypeIdxs[TypesLoaded[Index]] = TypeIdx::fromTypeID(ID);
     if (DeserializationListener)
       DeserializationListener->TypeRead(TypeIdx::fromTypeID(ID),
                                         TypesLoaded[Index]);
   }
 
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
+}
+
+TypeID ASTReader::GetTypeID(QualType T) const {
+  return MakeTypeID(T,
+              std::bind1st(std::mem_fun(&ASTReader::GetTypeIdx), this));
+}
+
+TypeIdx ASTReader::GetTypeIdx(QualType T) const {
+  if (T.isNull())
+    return TypeIdx();
+  assert(!T.getLocalFastQualifiers());
+
+  TypeIdxMap::const_iterator I = TypeIdxs.find(T);
+  // GetTypeIdx is mostly used for computing the hash of DeclarationNames and
+  // comparing keys of ASTDeclContextNameLookupTable.
+  // If the type didn't come from the AST file use a specially marked index
+  // so that any hash/key comparison fail since no such index is stored
+  // in a AST file.
+  if (I == TypeIdxs.end())
+    return TypeIdx(-1);
+  return I->second;
 }
 
 TemplateArgumentLocInfo

@@ -20,7 +20,6 @@
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Sema/SemaConsumer.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -49,24 +48,6 @@ class Sema;
 class SourceManager;
 class SwitchCase;
 class TargetInfo;
-
-/// A structure for putting "fast"-unqualified QualTypes into a
-/// DenseMap.  This uses the standard pointer hash function.
-struct UnsafeQualTypeDenseMapInfo {
-  static inline bool isEqual(QualType A, QualType B) { return A == B; }
-  static inline QualType getEmptyKey() {
-    return QualType::getFromOpaquePtr((void*) 1);
-  }
-  static inline QualType getTombstoneKey() {
-    return QualType::getFromOpaquePtr((void*) 2);
-  }
-  static inline unsigned getHashValue(QualType T) {
-    assert(!T.getLocalFastQualifiers() && 
-           "hash invalid for types with fast quals");
-    uintptr_t v = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
-    return (unsigned(v) >> 4) ^ (unsigned(v) >> 9);
-  }
-};
 
 /// \brief Writes an AST file containing the contents of a translation unit.
 ///
@@ -146,8 +127,7 @@ private:
   /// allow for the const/volatile qualifiers.
   ///
   /// Keys in the map never have const/volatile qualifiers.
-  llvm::DenseMap<QualType, serialization::TypeIdx, UnsafeQualTypeDenseMapInfo>
-      TypeIdxs;
+  serialization::TypeIdxMap TypeIdxs;
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.
@@ -368,13 +348,13 @@ public:
   serialization::TypeID GetOrCreateTypeID(QualType T);
 
   /// \brief Determine the type ID of an already-emitted type.
-  serialization::TypeID getTypeID(QualType T);
+  serialization::TypeID getTypeID(QualType T) const;
 
   /// \brief Force a type to be emitted and get its index.
   serialization::TypeIdx GetOrCreateTypeIdx(QualType T);
 
   /// \brief Determine the type index of an already-emitted type.
-  serialization::TypeIdx getTypeIdx(QualType T);
+  serialization::TypeIdx getTypeIdx(QualType T) const;
 
   /// \brief Emits a reference to a declarator info.
   void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record);

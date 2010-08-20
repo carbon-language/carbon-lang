@@ -27,7 +27,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -314,6 +313,17 @@ private:
   /// When the pointer at index I is non-NULL, the type with
   /// ID = (I + 1) << FastQual::Width has already been loaded
   std::vector<QualType> TypesLoaded;
+
+  /// \brief Map that provides the ID numbers of each type within the
+  /// output stream, plus those deserialized from a chained PCH.
+  ///
+  /// The ID numbers of types are consecutive (in order of discovery)
+  /// and start at 1. 0 is reserved for NULL. When types are actually
+  /// stored in the stream, the ID number is shifted by 2 bits to
+  /// allow for the const/volatile qualifiers.
+  ///
+  /// Keys in the map never have const/volatile qualifiers.
+  serialization::TypeIdxMap TypeIdxs;
 
   /// \brief Declarations that have already been loaded from the chain.
   ///
@@ -719,6 +729,16 @@ public:
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
   QualType GetType(serialization::TypeID ID);
+
+  /// \brief Returns the type ID associated with the given type.
+  /// If the type didn't come from the AST file the ID that is returned is
+  /// marked as "doesn't exist in AST".
+  serialization::TypeID GetTypeID(QualType T) const;
+
+  /// \brief Returns the type index associated with the given type.
+  /// If the type didn't come from the AST file the index that is returned is
+  /// marked as "doesn't exist in AST".
+  serialization::TypeIdx GetTypeIdx(QualType T) const;
 
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.

@@ -1653,6 +1653,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
   // Create and write out the blob that contains selectors and the method pool.
   {
     OnDiskChainedHashTableGenerator<ASTMethodPoolTrait> Generator;
+    ASTMethodPoolTrait Trait(*this);
 
     // Create the on-disk hash table representation. We walk through every
     // selector we've seen and look it up in the method pool.
@@ -1692,7 +1693,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
         // A new method pool entry.
         ++NumTableEntries;
       }
-      Generator.insert(S, Data);
+      Generator.insert(S, Data, Trait);
     }
 
     // Create the on-disk hash table in a buffer.
@@ -1877,6 +1878,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
   // strings.
   {
     OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
+    ASTIdentifierTableTrait Trait(*this, PP);
 
     // Look for any identifiers that were named while processing the
     // headers, but are otherwise not needed. We add these to the hash
@@ -1896,7 +1898,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
       if (!Chain || !ID->first->isFromAST())
-        Generator.insert(ID->first, ID->second);
+        Generator.insert(ID->first, ID->second, Trait);
     }
 
     // Create the on-disk hash table in a buffer.
@@ -1938,6 +1940,127 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP) {
                             (const char *)data(IdentifierOffsets),
                             IdentifierOffsets.size() * sizeof(uint32_t));
 }
+
+//===----------------------------------------------------------------------===//
+// DeclContext's Name Lookup Table Serialization
+//===----------------------------------------------------------------------===//
+
+namespace {
+// Trait used for the on-disk hash table used in the method pool.
+class ASTDeclContextNameLookupTrait {
+  ASTWriter &Writer;
+
+public:
+  typedef DeclarationName key_type;
+  typedef key_type key_type_ref;
+
+  typedef DeclContext::lookup_result data_type;
+  typedef const data_type& data_type_ref;
+
+  explicit ASTDeclContextNameLookupTrait(ASTWriter &Writer) : Writer(Writer) { }
+
+  unsigned ComputeHash(DeclarationName Name) {
+    llvm::FoldingSetNodeID ID;
+    ID.AddInteger(Name.getNameKind());
+
+    switch (Name.getNameKind()) {
+    case DeclarationName::Identifier:
+      ID.AddString(Name.getAsIdentifierInfo()->getName());
+      break;
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+      ID.AddInteger(serialization::ComputeHash(Name.getObjCSelector()));
+      break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
+      ID.AddInteger(Writer.GetOrCreateTypeID(Name.getCXXNameType()));
+      break;
+    case DeclarationName::CXXOperatorName:
+      ID.AddInteger(Name.getCXXOverloadedOperator());
+      break;
+    case DeclarationName::CXXLiteralOperatorName:
+      ID.AddString(Name.getCXXLiteralIdentifier()->getName());
+    case DeclarationName::CXXUsingDirective:
+      break;
+    }
+
+    return ID.ComputeHash();
+  }
+
+  std::pair<unsigned,unsigned>
+    EmitKeyDataLength(llvm::raw_ostream& Out, DeclarationName Name,
+                      data_type_ref Lookup) {
+    unsigned KeyLen = 1;
+    switch (Name.getNameKind()) {
+    case DeclarationName::Identifier:
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
+    case DeclarationName::CXXLiteralOperatorName:
+      KeyLen += 4;
+      break;
+    case DeclarationName::CXXOperatorName:
+      KeyLen += 1;
+      break;
+    case DeclarationName::CXXUsingDirective:
+      break;
+    }
+    clang::io::Emit16(Out, KeyLen);
+
+    // 2 bytes for num of decls and 4 for each DeclID.
+    unsigned DataLen = 2 + 4 * (Lookup.second - Lookup.first);
+    clang::io::Emit16(Out, DataLen);
+
+    return std::make_pair(KeyLen, DataLen);
+  }
+
+  void EmitKey(llvm::raw_ostream& Out, DeclarationName Name, unsigned) {
+    using namespace clang::io;
+
+    assert(Name.getNameKind() < 0x100 && "Invalid name kind ?");
+    Emit8(Out, Name.getNameKind());
+    switch (Name.getNameKind()) {
+    case DeclarationName::Identifier:
+      Emit32(Out, Writer.getIdentifierRef(Name.getAsIdentifierInfo()));
+      break;
+    case DeclarationName::ObjCZeroArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCMultiArgSelector:
+      Emit32(Out, Writer.getSelectorRef(Name.getObjCSelector()));
+      break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
+      Emit32(Out, Writer.getTypeID(Name.getCXXNameType()));
+      break;
+    case DeclarationName::CXXOperatorName:
+      assert(Name.getCXXOverloadedOperator() < 0x100 && "Invalid operator ?");
+      Emit8(Out, Name.getCXXOverloadedOperator());
+      break;
+    case DeclarationName::CXXLiteralOperatorName:
+      Emit32(Out, Writer.getIdentifierRef(Name.getCXXLiteralIdentifier()));
+      break;
+    case DeclarationName::CXXUsingDirective:
+      break;
+    }
+  }
+
+  void EmitData(llvm::raw_ostream& Out, key_type_ref,
+                data_type Lookup, unsigned DataLen) {
+    uint64_t Start = Out.tell(); (void)Start;
+    clang::io::Emit16(Out, Lookup.second - Lookup.first);
+    for (; Lookup.first != Lookup.second; ++Lookup.first)
+      clang::io::Emit32(Out, Writer.GetDeclRef(*Lookup.first));
+
+    assert(Out.tell() - Start == DataLen && "Data length is wrong");
+  }
+};
+} // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // General Serialization Routines
@@ -2587,7 +2710,7 @@ TypeID ASTWriter::GetOrCreateTypeID(QualType T) {
               std::bind1st(std::mem_fun(&ASTWriter::GetOrCreateTypeIdx), this));
 }
 
-TypeID ASTWriter::getTypeID(QualType T) {
+TypeID ASTWriter::getTypeID(QualType T) const {
   return MakeTypeID(T,
               std::bind1st(std::mem_fun(&ASTWriter::getTypeIdx), this));
 }
@@ -2607,13 +2730,14 @@ TypeIdx ASTWriter::GetOrCreateTypeIdx(QualType T) {
   return Idx;
 }
 
-TypeIdx ASTWriter::getTypeIdx(QualType T) {
+TypeIdx ASTWriter::getTypeIdx(QualType T) const {
   if (T.isNull())
     return TypeIdx();
   assert(!T.getLocalFastQualifiers());
 
-  assert(TypeIdxs.find(T) != TypeIdxs.end() && "Type not emitted!");
-  return TypeIdxs[T];
+  TypeIdxMap::const_iterator I = TypeIdxs.find(T);
+  assert(I != TypeIdxs.end() && "Type not emitted!");
+  return I->second;
 }
 
 void ASTWriter::AddDeclRef(const Decl *D, RecordData &Record) {

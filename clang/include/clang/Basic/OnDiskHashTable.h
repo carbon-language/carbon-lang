@@ -124,8 +124,9 @@ class OnDiskChainedHashTableGenerator {
     Item *next;
     const uint32_t hash;
 
-    Item(typename Info::key_type_ref k, typename Info::data_type_ref d)
-    : key(k), data(d), next(0), hash(Info::ComputeHash(k)) {}
+    Item(typename Info::key_type_ref k, typename Info::data_type_ref d,
+         Info &InfoObj)
+    : key(k), data(d), next(0), hash(InfoObj.ComputeHash(k)) {}
   };
 
   class Bucket {
@@ -168,10 +169,17 @@ public:
 
   void insert(typename Info::key_type_ref key,
               typename Info::data_type_ref data) {
+    Info InfoObj;
+    insert(key, data, InfoObj);
+  }
+
+  void insert(typename Info::key_type_ref key,
+              typename Info::data_type_ref data, Info &InfoObj) {
 
     ++NumEntries;
     if (4*NumEntries >= 3*NumBuckets) resize(NumBuckets*2);
-    insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
+    insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data,
+                                                               InfoObj));
   }
 
   io::Offset Emit(llvm::raw_ostream &out) {
@@ -278,8 +286,8 @@ public:
       InfoPtr = &InfoObj;
 
     using namespace io;
-    const internal_key_type& iKey = Info::GetInternalKey(eKey);
-    unsigned key_hash = Info::ComputeHash(iKey);
+    const internal_key_type& iKey = InfoObj.GetInternalKey(eKey);
+    unsigned key_hash = InfoObj.ComputeHash(iKey);
 
     // Each bucket is just a 32-bit offset into the hash table file.
     unsigned idx = key_hash & (NumBuckets - 1);
