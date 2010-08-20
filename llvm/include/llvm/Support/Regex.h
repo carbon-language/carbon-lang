@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_SUPPORT_REGEX_H
+#define LLVM_SUPPORT_REGEX_H
+
 #include <string>
 
 struct llvm_regex;
@@ -74,3 +77,5 @@ namespace llvm {
     int error;
   };
 }
+
+#endif // LLVM_SUPPORT_REGEX_H
