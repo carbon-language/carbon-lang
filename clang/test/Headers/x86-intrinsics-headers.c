@@ -4,33 +4,16 @@
 
 #if defined(i386) || defined(__x86_64__)
 
-#  if defined(__MMX__)
-#include <emmintrin.h>
+#ifdef __MMX__
 #include <mm_malloc.h>
-#  endif
+#endif
 
-#  if defined(__SSE__)
-#include <xmmintrin.h>
-#  endif
-
-#  if defined(__SSE3__)
-#include <pmmintrin.h>
-#  endif
-
-#  if defined(__SSSE3__)
-#include <tmmintrin.h>
-#  endif
-
-#  if defined(__SSE4_1__)
-#include <smmintrin.h>
-#  endif
-
-#  if defined(__SSE4_2__)
+#ifdef __SSE4_2__
+// nmmintrin forwards to smmintrin.
 #include <nmmintrin.h>
-#  endif
+#endif
 
-#  if defined(__AVX__)
-#include <avxintrin.h>
-#  endif
+// immintrin includes all other intel intrinsic headers.
+#include <immintrin.h>
 
 #endif

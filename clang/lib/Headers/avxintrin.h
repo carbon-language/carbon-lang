@@ -21,12 +21,9 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __AVXINTRIN_H
-#define __AVXINTRIN_H
-
-#ifndef __AVX__
-#error "AVX instruction set not enabled"
-#else
+#ifndef __IMMINTRIN_H
+#error "Never use <avxintrin.h> directly; include <immintrin.h> instead."
+#endif
 
 typedef double __v4df __attribute__ ((__vector_size__ (32)));
 typedef float __v8sf __attribute__ ((__vector_size__ (32)));
@@ -1157,7 +1154,3 @@ _mm256_castsi128_si256(__m128i in)
   __m128i zero = _mm_setzero_si128();
   return __builtin_shufflevector(in, zero, 0, 1, 2, 2);
 }
-
-#endif /* __AVX__ */
-
-#endif /* __AVXINTRIN_H */
