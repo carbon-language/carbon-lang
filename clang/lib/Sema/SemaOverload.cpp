@@ -3996,9 +3996,6 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //   candidates, non-member candidates and built-in candidates, are
   //   constructed as follows:
   QualType T1 = Args[0]->getType();
-  QualType T2;
-  if (NumArgs > 1)
-    T2 = Args[1]->getType();
 
   //     -- If T1 is a class type, the set of member candidates is the
   //        result of the qualified lookup of T1::operator@
