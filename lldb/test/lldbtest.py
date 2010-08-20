@@ -141,7 +141,7 @@ class TestBase(unittest2.TestCase):
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
-    def expect(self, cmd, msg, startstr=None, substrs=None, verbose=False):
+    def expect(self, cmd, msg=None, startstr=None, substrs=None, verbose=False):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -150,11 +150,11 @@ class TestBase(unittest2.TestCase):
         message.  We expect the output from running the command to start with
         'startstr' and matches the substrings contained in 'substrs'.
         """
-        # Fail fast if 'msg' is not meaningful.
-        if not msg or len(msg) == 0:
-            raise Exception("Bad 'msg' parameter encountered")
+
+        # First run the command.
         self.runCmd(cmd, verbose = (True if verbose else False))
 
+        # Then compare the output against expected strings.
         output = self.res.GetOutput()
         matched = output.startswith(startstr) if startstr else True
 
@@ -169,5 +169,5 @@ class TestBase(unittest2.TestCase):
                         print "Substring not matched:", str
                     break
 
-        self.assertTrue(matched, msg)
+        self.assertTrue(matched, msg if msg else CMD_MSG(cmd))
 

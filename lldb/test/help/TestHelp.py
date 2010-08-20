@@ -15,23 +15,14 @@ class TestHelpCommand(TestBase):
 
     def test_simplehelp(self):
         """A simple test of 'help' command and its output."""
-        res = lldb.SBCommandReturnObject()
-        self.ci.HandleCommand("help", res)
-        self.assertTrue(res.Succeeded() and
-                        res.GetOutput().startswith(
-                'The following is a list of built-in, permanent debugger commands'),
-                        CMD_MSG('help'))
+        self.expect("help",
+            startstr = 'The following is a list of built-in, permanent debugger commands')
 
     def test_help_should_not_hang_emacsshell(self):
         """Command 'set term-width 0' should not hang the help command."""
-        res = lldb.SBCommandReturnObject()
-        self.ci.HandleCommand("set term-width 0", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('set term-width 0'))
-        self.ci.HandleCommand("help", res)
-        self.assertTrue(res.Succeeded() and
-                        res.GetOutput().startswith(
-                'The following is a list of built-in, permanent debugger commands'),
-                        CMD_MSG('help'))
+        self.runCmd("set term-width 0")
+        self.expect("help",
+            startstr = 'The following is a list of built-in, permanent debugger commands')
 
 
 if __name__ == '__main__':
