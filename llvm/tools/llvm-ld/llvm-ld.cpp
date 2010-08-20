@@ -145,8 +145,8 @@ static void PrintCommand(const std::vector<const char*> &args) {
   std::vector<const char*>::const_iterator I = args.begin(), E = args.end(); 
   for (; I != E; ++I)
     if (*I)
-      outs() << "'" << *I << "'" << " ";
-  outs() << "\n"; outs().flush();
+      errs() << "'" << *I << "'" << " ";
+  errs() << "\n";
 }
 
 /// CopyEnv - This function takes an array of environment variables and makes a
@@ -232,7 +232,7 @@ static void RemoveEnv(const char * name, char ** const envp) {
 void GenerateBitcode(Module* M, const std::string& FileName) {
 
   if (Verbose)
-    outs() << "Generating Bitcode To " << FileName << '\n';
+    errs() << "Generating Bitcode To " << FileName << '\n';
 
   // Create the output file.
   std::string ErrorInfo;
@@ -272,7 +272,7 @@ static int GenerateAssembly(const std::string &OutputFilename,
   args.push_back(0);
 
   if (Verbose) {
-    outs() << "Generating Assembly With: \n";
+    errs() << "Generating Assembly With: \n";
     PrintCommand(args);
   }
 
@@ -294,7 +294,7 @@ static int GenerateCFile(const std::string &OutputFile,
   args.push_back(0);
 
   if (Verbose) {
-    outs() << "Generating C Source With: \n";
+    errs() << "Generating C Source With: \n";
     PrintCommand(args);
   }
 
@@ -391,7 +391,7 @@ static int GenerateNative(const std::string &OutputFilename,
   Args.push_back(0);
 
   if (Verbose) {
-    outs() << "Generating Native Executable With:\n";
+    errs() << "Generating Native Executable With:\n";
     PrintCommand(Args);
   }
 
@@ -406,7 +406,7 @@ static int GenerateNative(const std::string &OutputFilename,
 /// bitcode file for the program.
 static void EmitShellScript(char **argv, Module *M) {
   if (Verbose)
-    outs() << "Emitting Shell Script\n";
+    errs() << "Emitting Shell Script\n";
 #if defined(_WIN32) || defined(__CYGWIN__)
   // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
   // support windows systems, we copy the llvm-stub.exe executable from the
