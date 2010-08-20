@@ -698,9 +698,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   CleanTemporaryFiles();
   PreprocessedEntitiesByFile.clear();
 
-  if (!OverrideMainBuffer)
+  if (!OverrideMainBuffer) {
     StoredDiagnostics.clear();
-    
+    TopLevelDeclsInPreamble.clear();
+  }
+
   // Create a file manager object to provide access to and cache the filesystem.
   Clang.setFileManager(&getFileManager());
   
@@ -733,6 +735,9 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
                         getSourceManager());
       StoredDiagnostics[I].setLocation(Loc);
     }
+  } else {
+    PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
+    PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   }
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
@@ -1415,6 +1420,14 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   }
   
   // Remap files.
+  PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
+  for (PreprocessorOptions::remapped_file_buffer_iterator 
+         R = PPOpts.remapped_file_buffer_begin(),
+         REnd = PPOpts.remapped_file_buffer_end();
+       R != REnd; 
+       ++R) {
+    delete R->second;
+  }
   Invocation->getPreprocessorOpts().clearRemappedFiles();
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
@@ -1772,6 +1785,9 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
       FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SourceMgr);
       StoredDiagnostics[I].setLocation(Loc);
     }
+  } else {
+    PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
+    PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   }
 
   llvm::OwningPtr<SyntaxOnlyAction> Act;
