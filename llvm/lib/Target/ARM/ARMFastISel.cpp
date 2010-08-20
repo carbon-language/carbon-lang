@@ -122,7 +122,8 @@ bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
   // Look to see if our OptionalDef is defining CPSR or CCR.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isDef() && MO.isReg() && MO.getReg() == ARM::CPSR)
+    if (!MO.isReg() || !MO.isDef()) continue;
+    if (MO.getReg() == ARM::CPSR)
       *CPSR = true;
   }
   return true;
