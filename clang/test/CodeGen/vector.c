@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -target-cpu pentium4 -g -emit-llvm %s -o -
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -O1 -target-cpu pentium4 -target-feature +sse4.1 -g -emit-llvm %s -o - | FileCheck %s
 typedef short __v4hi __attribute__ ((__vector_size__ (8)));
 
 void test1() {
@@ -40,3 +40,16 @@ int test4(int argc, char *argv[]) {
 
   return result;
 }
+
+#include <smmintrin.h>
+
+unsigned long test_epi8(__m128i x) { return _mm_extract_epi8(x, 4); }
+// CHECK: @test_epi8
+// CHECK: extractelement <16 x i8> {{.*}}, i32 4
+// CHECK: zext i8 {{.*}} to i32
+
+unsigned long test_epi16(__m128i x) { return _mm_extract_epi16(x, 3); }
+
+// CHECK: @test_epi16
+// CHECK: extractelement <8 x i16> {{.*}}, i32 3
+// CHECK: zext i16 {{.*}} to i32

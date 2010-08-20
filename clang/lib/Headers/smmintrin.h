@@ -213,11 +213,13 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
                                                     __a;}))
 #endif /* __x86_64__ */
 
-/* Extract int from packed integer array at index.  */
+/* Extract int from packed integer array at index.  This returns the element
+ * as a zero extended value, so it is unsigned.
+ */
 #define _mm_extract_epi8(X, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
-                                                 __a[N];}))
+                                                 (unsigned char)__a[N];}))
 #define _mm_extract_epi32(X, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
-                                                  __a[N];}))
+                                                  (unsigned)__a[N];}))
 #ifdef __x86_64__
 #define _mm_extract_epi64(X, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
                                                   __a[N];}))

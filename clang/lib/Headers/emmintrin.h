@@ -1194,7 +1194,7 @@ static __inline__ int __attribute__((__always_inline__, __nodebug__))
 _mm_extract_epi16(__m128i a, int imm)
 {
   __v8hi b = (__v8hi)a;
-  return b[imm];
+  return (unsigned short)b[imm];
 }
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
