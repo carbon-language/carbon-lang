@@ -53,7 +53,7 @@ public:
 
 static bool PrintInsts(const MCDisassembler &DisAsm,
                        MCInstPrinter &Printer, const ByteArrayTy &Bytes,
-                       SourceMgr &SM) {
+                       SourceMgr &SM, raw_ostream &Out) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
   
@@ -66,8 +66,8 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
     
     if (DisAsm.getInstruction(Inst, Size, memoryObject, Index, 
                                /*REMOVE*/ nulls())) {
-      Printer.printInst(&Inst, outs());
-      outs() << "\n";
+      Printer.printInst(&Inst, Out);
+      Out << "\n";
     } else {
       SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
                       "invalid instruction encoding", "warning");
@@ -127,7 +127,8 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
 }
 
 int Disassembler::disassemble(const Target &T, const std::string &Triple,
-                              MemoryBuffer &Buffer) {
+                              MemoryBuffer &Buffer,
+                              raw_ostream &Out) {
   // Set up disassembler.
   OwningPtr<const MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));
   
@@ -162,7 +163,7 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
   ErrorOccurred |= ByteArrayFromString(ByteArray, Str, SM);
   
   if (!ByteArray.empty())
-    ErrorOccurred |= PrintInsts(*DisAsm, *IP, ByteArray, SM);
+    ErrorOccurred |= PrintInsts(*DisAsm, *IP, ByteArray, SM, Out);
     
   return ErrorOccurred;
 }
@@ -179,22 +180,24 @@ static int byteArrayReader(uint8_t *B, uint64_t A, void *Arg) {
 }
 
 static int verboseEvaluator(uint64_t *V, unsigned R, void *Arg) {
-  EDDisassembler &disassembler = *((EDDisassembler *)Arg);
+  EDDisassembler &disassembler = *(EDDisassembler *)((void **)Arg)[0];
+  raw_ostream &Out = *(raw_ostream *)((void **)Arg)[1];
   
   if (const char *regName = disassembler.nameWithRegisterID(R))
-    outs() << "[" << regName << "/" << R << "]";
+    Out << "[" << regName << "/" << R << "]";
   
   if (disassembler.registerIsStackPointer(R))
-    outs() << "(sp)";
+    Out << "(sp)";
   if (disassembler.registerIsProgramCounter(R))
-    outs() << "(pc)";
+    Out << "(pc)";
   
   *V = 0;
   return 0;
 }
 
 int Disassembler::disassembleEnhanced(const std::string &TS, 
-                                      MemoryBuffer &Buffer) {
+                                      MemoryBuffer &Buffer,
+                                      raw_ostream &Out) {
   ByteArrayTy ByteArray;
   StringRef Str = Buffer.getBuffer();
   SourceMgr SM;
@@ -259,52 +262,52 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
       return -1;
     }
     
-    outs() << '[';
+    Out << '[';
     int operandIndex = token->operandID();
     
     if (operandIndex >= 0)
-      outs() << operandIndex << "-";
+      Out << operandIndex << "-";
     
     switch (token->type()) {
-    default: outs() << "?"; break;
-    case EDToken::kTokenWhitespace: outs() << "w"; break;
-    case EDToken::kTokenPunctuation: outs() << "p"; break;
-    case EDToken::kTokenOpcode: outs() << "o"; break;
-    case EDToken::kTokenLiteral: outs() << "l"; break;
-    case EDToken::kTokenRegister: outs() << "r"; break;
+    default: Out << "?"; break;
+    case EDToken::kTokenWhitespace: Out << "w"; break;
+    case EDToken::kTokenPunctuation: Out << "p"; break;
+    case EDToken::kTokenOpcode: Out << "o"; break;
+    case EDToken::kTokenLiteral: Out << "l"; break;
+    case EDToken::kTokenRegister: Out << "r"; break;
     }
     
-    outs() << ":" << buf;
+    Out << ":" << buf;
   
     if (token->type() == EDToken::kTokenLiteral) {
-      outs() << "=";
+      Out << "=";
       if (token->literalSign())
-        outs() << "-";
+        Out << "-";
       uint64_t absoluteValue;
       if (token->literalAbsoluteValue(absoluteValue)) {
         errs() << "error: Couldn't get the value of a literal token\n";
         return -1;
       }
-      outs() << absoluteValue;
+      Out << absoluteValue;
     } else if (token->type() == EDToken::kTokenRegister) {
-      outs() << "=";
+      Out << "=";
       unsigned regID;
       if (token->registerID(regID)) {
         errs() << "error: Couldn't get the ID of a register token\n";
         return -1;
       }
-      outs() << "r" << regID;
+      Out << "r" << regID;
     }
     
-    outs() << "]";
+    Out << "]";
   }
   
-  outs() << " ";
+  Out << " ";
     
   if (inst->isBranch())
-    outs() << "<br> ";
+    Out << "<br> ";
   if (inst->isMove())
-    outs() << "<mov> ";
+    Out << "<mov> ";
   
   unsigned numOperands = inst->numOperands();
   
@@ -314,7 +317,7 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
   }
   
   for (unsigned operandIndex = 0; operandIndex != numOperands; ++operandIndex) {
-    outs() << operandIndex << ":";
+    Out << operandIndex << ":";
     
     EDOperand *operand;
     if (inst->getOperand(operand, operandIndex)) {
@@ -323,12 +326,12 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     }
     
     uint64_t evaluatedResult;
-    evaluatedResult = operand->evaluate(evaluatedResult, verboseEvaluator,
-                                        disassembler);
-    outs() << "=" << evaluatedResult << " ";
+    void *Arg[] = { disassembler, &Out };
+    evaluatedResult = operand->evaluate(evaluatedResult, verboseEvaluator, Arg);
+    Out << "=" << evaluatedResult << " ";
   }
   
-  outs() << '\n';
+  Out << '\n';
   
   return 0;
 }

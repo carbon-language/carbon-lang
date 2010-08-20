@@ -385,7 +385,7 @@ int main(int argc, char **argv) {
   }
 
   // Figure out what stream we are supposed to write to...
-  raw_ostream *Out = 0;
+  OwningPtr<tool_output_file> Out;
   if (NoOutput) {
     if (!OutputFilename.empty())
       errs() << "WARNING: The -o (output filename) option is ignored when\n"
@@ -395,17 +395,11 @@ int main(int argc, char **argv) {
     if (OutputFilename.empty())
       OutputFilename = "-";
 
-    // Make sure that the Output file gets unlinked from the disk if we get
-    // a SIGINT.
-    if (OutputFilename != "-")
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
     std::string ErrorInfo;
-    Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                             raw_fd_ostream::F_Binary);
+    Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
+                                   raw_fd_ostream::F_Binary));
     if (!ErrorInfo.empty()) {
       errs() << ErrorInfo << '\n';
-      delete Out;
       return 1;
     }
   }
@@ -542,7 +536,7 @@ int main(int argc, char **argv) {
   // Write bitcode or assembly to the output as the last step...
   if (!NoOutput && !AnalyzeOnly) {
     if (OutputAssembly)
-      Passes.add(createPrintModulePass(Out));
+      Passes.add(createPrintModulePass(Out.get()));
     else
       Passes.add(createBitcodeWriterPass(*Out));
   }
@@ -550,7 +544,9 @@ int main(int argc, char **argv) {
   // Now that we have all of the passes ready, run them.
   Passes.run(*M.get());
 
-  // Delete the raw_fd_ostream.
-  delete Out;
+  // Declare success.
+  if (!NoOutput)
+    Out->keep();
+
   return 0;
 }

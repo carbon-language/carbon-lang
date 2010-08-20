@@ -124,9 +124,9 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static formatted_raw_ostream *GetOutputStream(const char *TargetName,
-                                              Triple::OSType OS,
-                                              const char *ProgName) {
+static formatted_tool_output_file *GetOutputStream(const char *TargetName,
+                                                   Triple::OSType OS,
+                                                   const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {
     if (InputFilename == "-")
@@ -172,25 +172,21 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     break;
   }
 
-  // Make sure that the Out file gets unlinked from the disk if we get a
-  // SIGINT
-  if (OutputFilename != "-")
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
   // Open the file.
   std::string error;
   unsigned OpenFlags = 0;
   if (Binary) OpenFlags |= raw_fd_ostream::F_Binary;
-  raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error,
-                                             OpenFlags);
+  tool_output_file *FDOut = new tool_output_file(OutputFilename.c_str(), error,
+                                                 OpenFlags);
   if (!error.empty()) {
     errs() << error << '\n';
     delete FDOut;
     return 0;
   }
 
-  formatted_raw_ostream *Out =
-    new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
+  formatted_tool_output_file *Out =
+    new formatted_tool_output_file(*FDOut,
+                                   formatted_raw_ostream::DELETE_STREAM);
 
   return Out;
 }
@@ -283,9 +279,9 @@ int main(int argc, char **argv) {
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  formatted_raw_ostream *Out = GetOutputStream(TheTarget->getName(),
-                                               TheTriple.getOS(), argv[0]);
-  if (Out == 0) return 1;
+  OwningPtr<formatted_tool_output_file> Out
+    (GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
+  if (!Out) return 1;
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
@@ -335,16 +331,13 @@ int main(int argc, char **argv) {
                                  DisableVerify)) {
     errs() << argv[0] << ": target does not support generation of this"
            << " file type!\n";
-    delete Out;
-    // And the Out file is empty and useless, so remove it now.
-    sys::Path(OutputFilename).eraseFromDisk();
     return 1;
   }
 
   PM.run(mod);
 
-  // Delete the ostream.
-  delete Out;
+  // Declare success.
+  Out->keep();
 
   return 0;
 }

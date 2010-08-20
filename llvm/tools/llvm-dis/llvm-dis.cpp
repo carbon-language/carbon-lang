@@ -25,7 +25,6 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
-#include <memory>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -88,15 +87,10 @@ int main(int argc, char **argv) {
     }
   }
 
-  // Make sure that the Out file gets unlinked from the disk if we get a
-  // SIGINT.
-  if (OutputFilename != "-")
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
   std::string ErrorInfo;
-  std::auto_ptr<raw_fd_ostream> 
-  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                         raw_fd_ostream::F_Binary));
+  OwningPtr<tool_output_file> 
+  Out(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
+                           raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;
@@ -105,6 +99,9 @@ int main(int argc, char **argv) {
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint)
     *Out << *M;
+
+  // Declare success.
+  Out->keep();
 
   return 0;
 }
