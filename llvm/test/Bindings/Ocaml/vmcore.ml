@@ -455,7 +455,7 @@ let test_constants () =
   ignore (define_global "const_shufflevector" (const_shufflevector
     (const_vector [| zero; one |])
     (const_vector [| one; zero |])
-    (const_bitcast foldbomb (vector_type i32_type 2))) m);
+    (const_vector [| const_int i32_type 1; const_int i32_type 2 |])) m);
 
   group "asm"; begin
     let ft = function_type void_type [| i32_type; i32_type; i32_type |] in
@@ -1236,12 +1236,18 @@ let test_builder () =
 
   group "dbg"; begin
     (* RUN: grep {%dbg = add i32 %P1, %P2, !dbg !1} < %t.ll
-     * RUN: grep {!1 = metadata !\{i32 2, metadata !"dbg test"\}} < %t.ll
+     * RUN: grep {!1 = metadata !\{i32 2, i32 3, metadata !2, metadata !2\}} < %t.ll
      *)
-    let m1 = const_int i32_type 2 in
-    let m2 = mdstring context "dbg test" in
-    let md = mdnode context [| m1; m2 |] in
+    insist ((current_debug_location atentry) = None);
+
+    let m_line = const_int i32_type 2 in
+    let m_col = const_int i32_type 3 in
+    let m_scope = mdnode context [| |] in
+    let m_inlined = mdnode context [| |] in
+    let md = mdnode context [| m_line; m_col; m_scope; m_inlined |] in
     set_current_debug_location atentry md;
+
+    insist ((current_debug_location atentry) = Some md);
 
     let i = build_add p1 p2 "dbg" atentry in
     insist ((has_metadata i) = true);

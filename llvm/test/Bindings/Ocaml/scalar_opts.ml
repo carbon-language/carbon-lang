@@ -1,4 +1,5 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_scalar_opts.cmxa llvm_target.cmxa %s -o %t
+ * RUN: %t %t.bc
  *)
 
 (* Note: It takes several seconds for ocamlopt to link an executable with
@@ -13,8 +14,11 @@ let context = global_context ()
 let void_type = Llvm.void_type context
 
 (* Tiny unit test framework - really just to help find which line is busted *)
+let print_checkpoints = false
+
 let suite name f =
-  prerr_endline (name ^ ":");
+  if print_checkpoints then
+    prerr_endline (name ^ ":");
   f ()
 
 
