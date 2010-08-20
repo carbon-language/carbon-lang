@@ -36,6 +36,11 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 
+  if (OutputFilename == "-") {
+    errs() << argv[0] << ": error: Can't update standard output\n";
+    return 1;
+  }
+
   // Get the input data.
   std::string ErrorStr;
   MemoryBuffer *In =
