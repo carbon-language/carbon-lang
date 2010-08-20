@@ -147,7 +147,7 @@ private:
   ///
   /// Keys in the map never have const/volatile qualifiers.
   llvm::DenseMap<QualType, serialization::TypeIdx, UnsafeQualTypeDenseMapInfo>
-      TypeIDs;
+      TypeIdxs;
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.

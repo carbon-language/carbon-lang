@@ -1397,7 +1397,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
 
 /// \brief Write the representation of a type to the AST stream.
 void ASTWriter::WriteType(QualType T) {
-  TypeIdx &Idx = TypeIDs[T];
+  TypeIdx &Idx = TypeIdxs[T];
   if (Idx.getIndex() == 0) // we haven't seen this type before.
     Idx = TypeIdx(NextTypeID++);
 
@@ -2588,7 +2588,7 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   T.removeFastQualifiers();
 
   if (T.hasLocalNonFastQualifiers()) {
-    TypeIdx &Idx = TypeIDs[T];
+    TypeIdx &Idx = TypeIdxs[T];
     if (Idx.getIndex() == 0) {
       // We haven't seen these qualifiers applied to this type before.
       // Assign it a new ID.  This is the only time we enqueue a
@@ -2644,7 +2644,7 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
-  TypeIdx &Idx = TypeIDs[T];
+  TypeIdx &Idx = TypeIdxs[T];
   if (Idx.getIndex() == 0) {
     // We haven't seen this type before. Assign it a new ID and put it
     // into the queue of types to emit.
@@ -2921,7 +2921,7 @@ void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
 }
 
 void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
-  TypeIDs[T] = Idx;
+  TypeIdxs[T] = Idx;
 }
 
 void ASTWriter::DeclRead(DeclID ID, const Decl *D) {
