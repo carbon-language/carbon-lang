@@ -27,10 +27,10 @@ entry:
   %6 = bitcast <8 x i16> %5 to <2 x double>       ; <<2 x double>> [#uses=2]
   %7 = extractelement <2 x double> %6, i32 0      ; <double> [#uses=1]
   %8 = bitcast double %7 to <4 x i16>             ; <<4 x i16>> [#uses=1]
-  %9 = tail call <4 x i32> @llvm.arm.neon.vmovls.v4i32(<4 x i16> %8) ; <<4 x i32>> [#uses=1]
+  %9 = sext <4 x i16> %8 to <4 x i32>             ; <<4 x i32>> [#uses=1]
   %10 = extractelement <2 x double> %6, i32 1     ; <double> [#uses=1]
   %11 = bitcast double %10 to <4 x i16>           ; <<4 x i16>> [#uses=1]
-  %12 = tail call <4 x i32> @llvm.arm.neon.vmovls.v4i32(<4 x i16> %11) ; <<4 x i32>> [#uses=1]
+  %12 = sext <4 x i16> %11 to <4 x i32>           ; <<4 x i32>> [#uses=1]
   %13 = mul <4 x i32> %1, %9                      ; <<4 x i32>> [#uses=1]
   %14 = mul <4 x i32> %3, %12                     ; <<4 x i32>> [#uses=1]
   %15 = tail call <4 x i16> @llvm.arm.neon.vshiftn.v4i16(<4 x i32> %13, <4 x i32> <i32 -12, i32 -12, i32 -12, i32 -12>) ; <<4 x i16>> [#uses=1]
@@ -322,8 +322,6 @@ define <8 x i8> @t11(i8* %A1, i8* %A2, i8* %A3, i8* %A4, i8* %A5, i8* %A6, i8* %
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
 
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly
-
-declare <4 x i32> @llvm.arm.neon.vmovls.v4i32(<4 x i16>) nounwind readnone
 
 declare <4 x i16> @llvm.arm.neon.vshiftn.v4i16(<4 x i32>, <4 x i32>) nounwind readnone
 
