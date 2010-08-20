@@ -101,14 +101,7 @@ ClangExpressionDeclMap::AddPersistentVariable (const char *name, TypeFromParser 
                                                      parser_type.GetOpaqueQualType()),
                             context);
     
-    ConstString const_name(name);
-    
-    ClangPersistentVariable *pvar = m_persistent_vars->CreateVariable(const_name, user_type);
-    
-    if (!pvar)
-        return false;
-    
-    return true;
+    return m_persistent_vars->CreatePersistentVariable (name, user_type);
 }
 
 bool 
@@ -294,7 +287,7 @@ ClangExpressionDeclMap::Materialize (ExecutionContext *exe_ctx,
 
 bool 
 ClangExpressionDeclMap::Dematerialize (ExecutionContext *exe_ctx,
-                                       ClangPersistentVariable *&result,
+                                       ClangExpressionVariable *&result,
                                        Error &err)
 {
     return DoMaterialize(true, exe_ctx, &result, err);
@@ -368,7 +361,7 @@ ClangExpressionDeclMap::DumpMaterializedStruct(ExecutionContext *exe_ctx,
 bool 
 ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
                                        ExecutionContext *exe_ctx,
-                                       ClangPersistentVariable **result,
+                                       ClangExpressionVariable **result,
                                        Error &err)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
@@ -451,7 +444,7 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
                         if (log)
                             log->PutCString("Returning result PVar");
                         
-                        *result = m_persistent_vars->GetVariable(ConstString(m_result_name.c_str()));
+                        *result = m_persistent_vars->GetVariable(m_result_name.c_str());
                         
                         if (!*result)
                         {
@@ -506,7 +499,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable(bool dematerialize,
     if (log)
         log->Printf("Found persistent variable %s", name);
     
-    ClangPersistentVariable *pvar(m_persistent_vars->GetVariable(ConstString(name)));
+    ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
     if (!pvar)
     {
@@ -515,7 +508,11 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable(bool dematerialize,
     }
     
     size_t pvar_size = pvar->Size();
-    uint8_t *pvar_data = pvar->Data();                
+    
+    if (!pvar->m_data_vars.get())
+        return false;
+    
+    uint8_t *pvar_data = pvar->m_data_vars->m_data->GetBytes();               
     Error error;
     
     if (dematerialize)
@@ -779,7 +776,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     if (var)
         AddOneVariable(context, var);
     
-    ClangPersistentVariable *pvar(m_persistent_vars->GetVariable(ConstString(name)));
+    ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
     if (pvar)
         AddOneVariable(context, pvar);
@@ -927,9 +924,9 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
 
 void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       ClangPersistentVariable *pvar)
+                                       ClangExpressionVariable *pvar)
 {
-    TypeFromUser user_type = pvar->Type();
+    TypeFromUser user_type = pvar->m_user_type;
     
     TypeFromParser parser_type(ClangASTContext::CopyType(context.GetASTContext(), 
                                                          user_type.GetASTContext(), 

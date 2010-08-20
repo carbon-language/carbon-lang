@@ -21,6 +21,7 @@
 // Project includes
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Symbol/TaggedASTType.h"
 
 namespace llvm {
@@ -30,7 +31,7 @@ namespace llvm {
 
 namespace lldb_private {
 
-class ClangPersistentVariable;
+class ClangExpressionVariables;
 class ClangPersistentVariables;
 class Error;
 class Function;
@@ -301,7 +302,7 @@ public:
     ///     The execution context from which to read the struct.
     ///
     /// @param[out] result
-    ///     A ClangPersistentVariable containing the result of the
+    ///     A ClangExpressionVariable containing the result of the
     ///     expression, for potential re-use.
     ///
     /// @param[in] error
@@ -312,7 +313,7 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool Dematerialize(ExecutionContext *exe_ctx,
-                       ClangPersistentVariable *&result,
+                       ClangExpressionVariable *&result,
                        Error &error);
     
     //------------------------------------------------------------------
@@ -487,7 +488,7 @@ private:
     /// @param[in] pvar
     ///     The persistent variable that needs a Decl.
     //------------------------------------------------------------------
-    void AddOneVariable(NameSearchContext &context, ClangPersistentVariable *pvar);
+    void AddOneVariable(NameSearchContext &context, ClangExpressionVariable *pvar);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -545,7 +546,7 @@ private:
     //------------------------------------------------------------------
     bool DoMaterialize (bool dematerialize,
                         ExecutionContext *exe_ctx,
-                        ClangPersistentVariable **result,
+                        ClangExpressionVariable **result,
                         Error &err);
 
     //------------------------------------------------------------------

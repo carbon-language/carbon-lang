@@ -32,7 +32,7 @@ static char ID;
 
 IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                          const TargetData *target_data) :
-    ModulePass(ID),
+    ModulePass(&ID),
     m_decl_map(decl_map),
     m_target_data(target_data),
     m_sel_registerName(NULL)

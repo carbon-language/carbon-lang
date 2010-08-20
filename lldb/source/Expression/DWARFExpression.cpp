@@ -2435,6 +2435,7 @@ DWARFExpression::Evaluate
         //----------------------------------------------------------------------
         case DW_OP_APPLE_expr_local:
             {
+                /*
                 uint32_t idx = opcodes.GetULEB128(&offset);
                 if (expr_locals == NULL)
                 {
@@ -2453,6 +2454,7 @@ DWARFExpression::Evaluate
                 stack.push_back(*proxy);
                 delete proxy;
                 //stack.back().SetContext (Value::eContextTypeOpaqueClangQualType, expr_local_variable->GetOpaqueClangQualType());
+                */
             }
             break;
 

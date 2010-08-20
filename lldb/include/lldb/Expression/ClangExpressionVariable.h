@@ -15,92 +15,312 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <string>
 #include <vector>
 
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Core/Value.h"
+#include "lldb/Symbol/TaggedASTType.h"
+
+namespace llvm {
+    class Value;
+}
 
 namespace lldb_private {
+    
+class DataBufferHeap;
+class ExecutionContext;
+class Stream;
+class Value;
 
 //----------------------------------------------------------------------
-/// @class ClangExpressionVariableList ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
-/// @brief Manages local variables that the expression interpreter uses.
+/// @class ClangExpressionVariable ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
+/// @brief Encapsulates one variable for the expression parser.
 ///
-/// The DWARF interpreter, when interpreting expressions, occasionally
-/// needs to interact with chunks of memory corresponding to local variable 
-/// values.  These locals are distinct from the externally-defined values
-/// handled by ClangExpressionDeclMap, and do not persist between expressions
-/// so they are not handled by ClangPersistentVariables.  They are kept in a 
-/// list, which is encapsulated in ClangEpxressionVariableList.
+/// The expression parser uses variables in three different contexts:
+///
+/// First, it stores persistent variables along with the process for use
+/// in expressions.  These persistent variables contain their own data
+/// and are typed.
+///
+/// Second, in an interpreted expression, it stores the local variables
+/// for the expression along with the expression.  These variables
+/// contain their own data and are typed.
+///
+/// Third, in a JIT-compiled expression, it stores the variables that
+/// the expression needs to have materialized and dematerialized at each
+/// execution.  These do not contain their own data but are named and
+/// typed.
+///
+/// This class supports all of these use cases using simple type
+/// polymorphism, and provides necessary support methods.  Its interface
+/// is RTTI-neutral.
 //----------------------------------------------------------------------
-class ClangExpressionVariableList
+struct ClangExpressionVariable
+{
+    ClangExpressionVariable();
+    
+    ClangExpressionVariable(const ClangExpressionVariable &cev);
+    
+    //----------------------------------------------------------------------
+    /// If the variable contains its own data, make a Value point at it
+    ///
+    /// @param[in] value
+    ///     The value to point at the data.
+    ///
+    /// @return
+    ///     True on success; false otherwise (in particular, if this variable
+    ///     does not contain its own data).
+    //----------------------------------------------------------------------
+    bool
+    PointValueAtData(Value &value);
+    
+    //----------------------------------------------------------------------
+    /// The following values should stay valid for the life of the variable
+    //----------------------------------------------------------------------
+    std::string             m_name;         ///< The name of the variable
+    TypeFromUser            m_user_type;    ///< The type of the variable according to some LLDB context; NULL if the type hasn't yet been migrated to one
+    
+    //----------------------------------------------------------------------
+    /// The following values should not live beyond parsing
+    //----------------------------------------------------------------------
+    struct ParserVars {
+        TypeFromParser          m_parser_type;  ///< The type of the variable according to the parser
+        const clang::NamedDecl *m_named_decl;   ///< The Decl corresponding to this variable
+        llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
+    };
+    std::auto_ptr<ParserVars> m_parser_vars;
+    
+    //----------------------------------------------------------------------
+    /// Make this variable usable by the parser by allocating space for
+    /// parser-specific variables
+    //----------------------------------------------------------------------
+    void EnableParserVars()
+    {
+        if (!m_parser_vars.get())
+            m_parser_vars.reset(new struct ParserVars);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Deallocate parser-specific variables
+    //----------------------------------------------------------------------
+    void DisableParserVars()
+    {
+        m_parser_vars.reset();
+    }
+    
+    //----------------------------------------------------------------------
+    /// The following values are valid if the variable is used by JIT code
+    //----------------------------------------------------------------------
+    struct JITVars {
+        off_t   m_alignment;    ///< The required alignment of the variable, in bytes
+        size_t  m_size;         ///< The space required for the variable, in bytes
+        off_t   m_offset;       ///< The offset of the variable in the struct, in bytes
+    };
+    std::auto_ptr<JITVars> m_jit_vars;
+    
+    //----------------------------------------------------------------------
+    /// Make this variable usable for materializing for the JIT by allocating 
+    /// space for JIT-specific variables
+    //----------------------------------------------------------------------
+    void EnableJITVars()
+    {
+        if (!m_jit_vars.get())
+            m_jit_vars.reset(new struct JITVars);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Deallocate JIT-specific variables
+    //----------------------------------------------------------------------
+    void DisableJITVars()
+    {
+        m_jit_vars.reset();
+    }
+    
+    //----------------------------------------------------------------------
+    /// The following values are valid if the value contains its own data
+    //----------------------------------------------------------------------
+    struct DataVars {
+        lldb_private::DataBufferHeap   *m_data; ///< The heap area allocated to contain this variable's data.  Responsibility for deleting this falls to whoever uses the variable last
+    };
+    std::auto_ptr<DataVars> m_data_vars;
+    
+    //----------------------------------------------------------------------
+    /// Make this variable usable for storing its data internally by
+    /// allocating data-specific variables
+    //----------------------------------------------------------------------
+    void EnableDataVars()
+    {
+        if (!m_jit_vars.get())
+            m_data_vars.reset(new struct DataVars);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Deallocate data-specific variables
+    //----------------------------------------------------------------------
+    void DisableDataVars();
+    
+    //----------------------------------------------------------------------
+    /// Return the variable's size in bytes
+    //----------------------------------------------------------------------
+    size_t Size ()
+    {
+        return (m_user_type.GetClangTypeBitWidth () + 7) / 8;
+    }
+    
+    //----------------------------------------------------------------------
+    /// Pretty-print the variable, assuming it contains its own data
+    ///
+    /// @param[in] output_stream
+    ///     The stream to pretty-print on.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use when resolving the contents of the
+    ///     variable.
+    ///
+    /// @param[in] format
+    ///     The format to print the variable in
+    ///
+    /// @param[in] show_types
+    ///     If true, print the type of the variable
+    ///
+    /// @param[in] show_summary
+    ///     If true, print a summary of the variable's type
+    ///
+    /// @param[in] verbose
+    ///     If true, be verbose in printing the value of the variable
+    ///
+    /// @return
+    ///     An Error describing the result of the operation.  If Error::Success()
+    ///     returns true, the pretty printing completed successfully.
+    //----------------------------------------------------------------------
+    Error Print(Stream &output_stream,
+                ExecutionContext &exe_ctx,
+                lldb::Format format,
+                bool show_types,
+                bool show_summary,
+                bool verbose);
+};
+
+//----------------------------------------------------------------------
+/// @class ClangExpressionVariableListBase ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
+/// @brief Manages variables that the expression parser uses.
+///
+/// The expression parser uses variable lists in various contexts, as
+/// discuessed at ClangExpressionVariable.  This abstract class contains
+/// the basic functions for managing a list of variables.  Its subclasses
+/// store pointers to variables or variables, depending on whether they
+/// are backing stores or merely transient repositories.
+//----------------------------------------------------------------------
+class ClangExpressionVariableListBase
 {
 public:
     //----------------------------------------------------------------------
-    /// Constructor
+    /// Return the number of variables in the list
     //----------------------------------------------------------------------
-    ClangExpressionVariableList();
+    virtual uint64_t Size() = 0;
     
     //----------------------------------------------------------------------
-    /// Destructor
+    /// Return the variable at the given index in the list
     //----------------------------------------------------------------------
-    ~ClangExpressionVariableList();
-
+    virtual ClangExpressionVariable &VariableAtIndex(uint64_t index) = 0;
+    
     //----------------------------------------------------------------------
-    /// Get or create the chunk of data corresponding to a given VarDecl.
-    ///
-    /// @param[in] var_decl
-    ///     The Decl for which a chunk of memory is to be allocated.
-    ///
-    /// @param[out] idx
-    ///     The index of the Decl in the list of variables.
-    ///
-    /// @param[in] can_create
-    ///     True if the memory should be created if necessary.
-    ///
-    /// @return
-    ///     A Value for the allocated memory.  NULL if the Decl couldn't be 
-    ///     found and can_create was false, or if some error occurred during
-    ///     allocation.
+    /// Add a new variable and return its index
     //----------------------------------------------------------------------
-    Value *
-    GetVariableForVarDecl (const clang::VarDecl *var_decl, 
-                           uint32_t& idx, 
-                           bool can_create);
-
+    virtual uint64_t AddVariable(ClangExpressionVariable& var) = 0;
+    
     //----------------------------------------------------------------------
-    /// Get the chunk of data corresponding to a given index into the list.
+    /// Finds a variable by name in the list.
     ///
-    /// @param[in] idx
-    ///     The index of the Decl in the list of variables.
+    /// @param[in] name
+    ///     The name of the requested variable.
     ///
     /// @return
-    ///     The value at the given index, or NULL if there is none.
+    ///     The variable requested, or NULL if that variable is not in the list.
     //----------------------------------------------------------------------
-    Value *
-    GetVariableAtIndex (uint32_t idx);
-private:
-    //----------------------------------------------------------------------
-    /// @class ClangExpressionVariable ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
-    /// @brief Manages one local variable for the expression interpreter.
-    ///
-    /// The expression interpreter uses specially-created Values to hold its
-    /// temporary locals.  These Values contain data buffers holding enough
-    /// space to contain a variable of the appropriate type.  The VarDecls
-    /// are only used while creating the list and generating the DWARF code for
-    /// an expression; when interpreting the DWARF, the variables are identified
-    /// only by their index into the list of variables.
-    //----------------------------------------------------------------------
-    struct ClangExpressionVariable
+    ClangExpressionVariable *GetVariable (const char *name)
     {
-        const clang::VarDecl    *m_var_decl;    ///< The VarDecl corresponding to the parsed local.
-        Value                   *m_value;       ///< The LLDB Value containing the data for the local.
-    };
+        for (uint64_t index = 0, size = Size(); index < size; ++index)
+        {
+            ClangExpressionVariable &candidate (VariableAtIndex(index));
+            if (!candidate.m_name.compare(name))
+                return &candidate;
+        }
+        return NULL;
+    }
+};
+
+//----------------------------------------------------------------------
+/// @class ClangExpressionVariableListBase ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
+/// @brief A list of variable references.
+///
+/// This class stores references to variables stored elsewhere.
+//----------------------------------------------------------------------
+class ClangExpressionVariableList : public ClangExpressionVariableListBase
+{
+public:
+    //----------------------------------------------------------------------
+    /// Implementation of methods in ClangExpressionVariableListBase
+    //----------------------------------------------------------------------
+    uint64_t Size()
+    {
+        return m_variables.size();
+    }
     
-    typedef std::vector<ClangExpressionVariable> Variables;
-    Variables m_variables;                                  ///< The list of variables used by the expression.
+    ClangExpressionVariable &VariableAtIndex(uint64_t index)
+    {
+        return *m_variables[index];
+    }
+    
+    uint64_t AddVariable(ClangExpressionVariable &var)
+    {
+        m_variables.push_back(&var);
+        return m_variables.size() - 1;
+    }
+private:
+    std::vector <ClangExpressionVariable*> m_variables;
+};
+    
+//----------------------------------------------------------------------
+/// @class ClangExpressionVariableListBase ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
+/// @brief A list of variable references.
+///
+/// This class stores variables internally, acting as the permanent store.
+//----------------------------------------------------------------------
+class ClangExpressionVariableStore : public ClangExpressionVariableListBase
+{
+public:
+    //----------------------------------------------------------------------
+    /// Implementation of methods in ClangExpressionVariableListBase
+    //----------------------------------------------------------------------
+    uint64_t Size()
+    {
+        return m_variables.size();
+    }
+    
+    ClangExpressionVariable &VariableAtIndex(uint64_t index)
+    {
+        return m_variables[index];
+    }
+    
+    uint64_t AddVariable(ClangExpressionVariable &var)
+    {
+        m_variables.push_back(var);
+        return m_variables.size() - 1;
+    }
+    
+    //----------------------------------------------------------------------
+    /// Create a new variable in the list and return its index
+    //----------------------------------------------------------------------
+    uint64_t CreateVariable()
+    {
+        m_variables.push_back(ClangExpressionVariable());
+        return m_variables.size() - 1;
+    }
+private:
+    std::vector <ClangExpressionVariable> m_variables;
 };
 
 } // namespace lldb_private

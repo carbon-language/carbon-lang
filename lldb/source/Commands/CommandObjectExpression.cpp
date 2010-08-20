@@ -252,7 +252,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     bool success;
     bool canInterpret = false;
     
-    ClangPersistentVariable *expr_result = 0;
+    ClangExpressionVariable *expr_result = 0;
     Error expr_error;
     
     canInterpret = clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes);

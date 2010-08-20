@@ -29,7 +29,7 @@ static char ID;
 IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableList &variable_list, 
                      lldb_private::ClangExpressionDeclMap *decl_map,
                      lldb_private::StreamString &strm) :
-    ModulePass(ID),
+    ModulePass(&ID),
     m_variable_list(variable_list),
     m_decl_map(decl_map),
     m_strm(strm)
