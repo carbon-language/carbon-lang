@@ -1,4 +1,4 @@
-; RUN: opt < %s -print-dbginfo -disable-output | FileCheck %s
+; RUN: opt < %s -print-dbginfo -disable-output |& FileCheck %s
 ;  grep {%b is variable b of type x declared at x.c:7} %t1
 ;  grep {%2 is variable b of type x declared at x.c:7} %t1
 ;  grep {@c.1442 is variable c of type int declared at x.c:4} %t1
