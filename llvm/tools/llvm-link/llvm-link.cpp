@@ -116,18 +116,12 @@ int main(int argc, char **argv) {
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;
 
   std::string ErrorInfo;
-  std::auto_ptr<raw_ostream> 
-  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                         raw_fd_ostream::F_Binary));
+  tool_output_file Out(OutputFilename.c_str(), ErrorInfo,
+                       raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;
   }
-
-    // Make sure that the Out file gets unlinked from the disk if we get a
-    // SIGINT
-  if (OutputFilename != "-")
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   if (verifyModule(*Composite)) {
     errs() << argv[0] << ": linked module is broken!\n";
@@ -136,9 +130,12 @@ int main(int argc, char **argv) {
 
   if (Verbose) errs() << "Writing bitcode...\n";
   if (OutputAssembly) {
-    *Out << *Composite;
-  } else if (Force || !CheckBitcodeOutputToConsole(*Out, true))
-    WriteBitcodeToFile(Composite.get(), *Out);
+    Out << *Composite;
+  } else if (Force || !CheckBitcodeOutputToConsole(Out, true))
+    WriteBitcodeToFile(Composite.get(), Out);
+
+  // Declare success.
+  Out.keep();
 
   return 0;
 }

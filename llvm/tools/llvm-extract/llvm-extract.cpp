@@ -116,14 +116,9 @@ int main(int argc, char **argv) {
   Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
   Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
 
-  // Make sure that the Output file gets unlinked from the disk if we get a
-  // SIGINT
-  if (OutputFilename != "-")
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
   std::string ErrorInfo;
-  raw_fd_ostream Out(OutputFilename.c_str(), ErrorInfo,
-                     raw_fd_ostream::F_Binary);
+  tool_output_file Out(OutputFilename.c_str(), ErrorInfo,
+                       raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;
@@ -135,6 +130,9 @@ int main(int argc, char **argv) {
     Passes.add(createBitcodeWriterPass(Out));
 
   Passes.run(*M.get());
+
+  // Declare success.
+  Out.keep();
 
   return 0;
 }
