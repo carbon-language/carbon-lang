@@ -6538,8 +6538,6 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   FrD->setAccess(AS_public);
   CurContext->addDecl(FrD);
 
-  if (ND->isInvalidDecl()) FrD->setInvalidDecl();
-
   return DeclPtrTy::make(ND);
 }
 

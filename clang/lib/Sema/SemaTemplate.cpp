@@ -1365,12 +1365,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   // If there were at least as many template-ids as there were template
   // parameter lists, then there are no template parameter lists remaining for
   // the declaration itself.
-  if (Idx >= NumParamLists) {
-    // Silently drop template member friend declarations.
-    // TODO: implement these
-    if (IsFriend && NumParamLists) Invalid = true;
+  if (Idx >= NumParamLists)
     return 0;
-  }
 
   // If there were too many template parameter lists, complain about that now.
   if (Idx != NumParamLists - 1) {
@@ -1398,11 +1394,6 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
       ++Idx;
     }
   }
-
-  // Silently drop template member template friend declarations.
-  // TODO: implement these
-  if (IsFriend && NumParamLists > 1)
-    Invalid = true;
 
   // Return the last template parameter list, which corresponds to the
   // entity being declared.
