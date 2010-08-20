@@ -392,24 +392,6 @@ public:
   }
 };
 
-/// raw_stdout_ostream - This is a stream that always prints to stdout.
-///
-class raw_stdout_ostream : public raw_fd_ostream {
-  // An out of line virtual method to provide a home for the class vtable.
-  virtual void handle();
-public:
-  raw_stdout_ostream();
-};
-
-/// raw_stderr_ostream - This is a stream that always prints to stderr.
-///
-class raw_stderr_ostream : public raw_fd_ostream {
-  // An out of line virtual method to provide a home for the class vtable.
-  virtual void handle();
-public:
-  raw_stderr_ostream();
-};
-
 /// outs() - This returns a reference to a raw_ostream for standard output.
 /// Use it like: outs() << "foo" << "bar";
 raw_ostream &outs();

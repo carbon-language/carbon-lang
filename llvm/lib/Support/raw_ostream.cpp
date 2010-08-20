@@ -543,27 +543,19 @@ bool raw_fd_ostream::is_displayed() const {
 //  raw_stdout/err_ostream
 //===----------------------------------------------------------------------===//
 
-// Set buffer settings to model stdout and stderr behavior.
-// Set standard error to be unbuffered by default.
-raw_stdout_ostream::raw_stdout_ostream():raw_fd_ostream(STDOUT_FILENO, false) {}
-raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false,
-                                                        true) {}
-
-// An out of line virtual method to provide a home for the class vtable.
-void raw_stdout_ostream::handle() {}
-void raw_stderr_ostream::handle() {}
-
 /// outs() - This returns a reference to a raw_ostream for standard output.
 /// Use it like: outs() << "foo" << "bar";
 raw_ostream &llvm::outs() {
-  static raw_stdout_ostream S;
+  // Set buffer settings to model stdout behavior.
+  static raw_fd_ostream S(STDOUT_FILENO, false);
   return S;
 }
 
 /// errs() - This returns a reference to a raw_ostream for standard error.
 /// Use it like: errs() << "foo" << "bar";
 raw_ostream &llvm::errs() {
-  static raw_stderr_ostream S;
+  // Set standard error to be unbuffered by default.
+  static raw_fd_ostream S(STDERR_FILENO, false, true);
   return S;
 }
 
