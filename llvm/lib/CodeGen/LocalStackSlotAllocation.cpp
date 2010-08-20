@@ -48,7 +48,7 @@ namespace {
     void AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
                            unsigned &MaxAlign);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
-    void insertFrameReferenceRegisters(MachineFunction &Fn);
+    bool insertFrameReferenceRegisters(MachineFunction &Fn);
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit LocalStackSlotPass() : MachineFunctionPass(ID) { }
@@ -87,14 +87,14 @@ bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
   calculateFrameObjectOffsets(MF);
 
   // Insert virtual base registers to resolve frame index references.
-  insertFrameReferenceRegisters(MF);
+  bool UsedBaseRegs = insertFrameReferenceRegisters(MF);
 
   // Tell MFI whether any base registers were allocated. PEI will only
   // want to use the local block allocations from this pass if there were any.
   // Otherwise, PEI can do a bit better job of getting the alignment right
   // without a hole at the start since it knows the alignment of the stack
   // at the start of local allocation, and this pass doesn't.
-  MFI->setUseLocalStackAllocationBlock(NumBaseRegisters > 0);
+  MFI->setUseLocalStackAllocationBlock(UsedBaseRegs);
 
   return true;
 }
@@ -188,13 +188,14 @@ lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
   return false;
 }
 
-void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
+bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
   // Scan the function's instructions looking for frame index references.
   // For each, ask the target if it wants a virtual base register for it
   // based on what we can tell it about where the local will end up in the
   // stack frame. If it wants one, re-use a suitable one we've previously
   // allocated, or if there isn't one that fits the bill, allocate a new one
   // and ask the target to create a defining instruction for it.
+  bool UsedBaseReg = false;
 
   MachineFrameInfo *MFI = Fn.getFrameInfo();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
@@ -274,6 +275,7 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
                 std::pair<unsigned, int64_t>(BaseReg,
                                       LocalOffsets[FrameIdx] + InstrOffset));
               ++NumBaseRegisters;
+              UsedBaseReg = true;
             }
             assert(BaseReg != 0 && "Unable to allocate virtual base register!");
 
@@ -288,4 +290,5 @@ void LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
       }
     }
   }
+  return UsedBaseReg;
 }
