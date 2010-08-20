@@ -18,6 +18,8 @@
 
 #include <string>
 
+namespace llvmc {
+
 namespace SaveTempsEnum { enum Values { Cwd, Obj, Unset }; }
 
 extern llvm::cl::list<std::string> InputFilenames;
@@ -31,5 +33,7 @@ extern llvm::cl::opt<bool> CheckGraph;
 extern llvm::cl::opt<bool> ViewGraph;
 extern llvm::cl::opt<bool> WriteGraph;
 extern llvm::cl::opt<SaveTempsEnum::Values> SaveTemps;
+
+} // End namespace llvmc.
 
 #endif // LLVM_INCLUDE_COMPILER_DRIVER_BUILTIN_OPTIONS_H

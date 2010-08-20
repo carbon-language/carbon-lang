@@ -19,7 +19,7 @@
 
 namespace cl = llvm::cl;
 
-// External linkage here is intentional.
+namespace llvmc {
 
 cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
                                      cl::ZeroOrMore);
@@ -57,3 +57,5 @@ cl::opt<SaveTempsEnum::Values> SaveTemps
             clEnumValN(SaveTempsEnum::Obj, "", "Same as 'cwd'"),
             clEnumValEnd),
  cl::ValueOptional);
+
+}  // End namespace llvmc.
