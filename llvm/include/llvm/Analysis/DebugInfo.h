@@ -655,7 +655,7 @@ namespace llvm {
                                         MDNode *ContainingType = 0);
 
     /// CreateTemporaryType - Create a temporary forward-declared type.
-    DIType CreateTemporaryType(DIDescriptor Context);
+    DIType CreateTemporaryType();
 
     /// CreateArtificialType - Create a new DIType with "artificial" flag set.
     DIType CreateArtificialType(DIType Ty);

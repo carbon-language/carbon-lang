@@ -937,7 +937,7 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
 
 
 /// CreateTemporaryType - Create a temporary forward-declared type.
-DIType DIFactory::CreateTemporaryType(DIDescriptor Context) {
+DIType DIFactory::CreateTemporaryType() {
   // Give the temporary MDNode a tag. It doesn't matter what tag we
   // use here as long as DIType accepts it.
   Value *Elts[] = {
