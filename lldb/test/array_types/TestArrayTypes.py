@@ -11,67 +11,46 @@ class TestArrayTypes(TestBase):
 
     def test_array_types(self):
         """Test 'variable list var_name' on some variables with array types."""
-        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
-        self.ci.HandleCommand("file " + exe, res)
-        self.assertTrue(res.Succeeded(), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break on line 42 inside main().
-        self.ci.HandleCommand("breakpoint set -f main.c -l 42", res)
-        self.assertTrue(res.Succeeded(), CMD_MSG('breakpoint set'))
-        self.assertTrue(res.GetOutput().startswith(
-            "Breakpoint created: 1: file ='main.c', line = 42, locations = 1"),
-                        BREAKPOINT_CREATED)
+        self.expect("breakpoint set -f main.c -l 42", BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.c', line = 42, locations = 1")
 
-        self.ci.HandleCommand("run", res)
-        self.runStarted = True
-        self.assertTrue(res.Succeeded(), RUN_STOPPED)
+        self.runCmd("run", RUN_STOPPED)
 
         # The stop reason of the thread should be breakpoint.
-        self.ci.HandleCommand("thread list", res)
-        #print "thread list ->", res.GetOutput()
-        self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('state is Stopped') > 0 and
-                        res.GetOutput().find('stop reason = breakpoint') > 0,
-                        STOPPED_DUE_TO_BREAKPOINT)
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['state is Stopped',
+                       'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.ci.HandleCommand("breakpoint list", res)
-        self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('resolved, hit count = 1') > 0,
-                        BREAKPOINT_HIT_ONCE)
+        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+            substrs = ['resolved, hit count = 1'])
 
         # Issue 'variable list' command on several array-type variables.
 
-        self.ci.HandleCommand("variable list strings", res);
-        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
-        output = res.GetOutput()
-        self.assertTrue(output.startswith('(char *[4])') and
-                        output.find('(char *) strings[0]') > 0 and
-                        output.find('(char *) strings[1]') > 0 and
-                        output.find('(char *) strings[2]') > 0 and
-                        output.find('(char *) strings[3]') > 0 and
-                        output.find('Hello') > 0 and
-                        output.find('Hola') > 0 and
-                        output.find('Bonjour') > 0 and
-                        output.find('Guten Tag') > 0,
-                        VARIABLES_DISPLAYED_CORRECTLY)
+        self.expect("variable list strings", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = '(char *[4])',
+            substrs = ['(char *) strings[0]',
+                       '(char *) strings[1]',
+                       '(char *) strings[2]',
+                       '(char *) strings[3]',
+                       'Hello',
+                       'Hola',
+                       'Bonjour',
+                       'Guten Tag'])
 
-        self.ci.HandleCommand("variable list char_16", res);
-        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
-        self.assertTrue(res.GetOutput().find('(char) char_16[0]') > 0 and
-                        res.GetOutput().find('(char) char_16[15]') > 0,
-                        VARIABLES_DISPLAYED_CORRECTLY)
+        self.expect("variable list char_16", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['(char) char_16[0]',
+                       '(char) char_16[15]'])
 
-        self.ci.HandleCommand("variable list ushort_matrix", res);
-        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
-        self.assertTrue(res.GetOutput().startswith('(unsigned short [2][3])'),
-                        VARIABLES_DISPLAYED_CORRECTLY)
+        self.expect("variable list ushort_matrix", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = '(unsigned short [2][3])')
 
-        self.ci.HandleCommand("variable list long_6", res);
-        self.assertTrue(res.Succeeded(), CMD_MSG('variable list ...'))
-        self.assertTrue(res.GetOutput().startswith('(long [6])'),
-                        VARIABLES_DISPLAYED_CORRECTLY)
+        self.expect("variable list long_6", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = '(long [6])')
 
 
 if __name__ == '__main__':
