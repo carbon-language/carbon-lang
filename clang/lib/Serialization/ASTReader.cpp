@@ -2826,7 +2826,7 @@ QualType ASTReader::GetType(TypeID ID) {
     TypesLoaded[Index] = ReadTypeRecord(Index);
     TypesLoaded[Index]->setFromAST();
     if (DeserializationListener)
-      DeserializationListener->TypeRead(ID >> Qualifiers::FastWidth,
+      DeserializationListener->TypeRead(TypeIdx::fromTypeID(ID),
                                         TypesLoaded[Index]);
   }
 

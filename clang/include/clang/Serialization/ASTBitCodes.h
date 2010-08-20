@@ -17,6 +17,7 @@
 #ifndef LLVM_CLANG_FRONTEND_PCHBITCODES_H
 #define LLVM_CLANG_FRONTEND_PCHBITCODES_H
 
+#include "clang/AST/Type.h"
 #include "llvm/Bitcode/BitCodes.h"
 #include "llvm/System/DataTypes.h"
 
@@ -63,6 +64,22 @@ namespace clang {
     /// placeholder for "no type". Values from NUM_PREDEF_TYPE_IDs are
     /// other types that have serialized representations.
     typedef uint32_t TypeID;
+
+    /// \brief A type index; the type ID with the qualifier bits removed.
+    class TypeIdx {
+      uint32_t Idx;
+    public:
+      TypeIdx() : Idx(0) { }
+      explicit TypeIdx(uint32_t index) : Idx(index) { }
+
+      uint32_t getIndex() const { return Idx; }
+      TypeID asTypeID(unsigned FastQuals) const {
+        return (Idx << Qualifiers::FastWidth) | FastQuals;
+      }
+      static TypeIdx fromTypeID(TypeID ID) {
+        return TypeIdx(ID >> Qualifiers::FastWidth);
+      }
+    };
 
     /// \brief An ID number that refers to an identifier in an AST
     /// file.

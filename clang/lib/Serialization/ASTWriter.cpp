@@ -1397,12 +1397,12 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
 
 /// \brief Write the representation of a type to the AST stream.
 void ASTWriter::WriteType(QualType T) {
-  TypeID &ID = TypeIDs[T];
-  if (ID == 0) // we haven't seen this type before.
-    ID = NextTypeID++;
+  TypeIdx &Idx = TypeIDs[T];
+  if (Idx.getIndex() == 0) // we haven't seen this type before.
+    Idx = TypeIdx(NextTypeID++);
 
   // Record the offset for this type.
-  unsigned Index = ID - FirstTypeID;
+  unsigned Index = Idx.getIndex() - FirstTypeID;
   if (TypeOffsets.size() == Index)
     TypeOffsets.push_back(Stream.GetCurrentBitNo());
   else if (TypeOffsets.size() < Index) {
@@ -2588,17 +2588,17 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
   T.removeFastQualifiers();
 
   if (T.hasLocalNonFastQualifiers()) {
-    TypeID &ID = TypeIDs[T];
-    if (ID == 0) {
+    TypeIdx &Idx = TypeIDs[T];
+    if (Idx.getIndex() == 0) {
       // We haven't seen these qualifiers applied to this type before.
       // Assign it a new ID.  This is the only time we enqueue a
       // qualified type, and it has no CV qualifiers.
-      ID = NextTypeID++;
+      Idx = TypeIdx(NextTypeID++);
       DeclTypesToEmit.push(T);
     }
 
     // Encode the type qualifiers in the type reference.
-    Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
+    Record.push_back(Idx.asTypeID(FastQuals));
     return;
   }
 
@@ -2640,20 +2640,20 @@ void ASTWriter::AddTypeRef(QualType T, RecordData &Record) {
       break;
     }
 
-    Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
+    Record.push_back(TypeIdx(ID).asTypeID(FastQuals));
     return;
   }
 
-  TypeID &ID = TypeIDs[T];
-  if (ID == 0) {
+  TypeIdx &Idx = TypeIDs[T];
+  if (Idx.getIndex() == 0) {
     // We haven't seen this type before. Assign it a new ID and put it
     // into the queue of types to emit.
-    ID = NextTypeID++;
+    Idx = TypeIdx(NextTypeID++);
     DeclTypesToEmit.push(T);
   }
 
   // Encode the type qualifiers in the type reference.
-  Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
+  Record.push_back(Idx.asTypeID(FastQuals));
 }
 
 void ASTWriter::AddDeclRef(const Decl *D, RecordData &Record) {
@@ -2920,8 +2920,8 @@ void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
   IdentifierIDs[II] = ID;
 }
 
-void ASTWriter::TypeRead(TypeID ID, QualType T) {
-  TypeIDs[T] = ID;
+void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
+  TypeIDs[T] = Idx;
 }
 
 void ASTWriter::DeclRead(DeclID ID, const Decl *D) {

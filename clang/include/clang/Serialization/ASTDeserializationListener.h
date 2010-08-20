@@ -37,7 +37,7 @@ public:
   /// \brief A type was deserialized from the AST file. The ID here has the
   ///        qualifier bits already removed, and T is guaranteed to be locally
   ///        unqualified.
-  virtual void TypeRead(serialization::TypeID ID, QualType T) = 0;
+  virtual void TypeRead(serialization::TypeIdx Idx, QualType T) = 0;
   /// \brief A decl was deserialized from the AST file.
   virtual void DeclRead(serialization::DeclID ID, const Decl *D) = 0;
   /// \brief A selector was read from the AST file.

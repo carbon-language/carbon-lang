@@ -146,7 +146,7 @@ private:
   /// allow for the const/volatile qualifiers.
   ///
   /// Keys in the map never have const/volatile qualifiers.
-  llvm::DenseMap<QualType, serialization::TypeID, UnsafeQualTypeDenseMapInfo>
+  llvm::DenseMap<QualType, serialization::TypeIdx, UnsafeQualTypeDenseMapInfo>
       TypeIDs;
 
   /// \brief Offset of each type in the bitstream, indexed by
@@ -466,7 +466,7 @@ public:
   // ASTDeserializationListener implementation
   void SetReader(ASTReader *Reader);
   void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
-  void TypeRead(serialization::TypeID ID, QualType T);
+  void TypeRead(serialization::TypeIdx Idx, QualType T);
   void DeclRead(serialization::DeclID ID, const Decl *D);
   void SelectorRead(serialization::SelectorID iD, Selector Sel);
 };

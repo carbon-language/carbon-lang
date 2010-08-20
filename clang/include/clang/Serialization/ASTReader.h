@@ -18,7 +18,6 @@
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/Type.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/PreprocessingRecord.h"
