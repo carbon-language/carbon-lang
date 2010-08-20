@@ -18,7 +18,7 @@ struct llvm_regex;
 namespace llvm {
   class StringRef;
   template<typename T> class SmallVectorImpl;
-  
+
   class Regex {
   public:
     enum {
@@ -26,9 +26,9 @@ namespace llvm {
       /// Compile for matching that ignores upper/lower case distinctions.
       IgnoreCase=1,
       /// Compile for newline-sensitive matching. With this flag '[^' bracket
-      /// expressions and '.' never match newline. A ^ anchor matches the 
-      /// null string after any newline in the string in addition to its normal 
-      /// function, and the $ anchor matches the null string before any 
+      /// expressions and '.' never match newline. A ^ anchor matches the
+      /// null string after any newline in the string in addition to its normal
+      /// function, and the $ anchor matches the null string before any
       /// newline in the string in addition to its normal function.
       Newline=2
     };
@@ -47,7 +47,7 @@ namespace llvm {
     /// matches it contains.  The number filled in by match will include this
     /// many entries plus one for the whole regex (as element 0).
     unsigned getNumMatches() const;
-    
+
     /// matches - Match the regex against a given \arg String.
     ///
     /// \param Matches - If given, on a succesful match this will be filled in

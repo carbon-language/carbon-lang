@@ -24,10 +24,10 @@ namespace llvm {
   /// handlers which conflict with the ones installed by this module.
   /// Defaults to false.
   extern bool DisablePrettyStackTrace;
-  
+
   /// PrettyStackTraceEntry - This class is used to represent a frame of the
   /// "pretty" stack trace that is dumped when a program crashes. You can define
-  /// subclasses of this and declare them on the program stack: when they are 
+  /// subclasses of this and declare them on the program stack: when they are
   /// constructed and destructed, they will add their symbolic frames to a
   /// virtual stack trace.  This gets dumped out if the program crashes.
   class PrettyStackTraceEntry {
@@ -37,14 +37,14 @@ namespace llvm {
   public:
     PrettyStackTraceEntry();
     virtual ~PrettyStackTraceEntry();
-    
+
     /// print - Emit information about this stack frame to OS.
     virtual void print(raw_ostream &OS) const = 0;
-    
+
     /// getNextEntry - Return the next entry in the list of frames.
     const PrettyStackTraceEntry *getNextEntry() const { return NextEntry; }
   };
-  
+
   /// PrettyStackTraceString - This object prints a specified string (which
   /// should not contain newlines) to the stream as the stack trace when a crash
   /// occurs.
@@ -54,7 +54,7 @@ namespace llvm {
     PrettyStackTraceString(const char *str) : Str(str) {}
     virtual void print(raw_ostream &OS) const;
   };
-  
+
   /// PrettyStackTraceProgram - This object prints a specified program arguments
   /// to the stream as the stack trace when a crash occurs.
   class PrettyStackTraceProgram : public PrettyStackTraceEntry {
@@ -65,7 +65,7 @@ namespace llvm {
       : ArgC(argc), ArgV(argv) {}
     virtual void print(raw_ostream &OS) const;
   };
-  
+
 } // end namespace llvm
 
 #endif
