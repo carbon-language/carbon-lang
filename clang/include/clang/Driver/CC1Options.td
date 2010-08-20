@@ -41,7 +41,7 @@ def analysis_CFGDump : Flag<"-cfg-dump">,
 def analysis_CFGView : Flag<"-cfg-view">,
   HelpText<"View Control-Flow Graphs using GraphViz">;
 def analysis_UnoptimizedCFG : Flag<"-unoptimized-cfg">,
-  HelpText<"View Control-Flow Graphs using GraphViz">;
+  HelpText<"Generate unoptimized CFGs for all analyses">;
 def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
   HelpText<"Print results of live variable analysis">;
 def analysis_LLVMConventionChecker : Flag<"-analyzer-check-llvm-conventions">,
