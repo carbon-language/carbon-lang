@@ -514,6 +514,9 @@ static AccessResult MatchesFriend(Sema &S,
 static AccessResult MatchesFriend(Sema &S,
                                   const EffectiveContext &EC,
                                   FriendDecl *FriendD) {
+  if (FriendD->isInvalidDecl())
+    return AR_accessible;
+
   if (TypeSourceInfo *T = FriendD->getFriendType())
     return MatchesFriend(S, EC, T->getType()->getCanonicalTypeUnqualified());
 
