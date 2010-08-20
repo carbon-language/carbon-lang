@@ -157,10 +157,16 @@ class TestBase(unittest2.TestCase):
 
         output = self.res.GetOutput()
         matched = output.startswith(startstr) if startstr else True
+
+        if not matched and startstr and verbose:
+            print "Startstr not matched:", startstr
+
         if substrs:
             for str in substrs:
                 matched = output.find(str) > 0
                 if not matched:
+                    if verbose:
+                        print "Substring not matched:", str
                     break
 
         self.assertTrue(matched, msg)
