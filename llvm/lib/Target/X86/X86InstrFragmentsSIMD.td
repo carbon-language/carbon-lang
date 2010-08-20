@@ -122,6 +122,78 @@ def SDTX86CmpPTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
 def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
 def X86testp   : SDNode<"X86ISD::TESTP", SDTX86CmpPTest>;
 
+// Specific shuffle nodes - At some point ISD::VECTOR_SHUFFLE will always get
+// translated into one of the target nodes below during lowering.
+// Note: this is a work in progress...
+def SDTShuff1Op : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisSameAs<0,1>]>;
+def SDTShuff2Op : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                SDTCisSameAs<0,2>]>;
+
+def SDTShuff2OpI : SDTypeProfile<1, 2, [SDTCisVec<0>,
+                                 SDTCisSameAs<0,1>, SDTCisInt<2>]>;
+def SDTShuff3OpI : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                 SDTCisSameAs<0,2>, SDTCisInt<3>]>;
+
+def SDTShuff1OpLd : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisPtrTy<1>]>;
+def SDTShuff2OpLd : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                  SDTCisPtrTy<2>]>;
+
+def SDTShuff2OpLdI : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisPtrTy<1>,
+                                  SDTCisInt<2>]>;
+
+def X86PAlign : SDNode<"X86ISD::PALIGN", SDTShuff3OpI>;
+
+def X86PShufd  : SDNode<"X86ISD::PSHUFD", SDTShuff2OpI>;
+def X86PShufhw : SDNode<"X86ISD::PSHUFHW", SDTShuff2OpI>;
+def X86PShuflw : SDNode<"X86ISD::PSHUFLW", SDTShuff2OpI>;
+
+def X86PShufhwLd : SDNode<"X86ISD::PSHUFHW_LD", SDTShuff2OpLdI>;
+def X86PShuflwLd : SDNode<"X86ISD::PSHUFLW_LD", SDTShuff2OpLdI>;
+
+def X86Shufpd : SDNode<"X86ISD::SHUFPD", SDTShuff3OpI>;
+def X86Shufps : SDNode<"X86ISD::SHUFPS", SDTShuff3OpI>;
+
+def X86Movddup  : SDNode<"X86ISD::MOVDDUP", SDTShuff1Op>;
+def X86Movshdup : SDNode<"X86ISD::MOVSHDUP", SDTShuff1Op>;
+def X86Movsldup : SDNode<"X86ISD::MOVSLDUP", SDTShuff1Op>;
+
+def X86MovshdupLd : SDNode<"X86ISD::MOVSHDUP_LD", SDTShuff1OpLd,
+                          [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def X86MovsldupLd : SDNode<"X86ISD::MOVSLDUP_LD", SDTShuff1OpLd,
+                          [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+
+def X86Movsd : SDNode<"X86ISD::MOVSD", SDTShuff2Op>;
+def X86Movss : SDNode<"X86ISD::MOVSS", SDTShuff2Op>;
+
+def X86Movlhps : SDNode<"X86ISD::MOVLHPS", SDTShuff2Op>;
+def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
+def X86Movlhpd : SDNode<"X86ISD::MOVLHPD", SDTShuff2Op>;
+def X86Movhlpd : SDNode<"X86ISD::MOVHLPD", SDTShuff2Op>;
+
+def X86MovhpsLd : SDNode<"X86ISD::MOVHPS", SDTShuff2OpLd,
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def X86MovhpdLd : SDNode<"X86ISD::MOVHPD", SDTShuff2OpLd,
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def X86MovlpsLd : SDNode<"X86ISD::MOVLPS", SDTShuff2OpLd,
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def X86MovlpdLd : SDNode<"X86ISD::MOVLPD", SDTShuff2OpLd,
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+
+def X86Unpcklps : SDNode<"X86ISD::UNPCKLPS", SDTShuff2Op>;
+def X86Unpcklpd : SDNode<"X86ISD::UNPCKLPD", SDTShuff2Op>;
+def X86Unpckhps : SDNode<"X86ISD::UNPCKHPS", SDTShuff2Op>;
+def X86Unpckhpd : SDNode<"X86ISD::UNPCKHPD", SDTShuff2Op>;
+
+def X86Punpcklbw  : SDNode<"X86ISD::PUNPCKLBW", SDTShuff2Op>;
+def X86Punpcklwd  : SDNode<"X86ISD::PUNPCKLWD", SDTShuff2Op>;
+def X86Punpckldq  : SDNode<"X86ISD::PUNPCKLDQ", SDTShuff2Op>;
+def X86Punpcklqdq : SDNode<"X86ISD::PUNPCKLQDQ", SDTShuff2Op>;
+
+def X86Punpckhbw  : SDNode<"X86ISD::PUNPCKHBW", SDTShuff2Op>;
+def X86Punpckhwd  : SDNode<"X86ISD::PUNPCKHWD", SDTShuff2Op>;
+def X86Punpckhdq  : SDNode<"X86ISD::PUNPCKHDQ", SDTShuff2Op>;
+def X86Punpckhqdq : SDNode<"X86ISD::PUNPCKHQDQ", SDTShuff2Op>;
+
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
 //===----------------------------------------------------------------------===//
