@@ -3,6 +3,7 @@ set(files
   avxintrin.h
   emmintrin.h	
   float.h		
+  immintrin.h
   iso646.h	
   limits.h	
   mm_malloc.h	
