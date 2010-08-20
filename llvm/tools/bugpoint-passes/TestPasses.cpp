@@ -41,12 +41,12 @@ namespace {
       return false;
     }
   };
+}
 
-  char CrashOnCalls::ID = 0;
-  RegisterPass<CrashOnCalls>
+char CrashOnCalls::ID = 0;
+static RegisterPass<CrashOnCalls>
   X("bugpoint-crashcalls",
     "BugPoint Test Pass - Intentionally crash on CallInsts");
-}
 
 namespace {
   /// DeleteCalls - This pass is used to test bugpoint.  It intentionally
@@ -67,9 +67,9 @@ namespace {
       return false;
     }
   };
+}
  
-  char DeleteCalls::ID = 0;
-  RegisterPass<DeleteCalls>
+char DeleteCalls::ID = 0;
+static RegisterPass<DeleteCalls>
   Y("bugpoint-deletecalls",
     "BugPoint Test Pass - Intentionally 'misoptimize' CallInsts");
-}

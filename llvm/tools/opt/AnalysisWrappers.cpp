@@ -66,12 +66,14 @@ namespace {
       AU.setPreservesAll();
     }
   };
+}
 
-  char ExternalFunctionsPassedConstants::ID = 0;
-  RegisterPass<ExternalFunctionsPassedConstants>
+char ExternalFunctionsPassedConstants::ID = 0;
+static RegisterPass<ExternalFunctionsPassedConstants>
   P1("print-externalfnconstants",
      "Print external fn callsites passed constants");
 
+namespace {
   struct CallGraphPrinter : public ModulePass {
     static char ID; // Pass ID, replacement for typeid
     CallGraphPrinter() : ModulePass(ID) {}
@@ -85,8 +87,8 @@ namespace {
       return false;
     }
   };
-
-  char CallGraphPrinter::ID = 0;
-  RegisterPass<CallGraphPrinter>
-    P2("print-callgraph", "Print a call graph");
 }
+
+char CallGraphPrinter::ID = 0;
+static RegisterPass<CallGraphPrinter>
+  P2("print-callgraph", "Print a call graph");

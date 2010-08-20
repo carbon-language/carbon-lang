@@ -79,11 +79,11 @@ namespace {
       AU.setPreservesAll();
     }
   };
-
-  char CallGraphPrinter::ID = 0;
-  RegisterPass<CallGraphPrinter> P2("dot-callgraph",
-                                    "Print Call Graph to 'dot' file");
 }
+
+char CallGraphPrinter::ID = 0;
+static RegisterPass<CallGraphPrinter> P2("dot-callgraph",
+                                         "Print Call Graph to 'dot' file");
 
 //===----------------------------------------------------------------------===//
 //                            DomInfoPrinter Pass
@@ -110,8 +110,8 @@ namespace {
       return false;
     }
   };
-
-  char DomInfoPrinter::ID = 0;
-  static RegisterPass<DomInfoPrinter>
-  DIP("print-dom-info", "Dominator Info Printer", true, true);
 }
+
+char DomInfoPrinter::ID = 0;
+static RegisterPass<DomInfoPrinter>
+DIP("print-dom-info", "Dominator Info Printer", true, true);
