@@ -540,14 +540,16 @@ bool raw_fd_ostream::is_displayed() const {
 }
 
 //===----------------------------------------------------------------------===//
-//  raw_stdout/err_ostream
+//  outs(), errs(), nulls()
 //===----------------------------------------------------------------------===//
 
 /// outs() - This returns a reference to a raw_ostream for standard output.
 /// Use it like: outs() << "foo" << "bar";
 raw_ostream &llvm::outs() {
   // Set buffer settings to model stdout behavior.
-  static raw_fd_ostream S(STDOUT_FILENO, false);
+  // Delete the file descriptor when the program exists, forcing error
+  // detection. If you don't want this behavior, don't use outs().
+  static raw_fd_ostream S(STDOUT_FILENO, true);
   return S;
 }
 
