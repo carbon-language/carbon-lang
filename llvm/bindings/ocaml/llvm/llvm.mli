@@ -999,7 +999,7 @@ external const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
                              = "LLVMConstInsertElement"
 
 (** [const_shufflevector a b mask] returns a constant [shufflevector].
-    See the LLVM Language Reference for details on the [sufflevector]
+    See the LLVM Language Reference for details on the [shufflevector]
     instruction.
     See the method [llvm::ConstantExpr::getShuffleVector]. *)
 external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
