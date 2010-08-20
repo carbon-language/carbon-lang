@@ -282,6 +282,7 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // Modify the instruction to use the new base register rather
             // than the frame index operand.
             TRI->resolveFrameIndex(I, BaseReg, Offset);
+            DEBUG(dbgs() << "Resolved: " << *MI);
 
             ++NumReplacements;
           }
