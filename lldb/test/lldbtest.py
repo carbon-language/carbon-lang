@@ -114,7 +114,7 @@ class TestBase(unittest2.TestCase):
         # Restore old working directory.
         os.chdir(self.oldcwd)
 
-    def runCmd(self, cmd, msg=None, check=True):
+    def runCmd(self, cmd, msg=None, check=True, verbose=False):
         """
         Ask the command interpreter to handle the command and then check its
         return status.
@@ -122,16 +122,26 @@ class TestBase(unittest2.TestCase):
         # Fail fast if 'cmd' is not meaningful.
         if not cmd or len(cmd) == 0:
             raise Exception("Bad 'cmd' parameter encountered")
+
+        if verbose:
+            print "runCmd:", cmd
+
         self.ci.HandleCommand(cmd, self.res)
+
         if cmd.startswith("run"):
             self.runStarted = True
+
+        if not self.res.Succeeded():
+            print self.res.GetError()
+
+        if verbose:
+            print "output:", self.res.GetOutput()
+
         if check:
-            if (not self.res.Succeeded()):
-                print self.res.GetError()
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
-    def expect(self, cmd, msg, startstr=None, substrs=None):
+    def expect(self, cmd, msg, startstr=None, substrs=None, verbose=False):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -143,7 +153,7 @@ class TestBase(unittest2.TestCase):
         # Fail fast if 'msg' is not meaningful.
         if not msg or len(msg) == 0:
             raise Exception("Bad 'msg' parameter encountered")
-        self.runCmd(cmd)
+        self.runCmd(cmd, verbose = (True if verbose else False))
 
         output = self.res.GetOutput()
         matched = output.startswith(startstr) if startstr else True
