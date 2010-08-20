@@ -57,13 +57,6 @@ raw_ostream::~raw_ostream() {
 
   if (BufferMode == InternalBuffer)
     delete [] OutBufStart;
-
-  // If there are any pending errors, report them now. Clients wishing
-  // to avoid report_fatal_error calls should check for errors with
-  // has_error() and clear the error flag with clear_error() before
-  // destructing raw_ostream objects which may have errors.
-  if (Error)
-    report_fatal_error("IO failure on output stream.");
 }
 
 // An out of line virtual method to provide a home for the class vtable.
@@ -370,7 +363,7 @@ void format_object_base::home() {
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
-                               unsigned Flags) : pos(0) {
+                               unsigned Flags) : Error(false), pos(0) {
   assert(Filename != 0 && "Filename is null");
   // Verify that we don't have both "append" and "excl".
   assert((!(Flags & F_Excl) || !(Flags & F_Append)) &&
@@ -418,14 +411,22 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
 }
 
 raw_fd_ostream::~raw_fd_ostream() {
-  if (FD < 0) return;
-  flush();
-  if (ShouldClose)
-    while (::close(FD) != 0)
-      if (errno != EINTR) {
-        error_detected();
-        break;
-      }
+  if (FD >= 0) {
+    flush();
+    if (ShouldClose)
+      while (::close(FD) != 0)
+        if (errno != EINTR) {
+          error_detected();
+          break;
+        }
+  }
+
+  // If there are any pending errors, report them now. Clients wishing
+  // to avoid report_fatal_error calls should check for errors with
+  // has_error() and clear the error flag with clear_error() before
+  // destructing raw_ostream objects which may have errors.
+  if (has_error())
+    report_fatal_error("IO failure on output stream.");
 }
 
 

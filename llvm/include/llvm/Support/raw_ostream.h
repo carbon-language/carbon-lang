@@ -58,10 +58,6 @@ private:
     ExternalBuffer
   } BufferMode;
 
-  /// Error This flag is true if an error of any kind has been detected.
-  ///
-  bool Error;
-
 public:
   // color order matches ANSI escape sequence, don't change
   enum Colors {
@@ -77,7 +73,7 @@ public:
   };
 
   explicit raw_ostream(bool unbuffered=false)
-    : BufferMode(unbuffered ? Unbuffered : InternalBuffer), Error(false) {
+    : BufferMode(unbuffered ? Unbuffered : InternalBuffer) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
@@ -86,21 +82,6 @@ public:
 
   /// tell - Return the current offset with the file.
   uint64_t tell() const { return current_pos() + GetNumBytesInBuffer(); }
-
-  /// has_error - Return the value of the flag in this raw_ostream indicating
-  /// whether an output error has been encountered.
-  /// This doesn't implicitly flush any pending output.
-  bool has_error() const {
-    return Error;
-  }
-
-  /// clear_error - Set the flag read by has_error() to false. If the error
-  /// flag is set at the time when this raw_ostream's destructor is called,
-  /// report_fatal_error is called to report the error. Use clear_error()
-  /// after handling the error to avoid this behavior.
-  void clear_error() {
-    Error = false;
-  }
 
   //===--------------------------------------------------------------------===//
   // Configuration Interface
@@ -285,10 +266,6 @@ protected:
   /// underlying output mechanism.
   virtual size_t preferred_buffer_size() const;
 
-  /// error_detected - Set the flag indicating that an output error has
-  /// been encountered.
-  void error_detected() { Error = true; }
-
   /// getBufferStart - Return the beginning of the current stream buffer, or 0
   /// if the stream is unbuffered.
   const char *getBufferStart() const { return OutBufStart; }
@@ -319,6 +296,11 @@ private:
 class raw_fd_ostream : public raw_ostream {
   int FD;
   bool ShouldClose;
+
+  /// Error This flag is true if an error of any kind has been detected.
+  ///
+  bool Error;
+
   uint64_t pos;
 
   /// write_impl - See raw_ostream::write_impl.
@@ -330,6 +312,10 @@ class raw_fd_ostream : public raw_ostream {
 
   /// preferred_buffer_size - Determine an efficient buffer size.
   virtual size_t preferred_buffer_size() const;
+
+  /// error_detected - Set the flag indicating that an output error has
+  /// been encountered.
+  void error_detected() { Error = true; }
 
 public:
 
@@ -365,7 +351,8 @@ public:
   /// ShouldClose is true, this closes the file when the stream is destroyed.
   raw_fd_ostream(int fd, bool shouldClose,
                  bool unbuffered=false) : raw_ostream(unbuffered), FD(fd),
-                                          ShouldClose(shouldClose) {}
+                                          ShouldClose(shouldClose),
+                                          Error(false) {}
 
   ~raw_fd_ostream();
 
@@ -382,6 +369,21 @@ public:
   virtual raw_ostream &resetColor();
 
   virtual bool is_displayed() const;
+
+  /// has_error - Return the value of the flag in this raw_fd_ostream indicating
+  /// whether an output error has been encountered.
+  /// This doesn't implicitly flush any pending output.
+  bool has_error() const {
+    return Error;
+  }
+
+  /// clear_error - Set the flag read by has_error() to false. If the error
+  /// flag is set at the time when this raw_ostream's destructor is called,
+  /// report_fatal_error is called to report the error. Use clear_error()
+  /// after handling the error to avoid this behavior.
+  void clear_error() {
+    Error = false;
+  }
 };
 
 /// raw_stdout_ostream - This is a stream that always prints to stdout.
