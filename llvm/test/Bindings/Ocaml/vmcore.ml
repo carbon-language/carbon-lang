@@ -436,7 +436,7 @@ let test_constants () =
    * RUN: grep {const_select.*select} < %t.ll
    * RUN: grep {const_extractelement.*extractelement} < %t.ll
    * RUN: grep {const_insertelement.*insertelement} < %t.ll
-   * RUN: grep {const_shufflevector.*shufflevector} < %t.ll
+   * RUN: grep {const_shufflevector = global <4 x i32> <i32 0, i32 1, i32 1, i32 0>} < %t.ll
    *)
   ignore (define_global "const_size_of" (size_of (pointer_type i8_type)) m);
   ignore (define_global "const_gep" (const_gep foldbomb_gv [| five |]) m);
@@ -455,7 +455,8 @@ let test_constants () =
   ignore (define_global "const_shufflevector" (const_shufflevector
     (const_vector [| zero; one |])
     (const_vector [| one; zero |])
-    (const_vector [| const_int i32_type 1; const_int i32_type 2 |])) m);
+    (const_vector [| const_int i32_type 0; const_int i32_type 1;
+                     const_int i32_type 2; const_int i32_type 3 |])) m);
 
   group "asm"; begin
     let ft = function_type void_type [| i32_type; i32_type; i32_type |] in
@@ -1161,13 +1162,13 @@ let test_builder () =
   group "comparisons"; begin
     (* RUN: grep {%build_icmp_ne = icmp ne i32 %P1, %P2} < %t.ll
      * RUN: grep {%build_icmp_sle = icmp sle i32 %P2, %P1} < %t.ll
-     * RUN: grep {%build_icmp_false = fcmp false float %F1, %F2} < %t.ll
-     * RUN: grep {%build_icmp_true = fcmp true float %F2, %F1} < %t.ll
+     * RUN: grep {%build_fcmp_false = fcmp false float %F1, %F2} < %t.ll
+     * RUN: grep {%build_fcmp_true = fcmp true float %F2, %F1} < %t.ll
      *)
     ignore (build_icmp Icmp.Ne    p1 p2 "build_icmp_ne" atentry);
     ignore (build_icmp Icmp.Sle   p2 p1 "build_icmp_sle" atentry);
-    ignore (build_fcmp Fcmp.False f1 f2 "build_icmp_false" atentry);
-    ignore (build_fcmp Fcmp.True  f2 f1 "build_icmp_true" atentry)
+    ignore (build_fcmp Fcmp.False f1 f2 "build_fcmp_false" atentry);
+    ignore (build_fcmp Fcmp.True  f2 f1 "build_fcmp_true" atentry)
   end;
   
   group "miscellaneous"; begin
