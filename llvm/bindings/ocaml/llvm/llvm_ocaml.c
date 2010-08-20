@@ -452,6 +452,17 @@ CAMLprim LLVMValueRef llvm_operand(LLVMValueRef V, value I) {
   return LLVMGetOperand(V, Int_val(I));
 }
 
+/* llvalue -> int -> llvalue -> unit */
+CAMLprim value llvm_set_operand(LLVMValueRef U, value I, LLVMValueRef V) {
+  LLVMSetOperand(U, Int_val(I), V);
+  return Val_unit;
+}
+
+/* llvalue -> int */
+CAMLprim value llvm_num_operands(LLVMValueRef V) {
+  return Val_int(LLVMGetNumOperands(V));
+}
+
 /*--... Operations on constants of (mostly) any type .......................--*/
 
 /* llvalue -> bool */

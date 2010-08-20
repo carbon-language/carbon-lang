@@ -523,6 +523,8 @@ LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
 
 /* Operations on Users */
 LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index);
+void LLVMSetOperand(LLVMValueRef User, unsigned Index, LLVMValueRef Val);
+int LLVMGetNumOperands(LLVMValueRef Val);
 
 /* Operations on constants of any type */
 LLVMValueRef LLVMConstNull(LLVMTypeRef Ty); /* all zeroes */

@@ -557,6 +557,14 @@ val fold_right_uses : (lluse -> 'a -> 'a) -> llvalue -> 'a -> 'a
     method [llvm::User::getOperand]. *)
 external operand : llvalue -> int -> llvalue = "llvm_operand"
 
+(** [set_operand v i o] sets the operand of the value [v] at the index [i] to
+    the value [o].
+    See the method [llvm::User::setOperand]. *)
+external set_operand : llvalue -> int -> llvalue -> unit = "llvm_set_operand"
+
+(** [num_operands v] returns the number of operands for the value [v].
+    See the method [llvm::User::getNumOperands]. *)
+external num_operands : llvalue -> int = "llvm_num_operands"
 
 (** {7 Operations on constants of (mostly) any type} *)
 

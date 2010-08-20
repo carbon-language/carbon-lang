@@ -489,6 +489,14 @@ LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index) {
   return wrap(unwrap<User>(Val)->getOperand(Index));
 }
 
+void LLVMSetOperand(LLVMValueRef Val, unsigned Index, LLVMValueRef Op) {
+  unwrap<User>(Val)->setOperand(Index, unwrap(Op));
+}
+
+int LLVMGetNumOperands(LLVMValueRef Val) {
+  return unwrap<User>(Val)->getNumOperands();
+}
+
 /*--.. Operations on constants of any type .................................--*/
 
 LLVMValueRef LLVMConstNull(LLVMTypeRef Ty) {

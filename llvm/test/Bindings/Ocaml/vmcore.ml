@@ -642,10 +642,17 @@ let test_users () =
 
   let p1 = param fn 0 in
   let p2 = param fn 1 in
+  let a3 = build_alloca i32_type "user_alloca" b in
+  let p3 = build_load a3 "user_load" b in
   let i = build_add p1 p2 "sum" b in
 
+  insist ((num_operands i) = 2);
   insist ((operand i 0) = p1);
   insist ((operand i 1) = p2);
+
+  set_operand i 1 p3;
+  insist ((operand i 1) != p2);
+  insist ((operand i 1) = p3);
 
   ignore (build_unreachable b)
 
