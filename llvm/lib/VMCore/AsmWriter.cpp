@@ -1435,6 +1435,9 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT,
   case GlobalValue::LinkerPrivateWeakLinkage:
     Out << "linker_private_weak ";
     break;
+  case GlobalValue::LinkerPrivateWeakDefAutoLinkage:
+    Out << "linker_private_weak_def_auto ";
+    break;
   case GlobalValue::InternalLinkage:      Out << "internal ";       break;
   case GlobalValue::LinkOnceAnyLinkage:   Out << "linkonce ";       break;
   case GlobalValue::LinkOnceODRLinkage:   Out << "linkonce_odr ";   break;

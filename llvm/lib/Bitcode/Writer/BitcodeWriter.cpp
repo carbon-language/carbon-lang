@@ -299,21 +299,22 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
   switch (GV->getLinkage()) {
   default: llvm_unreachable("Invalid linkage!");
-  case GlobalValue::ExternalLinkage:            return 0;
-  case GlobalValue::WeakAnyLinkage:             return 1;
-  case GlobalValue::AppendingLinkage:           return 2;
-  case GlobalValue::InternalLinkage:            return 3;
-  case GlobalValue::LinkOnceAnyLinkage:         return 4;
-  case GlobalValue::DLLImportLinkage:           return 5;
-  case GlobalValue::DLLExportLinkage:           return 6;
-  case GlobalValue::ExternalWeakLinkage:        return 7;
-  case GlobalValue::CommonLinkage:              return 8;
-  case GlobalValue::PrivateLinkage:             return 9;
-  case GlobalValue::WeakODRLinkage:             return 10;
-  case GlobalValue::LinkOnceODRLinkage:         return 11;
-  case GlobalValue::AvailableExternallyLinkage: return 12;
-  case GlobalValue::LinkerPrivateLinkage:       return 13;
-  case GlobalValue::LinkerPrivateWeakLinkage:   return 14;
+  case GlobalValue::ExternalLinkage:                 return 0;
+  case GlobalValue::WeakAnyLinkage:                  return 1;
+  case GlobalValue::AppendingLinkage:                return 2;
+  case GlobalValue::InternalLinkage:                 return 3;
+  case GlobalValue::LinkOnceAnyLinkage:              return 4;
+  case GlobalValue::DLLImportLinkage:                return 5;
+  case GlobalValue::DLLExportLinkage:                return 6;
+  case GlobalValue::ExternalWeakLinkage:             return 7;
+  case GlobalValue::CommonLinkage:                   return 8;
+  case GlobalValue::PrivateLinkage:                  return 9;
+  case GlobalValue::WeakODRLinkage:                  return 10;
+  case GlobalValue::LinkOnceODRLinkage:              return 11;
+  case GlobalValue::AvailableExternallyLinkage:      return 12;
+  case GlobalValue::LinkerPrivateLinkage:            return 13;
+  case GlobalValue::LinkerPrivateWeakLinkage:        return 14;
+  case GlobalValue::LinkerPrivateWeakDefAutoLinkage: return 15;
   }
 }
 

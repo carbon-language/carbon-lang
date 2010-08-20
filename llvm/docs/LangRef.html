@@ -25,6 +25,7 @@
           <li><a href="#linkage_private">'<tt>private</tt>' Linkage</a></li>
           <li><a href="#linkage_linker_private">'<tt>linker_private</tt>' Linkage</a></li>
           <li><a href="#linkage_linker_private_weak">'<tt>linker_private_weak</tt>' Linkage</a></li>
+          <li><a href="#linkage_linker_private_weak_def_auto">'<tt>linker_private_weak_def_auto</tt>' Linkage</a></li>
           <li><a href="#linkage_internal">'<tt>internal</tt>' Linkage</a></li>
           <li><a href="#linkage_available_externally">'<tt>available_externally</tt>' Linkage</a></li>
           <li><a href="#linkage_linkonce">'<tt>linkonce</tt>' Linkage</a></li>
@@ -556,6 +557,15 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
       <tt>linker_private_weak</tt> symbols are subject to coalescing by the
       linker. The symbols are removed by the linker from the final linked image
       (executable or dynamic library).</dd>
+
+  <dt><tt><b><a name="linkage_linker_private_weak_def_auto">linker_private_weak_def_auto</a></b></tt></dt>
+  <dd>Similar to "<tt>linker_private_weak</tt>", but it's known that the address
+      of the object is not taken. For instance, functions that had an inline
+      definition, but the compiler decided not to inline it. Note,
+      unlike <tt>linker_private</tt> and <tt>linker_private_weak</tt>,
+      <tt>linker_private_weak_def_auto</tt> may have only <tt>default</tt>
+      visibility.  The symbols are removed by the linker from the final linked
+      image (executable or dynamic library).</dd>
 
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt></dt>
   <dd>Similar to private, but the value shows as a local symbol

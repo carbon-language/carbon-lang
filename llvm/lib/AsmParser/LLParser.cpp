@@ -199,6 +199,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_private:             // OptionalLinkage
     case lltok::kw_linker_private:      // OptionalLinkage
     case lltok::kw_linker_private_weak: // OptionalLinkage
+    case lltok::kw_linker_private_weak_def_auto: // OptionalLinkage
     case lltok::kw_internal:            // OptionalLinkage
     case lltok::kw_weak:                // OptionalLinkage
     case lltok::kw_weak_odr:            // OptionalLinkage
@@ -623,7 +624,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
       Linkage != GlobalValue::InternalLinkage &&
       Linkage != GlobalValue::PrivateLinkage &&
       Linkage != GlobalValue::LinkerPrivateLinkage &&
-      Linkage != GlobalValue::LinkerPrivateWeakLinkage)
+      Linkage != GlobalValue::LinkerPrivateWeakLinkage &&
+      Linkage != GlobalValue::LinkerPrivateWeakDefAutoLinkage)
     return Error(LinkageLoc, "invalid linkage type for alias");
 
   Constant *Aliasee;
@@ -1008,6 +1010,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
 ///   ::= 'private'
 ///   ::= 'linker_private'
 ///   ::= 'linker_private_weak'
+///   ::= 'linker_private_weak_def_auto'
 ///   ::= 'internal'
 ///   ::= 'weak'
 ///   ::= 'weak_odr'
@@ -1028,6 +1031,9 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_linker_private: Res = GlobalValue::LinkerPrivateLinkage; break;
   case lltok::kw_linker_private_weak:
     Res = GlobalValue::LinkerPrivateWeakLinkage;
+    break;
+  case lltok::kw_linker_private_weak_def_auto:
+    Res = GlobalValue::LinkerPrivateWeakDefAutoLinkage;
     break;
   case lltok::kw_internal:       Res = GlobalValue::InternalLinkage;      break;
   case lltok::kw_weak:           Res = GlobalValue::WeakAnyLinkage;       break;
@@ -2718,6 +2724,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::LinkerPrivateWeakLinkage:
+  case GlobalValue::LinkerPrivateWeakDefAutoLinkage:
   case GlobalValue::InternalLinkage:
   case GlobalValue::AvailableExternallyLinkage:
   case GlobalValue::LinkOnceAnyLinkage:

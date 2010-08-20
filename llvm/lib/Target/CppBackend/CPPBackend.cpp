@@ -288,6 +288,8 @@ void CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
     Out << "GlobalValue::LinkerPrivateLinkage"; break;
   case GlobalValue::LinkerPrivateWeakLinkage:
     Out << "GlobalValue::LinkerPrivateWeakLinkage"; break;
+  case GlobalValue::LinkerPrivateWeakDefAutoLinkage:
+    Out << "GlobalValue::LinkerPrivateWeakDefAutoLinkage"; break;
   case GlobalValue::AvailableExternallyLinkage:
     Out << "GlobalValue::AvailableExternallyLinkage "; break;
   case GlobalValue::LinkOnceAnyLinkage:

@@ -493,6 +493,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(private);
   KEYWORD(linker_private);
   KEYWORD(linker_private_weak);
+  KEYWORD(linker_private_weak_def_auto);
   KEYWORD(internal);
   KEYWORD(available_externally);
   KEYWORD(linkonce);

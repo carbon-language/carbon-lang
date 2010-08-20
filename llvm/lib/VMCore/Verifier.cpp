@@ -446,6 +446,10 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
     Assert1(GVar && GVar->getType()->getElementType()->isArrayTy(),
             "Only global arrays can have appending linkage!", GVar);
   }
+
+  Assert1(!GV.hasLinkerPrivateWeakDefAutoLinkage() || GV.hasDefaultVisibility(),
+          "linker_private_weak_def_auto can only have default visibility!",
+          &GV);
 }
 
 void Verifier::visitGlobalVariable(GlobalVariable &GV) {

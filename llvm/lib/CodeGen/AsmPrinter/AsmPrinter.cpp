@@ -200,11 +200,17 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateWeakLinkage:
+  case GlobalValue::LinkerPrivateWeakDefAutoLinkage:
     if (MAI->getWeakDefDirective() != 0) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-      // .weak_definition _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
+
+      if ((GlobalValue::LinkageTypes)Linkage !=
+          GlobalValue::LinkerPrivateWeakDefAutoLinkage)
+        // .weak_definition _foo
+        OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
+      else
+        OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefAutoPrivate);
     } else if (MAI->getLinkOnceDirective() != 0) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
