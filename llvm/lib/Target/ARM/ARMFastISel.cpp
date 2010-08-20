@@ -67,6 +67,7 @@ class ARMFastISel : public FastISel {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 
+    // Code from FastISel.cpp.
     virtual unsigned FastEmitInst_(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC);
     virtual unsigned FastEmitInst_r(unsigned MachineInstOpcode,
@@ -95,6 +96,8 @@ class ARMFastISel : public FastISel {
     virtual unsigned FastEmitInst_extractsubreg(MVT RetVT,
                                                 unsigned Op0, bool Op0IsKill,
                                                 uint32_t Idx);
+                                                
+    // Backend specific FastISel code.
     virtual bool TargetSelectInstruction(const Instruction *I);
 
   #include "ARMGenFastISel.inc"
