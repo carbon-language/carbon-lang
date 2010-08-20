@@ -648,19 +648,6 @@ ExternalASTSource::SetNoExternalVisibleDeclsForName(const DeclContext *DC,
 
 DeclContext::lookup_result
 ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
-                                          const VisibleDeclaration &VD) {
-  ASTContext &Context = DC->getParentASTContext();
-  StoredDeclsMap *Map;
-  if (!(Map = DC->LookupPtr))
-    Map = DC->CreateStoredDeclsMap(Context);
-
-  StoredDeclsList &List = (*Map)[VD.Name];
-  List.setFromDeclIDs(VD.Declarations);
-  return List.getLookupResult(Context);
-}
-
-DeclContext::lookup_result
-ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
                                                   DeclarationName Name,
                                     llvm::SmallVectorImpl<NamedDecl*> &Decls) {
   ASTContext &Context = DC->getParentASTContext();;
@@ -677,35 +664,7 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
       List.AddSubsequentDecl(Decls[I]);
   }
 
-  return List.getLookupResult(Context);
-}
-
-void ExternalASTSource::SetExternalVisibleDecls(const DeclContext *DC,
-                    const llvm::SmallVectorImpl<VisibleDeclaration> &Decls) {
-  // There is no longer any visible storage in this context.
-  DC->ExternalVisibleStorage = false;
-
-  assert(!DC->LookupPtr && "Have a lookup map before de-serialization?");
-  StoredDeclsMap *Map = DC->CreateStoredDeclsMap(DC->getParentASTContext());
-  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
-    (*Map)[Decls[I].Name].setFromDeclIDs(Decls[I].Declarations);
-  }
-}
-
-void ExternalASTSource::SetExternalVisibleDecls(const DeclContext *DC,
-                            const llvm::SmallVectorImpl<NamedDecl*> &Decls) {
-  // There is no longer any visible storage in this context.
-  DC->ExternalVisibleStorage = false;
-
-  assert(!DC->LookupPtr && "Have a lookup map before de-serialization?");
-  StoredDeclsMap &Map = *DC->CreateStoredDeclsMap(DC->getParentASTContext());
-  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
-    StoredDeclsList &List = Map[Decls[I]->getDeclName()];
-    if (List.isNull())
-      List.setOnlyValue(Decls[I]);
-    else
-      List.AddSubsequentDecl(Decls[I]);
-  }
+  return List.getLookupResult();
 }
 
 DeclContext::decl_iterator DeclContext::noload_decls_begin() const {
@@ -841,7 +800,7 @@ DeclContext::lookup(DeclarationName Name) {
     if (LookupPtr) {
       StoredDeclsMap::iterator I = LookupPtr->find(Name);
       if (I != LookupPtr->end())
-        return I->second.getLookupResult(getParentASTContext());
+        return I->second.getLookupResult();
     }
 
     ExternalASTSource *Source = getParentASTContext().getExternalSource();
@@ -861,7 +820,7 @@ DeclContext::lookup(DeclarationName Name) {
   StoredDeclsMap::iterator Pos = LookupPtr->find(Name);
   if (Pos == LookupPtr->end())
     return lookup_result(lookup_iterator(0), lookup_iterator(0));
-  return Pos->second.getLookupResult(getParentASTContext());
+  return Pos->second.getLookupResult();
 }
 
 DeclContext::lookup_const_result
@@ -925,17 +884,20 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   if (isa<ClassTemplateSpecializationDecl>(D))
     return;
 
-  // If there is an external AST source, load any declarations it knows about
-  // with this declaration's name.
-  if (ExternalASTSource *Source = getParentASTContext().getExternalSource())
-    if (hasExternalVisibleStorage())
-      Source->FindExternalVisibleDeclsByName(this, D->getDeclName());
-
   ASTContext *C = 0;
   if (!LookupPtr) {
     C = &getParentASTContext();
     CreateStoredDeclsMap(*C);
   }
+
+  // If there is an external AST source, load any declarations it knows about
+  // with this declaration's name.
+  // If the lookup table contains an entry about this name it means that we
+  // have already checked the external source.
+  if (ExternalASTSource *Source = getParentASTContext().getExternalSource())
+    if (hasExternalVisibleStorage() &&
+        LookupPtr->find(D->getDeclName()) == LookupPtr->end())
+      Source->FindExternalVisibleDeclsByName(this, D->getDeclName());
 
   // Insert this declaration into the map.
   StoredDeclsList &DeclNameEntries = (*LookupPtr)[D->getDeclName()];
@@ -947,10 +909,7 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // If it is possible that this is a redeclaration, check to see if there is
   // already a decl for which declarationReplaces returns true.  If there is
   // one, just replace it and return.
-  if (!C)
-    C = &getParentASTContext();
-  
-  if (DeclNameEntries.HandleRedeclaration(*C, D))
+  if (DeclNameEntries.HandleRedeclaration(D))
     return;
 
   // Put this declaration into the appropriate slot.
@@ -964,43 +923,6 @@ DeclContext::getUsingDirectives() const {
   lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
   return udir_iterator_range(reinterpret_cast<udir_iterator>(Result.first),
                              reinterpret_cast<udir_iterator>(Result.second));
-}
-
-void StoredDeclsList::materializeDecls(ASTContext &Context) {
-  if (isNull())
-    return;
-
-  switch ((DataKind)(Data & 0x03)) {
-  case DK_Decl:
-  case DK_Decl_Vector:
-    break;
-
-  case DK_DeclID: {
-    // Resolve this declaration ID to an actual declaration by
-    // querying the external AST source.
-    unsigned DeclID = Data >> 2;
-
-    ExternalASTSource *Source = Context.getExternalSource();
-    assert(Source && "No external AST source available!");
-
-    Data = reinterpret_cast<uintptr_t>(Source->GetExternalDecl(DeclID));
-    break;
-  }
-
-  case DK_ID_Vector: {
-    // We have a vector of declaration IDs. Resolve all of them to
-    // actual declarations.
-    VectorTy &Vector = *getAsVector();
-    ExternalASTSource *Source = Context.getExternalSource();
-    assert(Source && "No external AST source available!");
-
-    for (unsigned I = 0, N = Vector.size(); I != N; ++I)
-      Vector[I] = reinterpret_cast<uintptr_t>(Source->GetExternalDecl(Vector[I]));
-
-    Data = (Data & ~0x03) | DK_Decl_Vector;
-    break;
-  }
-  }
 }
 
 //===----------------------------------------------------------------------===//

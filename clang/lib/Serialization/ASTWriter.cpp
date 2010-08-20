@@ -1466,59 +1466,6 @@ uint64_t ASTWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
   return Offset;
 }
 
-/// \brief Write the block containing all of the declaration IDs
-/// visible from the given DeclContext.
-///
-/// \returns the offset of the DECL_CONTEXT_VISIBLE block within the
-/// bistream, or 0 if no block was written.
-uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
-                                                 DeclContext *DC) {
-  if (DC->getPrimaryContext() != DC)
-    return 0;
-
-  // Since there is no name lookup into functions or methods, don't bother to
-  // build a visible-declarations table for these entities.
-  if (DC->isFunctionOrMethod())
-    return 0;
-
-  // If not in C++, we perform name lookup for the translation unit via the
-  // IdentifierInfo chains, don't bother to build a visible-declarations table.
-  // FIXME: In C++ we need the visible declarations in order to "see" the
-  // friend declarations, is there a way to do this without writing the table ?
-  if (DC->isTranslationUnit() && !Context.getLangOptions().CPlusPlus)
-    return 0;
-
-  // Force the DeclContext to build a its name-lookup table.
-  DC->lookup(DeclarationName());
-
-  // Serialize the contents of the mapping used for lookup. Note that,
-  // although we have two very different code paths, the serialized
-  // representation is the same for both cases: a declaration name,
-  // followed by a size, followed by references to the visible
-  // declarations that have that name.
-  uint64_t Offset = Stream.GetCurrentBitNo();
-  RecordData Record;
-  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
-  if (!Map)
-    return 0;
-
-  for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
-       D != DEnd; ++D) {
-    AddDeclarationName(D->first, Record);
-    DeclContext::lookup_result Result = D->second.getLookupResult(Context);
-    Record.push_back(Result.second - Result.first);
-    for (; Result.first != Result.second; ++Result.first)
-      AddDeclRef(*Result.first, Record);
-  }
-
-  if (Record.size() == 0)
-    return 0;
-
-  Stream.EmitRecord(DECL_CONTEXT_VISIBLE, Record);
-  ++NumVisibleDeclContexts;
-  return Offset;
-}
-
 void ASTWriter::WriteTypeDeclOffsets() {
   using namespace llvm;
   RecordData Record;
@@ -2061,6 +2008,74 @@ public:
   }
 };
 } // end anonymous namespace
+
+/// \brief Write the block containing all of the declaration IDs
+/// visible from the given DeclContext.
+///
+/// \returns the offset of the DECL_CONTEXT_VISIBLE block within the
+/// bistream, or 0 if no block was written.
+uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
+                                                 DeclContext *DC) {
+  if (DC->getPrimaryContext() != DC)
+    return 0;
+
+  // Since there is no name lookup into functions or methods, don't bother to
+  // build a visible-declarations table for these entities.
+  if (DC->isFunctionOrMethod())
+    return 0;
+
+  // If not in C++, we perform name lookup for the translation unit via the
+  // IdentifierInfo chains, don't bother to build a visible-declarations table.
+  // FIXME: In C++ we need the visible declarations in order to "see" the
+  // friend declarations, is there a way to do this without writing the table ?
+  if (DC->isTranslationUnit() && !Context.getLangOptions().CPlusPlus)
+    return 0;
+
+  // Force the DeclContext to build a its name-lookup table.
+  DC->lookup(DeclarationName());
+
+  // Serialize the contents of the mapping used for lookup. Note that,
+  // although we have two very different code paths, the serialized
+  // representation is the same for both cases: a declaration name,
+  // followed by a size, followed by references to the visible
+  // declarations that have that name.
+  uint64_t Offset = Stream.GetCurrentBitNo();
+  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
+  if (!Map || Map->empty())
+    return 0;
+
+  OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait> Generator;
+  ASTDeclContextNameLookupTrait Trait(*this);
+
+  // Create the on-disk hash table representation.
+  for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
+       D != DEnd; ++D) {
+    DeclarationName Name = D->first;
+    DeclContext::lookup_result Result = D->second.getLookupResult();
+    Generator.insert(Name, Result, Trait);
+  }
+
+  // Create the on-disk hash table in a buffer.
+  llvm::SmallString<4096> LookupTable;
+  uint32_t BucketOffset;
+  {
+    llvm::raw_svector_ostream Out(LookupTable);
+    // Make sure that no bucket is at offset 0
+    clang::io::Emit32(Out, 0);
+    BucketOffset = Generator.Emit(Out, Trait);
+  }
+
+  // Write the lookup table
+  RecordData Record;
+  Record.push_back(DECL_CONTEXT_VISIBLE);
+  Record.push_back(BucketOffset);
+  Stream.EmitRecordWithBlob(DeclContextVisibleLookupAbbrev, Record,
+                            LookupTable.str());
+
+  Stream.EmitRecord(DECL_CONTEXT_VISIBLE, Record);
+  ++NumVisibleDeclContexts;
+  return Offset;
+}
 
 //===----------------------------------------------------------------------===//
 // General Serialization Routines

@@ -1413,35 +1413,3 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
 
   return D;
 }
-
-bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
-                                   const std::pair<uint64_t, uint64_t> &Offsets,
-                                       DeclContextInfo &Info) {
-  SavedStreamPosition SavedPosition(Cursor);
-  // First the lexical decls.
-  if (Offsets.first != 0) {
-    Cursor.JumpToBit(Offsets.first);
-
-    RecordData Record;
-    const char *Blob;
-    unsigned BlobLen;
-    unsigned Code = Cursor.ReadCode();
-    unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
-    if (RecCode != DECL_CONTEXT_LEXICAL) {
-      Error("Expected lexical block");
-      return true;
-    }
-
-    Info.LexicalDecls = reinterpret_cast<const DeclID*>(Blob);
-    Info.NumLexicalDecls = BlobLen / sizeof(DeclID);
-  } else {
-    Info.LexicalDecls = 0;
-    Info.NumLexicalDecls = 0;
-  }
-
-  // Now the visible decls.
-  Info.Stream = &Cursor;
-  Info.OffsetToVisibleDecls = Offsets.second;
-
-  return false;
-}

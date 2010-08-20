@@ -268,6 +268,7 @@ private:
 
   unsigned ParmVarDeclAbbrev;
   unsigned DeclContextLexicalAbbrev;
+  unsigned DeclContextVisibleLookupAbbrev;
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
 

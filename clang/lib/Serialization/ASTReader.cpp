@@ -846,6 +846,54 @@ public:
 typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
   ASTDeclContextNameLookupTable;
 
+bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
+                                   const std::pair<uint64_t, uint64_t> &Offsets,
+                                       DeclContextInfo &Info) {
+  SavedStreamPosition SavedPosition(Cursor);
+  // First the lexical decls.
+  if (Offsets.first != 0) {
+    Cursor.JumpToBit(Offsets.first);
+
+    RecordData Record;
+    const char *Blob;
+    unsigned BlobLen;
+    unsigned Code = Cursor.ReadCode();
+    unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
+    if (RecCode != DECL_CONTEXT_LEXICAL) {
+      Error("Expected lexical block");
+      return true;
+    }
+
+    Info.LexicalDecls = reinterpret_cast<const DeclID*>(Blob);
+    Info.NumLexicalDecls = BlobLen / sizeof(DeclID);
+  } else {
+    Info.LexicalDecls = 0;
+    Info.NumLexicalDecls = 0;
+  }
+
+  // Now the lookup table.
+  if (Offsets.second != 0) {
+    Cursor.JumpToBit(Offsets.second);
+
+    RecordData Record;
+    const char *Blob;
+    unsigned BlobLen;
+    unsigned Code = Cursor.ReadCode();
+    unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
+    if (RecCode != DECL_CONTEXT_VISIBLE) {
+      Error("Expected visible lookup table block");
+      return true;
+    }
+    Info.NameLookupTableData
+      = ASTDeclContextNameLookupTable::Create(
+                    (const unsigned char *)Blob + Record[0],
+                    (const unsigned char *)Blob,
+                    ASTDeclContextNameLookupTrait(*this));
+  }
+
+  return false;
+}
+
 void ASTReader::Error(const char *Msg) {
   Diag(diag::err_fe_pch_malformed) << Msg;
 }
@@ -1674,7 +1722,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case TU_UPDATE_LEXICAL: {
       DeclContextInfo Info = {
-        /* No visible information */ 0, 0,
+        /* No visible information */ 0,
         reinterpret_cast<const DeclID *>(BlobStart),
         BlobLen / sizeof(DeclID)
       };
@@ -3119,54 +3167,33 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                           DeclarationName Name) {
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
+  if (!Name)
+    return DeclContext::lookup_result(DeclContext::lookup_iterator(0),
+                                      DeclContext::lookup_iterator(0));
 
-  llvm::SmallVector<VisibleDeclaration, 64> Decls;
+  llvm::SmallVector<NamedDecl *, 64> Decls;
   // There might be lexical decls in multiple parts of the chain, for the TU
   // and namespaces.
   DeclContextInfos &Infos = DeclContextOffsets[DC];
   for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
        I != E; ++I) {
-    uint64_t Offset = I->OffsetToVisibleDecls;
-    if (Offset == 0)
+    if (!I->NameLookupTableData)
       continue;
 
-    llvm::BitstreamCursor &DeclsCursor = *I->Stream;
-
-    // Keep track of where we are in the stream, then jump back there
-    // after reading this context.
-    SavedStreamPosition SavedPosition(DeclsCursor);
-
-    // Load the record containing all of the declarations visible in
-    // this context.
-    DeclsCursor.JumpToBit(Offset);
-    RecordData Record;
-    unsigned Code = DeclsCursor.ReadCode();
-    unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-    if (RecCode != DECL_CONTEXT_VISIBLE) {
-      Error("Expected visible block");
-      return DeclContext::lookup_result(DeclContext::lookup_iterator(),
-                                        DeclContext::lookup_iterator());
-    }
-
-    if (Record.empty())
+    ASTDeclContextNameLookupTable *LookupTable =
+        (ASTDeclContextNameLookupTable*)I->NameLookupTableData;
+    ASTDeclContextNameLookupTable::iterator Pos = LookupTable->find(Name);
+    if (Pos == LookupTable->end())
       continue;
 
-    unsigned Idx = 0;
-    while (Idx < Record.size()) {
-      Decls.push_back(VisibleDeclaration());
-      Decls.back().Name = ReadDeclarationName(Record, Idx);
-
-      unsigned Size = Record[Idx++];
-      llvm::SmallVector<unsigned, 4> &LoadedDecls = Decls.back().Declarations;
-      LoadedDecls.reserve(Size);
-      for (unsigned J = 0; J < Size; ++J)
-        LoadedDecls.push_back(Record[Idx++]);
-    }
+    ASTDeclContextNameLookupTrait::data_type Data = *Pos;
+    for (; Data.first != Data.second; ++Data.first)
+      Decls.push_back(cast<NamedDecl>(GetDecl(*Data.first)));
   }
 
   ++NumVisibleDeclContextsRead;
 
-  SetExternalVisibleDecls(DC, Decls);
+  SetExternalVisibleDeclsForName(DC, Name, Decls);
   return const_cast<DeclContext*>(DC)->lookup(Name);
 }
 

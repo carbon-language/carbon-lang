@@ -27,18 +27,6 @@ class DeclContext;
 class ExternalSemaSource; // layering violation required for downcasting
 class Stmt;
 
-/// \brief The deserialized representation of a set of declarations
-/// with the same name that are visible in a given context.
-struct VisibleDeclaration {
-  /// \brief The name of the declarations.
-  DeclarationName Name;
-
-  /// \brief The ID numbers of all of the declarations with this name.
-  ///
-  /// These declarations have not necessarily been de-serialized.
-  llvm::SmallVector<unsigned, 4> Declarations;
-};
-
 /// \brief Abstract interface for external sources of AST nodes.
 ///
 /// External AST sources provide AST nodes constructed from some
@@ -140,22 +128,6 @@ public:
   virtual void PrintStats();
 
 protected:
-  /// \brief Initialize the context's lookup map with the given decls.
-  /// It is assumed that none of the declarations are redeclarations of
-  /// each other.
-  static void SetExternalVisibleDecls(const DeclContext *DC,
-                  const llvm::SmallVectorImpl<VisibleDeclaration> &Decls);
-
-  /// \brief Initialize the context's lookup map with the given decls.
-  /// It is assumed that none of the declarations are redeclarations of
-  /// each other.
-  static void SetExternalVisibleDecls(const DeclContext *DC,
-                              const llvm::SmallVectorImpl<NamedDecl*> &Decls);
-
-  static DeclContext::lookup_result
-  SetExternalVisibleDeclsForName(const DeclContext *DC,
-                                 const VisibleDeclaration &VD);
-
   static DeclContext::lookup_result
   SetExternalVisibleDeclsForName(const DeclContext *DC,
                                  DeclarationName Name,

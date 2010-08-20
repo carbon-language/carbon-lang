@@ -1086,6 +1086,12 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_CONTEXT_LEXICAL));
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   DeclContextLexicalAbbrev = Stream.EmitAbbrev(Abv);
+
+  Abv = new BitCodeAbbrev();
+  Abv->Add(BitCodeAbbrevOp(serialization::DECL_CONTEXT_VISIBLE));
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  DeclContextVisibleLookupAbbrev = Stream.EmitAbbrev(Abv);
 }
 
 /// isRequiredDecl - Check if this is a "required" Decl, which must be seen by

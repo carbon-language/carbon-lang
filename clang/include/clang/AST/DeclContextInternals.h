@@ -29,108 +29,54 @@ class DependentDiagnostic;
 /// StoredDeclsList - This is an array of decls optimized a common case of only
 /// containing one entry.
 struct StoredDeclsList {
-  /// The kind of data encoded in this list.
-  enum DataKind {
-    /// \brief The data is a NamedDecl*.
-    DK_Decl = 0,
-    /// \brief The data is a declaration ID (an unsigned value),
-    /// shifted left by 2 bits.
-    DK_DeclID = 1,
-    /// \brief The data is a pointer to a vector (of type VectorTy)
-    /// that contains declarations.
-    DK_Decl_Vector = 2,
-    /// \brief The data is a pointer to a vector (of type VectorTy)
-    /// that contains declaration ID.
-    DK_ID_Vector = 3
-  };
 
-  /// VectorTy - When in vector form, this is what the Data pointer points to.
-  typedef llvm::SmallVector<uintptr_t, 4> VectorTy;
+  /// DeclsTy - When in vector form, this is what the Data pointer points to.
+  typedef llvm::SmallVector<NamedDecl *, 4> DeclsTy;
 
-  /// \brief The stored data, which will be either a declaration ID, a
-  /// pointer to a NamedDecl, or a pointer to a vector.
-  uintptr_t Data;
+  /// \brief The stored data, which will be either a pointer to a NamedDecl,
+  /// or a pointer to a vector.
+  llvm::PointerUnion<NamedDecl *, DeclsTy *> Data;
 
 public:
-  StoredDeclsList() : Data(0) {}
+  StoredDeclsList() {}
 
   StoredDeclsList(const StoredDeclsList &RHS) : Data(RHS.Data) {
-    if (VectorTy *RHSVec = RHS.getAsVector()) {
-      VectorTy *New = new VectorTy(*RHSVec);
-      Data = reinterpret_cast<uintptr_t>(New) | (Data & 0x03);
-    }
+    if (DeclsTy *RHSVec = RHS.getAsVector())
+      Data = new DeclsTy(*RHSVec);
   }
 
   ~StoredDeclsList() {
     // If this is a vector-form, free the vector.
-    if (VectorTy *Vector = getAsVector())
+    if (DeclsTy *Vector = getAsVector())
       delete Vector;
   }
 
   StoredDeclsList &operator=(const StoredDeclsList &RHS) {
-    if (VectorTy *Vector = getAsVector())
+    if (DeclsTy *Vector = getAsVector())
       delete Vector;
     Data = RHS.Data;
-    if (VectorTy *RHSVec = RHS.getAsVector()) {
-      VectorTy *New = new VectorTy(*RHSVec);
-      Data = reinterpret_cast<uintptr_t>(New) | (Data & 0x03);
-    }
+    if (DeclsTy *RHSVec = RHS.getAsVector())
+      Data = new DeclsTy(*RHSVec);
     return *this;
   }
 
-  bool isNull() const { return (Data & ~0x03) == 0; }
+  bool isNull() const { return Data.isNull(); }
 
   NamedDecl *getAsDecl() const {
-    if ((Data & 0x03) != DK_Decl)
-      return 0;
-
-    return reinterpret_cast<NamedDecl *>(Data & ~0x03);
+    return Data.dyn_cast<NamedDecl *>();
   }
 
-  VectorTy *getAsVector() const {
-    if ((Data & 0x03) != DK_ID_Vector && (Data & 0x03) != DK_Decl_Vector)
-      return 0;
-
-    return reinterpret_cast<VectorTy *>(Data & ~0x03);
+  DeclsTy *getAsVector() const {
+    return Data.dyn_cast<DeclsTy *>();
   }
 
   void setOnlyValue(NamedDecl *ND) {
     assert(!getAsVector() && "Not inline");
-    Data = reinterpret_cast<uintptr_t>(ND);
-  }
-
-  void setFromDeclIDs(const llvm::SmallVectorImpl<unsigned> &Vec) {
-    if (Vec.size() > 1) {
-      VectorTy *Vector = getAsVector();
-      if (!Vector) {
-        Vector = new VectorTy;
-        Data = reinterpret_cast<uintptr_t>(Vector) | DK_ID_Vector;
-      }
-
-      Vector->resize(Vec.size());
-      std::copy(Vec.begin(), Vec.end(), Vector->begin());
-      return;
-    }
-
-    if (VectorTy *Vector = getAsVector())
-      delete Vector;
-
-    if (Vec.empty())
-      Data = 0;
-    else
-      Data = (Vec[0] << 2) | DK_DeclID;
-  }
-
-  /// \brief Force the stored declarations list to contain actual
-  /// declarations.
-  ///
-  /// This routine will resolve any declaration IDs for declarations
-  /// that may not yet have been loaded from external storage.
-  void materializeDecls(ASTContext &Context);
-
-  bool hasDeclarationIDs() const {
-    DataKind DK = (DataKind)(Data & 0x03);
-    return DK == DK_DeclID || DK == DK_ID_Vector;
+    Data = ND;
+    // Make sure that Data is a plain NamedDecl* so we can use its address
+    // at getLookupResult.
+    assert(*(NamedDecl **)&Data == ND &&
+           "PointerUnion mangles the NamedDecl pointer!");
   }
 
   void remove(NamedDecl *D) {
@@ -138,29 +84,25 @@ public:
     if (NamedDecl *Singleton = getAsDecl()) {
       assert(Singleton == D && "list is different singleton");
       (void)Singleton;
-      Data = 0;
+      Data = (NamedDecl *)0;
       return;
     }
 
-    VectorTy &Vec = *getAsVector();
-    VectorTy::iterator I = std::find(Vec.begin(), Vec.end(),
-                                     reinterpret_cast<uintptr_t>(D));
+    DeclsTy &Vec = *getAsVector();
+    DeclsTy::iterator I = std::find(Vec.begin(), Vec.end(), D);
     assert(I != Vec.end() && "list does not contain decl");
     Vec.erase(I);
 
-    assert(std::find(Vec.begin(), Vec.end(), reinterpret_cast<uintptr_t>(D))
+    assert(std::find(Vec.begin(), Vec.end(), D)
              == Vec.end() && "list still contains decl");
   }
 
   /// getLookupResult - Return an array of all the decls that this list
   /// represents.
-  DeclContext::lookup_result getLookupResult(ASTContext &Context) {
+  DeclContext::lookup_result getLookupResult() {
     if (isNull())
       return DeclContext::lookup_result(DeclContext::lookup_iterator(0),
                                         DeclContext::lookup_iterator(0));
-
-    if (hasDeclarationIDs())
-      materializeDecls(Context);
 
     // If we have a single NamedDecl, return it.
     if (getAsDecl()) {
@@ -172,19 +114,15 @@ public:
     }
 
     assert(getAsVector() && "Must have a vector at this point");
-    VectorTy &Vector = *getAsVector();
+    DeclsTy &Vector = *getAsVector();
 
     // Otherwise, we have a range result.
-    return DeclContext::lookup_result((NamedDecl **)&Vector[0],
-                                      (NamedDecl **)&Vector[0]+Vector.size());
+    return DeclContext::lookup_result(&Vector[0], &Vector[0]+Vector.size());
   }
 
   /// HandleRedeclaration - If this is a redeclaration of an existing decl,
   /// replace the old one with D and return true.  Otherwise return false.
-  bool HandleRedeclaration(ASTContext &Context, NamedDecl *D) {
-    if (hasDeclarationIDs())
-      materializeDecls(Context);
-
+  bool HandleRedeclaration(NamedDecl *D) {
     // Most decls only have one entry in their list, special case it.
     if (NamedDecl *OldD = getAsDecl()) {
       if (!D->declarationReplaces(OldD))
@@ -194,12 +132,12 @@ public:
     }
 
     // Determine if this declaration is actually a redeclaration.
-    VectorTy &Vec = *getAsVector();
-    for (VectorTy::iterator OD = Vec.begin(), ODEnd = Vec.end();
+    DeclsTy &Vec = *getAsVector();
+    for (DeclsTy::iterator OD = Vec.begin(), ODEnd = Vec.end();
          OD != ODEnd; ++OD) {
-      NamedDecl *OldD = reinterpret_cast<NamedDecl *>(*OD);
+      NamedDecl *OldD = *OD;
       if (D->declarationReplaces(OldD)) {
-        *OD = reinterpret_cast<uintptr_t>(D);
+        *OD = D;
         return true;
       }
     }
@@ -211,17 +149,15 @@ public:
   /// not a redeclaration to merge it into the appropriate place in our list.
   ///
   void AddSubsequentDecl(NamedDecl *D) {
-    assert(!hasDeclarationIDs() && "Must materialize before adding decls");
-
     // If this is the second decl added to the list, convert this to vector
     // form.
     if (NamedDecl *OldD = getAsDecl()) {
-      VectorTy *VT = new VectorTy();
-      VT->push_back(reinterpret_cast<uintptr_t>(OldD));
-      Data = reinterpret_cast<uintptr_t>(VT) | DK_Decl_Vector;
+      DeclsTy *VT = new DeclsTy();
+      VT->push_back(OldD);
+      Data = VT;
     }
 
-    VectorTy &Vec = *getAsVector();
+    DeclsTy &Vec = *getAsVector();
 
     // Using directives end up in a special entry which contains only
     // other using directives, so all this logic is wasted for them.
@@ -232,32 +168,30 @@ public:
     // iterator which points at the first tag will start a span of
     // decls that only contains tags.
     if (D->hasTagIdentifierNamespace())
-      Vec.push_back(reinterpret_cast<uintptr_t>(D));
+      Vec.push_back(D);
 
     // Resolved using declarations go at the front of the list so that
     // they won't show up in other lookup results.  Unresolved using
     // declarations (which are always in IDNS_Using | IDNS_Ordinary)
     // follow that so that the using declarations will be contiguous.
     else if (D->getIdentifierNamespace() & Decl::IDNS_Using) {
-      VectorTy::iterator I = Vec.begin();
+      DeclsTy::iterator I = Vec.begin();
       if (D->getIdentifierNamespace() != Decl::IDNS_Using) {
         while (I != Vec.end() &&
-               reinterpret_cast<NamedDecl *>(*I)
-                 ->getIdentifierNamespace() == Decl::IDNS_Using)
+               (*I)->getIdentifierNamespace() == Decl::IDNS_Using)
           ++I;
       }
-      Vec.insert(I, reinterpret_cast<uintptr_t>(D));
+      Vec.insert(I, D);
 
     // All other declarations go at the end of the list, but before any
     // tag declarations.  But we can be clever about tag declarations
     // because there can only ever be one in a scope.
-    } else if (reinterpret_cast<NamedDecl *>(Vec.back())
-                 ->hasTagIdentifierNamespace()) {
-      uintptr_t TagD = Vec.back();
-      Vec.back() = reinterpret_cast<uintptr_t>(D);
+    } else if (Vec.back()->hasTagIdentifierNamespace()) {
+      NamedDecl *TagD = Vec.back();
+      Vec.back() = D;
       Vec.push_back(TagD);
     } else
-      Vec.push_back(reinterpret_cast<uintptr_t>(D));
+      Vec.push_back(D);
   }
 };
 

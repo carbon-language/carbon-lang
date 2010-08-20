@@ -339,8 +339,7 @@ private:
 
   /// \brief Information about the contents of a DeclContext.
   struct DeclContextInfo {
-    llvm::BitstreamCursor *Stream;
-    uint64_t OffsetToVisibleDecls;
+    void *NameLookupTableData; // a ASTDeclContextNameLookupTable.
     const serialization::DeclID *LexicalDecls;
     unsigned NumLexicalDecls;
   };
