@@ -47,7 +47,6 @@ private:
     : P(r, (unsigned) k), Offset(offset) {}
 public:
 
-  bool isDefault() const { return P.getInt() == Default; }
   bool isDirect() const { return P.getInt() == Direct; }
 
   const MemRegion *getRegion() const { return P.getPointer(); }
@@ -105,19 +104,16 @@ struct maximal_features_tag {};
 
 class RegionStoreFeatures {
   bool SupportsFields;
-  bool SupportsRemaining;
-
 public:
   RegionStoreFeatures(minimal_features_tag) :
-    SupportsFields(false), SupportsRemaining(false) {}
+    SupportsFields(false) {}
 
   RegionStoreFeatures(maximal_features_tag) :
-    SupportsFields(true), SupportsRemaining(false) {}
+    SupportsFields(true) {}
 
   void enableFields(bool t) { SupportsFields = t; }
 
   bool supportsFields() const { return SupportsFields; }
-  bool supportsRemaining() const { return SupportsRemaining; }
 };
 }
 
@@ -201,7 +197,6 @@ public:
 
   RegionStoreSubRegionMap *getRegionStoreSubRegionMap(Store store);
 
-  Optional<SVal> getBinding(RegionBindings B, const MemRegion *R);
   Optional<SVal> getDirectBinding(RegionBindings B, const MemRegion *R);
   /// getDefaultBinding - Returns an SVal* representing an optional default
   ///  binding associated with a region and its subregions.
@@ -258,8 +253,6 @@ public:   // Made public for helper classes.
   RegionBindings Remove(RegionBindings B, const MemRegion *R) {
     return Remove(Remove(B, R, BindingKey::Direct), R, BindingKey::Default);
   }
-
-  Store Remove(Store store, BindingKey K);
 
 public: // Part of public interface to class.
 
@@ -934,15 +927,6 @@ Optional<SVal> RegionStoreManager::getDefaultBinding(RegionBindings B,
     return *V;
 
   return Optional<SVal>();
-}
-
-Optional<SVal> RegionStoreManager::getBinding(RegionBindings B,
-                                              const MemRegion *R) {
-
-  if (const Optional<SVal> &V = getDirectBinding(B, R))
-    return V;
-
-  return getDefaultBinding(B, R);
 }
 
 static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
@@ -1653,11 +1637,6 @@ RegionBindings RegionStoreManager::Remove(RegionBindings B, BindingKey K) {
 RegionBindings RegionStoreManager::Remove(RegionBindings B, const MemRegion *R,
                                           BindingKey::Kind k){
   return Remove(B, BindingKey::Make(R, k));
-}
-
-Store RegionStoreManager::Remove(Store store, BindingKey K) {
-  RegionBindings B = GetRegionBindings(store);
-  return Remove(B, K).getRoot();
 }
 
 //===----------------------------------------------------------------------===//
