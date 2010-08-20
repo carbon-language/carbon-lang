@@ -888,14 +888,14 @@ class N2VNInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$src), itin, OpcodeStr, Dt, "$dst, $src", "",
         [(set DPR:$dst, (TyD (IntOp (TyQ QPR:$src))))]>;
 
-// Long 2-register intrinsics (currently only used for VMOVL).
-class N2VLInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
-              bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
-              InstrItinClass itin, string OpcodeStr, string Dt,
-              ValueType TyQ, ValueType TyD, Intrinsic IntOp>
+// Long 2-register operations (currently only used for VMOVL).
+class N2VL<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
+           bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
+           InstrItinClass itin, string OpcodeStr, string Dt,
+           ValueType TyQ, ValueType TyD, SDNode OpNode>
   : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, op6, op4, (outs QPR:$dst),
         (ins DPR:$src), itin, OpcodeStr, Dt, "$dst, $src", "",
-        [(set QPR:$dst, (TyQ (IntOp (TyD DPR:$src))))]>;
+        [(set QPR:$dst, (TyQ (OpNode (TyD DPR:$src))))]>;
 
 // 2-register shuffles (VTRN/VZIP/VUZP), both double- and quad-register.
 class N2VDShuffle<bits<2> op19_18, bits<5> op11_7, string OpcodeStr, string Dt>
@@ -1508,14 +1508,14 @@ multiclass N2VNInt_HSD<bits<2> op24_23, bits<2> op21_20, bits<2> op17_16,
 
 // Neon Lengthening 2-register vector intrinsic (currently specific to VMOVL).
 //   source operand element sizes of 16, 32 and 64 bits:
-multiclass N2VLInt_QHS<bits<2> op24_23, bits<5> op11_7, bit op6, bit op4,
-                       string OpcodeStr, string Dt, Intrinsic IntOp> {
-  def v8i16 : N2VLInt<op24_23, 0b00, 0b10, 0b00, op11_7, op6, op4, IIC_VQUNAiD,
-                      OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, IntOp>;
-  def v4i32 : N2VLInt<op24_23, 0b01, 0b00, 0b00, op11_7, op6, op4, IIC_VQUNAiD,
-                      OpcodeStr, !strconcat(Dt, "16"), v4i32, v4i16, IntOp>;
-  def v2i64 : N2VLInt<op24_23, 0b10, 0b00, 0b00, op11_7, op6, op4, IIC_VQUNAiD,
-                      OpcodeStr, !strconcat(Dt, "32"), v2i64, v2i32, IntOp>;
+multiclass N2VL_QHS<bits<2> op24_23, bits<5> op11_7, bit op6, bit op4,
+                    string OpcodeStr, string Dt, SDNode OpNode> {
+  def v8i16 : N2VL<op24_23, 0b00, 0b10, 0b00, op11_7, op6, op4, IIC_VQUNAiD,
+                   OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, OpNode>;
+  def v4i32 : N2VL<op24_23, 0b01, 0b00, 0b00, op11_7, op6, op4, IIC_VQUNAiD,
+                   OpcodeStr, !strconcat(Dt, "16"), v4i32, v4i16, OpNode>;
+  def v2i64 : N2VL<op24_23, 0b10, 0b00, 0b00, op11_7, op6, op4, IIC_VQUNAiD,
+                   OpcodeStr, !strconcat(Dt, "32"), v2i64, v2i32, OpNode>;
 }
 
 
@@ -3123,10 +3123,8 @@ defm VQMOVNu  : N2VNInt_HSD<0b11,0b11,0b10,0b00101,1,0, IIC_VQUNAiD,
 defm VQMOVNsu : N2VNInt_HSD<0b11,0b11,0b10,0b00100,1,0, IIC_VQUNAiD,
                             "vqmovun", "s", int_arm_neon_vqmovnsu>;
 //   VMOVL    : Vector Lengthening Move
-defm VMOVLs   : N2VLInt_QHS<0b01,0b10100,0,1, "vmovl", "s",
-                            int_arm_neon_vmovls>;
-defm VMOVLu   : N2VLInt_QHS<0b11,0b10100,0,1, "vmovl", "u",
-                            int_arm_neon_vmovlu>;
+defm VMOVLs   : N2VL_QHS<0b01,0b10100,0,1, "vmovl", "s", sext>;
+defm VMOVLu   : N2VL_QHS<0b11,0b10100,0,1, "vmovl", "u", zext>;
 
 // Vector Conversions.
 

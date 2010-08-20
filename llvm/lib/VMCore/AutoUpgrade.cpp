@@ -78,6 +78,13 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         NewFn = F;
         return true;
       }
+    } else if (Name.compare(5, 9, "arm.neon.", 9) == 0) {
+      if (Name.compare(14, 7, "vmovls.", 7) == 0 ||
+          Name.compare(14, 7, "vmovlu.", 7) == 0) {
+        // Calls to these are transformed into IR without intrinsics.
+        NewFn = 0;
+        return true;
+      }
     }
     break;
   case 'b':
@@ -320,6 +327,28 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   assert(F && "CallInst has no function associated with it.");
 
   if (!NewFn) {
+    // Get the Function's name.
+    const std::string& Name = F->getName();
+
+    // Upgrade ARM NEON intrinsics.
+    if (Name.compare(5, 9, "arm.neon.", 9) == 0) {
+      Instruction *NewI;
+      if (Name.compare(14, 7, "vmovls.", 7) == 0) {
+        NewI = new SExtInst(CI->getArgOperand(0), CI->getType(),
+                            "upgraded." + CI->getName(), CI);
+      } else if (Name.compare(14, 7, "vmovlu.", 7) == 0) {
+        NewI = new ZExtInst(CI->getArgOperand(0), CI->getType(),
+                            "upgraded." + CI->getName(), CI);
+      } else {
+        llvm_unreachable("Unknown arm.neon function for CallInst upgrade.");
+      }
+      // Replace any uses of the old CallInst.
+      if (!CI->use_empty())
+        CI->replaceAllUsesWith(NewI);
+      CI->eraseFromParent();
+      return;
+    }
+
     bool isLoadH = false, isLoadL = false, isMovL = false;
     bool isMovSD = false, isShufPD = false;
     bool isUnpckhPD = false, isUnpcklPD = false;

@@ -60,9 +60,6 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
   class Neon_1Arg_Narrow_Intrinsic
     : Intrinsic<[llvm_anyvector_ty],
                 [LLVMExtendedElementVectorType<0>], [IntrNoMem]>;
-  class Neon_1Arg_Long_Intrinsic
-    : Intrinsic<[llvm_anyvector_ty],
-                [LLVMTruncatedElementVectorType<0>], [IntrNoMem]>;
   class Neon_2Arg_Intrinsic
     : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
                 [IntrNoMem]>;
@@ -322,8 +319,6 @@ def int_arm_neon_vmovn : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovns : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnu : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnsu : Neon_1Arg_Narrow_Intrinsic;
-def int_arm_neon_vmovls : Neon_1Arg_Long_Intrinsic;
-def int_arm_neon_vmovlu : Neon_1Arg_Long_Intrinsic;
 
 // Vector Table Lookup.
 // The first 1-4 arguments are the table.
