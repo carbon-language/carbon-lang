@@ -979,7 +979,8 @@ public:
   /// type of a class template or class template partial specialization.
   CXXRecordDecl *getAsCXXRecordDecl() const;
   
-  // Member-template getAs<specific type>'.  This scheme will eventually
+  // Member-template getAs<specific type>'.  Look through sugar for
+  // an instance of <specific type>.   This scheme will eventually
   // replace the specific getAsXXXX methods above.
   //
   // There are some specializations of this member template listed
