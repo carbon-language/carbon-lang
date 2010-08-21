@@ -78,6 +78,19 @@ public:
 };
 } // end anonymous namespace
 
+BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
+  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+    const RegionRawOffset &O = ER->getAsArrayOffset();
+
+    // FIXME: There are some ElementRegions for which we cannot compute
+    // raw offsets yet, including regions with symbolic offsets. These will be
+    // ignored by the store.
+    return BindingKey(O.getRegion(), O.getByteOffset(), k);
+  }
+
+  return BindingKey(R, 0, k);
+}
+
 namespace llvm {
   static inline
   llvm::raw_ostream& operator<<(llvm::raw_ostream& os, BindingKey K) {
@@ -1528,18 +1541,6 @@ Store RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 // "Raw" retrievals and bindings.
 //===----------------------------------------------------------------------===//
 
-BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
-  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-    const RegionRawOffset &O = ER->getAsArrayOffset();
-
-    // FIXME: There are some ElementRegions for which we cannot compute
-    // raw offsets yet, including regions with symbolic offsets. These will be
-    // ignored by the store.
-    return BindingKey(O.getRegion(), O.getByteOffset(), k);
-  }
-
-  return BindingKey(R, 0, k);
-}
 
 RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K, SVal V) {
   if (!K.isValid())
