@@ -62,6 +62,9 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
 ///  wraps a symbol, return that SymbolRef.  Otherwise return 0.
 // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
 SymbolRef SVal::getAsLocSymbol() const {
+  if (const nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(this))
+    return X->getLoc().getAsLocSymbol();
+
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion *R = X->StripCasts();
     if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))

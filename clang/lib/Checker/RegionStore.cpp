@@ -1326,14 +1326,8 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
       if (const TypedRegion *superR =
             dyn_cast<TypedRegion>(ER->getSuperRegion())) {
         QualType superTy = superR->getValueType();
-        QualType erTy = ER->getValueType();
-
-        if (IsAnyPointerOrIntptr(superTy, Ctx) &&
-            IsAnyPointerOrIntptr(erTy, Ctx)) {
-          V = ValMgr.getSValuator().EvalCast(V, superTy, erTy);
-          return Bind(store, loc::MemRegionVal(superR), V);
-        }
         // For now, just invalidate the fields of the struct/union/class.
+        // This is for test: undef-buffers.c
         // FIXME: Precisely handle the fields of the record.
         if (superTy->isStructureOrClassType())
           return KillStruct(store, superR, UnknownVal());
