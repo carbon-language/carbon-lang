@@ -922,29 +922,6 @@ Optional<SVal> RegionStoreManager::getDefaultBinding(RegionBindings B,
   return Optional<SVal>();
 }
 
-static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
-  RTy = Ctx.getCanonicalType(RTy);
-  UsedTy = Ctx.getCanonicalType(UsedTy);
-
-  if (RTy == UsedTy)
-    return false;
-
-
-  // Recursively check the types.  We basically want to see if a pointer value
-  // is ever reinterpreted as a non-pointer, e.g. void** and intptr_t*
-  // represents a reinterpretation.
-  if (Loc::IsLocType(RTy) && Loc::IsLocType(UsedTy)) {
-    const PointerType *PRTy = RTy->getAs<PointerType>();
-    const PointerType *PUsedTy = UsedTy->getAs<PointerType>();
-
-    return PUsedTy && PRTy &&
-           IsReinterpreted(PRTy->getPointeeType(),
-                           PUsedTy->getPointeeType(), Ctx);
-  }
-
-  return true;
-}
-
 SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
@@ -982,17 +959,6 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   //   char c = *q;  // returns the first byte of 'x'.
   //
   // Such funny addressing will occur due to layering of regions.
-
-#if 0
-  ASTContext &Ctx = getContext();
-  if (!T.isNull() && IsReinterpreted(RTy, T, Ctx)) {
-    SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-    R = MRMgr.getElementRegion(T, ZeroIdx, R, Ctx);
-    RTy = T;
-    assert(Ctx.getCanonicalType(RTy) ==
-           Ctx.getCanonicalType(R->getValueType(Ctx)));
-  }
-#endif
 
   if (RTy->isStructureOrClassType())
     return RetrieveStruct(store, R);
