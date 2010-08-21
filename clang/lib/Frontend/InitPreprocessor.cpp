@@ -319,7 +319,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       Builder.defineMacro("__cplusplus");
     else
       // C++ [cpp.predefined]p1:
-      //   The name_ _cplusplusis defined to the value199711Lwhen compiling a
+      //   The name_ _cplusplusis defined to the value 199711L when compiling a
       //   C++ translation unit.
       Builder.defineMacro("__cplusplus", "199711L");
     Builder.defineMacro("__private_extern__", "extern");
