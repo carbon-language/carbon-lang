@@ -118,18 +118,6 @@ public:
 }
 
 //===----------------------------------------------------------------------===//
-// Utility functions.
-//===----------------------------------------------------------------------===//
-
-static bool IsAnyPointerOrIntptr(QualType ty, ASTContext &Ctx) {
-  if (ty->isAnyPointerType())
-    return true;
-
-  return ty->isIntegerType() && ty->isScalarType() &&
-         Ctx.getTypeSize(ty) == Ctx.getTypeSize(Ctx.VoidPtrTy);
-}
-
-//===----------------------------------------------------------------------===//
 // Main RegionStore logic.
 //===----------------------------------------------------------------------===//
 
