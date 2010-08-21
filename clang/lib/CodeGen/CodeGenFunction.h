@@ -969,12 +969,6 @@ public:
   //                                  Helpers
   //===--------------------------------------------------------------------===//
 
-  Qualifiers MakeQualifiers(QualType T) {
-    Qualifiers Quals = getContext().getCanonicalType(T).getQualifiers();
-    Quals.setObjCGCAttr(getContext().getObjCGCAttrKind(T));
-    return Quals;
-  }
-
   LValue MakeAddrLValue(llvm::Value *V, QualType T) {
     return LValue::MakeAddr(V, T, 0, getContext());
   }
