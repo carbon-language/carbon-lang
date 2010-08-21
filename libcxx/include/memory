@@ -218,8 +218,6 @@ public:
     template <class U, class E>
         unique_ptr(unique_ptr<U, E>&& u);
     template <class U>
-        explicit unique_ptr(auto_ptr<U>& u);
-    template <class U>
         unique_ptr(auto_ptr<U>&& u);
 
     // destructor
@@ -2001,17 +1999,6 @@ public:
                 "unique_ptr constructed with null function pointer deleter");
         }
 
-    template <class _Up>
-        _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(auto_ptr<_Up>& __p,
-                typename enable_if<
-                                      is_convertible<_Up*, _Tp*>::value &&
-                                      is_same<_Dp, default_delete<_Tp> >::value,
-                                      __nat
-                                  >::type = __nat())
-            : __ptr_(__p.release())
-            {
-            }
-
 #ifdef _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY unique_ptr(pointer __p, typename conditional<
                                         is_reference<deleter_type>::value,
@@ -2695,8 +2682,6 @@ public:
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type= __nat()); 
 #ifdef _LIBCPP_MOVE    
     template<class _Yp> shared_ptr(auto_ptr<_Yp>&& __r); 
-#else
-    template<class _Yp> shared_ptr(auto_ptr<_Yp>& __r); 
 #endif
 #ifdef _LIBCPP_MOVE    
 private:
@@ -2722,7 +2707,7 @@ public:
     template<class _Yp> shared_ptr& operator=(shared_ptr<_Yp>&& __r); 
     template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp>&& __r); 
 #else
-    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp>& __r); 
+    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp> __r); 
 #endif
 #ifdef _LIBCPP_MOVE    
 private:
@@ -3004,7 +2989,7 @@ template<class _Yp>
 #ifdef _LIBCPP_MOVE    
 shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>&& __r)
 #else
-shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>& __r)
+shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
 #endif
     : __ptr_(__r.get())
 {
