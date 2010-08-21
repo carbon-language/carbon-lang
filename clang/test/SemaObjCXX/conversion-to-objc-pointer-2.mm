@@ -82,6 +82,7 @@ int main (int argc, const char * argv[]) {
 	TNSAutoRef<NSObject*> object2([[NSObject alloc] init]);
 	TNSAutoRef<TBar*> bar([[TBar alloc] init]);
 	[bar setBlah: object1];				// <== Does not compile.  It should.
-	[bar setBlah: object2];				// <== Does not compile.  It should.
+        if (object1 == object2)
+	  [bar setBlah: object2];				// <== Does not compile.  It should.
 	return 0;
 }
