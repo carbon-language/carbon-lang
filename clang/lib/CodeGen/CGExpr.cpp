@@ -1185,7 +1185,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
     LValue LV = LValue::MakeAddr(V, Quals);
-    LValue::SetObjCNonGC(LV, NonGCable);
+    if (NonGCable) {
+      LV.setNonGC(true);
+    }
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }
@@ -1234,7 +1236,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     if (getContext().getLangOptions().ObjC1 &&
         getContext().getLangOptions().getGCMode() != LangOptions::NonGC &&
         LV.isObjCWeak())
-      LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate(getContext()));
+      LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
     return LV;
   }
   case UnaryOperator::Real:
@@ -1462,7 +1464,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   LValue LV = LValue::MakeAddr(Address, Quals);
   if (getContext().getLangOptions().ObjC1 &&
       getContext().getLangOptions().getGCMode() != LangOptions::NonGC) {
-    LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate(getContext()));
+    LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
     setObjCGCLValueClass(getContext(), E, LV);
   }
   return LV;
@@ -1568,7 +1570,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (FieldDecl *Field = dyn_cast<FieldDecl>(ND)) {
     LValue LV = EmitLValueForField(BaseValue, Field, 
                                    BaseQuals.getCVRQualifiers());
-    LValue::SetObjCNonGC(LV, isNonGC);
+    LV.setNonGC(isNonGC);
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }

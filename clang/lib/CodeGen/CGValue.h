@@ -185,7 +185,10 @@ public:
 
   bool isObjCIvar() const { return Ivar; }
   bool isObjCArray() const { return ObjIsArray; }
+
   bool isNonGC () const { return NonGC; }
+  void setNonGC(bool Value) { NonGC = Value; }
+
   bool isGlobalObjCRef() const { return GlobalObjCRef; }
   bool isThreadLocalRef() const { return ThreadLocalRef; }
   bool isObjCWeak() const { return Quals.getObjCGCAttr() == Qualifiers::Weak; }
@@ -209,9 +212,6 @@ public:
   }
   static void SetThreadLocalRef(LValue& R, bool iValue) {
     R.ThreadLocalRef = iValue;
-  }
-  static void SetObjCNonGC(LValue& R, bool iValue) {
-    R.NonGC = iValue;
   }
 
   // simple lvalue
