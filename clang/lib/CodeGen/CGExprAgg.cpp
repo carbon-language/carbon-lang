@@ -259,13 +259,12 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
       
   case CastExpr::CK_ToUnion: {
     // GCC union extension
-    QualType PtrTy =
-    CGF.getContext().getPointerType(E->getSubExpr()->getType());
+    QualType Ty = E->getSubExpr()->getType();
+    QualType PtrTy = CGF.getContext().getPointerType(Ty);
     llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
                                                  CGF.ConvertType(PtrTy));
-    EmitInitializationToLValue(E->getSubExpr(),
-                               LValue::MakeAddr(CastPtr, Qualifiers()), 
-                               E->getSubExpr()->getType());
+    EmitInitializationToLValue(E->getSubExpr(), CGF.MakeAddrLValue(CastPtr, Ty),
+                               Ty);
     break;
   }
 
@@ -521,7 +520,7 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
     return;
   }
 
-  EmitFinalDestCopy(VE, LValue::MakeAddr(ArgPtr, Qualifiers()));
+  EmitFinalDestCopy(VE, CGF.MakeAddrLValue(ArgPtr, VE->getType()));
 }
 
 void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
@@ -549,9 +548,7 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
     Val = CGF.CreateMemTemp(E->getType(), "tmp");
 
   if (E->requiresZeroInitialization())
-    EmitNullInitializationToLValue(LValue::MakeAddr(Val, 
-                                                    // FIXME: Qualifiers()?
-                                                 E->getType().getQualifiers()),
+    EmitNullInitializationToLValue(CGF.MakeAddrLValue(Val, E->getType()),
                                    E->getType());
 
   CGF.EmitCXXConstructExpr(Val, E);
@@ -570,8 +567,8 @@ void AggExprEmitter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
     // Create a temporary variable.
     Val = CGF.CreateMemTemp(E->getType(), "tmp");
   }
-  LValue LV = LValue::MakeAddr(Val, Qualifiers());
-  EmitNullInitializationToLValue(LV, E->getType());
+  EmitNullInitializationToLValue(CGF.MakeAddrLValue(Val, E->getType()),
+                                 E->getType());
 }
 
 void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
@@ -581,8 +578,8 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
     // Create a temporary variable.
     Val = CGF.CreateMemTemp(E->getType(), "tmp");
   }
-  LValue LV = LValue::MakeAddr(Val, Qualifiers());
-  EmitNullInitializationToLValue(LV, E->getType());
+  EmitNullInitializationToLValue(CGF.MakeAddrLValue(Val, E->getType()),
+                                 E->getType());
 }
 
 void 
@@ -627,7 +624,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     llvm::GlobalVariable* GV =
     new llvm::GlobalVariable(CGF.CGM.getModule(), C->getType(), true,
                              llvm::GlobalValue::InternalLinkage, C, "");
-    EmitFinalDestCopy(E, LValue::MakeAddr(GV, Qualifiers()));
+    EmitFinalDestCopy(E, CGF.MakeAddrLValue(GV, E->getType()));
     return;
   }
 #endif
@@ -717,7 +714,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // FIXME: This is a hack around an AST bug (PR6537).
   if (NumInitElements == 1 && E->getType() == E->getInit(0)->getType()) {
     EmitInitializationToLValue(E->getInit(0),
-                               LValue::MakeAddr(DestPtr, Qualifiers()),
+                               CGF.MakeAddrLValue(DestPtr, E->getType()),
                                E->getType());
     return;
   }
@@ -776,10 +773,10 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
 
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   assert(hasAggregateLLVMType(E->getType()) && "Invalid argument!");
-  Qualifiers Q = MakeQualifiers(E->getType());
   llvm::Value *Temp = CreateMemTemp(E->getType());
-  EmitAggExpr(E, Temp, Q.hasVolatile());
-  return LValue::MakeAddr(Temp, Q);
+  LValue LV = MakeAddrLValue(Temp, E->getType());
+  EmitAggExpr(E, Temp, LV.isVolatileQualified());
+  return LV;
 }
 
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,

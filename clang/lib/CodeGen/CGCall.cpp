@@ -947,9 +947,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // we need to create a temporary and reconstruct it from the
       // arguments.
       llvm::Value *Temp = CreateMemTemp(Ty, Arg->getName() + ".addr");
-      // FIXME: What are the right qualifiers here?
       llvm::Function::arg_iterator End =
-        ExpandTypeFromArgs(Ty, LValue::MakeAddr(Temp, Qualifiers()), AI);
+        ExpandTypeFromArgs(Ty, MakeAddrLValue(Temp, Ty), AI);
       EmitParmDecl(*Arg, Temp);
 
       // Name the arguments used in expansion and increment AI.

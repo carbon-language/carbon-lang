@@ -1260,13 +1260,13 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
 }
 
 LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
-  return LValue::MakeAddr(CGM.GetAddrOfConstantStringFromLiteral(E),
-                          Qualifiers());
+  return MakeAddrLValue(CGM.GetAddrOfConstantStringFromLiteral(E),
+                        E->getType());
 }
 
 LValue CodeGenFunction::EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E) {
-  return LValue::MakeAddr(CGM.GetAddrOfConstantStringFromObjCEncode(E),
-                          Qualifiers());
+  return MakeAddrLValue(CGM.GetAddrOfConstantStringFromObjCEncode(E),
+                        E->getType());
 }
 
 
@@ -1308,7 +1308,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
 
     llvm::Constant *C =
       CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
-    return LValue::MakeAddr(C, Qualifiers());
+    return MakeAddrLValue(C, E->getType());
   }
   }
 }
