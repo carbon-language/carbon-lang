@@ -15,6 +15,7 @@
 #ifndef CLANG_CODEGEN_CGVALUE_H
 #define CLANG_CODEGEN_CGVALUE_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 
 namespace llvm {
@@ -256,6 +257,13 @@ public:
     R.V = V;
     R.Initialize(Quals, Alignment);
     return R;
+  }
+
+  static LValue MakeAddr(llvm::Value *V, QualType T, ASTContext &Context) {
+    Qualifiers Quals = Context.getCanonicalType(T).getQualifiers();
+    Quals.setObjCGCAttr(Context.getObjCGCAttrKind(T));
+
+    return MakeAddr(V, Quals);
   }
 
   static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,

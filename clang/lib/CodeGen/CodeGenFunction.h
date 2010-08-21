@@ -975,6 +975,10 @@ public:
     return Quals;
   }
 
+  LValue MakeAddrLValue(llvm::Value *V, QualType T) {
+    return LValue::MakeAddr(V, T, getContext());
+  }
+
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
   /// block. The caller is responsible for setting an appropriate alignment on
   /// the alloca.
