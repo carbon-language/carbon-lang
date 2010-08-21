@@ -146,10 +146,7 @@ struct SubobjectAdjustment {
       const CXXRecordDecl *DerivedClass;
     } DerivedToBase;
     
-    struct {
-      FieldDecl *Field;
-      unsigned CVRQualifiers;
-    } Field;
+    FieldDecl *Field;
   };
   
   SubobjectAdjustment(const CastExpr *BasePath, 
@@ -160,11 +157,10 @@ struct SubobjectAdjustment {
     DerivedToBase.DerivedClass = DerivedClass;
   }
   
-  SubobjectAdjustment(FieldDecl *Field, unsigned CVRQualifiers)
-    : Kind(FieldAdjustment) 
+  SubobjectAdjustment(FieldDecl *Field)
+    : Kind(FieldAdjustment)
   { 
-    this->Field.Field = Field;
-    this->Field.CVRQualifiers = CVRQualifiers;
+    this->Field = Field;
   }
 };
 
@@ -249,8 +245,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
             ME->getBase()->getType()->isRecordType()) {
           if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
             E = ME->getBase();
-            Adjustments.push_back(SubobjectAdjustment(Field,
-                                              E->getType().getCVRQualifiers()));
+            Adjustments.push_back(SubobjectAdjustment(Field));
             continue;
           }
         }
@@ -296,9 +291,8 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
           break;
             
         case SubobjectAdjustment::FieldAdjustment: {
-          unsigned CVR = Adjustment.Field.CVRQualifiers;
           LValue LV = 
-            CGF.EmitLValueForField(Object, Adjustment.Field.Field, CVR);
+            CGF.EmitLValueForField(Object, Adjustment.Field, 0);
           if (LV.isSimple()) {
             Object = LV.getAddress();
             break;
@@ -306,11 +300,11 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
           
           // For non-simple lvalues, we actually have to create a copy of
           // the object we're binding to.
-          QualType T = Adjustment.Field.Field->getType().getNonReferenceType()
-                                                        .getUnqualifiedType();
+          QualType T = Adjustment.Field->getType().getNonReferenceType()
+                                                  .getUnqualifiedType();
           Object = CreateReferenceTemporary(CGF, T, InitializedDecl);
-          LValue TempLV = LValue::MakeAddr(Object, 
-                                           Qualifiers::fromCVRMask(CVR));
+          LValue TempLV = CGF.MakeAddrLValue(Object,
+                                             Adjustment.Field->getType());
           CGF.EmitStoreThroughLValue(CGF.EmitLoadOfLValue(LV, T), TempLV, T);
           break;
         }
