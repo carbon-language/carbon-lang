@@ -223,14 +223,16 @@ public:
 };
 
 class WindowsX86AsmBackend : public X86AsmBackend {
+  bool Is64Bit;
 public:
-  WindowsX86AsmBackend(const Target &T)
-    : X86AsmBackend(T) {
+  WindowsX86AsmBackend(const Target &T, bool is64Bit)
+    : X86AsmBackend(T)
+    , Is64Bit(is64Bit) {
     HasScatteredSymbols = true;
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createWinCOFFObjectWriter (OS);
+    return createWinCOFFObjectWriter(OS, Is64Bit);
   }
 
   bool isVirtualSection(const MCSection &Section) const {
@@ -320,7 +322,7 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   case Triple::MinGW32:
   case Triple::Cygwin:
   case Triple::Win32:
-    return new WindowsX86AsmBackend(T);
+    return new WindowsX86AsmBackend(T, false);
   default:
     return new ELFX86_32AsmBackend(T);
   }
@@ -331,6 +333,10 @@ TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
   switch (Triple(TT).getOS()) {
   case Triple::Darwin:
     return new DarwinX86_64AsmBackend(T);
+  case Triple::MinGW64:
+  case Triple::Cygwin:
+  case Triple::Win32:
+    return new WindowsX86AsmBackend(T, true);
   default:
     return new ELFX86_64AsmBackend(T);
   }

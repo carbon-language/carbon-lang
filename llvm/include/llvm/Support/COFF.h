@@ -50,7 +50,7 @@ namespace COFF {
 
   enum MachineTypes {
     IMAGE_FILE_MACHINE_I386 = 0x14C,
-    IMAGINE_FILE_MACHINE_AMD64 = 0x8664
+    IMAGE_FILE_MACHINE_AMD64 = 0x8664
   };
 
   struct symbol {

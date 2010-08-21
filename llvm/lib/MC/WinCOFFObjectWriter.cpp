@@ -33,6 +33,8 @@
 
 #include "llvm/System/TimeValue.h"
 
+#include "../Target/X86/X86FixupKinds.h"
+
 #include <cstdio>
 
 using namespace llvm;
@@ -132,7 +134,7 @@ public:
   section_map SectionMap;
   symbol_map  SymbolMap;
 
-  WinCOFFObjectWriter(raw_ostream &OS);
+  WinCOFFObjectWriter(raw_ostream &OS, bool is64Bit);
   ~WinCOFFObjectWriter();
 
   COFFSymbol *createSymbol(llvm::StringRef Name);
@@ -271,11 +273,12 @@ size_t StringTable::insert(llvm::StringRef String) {
 //------------------------------------------------------------------------------
 // WinCOFFObjectWriter class implementation
 
-WinCOFFObjectWriter::WinCOFFObjectWriter(raw_ostream &OS)
+WinCOFFObjectWriter::WinCOFFObjectWriter(raw_ostream &OS, bool is64Bit)
                                 : MCObjectWriter(OS, true) {
   memset(&Header, 0, sizeof(Header));
-  // TODO: Move magic constant out to COFF.h
-  Header.Machine = 0x14C; // x86
+
+  is64Bit ? Header.Machine = COFF::IMAGE_FILE_MACHINE_AMD64
+          : Header.Machine = COFF::IMAGE_FILE_MACHINE_I386;
 }
 
 WinCOFFObjectWriter::~WinCOFFObjectWriter() {
@@ -587,17 +590,40 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
 
-  switch (Fixup.getKind()) {
-  case FirstTargetFixupKind: // reloc_pcrel_4byte
-    Reloc.Data.Type = COFF::IMAGE_REL_I386_REL32;
-    FixedValue += 4;
-    break;
-  case FK_Data_4:
-    Reloc.Data.Type = COFF::IMAGE_REL_I386_DIR32;
-    break;
-  default:
-    llvm_unreachable("unsupported relocation type");
-  }
+  COFF::RelocationTypeX86 Type;
+
+  if (Header.Machine == COFF::IMAGE_FILE_MACHINE_I386) {
+    switch (Fixup.getKind()) {
+    case X86::reloc_pcrel_4byte:
+      Type = COFF::IMAGE_REL_I386_REL32;
+      FixedValue += 4;
+      break;
+    case FK_Data_4:
+      Type = COFF::IMAGE_REL_I386_DIR32;
+      break;
+    default:
+      llvm_unreachable("unsupported relocation type");
+    }
+  } else if (Header.Machine == COFF::IMAGE_FILE_MACHINE_AMD64) {
+    switch (Fixup.getKind()) {
+    case FK_Data_8:
+      Type = COFF::IMAGE_REL_AMD64_ADDR64;
+      break;
+    case X86::reloc_pcrel_4byte:
+    case X86::reloc_riprel_4byte:
+      Type = COFF::IMAGE_REL_AMD64_REL32;
+      FixedValue += 4;
+      break;
+    case FK_Data_4:
+      Type = COFF::IMAGE_REL_AMD64_ADDR32;
+      break;
+    default:
+      llvm_unreachable("unsupported relocation type");
+    }
+  } else
+    llvm_unreachable("unknown target architecture");
+
+  Reloc.Data.Type = Type;
 
   coff_section->Relocations.push_back(Reloc);
 }
@@ -739,7 +765,7 @@ void WinCOFFObjectWriter::WriteObject(const MCAssembler &Asm,
 // WinCOFFObjectWriter factory function
 
 namespace llvm {
-  MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS) {
-    return new WinCOFFObjectWriter(OS);
+  MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS, bool is64Bit) {
+    return new WinCOFFObjectWriter(OS, is64Bit);
   }
 }

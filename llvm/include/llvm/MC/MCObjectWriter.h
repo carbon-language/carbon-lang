@@ -162,7 +162,7 @@ public:
   /// @}
 };
 
-MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS);
+MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS, bool is64Bit);
 
 } // End llvm namespace
 
