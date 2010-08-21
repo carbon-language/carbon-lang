@@ -197,6 +197,9 @@ public:
   Expr *getBaseIvarExp() const { return BaseIvarExp; }
   void setBaseIvarExp(Expr *V) { BaseIvarExp = V; }
 
+  const Qualifiers &getQuals() const { return Quals; }
+  Qualifiers &getQuals() { return Quals; }
+
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
 
   unsigned getAlignment() const { return Alignment; }
