@@ -667,15 +667,8 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
 
     // Invalidate the binding.
   if (const RecordType *RT = T->getAsStructureType()) {
-    const RecordDecl *RD = RT->getDecl()->getDefinition();
-      // No record definition.  There is nothing we can do.
-    if (!RD) {
-      B = RM.Remove(B, baseR);
-      return;
-    }
-
-      // Invalidate the region by setting its default value to
-      // conjured symbol. The type of the symbol is irrelavant.
+    // Invalidate the region by setting its default value to
+    // conjured symbol. The type of the symbol is irrelavant.
     DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy,
                                                          Count);
     B = RM.Add(B, baseR, BindingKey::Default, V);
