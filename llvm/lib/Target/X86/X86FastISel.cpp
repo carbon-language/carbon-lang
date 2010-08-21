@@ -960,9 +960,11 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
   MachineBasicBlock *TrueMBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FalseMBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
-  // Fold the common case of a conditional branch with a comparison.
+  // Fold the common case of a conditional branch with a comparison
+  // in the same block (values defined on other blocks may not have
+  // initialized registers).
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
-    if (CI->hasOneUse()) {
+    if (CI->hasOneUse() && CI->getParent() == I->getParent()) {
       EVT VT = TLI.getValueType(CI->getOperand(0)->getType());
 
       // Try to take advantage of fallthrough opportunities.
