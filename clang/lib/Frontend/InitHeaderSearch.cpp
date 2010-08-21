@@ -323,9 +323,19 @@ static bool getSystemRegistryString(const char*, const char*, char*, size_t) {
 
   // Get Visual Studio installation directory.
 static bool getVisualStudioDir(std::string &path) {
+  // First check the environment variables that vsvars32.bat sets.
+  const char* vcinstalldir = getenv("VCINSTALLDIR");
+  if(vcinstalldir) {
+    char *p = const_cast<char *>(strstr(vcinstalldir, "\\VC"));
+    if (p)
+      *p = '\0';
+    path = vcinstalldir;
+    return(true);
+  }
+
   char vsIDEInstallDir[256];
   char vsExpressIDEInstallDir[256];
-  // Try the Windows registry first.
+  // Then try the windows registry.
   bool hasVCDir = getSystemRegistryString(
     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION",
     "InstallDir", vsIDEInstallDir, sizeof(vsIDEInstallDir) - 1);
@@ -440,7 +450,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       if (getVisualStudioDir(VSDir)) {
         AddPath(VSDir + "\\VC\\include", System, false, false, false);
         if (getWindowsSDKDir(WindowsSDKDir))
-          AddPath(WindowsSDKDir, System, false, false, false);
+          AddPath(WindowsSDKDir + "\\include", System, false, false, false);
         else
           AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
             System, false, false, false);

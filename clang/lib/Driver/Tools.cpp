@@ -3329,3 +3329,44 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
     Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
+
+void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                      const InputInfo &Output,
+                                      const InputInfoList &Inputs,
+                                      const ArgList &Args,
+                                      const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getDriver();
+  ArgStringList CmdArgs;
+
+  if (Output.isFilename()) {
+    CmdArgs.push_back(Args.MakeArgString(std::string("-out:") + Output.getFilename()));
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+    !Args.hasArg(options::OPT_nostartfiles)) {
+    CmdArgs.push_back("-defaultlib:libcmt");
+  }
+
+  CmdArgs.push_back("-nologo");
+
+  for (InputInfoList::const_iterator
+    it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+
+    // Don't try to pass LLVM inputs to visual studio linker.
+    if (II.getType() == types::TY_LLVM_BC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+      << getToolChain().getTripleString();
+
+    if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      II.getInputArg().renderAsInput(Args, CmdArgs);
+  }
+
+  const char *Exec =
+  Args.MakeArgString(getToolChain().GetProgramPath("link.exe"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}

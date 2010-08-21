@@ -525,7 +525,78 @@ ToolChain *LinuxHostInfo::CreateToolChain(const ArgList &Args,
   return TC;
 }
 
+// Windows Host Info
+
+/// WindowsHostInfo - Host information to use on Microsoft Windows.
+class WindowsHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  WindowsHostInfo(const Driver &D, const llvm::Triple& Triple);
+  ~WindowsHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
+};
+
+WindowsHostInfo::WindowsHostInfo(const Driver &D, const llvm::Triple& Triple)
+  : HostInfo(D, Triple) {
 }
+
+WindowsHostInfo::~WindowsHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool WindowsHostInfo::useDriverDriver() const {
+  return false;
+}
+
+ToolChain *WindowsHostInfo::CreateToolChain(const ArgList &Args,
+                                            const char *ArchName) const {
+  assert(!ArchName &&
+         "Unexpected arch name on platform without driver driver support.");
+
+  // Automatically handle some instances of -m32/-m64 we know about.
+  std::string Arch = getArchName();
+  ArchName = Arch.c_str();
+  if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
+    if (Triple.getArch() == llvm::Triple::x86 ||
+        Triple.getArch() == llvm::Triple::x86_64) {
+      ArchName =
+        (A->getOption().matches(options::OPT_m32)) ? "i386" : "x86_64";
+    }
+  }
+
+  ToolChain *&TC = ToolChains[ArchName];
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+
+    TC = new toolchains::Windows(*this, TCTriple);
+  }
+
+  return TC;
+}
+
+// FIXME: This is a placeholder.
+class MinGWHostInfo : public UnknownHostInfo {
+public:
+  MinGWHostInfo(const Driver &D, const llvm::Triple& Triple);
+};
+
+MinGWHostInfo::MinGWHostInfo(const Driver &D, const llvm::Triple& Triple)
+  : UnknownHostInfo(D, Triple) {}
+
+} // end anon namespace
 
 const HostInfo *
 clang::driver::createAuroraUXHostInfo(const Driver &D,
@@ -573,6 +644,18 @@ const HostInfo *
 clang::driver::createTCEHostInfo(const Driver &D,
                                    const llvm::Triple& Triple) {
   return new TCEHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createWindowsHostInfo(const Driver &D,
+                                     const llvm::Triple& Triple) {
+  return new WindowsHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createMinGWHostInfo(const Driver &D,
+                                   const llvm::Triple& Triple) {
+  return new MinGWHostInfo(D, Triple);
 }
 
 const HostInfo *

@@ -315,6 +315,20 @@ private:
 
 };
 
+class LLVM_LIBRARY_VISIBILITY Windows : public ToolChain {
+  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+
+public:
+  Windows(const HostInfo &Host, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+
+  virtual bool IsIntegratedAssemblerDefault() const;
+  virtual bool IsUnwindTablesDefault() const;
+  virtual const char *GetDefaultRelocationModel() const;
+  virtual const char *GetForcedPicModel() const;
+};
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

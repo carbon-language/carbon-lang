@@ -1090,3 +1090,55 @@ Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA) const {
 
   return *T;
 }
+
+Windows::Windows(const HostInfo &Host, const llvm::Triple& Triple)
+  : ToolChain(Host, Triple) {
+}
+
+Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::InputClass:
+    case Action::BindArchClass:
+      assert(0 && "Invalid tool kind.");
+    case Action::PreprocessJobClass:
+    case Action::PrecompileJobClass:
+    case Action::AnalyzeJobClass:
+    case Action::CompileJobClass:
+      T = new tools::Clang(*this); break;
+    case Action::AssembleJobClass:
+      T = new tools::ClangAs(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::visualstudio::Link(*this); break;
+    }
+  }
+
+  return *T;
+}
+
+bool Windows::IsIntegratedAssemblerDefault() const {
+  return true;
+}
+
+bool Windows::IsUnwindTablesDefault() const {
+  // FIXME: Gross; we should probably have some separate target
+  // definition, possibly even reusing the one in clang.
+  return getArchName() == "x86_64";
+}
+
+const char *Windows::GetDefaultRelocationModel() const {
+  return "static";
+}
+
+const char *Windows::GetForcedPicModel() const {
+  if (getArchName() == "x86_64")
+    return "pic";
+  return 0;
+}
