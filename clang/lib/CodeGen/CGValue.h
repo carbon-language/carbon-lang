@@ -251,20 +251,16 @@ public:
     return KVCRefExpr;
   }
 
-  static LValue MakeAddr(llvm::Value *V, Qualifiers Quals,
-                         unsigned Alignment = 0) {
+  static LValue MakeAddr(llvm::Value *V, QualType T, unsigned Alignment,
+                         ASTContext &Context) {
+    Qualifiers Quals = Context.getCanonicalType(T).getQualifiers();
+    Quals.setObjCGCAttr(Context.getObjCGCAttrKind(T));
+
     LValue R;
     R.LVType = Simple;
     R.V = V;
     R.Initialize(Quals, Alignment);
     return R;
-  }
-
-  static LValue MakeAddr(llvm::Value *V, QualType T, ASTContext &Context) {
-    Qualifiers Quals = Context.getCanonicalType(T).getQualifiers();
-    Quals.setObjCGCAttr(Context.getObjCGCAttrKind(T));
-
-    return MakeAddr(V, Quals);
   }
 
   static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,

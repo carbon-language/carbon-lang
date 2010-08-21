@@ -976,7 +976,7 @@ public:
   }
 
   LValue MakeAddrLValue(llvm::Value *V, QualType T) {
-    return LValue::MakeAddr(V, T, getContext());
+    return LValue::MakeAddr(V, T, 0, getContext());
   }
 
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
