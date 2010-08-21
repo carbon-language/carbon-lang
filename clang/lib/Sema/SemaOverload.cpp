@@ -4171,9 +4171,12 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
     
   QualType PointeeTy;
   const PointerType *PointerTy = Ty->getAs<PointerType>();
+  bool buildObjCPtr = false;
   if (!PointerTy) {
-    if (const ObjCObjectPointerType *PTy = Ty->getAs<ObjCObjectPointerType>())
+    if (const ObjCObjectPointerType *PTy = Ty->getAs<ObjCObjectPointerType>()) {
       PointeeTy = PTy->getPointeeType();
+      buildObjCPtr = true;
+    }
     else
       assert(false && "type was not a pointer type!");
   }
@@ -4200,7 +4203,10 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
     if ((CVR & Qualifiers::Volatile) && !hasVolatile) continue;
     if ((CVR & Qualifiers::Restrict) && !hasRestrict) continue;
     QualType QPointeeTy = Context.getCVRQualifiedType(PointeeTy, CVR);
-    PointerTypes.insert(Context.getPointerType(QPointeeTy));
+    if (!buildObjCPtr)
+      PointerTypes.insert(Context.getPointerType(QPointeeTy));
+    else
+      PointerTypes.insert(Context.getObjCObjectPointerType(QPointeeTy));
   }
 
   return true;
