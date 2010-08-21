@@ -666,7 +666,7 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   QualType T = TR->getValueType();
 
     // Invalidate the binding.
-  if (const RecordType *RT = T->getAsStructureType()) {
+  if (T->isStructureType()) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
     DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy,
