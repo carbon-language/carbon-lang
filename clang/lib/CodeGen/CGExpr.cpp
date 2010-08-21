@@ -1118,7 +1118,8 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);
   if (VD->getType()->isReferenceType())
     V = CGF.Builder.CreateLoad(V, "tmp");
-  LValue LV = CGF.MakeAddrLValue(V, E->getType());
+  unsigned Alignment = CGF.getContext().getDeclAlign(VD).getQuantity();
+  LValue LV = CGF.MakeAddrLValue(V, E->getType(), Alignment);
   setObjCGCLValueClass(CGF.getContext(), E, LV);
   return LV;
 }
@@ -1138,17 +1139,18 @@ static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
       V = CGF.Builder.CreateBitCast(V, CGF.ConvertType(NoProtoType), "tmp");
     }
   }
-  return CGF.MakeAddrLValue(V, E->getType());
+  unsigned Alignment = CGF.getContext().getDeclAlign(FD).getQuantity();
+  return CGF.MakeAddrLValue(V, E->getType(), Alignment);
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
+  unsigned Alignment = CGF.getContext().getDeclAlign(ND).getQuantity();
 
   if (ND->hasAttr<WeakRefAttr>()) {
     const ValueDecl* VD = cast<ValueDecl>(ND);
     llvm::Constant *Aliasee = CGM.GetWeakRefReference(VD);
-
-    return MakeAddrLValue(Aliasee, E->getType());
+    return MakeAddrLValue(Aliasee, E->getType(), Alignment);
   }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
@@ -1174,7 +1176,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
 
-    LValue LV = MakeAddrLValue(V, E->getType());
+    LValue LV = MakeAddrLValue(V, E->getType(), Alignment);
     if (NonGCable) {
       LV.getQuals().removeObjCGCAttr();
       LV.setNonGC(true);
@@ -1190,7 +1192,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (E->getQualifier()) {
     const FieldDecl *FD = cast<FieldDecl>(ND);
     llvm::Value *V = CGM.EmitPointerToDataMember(FD);
-    return MakeAddrLValue(V, FD->getType());
+    return MakeAddrLValue(V, FD->getType(), Alignment);
   }
   
   assert(false && "Unhandled DeclRefExpr");
@@ -1201,7 +1203,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 }
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
-  return MakeAddrLValue(GetAddrOfBlockDecl(E), E->getType());
+  unsigned Alignment =
+    CGF.getContext().getDeclAlign(E->getDecl()).getQuantity();
+  return MakeAddrLValue(GetAddrOfBlockDecl(E), E->getType(), Alignment);
 }
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
@@ -1637,7 +1641,8 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   if (Field->getType()->isReferenceType())
     V = Builder.CreateLoad(V, "tmp");
 
-  LValue LV = MakeAddrLValue(V, Field->getType());
+  unsigned Alignment = getContext().getDeclAlign(Field).getQuantity();
+  LValue LV = MakeAddrLValue(V, Field->getType(), Alignment);
   LV.getQuals().addCVRQualifiers(CVRQualifiers);
 
   // __weak attribute on a field is ignored.
@@ -1663,7 +1668,8 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue,
 
   assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
 
-  return MakeAddrLValue(V, FieldType);
+  unsigned Alignment = getContext().getDeclAlign(Field).getQuantity();
+  return MakeAddrLValue(V, FieldType, Alignment);
 }
 
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){

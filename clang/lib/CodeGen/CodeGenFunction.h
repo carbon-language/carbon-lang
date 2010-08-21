@@ -969,8 +969,8 @@ public:
   //                                  Helpers
   //===--------------------------------------------------------------------===//
 
-  LValue MakeAddrLValue(llvm::Value *V, QualType T) {
-    return LValue::MakeAddr(V, T, 0, getContext());
+  LValue MakeAddrLValue(llvm::Value *V, QualType T, unsigned Alignment = 0) {
+    return LValue::MakeAddr(V, T, Alignment, getContext());
   }
 
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
