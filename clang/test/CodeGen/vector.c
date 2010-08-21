@@ -20,6 +20,8 @@ void test3 ( vec4* a, char b, float c ) {
 
 
 
+// Don't include mm_malloc.h, it's system specific.
+#define __MM_MALLOC_H
 
 #include <mmintrin.h>
 
