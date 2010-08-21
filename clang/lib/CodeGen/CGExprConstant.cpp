@@ -822,7 +822,7 @@ public:
     case Expr::PredefinedExprClass: {
       unsigned Type = cast<PredefinedExpr>(E)->getIdentType();
       if (CGF) {
-        LValue Res = CGF->EmitPredefinedFunctionName(Type);
+        LValue Res = CGF->EmitPredefinedLValue(cast<PredefinedExpr>(E));
         return cast<llvm::Constant>(Res.getAddress());
       } else if (Type == PredefinedExpr::PrettyFunction) {
         return CGM.GetAddrOfConstantCString("top level", ".tmp");

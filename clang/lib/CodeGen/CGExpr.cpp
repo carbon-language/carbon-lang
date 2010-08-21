@@ -1275,47 +1275,46 @@ LValue CodeGenFunction::EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E) {
 }
 
 
-LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
-  std::string GlobalVarName;
-
-  switch (Type) {
-  default: assert(0 && "Invalid type");
-  case PredefinedExpr::Func:
-    GlobalVarName = "__func__.";
-    break;
-  case PredefinedExpr::Function:
-    GlobalVarName = "__FUNCTION__.";
-    break;
-  case PredefinedExpr::PrettyFunction:
-    GlobalVarName = "__PRETTY_FUNCTION__.";
-    break;
-  }
-
-  llvm::StringRef FnName = CurFn->getName();
-  if (FnName.startswith("\01"))
-    FnName = FnName.substr(1);
-  GlobalVarName += FnName;
-
-  const Decl *CurDecl = CurCodeDecl;
-  if (CurDecl == 0)
-    CurDecl = getContext().getTranslationUnitDecl();
-  
-  std::string FunctionName =
-    PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurDecl);
-
-  llvm::Constant *C =
-    CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
-  return LValue::MakeAddr(C, Qualifiers());
-}
-
 LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   switch (E->getIdentType()) {
   default:
     return EmitUnsupportedLValue(E, "predefined expression");
+
   case PredefinedExpr::Func:
   case PredefinedExpr::Function:
-  case PredefinedExpr::PrettyFunction:
-    return EmitPredefinedFunctionName(E->getIdentType());
+  case PredefinedExpr::PrettyFunction: {
+    unsigned Type = E->getIdentType();
+    std::string GlobalVarName;
+
+    switch (Type) {
+    default: assert(0 && "Invalid type");
+    case PredefinedExpr::Func:
+      GlobalVarName = "__func__.";
+      break;
+    case PredefinedExpr::Function:
+      GlobalVarName = "__FUNCTION__.";
+      break;
+    case PredefinedExpr::PrettyFunction:
+      GlobalVarName = "__PRETTY_FUNCTION__.";
+      break;
+    }
+
+    llvm::StringRef FnName = CurFn->getName();
+    if (FnName.startswith("\01"))
+      FnName = FnName.substr(1);
+    GlobalVarName += FnName;
+
+    const Decl *CurDecl = CurCodeDecl;
+    if (CurDecl == 0)
+      CurDecl = getContext().getTranslationUnitDecl();
+
+    std::string FunctionName =
+      PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurDecl);
+
+    llvm::Constant *C =
+      CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
+    return LValue::MakeAddr(C, Qualifiers());
+  }
   }
 }
 
