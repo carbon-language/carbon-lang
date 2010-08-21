@@ -1316,18 +1316,13 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
     if (TR->getValueType()->isStructureOrClassType())
       return BindStruct(store, TR, V);
 
-  // Special case: the current region represents a cast and it and the super
-  // region both have pointer types or intptr_t types.  If so, perform the
-  // bind to the super region.
-  // This is needed to support OSAtomicCompareAndSwap and friends or other
-  // loads that treat integers as pointers and vis versa.
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
     if (ER->getIndex().isZeroConstant()) {
       if (const TypedRegion *superR =
             dyn_cast<TypedRegion>(ER->getSuperRegion())) {
         QualType superTy = superR->getValueType();
         // For now, just invalidate the fields of the struct/union/class.
-        // This is for test: undef-buffers.c
+        // This is for test rdar_test_7185607 in misc-ps-region-store.m.
         // FIXME: Precisely handle the fields of the record.
         if (superTy->isStructureOrClassType())
           return KillStruct(store, superR, UnknownVal());
