@@ -97,8 +97,8 @@ public:
                               InputIterator first, InputIterator last);
     iterator insert_after(const_iterator p, initializer_list<value_type> il);
 
-    void erase_after(const_iterator p);
-    void erase_after(const_iterator first, const_iterator last);
+    iterator erase_after(const_iterator p);
+    iterator erase_after(const_iterator first, const_iterator last);
 
     void swap(forward_list& x);
 
@@ -568,8 +568,8 @@ public:
     iterator insert_after(const_iterator __p, initializer_list<value_type> __il)
         {return insert_after(__p, __il.begin(), __il.end());}
 
-    void erase_after(const_iterator __p);
-    void erase_after(const_iterator __f, const_iterator __l);
+    iterator erase_after(const_iterator __p);
+    iterator erase_after(const_iterator __f, const_iterator __l);
 
     void swap(forward_list& __x) {base::swap(__x);}
 
@@ -1033,7 +1033,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
 }
 
 template <class _Tp, class _Alloc>
-void
+typename forward_list<_Tp, _Alloc>::iterator
 forward_list<_Tp, _Alloc>::erase_after(const_iterator __f)
 {
     __node_pointer __p = const_cast<__node_pointer>(__f.__ptr_);
@@ -1042,17 +1042,18 @@ forward_list<_Tp, _Alloc>::erase_after(const_iterator __f)
     __node_allocator& __a = base::__alloc();
     __node_traits::destroy(__a, addressof(__n->__value_));
     __node_traits::deallocate(__a, __n, 1);
+    return iterator(__p->__next_);
 }
 
 template <class _Tp, class _Alloc>
-void
+typename forward_list<_Tp, _Alloc>::iterator
 forward_list<_Tp, _Alloc>::erase_after(const_iterator __f, const_iterator __l)
 {
+    __node_pointer __e = const_cast<__node_pointer>(__l.__ptr_);
     if (__f != __l)
     {
         __node_pointer __p = const_cast<__node_pointer>(__f.__ptr_);
         __node_pointer __n = __p->__next_;
-        __node_pointer __e = const_cast<__node_pointer>(__l.__ptr_);
         if (__n != __e)
         {
             __p->__next_ = __e;
@@ -1066,6 +1067,7 @@ forward_list<_Tp, _Alloc>::erase_after(const_iterator __f, const_iterator __l)
             } while (__n != __e);
         }
     }
+    return iterator(__e);
 }
 
 template <class _Tp, class _Alloc>
