@@ -12,6 +12,10 @@
 // documented at:
 //  http://www.codesourcery.com/public/cxx-abi/abi.html
 //  http://www.codesourcery.com/public/cxx-abi/abi-eh.html
+//
+// It also supports the closely-related ARM ABI, documented at:
+// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0041c/IHI0041C_cppabi.pdf
+//
 //===----------------------------------------------------------------------===//
 
 #include "CGCXXABI.h"
@@ -31,9 +35,18 @@ public:
     return MangleCtx;
   }
 };
+
+class ARMCXXABI : public ItaniumCXXABI {
+public:
+  ARMCXXABI(CodeGen::CodeGenModule &CGM) : ItaniumCXXABI(CGM) {}
+};
 }
 
 CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
   return new ItaniumCXXABI(CGM);
+}
+
+CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
+  return new ARMCXXABI(CGM);
 }
 

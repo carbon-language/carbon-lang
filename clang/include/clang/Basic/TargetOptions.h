@@ -18,11 +18,6 @@ namespace clang {
 /// TargetOptions - Options for controlling the target.
 class TargetOptions {
 public:
-
-  TargetOptions() {
-    CXXABI = "itanium";
-  }
-
   /// If given, the name of the target triple to compile for. If not given the
   /// target will be selected to match the host.
   std::string Triple;

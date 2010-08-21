@@ -1585,6 +1585,9 @@ public:
                            "i64:64:64-f32:32:32-f64:64:64-"
                            "v64:64:64-v128:128:128-a0:0:64-n32");
     }
+
+    // ARM targets default to using the ARM C++ ABI.
+    CXXABI = CXXABI_ARM;
   }
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) {
@@ -2631,7 +2634,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
   }
 
   // Set the target C++ ABI.
-  if (!Target->setCXXABI(Opts.CXXABI)) {
+  if (!Opts.CXXABI.empty() && !Target->setCXXABI(Opts.CXXABI)) {
     Diags.Report(diag::err_target_unknown_cxxabi) << Opts.CXXABI;
     return 0;
   }

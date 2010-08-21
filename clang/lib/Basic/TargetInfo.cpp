@@ -58,6 +58,9 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
 
   // Default to no types using fpret.
   RealTypeUsesObjCFPRet = 0;
+
+  // Default to using the Itanium ABI.
+  CXXABI = CXXABI_Itanium;
 }
 
 // Out of line virtual dtor for TargetInfo.

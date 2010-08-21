@@ -91,11 +91,15 @@ void CodeGenModule::createObjCRuntime() {
 
 void CodeGenModule::createCXXABI() {
   switch (Context.Target.getCXXABI()) {
-  default:
+  case CXXABI_ARM:
+    ABI = CreateARMCXXABI(*this);
+    break;
+  case CXXABI_Itanium:
     ABI = CreateItaniumCXXABI(*this);
     break;
   case CXXABI_Microsoft:
     ABI = CreateMicrosoftCXXABI(*this);
+    break;
   }
 }
 
