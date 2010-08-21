@@ -136,6 +136,9 @@ class LValue {
   // 'const' is unused here
   Qualifiers Quals;
 
+  /// The alignment to use when accessing this lvalue.
+  unsigned char Alignment;
+
   // objective-c's ivar
   bool Ivar:1;
   
@@ -154,11 +157,12 @@ class LValue {
 
   Expr *BaseIvarExp;
 private:
-  void Initialize(Qualifiers Quals) {
+  void Initialize(Qualifiers Quals, unsigned Alignment = 0) {
     this->Quals = Quals;
-    
-    // FIXME: Convenient place to set objc flags to 0. This should really be
-    // done in a user-defined constructor instead.
+    this->Alignment = Alignment;
+    assert(this->Alignment == Alignment && "Alignment exceeds allowed max!");
+
+    // Initialize Objective-C flags.
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
     this->ThreadLocalRef = false;
     this->BaseIvarExp = 0;
@@ -190,6 +194,8 @@ public:
   void setBaseIvarExp(Expr *V) { BaseIvarExp = V; }
 
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
+
+  unsigned getAlignment() const { return Alignment; }
 
   static void SetObjCIvar(LValue& R, bool iValue) {
     R.Ivar = iValue;
@@ -243,11 +249,12 @@ public:
     return KVCRefExpr;
   }
 
-  static LValue MakeAddr(llvm::Value *V, Qualifiers Quals) {
+  static LValue MakeAddr(llvm::Value *V, Qualifiers Quals,
+                         unsigned Alignment = 0) {
     LValue R;
     R.LVType = Simple;
     R.V = V;
-    R.Initialize(Quals);
+    R.Initialize(Quals, Alignment);
     return R;
   }
 

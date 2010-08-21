@@ -635,11 +635,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
     // Simple scalar l-value.
     //
     // FIXME: We shouldn't have to use isSingleValueType here.
-    //
-    // FIXME: Pass alignment!
     if (EltTy->isSingleValueType())
       return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
-                                          /*Alignment=*/0, ExprType));
+                                          LV.getAlignment(), ExprType));
 
     assert(ExprType->isFunctionType() && "Unknown scalar value");
     return RValue::get(Ptr);
@@ -849,9 +847,8 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   }
 
   assert(Src.isScalar() && "Can't emit an agg store with this method");
-  // FIXME: Pass alignment.
   EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(),
-                    Dst.isVolatileQualified(), /*Alignment=*/0, Ty);
+                    Dst.isVolatileQualified(), Dst.getAlignment(), Ty);
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
