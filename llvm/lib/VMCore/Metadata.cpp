@@ -257,10 +257,12 @@ MDNode *MDNode::getTemporary(LLVMContext &Context, Value *const *Vals,
 
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->use_empty() && "Temporary MDNode has uses!");
+  assert(!N->getContext().pImpl->MDNodeSet.RemoveNode(N) &&
+         "Deleting a non-temporary node!");
   assert((N->getSubclassDataFromValue() & NotUniquedBit) &&
          "Temporary MDNode does not have NotUniquedBit set!");
   assert((N->getSubclassDataFromValue() & DestroyFlag) == 0 &&
-         "Temporary MDNode does has DestroyFlag set!");
+         "Temporary MDNode has DestroyFlag set!");
   N->setValueSubclassData(N->getSubclassDataFromValue() |
                           DestroyFlag);
   LeakDetector::removeGarbageObject(N);
