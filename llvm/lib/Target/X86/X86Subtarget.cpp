@@ -73,7 +73,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
       if (GV->hasDefaultVisibility() &&
           (isDecl || GV->isWeakForLinker()))
         return X86II::MO_GOTPCREL;
-    } else {
+    } else if (!isTargetWin64()) {
       assert(isTargetELF() && "Unknown rip-relative target");
 
       // Extra load is needed for all externally visible.
