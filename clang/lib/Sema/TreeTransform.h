@@ -95,7 +95,6 @@ public:
   typedef Sema::ExprArg ExprArg;
   typedef Sema::MultiExprArg MultiExprArg;
   typedef Sema::MultiStmtArg MultiStmtArg;
-  typedef Sema::DeclPtrTy DeclPtrTy;
   
   /// \brief Initializes a new tree transformer.
   TreeTransform(Sema &SemaRef) : SemaRef(SemaRef) { }
@@ -768,7 +767,7 @@ public:
   OwningStmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::FullExprArg Cond,
                                  VarDecl *CondVar, StmtArg Then, 
                                  SourceLocation ElseLoc, StmtArg Else) {
-    return getSema().ActOnIfStmt(IfLoc, Cond, DeclPtrTy::make(CondVar), 
+    return getSema().ActOnIfStmt(IfLoc, Cond, CondVar, 
                                  move(Then), ElseLoc, move(Else));
   }
 
@@ -780,7 +779,7 @@ public:
                                           Sema::ExprArg Cond, 
                                           VarDecl *CondVar) {
     return getSema().ActOnStartOfSwitchStmt(SwitchLoc, move(Cond), 
-                                            DeclPtrTy::make(CondVar));
+                                            CondVar);
   }
 
   /// \brief Attach the body to the switch statement.
@@ -802,7 +801,7 @@ public:
                                     VarDecl *CondVar,
                                     StmtArg Body) {
     return getSema().ActOnWhileStmt(WhileLoc, Cond, 
-                                    DeclPtrTy::make(CondVar), move(Body));
+                                    CondVar, move(Body));
   }
 
   /// \brief Build a new do-while statement.
@@ -828,7 +827,7 @@ public:
                                   VarDecl *CondVar, Sema::FullExprArg Inc,
                                   SourceLocation RParenLoc, StmtArg Body) {
     return getSema().ActOnForStmt(ForLoc, LParenLoc, move(Init), Cond, 
-                                  DeclPtrTy::make(CondVar),
+                                  CondVar,
                                   Inc, RParenLoc, move(Body));
   }
 
@@ -930,8 +929,7 @@ public:
                                           VarDecl *Var,
                                           StmtArg Body) {
     return getSema().ActOnObjCAtCatchStmt(AtLoc, RParenLoc,
-                                          Sema::DeclPtrTy::make(Var),
-                                          move(Body));
+                                          Var, move(Body));
   }
   
   /// \brief Build a new Objective-C @finally statement.
@@ -1834,7 +1832,7 @@ public:
                    Sema::LookupMemberName);
     OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/IvarLoc,
-                                                         SS, DeclPtrTy(),
+                                                         SS, 0,
                                                          false);
     if (Result.isInvalid())
       return getSema().ExprError();
@@ -1864,8 +1862,7 @@ public:
     bool IsArrow = false;
     OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/PropertyLoc,
-                                                         SS, DeclPtrTy(),
-                                                         false);
+                                                         SS, 0, false);
     if (Result.isInvalid())
       return getSema().ExprError();
     
@@ -1913,8 +1910,7 @@ public:
                    Sema::LookupMemberName);
     OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/IsaLoc,
-                                                         SS, DeclPtrTy(),
-                                                         false);
+                                                         SS, 0, false);
     if (Result.isInvalid())
       return getSema().ExprError();
     

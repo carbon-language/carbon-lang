@@ -43,8 +43,8 @@ using namespace clang;
 ///       namespace-alias-definition:  [C++ 7.3.2: namespace.alias]
 ///         'namespace' identifier '=' qualified-namespace-specifier ';'
 ///
-Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
-                                         SourceLocation &DeclEnd) {
+Decl *Parser::ParseNamespace(unsigned Context,
+                             SourceLocation &DeclEnd) {
   assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
 
@@ -82,7 +82,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, Ident ? diag::err_expected_lbrace :
          diag::err_expected_ident_lbrace);
-    return DeclPtrTy();
+    return 0;
   }
 
   SourceLocation LBrace = ConsumeBrace();
@@ -92,13 +92,13 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
       getCurScope()->getFnParent()) {
     Diag(LBrace, diag::err_namespace_nonnamespace_scope);
     SkipUntil(tok::r_brace, false);
-    return DeclPtrTy();
+    return 0;
   }
 
   // Enter a scope for the namespace.
   ParseScope NamespaceScope(this, Scope::DeclScope);
 
-  DeclPtrTy NamespcDecl =
+  Decl *NamespcDecl =
     Actions.ActOnStartNamespaceDef(getCurScope(), IdentLoc, Ident, LBrace,
                                    AttrList.get());
 
@@ -126,7 +126,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
 /// ParseNamespaceAlias - Parse the part after the '=' in a namespace
 /// alias definition.
 ///
-Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
+Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
                                               SourceLocation AliasLoc,
                                               IdentifierInfo *Alias,
                                               SourceLocation &DeclEnd) {
@@ -147,7 +147,7 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
     Diag(Tok, diag::err_expected_namespace_name);
     // Skip to end of the definition and eat the ';'.
     SkipUntil(tok::semi);
-    return DeclPtrTy();
+    return 0;
   }
 
   // Parse identifier.
@@ -170,7 +170,7 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 ///         'extern' string-literal '{' declaration-seq[opt] '}'
 ///         'extern' string-literal declaration
 ///
-Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
+Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
                                        unsigned Context) {
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallString<8> LangBuffer;
@@ -178,12 +178,12 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
   bool Invalid = false;
   llvm::StringRef Lang = PP.getSpelling(Tok, LangBuffer, &Invalid);
   if (Invalid)
-    return DeclPtrTy();
+    return 0;
 
   SourceLocation Loc = ConsumeStringToken();
 
   ParseScope LinkageScope(this, Scope::DeclScope);
-  DeclPtrTy LinkageSpec
+  Decl *LinkageSpec
     = Actions.ActOnStartLinkageSpecification(getCurScope(),
                                              /*FIXME: */SourceLocation(),
                                              Loc, Lang,
@@ -222,7 +222,7 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
 /// using-directive. Assumes that current token is 'using'.
-Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
+Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
                                                      SourceLocation &DeclEnd,
                                                      CXX0XAttributeList Attr) {
   assert(Tok.is(tok::kw_using) && "Not using token");
@@ -258,7 +258,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
 ///        'using' 'namespace' ::[opt] nested-name-specifier[opt]
 ///                 namespace-name attributes[opt] ;
 ///
-Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
+Decl *Parser::ParseUsingDirective(unsigned Context,
                                               SourceLocation UsingLoc,
                                               SourceLocation &DeclEnd,
                                               AttributeList *Attr) {
@@ -285,7 +285,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
     // If there was invalid namespace name, skip to end of decl, and eat ';'.
     SkipUntil(tok::semi);
     // FIXME: Are there cases, when we would like to call ActOnUsingDirective?
-    return DeclPtrTy();
+    return 0;
   }
 
   // Parse identifier.
@@ -317,7 +317,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
 ///               unqualified-id
 ///       'using' :: unqualified-id
 ///
-Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
+Decl *Parser::ParseUsingDeclaration(unsigned Context,
                                                 SourceLocation UsingLoc,
                                                 SourceLocation &DeclEnd,
                                                 AccessSpecifier AS) {
@@ -341,7 +341,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   // Check nested-name specifier.
   if (SS.isInvalid()) {
     SkipUntil(tok::semi);
-    return DeclPtrTy();
+    return 0;
   }
 
   // Parse the unqualified-id. We allow parsing of both constructor and
@@ -355,7 +355,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                          /*ObjectType=*/0,
                          Name)) {
     SkipUntil(tok::semi);
-    return DeclPtrTy();
+    return 0;
   }
 
   // Parse (optional) attributes (most likely GNU strong-using extension).
@@ -378,13 +378,13 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
 ///      static_assert-declaration:
 ///        static_assert ( constant-expression  ,  string-literal  ) ;
 ///
-Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
+Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   assert(Tok.is(tok::kw_static_assert) && "Not a static_assert declaration");
   SourceLocation StaticAssertLoc = ConsumeToken();
 
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen);
-    return DeclPtrTy();
+    return 0;
   }
 
   SourceLocation LParenLoc = ConsumeParen();
@@ -392,21 +392,21 @@ Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   OwningExprResult AssertExpr(ParseConstantExpression());
   if (AssertExpr.isInvalid()) {
     SkipUntil(tok::semi);
-    return DeclPtrTy();
+    return 0;
   }
 
   if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::semi))
-    return DeclPtrTy();
+    return 0;
 
   if (Tok.isNot(tok::string_literal)) {
     Diag(Tok, diag::err_expected_string_literal);
     SkipUntil(tok::semi);
-    return DeclPtrTy();
+    return 0;
   }
 
   OwningExprResult AssertMessage(ParseStringLiteralExpression());
   if (AssertMessage.isInvalid())
-    return DeclPtrTy();
+    return 0;
 
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
@@ -822,8 +822,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   }
 
   // Create the tag portion of the class or class template.
-  Action::DeclResult TagOrTempResult = true; // invalid
-  Action::TypeResult TypeResult = true; // invalid
+  DeclResult TagOrTempResult = true; // invalid
+  TypeResult TypeResult = true; // invalid
 
   bool Owned = false;
   if (TemplateId) {
@@ -967,7 +967,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     Result = TypeResult.get();
     Owned = false;
   } else if (!TagOrTempResult.isInvalid()) {
-    Result = TagOrTempResult.get().getAs<void>();
+    Result = TagOrTempResult.get();
   } else {
     DS.SetTypeSpecError();
     return;
@@ -1065,7 +1065,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 ///       base-specifier-list:
 ///         base-specifier '...'[opt]
 ///         base-specifier-list ',' base-specifier '...'[opt]
-void Parser::ParseBaseClause(DeclPtrTy ClassDecl) {
+void Parser::ParseBaseClause(Decl *ClassDecl) {
   assert(Tok.is(tok::colon) && "Not a base clause");
   ConsumeToken();
 
@@ -1107,7 +1107,7 @@ void Parser::ParseBaseClause(DeclPtrTy ClassDecl) {
 ///                        class-name
 ///         access-specifier 'virtual'[opt] ::[opt] nested-name-specifier[opt]
 ///                        class-name
-Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
+Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   bool IsVirtual = false;
   SourceLocation StartLoc = Tok.getLocation();
 
@@ -1175,7 +1175,7 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const {
 }
 
 void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
-                                             DeclPtrTy ThisDecl) {
+                                             Decl *ThisDecl) {
   // We just declared a member function. If this member function
   // has any default arguments, we'll need to parse them later.
   LateParsedMethodDeclaration *LateMethod = 0;
@@ -1345,7 +1345,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    DeclPtrTy TheDecl =
+    Decl *TheDecl =
       Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
     DS.complete(TheDecl);
     return;
@@ -1405,7 +1405,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   //   member-declarator
   //   member-declarator-list ',' member-declarator
 
-  llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
+  llvm::SmallVector<Decl *, 8> DeclsInGroup;
   OwningExprResult BitfieldSize(Actions);
   OwningExprResult Init(Actions);
   bool Deleted = false;
@@ -1465,7 +1465,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
 
-    DeclPtrTy ThisDecl;
+    Decl *ThisDecl = 0;
     if (DS.isFriendSpecified()) {
       // TODO: handle initializers, bitfields, 'delete'
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
@@ -1535,7 +1535,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 ///         access-specifier ':' member-specification[opt]
 ///
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
-                                         unsigned TagType, DeclPtrTy TagDecl) {
+                                         unsigned TagType, Decl *TagDecl) {
   assert((TagType == DeclSpec::TST_struct ||
          TagType == DeclSpec::TST_union  ||
          TagType == DeclSpec::TST_class) && "Invalid TagType!");
@@ -1701,7 +1701,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 /// [C++]  mem-initializer-list:
 ///          mem-initializer
 ///          mem-initializer , mem-initializer-list
-void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
+void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
   assert(Tok.is(tok::colon) && "Constructor initializer always starts with ':'");
 
   SourceLocation ColonLoc = ConsumeToken();
@@ -1744,7 +1744,7 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
 /// [C++] mem-initializer-id:
 ///         '::'[opt] nested-name-specifier[opt] class-name
 ///         identifier
-Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
+Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   // parse '::'[opt] nested-name-specifier[opt]
   CXXScopeSpec SS;
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
@@ -1851,7 +1851,7 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
 /// \brief We have just started parsing the definition of a new class,
 /// so push that class onto our stack of classes that is currently
 /// being parsed.
-void Parser::PushParsingClass(DeclPtrTy ClassDecl, bool NonNestedClass) {
+void Parser::PushParsingClass(Decl *ClassDecl, bool NonNestedClass) {
   assert((NonNestedClass || !ClassStack.empty()) &&
          "Nested class without outer class");
   ClassStack.push(new ParsingClass(ClassDecl, NonNestedClass));

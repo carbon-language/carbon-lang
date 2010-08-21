@@ -3364,7 +3364,7 @@ void ASTReader::InitializeSema(Sema &S) {
   // still get added to the identifier's declaration chains.
   if (SemaObj->TUScope) {
     for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
-      SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(PreloadedDecls[I]));
+      SemaObj->TUScope->AddDecl(PreloadedDecls[I]);
       SemaObj->IdResolver.AddDecl(PreloadedDecls[I]);
     }
   }
@@ -3565,7 +3565,7 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
         // Introduce this declaration into the translation-unit scope
         // and add it to the declaration chain for this identifier, so
         // that (unqualified) name lookup will find it.
-        SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(D));
+        SemaObj->TUScope->AddDecl(D);
         SemaObj->IdResolver.AddDeclToIdentifierChain(II, D);
       }
     } else {

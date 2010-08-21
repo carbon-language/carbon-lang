@@ -538,7 +538,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 /// successfully parsed.  Note that a successful parse can still have semantic
 /// errors in the condition.
 bool Parser::ParseParenExprOrCondition(OwningExprResult &ExprResult,
-                                       DeclPtrTy &DeclResult,
+                                       Decl *&DeclResult,
                                        SourceLocation Loc,
                                        bool ConvertToBoolean) {
   bool ParseError = false;
@@ -549,7 +549,7 @@ bool Parser::ParseParenExprOrCondition(OwningExprResult &ExprResult,
                                    ConvertToBoolean);
   else {
     ExprResult = ParseExpression();
-    DeclResult = DeclPtrTy();
+    DeclResult = 0;
     
     // If required, convert to a boolean value.
     if (!ExprResult.isInvalid() && ConvertToBoolean)
@@ -560,7 +560,7 @@ bool Parser::ParseParenExprOrCondition(OwningExprResult &ExprResult,
   // If the parser was confused by the condition and we don't have a ')', try to
   // recover by skipping ahead to a semi and bailing out.  If condexp is
   // semantically invalid but we have well formed code, keep going.
-  if (ExprResult.isInvalid() && !DeclResult.get() && Tok.isNot(tok::r_paren)) {
+  if (ExprResult.isInvalid() && !DeclResult && Tok.isNot(tok::r_paren)) {
     SkipUntil(tok::semi);
     // Skipping may have stopped if it found the containing ')'.  If so, we can
     // continue parsing the if statement.
@@ -612,7 +612,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 
   // Parse the condition.
   OwningExprResult CondExp(Actions);
-  DeclPtrTy CondVar;
+  Decl *CondVar = 0;
   if (ParseParenExprOrCondition(CondExp, CondVar, IfLoc, true))
     return StmtError();
 
@@ -677,7 +677,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 
   // If the condition was invalid, discard the if statement.  We could recover
   // better by replacing it with a valid expr, but don't do that yet.
-  if (CondExp.isInvalid() && !CondVar.get())
+  if (CondExp.isInvalid() && !CondVar)
     return StmtError();
 
   // If the then or else stmt is invalid and the other is valid (and present),
@@ -738,7 +738,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
 
   // Parse the condition.
   OwningExprResult Cond(Actions);
-  DeclPtrTy CondVar;
+  Decl *CondVar = 0;
   if (ParseParenExprOrCondition(Cond, CondVar, SwitchLoc, false))
     return StmtError();
 
@@ -828,7 +828,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
 
   // Parse the condition.
   OwningExprResult Cond(Actions);
-  DeclPtrTy CondVar;
+  Decl *CondVar = 0;
   if (ParseParenExprOrCondition(Cond, CondVar, WhileLoc, true))
     return StmtError();
 
@@ -855,7 +855,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
   InnerScope.Exit();
   WhileScope.Exit();
 
-  if ((Cond.isInvalid() && !CondVar.get()) || Body.isInvalid())
+  if ((Cond.isInvalid() && !CondVar) || Body.isInvalid())
     return StmtError();
 
   return Actions.ActOnWhileStmt(WhileLoc, FullCond, CondVar, move(Body));
@@ -990,7 +990,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
   FullExprArg SecondPart(Actions);
   OwningExprResult Collection(Actions);
   FullExprArg ThirdPart(Actions);
-  DeclPtrTy SecondVar;
+  Decl *SecondVar = 0;
   
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), 
@@ -1067,7 +1067,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
-      if (!SecondPartIsInvalid || SecondVar.get()) 
+      if (!SecondPartIsInvalid || SecondVar) 
         Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
@@ -1454,7 +1454,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
   return true;
 }
 
-Parser::DeclPtrTy Parser::ParseFunctionStatementBody(DeclPtrTy Decl) {
+Decl *Parser::ParseFunctionStatementBody(Decl *Decl) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
 
@@ -1480,7 +1480,7 @@ Parser::DeclPtrTy Parser::ParseFunctionStatementBody(DeclPtrTy Decl) {
 ///       function-try-block:
 ///         'try' ctor-initializer[opt] compound-statement handler-seq
 ///
-Parser::DeclPtrTy Parser::ParseFunctionTryBlock(DeclPtrTy Decl) {
+Decl *Parser::ParseFunctionTryBlock(Decl *Decl) {
   assert(Tok.is(tok::kw_try) && "Expected 'try'");
   SourceLocation TryLoc = ConsumeToken();
 
@@ -1586,7 +1586,7 @@ Parser::OwningStmtResult Parser::ParseCXXCatchBlock() {
 
   // exception-declaration is equivalent to '...' or a parameter-declaration
   // without default arguments.
-  DeclPtrTy ExceptionDecl;
+  Decl *ExceptionDecl = 0;
   if (Tok.isNot(tok::ellipsis)) {
     DeclSpec DS;
     if (ParseCXXTypeSpecifierSeq(DS))

@@ -23,6 +23,7 @@
 
 namespace clang {
   class ActionBase;
+  class Decl;
 
   /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
   /// Parser doesn't know about but that Sema or another client does.  The UID
@@ -199,7 +200,6 @@ namespace clang {
 
     // Types - Though these don't actually enforce strong typing, they document
     // what types are required to be identical for the actions.
-    typedef OpaquePtr<0> DeclPtrTy;
     typedef OpaquePtr<1> DeclGroupPtrTy;
     typedef OpaquePtr<2> TemplateTy;
     typedef void AttrTy;
@@ -518,6 +518,23 @@ namespace clang {
   ASTMultiPtr<Destroyer>& move(ASTMultiPtr<Destroyer> &ptr) {
     return ptr;
   }
+
+  // We can re-use the low bit of expression, statement, base, and
+  // member-initializer pointers for the "invalid" flag of
+  // ActionResult.
+  template<> struct IsResultPtrLowBitFree<0> { static const bool value = true;};
+  template<> struct IsResultPtrLowBitFree<1> { static const bool value = true;};
+  template<> struct IsResultPtrLowBitFree<3> { static const bool value = true;};
+  template<> struct IsResultPtrLowBitFree<4> { static const bool value = true;};
+  template<> struct IsResultPtrLowBitFree<5> { static const bool value = true;};
+
+  typedef ActionBase::ActionResult<0> ExprResult;
+  typedef ActionBase::ActionResult<1> StmtResult;
+  typedef ActionBase::ActionResult<2> TypeResult;
+  typedef ActionBase::ActionResult<3> BaseResult;
+  typedef ActionBase::ActionResult<4> MemInitResult;
+
+  typedef ActionBase::ActionResult<5, Decl*> DeclResult;
 }
 
 #endif

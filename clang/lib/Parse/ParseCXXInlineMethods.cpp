@@ -20,8 +20,7 @@ using namespace clang;
 /// ParseCXXInlineMethodDef - We parsed and verified that the specified
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
-Parser::DeclPtrTy
-Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
+Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
                                 const ParsedTemplateInfo &TemplateInfo) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
@@ -32,7 +31,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data() : 0,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 
-  DeclPtrTy FnD;
+  Decl *FnD;
   if (D.getDeclSpec().isFriendSpecified())
     // FIXME: Friend templates
     FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D, true,

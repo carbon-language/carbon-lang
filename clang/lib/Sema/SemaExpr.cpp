@@ -2756,7 +2756,7 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
   } else {
     OwningExprResult Result =
       LookupMemberExpr(R, Base, IsArrow, OpLoc,
-                       SS, /*ObjCImpDecl*/ DeclPtrTy(), TemplateArgs != 0);
+                       SS, /*ObjCImpDecl*/ 0, TemplateArgs != 0);
 
     if (Result.isInvalid()) {
       Owned(Base);
@@ -2972,7 +2972,7 @@ Sema::OwningExprResult
 Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                        bool &IsArrow, SourceLocation OpLoc,
                        CXXScopeSpec &SS,
-                       DeclPtrTy ObjCImpDecl, bool HasTemplateArgs) {
+                       Decl *ObjCImpDecl, bool HasTemplateArgs) {
   assert(BaseExpr && "no base expression");
 
   // Perform default conversions.
@@ -3210,12 +3210,11 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
             // down the context as argument to this routine. Ideally, this context
             // need be passed down in the AST node and somehow calculated from the
             // AST for a function decl.
-            Decl *ImplDecl = ObjCImpDecl.getAs<Decl>();
             if (ObjCImplementationDecl *IMPD =
-                dyn_cast<ObjCImplementationDecl>(ImplDecl))
+                dyn_cast<ObjCImplementationDecl>(ObjCImpDecl))
               ClassOfMethodDecl = IMPD->getClassInterface();
             else if (ObjCCategoryImplDecl* CatImplClass =
-                        dyn_cast<ObjCCategoryImplDecl>(ImplDecl))
+                        dyn_cast<ObjCCategoryImplDecl>(ObjCImpDecl))
               ClassOfMethodDecl = CatImplClass->getClassInterface();
           }
 
@@ -3321,7 +3320,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
                                                    tok::TokenKind OpKind,
                                                    CXXScopeSpec &SS,
                                                    UnqualifiedId &Id,
-                                                   DeclPtrTy ObjCImpDecl,
+                                                   Decl *ObjCImpDecl,
                                                    bool HasTrailingLParen) {
   if (SS.isSet() && SS.isInvalid())
     return ExprError();

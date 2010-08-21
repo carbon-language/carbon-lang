@@ -14,10 +14,12 @@
 #ifndef LLVM_CLANG_SEMA_SCOPE_H
 #define LLVM_CLANG_SEMA_SCOPE_H
 
-#include "clang/Sema/Action.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang {
+
+class Decl;
+class UsingDirectiveDecl;
 
 /// Scope - A scope is a transient data structure that is used while parsing the
 /// program.  It assists with resolving identifiers to the appropriate
@@ -117,7 +119,7 @@ private:
   /// popped, these declarations are removed from the IdentifierTable's notion
   /// of current declaration.  It is up to the current Action implementation to
   /// implement these semantics.
-  typedef llvm::SmallPtrSet<Action::DeclPtrTy, 32> DeclSetTy;
+  typedef llvm::SmallPtrSet<Decl *, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
 
   /// Entity - The entity with which this scope is associated. For
@@ -126,7 +128,7 @@ private:
   /// maintained by the Action implementation.
   void *Entity;
 
-  typedef llvm::SmallVector<Action::DeclPtrTy, 2> UsingDirectivesTy;
+  typedef llvm::SmallVector<UsingDirectiveDecl *, 2> UsingDirectivesTy;
   UsingDirectivesTy UsingDirectives;
 
   /// \brief The number of errors at the start of the given scope.
@@ -195,17 +197,17 @@ public:
   decl_iterator decl_end()   const { return DeclsInScope.end(); }
   bool decl_empty()          const { return DeclsInScope.empty(); }
 
-  void AddDecl(Action::DeclPtrTy D) {
+  void AddDecl(Decl *D) {
     DeclsInScope.insert(D);
   }
 
-  void RemoveDecl(Action::DeclPtrTy D) {
+  void RemoveDecl(Decl *D) {
     DeclsInScope.erase(D);
   }
 
   /// isDeclScope - Return true if this is the scope that the specified decl is
   /// declared in.
-  bool isDeclScope(Action::DeclPtrTy D) {
+  bool isDeclScope(Decl *D) {
     return DeclsInScope.count(D) != 0;
   }
 
@@ -266,7 +268,7 @@ public:
   typedef UsingDirectivesTy::iterator udir_iterator;
   typedef UsingDirectivesTy::const_iterator const_udir_iterator;
 
-  void PushUsingDirective(Action::DeclPtrTy UDir) {
+  void PushUsingDirective(UsingDirectiveDecl *UDir) {
     UsingDirectives.push_back(UDir);
   }
 

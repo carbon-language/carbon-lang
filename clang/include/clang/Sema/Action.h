@@ -42,15 +42,6 @@ namespace clang {
   class Preprocessor;
   class Token;
 
-  // We can re-use the low bit of expression, statement, base, and
-  // member-initializer pointers for the "invalid" flag of
-  // ActionResult.
-  template<> struct IsResultPtrLowBitFree<0> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<1> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<3> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<4> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<5> { static const bool value = true;};
-
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
 /// into something useful: e.g. a parse tree.
@@ -89,12 +80,12 @@ public:
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
   /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and
   /// allowing for failure.
-  typedef ActionResult<0> ExprResult;
-  typedef ActionResult<1> StmtResult;
-  typedef ActionResult<2> TypeResult;
-  typedef ActionResult<3> BaseResult;
-  typedef ActionResult<4> MemInitResult;
-  typedef ActionResult<5, DeclPtrTy> DeclResult;
+  typedef clang::ExprResult ExprResult;
+  typedef clang::StmtResult StmtResult;
+  typedef clang::TypeResult TypeResult;
+  typedef clang::BaseResult BaseResult;
+  typedef clang::MemInitResult MemInitResult;
+  typedef clang::DeclResult DeclResult;
 
   /// Same, but with ownership.
   typedef ASTOwningResult<&ActionBase::DeleteExpr> OwningExprResult;
@@ -166,7 +157,7 @@ public:
 
   /// getDeclName - Return a pretty name for the specified decl if possible, or
   /// an empty string if not.  This is used for pretty crash reporting.
-  virtual std::string getDeclName(DeclPtrTy D) { return ""; }
+  virtual std::string getDeclName(Decl *D) { return ""; }
 
   //===--------------------------------------------------------------------===//
   // Declaration Tracking Callbacks.
@@ -186,13 +177,13 @@ public:
   /// processing a declaration of some sort.  The decl will be empty
   /// if the declaration didn't correspond to a full declaration (or
   /// if the actions module returned an empty decl for it).
-  virtual void PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy D) {
+  virtual void PopParsingDeclaration(ParsingDeclStackState S, Decl *D) {
   }
 
   /// ConvertDeclToDeclGroup - If the parser has one decl in a context where it
   /// needs a decl group, it calls this to convert between the two
   /// representations.
-  virtual DeclGroupPtrTy ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
+  virtual DeclGroupPtrTy ConvertDeclToDeclGroup(Decl *Ptr) {
     return DeclGroupPtrTy();
   }
 
@@ -470,34 +461,34 @@ public:
   /// After this method is called, according to [C++ 3.4.1p13], if 'Dcl' is a
   /// static data member of class X, names should be looked up in the scope of
   /// class X.
-  virtual void ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
+  virtual void ActOnCXXEnterDeclInitializer(Scope *S, Decl *Dcl) {
   }
 
   /// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
   /// initializer for the declaration 'Dcl'.
-  virtual void ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
+  virtual void ActOnCXXExitDeclInitializer(Scope *S, Decl *Dcl) {
   }
 
   /// ActOnDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".
   ///
-  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
-    return DeclPtrTy();
+  virtual Decl *ActOnDeclarator(Scope *S, Declarator &D) {
+    return 0;
   }
 
   /// ActOnParamDeclarator - This callback is invoked when a parameter
   /// declarator is parsed. This callback only occurs for functions
   /// with prototypes. S is the function prototype scope for the
   /// parameters (C++ [basic.scope.proto]).
-  virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D) {
-    return DeclPtrTy();
+  virtual Decl *ActOnParamDeclarator(Scope *S, Declarator &D) {
+    return 0;
   }
 
   /// \brief Parsed an exception object declaration within an Objective-C
   /// @catch statement.
-  virtual DeclPtrTy ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
-    return DeclPtrTy();
+  virtual Decl *ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
+    return 0;
   }
 
   /// AddInitializerToDecl - This action is called immediately after
@@ -507,7 +498,7 @@ public:
   /// This allows ActOnDeclarator to register "xx" prior to parsing the
   /// initializer. The declaration above should still result in a warning,
   /// since the reference to "xx" is uninitialized.
-  virtual void AddInitializerToDecl(DeclPtrTy Dcl, ExprArg Init) {
+  virtual void AddInitializerToDecl(Decl *Dcl, ExprArg Init) {
     return;
   }
 
@@ -515,7 +506,7 @@ public:
   /// if =delete is parsed. C++0x [dcl.fct.def]p10
   /// Note that this can be called even for variable declarations. It's the
   /// action's job to reject it.
-  virtual void SetDeclDeleted(DeclPtrTy Dcl, SourceLocation DelLoc) {
+  virtual void SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     return;
   }
 
@@ -523,21 +514,21 @@ public:
   /// ActOnDeclarator (when an initializer is *not* present).
   /// If TypeContainsUndeducedAuto is true, then the type of the declarator
   /// has an undeduced 'auto' type somewhere.
-  virtual void ActOnUninitializedDecl(DeclPtrTy Dcl,
+  virtual void ActOnUninitializedDecl(Decl *Dcl,
                                       bool TypeContainsUndeducedAuto) {
     return;
   }
 
   /// \brief Note that the given declaration had an initializer that could not
   /// be parsed.
-  virtual void ActOnInitializerError(DeclPtrTy Dcl) {
+  virtual void ActOnInitializerError(Decl *Dcl) {
     return;
   }
   
   /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
   /// gives the actions implementation a chance to process the group as a whole.
   virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec& DS,
-                                                 DeclPtrTy *Group,
+                                                 Decl **Group,
                                                  unsigned NumDecls) {
     return DeclGroupPtrTy();
   }
@@ -554,31 +545,26 @@ public:
   /// ActOnStartOfFunctionDef - This is called at the start of a function
   /// definition, instead of calling ActOnDeclarator.  The Declarator includes
   /// information about formal arguments that are part of this function.
-  virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
-    // Default to ActOnDeclarator.
-    return ActOnStartOfFunctionDef(FnBodyScope,
-                                   ActOnDeclarator(FnBodyScope, D));
-  }
+  virtual Decl *ActOnStartOfFunctionDef(Scope *FnBodyScope,
+                                             Declarator &D) = 0;
 
   /// ActOnStartOfFunctionDef - This is called at the start of a function
   /// definition, after the FunctionDecl has already been created.
-  virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
-    return D;
-  }
+  virtual Decl *ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) = 0;
 
-  virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
+  virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     return;
   }
 
   /// ActOnFinishFunctionBody - This is called when a function body has
   /// completed parsing.  Decl is returned by ParseStartOfFunctionDef.
-  virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body) {
+  virtual Decl *ActOnFinishFunctionBody(Decl *Decl, StmtArg Body) {
     return Decl;
   }
 
-  virtual DeclPtrTy ActOnFileScopeAsmDecl(SourceLocation Loc,
+  virtual Decl *ActOnFileScopeAsmDecl(SourceLocation Loc,
                                           ExprArg AsmString) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnPopScope - This callback is called immediately before the specified
@@ -591,10 +577,10 @@ public:
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
-  virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S,
-                                               AccessSpecifier Access,
-                                               DeclSpec &DS) {
-    return DeclPtrTy();
+  virtual Decl *ParsedFreeStandingDeclSpec(Scope *S,
+                                                AccessSpecifier Access,
+                                                DeclSpec &DS) {
+    return 0;
   }
 
   /// ActOnStartLinkageSpecification - Parsed the beginning of a C++
@@ -604,20 +590,20 @@ public:
   /// by Lang/StrSize. LBraceLoc, if valid, provides the location of
   /// the '{' brace. Otherwise, this linkage specification does not
   /// have any braces.
-  virtual DeclPtrTy ActOnStartLinkageSpecification(Scope *S,
-                                                   SourceLocation ExternLoc,
-                                                   SourceLocation LangLoc,
-                                                   llvm::StringRef Lang,
-                                                   SourceLocation LBraceLoc) {
-    return DeclPtrTy();
+  virtual Decl *ActOnStartLinkageSpecification(Scope *S,
+                                                    SourceLocation ExternLoc,
+                                                    SourceLocation LangLoc,
+                                                    llvm::StringRef Lang,
+                                                    SourceLocation LBraceLoc) {
+    return 0;
   }
 
   /// ActOnFinishLinkageSpecification - Completely the definition of
   /// the C++ linkage specification LinkageSpec. If RBraceLoc is
   /// valid, it's the position of the closing '}' brace in a linkage
   /// specification that uses braces.
-  virtual DeclPtrTy ActOnFinishLinkageSpecification(Scope *S,
-                                                    DeclPtrTy LinkageSpec,
+  virtual Decl *ActOnFinishLinkageSpecification(Scope *S,
+                                                    Decl *LinkageSpec,
                                                     SourceLocation RBraceLoc) {
     return LinkageSpec;
   }
@@ -684,13 +670,13 @@ public:
   /// by the action module.
   ///
   /// \returns the declaration to which this tag refers.
-  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
+  virtual Decl *ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                              SourceLocation KWLoc, CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
                              MultiTemplateParamsArg TemplateParameterLists,
                              bool &OwnedDecl, bool &IsDependent) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// Acts on a reference to a dependent tag name.  This arises in
@@ -719,60 +705,60 @@ public:
 
   /// Act on @defs() element found when parsing a structure.  ClassName is the
   /// name of the referenced class.
-  virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
+  virtual void ActOnDefs(Scope *S, Decl *TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
-                         llvm::SmallVectorImpl<DeclPtrTy> &Decls) {}
-  virtual DeclPtrTy ActOnField(Scope *S, DeclPtrTy TagD,
+                         llvm::SmallVectorImpl<Decl *> &Decls) {}
+  virtual Decl *ActOnField(Scope *S, Decl *TagD,
                                SourceLocation DeclStart,
                                Declarator &D, ExprTy *BitfieldWidth) {
-    return DeclPtrTy();
+    return 0;
   }
 
-  virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
-                              DeclPtrTy IntfDecl,
+  virtual Decl *ActOnIvar(Scope *S, SourceLocation DeclStart,
+                              Decl *IntfDecl,
                               Declarator &D, ExprTy *BitfieldWidth,
                               tok::ObjCKeywordKind visibility) {
-    return DeclPtrTy();
+    return 0;
   }
 
-  virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclPtrTy TagDecl,
-                           DeclPtrTy *Fields, unsigned NumFields,
+  virtual void ActOnFields(Scope* S, SourceLocation RecLoc, Decl *TagDecl,
+                           Decl **Fields, unsigned NumFields,
                            SourceLocation LBrac, SourceLocation RBrac,
                            AttributeList *AttrList) {}
 
   /// ActOnTagStartDefinition - Invoked when we have entered the
   /// scope of a tag's definition (e.g., for an enumeration, class,
   /// struct, or union).
-  virtual void ActOnTagStartDefinition(Scope *S, DeclPtrTy TagDecl) { }
+  virtual void ActOnTagStartDefinition(Scope *S, Decl *TagDecl) { }
 
   /// ActOnStartCXXMemberDeclarations - Invoked when we have parsed a
   /// C++ record definition's base-specifiers clause and are starting its
   /// member declarations.
-  virtual void ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagDecl,
+  virtual void ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagDecl,
                                                SourceLocation LBraceLoc) { }
 
   /// ActOnTagFinishDefinition - Invoked once we have finished parsing
   /// the definition of a tag (enumeration, class, struct, or union).
   ///
   /// The scope is the scope of the tag definition.
-  virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl,
+  virtual void ActOnTagFinishDefinition(Scope *S, Decl *TagDecl,
                                         SourceLocation RBraceLoc) { }
 
   /// ActOnTagDefinitionError - Invoked if there's an unrecoverable
   /// error parsing the definition of a tag.
   ///
   /// The scope is the scope of the tag definition.
-  virtual void ActOnTagDefinitionError(Scope *S, DeclPtrTy TagDecl) { }
+  virtual void ActOnTagDefinitionError(Scope *S, Decl *TagDecl) { }
 
-  virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
-                                      DeclPtrTy LastEnumConstant,
+  virtual Decl *ActOnEnumConstant(Scope *S, Decl *EnumDecl,
+                                      Decl *LastEnumConstant,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
                                       SourceLocation EqualLoc, ExprTy *Val) {
-    return DeclPtrTy();
+    return 0;
   }
   virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
-                             SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
-                             DeclPtrTy *Elements, unsigned NumElements,
+                             SourceLocation RBraceLoc, Decl *EnumDecl,
+                             Decl **Elements, unsigned NumElements,
                              Scope *S, AttributeList *AttrList) {}
 
   //===--------------------------------------------------------------------===//
@@ -844,7 +830,7 @@ public:
   /// \param ElseVal the "else" statement.
   virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc,
                                        FullExprArg CondVal, 
-                                       DeclPtrTy CondVar,
+                                       Decl *CondVar,
                                        StmtArg ThenVal,
                                        SourceLocation ElseLoc,
                                        StmtArg ElseVal) {
@@ -862,7 +848,7 @@ public:
   /// variable, the condition variable itself.
   virtual OwningStmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
                                                   ExprArg Cond,
-                                                  DeclPtrTy CondVar) {
+                                                  Decl *CondVar) {
     return StmtEmpty();
   }
 
@@ -881,7 +867,7 @@ public:
   ///
   /// \param Body the body of the "while" loop.
   virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
-                                          FullExprArg Cond, DeclPtrTy CondVar,
+                                          FullExprArg Cond, Decl *CondVar,
                                           StmtArg Body) {
     return StmtEmpty();
   }
@@ -916,7 +902,7 @@ public:
   virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
                                         SourceLocation LParenLoc,
                                         StmtArg First, FullExprArg Second,
-                                        DeclPtrTy SecondVar, FullExprArg Third, 
+                                        Decl *SecondVar, FullExprArg Third, 
                                         SourceLocation RParenLoc,
                                         StmtArg Body) {
     return StmtEmpty();
@@ -980,7 +966,7 @@ public:
   /// \param Body The body of the @catch block.
   virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
-                                                DeclPtrTy Parm, StmtArg Body) {
+                                                Decl *Parm, StmtArg Body) {
     return StmtEmpty();
   }
 
@@ -1023,12 +1009,12 @@ public:
   }
 
   // C++ Statements
-  virtual DeclPtrTy ActOnExceptionDeclarator(Scope *S, Declarator &D) {
-    return DeclPtrTy();
+  virtual Decl *ActOnExceptionDeclarator(Scope *S, Declarator &D) {
+    return 0;
   }
 
   virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
-                                              DeclPtrTy ExceptionDecl,
+                                              Decl *ExceptionDecl,
                                               StmtArg HandlerBlock) {
     return StmtEmpty();
   }
@@ -1183,7 +1169,7 @@ public:
                                                  tok::TokenKind OpKind,
                                                  CXXScopeSpec &SS,
                                                  UnqualifiedId &Member,
-                                                 DeclPtrTy ObjCImpDecl,
+                                                 Decl *ObjCImpDecl,
                                                  bool HasTrailingLParen) {
     return ExprEmpty();
   }
@@ -1352,21 +1338,21 @@ public:
 
   /// ActOnStartNamespaceDef - This is called at the start of a namespace
   /// definition.
-  virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
+  virtual Decl *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
                                            IdentifierInfo *Ident,
                                            SourceLocation LBrace,
                                            AttributeList *AttrList) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnFinishNamespaceDef - This callback is called after a namespace is
   /// exited. Decl is returned by ActOnStartNamespaceDef.
-  virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace) {
+  virtual void ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace) {
     return;
   }
 
   /// ActOnUsingDirective - This is called when using-directive is parsed.
-  virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
+  virtual Decl *ActOnUsingDirective(Scope *CurScope,
                                         SourceLocation UsingLoc,
                                         SourceLocation NamespcLoc,
                                         CXXScopeSpec &SS,
@@ -1376,14 +1362,14 @@ public:
 
   /// ActOnNamespaceAliasDef - This is called when a namespace alias definition
   /// is parsed.
-  virtual DeclPtrTy ActOnNamespaceAliasDef(Scope *CurScope,
+  virtual Decl *ActOnNamespaceAliasDef(Scope *CurScope,
                                            SourceLocation NamespaceLoc,
                                            SourceLocation AliasLoc,
                                            IdentifierInfo *Alias,
                                            CXXScopeSpec &SS,
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// \brief Parsed a C++ using-declaration.
@@ -1422,7 +1408,7 @@ public:
   /// \param TypenameLoc the location of the 'typename' keyword, if present
   ///
   /// \returns a representation of the using declaration.
-  virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
+  virtual Decl *ActOnUsingDeclaration(Scope *CurScope,
                                           AccessSpecifier AS,
                                           bool HasUsingKeyword,
                                           SourceLocation UsingLoc,
@@ -1433,7 +1419,7 @@ public:
                                           SourceLocation TypenameLoc);
 
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
-  virtual void ActOnParamDefaultArgument(DeclPtrTy param,
+  virtual void ActOnParamDefaultArgument(Decl *param,
                                          SourceLocation EqualLoc,
                                          ExprArg defarg) {
   }
@@ -1442,18 +1428,18 @@ public:
   /// argument for a function parameter, but we can't parse it yet
   /// because we're inside a class definition. Note that this default
   /// argument will be parsed later.
-  virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param,
+  virtual void ActOnParamUnparsedDefaultArgument(Decl *param,
                                                  SourceLocation EqualLoc,
                                                  SourceLocation ArgLoc) { }
 
   /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
   /// the default argument for the parameter param failed.
-  virtual void ActOnParamDefaultArgumentError(DeclPtrTy param) { }
+  virtual void ActOnParamDefaultArgumentError(Decl *param) { }
 
   /// AddCXXDirectInitializerToDecl - This action is called immediately after
   /// ActOnDeclarator, when a C++ direct initializer is present.
   /// e.g: "int x(1);"
-  virtual void AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
+  virtual void AddCXXDirectInitializerToDecl(Decl *Dcl,
                                              SourceLocation LParenLoc,
                                              MultiExprArg Exprs,
                                              SourceLocation *CommaLocs,
@@ -1476,7 +1462,7 @@ public:
   ///
   /// \param Template the class template declaration whose template
   /// parameters should be reintroduced into the current scope.
-  virtual void ActOnReenterTemplateScope(Scope *S, DeclPtrTy Template) {
+  virtual void ActOnReenterTemplateScope(Scope *S, Decl *Template) {
   }
 
   /// ActOnStartDelayedMemberDeclarations - We have completed parsing
@@ -1484,7 +1470,7 @@ public:
   /// member declarations that could not be parsed earlier.  Enter
   /// the appropriate record scope.
   virtual void ActOnStartDelayedMemberDeclarations(Scope *S,
-                                                   DeclPtrTy Record) {
+                                                   Decl *Record) {
   }
 
   /// ActOnStartDelayedCXXMethodDeclaration - We have completed
@@ -1496,7 +1482,7 @@ public:
   /// name. However, it should not bring the parameters into scope;
   /// that will be performed by ActOnDelayedCXXMethodParameter.
   virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
-                                                     DeclPtrTy Method) {
+                                                     Decl *Method) {
   }
 
   /// ActOnDelayedCXXMethodParameter - We've already started a delayed
@@ -1504,7 +1490,7 @@ public:
   /// function parameter into scope for use in parsing later parts of
   /// the method declaration. For example, we could see an
   /// ActOnParamDefaultArgument event for this parameter.
-  virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy Param) {
+  virtual void ActOnDelayedCXXMethodParameter(Scope *S, Decl *Param) {
   }
 
   /// ActOnFinishDelayedCXXMethodDeclaration - We have finished
@@ -1514,7 +1500,7 @@ public:
   /// immediately!) for this method, if it was also defined inside the
   /// class body.
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S,
-                                                      DeclPtrTy Method) {
+                                                      Decl *Method) {
   }
 
   /// ActOnFinishDelayedMemberDeclarations - We have finished parsing
@@ -1522,30 +1508,30 @@ public:
   /// member declarations that could not be parsed earlier.  Enter the
   /// appropriate record scope.
   virtual void ActOnFinishDelayedMemberDeclarations(Scope *S,
-                                                    DeclPtrTy Record) {
+                                                    Decl *Record) {
   }
 
   /// ActOnStaticAssertDeclaration - Parse a C++0x static_assert declaration.
-  virtual DeclPtrTy ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
+  virtual Decl *ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnFriendFunctionDecl - Parsed a friend function declarator.
   /// The name is actually a slight misnomer, because the declarator
   /// is not necessarily a function declarator.
-  virtual DeclPtrTy ActOnFriendFunctionDecl(Scope *S,
+  virtual Decl *ActOnFriendFunctionDecl(Scope *S,
                                             Declarator &D,
                                             bool IsDefinition,
                                             MultiTemplateParamsArg TParams) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnFriendTypeDecl - Parsed a friend type declaration.
-  virtual DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
+  virtual Decl *ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
                                         MultiTemplateParamsArg TParams) {
-    return DeclPtrTy();
+    return 0;
   }
 
   //===------------------------- C++ Expressions --------------------------===//
@@ -1630,9 +1616,7 @@ public:
   /// \param S the scope of the if, switch, or while statement.
   ///
   /// \param D the declarator that that describes the variable being declared.
-  virtual DeclResult ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
-    return DeclResult();
-  }
+  virtual DeclResult ActOnCXXConditionDeclaration(Scope *S, Declarator &D) = 0;
 
   /// \brief Parsed an expression that will be handled as the condition in
   /// an if/while/for statement. 
@@ -1793,7 +1777,7 @@ public:
 
   //===---------------------------- C++ Classes ---------------------------===//
   /// ActOnBaseSpecifier - Parsed a base specifier
-  virtual BaseResult ActOnBaseSpecifier(DeclPtrTy classdecl,
+  virtual BaseResult ActOnBaseSpecifier(Decl *classdecl,
                                         SourceRange SpecifierRange,
                                         bool Virtual, AccessSpecifier Access,
                                         TypeTy *basetype,
@@ -1801,17 +1785,17 @@ public:
     return BaseResult();
   }
 
-  virtual void ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
+  virtual void ActOnBaseSpecifiers(Decl *ClassDecl, BaseTy **Bases,
                                    unsigned NumBases) {
   }
 
   /// ActOnAccessSpecifier - This is invoked when an access specifier
   /// (and the colon following it) is found during the parsing of a
   /// C++ class member declarator.
-  virtual DeclPtrTy ActOnAccessSpecifier(AccessSpecifier AS,
+  virtual Decl *ActOnAccessSpecifier(AccessSpecifier AS,
                                          SourceLocation ASLoc,
                                          SourceLocation ColonLoc) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
@@ -1819,17 +1803,17 @@ public:
   /// specifies the bitfield width if there is one and 'Init' specifies the
   /// initializer if any.  'Deleted' is true if there's a =delete
   /// specifier on the function.
-  virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
+  virtual Decl *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,
                                              ExprTy *BitfieldWidth,
                                              ExprTy *Init,
                                              bool IsDefinition,
                                              bool Deleted = false) {
-    return DeclPtrTy();
+    return 0;
   }
 
-  virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorDecl,
+  virtual MemInitResult ActOnMemInitializer(Decl *ConstructorDecl,
                                             Scope *S,
                                             CXXScopeSpec &SS,
                                             IdentifierInfo *MemberOrBase,
@@ -1850,18 +1834,18 @@ public:
   /// contains the individual member (and base) initializers.
   /// AnyErrors will be true if there were any invalid member initializers
   /// that are not represented in the list.
-  virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl,
+  virtual void ActOnMemInitializers(Decl *ConstructorDecl,
                                     SourceLocation ColonLoc,
                                     MemInitTy **MemInits, unsigned NumMemInits,
                                     bool AnyErrors){
   }
 
- virtual void ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {}
+ virtual void ActOnDefaultCtorInitializers(Decl *CDtorDecl) {}
 
   /// ActOnFinishCXXMemberSpecification - Invoked after all member declarators
   /// are parsed but *before* parsing of inline method definitions.
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
-                                                 DeclPtrTy TagDecl,
+                                                 Decl *TagDecl,
                                                  SourceLocation LBrac,
                                                  SourceLocation RBrac,
                                                  AttributeList *AttrList) {
@@ -1908,7 +1892,7 @@ public:
   /// argument, if any.
   ///
   /// \param DefaultArg The default argument, if provided.
-  virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
+  virtual Decl *ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
                                        SourceLocation EllipsisLoc,
                                        SourceLocation KeyLoc,
                                        IdentifierInfo *ParamName,
@@ -1916,7 +1900,7 @@ public:
                                        unsigned Depth, unsigned Position,
                                        SourceLocation EqualLoc,
                                        TypeTy *DefaultArg) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// \brief Called when a C++ non-type template parameter has been parsed.
@@ -1945,17 +1929,17 @@ public:
   /// argument, if any.
   ///
   /// \param DefaultArg The default argument, if provided.
-  virtual DeclPtrTy ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
+  virtual Decl *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                   unsigned Depth,
                                                   unsigned Position,
                                                   SourceLocation EqualLoc,
                                                   ExprArg DefaultArg) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// \brief Adds a default argument to the given non-type template
   /// parameter.
-  virtual void ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParam,
+  virtual void ActOnNonTypeTemplateParameterDefault(Decl *TemplateParam,
                                                     SourceLocation EqualLoc,
                                                     ExprArg Default) {
   }
@@ -1992,7 +1976,7 @@ public:
   /// argument, if any.
   ///
   /// \param DefaultArg The default argument, if provided.
-  virtual DeclPtrTy ActOnTemplateTemplateParameter(Scope *S,
+  virtual Decl *ActOnTemplateTemplateParameter(Scope *S,
                                                    SourceLocation TmpLoc,
                                                    TemplateParamsTy *Params,
                                                    IdentifierInfo *ParamName,
@@ -2001,7 +1985,7 @@ public:
                                                    unsigned Position,
                                                    SourceLocation EqualLoc,
                                     const ParsedTemplateArgument &DefaultArg) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnTemplateParameterList - Called when a complete template
@@ -2038,7 +2022,7 @@ public:
                              SourceLocation ExportLoc,
                              SourceLocation TemplateLoc,
                              SourceLocation LAngleLoc,
-                             DeclPtrTy *Params, unsigned NumParams,
+                             Decl **Params, unsigned NumParams,
                              SourceLocation RAngleLoc) {
     return 0;
   }
@@ -2177,9 +2161,7 @@ public:
                                    ASTTemplateArgsPtr TemplateArgs,
                                    SourceLocation RAngleLoc,
                                    AttributeList *Attr,
-                              MultiTemplateParamsArg TemplateParameterLists) {
-    return DeclResult();
-  }
+                          MultiTemplateParamsArg TemplateParameterLists) = 0;
 
   /// \brief Invoked when a declarator that has one or more template parameter
   /// lists has been parsed.
@@ -2187,18 +2169,18 @@ public:
   /// This action is similar to ActOnDeclarator(), except that the declaration
   /// being created somehow involves a template, e.g., it is a template
   /// declaration or specialization.
-  virtual DeclPtrTy ActOnTemplateDeclarator(Scope *S,
+  virtual Decl *ActOnTemplateDeclarator(Scope *S,
                               MultiTemplateParamsArg TemplateParameterLists,
                                             Declarator &D) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// \brief Invoked when the parser is beginning to parse a function template
   /// or function template specialization definition.
-  virtual DeclPtrTy ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
+  virtual Decl *ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
                                 MultiTemplateParamsArg TemplateParameterLists,
                                                     Declarator &D) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// \brief Process the explicit instantiation of a class template
@@ -2391,85 +2373,85 @@ public:
   // ActOnStartClassInterface - this action is called immediately after parsing
   // the prologue for a class interface (before parsing the instance
   // variables). Instance variables are processed by ActOnFields().
-  virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+  virtual Decl *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                              IdentifierInfo *ClassName,
                                              SourceLocation ClassLoc,
                                              IdentifierInfo *SuperName,
                                              SourceLocation SuperLoc,
-                                             const DeclPtrTy *ProtoRefs,
+                                             Decl * const *ProtoRefs,
                                              unsigned NumProtoRefs,
                                              const SourceLocation *ProtoLocs,
                                              SourceLocation EndProtoLoc,
                                              AttributeList *AttrList) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// ActOnCompatiblityAlias - this action is called after complete parsing of
   /// @compaatibility_alias declaration. It sets up the alias relationships.
-  virtual DeclPtrTy ActOnCompatiblityAlias(
+  virtual Decl *ActOnCompatiblityAlias(
     SourceLocation AtCompatibilityAliasLoc,
     IdentifierInfo *AliasName,  SourceLocation AliasLocation,
     IdentifierInfo *ClassName, SourceLocation ClassLocation) {
-    return DeclPtrTy();
+    return 0;
   }
 
   // ActOnStartProtocolInterface - this action is called immdiately after
   // parsing the prologue for a protocol interface.
-  virtual DeclPtrTy ActOnStartProtocolInterface(SourceLocation AtProtoLoc,
+  virtual Decl *ActOnStartProtocolInterface(SourceLocation AtProtoLoc,
                                                 IdentifierInfo *ProtocolName,
                                                 SourceLocation ProtocolLoc,
-                                                const DeclPtrTy *ProtoRefs,
+                                                Decl * const *ProtoRefs,
                                                 unsigned NumProtoRefs,
                                                 const SourceLocation *ProtoLocs,
                                                 SourceLocation EndProtoLoc,
                                                 AttributeList *AttrList) {
-    return DeclPtrTy();
+    return 0;
   }
   // ActOnStartCategoryInterface - this action is called immdiately after
   // parsing the prologue for a category interface.
-  virtual DeclPtrTy ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
+  virtual Decl *ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                                                 IdentifierInfo *ClassName,
                                                 SourceLocation ClassLoc,
                                                 IdentifierInfo *CategoryName,
                                                 SourceLocation CategoryLoc,
-                                                const DeclPtrTy *ProtoRefs,
+                                                Decl * const *ProtoRefs,
                                                 unsigned NumProtoRefs,
                                                 const SourceLocation *ProtoLocs,
                                                 SourceLocation EndProtoLoc) {
-    return DeclPtrTy();
+    return 0;
   }
   // ActOnStartClassImplementation - this action is called immdiately after
   // parsing the prologue for a class implementation. Instance variables are
   // processed by ActOnFields().
-  virtual DeclPtrTy ActOnStartClassImplementation(
+  virtual Decl *ActOnStartClassImplementation(
     SourceLocation AtClassImplLoc,
     IdentifierInfo *ClassName,
     SourceLocation ClassLoc,
     IdentifierInfo *SuperClassname,
     SourceLocation SuperClassLoc) {
-    return DeclPtrTy();
+    return 0;
   }
   // ActOnStartCategoryImplementation - this action is called immdiately after
   // parsing the prologue for a category implementation.
-  virtual DeclPtrTy ActOnStartCategoryImplementation(
+  virtual Decl *ActOnStartCategoryImplementation(
     SourceLocation AtCatImplLoc,
     IdentifierInfo *ClassName,
     SourceLocation ClassLoc,
     IdentifierInfo *CatName,
     SourceLocation CatLoc) {
-    return DeclPtrTy();
+    return 0;
   }
   // ActOnPropertyImplDecl - called for every property implementation
-  virtual DeclPtrTy ActOnPropertyImplDecl(
+  virtual Decl *ActOnPropertyImplDecl(
    Scope *S,
    SourceLocation AtLoc,              // location of the @synthesize/@dynamic
    SourceLocation PropertyNameLoc,    // location for the property name
    bool ImplKind,                     // true for @synthesize, false for
                                       // @dynamic
-   DeclPtrTy ClassImplDecl,           // class or category implementation
+   Decl *ClassImplDecl,           // class or category implementation
    IdentifierInfo *propertyId,        // name of property
    IdentifierInfo *propertyIvar) {    // name of the ivar
-    return DeclPtrTy();
+    return 0;
   }
 
   struct ObjCArgInfo {
@@ -2485,11 +2467,11 @@ public:
   };
 
   // ActOnMethodDeclaration - called for all method declarations.
-  virtual DeclPtrTy ActOnMethodDeclaration(
+  virtual Decl *ActOnMethodDeclaration(
     SourceLocation BeginLoc,   // location of the + or -.
     SourceLocation EndLoc,     // location of the ; or {.
     tok::TokenKind MethodType, // tok::minus for instance, tok::plus for class.
-    DeclPtrTy ClassDecl,       // class this methods belongs to.
+    Decl *ClassDecl,       // class this methods belongs to.
     ObjCDeclSpec &ReturnQT,    // for return type's in inout etc.
     TypeTy *ReturnType,        // the method return type.
     Selector Sel,              // a unique name for the method.
@@ -2499,29 +2481,29 @@ public:
     // tok::objc_not_keyword, tok::objc_optional, tok::objc_required
     tok::ObjCKeywordKind impKind,
     bool isVariadic = false) {
-    return DeclPtrTy();
+    return 0;
   }
   // ActOnAtEnd - called to mark the @end. For declarations (interfaces,
   // protocols, categories), the parser passes all methods/properties.
   // For class implementations, these values default to 0. For implementations,
   // methods are processed incrementally (by ActOnMethodDeclaration above).
   virtual void ActOnAtEnd(Scope *S, SourceRange AtEnd,
-                          DeclPtrTy classDecl,
-                          DeclPtrTy *allMethods = 0,
+                          Decl *classDecl,
+                          Decl **allMethods = 0,
                           unsigned allNum = 0,
-                          DeclPtrTy *allProperties = 0,
+                          Decl **allProperties = 0,
                           unsigned pNum = 0,
                           DeclGroupPtrTy *allTUVars = 0,
                           unsigned tuvNum = 0) {
   }
   // ActOnProperty - called to build one property AST
-  virtual DeclPtrTy ActOnProperty(Scope *S, SourceLocation AtLoc,
+  virtual Decl *ActOnProperty(Scope *S, SourceLocation AtLoc,
                                   FieldDeclarator &FD, ObjCDeclSpec &ODS,
                                   Selector GetterSel, Selector SetterSel,
-                                  DeclPtrTy ClassCategory,
+                                  Decl *ClassCategory,
                                   bool *OverridingProperty,
                                   tok::ObjCKeywordKind MethodImplKind) {
-    return DeclPtrTy();
+    return 0;
   }
 
   virtual OwningExprResult
@@ -2636,19 +2618,19 @@ public:
     return OwningExprResult(*this);
   }
 
-  virtual DeclPtrTy ActOnForwardClassDeclaration(
+  virtual Decl *ActOnForwardClassDeclaration(
     SourceLocation AtClassLoc,
     IdentifierInfo **IdentList,
     SourceLocation *IdentLocs,
     unsigned NumElts) {
-    return DeclPtrTy();
+    return 0;
   }
-  virtual DeclPtrTy ActOnForwardProtocolDeclaration(
+  virtual Decl *ActOnForwardProtocolDeclaration(
     SourceLocation AtProtocolLoc,
     const IdentifierLocPair*IdentList,
     unsigned NumElts,
     AttributeList *AttrList) {
-    return DeclPtrTy();
+    return 0;
   }
 
   /// FindProtocolDeclaration - This routine looks up protocols and
@@ -2657,7 +2639,7 @@ public:
   virtual void FindProtocolDeclaration(bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
-                                 llvm::SmallVectorImpl<DeclPtrTy> &ResProtos) {
+                                 llvm::SmallVectorImpl<Decl *> &ResProtos) {
   }
 
   //===----------------------- Obj-C Expressions --------------------------===//
@@ -2873,7 +2855,7 @@ public:
   /// \param S The scope in which the initializer occurs.
   ///
   /// \param D The declaration being initialized.
-  virtual void CodeCompleteInitializer(Scope *S, DeclPtrTy D) { }
+  virtual void CodeCompleteInitializer(Scope *S, Decl *D) { }
   
   /// \brief Code completion after the "return" keyword within a function.
   ///
@@ -2953,7 +2935,7 @@ public:
   ///
   /// \param InInterface whether we are in an Objective-C interface or
   /// protocol.
-  virtual void CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
+  virtual void CodeCompleteObjCAtDirective(Scope *S, Decl *ObjCImpDecl,
                                            bool InInterface) { }
 
   /// \brief Code completion after the '@' in the list of instance variables.
@@ -2987,8 +2969,8 @@ public:
   /// \param Methods the set of methods declared thus far within \p ClassDecl.
   ///
   /// \param NumMethods the number of methods in \p Methods
-  virtual void CodeCompleteObjCPropertyGetter(Scope *S, DeclPtrTy ClassDecl,
-                                              DeclPtrTy *Methods,
+  virtual void CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl,
+                                              Decl **Methods,
                                               unsigned NumMethods) {
   }
 
@@ -3006,8 +2988,8 @@ public:
   /// \param Methods the set of methods declared thus far within \p ClassDecl.
   ///
   /// \param NumMethods the number of methods in \p Methods
-  virtual void CodeCompleteObjCPropertySetter(Scope *S, DeclPtrTy ClassDecl,
-                                              DeclPtrTy *Methods,
+  virtual void CodeCompleteObjCPropertySetter(Scope *S, Decl *ClassDecl,
+                                              Decl **Methods,
                                               unsigned NumMethods) {
   }
 
@@ -3125,7 +3107,7 @@ public:
   /// This code completion action is invoked after @synthesize or @dynamic and
   /// after each "," within one of those definitions.
   virtual void CodeCompleteObjCPropertyDefinition(Scope *S, 
-                                                  DeclPtrTy ObjCImpDecl) {
+                                                  Decl *ObjCImpDecl) {
   }
 
   /// \brief Code completion for the instance variable name that should 
@@ -3135,7 +3117,7 @@ public:
   /// an @synthesized definition.
   virtual void CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
                                                    IdentifierInfo *PropertyName,
-                                                  DeclPtrTy ObjCImpDecl) {
+                                                  Decl *ObjCImpDecl) {
   }
 
   /// \brief Code completion for an Objective-C method declaration or
@@ -3161,7 +3143,7 @@ public:
   virtual void CodeCompleteObjCMethodDecl(Scope *S, 
                                           bool IsInstanceMethod,
                                           TypeTy *ReturnType,
-                                          DeclPtrTy IDecl) {
+                                          Decl *IDecl) {
   }
   
   /// \brief Code completion for a selector identifier or argument name within
@@ -3196,17 +3178,17 @@ public:
 /// something related to a virtualized decl, include that virtualized decl in
 /// the stack trace.
 class PrettyStackTraceActionsDecl : public llvm::PrettyStackTraceEntry {
-  Action::DeclPtrTy TheDecl;
+  Decl *TheDecl;
   SourceLocation Loc;
   Action &Actions;
   SourceManager &SM;
   const char *Message;
   
 public:
-  PrettyStackTraceActionsDecl(Action::DeclPtrTy Decl, SourceLocation L,
+  PrettyStackTraceActionsDecl(Decl *D, SourceLocation L,
                               Action &actions, SourceManager &sm,
                               const char *Msg)
-    : TheDecl(Decl), Loc(L), Actions(actions), SM(sm), Message(Msg) {}
+    : TheDecl(D), Loc(L), Actions(actions), SM(sm), Message(Msg) {}
 
   virtual void print(llvm::raw_ostream &OS) const;
 };

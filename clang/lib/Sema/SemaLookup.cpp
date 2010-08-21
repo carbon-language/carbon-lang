@@ -100,7 +100,7 @@ namespace {
                              End = S->using_directives_end();
           
           for (; I != End; ++I)
-            visit(I->getAs<UsingDirectiveDecl>(), InnermostFileDC);
+            visit(*I, InnermostFileDC);
         }
       }
     }
@@ -811,7 +811,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
 
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
-    for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
+    for (; I != IEnd && S->isDeclScope(*I); ++I) {
       if (R.isAcceptableDecl(*I)) {
         Found = true;
         R.addDecl(*I);
@@ -909,7 +909,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   for (; S; S = S->getParent()) {
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
-    for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
+    for (; I != IEnd && S->isDeclScope(*I); ++I) {
       if (R.isAcceptableDecl(*I)) {
         // We found something.  Look for anything else in our scope
         // with this same name and in an acceptable identifier
@@ -1045,7 +1045,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
         if (NameKind == LookupRedeclarationWithLinkage) {
           // Determine whether this (or a previous) declaration is
           // out-of-scope.
-          if (!LeftStartingScope && !S->isDeclScope(DeclPtrTy::make(*I)))
+          if (!LeftStartingScope && !S->isDeclScope(*I))
             LeftStartingScope = true;
 
           // If we found something outside of our starting scope that
@@ -1062,14 +1062,14 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 
           // Figure out what scope the identifier is in.
           while (!(S->getFlags() & Scope::DeclScope) ||
-                 !S->isDeclScope(DeclPtrTy::make(*I)))
+                 !S->isDeclScope(*I))
             S = S->getParent();
 
           // Find the last declaration in this scope (with the same
           // name, naturally).
           IdentifierResolver::iterator LastI = I;
           for (++LastI; LastI != IEnd; ++LastI) {
-            if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
+            if (!S->isDeclScope(*LastI))
               break;
             R.addDecl(*LastI);
           }
@@ -2535,7 +2535,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     // Walk through the declarations in this Scope.
     for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
          D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
         if (Result.isAcceptableDecl(ND)) {
           Consumer.FoundDecl(ND, Visited.checkHidden(ND), false);
           Visited.add(ND);

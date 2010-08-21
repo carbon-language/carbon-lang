@@ -1218,14 +1218,14 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   if (SubstBaseSpecifiers(Instantiation, Pattern, TemplateArgs))
     Invalid = true;
 
-  llvm::SmallVector<DeclPtrTy, 4> Fields;
+  llvm::SmallVector<Decl*, 4> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
          MemberEnd = Pattern->decls_end();
        Member != MemberEnd; ++Member) {
     Decl *NewMember = SubstDecl(*Member, Instantiation, TemplateArgs);
     if (NewMember) {
       if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
-        Fields.push_back(DeclPtrTy::make(Field));
+        Fields.push_back(Field);
       else if (NewMember->isInvalidDecl())
         Invalid = true;
     } else {
@@ -1236,7 +1236,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
 
   // Finish checking fields.
-  ActOnFields(0, Instantiation->getLocation(), DeclPtrTy::make(Instantiation),
+  ActOnFields(0, Instantiation->getLocation(), Instantiation,
               Fields.data(), Fields.size(), SourceLocation(), SourceLocation(),
               0);
   CheckCompletedCXXClass(Instantiation);

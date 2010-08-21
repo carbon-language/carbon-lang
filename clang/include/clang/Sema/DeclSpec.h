@@ -210,7 +210,7 @@ private:
   // List of protocol qualifiers for objective-c classes.  Used for
   // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
   // "id<foo>".
-  const ActionBase::DeclPtrTy *ProtocolQualifiers;
+  Decl * const *ProtocolQualifiers;
   unsigned NumProtocolQualifiers;
   SourceLocation ProtocolLAngleLoc;
   SourceLocation *ProtocolLocs;
@@ -447,7 +447,7 @@ public:
     return AL;
   }
 
-  typedef const ActionBase::DeclPtrTy *ProtocolQualifierListTy;
+  typedef Decl * const *ProtocolQualifierListTy;
   ProtocolQualifierListTy getProtocolQualifiers() const {
     return ProtocolQualifiers;
   }
@@ -456,7 +456,7 @@ public:
     return NumProtocolQualifiers;
   }
   SourceLocation getProtocolLAngleLoc() const { return ProtocolLAngleLoc; }
-  void setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos, unsigned NP,
+  void setProtocolQualifiers(Decl * const *Protos, unsigned NP,
                              SourceLocation *ProtoLocs,
                              SourceLocation LAngleLoc);
 
@@ -812,7 +812,7 @@ struct DeclaratorChunk {
   struct ParamInfo {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
-    ActionBase::DeclPtrTy Param;
+    Decl *Param;
 
     /// DefaultArgTokens - When the parameter's default argument
     /// cannot be parsed immediately (because it occurs within the
@@ -823,7 +823,7 @@ struct DeclaratorChunk {
 
     ParamInfo() {}
     ParamInfo(IdentifierInfo *ident, SourceLocation iloc,
-              ActionBase::DeclPtrTy param,
+              Decl *param,
               CachedTokens *DefArgTokens = 0)
       : Ident(ident), IdentLoc(iloc), Param(param),
         DefaultArgTokens(DefArgTokens) {}

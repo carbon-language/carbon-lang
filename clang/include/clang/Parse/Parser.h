@@ -147,7 +147,6 @@ public:
   // different actual classes based on the actions in place.
   typedef Action::ExprTy ExprTy;
   typedef Action::StmtTy StmtTy;
-  typedef Action::DeclPtrTy DeclPtrTy;
   typedef Action::DeclGroupPtrTy DeclGroupPtrTy;
   typedef Action::TypeTy TypeTy;
   typedef Action::BaseTy BaseTy;
@@ -539,7 +538,7 @@ private:
   // Lexing and parsing of C++ inline methods.
 
   struct LexedMethod {
-    Action::DeclPtrTy D;
+    Decl *D;
     CachedTokens Toks;
 
     /// \brief Whether this member function had an associated template
@@ -547,7 +546,7 @@ private:
     /// othewise, it is a member function declaration.
     bool TemplateScope;
 
-    explicit LexedMethod(Action::DeclPtrTy MD) : D(MD), TemplateScope(false) {}
+    explicit LexedMethod(Decl *MD) : D(MD), TemplateScope(false) {}
   };
 
   /// LateParsedDefaultArgument - Keeps track of a parameter that may
@@ -555,12 +554,12 @@ private:
   /// occurs within a member function declaration inside the class
   /// (C++ [class.mem]p2).
   struct LateParsedDefaultArgument {
-    explicit LateParsedDefaultArgument(Action::DeclPtrTy P,
+    explicit LateParsedDefaultArgument(Decl *P,
                                        CachedTokens *Toks = 0)
       : Param(P), Toks(Toks) { }
 
     /// Param - The parameter declaration for this parameter.
-    Action::DeclPtrTy Param;
+    Decl *Param;
 
     /// Toks - The sequence of tokens that comprises the default
     /// argument expression, not including the '=' or the terminating
@@ -574,11 +573,11 @@ private:
   /// until the class itself is completely-defined, such as a default
   /// argument (C++ [class.mem]p2).
   struct LateParsedMethodDeclaration {
-    explicit LateParsedMethodDeclaration(Action::DeclPtrTy M)
+    explicit LateParsedMethodDeclaration(Decl *M)
       : Method(M), TemplateScope(false) { }
 
     /// Method - The method declaration.
-    Action::DeclPtrTy Method;
+    Decl *Method;
 
     /// \brief Whether this member function had an associated template
     /// scope. When true, D is a template declaration.
@@ -609,7 +608,7 @@ private:
   /// any member function declarations or definitions that need to be
   /// parsed after the corresponding top-level class is complete.
   struct ParsingClass {
-    ParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass)
+    ParsingClass(Decl *TagOrTemplate, bool TopLevelClass)
       : TopLevelClass(TopLevelClass), TemplateScope(false),
         TagOrTemplate(TagOrTemplate) { }
 
@@ -623,7 +622,7 @@ private:
     bool TemplateScope : 1;
 
     /// \brief The class or class template whose definition we are parsing.
-    DeclPtrTy TagOrTemplate;
+    Decl *TagOrTemplate;
 
     /// MethodDecls - Method declarations that contain pieces whose
     /// parsing will be delayed until the class is fully defined.
@@ -687,10 +686,10 @@ private:
     /// Signals that the context was completed without an appropriate
     /// declaration being parsed.
     void abort() {
-      pop(DeclPtrTy());
+      pop(0);
     }
 
-    void complete(DeclPtrTy D) {
+    void complete(Decl *D) {
       assert(!Popped && "ParsingDeclaration has already been popped!");
       pop(D);
     }
@@ -707,7 +706,7 @@ private:
       Popped = false;
     }
 
-    void pop(DeclPtrTy D) {
+    void pop(Decl *D) {
       if (!Popped) {
         Actions.PopParsingDeclaration(State, D);
         Popped = true;
@@ -725,7 +724,7 @@ private:
     ParsingDeclSpec(Parser &P, ParsingDeclRAIIObject *RAII)
       : ParsingRAII(P, RAII) {}
 
-    void complete(DeclPtrTy D) {
+    void complete(Decl *D) {
       ParsingRAII.complete(D);
     }
 
@@ -756,7 +755,7 @@ private:
       ParsingRAII.reset();
     }
 
-    void complete(DeclPtrTy D) {
+    void complete(Decl *D) {
       ParsingRAII.complete(D);
     }
   };
@@ -767,7 +766,7 @@ private:
     bool Popped;
 
   public:
-    ParsingClassDefinition(Parser &P, DeclPtrTy TagOrTemplate, bool TopLevelClass)
+    ParsingClassDefinition(Parser &P, Decl *TagOrTemplate, bool TopLevelClass)
       : P(P), Popped(false) {
       P.PushParsingClass(TagOrTemplate, TopLevelClass);
     }
@@ -833,12 +832,12 @@ private:
     bool LastParameterListWasEmpty;
   };
 
-  void PushParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass);
+  void PushParsingClass(Decl *TagOrTemplate, bool TopLevelClass);
   void DeallocateParsedClasses(ParsingClass *Class);
   void PopParsingClass();
 
-  DeclPtrTy ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
-                                    const ParsedTemplateInfo &TemplateInfo);
+  Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
+                                     const ParsedTemplateInfo &TemplateInfo);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
   void ParseLexedMethodDefs(ParsingClass &Class);
   bool ConsumeAndStoreUntil(tok::TokenKind T1,
@@ -863,7 +862,7 @@ private:
                                                   AttributeList *Attr,
                                                   AccessSpecifier AS = AS_none);
   
-  DeclPtrTy ParseFunctionDefinition(ParsingDeclarator &D,
+  Decl *ParseFunctionDefinition(ParsingDeclarator &D,
                  const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   void ParseKNRParamDeclarations(Declarator &D);
   // EndLoc, if non-NULL, is filled with the location of the last token of
@@ -872,31 +871,31 @@ private:
   OwningExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
-  DeclPtrTy ParseObjCAtDirectives();
-  DeclPtrTy ParseObjCAtClassDeclaration(SourceLocation atLoc);
-  DeclPtrTy ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
+  Decl *ParseObjCAtDirectives();
+  Decl *ParseObjCAtClassDeclaration(SourceLocation atLoc);
+  Decl *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
                                           AttributeList *prefixAttrs = 0);
-  void ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
+  void ParseObjCClassInstanceVariables(Decl *interfaceDecl,
                                        tok::ObjCKeywordKind visibility,
                                        SourceLocation atLoc);
-  bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclPtrTy> &P,
+  bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<Decl *> &P,
                                    llvm::SmallVectorImpl<SourceLocation> &PLocs,
                                    bool WarnOnDeclarations,
                                    SourceLocation &LAngleLoc,
                                    SourceLocation &EndProtoLoc);
-  void ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
+  void ParseObjCInterfaceDeclList(Decl *interfaceDecl,
                                   tok::ObjCKeywordKind contextKey);
-  DeclPtrTy ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
+  Decl *ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
                                            AttributeList *prefixAttrs = 0);
 
-  DeclPtrTy ObjCImpDecl;
-  llvm::SmallVector<DeclPtrTy, 4> PendingObjCImpDecl;
+  Decl *ObjCImpDecl;
+  llvm::SmallVector<Decl *, 4> PendingObjCImpDecl;
 
-  DeclPtrTy ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
-  DeclPtrTy ParseObjCAtEndDeclaration(SourceRange atEnd);
-  DeclPtrTy ParseObjCAtAliasDeclaration(SourceLocation atLoc);
-  DeclPtrTy ParseObjCPropertySynthesize(SourceLocation atLoc);
-  DeclPtrTy ParseObjCPropertyDynamic(SourceLocation atLoc);
+  Decl *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
+  Decl *ParseObjCAtEndDeclaration(SourceRange atEnd);
+  Decl *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
+  Decl *ParseObjCPropertySynthesize(SourceLocation atLoc);
+  Decl *ParseObjCPropertyDynamic(SourceLocation atLoc);
 
   IdentifierInfo *ParseObjCSelectorPiece(SourceLocation &MethodLocation);
   // Definitions for Objective-c context sensitive keywords recognition.
@@ -910,15 +909,15 @@ private:
 
   TypeTy *ParseObjCTypeName(ObjCDeclSpec &DS);
   void ParseObjCMethodRequirement();
-  DeclPtrTy ParseObjCMethodPrototype(DeclPtrTy classOrCat,
+  Decl *ParseObjCMethodPrototype(Decl *classOrCat,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
-  DeclPtrTy ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
-                                DeclPtrTy classDecl,
+  Decl *ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
+                                Decl *classDecl,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
-  void ParseObjCPropertyAttribute(ObjCDeclSpec &DS, DeclPtrTy ClassDecl,
-                                  DeclPtrTy *Methods, unsigned NumMethods);
+  void ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
+                                  Decl **Methods, unsigned NumMethods);
 
-  DeclPtrTy ParseObjCMethodDefinition();
+  Decl *ParseObjCMethodDefinition();
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
@@ -1049,7 +1048,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while condition expression.
-  bool ParseCXXCondition(OwningExprResult &ExprResult, DeclPtrTy &DeclResult,
+  bool ParseCXXCondition(OwningExprResult &ExprResult, Decl *&DeclResult,
                          SourceLocation Loc, bool ConvertToBoolean);
 
   //===--------------------------------------------------------------------===//
@@ -1107,7 +1106,7 @@ private:
                                           bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(OwningExprResult &ExprResult,
-                                 DeclPtrTy &DeclResult,
+                                 Decl *&DeclResult,
                                  SourceLocation Loc,
                                  bool ConvertToBoolean);
   OwningStmtResult ParseIfStatement(AttributeList *Attr);
@@ -1162,10 +1161,10 @@ private:
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
                                 SourceLocation *DeclEnd = 0);
-  DeclPtrTy ParseDeclarationAfterDeclarator(Declarator &D,
+  Decl *ParseDeclarationAfterDeclarator(Declarator &D,
                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
-  DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
-  DeclPtrTy ParseFunctionTryBlock(DeclPtrTy Decl);
+  Decl *ParseFunctionStatementBody(Decl *Decl);
+  Decl *ParseFunctionTryBlock(Decl *Decl);
 
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         const ParsedTemplateInfo &TemplateInfo,
@@ -1187,12 +1186,12 @@ private:
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),                          AccessSpecifier AS = AS_none);
-  void ParseEnumBody(SourceLocation StartLoc, DeclPtrTy TagDecl);
+  void ParseEnumBody(SourceLocation StartLoc, Decl *TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
-                            DeclPtrTy TagDecl);
+                            Decl *TagDecl);
 
   struct FieldCallback {
-    virtual DeclPtrTy invoke(FieldDeclarator &Field) = 0;
+    virtual Decl *invoke(FieldDeclarator &Field) = 0;
     virtual ~FieldCallback() {}
 
   private:
@@ -1408,19 +1407,19 @@ private:
   bool isCXX0XAttributeSpecifier(bool FullLookahead = false, 
                                  tok::TokenKind *After = 0);
   
-  DeclPtrTy ParseNamespace(unsigned Context, SourceLocation &DeclEnd);
-  DeclPtrTy ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
-  DeclPtrTy ParseUsingDirectiveOrDeclaration(unsigned Context,
+  Decl *ParseNamespace(unsigned Context, SourceLocation &DeclEnd);
+  Decl *ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
+  Decl *ParseUsingDirectiveOrDeclaration(unsigned Context,
                                              SourceLocation &DeclEnd,
                                              CXX0XAttributeList Attrs);
-  DeclPtrTy ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
+  Decl *ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
                                 SourceLocation &DeclEnd,
                                 AttributeList *Attr);
-  DeclPtrTy ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
+  Decl *ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
                                   SourceLocation &DeclEnd,
                                   AccessSpecifier AS = AS_none);
-  DeclPtrTy ParseStaticAssertDeclaration(SourceLocation &DeclEnd);
-  DeclPtrTy ParseNamespaceAlias(SourceLocation NamespaceLoc,
+  Decl *ParseStaticAssertDeclaration(SourceLocation &DeclEnd);
+  Decl *ParseNamespaceAlias(SourceLocation NamespaceLoc,
                                 SourceLocation AliasLoc, IdentifierInfo *Alias,
                                 SourceLocation &DeclEnd);
 
@@ -1434,19 +1433,19 @@ private:
                            AccessSpecifier AS = AS_none,
                            bool SuppressDeclarations = false);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
-                                   DeclPtrTy TagDecl);
+                                   Decl *TagDecl);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                  ParsingDeclRAIIObject *DiagsFromTParams = 0);
-  void ParseConstructorInitializer(DeclPtrTy ConstructorDecl);
-  MemInitResult ParseMemInitializer(DeclPtrTy ConstructorDecl);
+  void ParseConstructorInitializer(Decl *ConstructorDecl);
+  MemInitResult ParseMemInitializer(Decl *ConstructorDecl);
   void HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
-                                       DeclPtrTy ThisDecl);
+                                       Decl *ThisDecl);
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]
-  void ParseBaseClause(DeclPtrTy ClassDecl);
-  BaseResult ParseBaseSpecifier(DeclPtrTy ClassDecl);
+  void ParseBaseClause(Decl *ClassDecl);
+  BaseResult ParseBaseSpecifier(Decl *ClassDecl);
   AccessSpecifier getAccessSpecifierIfPresent() const;
 
   bool ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS, 
@@ -1468,16 +1467,16 @@ private:
     
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
-  typedef llvm::SmallVector<DeclPtrTy, 4> TemplateParameterList;
+  typedef llvm::SmallVector<Decl *, 4> TemplateParameterList;
 
   // C++ 14.1: Template Parameters [temp.param]
-  DeclPtrTy ParseDeclarationStartingWithTemplate(unsigned Context,
+  Decl *ParseDeclarationStartingWithTemplate(unsigned Context,
                                                  SourceLocation &DeclEnd,
                                                  AccessSpecifier AS = AS_none);
-  DeclPtrTy ParseTemplateDeclarationOrSpecialization(unsigned Context,
+  Decl *ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                                      SourceLocation &DeclEnd,
                                                      AccessSpecifier AS);
-  DeclPtrTy ParseSingleDeclarationAfterTemplate(
+  Decl *ParseSingleDeclarationAfterTemplate(
                                        unsigned Context,
                                        const ParsedTemplateInfo &TemplateInfo,
                                        ParsingDeclRAIIObject &DiagsFromParams,
@@ -1490,10 +1489,10 @@ private:
   bool ParseTemplateParameterList(unsigned Depth,
                                   TemplateParameterList &TemplateParams);
   bool isStartOfTemplateTypeParameter();
-  DeclPtrTy ParseTemplateParameter(unsigned Depth, unsigned Position);
-  DeclPtrTy ParseTypeParameter(unsigned Depth, unsigned Position);
-  DeclPtrTy ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
-  DeclPtrTy ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
+  Decl *ParseTemplateParameter(unsigned Depth, unsigned Position);
+  Decl *ParseTypeParameter(unsigned Depth, unsigned Position);
+  Decl *ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
+  Decl *ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
   // C++ 14.3: Template arguments [temp.arg]
   typedef llvm::SmallVector<ParsedTemplateArgument, 16> TemplateArgList;
 
@@ -1515,9 +1514,9 @@ private:
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
   ParsedTemplateArgument ParseTemplateTemplateArgument();
   ParsedTemplateArgument ParseTemplateArgument();
-  DeclPtrTy ParseExplicitInstantiation(SourceLocation ExternLoc,
-                                       SourceLocation TemplateLoc,
-                                       SourceLocation &DeclEnd);
+  Decl *ParseExplicitInstantiation(SourceLocation ExternLoc,
+                                        SourceLocation TemplateLoc,
+                                        SourceLocation &DeclEnd);
 
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]

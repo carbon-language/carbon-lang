@@ -427,19 +427,19 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       // Attach the initializer to the declaration.
       if (D->hasCXXDirectInitializer()) {
         // Add the direct initializer to the declaration.
-        SemaRef.AddCXXDirectInitializerToDecl(Sema::DeclPtrTy::make(Var),
+        SemaRef.AddCXXDirectInitializerToDecl(Var,
                                               LParenLoc,
                                               move_arg(InitArgs),
                                               CommaLocs.data(),
                                               RParenLoc);
       } else if (InitArgs.size() == 1) {
         Expr *Init = (Expr*)(InitArgs.take()[0]);
-        SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), 
+        SemaRef.AddInitializerToDecl(Var, 
                                      SemaRef.Owned(Init),
                                      false);        
       } else {
         assert(InitArgs.size() == 0);
-        SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);    
+        SemaRef.ActOnUninitializedDecl(Var, false);    
       }
     } else {
       // FIXME: Not too happy about invalidating the declaration
@@ -449,7 +449,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     
     SemaRef.PopExpressionEvaluationContext();
   } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
-    SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);
+    SemaRef.ActOnUninitializedDecl(Var, false);
 
   // Diagnose unused local variables.
   if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed())
@@ -593,11 +593,9 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
 
   OwningExprResult Message(SemaRef, D->getMessage());
   D->getMessage()->Retain();
-  Decl *StaticAssert
-    = SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
-                                           move(InstantiatedAssertExpr),
-                                           move(Message)).getAs<Decl>();
-  return StaticAssert;
+  return SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
+                                              move(InstantiatedAssertExpr),
+                                              move(Message));
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
@@ -614,7 +612,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   if (D->getDeclContext()->isFunctionOrMethod())
     SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Enum);
     
-  llvm::SmallVector<Sema::DeclPtrTy, 4> Enumerators;
+  llvm::SmallVector<Decl*, 4> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
   for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(),
@@ -651,7 +649,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     if (EnumConst) {
       EnumConst->setAccess(Enum->getAccess());
       Enum->addDecl(EnumConst);
-      Enumerators.push_back(Sema::DeclPtrTy::make(EnumConst));
+      Enumerators.push_back(EnumConst);
       LastEnumConst = EnumConst;
       
       if (D->getDeclContext()->isFunctionOrMethod()) {
@@ -665,7 +663,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   // FIXME: Fixup LBraceLoc and RBraceLoc
   // FIXME: Empty Scope and AttributeList (required to handle attribute packed).
   SemaRef.ActOnEnumBody(Enum->getLocation(), SourceLocation(), SourceLocation(),
-                        Sema::DeclPtrTy::make(Enum),
+                        Enum,
                         Enumerators.data(), Enumerators.size(),
                         0, 0);
 
@@ -2072,7 +2070,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   EnterExpressionEvaluationContext EvalContext(*this, 
                                                Action::PotentiallyEvaluated);
-  ActOnStartOfFunctionDef(0, DeclPtrTy::make(Function));
+  ActOnStartOfFunctionDef(0, Function);
 
   // Introduce a new scope where local variable instantiations will be
   // recorded, unless we're actually a member function within a local
@@ -2115,7 +2113,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Body.isInvalid())
     Function->setInvalidDecl();
   
-  ActOnFinishFunctionBody(DeclPtrTy::make(Function), move(Body),
+  ActOnFinishFunctionBody(Function, move(Body),
                           /*IsInstantiation=*/true);
 
   PerformDependentDiagnostics(PatternDecl, TemplateArgs);
@@ -2312,7 +2310,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
   }
 
   // Assign all the initializers to the new constructor.
-  ActOnMemInitializers(DeclPtrTy::make(New),
+  ActOnMemInitializers(New,
                        /*FIXME: ColonLoc */
                        SourceLocation(),
                        NewInits.data(), NewInits.size(),
@@ -2715,7 +2713,7 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
 
     // Instantiate function definitions
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first)) {
-      PrettyStackTraceActionsDecl CrashInfo(DeclPtrTy::make(Function),
+      PrettyStackTraceActionsDecl CrashInfo(Function,
                                             Function->getLocation(), *this,
                                             Context.getSourceManager(),
                                            "instantiating function definition");
@@ -2746,8 +2744,7 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
       break;
     }
 
-    PrettyStackTraceActionsDecl CrashInfo(DeclPtrTy::make(Var),
-                                          Var->getLocation(), *this,
+    PrettyStackTraceActionsDecl CrashInfo(Var, Var->getLocation(), *this,
                                           Context.getSourceManager(),
                                           "instantiating static data member "
                                           "definition");

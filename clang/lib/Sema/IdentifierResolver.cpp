@@ -111,7 +111,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
            ((DeclContext *)S->getEntity())->isTransparentContext())
       S = S->getParent();
 
-    if (S->isDeclScope(Action::DeclPtrTy::make(D)))
+    if (S->isDeclScope(D))
       return true;
     if (LangOpt.CPlusPlus) {
       // C++ 3.3.2p3:
@@ -128,7 +128,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
       //
       assert(S->getParent() && "No TUScope?");
       if (S->getParent()->getFlags() & Scope::ControlScope)
-        return S->getParent()->isDeclScope(Action::DeclPtrTy::make(D));
+        return S->getParent()->isDeclScope(D);
     }
     return false;
   }

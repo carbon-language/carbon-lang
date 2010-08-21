@@ -730,7 +730,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 ///
 /// \returns true if there was a parsing, false otherwise.
 bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
-                               DeclPtrTy &DeclResult,
+                               Decl *&DeclResult,
                                SourceLocation Loc,
                                bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
@@ -741,7 +741,7 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
   if (!isCXXConditionDeclaration()) {
     // Parse the expression.
     ExprResult = ParseExpression(); // expression
-    DeclResult = DeclPtrTy();
+    DeclResult = 0;
     if (ExprResult.isInvalid())
       return true;
 

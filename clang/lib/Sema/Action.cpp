@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Sema/Action.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Basic/TargetInfo.h"
@@ -69,35 +70,35 @@ Action::ObjCMessageKind Action::getObjCMessageKind(Scope *S,
 }
 
 // Defined out-of-line here because of dependecy on AttributeList
-Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
-                                              SourceLocation UsingLoc,
-                                              SourceLocation NamespcLoc,
-                                              CXXScopeSpec &SS,
-                                              SourceLocation IdentLoc,
-                                              IdentifierInfo *NamespcName,
-                                              AttributeList *AttrList) {
+Decl *Action::ActOnUsingDirective(Scope *CurScope,
+                                  SourceLocation UsingLoc,
+                                  SourceLocation NamespcLoc,
+                                  CXXScopeSpec &SS,
+                                  SourceLocation IdentLoc,
+                                  IdentifierInfo *NamespcName,
+                                  AttributeList *AttrList) {
 
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it
   // temporary state or bug?
   delete AttrList;
-  return DeclPtrTy();
+  return 0;
 }
 
 // Defined out-of-line here because of dependency on AttributeList
-Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
-                                                AccessSpecifier AS,
-                                                bool HasUsingKeyword,
-                                                SourceLocation UsingLoc,
-                                                CXXScopeSpec &SS,
-                                                UnqualifiedId &Name,
-                                                AttributeList *AttrList,
-                                                bool IsTypeName,
-                                                SourceLocation TypenameLoc) {
+Decl *Action::ActOnUsingDeclaration(Scope *CurScope,
+                                    AccessSpecifier AS,
+                                    bool HasUsingKeyword,
+                                    SourceLocation UsingLoc,
+                                    CXXScopeSpec &SS,
+                                    UnqualifiedId &Name,
+                                    AttributeList *AttrList,
+                                    bool IsTypeName,
+                                    SourceLocation TypenameLoc) {
 
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it
   // temporary state or bug?
   delete AttrList;
-  return DeclPtrTy();
+  return 0;
 }

@@ -38,15 +38,14 @@ using namespace clang;
 
 /// getDeclName - Return a pretty name for the specified decl if possible, or
 /// an empty string if not.  This is used for pretty crash reporting.
-std::string Sema::getDeclName(DeclPtrTy d) {
-  Decl *D = d.getAs<Decl>();
+std::string Sema::getDeclName(Decl *D) {
   if (NamedDecl *DN = dyn_cast_or_null<NamedDecl>(D))
     return DN->getQualifiedNameAsString();
   return "";
 }
 
-Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
-  return DeclGroupPtrTy::make(DeclGroupRef(Ptr.getAs<Decl>()));
+Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr) {
+  return DeclGroupPtrTy::make(DeclGroupRef(Ptr));
 }
 
 /// \brief If the identifier refers to a type name within this scope,
@@ -462,8 +461,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   IdentifierResolver::iterator I = IdResolver.begin(D->getDeclName()),
                                IEnd = IdResolver.end();
   for (; I != IEnd; ++I) {
-    if (S->isDeclScope(DeclPtrTy::make(*I)) && D->declarationReplaces(*I)) {
-      S->RemoveDecl(DeclPtrTy::make(*I));
+    if (S->isDeclScope(*I) && D->declarationReplaces(*I)) {
+      S->RemoveDecl(*I);
       IdResolver.RemoveDecl(*I);
 
       // Should only need to replace one decl.
@@ -471,7 +470,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
     }
   }
 
-  S->AddDecl(DeclPtrTy::make(D));
+  S->AddDecl(D);
   IdResolver.AddDecl(D);
 }
 
@@ -673,7 +672,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
-    Decl *TmpD = (*I).getAs<Decl>();
+    Decl *TmpD = (*I);
     assert(TmpD && "This decl didn't get pushed??");
 
     assert(isa<NamedDecl>(TmpD) && "Decl isn't NamedDecl?");
@@ -1581,8 +1580,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
-Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
-                                                 DeclSpec &DS) {
+Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
+                                            DeclSpec &DS) {
   // FIXME: Error on auto/register at file scope
   // FIXME: Error on inline/virtual/explicit
   // FIXME: Warn on useless __thread
@@ -1598,7 +1597,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     TagD = static_cast<Decl *>(DS.getTypeRep());
 
     if (!TagD) // We probably had an error
-      return DeclPtrTy();
+      return 0;
 
     // Note that the above type specs guarantee that the
     // type rep is a Decl, whereas in many of the others
@@ -1619,7 +1618,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     // If we're dealing with a class template decl, assume that the
     // template routines are handling it.
     if (TagD && isa<ClassTemplateDecl>(TagD))
-      return DeclPtrTy();
+      return 0;
     return ActOnFriendTypeDecl(S, DS, MultiTemplateParamsArg(*this, 0, 0));
   }
          
@@ -1640,7 +1639,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     // about them.
     // FIXME: Should we support Microsoft's extensions in this area?
     if (Record->getDeclName() && getLangOptions().Microsoft)
-      return DeclPtrTy::make(Tag);
+      return Tag;
   }
   
   if (getLangOptions().CPlusPlus && 
@@ -1659,14 +1658,14 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
         Tag && isa<EnumDecl>(Tag)) {
       Diag(DS.getSourceRange().getBegin(), diag::ext_typedef_without_a_name)
         << DS.getSourceRange();
-      return DeclPtrTy::make(Tag);
+      return Tag;
     }
 
     Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
       << DS.getSourceRange();
   }
 
-  return DeclPtrTy::make(TagD);
+  return TagD;
 }
 
 /// We are trying to inject an anonymous member into the given scope;
@@ -1743,7 +1742,7 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
         Owner->makeDeclVisibleInContext(*F);
-        S->AddDecl(Sema::DeclPtrTy::make(*F));
+        S->AddDecl(*F);
         SemaRef.IdResolver.AddDecl(*F);
 
         // That includes picking up the appropriate access specifier.
@@ -1804,9 +1803,9 @@ StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
 /// anonymous structure or union. Anonymous unions are a C++ feature
 /// (C++ [class.union]) and a GNU C extension; anonymous structures
 /// are a GNU C and GNU C++ extension.
-Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
-                                                  AccessSpecifier AS,
-                                                  RecordDecl *Record) {
+Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
+                                             AccessSpecifier AS,
+                                             RecordDecl *Record) {
   DeclContext *Owner = Record->getDeclContext();
 
   // Diagnose whether this anonymous struct/union is an extension.
@@ -1973,7 +1972,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   if (Invalid)
     Anon->setInvalidDecl();
 
-  return DeclPtrTy::make(Anon);
+  return Anon;
 }
 
 
@@ -2172,10 +2171,9 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   return false;
 }
 
-Sema::DeclPtrTy
-Sema::HandleDeclarator(Scope *S, Declarator &D,
-                       MultiTemplateParamsArg TemplateParamLists,
-                       bool IsFunctionDefinition) {
+Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
+                             MultiTemplateParamsArg TemplateParamLists,
+                             bool IsFunctionDefinition) {
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -2187,7 +2185,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
       Diag(D.getDeclSpec().getSourceRange().getBegin(),
            diag::err_declarator_need_ident)
         << D.getDeclSpec().getSourceRange() << D.getSourceRange();
-    return DeclPtrTy();
+    return 0;
   }
 
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
@@ -2211,14 +2209,14 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
            diag::err_template_qualified_declarator_no_match)
         << (NestedNameSpecifier*)D.getCXXScopeSpec().getScopeRep()
         << D.getCXXScopeSpec().getRange();
-      return DeclPtrTy();
+      return 0;
     }
 
     bool IsDependentContext = DC->isDependentContext();
 
     if (!IsDependentContext && 
         RequireCompleteDeclContext(D.getCXXScopeSpec(), DC))
-      return DeclPtrTy();
+      return 0;
 
     if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
       Diag(D.getIdentifierLoc(),
@@ -2345,7 +2343,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     if (TemplateParamLists.size()) {
       Diag(D.getIdentifierLoc(), diag::err_template_typedef);
-      return DeclPtrTy();
+      return 0;
     }
 
     New = ActOnTypedefDeclarator(S, D, DC, R, TInfo, Previous, Redeclaration);
@@ -2360,14 +2358,14 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
   }
 
   if (New == 0)
-    return DeclPtrTy();
+    return 0;
 
   // If this has an identifier and is not an invalid redeclaration or 
   // function template specialization, add it to the scope stack.
   if (New->getDeclName() && !(Redeclaration && New->isInvalidDecl()))
     PushOnScopeChains(New, S);
 
-  return DeclPtrTy::make(New);
+  return New;
 }
 
 /// TryToFixInvalidVariablyModifiedType - Helper method to turn variable array
@@ -2455,11 +2453,11 @@ Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND,
   if (S && IdResolver.ReplaceDecl(PrevDecl, ND)) {
     // The previous declaration was found on the identifer resolver
     // chain, so remove it from its scope.
-    while (S && !S->isDeclScope(DeclPtrTy::make(PrevDecl)))
+    while (S && !S->isDeclScope(PrevDecl))
       S = S->getParent();
 
     if (S)
-      S->RemoveDecl(DeclPtrTy::make(PrevDecl));
+      S->RemoveDecl(PrevDecl);
   }
 }
 
@@ -3478,9 +3476,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // already checks for that case.
     if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
         FTI.ArgInfo[0].Param &&
-        FTI.ArgInfo[0].Param.getAs<ParmVarDecl>()->getType()->isVoidType()) {
+        cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
       // Empty arg list, don't push any params.
-      ParmVarDecl *Param = FTI.ArgInfo[0].Param.getAs<ParmVarDecl>();
+      ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[0].Param);
 
       // In C++, the empty parameter-type-list must be spelled "void"; a
       // typedef of void is not permitted.
@@ -3490,7 +3488,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // FIXME: Leaks decl?
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-        ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+        ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
         assert(Param->getDeclContext() != NewFD && "Was set before ?");
         Param->setDeclContext(NewFD);
         Params.push_back(Param);
@@ -4038,15 +4036,14 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   return true;
 }
 
-void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init) {
+void Sema::AddInitializerToDecl(Decl *dcl, ExprArg init) {
   AddInitializerToDecl(dcl, move(init), /*DirectInit=*/false);
 }
 
 /// AddInitializerToDecl - Adds the initializer Init to the
 /// declaration dcl. If DirectInit is true, this is C++ direct
 /// initialization rather than copy initialization.
-void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
-  Decl *RealDecl = dcl.getAs<Decl>();
+void Sema::AddInitializerToDecl(Decl *RealDecl, ExprArg init, bool DirectInit) {
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
   if (RealDecl == 0)
@@ -4263,10 +4260,9 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
 /// ActOnInitializerError - Given that there was an error parsing an
 /// initializer for the given declaration, try to return to some form
 /// of sanity.
-void Sema::ActOnInitializerError(DeclPtrTy dcl) {
+void Sema::ActOnInitializerError(Decl *D) {
   // Our main concern here is re-establishing invariants like "a
   // variable's type is either dependent or complete".
-  Decl *D = dcl.getAs<Decl>();
   if (!D || D->isInvalidDecl()) return;
 
   VarDecl *VD = dyn_cast<VarDecl>(D);
@@ -4295,10 +4291,8 @@ void Sema::ActOnInitializerError(DeclPtrTy dcl) {
   // though.
 }
 
-void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
+void Sema::ActOnUninitializedDecl(Decl *RealDecl,
                                   bool TypeContainsUndeducedAuto) {
-  Decl *RealDecl = dcl.getAs<Decl>();
-
   // If there is no declaration, there was an error parsing it. Just ignore it.
   if (RealDecl == 0)
     return;
@@ -4471,7 +4465,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
 }
 
 Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
-                                                   DeclPtrTy *Group,
+                                                   Decl **Group,
                                                    unsigned NumDecls) {
   llvm::SmallVector<Decl*, 8> Decls;
 
@@ -4479,7 +4473,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     Decls.push_back((Decl*)DS.getTypeRep());
 
   for (unsigned i = 0; i != NumDecls; ++i)
-    if (Decl *D = Group[i].getAs<Decl>())
+    if (Decl *D = Group[i])
       Decls.push_back(D);
 
   return DeclGroupPtrTy::make(DeclGroupRef::Create(Context,
@@ -4489,8 +4483,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
 
 /// ActOnParamDeclarator - Called from Parser::ParseFunctionDeclarator()
 /// to introduce parameters into function prototype scope.
-Sema::DeclPtrTy
-Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
+Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
 
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
@@ -4539,7 +4532,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
         DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
         // Just pretend that we didn't see the previous declaration.
         PrevDecl = 0;
-      } else if (S->isDeclScope(DeclPtrTy::make(PrevDecl))) {
+      } else if (S->isDeclScope(PrevDecl)) {
         Diag(D.getIdentifierLoc(), diag::err_param_redefinition) << II;
         Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
 
@@ -4570,7 +4563,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   }
 
   // Add the parameter declaration into this scope.
-  S->AddDecl(DeclPtrTy::make(New));
+  S->AddDecl(New);
   if (II)
     IdResolver.AddDecl(New);
 
@@ -4579,7 +4572,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (New->hasAttr<BlocksAttr>()) {
     Diag(New->getLocation(), diag::err_block_on_nonlocal);
   }
-  return DeclPtrTy::make(New);
+  return New;
 }
 
 /// \brief Synthesizes a variable for a parameter arising from a
@@ -4668,8 +4661,8 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
   }
 }
 
-Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
-                                              Declarator &D) {
+Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
+                                         Declarator &D) {
   assert(getCurFunctionDecl() == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
@@ -4681,9 +4674,9 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
 
   Scope *ParentScope = FnBodyScope->getParent();
 
-  DeclPtrTy DP = HandleDeclarator(ParentScope, D,
-                                  MultiTemplateParamsArg(*this),
-                                  /*IsFunctionDefinition=*/true);
+  Decl *DP = HandleDeclarator(ParentScope, D,
+                              MultiTemplateParamsArg(*this),
+                              /*IsFunctionDefinition=*/true);
   return ActOnStartOfFunctionDef(FnBodyScope, DP);
 }
 
@@ -4731,7 +4724,7 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
   return MissingPrototype;
 }
 
-Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
+Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   // Clear the last template instantiation error context.
   LastTemplateInstantiationErrorContext = ActiveTemplateInstantiation();
   
@@ -4739,11 +4732,10 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
     return D;
   FunctionDecl *FD = 0;
 
-  if (FunctionTemplateDecl *FunTmpl
-        = dyn_cast<FunctionTemplateDecl>(D.getAs<Decl>()))
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
     FD = FunTmpl->getTemplatedDecl();
   else
-    FD = cast<FunctionDecl>(D.getAs<Decl>());
+    FD = cast<FunctionDecl>(D);
 
   // Enter a new function scope
   PushFunctionScope();
@@ -4816,7 +4808,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
            diag::err_attribute_can_be_applied_only_to_symbol_declaration)
         << "dllimport";
       FD->setInvalidDecl();
-      return DeclPtrTy::make(FD);
+      return FD;
     }
 
     // Visual C++ appears to not think this is an issue, so only issue
@@ -4830,7 +4822,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
         << FD->getName() << "dllimport";
     }
   }
-  return DeclPtrTy::make(FD);
+  return FD;
 }
 
 /// \brief Given the set of return statements within a function body,
@@ -4865,13 +4857,12 @@ static void ComputeNRVO(Stmt *Body, ReturnStmt **Returns, unsigned NumReturns) {
     const_cast<VarDecl*>(NRVOCandidate)->setNRVOVariable(true);
 }
 
-Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
+Decl *Sema::ActOnFinishFunctionBody(Decl *D, StmtArg BodyArg) {
   return ActOnFinishFunctionBody(D, move(BodyArg), false);
 }
 
-Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
-                                              bool IsInstantiation) {
-  Decl *dcl = D.getAs<Decl>();
+Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, StmtArg BodyArg,
+                                         bool IsInstantiation) {
   Stmt *Body = BodyArg.takeAs<Stmt>();
 
   FunctionDecl *FD = 0;
@@ -4911,7 +4902,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     if (!MD->isInvalidDecl())
       DiagnoseUnusedParameters(MD->param_begin(), MD->param_end());
   } else {
-    return DeclPtrTy();
+    return 0;
   }
 
   // Verify and clean out per-function state.
@@ -5010,7 +5001,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   if (getDiagnostics().hasErrorOccurred())
     ExprTemporaries.clear();
 
-  return D;
+  return dcl;
 }
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function
@@ -5056,8 +5047,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   DeclContext *PrevDC = CurContext;
   CurContext = Context.getTranslationUnitDecl();
 
-  FunctionDecl *FD =
-      dyn_cast<FunctionDecl>(ActOnDeclarator(TUScope, D).getAs<Decl>());
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(ActOnDeclarator(TUScope, D));
   FD->setImplicit();
 
   CurContext = PrevDC;
@@ -5224,7 +5214,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
 /// reference/declaration/definition of a tag.
-Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
+Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                SourceLocation KWLoc, CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
@@ -5256,7 +5246,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
         if (Invalid)
-          return DeclPtrTy();
+          return 0;
         
         OwnedDecl = false;
         DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
@@ -5299,26 +5289,26 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       DC = computeDeclContext(SS, false);
       if (!DC) {
         IsDependent = true;
-        return DeclPtrTy();
+        return 0;
       }
     } else {
       DC = computeDeclContext(SS, true);
       if (!DC) {
         Diag(SS.getRange().getBegin(), diag::err_dependent_nested_name_spec)
           << SS.getRange();
-        return DeclPtrTy();
+        return 0;
       }
     }
 
     if (RequireCompleteDeclContext(SS, DC))
-      return DeclPtrTy::make((Decl *)0);
+      return 0;
 
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     LookupQualifiedName(Previous, DC);
 
     if (Previous.isAmbiguous())
-      return DeclPtrTy();
+      return 0;
 
     if (Previous.empty()) {
       // Name lookup did not find anything. However, if the
@@ -5328,7 +5318,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // this as a dependent elaborated-type-specifier.
       if (Previous.wasNotFoundInCurrentInstantiation()) {
         IsDependent = true;
-        return DeclPtrTy();
+        return 0;
       }
 
       // A tag 'foo::bar' must already exist.
@@ -5348,7 +5338,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
     // Note:  there used to be some attempt at recovery here.
     if (Previous.isAmbiguous())
-      return DeclPtrTy();
+      return 0;
 
     if (!getLangOptions().CPlusPlus && TUK != TUK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
@@ -5514,7 +5504,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           // need to be changed with DeclGroups.
           if ((TUK == TUK_Reference && !PrevTagDecl->getFriendObjectKind()) ||
               TUK == TUK_Friend)
-            return DeclPtrTy::make(PrevTagDecl);
+            return PrevTagDecl;
 
           // Diagnose attempts to redefine a tag.
           if (TUK == TUK_Definition) {
@@ -5762,21 +5752,21 @@ CreateNewDecl:
       Context.setFILEDecl(New);
 
   OwnedDecl = true;
-  return DeclPtrTy::make(New);
+  return New;
 }
 
-void Sema::ActOnTagStartDefinition(Scope *S, DeclPtrTy TagD) {
+void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
   AdjustDeclIfTemplate(TagD);
-  TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+  TagDecl *Tag = cast<TagDecl>(TagD);
   
   // Enter the tag context.
   PushDeclContext(S, Tag);
 }
 
-void Sema::ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagD,
+void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
                                            SourceLocation LBraceLoc) {
   AdjustDeclIfTemplate(TagD);
-  CXXRecordDecl *Record = cast<CXXRecordDecl>(TagD.getAs<Decl>());
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(TagD);
 
   FieldCollector->StartClass();
 
@@ -5803,10 +5793,10 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagD,
          "Broken injected-class-name");
 }
 
-void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
+void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
                                     SourceLocation RBraceLoc) {
   AdjustDeclIfTemplate(TagD);
-  TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+  TagDecl *Tag = cast<TagDecl>(TagD);
   Tag->setRBraceLoc(RBraceLoc);
 
   if (isa<CXXRecordDecl>(Tag))
@@ -5819,9 +5809,9 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
   Consumer.HandleTagDeclDefinition(Tag);
 }
 
-void Sema::ActOnTagDefinitionError(Scope *S, DeclPtrTy TagD) {
+void Sema::ActOnTagDefinitionError(Scope *S, Decl *TagD) {
   AdjustDeclIfTemplate(TagD);
-  TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+  TagDecl *Tag = cast<TagDecl>(TagD);
   Tag->setInvalidDecl();
 
   // We're undoing ActOnTagStartDefinition here, not
@@ -5904,13 +5894,13 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
 
 /// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
-Sema::DeclPtrTy Sema::ActOnField(Scope *S, DeclPtrTy TagD,
+Decl *Sema::ActOnField(Scope *S, Decl *TagD,
                                  SourceLocation DeclStart,
                                  Declarator &D, ExprTy *BitfieldWidth) {
-  FieldDecl *Res = HandleField(S, cast_or_null<RecordDecl>(TagD.getAs<Decl>()),
+  FieldDecl *Res = HandleField(S, cast_or_null<RecordDecl>(TagD),
                                DeclStart, D, static_cast<Expr*>(BitfieldWidth),
                                AS_public);
-  return DeclPtrTy::make(Res);
+  return Res;
 }
 
 /// HandleField - Analyze a field of a C struct or a C++ data member.
@@ -6310,9 +6300,9 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
 
 /// ActOnIvar - Each ivar field of an objective-c class is passed into this
 /// in order to create an IvarDecl object for it.
-Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
+Decl *Sema::ActOnIvar(Scope *S,
                                 SourceLocation DeclStart,
-                                DeclPtrTy IntfDecl,
+                                Decl *IntfDecl,
                                 Declarator &D, ExprTy *BitfieldWidth,
                                 tok::ObjCKeywordKind Visibility) {
 
@@ -6356,7 +6346,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
     Visibility != tok::objc_not_keyword ? TranslateIvarVisibility(Visibility)
                                         : ObjCIvarDecl::None;
   // Must set ivar's DeclContext to its enclosing interface.
-  ObjCContainerDecl *EnclosingDecl = IntfDecl.getAs<ObjCContainerDecl>();
+  ObjCContainerDecl *EnclosingDecl = cast<ObjCContainerDecl>(IntfDecl);
   ObjCContainerDecl *EnclosingContext;
   if (ObjCImplementationDecl *IMPDecl =
       dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
@@ -6368,7 +6358,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
         dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
       if (!LangOpts.ObjCNonFragileABI2 || !CDecl->IsClassExtension()) {
         Diag(Loc, diag::err_misplaced_ivar) << CDecl->IsClassExtension();
-        return DeclPtrTy();
+        return 0;
       }
     }
     EnclosingContext = EnclosingDecl;
@@ -6399,19 +6389,18 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   if (II) {
     // FIXME: When interfaces are DeclContexts, we'll need to add
     // these to the interface.
-    S->AddDecl(DeclPtrTy::make(NewID));
+    S->AddDecl(NewID);
     IdResolver.AddDecl(NewID);
   }
 
-  return DeclPtrTy::make(NewID);
+  return NewID;
 }
 
 void Sema::ActOnFields(Scope* S,
-                       SourceLocation RecLoc, DeclPtrTy RecDecl,
-                       DeclPtrTy *Fields, unsigned NumFields,
+                       SourceLocation RecLoc, Decl *EnclosingDecl,
+                       Decl **Fields, unsigned NumFields,
                        SourceLocation LBrac, SourceLocation RBrac,
                        AttributeList *Attr) {
-  Decl *EnclosingDecl = RecDecl.getAs<Decl>();
   assert(EnclosingDecl && "missing record or interface decl");
 
   // If the decl this is being inserted into is invalid, then it may be a
@@ -6428,7 +6417,7 @@ void Sema::ActOnFields(Scope* S,
 
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   for (unsigned i = 0; i != NumFields; ++i) {
-    FieldDecl *FD = cast<FieldDecl>(Fields[i].getAs<Decl>());
+    FieldDecl *FD = cast<FieldDecl>(Fields[i]);
 
     // Get the type for the field.
     Type *FDTy = FD->getType().getTypePtr();
@@ -6757,14 +6746,14 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 }
 
 
-Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
-                                        DeclPtrTy lastEnumConst,
+Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl,
+                                        Decl *lastEnumConst,
                                         SourceLocation IdLoc,
                                         IdentifierInfo *Id,
                                         SourceLocation EqualLoc, ExprTy *val) {
-  EnumDecl *TheEnumDecl = cast<EnumDecl>(theEnumDecl.getAs<Decl>());
+  EnumDecl *TheEnumDecl = cast<EnumDecl>(theEnumDecl);
   EnumConstantDecl *LastEnumConst =
-    cast_or_null<EnumConstantDecl>(lastEnumConst.getAs<Decl>());
+    cast_or_null<EnumConstantDecl>(lastEnumConst);
   Expr *Val = static_cast<Expr*>(val);
 
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
@@ -6793,7 +6782,7 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
       else
         Diag(IdLoc, diag::err_redefinition) << Id;
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      return DeclPtrTy();
+      return 0;
     }
   }
 
@@ -6806,14 +6795,14 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
     PushOnScopeChains(New, S);
   }
 
-  return DeclPtrTy::make(New);
+  return New;
 }
 
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
-                         SourceLocation RBraceLoc, DeclPtrTy EnumDeclX,
-                         DeclPtrTy *Elements, unsigned NumElements,
+                         SourceLocation RBraceLoc, Decl *EnumDeclX,
+                         Decl **Elements, unsigned NumElements,
                          Scope *S, AttributeList *Attr) {
-  EnumDecl *Enum = cast<EnumDecl>(EnumDeclX.getAs<Decl>());
+  EnumDecl *Enum = cast<EnumDecl>(EnumDeclX);
   QualType EnumType = Context.getTypeDeclType(Enum);
 
   if (Attr)
@@ -6822,7 +6811,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   if (Enum->isDependentType()) {
     for (unsigned i = 0; i != NumElements; ++i) {
       EnumConstantDecl *ECD =
-        cast_or_null<EnumConstantDecl>(Elements[i].getAs<Decl>());
+        cast_or_null<EnumConstantDecl>(Elements[i]);
       if (!ECD) continue;
 
       ECD->setType(EnumType);
@@ -6849,7 +6838,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
 
   for (unsigned i = 0; i != NumElements; ++i) {
     EnumConstantDecl *ECD =
-      cast_or_null<EnumConstantDecl>(Elements[i].getAs<Decl>());
+      cast_or_null<EnumConstantDecl>(Elements[i]);
     if (!ECD) continue;  // Already issued a diagnostic.
 
     const llvm::APSInt &InitVal = ECD->getInitVal();
@@ -6951,8 +6940,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   // Loop over all of the enumerator constants, changing their types to match
   // the type of the enum if needed.
   for (unsigned i = 0; i != NumElements; ++i) {
-    EnumConstantDecl *ECD =
-      cast_or_null<EnumConstantDecl>(Elements[i].getAs<Decl>());
+    EnumConstantDecl *ECD = cast_or_null<EnumConstantDecl>(Elements[i]);
     if (!ECD) continue;  // Already issued a diagnostic.
 
     // Standard C says the enumerators have int type, but we allow, as an
@@ -7013,14 +7001,13 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                            NumPositiveBits, NumNegativeBits);
 }
 
-Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
-                                            ExprArg expr) {
+Decl *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr) {
   StringLiteral *AsmString = cast<StringLiteral>(expr.takeAs<Expr>());
 
   FileScopeAsmDecl *New = FileScopeAsmDecl::Create(Context, CurContext,
                                                    Loc, AsmString);
   CurContext->addDecl(New);
-  return DeclPtrTy::make(New);
+  return New;
 }
 
 void Sema::ActOnPragmaWeakID(IdentifierInfo* Name,

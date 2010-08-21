@@ -2414,7 +2414,7 @@ Action::ParsingDeclStackState Sema::PushParsingDeclaration() {
   return (ParsingDeclStackState) DelayedDiagnostics.size();
 }
 
-void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
+void Sema::PopParsingDeclaration(ParsingDeclStackState S, Decl *D) {
   assert(ParsingDeclDepth > 0 && "empty ParsingDeclaration stack");
   ParsingDeclDepth--;
 
@@ -2429,7 +2429,6 @@ void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
 
   // We only want to actually emit delayed diagnostics when we
   // successfully parsed a decl.
-  Decl *D = Ctx ? Ctx.getAs<Decl>() : 0;
   if (D) {
     // We really do want to start with 0 here.  We get one push for a
     // decl spec and another for each declarator;  in a decl group like:

@@ -257,14 +257,14 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
 }
 
 Action::OwningStmtResult
-Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, DeclPtrTy CondVar,
+Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
                   StmtArg ThenVal, SourceLocation ElseLoc,
                   StmtArg ElseVal) {
   OwningExprResult CondResult(CondVal.release());
 
   VarDecl *ConditionVar = 0;
-  if (CondVar.get()) {
-    ConditionVar = CondVar.getAs<VarDecl>();
+  if (CondVar) {
+    ConditionVar = cast<VarDecl>(CondVar);
     CondResult = CheckConditionVariable(ConditionVar, IfLoc, true);
     if (CondResult.isInvalid())
       return StmtError();
@@ -397,10 +397,10 @@ static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
 
 Action::OwningStmtResult
 Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond, 
-                             DeclPtrTy CondVar) {
+                             Decl *CondVar) {
   VarDecl *ConditionVar = 0;
-  if (CondVar.get()) {
-    ConditionVar = CondVar.getAs<VarDecl>();
+  if (CondVar) {
+    ConditionVar = cast<VarDecl>(CondVar);
     OwningExprResult CondE = CheckConditionVariable(ConditionVar, SourceLocation(), false);
     if (CondE.isInvalid())
       return StmtError();
@@ -427,7 +427,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond,
   
   CondExpr = ConvertedCond.takeAs<Expr>();
   
-  if (!CondVar.get()) {
+  if (!CondVar) {
     CondExpr = MaybeCreateCXXExprWithTemporaries(CondExpr);
     if (!CondExpr)
       return StmtError();
@@ -801,12 +801,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 
 Action::OwningStmtResult
 Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, 
-                     DeclPtrTy CondVar, StmtArg Body) {
+                     Decl *CondVar, StmtArg Body) {
   OwningExprResult CondResult(Cond.release());
   
   VarDecl *ConditionVar = 0;
-  if (CondVar.get()) {
-    ConditionVar = CondVar.getAs<VarDecl>();
+  if (CondVar) {
+    ConditionVar = cast<VarDecl>(CondVar);
     CondResult = CheckConditionVariable(ConditionVar, WhileLoc, true);
     if (CondResult.isInvalid())
       return StmtError();
@@ -849,7 +849,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
 
 Action::OwningStmtResult
 Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
-                   StmtArg first, FullExprArg second, DeclPtrTy secondVar,
+                   StmtArg first, FullExprArg second, Decl *secondVar,
                    FullExprArg third,
                    SourceLocation RParenLoc, StmtArg body) {
   Stmt *First  = static_cast<Stmt*>(first.get());
@@ -873,8 +873,8 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 
   OwningExprResult SecondResult(second.release());
   VarDecl *ConditionVar = 0;
-  if (secondVar.get()) {
-    ConditionVar = secondVar.getAs<VarDecl>();
+  if (secondVar) {
+    ConditionVar = cast<VarDecl>(secondVar);
     SecondResult = CheckConditionVariable(ConditionVar, ForLoc, true);
     if (SecondResult.isInvalid())
       return StmtError();
@@ -1504,9 +1504,9 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
 
 Action::OwningStmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
-                           SourceLocation RParen, DeclPtrTy Parm,
+                           SourceLocation RParen, Decl *Parm,
                            StmtArg Body) {
-  VarDecl *Var = cast_or_null<VarDecl>(Parm.getAs<Decl>());
+  VarDecl *Var = cast_or_null<VarDecl>(Parm);
   if (Var && Var->isInvalidDecl())
     return StmtError();
   
@@ -1588,11 +1588,11 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
 /// ActOnCXXCatchBlock - Takes an exception declaration and a handler block
 /// and creates a proper catch handler from them.
 Action::OwningStmtResult
-Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclPtrTy ExDecl,
+Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, Decl *ExDecl,
                          StmtArg HandlerBlock) {
   // There's nothing to test that ActOnExceptionDecl didn't already test.
   return Owned(new (Context) CXXCatchStmt(CatchLoc,
-                                  cast_or_null<VarDecl>(ExDecl.getAs<Decl>()),
+                                          cast_or_null<VarDecl>(ExDecl),
                                           HandlerBlock.takeAs<Stmt>()));
 }
 

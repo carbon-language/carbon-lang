@@ -410,9 +410,9 @@ bool Sema::DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl) {
 /// AdjustDeclIfTemplate - If the given decl happens to be a template, reset
 /// the parameter D to reference the templated declaration and return a pointer
 /// to the template declaration. Otherwise, do nothing to D and return null.
-TemplateDecl *Sema::AdjustDeclIfTemplate(DeclPtrTy &D) {
-  if (TemplateDecl *Temp = dyn_cast_or_null<TemplateDecl>(D.getAs<Decl>())) {
-    D = DeclPtrTy::make(Temp->getTemplatedDecl());
+TemplateDecl *Sema::AdjustDeclIfTemplate(Decl *&D) {
+  if (TemplateDecl *Temp = dyn_cast_or_null<TemplateDecl>(D)) {
+    D = Temp->getTemplatedDecl();
     return Temp;
   }
   return 0;
@@ -466,14 +466,14 @@ void Sema::translateTemplateArguments(const ASTTemplateArgsPtr &TemplateArgsIn,
 /// ParamName is the location of the parameter name (if any).
 /// If the type parameter has a default argument, it will be added
 /// later via ActOnTypeParameterDefault.
-Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
-                                         SourceLocation EllipsisLoc,
-                                         SourceLocation KeyLoc,
-                                         IdentifierInfo *ParamName,
-                                         SourceLocation ParamNameLoc,
-                                         unsigned Depth, unsigned Position,
-                                         SourceLocation EqualLoc,
-                                         TypeTy *DefaultArg) {
+Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
+                               SourceLocation EllipsisLoc,
+                               SourceLocation KeyLoc,
+                               IdentifierInfo *ParamName,
+                               SourceLocation ParamNameLoc,
+                               unsigned Depth, unsigned Position,
+                               SourceLocation EqualLoc,
+                               TypeTy *DefaultArg) {
   assert(S->isTemplateParamScope() &&
          "Template type parameter not in template parameter scope!");
   bool Invalid = false;
@@ -500,7 +500,7 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
 
   if (ParamName) {
     // Add the template parameter into the current scope.
-    S->AddDecl(DeclPtrTy::make(Param));
+    S->AddDecl(Param);
     IdResolver.AddDecl(Param);
   }
 
@@ -516,19 +516,19 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     // template-parameter that is not a template parameter pack.
     if (Ellipsis) {
       Diag(EqualLoc, diag::err_template_param_pack_default_arg);
-      return DeclPtrTy::make(Param);
+      return Param;
     }
     
     // Check the template argument itself.
     if (CheckTemplateArgument(Param, DefaultTInfo)) {
       Param->setInvalidDecl();
-      return DeclPtrTy::make(Param);;
+      return Param;
     }
     
     Param->setDefaultArgument(DefaultTInfo, false);
   }
   
-  return DeclPtrTy::make(Param);
+  return Param;
 }
 
 /// \brief Check that the type of a non-type template parameter is
@@ -581,11 +581,11 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
   return QualType();
 }
 
-Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
-                                                    unsigned Depth,
-                                                    unsigned Position,
-                                                    SourceLocation EqualLoc,
-                                                    ExprArg DefaultArg) {
+Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
+                                          unsigned Depth,
+                                          unsigned Position,
+                                          SourceLocation EqualLoc,
+                                          ExprArg DefaultArg) {
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType T = TInfo->getType();
 
@@ -618,7 +618,7 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 
   if (D.getIdentifier()) {
     // Add the template parameter into the current scope.
-    S->AddDecl(DeclPtrTy::make(Param));
+    S->AddDecl(Param);
     IdResolver.AddDecl(Param);
   }
   
@@ -627,26 +627,26 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     TemplateArgument Converted;
     if (CheckTemplateArgument(Param, Param->getType(), Default, Converted)) {
       Param->setInvalidDecl();
-      return DeclPtrTy::make(Param);;
+      return Param;
     }
   
     Param->setDefaultArgument(DefaultArg.takeAs<Expr>(), false);
   }
   
-  return DeclPtrTy::make(Param);
+  return Param;
 }
 
 /// ActOnTemplateTemplateParameter - Called when a C++ template template
 /// parameter (e.g. T in template <template <typename> class T> class array)
 /// has been parsed. S is the current scope.
-Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
-                                                     SourceLocation TmpLoc,
-                                                     TemplateParamsTy *Params,
-                                                     IdentifierInfo *Name,
-                                                     SourceLocation NameLoc,
-                                                     unsigned Depth,
-                                                     unsigned Position,
-                                                     SourceLocation EqualLoc,
+Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
+                                           SourceLocation TmpLoc,
+                                           TemplateParamsTy *Params,
+                                           IdentifierInfo *Name,
+                                           SourceLocation NameLoc,
+                                           unsigned Depth,
+                                           unsigned Position,
+                                           SourceLocation EqualLoc,
                                        const ParsedTemplateArgument &Default) {
   assert(S->isTemplateParamScope() &&
          "Template template parameter not in template parameter scope!");
@@ -660,7 +660,7 @@ Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
   // If the template template parameter has a name, then link the identifier 
   // into the scope and lookup mechanisms.
   if (Name) {
-    S->AddDecl(DeclPtrTy::make(Param));
+    S->AddDecl(Param);
     IdResolver.AddDecl(Param);
   }
 
@@ -677,13 +677,13 @@ Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
     if (DefaultArg.getArgument().getAsTemplate().isNull()) {
       Diag(DefaultArg.getLocation(), diag::err_template_arg_not_class_template)
         << DefaultArg.getSourceRange();
-      return DeclPtrTy::make(Param);
+      return Param;
     }
     
     Param->setDefaultArgument(DefaultArg, false);
   }
   
-  return DeclPtrTy::make(Param);
+  return Param;
 }
 
 /// ActOnTemplateParameterList - Builds a TemplateParameterList that
@@ -693,7 +693,7 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
                                  SourceLocation ExportLoc,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,
-                                 DeclPtrTy *Params, unsigned NumParams,
+                                 Decl **Params, unsigned NumParams,
                                  SourceLocation RAngleLoc) {
   if (ExportLoc.isValid())
     Diag(ExportLoc, diag::warn_template_export_unsupported);
@@ -951,7 +951,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     NewTemplate->setInvalidDecl();
     NewClass->setInvalidDecl();
   }
-  return DeclPtrTy::make(NewTemplate);
+  return NewTemplate;
 }
 
 /// \brief Diagnose the presence of a default template argument on a
@@ -3603,7 +3603,7 @@ static NamedDecl *getPreviousDecl(NamedDecl *ND) {
   return 0;
 }
 
-Sema::DeclResult
+DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        TagUseKind TUK,
                                        SourceLocation KWLoc,
@@ -3991,20 +3991,18 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // context. However, specializations are not found by name lookup.
     CurContext->addDecl(Specialization);
   }
-  return DeclPtrTy::make(Specialization);
+  return Specialization;
 }
 
-Sema::DeclPtrTy
-Sema::ActOnTemplateDeclarator(Scope *S,
+Decl *Sema::ActOnTemplateDeclarator(Scope *S,
                               MultiTemplateParamsArg TemplateParameterLists,
-                              Declarator &D) {
+                                    Declarator &D) {
   return HandleDeclarator(S, D, move(TemplateParameterLists), false);
 }
 
-Sema::DeclPtrTy
-Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
+Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
                                MultiTemplateParamsArg TemplateParameterLists,
-                                      Declarator &D) {
+                                            Declarator &D) {
   assert(getCurFunctionDecl() == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
@@ -4016,16 +4014,16 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 
   Scope *ParentScope = FnBodyScope->getParent();
 
-  DeclPtrTy DP = HandleDeclarator(ParentScope, D,
-                                  move(TemplateParameterLists),
-                                  /*IsFunctionDefinition=*/true);
+  Decl *DP = HandleDeclarator(ParentScope, D,
+                              move(TemplateParameterLists),
+                              /*IsFunctionDefinition=*/true);
   if (FunctionTemplateDecl *FunctionTemplate
-        = dyn_cast_or_null<FunctionTemplateDecl>(DP.getAs<Decl>()))
+        = dyn_cast_or_null<FunctionTemplateDecl>(DP))
     return ActOnStartOfFunctionDef(FnBodyScope,
-                      DeclPtrTy::make(FunctionTemplate->getTemplatedDecl()));
-  if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(DP.getAs<Decl>()))
-    return ActOnStartOfFunctionDef(FnBodyScope, DeclPtrTy::make(Function));
-  return DeclPtrTy();
+                                   FunctionTemplate->getTemplatedDecl());
+  if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(DP))
+    return ActOnStartOfFunctionDef(FnBodyScope, Function);
+  return 0;
 }
 
 /// \brief Strips various properties off an implicit instantiation
@@ -4720,7 +4718,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                                PrevDecl, PrevDecl_TSK,
                                             PrevDecl->getPointOfInstantiation(),
                                                HasNoEffect))
-      return DeclPtrTy::make(PrevDecl);
+      return PrevDecl;
 
     // Even though HasNoEffect == true means that this explicit instantiation
     // has no effect on semantics, we go on to put its syntax in the AST.
@@ -4784,7 +4782,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   if (HasNoEffect) {
     // Set the template specialization kind.
     Specialization->setTemplateSpecializationKind(TSK);
-    return DeclPtrTy::make(Specialization);
+    return Specialization;
   }
 
   // C++ [temp.explicit]p3:
@@ -4821,11 +4819,11 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   // Set the template specialization kind.
   Specialization->setTemplateSpecializationKind(TSK);
-  return DeclPtrTy::make(Specialization);
+  return Specialization;
 }
 
 // Explicit instantiation of a member class of a class template.
-Sema::DeclResult
+DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation ExternLoc,
                                  SourceLocation TemplateLoc,
@@ -4838,16 +4836,16 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   bool Owned = false;
   bool IsDependent = false;
-  DeclPtrTy TagD = ActOnTag(S, TagSpec, Action::TUK_Reference,
-                            KWLoc, SS, Name, NameLoc, Attr, AS_none,
-                            MultiTemplateParamsArg(*this, 0, 0),
-                            Owned, IsDependent);
+  Decl *TagD = ActOnTag(S, TagSpec, Action::TUK_Reference,
+                        KWLoc, SS, Name, NameLoc, Attr, AS_none,
+                        MultiTemplateParamsArg(*this, 0, 0),
+                        Owned, IsDependent);
   assert(!IsDependent && "explicit instantiation of dependent name not yet handled");
 
   if (!TagD)
     return true;
 
-  TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+  TagDecl *Tag = cast<TagDecl>(TagD);
   if (Tag->isEnum()) {
     Diag(TemplateLoc, diag::err_explicit_instantiation_enum)
       << Context.getTypeDeclType(Tag);
@@ -5064,7 +5062,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                                HasNoEffect))
       return true;
     if (HasNoEffect)
-      return DeclPtrTy();
+      return (Decl*) 0;
     
     // Instantiate static data member.
     Prev->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
@@ -5073,7 +5071,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                             /*DefinitionRequired=*/true);
     
     // FIXME: Create an ExplicitInstantiation node?
-    return DeclPtrTy();
+    return (Decl*) 0;
   }
   
   // If the declarator is a template-id, translate the parser's template 
@@ -5171,7 +5169,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // FIXME: We may still want to build some representation of this
     // explicit specialization.
     if (HasNoEffect)
-      return DeclPtrTy();
+      return (Decl*) 0;
   }
 
   Specialization->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
@@ -5202,7 +5200,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                   D.getCXXScopeSpec().isSet());
   
   // FIXME: Create some kind of ExplicitInstantiationDecl here.
-  return DeclPtrTy();
+  return (Decl*) 0;
 }
 
 Sema::TypeResult

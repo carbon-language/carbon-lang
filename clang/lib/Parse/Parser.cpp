@@ -29,7 +29,7 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   Actions.CurScope = 0;
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
-  ObjCImpDecl = DeclPtrTy();
+  ObjCImpDecl = 0;
 
   // Add #pragma handlers. These are removed and destroyed in the
   // destructor.
@@ -408,7 +408,7 @@ void Parser::ParseTranslationUnit() {
 Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
   
-  DeclPtrTy SingleDecl;
+  Decl *SingleDecl = 0;
   switch (Tok.getKind()) {
   case tok::semi:
     if (!getLang().CPlusPlus0x)
@@ -561,7 +561,7 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
+    Decl *TheDecl = Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
     DS.complete(TheDecl);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
@@ -585,7 +585,7 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec, DiagID))
       Diag(AtLoc, DiagID) << PrevSpec;
 
-    DeclPtrTy TheDecl;
+    Decl *TheDecl = 0;
     if (Tok.isObjCAtKeyword(tok::objc_protocol))
       TheDecl = ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
     else
@@ -599,7 +599,7 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
   if (Tok.is(tok::string_literal) && getLang().CPlusPlus &&
       DS.getStorageClassSpec() == DeclSpec::SCS_extern &&
       DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier) {
-    DeclPtrTy TheDecl = ParseLinkage(DS, Declarator::FileContext);
+    Decl *TheDecl = ParseLinkage(DS, Declarator::FileContext);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
@@ -627,7 +627,7 @@ Parser::ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
 /// [C++] function-definition: [C++ 8.4]
 ///         decl-specifier-seq[opt] declarator function-try-block
 ///
-Parser::DeclPtrTy Parser::ParseFunctionDefinition(ParsingDeclarator &D,
+Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
                                      const ParsedTemplateInfo &TemplateInfo) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
@@ -663,7 +663,7 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
     // If we didn't find the '{', bail out.
     if (Tok.isNot(tok::l_brace))
-      return DeclPtrTy();
+      return 0;
   }
 
   // Enter a scope for the function body.
@@ -671,7 +671,7 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.
-  DeclPtrTy Res = TemplateInfo.TemplateParams?
+  Decl *Res = TemplateInfo.TemplateParams?
       Actions.ActOnStartOfFunctionTemplateDef(getCurScope(),
                               Action::MultiTemplateParamsArg(Actions,
                                           TemplateInfo.TemplateParams->data(),
@@ -762,7 +762,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       }
 
       // Ask the actions module to compute the type for this declarator.
-      Action::DeclPtrTy Param =
+      Decl *Param =
         Actions.ActOnParamDeclarator(getCurScope(), ParmDeclarator);
 
       if (Param &&
