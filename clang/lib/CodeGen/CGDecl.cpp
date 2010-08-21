@@ -598,7 +598,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
     // Get the element type.
     const llvm::Type *LElemTy = ConvertTypeForMem(Ty);
     const llvm::Type *LElemPtrTy =
-      llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
+      llvm::PointerType::get(LElemTy, Ty.getAddressSpace());
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 
@@ -703,13 +703,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
       Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
                                     D.getNameAsString());
     
-    bool isVolatile =
-    getContext().getCanonicalType(D.getType()).isVolatileQualified();
+    bool isVolatile = getContext().getCanonicalType(Ty).isVolatileQualified();
     
     // If the initializer was a simple constant initializer, we can optimize it
     // in various ways.
     if (IsSimpleConstantInitializer) {
-      llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(),D.getType(),this);
+      llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), Ty,this);
       assert(Init != 0 && "Wasn't a simple constant init?");
       
       llvm::Value *AlignVal = 
@@ -756,7 +755,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
       EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
     } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      EmitStoreOfScalar(V, Loc, isVolatile, D.getType());
+      EmitStoreOfScalar(V, Loc, isVolatile, Ty);
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, isVolatile);
     } else {
