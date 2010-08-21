@@ -19,3 +19,8 @@ X3(foo)
 // PR3880
 #define X4(...)  AA , ## __VA_ARGS__ BB
 X4()
+
+// RUN: %clang_cc1 %s -E | grep '5: 1'
+// PR7943
+#define X5(x,...) x##,##__VA_ARGS__
+5: X5(1)

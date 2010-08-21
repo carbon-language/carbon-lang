@@ -268,6 +268,13 @@ void TokenLexer::ExpandFunctionArguments() {
       // Remove the paste operator, report use of the extension.
       PP.Diag(ResultToks.back().getLocation(), diag::ext_paste_comma);
       ResultToks.pop_back();
+      
+      // If the comma was right after another paste (e.g. "X##,##__VA_ARGS__"),
+      // then removal of the comma should produce a placemarker token (in C99
+      // terms) which we model by popping off the previous ##, giving us a plain
+      // "X" when __VA_ARGS__ is empty.
+      if (!ResultToks.empty() && ResultToks.back().is(tok::hashhash))
+        ResultToks.pop_back();
     }
     continue;
   }
