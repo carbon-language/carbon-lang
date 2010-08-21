@@ -30,9 +30,10 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
   QualType T = D.getType();
   bool isVolatile = Context.getCanonicalType(T).isVolatileQualified();
 
+  unsigned Alignment = Context.getDeclAlign(&D).getQuantity();
   if (!CGF.hasAggregateLLVMType(T)) {
     llvm::Value *V = CGF.EmitScalarExpr(Init);
-    CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, T);
+    CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, Alignment, T);
   } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
@@ -90,8 +91,9 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     return;
   }
 
+  unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
   RValue RV = EmitReferenceBindingToExpr(Init, &D);
-  EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, T);
+  EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, Alignment, T);
 }
 
 void
@@ -390,10 +392,10 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   }
 
   if (D.getType()->isReferenceType()) {
+    unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
     QualType T = D.getType();
     RValue RV = EmitReferenceBindingToExpr(D.getInit(), &D);
-    EmitStoreOfScalar(RV.getScalarVal(), GV, /*Volatile=*/false, T);
-
+    EmitStoreOfScalar(RV.getScalarVal(), GV, /*Volatile=*/false, Alignment, T);
   } else
     EmitDeclInit(*this, D, GV);
 

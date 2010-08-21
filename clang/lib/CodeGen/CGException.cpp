@@ -1132,8 +1132,11 @@ static void InitCatchParam(CodeGenFunction &CGF,
       CGF.StoreComplexToAddr(CGF.LoadComplexFromAddr(Cast, /*volatile*/ false),
                              ParamAddr, /*volatile*/ false);
     } else {
+      unsigned Alignment =
+        CGF.getContext().getDeclAlign(&CatchParam).getQuantity();
       llvm::Value *ExnLoad = CGF.Builder.CreateLoad(Cast, "exn.scalar");
-      CGF.EmitStoreOfScalar(ExnLoad, ParamAddr, /*volatile*/ false, CatchType);
+      CGF.EmitStoreOfScalar(ExnLoad, ParamAddr, /*volatile*/ false, Alignment,
+                            CatchType);
     }
     return;
   }

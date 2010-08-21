@@ -330,9 +330,12 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
   ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
                                                 InitializedDecl);
 
+
+  unsigned Alignment =
+    CGF.getContext().getTypeAlignInChars(E->getType()).getQuantity();
   if (RV.isScalar())
     CGF.EmitStoreOfScalar(RV.getScalarVal(), ReferenceTemporary,
-                          /*Volatile=*/false, E->getType());
+                          /*Volatile=*/false, Alignment, E->getType());
   else
     CGF.StoreComplexToAddr(RV.getComplexVal(), ReferenceTemporary,
                            /*Volatile=*/false);
@@ -582,10 +585,12 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 }
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
-                                               QualType Ty) {
+                                              unsigned Alignment, QualType Ty) {
   llvm::LoadInst *Load = Builder.CreateLoad(Addr, "tmp");
   if (Volatile)
     Load->setVolatile(true);
+  if (Alignment)
+    Load->setAlignment(Alignment);
 
   // Bool can have different representation in memory than in registers.
   llvm::Value *V = Load;
@@ -597,14 +602,18 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
 }
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
-                                        bool Volatile, QualType Ty) {
+                                        bool Volatile, unsigned Alignment,
+                                        QualType Ty) {
 
   if (Ty->isBooleanType()) {
     // Bool can have different representation in memory than in registers.
     const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
     Value = Builder.CreateIntCast(Value, DstPtr->getElementType(), false);
   }
-  Builder.CreateStore(Value, Addr, Volatile);
+
+  llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
+  if (Alignment)
+    Store->setAlignment(Alignment);
 }
 
 /// EmitLoadOfLValue - Given an expression that represents a value lvalue, this
@@ -626,9 +635,11 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
     // Simple scalar l-value.
     //
     // FIXME: We shouldn't have to use isSingleValueType here.
+    //
+    // FIXME: Pass alignment!
     if (EltTy->isSingleValueType())
       return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
-                                          ExprType));
+                                          /*Alignment=*/0, ExprType));
 
     assert(ExprType->isFunctionType() && "Unknown scalar value");
     return RValue::get(Ptr);
@@ -838,8 +849,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   }
 
   assert(Src.isScalar() && "Can't emit an agg store with this method");
+  // FIXME: Pass alignment.
   EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(),
-                    Dst.isVolatileQualified(), Ty);
+                    Dst.isVolatileQualified(), /*Alignment=*/0, Ty);
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,

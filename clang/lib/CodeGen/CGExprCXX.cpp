@@ -516,10 +516,13 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
   
   const Expr *Init = E->getConstructorArg(0);
   QualType AllocType = E->getAllocatedType();
-  
+
+  unsigned Alignment =
+    CGF.getContext().getTypeAlignInChars(AllocType).getQuantity();
   if (!CGF.hasAggregateLLVMType(AllocType)) 
     CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
-                          AllocType.isVolatileQualified(), AllocType);
+                          AllocType.isVolatileQualified(), Alignment,
+                          AllocType);
   else if (AllocType->isAnyComplexType())
     CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
                                 AllocType.isVolatileQualified());

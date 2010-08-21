@@ -854,7 +854,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         // reference.
       } else {
         // Load scalar value from indirect argument.
-        V = EmitLoadOfScalar(V, false, Ty);
+        unsigned Alignment = getContext().getTypeAlignInChars(Ty).getQuantity();
+        V = EmitLoadOfScalar(V, false, Alignment, Ty);
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
           // This must be a promotion, for something like
           // "void a(x) short x; {..."
@@ -930,7 +931,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       
       // Match to what EmitParmDecl is expecting for this type.
       if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
-        V = EmitLoadOfScalar(V, false, Ty);
+        V = EmitLoadOfScalar(V, false, AlignmentToUse, Ty);
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
           // This must be a promotion, for something like
           // "void a(x) short x; {..."
@@ -987,7 +988,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
   const ABIArgInfo &RetAI = FI.getReturnInfo();
 
   switch (RetAI.getKind()) {
-  case ABIArgInfo::Indirect:
+  case ABIArgInfo::Indirect: {
+    unsigned Alignment = getContext().getTypeAlignInChars(RetTy).getQuantity();
     if (RetTy->isAnyComplexType()) {
       ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
       StoreComplexToAddr(RT, CurFn->arg_begin(), false);
@@ -995,9 +997,10 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
       // Do nothing; aggregrates get evaluated directly into the destination.
     } else {
       EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(),
-                        false, RetTy);
+                        false, Alignment, RetTy);
     }
     break;
+  }
 
   case ABIArgInfo::Extend:
   case ABIArgInfo::Direct:
@@ -1080,7 +1083,8 @@ RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
   if (hasAggregateLLVMType(ArgType))
     return RValue::getAggregate(Local);
 
-  return RValue::get(EmitLoadOfScalar(Local, false, ArgType));
+  unsigned Alignment = getContext().getDeclAlign(Param).getQuantity();
+  return RValue::get(EmitLoadOfScalar(Local, false, Alignment, ArgType));
 }
 
 RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
@@ -1140,19 +1144,23 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     const ABIArgInfo &ArgInfo = info_it->info;
     RValue RV = I->first;
 
+    unsigned Alignment =
+      getContext().getTypeAlignInChars(I->second).getQuantity();
     switch (ArgInfo.getKind()) {
-    case ABIArgInfo::Indirect:
+    case ABIArgInfo::Indirect: {
       if (RV.isScalar() || RV.isComplex()) {
         // Make a temporary alloca to pass the argument.
         Args.push_back(CreateMemTemp(I->second));
         if (RV.isScalar())
-          EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false, I->second);
+          EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false,
+                            Alignment, I->second);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false);
       } else {
         Args.push_back(RV.getAggregateAddr());
       }
       break;
+    }
 
     case ABIArgInfo::Ignore:
       break;
@@ -1173,7 +1181,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
         SrcPtr = CreateMemTemp(I->second, "coerce");
-        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, I->second);
+        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, Alignment,
+                          I->second);
       } else if (RV.isComplex()) {
         SrcPtr = CreateMemTemp(I->second, "coerce");
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
@@ -1294,12 +1303,14 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     CI->setName("call");
 
   switch (RetAI.getKind()) {
-  case ABIArgInfo::Indirect:
+  case ABIArgInfo::Indirect: {
+    unsigned Alignment = getContext().getTypeAlignInChars(RetTy).getQuantity();
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
     if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(Args[0]);
-    return RValue::get(EmitLoadOfScalar(Args[0], false, RetTy));
+    return RValue::get(EmitLoadOfScalar(Args[0], false, Alignment, RetTy));
+  }
 
   case ABIArgInfo::Ignore:
     // If we are ignoring an argument that had a result, make sure to
@@ -1347,11 +1358,12 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     }
     CreateCoercedStore(CI, StorePtr, DestIsVolatile, *this);
     
+    unsigned Alignment = getContext().getTypeAlignInChars(RetTy).getQuantity();
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(DestPtr, false));
     if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(DestPtr);
-    return RValue::get(EmitLoadOfScalar(DestPtr, false, RetTy));
+    return RValue::get(EmitLoadOfScalar(DestPtr, false, Alignment, RetTy));
   }
 
   case ABIArgInfo::Expand:

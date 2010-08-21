@@ -497,6 +497,7 @@ namespace {
 void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
                                             SpecialInitFn *SpecialInit) {
   QualType Ty = D.getType();
+  unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
   bool isByRef = D.hasAttr<BlocksAttr>();
   bool needsDispose = false;
   CharUnits Align = CharUnits::Zero();
@@ -752,10 +753,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
       }
     } else if (Ty->isReferenceType()) {
       RValue RV = EmitReferenceBindingToExpr(Init, &D);
-      EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
+      EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Alignment, Ty);
     } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      EmitStoreOfScalar(V, Loc, isVolatile, Ty);
+      EmitStoreOfScalar(V, Loc, isVolatile, Alignment, Ty);
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, isVolatile);
     } else {
@@ -828,7 +829,8 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     DeclPtr = CreateMemTemp(Ty, D.getName() + ".addr");
 
     // Store the initial value into the alloca.
-    EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Ty);
+    unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
+    EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Alignment, Ty);
   }
   Arg->setName(D.getName());
 
