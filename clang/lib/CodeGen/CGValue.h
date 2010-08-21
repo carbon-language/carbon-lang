@@ -154,7 +154,7 @@ class LValue {
 
   Expr *BaseIvarExp;
 private:
-  void SetQualifiers(Qualifiers Quals) {
+  void Initialize(Qualifiers Quals) {
     this->Quals = Quals;
     
     // FIXME: Convenient place to set objc flags to 0. This should really be
@@ -247,7 +247,7 @@ public:
     LValue R;
     R.LVType = Simple;
     R.V = V;
-    R.SetQualifiers(Quals);
+    R.Initialize(Quals);
     return R;
   }
 
@@ -257,7 +257,7 @@ public:
     R.LVType = VectorElt;
     R.V = Vec;
     R.VectorIdx = Idx;
-    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
@@ -267,7 +267,7 @@ public:
     R.LVType = ExtVectorElt;
     R.V = Vec;
     R.VectorElts = Elts;
-    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
@@ -283,7 +283,7 @@ public:
     R.LVType = BitField;
     R.V = BaseValue;
     R.BitFieldInfo = &Info;
-    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
@@ -295,7 +295,7 @@ public:
     LValue R;
     R.LVType = PropertyRef;
     R.PropertyRefExpr = E;
-    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
@@ -304,7 +304,7 @@ public:
     LValue R;
     R.LVType = KVCRef;
     R.KVCRefExpr = E;
-    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 };
