@@ -1041,10 +1041,10 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     return;
   
   if (isa<ObjCIvarRefExpr>(E)) {
-    LV.SetObjCIvar(LV, true);
+    LV.setObjCIvar(true);
     ObjCIvarRefExpr *Exp = cast<ObjCIvarRefExpr>(const_cast<Expr*>(E));
     LV.setBaseIvarExp(Exp->getBase());
-    LV.SetObjCArray(LV, E->getType()->isArrayType());
+    LV.setObjCArray(E->getType()->isArrayType());
     return;
   }
   
@@ -1052,11 +1052,11 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
       if ((VD->isBlockVarDecl() && !VD->hasLocalStorage()) ||
           VD->isFileVarDecl()) {
-        LV.SetGlobalObjCRef(LV, true);
-        LV.SetThreadLocalRef(LV, VD->isThreadSpecified());
+        LV.setGlobalObjCRef(true);
+        LV.setThreadLocalRef(VD->isThreadSpecified());
       }
     }
-    LV.SetObjCArray(LV, E->getType()->isArrayType());
+    LV.setObjCArray(E->getType()->isArrayType());
     return;
   }
   
@@ -1074,7 +1074,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
       if (ExpTy->isPointerType())
         ExpTy = ExpTy->getAs<PointerType>()->getPointeeType();
       if (ExpTy->isRecordType())
-        LV.SetObjCIvar(LV, false); 
+        LV.setObjCIvar(false); 
     }
     return;
   }
@@ -1093,11 +1093,11 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     if (LV.isObjCIvar() && !LV.isObjCArray()) 
       // Using array syntax to assigning to what an ivar points to is not 
       // same as assigning to the ivar itself. {id *Names;} Names[i] = 0;
-      LV.SetObjCIvar(LV, false); 
+      LV.setObjCIvar(false); 
     else if (LV.isGlobalObjCRef() && !LV.isObjCArray())
       // Using array syntax to assigning to what global points to is not 
       // same as assigning to the global itself. {id *G;} G[i] = 0;
-      LV.SetGlobalObjCRef(LV, false);
+      LV.setGlobalObjCRef(false);
     return;
   }
   
@@ -1105,7 +1105,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
     // We don't know if member is an 'ivar', but this flag is looked at
     // only in the context of LV.isObjCIvar().
-    LV.SetObjCArray(LV, E->getType()->isArrayType());
+    LV.setObjCArray(E->getType()->isArrayType());
     return;
   }
 }

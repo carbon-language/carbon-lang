@@ -184,15 +184,26 @@ public:
   }
 
   bool isObjCIvar() const { return Ivar; }
+  void setObjCIvar(bool Value) { Ivar = Value; }
+
   bool isObjCArray() const { return ObjIsArray; }
+  void setObjCArray(bool Value) { ObjIsArray = Value; }
 
   bool isNonGC () const { return NonGC; }
   void setNonGC(bool Value) { NonGC = Value; }
 
   bool isGlobalObjCRef() const { return GlobalObjCRef; }
+  void setGlobalObjCRef(bool Value) { GlobalObjCRef = Value; }
+
   bool isThreadLocalRef() const { return ThreadLocalRef; }
-  bool isObjCWeak() const { return Quals.getObjCGCAttr() == Qualifiers::Weak; }
-  bool isObjCStrong() const { return Quals.getObjCGCAttr() == Qualifiers::Strong; }
+  void setThreadLocalRef(bool Value) { ThreadLocalRef = Value;}
+
+  bool isObjCWeak() const {
+    return Quals.getObjCGCAttr() == Qualifiers::Weak;
+  }
+  bool isObjCStrong() const {
+    return Quals.getObjCGCAttr() == Qualifiers::Strong;
+  }
   
   Expr *getBaseIvarExp() const { return BaseIvarExp; }
   void setBaseIvarExp(Expr *V) { BaseIvarExp = V; }
@@ -203,19 +214,6 @@ public:
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
 
   unsigned getAlignment() const { return Alignment; }
-
-  static void SetObjCIvar(LValue& R, bool iValue) {
-    R.Ivar = iValue;
-  }
-  static void SetObjCArray(LValue& R, bool iValue) {
-    R.ObjIsArray = iValue;
-  }
-  static void SetGlobalObjCRef(LValue& R, bool iValue) {
-    R.GlobalObjCRef = iValue;
-  }
-  static void SetThreadLocalRef(LValue& R, bool iValue) {
-    R.ThreadLocalRef = iValue;
-  }
 
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
