@@ -154,7 +154,7 @@ Variable::IsInScope (StackFrame *frame)
                 SymbolContext variable_sc;
                 CalculateSymbolContext (&variable_sc);
                 if (variable_sc.function && variable_sc.block)
-                    return variable_sc.block->ContainsBlockWithID (frame_block->GetID());
+                    return variable_sc.block->FindBlockByID(frame_block->GetID()) != NULL;
             }
         }
         break;

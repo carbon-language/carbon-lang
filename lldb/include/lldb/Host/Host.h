@@ -66,32 +66,16 @@ public:
     ///     get called if the child process exits.
     ///
     /// @return
-    ///     A unique handle to the process monitoring information that
-    ///     can be used to stop monitoring a child process.
+    ///     A thread handle that can be used to cancel the thread that
+    ///     was spawned to monitor \a pid.
     ///
     /// @see static void Host::StopMonitoringChildProcess (uint32_t)
     //------------------------------------------------------------------
-    static uint32_t
+    static lldb::thread_t
     StartMonitoringChildProcess (MonitorChildProcessCallback callback,
                                  void *callback_baton,
                                  lldb::pid_t pid,
                                  bool monitor_signals);
-
-    //------------------------------------------------------------------
-    /// Stop monitoring a child process.
-    ///
-    /// @param[in] handle
-    ///     A unique handle returned from a previous call to
-    ///     Host::StartMonitoringChildProcess(...).
-    ///
-    /// @return
-    ///     \b true if the the handle was found and disabled, \b false
-    ///     if the monitor map with handle of \a handle was not found.
-    ///
-    /// @see static int Host::StartMonitoringChildProcess (MonitorChildProcessCallback *, void *, lldb::pid_t, bool)
-    //------------------------------------------------------------------
-    static bool
-    StopMonitoringChildProcess (uint32_t handle);
 
     //------------------------------------------------------------------
     /// Get the host page size.

@@ -785,8 +785,7 @@ SymbolFileDWARF::ParseCompileUnitAtIndex(uint32_t cu_idx)
 static void
 AddRangesToBlock
 (
-    BlockList& blocks,
-    lldb::user_id_t blockID,
+    Block& block,
     DWARFDebugRanges::RangeList& ranges,
     addr_t block_base_addr
 )
@@ -796,7 +795,7 @@ AddRangesToBlock
     const DWARFDebugRanges::Range *debug_range;
     for (range_idx = 0; (debug_range = ranges.RangeAtIndex(range_idx)) != NULL; range_idx++)
     {
-        blocks.AddRange(blockID, debug_range->begin_offset, debug_range->end_offset);
+        block.AddRange(debug_range->begin_offset, debug_range->end_offset);
     }
 }
 
@@ -1129,7 +1128,7 @@ size_t
 SymbolFileDWARF::ParseFunctionBlocks
 (
     const SymbolContext& sc,
-    lldb::user_id_t parentBlockID,
+    Block *parent_block,
     const DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *die,
     addr_t subprogram_low_pc,
@@ -1151,18 +1150,31 @@ SymbolFileDWARF::ParseFunctionBlocks
                 DWARFDebugRanges::RangeList ranges;
                 const char *name = NULL;
                 const char *mangled_name = NULL;
-                BlockList& blocks = sc.function->GetBlocks(false);
+                Block *block = NULL;
+                if (tag != DW_TAG_subprogram)
+                {
+                    BlockSP block_sp(new Block (die->GetOffset()));
+                    parent_block->AddChild(block_sp);
+                    block = block_sp.get();
+                }
+                else
+                {
+                    block = parent_block;
+                }
 
-                lldb::user_id_t blockID = blocks.AddChild(parentBlockID, die->GetOffset());
                 int decl_file = 0;
                 int decl_line = 0;
                 int decl_column = 0;
                 int call_file = 0;
                 int call_line = 0;
                 int call_column = 0;
-                if (die->GetDIENamesAndRanges(this, dwarf_cu, name, mangled_name, ranges, 
-                                              decl_file, decl_line, decl_column,
-                                              call_file, call_line, call_column))
+                if (die->GetDIENamesAndRanges (this, 
+                                               dwarf_cu, 
+                                               name, 
+                                               mangled_name, 
+                                               ranges, 
+                                               decl_file, decl_line, decl_column,
+                                               call_file, call_line, call_column))
                 {
                     if (tag == DW_TAG_subprogram)
                     {
@@ -1185,7 +1197,7 @@ SymbolFileDWARF::ParseFunctionBlocks
                         }
                     }
                     
-                    AddRangesToBlock (blocks, blockID, ranges, subprogram_low_pc);
+                    AddRangesToBlock (*block, ranges, subprogram_low_pc);
 
                     if (tag != DW_TAG_subprogram && (name != NULL || mangled_name != NULL))
                     {
@@ -1199,15 +1211,20 @@ SymbolFileDWARF::ParseFunctionBlocks
                             call_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(call_file), 
                                                           call_line, call_column));
 
-                        blocks.SetInlinedFunctionInfo(blockID, name, mangled_name, decl_ap.get(), call_ap.get());
+                        block->SetInlinedFunctionInfo (name, mangled_name, decl_ap.get(), call_ap.get());
                     }
 
                     ++blocks_added;
 
                     if (parse_children && die->HasChildren())
                     {
-                        blocks_added += ParseFunctionBlocks(sc, blockID, dwarf_cu, die->GetFirstChild(), 
-                                                            subprogram_low_pc, true, true);
+                        blocks_added += ParseFunctionBlocks (sc, 
+                                                             block, 
+                                                             dwarf_cu, 
+                                                             die->GetFirstChild(), 
+                                                             subprogram_low_pc, 
+                                                             true, 
+                                                             true);
                     }
                 }
             }
@@ -1582,12 +1599,12 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
 
                             if (resolve_scope & eSymbolContextBlock)
                             {
-                                BlockList& blocks = sc.function->GetBlocks(true);
+                                Block& block = sc.function->GetBlock (true);
 
                                 if (block_die != NULL)
-                                    sc.block = blocks.GetBlockByID(block_die->GetOffset());
+                                    sc.block = block.FindBlockByID (block_die->GetOffset());
                                 else
-                                    sc.block = blocks.GetBlockByID(function_die->GetOffset());
+                                    sc.block = block.FindBlockByID (function_die->GetOffset());
                                 if (sc.block)
                                     resolved |= eSymbolContextBlock;
                             }
@@ -1674,12 +1691,12 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
 
                                             if (sc.function != NULL)
                                             {
-                                                BlockList& blocks = sc.function->GetBlocks(true);
+                                                Block& block = sc.function->GetBlock (true);
 
                                                 if (block_die != NULL)
-                                                    sc.block = blocks.GetBlockByID(block_die->GetOffset());
+                                                    sc.block = block.FindBlockByID (block_die->GetOffset());
                                                 else
-                                                    sc.block = blocks.GetBlockByID(function_die->GetOffset());
+                                                    sc.block = block.FindBlockByID (function_die->GetOffset());
                                             }
                                         }
                                     }
@@ -3126,7 +3143,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                 }
                 else if (sc.function != NULL)
                 {
-                    symbol_context_scope = sc.function->GetBlocks(true).GetBlockByID(sc_parent_die->GetOffset());
+                    symbol_context_scope = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
                     if (symbol_context_scope == NULL)
                         symbol_context_scope = sc.function;
                 }
@@ -3235,7 +3252,7 @@ SymbolFileDWARF::ParseFunctionBlocks (const SymbolContext &sc)
         const DWARFDebugInfoEntry *function_die = dwarf_cu->GetDIEPtr(function_die_offset);
         if (function_die)
         {
-            ParseFunctionBlocks(sc, Block::RootID, dwarf_cu, function_die, LLDB_INVALID_ADDRESS, false, true);
+            ParseFunctionBlocks(sc, &sc.function->GetBlock (false), dwarf_cu, function_die, LLDB_INVALID_ADDRESS, false, true);
         }
     }
 
@@ -3430,7 +3447,7 @@ SymbolFileDWARF::ParseVariableDIE
             }
             else if (sc.function != NULL)
             {
-                symbol_context_scope = sc.function->GetBlocks(true).GetBlockByID(sc_parent_die->GetOffset());
+                symbol_context_scope = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
                 if (symbol_context_scope == NULL)
                     symbol_context_scope = sc.function;
             }
@@ -3495,11 +3512,14 @@ SymbolFileDWARF::ParseVariables
         if (sc.function != NULL)
         {
             // Check to see if we already have parsed the variables for the given scope
-            variables = sc.function->GetBlocks(true).GetVariableList(sc_parent_die->GetOffset(), false, false);
+            
+            Block *block = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
+            assert (block != NULL);
+            variables = block->GetVariableList(false, true);
             if (variables.get() == NULL)
             {
                 variables.reset(new VariableList());
-                sc.function->GetBlocks(true).SetVariableList(sc_parent_die->GetOffset(), variables);
+                block->SetVariableList(variables);
             }
         }
         else

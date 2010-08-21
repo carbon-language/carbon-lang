@@ -508,101 +508,47 @@ Host::ResolveExecutableInBundle (FileSpec *file)
 
 struct MonitorInfo
 {
-    uint32_t handle;
-    pthread_t thread;
-    Host::MonitorChildProcessCallback callback;
-    void *callback_baton;
-    bool monitor_signals;
+    lldb::pid_t pid;                            // The process ID to monitor
+    Host::MonitorChildProcessCallback callback; // The callback function to call when "pid" exits or signals
+    void *callback_baton;                       // The callback baton for the callback function
+    bool monitor_signals;                       // If true, call the callback when "pid" gets signaled.
 };
-
-typedef std::multimap<lldb::pid_t, MonitorInfo> MonitorInfoMap;
-static pthread_mutex_t g_monitor_map_mutex = PTHREAD_MUTEX_INITIALIZER;
-typedef lldb::SharedPtr<MonitorInfoMap>::Type MonitorInfoMapSP;
-
-static MonitorInfoMapSP&
-GetMonitorMap (bool can_create)
-{
-    static MonitorInfoMapSP g_monitor_map_sp;
-    if (can_create && g_monitor_map_sp.get() == NULL)
-    {
-        g_monitor_map_sp.reset (new MonitorInfoMap);
-    }
-    return g_monitor_map_sp;
-}
-
-static Predicate<bool>&
-GetChildProcessPredicate ()
-{
-    static Predicate<bool> g_has_child_processes;
-    return g_has_child_processes;
-}
 
 static void *
 MonitorChildProcessThreadFunction (void *arg);
 
-static pthread_t g_monitor_thread;
-
-uint32_t
+lldb::thread_t
 Host::StartMonitoringChildProcess
 (
-    MonitorChildProcessCallback callback,
+    Host::MonitorChildProcessCallback callback,
     void *callback_baton,
     lldb::pid_t pid,
     bool monitor_signals
 )
 {
-    static uint32_t g_handle = 0;
+    
+    lldb::thread_t thread = LLDB_INVALID_HOST_THREAD;
     if (callback)
     {
-        Mutex::Locker locker(&g_monitor_map_mutex);
-        if (!g_monitor_thread)
-        {
-            lldb::pid_t wait_pid = -1;
-            g_monitor_thread = ThreadCreate ("<lldb.host.wait4>",
-                                             MonitorChildProcessThreadFunction,
-                                             &wait_pid,
-                                             NULL);
-            if (g_monitor_thread)
-            {
-                //Host::ThreadDetach (g_monitor_thread, NULL);
-            }
-        }
-
-        if (g_monitor_thread)
-        {
-            MonitorInfo info = { ++g_handle, 0, callback, callback_baton, monitor_signals };
-            MonitorInfoMapSP monitor_map_sp (GetMonitorMap (true));
-            if (monitor_map_sp)
-            {
-                monitor_map_sp->insert(std::make_pair(pid, info));
-                GetChildProcessPredicate ().SetValue (true, eBroadcastOnChange);
-                return info.handle;
-            }
-        }
+        std::auto_ptr<MonitorInfo> info_ap(new MonitorInfo);
+            
+        info_ap->pid = pid;
+        info_ap->callback = callback;
+        info_ap->callback_baton = callback_baton;
+        info_ap->monitor_signals = monitor_signals;
+        
+        char thread_name[256];
+        ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%i)>", pid);
+        thread = ThreadCreate (thread_name,
+                               MonitorChildProcessThreadFunction,
+                               info_ap.get(),
+                               NULL);
+                               
+        if (thread != LLDB_INVALID_HOST_THREAD)
+            info_ap.release();
     }
-    return 0;
+    return thread;
 }
-
-bool
-Host::StopMonitoringChildProcess (uint32_t handle)
-{
-    Mutex::Locker locker(&g_monitor_map_mutex);
-    MonitorInfoMapSP monitor_map_sp (GetMonitorMap (false));
-    if (monitor_map_sp)
-    {
-        MonitorInfoMap::iterator pos, end = monitor_map_sp->end();
-        for (pos = monitor_map_sp->end(); pos != end; ++pos)
-        {
-            if (pos->second.handle == handle)
-            {
-                monitor_map_sp->erase(pos);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 
 //------------------------------------------------------------------
 // Scoped class that will disable thread canceling when it is
@@ -643,64 +589,37 @@ MonitorChildProcessThreadFunction (void *arg)
     if (log)
         log->Printf ("%s (arg = %p) thread starting...", function, arg);
 
-    const lldb::pid_t wait_pid = -1;//*((pid_t*)arg);
+    MonitorInfo *info = (MonitorInfo *)arg;
+
+    const Host::MonitorChildProcessCallback callback = info->callback;
+    void * const callback_baton = info->callback_baton;
+    const lldb::pid_t pid = info->pid;
+    const bool monitor_signals = info->monitor_signals;
+
+    delete info;
+
     int status = -1;
     const int options = 0;
     struct rusage *rusage = NULL;
     while (1)
     {
         if (log)
-            log->Printf("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p)...", function, wait_pid, options, rusage);
+            log->Printf("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p)...", function, pid, options, rusage);
 
         // Wait for all child processes
         ::pthread_testcancel ();
-        lldb::pid_t pid = ::wait4 (wait_pid, &status, options, rusage);
+        const lldb::pid_t wait_pid = ::wait4 (pid, &status, options, rusage);
         ::pthread_testcancel ();
 
-        if (pid < 0)
+        if (wait_pid == -1)
         {
-            // No child processes to watch wait for the mutex to be cleared
-
-            // Scope for "locker"
-            {
-                ScopedPThreadCancelDisabler pthread_cancel_disabler;
-
-                // First clear out all monitor entries since we have no processes
-                // to watch.
-                Mutex::Locker locker(&g_monitor_map_mutex);
-                // Since we don't have any child processes, we can safely clear
-                // anyone with a valid pid.
-                MonitorInfoMapSP monitor_map_sp(GetMonitorMap (false));
-                if (monitor_map_sp)
-                {
-                    MonitorInfoMap::iterator pos = monitor_map_sp->begin();
-                    while (pos != monitor_map_sp->end())
-                    {
-                        // pid value of 0 and -1 are special (see man page on wait4...)
-                        if (pos->first > 0)
-                        {
-                            MonitorInfoMap::iterator next_pos = pos; ++next_pos;
-                            monitor_map_sp->erase (pos, next_pos);
-                            pos = next_pos;
-                        }
-                        else
-                            ++pos;
-                    }
-                }
-            }
-
-            if (log)
-                log->Printf("%s no child processes, wait for some...", function);
-            GetChildProcessPredicate ().SetValue (false, eBroadcastNever);
-            ::pthread_testcancel();
-            GetChildProcessPredicate ().WaitForValueEqualTo (true);
-            if (log)
-                log->Printf("%s resuming monitoring of child processes.", function);
-
+            if (errno == EINTR)
+                continue;
+            else
+                break;
         }
-        else
+        else if (wait_pid == pid)
         {
-            ScopedPThreadCancelDisabler pthread_cancel_disabler;
             bool exited = false;
             int signal = 0;
             int exit_status = 0;
@@ -728,80 +647,47 @@ MonitorChildProcessThreadFunction (void *arg)
                 status_cstr = "(???)";
             }
 
-            if (log)
-                log->Printf ("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_state = %i",
-                             function,
-                             wait_pid,
-                             options,
-                             rusage,
-                             pid,
-                             status,
-                             status_cstr,
-                             signal,
-                             exit_status);
-
-            // Scope for mutex locker
+            // Scope for pthread_cancel_disabler
             {
-                // Notify anyone listening to this process
-                Mutex::Locker locker(&g_monitor_map_mutex);
-                MonitorInfoMapSP monitor_map_sp(GetMonitorMap (false));
-                if (monitor_map_sp)
+                ScopedPThreadCancelDisabler pthread_cancel_disabler;
+
+                if (log)
+                    log->Printf ("%s ::wait4 (pid = %i, &status, options = %i, rusage = %p) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_state = %i",
+                                 function,
+                                 wait_pid,
+                                 options,
+                                 rusage,
+                                 pid,
+                                 status,
+                                 status_cstr,
+                                 signal,
+                                 exit_status);
+
+                if (exited || (signal != 0 && monitor_signals))
                 {
-                    std::pair<MonitorInfoMap::iterator, MonitorInfoMap::iterator> range;
-                    range = monitor_map_sp->equal_range(pid);
-                    MonitorInfoMap::iterator pos;
-                    for (pos = range.first; pos != range.second; ++pos)
-                    {
-                        if (exited || (signal != 0 && pos->second.monitor_signals))
-                        {
-                            bool callback_return = pos->second.callback (pos->second.callback_baton, pid, signal, exit_status);
-
-                            if (exited || callback_return)
-                            {
-                                // Make this entry as needing to be removed by
-                                // setting its handle to zero
-                                pos->second.handle = 0;
-                            }
-                        }
-                    }
-
-                    // Remove any entries that requested to be removed or any
-                    // entries for child processes that did exit. We know this
-                    // because we changed the handles to an invalid value.
-                    pos = monitor_map_sp->begin();
-                    while (pos != monitor_map_sp->end())
-                    {
-                        if (pos->second.handle == 0)
-                        {
-                            MonitorInfoMap::iterator next_pos = pos; ++next_pos;
-                            monitor_map_sp->erase (pos, next_pos);
-                            pos = next_pos;
-                        }
-                        else
-                            ++pos;
-                    }
+                    bool callback_return = callback (callback_baton, pid, signal, exit_status);
+                    
+                    // If our process exited, then this thread should exit
+                    if (exited)
+                        break;
+                    // If the callback returns true, it means this process should
+                    // exit
+                    if (callback_return)
+                        break;
                 }
             }
         }
     }
 
     if (log)
-        log->Printf ("ProcessMacOSX::%s (arg = %p) thread exiting...", __FUNCTION__, arg);
+        log->Printf ("%s (arg = %p) thread exiting...", __FUNCTION__, arg);
 
-    g_monitor_thread = NULL;
     return NULL;
 }
 
 void
 Host::WillTerminate ()
 {
-    if (g_monitor_thread != NULL)
-    {
-        ThreadCancel (g_monitor_thread, NULL);
-        GetChildProcessPredicate ().SetValue (true, eBroadcastAlways);
-        ThreadJoin(g_monitor_thread, NULL, NULL);
-        g_monitor_thread = NULL;
-    }
 }
 
 uint32_t

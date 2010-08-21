@@ -324,7 +324,7 @@ protected:
     lldb::ByteOrder m_byte_order;
     GDBRemoteCommunication m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
-    uint32_t m_debugserver_monitor;
+    lldb::thread_t m_debugserver_thread;
     StringExtractor m_last_stop_packet;
     GDBRemoteDynamicRegisterInfo m_register_info;
     lldb_private::Broadcaster m_async_broadcaster;

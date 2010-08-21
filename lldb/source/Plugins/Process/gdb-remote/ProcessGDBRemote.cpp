@@ -110,7 +110,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_byte_order (eByteOrderHost),
     m_gdb_comm(),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
-    m_debugserver_monitor (0),
+    m_debugserver_thread (LLDB_INVALID_HOST_THREAD),
     m_last_stop_packet (),
     m_register_info (),
     m_async_broadcaster ("lldb.process.gdb-remote.async-broadcaster"),
@@ -134,6 +134,13 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
 //----------------------------------------------------------------------
 ProcessGDBRemote::~ProcessGDBRemote()
 {
+    if (m_debugserver_thread != LLDB_INVALID_HOST_THREAD)
+    {
+        Host::ThreadCancel (m_debugserver_thread, NULL);
+        thread_result_t thread_result;
+        Host::ThreadJoin (m_debugserver_thread, &thread_result, NULL);
+        m_debugserver_thread = LLDB_INVALID_HOST_THREAD;
+    }
     //  m_mach_process.UnregisterNotificationCallbacks (this);
     Clear();
 }
@@ -535,11 +542,11 @@ ProcessGDBRemote::ConnectToDebugserver (const char *host_port)
         m_gdb_comm.SendAck('+');
 
         if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
-            m_debugserver_monitor = Host::StartMonitoringChildProcess (MonitorDebugserverProcess,
-                                                                       (void*)(intptr_t)GetID(),    // Pass the inferior pid in the thread argument (which is a void *)
-                                                                       m_debugserver_pid,
-                                                                       false);
-
+            m_debugserver_thread = Host::StartMonitoringChildProcess (MonitorDebugserverProcess,
+                                                                      this,
+                                                                      m_debugserver_pid,
+                                                                      false);
+        
         StringExtractorGDBRemote response;
         if (m_gdb_comm.SendPacketAndWaitForResponse("QStartNoAckMode", response, 1, false))
         {
@@ -1907,47 +1914,42 @@ ProcessGDBRemote::MonitorDebugserverProcess
     // "debugserver_pid" argument passed in is the process ID for
     // debugserver that we are tracking...
 
-    lldb::pid_t gdb_remote_pid = (lldb::pid_t)(intptr_t)callback_baton;
-    TargetSP target_sp(Debugger::FindTargetWithProcessID (gdb_remote_pid));
-    if (target_sp)
+    ProcessGDBRemote *process = (ProcessGDBRemote *)callback_baton;
+    
+    if (process)
     {
-        ProcessSP process_sp (target_sp->GetProcessSP());
-        if (process_sp)
+        // Sleep for a half a second to make sure our inferior process has
+        // time to set its exit status before we set it incorrectly when
+        // both the debugserver and the inferior process shut down.
+        usleep (500000);
+        // If our process hasn't yet exited, debugserver might have died.
+        // If the process did exit, the we are reaping it.
+        if (process->GetState() != eStateExited)
         {
-            // Sleep for a half a second to make sure our inferior process has
-            // time to set its exit status before we set it incorrectly when
-            // both the debugserver and the inferior process shut down.
-            usleep (500000);
-            // If our process hasn't yet exited, debugserver might have died.
-            // If the process did exit, the we are reaping it.
-            if (process_sp->GetState() != eStateExited)
+            char error_str[1024];
+            if (signo)
             {
-                char error_str[1024];
-                if (signo)
-                {
-                    const char *signal_cstr = process_sp->GetUnixSignals().GetSignalAsCString (signo);
-                    if (signal_cstr)
-                        ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %s", signal_cstr);
-                    else
-                        ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %i", signo);
-                }
+                const char *signal_cstr = process->GetUnixSignals().GetSignalAsCString (signo);
+                if (signal_cstr)
+                    ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %s", signal_cstr);
                 else
-                {
-                    ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with an exit status of 0x%8.8x", exit_status);
-                }
-
-                process_sp->SetExitStatus (-1, error_str);
+                    ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with signal %i", signo);
             }
             else
             {
-                ProcessGDBRemote *gdb_process = (ProcessGDBRemote *)process_sp.get();
-                // Debugserver has exited we need to let our ProcessGDBRemote
-                // know that it no longer has a debugserver instance
-                gdb_process->m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
-                // We are returning true to this function below, so we can
-                // forget about the monitor handle.
-                gdb_process->m_debugserver_monitor = 0;
+                ::snprintf (error_str, sizeof (error_str), DEBUGSERVER_BASENAME " died with an exit status of 0x%8.8x", exit_status);
             }
+
+            process->SetExitStatus (-1, error_str);
+        }
+        else
+        {
+            // Debugserver has exited we need to let our ProcessGDBRemote
+            // know that it no longer has a debugserver instance
+            process->m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
+            // We are returning true to this function below, so we can
+            // forget about the monitor handle.
+            process->m_debugserver_thread = LLDB_INVALID_HOST_THREAD;
         }
     }
     return true;

@@ -191,16 +191,18 @@ Function::Function
     Type * type,
     const AddressRange& range
 ) :
-    UserID(func_uid),
-    m_comp_unit(comp_unit),
-    m_type_uid(type_uid),
-    m_type(type),
-    m_mangled(mangled),
-    m_blocks(this, range),
-    m_frame_base(),
-    m_flags(),
-    m_prologue_byte_size(0)
+    UserID (func_uid),
+    m_comp_unit (comp_unit),
+    m_type_uid (type_uid),
+    m_type (type),
+    m_mangled (mangled),
+    m_block (func_uid),
+    m_range (range),
+    m_frame_base (),
+    m_flags (),
+    m_prologue_byte_size (0)
 {
+    m_block.SetParentScope(this);
     assert(comp_unit != NULL);
 }
 
@@ -213,16 +215,18 @@ Function::Function
     Type *type,
     const AddressRange &range
 ) :
-    UserID(func_uid),
-    m_comp_unit(comp_unit),
-    m_type_uid(type_uid),
-    m_type(type),
-    m_mangled(mangled, true),
-    m_blocks(this, range),
-    m_frame_base(),
-    m_flags(),
-    m_prologue_byte_size(0)
+    UserID (func_uid),
+    m_comp_unit (comp_unit),
+    m_type_uid (type_uid),
+    m_type (type),
+    m_mangled (mangled, true),
+    m_block (func_uid),
+    m_range (range),
+    m_frame_base (),
+    m_flags (),
+    m_prologue_byte_size (0)
 {
+    m_block.SetParentScope(this);
     assert(comp_unit != NULL);
 }
 
@@ -231,24 +235,6 @@ Function::~Function()
 {
 }
 
-const AddressRange &
-Function::GetAddressRange()
-{
-    return GetBlocks(true).GetAddressRange();
-}
-
-bool
-Function::IsInlined()
-{
-    Block *root_block = GetBlocks(true).GetBlockByID(Block::RootID);
-    if (root_block)
-    {
-        if (root_block->InlinedFunctionInfo() != NULL)
-            return true;
-    }
-    return false;
-
-}
 void
 Function::GetStartLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
 {
@@ -301,17 +287,18 @@ Function::GetEndLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
     }
 }
 
-BlockList &
-Function::GetBlocks(bool can_create)
+Block &
+Function::GetBlock (bool can_create)
 {
-    if (m_blocks.IsEmpty() && can_create)
+    if (!m_block.BlockInfoHasBeenParsed() && can_create)
     {
         SymbolContext sc;
         CalculateSymbolContext(&sc);
         assert(sc.module_sp);
         sc.module_sp->GetSymbolVendor()->ParseFunctionBlocks(sc);
+        m_block.SetBlockInfoHasBeenParsed (true, true);
     }
-    return m_blocks;
+    return m_block;
 }
 
 CompileUnit*
@@ -358,8 +345,8 @@ Function::Dump(Stream *s, bool show_context) const
 
     s->EOL();
     // Dump the root object
-    if (!m_blocks.IsEmpty())
-        m_blocks.Dump(s, Block::RootID, INT_MAX, show_context);
+    if (m_block.BlockInfoHasBeenParsed ())
+        m_block.Dump(s, m_range.GetBaseAddress().GetFileAddress(), INT_MAX, show_context);
 }
 
 
@@ -380,7 +367,7 @@ Function::DumpSymbolContext(Stream *s)
 size_t
 Function::MemorySize () const
 {
-    size_t mem_size = sizeof(Function) + m_blocks.MemorySize();
+    size_t mem_size = sizeof(Function) + m_block.MemorySize();
     return mem_size;
 }
 

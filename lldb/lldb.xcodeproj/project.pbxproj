@@ -2791,6 +2791,7 @@
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
 				LLVM_CONFIGURATION = Release;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",

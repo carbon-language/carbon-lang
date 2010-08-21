@@ -222,7 +222,7 @@ protected:
     bool                    GetFunction (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* func_die, lldb_private::SymbolContext& sc);
     lldb_private::Function *        ParseCompileUnitFunction (const lldb_private::SymbolContext& sc, const DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die);
     size_t                  ParseFunctionBlocks (const lldb_private::SymbolContext& sc,
-                                                 lldb::user_id_t parentBlockID,
+                                                 lldb_private::Block *parent_block,
                                                  const DWARFCompileUnit* dwarf_cu,
                                                  const DWARFDebugInfoEntry *die,
                                                  lldb::addr_t subprogram_low_pc,

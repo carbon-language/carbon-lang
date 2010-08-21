@@ -226,6 +226,7 @@ ProcessMacOSX::ProcessMacOSX(Target& target, Listener &listener) :
     m_task (this),
     m_flags (eFlagsNone),
     m_stdio_thread (LLDB_INVALID_HOST_THREAD),
+    m_monitor_thread (LLDB_INVALID_HOST_THREAD),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
     m_exception_messages (),
@@ -244,6 +245,7 @@ ProcessMacOSX::~ProcessMacOSX()
 {
 //  m_mach_process.UnregisterNotificationCallbacks (this);
     Clear();
+    
 }
 
 //----------------------------------------------------------------------
@@ -450,7 +452,7 @@ ProcessMacOSX::DidLaunchOrAttach ()
         // Install a signal handler so we can catch when our child process
         // dies and set the exit status correctly.
 
-        Host::StartMonitoringChildProcess (Process::SetProcessExitStatus, NULL, GetID(), false);
+        m_monitor_thread = Host::StartMonitoringChildProcess (Process::SetProcessExitStatus, NULL, GetID(), false);
 
         if (m_arch_spec == ArchSpec("arm"))
         {
@@ -1154,6 +1156,14 @@ ProcessMacOSX::Clear()
     {
         Mutex::Locker locker(m_exception_messages_mutex);
         m_exception_messages.clear();
+    }
+
+    if (m_monitor_thread != LLDB_INVALID_HOST_THREAD)
+    {
+        Host::ThreadCancel (m_monitor_thread, NULL);
+        thread_result_t thread_result;
+        Host::ThreadJoin (m_monitor_thread, &thread_result, NULL);
+        m_monitor_thread = LLDB_INVALID_HOST_THREAD;
     }
 
 }

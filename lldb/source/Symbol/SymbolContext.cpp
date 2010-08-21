@@ -217,7 +217,7 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *
                 s->Indent("     Blocks: ");
             else
                 s->Indent("             ");
-            (*pos)->GetDescription(s, level, process);
+            (*pos)->GetDescription(s, function, level, process);
             s->EOL();
         }
     }

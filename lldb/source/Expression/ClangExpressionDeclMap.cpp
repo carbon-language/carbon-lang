@@ -626,28 +626,21 @@ ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
-    Function *function(m_sym_ctx->function);
-    Block *block(m_sym_ctx->block);
-    
-    if (!function || !block)
+    if (m_sym_ctx->function == NULL || m_sym_ctx->block == NULL)
     {
         if (log)
-            log->Printf("function = %p, block = %p", function, block);
+            log->Printf("function = %p, block = %p", m_sym_ctx->function, m_sym_ctx->block);
         return NULL;
     }
     
-    BlockList& blocks(function->GetBlocks(true));
-    
     ConstString name_cs(name);
     
-    lldb::user_id_t current_block_id;
+    Block *current_block;
     
-    for (current_block_id = block->GetID();
-         current_block_id != Block::InvalidID;
-         current_block_id = blocks.GetParent(current_block_id))
-    {
-        Block *current_block(blocks.GetBlockByID(current_block_id));
-        
+    for (current_block = m_sym_ctx->block; 
+         current_block != NULL; 
+         current_block = current_block->GetParent())
+    {        
         lldb::VariableListSP var_list = current_block->GetVariableList(false, true);
         
         if (!var_list)

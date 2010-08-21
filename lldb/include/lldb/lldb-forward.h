@@ -25,7 +25,6 @@ class   ArchSpec;
 class   Args;
 class   Baton;
 class   Block;
-class   BlockList;
 class   Breakpoint;
 class   BreakpointID;
 class   BreakpointIDList;

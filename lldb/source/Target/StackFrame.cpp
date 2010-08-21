@@ -280,7 +280,7 @@ StackFrame::GetVariableList ()
         {
             bool get_child_variables = true;
             bool can_create = true;
-            m_variable_list_sp = m_sc.function->GetBlocks(can_create).GetVariableList (Block::RootID, get_child_variables, can_create);
+            m_variable_list_sp = m_sc.function->GetBlock (can_create).GetVariableList (get_child_variables, can_create);
         }
     }
     return m_variable_list_sp.get();

@@ -419,8 +419,11 @@ public:
     CalculateSymbolContext(SymbolContext* sc);
 
     const AddressRange &
-    GetAddressRange();
-    
+    GetAddressRange()
+    {
+        return m_range;
+    }
+
     //------------------------------------------------------------------
     /// Find the file and line number of the source location of the start
     /// of the function.  This will use the declaration if present and fall
@@ -450,15 +453,6 @@ public:
    void
     GetEndLineSourceInfo (FileSpec &source_file, uint32_t &line_no);
 
-     //------------------------------------------------------------------
-    /// Return whether this Function represents an inlined version of the
-    /// original function.
-    ///
-    /// @return
-    ///     \b true if inlined, \b false otherwise.
-    //------------------------------------------------------------------
-    bool IsInlined();
-
     //------------------------------------------------------------------
     /// Get accessor for the block list.
     ///
@@ -468,8 +462,8 @@ public:
     ///
     /// @see BlockList
     //------------------------------------------------------------------
-    BlockList&
-    GetBlocks (bool can_create);
+    Block&
+    GetBlock (bool can_create);
 
     //------------------------------------------------------------------
     /// Get accessor for the compile unit that owns this function.
@@ -611,14 +605,15 @@ protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
-    CompileUnit *m_comp_unit;   ///< The compile unit that owns this function.
+    CompileUnit *m_comp_unit;       ///< The compile unit that owns this function.
     lldb::user_id_t m_type_uid;     ///< The user ID of for the prototype Type for this function.
-    Type * m_type;         ///< The function prototype type for this function that include the function info (FunctionInfo), return type and parameters.
-    Mangled m_mangled;      ///< The mangled function name if any, if empty, there is no mangled information.
-    BlockList m_blocks;       ///< All lexical blocks contained in this function.
+    Type * m_type;                  ///< The function prototype type for this function that include the function info (FunctionInfo), return type and parameters.
+    Mangled m_mangled;              ///< The mangled function name if any, if empty, there is no mangled information.
+    Block m_block;                  ///< All lexical blocks contained in this function.
+    AddressRange m_range;           ///< The function address range that covers the widest range needed to contain all blocks
     DWARFExpression m_frame_base;   ///< The frame base expression for variables that are relative to the frame pointer.
     Flags m_flags;
-    uint32_t m_prologue_byte_size; ///< Compute the prologue size once and cache it
+    uint32_t m_prologue_byte_size;  ///< Compute the prologue size once and cache it
 private:
     DISALLOW_COPY_AND_ASSIGN(Function);
 };

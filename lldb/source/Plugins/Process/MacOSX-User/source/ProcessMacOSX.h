@@ -239,6 +239,7 @@ protected:
     MachTask m_task;            // The mach task for this process
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     lldb::thread_t m_stdio_thread;  // Thread ID for the thread that watches for child process stdio
+    lldb::thread_t m_monitor_thread;  // Thread ID for the thread that watches for child process stdio
     lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
     std::string m_stdout_data;
     MachException::Message::collection m_exception_messages;       // A collection of exception messages caught when listening to the exception port
