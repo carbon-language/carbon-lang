@@ -1165,11 +1165,6 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       V = CGM.getStaticLocalDeclAddress(VD);
     assert(V && "DeclRefExpr not entered in LocalDeclMap?");
 
-    Qualifiers Quals = MakeQualifiers(E->getType());
-    // local variables do not get their gc attribute set.
-    // local static?
-    if (NonGCable) Quals.removeObjCGCAttr();
-
     if (VD->hasAttr<BlocksAttr>()) {
       V = Builder.CreateStructGEP(V, 1, "forwarding");
       V = Builder.CreateLoad(V);
@@ -1178,8 +1173,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     }
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
-    LValue LV = LValue::MakeAddr(V, Quals);
+
+    LValue LV = MakeAddrLValue(V, E->getType());
     if (NonGCable) {
+      LV.getQuals().removeObjCGCAttr();
       LV.setNonGC(true);
     }
     setObjCGCLValueClass(getContext(), E, LV);
@@ -1219,10 +1216,9 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     QualType T = E->getSubExpr()->getType()->getPointeeType();
     assert(!T.isNull() && "CodeGenFunction::EmitUnaryOpLValue: Illegal type");
 
-    Qualifiers Quals = MakeQualifiers(T);
-    Quals.setAddressSpace(ExprTy.getAddressSpace());
+    LValue LV = MakeAddrLValue(EmitScalarExpr(E->getSubExpr()), T);
+    LV.getQuals().setAddressSpace(ExprTy.getAddressSpace());
 
-    LValue LV = LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()), Quals);
     // We should not generate __weak write barrier on indirect reference
     // of a pointer to object; as in void foo (__weak id *param); *param = 0;
     // But, we continue to generate __strong write barrier on indirect write
@@ -1452,10 +1448,9 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   assert(!T.isNull() &&
          "CodeGenFunction::EmitArraySubscriptExpr(): Illegal base type");
 
-  Qualifiers Quals = MakeQualifiers(T);
-  Quals.setAddressSpace(E->getBase()->getType().getAddressSpace());
+  LValue LV = MakeAddrLValue(Address, T);
+  LV.getQuals().setAddressSpace(E->getBase()->getType().getAddressSpace());
 
-  LValue LV = LValue::MakeAddr(Address, Quals);
   if (getContext().getLangOptions().ObjC1 &&
       getContext().getLangOptions().getGCMode() != LangOptions::NonGC) {
     LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
@@ -1487,9 +1482,8 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     // it.
     llvm::Value *Ptr = EmitScalarExpr(E->getBase());
     const PointerType *PT = E->getBase()->getType()->getAs<PointerType>();
-    Qualifiers Quals = MakeQualifiers(PT->getPointeeType());
-    Quals.removeObjCGCAttr();
-    Base = LValue::MakeAddr(Ptr, Quals);
+    Base = MakeAddrLValue(Ptr, PT->getPointeeType());
+    Base.getQuals().removeObjCGCAttr();
   } else if (E->getBase()->isLvalue(getContext()) == Expr::LV_Valid) {
     // Otherwise, if the base is an lvalue ( as in the case of foo.x.x),
     // emit the base as an lvalue.
@@ -1504,7 +1498,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     // Store the vector to memory (because LValue wants an address).
     llvm::Value *VecMem = CreateMemTemp(E->getBase()->getType());
     Builder.CreateStore(Vec, VecMem);
-    Base = LValue::MakeAddr(VecMem, Qualifiers());
+    Base = MakeAddrLValue(VecMem, E->getBase()->getType());
   }
   
   // Encode the element access list into a vector of unsigned indices.
@@ -1643,13 +1637,14 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   if (Field->getType()->isReferenceType())
     V = Builder.CreateLoad(V, "tmp");
 
-  Qualifiers Quals = MakeQualifiers(Field->getType());
-  Quals.addCVRQualifiers(CVRQualifiers);
+  LValue LV = MakeAddrLValue(V, Field->getType());
+  LV.getQuals().addCVRQualifiers(CVRQualifiers);
+
   // __weak attribute on a field is ignored.
-  if (Quals.getObjCGCAttr() == Qualifiers::Weak)
-    Quals.removeObjCGCAttr();
+  if (LV.getQuals().getObjCGCAttr() == Qualifiers::Weak)
+    LV.getQuals().removeObjCGCAttr();
   
-  return LValue::MakeAddr(V, Quals);
+  return LV;
 }
 
 LValue 

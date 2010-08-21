@@ -107,11 +107,11 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
   V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
 
-  Qualifiers Quals = CGF.MakeQualifiers(IvarTy);
-  Quals.addCVRQualifiers(CVRQualifiers);
-
-  if (!Ivar->isBitField())
-    return LValue::MakeAddr(V, Quals);
+  if (!Ivar->isBitField()) {
+    LValue LV = CGF.MakeAddrLValue(V, IvarTy);
+    LV.getQuals().addCVRQualifiers(CVRQualifiers);
+    return LV;
+  }
 
   // We need to compute the bit offset for the bit-field, the offset is to the
   // byte. Note, there is a subtle invariant here: we can only call this routine
@@ -144,6 +144,8 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
 
   // FIXME: We need to set a very conservative alignment on this, or make sure
   // that the runtime is doing the right thing.
+  Qualifiers Quals = CGF.MakeQualifiers(IvarTy);
+  Quals.addCVRQualifiers(CVRQualifiers);
   return LValue::MakeBitfield(V, *Info, Quals.getCVRQualifiers());
 }
 
