@@ -144,9 +144,8 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
 
   // FIXME: We need to set a very conservative alignment on this, or make sure
   // that the runtime is doing the right thing.
-  Qualifiers Quals = CGF.MakeQualifiers(IvarTy);
-  Quals.addCVRQualifiers(CVRQualifiers);
-  return LValue::MakeBitfield(V, *Info, Quals.getCVRQualifiers());
+  return LValue::MakeBitfield(V, *Info,
+                              IvarTy.getCVRQualifiers() | CVRQualifiers);
 }
 
 ///
