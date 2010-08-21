@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm < %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin10 < %s -o - | FileCheck %s
 // CHECK:%struct.S = type { i32, i32 }
 // CHECK:define void @test_addrspace(%struct.S addrspace(1)* %p1, %struct.S addrspace(2)* %p2) nounwind
 // CHECK:  [[p1addr:%.*]] = alloca %struct.S addrspace(1)*
