@@ -932,9 +932,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     Value *V = EmitLValue(E).getAddress();
     V = Builder.CreateBitCast(V, 
                           ConvertType(CGF.getContext().getPointerType(DestTy)));
-    // FIXME: Are the qualifiers correct here?
-    return EmitLoadOfLValue(LValue::MakeAddr(V, CGF.MakeQualifiers(DestTy)), 
-                            DestTy);
+    return EmitLoadOfLValue(CGF.MakeAddrLValue(V, DestTy), DestTy);
   }
       
   case CastExpr::CK_AnyPointerToObjCPointerCast:
@@ -1164,7 +1162,7 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
         NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");
         llvm::Value *lhs = LV.getAddress();
         lhs = Builder.CreateBitCast(lhs, llvm::PointerType::getUnqual(i8Ty));
-        LV = LValue::MakeAddr(lhs, CGF.MakeQualifiers(ValTy));
+        LV = CGF.MakeAddrLValue(lhs, ValTy);
       } else
         NextVal = Builder.CreateInBoundsGEP(InVal, Inc, "ptrincdec");
     } else {
@@ -2234,21 +2232,19 @@ LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
     V = CreateTempAlloca(ClassPtrTy, "resval");
     llvm::Value *Src = EmitScalarExpr(BaseExpr);
     Builder.CreateStore(Src, V);
-    LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-    V = ScalarExprEmitter(*this).EmitLoadOfLValue(LV, E->getType());
-  }
-  else {
-      if (E->isArrow())
-        V = ScalarExprEmitter(*this).EmitLoadOfLValue(BaseExpr);
-      else
-        V  = EmitLValue(BaseExpr).getAddress();
+    V = ScalarExprEmitter(*this).EmitLoadOfLValue(
+      MakeAddrLValue(V, E->getType()), E->getType());
+  } else {
+    if (E->isArrow())
+      V = ScalarExprEmitter(*this).EmitLoadOfLValue(BaseExpr);
+    else
+      V = EmitLValue(BaseExpr).getAddress();
   }
   
   // build Class* type
   ClassPtrTy = ClassPtrTy->getPointerTo();
   V = Builder.CreateBitCast(V, ClassPtrTy);
-  LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-  return LV;
+  return MakeAddrLValue(V, E->getType());
 }
 
 

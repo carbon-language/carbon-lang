@@ -528,7 +528,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       BasePtr = llvm::PointerType::getUnqual(BasePtr);
       llvm::Value *BaseAddrPtr = CGF.Builder.CreateBitCast(LHS.getAddress(), 
                                                            BasePtr);
-      LHS = LValue::MakeAddr(BaseAddrPtr, CGF.MakeQualifiers(BaseElementTy));
+      LHS = CGF.MakeAddrLValue(BaseAddrPtr, BaseElementTy);
       
       // Create an array index that will be used to walk over all of the
       // objects we're constructing.

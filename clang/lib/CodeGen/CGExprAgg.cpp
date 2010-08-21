@@ -658,17 +658,15 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     ElementType = CGF.getContext().getAsArrayType(ElementType)->getElementType();
 
     // FIXME: were we intentionally ignoring address spaces and GC attributes?
-    Qualifiers Quals = CGF.MakeQualifiers(ElementType);
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
+      LValue LV = CGF.MakeAddrLValue(NextVal, ElementType);
       if (i < NumInitElements)
-        EmitInitializationToLValue(E->getInit(i),
-                                   LValue::MakeAddr(NextVal, Quals), 
-                                   ElementType);
+        EmitInitializationToLValue(E->getInit(i), LV, ElementType);
+
       else
-        EmitNullInitializationToLValue(LValue::MakeAddr(NextVal, Quals),
-                                       ElementType);
+        EmitNullInitializationToLValue(LV, ElementType);
     }
     return;
   }
