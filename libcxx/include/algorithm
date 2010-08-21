@@ -485,6 +485,14 @@ template <class RandomAccessIterator, class Compare>
     RandomAccessIterator
     is_heap_until(RandomAccessIterator first, RandomAccessiterator last, Compare comp); 
 
+template <class ForwardIterator>
+    ForwardIterator
+    min_element(ForwardIterator first, ForwardIterator last);
+
+template <class ForwardIterator, class Compare>
+    ForwardIterator
+    min_element(ForwardIterator first, ForwardIterator last, Compare comp);
+
 template <class T>
     const T&
     min(const T& a, const T& b);
@@ -492,6 +500,22 @@ template <class T>
 template <class T, class Compare>
     const T&
     min(const T& a, const T& b, Compare comp);
+
+template<class T>
+    T
+    min(initializer_list<T> t);
+
+template<class T, class Compare>
+    T
+    min(initializer_list<T> t, Compare comp);
+
+template <class ForwardIterator>
+    ForwardIterator
+    max_element(ForwardIterator first, ForwardIterator last);
+
+template <class ForwardIterator, class Compare>
+    ForwardIterator
+    max_element(ForwardIterator first, ForwardIterator last, Compare comp);
 
 template <class T>
     const T&
@@ -501,21 +525,37 @@ template <class T, class Compare>
     const T&
     max(const T& a, const T& b, Compare comp);
 
-template <class ForwardIterator>
-    ForwardIterator
-    min_element(ForwardIterator first, ForwardIterator last);
+template<class T>
+    T
+    max(initializer_list<T> t);
 
-template <class ForwardIterator, class Compare>
-    ForwardIterator
-    min_element(ForwardIterator first, ForwardIterator last, Compare comp);
+template<class T, class Compare>
+    T
+    max(initializer_list<T> t, Compare comp);
 
-template <class ForwardIterator>
-    ForwardIterator
-    max_element(ForwardIterator first, ForwardIterator last);
+template<class ForwardIterator>
+    pair<ForwardIterator, ForwardIterator>
+    minmax_element(ForwardIterator first, ForwardIterator last);
 
-template <class ForwardIterator, class Compare>
-    ForwardIterator
-    max_element(ForwardIterator first, ForwardIterator last, Compare comp);
+template<class ForwardIterator, class Compare>
+    pair<ForwardIterator, ForwardIterator>
+    minmax_element(ForwardIterator first, ForwardIterator last, Compare comp);
+
+template<class T>
+    pair<const T&, const T&>
+    minmax(const T& a, const T& b);
+
+template<class T, class Compare>
+    pair<const T&, const T&>
+    minmax(const T& a, const T& b, Compare comp);
+
+template<class T>
+    pair<T, T>
+    minmax(initializer_list<T> t);
+
+template<class T, class Compare>
+    pair<T, T>
+    minmax(initializer_list<T> t, Compare comp);
 
 template <class InputIterator1, class InputIterator2>
     bool
@@ -2147,42 +2187,6 @@ rotate_copy(_ForwardIterator __first, _ForwardIterator __middle, _ForwardIterato
     return _STD::copy(__first, __middle, _STD::copy(__middle, __last, __result));
 }
 
-// min
-
-template <class _Tp, class _Compare>
-inline _LIBCPP_INLINE_VISIBILITY
-const _Tp&
-min(const _Tp& __a, const _Tp& __b, _Compare __comp)
-{
-    return __comp(__b, __a) ? __b : __a;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-const _Tp&
-min(const _Tp& __a, const _Tp& __b)
-{
-    return _STD::min(__a, __b, __less<_Tp>());
-}
-
-// max
-
-template <class _Tp, class _Compare>
-inline _LIBCPP_INLINE_VISIBILITY
-const _Tp&
-max(const _Tp& __a, const _Tp& __b, _Compare __comp)
-{
-    return __comp(__a, __b) ? __b : __a;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-const _Tp&
-max(const _Tp& __a, const _Tp& __b)
-{
-    return _STD::max(__a, __b, __less<_Tp>());
-}
-
 // min_element
 
 template <class _ForwardIterator, class _Compare>
@@ -2205,7 +2209,42 @@ inline _LIBCPP_INLINE_VISIBILITY
 _ForwardIterator
 min_element(_ForwardIterator __first, _ForwardIterator __last)
 {
-    return _STD::min_element(__first, __last, __less<typename iterator_traits<_ForwardIterator>::value_type>());
+    return _STD::min_element(__first, __last,
+              __less<typename iterator_traits<_ForwardIterator>::value_type>());
+}
+
+// min
+
+template <class _Tp, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY
+const _Tp&
+min(const _Tp& __a, const _Tp& __b, _Compare __comp)
+{
+    return __comp(__b, __a) ? __b : __a;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+const _Tp&
+min(const _Tp& __a, const _Tp& __b)
+{
+    return _STD::min(__a, __b, __less<_Tp>());
+}
+
+template<class _Tp, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+min(initializer_list<_Tp> __t, _Compare __comp)
+{
+    return *_STD::min_element(__t.begin(), __t.end(), __comp);
+}
+
+template<class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+min(initializer_list<_Tp> __t)
+{
+    return *_STD::min_element(__t.begin(), __t.end());
 }
 
 // max_element
@@ -2230,7 +2269,42 @@ inline _LIBCPP_INLINE_VISIBILITY
 _ForwardIterator
 max_element(_ForwardIterator __first, _ForwardIterator __last)
 {
-    return _STD::max_element(__first, __last, __less<typename iterator_traits<_ForwardIterator>::value_type>());
+    return _STD::max_element(__first, __last,
+              __less<typename iterator_traits<_ForwardIterator>::value_type>());
+}
+
+// max
+
+template <class _Tp, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY
+const _Tp&
+max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+{
+    return __comp(__a, __b) ? __b : __a;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+const _Tp&
+max(const _Tp& __a, const _Tp& __b)
+{
+    return _STD::max(__a, __b, __less<_Tp>());
+}
+
+template<class _Tp, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+max(initializer_list<_Tp> __t, _Compare __comp)
+{
+    return *_STD::max_element(__t.begin(), __t.end(), __comp);
+}
+
+template<class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+max(initializer_list<_Tp> __t)
+{
+    return *_STD::max_element(__t.begin(), __t.end());
 }
 
 // minmax_element
@@ -2291,6 +2365,45 @@ std::pair<_ForwardIterator, _ForwardIterator>
 minmax_element(_ForwardIterator __first, _ForwardIterator __last)
 {
     return _STD::minmax_element(__first, __last, __less<typename iterator_traits<_ForwardIterator>::value_type>());
+}
+
+// minmax
+
+template<class _Tp, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY
+pair<const _Tp&, const _Tp&>
+minmax(const _Tp& __a, const _Tp& __b, _Compare __comp)
+{
+    return __comp(__b, __a) ? pair<const _Tp&, const _Tp&>(__b, __a) :
+                              pair<const _Tp&, const _Tp&>(__a, __b);
+}
+
+template<class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+pair<const _Tp&, const _Tp&>
+minmax(const _Tp& __a, const _Tp& __b)
+{
+    return _STD::minmax(__a, __b, __less<_Tp>());
+}
+
+template<class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+pair<_Tp, _Tp>
+minmax(initializer_list<_Tp> __t)
+{
+    pair<const _Tp*, const _Tp*> __p =
+                                   _STD::minmax_element(__t.begin(), __t.end());
+    return pair<_Tp, _Tp>(*__p.first, *__p.second);
+}
+
+template<class _Tp, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY
+pair<_Tp, _Tp>
+minmax(initializer_list<_Tp> __t, _Compare __comp)
+{
+    pair<const _Tp*, const _Tp*> __p =
+                           _STD::minmax_element(__t.begin(), __t.end(), __comp);
+    return pair<_Tp, _Tp>(*__p.first, *__p.second);
 }
 
 // random_shuffle

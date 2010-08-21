@@ -16,8 +16,20 @@
 #include <algorithm>
 #include <cassert>
 
-#error max(initializer_list<T> t) is not implemented
-
 int main()
 {
+#ifdef _LIBCPP_MOVE
+    int i = std::max({2, 3, 1});
+    assert(i == 3);
+    i = std::max({2, 1, 3});
+    assert(i == 3);
+    i = std::max({3, 1, 2});
+    assert(i == 3);
+    i = std::max({3, 2, 1});
+    assert(i == 3);
+    i = std::max({1, 2, 3});
+    assert(i == 3);
+    i = std::max({1, 3, 2});
+    assert(i == 3);
+#endif
 }

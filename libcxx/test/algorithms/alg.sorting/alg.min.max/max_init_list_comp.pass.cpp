@@ -14,10 +14,23 @@
 //   max(initializer_list<T> t, Compare comp);
 
 #include <algorithm>
+#include <functional>
 #include <cassert>
-
-#error max(initializer_list<T> t, Compare comp) is not implemented
 
 int main()
 {
+#ifdef _LIBCPP_MOVE
+    int i = std::max({2, 3, 1}, std::greater<int>());
+    assert(i == 1);
+    i = std::max({2, 1, 3}, std::greater<int>());
+    assert(i == 1);
+    i = std::max({3, 1, 2}, std::greater<int>());
+    assert(i == 1);
+    i = std::max({3, 2, 1}, std::greater<int>());
+    assert(i == 1);
+    i = std::max({1, 2, 3}, std::greater<int>());
+    assert(i == 1);
+    i = std::max({1, 3, 2}, std::greater<int>());
+    assert(i == 1);
+#endif
 }

@@ -10,14 +10,20 @@
 // <algorithm>
 
 // template<class T> 
-//   pair<const T&, const T&>
+//   pair<T, T>
 //   minmax(initializer_list<T> t);
 
 #include <algorithm>
 #include <cassert>
 
-#error minmax(initializer_list<T> t) is not implemented
-
 int main()
 {
+#ifdef _LIBCPP_MOVE
+    assert((std::minmax({1, 2, 3}) == std::pair<int, int>(1, 3)));
+    assert((std::minmax({1, 3, 2}) == std::pair<int, int>(1, 3)));
+    assert((std::minmax({2, 1, 3}) == std::pair<int, int>(1, 3)));
+    assert((std::minmax({2, 3, 1}) == std::pair<int, int>(1, 3)));
+    assert((std::minmax({3, 1, 2}) == std::pair<int, int>(1, 3)));
+    assert((std::minmax({3, 2, 1}) == std::pair<int, int>(1, 3)));
+#endif
 }

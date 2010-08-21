@@ -38,13 +38,13 @@ int main()
     {
     int x = 0;
     int y = 1;
-    test(x, y, std::greater<int>(), x, y);
-    test(y, x, std::greater<int>(), x, y);
+    test(x, y, std::greater<int>(), y, x);
+    test(y, x, std::greater<int>(), y, x);
     }
     {
     int x = 1;
     int y = 0;
-    test(x, y, std::greater<int>(), y, x);
-    test(y, x, std::greater<int>(), y, x);
+    test(x, y, std::greater<int>(), x, y);
+    test(y, x, std::greater<int>(), x, y);
     }
 }
