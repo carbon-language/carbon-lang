@@ -15,7 +15,7 @@
 
     thread synopsis
 
-#define __STDCPP_THREADS __cplusplus
+#define __STDCPP_THREADS__ __cplusplus
 
 namespace std
 {
@@ -99,7 +99,7 @@ void sleep_for(const chrono::duration<Rep, Period>& rel_time);
 
 #pragma GCC system_header
 
-#define __STDCPP_THREADS __cplusplus
+#define __STDCPP_THREADS__ __cplusplus
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 

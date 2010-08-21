@@ -9,13 +9,13 @@
 
 // <thread>
 
-// #define __STDCPP_THREADS __cplusplus
+// #define __STDCPP_THREADS__ __cplusplus
 
 #include <thread>
 
 int main()
 {
-#ifndef __STDCPP_THREADS
-#error __STDCPP_THREADS is not defined
+#ifndef __STDCPP_THREADS__
+#error __STDCPP_THREADS__ is not defined
 #endif
 }
