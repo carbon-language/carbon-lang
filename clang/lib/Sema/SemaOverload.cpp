@@ -4168,11 +4168,18 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
   // Insert this type.
   if (!PointerTypes.insert(Ty))
     return false;
-
+    
+  QualType PointeeTy;
   const PointerType *PointerTy = Ty->getAs<PointerType>();
-  assert(PointerTy && "type was not a pointer type!");
-
-  QualType PointeeTy = PointerTy->getPointeeType();
+  if (!PointerTy) {
+    if (const ObjCObjectPointerType *PTy = Ty->getAs<ObjCObjectPointerType>())
+      PointeeTy = PTy->getPointeeType();
+    else
+      assert(false && "type was not a pointer type!");
+  }
+  else
+    PointeeTy = PointerTy->getPointeeType();
+  
   // Don't add qualified variants of arrays. For one, they're not allowed
   // (the qualifier would sink to the element type), and for another, the
   // only overload situation where it matters is subscript or pointer +- int,
@@ -4268,8 +4275,9 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   // If we're dealing with an array type, decay to the pointer.
   if (Ty->isArrayType())
     Ty = SemaRef.Context.getArrayDecayedType(Ty);
-
-  if (Ty->getAs<PointerType>()) {
+  if (Ty->isObjCIdType() || Ty->isObjCClassType())
+    PointerTypes.insert(Ty);
+  else if (Ty->getAs<PointerType>() || Ty->getAs<ObjCObjectPointerType>()) {
     // Insert our type, and its more-qualified variants, into the set
     // of types.
     if (!AddPointerWithMoreQualifiedTypeVariants(Ty, VisibleQuals))

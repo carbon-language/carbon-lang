@@ -19,3 +19,21 @@ void a() {
 
 }
 
+
+// pr7936
+@interface I1 @end
+
+class Wrapper {
+public:
+  operator id() const { return (id)_value; }
+  operator Class() const { return (Class)_value; }
+  operator I1*() const { return (I1*)_value; }
+
+  bool Compare(id obj) { return *this == obj; }
+  bool CompareClass(Class obj) { return *this == obj; }
+  bool CompareI1(I1* obj) { return *this == obj; }
+
+private:
+  long _value;
+};
+
