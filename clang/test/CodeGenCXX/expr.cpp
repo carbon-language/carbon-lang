@@ -28,3 +28,10 @@ int test4() {
   test4A a;
   (a.j = 2) = 3;
 }
+
+// Incomplete type in conditional operator.
+// Check operations on incomplete types.
+struct s5;
+struct s5 &f5_0(bool cond, struct s5 &a, struct s5 &b) {
+  return cond ? a : b;
+}

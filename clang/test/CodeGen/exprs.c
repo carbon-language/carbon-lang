@@ -145,3 +145,10 @@ double f13(double X) {
   // CHECK: fsub double -0.0
   return -X;
 }
+
+// Check operations on incomplete types.
+struct s14;
+void f14(struct s13 *a) {
+  (void) &*a;
+}
+
