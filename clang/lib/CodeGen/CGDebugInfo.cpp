@@ -866,8 +866,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
       return FwdDecl;
   }
 
-  // A RD->getName() is not unique. However, the debug info descriptors 
-  // are uniqued so use type name to ensure uniquness.
   llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType();
 
   llvm::MDNode *MN = FwdDecl;
