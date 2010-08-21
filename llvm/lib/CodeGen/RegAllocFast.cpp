@@ -239,8 +239,7 @@ void RAFast::killVirtReg(unsigned VirtReg) {
 }
 
 /// spillVirtReg - This method spills the value specified by VirtReg into the
-/// corresponding stack slot if needed. If isKill is set, the register is also
-/// killed.
+/// corresponding stack slot if needed.
 void RAFast::spillVirtReg(MachineBasicBlock::iterator MI, unsigned VirtReg) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Spilling a physical register is illegal!");
