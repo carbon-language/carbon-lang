@@ -1282,28 +1282,37 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   visitInstruction(B);
 }
 
-void Verifier::visitICmpInst(ICmpInst& IC) {
+void Verifier::visitICmpInst(ICmpInst &IC) {
   // Check that the operands are the same type
-  const Type* Op0Ty = IC.getOperand(0)->getType();
-  const Type* Op1Ty = IC.getOperand(1)->getType();
+  const Type *Op0Ty = IC.getOperand(0)->getType();
+  const Type *Op1Ty = IC.getOperand(1)->getType();
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
   Assert1(Op0Ty->isIntOrIntVectorTy() || Op0Ty->isPointerTy(),
           "Invalid operand types for ICmp instruction", &IC);
+  // Check that the predicate is valid.
+  Assert1(IC.getPredicate() >= CmpInst::FIRST_ICMP_PREDICATE &&
+          IC.getPredicate() <= CmpInst::LAST_ICMP_PREDICATE,
+          "Invalid predicate in ICmp instruction!", &IC);
 
   visitInstruction(IC);
 }
 
-void Verifier::visitFCmpInst(FCmpInst& FC) {
+void Verifier::visitFCmpInst(FCmpInst &FC) {
   // Check that the operands are the same type
-  const Type* Op0Ty = FC.getOperand(0)->getType();
-  const Type* Op1Ty = FC.getOperand(1)->getType();
+  const Type *Op0Ty = FC.getOperand(0)->getType();
+  const Type *Op1Ty = FC.getOperand(1)->getType();
   Assert1(Op0Ty == Op1Ty,
           "Both operands to FCmp instruction are not of the same type!", &FC);
   // Check that the operands are the right type
   Assert1(Op0Ty->isFPOrFPVectorTy(),
           "Invalid operand types for FCmp instruction", &FC);
+  // Check that the predicate is valid.
+  Assert1(FC.getPredicate() >= CmpInst::FIRST_FCMP_PREDICATE &&
+          FC.getPredicate() <= CmpInst::LAST_FCMP_PREDICATE,
+          "Invalid predicate in FCmp instruction!", &FC);
+
   visitInstruction(FC);
 }
 
