@@ -248,25 +248,18 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
                                       const CXXConstructExpr *E) {
   assert(Dest && "Must have a destination!");
   const CXXConstructorDecl *CD = E->getConstructor();
-  const ConstantArrayType *Array =
-  getContext().getAsConstantArrayType(E->getType());
-  // For a copy constructor, even if it is trivial, must fall thru so
-  // its argument is code-gen'ed.
-  if (!CD->isCopyConstructor()) {
-    QualType InitType = E->getType();
-    if (Array)
-      InitType = getContext().getBaseElementType(Array);
-    const CXXRecordDecl *RD =
-    cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
-    if (RD->hasTrivialConstructor()) {
-      // The constructor is trivial, but we may still need to zero-initialize
-      // the class.
-      if (E->requiresZeroInitialization())
-        EmitNullInitialization(Dest, E->getType());
-      
-      return;
-    }
-  }
+  
+  // If we require zero initialization before (or instead of) calling the
+  // constructor, as can be the case with a non-user-provided default
+  // constructor, emit the zero initialization now.
+  if (E->requiresZeroInitialization())
+    EmitNullInitialization(Dest, E->getType());
+
+  
+  // If this is a call to a trivial default constructor, do nothing.
+  if (CD->isTrivial() && CD->isDefaultConstructor())
+    return;
+  
   // Code gen optimization to eliminate copy constructor and return
   // its first argument instead, if in fact that argument is a temporary 
   // object.
@@ -276,6 +269,9 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
       return;
     }
   }
+  
+  const ConstantArrayType *Array 
+    = getContext().getAsConstantArrayType(E->getType());
   if (Array) {
     QualType BaseElementTy = getContext().getBaseElementType(Array);
     const llvm::Type *BasePtr = ConvertType(BaseElementTy);

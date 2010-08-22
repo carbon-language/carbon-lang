@@ -450,10 +450,6 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   if (!Val) // Create a temporary variable.
     Val = CGF.CreateMemTemp(E->getType(), "tmp");
 
-  if (E->requiresZeroInitialization())
-    EmitNullInitializationToLValue(CGF.MakeAddrLValue(Val, E->getType()),
-                                   E->getType());
-
   CGF.EmitCXXConstructExpr(Val, E);
 }
 

@@ -93,4 +93,22 @@ namespace zeroinit {
     // CHECK: ret i32
     return S().i;
   }
+
+  struct X0 {
+    X0() { }
+    int x;
+  };
+
+  struct X1 : X0 {
+    int x1;
+    void f();
+  };
+
+  // CHECK: define void @_ZN8zeroinit9testX0_X1Ev
+  void testX0_X1() {
+    // CHECK: call void @llvm.memset.p0i8.i64
+    // CHECK-NEXT: call void @_ZN8zeroinit2X1C1Ev
+    // CHECK-NEXT: call void @_ZN8zeroinit2X11fEv
+    X1().f();
+  }
 }
