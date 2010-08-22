@@ -34,7 +34,7 @@ int main()
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
     test<char16_t, 2>();
     test<char32_t, 2>();
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
     test<short, 2>();
     test<unsigned short, 2>();
     test<int, 2>();

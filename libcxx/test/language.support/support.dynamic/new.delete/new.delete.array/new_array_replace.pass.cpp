@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
- 
+
  // test operator new[] replacement by replacing only operator new
 
 #include <new>

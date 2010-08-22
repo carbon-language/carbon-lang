@@ -29,7 +29,7 @@ int main()
     // GCC 4.2 through 4.5 can't handle this
     void (A::*pmf)() = 0;
     assert(pmf == nullptr);
-#endif
+#endif  // !((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ <= 5))
     int A::*pmd = 0;
     assert(pmd == nullptr);
     A a1(nullptr);

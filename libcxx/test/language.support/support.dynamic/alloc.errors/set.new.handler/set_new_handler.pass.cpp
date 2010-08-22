@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
- 
+
 // test set_new_handler
 
 #include <new>

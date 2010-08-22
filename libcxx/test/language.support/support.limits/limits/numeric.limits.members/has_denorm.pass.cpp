@@ -33,7 +33,7 @@ int main()
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
     test<char16_t, std::denorm_absent>();
     test<char32_t, std::denorm_absent>();
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
     test<short, std::denorm_absent>();
     test<unsigned short, std::denorm_absent>();
     test<int, std::denorm_absent>();

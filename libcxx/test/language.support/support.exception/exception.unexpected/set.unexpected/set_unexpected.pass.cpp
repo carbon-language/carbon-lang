@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
- 
+
 // test set_unexpected
 
 #include <exception>
@@ -25,9 +25,9 @@ int main()
 {
 	std::unexpected_handler old = std::set_unexpected(f1);
     // verify there is a previous unexpected handler
-	assert(old); 
+	assert(old);
 	// verify f1 was replace with f2
-    assert(std::set_unexpected(f2) == f1);  
+    assert(std::set_unexpected(f2) == f1);
 	// verify calling original unexpected handler calls terminate
 	std::set_terminate(f3);
 	(*old)();

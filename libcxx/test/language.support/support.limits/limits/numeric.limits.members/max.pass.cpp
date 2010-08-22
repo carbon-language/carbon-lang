@@ -41,7 +41,7 @@ int main()
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
     test<char16_t>(USHRT_MAX);
     test<char32_t>(UINT_MAX);
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
     test<short>(SHRT_MAX);
     test<unsigned short>(USHRT_MAX);
     test<int>(INT_MAX);
