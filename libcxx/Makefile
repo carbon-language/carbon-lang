@@ -36,5 +36,3 @@ install:: installhdrs $(DESTDIR)
 	mkdir -p $(DSTROOT)/usr/lib
 	strip -S -o $(DSTROOT)/usr/lib/libc++.1.dylib $(SYMROOT)/usr/lib/libc++.1.dylib
 	cd $(DSTROOT)/usr/lib && ln -s libc++.1.dylib libc++.dylib
-	
-	

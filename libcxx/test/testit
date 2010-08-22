@@ -52,7 +52,7 @@ fi
 
 if [ -z "$OPTIONS" ]
 then
- 	OPTIONS="-nostdinc++ -nodefaultlibs /usr/lib/libSystem.B.dylib -arch `arch`"
+	OPTIONS="-nostdinc++ -nodefaultlibs /usr/lib/libSystem.B.dylib -arch `arch`"
 fi
 
 FAIL=0
@@ -78,7 +78,7 @@ function afunc
 			fi
 		done
 	fi
-	
+
 	if (ls *.pass.cpp &> /dev/null)
 	then
 		for FILE in $(ls *.pass.cpp); do

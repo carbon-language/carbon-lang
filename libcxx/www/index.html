@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
           "http://www.w3.org/TR/html4/strict.dtd">
 <!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
@@ -14,7 +14,7 @@
   <div>
     <a href="http://llvm.org/">LLVM Home</a>
   </div>
-  
+
   <div class="submenu">
     <label>libc++ Info</label>
     <a href="/index.html">About</a>
@@ -34,18 +34,18 @@
   <!--*********************************************************************-->
   <h1>"libc++" C++ Standard Library</h1>
   <!--*********************************************************************-->
-  
+
   <p>libc++ is a new implementation of the C++ standard library, targeting
      C++0X.</p>
 
   <p>All of the code in libc++ is available under the standard
      <a href="http://llvm.org/docs/DeveloperPolicy.html#license">LLVM
      License</a>, a "BSD-style" license.</p>
-  
+
   <!--=====================================================================-->
   <h2 id="goals">Features and Goals</h2>
   <!--=====================================================================-->
-  
+
     <ul>
         <li>Correctness as defined by the (currently draft) C++0X standard.</li>
         <li>Fast execution.</li>
@@ -59,12 +59,12 @@
   <!--=====================================================================-->
   <h2 id="why">Why a new C++ Standard Library for C++'0x?</h2>
   <!--=====================================================================-->
-  
+
   <p>After its initial introduction, many people have asked "why start a new
      library instead of contributing to an existing library?" (like Apache's
      libstdcxx, GNU's libstdc++, STLport, etc).  There are many contributing
      reasons, but some of the major ones are:</p>
-    
+
   <ul>
   <li><p>From years of experience (including having implemented the standard
       library before), we've learned many things about implementing
@@ -76,7 +76,7 @@
       ABI compatibility with old versions of the library was
       determined to be critical to achieving the performance goals of
       libc++.</p></li>
-      
+
   <li><p>Mainline libstdc++ has switched to GPL3, a license which the developers
       of libc++ cannot use.  libstdc++ 4.2 (the last GPL2 version) could be
       independently extended to support C++'0x, but this would be a fork of the
@@ -93,7 +93,7 @@
       almost every class and function, essentially amounting to a rewrite.
       Faced with a rewrite, we decided to start from scratch and evaluate every
       design decision from first principles based on experience.</p>
-      
+
       <p>Further, both projects are apparently abandoned: STLport 5.2.1 was
       released in Oct'08, and STDCXX 4.2.1 in May'08.</p>
 
@@ -133,9 +133,9 @@
   <!--=====================================================================-->
   <h2>Get it and get involved!</h2>
   <!--=====================================================================-->
-  
+
   <p>To check out the code, use:</p>
-  
+
   <ul>
   <li><code>svn co http://llvm.org/svn/llvm-project/libcxx/trunk libcxx</code></li>
   <li><code>cd libcxx/lib</code></li>
@@ -149,7 +149,7 @@
   <li><code>./testit</code></li>
   </ul>
 
-  <p>Send discussions to the 
+  <p>Send discussions to the
   (<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">clang mailing list</a>).</p>
 
 </div>
