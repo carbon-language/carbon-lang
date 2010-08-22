@@ -41,8 +41,7 @@ public:
     return MangleCtx;
   }
 
-  bool RequiresNonZeroInitializer(QualType T);
-  bool RequiresNonZeroInitializer(const CXXRecordDecl *D);
+  bool isZeroInitializable(const MemberPointerType *MPT);
 
   llvm::Value *EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                llvm::Value *&This,
@@ -460,10 +459,8 @@ ItaniumCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
   return Result;
 }
 
-bool ItaniumCXXABI::RequiresNonZeroInitializer(QualType T) {
-  return CGM.getTypes().ContainsPointerToDataMember(T);
-}
-
-bool ItaniumCXXABI::RequiresNonZeroInitializer(const CXXRecordDecl *D) {
-  return CGM.getTypes().ContainsPointerToDataMember(D);
+/// The Itanium ABI requires non-zero initialization only for data
+/// member pointers, for which '0' is a valid offset.
+bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
+  return MPT->getPointeeType()->isFunctionType();
 }

@@ -547,8 +547,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
         if (!E->hasInitializer() || Ctor->getParent()->isEmpty())
           return;
       
-        if (!CGF.CGM.getCXXABI().RequiresNonZeroInitializer(
-                                                       E->getAllocatedType())) {
+        if (CGF.CGM.getTypes().isZeroInitializable(E->getAllocatedType())) {
           // Optimization: since zero initialization will just set the memory
           // to all zeroes, generate a single memset to do it in one shot.
           EmitZeroMemSet(CGF, E->getAllocatedType(), NewPtr, 

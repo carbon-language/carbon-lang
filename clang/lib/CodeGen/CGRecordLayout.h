@@ -174,20 +174,21 @@ private:
 
   /// Whether one of the fields in this record layout is a pointer to data
   /// member, or a struct that contains pointer to data member.
-  bool ContainsPointerToDataMember : 1;
+  bool IsZeroInitializable : 1;
 
 public:
-  CGRecordLayout(const llvm::Type *T, bool ContainsPointerToDataMember)
-    : LLVMType(T), ContainsPointerToDataMember(ContainsPointerToDataMember) {}
+  CGRecordLayout(const llvm::Type *T, bool IsZeroInitializable)
+    : LLVMType(T), IsZeroInitializable(IsZeroInitializable) {}
 
   /// \brief Return the LLVM type associated with this record.
   const llvm::Type *getLLVMType() const {
     return LLVMType;
   }
 
-  /// \brief Check whether this struct contains pointers to data members.
-  bool containsPointerToDataMember() const {
-    return ContainsPointerToDataMember;
+  /// \brief Check whether this struct can be C++ zero-initialized
+  /// with a zeroinitializer.
+  bool isZeroInitializable() const {
+    return IsZeroInitializable;
   }
 
   /// \brief Return llvm::StructType element number that corresponds to the

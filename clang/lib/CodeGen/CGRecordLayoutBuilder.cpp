@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "CodeGenTypes.h"
+#include "CGCXXABI.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Type.h"
 #include "llvm/Support/Debug.h"
@@ -45,10 +46,9 @@ public:
   typedef std::pair<const CXXRecordDecl *, unsigned> LLVMBaseInfo;
   llvm::SmallVector<LLVMBaseInfo, 16> LLVMNonVirtualBases;
   
-  /// ContainsPointerToDataMember - Whether one of the fields in this record
-  /// layout is a pointer to data member, or a struct that contains pointer to
-  /// data member.
-  bool ContainsPointerToDataMember;
+  /// IsZeroInitializable - Whether this struct can be C++
+  /// zero-initialized with an LLVM zeroinitializer.
+  bool IsZeroInitializable;
 
   /// Packed - Whether the resulting LLVM struct will be packed or not.
   bool Packed;
@@ -115,14 +115,14 @@ private:
 
   unsigned getTypeAlignment(const llvm::Type *Ty) const;
 
-  /// CheckForPointerToDataMember - Check if the given type contains a pointer
+  /// CheckZeroInitializable - Check if the given type contains a pointer
   /// to data member.
-  void CheckForPointerToDataMember(QualType T);
-  void CheckForPointerToDataMember(const CXXRecordDecl *RD);
+  void CheckZeroInitializable(QualType T);
+  void CheckZeroInitializable(const CXXRecordDecl *RD);
 
 public:
   CGRecordLayoutBuilder(CodeGenTypes &Types)
-    : ContainsPointerToDataMember(false), Packed(false), Types(Types),
+    : IsZeroInitializable(true), Packed(false), Types(Types),
       Alignment(0), AlignmentAsLLVMStruct(1),
       BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
 
@@ -311,8 +311,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     return true;
   }
 
-  // Check if we have a pointer to data member in this field.
-  CheckForPointerToDataMember(D->getType());
+  CheckZeroInitializable(D->getType());
 
   assert(FieldOffset % 8 == 0 && "FieldOffset is not on a byte boundary!");
   uint64_t FieldOffsetInBytes = FieldOffset / 8;
@@ -458,7 +457,7 @@ void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
     return;
   }
 
-  CheckForPointerToDataMember(BaseDecl);
+  CheckZeroInitializable(BaseDecl);
 
   // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
   AppendPadding(BaseOffset / 8, 1);
@@ -603,9 +602,9 @@ unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
   return Types.getTargetData().getABITypeAlignment(Ty);
 }
 
-void CGRecordLayoutBuilder::CheckForPointerToDataMember(QualType T) {
+void CGRecordLayoutBuilder::CheckZeroInitializable(QualType T) {
   // This record already contains a member pointer.
-  if (ContainsPointerToDataMember)
+  if (!IsZeroInitializable)
     return;
 
   // Can only have member pointers if we're compiling C++.
@@ -615,21 +614,17 @@ void CGRecordLayoutBuilder::CheckForPointerToDataMember(QualType T) {
   T = Types.getContext().getBaseElementType(T);
 
   if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
-    if (!MPT->getPointeeType()->isFunctionType()) {
-      // We have a pointer to data member.
-      ContainsPointerToDataMember = true;
-    }
+    if (!Types.getCXXABI().isZeroInitializable(MPT))
+      IsZeroInitializable = false;
   } else if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-
-    return CheckForPointerToDataMember(RD);
+    CheckZeroInitializable(RD);
   }
 }
 
-void
-CGRecordLayoutBuilder::CheckForPointerToDataMember(const CXXRecordDecl *RD) {
+void CGRecordLayoutBuilder::CheckZeroInitializable(const CXXRecordDecl *RD) {
   // This record already contains a member pointer.
-  if (ContainsPointerToDataMember)
+  if (!IsZeroInitializable)
     return;
 
   // FIXME: It would be better if there was a way to explicitly compute the
@@ -638,8 +633,8 @@ CGRecordLayoutBuilder::CheckForPointerToDataMember(const CXXRecordDecl *RD) {
   
   const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
   
-  if (Layout.containsPointerToDataMember())
-    ContainsPointerToDataMember = true;
+  if (!Layout.isZeroInitializable())
+    IsZeroInitializable = false;
 }
 
 CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
@@ -652,7 +647,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
                                                Builder.Packed);
 
   CGRecordLayout *RL =
-    new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
+    new CGRecordLayout(Ty, Builder.IsZeroInitializable);
 
   // Add all the non-virtual base field numbers.
   RL->NonVirtualBaseFields.insert(Builder.LLVMNonVirtualBases.begin(),
@@ -723,7 +718,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 void CGRecordLayout::print(llvm::raw_ostream &OS) const {
   OS << "<CGRecordLayout\n";
   OS << "  LLVMType:" << *LLVMType << "\n";
-  OS << "  ContainsPointerToDataMember:" << ContainsPointerToDataMember << "\n";
+  OS << "  IsZeroInitializable:" << IsZeroInitializable << "\n";
   OS << "  BitFields:[\n";
 
   // Print bit-field infos in declaration order.

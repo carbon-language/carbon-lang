@@ -393,10 +393,7 @@ llvm::Constant *CGCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
                                          MD->getParent()->getTypeForDecl()));
 }
 
-bool CGCXXABI::RequiresNonZeroInitializer(QualType T) {
-  return false;
-}
-
-bool CGCXXABI::RequiresNonZeroInitializer(const CXXRecordDecl *D) {
-  return RequiresNonZeroInitializer(QualType(D->getTypeForDecl(), 0));
+bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
+  // Fake answer.
+  return true;
 }

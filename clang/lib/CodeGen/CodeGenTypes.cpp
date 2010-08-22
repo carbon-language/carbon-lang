@@ -13,6 +13,7 @@
 
 #include "CodeGenTypes.h"
 #include "CGCall.h"
+#include "CGCXXABI.h"
 #include "CGRecordLayout.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -26,9 +27,10 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
-                           const llvm::TargetData &TD, const ABIInfo &Info)
+                           const llvm::TargetData &TD, const ABIInfo &Info,
+                           CGCXXABI &CXXABI)
   : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
-    TheABIInfo(Info) {
+    TheABIInfo(Info), TheCXXABI(CXXABI) {
 }
 
 CodeGenTypes::~CodeGenTypes() {
@@ -491,31 +493,34 @@ CodeGenTypes::getCGRecordLayout(const RecordDecl *TD) const {
   return *Layout;
 }
 
-bool CodeGenTypes::ContainsPointerToDataMember(QualType T) {
+bool CodeGenTypes::isZeroInitializable(QualType T) {
   // No need to check for member pointers when not compiling C++.
   if (!Context.getLangOptions().CPlusPlus)
-    return false;
+    return true;
   
   T = Context.getBaseElementType(T);
   
+  // Records are non-zero-initializable if they contain any
+  // non-zero-initializable subobjects.
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    
-    return ContainsPointerToDataMember(RD);
+    return isZeroInitializable(RD);
   }
-  
+
+  // We have to ask the ABI about member pointers.
   if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
-    return !MPT->getPointeeType()->isFunctionType();
+    return getCXXABI().isZeroInitializable(MPT);
   
-  return false;
+  // Everything else is okay.
+  return true;
 }
 
-bool CodeGenTypes::ContainsPointerToDataMember(const CXXRecordDecl *RD) {
+bool CodeGenTypes::isZeroInitializable(const CXXRecordDecl *RD) {
   
   // FIXME: It would be better if there was a way to explicitly compute the
   // record layout instead of converting to a type.
   ConvertTagDeclType(RD);
   
   const CGRecordLayout &Layout = getCGRecordLayout(RD);
-  return Layout.containsPointerToDataMember();
+  return Layout.isZeroInitializable();
 }

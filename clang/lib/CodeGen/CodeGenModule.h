@@ -109,6 +109,7 @@ class CodeGenModule : public BlockModule {
   const llvm::TargetData &TheTargetData;
   mutable const TargetCodeGenInfo *TheTargetCodeGenInfo;
   Diagnostic &Diags;
+  CGCXXABI &ABI;
   CodeGenTypes Types;
 
   /// VTables - Holds information about C++ vtables.
@@ -116,7 +117,6 @@ class CodeGenModule : public BlockModule {
   friend class CodeGenVTables;
 
   CGObjCRuntime* Runtime;
-  CGCXXABI* ABI;
   CGDebugInfo* DebugInfo;
 
   // WeakRefReferences - A set of references that have only been seen via
@@ -189,8 +189,6 @@ class CodeGenModule : public BlockModule {
 
   /// Lazily create the Objective-C runtime
   void createObjCRuntime();
-  /// Lazily create the C++ ABI
-  void createCXXABI();
 
   llvm::LLVMContext &VMContext;
 
@@ -228,15 +226,8 @@ public:
   /// been configured.
   bool hasObjCRuntime() { return !!Runtime; }
 
-  /// getCXXABI() - Return a reference to the configured
-  /// C++ ABI.
-  CGCXXABI &getCXXABI() {
-    if (!ABI) createCXXABI();
-    return *ABI;
-  }
-
-  /// hasCXXABI() - Return true iff a C++ ABI has been configured.
-  bool hasCXXABI() { return !!ABI; }
+  /// getCXXABI() - Return a reference to the configured C++ ABI.
+  CGCXXABI &getCXXABI() { return ABI; }
 
   llvm::Value *getStaticLocalDeclAddress(const VarDecl *VD) {
     return StaticLocalDeclMap[VD];
@@ -253,8 +244,7 @@ public:
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   MangleContext &getMangleContext() {
-    if (!ABI) createCXXABI();
-    return ABI->getMangleContext();
+    return ABI.getMangleContext();
   }
   CodeGenVTables &getVTables() { return VTables; }
   Diagnostic &getDiags() const { return Diags; }

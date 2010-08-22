@@ -59,10 +59,10 @@ public:
 
   // Manipulations on constant expressions.
 
-  /// \brief Returns true if zero-initializing the given type requires
-  /// a constant other than the LLVM null value.
-  virtual bool RequiresNonZeroInitializer(QualType T);
-  virtual bool RequiresNonZeroInitializer(const CXXRecordDecl *D);
+  /// \brief Returns true if the given member pointer can be
+  /// zero-initialized (in the C++ sense) with an LLVM
+  /// zeroinitialized.
+  virtual bool isZeroInitializable(const MemberPointerType *MPT);
 
   virtual llvm::Constant *
   EmitMemberFunctionPointerConversion(llvm::Constant *C,

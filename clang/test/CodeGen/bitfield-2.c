@@ -12,7 +12,7 @@
 // CHECK-RECORD: Record: struct s0
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:<{ [3 x i8] }>
-// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Size:24 IsSigned:1
 // CHECK-RECORD:                     NumComponents:2 Components: [
@@ -57,7 +57,7 @@ unsigned long long test_0() {
 // CHECK-RECORD: Record: struct s1
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:<{ [2 x i8], i8 }>
-// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
 // CHECK-RECORD:                     NumComponents:1 Components: [
@@ -114,7 +114,7 @@ unsigned long long test_1() {
 // CHECK-RECORD: Record: union u2
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:<{ i8 }>
-// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Size:3 IsSigned:0
 // CHECK-RECORD:                     NumComponents:1 Components: [
@@ -289,7 +289,7 @@ _Bool test_6() {
 // CHECK-RECORD: Record: struct s7
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:{ i32, i32, i32, i8, [3 x i8], [4 x i8], [12 x i8] }
-// CHECK-RECORD:   ContainsPointerToDataMember:0
+// CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Size:5 IsSigned:1
 // CHECK-RECORD:                     NumComponents:1 Components: [

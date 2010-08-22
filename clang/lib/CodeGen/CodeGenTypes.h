@@ -50,6 +50,7 @@ namespace clang {
   typedef CanQual<Type> CanQualType;
 
 namespace CodeGen {
+  class CGCXXABI;
   class CGRecordLayout;
 
 /// CodeGenTypes - This class organizes the cross-module state that is used
@@ -60,6 +61,7 @@ class CodeGenTypes {
   llvm::Module& TheModule;
   const llvm::TargetData& TheTargetData;
   const ABIInfo& TheABIInfo;
+  CGCXXABI &TheCXXABI;
 
   llvm::SmallVector<std::pair<QualType,
                               llvm::OpaqueType *>, 8>  PointersToResolve;
@@ -101,13 +103,14 @@ private:
 
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD,
-               const ABIInfo &Info);
+               const ABIInfo &Info, CGCXXABI &CXXABI);
   ~CodeGenTypes();
 
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   const TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const { return TheABIInfo; }
+  CGCXXABI &getCXXABI() const { return TheCXXABI; }
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 
   /// ConvertType - Convert type T into a llvm::Type.
@@ -204,13 +207,13 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys,
                         bool IsRecursive);
   
-  /// ContainsPointerToDataMember - Return whether the given type contains a
-  /// pointer to a data member.
-  bool ContainsPointerToDataMember(QualType T);
+  /// IsZeroInitializable - Return whether a type can be
+  /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
+  bool isZeroInitializable(QualType T);
   
-  /// ContainsPointerToDataMember - Return whether the record decl contains a
-  /// pointer to a data member.
-  bool ContainsPointerToDataMember(const CXXRecordDecl *RD);
+  /// IsZeroInitializable - Return whether a record type can be
+  /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
+  bool isZeroInitializable(const CXXRecordDecl *RD);
 };
 
 }  // end namespace CodeGen

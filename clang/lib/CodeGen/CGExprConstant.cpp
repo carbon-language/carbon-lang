@@ -958,8 +958,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
                              uint64_t StartOffset) {
   assert(StartOffset % 8 == 0 && "StartOffset not byte aligned!");
 
-  if (!CGM.getLangOptions().CPlusPlus ||
-      !CGM.getCXXABI().RequiresNonZeroInitializer(T))
+  if (CGM.getTypes().isZeroInitializable(T))
     return;
 
   if (const ConstantArrayType *CAT = 
@@ -992,7 +991,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
         continue;
       
       // Ignore bases that don't have any pointer to data members.
-      if (!CGM.getCXXABI().RequiresNonZeroInitializer(BaseDecl))
+      if (CGM.getTypes().isZeroInitializable(BaseDecl))
         continue;
 
       uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
@@ -1006,7 +1005,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
       QualType FieldType = I->getType();
       
-      if (!CGM.getCXXABI().RequiresNonZeroInitializer(FieldType))
+      if (CGM.getTypes().isZeroInitializable(FieldType))
         continue;
 
       uint64_t FieldOffset = StartOffset + Layout.getFieldOffset(FieldNo);
@@ -1031,8 +1030,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
 }
 
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
-  if (!getLangOptions().CPlusPlus ||
-      !getCXXABI().RequiresNonZeroInitializer(T))
+  if (getTypes().isZeroInitializable(T))
     return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
     
   if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {
@@ -1076,7 +1074,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
         continue;
 
       // Ignore bases that don't have any pointer to data members.
-      if (!getCXXABI().RequiresNonZeroInitializer(BaseDecl))
+      if (getTypes().isZeroInitializable(BaseDecl))
         continue;
 
       // Currently, all bases are arrays of i8. Figure out how many elements

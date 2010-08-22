@@ -41,6 +41,17 @@
 using namespace clang;
 using namespace CodeGen;
 
+static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
+  switch (CGM.getContext().Target.getCXXABI()) {
+  case CXXABI_ARM: return *CreateARMCXXABI(CGM);
+  case CXXABI_Itanium: return *CreateItaniumCXXABI(CGM);
+  case CXXABI_Microsoft: return *CreateMicrosoftCXXABI(CGM);
+  }
+
+  llvm_unreachable("invalid C++ ABI kind");
+  return *CreateItaniumCXXABI(CGM);
+}
+
 
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
                              llvm::Module &M, const llvm::TargetData &TD,
@@ -48,8 +59,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   : BlockModule(C, M, TD, Types, *this), Context(C),
     Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
-    Types(C, M, TD, getTargetCodeGenInfo().getABIInfo()),
-    VTables(*this), Runtime(0), ABI(0),
+    ABI(createCXXABI(*this)), 
+    Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI),
+    VTables(*this), Runtime(0),
     CFConstantStringClassRef(0), NSConstantStringClassRef(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
@@ -66,17 +78,13 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   else
     Runtime = CreateMacObjCRuntime(*this);
 
-  if (!Features.CPlusPlus)
-    ABI = 0;
-  else createCXXABI();
-
   // If debug info generation is enabled, create the CGDebugInfo object.
   DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(*this) : 0;
 }
 
 CodeGenModule::~CodeGenModule() {
   delete Runtime;
-  delete ABI;
+  delete &ABI;
   delete DebugInfo;
 }
 
@@ -87,20 +95,6 @@ void CodeGenModule::createObjCRuntime() {
     Runtime = CreateMacNonFragileABIObjCRuntime(*this);
   else
     Runtime = CreateMacObjCRuntime(*this);
-}
-
-void CodeGenModule::createCXXABI() {
-  switch (Context.Target.getCXXABI()) {
-  case CXXABI_ARM:
-    ABI = CreateARMCXXABI(*this);
-    break;
-  case CXXABI_Itanium:
-    ABI = CreateItaniumCXXABI(*this);
-    break;
-  case CXXABI_Microsoft:
-    ABI = CreateMicrosoftCXXABI(*this);
-    break;
-  }
 }
 
 void CodeGenModule::Release() {
