@@ -16,12 +16,15 @@
 #define CLANG_CODEGEN_CXXABI_H
 
 namespace llvm {
+  class Constant;
   class Value;
 }
 
 namespace clang {
   class CastExpr;
+  class CXXRecordDecl;
   class MemberPointerType;
+  class QualType;
 
 namespace CodeGen {
   class CodeGenFunction;
@@ -42,11 +45,31 @@ public:
                                   llvm::Value *MemPtr,
                                   const MemberPointerType *MPT);
 
-  virtual void EmitMemberPointerConversion(CodeGenFunction &CGF,
-                                           const CastExpr *E,
-                                           llvm::Value *Src,
-                                           llvm::Value *Dest,
-                                           bool VolatileDest);
+  virtual void
+  EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                      const CastExpr *E,
+                                      llvm::Value *Src,
+                                      llvm::Value *Dest,
+                                      bool VolatileDest);
+
+  virtual void EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
+                                             const MemberPointerType *MPT,
+                                             llvm::Value *Dest,
+                                             bool VolatileDest);
+  
+  // Manipulations on constant expressions.
+
+  /// \brief Returns true if zero-initializing the given type requires
+  /// a constant other than the LLVM null value.
+  virtual bool RequiresNonZeroInitializer(QualType T);
+  virtual bool RequiresNonZeroInitializer(const CXXRecordDecl *D);
+
+  virtual llvm::Constant *
+  EmitMemberFunctionPointerConversion(llvm::Constant *C,
+                                      const CastExpr *E);
+
+  virtual llvm::Constant *
+  EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
 };
 
 /// Creates an instance of a C++ ABI class.

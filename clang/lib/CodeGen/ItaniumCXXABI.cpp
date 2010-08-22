@@ -42,16 +42,30 @@ public:
     return MangleCtx;
   }
 
+  bool RequiresNonZeroInitializer(QualType T);
+  bool RequiresNonZeroInitializer(const CXXRecordDecl *D);
+
   llvm::Value *EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                llvm::Value *&This,
                                                llvm::Value *MemFnPtr,
                                                const MemberPointerType *MPT);
 
-  void EmitMemberPointerConversion(CodeGenFunction &CGF,
-                                   const CastExpr *E,
-                                   llvm::Value *Src,
-                                   llvm::Value *Dest,
-                                   bool VolatileDest);
+  void EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                           const CastExpr *E,
+                                           llvm::Value *Src,
+                                           llvm::Value *Dest,
+                                           bool VolatileDest);
+
+  llvm::Constant *EmitMemberFunctionPointerConversion(llvm::Constant *C,
+                                                      const CastExpr *E);
+
+  void EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
+                                     const MemberPointerType *MPT,
+                                     llvm::Value *Dest,
+                                     bool VolatileDest);
+
+  llvm::Constant *EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
+
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -176,11 +190,11 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
 }
 
 /// Perform a derived-to-base or base-to-derived member pointer conversion.
-void ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
-                                                const CastExpr *E,
-                                                llvm::Value *Src,
-                                                llvm::Value *Dest,
-                                                bool VolatileDest) {
+void ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                                        const CastExpr *E,
+                                                        llvm::Value *Src,
+                                                        llvm::Value *Dest,
+                                                        bool VolatileDest) {
   assert(E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer ||
          E->getCastKind() == CastExpr::CK_BaseToDerivedMemberPointer);
 
@@ -224,4 +238,72 @@ void ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   }
     
   Builder.CreateStore(SrcAdj, DstAdj, VolatileDest);
+}
+
+llvm::Constant *
+ItaniumCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
+                                                   const CastExpr *E) {
+  const MemberPointerType *SrcTy = 
+    E->getSubExpr()->getType()->getAs<MemberPointerType>();
+  const MemberPointerType *DestTy = 
+    E->getType()->getAs<MemberPointerType>();
+
+  bool DerivedToBase =
+    E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer;
+
+  const CXXRecordDecl *DerivedDecl;
+  if (DerivedToBase)
+    DerivedDecl = SrcTy->getClass()->getAsCXXRecordDecl();
+  else
+    DerivedDecl = DestTy->getClass()->getAsCXXRecordDecl();
+
+  // Calculate the offset to the base class.
+  llvm::Constant *Offset = 
+    CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
+                                     E->path_begin(),
+                                     E->path_end());
+  // If there's no offset, we're done.
+  if (!Offset) return C;
+
+  llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
+
+  llvm::Constant *Values[2] = {
+    CS->getOperand(0),
+    llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset)
+  };
+  return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2,
+                                   /*Packed=*/false);
+}        
+
+
+void ItaniumCXXABI::EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
+                                                  const MemberPointerType *MPT,
+                                                  llvm::Value *Dest,
+                                                  bool VolatileDest) {
+  // Should this be "unabstracted" and implemented in terms of the
+  // Constant version?
+
+  CGBuilderTy &Builder = CGF.Builder;
+
+  const llvm::IntegerType *PtrDiffTy = CGF.IntPtrTy;
+  llvm::Value *Zero = llvm::ConstantInt::get(PtrDiffTy, 0);
+
+  llvm::Value *Ptr = Builder.CreateStructGEP(Dest, 0, "ptr");
+  Builder.CreateStore(Zero, Ptr, VolatileDest);
+    
+  llvm::Value *Adj = Builder.CreateStructGEP(Dest, 1, "adj");
+  Builder.CreateStore(Zero, Adj, VolatileDest);
+}
+
+llvm::Constant *
+ItaniumCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
+  return CGM.EmitNullConstant(QualType(MPT, 0));
+}
+
+bool ItaniumCXXABI::RequiresNonZeroInitializer(QualType T) {
+  return CGM.getTypes().ContainsPointerToDataMember(T);
+}
+
+bool ItaniumCXXABI::RequiresNonZeroInitializer(const CXXRecordDecl *D) {
+  return CGM.getTypes().ContainsPointerToDataMember(D);
 }

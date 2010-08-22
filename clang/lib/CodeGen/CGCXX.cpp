@@ -385,10 +385,36 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   return llvm::Constant::getNullValue(FTy->getPointerTo());
 }
 
-void CGCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
-                                           const CastExpr *E,
-                                           llvm::Value *Src,
-                                           llvm::Value *Dest,
-                                           bool VolatileDest) {
-  ErrorUnsupportedABI(CGF, "member pointer conversions");
+void CGCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                                   const CastExpr *E,
+                                                   llvm::Value *Src,
+                                                   llvm::Value *Dest,
+                                                   bool VolatileDest) {
+  ErrorUnsupportedABI(CGF, "member function pointer conversions");
+}
+
+void CGCXXABI::EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
+                                             const MemberPointerType *MPT,
+                                             llvm::Value *Dest,
+                                             bool VolatileDest) {
+  ErrorUnsupportedABI(CGF, "null member function pointers");
+}
+
+llvm::Constant *
+CGCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
+                                              const CastExpr *E) {
+  return 0;
+}
+
+llvm::Constant *
+CGCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
+  return 0;
+}
+
+bool CGCXXABI::RequiresNonZeroInitializer(QualType T) {
+  return false;
+}
+
+bool CGCXXABI::RequiresNonZeroInitializer(const CXXRecordDecl *D) {
+  return RequiresNonZeroInitializer(QualType(D->getTypeForDecl(), 0));
 }

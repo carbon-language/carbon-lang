@@ -293,15 +293,9 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     if (E->getSubExpr()->getType()->isNullPtrType())
       Visit(E->getSubExpr());
 
-    const llvm::Type *PtrDiffTy = 
-      CGF.ConvertType(CGF.getContext().getPointerDiffType());
-
-    llvm::Value *NullValue = llvm::Constant::getNullValue(PtrDiffTy);
-    llvm::Value *Ptr = Builder.CreateStructGEP(DestPtr, 0, "ptr");
-    Builder.CreateStore(NullValue, Ptr, VolatileDest);
-    
-    llvm::Value *Adj = Builder.CreateStructGEP(DestPtr, 1, "adj");
-    Builder.CreateStore(NullValue, Adj, VolatileDest);
+    CGF.CGM.getCXXABI().EmitNullMemberFunctionPointer(CGF,
+                                    E->getType()->getAs<MemberPointerType>(),
+                                                      DestPtr, VolatileDest);
 
     break;
   }
@@ -329,8 +323,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     // ABIs where an actual null check is thus required; fortunately,
     // the Itanium and ARM ABIs ignore the adjustment value when
     // considering null-ness.
-    CGF.CGM.getCXXABI().EmitMemberPointerConversion(CGF, E, Src,
-                                                    DestPtr, VolatileDest);
+    CGF.CGM.getCXXABI().EmitMemberFunctionPointerConversion(CGF, E, Src,
+                                                   DestPtr, VolatileDest);
     break;
   }
   }

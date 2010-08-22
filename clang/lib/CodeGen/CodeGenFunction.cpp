@@ -579,7 +579,8 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
 
   // If the type contains a pointer to data member we can't memset it to zero.
   // Instead, create a null constant and copy it to the destination.
-  if (CGM.getTypes().ContainsPointerToDataMember(Ty)) {
+  if (CGM.getLangOptions().CPlusPlus &&
+      CGM.getCXXABI().RequiresNonZeroInitializer(Ty)) {
     llvm::Constant *NullConstant = CGM.EmitNullConstant(Ty);
 
     llvm::GlobalVariable *NullVariable = 

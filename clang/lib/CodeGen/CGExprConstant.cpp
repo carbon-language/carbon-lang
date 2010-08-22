@@ -549,42 +549,17 @@ public:
       return llvm::ConstantStruct::get(STy, Elts);
     }
     case CastExpr::CK_NullToMemberPointer:
-      return CGM.EmitNullConstant(E->getType());
+      return CGM.getCXXABI().EmitNullMemberFunctionPointer(
+                                   E->getType()->getAs<MemberPointerType>());
       
     case CastExpr::CK_BaseToDerivedMemberPointer: {
       Expr *SubExpr = E->getSubExpr();
 
-      const MemberPointerType *SrcTy = 
-        SubExpr->getType()->getAs<MemberPointerType>();
-      const MemberPointerType *DestTy = 
-        E->getType()->getAs<MemberPointerType>();
-      
-      const CXXRecordDecl *DerivedClass =
-        cast<CXXRecordDecl>(cast<RecordType>(DestTy->getClass())->getDecl());
+      llvm::Constant *C = 
+        CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
+      if (!C) return 0;
 
-      if (SrcTy->getPointeeType()->isFunctionProtoType()) {
-        llvm::Constant *C = 
-          CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
-        if (!C)
-          return 0;
-        
-        llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
-        
-        // Check if we need to update the adjustment.
-        if (llvm::Constant *Offset = 
-            CGM.GetNonVirtualBaseClassOffset(DerivedClass,
-                                             E->path_begin(),
-                                             E->path_end())) {
-          llvm::Constant *Values[2];
-        
-          Values[0] = CS->getOperand(0);
-          Values[1] = llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset);
-          return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2, 
-                                           /*Packed=*/false);
-        }
-        
-        return CS;
-      }          
+      return CGM.getCXXABI().EmitMemberFunctionPointerConversion(C, E);
     }
 
     case CastExpr::CK_BitCast: 
@@ -990,7 +965,8 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
                              uint64_t StartOffset) {
   assert(StartOffset % 8 == 0 && "StartOffset not byte aligned!");
 
-  if (!CGM.getTypes().ContainsPointerToDataMember(T))
+  if (!CGM.getLangOptions().CPlusPlus ||
+      !CGM.getCXXABI().RequiresNonZeroInitializer(T))
     return;
 
   if (const ConstantArrayType *CAT = 
@@ -1023,7 +999,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
         continue;
       
       // Ignore bases that don't have any pointer to data members.
-      if (!CGM.getTypes().ContainsPointerToDataMember(BaseDecl))
+      if (!CGM.getCXXABI().RequiresNonZeroInitializer(BaseDecl))
         continue;
 
       uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl);
@@ -1037,7 +1013,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
       QualType FieldType = I->getType();
       
-      if (!CGM.getTypes().ContainsPointerToDataMember(FieldType))
+      if (!CGM.getCXXABI().RequiresNonZeroInitializer(FieldType))
         continue;
 
       uint64_t FieldOffset = StartOffset + Layout.getFieldOffset(FieldNo);
@@ -1062,7 +1038,8 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
 }
 
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
-  if (!getTypes().ContainsPointerToDataMember(T))
+  if (!getLangOptions().CPlusPlus ||
+      !getCXXABI().RequiresNonZeroInitializer(T))
     return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
     
   if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {
@@ -1106,7 +1083,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
         continue;
 
       // Ignore bases that don't have any pointer to data members.
-      if (!getTypes().ContainsPointerToDataMember(BaseDecl))
+      if (!getCXXABI().RequiresNonZeroInitializer(BaseDecl))
         continue;
 
       // Currently, all bases are arrays of i8. Figure out how many elements
