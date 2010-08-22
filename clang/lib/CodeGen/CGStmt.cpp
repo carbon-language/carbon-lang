@@ -877,8 +877,8 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
     case '=': // Will see this and the following in mult-alt constraints.
     case '+':
       break;
-    case ',':			// FIXME - Until the back-end properly supports
-		return Result;	// multiple alternative constraints, we stop here.
+    case ',':                 // FIXME - Until the back-end properly supports
+              return Result;  // multiple alternative constraints, we stop here.
       break;
     case 'g':
       Result += "imr";

@@ -3000,9 +3000,9 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       ExplodedNodeSet Tmp;
 
       if (asLValue)
-	VisitLValue(Ex, Pred, Tmp);
+        VisitLValue(Ex, Pred, Tmp);
       else
-	Visit(Ex, Pred, Tmp);
+        Visit(Ex, Pred, Tmp);
 
       for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
         const GRState* state = GetState(*I);

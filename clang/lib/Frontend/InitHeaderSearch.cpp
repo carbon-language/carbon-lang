@@ -520,7 +520,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/boot/develop/headers/glibc", System, true, false, false);
     AddPath("/boot/develop/headers/posix", System, true, false, false);
     AddPath("/boot/develop/headers",  System, true, false, false);
-  	break;
+    break;
   case llvm::Triple::MinGW64:
   case llvm::Triple::MinGW32:
     AddPath("c:/mingw/include", System, true, false, false);

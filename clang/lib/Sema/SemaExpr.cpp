@@ -896,7 +896,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
               CallsUndergoingInstantiation.back()->getCallee());
           CXXMethodDecl *DepMethod = cast_or_null<CXXMethodDecl>(
               CurMethod->getInstantiatedFromMemberFunction());
-	  if (DepMethod) {
+          if (DepMethod) {
             Diag(R.getNameLoc(), diagnostic) << Name
               << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
             QualType DepThisType = DepMethod->getThisType(Context);
@@ -911,11 +911,11 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
                     ULE->getQualifier(), ULE->getQualifierRange(), NULL,
                     R.getLookupNameInfo(), &TList);
             CallsUndergoingInstantiation.back()->setCallee(DepExpr);
-	  } else {
+          } else {
             // FIXME: we should be able to handle this case too. It is correct
             // to add this-> here. This is a workaround for PR7947.
             Diag(R.getNameLoc(), diagnostic) << Name;
-	  }
+          }
         } else {
           Diag(R.getNameLoc(), diagnostic) << Name;
         }

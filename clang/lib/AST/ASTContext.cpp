@@ -3171,8 +3171,8 @@ QualType ASTContext::BuildByRefType(llvm::StringRef DeclName, QualType Ty) {
   //    struct __Block_byref_1_X *__forwarding;
   //    unsigned int __flags;
   //    unsigned int __size;
-  //    void *__copy_helper;		// as needed
-  //    void *__destroy_help		// as needed
+  //    void *__copy_helper;            // as needed
+  //    void *__destroy_help            // as needed
   //    int X;
   //  } *
 

@@ -108,7 +108,7 @@ void StackAddrLeakChecker::EmitStackError(CheckerContext &C, const MemRegion *R,
     report->addRange(range);
 
   C.EmitReport(report);
-}	
+}
 
 void StackAddrLeakChecker::PreVisitReturnStmt(CheckerContext &C,
                                               const ReturnStmt *RS) {

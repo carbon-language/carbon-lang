@@ -1280,7 +1280,7 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
     mangleType(Proto->getResultType());
 
   if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
-    //   <builtin-type> ::= v	# void
+    //   <builtin-type> ::= v   # void
     Out << 'v';
     return;
   }
@@ -1560,10 +1560,10 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   // <expression> ::= <unary operator-name> <expression>
   //              ::= <binary operator-name> <expression> <expression>
   //              ::= <trinary operator-name> <expression> <expression> <expression>
-  //              ::= cl <expression>* E	     # call
+  //              ::= cl <expression>* E             # call
   //              ::= cv <type> expression           # conversion with one argument
   //              ::= cv <type> _ <expression>* E # conversion with a different number of arguments
-  //              ::= st <type>		             # sizeof (a type)
+  //              ::= st <type>                      # sizeof (a type)
   //              ::= at <type>                      # alignof (a type)
   //              ::= <template-param>
   //              ::= <function-param>

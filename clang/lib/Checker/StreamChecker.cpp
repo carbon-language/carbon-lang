@@ -367,8 +367,8 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
 }
 
 const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
-					       const GRState *state,
-					       CheckerContext &C) {
+                                               const GRState *state,
+                                               CheckerContext &C) {
   SymbolRef Sym = state->getSVal(CE->getArg(0)).getAsSymbol();
   assert(Sym);
   
@@ -384,11 +384,11 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
     ExplodedNode *N = C.GenerateSink();
     if (N) {
       if (!BT_doubleclose)
-	BT_doubleclose = new BuiltinBug("Double fclose",
-					"Try to close a file Descriptor already"
-					" closed. Cause undefined behaviour.");
+        BT_doubleclose = new BuiltinBug("Double fclose",
+                                        "Try to close a file Descriptor already"
+                                        " closed. Cause undefined behaviour.");
       BugReport *R = new BugReport(*BT_doubleclose,
-				   BT_doubleclose->getDescription(), N);
+                                   BT_doubleclose->getDescription(), N);
       C.EmitReport(R);
     }
     return NULL;
@@ -400,7 +400,7 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
 
 void StreamChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-	 E = SymReaper.dead_end(); I != E; ++I) {
+         E = SymReaper.dead_end(); I != E; ++I) {
     SymbolRef Sym = *I;
     const GRState *state = C.getState();
     const StreamState *SS = state->get<StreamState>(Sym);
@@ -410,19 +410,19 @@ void StreamChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
     if (SS->isOpened()) {
       ExplodedNode *N = C.GenerateSink();
       if (N) {
-	if (!BT_ResourceLeak)
-	  BT_ResourceLeak = new BuiltinBug("Resource Leak", 
-			  "Opened File never closed. Potential Resource leak.");
-	BugReport *R = new BugReport(*BT_ResourceLeak, 
-				     BT_ResourceLeak->getDescription(), N);
-	C.EmitReport(R);
+        if (!BT_ResourceLeak)
+          BT_ResourceLeak = new BuiltinBug("Resource Leak", 
+                          "Opened File never closed. Potential Resource leak.");
+        BugReport *R = new BugReport(*BT_ResourceLeak, 
+                                     BT_ResourceLeak->getDescription(), N);
+        C.EmitReport(R);
       }
     }
   }
 }
 
 void StreamChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
-				GRExprEngine &Eng) {
+                                GRExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
   typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
@@ -435,9 +435,9 @@ void StreamChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
       if (N) {
         if (!BT_ResourceLeak)
           BT_ResourceLeak = new BuiltinBug("Resource Leak", 
-			  "Opened File never closed. Potential Resource leak.");
+                          "Opened File never closed. Potential Resource leak.");
         BugReport *R = new BugReport(*BT_ResourceLeak, 
-				     BT_ResourceLeak->getDescription(), N);
+                                     BT_ResourceLeak->getDescription(), N);
         Eng.getBugReporter().EmitReport(R);
       }
     }

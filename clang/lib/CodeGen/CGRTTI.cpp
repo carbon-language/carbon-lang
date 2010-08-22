@@ -796,7 +796,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
   //   direct proper base. Each description is of the type:
   //
   //   struct abi::__base_class_type_info {
-	//   public:
+  //   public:
   //     const __class_type_info *__base_type;
   //     long __offset_flags;
   //

@@ -1460,7 +1460,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       // Macros must be identical.  This means all tokens and whitespace
       // separation must be the same.  C99 6.10.3.2.
       if (!OtherMI->isAllowRedefinitionsWithoutWarning() &&
-	      !MI->isIdenticalTo(*OtherMI, *this)) {
+          !MI->isIdenticalTo(*OtherMI, *this)) {
         Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
           << MacroNameTok.getIdentifierInfo();
         Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);

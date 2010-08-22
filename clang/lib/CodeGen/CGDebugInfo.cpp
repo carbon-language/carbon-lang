@@ -1136,7 +1136,7 @@ llvm::DIType CGDebugInfo::CreateType(const TagType *Ty,
 }
 
 llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty,
-				     llvm::DIFile Unit) {
+                                     llvm::DIFile Unit) {
   llvm::DIType ElementTy = getOrCreateType(Ty->getElementType(), Unit);
   uint64_t NumElems = Ty->getNumElements();
   if (NumElems > 0)
@@ -1152,7 +1152,7 @@ llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty,
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_vector_type,
                                      Unit, "", Unit,
                                      0, Size, Align, 0, 0,
-				     ElementTy,  SubscriptArray);
+                                     ElementTy,  SubscriptArray);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
@@ -1845,7 +1845,7 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl,
     getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()), Unit);
   llvm::DINameSpace NS =
     DebugFactory.CreateNameSpace(Context, NSDecl->getName(), 
-	llvm::DIFile(Unit), LineNo);
+        llvm::DIFile(Unit), LineNo);
   NameSpaceCache[NSDecl] = llvm::WeakVH(NS);
   return NS;
 }

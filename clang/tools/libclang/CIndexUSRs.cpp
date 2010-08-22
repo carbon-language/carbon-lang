@@ -207,7 +207,7 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
 
   // The string can be empty if the declaration has no name; e.g., it is
   // the ParmDecl with no name for declaration of a function pointer type, e.g.:
-  //  	void  (*f)(void *);
+  //    void  (*f)(void *);
   // In this case, don't generate a USR.
   if (s.empty())
     IgnoreResults = true;
