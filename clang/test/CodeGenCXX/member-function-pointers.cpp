@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-apple-darwin9 | FileCheck -check-prefix LP32 %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=armv7-unknown-unknown | FileCheck -check-prefix ARM %s
 
 struct A { int a; void f(); virtual void vf1(); virtual void vf2(); };
 struct B { int b; virtual void g(); };
@@ -189,4 +190,23 @@ namespace PR6258 {
 namespace PR7027 {
   struct X { void test( ); };
   void testX() { &X::test; }
+}
+
+namespace test7 {
+  struct A { void foo(); virtual void vfoo(); };
+  struct B { void foo(); virtual void vfoo(); };
+  struct C : A, B { void foo(); virtual void vfoo(); };
+
+  // CHECK-ARM: @_ZN5test74ptr0E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71A3fooEv to i32), i32 0 }
+  // CHECK-ARM: @_ZN5test74ptr1E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71B3fooEv to i32), i32 8 }
+  // CHECK-ARM: @_ZN5test74ptr2E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71C3fooEv to i32), i32 0 }
+  // CHECK-ARM: @_ZN5test74ptr3E = global {{.*}} { i32 0, i32 1 }
+  // CHECK-ARM: @_ZN5test74ptr4E = global {{.*}} { i32 0, i32 9 }
+  // CHECK-ARM: @_ZN5test74ptr5E = global {{.*}} { i32 0, i32 1 }
+  void (C::*ptr0)() = &A::foo;
+  void (C::*ptr1)() = &B::foo;
+  void (C::*ptr2)() = &C::foo;
+  void (C::*ptr3)() = &A::vfoo;
+  void (C::*ptr4)() = &B::vfoo;
+  void (C::*ptr5)() = &C::vfoo;
 }

@@ -455,22 +455,7 @@ public:
   }
     
   llvm::Constant *EmitMemberFunctionPointer(CXXMethodDecl *MD) {
-    assert(MD->isInstance() && "Member function must not be static!");
-    
-    MD = MD->getCanonicalDecl();
-
-    const llvm::Type *PtrDiffTy = 
-      CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
-    
-    llvm::Constant *Values[2];
-
-    Values[0] = CGM.GetCXXMemberFunctionPointerValue(MD);
-    
-    // The adjustment will always be 0.
-    Values[1] = llvm::ConstantInt::get(PtrDiffTy, 0);
-    
-    return llvm::ConstantStruct::get(CGM.getLLVMContext(),
-                                     Values, 2, /*Packed=*/false);
+    return CGM.getCXXABI().EmitMemberFunctionPointer(MD);
   }
 
   llvm::Constant *VisitUnaryAddrOf(UnaryOperator *E) {

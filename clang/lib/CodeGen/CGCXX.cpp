@@ -287,44 +287,6 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
   return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
 }
 
-llvm::Constant *
-CodeGenModule::GetCXXMemberFunctionPointerValue(const CXXMethodDecl *MD) {
-  assert(MD->isInstance() && "Member function must not be static!");
-    
-  MD = MD->getCanonicalDecl();
-
-  const llvm::Type *PtrDiffTy = Types.ConvertType(Context.getPointerDiffType());
-
-  // Get the function pointer (or index if this is a virtual function).
-  if (MD->isVirtual()) {
-    uint64_t Index = VTables.getMethodVTableIndex(MD);
-
-    // FIXME: We shouldn't use / 8 here.
-    uint64_t PointerWidthInBytes = Context.Target.getPointerWidth(0) / 8;
-
-    // Itanium C++ ABI 2.3:
-    //   For a non-virtual function, this field is a simple function pointer. 
-    //   For a virtual function, it is 1 plus the virtual table offset 
-    //   (in bytes) of the function, represented as a ptrdiff_t. 
-    return llvm::ConstantInt::get(PtrDiffTy, (Index * PointerWidthInBytes) + 1);
-  }
-
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-  const llvm::Type *Ty;
-  // Check whether the function has a computable LLVM signature.
-  if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
-    // The function has a computable LLVM signature; use the correct type.
-    Ty = Types.GetFunctionType(Types.getFunctionInfo(MD), FPT->isVariadic());
-  } else {
-    // Use an arbitrary non-function type to tell GetAddrOfFunction that the
-    // function type is incomplete.
-    Ty = PtrDiffTy;
-  }
-
-  llvm::Constant *FuncPtr = GetAddrOfFunction(MD, Ty);
-  return llvm::ConstantExpr::getPtrToInt(FuncPtr, PtrDiffTy);
-}
-
 static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VTableIndex, 
                                      llvm::Value *This, const llvm::Type *Ty) {
   Ty = Ty->getPointerTo()->getPointerTo()->getPointerTo();
@@ -400,6 +362,13 @@ void CGCXXABI::EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
   ErrorUnsupportedABI(CGF, "null member function pointers");
 }
 
+void CGCXXABI::EmitMemberFunctionPointer(CodeGenFunction &CGF,
+                                         const CXXMethodDecl *MD,
+                                         llvm::Value *DestPtr,
+                                         bool VolatileDest) {
+  ErrorUnsupportedABI(CGF, "member function pointers");
+}
+
 llvm::Constant *
 CGCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
                                               const CastExpr *E) {
@@ -408,6 +377,10 @@ CGCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
 
 llvm::Constant *
 CGCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
+  return 0;
+}
+
+llvm::Constant *CGCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
   return 0;
 }
 

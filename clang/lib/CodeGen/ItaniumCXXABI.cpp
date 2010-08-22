@@ -66,6 +66,16 @@ public:
 
   llvm::Constant *EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
 
+  void EmitMemberFunctionPointer(CodeGenFunction &CGF,
+                                 const CXXMethodDecl *MD,
+                                 llvm::Value *Dest,
+                                 bool VolatileDest);
+
+  llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD);
+
+private:
+  void GetMemberFunctionPointer(const CXXMethodDecl *MD,
+                                llvm::Constant *(&Array)[2]);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -81,6 +91,62 @@ CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
 CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
   return new ARMCXXABI(CGM);
 }
+
+void ItaniumCXXABI::GetMemberFunctionPointer(const CXXMethodDecl *MD,
+                                             llvm::Constant *(&MemPtr)[2]) {
+  assert(MD->isInstance() && "Member function must not be static!");
+    
+  MD = MD->getCanonicalDecl();
+
+  CodeGenTypes &Types = CGM.getTypes();
+  const llvm::Type *ptrdiff_t = 
+    Types.ConvertType(CGM.getContext().getPointerDiffType());
+
+  // Get the function pointer (or index if this is a virtual function).
+  if (MD->isVirtual()) {
+    uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
+
+    // FIXME: We shouldn't use / 8 here.
+    uint64_t PointerWidthInBytes =
+      CGM.getContext().Target.getPointerWidth(0) / 8;
+    uint64_t VTableOffset = (Index * PointerWidthInBytes);
+
+    if (IsARM) {
+      // ARM C++ ABI 3.2.1:
+      //   This ABI specifies that adj contains twice the this
+      //   adjustment, plus 1 if the member function is virtual. The
+      //   least significant bit of adj then makes exactly the same
+      //   discrimination as the least significant bit of ptr does for
+      //   Itanium.
+      MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset);
+      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 1);
+    } else {
+      // Itanium C++ ABI 2.3:
+      //   For a virtual function, [the pointer field] is 1 plus the
+      //   virtual table offset (in bytes) of the function,
+      //   represented as a ptrdiff_t.
+      MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset + 1);
+      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
+    }
+  } else {
+    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+    const llvm::Type *Ty;
+    // Check whether the function has a computable LLVM signature.
+    if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
+      // The function has a computable LLVM signature; use the correct type.
+      Ty = Types.GetFunctionType(Types.getFunctionInfo(MD), FPT->isVariadic());
+    } else {
+      // Use an arbitrary non-function type to tell GetAddrOfFunction that the
+      // function type is incomplete.
+      Ty = ptrdiff_t;
+    }
+
+    llvm::Constant *Addr = CGM.GetAddrOfFunction(MD, Ty);
+    MemPtr[0] = llvm::ConstantExpr::getPtrToInt(Addr, ptrdiff_t);
+    MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
+  }
+}
+
 
 /// In the Itanium and ARM ABIs, method pointers have the form:
 ///   struct { ptrdiff_t ptr; ptrdiff_t adj; } memptr;
@@ -231,6 +297,13 @@ void ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
         CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
                                              E->path_begin(),
                                              E->path_end())) {
+    // The this-adjustment is left-shifted by 1 on ARM.
+    if (IsARM) {
+      uint64_t Offset = cast<llvm::ConstantInt>(Adj)->getZExtValue();
+      Offset <<= 1;
+      Adj = llvm::ConstantInt::get(Adj->getType(), Offset);
+    }
+
     if (DerivedToBase)
       SrcAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
     else
@@ -264,6 +337,13 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
                                      E->path_end());
   // If there's no offset, we're done.
   if (!Offset) return C;
+
+  // The this-adjustment is left-shifted by 1 on ARM.
+  if (IsARM) {
+    uint64_t OffsetV = cast<llvm::ConstantInt>(Offset)->getZExtValue();
+    OffsetV <<= 1;
+    Offset = llvm::ConstantInt::get(Offset->getType(), OffsetV);
+  }
 
   llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
 
@@ -299,6 +379,32 @@ llvm::Constant *
 ItaniumCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
   return CGM.EmitNullConstant(QualType(MPT, 0));
 }
+
+llvm::Constant *
+ItaniumCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
+  llvm::Constant *Values[2];
+  GetMemberFunctionPointer(MD, Values);
+  
+  return llvm::ConstantStruct::get(CGM.getLLVMContext(),
+                                   Values, 2, /*Packed=*/false);
+}
+
+void ItaniumCXXABI::EmitMemberFunctionPointer(CodeGenFunction &CGF,
+                                              const CXXMethodDecl *MD,
+                                              llvm::Value *DestPtr,
+                                              bool VolatileDest) {
+  llvm::Constant *Values[2];
+  GetMemberFunctionPointer(MD, Values);
+
+  CGBuilderTy &Builder = CGF.Builder;
+  
+  llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "memptr.ptr");
+  Builder.CreateStore(Values[0], DstPtr, VolatileDest);
+
+  llvm::Value *AdjPtr = Builder.CreateStructGEP(DestPtr, 1, "memptr.adj");
+  Builder.CreateStore(Values[1], AdjPtr, VolatileDest);
+}
+
 
 bool ItaniumCXXABI::RequiresNonZeroInitializer(QualType T) {
   return CGM.getTypes().ContainsPointerToDataMember(T);

@@ -484,7 +484,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // FIXME: This is broken, we should store the TargetOptions in the AST file.
   TargetOptions TargetOpts;
   TargetOpts.ABI = "";
-  TargetOpts.CXXABI = "itanium";
+  TargetOpts.CXXABI = "";
   TargetOpts.CPU = "";
   TargetOpts.Features.clear();
   TargetOpts.Triple = TargetTriple;

@@ -22,6 +22,7 @@ namespace llvm {
 
 namespace clang {
   class CastExpr;
+  class CXXMethodDecl;
   class CXXRecordDecl;
   class MemberPointerType;
   class QualType;
@@ -70,6 +71,12 @@ public:
 
   virtual llvm::Constant *
   EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
+
+  virtual llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD);
+  virtual void EmitMemberFunctionPointer(CodeGenFunction &CGF,
+                                         const CXXMethodDecl *MD,
+                                         llvm::Value *DestPtr,
+                                         bool VolatileDest);
 };
 
 /// Creates an instance of a C++ ABI class.

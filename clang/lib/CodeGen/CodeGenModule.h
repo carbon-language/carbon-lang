@@ -371,10 +371,6 @@ public:
   llvm::GlobalValue *GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                                             CXXDtorType Type);
 
-  // GetCXXMemberFunctionPointerValue - Given a method declaration, return the
-  // integer used in a member function pointer to refer to that value.
-  llvm::Constant *GetCXXMemberFunctionPointerValue(const CXXMethodDecl *MD);
-
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
   llvm::Value *getBuiltinLibFunction(const FunctionDecl *FD,

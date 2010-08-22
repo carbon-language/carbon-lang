@@ -364,9 +364,8 @@ void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   // We have a member function pointer.
-  const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
-  (void) MPT;
-  assert(MPT->getPointeeType()->isFunctionProtoType() &&
+  assert(E->getType()->getAs<MemberPointerType>()
+          ->getPointeeType()->isFunctionProtoType() &&
          "Unexpected member pointer type!");
 
   // The creation of member function pointers has no side effects; if
@@ -375,20 +374,9 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
     return;
   
   const DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
-  const CXXMethodDecl *MD = 
-    cast<CXXMethodDecl>(DRE->getDecl())->getCanonicalDecl();
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(DRE->getDecl());
 
-  const llvm::Type *PtrDiffTy = 
-    CGF.ConvertType(CGF.getContext().getPointerDiffType());
-
-  llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "dst.ptr");
-  llvm::Value *FuncPtr = CGF.CGM.GetCXXMemberFunctionPointerValue(MD);
-  Builder.CreateStore(FuncPtr, DstPtr, VolatileDest);
-
-  llvm::Value *AdjPtr = Builder.CreateStructGEP(DestPtr, 1, "dst.adj");
-  // The adjustment will always be 0.
-  Builder.CreateStore(llvm::ConstantInt::get(PtrDiffTy, 0), AdjPtr,
-                      VolatileDest);
+  CGF.CGM.getCXXABI().EmitMemberFunctionPointer(CGF, MD, DestPtr, VolatileDest);
 }
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {

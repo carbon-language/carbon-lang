@@ -713,8 +713,10 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
     Res.push_back("-target-linker-version");
     Res.push_back(Opts.LinkerVersion);
   }
-  Res.push_back("-cxx-abi");
-  Res.push_back(Opts.CXXABI);
+  if (!Opts.CXXABI.empty()) {
+    Res.push_back("-cxx-abi");
+    Res.push_back(Opts.CXXABI);
+  }
   for (unsigned i = 0, e = Opts.Features.size(); i != e; ++i) {
     Res.push_back("-target-feature");
     Res.push_back(Opts.Features[i]);
@@ -1471,10 +1473,6 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   // Use the host triple if unspecified.
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getHostTriple();
-
-  // Use the Itanium C++ ABI if unspecified.
-  if (Opts.CXXABI.empty())
-    Opts.CXXABI = "itanium";
 }
 
 //
