@@ -18,7 +18,6 @@
 #include <unordered_set>
 #include <cassert>
 
-
 int main()
 {
     {

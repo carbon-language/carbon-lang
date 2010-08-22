@@ -27,7 +27,7 @@ test(typename C::size_type n)
 #ifdef _LIBCPP_MOVE
     for (typename C::const_iterator i = c.cbegin(), e = c.cend(); i != e; ++i)
         assert(*i == typename C::value_type());
-#endif
+#endif  // _LIBCPP_MOVE
 }
 
 int main()

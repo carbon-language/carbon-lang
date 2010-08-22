@@ -13,7 +13,7 @@
 // class list
 // {
 // public:
-// 
+//
 //     // types:
 //     typedef T value_type;
 //     typedef Alloc allocator_type;

@@ -51,5 +51,5 @@ int main()
         assert(c0.empty());
         assert(c.get_allocator() == A(10));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

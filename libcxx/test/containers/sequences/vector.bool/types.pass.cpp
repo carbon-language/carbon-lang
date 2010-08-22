@@ -11,11 +11,11 @@
 
 // Test nested types and default template args:
 
-// template <class Allocator> 
+// template <class Allocator>
 // class vector<bool, Allocator
-// { 
-// public: 
-//     typedef T                                        value_type; 
+// {
+// public:
+//     typedef T                                        value_type;
 //     typedef Allocator                                allocator_type;
 //     typedef implementation-defined                   iterator;
 //     typedef implementation-defined                   const_iterator;

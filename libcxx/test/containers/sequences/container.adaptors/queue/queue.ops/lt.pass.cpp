@@ -11,13 +11,13 @@
 
 // template <class T, class Container>
 //   bool operator< (const queue<T, Container>& x,const queue<T, Container>& y);
-// 
+//
 // template <class T, class Container>
 //   bool operator> (const queue<T, Container>& x,const queue<T, Container>& y);
-// 
+//
 // template <class T, class Container>
 //   bool operator>=(const queue<T, Container>& x,const queue<T, Container>& y);
-// 
+//
 // template <class T, class Container>
 //   bool operator<=(const queue<T, Container>& x,const queue<T, Container>& y);
 

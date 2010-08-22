@@ -54,7 +54,7 @@ void test(int size)
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -63,5 +63,5 @@ int main()
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int j = 0; j < N; ++j)
         test(rng[j]);
-#endif
+#endif  // _LIBCPP_MOVE
 }

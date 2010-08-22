@@ -52,7 +52,7 @@ struct test
     using base::c;
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -64,5 +64,5 @@ int main()
     assert(q.size() == 5);
     assert(q.c.get_allocator() == test_allocator<MoveOnly>(6));
     assert(q.top() == MoveOnly(4));
-#endif
+#endif  // _LIBCPP_MOVE
 }

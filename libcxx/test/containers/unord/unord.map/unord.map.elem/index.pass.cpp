@@ -64,5 +64,5 @@ int main()
         assert(c.size() == 5);
         assert(c.at(11) == "eleven");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

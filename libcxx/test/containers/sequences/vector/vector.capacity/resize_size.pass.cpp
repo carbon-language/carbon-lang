@@ -37,7 +37,7 @@ int main()
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
     }
-#else
+#else  // _LIBCPP_MOVE
     {
         std::vector<int> v(100);
         v.resize(50);
@@ -56,5 +56,5 @@ int main()
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

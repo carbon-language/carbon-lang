@@ -9,7 +9,7 @@
 
 // <list>
 
-// template <class InputIterator> 
+// template <class InputIterator>
 //   list(InputIterator first, InputIterator last, const Allocator& = Allocator());
 
 #include <list>

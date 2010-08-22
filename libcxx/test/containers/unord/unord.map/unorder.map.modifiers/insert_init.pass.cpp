@@ -44,5 +44,5 @@ int main()
         assert(c.at(3) == "three");
         assert(c.at(4) == "four");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

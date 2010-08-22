@@ -45,7 +45,7 @@ int main()
         {
             C c1(std::begin(t1), std::end(t1));
             C c2(t2, t2+l);
-    
+
             c1.splice_after(next(c1.cbefore_begin(), p), std::move(c2));
             testd(c1, p, l);
         }

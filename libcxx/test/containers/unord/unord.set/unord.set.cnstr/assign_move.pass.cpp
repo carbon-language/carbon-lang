@@ -160,5 +160,5 @@ int main()
         assert(c.load_factor() == (float)c.size()/c.bucket_count());
         assert(c.max_load_factor() == 1);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -58,5 +58,5 @@ int main()
         assert(!l.empty());
         assert(l2.get_allocator() == other_allocator<MoveOnly>(4));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

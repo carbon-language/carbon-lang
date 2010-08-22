@@ -52,7 +52,7 @@ int main()
         assert(*next(m.begin(), 6) == 3);
         assert(*next(m.begin(), 7) == 3);
         assert(*next(m.begin(), 8) == 3);
-    
+
         assert(mo.get_allocator() == A(7));
         assert(mo.key_comp() == C(5));
         assert(mo.size() == 9);
@@ -99,7 +99,7 @@ int main()
         assert(*next(m.begin(), 6) == 3);
         assert(*next(m.begin(), 7) == 3);
         assert(*next(m.begin(), 8) == 3);
-    
+
         assert(mo.get_allocator() == A(7));
         assert(mo.key_comp() == C(5));
         assert(mo.size() == 9);
@@ -114,5 +114,5 @@ int main()
         assert(*next(mo.begin(), 7) == 3);
         assert(*next(mo.begin(), 8) == 3);
     }
-#endif
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 }

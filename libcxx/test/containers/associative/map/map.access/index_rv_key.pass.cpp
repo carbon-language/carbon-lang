@@ -34,5 +34,5 @@ int main()
     m[6] = 6.5;
     assert(m[6] == 6.5);
     assert(m.size() == 2);
-#endif
+#endif  // _LIBCPP_MOVE
 }

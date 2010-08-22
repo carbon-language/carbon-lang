@@ -26,5 +26,5 @@ int main()
     assert(q.size() == 3);
     assert(q.front() == Emplaceable(1, 2.5));
     assert(q.back() == Emplaceable(3, 4.5));
-#endif
+#endif  // _LIBCPP_MOVE
 }

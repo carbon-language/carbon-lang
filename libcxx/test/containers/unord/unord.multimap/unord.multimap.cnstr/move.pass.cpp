@@ -125,5 +125,5 @@ int main()
 
         assert(c0.empty());
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

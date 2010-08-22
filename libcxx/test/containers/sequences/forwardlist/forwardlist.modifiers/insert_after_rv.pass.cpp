@@ -51,5 +51,5 @@ int main()
         assert(*next(c.begin(), 3) == 2);
         assert(distance(c.begin(), c.end()) == 4);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

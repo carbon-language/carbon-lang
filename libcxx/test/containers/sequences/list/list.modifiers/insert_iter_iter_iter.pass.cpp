@@ -9,7 +9,7 @@
 
 // <list>
 
-// template <InputIterator Iter> 
+// template <InputIterator Iter>
 //   iterator insert(const_iterator position, Iter first, Iter last);
 
 #include <list>

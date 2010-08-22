@@ -14,7 +14,6 @@
 #include <forward_list>
 #include <cassert>
 
-
 int main()
 {
     {

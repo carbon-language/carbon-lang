@@ -163,5 +163,5 @@ int main()
         assert(c.max_load_factor() == 1);
         assert(c0.size() == 0);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

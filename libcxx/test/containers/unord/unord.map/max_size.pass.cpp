@@ -18,7 +18,6 @@
 #include <unordered_map>
 #include <cassert>
 
-
 int main()
 {
     {

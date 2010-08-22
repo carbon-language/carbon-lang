@@ -36,5 +36,5 @@ int main()
     assert(*i++ == 1);
     assert(*i++ == 1);
     assert(*i++ == 1);
-#endif
+#endif  // _LIBCPP_MOVE
 }

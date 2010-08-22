@@ -24,4 +24,4 @@ public:
         {return data_ == c.data_;}
 };
 
-#endif
+#endif  // TEST_COMPARE_H

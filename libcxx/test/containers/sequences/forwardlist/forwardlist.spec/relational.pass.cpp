@@ -12,15 +12,15 @@
 // template <class T, class Allocator>
 //     bool operator< (const forward_list<T, Allocator>& x,
 //                     const forward_list<T, Allocator>& y);
-// 
+//
 // template <class T, class Allocator>
 //     bool operator> (const forward_list<T, Allocator>& x,
 //                     const forward_list<T, Allocator>& y);
-// 
+//
 // template <class T, class Allocator>
 //     bool operator>=(const forward_list<T, Allocator>& x,
 //                     const forward_list<T, Allocator>& y);
-// 
+//
 // template <class T, class Allocator>
 //     bool operator<=(const forward_list<T, Allocator>& x,
 //                     const forward_list<T, Allocator>& y);

@@ -85,7 +85,7 @@ testN(int start, int N)
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -95,5 +95,5 @@ int main()
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
             testN(rng[i], rng[j]);
-#endif
+#endif  // _LIBCPP_MOVE
 }

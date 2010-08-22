@@ -42,5 +42,5 @@ int main()
     assert(*next(m.begin(), 2) == V(3, 1));
     assert(m.key_comp() == C(3));
     assert(m.get_allocator() == A(6));
-#endif
+#endif  // _LIBCPP_MOVE
 }

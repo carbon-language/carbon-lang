@@ -15,7 +15,6 @@
 #include <cassert>
 #include <iterator>
 
-
 int main()
 {
     {

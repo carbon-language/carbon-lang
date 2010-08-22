@@ -65,5 +65,5 @@ int main()
         for (int j = 0; j < c.size(); ++j)
             assert(c[j] == MoveOnly(j));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

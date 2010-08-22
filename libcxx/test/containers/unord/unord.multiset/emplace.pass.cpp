@@ -40,5 +40,5 @@ int main()
         assert(c.size() == 3);
         assert(*r == Emplaceable(5, 6));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

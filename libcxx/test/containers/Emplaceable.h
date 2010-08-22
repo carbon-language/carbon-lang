@@ -40,6 +40,6 @@ struct hash<Emplaceable>
 
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
-#endif
+#endif  // EMPLACEABLE_H

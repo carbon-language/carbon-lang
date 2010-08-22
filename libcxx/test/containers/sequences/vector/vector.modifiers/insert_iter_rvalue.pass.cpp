@@ -43,5 +43,5 @@ int main()
         for (++j; j < 101; ++j)
             assert(v[j] == MoveOnly());
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

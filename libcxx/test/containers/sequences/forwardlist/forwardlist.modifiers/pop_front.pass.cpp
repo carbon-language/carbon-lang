@@ -44,5 +44,5 @@ int main()
         c.pop_front();
         assert(distance(c.begin(), c.end()) == 0);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

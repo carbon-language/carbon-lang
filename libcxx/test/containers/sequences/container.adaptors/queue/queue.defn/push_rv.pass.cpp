@@ -32,5 +32,5 @@ int main()
     assert(q.size() == 3);
     assert(q.front() == MoveOnly(1));
     assert(q.back() == MoveOnly(3));
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -47,5 +47,5 @@ int main()
         assert(v2 == v);
         assert(v2.get_allocator() == other_allocator<bool>(-2));
     }
-#endif
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 }

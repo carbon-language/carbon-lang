@@ -34,7 +34,7 @@ struct test
     test(const value_compare& comp, container_type&& c,
          const test_allocator<int>& a) : base(comp, std::move(c), a) {}
     test(test&& q, const test_allocator<int>& a) : base(std::move(q), a) {}
-#endif
+#endif  // _LIBCPP_MOVE
     test_allocator<int> get_allocator() {return c.get_allocator();}
 
     using base::c;

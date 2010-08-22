@@ -43,5 +43,5 @@ int main()
         assert(c.count(3) == 1);
         assert(c.count(4) == 1);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

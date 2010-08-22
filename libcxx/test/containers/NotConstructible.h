@@ -27,4 +27,4 @@ struct hash<NotConstructible>
 
 }
 
-#endif
+#endif  // NOTCONSTRUCTIBLE_H

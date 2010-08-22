@@ -28,7 +28,7 @@ make(int n)
     return c;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -38,5 +38,5 @@ int main()
     q2 = std::move(q);
     assert(q2.size() == 5);
     assert(q.empty());
-#endif
+#endif  // _LIBCPP_MOVE
 }

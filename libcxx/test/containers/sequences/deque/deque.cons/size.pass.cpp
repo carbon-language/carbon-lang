@@ -32,7 +32,7 @@ test(unsigned n)
 #ifdef _LIBCPP_MOVE
     for (const_iterator i = d.begin(), e = d.end(); i != e; ++i)
         assert(*i == T());
-#endif
+#endif  // _LIBCPP_MOVE
     }
     assert(DefaultOnly::count == 0);
 }

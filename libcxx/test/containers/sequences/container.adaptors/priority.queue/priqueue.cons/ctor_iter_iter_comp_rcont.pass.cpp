@@ -28,5 +28,5 @@ int main()
                                     std::vector<MoveOnly>(a, a+n/2));
     assert(q.size() == n);
     assert(q.top() == MoveOnly(8));
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -219,9 +219,8 @@ test_move()
     j = 0;
     for (CI i = c.begin(); i != c.end(); ++i, ++j)
         assert(*i == MoveOnly(j));
-#endif
+#endif  // _LIBCPP_MOVE
 }
-
 
 int main()
 {

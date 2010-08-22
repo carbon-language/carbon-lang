@@ -40,5 +40,5 @@ int main()
             assert(*i == 10+n);
         assert(n == 4);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -9,21 +9,21 @@
 
 // <array>
 
-// template <class T, size_t N > 
+// template <class T, size_t N >
 // struct array
-// { 
-//     // types: 
-//     typedef T& reference; 
-//     typedef const T& const_reference; 
-//     typedef implementation defined iterator; 
-//     typedef implementation defined const_iterator; 
-//     typedef T value_type; 
+// {
+//     // types:
+//     typedef T& reference;
+//     typedef const T& const_reference;
+//     typedef implementation defined iterator;
+//     typedef implementation defined const_iterator;
+//     typedef T value_type;
 //     typedef T* pointer;
-//     typedef size_t size_type; 
-//     typedef ptrdiff_t difference_type; 
-//     typedef T value_type; 
-//     typedef std::reverse_iterator<iterator> reverse_iterator; 
-//     typedef std::reverse_iterator<const_iterator> const_reverse_iterator; 
+//     typedef size_t size_type;
+//     typedef ptrdiff_t difference_type;
+//     typedef T value_type;
+//     typedef std::reverse_iterator<iterator> reverse_iterator;
+//     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 #include <array>
 #include <iterator>

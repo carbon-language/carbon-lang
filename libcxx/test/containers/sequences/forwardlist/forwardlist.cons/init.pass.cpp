@@ -26,5 +26,5 @@ int main()
             assert(*i == n);
         assert(n == 10);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

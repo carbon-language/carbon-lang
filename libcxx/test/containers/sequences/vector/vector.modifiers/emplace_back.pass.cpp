@@ -49,7 +49,7 @@ public:
     double getd() const {return d_;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -80,5 +80,5 @@ int main()
         assert(c.back().geti() == 3);
         assert(c.back().getd() == 4.5);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

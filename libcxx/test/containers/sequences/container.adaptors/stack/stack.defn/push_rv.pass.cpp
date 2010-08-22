@@ -29,5 +29,5 @@ int main()
     q.push(MoveOnly(3));
     assert(q.size() == 3);
     assert(q.top() == MoveOnly(3));
-#endif
+#endif  // _LIBCPP_MOVE
 }

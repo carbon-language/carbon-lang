@@ -47,7 +47,7 @@ int main()
         assert(*m.begin() == V(1, 1));
         assert(*next(m.begin()) == V(2, 1));
         assert(*next(m.begin(), 2) == V(3, 1));
-    
+
         assert(mo.get_allocator() == A(2));
         assert(mo.key_comp() == C(5));
         assert(mo.size() == 3);
@@ -82,7 +82,7 @@ int main()
         assert(*m.begin() == V(1, 1));
         assert(*next(m.begin()) == V(2, 1));
         assert(*next(m.begin(), 2) == V(3, 1));
-    
+
         assert(mo.get_allocator() == A(2));
         assert(mo.key_comp() == C(5));
         assert(mo.size() == 3);

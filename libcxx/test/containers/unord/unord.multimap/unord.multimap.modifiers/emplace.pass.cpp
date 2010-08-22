@@ -43,5 +43,5 @@ int main()
         assert(r->first == 5);
         assert(r->second == Emplaceable(6, 7));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

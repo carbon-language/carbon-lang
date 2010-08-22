@@ -27,5 +27,5 @@ int main()
     assert(l1.size() == 2);
     assert(l1.front() == MoveOnly(1));
     assert(l1.back() == MoveOnly(2));
-#endif
+#endif  // _LIBCPP_MOVE
 }

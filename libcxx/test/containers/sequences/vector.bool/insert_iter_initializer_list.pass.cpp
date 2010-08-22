@@ -35,5 +35,5 @@ int main()
     assert(d[11] == true);
     assert(d[12] == true);
     assert(d[13] == true);
-#endif
+#endif  // _LIBCPP_MOVE
 }

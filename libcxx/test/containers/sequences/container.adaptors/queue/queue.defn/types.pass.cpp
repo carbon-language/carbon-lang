@@ -18,7 +18,7 @@
 //     typedef typename container_type::reference       reference;
 //     typedef typename container_type::const_reference const_reference;
 //     typedef typename container_type::size_type       size_type;
-// 
+//
 // protected:
 //     container_type c;
 // ...

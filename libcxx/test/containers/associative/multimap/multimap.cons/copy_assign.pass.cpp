@@ -43,7 +43,7 @@ int main()
         assert(m == mo);
         assert(m.get_allocator() == A(7));
         assert(m.key_comp() == C(5));
-    
+
         assert(mo.get_allocator() == A(2));
         assert(mo.key_comp() == C(5));
     }
@@ -69,7 +69,7 @@ int main()
         assert(m == mo);
         assert(m.get_allocator() == A(2));
         assert(m.key_comp() == C(5));
-    
+
         assert(mo.get_allocator() == A(2));
         assert(mo.key_comp() == C(5));
     }

@@ -51,5 +51,5 @@ int main()
         assert(r->first == 3);
         assert(r->second == 3);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

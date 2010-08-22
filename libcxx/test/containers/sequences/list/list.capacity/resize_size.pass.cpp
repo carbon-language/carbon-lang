@@ -45,5 +45,5 @@ int main()
         assert(l.size() == 20);
         assert(std::distance(l.begin(), l.end()) == 20);
     }
-#endif
+#endif  // __LIBCPP_MOVE
 }

@@ -28,12 +28,12 @@ make(int n)
     return c;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
 #ifdef _LIBCPP_MOVE
     std::queue<MoveOnly> q(make<std::deque<MoveOnly> >(5));
     assert(q.size() == 5);
-#endif
+#endif  // _LIBCPP_MOVE
 }

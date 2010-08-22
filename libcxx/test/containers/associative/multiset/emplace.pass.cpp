@@ -67,5 +67,5 @@ int main()
         assert(m.size() == 1);
         assert(*r == 2);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

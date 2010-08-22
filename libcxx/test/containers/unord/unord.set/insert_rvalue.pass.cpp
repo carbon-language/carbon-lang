@@ -73,5 +73,5 @@ int main()
         assert(*r.first == 5);
         assert(r.second);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

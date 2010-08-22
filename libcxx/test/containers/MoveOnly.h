@@ -21,8 +21,8 @@ public:
 
     int get() const {return data_;}
 
-    bool operator==(const MoveOnly& x) const {return data_ == x.data_;}    
-    bool operator< (const MoveOnly& x) const {return data_ <  x.data_;}    
+    bool operator==(const MoveOnly& x) const {return data_ == x.data_;}
+    bool operator< (const MoveOnly& x) const {return data_ <  x.data_;}
 };
 
 namespace std {
@@ -36,6 +36,6 @@ struct hash<MoveOnly>
 
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
-#endif
+#endif  // MOVEONLY_H

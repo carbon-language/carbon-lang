@@ -43,5 +43,5 @@ int main()
     assert(c.front().getd() == 4.5);
     assert(c.back().geti() == 2);
     assert(c.back().getd() == 3.5);
-#endif
+#endif  // _LIBCPP_MOVE
 }

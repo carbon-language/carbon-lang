@@ -39,57 +39,57 @@ test1()
         Node d;
         Node e;
         Node y;
-    
+
         root.__left_ = &b;
-    
+
         b.__parent_ = &root;
         b.__left_ = &y;
         b.__right_ = &d;
         b.__is_black_ = true;
-    
+
         y.__parent_ = &b;
         y.__left_ = 0;
         y.__right_ = 0;
         y.__is_black_ = true;
-    
+
         d.__parent_ = &b;
         d.__left_ = &c;
         d.__right_ = &e;
         d.__is_black_ = false;
-    
+
         c.__parent_ = &d;
         c.__left_ = 0;
         c.__right_ = 0;
         c.__is_black_ = true;
-    
+
         e.__parent_ = &d;
         e.__left_ = 0;
         e.__right_ = 0;
         e.__is_black_ = true;
-    
+
         std::__tree_remove(root.__left_, &y);
         assert(std::__tree_invariant(root.__left_));
-    
+
         assert(root.__parent_ == 0);
         assert(root.__left_ == &d);
         assert(root.__right_ == 0);
         assert(root.__is_black_ == false);
-    
+
         assert(d.__parent_ == &root);
         assert(d.__left_ == &b);
         assert(d.__right_ == &e);
         assert(d.__is_black_ == true);
-    
+
         assert(b.__parent_ == &d);
         assert(b.__left_ == 0);
         assert(b.__right_ == &c);
         assert(b.__is_black_ == true);
-    
+
         assert(c.__parent_ == &b);
         assert(c.__left_ == 0);
         assert(c.__right_ == 0);
         assert(c.__is_black_ == false);
-    
+
         assert(e.__parent_ == &d);
         assert(e.__left_ == 0);
         assert(e.__right_ == 0);
@@ -104,57 +104,57 @@ test1()
         Node d;
         Node e;
         Node y;
-    
+
         root.__left_ = &b;
-    
+
         b.__parent_ = &root;
         b.__right_ = &y;
         b.__left_ = &d;
         b.__is_black_ = true;
-    
+
         y.__parent_ = &b;
         y.__right_ = 0;
         y.__left_ = 0;
         y.__is_black_ = true;
-    
+
         d.__parent_ = &b;
         d.__right_ = &c;
         d.__left_ = &e;
         d.__is_black_ = false;
-    
+
         c.__parent_ = &d;
         c.__right_ = 0;
         c.__left_ = 0;
         c.__is_black_ = true;
-    
+
         e.__parent_ = &d;
         e.__right_ = 0;
         e.__left_ = 0;
         e.__is_black_ = true;
-    
+
         std::__tree_remove(root.__left_, &y);
         assert(std::__tree_invariant(root.__left_));
-    
+
         assert(root.__parent_ == 0);
         assert(root.__left_ == &d);
         assert(root.__right_ == 0);
         assert(root.__is_black_ == false);
-    
+
         assert(d.__parent_ == &root);
         assert(d.__right_ == &b);
         assert(d.__left_ == &e);
         assert(d.__is_black_ == true);
-    
+
         assert(b.__parent_ == &d);
         assert(b.__right_ == 0);
         assert(b.__left_ == &c);
         assert(b.__is_black_ == true);
-    
+
         assert(c.__parent_ == &b);
         assert(c.__right_ == 0);
         assert(c.__left_ == 0);
         assert(c.__is_black_ == false);
-    
+
         assert(e.__parent_ == &d);
         assert(e.__right_ == 0);
         assert(e.__left_ == 0);
@@ -170,67 +170,67 @@ test1()
         Node e;
         Node f;
         Node y;
-    
+
         root.__left_ = &b;
-    
+
         b.__parent_ = &root;
         b.__left_ = &y;
         b.__right_ = &d;
         b.__is_black_ = true;
-    
+
         y.__parent_ = &b;
         y.__left_ = 0;
         y.__right_ = 0;
         y.__is_black_ = true;
-    
+
         d.__parent_ = &b;
         d.__left_ = &c;
         d.__right_ = &e;
         d.__is_black_ = false;
-    
+
         c.__parent_ = &d;
         c.__left_ = &f;
         c.__right_ = 0;
         c.__is_black_ = true;
-    
+
         e.__parent_ = &d;
         e.__left_ = 0;
         e.__right_ = 0;
         e.__is_black_ = true;
-    
+
         f.__parent_ = &c;
         f.__left_ = 0;
         f.__right_ = 0;
         f.__is_black_ = false;
-    
+
         std::__tree_remove(root.__left_, &y);
         assert(std::__tree_invariant(root.__left_));
-    
+
         assert(root.__parent_ == 0);
         assert(root.__left_ == &d);
         assert(root.__right_ == 0);
         assert(root.__is_black_ == false);
-    
+
         assert(d.__parent_ == &root);
         assert(d.__left_ == &f);
         assert(d.__right_ == &e);
         assert(d.__is_black_ == true);
-    
+
         assert(f.__parent_ == &d);
         assert(f.__left_ == &b);
         assert(f.__right_ == &c);
         assert(f.__is_black_ == false);
-    
+
         assert(b.__parent_ == &f);
         assert(b.__left_ == 0);
         assert(b.__right_ == 0);
         assert(b.__is_black_ == true);
-    
+
         assert(c.__parent_ == &f);
         assert(c.__left_ == 0);
         assert(c.__right_ == 0);
         assert(c.__is_black_ == true);
-    
+
         assert(e.__parent_ == &d);
         assert(e.__left_ == 0);
         assert(e.__right_ == 0);
@@ -246,67 +246,67 @@ test1()
         Node e;
         Node f;
         Node y;
-    
+
         root.__left_ = &b;
-    
+
         b.__parent_ = &root;
         b.__right_ = &y;
         b.__left_ = &d;
         b.__is_black_ = true;
-    
+
         y.__parent_ = &b;
         y.__right_ = 0;
         y.__left_ = 0;
         y.__is_black_ = true;
-    
+
         d.__parent_ = &b;
         d.__right_ = &c;
         d.__left_ = &e;
         d.__is_black_ = false;
-    
+
         c.__parent_ = &d;
         c.__right_ = &f;
         c.__left_ = 0;
         c.__is_black_ = true;
-    
+
         e.__parent_ = &d;
         e.__right_ = 0;
         e.__left_ = 0;
         e.__is_black_ = true;
-    
+
         f.__parent_ = &c;
         f.__right_ = 0;
         f.__left_ = 0;
         f.__is_black_ = false;
-    
+
         std::__tree_remove(root.__left_, &y);
         assert(std::__tree_invariant(root.__left_));
-    
+
         assert(root.__parent_ == 0);
         assert(root.__left_ == &d);
         assert(root.__right_ == 0);
         assert(root.__is_black_ == false);
-    
+
         assert(d.__parent_ == &root);
         assert(d.__right_ == &f);
         assert(d.__left_ == &e);
         assert(d.__is_black_ == true);
-    
+
         assert(f.__parent_ == &d);
         assert(f.__right_ == &b);
         assert(f.__left_ == &c);
         assert(f.__is_black_ == false);
-    
+
         assert(b.__parent_ == &f);
         assert(b.__right_ == 0);
         assert(b.__left_ == 0);
         assert(b.__is_black_ == true);
-    
+
         assert(c.__parent_ == &f);
         assert(c.__right_ == 0);
         assert(c.__left_ == 0);
         assert(c.__is_black_ == true);
-    
+
         assert(e.__parent_ == &d);
         assert(e.__right_ == 0);
         assert(e.__left_ == 0);

@@ -49,4 +49,4 @@ inline
 void
 swap(stack_allocator<T, N>& x, stack_allocator<T, N>& y) {}
 
-#endif
+#endif  // STACK_ALLOCATOR_H

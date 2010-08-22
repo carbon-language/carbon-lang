@@ -30,5 +30,5 @@ int main()
         assert(n == 10);
         assert(c.get_allocator() == A(14));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -69,5 +69,5 @@ int main()
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

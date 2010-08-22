@@ -47,7 +47,7 @@ struct test
     allocator_type get_allocator() {return this->c.get_allocator();}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -55,5 +55,5 @@ int main()
     test<MoveOnly> q(make<C>(5), test_allocator<MoveOnly>(4));
     assert(q.get_allocator() == test_allocator<MoveOnly>(4));
     assert(q.size() == 5);
-#endif
+#endif  // _LIBCPP_MOVE
 }

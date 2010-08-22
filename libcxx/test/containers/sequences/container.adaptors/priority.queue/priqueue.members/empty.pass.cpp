@@ -13,7 +13,6 @@
 
 // bool empty() const;
 
-
 #include <queue>
 #include <cassert>
 

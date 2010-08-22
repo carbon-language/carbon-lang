@@ -85,5 +85,5 @@ int main()
         assert(c.key_eq() == test_compare<std::equal_to<int> >(9));
         assert((c.get_allocator() == test_allocator<std::pair<const int, std::string> >(10)));
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

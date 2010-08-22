@@ -85,5 +85,5 @@ int main()
         assert(m.begin()->first == 2);
         assert(m.begin()->second == 3.5);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -25,5 +25,5 @@ int main()
     q.emplace(3, 4.5);
     assert(q.size() == 3);
     assert(q.top() == Emplaceable(3, 4.5));
-#endif
+#endif  // _LIBCPP_MOVE
 }

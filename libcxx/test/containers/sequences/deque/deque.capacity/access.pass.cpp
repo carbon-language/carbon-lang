@@ -11,13 +11,13 @@
 
 //       reference operator[](size_type __i);
 // const_reference operator[](size_type __i) const;
-// 
+//
 //       reference at(size_type __i);
 // const_reference at(size_type __i) const;
-// 
+//
 //       reference front();
 // const_reference front() const;
-// 
+//
 //       reference back();
 // const_reference back() const;
 

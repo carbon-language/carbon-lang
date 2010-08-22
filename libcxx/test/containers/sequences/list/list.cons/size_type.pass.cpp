@@ -46,5 +46,5 @@ int main()
         assert(l.size() == 3);
         assert(std::distance(l.begin(), l.end()) == 3);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

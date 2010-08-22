@@ -28,5 +28,5 @@ int main()
     assert(q.top() == 3);
     q.push(2);
     assert(q.top() == 3);
-#endif
+#endif  // _LIBCPP_MOVE
 }

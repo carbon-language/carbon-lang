@@ -15,12 +15,12 @@
 // const_iterator begin() const;
 //       iterator end();
 // const_iterator end()   const;
-// 
+//
 //       reverse_iterator rbegin();
 // const_reverse_iterator rbegin() const;
 //       reverse_iterator rend();
 // const_reverse_iterator rend()   const;
-// 
+//
 // const_iterator         cbegin()  const;
 // const_iterator         cend()    const;
 // const_reverse_iterator crbegin() const;

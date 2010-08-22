@@ -137,5 +137,5 @@ int main()
         assert(m3.key_comp() == C(5));
         assert(m1.empty());
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

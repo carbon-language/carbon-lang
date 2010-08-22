@@ -25,5 +25,5 @@ int main()
     assert(*i++ == 4);
     assert(*i++ == 5);
     assert(*i++ == 6);
-#endif
+#endif  // _LIBCPP_MOVE
 }

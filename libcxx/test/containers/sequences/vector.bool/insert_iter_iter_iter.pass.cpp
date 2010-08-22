@@ -10,7 +10,7 @@
 // <vector>
 // vector<bool>
 
-// template <class Iter> 
+// template <class Iter>
 //   iterator insert(const_iterator position, Iter first, Iter last);
 
 #include <vector>

@@ -31,5 +31,5 @@ int main()
     assert(*++i == V(4));
     assert(*++i == V(5));
     assert(*++i == V(6));
-#endif
+#endif  // _LIBCPP_MOVE
 }

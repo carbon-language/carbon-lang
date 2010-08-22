@@ -51,5 +51,5 @@ int main()
         assert(*next(c.begin(), 3) == Emplaceable(2, 3.5));
         assert(distance(c.begin(), c.end()) == 4);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

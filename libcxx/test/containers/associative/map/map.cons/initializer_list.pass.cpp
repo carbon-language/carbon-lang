@@ -37,5 +37,5 @@ int main()
     assert(*m.begin() == V(1, 1));
     assert(*next(m.begin()) == V(2, 1));
     assert(*next(m.begin(), 2) == V(3, 1));
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -50,5 +50,5 @@ int main()
     assert(*++i == V(3, 1.5));
     assert(*++i == V(3, 2));
     assert(m.key_comp() == Cmp(4));
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -42,5 +42,5 @@ int main()
         assert(*next(c.begin(), 3) == 1);
         assert(*next(c.begin(), 4) == 2);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

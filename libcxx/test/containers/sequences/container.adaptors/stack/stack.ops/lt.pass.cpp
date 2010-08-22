@@ -11,13 +11,13 @@
 
 // template <class T, class Container>
 //   bool operator< (const stack<T, Container>& x,const stack<T, Container>& y);
-// 
+//
 // template <class T, class Container>
 //   bool operator> (const stack<T, Container>& x,const stack<T, Container>& y);
-// 
+//
 // template <class T, class Container>
 //   bool operator>=(const stack<T, Container>& x,const stack<T, Container>& y);
-// 
+//
 // template <class T, class Container>
 //   bool operator<=(const stack<T, Container>& x,const stack<T, Container>& y);
 

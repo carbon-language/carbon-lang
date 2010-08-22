@@ -11,11 +11,11 @@
 
 // Test nested types and default template args:
 
-// template <class T, class Allocator = allocator<T> > 
+// template <class T, class Allocator = allocator<T> >
 // class vector
-// { 
-// public: 
-//     typedef T                                        value_type; 
+// {
+// public:
+//     typedef T                                        value_type;
 //     typedef Allocator                                allocator_type;
 //     typedef typename allocator_type::reference       reference;
 //     typedef typename allocator_type::const_reference const_reference;
