@@ -33,9 +33,10 @@ class ItaniumCXXABI : public CodeGen::CGCXXABI {
 protected:
   CodeGenModule &CGM;
   CodeGen::MangleContext MangleCtx;
+  bool IsARM;
 public:
-  ItaniumCXXABI(CodeGen::CodeGenModule &CGM) :
-    CGM(CGM), MangleCtx(CGM.getContext(), CGM.getDiags()) { }
+  ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
+    CGM(CGM), MangleCtx(CGM.getContext(), CGM.getDiags()), IsARM(IsARM) { }
 
   CodeGen::MangleContext &getMangleContext() {
     return MangleCtx;
@@ -49,7 +50,7 @@ public:
 
 class ARMCXXABI : public ItaniumCXXABI {
 public:
-  ARMCXXABI(CodeGen::CodeGenModule &CGM) : ItaniumCXXABI(CGM) {}
+  ARMCXXABI(CodeGen::CodeGenModule &CGM) : ItaniumCXXABI(CGM, /*ARM*/ true) {}
 };
 }
 
@@ -61,6 +62,26 @@ CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
   return new ARMCXXABI(CGM);
 }
 
+/// In the Itanium and ARM ABIs, method pointers have the form:
+///   struct { ptrdiff_t ptr; ptrdiff_t adj; } memptr;
+///
+/// In the Itanium ABI:
+///  - method pointers are virtual if (memptr.ptr & 1) is nonzero
+///  - the this-adjustment is (memptr.adj)
+///  - the virtual offset is (memptr.ptr - 1)
+///
+/// In the ARM ABI:
+///  - method pointers are virtual if (memptr.adj & 1) is nonzero
+///  - the this-adjustment is (memptr.adj >> 1)
+///  - the virtual offset is (memptr.ptr)
+/// ARM uses 'adj' for the virtual flag because Thumb functions
+/// may be only single-byte aligned.
+///
+/// If the member is virtual, the adjusted 'this' pointer points
+/// to a vtable pointer from which the virtual offset is applied.
+///
+/// If the member is non-virtual, memptr.ptr is the address of
+/// the function to call.
 llvm::Value *
 ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                llvm::Value *&This,
@@ -77,55 +98,67 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
                                    FPT->isVariadic());
 
-  llvm::BasicBlock *FnVirtual = CGF.createBasicBlock("fn.virtual");
-  llvm::BasicBlock *FnNonVirtual = CGF.createBasicBlock("fn.nonvirtual");
-  llvm::BasicBlock *FnEnd = CGF.createBasicBlock("fn.end");
+  const llvm::IntegerType *ptrdiff = CGF.IntPtrTy;
+  llvm::Constant *ptrdiff_1 = llvm::ConstantInt::get(ptrdiff, 1);
 
-  // Load the adjustment, which is in the second field.
-  llvm::Value *Adj = Builder.CreateStructGEP(MemFnPtr, 1);
-  Adj = Builder.CreateLoad(Adj, "mem.fn.adj");
+  llvm::BasicBlock *FnVirtual = CGF.createBasicBlock("memptr.virtual");
+  llvm::BasicBlock *FnNonVirtual = CGF.createBasicBlock("memptr.nonvirtual");
+  llvm::BasicBlock *FnEnd = CGF.createBasicBlock("memptr.end");
+
+  // Load memptr.adj, which is in the second field.
+  llvm::Value *RawAdj = Builder.CreateStructGEP(MemFnPtr, 1);
+  RawAdj = Builder.CreateLoad(RawAdj, "memptr.adj");
+
+  // Compute the true adjustment.
+  llvm::Value *Adj = RawAdj;
+  if (IsARM)
+    Adj = Builder.CreateAShr(Adj, ptrdiff_1, "memptr.adj.shifted");
 
   // Apply the adjustment and cast back to the original struct type
   // for consistency.
-  llvm::Value *Ptr = Builder.CreateBitCast(This, Builder.getInt8PtrTy(), "ptr");
-  Ptr = Builder.CreateInBoundsGEP(Ptr, Adj, "adj");
-  This = Builder.CreateBitCast(Ptr, This->getType(), "this");
+  llvm::Value *Ptr = Builder.CreateBitCast(This, Builder.getInt8PtrTy());
+  Ptr = Builder.CreateInBoundsGEP(Ptr, Adj);
+  This = Builder.CreateBitCast(Ptr, This->getType(), "this.adjusted");
   
   // Load the function pointer.
-  llvm::Value *FnPtr = Builder.CreateStructGEP(MemFnPtr, 0, "mem.fn.ptr");
-  llvm::Value *FnAsInt = Builder.CreateLoad(FnPtr, "fn");
+  llvm::Value *FnPtr = Builder.CreateStructGEP(MemFnPtr, 0);
+  llvm::Value *FnAsInt = Builder.CreateLoad(FnPtr, "memptr.ptr");
   
   // If the LSB in the function pointer is 1, the function pointer points to
   // a virtual function.
-  llvm::Constant *iptr_1 = llvm::ConstantInt::get(FnAsInt->getType(), 1);
-  llvm::Value *IsVirtual = Builder.CreateAnd(FnAsInt, iptr_1);
-  IsVirtual = Builder.CreateIsNotNull(IsVirtual);
+  llvm::Value *IsVirtual;
+  if (IsARM)
+    IsVirtual = Builder.CreateAnd(RawAdj, ptrdiff_1);
+  else
+    IsVirtual = Builder.CreateAnd(FnAsInt, ptrdiff_1);
+  IsVirtual = Builder.CreateIsNotNull(IsVirtual, "memptr.isvirtual");
   Builder.CreateCondBr(IsVirtual, FnVirtual, FnNonVirtual);
 
   // In the virtual path, the adjustment left 'This' pointing to the
   // vtable of the correct base subobject.  The "function pointer" is an
-  // offset within the vtable (+1 for the virtual flag).
+  // offset within the vtable (+1 for the virtual flag on non-ARM).
   CGF.EmitBlock(FnVirtual);
 
   // Cast the adjusted this to a pointer to vtable pointer and load.
   const llvm::Type *VTableTy = Builder.getInt8PtrTy();
   llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy->getPointerTo());
-  VTable = Builder.CreateLoad(VTable);
+  VTable = Builder.CreateLoad(VTable, "memptr.vtable");
 
   // Apply the offset.
-  llvm::Value *VTableOffset = Builder.CreateSub(FnAsInt, iptr_1);
-  VTable = Builder.CreateGEP(VTable, VTableOffset, "fn");
+  llvm::Value *VTableOffset = FnAsInt;
+  if (!IsARM) VTableOffset = Builder.CreateSub(VTableOffset, ptrdiff_1);
+  VTable = Builder.CreateGEP(VTable, VTableOffset);
 
   // Load the virtual function to call.
   VTable = Builder.CreateBitCast(VTable, FTy->getPointerTo()->getPointerTo());
-  llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "virtualfn");
+  llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "memptr.virtualfn");
   CGF.EmitBranch(FnEnd);
 
   // In the non-virtual path, the function pointer is actually a
   // function pointer.
   CGF.EmitBlock(FnNonVirtual);
   llvm::Value *NonVirtualFn =
-    Builder.CreateIntToPtr(FnAsInt, FTy->getPointerTo());
+    Builder.CreateIntToPtr(FnAsInt, FTy->getPointerTo(), "memptr.nonvirtualfn");
   
   // We're done.
   CGF.EmitBlock(FnEnd);
