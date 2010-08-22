@@ -10,11 +10,11 @@
 // <numeric>
 
 // template<InputIterator InIter,
-//          OutputIterator<auto, const InIter::value_type&> OutIter, 
-//          Callable<auto, const InIter::value_type&, InIter::reference> BinaryOperation> 
-//   requires HasAssign<InIter::value_type, BinaryOperation::result_type> 
-//         && Constructible<InIter::value_type, InIter::reference> 
-//         && CopyConstructible<BinaryOperation> 
+//          OutputIterator<auto, const InIter::value_type&> OutIter,
+//          Callable<auto, const InIter::value_type&, InIter::reference> BinaryOperation>
+//   requires HasAssign<InIter::value_type, BinaryOperation::result_type>
+//         && Constructible<InIter::value_type, InIter::reference>
+//         && CopyConstructible<BinaryOperation>
 //   OutIter
 //   partial_sum(InIter first, InIter last, OutIter result, BinaryOperation binary_op);
 

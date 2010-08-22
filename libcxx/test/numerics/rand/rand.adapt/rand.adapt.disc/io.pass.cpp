@@ -17,7 +17,7 @@
 // basic_ostream<charT, traits>&
 // operator<<(basic_ostream<charT, traits>& os,
 //            const discard_block_engine<Engine, p, r>& x);
-// 
+//
 // template <class charT, class traits,
 //           class Engine, size_t p, size_t r>
 // basic_istream<charT, traits>&

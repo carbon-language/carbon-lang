@@ -77,5 +77,5 @@ int main()
         assert(p[1] == 0);
         assert(p[2] == 1);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

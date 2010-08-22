@@ -62,7 +62,7 @@ int main()
         kurtosis -= 3;
         double x_mean = std::exp(d.m() + sqr(d.s())/2);
         double x_var = (std::exp(sqr(d.s())) - 1) * std::exp(2*d.m() + sqr(d.s()));
-        double x_skew = (std::exp(sqr(d.s())) + 2) * 
+        double x_skew = (std::exp(sqr(d.s())) + 2) *
               std::sqrt((std::exp(sqr(d.s())) - 1));
         double x_kurtosis = std::exp(4*sqr(d.s())) + 2*std::exp(3*sqr(d.s())) +
                           3*std::exp(2*sqr(d.s())) - 6;
@@ -104,7 +104,7 @@ int main()
         kurtosis -= 3;
         double x_mean = std::exp(d.m() + sqr(d.s())/2);
         double x_var = (std::exp(sqr(d.s())) - 1) * std::exp(2*d.m() + sqr(d.s()));
-        double x_skew = (std::exp(sqr(d.s())) + 2) * 
+        double x_skew = (std::exp(sqr(d.s())) + 2) *
               std::sqrt((std::exp(sqr(d.s())) - 1));
         double x_kurtosis = std::exp(4*sqr(d.s())) + 2*std::exp(3*sqr(d.s())) +
                           3*std::exp(2*sqr(d.s())) - 6;
@@ -146,7 +146,7 @@ int main()
         kurtosis -= 3;
         double x_mean = std::exp(d.m() + sqr(d.s())/2);
         double x_var = (std::exp(sqr(d.s())) - 1) * std::exp(2*d.m() + sqr(d.s()));
-        double x_skew = (std::exp(sqr(d.s())) + 2) * 
+        double x_skew = (std::exp(sqr(d.s())) + 2) *
               std::sqrt((std::exp(sqr(d.s())) - 1));
         double x_kurtosis = std::exp(4*sqr(d.s())) + 2*std::exp(3*sqr(d.s())) +
                           3*std::exp(2*sqr(d.s())) - 6;
@@ -188,7 +188,7 @@ int main()
         kurtosis -= 3;
         double x_mean = std::exp(d.m() + sqr(d.s())/2);
         double x_var = (std::exp(sqr(d.s())) - 1) * std::exp(2*d.m() + sqr(d.s()));
-        double x_skew = (std::exp(sqr(d.s())) + 2) * 
+        double x_skew = (std::exp(sqr(d.s())) + 2) *
               std::sqrt((std::exp(sqr(d.s())) - 1));
         double x_kurtosis = std::exp(4*sqr(d.s())) + 2*std::exp(3*sqr(d.s())) +
                           3*std::exp(2*sqr(d.s())) - 6;
@@ -230,7 +230,7 @@ int main()
         kurtosis -= 3;
         double x_mean = std::exp(d.m() + sqr(d.s())/2);
         double x_var = (std::exp(sqr(d.s())) - 1) * std::exp(2*d.m() + sqr(d.s()));
-        double x_skew = (std::exp(sqr(d.s())) + 2) * 
+        double x_skew = (std::exp(sqr(d.s())) + 2) *
               std::sqrt((std::exp(sqr(d.s())) - 1));
         double x_kurtosis = std::exp(4*sqr(d.s())) + 2*std::exp(3*sqr(d.s())) +
                           3*std::exp(2*sqr(d.s())) - 6;

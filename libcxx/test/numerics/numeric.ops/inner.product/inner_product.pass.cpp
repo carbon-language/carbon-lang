@@ -9,9 +9,9 @@
 
 // <numeric>
 
-// template <InputIterator Iter1, InputIterator Iter2, MoveConstructible T> 
-//   requires HasMultiply<Iter1::reference, Iter2::reference> 
-//         && HasPlus<T, HasMultiply<Iter1::reference, Iter2::reference>::result_type> 
+// template <InputIterator Iter1, InputIterator Iter2, MoveConstructible T>
+//   requires HasMultiply<Iter1::reference, Iter2::reference>
+//         && HasPlus<T, HasMultiply<Iter1::reference, Iter2::reference>::result_type>
 //         && HasAssign<T,
 //                      HasPlus<T,
 //                              HasMultiply<Iter1::reference,

@@ -10,9 +10,9 @@
 // <numeric>
 
 // template <InputIterator Iter, MoveConstructible T,
-//           Callable<auto, const T&, Iter::reference> BinaryOperation> 
-//   requires HasAssign<T, BinaryOperation::result_type> 
-//         && CopyConstructible<BinaryOperation> 
+//           Callable<auto, const T&, Iter::reference> BinaryOperation>
+//   requires HasAssign<T, BinaryOperation::result_type>
+//         && CopyConstructible<BinaryOperation>
 //   T
 //   accumulate(Iter first, Iter last, T init, BinaryOperation binary_op);
 

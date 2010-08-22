@@ -9,7 +9,7 @@
 
 // <complex>
 
-// template<class T> 
+// template<class T>
 //   complex<T>
 //   pow(const complex<T>& x, const complex<T>& y);
 

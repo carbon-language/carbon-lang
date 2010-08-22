@@ -55,7 +55,6 @@ test()
     test<T>(10);
 }
 
-
 int main()
 {
     test<float>();

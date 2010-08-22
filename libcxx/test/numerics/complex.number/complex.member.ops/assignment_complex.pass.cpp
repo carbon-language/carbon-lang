@@ -9,7 +9,7 @@
 
 // <complex>
 
-// complex& operator=(const complex&); 
+// complex& operator=(const complex&);
 // template<class X> complex& operator= (const complex<X>&);
 
 #include <complex>

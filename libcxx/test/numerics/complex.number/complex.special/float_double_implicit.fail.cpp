@@ -10,9 +10,9 @@
 // <complex>
 
 // template<> class complex<float>
-// { 
-// public: 
-//     explicit constexpr complex(const complex<double>&); 
+// {
+// public:
+//     explicit constexpr complex(const complex<double>&);
 // };
 
 #include <complex>

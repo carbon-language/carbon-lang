@@ -9,13 +9,13 @@
 
 // <numeric>
 
-// template <InputIterator Iter1, InputIterator Iter2, MoveConstructible T, 
+// template <InputIterator Iter1, InputIterator Iter2, MoveConstructible T,
 //           class BinaryOperation1,
-//           Callable<auto, Iter1::reference, Iter2::reference> BinaryOperation2> 
-//   requires Callable<BinaryOperation1, const T&, BinaryOperation2::result_type> 
-//         && HasAssign<T, BinaryOperation1::result_type> 
-//         && CopyConstructible<BinaryOperation1> 
-//         && CopyConstructible<BinaryOperation2> 
+//           Callable<auto, Iter1::reference, Iter2::reference> BinaryOperation2>
+//   requires Callable<BinaryOperation1, const T&, BinaryOperation2::result_type>
+//         && HasAssign<T, BinaryOperation1::result_type>
+//         && CopyConstructible<BinaryOperation1>
+//         && CopyConstructible<BinaryOperation2>
 //   T
 //   inner_product(Iter1 first1, Iter1 last1, Iter2 first2,
 //                 T init, BinaryOperation1 binary_op1, BinaryOperation2 binary_op2);

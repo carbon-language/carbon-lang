@@ -79,7 +79,6 @@ test(typename std::enable_if<!std::is_integral<T>::value>::type* = 0, typename s
     test(std::complex<T>(3, 4), std::complex<U>(5, 6));
 }
 
-
 int main()
 {
     test<int, float>();

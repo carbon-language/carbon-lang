@@ -11,8 +11,6 @@
 
 // typedef minstd_rand0 default_random_engine;
 
-
-
 #include <random>
 #include <cassert>
 

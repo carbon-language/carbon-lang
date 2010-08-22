@@ -59,5 +59,5 @@ int main()
                 assert(v2[i][j] == a[i][j]);
         }
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

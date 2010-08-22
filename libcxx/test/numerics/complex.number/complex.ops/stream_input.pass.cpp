@@ -9,8 +9,8 @@
 
 // <complex>
 
-// template<class T, class charT, class traits> 
-//   basic_istream<charT, traits>& 
+// template<class T, class charT, class traits>
+//   basic_istream<charT, traits>&
 //   operator>>(basic_istream<charT, traits>& is, complex<T>& x);
 
 #include <complex>

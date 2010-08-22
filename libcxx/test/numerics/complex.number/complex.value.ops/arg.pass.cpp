@@ -126,7 +126,6 @@ void test_edges()
     }
 }
 
-
 int main()
 {
     test<float>();

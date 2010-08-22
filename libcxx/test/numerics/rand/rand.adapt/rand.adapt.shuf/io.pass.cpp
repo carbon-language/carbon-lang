@@ -17,7 +17,7 @@
 // basic_ostream<charT, traits>&
 // operator<<(basic_ostream<charT, traits>& os,
 //            const shuffle_order_engine<Engine, k>& x);
-// 
+//
 // template <class charT, class traits,
 //           class Engine, size_t k>
 // basic_istream<charT, traits>&

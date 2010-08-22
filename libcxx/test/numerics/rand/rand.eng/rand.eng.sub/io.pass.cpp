@@ -17,7 +17,7 @@
 // basic_ostream<charT, traits>&
 // operator<<(basic_ostream<charT, traits>& os,
 //            const subtract_with_carry_engine<UIntType, w, s, r>& x);
-// 
+//
 // template <class charT, class traits,
 //           class UIntType, size_t w, size_t s, size_t r>
 // basic_istream<charT, traits>&

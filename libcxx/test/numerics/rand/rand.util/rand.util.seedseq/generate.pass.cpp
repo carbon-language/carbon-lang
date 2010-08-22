@@ -17,8 +17,6 @@
 #include <random>
 #include <cassert>
 
-
-
 int main()
 {
     {

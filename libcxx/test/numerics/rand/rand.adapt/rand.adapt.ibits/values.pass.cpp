@@ -15,7 +15,7 @@
 // public:
 //     // types
 //     typedef UIntType result_type;
-// 
+//
 //     // engine characteristics
 //     static constexpr result_type min() { return 0; }
 //     static constexpr result_type max() { return 2^w - 1; }

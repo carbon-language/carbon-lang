@@ -37,5 +37,5 @@ int main()
         for (int i = 0; i < N; ++i)
             assert(v[i] == a[i]);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

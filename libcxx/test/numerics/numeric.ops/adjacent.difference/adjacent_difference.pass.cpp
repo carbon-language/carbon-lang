@@ -10,12 +10,12 @@
 // <numeric>
 
 // template <InputIterator InIter,
-//           OutputIterator<auto, const InIter::value_type&> OutIter> 
-//   requires HasMinus<InIter::value_type, InIter::value_type> 
-//         && Constructible<InIter::value_type, InIter::reference> 
+//           OutputIterator<auto, const InIter::value_type&> OutIter>
+//   requires HasMinus<InIter::value_type, InIter::value_type>
+//         && Constructible<InIter::value_type, InIter::reference>
 //         && OutputIterator<OutIter,
-//                           HasMinus<InIter::value_type, InIter::value_type>::result_type> 
-//         && MoveAssignable<InIter::value_type> 
+//                           HasMinus<InIter::value_type, InIter::value_type>::result_type>
+//         && MoveAssignable<InIter::value_type>
 //   OutIter
 //   adjacent_difference(InIter first, InIter last, OutIter result);
 

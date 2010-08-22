@@ -9,9 +9,9 @@
 
 // <numeric>
 
-// template <InputIterator Iter, MoveConstructible T> 
-//   requires HasPlus<T, Iter::reference> 
-//         && HasAssign<T, HasPlus<T, Iter::reference>::result_type> 
+// template <InputIterator Iter, MoveConstructible T>
+//   requires HasPlus<T, Iter::reference>
+//         && HasAssign<T, HasPlus<T, Iter::reference>::result_type>
 //   T
 //   accumulate(Iter first, Iter last, T init);
 

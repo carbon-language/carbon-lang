@@ -15,7 +15,7 @@
 // public:
 //     // types
 //     typedef typename Engine::result_type result_type;
-// 
+//
 //     // engine characteristics
 //     static constexpr size_t table_size = k;
 //     static constexpr result_type min() { return Engine::min; }

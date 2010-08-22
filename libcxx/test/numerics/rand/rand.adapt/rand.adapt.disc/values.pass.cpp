@@ -15,7 +15,7 @@
 // public:
 //     // types
 //     typedef typename Engine::result_type result_type;
-// 
+//
 //     // engine characteristics
 //     static constexpr size_t block_size = p;
 //     static constexpr size_t used_block = r;

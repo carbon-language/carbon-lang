@@ -9,7 +9,7 @@
 
 // <complex>
 
-// template<class T> 
+// template<class T>
 //   complex<T>
 //   operator/(const complex<T>& lhs, const complex<T>& rhs);
 

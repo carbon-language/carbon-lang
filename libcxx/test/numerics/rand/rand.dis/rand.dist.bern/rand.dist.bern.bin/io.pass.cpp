@@ -16,7 +16,7 @@
 // basic_ostream<charT, traits>&
 // operator<<(basic_ostream<charT, traits>& os,
 //            const binomial_distribution& x);
-// 
+//
 // template <class charT, class traits>
 // basic_istream<charT, traits>&
 // operator>>(basic_istream<charT, traits>& is,

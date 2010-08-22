@@ -17,7 +17,7 @@
 // basic_ostream<charT, traits>&
 // operator<<(basic_ostream<charT, traits>& os,
 //            const independent_bits_engine<Engine, w, UIntType>& x);
-// 
+//
 // template <class charT, class traits,
 //           class Engine, size_t w, class UIntType>
 // basic_istream<charT, traits>&

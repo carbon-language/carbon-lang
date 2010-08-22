@@ -75,5 +75,5 @@ int main()
         assert(dn[0] == 0.203125);
         assert(dn[1] == 0.1484375);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

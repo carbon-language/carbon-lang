@@ -15,7 +15,7 @@
 // public:
 //     // types
 //     typedef UIntType result_type;
-// 
+//
 //     // engine characteristics
 //     static constexpr size_t word_size = w;
 //     static constexpr size_t short_lag = s;

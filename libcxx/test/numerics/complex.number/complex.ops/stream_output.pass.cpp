@@ -9,8 +9,8 @@
 
 // <complex>
 
-// template<class T, class charT, class traits> 
-//   basic_ostream<charT, traits>& 
+// template<class T, class charT, class traits>
+//   basic_ostream<charT, traits>&
 //   operator<<(basic_ostream<charT, traits>& o, const complex<T>& x);
 
 #include <complex>

@@ -10,12 +10,12 @@
 // <numeric>
 
 // template <InputIterator InIter,
-//           OutputIterator<auto, const InIter::value_type&> OutIter, 
-//           Callable<auto, const InIter::value_type&, const InIter::value_type&> BinaryOperation> 
-//   requires Constructible<InIter::value_type, InIter::reference> 
-//         && OutputIterator<OutIter, BinaryOperation::result_type> 
-//         && MoveAssignable<InIter::value_type> 
-//         && CopyConstructible<BinaryOperation> 
+//           OutputIterator<auto, const InIter::value_type&> OutIter,
+//           Callable<auto, const InIter::value_type&, const InIter::value_type&> BinaryOperation>
+//   requires Constructible<InIter::value_type, InIter::reference>
+//         && OutputIterator<OutIter, BinaryOperation::result_type>
+//         && MoveAssignable<InIter::value_type>
+//         && CopyConstructible<BinaryOperation>
 //   OutIter
 //   adjacent_difference(InIter first, InIter last, OutIter result, BinaryOperation binary_op);
 

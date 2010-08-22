@@ -9,11 +9,11 @@
 
 // <complex>
 
-// template<class T> 
+// template<class T>
 // class complex
-// { 
-// public: 
-//   typedef T value_type; 
+// {
+// public:
+//   typedef T value_type;
 //   ...
 // };
 

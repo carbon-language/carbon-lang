@@ -29,5 +29,5 @@ int main()
     assert(b[2] == 3);
     assert(b[3] == 2);
     assert(b[4] == 1);
-#endif
+#endif  // _LIBCPP_MOVE
 }

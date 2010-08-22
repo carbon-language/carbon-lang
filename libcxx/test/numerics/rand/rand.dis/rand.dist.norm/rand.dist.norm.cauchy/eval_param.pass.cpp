@@ -25,7 +25,6 @@ f(double x, double a, double b)
     return 1/3.1415926535897932 * std::atan((x - a)/b) + .5;
 }
 
-
 int main()
 {
     {

@@ -9,11 +9,11 @@
 
 // <numeric>
 
-// template <InputIterator InIter, OutputIterator<auto, const InIter::value_type&> OutIter> 
-//   requires HasPlus<InIter::value_type, InIter::reference> 
+// template <InputIterator InIter, OutputIterator<auto, const InIter::value_type&> OutIter>
+//   requires HasPlus<InIter::value_type, InIter::reference>
 //         && HasAssign<InIter::value_type,
-//                      HasPlus<InIter::value_type, InIter::reference>::result_type> 
-//         && Constructible<InIter::value_type, InIter::reference> 
+//                      HasPlus<InIter::value_type, InIter::reference>::result_type>
+//         && Constructible<InIter::value_type, InIter::reference>
 //   OutIter
 //   partial_sum(InIter first, InIter last, OutIter result);
 

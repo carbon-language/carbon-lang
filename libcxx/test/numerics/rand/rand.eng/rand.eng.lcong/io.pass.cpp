@@ -17,7 +17,7 @@
 // basic_ostream<charT, traits>&
 // operator<<(basic_ostream<charT, traits>& os,
 //            const linear_congruential_engine<UIntType, a, c, m>& x);
-// 
+//
 // template <class charT, class traits,
 //           class UIntType, UIntType a, UIntType c, UIntType m>
 // basic_istream<charT, traits>&
