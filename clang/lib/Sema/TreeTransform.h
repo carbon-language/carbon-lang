@@ -1684,14 +1684,17 @@ public:
                                            SourceLocation Loc,
                                            CXXConstructorDecl *Constructor,
                                            bool IsElidable,
-                                           MultiExprArg Args) {
+                                           MultiExprArg Args,
+                                           bool RequiresZeroInit,
+                             CXXConstructExpr::ConstructionKind ConstructKind) {
     ASTOwningVector<&ActionBase::DeleteExpr> ConvertedArgs(SemaRef);
     if (getSema().CompleteConstructorCall(Constructor, move(Args), Loc, 
                                           ConvertedArgs))
       return getSema().ExprError();
     
     return getSema().BuildCXXConstructExpr(Loc, T, Constructor, IsElidable,
-                                           move_arg(ConvertedArgs));
+                                           move_arg(ConvertedArgs),
+                                           RequiresZeroInit, ConstructKind);
   }
 
   /// \brief Build a new object-construction expression.
@@ -5686,7 +5689,9 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
 
   return getDerived().RebuildCXXConstructExpr(T, /*FIXME:*/E->getLocStart(),
                                               Constructor, E->isElidable(),
-                                              move_arg(Args));
+                                              move_arg(Args),
+                                              E->requiresZeroInitialization(),
+                                              E->getConstructionKind());
 }
 
 /// \brief Transform a C++ temporary-binding expression.

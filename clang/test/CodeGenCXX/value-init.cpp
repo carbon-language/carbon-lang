@@ -111,4 +111,30 @@ namespace zeroinit {
     // CHECK-NEXT: call void @_ZN8zeroinit2X11fEv
     X1().f();
   }
+
+  template<typename>
+  struct X2 : X0 {
+    int x2;
+    void f();
+  };
+
+  template<typename>
+  struct X3 : X2<int> { 
+    X3() : X2<int>() { }
+  };
+  
+
+  // CHECK: define void @_ZN8zeroinit9testX0_X3Ev
+  void testX0_X3() {
+    // CHECK-NOT: call void @llvm.memset
+    // CHECK: call void @_ZN8zeroinit2X3IiEC1Ev
+    // CHECK: call void @_ZN8zeroinit2X2IiE1fEv
+    // CHECK-NEXT: ret void
+    X3<int>().f();
+  }
+
+  // CHECK: define linkonce_odr void @_ZN8zeroinit2X3IiEC2Ev
+  // CHECK: call void @llvm.memset.p0i8.i64
+  // CHECK-NEXT: call void @_ZN8zeroinit2X2IiEC2Ev
+  // CHECK-NEXT: ret void
 }
