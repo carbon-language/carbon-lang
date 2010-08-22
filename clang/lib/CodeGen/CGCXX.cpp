@@ -369,6 +369,24 @@ void CGCXXABI::EmitMemberFunctionPointer(CodeGenFunction &CGF,
   ErrorUnsupportedABI(CGF, "member function pointers");
 }
 
+llvm::Value *
+CGCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
+                                              llvm::Value *L,
+                                              llvm::Value *R,
+                                              const MemberPointerType *MPT,
+                                              bool Inequality) {
+  ErrorUnsupportedABI(CGF, "member function pointer comparison");
+  return CGF.Builder.getFalse();
+}
+
+llvm::Value *
+CGCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
+                                             llvm::Value *MemPtr,
+                                             const MemberPointerType *MPT) {
+  ErrorUnsupportedABI(CGF, "member function pointer null testing");
+  return CGF.Builder.getFalse();
+}
+
 llvm::Constant *
 CGCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
                                               const CastExpr *E) {

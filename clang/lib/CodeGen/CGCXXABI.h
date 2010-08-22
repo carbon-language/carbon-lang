@@ -77,6 +77,18 @@ public:
                                          const CXXMethodDecl *MD,
                                          llvm::Value *DestPtr,
                                          bool VolatileDest);
+
+  virtual llvm::Value *
+  EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
+                                      llvm::Value *L,
+                                      llvm::Value *R,
+                                      const MemberPointerType *MPT,
+                                      bool Inequality);
+
+  virtual llvm::Value *
+  EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
+                                     llvm::Value *Addr,
+                                     const MemberPointerType *MPT);
 };
 
 /// Creates an instance of a C++ ABI class.

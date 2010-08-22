@@ -69,17 +69,9 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   if (E->getType()->isMemberFunctionPointerType()) {
     LValue LV = EmitAggExprToLValue(E);
 
-    // Get the pointer.
-    llvm::Value *FuncPtr = Builder.CreateStructGEP(LV.getAddress(), 0,
-                                                   "src.ptr");
-    FuncPtr = Builder.CreateLoad(FuncPtr);
-
-    llvm::Value *IsNotNull = 
-      Builder.CreateICmpNE(FuncPtr,
-                            llvm::Constant::getNullValue(FuncPtr->getType()),
-                            "tobool");
-
-    return IsNotNull;
+    return CGM.getCXXABI().EmitMemberFunctionPointerIsNotNull(CGF,
+                                                              LV.getAddress(),
+                                    E->getType()->getAs<MemberPointerType>());
   }
   if (!E->getType()->isAnyComplexType())
     return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy);

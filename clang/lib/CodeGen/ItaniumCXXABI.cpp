@@ -73,6 +73,16 @@ public:
 
   llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD);
 
+  llvm::Value *EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
+                                                   llvm::Value *L,
+                                                   llvm::Value *R,
+                                             const MemberPointerType *MPT,
+                                                   bool Inequality);
+
+  llvm::Value *EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
+                                                  llvm::Value *Addr,
+                                            const MemberPointerType *MPT);
+
 private:
   void GetMemberFunctionPointer(const CXXMethodDecl *MD,
                                 llvm::Constant *(&Array)[2]);
@@ -405,6 +415,108 @@ void ItaniumCXXABI::EmitMemberFunctionPointer(CodeGenFunction &CGF,
   Builder.CreateStore(Values[1], AdjPtr, VolatileDest);
 }
 
+/// The comparison algorithm is pretty easy: the member pointers are
+/// the same if they're either bitwise identical *or* both null.
+///
+/// ARM is different here only because null-ness is more complicated.
+llvm::Value *
+ItaniumCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
+                                                   llvm::Value *L,
+                                                   llvm::Value *R,
+                                             const MemberPointerType *MPT,
+                                                   bool Inequality) {
+  CGBuilderTy &Builder = CGF.Builder;
+
+  llvm::Value *LPtr = Builder.CreateLoad(Builder.CreateStructGEP(L, 0),
+                                         "lhs.memptr.ptr");
+  llvm::Value *RPtr = Builder.CreateLoad(Builder.CreateStructGEP(R, 0),
+                                         "rhs.memptr.ptr");
+
+  // The Itanium tautology is:
+  //   (L == R) <==> (L.ptr == R.ptr /\ (L.ptr == 0 \/ L.adj == R.adj))
+  // The ARM tautology is:
+  //   (L == R) <==> (L.ptr == R.ptr /\
+  //                  (L.adj == R.adj \/
+  //                   (L.ptr == 0 /\ ((L.adj|R.adj) & 1) == 0)))
+  // The inequality tautologies have exactly the same structure, except
+  // applying De Morgan's laws.
+  
+  llvm::ICmpInst::Predicate Eq;
+  llvm::Instruction::BinaryOps And, Or;
+  if (Inequality) {
+    Eq = llvm::ICmpInst::ICMP_NE;
+    And = llvm::Instruction::Or;
+    Or = llvm::Instruction::And;
+  } else {
+    Eq = llvm::ICmpInst::ICMP_EQ;
+    And = llvm::Instruction::And;
+    Or = llvm::Instruction::Or;
+  }
+
+  // This condition tests whether L.ptr == R.ptr.  This must always be
+  // true for equality to hold.
+  llvm::Value *PtrEq = Builder.CreateICmp(Eq, LPtr, RPtr, "cmp.ptr");
+
+  // This condition, together with the assumption that L.ptr == R.ptr,
+  // tests whether the pointers are both null.  ARM imposes an extra
+  // condition.
+  llvm::Value *Zero = llvm::Constant::getNullValue(LPtr->getType());
+  llvm::Value *EqZero = Builder.CreateICmp(Eq, LPtr, Zero, "cmp.ptr.null");
+
+  // This condition tests whether L.adj == R.adj.  If this isn't
+  // true, the pointers are unequal unless they're both null.
+  llvm::Value *LAdj = Builder.CreateLoad(Builder.CreateStructGEP(L, 1),
+                                         "lhs.memptr.adj");
+  llvm::Value *RAdj = Builder.CreateLoad(Builder.CreateStructGEP(R, 1),
+                                         "rhs.memptr.adj");
+  llvm::Value *AdjEq = Builder.CreateICmp(Eq, LAdj, RAdj, "cmp.adj");
+
+  // Null member function pointers on ARM clear the low bit of Adj,
+  // so the zero condition has to check that neither low bit is set.
+  if (IsARM) {
+    llvm::Value *One = llvm::ConstantInt::get(LPtr->getType(), 1);
+
+    // Compute (l.adj | r.adj) & 1 and test it against zero.
+    llvm::Value *OrAdj = Builder.CreateOr(LAdj, RAdj, "or.adj");
+    llvm::Value *OrAdjAnd1 = Builder.CreateAnd(OrAdj, One);
+    llvm::Value *OrAdjAnd1EqZero = Builder.CreateICmp(Eq, OrAdjAnd1, Zero,
+                                                      "cmp.or.adj");
+    EqZero = Builder.CreateBinOp(And, EqZero, OrAdjAnd1EqZero);
+  }
+
+  // Tie together all our conditions.
+  llvm::Value *Result = Builder.CreateBinOp(Or, EqZero, AdjEq);
+  Result = Builder.CreateBinOp(And, PtrEq, Result,
+                               Inequality ? "memptr.ne" : "memptr.eq");
+  return Result;
+}
+
+llvm::Value *
+ItaniumCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
+                                                  llvm::Value *MemPtr,
+                                            const MemberPointerType *MPT) {
+  CGBuilderTy &Builder = CGF.Builder;
+  
+  // In Itanium, a member function pointer is null if 'ptr' is null.
+  llvm::Value *Ptr =
+    Builder.CreateLoad(Builder.CreateStructGEP(MemPtr, 0), "memptr.ptr");
+
+  llvm::Constant *Zero = llvm::ConstantInt::get(Ptr->getType(), 0);
+  llvm::Value *Result = Builder.CreateICmpNE(Ptr, Zero, "memptr.tobool");
+
+  // In ARM, it's that, plus the low bit of 'adj' must be zero.
+  if (IsARM) {
+    llvm::Constant *One = llvm::ConstantInt::get(Ptr->getType(), 1);
+    llvm::Value *Adj =
+      Builder.CreateLoad(Builder.CreateStructGEP(MemPtr, 1), "memptr.adj");
+    llvm::Value *VirtualBit = Builder.CreateAnd(Adj, One, "memptr.virtualbit");
+    llvm::Value *IsNotVirtual = Builder.CreateICmpEQ(VirtualBit, Zero,
+                                                     "memptr.notvirtual");
+    Result = Builder.CreateAnd(Result, IsNotVirtual);
+  }
+
+  return Result;
+}
 
 bool ItaniumCXXABI::RequiresNonZeroInitializer(QualType T) {
   return CGM.getTypes().ContainsPointerToDataMember(T);
