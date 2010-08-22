@@ -11,11 +11,11 @@
 
 // template<> struct char_traits<char32_t>
 
-// typedef char32_t       char_type; 
-// typedef uint_least32_t int_type; 
-// typedef streamoff      off_type; 
-// typedef u32streampos   pos_type; 
-// typedef mbstate_t      state_type; 
+// typedef char32_t       char_type;
+// typedef uint_least32_t int_type;
+// typedef streamoff      off_type;
+// typedef u32streampos   pos_type;
+// typedef mbstate_t      state_type;
 
 #include <string>
 #include <type_traits>
@@ -29,5 +29,5 @@ int main()
     static_assert((std::is_same<std::char_traits<char32_t>::off_type, std::streamoff>::value), "");
     static_assert((std::is_same<std::char_traits<char32_t>::pos_type, std::u32streampos>::value), "");
     static_assert((std::is_same<std::char_traits<char32_t>::state_type, std::mbstate_t>::value), "");
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

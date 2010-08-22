@@ -31,5 +31,5 @@ int main()
         getline(std::wistringstream(L" abc*  def*   ghij"), s, L'*');
         assert(s == L" abc");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

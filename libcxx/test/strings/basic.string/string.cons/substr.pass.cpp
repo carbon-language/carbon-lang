@@ -9,8 +9,8 @@
 
 // <string>
 
-// basic_string(const basic_string<charT,traits,Allocator>& str, 
-//              size_type pos, size_type n = npos, 
+// basic_string(const basic_string<charT,traits,Allocator>& str,
+//              size_type pos, size_type n = npos,
 //              const Allocator& a = Allocator());
 
 #include <string>

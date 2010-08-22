@@ -25,5 +25,5 @@ int main()
     assert(std::char_traits<char16_t>::find(s1, 3, char16_t(3)) == s1+2);
     assert(std::char_traits<char16_t>::find(s1, 3, char16_t(4)) == 0);
     assert(std::char_traits<char16_t>::find(s1, 3, char16_t(0)) == 0);
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

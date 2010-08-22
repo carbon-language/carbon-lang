@@ -23,5 +23,5 @@ int main()
         assert(i - s.begin() == 3);
         assert(s == "123abc456");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

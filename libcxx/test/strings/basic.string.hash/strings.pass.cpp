@@ -43,6 +43,6 @@ int main()
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
     test<std::u16string>();
     test<std::u32string>();
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
     test<std::wstring>();
 }

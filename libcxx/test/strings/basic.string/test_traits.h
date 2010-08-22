@@ -7,4 +7,4 @@ struct test_traits
     typedef charT     char_type;
 };
 
-#endif
+#endif  // TEST_TRAITS_H

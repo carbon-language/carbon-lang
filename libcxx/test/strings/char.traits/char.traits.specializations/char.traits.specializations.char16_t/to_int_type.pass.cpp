@@ -22,5 +22,5 @@ int main()
     assert(std::char_traits<char16_t>::to_int_type(u'a') == u'a');
     assert(std::char_traits<char16_t>::to_int_type(u'A') == u'A');
     assert(std::char_traits<char16_t>::to_int_type(0) == 0);
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

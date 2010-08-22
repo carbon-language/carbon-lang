@@ -24,5 +24,5 @@ int main()
     assert(std::char_traits<char16_t>::length(u"aa") == 2);
     assert(std::char_traits<char16_t>::length(u"aaa") == 3);
     assert(std::char_traits<char16_t>::length(u"aaaa") == 4);
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

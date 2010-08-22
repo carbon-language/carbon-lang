@@ -31,7 +31,7 @@ test(S s0, const typename S::allocator_type& a)
     assert(s2.get_allocator() == a);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -41,5 +41,5 @@ int main()
     test(S(), A(3));
     test(S("1"), A(5));
     test(S("1234567890123456789012345678901234567890123456789012345678901234567890"), A(7));
-#endif
+#endif  // _LIBCPP_MOVE
 }

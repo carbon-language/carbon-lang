@@ -9,8 +9,8 @@
 
 // <string>
 
-// template<class charT, class traits, class Allocator> 
-//   void swap(basic_string<charT,traits,Allocator>& lhs, 
+// template<class charT, class traits, class Allocator>
+//   void swap(basic_string<charT,traits,Allocator>& lhs,
 //             basic_string<charT,traits,Allocator>& rhs);
 
 #include <string>

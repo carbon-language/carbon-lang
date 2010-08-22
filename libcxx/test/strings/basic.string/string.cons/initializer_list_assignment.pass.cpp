@@ -22,5 +22,5 @@ int main()
         s = {'a', 'b', 'c'};
         assert(s == "abc");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

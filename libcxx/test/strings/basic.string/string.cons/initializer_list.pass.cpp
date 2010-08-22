@@ -28,5 +28,5 @@ int main()
         s = {L'a', L'b', L'c'};
         assert(s == L"abc");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

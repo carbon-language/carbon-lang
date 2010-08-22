@@ -22,5 +22,5 @@ int main()
         s.replace(s.begin() + 3, s.begin() + 6, {'a', 'b', 'c'});
         assert(s == "123abc456");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

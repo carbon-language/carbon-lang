@@ -11,11 +11,11 @@
 
 // template<> struct char_traits<wchar_t>
 
-// typedef wchar_t   char_type; 
-// typedef int       int_type; 
-// typedef streamoff off_type; 
-// typedef streampos pos_type; 
-// typedef mbstate_t state_type; 
+// typedef wchar_t   char_type;
+// typedef int       int_type;
+// typedef streamoff off_type;
+// typedef streampos pos_type;
+// typedef mbstate_t state_type;
 
 #include <string>
 #include <type_traits>

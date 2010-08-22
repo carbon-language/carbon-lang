@@ -67,4 +67,4 @@ public:
         {return !(x == y);}
 };
 
-#endif
+#endif  // TEST_ALLOCATOR_H

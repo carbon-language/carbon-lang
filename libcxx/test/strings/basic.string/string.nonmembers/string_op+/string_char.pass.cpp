@@ -9,11 +9,11 @@
 
 // <string>
 
-// template<class charT, class traits, class Allocator> 
+// template<class charT, class traits, class Allocator>
 //   basic_string<charT,traits,Allocator>
 //   operator+(const basic_string<charT,traits,Allocator>& lhs, charT rhs);
 
-// template<class charT, class traits, class Allocator> 
+// template<class charT, class traits, class Allocator>
 //   basic_string<charT,traits,Allocator>&&
 //   operator+(basic_string<charT,traits,Allocator>&& lhs, charT rhs);
 
@@ -36,7 +36,7 @@ test1(S&& lhs, typename S::value_type rhs, const S& x)
     assert(move(lhs) + rhs == x);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 typedef std::string S;
 
@@ -54,5 +54,5 @@ int main()
     test1(S("abcdefghij"), '1', S("abcdefghij1"));
     test1(S("abcdefghijklmnopqrst"), '1', S("abcdefghijklmnopqrst1"));
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

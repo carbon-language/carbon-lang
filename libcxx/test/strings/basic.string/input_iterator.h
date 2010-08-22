@@ -29,4 +29,4 @@ public:
         {return !(x == y);}
 };
 
-#endif
+#endif  // INPUT_ITERATOR_H

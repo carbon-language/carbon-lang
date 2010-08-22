@@ -9,7 +9,7 @@
 
 // <string>
 
-// template<class InputIterator> 
+// template<class InputIterator>
 //   basic_string&
 //   replace(iterator i1, iterator i2, InputIterator j1, InputIterator j2);
 

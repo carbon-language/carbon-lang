@@ -29,5 +29,5 @@ int main()
     assert(s1[0] == char32_t(2));
     assert(s1[1] == char32_t(2));
     assert(s1[2] == char32_t(3));
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

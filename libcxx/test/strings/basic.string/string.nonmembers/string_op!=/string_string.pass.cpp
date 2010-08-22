@@ -9,8 +9,8 @@
 
 // <string>
 
-// template<class charT, class traits, class Allocator> 
-//   bool operator!=(const basic_string<charT,traits,Allocator>& lhs, 
+// template<class charT, class traits, class Allocator>
+//   bool operator!=(const basic_string<charT,traits,Allocator>& lhs,
 //                   const basic_string<charT,traits,Allocator>& rhs);
 
 #include <string>

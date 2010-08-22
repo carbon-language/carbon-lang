@@ -24,5 +24,5 @@ int main()
     assert(!std::char_traits<char32_t>::eq_int_type(std::char_traits<char32_t>::eof(), U'A'));
     assert( std::char_traits<char32_t>::eq_int_type(std::char_traits<char32_t>::eof(),
                                                     std::char_traits<char32_t>::eof()));
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

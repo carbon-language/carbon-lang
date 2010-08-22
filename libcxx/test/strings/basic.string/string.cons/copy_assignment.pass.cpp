@@ -9,7 +9,7 @@
 
 // <string>
 
-// basic_string<charT,traits,Allocator>& 
+// basic_string<charT,traits,Allocator>&
 //   operator=(const basic_string<charT,traits,Allocator>& str);
 
 #include <string>

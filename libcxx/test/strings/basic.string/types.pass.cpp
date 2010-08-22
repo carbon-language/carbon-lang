@@ -11,25 +11,25 @@
 
 // Test nested types and default template args:
 
-// template<class charT, class traits = char_traits<charT>, 
+// template<class charT, class traits = char_traits<charT>,
 //   class Allocator = allocator<charT> >
 // {
 // public:
-//     // types: 
-//     typedef traits traits_type; 
-//     typedef typename traits::char_type value_type; 
-//     typedef Allocator allocator_type; 
-//     typedef typename Allocator::size_type size_type; 
-//     typedef typename Allocator::difference_type difference_type; 
-//     typedef typename Allocator::reference reference; 
-//     typedef typename Allocator::const_reference const_reference; 
-//     typedef typename Allocator::pointer pointer; 
-//     typedef typename Allocator::const_pointer const_pointer; 
-//     typedef implementation-defined iterator; // See 23.1 
-//     typedef implementation-defined const_iterator; // See 23.1 
-//     typedef std::reverse_iterator<iterator> reverse_iterator; 
-//     typedef std::reverse_iterator<const_iterator> const_reverse_iterator; 
-//     static const size_type npos = -1; 
+//     // types:
+//     typedef traits traits_type;
+//     typedef typename traits::char_type value_type;
+//     typedef Allocator allocator_type;
+//     typedef typename Allocator::size_type size_type;
+//     typedef typename Allocator::difference_type difference_type;
+//     typedef typename Allocator::reference reference;
+//     typedef typename Allocator::const_reference const_reference;
+//     typedef typename Allocator::pointer pointer;
+//     typedef typename Allocator::const_pointer const_pointer;
+//     typedef implementation-defined iterator; // See 23.1
+//     typedef implementation-defined const_iterator; // See 23.1
+//     typedef std::reverse_iterator<iterator> reverse_iterator;
+//     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+//     static const size_type npos = -1;
 // };
 
 #include <string>

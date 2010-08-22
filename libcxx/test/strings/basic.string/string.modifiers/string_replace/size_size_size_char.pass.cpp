@@ -9,7 +9,7 @@
 
 // <string>
 
-// basic_string<charT,traits,Allocator>& 
+// basic_string<charT,traits,Allocator>&
 //   replace(size_type pos, size_type n1, size_type n2, charT c);
 
 #include <string>

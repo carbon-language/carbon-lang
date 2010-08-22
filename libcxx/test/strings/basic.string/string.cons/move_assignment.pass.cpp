@@ -9,7 +9,7 @@
 
 // <string>
 
-// basic_string<charT,traits,Allocator>& 
+// basic_string<charT,traits,Allocator>&
 //   operator=(basic_string<charT,traits,Allocator>&& str);
 
 #include <string>
@@ -31,7 +31,7 @@ test(S s1, S s2)
     assert(s1.capacity() >= s1.size());
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -52,5 +52,5 @@ int main()
     test(S("1234567890123456789012345678901234567890123456789012345678901234567890"
            "1234567890123456789012345678901234567890123456789012345678901234567890"),
          S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -9,7 +9,7 @@
 
 // <string>
 
-// template<class InputIterator> 
+// template<class InputIterator>
 //   iterator insert(const_iterator p, InputIterator first, InputIterator last);
 
 #include <string>

@@ -38,5 +38,5 @@ int main()
     assert(std::char_traits<char32_t>::compare(U"223", U"123", 3) > 0);
     assert(std::char_traits<char32_t>::compare(U"133", U"123", 3) > 0);
     assert(std::char_traits<char32_t>::compare(U"124", U"123", 3) > 0);
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

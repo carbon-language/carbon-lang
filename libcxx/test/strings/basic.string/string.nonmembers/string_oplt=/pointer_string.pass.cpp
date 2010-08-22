@@ -9,7 +9,7 @@
 
 // <string>
 
-// template<class charT, class traits, class Allocator> 
+// template<class charT, class traits, class Allocator>
 //   bool operator<=(const charT* lhs, const basic_string<charT,traits,Allocator>& rhs);
 
 #include <string>

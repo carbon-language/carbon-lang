@@ -9,7 +9,7 @@
 
 // <string>
 
-// template<class InputIterator> 
+// template<class InputIterator>
 //   basic_string& append(InputIterator first, InputIterator last);
 
 #include <string>

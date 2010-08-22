@@ -9,7 +9,7 @@
 
 // <string>
 
-// basic_string<charT,traits,Allocator>& 
+// basic_string<charT,traits,Allocator>&
 //   append(const basic_string<charT,traits>& str, size_type pos, size_type n);
 
 #include <string>

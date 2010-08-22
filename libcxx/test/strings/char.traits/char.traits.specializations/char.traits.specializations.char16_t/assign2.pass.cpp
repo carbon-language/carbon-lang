@@ -22,5 +22,5 @@ int main()
     char16_t c = u'\0';
     std::char_traits<char16_t>::assign(c, u'a');
     assert(c == u'a');
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

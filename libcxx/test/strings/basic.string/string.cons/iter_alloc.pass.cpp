@@ -9,8 +9,8 @@
 
 // <string>
 
-// template<class InputIterator> 
-//   basic_string(InputIterator begin, InputIterator end, 
+// template<class InputIterator>
+//   basic_string(InputIterator begin, InputIterator end,
 //   const Allocator& a = Allocator());
 
 #include <string>
