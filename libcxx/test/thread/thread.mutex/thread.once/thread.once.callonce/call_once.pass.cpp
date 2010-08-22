@@ -95,7 +95,7 @@ void f2()
     std::call_once(flg2, init2(), 4, 5);
 }
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 std::once_flag flg41;
 std::once_flag flg42;
@@ -128,7 +128,6 @@ void f42()
     std::call_once(flg42, init42);
     std::call_once(flg41, init41);
 }
-
 
 int main()
 {
@@ -175,5 +174,5 @@ int main()
         t1.join();
         assert(init2::called == 5);
     }
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 }

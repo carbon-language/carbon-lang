@@ -501,5 +501,5 @@ int main()
             assert(!l3.locked());
         }
     }
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 }

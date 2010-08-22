@@ -69,8 +69,6 @@ public:
     bool locked() const {return locked_;}
 };
 
-
-
 int main()
 {
     {
@@ -512,5 +510,5 @@ int main()
         assert(!l2.locked());
         assert(!l3.locked());
     }
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 }

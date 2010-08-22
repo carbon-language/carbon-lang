@@ -27,5 +27,5 @@ int main()
     assert(lk.owns_lock() == true);
     assert(lk0.mutex() == nullptr);
     assert(lk0.owns_lock() == false);
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -16,8 +16,6 @@
 #include <mutex>
 #include <cassert>
 
-
-
 int main()
 {
     std::mutex m;

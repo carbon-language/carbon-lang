@@ -18,7 +18,6 @@
 #include <cstdlib>
 #include <cassert>
 
-
 class G
 {
     int alive_;

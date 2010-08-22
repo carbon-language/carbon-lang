@@ -78,5 +78,5 @@ int main()
         t0 = std::move(t1);
         assert(false);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

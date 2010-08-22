@@ -64,5 +64,5 @@ int main()
         assert(G::n_alive == 0);
         assert(G::op_run);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }
