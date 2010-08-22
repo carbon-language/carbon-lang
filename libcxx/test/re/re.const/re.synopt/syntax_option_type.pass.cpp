@@ -12,7 +12,7 @@
 
 // namespace regex_constants
 // {
-// 
+//
 // emum syntax_option_type  // bitmask type
 // {
 //     icase      = unspecified,
@@ -26,7 +26,7 @@
 //     grep       = unspecified,
 //     egrep      = unspecified
 // };
-// 
+//
 // }
 
 #include <regex>

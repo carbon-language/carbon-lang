@@ -12,7 +12,7 @@
 
 // namespace regex_constants
 // {
-// 
+//
 // enum error_type
 // {
 //     error_collate    = unspecified,
@@ -29,7 +29,7 @@
 //     error_complexity = unspecified,
 //     error_stack      = unspecified
 // };
-// 
+//
 // }
 
 #include <regex>

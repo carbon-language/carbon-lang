@@ -248,4 +248,4 @@ operator-(const random_access_iterator<T>& x, const random_access_iterator<U>& y
     return x.base() - y.base();
 }
 
-#endif
+#endif  // ITERATORS_H

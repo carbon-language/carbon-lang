@@ -27,7 +27,7 @@ test(std::initializer_list<char> il, std::regex_constants::syntax_option_type f,
     assert(r.mark_count() == mc);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -66,5 +66,5 @@ int main()
     test({'\\', '(', 'a', '[', 'b', 'c', ']', '\\', ')'}, std::regex_constants::egrep, 0);
     test({'\\', '(', 'a', '\\', '(', '[', 'b', 'c', ']', '\\', ')', '\\', ')'}, std::regex_constants::egrep, 0);
     test({'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'}, std::regex_constants::egrep, 2);
-#endif
+#endif  // _LIBCPP_MOVE
 }

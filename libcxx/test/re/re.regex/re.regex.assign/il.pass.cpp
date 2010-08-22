@@ -23,5 +23,5 @@ int main()
     r2 = {'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'};
     assert(r2.flags() == std::regex::ECMAScript);
     assert(r2.mark_count() == 2);
-#endif
+#endif  // _LIBCPP_MOVE
 }

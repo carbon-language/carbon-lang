@@ -691,7 +691,6 @@ int main()
         assert(m.str(0) == s);
     }
 
-
     {
         std::wcmatch m;
         assert(!std::regex_match(L"a", m, std::wregex()));

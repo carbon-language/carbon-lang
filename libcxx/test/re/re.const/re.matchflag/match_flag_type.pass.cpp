@@ -12,7 +12,7 @@
 
 // namespace regex_constants
 // {
-// 
+//
 // emum match_flag_type  // bitmask type
 // {
 //     match_default     = 0,
@@ -29,7 +29,7 @@
 //     format_no_copy    = unspecified,
 //     format_first_only = unspecified
 // };
-// 
+//
 // }
 
 #include <regex>

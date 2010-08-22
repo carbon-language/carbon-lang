@@ -60,5 +60,5 @@ int main()
         ++i;
         assert(i == std::cregex_token_iterator());
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

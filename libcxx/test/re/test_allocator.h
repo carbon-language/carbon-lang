@@ -62,7 +62,7 @@ public:
 #ifdef _LIBCPP_MOVE
     void construct(pointer p, T&& val)
         {::new(p) T(std::move(val));}
-#endif
+#endif  // _LIBCPP_MOVE
     void destroy(pointer p) {p->~T();}
 
     friend bool operator==(const test_allocator& x, const test_allocator& y)
@@ -105,8 +105,8 @@ public:
 #ifdef _LIBCPP_HAS_NO_ADVANCED_SFINAE
     std::size_t max_size() const
         {return UINT_MAX / sizeof(T);}
-#endif
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 };
 
-#endif
+#endif  // TEST_ALLOCATOR_H

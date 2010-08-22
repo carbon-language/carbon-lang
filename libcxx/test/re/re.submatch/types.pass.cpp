@@ -18,7 +18,7 @@
 //     typedef typename iterator_traits<iterator>::value_type      value_type;
 //     typedef typename iterator_traits<iterator>::difference_type difference_type;
 //     typedef basic_string<value_type>                            string_type;
-// 
+//
 //     bool matched;
 //     ...
 // };

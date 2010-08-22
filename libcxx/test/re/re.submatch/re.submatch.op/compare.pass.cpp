@@ -14,200 +14,200 @@
 // template <class BiIter>
 //     bool
 //     operator==(const sub_match<BiIter>& lhs, const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator!=(const sub_match<BiIter>& lhs, const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<(const sub_match<BiIter>& lhs, const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<=(const sub_match<BiIter>& lhs, const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>=(const sub_match<BiIter>& lhs, const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>(const sub_match<BiIter>& lhs, const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator==(const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator!=(const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator<(const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& lhs,
 //               const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator>(const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& lhs,
 //               const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool operator>=(const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& lhs,
 //                     const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator<=(const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator==(const sub_match<BiIter>& lhs,
 //                const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator!=(const sub_match<BiIter>& lhs,
 //                const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator<(const sub_match<BiIter>& lhs,
 //               const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool operator>(const sub_match<BiIter>& lhs,
 //                    const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator>=(const sub_match<BiIter>& lhs,
 //                const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& rhs);
-// 
+//
 // template <class BiIter, class ST, class SA>
 //     bool
 //     operator<=(const sub_match<BiIter>& lhs,
 //                const basic_string<typename iterator_traits<BiIter>::value_type, ST, SA>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator==(typename iterator_traits<BiIter>::value_type const* lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator!=(typename iterator_traits<BiIter>::value_type const* lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<(typename iterator_traits<BiIter>::value_type const* lhs,
 //               const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>(typename iterator_traits<BiIter>::value_type const* lhs,
 //               const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>=(typename iterator_traits<BiIter>::value_type const* lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<=(typename iterator_traits<BiIter>::value_type const* lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator==(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const* rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator!=(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const* rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<(const sub_match<BiIter>& lhs,
 //               typename iterator_traits<BiIter>::value_type const* rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>(const sub_match<BiIter>& lhs,
 //               typename iterator_traits<BiIter>::value_type const* rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>=(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const* rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<=(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const* rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator==(typename iterator_traits<BiIter>::value_type const& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator!=(typename iterator_traits<BiIter>::value_type const& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<(typename iterator_traits<BiIter>::value_type const& lhs,
 //               const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>(typename iterator_traits<BiIter>::value_type const& lhs,
 //               const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>=(typename iterator_traits<BiIter>::value_type const& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<=(typename iterator_traits<BiIter>::value_type const& lhs,
 //                const sub_match<BiIter>& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator==(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator!=(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<(const sub_match<BiIter>& lhs,
 //               typename iterator_traits<BiIter>::value_type const& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>(const sub_match<BiIter>& lhs,
 //               typename iterator_traits<BiIter>::value_type const& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator>=(const sub_match<BiIter>& lhs,
 //                typename iterator_traits<BiIter>::value_type const& rhs);
-// 
+//
 // template <class BiIter>
 //     bool
 //     operator<=(const sub_match<BiIter>& lhs,

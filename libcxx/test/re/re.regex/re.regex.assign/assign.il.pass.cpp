@@ -29,5 +29,5 @@ int main()
     r2.assign({'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'}, std::regex::extended);
     assert(r2.flags() == std::regex::extended);
     assert(r2.mark_count() == 2);
-#endif
+#endif  // _LIBCPP_MOVE
 }
