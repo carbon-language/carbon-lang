@@ -11,8 +11,8 @@
 
 // class error_code
 
-// template <class charT, class traits> 
-//   basic_ostream<charT,traits>& 
+// template <class charT, class traits>
+//   basic_ostream<charT,traits>&
 //   operator<<(basic_ostream<charT,traits>& os, const error_code& ec);
 
 #include <system_error>

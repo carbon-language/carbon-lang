@@ -11,7 +11,7 @@
 
 // class error_code
 
-// template <ErrorCodeEnum E> error_code(E e); 
+// template <ErrorCodeEnum E> error_code(E e);
 
 #include <system_error>
 #include <cassert>

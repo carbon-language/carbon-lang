@@ -11,7 +11,7 @@
 
 // class error_condition
 
-// template <ErrorConditionEnum E> error_condition(E e); 
+// template <ErrorConditionEnum E> error_condition(E e);
 
 #include <system_error>
 #include <cassert>
