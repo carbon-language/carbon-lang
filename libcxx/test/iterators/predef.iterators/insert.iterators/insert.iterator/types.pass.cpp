@@ -13,17 +13,17 @@
 
 // Test nested types and data members:
 
-// template <InsertionContainer Cont> 
-// class insert_iterator { 
-// protected: 
-//   Cont* container; 
-//   Cont::iterator iter; 
-// public: 
-//   typedef Cont                   container_type; 
-//   typedef void                   value_type; 
-//   typedef void                   difference_type; 
-//   typedef insert_iterator<Cont>& reference; 
-//   typedef void                   pointer; 
+// template <InsertionContainer Cont>
+// class insert_iterator {
+// protected:
+//   Cont* container;
+//   Cont::iterator iter;
+// public:
+//   typedef Cont                   container_type;
+//   typedef void                   value_type;
+//   typedef void                   difference_type;
+//   typedef insert_iterator<Cont>& reference;
+//   typedef void                   pointer;
 // };
 
 #include <iterator>

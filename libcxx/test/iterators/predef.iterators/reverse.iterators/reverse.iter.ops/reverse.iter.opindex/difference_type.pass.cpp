@@ -11,7 +11,7 @@
 
 // reverse_iterator
 
-// requires RandomAccessIterator<Iter> 
+// requires RandomAccessIterator<Iter>
 //   unspecified operator[](difference_type n) const;
 
 #include <iterator>

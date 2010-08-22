@@ -11,7 +11,7 @@
 
 // move_iterator
 
-// template <InputIterator Iter> 
+// template <InputIterator Iter>
 //   move_iterator<Iter>
 //   make_move_iterator(const Iter& i);
 

@@ -12,7 +12,7 @@
 // move_iterator
 
 // template <InputIterator Iter1, InputIterator Iter2>
-//   requires HasEqualTo<Iter1, Iter2> 
+//   requires HasEqualTo<Iter1, Iter2>
 //   bool
 //   operator==(const move_iterator<Iter1>& x, const move_iterator<Iter2>& y);
 

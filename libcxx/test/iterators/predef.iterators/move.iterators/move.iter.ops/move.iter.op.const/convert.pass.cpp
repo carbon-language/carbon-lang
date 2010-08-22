@@ -11,8 +11,8 @@
 
 // move_iterator
 
-// template <class U> 
-//   requires HasConstructor<Iter, const U&> 
+// template <class U>
+//   requires HasConstructor<Iter, const U&>
 //   move_iterator(const move_iterator<U> &u);
 
 #include <iterator>

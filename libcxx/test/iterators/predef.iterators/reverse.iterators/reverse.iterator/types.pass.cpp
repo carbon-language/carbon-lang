@@ -13,11 +13,11 @@
 
 // Test nested types and data member:
 
-// template <BidirectionalIterator Iter> 
-// class reverse_iterator { 
-// protected: 
-//   Iter current; 
-// public: 
+// template <BidirectionalIterator Iter>
+// class reverse_iterator {
+// protected:
+//   Iter current;
+// public:
 //   iterator<typename iterator_traits<Iterator>::iterator_category,
 //   typename iterator_traits<Iterator>::value_type,
 //   typename iterator_traits<Iterator>::difference_type,

@@ -11,8 +11,8 @@
 
 // reverse_iterator
 
-// template <RandomAccessIterator Iter1, RandomAccessIterator Iter2> 
-//   requires HasGreater<Iter1, Iter2> 
+// template <RandomAccessIterator Iter1, RandomAccessIterator Iter2>
+//   requires HasGreater<Iter1, Iter2>
 //   bool
 //   operator>(const reverse_iterator<Iter1>& x, const reverse_iterator<Iter2>& y);
 

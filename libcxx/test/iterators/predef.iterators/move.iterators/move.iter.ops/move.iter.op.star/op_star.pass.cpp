@@ -47,7 +47,7 @@ struct do_nothing
     void operator()(void*) const {}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -57,5 +57,5 @@ int main()
     int i;
     std::unique_ptr<int, do_nothing> p(&i);
     test(&p, std::unique_ptr<int, do_nothing>(&i));
-#endif
+#endif  // _LIBCPP_MOVE
 }

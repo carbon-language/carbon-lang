@@ -11,7 +11,7 @@
 
 // template<class NotAnIterator>
 // struct iterator_traits
-// { 
+// {
 // };
 
 #include <iterator>

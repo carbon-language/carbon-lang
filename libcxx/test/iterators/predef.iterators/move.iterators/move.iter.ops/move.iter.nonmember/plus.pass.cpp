@@ -11,7 +11,7 @@
 
 // move_iterator
 
-// template <RandomAccessIterator Iter> 
+// template <RandomAccessIterator Iter>
 //   move_iterator<Iter>
 //   operator+(Iter::difference_type n, const move_iterator<Iter>& x);
 

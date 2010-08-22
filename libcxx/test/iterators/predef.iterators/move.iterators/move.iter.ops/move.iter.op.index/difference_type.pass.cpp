@@ -11,7 +11,7 @@
 
 // move_iterator
 
-// requires RandomAccessIterator<Iter> 
+// requires RandomAccessIterator<Iter>
 //   unspecified operator[](difference_type n) const;
 
 #include <iterator>
@@ -40,7 +40,7 @@ struct do_nothing
     void operator()(void*) const {}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -54,5 +54,5 @@ int main()
     for (unsigned j = 0; j < 5; ++j)
         p[j].reset(i+j);
     test(p, 3, Ptr(i+3));
-#endif
+#endif  // _LIBCPP_MOVE
 }

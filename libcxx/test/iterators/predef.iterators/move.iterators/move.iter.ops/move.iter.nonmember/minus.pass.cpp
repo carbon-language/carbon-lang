@@ -11,8 +11,8 @@
 
 // move_iterator
 
-// template <RandomAccessIterator Iter1, RandomAccessIterator Iter2> 
-//   requires HasMinus<Iter1, Iter2> 
+// template <RandomAccessIterator Iter1, RandomAccessIterator Iter2>
+//   requires HasMinus<Iter1, Iter2>
 //   auto
 //   operator-(const move_iterator<Iter1>& x, const move_iterator<Iter2>& y)
 //   -> decltype(x.base() - y.base());

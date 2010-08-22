@@ -11,7 +11,7 @@
 
 // front_insert_iterator
 
-// front_insert_iterator<Cont>& 
+// front_insert_iterator<Cont>&
 //   operator=(Cont::value_type&& value);
 
 #include <iterator>
@@ -31,7 +31,7 @@ test(C c)
     assert(c.front() == typename C::value_type());
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {

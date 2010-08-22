@@ -13,16 +13,16 @@
 
 // Test nested types and data member:
 
-// template <BackInsertionContainer Cont> 
-// class back_insert_iterator { 
-// protected: 
-//   Cont* container; 
-// public: 
-//   typedef Cont                        container_type; 
-//   typedef void                        value_type; 
-//   typedef void                        difference_type; 
-//   typedef back_insert_iterator<Cont>& reference; 
-//   typedef void                        pointer; 
+// template <BackInsertionContainer Cont>
+// class back_insert_iterator {
+// protected:
+//   Cont* container;
+// public:
+//   typedef Cont                        container_type;
+//   typedef void                        value_type;
+//   typedef void                        difference_type;
+//   typedef back_insert_iterator<Cont>& reference;
+//   typedef void                        pointer;
 // };
 
 #include <iterator>

@@ -11,7 +11,7 @@
 
 // reverse_iterator
 
-// template <RandomAccessIterator Iterator> 
+// template <RandomAccessIterator Iterator>
 //   reverse_iterator<Iter>
 //   operator+(Iter::difference_type n, const reverse_iterator<Iter>& x);
 

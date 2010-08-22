@@ -12,7 +12,7 @@
 // back_insert_iterator
 
 // requires CopyConstructible<Cont::value_type>
-//   back_insert_iterator<Cont>& 
+//   back_insert_iterator<Cont>&
 //   operator=(Cont::value_type&& value);
 
 #include <iterator>
@@ -32,7 +32,7 @@ test(C c)
     assert(c.back() == typename C::value_type());
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {

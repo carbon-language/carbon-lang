@@ -11,9 +11,9 @@
 
 // move_iterator
 
-// template <class U> 
-//   requires HasAssign<Iter, const U&> 
-//   move_iterator& 
+// template <class U>
+//   requires HasAssign<Iter, const U&>
+//   move_iterator&
 //   operator=(const move_iterator<U>& u);
 
 #include <iterator>

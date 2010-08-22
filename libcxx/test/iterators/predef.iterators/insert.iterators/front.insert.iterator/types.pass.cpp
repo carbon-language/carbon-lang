@@ -13,15 +13,15 @@
 
 // Test nested types and data member:
 
-// template <class Container> 
-// class front_insert_iterator { 
-// protected: 
-//   Container* container; 
-// public: 
-//   typedef Container                   container_type; 
-//   typedef void                        value_type; 
-//   typedef void                        difference_type; 
-//   typedef front_insert_iterator<Cont>& reference; 
+// template <class Container>
+// class front_insert_iterator {
+// protected:
+//   Container* container;
+// public:
+//   typedef Container                   container_type;
+//   typedef void                        value_type;
+//   typedef void                        difference_type;
+//   typedef front_insert_iterator<Cont>& reference;
 //   typedef void                        pointer;
 //   typedef output_iterator_tag         iterator_category;
 // };

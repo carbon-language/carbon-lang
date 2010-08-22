@@ -11,9 +11,9 @@
 
 // reverse_iterator
 
-// template <class U> 
-//   requires HasAssign<Iter, const U&> 
-//   reverse_iterator& 
+// template <class U>
+//   requires HasAssign<Iter, const U&>
+//   reverse_iterator&
 //   operator=(const reverse_iterator<U>& u);
 
 #include <iterator>

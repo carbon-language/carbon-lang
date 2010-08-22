@@ -9,7 +9,7 @@
 
 // <iterator>
 
-// template <BidirectionalIterator Iter> 
+// template <BidirectionalIterator Iter>
 //   Iter prev(Iter x, Iter::difference_type n = 1);
 
 #include <iterator>

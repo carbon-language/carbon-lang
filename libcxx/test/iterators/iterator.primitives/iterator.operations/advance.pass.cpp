@@ -9,13 +9,13 @@
 
 // <iterator>
 
-// template <InputIterator Iter> 
+// template <InputIterator Iter>
 //   void advance(Iter& i, Iter::difference_type n);
-// 
-// template <BidirectionalIterator Iter> 
-//   void advance(Iter& i, Iter::difference_type n); 
-// 
-// template <RandomAccessIterator Iter> 
+//
+// template <BidirectionalIterator Iter>
+//   void advance(Iter& i, Iter::difference_type n);
+//
+// template <RandomAccessIterator Iter>
 //   void advance(Iter& i, Iter::difference_type n);
 
 #include <iterator>

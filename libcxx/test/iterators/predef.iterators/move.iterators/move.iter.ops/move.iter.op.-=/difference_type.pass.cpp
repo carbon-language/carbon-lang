@@ -11,7 +11,7 @@
 
 // move_iterator
 
-// requires RandomAccessIterator<Iter> 
+// requires RandomAccessIterator<Iter>
 //   move_iterator& operator-=(difference_type n);
 
 #include <iterator>

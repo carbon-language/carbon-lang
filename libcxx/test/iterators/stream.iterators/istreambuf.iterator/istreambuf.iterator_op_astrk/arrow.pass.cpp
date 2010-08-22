@@ -13,9 +13,9 @@
 
 // pointer operator->() const;
 
-#include <iostream> 
+#include <iostream>
 #include <sstream>
-#include <streambuf> 
+#include <streambuf>
 
 typedef char C;
 int main ()

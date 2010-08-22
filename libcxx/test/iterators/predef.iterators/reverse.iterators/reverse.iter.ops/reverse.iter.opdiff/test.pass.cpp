@@ -11,8 +11,8 @@
 
 // reverse_iterator
 
-// template <RandomAccessIterator Iter1, RandomAccessIterator Iter2> 
-//   requires HasMinus<Iter2, Iter1> 
+// template <RandomAccessIterator Iter1, RandomAccessIterator Iter2>
+//   requires HasMinus<Iter2, Iter1>
 //   auto operator-(const reverse_iterator<Iter1>& x, const reverse_iterator<Iter2>& y)
 //   -> decltype(y.base() - x.base());
 

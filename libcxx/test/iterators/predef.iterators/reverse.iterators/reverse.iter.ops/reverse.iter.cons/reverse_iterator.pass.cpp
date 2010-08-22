@@ -11,8 +11,8 @@
 
 // reverse_iterator
 
-// template <class U> 
-//   requires HasConstructor<Iter, const U&> 
+// template <class U>
+//   requires HasConstructor<Iter, const U&>
 //   reverse_iterator(const reverse_iterator<U> &u);
 
 #include <iterator>

@@ -9,7 +9,7 @@
 
 // <iterator>
 
-// template <BackInsertionContainer Cont> 
+// template <BackInsertionContainer Cont>
 //   front_insert_iterator<Cont>
 //   front_inserter(Cont& x);
 

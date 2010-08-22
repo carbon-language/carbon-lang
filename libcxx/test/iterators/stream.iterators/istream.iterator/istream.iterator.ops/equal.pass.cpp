@@ -14,7 +14,7 @@
 // template <class T, class charT, class traits, class Distance>
 //   bool operator==(const istream_iterator<T,charT,traits,Distance> &x,
 //                   const istream_iterator<T,charT,traits,Distance> &y);
-// 
+//
 // template <class T, class charT, class traits, class Distance>
 //   bool operator!=(const istream_iterator<T,charT,traits,Distance> &x,
 //                   const istream_iterator<T,charT,traits,Distance> &y);

@@ -9,7 +9,7 @@
 
 // <iterator>
 
-// template <InsertionContainer Cont> 
+// template <InsertionContainer Cont>
 //   insert_iterator<Cont>
 //   inserter(Cont& x, Cont::iterator i);
 

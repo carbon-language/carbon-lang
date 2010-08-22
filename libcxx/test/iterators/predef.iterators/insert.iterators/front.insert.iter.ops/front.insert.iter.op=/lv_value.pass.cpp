@@ -11,7 +11,7 @@
 
 // front_insert_iterator
 
-// front_insert_iterator<Cont>& 
+// front_insert_iterator<Cont>&
 //   operator=(const Cont::value_type& value);
 
 #include <iterator>

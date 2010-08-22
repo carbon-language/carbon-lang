@@ -9,7 +9,7 @@
 
 // <iterator>
 
-// template <InputIterator Iter> 
+// template <InputIterator Iter>
 //   Iter next(Iter x, Iter::difference_type n = 1);
 
 #include <iterator>

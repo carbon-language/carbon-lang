@@ -11,8 +11,8 @@
 
 // insert_iterator
 
-// requires CopyConstructible<Cont::value_type> 
-//   insert_iterator<Cont>& 
+// requires CopyConstructible<Cont::value_type>
+//   insert_iterator<Cont>&
 //   operator=(const Cont::value_type& value);
 
 #include <iterator>
@@ -51,7 +51,7 @@ struct do_nothing
     void operator()(void*) const {}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -91,5 +91,5 @@ int main()
         c2.push_back(Ptr(x+i));
     insert3at(c2, c2.begin()+3, Ptr(x+3), Ptr(x+4), Ptr(x+5));
     test(std::move(c1), 3, Ptr(x+3), Ptr(x+4), Ptr(x+5), c2);
-#endif
+#endif  // _LIBCPP_MOVE
 }

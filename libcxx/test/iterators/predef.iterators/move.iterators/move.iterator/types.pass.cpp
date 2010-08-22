@@ -13,14 +13,14 @@
 
 // Test nested types:
 
-// template <InputIterator Iter> 
-// class move_iterator { 
-// public: 
-//   typedef Iter                  iterator_type; 
-//   typedef Iter::difference_type difference_type; 
-//   typedef Iterator              pointer; 
-//   typedef Iter::value_type      value_type; 
-//   typedef value_type&&          reference; 
+// template <InputIterator Iter>
+// class move_iterator {
+// public:
+//   typedef Iter                  iterator_type;
+//   typedef Iter::difference_type difference_type;
+//   typedef Iterator              pointer;
+//   typedef Iter::value_type      value_type;
+//   typedef value_type&&          reference;
 // };
 
 #include <iterator>

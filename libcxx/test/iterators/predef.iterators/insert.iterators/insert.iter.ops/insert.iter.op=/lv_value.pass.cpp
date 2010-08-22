@@ -11,8 +11,8 @@
 
 // insert_iterator
 
-// requires CopyConstructible<Cont::value_type> 
-//   insert_iterator<Cont>& 
+// requires CopyConstructible<Cont::value_type>
+//   insert_iterator<Cont>&
 //   operator=(const Cont::value_type& value);
 
 #include <iterator>

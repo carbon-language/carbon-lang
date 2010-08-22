@@ -11,8 +11,8 @@
 
 // reverse_iterator
 
-// template <BidirectionalIterator Iter1, BidirectionalIterator Iter2> 
-//   requires HasEqualTo<Iter1, Iter2> 
+// template <BidirectionalIterator Iter1, BidirectionalIterator Iter2>
+//   requires HasEqualTo<Iter1, Iter2>
 //   bool
 //   operator!=(const reverse_iterator<Iter1>& x, const reverse_iterator<Iter2>& y);
 

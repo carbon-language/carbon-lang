@@ -9,11 +9,11 @@
 
 // <iterator>
 
-// template <InputIterator Iter> 
-//   Iter::difference_type 
-//   distance(Iter first, Iter last); 
-// 
-// template <RandomAccessIterator Iter> 
+// template <InputIterator Iter>
+//   Iter::difference_type
+//   distance(Iter first, Iter last);
+//
+// template <RandomAccessIterator Iter>
 //   Iter::difference_type
 //   distance(Iter first, Iter last);
 

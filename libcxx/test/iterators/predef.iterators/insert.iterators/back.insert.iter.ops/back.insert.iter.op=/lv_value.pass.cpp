@@ -12,7 +12,7 @@
 // back_insert_iterator
 
 // requires CopyConstructible<Cont::value_type>
-//   back_insert_iterator<Cont>& 
+//   back_insert_iterator<Cont>&
 //   operator=(const Cont::value_type& value);
 
 #include <iterator>
