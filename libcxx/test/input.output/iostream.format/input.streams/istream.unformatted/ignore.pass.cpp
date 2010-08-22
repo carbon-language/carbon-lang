@@ -9,7 +9,7 @@
 
 // <istream>
 
-// basic_istream<charT,traits>& 
+// basic_istream<charT,traits>&
 //    ignore(streamsize n = 1, int_type delim = traits::eof());
 
 #include <istream>

@@ -12,8 +12,8 @@
 // template <class charT, class traits = char_traits<charT> >
 //   class basic_ostream;
 
-// basic_ostream<charT,traits>& operator<< 
-//           (basic_ostream<charT,traits>& (*pf)(basic_ostream<charT,traits>&)) 
+// basic_ostream<charT,traits>& operator<<
+//           (basic_ostream<charT,traits>& (*pf)(basic_ostream<charT,traits>&))
 
 #include <ostream>
 #include <cassert>

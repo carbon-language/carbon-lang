@@ -21,5 +21,5 @@ int main()
 #else
     assert(std::wcerr.tie() == &std::wcout);
     assert(std::wcerr.flags() & std::ios_base::unitbuf);
-#endif
+#endif  // 0
 }

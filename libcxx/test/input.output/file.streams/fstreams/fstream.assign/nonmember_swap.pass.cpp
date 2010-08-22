@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT> >
 // class basic_fstream
 
-// template <class charT, class traits> 
+// template <class charT, class traits>
 //   void swap(basic_fstream<charT, traits>& x, basic_fstream<charT, traits>& y);
 
 #include <fstream>

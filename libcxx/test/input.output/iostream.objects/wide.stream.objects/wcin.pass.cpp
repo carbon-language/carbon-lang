@@ -22,7 +22,7 @@ int main()
     std::wcout << L"Enter a number: ";
     std::wcin >> i;
     std::wcout << L"The number is : " << i << L'\n';
-#else
+#else  // 0
     assert(std::wcin.tie() == &std::wcout);
 #endif
 }

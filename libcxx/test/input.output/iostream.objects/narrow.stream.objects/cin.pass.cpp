@@ -22,7 +22,7 @@ int main()
     std::cout << "Enter a number: ";
     std::cin >> i;
     std::cout << "The number is : " << i << '\n';
-#else
+#else  // 0
     assert(std::cin.tie() == &std::cout);
 #endif
 }

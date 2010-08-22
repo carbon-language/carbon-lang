@@ -12,9 +12,9 @@
 // template <class charT, class traits = char_traits<charT>, class Allocator = allocator<charT> >
 // class basic_stringstream
 
-// template <class charT, class traits, class Allocator> 
+// template <class charT, class traits, class Allocator>
 //   void
-//   swap(basic_stringstream<charT, traits, Allocator>& x, 
+//   swap(basic_stringstream<charT, traits, Allocator>& x,
 //        basic_stringstream<charT, traits, Allocator>& y);
 
 #include <sstream>

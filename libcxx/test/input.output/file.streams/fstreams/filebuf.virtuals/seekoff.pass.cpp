@@ -9,9 +9,9 @@
 
 // <fstream>
 
-// pos_type seekoff(off_type off, ios_base::seekdir way, 
+// pos_type seekoff(off_type off, ios_base::seekdir way,
 //                  ios_base::openmode which = ios_base::in | ios_base::out);
-// pos_type seekpos(pos_type sp, 
+// pos_type seekpos(pos_type sp,
 //                  ios_base::openmode which = ios_base::in | ios_base::out);
 
 // This test is not entirely portable

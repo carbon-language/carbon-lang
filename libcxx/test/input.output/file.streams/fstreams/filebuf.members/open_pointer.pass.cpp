@@ -46,4 +46,4 @@ int main()
         assert(f.sbumpc() == L'3');
     }
     remove("test.dat");
-}    
+}

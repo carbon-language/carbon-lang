@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT>, class Allocator = allocator<charT> >
 // class basic_ostringstream
 
-// explicit basic_ostringstream(const basic_string<charT,traits,allocator>& str, 
+// explicit basic_ostringstream(const basic_string<charT,traits,allocator>& str,
 //                              ios_base::openmode which = ios_base::in);
 
 #include <sstream>

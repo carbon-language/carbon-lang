@@ -37,7 +37,7 @@ struct test_ostream
         {base::operator=(std::move(s)); return *this;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -88,5 +88,5 @@ int main()
         assert(os2.precision() == 6);
         assert(os2.getloc().name() == "C");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

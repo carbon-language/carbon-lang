@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT> >
 // class basic_streambuf;
 
-// pos_type pubseekpos(pos_type sp, 
+// pos_type pubseekpos(pos_type sp,
 //                     ios_base::openmode which = ios_base::in | ios_base::out;
 
 #include <streambuf>

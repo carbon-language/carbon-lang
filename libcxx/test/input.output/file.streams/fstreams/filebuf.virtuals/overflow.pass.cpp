@@ -137,4 +137,4 @@ int main()
         assert(f.sbumpc() == -1);
     }
     std::remove("overflow.dat");
-}    
+}

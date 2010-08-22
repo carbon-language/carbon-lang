@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT>, class Allocator = allocator<charT> >
 // class basic_stringbuf
 
-// pos_type seekoff(off_type off, ios_base::seekdir way, 
+// pos_type seekoff(off_type off, ios_base::seekdir way,
 //                  ios_base::openmode which = ios_base::in | ios_base::out);
 
 #include <sstream>

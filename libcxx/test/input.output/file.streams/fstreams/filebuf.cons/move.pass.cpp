@@ -48,5 +48,5 @@ int main()
         assert(f2.sgetc() == L'2');
     }
     remove("test.dat");
-#endif
+#endif  // _LIBCPP_MOVE
 }

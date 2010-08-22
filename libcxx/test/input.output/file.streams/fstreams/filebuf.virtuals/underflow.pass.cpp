@@ -116,4 +116,4 @@ int main()
         assert(f.sbumpc() == 0x4E53);
         assert(f.sbumpc() == -1);
     }
-}    
+}

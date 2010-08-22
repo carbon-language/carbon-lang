@@ -9,15 +9,15 @@
 
 // <ios>
 
-// template <class charT, class traits = char_traits<charT> > 
+// template <class charT, class traits = char_traits<charT> >
 // class basic_ios : public ios_base
 // {
 // public:
-//     typedef charT char_type; 
-//     typedef typename traits::int_type int_type; 
-//     typedef typename traits::pos_type pos_type; 
-//     typedef typename traits::off_type off_type; 
-//     typedef traits traits_type; 
+//     typedef charT char_type;
+//     typedef typename traits::int_type int_type;
+//     typedef typename traits::pos_type pos_type;
+//     typedef typename traits::off_type off_type;
+//     typedef traits traits_type;
 
 #include <ios>
 #include <type_traits>

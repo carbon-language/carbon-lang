@@ -12,8 +12,8 @@
 // class ios_base
 
 // static const seekdir beg;
-// static const seekdir cur; 
-// static const seekdir end; 
+// static const seekdir cur;
+// static const seekdir end;
 
 #include <ios>
 #include <cassert>

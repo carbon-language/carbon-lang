@@ -46,5 +46,5 @@ int main()
         ss >> i;
         assert(i == 456);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

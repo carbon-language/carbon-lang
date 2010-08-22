@@ -42,5 +42,5 @@ int main()
         ss << i << ' ' << 567;;
         assert(ss.str() == L"234 5676");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

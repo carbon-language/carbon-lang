@@ -27,4 +27,4 @@ int main()
         std::wfilebuf f;
         assert(!f.is_open());
     }
-}    
+}

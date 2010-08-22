@@ -28,7 +28,7 @@ struct testbuf
 
 protected:
 
-    typename base::pos_type 
+    typename base::pos_type
     seekpos(typename base::pos_type sp, std::ios_base::openmode which)
     {
         ++seekpos_called;

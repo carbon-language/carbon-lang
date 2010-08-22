@@ -12,11 +12,11 @@
 // class ios_base
 
 // static const openmode app;
-// static const openmode ate; 
-// static const openmode binary; 
-// static const openmode in; 
-// static const openmode out; 
-// static const openmode trunc; 
+// static const openmode ate;
+// static const openmode binary;
+// static const openmode in;
+// static const openmode out;
+// static const openmode trunc;
 
 #include <ios>
 #include <cassert>

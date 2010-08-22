@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT> >
 // class basic_filebuf
 
-// template <class charT, class traits> 
+// template <class charT, class traits>
 // void
 // swap(basic_filebuf<charT, traits>& x, basic_filebuf<charT, traits>& y);
 

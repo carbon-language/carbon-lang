@@ -12,8 +12,8 @@
 // template <class charT, class traits = char_traits<charT> >
 //   class basic_ostream;
 
-// template <class charT, class traits, class T> 
-//   basic_ostream<charT, traits>& 
+// template <class charT, class traits, class T>
+//   basic_ostream<charT, traits>&
 //   operator<<(basic_ostream<charT, traits>&& os, const T& x);
 
 #include <ostream>
@@ -53,7 +53,7 @@ protected:
         }
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -68,5 +68,5 @@ int main()
         std::wostream(&sb) << L"123";
         assert(sb.str() == L"123");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

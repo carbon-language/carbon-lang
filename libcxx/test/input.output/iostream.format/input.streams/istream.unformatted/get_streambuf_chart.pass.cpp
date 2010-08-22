@@ -9,8 +9,8 @@
 
 // <istream>
 
-// basic_istream<charT,traits>& get(basic_streambuf<char_type,traits>& sb, 
-//                                  char_type delim); 
+// basic_istream<charT,traits>& get(basic_streambuf<char_type,traits>& sb,
+//                                  char_type delim);
 
 #include <istream>
 #include <cassert>

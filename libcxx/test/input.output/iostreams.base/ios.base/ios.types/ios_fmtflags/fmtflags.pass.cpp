@@ -11,21 +11,21 @@
 
 // class ios_base
 
-// static const fmtflags boolalpha; 
-// static const fmtflags dec; 
-// static const fmtflags fixed; 
-// static const fmtflags hex; 
-// static const fmtflags internal; 
-// static const fmtflags left; 
-// static const fmtflags oct; 
-// static const fmtflags right; 
-// static const fmtflags scientific; 
-// static const fmtflags showbase; 
-// static const fmtflags showpoint; 
-// static const fmtflags showpos; 
-// static const fmtflags skipws; 
-// static const fmtflags unitbuf; 
-// static const fmtflags uppercase; 
+// static const fmtflags boolalpha;
+// static const fmtflags dec;
+// static const fmtflags fixed;
+// static const fmtflags hex;
+// static const fmtflags internal;
+// static const fmtflags left;
+// static const fmtflags oct;
+// static const fmtflags right;
+// static const fmtflags scientific;
+// static const fmtflags showbase;
+// static const fmtflags showpoint;
+// static const fmtflags showpos;
+// static const fmtflags skipws;
+// static const fmtflags unitbuf;
+// static const fmtflags uppercase;
 // static const fmtflags adjustfield = left | right | internal;
 // static const fmtflags basefield   = dec | oct | hex;
 // static const fmtflags floatfield  = scientific | fixed;

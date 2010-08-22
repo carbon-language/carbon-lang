@@ -37,7 +37,7 @@ struct test_istream
         : base(std::move(s)) {}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -74,5 +74,5 @@ int main()
         assert(is.precision() == 6);
         assert(is.getloc().name() == "C");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

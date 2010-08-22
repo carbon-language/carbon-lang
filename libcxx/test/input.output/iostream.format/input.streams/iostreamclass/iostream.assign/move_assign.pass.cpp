@@ -33,11 +33,11 @@ struct test_iostream
     typedef std::basic_iostream<CharT> base;
     test_iostream(testbuf<CharT>* sb) : base(sb) {}
 
-    test_iostream& operator=(test_iostream&& s) 
+    test_iostream& operator=(test_iostream&& s)
         {base::operator=(std::move(s)); return *this;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -88,5 +88,5 @@ int main()
         assert(is2.precision() == 6);
         assert(is2.getloc().name() == "C");
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

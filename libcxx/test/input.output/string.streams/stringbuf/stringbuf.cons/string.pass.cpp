@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT>, class Allocator = allocator<charT> >
 // class basic_stringbuf
 
-// explicit basic_stringbuf(const basic_string<charT,traits,Allocator>& s, 
+// explicit basic_stringbuf(const basic_string<charT,traits,Allocator>& s,
 //                          ios_base::openmode which = ios_base::in | ios_base::out);
 
 #include <sstream>

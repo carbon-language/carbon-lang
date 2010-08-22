@@ -9,8 +9,8 @@
 
 // <istream>
 
-// template <class charT, class traits, class T> 
-//   basic_istream<charT, traits>& 
+// template <class charT, class traits, class T>
+//   basic_istream<charT, traits>&
 //   operator>>(basic_istream<charT, traits>&& is, T& x);
 
 #include <istream>
@@ -42,7 +42,7 @@ public:
     CharT* egptr() const {return base::egptr();}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -59,5 +59,5 @@ int main()
         std::wistream(&sb) >> i;
         assert(i == 123);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

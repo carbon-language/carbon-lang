@@ -9,7 +9,7 @@
 
 // <istream>
 
-// template <class charT, class traits> 
+// template <class charT, class traits>
 //   basic_istream<charT,traits>&
 //   ws(basic_istream<charT,traits>& is);
 

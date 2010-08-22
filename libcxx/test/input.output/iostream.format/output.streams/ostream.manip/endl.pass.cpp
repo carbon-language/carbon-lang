@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT> >
 //   class basic_ostream;
 
-// template <class charT, class traits> 
+// template <class charT, class traits>
 //   basic_ostream<charT,traits>& endl(basic_ostream<charT,traits>& os);
 
 #include <ostream>

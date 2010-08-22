@@ -9,7 +9,7 @@
 
 // <istream>
 
-// basic_istream<charT,traits>& get(basic_streambuf<char_type,traits>& sb); 
+// basic_istream<charT,traits>& get(basic_streambuf<char_type,traits>& sb);
 
 #include <istream>
 #include <cassert>

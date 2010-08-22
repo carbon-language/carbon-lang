@@ -53,4 +53,4 @@ int main()
         assert(f.sbumpc() == 'a');
         assert(f.sgetc() == '2');
     }
-}    
+}

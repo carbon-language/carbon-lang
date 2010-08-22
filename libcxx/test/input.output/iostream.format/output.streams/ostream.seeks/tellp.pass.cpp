@@ -28,7 +28,7 @@ struct testbuf
 
 protected:
 
-    typename base::pos_type 
+    typename base::pos_type
     seekoff(typename base::off_type off, std::ios_base::seekdir way, std::ios_base::openmode which)
     {
         assert(off == 0);

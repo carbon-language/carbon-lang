@@ -21,5 +21,5 @@ int main()
 #else
     assert(std::cerr.tie() == &std::cout);
     assert(std::cerr.flags() & std::ios_base::unitbuf);
-#endif
+#endif  // 0
 }

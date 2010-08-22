@@ -34,5 +34,5 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

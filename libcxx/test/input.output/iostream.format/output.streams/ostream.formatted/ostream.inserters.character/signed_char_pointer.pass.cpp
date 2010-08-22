@@ -12,7 +12,7 @@
 // template <class charT, class traits = char_traits<charT> >
 //   class basic_ostream;
 
-// template<class traits> 
+// template<class traits>
 //   basic_ostream<char,traits>& operator<<(basic_ostream<char,traits>& out, const signed char* s);
 
 #include <ostream>

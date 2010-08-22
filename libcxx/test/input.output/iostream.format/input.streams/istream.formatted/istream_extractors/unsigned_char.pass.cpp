@@ -9,7 +9,7 @@
 
 // <istream>
 
-// template<class traits> 
+// template<class traits>
 //   basic_istream<char,traits>& operator>>(basic_istream<char,traits>&& in, unsigned char& c);
 
 #include <istream>

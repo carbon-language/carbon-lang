@@ -46,5 +46,5 @@ int main()
         assert(x == 3.25);
     }
     remove("test.dat");
-#endif
+#endif  // _LIBCPP_MOVE
 }

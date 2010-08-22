@@ -12,8 +12,8 @@
 // class ios_base
 
 // static const iostate badbit;
-// static const iostate eofbit; 
-// static const iostate failbit; 
+// static const iostate eofbit;
+// static const iostate failbit;
 // static const iostate goodbit = 0;
 
 #include <ios>

@@ -12,8 +12,8 @@
 // template <class charT, class traits = char_traits<charT>, class Allocator = allocator<charT> >
 // class basic_stringbuf
 
-// template <class charT, class traits, class Allocator> 
-//   void swap(basic_stringbuf<charT, traits, Allocator>& x, 
+// template <class charT, class traits, class Allocator>
+//   void swap(basic_stringbuf<charT, traits, Allocator>& x,
 //             basic_stringbuf<charT, traits, Allocator>& y);
 
 #include <sstream>
