@@ -18,7 +18,7 @@ Macros:
 
     offsetof(type,member-designator)
     NULL
- 
+
 namespace std
 {
 
@@ -39,7 +39,7 @@ Types:
 #define __need_NULL
 #define __need_ptrdiff_t
 #define __need_size_t
-#endif
+#endif  // __GLIBC__
 
 #include <stddef.h>
 
@@ -65,11 +65,11 @@ struct nullptr_t
     _LIBCPP_ALWAYS_INLINE operator int __nat::*() const {return 0;}
 
     template <class _Tp>
-        _LIBCPP_ALWAYS_INLINE 
+        _LIBCPP_ALWAYS_INLINE
         operator _Tp* () const {return 0;}
 
     template <class _Tp, class _Up>
-        _LIBCPP_ALWAYS_INLINE 
+        _LIBCPP_ALWAYS_INLINE
         operator _Tp _Up::* () const {return 0;}
 
     friend _LIBCPP_ALWAYS_INLINE bool operator==(nullptr_t, nullptr_t) {return true;}
@@ -120,11 +120,11 @@ inline _LIBCPP_ALWAYS_INLINE nullptr_t __get_nullptr_t() {return nullptr_t(0);}
 
 #define nullptr _STD::__get_nullptr_t()
 
-#else
+#else  // _LIBCPP_HAS_NO_NULLPTR
 
 typedef decltype(nullptr) nullptr_t;
 
-#endif
+#endif  // _LIBCPP_HAS_NO_NULLPTR
 
 _LIBCPP_END_NAMESPACE_STD
 

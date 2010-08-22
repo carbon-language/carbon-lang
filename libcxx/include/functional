@@ -186,18 +186,18 @@ template <class Predicate> binary_negate<Predicate> not2(const Predicate& pred);
 template<class T> struct is_bind_expression;
 template<class T> struct is_placeholder;
 
-template<class Fn, class... BoundArgs> 
+template<class Fn, class... BoundArgs>
   unspecified bind(Fn&&, BoundArgs&&...);
-template<class R, class Fn, class... BoundArgs> 
+template<class R, class Fn, class... BoundArgs>
   unspecified bind(Fn&&, BoundArgs&&...);
 
-namespace placeholders { 
-  // M is the implementation-defined number of placeholders 
+namespace placeholders {
+  // M is the implementation-defined number of placeholders
   extern unspecified _1;
   extern unspecified _2;
-  . 
-  . 
-  . 
+  .
+  .
+  .
   extern unspecified _M;
 }
 
@@ -415,21 +415,21 @@ public:
     template <typename T> const T* target() const;
 };
 
-// Null pointer comparisons: 
-template <class R, class ... ArgTypes> 
+// Null pointer comparisons:
+template <class R, class ... ArgTypes>
   bool operator==(const function<R(ArgTypes...)>&, nullptr_t);
 
-template <class R, class ... ArgTypes> 
+template <class R, class ... ArgTypes>
   bool operator==(nullptr_t, const function<R(ArgTypes...)>&);
 
-template <class R, class ... ArgTypes> 
+template <class R, class ... ArgTypes>
   bool operator!=(const function<R(ArgTypes...)>&, nullptr_t);
 
-template <class  R, class ... ArgTypes> 
+template <class  R, class ... ArgTypes>
   bool operator!=(nullptr_t, const function<R(ArgTypes...)>&);
 
-// specialized algorithms: 
-template <class  R, class ... ArgTypes> 
+// specialized algorithms:
+template <class  R, class ... ArgTypes>
   void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&);
 
 template <class T> struct hash;
@@ -861,7 +861,6 @@ const_mem_fun1_ref_t<_Sp,_Tp,_Ap>
 mem_fun_ref(_Sp (_Tp::*__f)(_Ap) const)
     {return const_mem_fun1_ref_t<_Sp,_Tp,_Ap>(__f);}
 
-
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
 #include <__functional_03>
@@ -982,7 +981,7 @@ public:
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
-#endif
+#endif  // _LIBCPP_NO_RTTI
 };
 
 template<class _FD, class _Alloc, class _FB> class __func;
@@ -1003,7 +1002,7 @@ public:
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
-#endif
+#endif  // _LIBCPP_NO_RTTI
 };
 
 template<class _F, class _Alloc, class _R, class ..._ArgTypes>
@@ -1067,7 +1066,7 @@ __func<_F, _Alloc, _R(_ArgTypes...)>::target_type() const
     return typeid(_F);
 }
 
-#endif
+#endif  // _LIBCPP_NO_RTTI
 
 }  // __function
 
@@ -1154,7 +1153,7 @@ public:
     const std::type_info& target_type() const;
     template <typename _T> _T* target();
     template <typename _T> const _T* target() const;
-#endif
+#endif  // _LIBCPP_NO_RTTI
 };
 
 template<class _R, class ..._ArgTypes>
@@ -1390,7 +1389,7 @@ function<_R(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
         throw bad_function_call();
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return (*__f_)(_STD::forward<_ArgTypes>(__arg)...);
 }
 
@@ -1425,29 +1424,29 @@ function<_R(_ArgTypes...)>::target() const
     return (const _T*)__f_->target(typeid(_T));
 }
 
-#endif
+#endif  // _LIBCPP_NO_RTTI
 
-template <class _R, class... _ArgTypes> 
+template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const function<_R(_ArgTypes...)>& __f, nullptr_t) {return !__f;}
 
-template <class _R, class... _ArgTypes> 
+template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(nullptr_t, const function<_R(_ArgTypes...)>& __f) {return !__f;}
 
-template <class _R, class... _ArgTypes> 
+template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(const function<_R(_ArgTypes...)>& __f, nullptr_t) {return (bool)__f;}
 
-template <class _R, class... _ArgTypes> 
+template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(nullptr_t, const function<_R(_ArgTypes...)>& __f) {return (bool)__f;}
 
-template <class _R, class... _ArgTypes> 
+template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(function<_R(_ArgTypes...)>& __x, function<_R(_ArgTypes...)>& __y)
@@ -1499,7 +1498,6 @@ struct __mu_return1<true, _Ti, _Uj...>
 {
     typedef typename result_of<_Ti(_Uj...)>::type type;
 };
-
 
 template <class _Ti, class ..._Uj, size_t ..._Indx>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -1638,7 +1636,7 @@ __apply_functor(_F& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>,
     return __invoke(__f, __mu(get<_Indx>(__bound_args), __args)...);
 }
 
-template<class _F, class ..._BoundArgs> 
+template<class _F, class ..._BoundArgs>
 class __bind
     : public __weak_result_type<_F>
 {
@@ -1661,7 +1659,7 @@ public:
         operator()(_Args&& ...__args)
         {
             // compiler bug workaround
-            return __apply_functor(__f_, __bound_args_, __indices(), 
+            return __apply_functor(__f_, __bound_args_, __indices(),
                                   tuple<_Args&&...>(__args...));
         }
 
@@ -1669,15 +1667,15 @@ public:
         typename __bind_return<_F, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args) const
         {
-            return __apply_functor(__f_, __bound_args_, __indices(), 
+            return __apply_functor(__f_, __bound_args_, __indices(),
                                    tuple<_Args&&...>(__args...));
         }
 };
 
-template<class _F, class ..._BoundArgs> 
+template<class _F, class ..._BoundArgs>
 struct __is_bind_expression<__bind<_F, _BoundArgs...> > : public true_type {};
 
-template<class _R, class _F, class ..._BoundArgs> 
+template<class _R, class _F, class ..._BoundArgs>
 class __bind_r
     : public __bind<_F, _BoundArgs...>
 {
@@ -1705,10 +1703,10 @@ public:
         }
 };
 
-template<class _R, class _F, class ..._BoundArgs> 
+template<class _R, class _F, class ..._BoundArgs>
 struct __is_bind_expression<__bind_r<_R, _F, _BoundArgs...> > : public true_type {};
 
-template<class _F, class ..._BoundArgs> 
+template<class _F, class ..._BoundArgs>
 inline _LIBCPP_INLINE_VISIBILITY
 __bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
@@ -1717,7 +1715,7 @@ bind(_F&& __f, _BoundArgs&&... __bound_args)
     return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
 }
 
-template<class _R, class _F, class ..._BoundArgs> 
+template<class _R, class _F, class ..._BoundArgs>
 inline _LIBCPP_INLINE_VISIBILITY
 __bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
@@ -1772,7 +1770,7 @@ struct hash<char32_t>
     size_t operator()(char32_t __v) const {return static_cast<size_t>(__v);}
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
 template <>
 struct hash<wchar_t>

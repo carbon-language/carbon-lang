@@ -26,26 +26,26 @@
 #if __LITTLE_ENDIAN__
 #define _LIBCPP_LITTLE_ENDIAN 1
 #define _LIBCPP_BIG_ENDIAN    0
-#endif
-#endif
+#endif  // __LITTLE_ENDIAN__
+#endif  // __LITTLE_ENDIAN__
 
 #ifdef __BIG_ENDIAN__
 #if __BIG_ENDIAN__
 #define _LIBCPP_LITTLE_ENDIAN 0
 #define _LIBCPP_BIG_ENDIAN    1
-#endif
-#endif
+#endif  // __BIG_ENDIAN__
+#endif  // __BIG_ENDIAN__
 
 #ifdef __FreeBSD__
 # include <sys/endian.h>
 #  if _BYTE_ORDER == _LITTLE_ENDIAN
 #   define _LIBCPP_LITTLE_ENDIAN 1
 #   define _LIBCPP_BIG_ENDIAN    0
-# else
+# else  // _BYTE_ORDER == _LITTLE_ENDIAN
 #   define _LIBCPP_LITTLE_ENDIAN 0
 #   define _LIBCPP_BIG_ENDIAN    1
-# endif
-#endif
+# endif  // _BYTE_ORDER == _LITTLE_ENDIAN
+#endif  // __FreeBSD__
 
 #if !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 # include <endian.h>
@@ -55,10 +55,10 @@
 # elif __BYTE_ORDER == __BIG_ENDIAN
 #  define _LIBCPP_LITTLE_ENDIAN 0
 #  define _LIBCPP_BIG_ENDIAN    1
-# else
+# else  // __BYTE_ORDER == __BIG_ENDIAN
 #  error unable to determine endian
 # endif
-#endif
+#endif  // !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 
 #ifndef _LIBCPP_VISIBILITY_TAG
 #define _LIBCPP_VISIBILITY_TAG 1
@@ -67,10 +67,10 @@
 #if _LIBCPP_VISIBILITY_TAG
 #define _LIBCPP_HIDDEN __attribute__ ((__visibility__("hidden")))
 #define _LIBCPP_VISIBLE __attribute__ ((__visibility__("default")))
-#else
+#else  // _LIBCPP_VISIBILITY_TAG
 #define _LIBCPP_HIDDEN
 #define _LIBCPP_VISIBLE
-#endif
+#endif  // _LIBCPP_VISIBILITY_TAG
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
 #define _LIBCPP_INLINE_VISIBILITY __attribute__ ((__visibility__("hidden"), __always_inline__))
@@ -108,7 +108,7 @@
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
 
-#else
+#else  // __GXX_EXPERIMENTAL_CXX0X__
 
 #if __has_feature(cxx_rvalue_references)
 #define _LIBCPP_MOVE
@@ -121,7 +121,7 @@
 #if !(__has_feature(cxx_deleted_functions))
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-#endif
+#endif  // !(__has_feature(cxx_deleted_functions))
 
 #if !(__has_feature(cxx_nullptr))
 #define _LIBCPP_HAS_NO_NULLPTR
@@ -135,7 +135,7 @@
 #define _LIBCPP_HAS_NO_VARIADICS
 #endif
 
-#endif
+#endif  // __GXX_EXPERIMENTAL_CXX0X__
 
 #elif defined(__GNUC__)
 
@@ -156,7 +156,7 @@
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
 
-#else
+#else  // __GXX_EXPERIMENTAL_CXX0X__
 
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
 #define _LIBCPP_MOVE
@@ -173,21 +173,21 @@
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
-#endif
+#endif  // !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 4)
 
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
 #define _LIBCPP_HAS_NO_NULLPTR
 #endif
 
-#endif
+#endif  // __GXX_EXPERIMENTAL_CXX0X__
 
-#endif
+#endif  // defined(__GNUC__)
 
 #ifdef _LIBCPP_HAS_NO_STRONG_USING
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
 #define _LIBCPP_END_NAMESPACE_STD }
 #define _STD std
-#else
+#else  // _LIBCPP_HAS_NO_STRONG_USING
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std { namespace _LIBCPP_NAMESPACE {
 #define _LIBCPP_END_NAMESPACE_STD  } }
 #define _STD std::_LIBCPP_NAMESPACE
@@ -198,12 +198,12 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
-#endif
+#endif  // _LIBCPP_HAS_NO_STRONG_USING
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef unsigned short char16_t;
 typedef unsigned int   char32_t;
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
 #ifdef _LIBCPP_HAS_NO_STATIC_ASSERT
 
@@ -214,7 +214,7 @@ template <unsigned> struct __static_assert_check {};
     typedef __static_assert_check<sizeof(__static_assert_test<(__b)>)> \
     _LIBCPP_CONCAT(__t, __LINE__)
 
-#endif
+#endif  // _LIBCPP_HAS_NO_STATIC_ASSERT
 
 #ifdef _LIBCPP_HAS_NO_DECLTYPE
 #define decltype(x) __typeof__(x)

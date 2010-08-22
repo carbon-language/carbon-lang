@@ -514,7 +514,7 @@ cref(reference_wrapper<_Tp> __t)
 #ifdef _LIBCPP_MOVE
 template <class _Tp> void ref(const _Tp&& __t);// = delete; // LWG 688
 template <class _Tp> void cref(const _Tp&& __t);// = delete; // LWG 688
-#endif
+#endif  // _LIBCPP_MOVE
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 

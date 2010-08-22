@@ -129,7 +129,7 @@ public:
             __u.__owns_ = false;
             return *this;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
     void lock();
     bool try_lock();

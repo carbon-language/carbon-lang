@@ -21,7 +21,7 @@ template <class OuterAlloc, class... InnerAllocs>
 class scoped_allocator_adaptor : public OuterAlloc
 {
     typedef allocator_traits<OuterAlloc> OuterTraits; // exposition only
-    scoped_allocator_adaptor<InnerAllocs...> inner;	// exposition only
+    scoped_allocator_adaptor<InnerAllocs...> inner;   // exposition only
 public:
 
     typedef OuterAlloc outer_allocator_type;
@@ -180,7 +180,7 @@ private:
     inner_allocator_type __inner_;
 
 protected:
-    
+
     __scoped_allocator_storage() {}
 
     template <class _OuterA2,
@@ -526,7 +526,7 @@ operator!=(const scoped_allocator_adaptor<_OuterA1, _InnerAllocs...>& __a,
     return !(__a == __b);
 }
 
-#endif
+#endif  // defined(_LIBCPP_MOVE) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
 
 _LIBCPP_END_NAMESPACE_STD
 

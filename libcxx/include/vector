@@ -17,11 +17,11 @@
 namespace std
 {
 
-template <class T, class Allocator = allocator<T> > 
+template <class T, class Allocator = allocator<T> >
 class vector
-{ 
-public: 
-    typedef T                                        value_type; 
+{
+public:
+    typedef T                                        value_type;
     typedef Allocator                                allocator_type;
     typedef typename allocator_type::reference       reference;
     typedef typename allocator_type::const_reference const_reference;
@@ -114,13 +114,13 @@ public:
     void swap(vector&);
 
     bool __invariants() const;
-}; 
+};
 
-template <class Allocator = allocator<T> > 
+template <class Allocator = allocator<T> >
 class vector<bool, Allocator>
-{ 
-public: 
-    typedef bool                                     value_type; 
+{
+public:
+    typedef bool                                     value_type;
     typedef Allocator                                allocator_type;
     typedef implementation-defined                   iterator;
     typedef implementation-defined                   const_iterator;
@@ -222,7 +222,7 @@ public:
     void flip();
 
     bool __invariants() const;
-}; 
+};
 
 template <class Allocator> struct hash<std::vector<bool, Allocator>>;
 
@@ -297,7 +297,7 @@ class __vector_base
     : protected __vector_base_common<true>
 {
 protected:
-    typedef _Tp                                      value_type; 
+    typedef _Tp                                      value_type;
     typedef _Allocator                               allocator_type;
     typedef allocator_traits<allocator_type>         __alloc_traits;
     typedef value_type&                              reference;
@@ -424,9 +424,9 @@ class vector
 {
 private:
     typedef __vector_base<_Tp, _Allocator>           __base;
-public: 
+public:
     typedef vector                                   __self;
-    typedef _Tp                                      value_type; 
+    typedef _Tp                                      value_type;
     typedef _Allocator                               allocator_type;
     typedef typename __base::__alloc_traits          __alloc_traits;
     typedef typename __base::reference               reference;
@@ -449,10 +449,10 @@ public:
 #elif defined(_LIBCPP_RAW_ITERATORS)
     typedef pointer                                  iterator;
     typedef const_pointer                            const_iterator;
-#else
+#else  // defined(_LIBCPP_RAW_ITERATORS)
     typedef __wrap_iter<pointer>                     iterator;
     typedef __wrap_iter<const_pointer>               const_iterator;
-#endif
+#endif  // defined(_LIBCPP_RAW_ITERATORS)
     typedef _STD::reverse_iterator<iterator>         reverse_iterator;
     typedef _STD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
@@ -488,7 +488,7 @@ public:
     vector(vector&& __x);
     vector(vector&& __x, const allocator_type& __a);
     vector& operator=(vector&& __x);
-#endif
+#endif  // _LIBCPP_MOVE
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -556,7 +556,7 @@ public:
     void push_back(value_type&& __x);
     template <class... _Args>
         void emplace_back(_Args&&... __args);
-#endif
+#endif  // _LIBCPP_MOVE
     void pop_back();
 
     iterator insert(const_iterator __position, const_reference __x);
@@ -564,7 +564,7 @@ public:
     iterator insert(const_iterator __position, value_type&& __x);
     template <class... _Args>
         iterator emplace(const_iterator __position, _Args&&... __args);
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const_iterator __position, size_type __n, const_reference __x);
     template <class _InputIterator>
         typename enable_if
@@ -1043,7 +1043,7 @@ vector<_Tp, _Allocator>::__move_assign(vector& __c, true_type)
     __c.__begin_ = __c.__end_ = __c.__end_cap() = nullptr;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1128,7 +1128,7 @@ vector<_Tp, _Allocator>::assign(size_type __n, const_reference __u)
     }
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::iterator
 vector<_Tp, _Allocator>::__make_iter(pointer __p)
@@ -1140,7 +1140,7 @@ vector<_Tp, _Allocator>::__make_iter(pointer __p)
 #endif
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::const_iterator
 vector<_Tp, _Allocator>::__make_iter(const_pointer __p) const
@@ -1152,7 +1152,7 @@ vector<_Tp, _Allocator>::__make_iter(const_pointer __p) const
 #endif
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::iterator
 vector<_Tp, _Allocator>::begin()
@@ -1160,7 +1160,7 @@ vector<_Tp, _Allocator>::begin()
     return __make_iter(this->__begin_);
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::const_iterator
 vector<_Tp, _Allocator>::begin() const
@@ -1168,7 +1168,7 @@ vector<_Tp, _Allocator>::begin() const
     return __make_iter(this->__begin_);
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::iterator
 vector<_Tp, _Allocator>::end()
@@ -1176,7 +1176,7 @@ vector<_Tp, _Allocator>::end()
     return __make_iter(this->__end_);
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::const_iterator
 vector<_Tp, _Allocator>::end() const
@@ -1184,7 +1184,7 @@ vector<_Tp, _Allocator>::end() const
     return __make_iter(this->__end_);
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::reference
 vector<_Tp, _Allocator>::operator[](size_type __n)
@@ -1195,7 +1195,7 @@ vector<_Tp, _Allocator>::operator[](size_type __n)
     return this->__begin_[__n];
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 typename vector<_Tp, _Allocator>::const_reference
 vector<_Tp, _Allocator>::operator[](size_type __n) const
@@ -1206,7 +1206,7 @@ vector<_Tp, _Allocator>::operator[](size_type __n) const
     return this->__begin_[__n];
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 typename vector<_Tp, _Allocator>::reference
 vector<_Tp, _Allocator>::at(size_type __n)
 {
@@ -1215,7 +1215,7 @@ vector<_Tp, _Allocator>::at(size_type __n)
     return this->__begin_[__n];
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 typename vector<_Tp, _Allocator>::const_reference
 vector<_Tp, _Allocator>::at(size_type __n) const
 {
@@ -1248,7 +1248,7 @@ vector<_Tp, _Allocator>::shrink_to_fit()
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             allocator_type& __a = this->__alloc();
             __split_buffer<value_type, allocator_type&> __v(size(), 0, __a);
             __v.__construct_at_end(move_iterator<pointer>(this->__begin_),
@@ -1260,7 +1260,7 @@ vector<_Tp, _Allocator>::shrink_to_fit()
         catch (...)
         {
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
 }
 
@@ -1326,7 +1326,7 @@ vector<_Tp, _Allocator>::emplace_back(_Args&&... __args)
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1465,7 +1465,7 @@ vector<_Tp, _Allocator>::emplace(const_iterator __position, _Args&&... __args)
     return __make_iter(__p);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Allocator>
 typename vector<_Tp, _Allocator>::iterator
@@ -1530,7 +1530,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, _InputIterator __firs
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             __v.__construct_at_end(__first, __last);
             difference_type __old_size = __old_last - this->__begin_;
             difference_type __old_p = __p - this->__begin_;
@@ -1544,7 +1544,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, _InputIterator __firs
             erase(__make_iter(__old_last), end());
             throw;
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
     __p = _STD::rotate(__p, __old_last, this->__end_);
     insert(__make_iter(__p), move_iterator<iterator>(__v.begin()),
@@ -1628,10 +1628,10 @@ vector<_Tp, _Allocator>::swap(vector& __x)
 #ifdef _LIBCPP_DEBUG
     iterator::swap(this, &__x);
     const_iterator::swap(this, &__x);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
-template <class _Tp, class _Allocator> 
+template <class _Tp, class _Allocator>
 bool
 vector<_Tp, _Allocator>::__invariants() const
 {
@@ -1662,7 +1662,7 @@ vector<_Tp, _Allocator>::__invalidate_all_iterators()
 #ifdef _LIBCPP_DEBUG
     iterator::__remove_all(this);
     const_iterator::__remove_all(this);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 // vector<bool>
@@ -1677,7 +1677,7 @@ class vector<bool, _Allocator>
 {
 public:
     typedef vector                                   __self;
-    typedef bool                                     value_type; 
+    typedef bool                                     value_type;
     typedef _Allocator                               allocator_type;
     typedef allocator_traits<allocator_type>         __alloc_traits;
     typedef __bit_reference<vector>                  reference;
@@ -1697,10 +1697,10 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY iterator*&       __get_iterator_list(iterator*)       {return __iterator_list_.first;}
     _LIBCPP_INLINE_VISIBILITY const_iterator*& __get_iterator_list(const_iterator*) {return __iterator_list_.second;}
-#else
+#else  // _LIBCPP_DEBUG
     typedef pointer                                  iterator;
     typedef const_pointer                            const_iterator;
-#endif
+#endif  // _LIBCPP_DEBUG
     typedef _STD::reverse_iterator<iterator>         reverse_iterator;
     typedef _STD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
@@ -1765,7 +1765,7 @@ public:
     vector(vector&& __v);
     vector(vector&& __v, const allocator_type& __a);
     vector& operator=(vector&& __v);
-#endif
+#endif  // _LIBCPP_MOVE
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
 
@@ -1887,14 +1887,14 @@ private:
         {return const_iterator(this, const_pointer(__begin_ + __pos / __bits_per_word, static_cast<unsigned>(__pos % __bits_per_word)));}
     _LIBCPP_INLINE_VISIBILITY iterator __const_iterator_cast(const_iterator __p)
         {return iterator(this, pointer(const_cast<__storage_pointer>(__p.base().__seg_), __p.base().__ctz_));}
-#else
+#else  // _LIBCPP_DEBUG
     _LIBCPP_INLINE_VISIBILITY iterator __make_iter(size_type __pos)
         {return iterator(__begin_ + __pos / __bits_per_word, static_cast<unsigned>(__pos % __bits_per_word));}
     _LIBCPP_INLINE_VISIBILITY const_iterator __make_iter(size_type __pos) const
         {return const_iterator(__begin_ + __pos / __bits_per_word, static_cast<unsigned>(__pos % __bits_per_word));}
     _LIBCPP_INLINE_VISIBILITY iterator __const_iterator_cast(const_iterator __p)
         {return iterator(const_cast<__storage_pointer>(__p.__seg_), __p.__ctz_);}
-#endif
+#endif  // _LIBCPP_DEBUG
 
     void __copy_assign_alloc(const vector& __v)
         {__copy_assign_alloc(__v, integral_constant<bool,
@@ -1954,7 +1954,7 @@ vector<bool, _Allocator>::__invalidate_all_iterators()
 #ifdef _LIBCPP_DEBUG
     iterator::__remove_all(this);
     const_iterator::__remove_all(this);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 //  Allocate space for __n objects
@@ -2112,7 +2112,7 @@ vector<bool, _Allocator>::vector(_InputIterator __first, _InputIterator __last,
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         for (; __first != __last; ++__first)
             push_back(*__first);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -2124,7 +2124,7 @@ vector<bool, _Allocator>::vector(_InputIterator __first, _InputIterator __last,
         __invalidate_all_iterators();
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template <class _Allocator>
@@ -2139,7 +2139,7 @@ vector<bool, _Allocator>::vector(_InputIterator __first, _InputIterator __last, 
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         for (; __first != __last; ++__first)
             push_back(*__first);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -2151,7 +2151,7 @@ vector<bool, _Allocator>::vector(_InputIterator __first, _InputIterator __last, 
         __invalidate_all_iterators();
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template <class _Allocator>
@@ -2337,7 +2337,7 @@ vector<bool, _Allocator>::__move_assign(vector& __c, true_type)
     __c.__begin_ = nullptr;
     __c.__cap() = __c.__size_ = 0;
 }
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Allocator>
 void
@@ -2420,14 +2420,14 @@ vector<bool, _Allocator>::shrink_to_fit()
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             vector(*this, allocator_type(__alloc())).swap(*this);
 #ifndef _LIBCPP_NO_EXCEPTIONS
         }
         catch (...)
         {
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
 }
 
@@ -2534,7 +2534,7 @@ vector<bool, _Allocator>::insert(const_iterator __position, _InputIterator __fir
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             __v.assign(__first, __last);
             difference_type __old_size = static_cast<difference_type>(__old_end - begin());
             difference_type __old_p = __p - begin();
@@ -2548,7 +2548,7 @@ vector<bool, _Allocator>::insert(const_iterator __position, _InputIterator __fir
             erase(__old_end, end());
             throw;
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
     __p = _STD::rotate(__p, __old_end, end());
     insert(__p, __v.begin(), __v.end());
@@ -2620,10 +2620,10 @@ vector<bool, _Allocator>::swap(vector& __x)
 #ifdef _LIBCPP_DEBUG
     iterator::swap(this, &__x);
     const_iterator::swap(this, &__x);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
-template <class _Allocator> 
+template <class _Allocator>
 void
 vector<bool, _Allocator>::resize(size_type __sz, value_type __x)
 {
@@ -2652,7 +2652,7 @@ vector<bool, _Allocator>::resize(size_type __sz, value_type __x)
         __size_ = __sz;
 }
 
-template <class _Allocator> 
+template <class _Allocator>
 void
 vector<bool, _Allocator>::flip()
 {
@@ -2671,7 +2671,7 @@ vector<bool, _Allocator>::flip()
     }
 }
 
-template <class _Allocator> 
+template <class _Allocator>
 bool
 vector<bool, _Allocator>::__invariants() const
 {
@@ -2690,7 +2690,7 @@ vector<bool, _Allocator>::__invariants() const
     return true;
 }
 
-template <class _Allocator> 
+template <class _Allocator>
 size_t
 vector<bool, _Allocator>::__hash_code() const
 {

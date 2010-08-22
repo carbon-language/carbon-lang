@@ -392,7 +392,7 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
              >
         __tuple_impl(allocator_arg_t, const _Alloc& __a, _Tuple&& __t)
             : __tuple_leaf<_Indx, _Tp>(__uses_alloc_ctor<_Tp, _Alloc, typename tuple_element<_Indx,
-                                       typename __make_tuple_types<_Tuple>::type>::type>(), __a, 
+                                       typename __make_tuple_types<_Tuple>::type>::type>(), __a,
                                        _STD::forward<typename tuple_element<_Indx,
                                        typename __make_tuple_types<_Tuple>::type>::type>(_STD::get<_Indx>(__t)))...
             {}
@@ -798,7 +798,7 @@ pair<_T1, _T2>::pair(piecewise_construct_t,
 {
 }
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 _LIBCPP_END_NAMESPACE_STD
 

@@ -111,7 +111,7 @@ public:
     explicit stack(container_type&& __c) : c(_STD::move(__c)) {}
     stack(stack&& __s) : c(_STD::move(__s.c)) {}
     stack& operator=(stack&& __s) {c = _STD::move(__s.c); return *this;}
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _Alloc>
         explicit stack(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -138,7 +138,7 @@ public:
               typename enable_if<uses_allocator<container_type,
                                                 _Alloc>::value>::type* = 0)
             : c(_STD::move(__s.c), __a) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     bool empty()     const      {return c.empty();}
     size_type size() const      {return c.size();}
@@ -150,7 +150,7 @@ public:
     void push(value_type&& __v) {c.push_back(_STD::move(__v));}
     template <class... _Args> void emplace(_Args&&... __args)
         {c.emplace_back(_STD::forward<_Args>(__args)...);}
-#endif
+#endif  // _LIBCPP_MOVE
     void pop() {c.pop_back();}
 
     void swap(stack& __s)
@@ -163,7 +163,7 @@ public:
     friend
     bool
     operator==(const stack<T1, _C1>& __x, const stack<T1, _C1>& __y);
-    
+
     template <class T1, class _C1>
     friend
     bool

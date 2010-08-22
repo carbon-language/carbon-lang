@@ -240,7 +240,6 @@ template <class _Tp> struct is_error_condition_enum
 // Some error codes are not present on all platforms, so we provide equivalents
 // for them:
 
-
 //enum class errc
 struct errc
 {

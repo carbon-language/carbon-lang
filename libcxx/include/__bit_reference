@@ -50,7 +50,7 @@ public:
             *__seg_ &= ~__mask_;
         return *this;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY
     __bit_reference& operator=(const __bit_reference& __x) {return operator=(static_cast<bool>(__x));}
 
@@ -1074,14 +1074,14 @@ public:
         }
         return *this;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator operator++(int)
     {
         __bit_iterator __tmp = *this;
         ++(*this);
         return __tmp;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator& operator--()
     {
         if (__ctz_ != 0)
@@ -1093,14 +1093,14 @@ public:
         }
         return *this;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator operator--(int)
     {
         __bit_iterator __tmp = *this;
         --(*this);
         return __tmp;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator& operator+=(difference_type __n)
     {
         if (__n >= 0)
@@ -1112,19 +1112,19 @@ public:
         __ctz_ = static_cast<unsigned>((__n + __ctz_)  % __bits_per_word);
         return *this;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator& operator-=(difference_type __n)
     {
         return *this += -__n;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator operator+(difference_type __n) const
     {
         __bit_iterator __t(*this);
         __t += __n;
         return __t;
     }
-    
+
     _LIBCPP_INLINE_VISIBILITY __bit_iterator operator-(difference_type __n) const
     {
         __bit_iterator __t(*this);

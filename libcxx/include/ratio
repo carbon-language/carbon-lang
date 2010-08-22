@@ -335,11 +335,11 @@ public:
 
 template <class _R1, class _R2>
 struct ratio_equal
-    : public integral_constant<bool, _R1::num == _R2::num && _R1::den == _R2::den> {}; 
+    : public integral_constant<bool, _R1::num == _R2::num && _R1::den == _R2::den> {};
 
 template <class _R1, class _R2>
 struct ratio_not_equal
-    : public integral_constant<bool, !ratio_equal<_R1, _R2>::value> {}; 
+    : public integral_constant<bool, !ratio_equal<_R1, _R2>::value> {};
 
 // ratio_less
 

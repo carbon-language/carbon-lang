@@ -185,7 +185,7 @@ public:
 #ifdef _LIBCPP_MOVE
     explicit queue(container_type&& __c) : c(_STD::move(__c)) {}
     queue(queue&& __q) : c(_STD::move(__q.c)) {}
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _Alloc>
         explicit queue(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -218,7 +218,7 @@ public:
         c = _STD::move(__q.c);
         return *this;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 
     bool      empty() const {return c.empty();}
     size_type size() const  {return c.size();}
@@ -234,7 +234,7 @@ public:
     template <class... _Args>
         void emplace(_Args&&... __args)
             {c.emplace_back(_STD::forward<_Args>(__args)...);}
-#endif
+#endif  // _LIBCPP_MOVE
     void pop() {c.pop_front();}
 
     void swap(queue& __q)
@@ -247,7 +247,7 @@ public:
     friend
     bool
     operator==(const queue<_T1, _C1>& __x,const queue<_T1, _C1>& __y);
-    
+
     template <class _T1, class _C1>
     friend
     bool
@@ -351,7 +351,7 @@ public:
                        const value_compare& __comp, container_type&& __c);
     priority_queue(priority_queue&& __q);
     priority_queue& operator=(priority_queue&& __q);
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _Alloc>
         explicit priority_queue(const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
@@ -379,7 +379,7 @@ public:
         priority_queue(priority_queue&& __q, const _Alloc& __a,
                        typename enable_if<uses_allocator<container_type,
                                                          _Alloc>::value>::type* = 0);
-#endif
+#endif  // _LIBCPP_MOVE
 
     bool            empty() const {return c.empty();}
     size_type       size() const  {return c.size();}
@@ -389,7 +389,7 @@ public:
 #ifdef _LIBCPP_MOVE
     void push(value_type&& __v);
     template <class... _Args> void emplace(_Args&&... __args);
-#endif
+#endif  // _LIBCPP_MOVE
     void pop();
 
     void swap(priority_queue& __q);
@@ -417,7 +417,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Container, class _Compare>
 template <class _InputIter>
@@ -475,7 +475,7 @@ priority_queue<_Tp, _Container, _Compare>::operator=(priority_queue&& __q)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
@@ -542,7 +542,6 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(const value_compare& _
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-
 template <class _Tp, class _Container, class _Compare>
 template <class _Alloc>
 inline
@@ -556,7 +555,7 @@ priority_queue<_Tp, _Container, _Compare>::priority_queue(priority_queue&& __q,
     _STD::make_heap(c.begin(), c.end(), comp);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Container, class _Compare>
 inline
@@ -588,7 +587,7 @@ priority_queue<_Tp, _Container, _Compare>::emplace(_Args&&... __args)
     _STD::push_heap(c.begin(), c.end(), comp);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Container, class _Compare>
 inline

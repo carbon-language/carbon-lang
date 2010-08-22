@@ -22,11 +22,11 @@
 
 #include <ccomplex>
 
-#else
+#else  // __cplusplus
 
 #include_next <complex.h>
 
-#endif
+#endif  // __cplusplus
 
 #pragma GCC system_header
 

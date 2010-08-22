@@ -254,7 +254,7 @@ public:
         {return static_cast<const _Pred&>(*this)(__x, __y.first);}
     bool operator()(const _Tp& __x, const typename _Tp::first_type& __y) const
         {return static_cast<const _Pred&>(*this)(__x.first, __y);}
-    bool operator()(const typename _Tp::first_type& __x, 
+    bool operator()(const typename _Tp::first_type& __x,
                     const typename _Tp::first_type& __y) const
         {return static_cast<const _Pred&>(*this)(__x, __y);}
 };
@@ -312,7 +312,7 @@ public:
         {
             __x.__value_constructed = false;
         }
-#else
+#else  // _LIBCPP_MOVE
     __hash_map_node_destructor(const __hash_node_destructor<allocator_type>& __x)
         : __na_(__x.__na_),
           __first_constructed(__x.__value_constructed),
@@ -320,7 +320,7 @@ public:
         {
             const_cast<bool&>(__x.__value_constructed) = false;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
     void operator()(pointer __p)
     {

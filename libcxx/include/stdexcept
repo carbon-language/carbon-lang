@@ -155,7 +155,6 @@ public:
     virtual ~underflow_error() throw();
 };
 
-
 }  // std
 
 #endif  // _LIBCPP_STDEXCEPT

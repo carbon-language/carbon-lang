@@ -325,7 +325,7 @@ public:
         {return static_cast<const _Pred&>(*this)(__x, __y.first);}
     bool operator()(const _Tp& __x, const typename _Tp::first_type& __y) const
         {return static_cast<const _Pred&>(*this)(__x.first, __y);}
-    bool operator()(const typename _Tp::first_type& __x, 
+    bool operator()(const typename _Tp::first_type& __x,
                     const typename _Tp::first_type& __y) const
         {return static_cast<const _Pred&>(*this)(__x, __y);}
 };
@@ -383,7 +383,7 @@ public:
         {
             __x.__value_constructed = false;
         }
-#else
+#else  // _LIBCPP_MOVE
     __hash_map_node_destructor(const __hash_node_destructor<allocator_type>& __x)
         : __na_(__x.__na_),
           __first_constructed(__x.__value_constructed),
@@ -391,7 +391,7 @@ public:
         {
             const_cast<bool&>(__x.__value_constructed) = false;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
     void operator()(pointer __p)
     {
@@ -576,7 +576,7 @@ public:
 #ifdef _LIBCPP_MOVE
     unordered_map(unordered_map&& __u);
     unordered_map(unordered_map&& __u, const allocator_type& __a);
-#endif
+#endif  // _LIBCPP_MOVE
     unordered_map(initializer_list<value_type> __il);
     unordered_map(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf = hasher(), const key_equal& __eql = key_equal());
@@ -630,7 +630,7 @@ public:
         iterator emplace_hint(const_iterator, _A0&& __a0, _Args&&... __args)
             {return emplace(_STD::forward<_A0>(__a0),
                             _STD::forward<_Args>(__args)...).first;}
-#endif
+#endif  // _LIBCPP_MOVE
     pair<iterator, bool> insert(const value_type& __x)
         {return __table_.__insert_unique(__x);}
 #ifdef _LIBCPP_MOVE
@@ -638,7 +638,7 @@ public:
               class = typename enable_if<is_convertible<_P, value_type>::value>::type>
         pair<iterator, bool> insert(_P&& __x)
             {return __table_.__insert_unique(_STD::forward<_P>(__x));}
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const_iterator, const value_type& __x)
         {return insert(__x).first;}
 #ifdef _LIBCPP_MOVE
@@ -646,7 +646,7 @@ public:
               class = typename enable_if<is_convertible<_P, value_type>::value>::type>
         iterator insert(const_iterator, _P&& __x)
             {return insert(_STD::forward<_P>(__x)).first;}
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
     void insert(initializer_list<value_type> __il)
@@ -709,7 +709,7 @@ private:
     template <class _A0,
               class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0);
-#else
+#else  // _LIBCPP_MOVE
     __node_holder __construct_node(const key_type& __k);
 #endif
 };
@@ -812,7 +812,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
@@ -852,7 +852,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(unordered_map&& __u)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 inline
@@ -916,7 +916,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace(_A0&& __a0, _Args&&... _
     return __r;
 }
 
-#else
+#else  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
@@ -931,7 +931,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(const key_type&
     return _STD::move(__h);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _InputIterator>
@@ -972,7 +972,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator[](key_type&& __k)
     return __r.first->second;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 _Tp&
@@ -982,7 +982,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::at(const key_type& __k)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__i == end())
         throw out_of_range("unordered_map::at: key not found");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __i->second;
 }
 
@@ -994,7 +994,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::at(const key_type& __k) const
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__i == end())
         throw out_of_range("unordered_map::at: key not found");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __i->second;
 }
 
@@ -1107,7 +1107,7 @@ public:
 #ifdef _LIBCPP_MOVE
     unordered_multimap(unordered_multimap&& __u);
     unordered_multimap(unordered_multimap&& __u, const allocator_type& __a);
-#endif
+#endif  // _LIBCPP_MOVE
     unordered_multimap(initializer_list<value_type> __il);
     unordered_multimap(initializer_list<value_type> __il, size_type __n,
                        const hasher& __hf = hasher(),
@@ -1160,14 +1160,14 @@ public:
     template <class _A0, class... _Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         iterator emplace_hint(const_iterator __p, _A0&& __a0, _Args&&... __args);
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const value_type& __x) {return __table_.__insert_multi(__x);}
 #ifdef _LIBCPP_MOVE
     template <class _P,
               class = typename enable_if<is_convertible<_P, value_type>::value>::type>
         iterator insert(_P&& __x)
             {return __table_.__insert_multi(_STD::forward<_P>(__x));}
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const_iterator __p, const value_type& __x)
         {return __table_.__insert_multi(__p.__i_, __x);}
 #ifdef _LIBCPP_MOVE
@@ -1175,7 +1175,7 @@ public:
               class = typename enable_if<is_convertible<_P, value_type>::value>::type>
         iterator insert(const_iterator __p, _P&& __x)
             {return __table_.__insert_multi(__p.__i_, _STD::forward<_P>(__x));}
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
     void insert(initializer_list<value_type> __il)
@@ -1230,7 +1230,7 @@ private:
     template <class _A0,
               class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0);
-#endif
+#endif  // _LIBCPP_MOVE
 };
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
@@ -1279,7 +1279,6 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_multimap(
     __table_.rehash(__n);
     insert(__first, __last);
 }
-
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 inline
@@ -1334,7 +1333,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_multimap(
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_multimap(
@@ -1374,7 +1373,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(unordered_multima
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 inline
@@ -1452,7 +1451,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace_hint(
     return __r;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _InputIterator>

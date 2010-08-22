@@ -141,17 +141,17 @@ bool signbit(floating_point x);
 
 int fpclassify(floating_point x);
 
-bool isfinite(floating_point x); 
-bool isinf(floating_point x); 
-bool isnan(floating_point x); 
-bool isnormal(floating_point x); 
+bool isfinite(floating_point x);
+bool isinf(floating_point x);
+bool isnan(floating_point x);
+bool isnormal(floating_point x);
 
-bool isgreater(floating_point x, floating_point y); 
-bool isgreaterequal(floating_point x, floating_point y); 
-bool isless(floating_point x, floating_point y); 
-bool islessequal(floating_point x, floating_point y); 
-bool islessgreater(floating_point x, floating_point y); 
-bool isunordered(floating_point x, floating_point y); 
+bool isgreater(floating_point x, floating_point y);
+bool isgreaterequal(floating_point x, floating_point y);
+bool isless(floating_point x, floating_point y);
+bool islessequal(floating_point x, floating_point y);
+bool islessgreater(floating_point x, floating_point y);
+bool isunordered(floating_point x, floating_point y);
 
 floating_point acosh (arithmetic x);
 float          acoshf(float x);
@@ -297,11 +297,11 @@ long double    truncl(long double x);
 
 */
 
-// FIXME: work around for Clang with -std=C++0x on OSX/iOS 
+// FIXME: work around for Clang with -std=C++0x on OSX/iOS
 #if defined(__clang__) && defined(__APPLE__)
 # pragma push_macro("__STRICT_ANSI__")
 # undef __STRICT_ANSI__
-#endif
+#endif  // defined(__clang__) && defined(__APPLE__)
 
 #include <__config>
 #include <math.h>

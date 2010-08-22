@@ -181,10 +181,10 @@ class thread
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     thread(const thread&) = delete;
     thread& operator=(const thread&) = delete;
-#else
+#else  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     thread(const thread&);
     thread& operator=(const thread&);
-#endif
+#endif  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 public:
     typedef __thread_id id;
     typedef pthread_t native_handle_type;
@@ -198,7 +198,7 @@ public:
               >::type
              >
         explicit thread(_F&& __f, _Args&&... __args);
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
     template <class _F> explicit thread(_F __f);
 #endif
     ~thread();
@@ -206,7 +206,7 @@ public:
 #ifdef _LIBCPP_MOVE
     thread(thread&& __t) : __t_(__t.__t_) {__t.__t_ = 0;}
     thread& operator=(thread&& __t);
-#endif
+#endif  // _LIBCPP_MOVE
 
     void swap(thread& __t) {_STD::swap(__t_, __t.__t_);}
 
@@ -245,7 +245,7 @@ thread::thread(_F&& __f, _Args&&... __args)
         __throw_system_error(__ec, "thread constructor failed");
 }
 
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _F>
 thread::thread(_F __f)
@@ -258,7 +258,7 @@ thread::thread(_F __f)
         __throw_system_error(__ec, "thread constructor failed");
 }
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 #ifdef _LIBCPP_MOVE
 
@@ -273,11 +273,10 @@ thread::operator=(thread&& __t)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 inline
 void swap(thread& __x, thread& __y) {__x.swap(__y);}
-
 
 namespace this_thread
 {

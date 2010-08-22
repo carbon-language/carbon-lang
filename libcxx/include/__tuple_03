@@ -22,4 +22,4 @@ template <size_t _Ip, class _Tp> class tuple_element;
 
 _LIBCPP_END_NAMESPACE_STD
 
-#endif
+#endif  // _LIBCPP___TUPLE_03

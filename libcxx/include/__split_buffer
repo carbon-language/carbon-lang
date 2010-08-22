@@ -26,7 +26,7 @@ private:
     __split_buffer(const __split_buffer&);
     __split_buffer& operator=(const __split_buffer&);
 public:
-    typedef _Tp                                             value_type; 
+    typedef _Tp                                             value_type;
     typedef _Allocator                                      allocator_type;
     typedef typename remove_reference<allocator_type>::type __alloc_rr;
     typedef allocator_traits<__alloc_rr>                    __alloc_traits;
@@ -62,7 +62,7 @@ public:
     __split_buffer(__split_buffer&& __c);
     __split_buffer(__split_buffer&& __c, const __alloc_rr& __a);
     __split_buffer& operator=(__split_buffer&& __c);
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY       iterator begin()       {return __begin_;}
     _LIBCPP_INLINE_VISIBILITY const_iterator begin() const {return __begin_;}
@@ -90,7 +90,7 @@ public:
     void push_back(value_type&& __x);
     template <class... _Args>
         void emplace_back(_Args&&... __args);
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY void pop_front() {__destruct_at_begin(__begin_+1);}
     _LIBCPP_INLINE_VISIBILITY void pop_back() {__destruct_at_end(__end_-1);}
@@ -425,7 +425,7 @@ __split_buffer<_Tp, _Allocator>::operator=(__split_buffer&& __c)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Allocator>
 void
@@ -463,7 +463,7 @@ __split_buffer<_Tp, _Allocator>::shrink_to_fit()
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             __split_buffer<value_type, __alloc_rr&> __t(size(), 0, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
@@ -477,7 +477,7 @@ __split_buffer<_Tp, _Allocator>::shrink_to_fit()
         catch (...)
         {
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
 }
 
@@ -542,7 +542,7 @@ __split_buffer<_Tp, _Allocator>::push_front(value_type&& __x)
     --__begin_;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -637,7 +637,7 @@ __split_buffer<_Tp, _Allocator>::emplace_back(_Args&&... __args)
     ++__end_;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 _LIBCPP_END_NAMESPACE_STD
 

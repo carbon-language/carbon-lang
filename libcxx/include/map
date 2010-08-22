@@ -375,8 +375,6 @@ public:
     bool operator()(const _Key& __x, const _Key& __y) const
         {return static_cast<const _Compare&>(*this)(__x, __y);}
 
-
-
 //     bool operator()(const _Tp& __x, const _Tp& __y) const
 //         {return static_cast<const _Compare&>(*this)(__x.first, __y.first);}
 //     bool operator()(const typename _Tp::first_type& __x, const _Tp& __y) const
@@ -419,8 +417,6 @@ public:
         {return comp(__x, __y.first);}
     bool operator()(const _Key& __x, const _Key& __y) const
         {return comp(__x, __y);}
-
-
 
 //     bool operator()(const _Tp& __x, const _Tp& __y) const
 //         {return comp(__x.first, __y.first);}
@@ -467,7 +463,7 @@ public:
         {
             __x.__value_constructed = false;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
     void operator()(pointer __p)
     {
@@ -709,7 +705,7 @@ public:
             return *this;
         }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
     explicit map(const allocator_type& __a)
         : __tree_(__a)
@@ -794,7 +790,7 @@ public:
         iterator insert(const_iterator __pos, _P&& __p)
             {return __tree_.__insert_unique(__pos.__i_, _STD::forward<_P>(__p));}
 
-#endif
+#endif  // _LIBCPP_MOVE
 
     pair<iterator, bool>
         insert(const value_type& __v) {return __tree_.__insert_unique(__v);}
@@ -857,7 +853,7 @@ private:
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0, _Args&& ...__args);
-#else
+#else  // _LIBCPP_MOVE
     __node_holder __construct_node(const key_type& __k);
 #endif
 
@@ -1077,7 +1073,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0, _Args&& ...__
     return __h;
 }
 
-#else
+#else  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
@@ -1092,7 +1088,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(const key_type& __k)
     return _STD::move(__h);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 _Tp&
@@ -1128,7 +1124,7 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](key_type&& __k)
     return __r->__value_.second;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 _Tp&
@@ -1139,7 +1135,7 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__child == nullptr)
         throw out_of_range("map::at:  key not found");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return static_cast<__node_pointer>(__child)->__value_.second;
 }
 
@@ -1152,7 +1148,7 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k) const
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__child == nullptr)
         throw out_of_range("map::at:  key not found");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return static_cast<__node_const_pointer>(__child)->__value_.second;
 }
 
@@ -1189,7 +1185,7 @@ map<_Key, _Tp, _Compare, _Allocator>::emplace_hint(const_iterator __p,
     return __r;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 inline
@@ -1368,7 +1364,7 @@ public:
             __tree_.__assign_multi(__il.begin(), __il.end());
             return *this;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
     explicit multimap(const allocator_type& __a)
         : __tree_(__a)
@@ -1443,7 +1439,7 @@ public:
         iterator insert(const_iterator __pos, _P&& __p)
             {return __tree_.__insert_multi(__pos.__i_, _STD::forward<_P>(__p));}
 
-#endif
+#endif  // _LIBCPP_MOVE
 
     iterator insert(const value_type& __v) {return __tree_.__insert_multi(__v);}
 
@@ -1501,7 +1497,7 @@ private:
     template <class _A0, class ..._Args,
               class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
         __node_holder __construct_node(_A0&& __a0, _Args&& ...__args);
-#endif
+#endif  // _LIBCPP_MOVE
 };
 
 #ifdef _LIBCPP_MOVE
@@ -1563,7 +1559,7 @@ multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0, _Args&& 
     return __h;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 #ifdef _LIBCPP_MOVE
 
@@ -1597,7 +1593,7 @@ multimap<_Key, _Tp, _Compare, _Allocator>::emplace_hint(const_iterator __p,
     return __r;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 inline

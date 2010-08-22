@@ -158,7 +158,7 @@ typedef fpos<mbstate_t>    wstreampos;
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef fpos<mbstate_t>    u16streampos;
 typedef fpos<mbstate_t>    u32streampos;
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
 typedef long long streamoff;        // for char_traits in <string>
 

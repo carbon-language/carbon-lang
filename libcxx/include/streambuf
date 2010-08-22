@@ -557,7 +557,6 @@ extern template class basic_streambuf<wchar_t>;
 extern template class basic_ios<char>;
 extern template class basic_ios<wchar_t>;
 
-
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_STEAMBUF

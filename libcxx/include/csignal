@@ -25,7 +25,7 @@ Macros:
     SIGINT
     SIGSEGV
     SIGTERM
- 
+
 namespace std
 {
 

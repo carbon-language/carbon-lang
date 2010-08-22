@@ -17,7 +17,7 @@
 Macros:
 
     WEOF
- 
+
 namespace std
 {
 
@@ -66,7 +66,7 @@ using ::wctype_t;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswalnum(wint_t __wc) {return iswalnum(__wc);}
 #undef iswalnum
 inline _LIBCPP_INLINE_VISIBILITY int iswalnum(wint_t __wc) {return __libcpp_iswalnum(__wc);}
-#else
+#else  // iswalnum
 using ::iswalnum;
 #endif
 
@@ -74,7 +74,7 @@ using ::iswalnum;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswalpha(wint_t __wc) {return iswalpha(__wc);}
 #undef iswalpha
 inline _LIBCPP_INLINE_VISIBILITY int iswalpha(wint_t __wc) {return __libcpp_iswalpha(__wc);}
-#else
+#else  // iswalpha
 using ::iswalpha;
 #endif
 
@@ -82,7 +82,7 @@ using ::iswalpha;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswblank(wint_t __wc) {return iswblank(__wc);}
 #undef iswblank
 inline _LIBCPP_INLINE_VISIBILITY int iswblank(wint_t __wc) {return __libcpp_iswblank(__wc);}
-#else
+#else  // iswblank
 using ::iswblank;
 #endif
 
@@ -90,7 +90,7 @@ using ::iswblank;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswcntrl(wint_t __wc) {return iswcntrl(__wc);}
 #undef iswcntrl
 inline _LIBCPP_INLINE_VISIBILITY int iswcntrl(wint_t __wc) {return __libcpp_iswcntrl(__wc);}
-#else
+#else  // iswcntrl
 using ::iswcntrl;
 #endif
 
@@ -98,7 +98,7 @@ using ::iswcntrl;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswdigit(wint_t __wc) {return iswdigit(__wc);}
 #undef iswdigit
 inline _LIBCPP_INLINE_VISIBILITY int iswdigit(wint_t __wc) {return __libcpp_iswdigit(__wc);}
-#else
+#else  // iswdigit
 using ::iswdigit;
 #endif
 
@@ -106,7 +106,7 @@ using ::iswdigit;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswgraph(wint_t __wc) {return iswgraph(__wc);}
 #undef iswgraph
 inline _LIBCPP_INLINE_VISIBILITY int iswgraph(wint_t __wc) {return __libcpp_iswgraph(__wc);}
-#else
+#else  // iswgraph
 using ::iswgraph;
 #endif
 
@@ -114,7 +114,7 @@ using ::iswgraph;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswlower(wint_t __wc) {return iswlower(__wc);}
 #undef iswlower
 inline _LIBCPP_INLINE_VISIBILITY int iswlower(wint_t __wc) {return __libcpp_iswlower(__wc);}
-#else
+#else  // iswlower
 using ::iswlower;
 #endif
 
@@ -122,7 +122,7 @@ using ::iswlower;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswprint(wint_t __wc) {return iswprint(__wc);}
 #undef iswprint
 inline _LIBCPP_INLINE_VISIBILITY int iswprint(wint_t __wc) {return __libcpp_iswprint(__wc);}
-#else
+#else  // iswprint
 using ::iswprint;
 #endif
 
@@ -130,7 +130,7 @@ using ::iswprint;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswpunct(wint_t __wc) {return iswpunct(__wc);}
 #undef iswpunct
 inline _LIBCPP_INLINE_VISIBILITY int iswpunct(wint_t __wc) {return __libcpp_iswpunct(__wc);}
-#else
+#else  // iswpunct
 using ::iswpunct;
 #endif
 
@@ -138,7 +138,7 @@ using ::iswpunct;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswspace(wint_t __wc) {return iswspace(__wc);}
 #undef iswspace
 inline _LIBCPP_INLINE_VISIBILITY int iswspace(wint_t __wc) {return __libcpp_iswspace(__wc);}
-#else
+#else  // iswspace
 using ::iswspace;
 #endif
 
@@ -146,7 +146,7 @@ using ::iswspace;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswupper(wint_t __wc) {return iswupper(__wc);}
 #undef iswupper
 inline _LIBCPP_INLINE_VISIBILITY int iswupper(wint_t __wc) {return __libcpp_iswupper(__wc);}
-#else
+#else  // iswupper
 using ::iswupper;
 #endif
 
@@ -154,7 +154,7 @@ using ::iswupper;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswxdigit(wint_t __wc) {return iswxdigit(__wc);}
 #undef iswxdigit
 inline _LIBCPP_INLINE_VISIBILITY int iswxdigit(wint_t __wc) {return __libcpp_iswxdigit(__wc);}
-#else
+#else  // iswxdigit
 using ::iswxdigit;
 #endif
 
@@ -162,7 +162,7 @@ using ::iswxdigit;
 inline _LIBCPP_INLINE_VISIBILITY int __libcpp_iswctype(wint_t __w, wctype_t __d) {return iswctype(__w, __d);}
 #undef iswctype
 inline _LIBCPP_INLINE_VISIBILITY int iswctype(wint_t __w, wctype_t __d) {return __libcpp_iswctype(__w, __d);}
-#else
+#else  // iswctype
 using ::iswctype;
 #endif
 
@@ -170,7 +170,7 @@ using ::iswctype;
 inline _LIBCPP_INLINE_VISIBILITY wctype_t __libcpp_wctype(const char* __p) {return wctype(__p);}
 #undef wctype
 inline _LIBCPP_INLINE_VISIBILITY wctype_t wctype(const char* __p) {return __libcpp_wctype(__p);}
-#else
+#else  // wctype
 using ::wctype;
 #endif
 
@@ -178,7 +178,7 @@ using ::wctype;
 inline _LIBCPP_INLINE_VISIBILITY wint_t __libcpp_towlower(wint_t __wc) {return towlower(__wc);}
 #undef towlower
 inline _LIBCPP_INLINE_VISIBILITY wint_t towlower(wint_t __wc) {return __libcpp_towlower(__wc);}
-#else
+#else  // towlower
 using ::towlower;
 #endif
 
@@ -186,7 +186,7 @@ using ::towlower;
 inline _LIBCPP_INLINE_VISIBILITY wint_t __libcpp_towupper(wint_t __wc) {return towupper(__wc);}
 #undef towupper
 inline _LIBCPP_INLINE_VISIBILITY wint_t towupper(wint_t __wc) {return __libcpp_towupper(__wc);}
-#else
+#else  // towupper
 using ::towupper;
 #endif
 
@@ -194,7 +194,7 @@ using ::towupper;
 inline _LIBCPP_INLINE_VISIBILITY wint_t __libcpp_towctrans(wint_t __wc, wctype_t __d) {return towctrans(__wc, __d);}
 #undef towctrans
 inline _LIBCPP_INLINE_VISIBILITY wint_t towctrans(wint_t __wc, wctype_t __d) {return __libcpp_towctrans(__wc, __d);}
-#else
+#else  // towctrans
 using ::towctrans;
 #endif
 
@@ -202,7 +202,7 @@ using ::towctrans;
 inline _LIBCPP_INLINE_VISIBILITY wctrans_t __libcpp_wctrans(const char* __p) {return wctrans(__p);}
 #undef wctrans
 inline _LIBCPP_INLINE_VISIBILITY wctrans_t wctrans(const char* __p) {return __libcpp_wctrans(__p);}
-#else
+#else  // wctrans
 using ::wctrans;
 #endif
 

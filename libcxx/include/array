@@ -16,84 +16,84 @@
 
 namespace std
 {
-template <class T, size_t N > 
+template <class T, size_t N >
 struct array
-{ 
-    // types: 
-    typedef T & reference; 
-    typedef const T & const_reference; 
-    typedef implementation defined iterator; 
-    typedef implementation defined const_iterator; 
-    typedef size_t size_type; 
-    typedef ptrdiff_t difference_type; 
-    typedef T value_type; 
+{
+    // types:
+    typedef T & reference;
+    typedef const T & const_reference;
+    typedef implementation defined iterator;
+    typedef implementation defined const_iterator;
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+    typedef T value_type;
     typedef T* pointer;
     typedef const T* const_pointer;
-    typedef std::reverse_iterator<iterator> reverse_iterator; 
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator; 
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    // No explicit construct/copy/destroy for aggregate type 
-    void fill(const T& u); 
+    // No explicit construct/copy/destroy for aggregate type
+    void fill(const T& u);
     void swap(array& a);
 
-    // iterators: 
-    iterator begin(); 
-    const_iterator begin() const; 
-    iterator end(); 
-    const_iterator end() const; 
+    // iterators:
+    iterator begin();
+    const_iterator begin() const;
+    iterator end();
+    const_iterator end() const;
 
-    reverse_iterator rbegin(); 
-    const_reverse_iterator rbegin() const; 
-    reverse_iterator rend(); 
-    const_reverse_iterator rend() const; 
+    reverse_iterator rbegin();
+    const_reverse_iterator rbegin() const;
+    reverse_iterator rend();
+    const_reverse_iterator rend() const;
 
-    const_iterator cbegin() const; 
-    const_iterator cend() const; 
+    const_iterator cbegin() const;
+    const_iterator cend() const;
     const_reverse_iterator crbegin() const;
-    const_reverse_iterator crend() const; 
+    const_reverse_iterator crend() const;
 
-    // capacity: 
-    constexpr size_type size() const; 
-    constexpr size_type max_size() const; 
-    bool empty() const; 
+    // capacity:
+    constexpr size_type size() const;
+    constexpr size_type max_size() const;
+    bool empty() const;
 
-    // element access: 
-    reference operator[](size_type n); 
-    const_reference operator[](size_type n) const; 
-    const_reference at(size_type n) const; 
-    reference at(size_type n); 
+    // element access:
+    reference operator[](size_type n);
+    const_reference operator[](size_type n) const;
+    const_reference at(size_type n) const;
+    reference at(size_type n);
 
-    reference front(); 
-    const_reference front() const; 
-    reference back(); 
-    const_reference back() const; 
+    reference front();
+    const_reference front() const;
+    reference back();
+    const_reference back() const;
 
-    T* data(); 
-    const T* data() const; 
+    T* data();
+    const T* data() const;
 };
 
-template <class T, size_t N> 
-  bool operator==(const array<T,N>& x, const array<T,N>& y); 
-template <class T, size_t N> 
-  bool operator!=(const array<T,N>& x, const array<T,N>& y); 
-template <class T, size_t N> 
-  bool operator<(const array<T,N>& x, const array<T,N>& y); 
-template <class T, size_t N> 
-  bool operator>(const array<T,N>& x, const array<T,N>& y); 
-template <class T, size_t N> 
-  bool operator<=(const array<T,N>& x, const array<T,N>& y); 
-template <class T, size_t N> 
-  bool operator>=(const array<T,N>& x, const array<T,N>& y); 
+template <class T, size_t N>
+  bool operator==(const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N>
+  bool operator!=(const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N>
+  bool operator<(const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N>
+  bool operator>(const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N>
+  bool operator<=(const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N>
+  bool operator>=(const array<T,N>& x, const array<T,N>& y);
 
-template <class T, size_t N > 
-  void swap(array<T,N>& x, array<T,N>& y); 
+template <class T, size_t N >
+  void swap(array<T,N>& x, array<T,N>& y);
 
-template <class T> class tuple_size; 
-template <int I, class T> class tuple_element; 
+template <class T> class tuple_size;
+template <int I, class T> class tuple_element;
 template <class T, size_t N> struct tuple_size<array<T, N>>;
-template <int I, class T, size_t N> struct tuple_element<I, array<T, N>>; 
-template <int I, class T, size_t N> T& get(array<T, N>&); 
-template <int I, class T, size_t N> const T& get(const array<T, N>&); 
+template <int I, class T, size_t N> struct tuple_element<I, array<T, N>>;
+template <int I, class T, size_t N> T& get(array<T, N>&);
+template <int I, class T, size_t N> const T& get(const array<T, N>&);
 
 }  // std
 
@@ -114,30 +114,30 @@ template <int I, class T, size_t N> const T& get(const array<T, N>&);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 struct array
 {
     // types:
     typedef array __self;
-    typedef _Tp                                   value_type; 
-    typedef value_type&                           reference; 
-    typedef const value_type&                     const_reference; 
+    typedef _Tp                                   value_type;
+    typedef value_type&                           reference;
+    typedef const value_type&                     const_reference;
     typedef value_type*                           iterator;
     typedef const value_type*                     const_iterator;
     typedef value_type*                           pointer;
     typedef const value_type*                     const_pointer;
-    typedef size_t                                size_type; 
-    typedef ptrdiff_t                             difference_type; 
-    typedef std::reverse_iterator<iterator>       reverse_iterator; 
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator; 
+    typedef size_t                                size_type;
+    typedef ptrdiff_t                             difference_type;
+    typedef std::reverse_iterator<iterator>       reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     value_type __elems_[_Size > 0 ? _Size : 1];
 
-    // No explicit construct/copy/destroy for aggregate type 
+    // No explicit construct/copy/destroy for aggregate type
     _LIBCPP_INLINE_VISIBILITY void fill(const value_type& __u) {_STD::fill_n(__elems_, _Size, __u);}
     _LIBCPP_INLINE_VISIBILITY void swap(array& __a) {_STD::swap_ranges(__elems_, __elems_ + _Size, __a.__elems_);}
 
-    // iterators: 
+    // iterators:
     _LIBCPP_INLINE_VISIBILITY iterator begin()             {return iterator(__elems_);}
     _LIBCPP_INLINE_VISIBILITY const_iterator begin() const {return const_iterator(__elems_);}
     _LIBCPP_INLINE_VISIBILITY iterator end()               {return iterator(__elems_ + _Size);}
@@ -153,16 +153,16 @@ struct array
     _LIBCPP_INLINE_VISIBILITY const_reverse_iterator crbegin() const {return rbegin();}
     _LIBCPP_INLINE_VISIBILITY const_reverse_iterator crend() const   {return rend();}
 
-    // capacity: 
+    // capacity:
     _LIBCPP_INLINE_VISIBILITY /*constexpr*/ size_type size() const      {return _Size;}
     _LIBCPP_INLINE_VISIBILITY /*constexpr*/ size_type max_size() const  {return _Size;}
     _LIBCPP_INLINE_VISIBILITY bool empty() const                    {return _Size == 0;}
 
-    // element access: 
+    // element access:
     _LIBCPP_INLINE_VISIBILITY reference operator[](size_type __n)             {return __elems_[__n];}
     _LIBCPP_INLINE_VISIBILITY const_reference operator[](size_type __n) const {return __elems_[__n];}
-    reference at(size_type __n); 
-    const_reference at(size_type __n) const; 
+    reference at(size_type __n);
+    const_reference at(size_type __n) const;
 
     _LIBCPP_INLINE_VISIBILITY reference front()             {return __elems_[0];}
     _LIBCPP_INLINE_VISIBILITY const_reference front() const {return __elems_[0];}
@@ -170,10 +170,10 @@ struct array
     _LIBCPP_INLINE_VISIBILITY const_reference back() const  {return __elems_[_Size > 0 ? _Size-1 : 0];}
 
     _LIBCPP_INLINE_VISIBILITY value_type* data()             {return __elems_;}
-    _LIBCPP_INLINE_VISIBILITY const value_type* data() const {return __elems_;} 
+    _LIBCPP_INLINE_VISIBILITY const value_type* data() const {return __elems_;}
 };
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 typename array<_Tp, _Size>::reference
 array<_Tp, _Size>::at(size_type __n)
 {
@@ -186,7 +186,7 @@ array<_Tp, _Size>::at(size_type __n)
     return __elems_[__n];
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 typename array<_Tp, _Size>::const_reference
 array<_Tp, _Size>::at(size_type __n) const
 {
@@ -199,7 +199,7 @@ array<_Tp, _Size>::at(size_type __n) const
     return __elems_[__n];
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator==(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
@@ -207,7 +207,7 @@ operator==(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
     return _STD::equal(__x.__elems_, __x.__elems_ + _Size, __y.__elems_);
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator!=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
@@ -215,7 +215,7 @@ operator!=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
     return !(__x == __y);
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator<(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
@@ -223,7 +223,7 @@ operator<(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
     return _STD::lexicographical_compare(__x.__elems_, __x.__elems_ + _Size, __y.__elems_, __y.__elems_ + _Size);
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator>(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
@@ -231,7 +231,7 @@ operator>(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
     return __y < __x;
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator<=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
@@ -239,7 +239,7 @@ operator<=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
     return !(__y < __x);
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator>=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
@@ -247,7 +247,7 @@ operator>=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
     return !(__x < __y);
 }
 
-template <class _Tp, size_t _Size> 
+template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
 void
 swap(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)

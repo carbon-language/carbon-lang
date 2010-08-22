@@ -354,7 +354,7 @@ public:
         __x.size() = 0;
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
     size_type& size()       {return __data_.first();}
     size_type  size() const {return __data_.first();}
@@ -489,7 +489,7 @@ public:
 #ifdef _LIBCPP_MOVE
     __hash_table(__hash_table&& __u);
     __hash_table(__hash_table&& __u, const allocator_type& __a);
-#endif
+#endif  // _LIBCPP_MOVE
     ~__hash_table();
 
     __hash_table& operator=(const __hash_table& __u);
@@ -519,24 +519,24 @@ public:
         iterator __emplace_multi(_Args&&... __args);
     template <class... _Args>
         iterator __emplace_hint_multi(const_iterator __p, _Args&&... __args);
-#endif
+#endif  // _LIBCPP_MOVE
 
     pair<iterator, bool> __insert_unique(const value_type& __x);
 
 #ifdef _LIBCPP_MOVE
     template <class _P>
         pair<iterator, bool> __insert_unique(_P&& __x);
-#endif
+#endif  // _LIBCPP_MOVE
 
 #ifdef _LIBCPP_MOVE
     template <class _P>
         iterator __insert_multi(_P&& __x);
     template <class _P>
         iterator __insert_multi(const_iterator __p, _P&& __x);
-#else
+#else  // _LIBCPP_MOVE
     iterator __insert_multi(const value_type& __x);
     iterator __insert_multi(const_iterator __p, const value_type& __x);
-#endif
+#endif  // _LIBCPP_MOVE
 
     void clear();
     void rehash(size_type __n);
@@ -619,7 +619,7 @@ private:
     template <class ..._Args>
         __node_holder __construct_node(_Args&& ...__args);
     __node_holder __construct_node(value_type&& __v, size_t __hash);
-#else
+#else  // _LIBCPP_MOVE
     __node_holder __construct_node(const value_type& __v);
 #endif
     __node_holder __construct_node(const value_type& __v, size_t __hash);
@@ -777,7 +777,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::~__hash_table()
@@ -886,7 +886,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
 #ifndef _LIBCPP_NO_EXCEPTIONS
             try
             {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
                 const_iterator __i = __u.begin();
                 while (__cache != nullptr && __u.size() != 0)
                 {
@@ -902,7 +902,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
                 __deallocate(__cache);
                 throw;
             }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             __deallocate(__cache);
         }
         const_iterator __i = __u.begin();
@@ -926,7 +926,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::operator=(__hash_table&& __u)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 template <class _InputIterator>
@@ -940,7 +940,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_unique(_InputIterator __first
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             for (; __cache != nullptr && __first != __last; ++__first)
             {
                 __cache->__value_ = *__first;
@@ -955,7 +955,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_unique(_InputIterator __first
             __deallocate(__cache);
             throw;
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         __deallocate(__cache);
     }
     for (; __first != __last; ++__first)
@@ -974,7 +974,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_multi(_InputIterator __first,
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             for (; __cache != nullptr && __first != __last; ++__first)
             {
                 __cache->__value_ = *__first;
@@ -989,7 +989,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_multi(_InputIterator __first,
             __deallocate(__cache);
             throw;
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         __deallocate(__cache);
     }
     for (; __first != __last; ++__first)
@@ -1130,7 +1130,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
         for (bool __found = false; __pn->__next_ != nullptr &&
                                    __pn->__next_->__hash_ % __bc == __chash;
                                                            __pn = __pn->__next_)
-        {     
+        {
             //      __found    key_eq()     action
             //      false       false       loop
             //      true        true        loop
@@ -1294,7 +1294,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(_P&& __x)
     return __r;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 #ifdef _LIBCPP_MOVE
 
@@ -1321,7 +1321,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(const_iterator __p,
     return __r;
 }
 
-#else
+#else  // _LIBCPP_MOVE
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
@@ -1344,7 +1344,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(const_iterator __p,
     return __r;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
@@ -1409,7 +1409,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__rehash(size_type __nbc)
                         __pp->__next_ = __np->__next_;
                         __np->__next_ = __bucket_list_[__chash]->__next_;
                         __bucket_list_[__chash]->__next_ = __cp;
-                        
+
                     }
                 }
             }
@@ -1463,7 +1463,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::find(const _Key& __k) const
                     return const_iterator(__nd);
             }
         }
-        
+
     }
     return end();
 }
@@ -1498,7 +1498,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(value_type&& __v,
     return _STD::move(__h);
 }
 
-#else
+#else  // _LIBCPP_MOVE
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
@@ -1513,7 +1513,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
     return _STD::move(__h);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder

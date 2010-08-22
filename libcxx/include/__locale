@@ -108,7 +108,7 @@ class locale::id
 {
     once_flag      __flag_;
     int32_t        __id_;
-   
+
     static int32_t __next_id;
 public:
     id() {}
@@ -137,7 +137,7 @@ locale::combine(const locale& __other) const
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (!_STD::has_facet<_Facet>(__other))
         throw runtime_error("locale::combine: locale missing facet");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return locale(*this, &const_cast<_Facet&>(_STD::use_facet<_Facet>(__other)));
 }
 
@@ -308,7 +308,7 @@ public:
     static const mask punct  = _CTYPE_P;
     static const mask xdigit = _CTYPE_X;
     static const mask blank  = _CTYPE_B;
-#else  /* !__APPLE__ */
+#else  // __APPLE__
     static const mask space  = _ISspace;
     static const mask print  = _ISprint;
     static const mask cntrl  = _IScntrl;
@@ -319,7 +319,7 @@ public:
     static const mask punct  = _ISpunct;
     static const mask xdigit = _ISxdigit;
     static const mask blank  = _ISblank;
-#endif  /* __APPLE__ */
+#endif  // __APPLE__
     static const mask alnum  = alpha | digit;
     static const mask graph  = alnum | punct;
 
@@ -335,7 +335,7 @@ class ctype<wchar_t>
 {
 public:
     typedef wchar_t char_type;
-   
+
     _LIBCPP_ALWAYS_INLINE
     explicit ctype(size_t __refs = 0)
         : locale::facet(__refs) {}

@@ -21,7 +21,7 @@ Macros:
     MB_CUR_MAX
     NULL
     RAND_MAX
- 
+
 namespace std
 {
 
@@ -66,7 +66,7 @@ long       labs(     long j);
 long long llabs(long long j);                                             // C99
 div_t     div(      int numer,       int denom);
 ldiv_t    div(     long numer,      long denom);
-lldiv_t   div(long long numer, long long denom);                          // C++0X              
+lldiv_t   div(long long numer, long long denom);                          // C++0X
 ldiv_t   ldiv(     long numer,      long denom);
 lldiv_t lldiv(long long numer, long long denom);                          // C99
 int mblen(const char* s, size_t n);

@@ -214,7 +214,7 @@ public:
     typedef typename pointer_traits<__node_pointer>::element_type::value_type
                                                               value_type;
     typedef value_type& reference;
-    typedef typename pointer_traits<__node_pointer>::difference_type 
+    typedef typename pointer_traits<__node_pointer>::difference_type
                                                               difference_type;
     typedef typename pointer_traits<__node_pointer>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -277,7 +277,7 @@ public:
     typedef forward_iterator_tag                              iterator_category;
     typedef typename __node::value_type                       value_type;
     typedef const value_type& reference;
-    typedef typename pointer_traits<__node_const_pointer>::difference_type 
+    typedef typename pointer_traits<__node_const_pointer>::difference_type
                                                               difference_type;
     typedef typename pointer_traits<__node_const_pointer>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -358,7 +358,7 @@ protected:
 #ifdef _LIBCPP_MOVE
     __forward_list_base(__forward_list_base&& __x);
     __forward_list_base(__forward_list_base&& __x, const allocator_type& __a);
-#endif
+#endif  // _LIBCPP_MOVE
 
 private:
     __forward_list_base(const __forward_list_base&);
@@ -428,7 +428,7 @@ __forward_list_base<_Tp, _Alloc>::__forward_list_base(__forward_list_base&& __x,
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Alloc>
 __forward_list_base<_Tp, _Alloc>::~__forward_list_base()
@@ -501,7 +501,7 @@ public:
 #ifdef _LIBCPP_MOVE
     forward_list(forward_list&& __x) : base(_STD::move(__x)) {}
     forward_list(forward_list&& __x, const allocator_type& __a);
-#endif
+#endif  // _LIBCPP_MOVE
     forward_list(initializer_list<value_type> __il);
     forward_list(initializer_list<value_type> __il, const allocator_type& __a);
 
@@ -546,7 +546,7 @@ public:
 #ifdef _LIBCPP_MOVE
     template <class... _Args> void emplace_front(_Args&&... __args);
     void push_front(value_type&& __v);
-#endif
+#endif  // _LIBCPP_MOVE
     void push_front(const value_type& __v);
 
     void pop_front();
@@ -555,7 +555,7 @@ public:
     template <class... _Args>
         iterator emplace_after(const_iterator __p, _Args&&... __args);
     iterator insert_after(const_iterator __p, value_type&& __v);
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert_after(const_iterator __p, const value_type& __v);
     iterator insert_after(const_iterator __p, size_type __n, const value_type& __v);
     template <class _InputIterator>
@@ -582,12 +582,12 @@ public:
     void splice_after(const_iterator __p, forward_list&& __x, const_iterator __i);
     void splice_after(const_iterator __p, forward_list&& __x,
                       const_iterator __f, const_iterator __l);
-#else
+#else  // _LIBCPP_MOVE
     void splice_after(const_iterator __p, forward_list& __x);
     void splice_after(const_iterator __p, forward_list& __x, const_iterator __i);
     void splice_after(const_iterator __p, forward_list& __x,
                       const_iterator __f, const_iterator __l);
-#endif
+#endif  // _LIBCPP_MOVE
     void remove(const value_type& __v);
     template <class _Predicate> void remove_if(_Predicate __pred);
     void unique() {unique(__equal_to<value_type>());}
@@ -595,10 +595,10 @@ public:
 #ifdef _LIBCPP_MOVE
     void merge(forward_list&& __x) {merge(_STD::move(__x), __less<value_type>());}
     template <class _Compare> void merge(forward_list&& __x, _Compare __comp);
-#else
+#else  // _LIBCPP_MOVE
     void merge(forward_list& __x) {merge(__x, __less<value_type>());}
     template <class _Compare> void merge(forward_list& __x, _Compare __comp);
-#endif
+#endif  // _LIBCPP_MOVE
     void sort() {sort(__less<value_type>());}
     template <class _Compare> void sort(_Compare __comp);
     void reverse();
@@ -612,7 +612,7 @@ private:
 #ifdef _LIBCPP_MOVE
     void __move_assign(forward_list& __x, true_type);
     void __move_assign(forward_list& __x, false_type);
-#endif
+#endif  // _LIBCPP_MOVE
 
     template <class _Compare>
         static
@@ -719,7 +719,7 @@ forward_list<_Tp, _Alloc>::forward_list(forward_list&& __x,
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Alloc>
 forward_list<_Tp, _Alloc>::forward_list(initializer_list<value_type> __il)
@@ -782,7 +782,7 @@ forward_list<_Tp, _Alloc>::operator=(forward_list&& __x)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Alloc>
 inline
@@ -864,7 +864,7 @@ forward_list<_Tp, _Alloc>::push_front(value_type&& __v)
     base::__before_begin()->__next_ = __h.release();
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Alloc>
 void
@@ -921,7 +921,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, value_type&& __v)
     return iterator(__r->__next_);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp, class _Alloc>
 typename forward_list<_Tp, _Alloc>::iterator
@@ -954,7 +954,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             for (--__n; __n != 0; --__n, __last = __last->__next_)
             {
                 __h.reset(__node_traits::allocate(__a, 1));
@@ -974,7 +974,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
             }
             throw;
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         __last->__next_ = __r->__next_;
         __r->__next_ = __first;
         __r = __last;
@@ -1004,7 +1004,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
 #ifndef _LIBCPP_NO_EXCEPTIONS
         try
         {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             for (++__f; __f != __l; ++__f, __last = __last->__next_)
             {
                 __h.reset(__node_traits::allocate(__a, 1));
@@ -1024,7 +1024,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
             }
             throw;
         }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         __last->__next_ = __r->__next_;
         __r->__next_ = __first;
         __r = __last;

@@ -178,7 +178,7 @@ typename conditional
     const _Tp&,
     _Tp&&
 >::type
-#else
+#else  // _LIBCPP_MOVE
 const _Tp&
 #endif
 move_if_noexcept(_Tp& __x)
@@ -233,7 +233,7 @@ struct pair
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
         pair(piecewise_construct_t __pc, tuple<_Args1...> __first_args,
                                     tuple<_Args2...> __second_args)
-            : pair(__pc, __first_args, __second_args, 
+            : pair(__pc, __first_args, __second_args,
                    typename __make_tuple_indices<sizeof...(_Args1)>::type(),
                    typename __make_tuple_indices<sizeof...(_Args2) >::type())
             {}
@@ -251,22 +251,22 @@ struct pair
             return *this;
         }
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
-#else
+#else  // _LIBCPP_MOVE
     template<class _U1, class _U2>
         _LIBCPP_INLINE_VISIBILITY pair(const pair<_U1, _U2>& __p)
             : first(__p.first), second(__p.second) {}
-#endif
+#endif  // _LIBCPP_MOVE
     void _LIBCPP_INLINE_VISIBILITY swap(pair& __p) {_STD::swap(*this, __p);}
 private:
-    
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
         pair(piecewise_construct_t,
              tuple<_Args1...>& __first_args, tuple<_Args2...>& __second_args,
              __tuple_indices<_I1...>, __tuple_indices<_I2...>);
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 };
 
 template <class _T1, class _T2>
@@ -357,7 +357,7 @@ make_pair(_T1&& __t1, _T2&& __t2)
                (_STD::forward<_T1>(__t1), _STD::forward<_T2>(__t2));
 }
 
-#else
+#else  // _LIBCPP_MOVE
 
 template <class _T1, class _T2>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -367,7 +367,7 @@ make_pair(_T1 __x, _T2 __y)
     return pair<_T1, _T2>(__x, __y);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -455,7 +455,7 @@ get(const pair<_T1, _T2>& __p)
     return __get_pair<_Ip>::get(__p);
 }
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 _LIBCPP_END_NAMESPACE_STD
 

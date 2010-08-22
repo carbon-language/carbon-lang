@@ -18,7 +18,7 @@ Macros:
 
     NULL
     CLOCKS_PER_SEC
- 
+
 namespace std
 {
 

@@ -307,7 +307,7 @@ basic_istream<_CharT, _Traits>::operator=(basic_istream&& __rhs)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _CharT, class _Traits>
 basic_istream<_CharT, _Traits>::~basic_istream()
@@ -330,7 +330,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned short& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -346,7 +346,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned short& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -357,7 +357,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned int& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -373,7 +373,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned int& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -384,7 +384,7 @@ basic_istream<_CharT, _Traits>::operator>>(long& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -400,7 +400,7 @@ basic_istream<_CharT, _Traits>::operator>>(long& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -411,7 +411,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned long& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -427,7 +427,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned long& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -438,7 +438,7 @@ basic_istream<_CharT, _Traits>::operator>>(long long& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -454,7 +454,7 @@ basic_istream<_CharT, _Traits>::operator>>(long long& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -465,7 +465,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned long long& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -481,7 +481,7 @@ basic_istream<_CharT, _Traits>::operator>>(unsigned long long& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -492,7 +492,7 @@ basic_istream<_CharT, _Traits>::operator>>(float& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -508,7 +508,7 @@ basic_istream<_CharT, _Traits>::operator>>(float& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -519,7 +519,7 @@ basic_istream<_CharT, _Traits>::operator>>(double& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -535,7 +535,7 @@ basic_istream<_CharT, _Traits>::operator>>(double& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -546,7 +546,7 @@ basic_istream<_CharT, _Traits>::operator>>(long double& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -562,7 +562,7 @@ basic_istream<_CharT, _Traits>::operator>>(long double& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -573,7 +573,7 @@ basic_istream<_CharT, _Traits>::operator>>(bool& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -589,7 +589,7 @@ basic_istream<_CharT, _Traits>::operator>>(bool& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -600,7 +600,7 @@ basic_istream<_CharT, _Traits>::operator>>(void*& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -616,7 +616,7 @@ basic_istream<_CharT, _Traits>::operator>>(void*& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -627,7 +627,7 @@ basic_istream<_CharT, _Traits>::operator>>(short& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -656,7 +656,7 @@ basic_istream<_CharT, _Traits>::operator>>(short& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -667,7 +667,7 @@ basic_istream<_CharT, _Traits>::operator>>(int& __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this);
         if (__s)
         {
@@ -696,7 +696,7 @@ basic_istream<_CharT, _Traits>::operator>>(int& __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -734,7 +734,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, _CharT* __s)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is);
         if (__sen)
         {
@@ -768,7 +768,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, _CharT* __s)
     {
         __is.__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __is;
 }
 
@@ -795,7 +795,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, _CharT& __c)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is);
         if (__sen)
         {
@@ -817,7 +817,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, _CharT& __c)
     {
         __is.__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __is;
 }
 
@@ -845,7 +845,7 @@ basic_istream<_CharT, _Traits>::operator>>(basic_streambuf<char_type, traits_typ
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this, true);
         if (__s)
         {
@@ -855,7 +855,7 @@ basic_istream<_CharT, _Traits>::operator>>(basic_streambuf<char_type, traits_typ
 #ifndef _LIBCPP_NO_EXCEPTIONS
                 try
                 {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
                     typedef istreambuf_iterator<char_type, traits_type> _I;
                     typedef ostreambuf_iterator<char_type, traits_type> _O;
                     _I __i(*this);
@@ -880,7 +880,7 @@ basic_istream<_CharT, _Traits>::operator>>(basic_streambuf<char_type, traits_typ
                     if (__c == 0)
                         this->__set_failbit_and_consider_rethrow();
                 }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             }
             else
                 this->setstate(ios_base::failbit);
@@ -892,7 +892,7 @@ basic_istream<_CharT, _Traits>::operator>>(basic_streambuf<char_type, traits_typ
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -905,7 +905,7 @@ basic_istream<_CharT, _Traits>::get()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __s(*this, true);
         if (__s)
         {
@@ -932,7 +932,7 @@ basic_istream<_CharT, _Traits>::get()
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __r;
 }
 
@@ -955,7 +955,7 @@ basic_istream<_CharT, _Traits>::get(char_type* __s, streamsize __n, char_type __
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -990,7 +990,7 @@ basic_istream<_CharT, _Traits>::get(char_type* __s, streamsize __n, char_type __
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1011,7 +1011,7 @@ basic_istream<_CharT, _Traits>::get(basic_streambuf<char_type, traits_type>& __s
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1020,7 +1020,7 @@ basic_istream<_CharT, _Traits>::get(basic_streambuf<char_type, traits_type>& __s
 #ifndef _LIBCPP_NO_EXCEPTIONS
             try
             {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
                 typedef istreambuf_iterator<char_type, traits_type> _I;
                 typedef ostreambuf_iterator<char_type, traits_type> _O;
                 _I __i(*this);
@@ -1042,7 +1042,7 @@ basic_istream<_CharT, _Traits>::get(basic_streambuf<char_type, traits_type>& __s
             catch (...)
             {
             }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
             if (__c == 0)
                __err |= ios_base::failbit;
             this->setstate(__err);
@@ -1054,7 +1054,7 @@ basic_istream<_CharT, _Traits>::get(basic_streambuf<char_type, traits_type>& __s
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1074,7 +1074,7 @@ basic_istream<_CharT, _Traits>::getline(char_type* __s, streamsize __n, char_typ
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1112,7 +1112,7 @@ basic_istream<_CharT, _Traits>::getline(char_type* __s, streamsize __n, char_typ
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1132,7 +1132,7 @@ basic_istream<_CharT, _Traits>::ignore(streamsize __n, int_type __dlm)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1172,7 +1172,7 @@ basic_istream<_CharT, _Traits>::ignore(streamsize __n, int_type __dlm)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1185,7 +1185,7 @@ basic_istream<_CharT, _Traits>::peek()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
             __r = this->rdbuf()->sgetc();
@@ -1195,7 +1195,7 @@ basic_istream<_CharT, _Traits>::peek()
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __r;
 }
 
@@ -1207,7 +1207,7 @@ basic_istream<_CharT, _Traits>::read(char_type* __s, streamsize __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1234,7 +1234,7 @@ basic_istream<_CharT, _Traits>::read(char_type* __s, streamsize __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1247,7 +1247,7 @@ basic_istream<_CharT, _Traits>::readsome(char_type* __s, streamsize __n)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1279,7 +1279,7 @@ basic_istream<_CharT, _Traits>::readsome(char_type* __s, streamsize __n)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __c;
 }
 
@@ -1291,7 +1291,7 @@ basic_istream<_CharT, _Traits>::putback(char_type __c)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1306,7 +1306,7 @@ basic_istream<_CharT, _Traits>::putback(char_type __c)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1318,7 +1318,7 @@ basic_istream<_CharT, _Traits>::unget()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1333,7 +1333,7 @@ basic_istream<_CharT, _Traits>::unget()
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1345,7 +1345,7 @@ basic_istream<_CharT, _Traits>::sync()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
         {
@@ -1363,7 +1363,7 @@ basic_istream<_CharT, _Traits>::sync()
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __r;
 }
 
@@ -1375,7 +1375,7 @@ basic_istream<_CharT, _Traits>::tellg()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
             __r = this->rdbuf()->pubseekoff(0, ios_base::cur, ios_base::in);
@@ -1385,7 +1385,7 @@ basic_istream<_CharT, _Traits>::tellg()
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __r;
 }
 
@@ -1396,7 +1396,7 @@ basic_istream<_CharT, _Traits>::seekg(pos_type __pos)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
             if (this->rdbuf()->pubseekpos(__pos, ios_base::in) == pos_type(-1))
@@ -1407,7 +1407,7 @@ basic_istream<_CharT, _Traits>::seekg(pos_type __pos)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1418,7 +1418,7 @@ basic_istream<_CharT, _Traits>::seekg(off_type __off, ios_base::seekdir __dir)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         sentry __sen(*this, true);
         if (__sen)
             this->rdbuf()->pubseekoff(__off, __dir, ios_base::in);
@@ -1428,7 +1428,7 @@ basic_istream<_CharT, _Traits>::seekg(off_type __off, ios_base::seekdir __dir)
     {
         this->__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return *this;
 }
 
@@ -1439,7 +1439,7 @@ ws(basic_istream<_CharT, _Traits>& __is)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is, true);
         if (__sen)
         {
@@ -1459,7 +1459,7 @@ ws(basic_istream<_CharT, _Traits>& __is)
     {
         __is.__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __is;
 }
 
@@ -1474,7 +1474,7 @@ operator>>(basic_istream<_CharT, _Traits>&& __is, _Tp& __x)
     return __is;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _CharT, class _Traits>
 class basic_iostream
@@ -1530,7 +1530,7 @@ basic_iostream<_CharT, _Traits>::operator=(basic_iostream&& __rhs)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _CharT, class _Traits>
 basic_iostream<_CharT, _Traits>::~basic_iostream()
@@ -1553,7 +1553,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is);
         if (__sen)
         {
@@ -1591,19 +1591,19 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     {
         __is.__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __is;
 }
 
 template<class _CharT, class _Traits, class _Allocator>
-basic_istream<_CharT, _Traits>& 
+basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str, _CharT __dlm)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is, true);
         if (__sen)
         {
@@ -1642,13 +1642,13 @@ getline(basic_istream<_CharT, _Traits>& __is,
     {
         __is.__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __is;
 }
 
 template<class _CharT, class _Traits, class _Allocator>
 inline
-basic_istream<_CharT, _Traits>& 
+basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str)
 {
@@ -1659,7 +1659,7 @@ getline(basic_istream<_CharT, _Traits>& __is,
 
 template<class _CharT, class _Traits, class _Allocator>
 inline
-basic_istream<_CharT, _Traits>& 
+basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>&& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str, _CharT __dlm)
 {
@@ -1668,14 +1668,14 @@ getline(basic_istream<_CharT, _Traits>&& __is,
 
 template<class _CharT, class _Traits, class _Allocator>
 inline
-basic_istream<_CharT, _Traits>& 
+basic_istream<_CharT, _Traits>&
 getline(basic_istream<_CharT, _Traits>&& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str)
 {
     return getline(__is, __str, __is.widen('\n'));
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _CharT, class _Traits, size_t _Size>
 basic_istream<_CharT, _Traits>&
@@ -1684,7 +1684,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, bitset<_Size>& __x)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is);
         if (__sen)
         {
@@ -1720,7 +1720,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, bitset<_Size>& __x)
     {
         __is.__set_badbit_and_consider_rethrow();
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __is;
 }
 

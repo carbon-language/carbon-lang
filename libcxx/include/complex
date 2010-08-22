@@ -49,89 +49,89 @@ public:
 
 template<>
 class complex<float>
-{ 
-public: 
-    typedef float value_type; 
+{
+public:
+    typedef float value_type;
 
-    constexpr complex(float re = 0.0f, float im = 0.0f); 
-    explicit constexpr complex(const complex<double>&); 
-    explicit constexpr complex(const complex<long double>&); 
+    constexpr complex(float re = 0.0f, float im = 0.0f);
+    explicit constexpr complex(const complex<double>&);
+    explicit constexpr complex(const complex<long double>&);
 
-    constexpr float real() const; 
+    constexpr float real() const;
     void real(float);
-    constexpr float imag() const; 
+    constexpr float imag() const;
     void imag(float);
 
-    complex<float>& operator= (float); 
-    complex<float>& operator+=(float); 
-    complex<float>& operator-=(float); 
-    complex<float>& operator*=(float); 
-    complex<float>& operator/=(float); 
+    complex<float>& operator= (float);
+    complex<float>& operator+=(float);
+    complex<float>& operator-=(float);
+    complex<float>& operator*=(float);
+    complex<float>& operator/=(float);
 
-    complex<float>& operator=(const complex<float>&); 
-    template<class X> complex<float>& operator= (const complex<X>&); 
-    template<class X> complex<float>& operator+=(const complex<X>&); 
-    template<class X> complex<float>& operator-=(const complex<X>&); 
-    template<class X> complex<float>& operator*=(const complex<X>&); 
-    template<class X> complex<float>& operator/=(const complex<X>&); 
+    complex<float>& operator=(const complex<float>&);
+    template<class X> complex<float>& operator= (const complex<X>&);
+    template<class X> complex<float>& operator+=(const complex<X>&);
+    template<class X> complex<float>& operator-=(const complex<X>&);
+    template<class X> complex<float>& operator*=(const complex<X>&);
+    template<class X> complex<float>& operator/=(const complex<X>&);
 };
 
 template<>
 class complex<double>
-{ 
-public: 
-    typedef double value_type; 
+{
+public:
+    typedef double value_type;
 
-    constexpr complex(double re = 0.0, double im = 0.0); 
-    constexpr complex(const complex<float>&); 
-    explicit constexpr complex(const complex<long double>&); 
+    constexpr complex(double re = 0.0, double im = 0.0);
+    constexpr complex(const complex<float>&);
+    explicit constexpr complex(const complex<long double>&);
 
-    constexpr double real() const; 
+    constexpr double real() const;
     void real(double);
-    constexpr double imag() const; 
+    constexpr double imag() const;
     void imag(double);
 
-    complex<double>& operator= (double); 
-    complex<double>& operator+=(double); 
-    complex<double>& operator-=(double); 
-    complex<double>& operator*=(double); 
-    complex<double>& operator/=(double); 
-    complex<double>& operator=(const complex<double>&); 
+    complex<double>& operator= (double);
+    complex<double>& operator+=(double);
+    complex<double>& operator-=(double);
+    complex<double>& operator*=(double);
+    complex<double>& operator/=(double);
+    complex<double>& operator=(const complex<double>&);
 
-    template<class X> complex<double>& operator= (const complex<X>&); 
-    template<class X> complex<double>& operator+=(const complex<X>&); 
-    template<class X> complex<double>& operator-=(const complex<X>&); 
-    template<class X> complex<double>& operator*=(const complex<X>&); 
-    template<class X> complex<double>& operator/=(const complex<X>&); 
-}; 
+    template<class X> complex<double>& operator= (const complex<X>&);
+    template<class X> complex<double>& operator+=(const complex<X>&);
+    template<class X> complex<double>& operator-=(const complex<X>&);
+    template<class X> complex<double>& operator*=(const complex<X>&);
+    template<class X> complex<double>& operator/=(const complex<X>&);
+};
 
 template<>
 class complex<long double>
-{ 
-public: 
-    typedef long double value_type; 
+{
+public:
+    typedef long double value_type;
 
-    constexpr complex(long double re = 0.0L, long double im = 0.0L); 
-    constexpr complex(const complex<float>&); 
-    constexpr complex(const complex<double>&); 
+    constexpr complex(long double re = 0.0L, long double im = 0.0L);
+    constexpr complex(const complex<float>&);
+    constexpr complex(const complex<double>&);
 
-    constexpr long double real() const; 
+    constexpr long double real() const;
     void real(long double);
-    constexpr long double imag() const; 
+    constexpr long double imag() const;
     void imag(long double);
 
-    complex<long double>& operator=(const complex<long double>&); 
-    complex<long double>& operator= (long double); 
-    complex<long double>& operator+=(long double); 
-    complex<long double>& operator-=(long double); 
-    complex<long double>& operator*=(long double); 
-    complex<long double>& operator/=(long double); 
+    complex<long double>& operator=(const complex<long double>&);
+    complex<long double>& operator= (long double);
+    complex<long double>& operator+=(long double);
+    complex<long double>& operator-=(long double);
+    complex<long double>& operator*=(long double);
+    complex<long double>& operator/=(long double);
 
-    template<class X> complex<long double>& operator= (const complex<X>&); 
-    template<class X> complex<long double>& operator+=(const complex<X>&); 
-    template<class X> complex<long double>& operator-=(const complex<X>&); 
-    template<class X> complex<long double>& operator*=(const complex<X>&); 
-    template<class X> complex<long double>& operator/=(const complex<X>&); 
+    template<class X> complex<long double>& operator= (const complex<X>&);
+    template<class X> complex<long double>& operator+=(const complex<X>&);
+    template<class X> complex<long double>& operator-=(const complex<X>&);
+    template<class X> complex<long double>& operator*=(const complex<X>&);
+    template<class X> complex<long double>& operator/=(const complex<X>&);
 };
 
 // 26.3.6 operators:
@@ -321,11 +321,11 @@ template<> class complex<long double>;
 
 template<>
 class complex<float>
-{ 
+{
     float __re_;
     float __im_;
-public: 
-    typedef float value_type; 
+public:
+    typedef float value_type;
 
     /*constexpr*/ _LIBCPP_INLINE_VISIBILITY complex(float __re = 0.0f, float __im = 0.0f)
         : __re_(__re), __im_(__im) {}
@@ -376,11 +376,11 @@ public:
 
 template<>
 class complex<double>
-{ 
+{
     double __re_;
     double __im_;
-public: 
-    typedef double value_type; 
+public:
+    typedef double value_type;
 
     /*constexpr*/ _LIBCPP_INLINE_VISIBILITY complex(double __re = 0.0, double __im = 0.0)
         : __re_(__re), __im_(__im) {}
@@ -427,15 +427,15 @@ public:
             *this = *this / __c;
             return *this;
         }
-}; 
+};
 
 template<>
 class complex<long double>
-{ 
+{
     long double __re_;
     long double __im_;
-public: 
-    typedef long double value_type; 
+public:
+    typedef long double value_type;
 
     /*constexpr*/ _LIBCPP_INLINE_VISIBILITY complex(long double __re = 0.0L, long double __im = 0.0L)
         : __re_(__re), __im_(__im) {}

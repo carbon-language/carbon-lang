@@ -44,14 +44,14 @@ const int __elast2 = ELAST+2;
 #define ENOTRECOVERABLE __elast1
 #define ELAST ENOTRECOVERABLE
 
-#else
+#else  // defined(EOWNERDEAD)
 
 #define EOWNERDEAD __elast1
 #define ENOTRECOVERABLE __elast2
 #define ELAST ENOTRECOVERABLE
 
-#endif
+#endif  // defined(EOWNERDEAD)
 
-#endif
+#endif  // !defined(EOWNERDEAD) || !defined(ENOTRECOVERABLE)
 
 #endif  // _LIBCPP_CERRNO

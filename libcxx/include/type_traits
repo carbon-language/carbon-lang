@@ -41,7 +41,7 @@ namespace std
     template <class T> struct is_union;
     template <class T> struct is_class;
     template <class T> struct is_function;
-    
+
     // Secondary classification traits:
     template <class T> struct is_reference;
     template <class T> struct is_arithmetic;
@@ -50,7 +50,7 @@ namespace std
     template <class T> struct is_scalar;
     template <class T> struct is_object;
     template <class T> struct is_compound;
-    
+
     // Const-volatile properties and transformations:
     template <class T> struct is_const;
     template <class T> struct is_volatile;
@@ -60,28 +60,28 @@ namespace std
     template <class T> struct add_const;
     template <class T> struct add_volatile;
     template <class T> struct add_cv;
-    
+
     // Reference transformations:
     template <class T> struct remove_reference;
     template <class T> struct add_lvalue_reference;
     template <class T> struct add_rvalue_reference;
-    
+
     // Pointer transformations:
     template <class T> struct remove_pointer;
     template <class T> struct add_pointer;
-    
+
     // Integral properties:
     template <class T> struct is_signed;
     template <class T> struct is_unsigned;
     template <class T> struct make_signed;
     template <class T> struct make_unsigned;
-    
+
     // Array properties and transformations:
     template <class T> struct rank;
     template <class T, unsigned I = 0> struct extent;
     template <class T> struct remove_extent;
     template <class T> struct remove_all_extents;
-    
+
     // Member introspection:
     template <class T> struct is_pod;
     template <class T> struct is_trivial;
@@ -110,13 +110,13 @@ namespace std
     template <class T> struct has_nothrow_copy_assign;
     template <class T> struct has_nothrow_move_assign;
     template <class T> struct has_virtual_destructor;
-    
+
     // Relationships between types:
     template <class T, class U> struct is_same;
     template <class Base, class Derived> struct is_base_of;
     template <class From, class To> struct is_convertible;
     template <class T> struct underlying_type;
-    
+
     // Alignment properties and transformations:
     template <class T> struct alignment_of;
     template <size_t Len, size_t Align = most_stringent_alignment_requirement>
@@ -206,7 +206,7 @@ template <>          struct __is_integral<wchar_t>            : public true_type
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
 template <>          struct __is_integral<char16_t>           : public true_type {};
 template <>          struct __is_integral<char32_t>           : public true_type {};
-#endif
+#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 template <>          struct __is_integral<short>              : public true_type {};
 template <>          struct __is_integral<unsigned short>     : public true_type {};
 template <>          struct __is_integral<int>                : public true_type {};
@@ -262,12 +262,12 @@ template <class _Tp> struct is_reference<_Tp&&> : public true_type {};
 
 template <class _Tp> struct is_union : public integral_constant<bool, __is_union(_Tp)> {};
 
-#else
+#else  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
 
 template <class _Tp> struct __libcpp_union : public false_type {};
 template <class _Tp> struct is_union : public __libcpp_union<typename remove_cv<_Tp>::type> {};
 
-#endif
+#endif  // __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
 
 // is_class
 
@@ -421,7 +421,7 @@ template <>          struct add_rvalue_reference<const void>          {typedef c
 template <>          struct add_rvalue_reference<volatile void>       {typedef volatile void type;};
 template <>          struct add_rvalue_reference<const volatile void> {typedef const volatile void type;};
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 // remove_pointer
 
@@ -566,7 +566,7 @@ template <class _T1> struct __is_convertible<_T1, _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, const _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, volatile _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, const volatile _T1&&, 1, 0> : true_type {};
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2*, 1, 0>
     : public integral_constant<bool, __is_convertible<typename remove_all_extents<_T1>::type*, _T2*>::value> {};
@@ -579,7 +579,6 @@ template <class _T1, class _T2> struct __is_convertible<_T1, _T2* volatile, 1, 0
 
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2* const volatile, 1, 0>
     : public integral_constant<bool, __is_convertible<typename remove_all_extents<_T1>::type*, _T2*const volatile>::value> {};
-
 
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 2, 0>                : public false_type {};
 #ifdef _LIBCPP_MOVE
@@ -888,7 +887,6 @@ template <class _A1, class _A2 = void, class _A3 = void,
                  (is_arithmetic<_A3>::value || is_void<_A3>::value)>
 class __promote {};
 
-
 template <class _A1, class _A2, class _A3>
 class __promote<_A1, _A2, _A3, true>
 {
@@ -1074,7 +1072,6 @@ public:
     typedef typename common_type<typename common_type<_Tp, _Up>::type, V>::type type;
 };
 
-
 template <class _Tp>
 struct common_type<_Tp, void, void>
 {
@@ -1089,16 +1086,16 @@ private:
 #ifdef _LIBCPP_MOVE
     static _Tp&& __t();
     static _Up&& __u();
-#else
+#else  // _LIBCPP_MOVE
     static _Tp __t();
     static _Up __u();
-#endif
+#endif  // _LIBCPP_MOVE
     static bool __f();
 public:
     typedef decltype(__f() ? __t() : __u()) type;
 };
 
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class ..._Tp> struct common_type;
 
@@ -1125,7 +1122,7 @@ struct common_type<_Tp, _Up, _Vp...>
     typedef typename common_type<typename common_type<_Tp, _Up>::type, _Vp...>::type type;
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 // move
 
@@ -1275,13 +1272,13 @@ template <class _Tp>
 typename add_rvalue_reference<_Tp>::type
 declval();
 
-#else
+#else  // _LIBCPP_MOVE
 
 template <class _Tp>
 typename add_lvalue_reference<_Tp>::type
 declval();
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Tp>
 struct decay
@@ -1381,7 +1378,7 @@ class __result_of<_Fn(_Tp, _ArgTypes...), false>  // _Fn must be member pointer
 {
 };
 
-#endif
+#endif  // 0
 
 // result_of
 
@@ -1397,7 +1394,7 @@ class result_of<_Fn(_ArgTypes...)>
 {
 };
 
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Fn>
 class __result_of<_Fn(), true>
@@ -1475,7 +1472,7 @@ class result_of<_Fn(_A0, _A1, _A2)>
 {
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
@@ -1516,7 +1513,7 @@ struct __is_constructible<false, _R(_A1...), _A2...>
 //      Scalars are default constructible, references are not
 
 template <class _Tp>
-struct __is_constructible<true, _Tp> 
+struct __is_constructible<true, _Tp>
     : public is_scalar<_Tp>
     {};
 
@@ -1531,7 +1528,7 @@ struct __is_constructible_ref
 };
 
 template <class _Tp, class _A0>
-struct __is_constructible<true, _Tp, _A0> 
+struct __is_constructible<true, _Tp, _A0>
     : public common_type
              <
                  decltype(__is_constructible_ref<_Tp>::__(declval<_A0>()))
@@ -1541,7 +1538,7 @@ struct __is_constructible<true, _Tp, _A0>
 //      Scalars and references are not constructible from multiple args.
 
 template <class _Tp, class _A0, class ..._Args>
-struct __is_constructible<true, _Tp, _A0, _Args...> 
+struct __is_constructible<true, _Tp, _A0, _Args...>
     : public false_type
     {};
 
@@ -1602,7 +1599,7 @@ struct __is_constructible<false, _A[], _Args...>
     : public false_type
     {};
 
-#endif
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp> struct __is_zero_default_constructible
     : public integral_constant<bool, is_scalar<_Tp>::value || is_empty<_Tp>::value> {};

@@ -21,14 +21,14 @@ class type_info
 {
 public:
     virtual ~type_info();
-    
+
     bool operator==(const type_info& rhs) const;
     bool operator!=(const type_info& rhs) const;
-    
+
     bool before(const type_info& rhs) const;
     size_t hash_code() const throw();
     const char* name() const;
-    
+
     type_info(const type_info& rhs) = delete;
     type_info& operator=(const type_info& rhs) = delete;
 };
@@ -63,11 +63,10 @@ public:
 
 #pragma GCC system_header
 
-
 namespace std  // purposefully not using versioning namespace
 {
 
-class _LIBCPP_EXCEPTION_ABI type_info 
+class _LIBCPP_EXCEPTION_ABI type_info
 {
     type_info& operator=(const type_info&);
     type_info(const type_info&);
@@ -95,7 +94,7 @@ public:
 };
 
 class _LIBCPP_EXCEPTION_ABI bad_cast
-    : public exception 
+    : public exception
 {
 public:
     bad_cast() throw();
@@ -104,7 +103,7 @@ public:
 };
 
 class _LIBCPP_EXCEPTION_ABI bad_typeid
-    : public exception 
+    : public exception
 {
 public:
     bad_typeid() throw();
@@ -112,9 +111,6 @@ public:
     virtual const char* what() const throw();
 };
 
-
 }  // std
-
-
 
 #endif  // __LIBCPP_TYPEINFO

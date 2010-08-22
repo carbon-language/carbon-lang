@@ -20,7 +20,7 @@ Macros:
     WCHAR_MAX
     WCHAR_MIN
     WEOF
- 
+
 namespace std
 {
 
@@ -49,7 +49,7 @@ wint_t fputwc(wchar_t c, FILE* stream);
 int fputws(const wchar_t* restrict s, FILE* restrict stream);
 int fwide(FILE* stream, int mode);
 wint_t getwc(FILE* stream);
-wint_t getwchar(); 
+wint_t getwchar();
 wint_t putwc(wchar_t c, FILE* stream);
 wint_t putwchar(wchar_t c);
 wint_t ungetwc(wint_t c, FILE* stream);
@@ -92,10 +92,10 @@ wint_t btowc(int c);
 int wctob(wint_t c);
 int mbsinit(const mbstate_t* ps);
 size_t mbrlen(const char* restrict s, size_t n, mbstate_t* restrict ps);
-size_t mbrtowc(wchar_t* restrict pwc, const char* restrict s, size_t n, mbstate_t* restrict ps); 
+size_t mbrtowc(wchar_t* restrict pwc, const char* restrict s, size_t n, mbstate_t* restrict ps);
 size_t wcrtomb(char* restrict s, wchar_t wc, mbstate_t* restrict ps);
 size_t mbsrtowcs(wchar_t* restrict dst, const char** restrict src, size_t len,
-                 mbstate_t* restrict ps); 
+                 mbstate_t* restrict ps);
 size_t wcsrtombs(char* restrict dst, const wchar_t** restrict src, size_t len,
                  mbstate_t* restrict ps);
 

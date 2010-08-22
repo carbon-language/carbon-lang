@@ -28,9 +28,9 @@ struct pointer_traits
     typedef Ptr pointer;
     typedef <details> element_type;
     typedef <details> difference_type;
-    
+
     template <class U> using rebind = <details>;
-    
+
     static pointer pointer_to(<details>);
 };
 
@@ -259,7 +259,7 @@ public:
     unique_ptr(nullptr_t) : unique_ptr() { }
 
     // destructor
-    ∼unique_ptr();
+    ~unique_ptr();
 
     // assignment
     unique_ptr& operator=(unique_ptr&& u);
@@ -531,7 +531,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 // allocator_arg_t
 
-struct allocator_arg_t { }; 
+struct allocator_arg_t { };
 
 extern const allocator_arg_t allocator_arg;
 
@@ -557,7 +557,6 @@ public:
 
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 };
-
 
 // pointer_traits
 
@@ -595,7 +594,7 @@ struct __pointer_traits_element_type<_Sp<_Tp, _Args...>, false>
     typedef _Tp type;
 };
 
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <template <class> class _Sp, class _Tp>
 struct __pointer_traits_element_type<_Sp<_Tp>, true>
@@ -647,7 +646,7 @@ struct __pointer_traits_element_type<_Sp<_Tp, _A0, _A1, _A2>, false>
     typedef _Tp type;
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp>
 struct __has_difference_type
@@ -711,7 +710,7 @@ struct __pointer_traits_rebind<_Sp<_Tp, _Args...>, _Up, false>
     typedef _Sp<_Up, _Args...> type;
 };
 
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <template <class> class _Sp, class _Tp, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp>, _Up, true>
@@ -781,7 +780,7 @@ struct __pointer_traits_rebind<_Sp<_Tp, _A0, _A1, _A2>, _Up, false>
     typedef _Sp<_Up, _A0, _A1, _A2> type;
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Ptr>
 struct pointer_traits
@@ -795,7 +794,7 @@ struct pointer_traits
 #else
     template <class _Up> struct rebind
         {typedef typename __pointer_traits_rebind<pointer, _Up>::type other;};
-#endif
+#endif  // _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 
 private:
     struct __nat {};
@@ -1089,7 +1088,7 @@ struct __allocator_traits_rebind<_Alloc<_Tp, _Args...>, _Up, false>
     typedef _Alloc<_Up, _Args...> type;
 };
 
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <template <class> class _Alloc, class _Tp, class _Up>
 struct __allocator_traits_rebind<_Alloc<_Tp>, _Up, true>
@@ -1103,7 +1102,6 @@ struct __allocator_traits_rebind<_Alloc<_Tp>, _Up, false>
     typedef _Alloc<_Up> type;
 };
 
-
 template <template <class, class> class _Alloc, class _Tp, class _A0, class _Up>
 struct __allocator_traits_rebind<_Alloc<_Tp, _A0>, _Up, true>
 {
@@ -1115,7 +1113,6 @@ struct __allocator_traits_rebind<_Alloc<_Tp, _A0>, _Up, false>
 {
     typedef _Alloc<_Up, _A0> type;
 };
-
 
 template <template <class, class, class> class _Alloc, class _Tp, class _A0,
                                          class _A1, class _Up>
@@ -1131,7 +1128,6 @@ struct __allocator_traits_rebind<_Alloc<_Tp, _A0, _A1>, _Up, false>
     typedef _Alloc<_Up, _A0, _A1> type;
 };
 
-
 template <template <class, class, class, class> class _Alloc, class _Tp, class _A0,
                                                 class _A1, class _A2, class _Up>
 struct __allocator_traits_rebind<_Alloc<_Tp, _A0, _A1, _A2>, _Up, true>
@@ -1146,7 +1142,7 @@ struct __allocator_traits_rebind<_Alloc<_Tp, _A0, _A1, _A2>, _Up, false>
     typedef _Alloc<_Up, _A0, _A1, _A2> type;
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
@@ -1171,7 +1167,7 @@ struct __has_allocate_hint
 {
 };
 
-#else
+#else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Alloc, class _SizeType, class _ConstVoidPtr>
 struct __has_allocate_hint
@@ -1179,7 +1175,7 @@ struct __has_allocate_hint
 {
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
@@ -1262,8 +1258,7 @@ struct __has_select_on_container_copy_construction
 {
 };
 
-#else
-
+#else  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -1273,7 +1268,7 @@ struct __has_construct
 {
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Alloc, class _Pointer>
 struct __has_destroy
@@ -1293,7 +1288,7 @@ struct __has_select_on_container_copy_construction
 {
 };
 
-#endif
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Alloc>
 struct allocator_traits
@@ -1320,12 +1315,12 @@ struct allocator_traits
     template <class _Tp> using rebind_alloc =
                            __allocator_traits_rebind<allocator_type, _Tp>::type;
     template <class _Tp> using rebind_traits = allocator_traits<rebind_alloc<_Tp>>;
-#else
+#else  // _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     template <class _Tp> struct rebind_alloc
         {typedef typename __allocator_traits_rebind<allocator_type, _Tp>::type other;};
     template <class _Tp> struct rebind_traits
         {typedef allocator_traits<typename rebind_alloc<_Tp>::other> other;};
-#endif
+#endif  // _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 
     static pointer allocate(allocator_type& __a, size_type __n)
         {return __a.allocate(__n);}
@@ -1341,7 +1336,7 @@ struct allocator_traits
         static void construct(allocator_type& __a, _Tp* __p, _Args&&... __args)
             {__construct(__has_construct<allocator_type, pointer, _Args...>(),
                          __a, __p, _STD::forward<_Args>(__args)...);}
-#else
+#else  // _LIBCPP_HAS_NO_VARIADICS
     template <class _Tp>
         static void construct(allocator_type& __a, _Tp* __p)
             {
@@ -1364,7 +1359,7 @@ struct allocator_traits
             {
                 ::new ((void*)__p) _Tp(__a0, __a1, __a2);
             }
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     template <class _Tp>
         static void destroy(allocator_type& __a, _Tp* __p)
@@ -1397,7 +1392,7 @@ private:
             {
                 ::new ((void*)__p) _Tp(_STD::forward<_Args>(__args)...);
             }
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
     template <class _Tp>
         static void __destroy(true_type, allocator_type& __a, _Tp* __p)
@@ -1471,7 +1466,7 @@ struct __uses_alloc_ctor
     : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
     {};
 
-#endif
+#endif  // defined(_LIBCPP_MOVE) && !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE)
 
 // allocator
 
@@ -1505,7 +1500,7 @@ public:
         {
             ::new((void*)__p) _Up(_STD::forward<_Args>(__args)...);
         }
-#else
+#else  // _LIBCPP_MOVE
         _LIBCPP_INLINE_VISIBILITY
         void
         construct(pointer __p)
@@ -1573,7 +1568,7 @@ public:
         {
             ::new((void*)__p) _Tp(__a0, __a1);
         }
-#endif
+#endif  // _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY void destroy(pointer __p) {__p->~_Tp();}
 };
 
@@ -1689,7 +1684,6 @@ public:
     typedef void element_type;
 };
 
-
 template <class _T1, class _T2, bool = is_same<typename remove_cv<_T1>::type,
                                                      typename remove_cv<_T2>::type>::value,
                                 bool = is_empty<_T1>::value,
@@ -1741,7 +1735,7 @@ public:
 #ifdef _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : __first_(_STD::forward<_T1>(__p.first())), __second_(_STD::forward<_T2>(__p.second())) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return __first_;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return __first_;}
@@ -1784,7 +1778,7 @@ public:
 #ifdef _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : _T1(_STD::move(__p.first())), __second_(_STD::forward<_T2>(__p.second())) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return *this;}
@@ -1826,7 +1820,7 @@ public:
 #ifdef _LIBCPP_MOVE
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : _T2(_STD::forward<_T2>(__p.second())), __first_(_STD::move(__p.first())) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return __first_;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return __first_;}
@@ -1867,7 +1861,7 @@ public:
 #ifdef _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         : _T1(_STD::move(__p.first())), _T2(_STD::move(__p.second())) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return *this;}
@@ -1906,7 +1900,7 @@ public:
 #ifdef _LIBCPP_MOVE
     __compressed_pair(__compressed_pair&& __p)
         : base(_STD::move(__p)) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first()       {return base::first();}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const {return base::first();}
@@ -1966,14 +1960,14 @@ private:
         unique_ptr(const unique_ptr<_Up, _Ep>&);
     template <class _Up, class _Ep>
         unique_ptr& operator=(const unique_ptr<_Up, _Ep>&);
-#else
+#else  // _LIBCPP_MOVE
     unique_ptr(unique_ptr&);
     template <class _Up, class _Ep>
         unique_ptr(unique_ptr<_Up, _Ep>&);
     unique_ptr& operator=(unique_ptr&);
     template <class _Up, class _Ep>
         unique_ptr& operator=(unique_ptr<_Up, _Ep>&);
-#endif
+#endif  // _LIBCPP_MOVE
 
     struct __nat {int __for_bool_;};
 
@@ -2060,7 +2054,7 @@ public:
                 __ptr_.second() = _STD::forward<_Ep>(__u.get_deleter());
                 return *this;
             }
-#else
+#else  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY operator __rv<unique_ptr>()
     {
@@ -2091,7 +2085,7 @@ public:
         operator=(auto_ptr<_Up> __p)
             {reset(__p.release()); return *this;}
 
-#endif
+#endif  // _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY ~unique_ptr() {reset();}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(nullptr_t)
@@ -2139,14 +2133,14 @@ private:
 #ifdef _LIBCPP_MOVE
     unique_ptr(const unique_ptr&);
     unique_ptr& operator=(const unique_ptr&);
-#else
+#else  // _LIBCPP_MOVE
     unique_ptr(unique_ptr&);
     template <class _Up>
         unique_ptr(unique_ptr<_Up>&);
     unique_ptr& operator=(unique_ptr&);
     template <class _Up>
         unique_ptr& operator=(unique_ptr<_Up>&);
-#endif
+#endif  // _LIBCPP_MOVE
 
     struct __nat {int __for_bool_;};
 
@@ -2216,7 +2210,7 @@ public:
             __ptr_.second() = _STD::forward<deleter_type>(__u.get_deleter());
             return *this;
         }
-#else
+#else  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(pointer __p)
         : __ptr_(__p)
@@ -2246,7 +2240,7 @@ public:
         return *this;
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY ~unique_ptr() {reset();}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(nullptr_t)
@@ -2294,7 +2288,7 @@ public:
         if (__tmp)
             __ptr_.second()(__tmp);
     }
-#else
+#else  // _LIBCPP_MOVE
     _LIBCPP_INLINE_VISIBILITY void reset(pointer __p = pointer())
     {
         pointer __tmp = __ptr_.first();
@@ -2302,11 +2296,11 @@ public:
         if (__tmp)
             __ptr_.second()(__tmp);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 
     _LIBCPP_INLINE_VISIBILITY void swap(unique_ptr& __u) {__ptr_.swap(__u.__ptr_);}
 private:
-    
+
 #ifndef _LIBCPP_MOVE
     template <class _Up>
         explicit unique_ptr(_Up);
@@ -2321,7 +2315,7 @@ private:
                          is_convertible<_Up, pointer>::value,
                          __nat
                       >::type = __nat());
-#endif
+#endif  // _LIBCPP_MOVE
 };
 
 template <class _Tp, class _Dp>
@@ -2572,7 +2566,7 @@ __shared_ptr_pointer<_Tp, _Dp, _Alloc>::__get_deleter(const type_info& __t) cons
     return __t == typeid(_Dp) ? &__data_.first().second() : 0;
 }
 
-#endif
+#endif  // _LIBCPP_NO_RTTI
 
 template <class _Tp, class _Dp, class _Alloc>
 void
@@ -2653,8 +2647,8 @@ template<class _Tp> class enable_shared_from_this;
 template<class _Tp>
 class shared_ptr
 {
-public: 
-    typedef _Tp element_type; 
+public:
+    typedef _Tp element_type;
 private:
     element_type*      __ptr_;
     __shared_weak_count* __cntrl_;
@@ -2664,58 +2658,60 @@ public:
     shared_ptr();
     shared_ptr(nullptr_t);
     template<class _Yp> explicit shared_ptr(_Yp* __p);
-    template<class _Yp, class _Dp> shared_ptr(_Yp* __p, _Dp __d); 
-    template<class _Yp, class _Dp, class _Alloc> shared_ptr(_Yp* __p, _Dp __d, _Alloc __a); 
+    template<class _Yp, class _Dp> shared_ptr(_Yp* __p, _Dp __d);
+    template<class _Yp, class _Dp, class _Alloc> shared_ptr(_Yp* __p, _Dp __d, _Alloc __a);
     template <class _Dp> shared_ptr(nullptr_t __p, _Dp __d);
     template <class _Dp, class _Alloc> shared_ptr(nullptr_t __p, _Dp __d, _Alloc __a);
-    template<class _Yp> shared_ptr(const shared_ptr<_Yp>& __r, element_type *__p); 
+    template<class _Yp> shared_ptr(const shared_ptr<_Yp>& __r, element_type *__p);
     shared_ptr(const shared_ptr& __r);
     template<class _Yp>
         shared_ptr(const shared_ptr<_Yp>& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
     shared_ptr(shared_ptr&& __r);
     template<class _Yp> shared_ptr(shared_ptr<_Yp>&& __r,
-                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat()); 
-#endif
+                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
+#endif  // _LIBCPP_MOVE
     template<class _Yp> explicit shared_ptr(const weak_ptr<_Yp>& __r,
-                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type= __nat()); 
-#ifdef _LIBCPP_MOVE    
-    template<class _Yp> shared_ptr(auto_ptr<_Yp>&& __r); 
+                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type= __nat());
+#ifdef _LIBCPP_MOVE
+    template<class _Yp> shared_ptr(auto_ptr<_Yp>&& __r);
+#else
+    template<class _Yp> shared_ptr(auto_ptr<_Yp> __r);
 #endif
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
 private:
-    template <class _Yp, class _Dp> shared_ptr(const unique_ptr<_Yp, _Dp>& __r);// = delete; 
+    template <class _Yp, class _Dp> shared_ptr(const unique_ptr<_Yp, _Dp>& __r);// = delete;
 public:
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>&&,
        typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>&&,
        typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-#else
+#else  // _LIBCPP_MOVE
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>,
        typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
     template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>,
        typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-#endif
+#endif  // _LIBCPP_MOVE
 
     ~shared_ptr();
 
-    shared_ptr& operator=(const shared_ptr& __r); 
-    template<class _Yp> shared_ptr& operator=(const shared_ptr<_Yp>& __r); 
-#ifdef _LIBCPP_MOVE    
-    shared_ptr& operator=(shared_ptr&& __r); 
-    template<class _Yp> shared_ptr& operator=(shared_ptr<_Yp>&& __r); 
-    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp>&& __r); 
-#else
-    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp> __r); 
+    shared_ptr& operator=(const shared_ptr& __r);
+    template<class _Yp> shared_ptr& operator=(const shared_ptr<_Yp>& __r);
+#ifdef _LIBCPP_MOVE
+    shared_ptr& operator=(shared_ptr&& __r);
+    template<class _Yp> shared_ptr& operator=(shared_ptr<_Yp>&& __r);
+    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp>&& __r);
+#else  // _LIBCPP_MOVE
+    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp> __r);
 #endif
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
 private:
-    template <class _Yp, class _Dp> shared_ptr& operator=(const unique_ptr<_Yp, _Dp>& __r);// = delete; 
+    template <class _Yp, class _Dp> shared_ptr& operator=(const unique_ptr<_Yp, _Dp>& __r);// = delete;
 public:
-    template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp>&& __r); 
-#else
-    template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp> __r); 
+    template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp>&& __r);
+#else  // _LIBCPP_MOVE
+    template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp> __r);
 #endif
 
     void swap(shared_ptr& __r);
@@ -2740,7 +2736,7 @@ public:
     template <class _Dp>
         _Dp* __get_deleter() const
             {return (_Dp*)(__cntrl_ ? __cntrl_->__get_deleter(typeid(_Dp)) : 0);}
-#endif
+#endif  // _LIBCPP_NO_RTTI
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -2837,7 +2833,7 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typedef __shared_ptr_pointer<_Yp*, _Dp, allocator<_Yp> > _CntrlBlk;
         __cntrl_ = new _CntrlBlk(__p, __d, allocator<_Yp>());
         __enable_weak_this(__p);
@@ -2848,7 +2844,7 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d)
         __d(__p);
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template<class _Tp>
@@ -2859,7 +2855,7 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typedef __shared_ptr_pointer<nullptr_t, _Dp, allocator<_Tp> > _CntrlBlk;
         __cntrl_ = new _CntrlBlk(__p, __d, allocator<_Tp>());
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -2869,7 +2865,7 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d)
         __d(__p);
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template<class _Tp>
@@ -2880,7 +2876,7 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d, _Alloc __a)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typedef __shared_ptr_pointer<_Yp*, _Dp, _Alloc> _CntrlBlk;
         typedef typename _Alloc::template rebind<_CntrlBlk>::other _A2;
         typedef __allocator_destructor<_A2> _D2;
@@ -2896,7 +2892,7 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d, _Alloc __a)
         __d(__p);
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template<class _Tp>
@@ -2907,7 +2903,7 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d, _Alloc __a)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         typedef __shared_ptr_pointer<nullptr_t, _Dp, _Alloc> _CntrlBlk;
         typedef typename _Alloc::template rebind<_CntrlBlk>::other _A2;
         typedef __allocator_destructor<_A2> _D2;
@@ -2922,7 +2918,7 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d, _Alloc __a)
         __d(__p);
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template<class _Tp>
@@ -2982,11 +2978,11 @@ shared_ptr<_Tp>::shared_ptr(shared_ptr<_Yp>&& __r,
     __r.__cntrl_ = 0;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template<class _Tp>
 template<class _Yp>
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
 shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>&& __r)
 #else
 shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
@@ -3001,7 +2997,7 @@ shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
 
 template<class _Tp>
 template <class _Yp, class _Dp>
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
@@ -3017,7 +3013,7 @@ shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
 
 template<class _Tp>
 template <class _Yp, class _Dp>
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
@@ -3244,7 +3240,7 @@ shared_ptr<_Tp>::operator=(const shared_ptr<_Yp>& __r)
     return *this;
 }
 
-#ifdef _LIBCPP_MOVE    
+#ifdef _LIBCPP_MOVE
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -3285,13 +3281,13 @@ shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp>&& __r)
     return *this;
 }
 
-#else
+#else  // _LIBCPP_MOVE
 
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
-shared_ptr<_Tp>::operator=(auto_ptr<_Yp>& __r)
+shared_ptr<_Tp>::operator=(auto_ptr<_Yp> __r)
 {
     shared_ptr(__r).swap(*this);
     return *this;
@@ -3307,7 +3303,7 @@ shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp> __r)
     return *this;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -3355,7 +3351,7 @@ shared_ptr<_Tp>::reset(_Yp* __p, _Dp __d, _Alloc __a)
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
-template<class _Tp, class ..._Args> 
+template<class _Tp, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>
 make_shared(_Args&& ...__args)
@@ -3363,7 +3359,7 @@ make_shared(_Args&& ...__args)
     return shared_ptr<_Tp>::make_shared(_STD::forward<_Args>(__args)...);
 }
 
-template<class _Tp, class _Alloc, class ..._Args> 
+template<class _Tp, class _Alloc, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>
 allocate_shared(const _Alloc& __a, _Args&& ...__args)
@@ -3397,7 +3393,7 @@ make_shared(_A0& __a0, _A1& __a1)
     return shared_ptr<_Tp>::make_shared(__a0, __a1);
 }
 
-template<class _Tp, class _A0, class _A1, class _A2> 
+template<class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>
 make_shared(_A0& __a0, _A1& __a1, _A2& __a2)
@@ -3505,38 +3501,38 @@ get_deleter(const shared_ptr<_Tp>& __p)
     return __p.template __get_deleter<_Dp>();
 }
 
-#endif
+#endif  // _LIBCPP_NO_RTTI
 
 template<class _Tp>
 class weak_ptr
 {
-public: 
-    typedef _Tp element_type; 
+public:
+    typedef _Tp element_type;
 private:
     element_type*        __ptr_;
     __shared_weak_count* __cntrl_;
 
-public: 
-    weak_ptr(); 
+public:
+    weak_ptr();
     template<class _Yp> weak_ptr(shared_ptr<_Yp> const& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
-    weak_ptr(weak_ptr const& __r); 
+    weak_ptr(weak_ptr const& __r);
     template<class _Yp> weak_ptr(weak_ptr<_Yp> const& __r,
-                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat()); 
-    
-    ~weak_ptr(); 
-    
-    weak_ptr& operator=(weak_ptr const& __r); 
-    template<class _Yp> weak_ptr& operator=(weak_ptr<_Yp> const& __r); 
-    template<class _Yp> weak_ptr& operator=(shared_ptr<_Yp> const& __r); 
-    
-    void swap(weak_ptr& __r); 
-    void reset(); 
-    
+                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
+
+    ~weak_ptr();
+
+    weak_ptr& operator=(weak_ptr const& __r);
+    template<class _Yp> weak_ptr& operator=(weak_ptr<_Yp> const& __r);
+    template<class _Yp> weak_ptr& operator=(shared_ptr<_Yp> const& __r);
+
+    void swap(weak_ptr& __r);
+    void reset();
+
     long use_count() const {return __cntrl_ ? __cntrl_->use_count() : 0;}
     bool expired() const {return __cntrl_ == 0 || __cntrl_->use_count() == 0;}
-    shared_ptr<_Tp> lock() const; 
-    template<class _Up> bool owner_before(const shared_ptr<_Up>& __r) const 
+    shared_ptr<_Tp> lock() const;
+    template<class _Up> bool owner_before(const shared_ptr<_Up>& __r) const
         {return __cntrl_ < __r.__cntrl_;}
     template<class _Up> bool owner_before(const weak_ptr<_Up>& __r) const
         {return __cntrl_ < __r.__cntrl_;}
@@ -3604,7 +3600,7 @@ weak_ptr<_Tp>::operator=(weak_ptr const& __r)
 }
 
 template<class _Tp>
-template<class _Yp> 
+template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 weak_ptr<_Tp>&
 weak_ptr<_Tp>::operator=(weak_ptr<_Yp> const& __r)
@@ -3614,7 +3610,7 @@ weak_ptr<_Tp>::operator=(weak_ptr<_Yp> const& __r)
 }
 
 template<class _Tp>
-template<class _Yp> 
+template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 weak_ptr<_Tp>&
 weak_ptr<_Tp>::operator=(shared_ptr<_Yp> const& __r)
@@ -3674,26 +3670,26 @@ weak_ptr<_Tp>::lock() const
     return __r;
 }
 
-template <class _Tp> struct owner_less; 
+template <class _Tp> struct owner_less;
 
 template <class _Tp>
-struct owner_less<shared_ptr<_Tp> > 
+struct owner_less<shared_ptr<_Tp> >
     : binary_function<shared_ptr<_Tp>, shared_ptr<_Tp>, bool>
-{ 
-    typedef bool result_type; 
+{
+    typedef bool result_type;
     bool operator()(shared_ptr<_Tp> const& __x, shared_ptr<_Tp> const& __y) const
         {return __x.owner_before(__y);}
     bool operator()(shared_ptr<_Tp> const& __x,   weak_ptr<_Tp> const& __y) const
         {return __x.owner_before(__y);}
     bool operator()(  weak_ptr<_Tp> const& __x, shared_ptr<_Tp> const& __y) const
         {return __x.owner_before(__y);}
-}; 
+};
 
 template <class _Tp>
-struct owner_less<weak_ptr<_Tp> > 
+struct owner_less<weak_ptr<_Tp> >
     : binary_function<weak_ptr<_Tp>, weak_ptr<_Tp>, bool>
 {
-    typedef bool result_type; 
+    typedef bool result_type;
     bool operator()(  weak_ptr<_Tp> const& __x,   weak_ptr<_Tp> const& __y) const
         {return __x.owner_before(__y);}
     bool operator()(shared_ptr<_Tp> const& __x,   weak_ptr<_Tp> const& __y) const
@@ -3706,12 +3702,12 @@ template<class _Tp>
 class enable_shared_from_this
 {
     mutable weak_ptr<_Tp> __weak_this_;
-protected: 
+protected:
     enable_shared_from_this() {}
     enable_shared_from_this(enable_shared_from_this const&) {}
     enable_shared_from_this& operator=(enable_shared_from_this const&) {return *this;}
     ~enable_shared_from_this() {}
-public: 
+public:
     shared_ptr<_Tp> shared_from_this() {return shared_ptr<_Tp>(__weak_this_);}
     shared_ptr<_Tp const> shared_from_this() const {return shared_ptr<const _Tp>(__weak_this_);}
 
@@ -3729,7 +3725,7 @@ struct hash<shared_ptr<_Tp> >
     }
 };
 
-//enum class 
+//enum class
 struct pointer_safety
 {
     enum _
@@ -3753,7 +3749,7 @@ void* __undeclare_reachable(void*);
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-_Tp* 
+_Tp*
 undeclare_reachable(_Tp* __p)
 {
     return static_cast<_Tp*>(__undeclare_reachable(__p));

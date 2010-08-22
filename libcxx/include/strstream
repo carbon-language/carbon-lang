@@ -152,7 +152,7 @@ public:
 #ifdef _LIBCPP_MOVE
     strstreambuf(strstreambuf&& __rhs);
     strstreambuf& operator=(strstreambuf&& __rhs);
-#endif
+#endif  // _LIBCPP_MOVE
 
     virtual ~strstreambuf();
 
@@ -214,7 +214,7 @@ public:
         __sb_ = _STD::move(__rhs.__sb_);
         return *this;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 
     virtual ~istrstream();
 
@@ -256,7 +256,7 @@ public:
         __sb_ = _STD::move(__rhs.__sb_);
         return *this;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 
     virtual ~ostrstream();
 
@@ -307,7 +307,7 @@ public:
         __sb_ = _STD::move(__rhs.__sb_);
         return *this;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 
     virtual ~strstream();
 

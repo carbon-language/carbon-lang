@@ -469,21 +469,21 @@ template <class RandomAccessIterator, class Compare>
     void
     sort_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp);
 
-template <class RandomAccessIterator> 
+template <class RandomAccessIterator>
     bool
-    is_heap(RandomAccessIterator first, RandomAccessiterator last); 
+    is_heap(RandomAccessIterator first, RandomAccessiterator last);
 
-template <class RandomAccessIterator, class Compare> 
+template <class RandomAccessIterator, class Compare>
     bool
-    is_heap(RandomAccessIterator first, RandomAccessiterator last, Compare comp); 
+    is_heap(RandomAccessIterator first, RandomAccessiterator last, Compare comp);
 
-template <class RandomAccessIterator> 
+template <class RandomAccessIterator>
     RandomAccessIterator
-    is_heap_until(RandomAccessIterator first, RandomAccessiterator last); 
+    is_heap_until(RandomAccessIterator first, RandomAccessiterator last);
 
-template <class RandomAccessIterator, class Compare> 
+template <class RandomAccessIterator, class Compare>
     RandomAccessIterator
-    is_heap_until(RandomAccessIterator first, RandomAccessiterator last, Compare comp); 
+    is_heap_until(RandomAccessIterator first, RandomAccessiterator last, Compare comp);
 
 template <class ForwardIterator>
     ForwardIterator
@@ -567,7 +567,7 @@ template <class InputIterator1, class InputIterator2, class Compare>
                             InputIterator2 first2, InputIterator2 last2, Compare comp);
 
 template <class BidirectionalIterator>
-    bool 
+    bool
     next_permutation(BidirectionalIterator first, BidirectionalIterator last);
 
 template <class BidirectionalIterator, class Compare>
@@ -1200,7 +1200,7 @@ __search(_RandomAccessIterator1 __first1, _RandomAccessIterator1 __last1,
                 break;
             ++__first1;
         }
-#else  // _LIBCPP_UNROLL_LOOPS
+#else  // !_LIBCPP_UNROLL_LOOPS
         for (_D1 __loop_unroll = (__s - __first1) / 4; __loop_unroll > 0; --__loop_unroll)
         {
             if (__pred(*__first1, *__first2))
@@ -1230,7 +1230,7 @@ __search(_RandomAccessIterator1 __first1, _RandomAccessIterator1 __last1,
             return __last1;
         }
     __phase2:
-#endif  // _LIBCPP_UNROLL_LOOPS
+#endif  // !_LIBCPP_UNROLL_LOOPS
         _RandomAccessIterator1 __m1 = __first1;
         _RandomAccessIterator2 __m2 = __first2;
 #if !_LIBCPP_UNROLL_LOOPS
@@ -1245,7 +1245,7 @@ __search(_RandomAccessIterator1 __first1, _RandomAccessIterator1 __last1,
                  break;
              }
          }
-#else  // _LIBCPP_UNROLL_LOOPS
+#else  // !_LIBCPP_UNROLL_LOOPS
         ++__m2;
         ++__m1;
         for (_D2 __loop_unroll = (__last2 - __m2) / 4; __loop_unroll > 0; --__loop_unroll)
@@ -1281,7 +1281,7 @@ __search(_RandomAccessIterator1 __first1, _RandomAccessIterator1 __last1,
         }
     __continue:
         ++__first1;
-#endif  // _LIBCPP_UNROLL_LOOPS
+#endif  // !_LIBCPP_UNROLL_LOOPS
     }
 }
 
@@ -1995,7 +1995,6 @@ __unique_copy(_InputIterator __first, _InputIterator __last, _ForwardIterator __
     return __result;
 }
 
-
 template <class _InputIterator, class _OutputIterator, class _BinaryPredicate>
 inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
@@ -2123,7 +2122,7 @@ __rotate(_RandomAccessIterator __first, _RandomAccessIterator __middle, _RandomA
 {
     typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
     typedef typename iterator_traits<_RandomAccessIterator>::value_type value_type;
-    
+
     if (__first == __middle)
         return __last;
     if (__middle == __last)
@@ -3147,7 +3146,7 @@ is_sorted_until(_ForwardIterator __first, _ForwardIterator __last, _Compare __co
     return __last;
 }
 
-template<class _ForwardIterator> 
+template<class _ForwardIterator>
 inline _LIBCPP_INLINE_VISIBILITY
 _ForwardIterator
 is_sorted_until(_ForwardIterator __first, _ForwardIterator __last)
@@ -3165,7 +3164,7 @@ is_sorted(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
     return _STD::is_sorted_until(__first, __last, __comp) == __last;
 }
 
-template<class _ForwardIterator> 
+template<class _ForwardIterator>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 is_sorted(_ForwardIterator __first, _ForwardIterator __last)
@@ -3616,10 +3615,10 @@ sort(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __com
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __sort<_Comp_ref>(__first, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __sort<_Comp_ref>(__first, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -3713,10 +3712,10 @@ lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __valu
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __lower_bound<_Comp_ref>(__first, __last, __value, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __lower_bound<_Comp_ref>(__first, __last, __value, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _ForwardIterator, class _Tp>
@@ -3761,10 +3760,10 @@ upper_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __valu
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __upper_bound<_Comp_ref>(__first, __last, __value, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __upper_bound<_Comp_ref>(__first, __last, __value, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _ForwardIterator, class _Tp>
@@ -3821,10 +3820,10 @@ equal_range(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __valu
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __equal_range<_Comp_ref>(__first, __last, __value, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __equal_range<_Comp_ref>(__first, __last, __value, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _ForwardIterator, class _Tp>
@@ -3856,10 +3855,10 @@ binary_search(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __va
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __binary_search<_Comp_ref>(__first, __last, __value, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __binary_search<_Comp_ref>(__first, __last, __value, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _ForwardIterator, class _Tp>
@@ -3906,10 +3905,10 @@ merge(_InputIterator1 __first1, _InputIterator1 __last1,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return _STD::__merge<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return _STD::__merge<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2, class _OutputIterator>
@@ -4081,11 +4080,11 @@ inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle, _
     __debug_less<_Compare> __c(__comp);
     return _STD::__inplace_merge<_Comp_ref>(__first, __middle, __last, __c, __len1, __len2,
                                             __buf.first, __buf.second);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return _STD::__inplace_merge<_Comp_ref>(__first, __middle, __last, __comp, __len1, __len2,
                                             __buf.first, __buf.second);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _BidirectionalIterator>
@@ -4291,10 +4290,10 @@ stable_sort(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compar
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __stable_sort<_Comp_ref>(__first, __last, __c, __len, __buf.first, __buf.second);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __stable_sort<_Comp_ref>(__first, __last, __comp, __len, __buf.first, __buf.second);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4334,7 +4333,7 @@ is_heap_until(_RandomAccessIterator __first, _RandomAccessIterator __last, _Comp
     return __last;
 }
 
-template<class _RandomAccessIterator> 
+template<class _RandomAccessIterator>
 inline _LIBCPP_INLINE_VISIBILITY
 _RandomAccessIterator
 is_heap_until(_RandomAccessIterator __first, _RandomAccessIterator __last)
@@ -4352,7 +4351,7 @@ is_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __
     return _STD::is_heap_until(__first, __last, __comp) == __last;
 }
 
-template<class _RandomAccessIterator> 
+template<class _RandomAccessIterator>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 is_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
@@ -4440,10 +4439,10 @@ push_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare 
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __push_heap_back<_Comp_ref>(__first, __last, __c, __last - __first);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __push_heap_back<_Comp_ref>(__first, __last, __comp, __last - __first);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4478,10 +4477,10 @@ pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare _
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __pop_heap<_Comp_ref>(__first, __last, __c, __last - __first);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __pop_heap<_Comp_ref>(__first, __last, __comp, __last - __first);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4518,10 +4517,10 @@ make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare 
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __make_heap<_Comp_ref>(__first, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __make_heap<_Comp_ref>(__first, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4552,10 +4551,10 @@ sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare 
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __sort_heap<_Comp_ref>(__first, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __sort_heap<_Comp_ref>(__first, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4596,10 +4595,10 @@ partial_sort(_RandomAccessIterator __first, _RandomAccessIterator __middle, _Ran
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __partial_sort<_Comp_ref>(__first, __middle, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __partial_sort<_Comp_ref>(__first, __middle, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4646,10 +4645,10 @@ partial_sort_copy(_InputIterator __first, _InputIterator __last,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __partial_sort_copy<_Comp_ref>(__first, __last, __result_first, __result_last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __partial_sort_copy<_Comp_ref>(__first, __last, __result_first, __result_last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator, class _RandomAccessIterator>
@@ -4858,10 +4857,10 @@ nth_element(_RandomAccessIterator __first, _RandomAccessIterator __nth, _RandomA
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     __nth_element<_Comp_ref>(__first, __nth, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     __nth_element<_Comp_ref>(__first, __nth, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _RandomAccessIterator>
@@ -4899,10 +4898,10 @@ includes(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __fi
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __includes<_Comp_ref>(__first1, __last1, __first2, __last2, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __includes<_Comp_ref>(__first1, __last1, __first2, __last2, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2>
@@ -4952,10 +4951,10 @@ set_union(_InputIterator1 __first1, _InputIterator1 __last1,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __set_union<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __set_union<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2, class _OutputIterator>
@@ -5004,10 +5003,10 @@ set_intersection(_InputIterator1 __first1, _InputIterator1 __last1,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __set_intersection<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __set_intersection<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2, class _OutputIterator>
@@ -5058,10 +5057,10 @@ set_difference(_InputIterator1 __first1, _InputIterator1 __last1,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __set_difference<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __set_difference<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2, class _OutputIterator>
@@ -5117,10 +5116,10 @@ set_symmetric_difference(_InputIterator1 __first1, _InputIterator1 __last1,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __set_symmetric_difference<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __set_symmetric_difference<_Comp_ref>(__first1, __last1, __first2, __last2, __result, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2, class _OutputIterator>
@@ -5161,10 +5160,10 @@ lexicographical_compare(_InputIterator1 __first1, _InputIterator1 __last1,
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __lexicographical_compare<_Comp_ref>(__first1, __last1, __first2, __last2, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __lexicographical_compare<_Comp_ref>(__first1, __last1, __first2, __last2, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _InputIterator1, class _InputIterator2>
@@ -5216,15 +5215,15 @@ next_permutation(_BidirectionalIterator __first, _BidirectionalIterator __last, 
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __next_permutation<_Comp_ref>(__first, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __next_permutation<_Comp_ref>(__first, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _BidirectionalIterator>
 inline _LIBCPP_INLINE_VISIBILITY
-bool 
+bool
 next_permutation(_BidirectionalIterator __first, _BidirectionalIterator __last)
 {
     return _STD::next_permutation(__first, __last,
@@ -5269,10 +5268,10 @@ prev_permutation(_BidirectionalIterator __first, _BidirectionalIterator __last, 
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
     return __prev_permutation<_Comp_ref>(__first, __last, __c);
-#else
+#else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
     return __prev_permutation<_Comp_ref>(__first, __last, __comp);
-#endif
+#endif  // _LIBCPP_DEBUG
 }
 
 template <class _BidirectionalIterator>

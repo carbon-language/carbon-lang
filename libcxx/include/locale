@@ -264,7 +264,7 @@ __nolocale_isdigit(int __c)
     return isdigit_l(__c, 0);
 }
 
-#else  /* !__APPLE__ */
+#else  // __APPLE__
 inline int
 __nolocale_sprintf(char* __restrict __str,
                    const char* __restrict __format, ...)
@@ -315,7 +315,7 @@ __nolocale_isdigit(int __c)
 {
     return isdigit(__c);
 }
-#endif  /* __APPLE__ */
+#endif  // __APPLE__
 
 // __scan_keyword
 // Scans [__b, __e) until a match is found in the basic_strings range
@@ -455,7 +455,6 @@ struct __num_get_base
 
 void __check_grouping(const string& __grouping, unsigned* __g, unsigned* __g_end,
                       ios_base::iostate& __err);
-
 
 template <class _CharT>
 struct __num_get
@@ -836,7 +835,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
@@ -871,8 +870,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
-                                    __thousands_sep, __grouping, __g, __g_end, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
+                                    __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
@@ -906,7 +905,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
@@ -941,7 +940,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
@@ -976,7 +975,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
@@ -1011,7 +1010,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
@@ -1039,8 +1038,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[32];
     char_type __decimal_point;
     char_type __thousands_sep;
-    string __grouping = this->__stage2_float_prep(__iob, __atoms, 
-                                                  __decimal_point, 
+    string __grouping = this->__stage2_float_prep(__iob, __atoms,
+                                                  __decimal_point,
                                                   __thousands_sep);
     char __a[__num_get_base::__num_get_buf_sz] = {0};
     char* __a_end = __a;
@@ -1050,8 +1049,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     bool __in_units = true;
     char __exp = 'E';
     for (; __b != __e; ++__b)
-        if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end, 
-                                      __decimal_point, __thousands_sep, 
+        if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end,
+                                      __decimal_point, __thousands_sep,
                                       __grouping, __g, __g_end,
                                       __dc, __atoms))
             break;
@@ -1079,8 +1078,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[32];
     char_type __decimal_point;
     char_type __thousands_sep;
-    string __grouping = this->__stage2_float_prep(__iob, __atoms, 
-                                                  __decimal_point, 
+    string __grouping = this->__stage2_float_prep(__iob, __atoms,
+                                                  __decimal_point,
                                                   __thousands_sep);
     char __a[__num_get_base::__num_get_buf_sz] = {0};
     char* __a_end = __a;
@@ -1090,8 +1089,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     bool __in_units = true;
     char __exp = 'E';
     for (; __b != __e; ++__b)
-        if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end, 
-                                      __decimal_point, __thousands_sep, 
+        if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end,
+                                      __decimal_point, __thousands_sep,
                                       __grouping, __g, __g_end,
                                       __dc, __atoms))
             break;
@@ -1119,7 +1118,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[32];
     char_type __decimal_point;
     char_type __thousands_sep;
-    string __grouping = this->__stage2_float_prep(__iob, __atoms, 
+    string __grouping = this->__stage2_float_prep(__iob, __atoms,
                                                   __decimal_point,
                                                   __thousands_sep);
     char __a[__num_get_base::__num_get_buf_sz] = {0};
@@ -1130,8 +1129,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     bool __in_units = true;
     char __exp = 'E';
     for (; __b != __e; ++__b)
-        if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end, 
-                                      __decimal_point, __thousands_sep, 
+        if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end,
+                                      __decimal_point, __thousands_sep,
                                       __grouping, __g, __g_end,
                                       __dc, __atoms))
             break;
@@ -1168,8 +1167,8 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
-        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc, 
-                                    __thousands_sep, __grouping, 
+        if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
+                                    __thousands_sep, __grouping,
                                     __g, __g_end, __atoms))
             break;
     // Stage 3
@@ -2779,7 +2778,7 @@ public:
 protected:
 
     ~money_get() {}
-    
+
     virtual iter_type do_get(iter_type __b, iter_type __e, bool __intl,
                              ios_base& __iob, ios_base::iostate& __err,
                              long double& __v) const;
@@ -2867,7 +2866,7 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
                     return false;
                 }
             }
-            // drop through            
+            // drop through
         case money_base::none:
             if (__p != 3)
             {
@@ -3629,7 +3628,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     __wc.__cvtptr_ = nullptr;
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::~wstring_convert()
@@ -3693,7 +3692,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__wide_err_string_.empty())
         throw range_error("wstring_convert: from_bytes error");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __wide_err_string_;
 }
 
@@ -3781,7 +3780,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__byte_err_string_.empty())
         throw range_error("wstring_convert: to_bytes error");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return __byte_err_string_;
 }
 

@@ -310,13 +310,13 @@ public:
     iostate rdstate() const;
     void clear(iostate __state = goodbit);
     void setstate(iostate __state);
-    
-    bool good() const; 
-    bool eof() const; 
-    bool fail() const; 
-    bool bad() const; 
 
-    iostate exceptions() const; 
+    bool good() const;
+    bool eof() const;
+    bool fail() const;
+    bool bad() const;
+
+    iostate exceptions() const;
     void exceptions(iostate __except);
 
     void __set_badbit_and_consider_rethrow();
@@ -402,10 +402,10 @@ make_error_condition(io_errc __e)
 
 class ios_base::failure
     : public system_error
-{ 
-public: 
+{
+public:
     explicit failure(const string& __msg, const error_code& __ec = io_errc::stream);
-    explicit failure(const char* __msg, const error_code& __ec = io_errc::stream); 
+    explicit failure(const char* __msg, const error_code& __ec = io_errc::stream);
     virtual ~failure() throw();
 };
 

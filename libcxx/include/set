@@ -157,7 +157,6 @@ template <class Key, class Compare, class Allocator>
 void
 swap(set<Key, Compare, Allocator>& x, set<Key, Compare, Allocator>& y);
 
-
 template <class Key, class Compare = less<Key>,
           class Allocator = allocator<Key>>
 class multiset
@@ -369,7 +368,7 @@ public:
 #ifdef _LIBCPP_MOVE
     set(set&& __s)
         : __tree_(_STD::move(__s.__tree_)) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     explicit set(const allocator_type& __a)
         : __tree_(__a) {}
@@ -409,7 +408,7 @@ public:
             __tree_ = _STD::move(__s.__tree_);
             return *this;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
           iterator begin()       {return __tree_.begin();}
     const_iterator begin() const {return __tree_.begin();}
@@ -438,19 +437,19 @@ public:
     template <class... _Args>
         iterator emplace_hint(const_iterator __p, _Args&&... __args)
             {return __tree_.__emplace_hint_unique(__p, _STD::forward<_Args>(__args)...);}
-#endif
+#endif  // _LIBCPP_MOVE
     pair<iterator,bool> insert(const value_type& __v)
         {return __tree_.__insert_unique(__v);}
 #ifdef _LIBCPP_MOVE
     pair<iterator,bool> insert(value_type&& __v)
         {return __tree_.__insert_unique(_STD::move(__v));}
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const_iterator __p, const value_type& __v)
         {return __tree_.__insert_unique(__p, __v);}
 #ifdef _LIBCPP_MOVE
     iterator insert(const_iterator __p, value_type&& __v)
         {return __tree_.__insert_unique(__p, _STD::move(__v));}
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _InputIterator>
         void insert(_InputIterator __f, _InputIterator __l)
         {
@@ -507,7 +506,7 @@ set<_Key, _Compare, _Allocator>::set(set&& __s, const allocator_type& __a)
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Compare, class _Allocator>
 inline
@@ -573,7 +572,6 @@ swap(set<_Key, _Compare, _Allocator>& __x,
     __x.swap(__y);
 }
 
-
 template <class _Key, class _Compare = less<_Key>,
           class _Allocator = allocator<_Key> >
 class multiset
@@ -636,7 +634,7 @@ public:
 #ifdef _LIBCPP_MOVE
     multiset(multiset&& __s)
         : __tree_(_STD::move(__s.__tree_)) {}
-#endif
+#endif  // _LIBCPP_MOVE
     explicit multiset(const allocator_type& __a)
         : __tree_(__a) {}
     multiset(const multiset& __s, const allocator_type& __a)
@@ -673,7 +671,7 @@ public:
             __tree_ = _STD::move(__s.__tree_);
             return *this;
         }
-#endif
+#endif  // _LIBCPP_MOVE
 
           iterator begin()       {return __tree_.begin();}
     const_iterator begin() const {return __tree_.begin();}
@@ -702,19 +700,19 @@ public:
     template <class... _Args>
         iterator emplace_hint(const_iterator __p, _Args&&... __args)
             {return __tree_.__emplace_hint_multi(__p, _STD::forward<_Args>(__args)...);}
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const value_type& __v)
         {return __tree_.__insert_multi(__v);}
 #ifdef _LIBCPP_MOVE
     iterator insert(value_type&& __v)
         {return __tree_.__insert_multi(_STD::move(__v));}
-#endif
+#endif  // _LIBCPP_MOVE
     iterator insert(const_iterator __p, const value_type& __v)
         {return __tree_.__insert_multi(__p, __v);}
 #ifdef _LIBCPP_MOVE
     iterator insert(const_iterator __p, value_type&& __v)
         {return __tree_.__insert_multi(_STD::move(__v));}
-#endif
+#endif  // _LIBCPP_MOVE
     template <class _InputIterator>
         void insert(_InputIterator __f, _InputIterator __l)
         {
@@ -770,7 +768,7 @@ multiset<_Key, _Compare, _Allocator>::multiset(multiset&& __s, const allocator_t
     }
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 template <class _Key, class _Compare, class _Allocator>
 inline
@@ -834,7 +832,6 @@ swap(multiset<_Key, _Compare, _Allocator>& __x,
 {
     __x.swap(__y);
 }
-
 
 _LIBCPP_END_NAMESPACE_STD
 
