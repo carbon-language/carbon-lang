@@ -1107,6 +1107,8 @@ Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA) const {
     switch (Key) {
     case Action::InputClass:
     case Action::BindArchClass:
+    case Action::LipoJobClass:
+    case Action::DsymutilJobClass:
       assert(0 && "Invalid tool kind.");
     case Action::PreprocessJobClass:
     case Action::PrecompileJobClass:
