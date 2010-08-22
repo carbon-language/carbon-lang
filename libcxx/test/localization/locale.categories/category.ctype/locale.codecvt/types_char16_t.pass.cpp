@@ -14,10 +14,10 @@
 //     : public locale::facet,
 //       public codecvt_base
 // {
-// public: 
-//     typedef char16_t  intern_type; 
-//     typedef char      extern_type; 
-//     typedef mbstate_t state_type; 
+// public:
+//     typedef char16_t  intern_type;
+//     typedef char      extern_type;
+//     typedef mbstate_t state_type;
 //     ...
 // };
 

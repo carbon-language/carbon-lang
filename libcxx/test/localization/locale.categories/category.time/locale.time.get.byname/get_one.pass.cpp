@@ -11,7 +11,7 @@
 
 // class time_get_byname<charT, InputIterator>
 
-// iter_type get(iter_type s, iter_type end, ios_base& f, 
+// iter_type get(iter_type s, iter_type end, ios_base& f,
 //               ios_base::iostate& err, tm *t, char format, char modifier = 0) const;
 
 #include <locale>

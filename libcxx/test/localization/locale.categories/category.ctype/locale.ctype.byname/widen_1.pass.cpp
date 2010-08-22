@@ -26,7 +26,7 @@ int main()
         {
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
-    
+
             assert(f.widen(' ') == L' ');
             assert(f.widen('A') == L'A');
             assert(f.widen('\x07') == L'\x07');
@@ -41,7 +41,7 @@ int main()
         {
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
-    
+
             assert(f.widen(' ') == L' ');
             assert(f.widen('A') == L'A');
             assert(f.widen('\x07') == L'\x07');

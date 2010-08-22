@@ -25,7 +25,7 @@ int main()
             typedef std::ctype<char> F;
             const F& f = std::use_facet<F>(l);
             std::string in("\xDA A\x07.a1");
-    
+
             assert(f.tolower(&in[0], in.data() + in.size()) == in.data() + in.size());
             assert(in[0] == '\xDA');
             assert(in[1] == ' ');
@@ -42,7 +42,7 @@ int main()
             typedef std::ctype<char> F;
             const F& f = std::use_facet<F>(l);
             std::string in("\xDA A\x07.a1");
-    
+
             assert(f.tolower(&in[0], in.data() + in.size()) == in.data() + in.size());
             assert(in[0] == '\xDA');
             assert(in[1] == ' ');
@@ -59,7 +59,7 @@ int main()
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
             std::wstring in(L"\xDA A\x07.a1");
-    
+
             assert(f.tolower(&in[0], in.data() + in.size()) == in.data() + in.size());
             assert(in[0] == L'\xFA');
             assert(in[1] == L' ');
@@ -76,7 +76,7 @@ int main()
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
             std::wstring in(L"\xDA A\x07.a1");
-    
+
             assert(f.tolower(&in[0], in.data() + in.size()) == in.data() + in.size());
             assert(in[0] == L'\xDA');
             assert(in[1] == L' ');

@@ -31,7 +31,7 @@ int main()
             std::vector<F::mask> m(in.size());
             const wchar_t* h = f.is(in.data(), in.data() + in.size(), m.data());
             assert(h == in.data() + in.size());
-    
+
             // L'\x00DA'
             assert(!(m[0] & F::space));
             assert( (m[0] & F::print));
@@ -45,7 +45,7 @@ int main()
             assert(!(m[0] & F::blank));
             assert( (m[0] & F::alnum));
             assert( (m[0] & F::graph));
-    
+
             // L' '
             assert( (m[1] & F::space));
             assert( (m[1] & F::print));
@@ -59,7 +59,7 @@ int main()
             assert( (m[1] & F::blank));
             assert(!(m[1] & F::alnum));
             assert(!(m[1] & F::graph));
-    
+
             // L'A'
             assert(!(m[2] & F::space));
             assert( (m[2] & F::print));
@@ -73,7 +73,7 @@ int main()
             assert(!(m[2] & F::blank));
             assert( (m[2] & F::alnum));
             assert( (m[2] & F::graph));
-    
+
             // L'\x07'
             assert(!(m[3] & F::space));
             assert(!(m[3] & F::print));
@@ -87,7 +87,7 @@ int main()
             assert(!(m[3] & F::blank));
             assert(!(m[3] & F::alnum));
             assert(!(m[3] & F::graph));
-    
+
             // L'.'
             assert(!(m[4] & F::space));
             assert( (m[4] & F::print));
@@ -101,7 +101,7 @@ int main()
             assert(!(m[4] & F::blank));
             assert(!(m[4] & F::alnum));
             assert( (m[4] & F::graph));
-    
+
             // L'a'
             assert(!(m[5] & F::space));
             assert( (m[5] & F::print));
@@ -115,7 +115,7 @@ int main()
             assert(!(m[5] & F::blank));
             assert( (m[5] & F::alnum));
             assert( (m[5] & F::graph));
-    
+
             // L'1'
             assert(!(m[6] & F::space));
             assert( (m[6] & F::print));
@@ -140,7 +140,7 @@ int main()
             std::vector<F::mask> m(in.size());
             const wchar_t* h = f.is(in.data(), in.data() + in.size(), m.data());
             assert(h == in.data() + in.size());
-    
+
             // L'\x00DA'
             assert(!(m[0] & F::space));
             assert(!(m[0] & F::print));
@@ -154,7 +154,7 @@ int main()
             assert(!(m[0] & F::blank));
             assert(!(m[0] & F::alnum));
             assert(!(m[0] & F::graph));
-    
+
             // L' '
             assert( (m[1] & F::space));
             assert( (m[1] & F::print));
@@ -168,7 +168,7 @@ int main()
             assert( (m[1] & F::blank));
             assert(!(m[1] & F::alnum));
             assert(!(m[1] & F::graph));
-    
+
             // L'A'
             assert(!(m[2] & F::space));
             assert( (m[2] & F::print));
@@ -182,7 +182,7 @@ int main()
             assert(!(m[2] & F::blank));
             assert( (m[2] & F::alnum));
             assert( (m[2] & F::graph));
-    
+
             // L'\x07'
             assert(!(m[3] & F::space));
             assert(!(m[3] & F::print));
@@ -196,7 +196,7 @@ int main()
             assert(!(m[3] & F::blank));
             assert(!(m[3] & F::alnum));
             assert(!(m[3] & F::graph));
-    
+
             // L'.'
             assert(!(m[4] & F::space));
             assert( (m[4] & F::print));
@@ -210,7 +210,7 @@ int main()
             assert(!(m[4] & F::blank));
             assert(!(m[4] & F::alnum));
             assert( (m[4] & F::graph));
-    
+
             // L'a'
             assert(!(m[5] & F::space));
             assert( (m[5] & F::print));
@@ -224,7 +224,7 @@ int main()
             assert(!(m[5] & F::blank));
             assert( (m[5] & F::alnum));
             assert( (m[5] & F::graph));
-    
+
             // L'1'
             assert(!(m[6] & F::space));
             assert( (m[6] & F::print));

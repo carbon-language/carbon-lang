@@ -11,8 +11,8 @@
 
 // template <> class codecvt<wchar_t, char, mbstate_t>
 
-// result in(stateT& state, 
-//           const externT* from, const externT* from_end, const externT*& from_next, 
+// result in(stateT& state,
+//           const externT* from, const externT* from_end, const externT*& from_next,
 //           internT* to, internT* to_end, internT*& to_next) const;
 
 #include <locale>

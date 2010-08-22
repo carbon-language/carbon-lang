@@ -56,4 +56,4 @@ int main()
         assert(f.sbumpc() == L'2');
         assert(f.sgetc() == L'3');
     }
-}    
+}

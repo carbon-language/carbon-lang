@@ -9,16 +9,16 @@
 
 // <locale>
 
-// template <class charT> 
+// template <class charT>
 // class collate_byname
 //     : public collate<charT>
 // {
-// public: 
-//     typedef basic_string<charT> string_type; 
-//     explicit collate_byname(const char*, size_t refs = 0); 
-//     explicit collate_byname(const string&, size_t refs = 0); 
-// protected: 
-//     ~collate_byname(); 
+// public:
+//     typedef basic_string<charT> string_type;
+//     explicit collate_byname(const char*, size_t refs = 0);
+//     explicit collate_byname(const string&, size_t refs = 0);
+// protected:
+//     ~collate_byname();
 // };
 
 #include <locale>

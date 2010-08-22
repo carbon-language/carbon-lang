@@ -23,7 +23,7 @@ int main()
         {
             typedef std::ctype<char> F;
             const F& f = std::use_facet<F>(l);
-    
+
             assert(f.tolower(' ') == ' ');
             assert(f.tolower('A') == 'a');
             assert(f.tolower('\x07') == '\x07');
@@ -39,7 +39,7 @@ int main()
         {
             typedef std::ctype<char> F;
             const F& f = std::use_facet<F>(l);
-    
+
             assert(f.tolower(' ') == ' ');
             assert(f.tolower('A') == 'a');
             assert(f.tolower('\x07') == '\x07');
@@ -55,7 +55,7 @@ int main()
         {
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
-    
+
             assert(f.tolower(L' ') == L' ');
             assert(f.tolower(L'A') == L'a');
             assert(f.tolower(L'\x07') == L'\x07');
@@ -71,7 +71,7 @@ int main()
         {
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
-    
+
             assert(f.tolower(L' ') == L' ');
             assert(f.tolower(L'A') == L'a');
             assert(f.tolower(L'\x07') == L'\x07');

@@ -11,7 +11,7 @@
 
 // class time_put<charT, OutputIterator>
 
-// iter_type put(iter_type s, ios_base& str, char_type fill, const tm* t, 
+// iter_type put(iter_type s, ios_base& str, char_type fill, const tm* t,
 //               const charT* pattern, const charT* pat_end) const;
 
 #include <locale>

@@ -11,7 +11,7 @@
 
 // class locale::id
 // {
-// public: 
+// public:
 //     id();
 //     void operator=(const id&) = delete;
 //     id(const id&) = delete;

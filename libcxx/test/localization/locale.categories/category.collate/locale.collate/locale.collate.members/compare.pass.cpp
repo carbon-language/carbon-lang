@@ -11,12 +11,11 @@
 
 // template <class charT> class collate;
 
-// int compare(const charT* low1, const charT* high1, 
+// int compare(const charT* low1, const charT* high1,
 //             const charT* low2, const charT* high2) const;
 
 #include <locale>
 #include <cassert>
-
 
 int main()
 {

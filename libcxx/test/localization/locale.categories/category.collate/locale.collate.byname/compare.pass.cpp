@@ -11,7 +11,7 @@
 
 // template <class charT> class collate_byname
 
-// int compare(const charT* low1, const charT* high1, 
+// int compare(const charT* low1, const charT* high1,
 //             const charT* low2, const charT* high2) const;
 
 //  I'm currently unable to confirm that collation based on named locales

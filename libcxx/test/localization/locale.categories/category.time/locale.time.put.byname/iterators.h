@@ -30,4 +30,4 @@ public:
         {output_iterator tmp(*this); ++(*this); return tmp;}
 };
 
-#endif
+#endif  // ITERATORS_H

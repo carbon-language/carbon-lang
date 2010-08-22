@@ -16,7 +16,7 @@
 // public:
 //     explicit time_put_byname(const char* nm, size_t refs = 0);
 //     explicit time_put_byname(const string& nm, size_t refs = 0);
-// 
+//
 // protected:
 //     ~time_put_byname();
 // };

@@ -10,12 +10,12 @@
 // <locale>
 
 // class locale::facet
-// { 
-// protected: 
-//     explicit facet(size_t refs = 0); 
-//     virtual ~facet(); 
-//     facet(const facet&) = delete; 
-//     void operator=(const facet&) = delete; 
+// {
+// protected:
+//     explicit facet(size_t refs = 0);
+//     virtual ~facet();
+//     facet(const facet&) = delete;
+//     void operator=(const facet&) = delete;
 // };
 
 // This test isn't portable

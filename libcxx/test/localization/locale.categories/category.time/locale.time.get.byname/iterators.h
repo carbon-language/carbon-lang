@@ -52,4 +52,4 @@ operator!=(const input_iterator<T>& x, const input_iterator<U>& y)
     return !(x == y);
 }
 
-#endif
+#endif  // ITERATORS_H

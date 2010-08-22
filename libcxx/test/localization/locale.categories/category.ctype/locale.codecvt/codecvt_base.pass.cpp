@@ -11,7 +11,7 @@
 
 // class codecvt_base
 // {
-// public: 
+// public:
 //     enum result {ok, partial, error, noconv};
 // };
 

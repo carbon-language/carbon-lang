@@ -9,12 +9,12 @@
 
 // <locale>
 
-// template <class charT, class OutputIterator = ostreambuf_iterator<charT> > 
+// template <class charT, class OutputIterator = ostreambuf_iterator<charT> >
 // class time_put
 //     : public locale::facet
 // {
-// public: 
-//     typedef charT          char_type; 
+// public:
+//     typedef charT          char_type;
 //     typedef OutputIterator iter_type;
 
 #include <locale>

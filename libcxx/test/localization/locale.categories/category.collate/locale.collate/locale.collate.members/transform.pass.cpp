@@ -17,7 +17,6 @@
 #include <string>
 #include <cassert>
 
-
 int main()
 {
     std::locale l = std::locale::classic();

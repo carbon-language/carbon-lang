@@ -13,12 +13,12 @@
 // class ctype_byname
 //     : public ctype<CharT>
 // {
-// public: 
-//     explicit ctype_byname(const char*, size_t = 0); 
-//     explicit ctype_byname(const string&, size_t = 0); 
-// 
-// protected: 
-//     ~ctype_byname(); 
+// public:
+//     explicit ctype_byname(const char*, size_t = 0);
+//     explicit ctype_byname(const string&, size_t = 0);
+//
+// protected:
+//     ~ctype_byname();
 // };
 
 #include <locale>

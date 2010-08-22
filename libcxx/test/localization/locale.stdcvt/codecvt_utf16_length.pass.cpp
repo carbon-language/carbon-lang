@@ -17,7 +17,7 @@
 //     // unspecified
 // };
 
-// int length(stateT& state, const externT* from, const externT* from_end, 
+// int length(stateT& state, const externT* from, const externT* from_end,
 //            size_t max) const;
 
 #include <codecvt>

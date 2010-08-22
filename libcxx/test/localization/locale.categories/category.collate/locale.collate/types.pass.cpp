@@ -9,13 +9,13 @@
 
 // <locale>
 
-// template <class charT> 
+// template <class charT>
 // class collate
-//     : public locale::facet { 
-// public: 
-//     typedef charT char_type; 
+//     : public locale::facet {
+// public:
+//     typedef charT char_type;
 //     typedef basic_string<charT>string_type;
-// 
+//
 //     static locale::id id;
 // };
 

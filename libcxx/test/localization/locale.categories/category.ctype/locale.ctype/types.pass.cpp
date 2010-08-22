@@ -9,13 +9,13 @@
 
 // <locale>
 
-// template <class CharT> 
+// template <class CharT>
 // class ctype
 //     : public locale::facet,
 //       public ctype_base
 // {
-// public: 
-//     typedef CharT char_type; 
+// public:
+//     typedef CharT char_type;
 // };
 
 #include <locale>

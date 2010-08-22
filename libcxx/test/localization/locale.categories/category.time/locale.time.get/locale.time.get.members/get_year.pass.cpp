@@ -11,7 +11,7 @@
 
 // class time_get<charT, InputIterator>
 
-// iter_type get_year(iter_type s, iter_type end, ios_base& str, 
+// iter_type get_year(iter_type s, iter_type end, ios_base& str,
 //                    ios_base::iostate& err, tm* t) const;
 
 #include <locale>

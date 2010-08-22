@@ -9,12 +9,12 @@
 
 // <locale>
 
-// template <class charT, class InputIterator = istreambuf_iterator<charT> > 
+// template <class charT, class InputIterator = istreambuf_iterator<charT> >
 // class num_get
 //     : public locale::facet
 // {
-// public: 
-//     typedef charT char_type; 
+// public:
+//     typedef charT char_type;
 //     typedef InputIterator iter_type;
 
 #include <locale>

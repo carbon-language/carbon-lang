@@ -14,14 +14,14 @@
 // public:
 //     enum dateorder {no_order, dmy, mdy, ymd, ydm};
 // };
-// 
-// template <class charT, class InputIterator = istreambuf_iterator<charT> > 
+//
+// template <class charT, class InputIterator = istreambuf_iterator<charT> >
 // class time_get
 //     : public locale::facet,
 //       public time_base
 // {
-// public: 
-//     typedef charT         char_type; 
+// public:
+//     typedef charT         char_type;
 //     typedef InputIterator iter_type;
 
 #include <locale>

@@ -49,7 +49,7 @@ int main()
     {
         const char str[] = "0";
         std::ios_base::iostate err = ios.goodbit;
-        input_iterator<const char*> iter = 
+        input_iterator<const char*> iter =
             f.get(input_iterator<const char*>(str),
                   input_iterator<const char*>(str+sizeof(str)),
                   ios, err, v);
@@ -60,7 +60,7 @@ int main()
     {
         const char str[] = "1";
         std::ios_base::iostate err = ios.goodbit;
-        input_iterator<const char*> iter = 
+        input_iterator<const char*> iter =
             f.get(input_iterator<const char*>(str),
                   input_iterator<const char*>(str+sizeof(str)),
                   ios, err, v);
@@ -71,7 +71,7 @@ int main()
     {
         const char str[] = "-1";
         std::ios_base::iostate err = ios.goodbit;
-        input_iterator<const char*> iter = 
+        input_iterator<const char*> iter =
             f.get(input_iterator<const char*>(str),
                   input_iterator<const char*>(str+sizeof(str)),
                   ios, err, v);
@@ -83,7 +83,7 @@ int main()
     {
         const char str[] = "0x7FFFFFFFFFFFFFFF";
         std::ios_base::iostate err = ios.goodbit;
-        input_iterator<const char*> iter = 
+        input_iterator<const char*> iter =
             f.get(input_iterator<const char*>(str),
                   input_iterator<const char*>(str+sizeof(str)),
                   ios, err, v);
@@ -94,7 +94,7 @@ int main()
     {
         const char str[] = "-0x8000000000000000";
         std::ios_base::iostate err = ios.goodbit;
-        input_iterator<const char*> iter = 
+        input_iterator<const char*> iter =
             f.get(input_iterator<const char*>(str),
                   input_iterator<const char*>(str+sizeof(str)),
                   ios, err, v);
