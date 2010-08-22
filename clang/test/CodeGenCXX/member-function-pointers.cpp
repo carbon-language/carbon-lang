@@ -37,21 +37,17 @@ void f() {
   vpa = 0;
 
   // CHECK: [[TMP:%.*]] = load %0* @pa, align 8
-  // CHECK: [[TMPPTR:%.*]] = extractvalue %0 [[TMP]], 0
   // CHECK: [[TMPADJ:%.*]] = extractvalue %0 [[TMP]], 1
-  // CHECK: [[RES0:%.*]] = insertvalue %0 undef, i64 [[TMPPTR]], 0
   // CHECK: [[ADJ:%.*]] = add i64 [[TMPADJ]], 16
-  // CHECK: [[RES1:%.*]] = insertvalue %0 [[RES0]], i64 [[ADJ]], 1
-  // CHECK: store %0 [[RES1]], %0* @pc, align 8
+  // CHECK: [[RES:%.*]] = insertvalue %0 [[TMP]], i64 [[ADJ]], 1
+  // CHECK: store %0 [[RES]], %0* @pc, align 8
   pc = pa;
 
   // CHECK: [[TMP:%.*]] = load %0* @pc, align 8
-  // CHECK: [[TMPPTR:%.*]] = extractvalue %0 [[TMP]], 0
   // CHECK: [[TMPADJ:%.*]] = extractvalue %0 [[TMP]], 1
-  // CHECK: [[RES0:%.*]] = insertvalue %0 undef, i64 [[TMPPTR]], 0
   // CHECK: [[ADJ:%.*]] = sub i64 [[TMPADJ]], 16
-  // CHECK: [[RES1:%.*]] = insertvalue %0 [[RES0]], i64 [[ADJ]], 1
-  // CHECK: store %0 [[RES1]], %0* @pa, align 8
+  // CHECK: [[RES:%.*]] = insertvalue %0 [[TMP]], i64 [[ADJ]], 1
+  // CHECK: store %0 [[RES]], %0* @pa, align 8
   pa = static_cast<void (A::*)()>(pc);
 }
 

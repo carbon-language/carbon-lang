@@ -234,12 +234,6 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
                                          E->path_end());
   if (!Adj) return Src;
 
-  llvm::Value *SrcPtr = Builder.CreateExtractValue(Src, 0, "src.ptr");
-  llvm::Value *SrcAdj = Builder.CreateExtractValue(Src, 1, "src.adj");
-
-  llvm::Value *Result = llvm::UndefValue::get(Src->getType());
-  Result = Builder.CreateInsertValue(Result, SrcPtr, 0);
-    
   // The this-adjustment is left-shifted by 1 on ARM.
   if (IsARM) {
     uint64_t Offset = cast<llvm::ConstantInt>(Adj)->getZExtValue();
@@ -247,14 +241,14 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
     Adj = llvm::ConstantInt::get(Adj->getType(), Offset);
   }
 
+  llvm::Value *SrcAdj = Builder.CreateExtractValue(Src, 1, "src.adj");
   llvm::Value *DstAdj;
   if (DerivedToBase)
     DstAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
   else
     DstAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
 
-  Result = Builder.CreateInsertValue(Result, DstAdj, 1);
-  return Result;
+  return Builder.CreateInsertValue(Src, DstAdj, 1);
 }
 
 llvm::Constant *
