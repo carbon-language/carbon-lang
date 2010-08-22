@@ -15,8 +15,15 @@
 #ifndef CLANG_CODEGEN_CXXABI_H
 #define CLANG_CODEGEN_CXXABI_H
 
+namespace llvm {
+  class Value;
+}
+
 namespace clang {
+  class MemberPointerType;
+
 namespace CodeGen {
+  class CodeGenFunction;
   class CodeGenModule;
   class MangleContext;
 
@@ -27,12 +34,19 @@ public:
 
   /// Gets the mangle context.
   virtual MangleContext &getMangleContext() = 0;
+
+  virtual llvm::Value *
+  EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
+                                  llvm::Value *&This,
+                                  llvm::Value *MemPtr,
+                                  const MemberPointerType *MPT);
 };
 
 /// Creates an instance of a C++ ABI class.
 CGCXXABI *CreateARMCXXABI(CodeGenModule &CGM);
 CGCXXABI *CreateItaniumCXXABI(CodeGenModule &CGM);
 CGCXXABI *CreateMicrosoftCXXABI(CodeGenModule &CGM);
+
 }
 }
 

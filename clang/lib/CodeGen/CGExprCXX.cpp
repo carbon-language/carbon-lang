@@ -153,16 +153,11 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   
   const MemberPointerType *MPT = 
     MemFnExpr->getType()->getAs<MemberPointerType>();
+
   const FunctionProtoType *FPT = 
     MPT->getPointeeType()->getAs<FunctionProtoType>();
   const CXXRecordDecl *RD = 
     cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
-
-  const llvm::FunctionType *FTy = 
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
-                                   FPT->isVariadic());
-
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
   // Get the member function pointer.
   llvm::Value *MemFnPtr = CreateMemTemp(MemFnExpr->getType(), "mem.fn");
@@ -175,67 +170,11 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
     This = EmitScalarExpr(BaseExpr);
   else 
     This = EmitLValue(BaseExpr).getAddress();
-  
-  // Adjust it.
-  llvm::Value *Adj = Builder.CreateStructGEP(MemFnPtr, 1);
-  Adj = Builder.CreateLoad(Adj, "mem.fn.adj");
-  
-  llvm::Value *Ptr = Builder.CreateBitCast(This, Int8PtrTy, "ptr");
-  Ptr = Builder.CreateGEP(Ptr, Adj, "adj");
-  
-  This = Builder.CreateBitCast(Ptr, This->getType(), "this");
-  
-  llvm::Value *FnPtr = Builder.CreateStructGEP(MemFnPtr, 0, "mem.fn.ptr");
-  
-  const llvm::Type *PtrDiffTy = ConvertType(getContext().getPointerDiffType());
 
-  llvm::Value *FnAsInt = Builder.CreateLoad(FnPtr, "fn");
+  // Ask the ABI to load the callee.  Note that This is modified.
+  llvm::Value *Callee =
+    CGM.getCXXABI().EmitLoadOfMemberFunctionPointer(CGF, This, MemFnPtr, MPT);
   
-  // If the LSB in the function pointer is 1, the function pointer points to
-  // a virtual function.
-  llvm::Value *IsVirtual 
-    = Builder.CreateAnd(FnAsInt, llvm::ConstantInt::get(PtrDiffTy, 1),
-                        "and");
-  
-  IsVirtual = Builder.CreateTrunc(IsVirtual,
-                                  llvm::Type::getInt1Ty(VMContext));
-  
-  llvm::BasicBlock *FnVirtual = createBasicBlock("fn.virtual");
-  llvm::BasicBlock *FnNonVirtual = createBasicBlock("fn.nonvirtual");
-  llvm::BasicBlock *FnEnd = createBasicBlock("fn.end");
-  
-  Builder.CreateCondBr(IsVirtual, FnVirtual, FnNonVirtual);
-  EmitBlock(FnVirtual);
-  
-  const llvm::Type *VTableTy = 
-    FTy->getPointerTo()->getPointerTo();
-
-  llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy->getPointerTo());
-  VTable = Builder.CreateLoad(VTable);
-  
-  VTable = Builder.CreateBitCast(VTable, Int8PtrTy);
-  llvm::Value *VTableOffset = 
-    Builder.CreateSub(FnAsInt, llvm::ConstantInt::get(PtrDiffTy, 1));
-  
-  VTable = Builder.CreateGEP(VTable, VTableOffset, "fn");
-  VTable = Builder.CreateBitCast(VTable, VTableTy);
-  
-  llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "virtualfn");
-  
-  EmitBranch(FnEnd);
-  EmitBlock(FnNonVirtual);
-  
-  // If the function is not virtual, just load the pointer.
-  llvm::Value *NonVirtualFn = Builder.CreateLoad(FnPtr, "fn");
-  NonVirtualFn = Builder.CreateIntToPtr(NonVirtualFn, FTy->getPointerTo());
-  
-  EmitBlock(FnEnd);
-
-  llvm::PHINode *Callee = Builder.CreatePHI(FTy->getPointerTo());
-  Callee->reserveOperandSpace(2);
-  Callee->addIncoming(VirtualFn, FnVirtual);
-  Callee->addIncoming(NonVirtualFn, FnNonVirtual);
-
   CallArgList Args;
 
   QualType ThisType = 

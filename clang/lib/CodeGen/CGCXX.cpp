@@ -357,3 +357,25 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
 }
 
 CGCXXABI::~CGCXXABI() {}
+
+llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
+                                                       llvm::Value *&This,
+                                                       llvm::Value *MemPtr,
+                                                 const MemberPointerType *MPT) {
+  Diagnostic &Diags = CGF.CGM.getDiags();
+  unsigned DiagID =
+    Diags.getCustomDiagID(Diagnostic::Error,
+                          "cannot yet compile member pointer calls in this ABI");
+  Diags.Report(CGF.getContext().getFullLoc(CGF.CurCodeDecl->getLocation()),
+               DiagID);
+
+  const FunctionProtoType *FPT = 
+    MPT->getPointeeType()->getAs<FunctionProtoType>();
+  const CXXRecordDecl *RD = 
+    cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
+  const llvm::FunctionType *FTy = 
+    CGF.CGM.getTypes().GetFunctionType(
+                                 CGF.CGM.getTypes().getFunctionInfo(RD, FPT),
+                                 FPT->isVariadic());
+  return llvm::Constant::getNullValue(FTy->getPointerTo());
+}
