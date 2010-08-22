@@ -322,39 +322,15 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     
     llvm::Value *Src = CGF.CreateMemTemp(SrcType, "tmp");
     CGF.EmitAggExpr(E->getSubExpr(), Src, SrcType.isVolatileQualified());
-    
-    llvm::Value *SrcPtr = Builder.CreateStructGEP(Src, 0, "src.ptr");
-    SrcPtr = Builder.CreateLoad(SrcPtr);
-    
-    llvm::Value *SrcAdj = Builder.CreateStructGEP(Src, 1, "src.adj");
-    SrcAdj = Builder.CreateLoad(SrcAdj);
-    
-    llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "dst.ptr");
-    Builder.CreateStore(SrcPtr, DstPtr, VolatileDest);
-    
-    llvm::Value *DstAdj = Builder.CreateStructGEP(DestPtr, 1, "dst.adj");
-    
-    // Now See if we need to update the adjustment.
-    const CXXRecordDecl *BaseDecl = 
-      cast<CXXRecordDecl>(SrcType->getAs<MemberPointerType>()->
-                          getClass()->getAs<RecordType>()->getDecl());
-    const CXXRecordDecl *DerivedDecl = 
-      cast<CXXRecordDecl>(E->getType()->getAs<MemberPointerType>()->
-                          getClass()->getAs<RecordType>()->getDecl());
-    if (E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
-      std::swap(DerivedDecl, BaseDecl);
 
-    if (llvm::Constant *Adj = 
-          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
-                                               E->path_begin(),
-                                               E->path_end())) {
-      if (E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
-        SrcAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
-      else
-        SrcAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
-    }
-    
-    Builder.CreateStore(SrcAdj, DstAdj, VolatileDest);
+    // Note that the AST doesn't distinguish between checked and
+    // unchecked member pointer conversions, so we always have to
+    // implement checked conversions here.  This is inefficient for
+    // ABIs where an actual null check is thus required; fortunately,
+    // the Itanium and ARM ABIs ignore the adjustment value when
+    // considering null-ness.
+    CGF.CGM.getCXXABI().EmitMemberPointerConversion(CGF, E, Src,
+                                                    DestPtr, VolatileDest);
     break;
   }
   }

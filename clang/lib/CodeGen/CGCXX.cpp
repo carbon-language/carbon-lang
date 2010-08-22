@@ -358,16 +358,21 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
 
 CGCXXABI::~CGCXXABI() {}
 
+static void ErrorUnsupportedABI(CodeGenFunction &CGF,
+                                llvm::StringRef S) {
+  Diagnostic &Diags = CGF.CGM.getDiags();
+  unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
+                                          "cannot yet compile %s in this ABI");
+  Diags.Report(CGF.getContext().getFullLoc(CGF.CurCodeDecl->getLocation()),
+               DiagID)
+    << S;
+}
+
 llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                        llvm::Value *&This,
                                                        llvm::Value *MemPtr,
                                                  const MemberPointerType *MPT) {
-  Diagnostic &Diags = CGF.CGM.getDiags();
-  unsigned DiagID =
-    Diags.getCustomDiagID(Diagnostic::Error,
-                          "cannot yet compile member pointer calls in this ABI");
-  Diags.Report(CGF.getContext().getFullLoc(CGF.CurCodeDecl->getLocation()),
-               DiagID);
+  ErrorUnsupportedABI(CGF, "calls through member pointers");
 
   const FunctionProtoType *FPT = 
     MPT->getPointeeType()->getAs<FunctionProtoType>();
@@ -378,4 +383,12 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                  CGF.CGM.getTypes().getFunctionInfo(RD, FPT),
                                  FPT->isVariadic());
   return llvm::Constant::getNullValue(FTy->getPointerTo());
+}
+
+void CGCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                           const CastExpr *E,
+                                           llvm::Value *Src,
+                                           llvm::Value *Dest,
+                                           bool VolatileDest) {
+  ErrorUnsupportedABI(CGF, "member pointer conversions");
 }

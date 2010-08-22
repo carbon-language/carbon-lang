@@ -20,6 +20,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class CastExpr;
   class MemberPointerType;
 
 namespace CodeGen {
@@ -40,6 +41,12 @@ public:
                                   llvm::Value *&This,
                                   llvm::Value *MemPtr,
                                   const MemberPointerType *MPT);
+
+  virtual void EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                           const CastExpr *E,
+                                           llvm::Value *Src,
+                                           llvm::Value *Dest,
+                                           bool VolatileDest);
 };
 
 /// Creates an instance of a C++ ABI class.

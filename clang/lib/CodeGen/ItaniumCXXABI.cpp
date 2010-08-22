@@ -46,6 +46,12 @@ public:
                                                llvm::Value *&This,
                                                llvm::Value *MemFnPtr,
                                                const MemberPointerType *MPT);
+
+  void EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                   const CastExpr *E,
+                                   llvm::Value *Src,
+                                   llvm::Value *Dest,
+                                   bool VolatileDest);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -167,4 +173,55 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   Callee->addIncoming(VirtualFn, FnVirtual);
   Callee->addIncoming(NonVirtualFn, FnNonVirtual);
   return Callee;
+}
+
+/// Perform a derived-to-base or base-to-derived member pointer conversion.
+void ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                                const CastExpr *E,
+                                                llvm::Value *Src,
+                                                llvm::Value *Dest,
+                                                bool VolatileDest) {
+  assert(E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer ||
+         E->getCastKind() == CastExpr::CK_BaseToDerivedMemberPointer);
+
+  CGBuilderTy &Builder = CGF.Builder;
+
+  const MemberPointerType *SrcTy =
+    E->getSubExpr()->getType()->getAs<MemberPointerType>();
+  const MemberPointerType *DestTy = E->getType()->getAs<MemberPointerType>();
+
+  const CXXRecordDecl *SrcDecl = SrcTy->getClass()->getAsCXXRecordDecl();
+  const CXXRecordDecl *DestDecl = DestTy->getClass()->getAsCXXRecordDecl();
+
+  llvm::Value *SrcPtr = Builder.CreateStructGEP(Src, 0, "src.ptr");
+  SrcPtr = Builder.CreateLoad(SrcPtr);
+    
+  llvm::Value *SrcAdj = Builder.CreateStructGEP(Src, 1, "src.adj");
+  SrcAdj = Builder.CreateLoad(SrcAdj);
+    
+  llvm::Value *DstPtr = Builder.CreateStructGEP(Dest, 0, "dst.ptr");
+  Builder.CreateStore(SrcPtr, DstPtr, VolatileDest);
+    
+  llvm::Value *DstAdj = Builder.CreateStructGEP(Dest, 1, "dst.adj");
+
+  bool DerivedToBase =
+    E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer;
+
+  const CXXRecordDecl *BaseDecl, *DerivedDecl;
+  if (DerivedToBase)
+    DerivedDecl = SrcDecl, BaseDecl = DestDecl;
+  else
+    BaseDecl = SrcDecl, DerivedDecl = DestDecl;
+
+  if (llvm::Constant *Adj = 
+        CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
+                                             E->path_begin(),
+                                             E->path_end())) {
+    if (DerivedToBase)
+      SrcAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
+    else
+      SrcAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
+  }
+    
+  Builder.CreateStore(SrcAdj, DstAdj, VolatileDest);
 }
