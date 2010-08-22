@@ -31,12 +31,11 @@ using namespace CodeGen;
 namespace {
 class ItaniumCXXABI : public CodeGen::CGCXXABI {
 protected:
-  CodeGenModule &CGM;
   CodeGen::MangleContext MangleCtx;
   bool IsARM;
 public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
-    CGM(CGM), MangleCtx(CGM.getContext(), CGM.getDiags()), IsARM(IsARM) { }
+    CGCXXABI(CGM), MangleCtx(CGM.getContext(), CGM.getDiags()), IsARM(IsARM) { }
 
   CodeGen::MangleContext &getMangleContext() {
     return MangleCtx;
@@ -50,26 +49,14 @@ public:
                                                llvm::Value *MemFnPtr,
                                                const MemberPointerType *MPT);
 
-  void EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
-                                           const CastExpr *E,
-                                           llvm::Value *Src,
-                                           llvm::Value *Dest,
-                                           bool VolatileDest);
+  llvm::Value *EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                                   const CastExpr *E,
+                                                   llvm::Value *Src);
 
   llvm::Constant *EmitMemberFunctionPointerConversion(llvm::Constant *C,
                                                       const CastExpr *E);
 
-  void EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
-                                     const MemberPointerType *MPT,
-                                     llvm::Value *Dest,
-                                     bool VolatileDest);
-
   llvm::Constant *EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
-
-  void EmitMemberFunctionPointer(CodeGenFunction &CGF,
-                                 const CXXMethodDecl *MD,
-                                 llvm::Value *Dest,
-                                 bool VolatileDest);
 
   llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD);
 
@@ -104,57 +91,6 @@ CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
 
 void ItaniumCXXABI::GetMemberFunctionPointer(const CXXMethodDecl *MD,
                                              llvm::Constant *(&MemPtr)[2]) {
-  assert(MD->isInstance() && "Member function must not be static!");
-    
-  MD = MD->getCanonicalDecl();
-
-  CodeGenTypes &Types = CGM.getTypes();
-  const llvm::Type *ptrdiff_t = 
-    Types.ConvertType(CGM.getContext().getPointerDiffType());
-
-  // Get the function pointer (or index if this is a virtual function).
-  if (MD->isVirtual()) {
-    uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
-
-    // FIXME: We shouldn't use / 8 here.
-    uint64_t PointerWidthInBytes =
-      CGM.getContext().Target.getPointerWidth(0) / 8;
-    uint64_t VTableOffset = (Index * PointerWidthInBytes);
-
-    if (IsARM) {
-      // ARM C++ ABI 3.2.1:
-      //   This ABI specifies that adj contains twice the this
-      //   adjustment, plus 1 if the member function is virtual. The
-      //   least significant bit of adj then makes exactly the same
-      //   discrimination as the least significant bit of ptr does for
-      //   Itanium.
-      MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset);
-      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 1);
-    } else {
-      // Itanium C++ ABI 2.3:
-      //   For a virtual function, [the pointer field] is 1 plus the
-      //   virtual table offset (in bytes) of the function,
-      //   represented as a ptrdiff_t.
-      MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset + 1);
-      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
-    }
-  } else {
-    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-    const llvm::Type *Ty;
-    // Check whether the function has a computable LLVM signature.
-    if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
-      // The function has a computable LLVM signature; use the correct type.
-      Ty = Types.GetFunctionType(Types.getFunctionInfo(MD), FPT->isVariadic());
-    } else {
-      // Use an arbitrary non-function type to tell GetAddrOfFunction that the
-      // function type is incomplete.
-      Ty = ptrdiff_t;
-    }
-
-    llvm::Constant *Addr = CGM.GetAddrOfFunction(MD, Ty);
-    MemPtr[0] = llvm::ConstantExpr::getPtrToInt(Addr, ptrdiff_t);
-    MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
-  }
 }
 
 
@@ -201,9 +137,8 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   llvm::BasicBlock *FnNonVirtual = CGF.createBasicBlock("memptr.nonvirtual");
   llvm::BasicBlock *FnEnd = CGF.createBasicBlock("memptr.end");
 
-  // Load memptr.adj, which is in the second field.
-  llvm::Value *RawAdj = Builder.CreateStructGEP(MemFnPtr, 1);
-  RawAdj = Builder.CreateLoad(RawAdj, "memptr.adj");
+  // Extract memptr.adj, which is in the second field.
+  llvm::Value *RawAdj = Builder.CreateExtractValue(MemFnPtr, 1, "memptr.adj");
 
   // Compute the true adjustment.
   llvm::Value *Adj = RawAdj;
@@ -217,8 +152,7 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   This = Builder.CreateBitCast(Ptr, This->getType(), "this.adjusted");
   
   // Load the function pointer.
-  llvm::Value *FnPtr = Builder.CreateStructGEP(MemFnPtr, 0);
-  llvm::Value *FnAsInt = Builder.CreateLoad(FnPtr, "memptr.ptr");
+  llvm::Value *FnAsInt = Builder.CreateExtractValue(MemFnPtr, 0, "memptr.ptr");
   
   // If the LSB in the function pointer is 1, the function pointer points to
   // a virtual function.
@@ -266,13 +200,15 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
 }
 
 /// Perform a derived-to-base or base-to-derived member pointer conversion.
-void ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
-                                                        const CastExpr *E,
-                                                        llvm::Value *Src,
-                                                        llvm::Value *Dest,
-                                                        bool VolatileDest) {
+llvm::Value *
+ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                                   const CastExpr *E,
+                                                   llvm::Value *Src) {
   assert(E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer ||
          E->getCastKind() == CastExpr::CK_BaseToDerivedMemberPointer);
+
+  if (isa<llvm::Constant>(Src))
+    return EmitMemberFunctionPointerConversion(cast<llvm::Constant>(Src), E);
 
   CGBuilderTy &Builder = CGF.Builder;
 
@@ -283,17 +219,6 @@ void ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
   const CXXRecordDecl *SrcDecl = SrcTy->getClass()->getAsCXXRecordDecl();
   const CXXRecordDecl *DestDecl = DestTy->getClass()->getAsCXXRecordDecl();
 
-  llvm::Value *SrcPtr = Builder.CreateStructGEP(Src, 0, "src.ptr");
-  SrcPtr = Builder.CreateLoad(SrcPtr);
-    
-  llvm::Value *SrcAdj = Builder.CreateStructGEP(Src, 1, "src.adj");
-  SrcAdj = Builder.CreateLoad(SrcAdj);
-    
-  llvm::Value *DstPtr = Builder.CreateStructGEP(Dest, 0, "dst.ptr");
-  Builder.CreateStore(SrcPtr, DstPtr, VolatileDest);
-    
-  llvm::Value *DstAdj = Builder.CreateStructGEP(Dest, 1, "dst.adj");
-
   bool DerivedToBase =
     E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer;
 
@@ -303,24 +228,33 @@ void ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
   else
     BaseDecl = SrcDecl, DerivedDecl = DestDecl;
 
-  if (llvm::Constant *Adj = 
-        CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
-                                             E->path_begin(),
-                                             E->path_end())) {
-    // The this-adjustment is left-shifted by 1 on ARM.
-    if (IsARM) {
-      uint64_t Offset = cast<llvm::ConstantInt>(Adj)->getZExtValue();
-      Offset <<= 1;
-      Adj = llvm::ConstantInt::get(Adj->getType(), Offset);
-    }
+  llvm::Constant *Adj = 
+    CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
+                                         E->path_begin(),
+                                         E->path_end());
+  if (!Adj) return Src;
 
-    if (DerivedToBase)
-      SrcAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
-    else
-      SrcAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
-  }
+  llvm::Value *SrcPtr = Builder.CreateExtractValue(Src, 0, "src.ptr");
+  llvm::Value *SrcAdj = Builder.CreateExtractValue(Src, 1, "src.adj");
+
+  llvm::Value *Result = llvm::UndefValue::get(Src->getType());
+  Result = Builder.CreateInsertValue(Result, SrcPtr, 0);
     
-  Builder.CreateStore(SrcAdj, DstAdj, VolatileDest);
+  // The this-adjustment is left-shifted by 1 on ARM.
+  if (IsARM) {
+    uint64_t Offset = cast<llvm::ConstantInt>(Adj)->getZExtValue();
+    Offset <<= 1;
+    Adj = llvm::ConstantInt::get(Adj->getType(), Offset);
+  }
+
+  llvm::Value *DstAdj;
+  if (DerivedToBase)
+    DstAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
+  else
+    DstAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
+
+  Result = Builder.CreateInsertValue(Result, DstAdj, 1);
+  return Result;
 }
 
 llvm::Constant *
@@ -366,53 +300,73 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
 }        
 
 
-void ItaniumCXXABI::EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
-                                                  const MemberPointerType *MPT,
-                                                  llvm::Value *Dest,
-                                                  bool VolatileDest) {
-  // Should this be "unabstracted" and implemented in terms of the
-  // Constant version?
-
-  CGBuilderTy &Builder = CGF.Builder;
-
-  const llvm::IntegerType *PtrDiffTy = CGF.IntPtrTy;
-  llvm::Value *Zero = llvm::ConstantInt::get(PtrDiffTy, 0);
-
-  llvm::Value *Ptr = Builder.CreateStructGEP(Dest, 0, "ptr");
-  Builder.CreateStore(Zero, Ptr, VolatileDest);
-    
-  llvm::Value *Adj = Builder.CreateStructGEP(Dest, 1, "adj");
-  Builder.CreateStore(Zero, Adj, VolatileDest);
-}
-
 llvm::Constant *
 ItaniumCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
-  return CGM.EmitNullConstant(QualType(MPT, 0));
+  const llvm::Type *ptrdiff_t =
+    CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
+
+  llvm::Constant *Zero = llvm::ConstantInt::get(ptrdiff_t, 0);
+  llvm::Constant *Values[2] = { Zero, Zero };
+  return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2,
+                                   /*Packed=*/false);
 }
 
 llvm::Constant *
 ItaniumCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
-  llvm::Constant *Values[2];
-  GetMemberFunctionPointer(MD, Values);
+  assert(MD->isInstance() && "Member function must not be static!");
+  MD = MD->getCanonicalDecl();
+
+  CodeGenTypes &Types = CGM.getTypes();
+  const llvm::Type *ptrdiff_t = 
+    Types.ConvertType(CGM.getContext().getPointerDiffType());
+
+  // Get the function pointer (or index if this is a virtual function).
+  llvm::Constant *MemPtr[2];
+  if (MD->isVirtual()) {
+    uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
+
+    // FIXME: We shouldn't use / 8 here.
+    uint64_t PointerWidthInBytes =
+      CGM.getContext().Target.getPointerWidth(0) / 8;
+    uint64_t VTableOffset = (Index * PointerWidthInBytes);
+
+    if (IsARM) {
+      // ARM C++ ABI 3.2.1:
+      //   This ABI specifies that adj contains twice the this
+      //   adjustment, plus 1 if the member function is virtual. The
+      //   least significant bit of adj then makes exactly the same
+      //   discrimination as the least significant bit of ptr does for
+      //   Itanium.
+      MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset);
+      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 1);
+    } else {
+      // Itanium C++ ABI 2.3:
+      //   For a virtual function, [the pointer field] is 1 plus the
+      //   virtual table offset (in bytes) of the function,
+      //   represented as a ptrdiff_t.
+      MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset + 1);
+      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
+    }
+  } else {
+    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+    const llvm::Type *Ty;
+    // Check whether the function has a computable LLVM signature.
+    if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
+      // The function has a computable LLVM signature; use the correct type.
+      Ty = Types.GetFunctionType(Types.getFunctionInfo(MD), FPT->isVariadic());
+    } else {
+      // Use an arbitrary non-function type to tell GetAddrOfFunction that the
+      // function type is incomplete.
+      Ty = ptrdiff_t;
+    }
+
+    llvm::Constant *Addr = CGM.GetAddrOfFunction(MD, Ty);
+    MemPtr[0] = llvm::ConstantExpr::getPtrToInt(Addr, ptrdiff_t);
+    MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
+  }
   
   return llvm::ConstantStruct::get(CGM.getLLVMContext(),
-                                   Values, 2, /*Packed=*/false);
-}
-
-void ItaniumCXXABI::EmitMemberFunctionPointer(CodeGenFunction &CGF,
-                                              const CXXMethodDecl *MD,
-                                              llvm::Value *DestPtr,
-                                              bool VolatileDest) {
-  llvm::Constant *Values[2];
-  GetMemberFunctionPointer(MD, Values);
-
-  CGBuilderTy &Builder = CGF.Builder;
-  
-  llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "memptr.ptr");
-  Builder.CreateStore(Values[0], DstPtr, VolatileDest);
-
-  llvm::Value *AdjPtr = Builder.CreateStructGEP(DestPtr, 1, "memptr.adj");
-  Builder.CreateStore(Values[1], AdjPtr, VolatileDest);
+                                   MemPtr, 2, /*Packed=*/false);
 }
 
 /// The comparison algorithm is pretty easy: the member pointers are
@@ -427,10 +381,8 @@ ItaniumCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
                                                    bool Inequality) {
   CGBuilderTy &Builder = CGF.Builder;
 
-  llvm::Value *LPtr = Builder.CreateLoad(Builder.CreateStructGEP(L, 0),
-                                         "lhs.memptr.ptr");
-  llvm::Value *RPtr = Builder.CreateLoad(Builder.CreateStructGEP(R, 0),
-                                         "rhs.memptr.ptr");
+  llvm::Value *LPtr = Builder.CreateExtractValue(L, 0, "lhs.memptr.ptr");
+  llvm::Value *RPtr = Builder.CreateExtractValue(R, 0, "rhs.memptr.ptr");
 
   // The Itanium tautology is:
   //   (L == R) <==> (L.ptr == R.ptr /\ (L.ptr == 0 \/ L.adj == R.adj))
@@ -465,10 +417,8 @@ ItaniumCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
 
   // This condition tests whether L.adj == R.adj.  If this isn't
   // true, the pointers are unequal unless they're both null.
-  llvm::Value *LAdj = Builder.CreateLoad(Builder.CreateStructGEP(L, 1),
-                                         "lhs.memptr.adj");
-  llvm::Value *RAdj = Builder.CreateLoad(Builder.CreateStructGEP(R, 1),
-                                         "rhs.memptr.adj");
+  llvm::Value *LAdj = Builder.CreateExtractValue(L, 1, "lhs.memptr.adj");
+  llvm::Value *RAdj = Builder.CreateExtractValue(R, 1, "rhs.memptr.adj");
   llvm::Value *AdjEq = Builder.CreateICmp(Eq, LAdj, RAdj, "cmp.adj");
 
   // Null member function pointers on ARM clear the low bit of Adj,
@@ -498,8 +448,7 @@ ItaniumCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
   CGBuilderTy &Builder = CGF.Builder;
   
   // In Itanium, a member function pointer is null if 'ptr' is null.
-  llvm::Value *Ptr =
-    Builder.CreateLoad(Builder.CreateStructGEP(MemPtr, 0), "memptr.ptr");
+  llvm::Value *Ptr = Builder.CreateExtractValue(MemPtr, 0, "memptr.ptr");
 
   llvm::Constant *Zero = llvm::ConstantInt::get(Ptr->getType(), 0);
   llvm::Value *Result = Builder.CreateICmpNE(Ptr, Zero, "memptr.tobool");
@@ -507,8 +456,7 @@ ItaniumCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
   // In ARM, it's that, plus the low bit of 'adj' must be zero.
   if (IsARM) {
     llvm::Constant *One = llvm::ConstantInt::get(Ptr->getType(), 1);
-    llvm::Value *Adj =
-      Builder.CreateLoad(Builder.CreateStructGEP(MemPtr, 1), "memptr.adj");
+    llvm::Value *Adj = Builder.CreateExtractValue(MemPtr, 1, "memptr.adj");
     llvm::Value *VirtualBit = Builder.CreateAnd(Adj, One, "memptr.virtualbit");
     llvm::Value *IsNotVirtual = Builder.CreateICmpEQ(VirtualBit, Zero,
                                                      "memptr.notvirtual");

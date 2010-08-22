@@ -89,7 +89,7 @@ struct s5 { s5(); int &x; };
 s5 f5() { return s5(); }
 
 // CHECK: define i32 @_Z4f6_0M2s6i(i32 %a)
-// CHECK: define i64 @_Z4f6_1M2s6FivE(%{{.*}} byval %a)
+// CHECK: define i64 @_Z4f6_1M2s6FivE(%{{.*}} byval)
 // FIXME: It would be nice to avoid byval on the previous case.
 struct s6 {};
 typedef int s6::* s6_mdp;

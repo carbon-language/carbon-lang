@@ -460,7 +460,7 @@ public:
 
   llvm::Constant *VisitUnaryAddrOf(UnaryOperator *E) {
     if (const MemberPointerType *MPT = 
-        E->getType()->getAs<MemberPointerType>()) {
+          E->getType()->getAs<MemberPointerType>()) {
       QualType T = MPT->getPointeeType();
       DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
 
@@ -533,13 +533,21 @@ public:
         llvm::StructType::get(C->getType()->getContext(), Types, false);
       return llvm::ConstantStruct::get(STy, Elts);
     }
-    case CastExpr::CK_NullToMemberPointer:
-      return CGM.getCXXABI().EmitNullMemberFunctionPointer(
-                                   E->getType()->getAs<MemberPointerType>());
+    case CastExpr::CK_NullToMemberPointer: {
+      const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
+      if (MPT->getPointeeType()->isFunctionType())
+        return CGM.getCXXABI().EmitNullMemberFunctionPointer(MPT);
+      return CGM.EmitNullConstant(E->getType());
+    }
       
     case CastExpr::CK_BaseToDerivedMemberPointer: {
-      Expr *SubExpr = E->getSubExpr();
+      const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
 
+      // TODO: support data-member conversions here!
+      if (!MPT->getPointeeType()->isFunctionType())
+        return 0;
+
+      Expr *SubExpr = E->getSubExpr();
       llvm::Constant *C = 
         CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
       if (!C) return 0;

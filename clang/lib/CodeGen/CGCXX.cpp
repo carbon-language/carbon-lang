@@ -330,6 +330,11 @@ static void ErrorUnsupportedABI(CodeGenFunction &CGF,
     << S;
 }
 
+static llvm::Constant *GetBogusMemberPointer(CodeGenModule &CGM,
+                                             QualType T) {
+  return llvm::Constant::getNullValue(CGM.getTypes().ConvertType(T));
+}
+
 llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                        llvm::Value *&This,
                                                        llvm::Value *MemPtr,
@@ -341,32 +346,16 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   const CXXRecordDecl *RD = 
     cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
   const llvm::FunctionType *FTy = 
-    CGF.CGM.getTypes().GetFunctionType(
-                                 CGF.CGM.getTypes().getFunctionInfo(RD, FPT),
-                                 FPT->isVariadic());
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
+                                   FPT->isVariadic());
   return llvm::Constant::getNullValue(FTy->getPointerTo());
 }
 
-void CGCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
-                                                   const CastExpr *E,
-                                                   llvm::Value *Src,
-                                                   llvm::Value *Dest,
-                                                   bool VolatileDest) {
+llvm::Value *CGCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
+                                                           const CastExpr *E,
+                                                           llvm::Value *Src) {
   ErrorUnsupportedABI(CGF, "member function pointer conversions");
-}
-
-void CGCXXABI::EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
-                                             const MemberPointerType *MPT,
-                                             llvm::Value *Dest,
-                                             bool VolatileDest) {
-  ErrorUnsupportedABI(CGF, "null member function pointers");
-}
-
-void CGCXXABI::EmitMemberFunctionPointer(CodeGenFunction &CGF,
-                                         const CXXMethodDecl *MD,
-                                         llvm::Value *DestPtr,
-                                         bool VolatileDest) {
-  ErrorUnsupportedABI(CGF, "member function pointers");
+  return GetBogusMemberPointer(CGM, E->getType());
 }
 
 llvm::Value *
@@ -390,16 +379,18 @@ CGCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
 llvm::Constant *
 CGCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
                                               const CastExpr *E) {
-  return 0;
+  return GetBogusMemberPointer(CGM, E->getType());
 }
 
 llvm::Constant *
 CGCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
-  return 0;
+  return GetBogusMemberPointer(CGM, QualType(MPT, 0));
 }
 
 llvm::Constant *CGCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
-  return 0;
+  return GetBogusMemberPointer(CGM,
+                         CGM.getContext().getMemberPointerType(MD->getType(),
+                                         MD->getParent()->getTypeForDecl()));
 }
 
 bool CGCXXABI::RequiresNonZeroInitializer(QualType T) {

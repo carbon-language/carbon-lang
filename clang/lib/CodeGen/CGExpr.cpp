@@ -67,10 +67,8 @@ llvm::AllocaInst *CodeGenFunction::CreateMemTemp(QualType Ty,
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   QualType BoolTy = getContext().BoolTy;
   if (E->getType()->isMemberFunctionPointerType()) {
-    LValue LV = EmitAggExprToLValue(E);
-
-    return CGM.getCXXABI().EmitMemberFunctionPointerIsNotNull(CGF,
-                                                              LV.getAddress(),
+    llvm::Value *MemPtr = EmitScalarExpr(E);
+    return CGM.getCXXABI().EmitMemberFunctionPointerIsNotNull(CGF, MemPtr,
                                     E->getType()->getAs<MemberPointerType>());
   }
   if (!E->getType()->isAnyComplexType())
@@ -614,18 +612,15 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
   if (LV.isSimple()) {
     llvm::Value *Ptr = LV.getAddress();
-    const llvm::Type *EltTy =
-      cast<llvm::PointerType>(Ptr->getType())->getElementType();
 
-    // Simple scalar l-value.
-    //
-    // FIXME: We shouldn't have to use isSingleValueType here.
-    if (EltTy->isSingleValueType())
-      return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
-                                          LV.getAlignment(), ExprType));
+    // Functions are l-values that don't require loading.
+    if (ExprType->isFunctionType())
+      return RValue::get(Ptr);
 
-    assert(ExprType->isFunctionType() && "Unknown scalar value");
-    return RValue::get(Ptr);
+    // Everything needs a load.
+    return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
+                                        LV.getAlignment(), ExprType));
+
   }
 
   if (LV.isVectorElt()) {
@@ -1177,12 +1172,19 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LV;
   }
   
+  // If we're emitting an instance method as an independent lvalue,
+  // we're actually emitting a member pointer.
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
+    if (MD->isInstance()) {
+      llvm::Value *V = CGM.getCXXABI().EmitMemberFunctionPointer(MD);
+      return MakeAddrLValue(V, MD->getType(), Alignment);
+    }
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
     return EmitFunctionDeclLValue(*this, E, FD);
   
-  // FIXME: the qualifier check does not seem sufficient here
-  if (E->getQualifier()) {
-    const FieldDecl *FD = cast<FieldDecl>(ND);
+  // If we're emitting a field as an independent lvalue, we're
+  // actually emitting a member pointer.
+  if (const FieldDecl *FD = dyn_cast<FieldDecl>(ND)) {
     llvm::Value *V = CGM.EmitPointerToDataMember(FD);
     return MakeAddrLValue(V, FD->getType(), Alignment);
   }

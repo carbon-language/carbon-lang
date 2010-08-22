@@ -238,6 +238,9 @@ public:
 
     
   Value *VisitUnaryAddrOf(const UnaryOperator *E) {
+    // If the sub-expression is an instance member reference,
+    // EmitDeclRefLValue will magically emit it with the appropriate
+    // value as the "address".
     return EmitLValue(E->getSubExpr()).getAddress();
   }
   Value *VisitUnaryDeref(const Expr *E) { return EmitLoadOfLValue(E); }
@@ -995,11 +998,31 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return EmitLValue(E).getAddress();
 
   case CastExpr::CK_NullToMemberPointer:
+    // If the subexpression's type is the C++0x nullptr_t, emit the
+    // subexpression, which may have side effects.
+    if (E->getType()->isNullPtrType())
+      (void) Visit(E);
+
+    if (CE->getType()->isMemberFunctionPointerType())
+      return CGF.CGM.getCXXABI().EmitNullMemberFunctionPointer(
+                                   CE->getType()->getAs<MemberPointerType>());
+
     return CGF.CGM.EmitNullConstant(DestTy);
 
   case CastExpr::CK_BaseToDerivedMemberPointer:
   case CastExpr::CK_DerivedToBaseMemberPointer: {
     Value *Src = Visit(E);
+    
+    // Note that the AST doesn't distinguish between checked and
+    // unchecked member pointer conversions, so we always have to
+    // implement checked conversions here.  This is inefficient when
+    // actual control flow may be required in order to perform the
+    // check, which it is for data member pointers (but not member
+    // function pointers on Itanium and ARM).
+
+    if (CE->getType()->isMemberFunctionPointerType())
+      return CGF.CGM.getCXXABI().EmitMemberFunctionPointerConversion(CGF, CE,
+                                                                     Src);
 
     // See if we need to adjust the pointer.
     const CXXRecordDecl *BaseDecl = 
@@ -1804,10 +1827,10 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
   if (LHSTy->isMemberFunctionPointerType()) {
     assert(E->getOpcode() == BinaryOperator::EQ ||
            E->getOpcode() == BinaryOperator::NE);
-    Value *LHSPtr = CGF.EmitAnyExprToTemp(E->getLHS()).getAggregateAddr();
-    Value *RHSPtr = CGF.EmitAnyExprToTemp(E->getRHS()).getAggregateAddr();
+    Value *LHS = CGF.EmitScalarExpr(E->getLHS());
+    Value *RHS = CGF.EmitScalarExpr(E->getRHS());
     Result = CGF.CGM.getCXXABI().EmitMemberFunctionPointerComparison(
-                     CGF, LHSPtr, RHSPtr, LHSTy->getAs<MemberPointerType>(),
+                         CGF, LHS, RHS, LHSTy->getAs<MemberPointerType>(),
                                     E->getOpcode() == BinaryOperator::NE);
   } else if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());

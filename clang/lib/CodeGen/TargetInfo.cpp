@@ -36,6 +36,11 @@ static void AssignToArrayRange(CodeGen::CGBuilderTy &Builder,
   }
 }
 
+static bool isAggregateTypeForABI(QualType T) {
+  return CodeGenFunction::hasAggregateLLVMType(T) ||
+         T->isMemberFunctionPointerType();
+}
+
 ABIInfo::~ABIInfo() {}
 
 ASTContext &ABIInfo::getContext() const {
@@ -218,7 +223,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
       FT = AT->getElementType();
     }
 
-    if (!CodeGenFunction::hasAggregateLLVMType(FT)) {
+    if (!isAggregateTypeForABI(FT)) {
       Found = FT.getTypePtr();
     } else {
       Found = isSingleElementStruct(FT, Context);
@@ -314,7 +319,7 @@ llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 }
 
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty) const {
-  if (CodeGenFunction::hasAggregateLLVMType(Ty))
+  if (isAggregateTypeForABI(Ty))
     return ABIArgInfo::getIndirect(0);
 
   // Treat an enum type as its underlying type.
@@ -467,7 +472,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getDirect();
   }
   
-  if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+  if (isAggregateTypeForABI(RetTy)) {
     if (const RecordType *RT = RetTy->getAs<RecordType>()) {
       // Structures with either a non-trivial destructor or a non-trivial
       // copy constructor are always indirect.
@@ -557,7 +562,7 @@ ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
   // FIXME: Set alignment on indirect arguments.
-  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
+  if (isAggregateTypeForABI(Ty)) {
     // Structures with flexible arrays are always indirect.
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
       // Structures with either a non-trivial destructor or a non-trivial
@@ -1094,7 +1099,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
-  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+  if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
@@ -1109,7 +1114,7 @@ ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
 ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
-  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+  if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
@@ -2079,7 +2084,7 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
 }
 
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
-  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+  if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
@@ -2205,7 +2210,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
-  if (!CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+  if (!isAggregateTypeForABI(RetTy)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
       RetTy = EnumTy->getDecl()->getIntegerType();
@@ -2295,7 +2300,7 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
-  if (CodeGenFunction::hasAggregateLLVMType(RetTy))
+  if (isAggregateTypeForABI(RetTy))
     return ABIArgInfo::getIndirect(0);
 
   // Treat an enum type as its underlying type.
@@ -2370,7 +2375,7 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
-  if (CodeGenFunction::hasAggregateLLVMType(RetTy))
+  if (isAggregateTypeForABI(RetTy))
     return ABIArgInfo::getIndirect(0);
 
   return (isPromotableIntegerType(RetTy) ?
@@ -2378,7 +2383,7 @@ ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
 }
 
 ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
-  if (CodeGenFunction::hasAggregateLLVMType(Ty))
+  if (isAggregateTypeForABI(Ty))
     return ABIArgInfo::getIndirect(0);
 
   return (isPromotableIntegerType(Ty) ?

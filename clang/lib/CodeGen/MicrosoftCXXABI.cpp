@@ -112,7 +112,7 @@ class MicrosoftCXXABI : public CGCXXABI {
   MicrosoftMangleContext MangleCtx;
 public:
   MicrosoftCXXABI(CodeGenModule &CGM)
-   : MangleCtx(CGM.getContext(), CGM.getDiags()) {}
+    : CGCXXABI(CGM), MangleCtx(CGM.getContext(), CGM.getDiags()) {}
 
   MicrosoftMangleContext &getMangleContext() {
     return MangleCtx;

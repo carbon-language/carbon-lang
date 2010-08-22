@@ -34,7 +34,13 @@ namespace CodeGen {
 
 /// Implements C++ ABI-specific code generation functions.
 class CGCXXABI {
+protected:
+  CodeGenModule &CGM;
+
+  CGCXXABI(CodeGenModule &CGM) : CGM(CGM) {}
+
 public:
+
   virtual ~CGCXXABI();
 
   /// Gets the mangle context.
@@ -46,18 +52,11 @@ public:
                                   llvm::Value *MemPtr,
                                   const MemberPointerType *MPT);
 
-  virtual void
+  virtual llvm::Value *
   EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
                                       const CastExpr *E,
-                                      llvm::Value *Src,
-                                      llvm::Value *Dest,
-                                      bool VolatileDest);
+                                      llvm::Value *Src);
 
-  virtual void EmitNullMemberFunctionPointer(CodeGenFunction &CGF,
-                                             const MemberPointerType *MPT,
-                                             llvm::Value *Dest,
-                                             bool VolatileDest);
-  
   // Manipulations on constant expressions.
 
   /// \brief Returns true if zero-initializing the given type requires
@@ -73,10 +72,6 @@ public:
   EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
 
   virtual llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD);
-  virtual void EmitMemberFunctionPointer(CodeGenFunction &CGF,
-                                         const CXXMethodDecl *MD,
-                                         llvm::Value *DestPtr,
-                                         bool VolatileDest);
 
   virtual llvm::Value *
   EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
@@ -87,7 +82,7 @@ public:
 
   virtual llvm::Value *
   EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
-                                     llvm::Value *Addr,
+                                     llvm::Value *MemPtr,
                                      const MemberPointerType *MPT);
 };
 

@@ -108,7 +108,6 @@ public:
   void VisitPointerToDataMemberBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
   void VisitBinComma(const BinaryOperator *E);
-  void VisitUnaryAddrOf(const UnaryOperator *E);
 
   void VisitObjCMessageExpr(ObjCMessageExpr *E);
   void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
@@ -287,46 +286,9 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     Visit(E->getSubExpr());
     break;
 
-  case CastExpr::CK_NullToMemberPointer: {
-    // If the subexpression's type is the C++0x nullptr_t, emit the
-    // subexpression, which may have side effects.
-    if (E->getSubExpr()->getType()->isNullPtrType())
-      Visit(E->getSubExpr());
-
-    CGF.CGM.getCXXABI().EmitNullMemberFunctionPointer(CGF,
-                                    E->getType()->getAs<MemberPointerType>(),
-                                                      DestPtr, VolatileDest);
-
-    break;
-  }
-      
   case CastExpr::CK_LValueBitCast:
     llvm_unreachable("there are no lvalue bit-casts on aggregates");
     break;
-      
-  case CastExpr::CK_BitCast: {
-    // This must be a member function pointer cast.
-    Visit(E->getSubExpr());
-    break;
-  }
-
-  case CastExpr::CK_DerivedToBaseMemberPointer:
-  case CastExpr::CK_BaseToDerivedMemberPointer: {
-    QualType SrcType = E->getSubExpr()->getType();
-    
-    llvm::Value *Src = CGF.CreateMemTemp(SrcType, "tmp");
-    CGF.EmitAggExpr(E->getSubExpr(), Src, SrcType.isVolatileQualified());
-
-    // Note that the AST doesn't distinguish between checked and
-    // unchecked member pointer conversions, so we always have to
-    // implement checked conversions here.  This is inefficient for
-    // ABIs where an actual null check is thus required; fortunately,
-    // the Itanium and ARM ABIs ignore the adjustment value when
-    // considering null-ness.
-    CGF.CGM.getCXXABI().EmitMemberFunctionPointerConversion(CGF, E, Src,
-                                                   DestPtr, VolatileDest);
-    break;
-  }
   }
 }
 
@@ -360,23 +322,6 @@ void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
   CGF.EmitAnyExpr(E->getLHS(), 0, false, true);
   CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest,
                   /*IgnoreResult=*/false, IsInitializer);
-}
-
-void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
-  // We have a member function pointer.
-  assert(E->getType()->getAs<MemberPointerType>()
-          ->getPointeeType()->isFunctionProtoType() &&
-         "Unexpected member pointer type!");
-
-  // The creation of member function pointers has no side effects; if
-  // there is no destination pointer, we have nothing to do.
-  if (!DestPtr)
-    return;
-  
-  const DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(DRE->getDecl());
-
-  CGF.CGM.getCXXABI().EmitMemberFunctionPointer(CGF, MD, DestPtr, VolatileDest);
 }
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
