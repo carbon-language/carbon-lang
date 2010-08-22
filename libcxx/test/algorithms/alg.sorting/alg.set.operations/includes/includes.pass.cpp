@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator Iter1, InputIterator Iter2> 
-//   requires HasLess<Iter1::value_type, Iter2::value_type> 
+// template<InputIterator Iter1, InputIterator Iter2>
+//   requires HasLess<Iter1::value_type, Iter2::value_type>
 //         && HasLess<Iter2::value_type, Iter1::value_type>
 //   bool
 //   includes(Iter1 first1, Iter1 last1, Iter2 first2, Iter2 last2);
@@ -40,7 +40,6 @@ test()
 
     assert(std::includes(Iter1(ia), Iter1(ia+sa), Iter2(ib), Iter2(ib+sb)));
     assert(!std::includes(Iter1(ib), Iter1(ib+sb), Iter2(ia), Iter2(ia+sa)));
-
 
     assert(std::includes(Iter1(ia), Iter1(ia+2), Iter2(ic), Iter2(ic+2)));
     assert(!std::includes(Iter1(ia), Iter1(ia+2), Iter2(ib), Iter2(ib+2)));

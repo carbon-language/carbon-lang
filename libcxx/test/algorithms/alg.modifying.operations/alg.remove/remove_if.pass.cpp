@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, Predicate<auto, Iter::value_type> Pred> 
-//   requires OutputIterator<Iter, RvalueOf<Iter::reference>::type> 
-//         && CopyConstructible<Pred> 
+// template<ForwardIterator Iter, Predicate<auto, Iter::value_type> Pred>
+//   requires OutputIterator<Iter, RvalueOf<Iter::reference>::type>
+//         && CopyConstructible<Pred>
 //   Iter
 //   remove_if(Iter first, Iter last, Pred pred);
 
@@ -72,7 +72,7 @@ test1()
     assert(*ia[5] == 4);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -88,5 +88,5 @@ int main()
     test1<random_access_iterator<std::unique_ptr<int>*> >();
     test1<std::unique_ptr<int>*>();
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T> 
-//   requires HasLess<T, Iter::value_type> 
-//         && HasLess<Iter::value_type, T> 
+// template<ForwardIterator Iter, class T>
+//   requires HasLess<T, Iter::value_type>
+//         && HasLess<Iter::value_type, T>
 //   bool
 //   binary_search(Iter first, Iter last, const T& value);
 

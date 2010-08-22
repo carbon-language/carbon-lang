@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<InputIterator Iter1, InputIterator Iter2, 
-//          Predicate<auto, Iter1::value_type, Iter2::value_type> Pred> 
-//   requires CopyConstructible<Pred> 
+// template<InputIterator Iter1, InputIterator Iter2,
+//          Predicate<auto, Iter1::value_type, Iter2::value_type> Pred>
+//   requires CopyConstructible<Pred>
 //   pair<Iter1, Iter2>
 //   mismatch(Iter1 first1, Iter1 last1, Iter2 first2, Pred pred);
 

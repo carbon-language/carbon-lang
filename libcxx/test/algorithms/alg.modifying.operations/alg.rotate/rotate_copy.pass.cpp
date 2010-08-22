@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<ForwardIterator InIter, OutputIterator<auto, InIter::reference> OutIter> 
+// template<ForwardIterator InIter, OutputIterator<auto, InIter::reference> OutIter>
 //   OutIter
 //   rotate_copy(InIter first, InIter middle, InIter last, OutIter result);
 

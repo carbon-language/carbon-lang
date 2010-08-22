@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter1, ForwardIterator Iter2> 
-//   requires HasSwap<Iter1::reference, Iter2::reference> 
+// template<ForwardIterator Iter1, ForwardIterator Iter2>
+//   requires HasSwap<Iter1::reference, Iter2::reference>
 //   Iter2
 //   swap_ranges(Iter1 first1, Iter1 last1, Iter2 first2);
 
@@ -60,7 +60,7 @@ test1()
     assert(*j[2] == 3);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -106,5 +106,5 @@ int main()
     test1<std::unique_ptr<int>*, random_access_iterator<std::unique_ptr<int>*> >();
     test1<std::unique_ptr<int>*, std::unique_ptr<int>*>();
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

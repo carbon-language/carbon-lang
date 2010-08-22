@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter1, ForwardIterator Iter2> 
-//   requires HasEqualTo<Iter1::value_type, Iter2::value_type> 
+// template<ForwardIterator Iter1, ForwardIterator Iter2>
+//   requires HasEqualTo<Iter1::value_type, Iter2::value_type>
 //   Iter1
 //   search(Iter1 first1, Iter1 last1, Iter2 first2, Iter2 last2);
 

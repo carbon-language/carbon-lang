@@ -9,15 +9,14 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter> 
-//   requires LessThanComparable<Iter::value_type> 
+// template<RandomAccessIterator Iter>
+//   requires LessThanComparable<Iter::value_type>
 //   bool
 //   is_heap(Iter first, Iter last);
 
 #include <algorithm>
 #include <functional>
 #include <cassert>
-
 
 void test()
 {

@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, Callable<auto, Iter::difference_type> Rand> 
-//   requires ShuffleIterator<Iter> 
-//         && Convertible<Rand::result_type, Iter::difference_type> 
+// template<RandomAccessIterator Iter, Callable<auto, Iter::difference_type> Rand>
+//   requires ShuffleIterator<Iter>
+//         && Convertible<Rand::result_type, Iter::difference_type>
 //   void
 //   random_shuffle(Iter first, Iter last, Rand&& rand);
 

@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<class Iter, IntegralLike Size, class T> 
-//   requires OutputIterator<Iter, const T&> 
+// template<class Iter, IntegralLike Size, class T>
+//   requires OutputIterator<Iter, const T&>
 //   OutputIterator
 //   fill_n(Iter first, Size n, const T& value);
 

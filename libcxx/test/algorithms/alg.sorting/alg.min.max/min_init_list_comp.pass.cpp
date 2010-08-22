@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<class T, class Compare> 
+// template<class T, class Compare>
 //   T
 //   min(initializer_list<T> t, Compare comp);
 
@@ -32,5 +32,5 @@ int main()
     assert(i == 3);
     i = std::min({1, 3, 2}, std::greater<int>());
     assert(i == 3);
-#endif
+#endif  // _LIBCPP_MOVE
 }

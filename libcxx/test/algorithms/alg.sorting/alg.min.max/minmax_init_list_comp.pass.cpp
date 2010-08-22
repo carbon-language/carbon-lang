@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<class T, class Compare> 
+// template<class T, class Compare>
 //   pair<T, T>
 //   minmax(initializer_list<T> t, Compare comp);
 
@@ -26,5 +26,5 @@ int main()
     assert((std::minmax({2, 3, 1}, std::greater<int>()) == std::pair<int, int>(3, 1)));
     assert((std::minmax({3, 1, 2}, std::greater<int>()) == std::pair<int, int>(3, 1)));
     assert((std::minmax({3, 2, 1}, std::greater<int>()) == std::pair<int, int>(3, 1)));
-#endif
+#endif  // _LIBCPP_MOVE
 }

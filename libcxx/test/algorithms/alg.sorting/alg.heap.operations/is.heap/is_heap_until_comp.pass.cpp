@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires CopyConstructible<Compare> 
+// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires CopyConstructible<Compare>
 //   Iter
 //   is_heap_until(Iter first, Iter last, Compare comp);
 

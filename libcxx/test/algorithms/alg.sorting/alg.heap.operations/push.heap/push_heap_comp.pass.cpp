@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter> 
-//   requires ShuffleIterator<Iter> 
-//         && LessThanComparable<Iter::value_type> 
+// template<RandomAccessIterator Iter>
+//   requires ShuffleIterator<Iter>
+//         && LessThanComparable<Iter::value_type>
 //   void
 //   push_heap(Iter first, Iter last);
 
@@ -28,7 +28,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 void test(unsigned N)
 {
@@ -62,5 +62,5 @@ int main()
     }
     delete [] ia;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

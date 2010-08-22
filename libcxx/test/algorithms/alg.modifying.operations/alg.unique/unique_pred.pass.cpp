@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, EquivalenceRelation<auto, Iter::value_type> Pred> 
-//   requires OutputIterator<Iter, RvalueOf<Iter::reference>::type> 
-//         && CopyConstructible<Pred> 
+// template<ForwardIterator Iter, EquivalenceRelation<auto, Iter::value_type> Pred>
+//   requires OutputIterator<Iter, RvalueOf<Iter::reference>::type>
+//         && CopyConstructible<Pred>
 //   Iter
 //   unique(Iter first, Iter last, Pred pred);
 
@@ -211,7 +211,7 @@ test1()
     assert(count_equal::count == si-1);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -227,5 +227,5 @@ int main()
     test1<random_access_iterator<Ptr*> >();
     test1<Ptr*>();
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

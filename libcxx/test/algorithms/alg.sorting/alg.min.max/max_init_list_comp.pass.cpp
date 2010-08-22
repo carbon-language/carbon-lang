@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<class T, class Compare> 
+// template<class T, class Compare>
 //   T
 //   max(initializer_list<T> t, Compare comp);
 
@@ -32,5 +32,5 @@ int main()
     assert(i == 1);
     i = std::max({1, 3, 2}, std::greater<int>());
     assert(i == 1);
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T> 
-//   requires OutputIterator<Iter, RvalueOf<Iter::reference>::type> 
-//         && HasEqualTo<Iter::value_type, T> 
+// template<ForwardIterator Iter, class T>
+//   requires OutputIterator<Iter, RvalueOf<Iter::reference>::type>
+//         && HasEqualTo<Iter::value_type, T>
 //   Iter
 //   remove(Iter first, Iter last, const T& value);
 
@@ -63,7 +63,7 @@ test1()
     assert(*ia[5] == 4);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -79,5 +79,5 @@ int main()
     test1<random_access_iterator<std::unique_ptr<int>*> >();
     test1<std::unique_ptr<int>*>();
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

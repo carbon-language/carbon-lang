@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator Iter> 
-//   requires HasSwap<Iter::reference, Iter::reference> 
+// template<BidirectionalIterator Iter>
+//   requires HasSwap<Iter::reference, Iter::reference>
 //   void
 //   reverse(Iter first, Iter last);
 

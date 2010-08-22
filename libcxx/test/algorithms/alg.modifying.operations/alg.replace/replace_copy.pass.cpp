@@ -9,10 +9,10 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, typename OutIter, class T> 
-//   requires OutputIterator<OutIter, InIter::reference> 
-//         && OutputIterator<OutIter, const T&> 
-//         && HasEqualTo<InIter::value_type, T> 
+// template<InputIterator InIter, typename OutIter, class T>
+//   requires OutputIterator<OutIter, InIter::reference>
+//         && OutputIterator<OutIter, const T&>
+//         && HasEqualTo<InIter::value_type, T>
 //   OutIter
 //   replace_copy(InIter first, InIter last, OutIter result, const T& old_value,
 //                                                           const T& new_value);

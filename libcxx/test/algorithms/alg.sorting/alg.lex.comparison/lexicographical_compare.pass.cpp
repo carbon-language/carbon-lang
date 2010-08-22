@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<InputIterator Iter1, InputIterator Iter2> 
-//   requires HasLess<Iter1::value_type, Iter2::value_type> 
-//         && HasLess<Iter2::value_type, Iter1::value_type> 
+// template<InputIterator Iter1, InputIterator Iter2>
+//   requires HasLess<Iter1::value_type, Iter2::value_type>
+//         && HasLess<Iter2::value_type, Iter1::value_type>
 //   bool
 //   lexicographical_compare(Iter1 first1, Iter1 last1, Iter2 first2, Iter2 last2);
 

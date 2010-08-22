@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator Iter, Predicate<auto, Iter::value_type> Pred> 
-//   requires ShuffleIterator<Iter> 
-//         && CopyConstructible<Pred> 
+// template<BidirectionalIterator Iter, Predicate<auto, Iter::value_type> Pred>
+//   requires ShuffleIterator<Iter>
+//         && CopyConstructible<Pred>
 //   Iter
 //   partition(Iter first, Iter last, Pred pred);
 

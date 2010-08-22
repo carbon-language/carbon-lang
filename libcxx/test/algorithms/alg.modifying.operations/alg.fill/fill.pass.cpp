@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T> 
-//   requires OutputIterator<Iter, const T&> 
+// template<ForwardIterator Iter, class T>
+//   requires OutputIterator<Iter, const T&>
 //   void
 //   fill(Iter first, Iter last, const T& value);
 

@@ -13,7 +13,6 @@
 //     bool
 //     is_partitioned(InputIterator first, InputIterator last, Predicate pred);
 
-
 #include <algorithm>
 #include <cassert>
 

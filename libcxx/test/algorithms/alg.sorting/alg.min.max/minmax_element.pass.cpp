@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter> 
-//   requires LessThanComparable<Iter::value_type> 
-//   pair<Iter, Iter> 
+// template<ForwardIterator Iter>
+//   requires LessThanComparable<Iter::value_type>
+//   pair<Iter, Iter>
 //   minmax_element(Iter first, Iter last);
 
 #include <algorithm>
@@ -47,7 +47,7 @@ test(unsigned N)
     for (int i = 0; i < N; ++i)
         a[i] = i;
     std::random_shuffle(a, a+N);
-    test(Iter(a), Iter(a+N)); 
+    test(Iter(a), Iter(a+N));
     delete [] a;
 }
 

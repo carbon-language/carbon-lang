@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, class OutIter, 
-//          Callable<auto, const InIter::value_type&> Op> 
-//   requires OutputIterator<OutIter, Op::result_type> && CopyConstructible<Op> 
+// template<InputIterator InIter, class OutIter,
+//          Callable<auto, const InIter::value_type&> Op>
+//   requires OutputIterator<OutIter, Op::result_type> && CopyConstructible<Op>
 //   OutIter
 //   transform(InIter first, InIter last, OutIter result, Op op);
 

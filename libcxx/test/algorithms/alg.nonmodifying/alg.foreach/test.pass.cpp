@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator Iter, Callable<auto, Iter::reference> Function> 
-//   requires CopyConstructible<Function> 
+// template<InputIterator Iter, Callable<auto, Iter::reference> Function>
+//   requires CopyConstructible<Function>
 //   Function
 //   for_each(Iter first, Iter last, Function f);
 

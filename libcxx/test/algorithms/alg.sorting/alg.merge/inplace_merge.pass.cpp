@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator Iter> 
-//   requires ShuffleIterator<Iter> 
-//         && LessThanComparable<Iter::value_type> 
+// template<BidirectionalIterator Iter>
+//   requires ShuffleIterator<Iter>
+//         && LessThanComparable<Iter::value_type>
 //   void
 //   inplace_merge(Iter first, Iter middle, Iter last);
 

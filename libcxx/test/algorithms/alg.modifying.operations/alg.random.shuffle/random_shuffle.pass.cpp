@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter> 
-//   requires ShuffleIterator<Iter> 
+// template<RandomAccessIterator Iter>
+//   requires ShuffleIterator<Iter>
 //   void
 //   random_shuffle(Iter first, Iter last);
 

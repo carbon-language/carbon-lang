@@ -9,10 +9,10 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, Predicate<auto, Iter::value_type> Pred, class T> 
-//   requires OutputIterator<Iter, Iter::reference> 
-//         && OutputIterator<Iter, const T&> 
-//         && CopyConstructible<Pred> 
+// template<ForwardIterator Iter, Predicate<auto, Iter::value_type> Pred, class T>
+//   requires OutputIterator<Iter, Iter::reference>
+//         && OutputIterator<Iter, const T&>
+//         && CopyConstructible<Pred>
 //   void
 //   replace_if(Iter first, Iter last, Pred pred, const T& new_value);
 

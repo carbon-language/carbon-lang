@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires ShuffleIterator<Iter> 
-//         && CopyConstructible<Compare> 
+// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires ShuffleIterator<Iter>
+//         && CopyConstructible<Compare>
 //   void
 //   nth_element(Iter first, Iter nth, Iter last, Compare comp);
 
@@ -29,7 +29,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 void
 test_one(unsigned N, unsigned M)
@@ -81,5 +81,5 @@ int main()
     std::nth_element(v.begin(), v.begin() + v.size()/2, v.end(), indirect_less());
     assert(*v[v.size()/2] == v.size()/2);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

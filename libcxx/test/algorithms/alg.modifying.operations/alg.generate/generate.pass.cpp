@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, Callable Generator> 
-//   requires OutputIterator<Iter, Generator::result_type> 
-//         && CopyConstructible<Generator> 
+// template<ForwardIterator Iter, Callable Generator>
+//   requires OutputIterator<Iter, Generator::result_type>
+//         && CopyConstructible<Generator>
 //   void
 //   generate(Iter first, Iter last, Generator gen);
 

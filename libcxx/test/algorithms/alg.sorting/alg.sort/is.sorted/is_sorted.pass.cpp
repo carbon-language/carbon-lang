@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter> 
-//   requires LessThanComparable<Iter::value_type> 
+// template<ForwardIterator Iter>
+//   requires LessThanComparable<Iter::value_type>
 //   bool
 //   is_sorted(Iter first, Iter last);
 

@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter> 
-//   requires EqualityComparable<Iter::value_type> 
+// template<ForwardIterator Iter>
+//   requires EqualityComparable<Iter::value_type>
 //   Iter
 //   adjacent_find(Iter first, Iter last);
 

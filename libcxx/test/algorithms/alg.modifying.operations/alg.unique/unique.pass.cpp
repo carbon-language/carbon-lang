@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter> 
+// template<ForwardIterator Iter>
 //   requires OutputIterator<Iter, Iter::reference>
-//         && EqualityComparable<Iter::value_type> 
+//         && EqualityComparable<Iter::value_type>
 //   Iter
 //   unique(Iter first, Iter last);
 
@@ -169,7 +169,7 @@ test1()
     assert(*ii[2] == 2);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -185,5 +185,5 @@ int main()
     test1<random_access_iterator<Ptr*> >();
     test1<Ptr*>();
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

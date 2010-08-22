@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, OutputIterator<auto, InIter::reference> OutIter> 
+// template<InputIterator InIter, OutputIterator<auto, InIter::reference> OutIter>
 //   OutIter
 //   copy(InIter first, InIter last, OutIter result);
 

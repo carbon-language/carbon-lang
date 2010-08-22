@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator Iter, class T> 
-//   requires HasEqualTo<Iter::value_type, T> 
+// template<InputIterator Iter, class T>
+//   requires HasEqualTo<Iter::value_type, T>
 //   Iter
 //   find(Iter first, Iter last, const T& value);
 

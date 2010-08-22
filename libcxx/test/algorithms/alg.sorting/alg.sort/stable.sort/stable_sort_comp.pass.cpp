@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires ShuffleIterator<Iter> 
-//         && CopyConstructible<Compare> 
+// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires ShuffleIterator<Iter>
+//         && CopyConstructible<Compare>
 //   void
 //   stable_sort(Iter first, Iter last, Compare comp);
 
@@ -29,7 +29,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 struct first_only
 {
@@ -79,5 +79,5 @@ int main()
     assert(*v[1] == 1);
     assert(*v[2] == 2);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

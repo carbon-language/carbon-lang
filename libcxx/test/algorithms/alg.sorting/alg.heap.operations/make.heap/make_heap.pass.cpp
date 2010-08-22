@@ -9,14 +9,13 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter> 
-//   requires ShuffleIterator<Iter> && LessThanComparable<Iter::value_type> 
+// template<RandomAccessIterator Iter>
+//   requires ShuffleIterator<Iter> && LessThanComparable<Iter::value_type>
 //   void
 //   make_heap(Iter first, Iter last);
 
 #include <algorithm>
 #include <cassert>
-
 
 void test(unsigned N)
 {

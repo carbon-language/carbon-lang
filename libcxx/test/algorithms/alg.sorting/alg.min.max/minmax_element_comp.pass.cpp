@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires CopyConstructible<Compare> 
+// template<ForwardIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires CopyConstructible<Compare>
 //   pair<Iter, Iter>
 //   minmax_element(Iter first, Iter last, Compare comp);
 
@@ -50,7 +50,7 @@ test(unsigned N)
     for (int i = 0; i < N; ++i)
         a[i] = i;
     std::random_shuffle(a, a+N);
-    test(Iter(a), Iter(a+N)); 
+    test(Iter(a), Iter(a+N));
     delete [] a;
 }
 

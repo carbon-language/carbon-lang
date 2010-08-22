@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator InIter, BidirectionalIterator OutIter> 
-//   requires OutputIterator<OutIter, RvalueOf<InIter::reference>::type> 
+// template<BidirectionalIterator InIter, BidirectionalIterator OutIter>
+//   requires OutputIterator<OutIter, RvalueOf<InIter::reference>::type>
 //   OutIter
 //   move_backward(InIter first, InIter last, OutIter result);
 
@@ -56,7 +56,7 @@ test1()
         assert(*ib[i] == i);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -84,5 +84,5 @@ int main()
     test1<std::unique_ptr<int>*, bidirectional_iterator<std::unique_ptr<int>*> >();
     test1<std::unique_ptr<int>*, random_access_iterator<std::unique_ptr<int>*> >();
     test1<std::unique_ptr<int>*, std::unique_ptr<int>*>();
-#endif
+#endif  // _LIBCPP_MOVE
 }

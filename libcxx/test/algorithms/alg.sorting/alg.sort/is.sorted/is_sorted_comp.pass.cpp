@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires CopyConstructible<Compare> 
+// template<ForwardIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires CopyConstructible<Compare>
 //   bool
 //   is_sorted(Iter first, Iter last, Compare comp);
 

@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <cassert>
 
-
 void test()
 {
     int i1[] = {0, 0};

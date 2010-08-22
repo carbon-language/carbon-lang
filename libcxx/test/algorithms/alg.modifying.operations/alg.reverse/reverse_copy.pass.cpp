@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator InIter, OutputIterator<auto, InIter::reference> OutIter> 
+// template<BidirectionalIterator InIter, OutputIterator<auto, InIter::reference> OutIter>
 //   OutIter
 //   reverse_copy(InIter first, InIter last, OutIter result);
 

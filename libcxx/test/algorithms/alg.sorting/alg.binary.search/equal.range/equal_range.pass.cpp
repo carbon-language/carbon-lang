@@ -9,10 +9,10 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T> 
-//   requires HasLess<T, Iter::value_type> 
-//         && HasLess<Iter::value_type, T> 
-//   pair<Iter, Iter> 
+// template<ForwardIterator Iter, class T>
+//   requires HasLess<T, Iter::value_type>
+//         && HasLess<Iter::value_type, T>
+//   pair<Iter, Iter>
 //   equal_range(Iter first, Iter last, const T& value);
 
 #include <algorithm>

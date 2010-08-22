@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter1, ForwardIterator Iter2, 
-//          Predicate<auto, Iter1::value_type, Iter2::value_type> Pred> 
-//   requires CopyConstructible<Pred> 
+// template<ForwardIterator Iter1, ForwardIterator Iter2,
+//          Predicate<auto, Iter1::value_type, Iter2::value_type> Pred>
+//   requires CopyConstructible<Pred>
 //   Iter1
 //   find_end(Iter1 first1, Iter1 last1, Iter2 first2, Iter2 last2, Pred pred);
 

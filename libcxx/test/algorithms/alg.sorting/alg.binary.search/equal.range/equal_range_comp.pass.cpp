@@ -9,10 +9,10 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T, CopyConstructible Compare> 
-//   requires Predicate<Compare, T, Iter::value_type> 
-//         && Predicate<Compare, Iter::value_type, T> 
-//   pair<Iter, Iter> 
+// template<ForwardIterator Iter, class T, CopyConstructible Compare>
+//   requires Predicate<Compare, T, Iter::value_type>
+//         && Predicate<Compare, Iter::value_type, T>
+//   pair<Iter, Iter>
 //   equal_range(Iter first, Iter last, const T& value, Compare comp);
 
 #include <algorithm>

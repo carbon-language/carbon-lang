@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T> 
-//   requires HasLess<T, Iter::value_type> 
+// template<ForwardIterator Iter, class T>
+//   requires HasLess<T, Iter::value_type>
 //   Iter
 //   upper_bound(Iter first, Iter last, const T& value);
 

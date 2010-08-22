@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<class T, StrictWeakOrder<auto, T> Compare> 
-//   requires !SameType<T, Compare> && CopyConstructible<Compare> 
+// template<class T, StrictWeakOrder<auto, T> Compare>
+//   requires !SameType<T, Compare> && CopyConstructible<Compare>
 //   pair<const T&, const T&>
 //   minmax(const T& a, const T& b, Compare comp);
 

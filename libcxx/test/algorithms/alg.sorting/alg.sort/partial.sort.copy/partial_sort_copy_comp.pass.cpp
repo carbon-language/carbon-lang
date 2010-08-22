@@ -9,12 +9,12 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, RandomAccessIterator RAIter, class Compare> 
-//   requires ShuffleIterator<RAIter> 
-//         && OutputIterator<RAIter, InIter::reference> 
-//         && Predicate<Compare, InIter::value_type, RAIter::value_type> 
-//         && StrictWeakOrder<Compare, RAIter::value_type>} 
-//         && CopyConstructible<Compare> 
+// template<InputIterator InIter, RandomAccessIterator RAIter, class Compare>
+//   requires ShuffleIterator<RAIter>
+//         && OutputIterator<RAIter, InIter::reference>
+//         && Predicate<Compare, InIter::value_type, RAIter::value_type>
+//         && StrictWeakOrder<Compare, RAIter::value_type>}
+//         && CopyConstructible<Compare>
 //   RAIter
 //   partial_sort_copy(InIter first, InIter last,
 //                     RAIter result_first, RAIter result_last, Compare comp);

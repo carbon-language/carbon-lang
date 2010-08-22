@@ -9,11 +9,11 @@
 
 // <algorithm>
 
-// template<InputIterator InIter1, InputIterator InIter2, typename OutIter, 
-//          Predicate<auto, InIter2::value_type, InIter1::value_type> Compare> 
+// template<InputIterator InIter1, InputIterator InIter2, typename OutIter,
+//          Predicate<auto, InIter2::value_type, InIter1::value_type> Compare>
 //   requires OutputIterator<OutIter, InIter1::reference>
-//         && OutputIterator<OutIter, InIter2::reference> 
-//         && CopyConstructible<Compare> 
+//         && OutputIterator<OutIter, InIter2::reference>
+//         && CopyConstructible<Compare>
 //   OutIter
 //   merge(InIter1 first1, InIter1 last1,
 //         InIter2 first2, InIter2 last2, OutIter result, Compare comp);

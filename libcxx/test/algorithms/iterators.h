@@ -311,4 +311,4 @@ base(Iter i)
     return i;
 }
 
-#endif
+#endif  // ITERATORS_H

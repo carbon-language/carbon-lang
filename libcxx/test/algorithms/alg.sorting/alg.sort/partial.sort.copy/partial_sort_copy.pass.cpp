@@ -9,11 +9,11 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, RandomAccessIterator RAIter> 
-//   requires ShuffleIterator<RAIter> 
-//         && OutputIterator<RAIter, InIter::reference> 
-//         && HasLess<InIter::value_type, RAIter::value_type> 
-//         && LessThanComparable<RAIter::value_type> 
+// template<InputIterator InIter, RandomAccessIterator RAIter>
+//   requires ShuffleIterator<RAIter>
+//         && OutputIterator<RAIter, InIter::reference>
+//         && HasLess<InIter::value_type, RAIter::value_type>
+//         && LessThanComparable<RAIter::value_type>
 //   RAIter
 //   partial_sort_copy(InIter first, InIter last, RAIter result_first, RAIter result_last);
 

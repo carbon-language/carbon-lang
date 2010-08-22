@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T, CopyConstructible Compare> 
-//   requires Predicate<Compare, T, Iter::value_type> 
-//         && Predicate<Compare, Iter::value_type, T> 
+// template<ForwardIterator Iter, class T, CopyConstructible Compare>
+//   requires Predicate<Compare, T, Iter::value_type>
+//         && Predicate<Compare, Iter::value_type, T>
 //   bool
 //   binary_search(Iter first, Iter last, const T& value, Compare comp);
 

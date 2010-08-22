@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template <class T> 
+// template <class T>
 //   T
 //   max(initializer_list<T> t);
 
@@ -31,5 +31,5 @@ int main()
     assert(i == 3);
     i = std::max({1, 3, 2});
     assert(i == 3);
-#endif
+#endif  // _LIBCPP_MOVE
 }

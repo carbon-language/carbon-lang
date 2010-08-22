@@ -10,14 +10,14 @@
 // <algorithm>
 
 // template<InputIterator InIter1, InputIterator InIter2, typename OutIter,
-//          CopyConstructible Compare> 
-//   requires OutputIterator<OutIter, InIter1::reference> 
-//         && OutputIterator<OutIter, InIter2::reference> 
-//         && Predicate<Compare, InIter1::value_type, InIter2::value_type> 
-//         && Predicate<Compare, InIter2::value_type, InIter1::value_type> 
+//          CopyConstructible Compare>
+//   requires OutputIterator<OutIter, InIter1::reference>
+//         && OutputIterator<OutIter, InIter2::reference>
+//         && Predicate<Compare, InIter1::value_type, InIter2::value_type>
+//         && Predicate<Compare, InIter2::value_type, InIter1::value_type>
 //   OutIter
 //   set_symmetric_difference(InIter1 first1, InIter1 last1,
-//                            InIter2 first2, InIter2 last2, 
+//                            InIter2 first2, InIter2 last2,
 //                            OutIter result, Compare comp);
 
 #include <algorithm>

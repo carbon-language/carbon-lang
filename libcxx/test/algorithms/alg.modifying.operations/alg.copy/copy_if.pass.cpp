@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, OutputIterator<auto, InIter::reference> OutIter, 
-//          Predicate<auto, InIter::value_type> Pred> 
-//   requires CopyConstructible<Pred> 
+// template<InputIterator InIter, OutputIterator<auto, InIter::reference> OutIter,
+//          Predicate<auto, InIter::value_type> Pred>
+//   requires CopyConstructible<Pred>
 //   OutIter
 //   copy_if(InIter first, InIter last, OutIter result, Pred pred);
 

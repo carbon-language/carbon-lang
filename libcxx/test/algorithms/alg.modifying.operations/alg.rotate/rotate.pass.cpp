@@ -9,7 +9,7 @@
 
 // <algorithm>
 
-// template<ShuffleIterator Iter> 
+// template<ShuffleIterator Iter>
 //   Iter
 //   rotate(Iter first, Iter middle, Iter last);
 
@@ -419,7 +419,7 @@ test1()
     assert(*ig[5] == 2);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -435,5 +435,5 @@ int main()
     test1<random_access_iterator<std::unique_ptr<int>*> >();
     test1<std::unique_ptr<int>*>();
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

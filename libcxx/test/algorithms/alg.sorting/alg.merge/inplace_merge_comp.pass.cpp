@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires ShuffleIterator<Iter> 
-//         && CopyConstructible<Compare> 
+// template<BidirectionalIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires ShuffleIterator<Iter>
+//         && CopyConstructible<Compare>
 //   void
 //   inplace_merge(Iter first, Iter middle, Iter last, Compare comp);
 
@@ -28,7 +28,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 #include "../../iterators.h"
 
@@ -108,5 +108,5 @@ int main()
     }
     delete [] ia;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

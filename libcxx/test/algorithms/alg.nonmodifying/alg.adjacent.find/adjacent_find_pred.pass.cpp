@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, EquivalenceRelation<auto, Iter::value_type> Pred> 
-//   requires CopyConstructible<Pred> 
+// template<ForwardIterator Iter, EquivalenceRelation<auto, Iter::value_type> Pred>
+//   requires CopyConstructible<Pred>
 //   Iter
 //   adjacent_find(Iter first, Iter last, Pred pred);
 

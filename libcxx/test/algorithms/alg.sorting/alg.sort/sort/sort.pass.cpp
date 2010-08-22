@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter> 
-//   requires ShuffleIterator<Iter> 
-//         && LessThanComparable<Iter::value_type> 
+// template<RandomAccessIterator Iter>
+//   requires ShuffleIterator<Iter>
+//         && LessThanComparable<Iter::value_type>
 //   void
 //   sort(Iter first, Iter last);
 

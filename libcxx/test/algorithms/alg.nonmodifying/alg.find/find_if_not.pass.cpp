@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator Iter, Predicate<auto, Iter::value_type> Pred> 
-//   requires CopyConstructible<Pred> 
+// template<InputIterator Iter, Predicate<auto, Iter::value_type> Pred>
+//   requires CopyConstructible<Pred>
 //   Iter
 //   find_if_not(Iter first, Iter last, Pred pred);
 

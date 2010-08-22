@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator Iter, Predicate<auto, Iter::value_type> Pred> 
-//   requires CopyConstructible<Pred> 
+// template<InputIterator Iter, Predicate<auto, Iter::value_type> Pred>
+//   requires CopyConstructible<Pred>
 //   Iter::difference_type
 //   count_if(Iter first, Iter last, Pred pred);
 

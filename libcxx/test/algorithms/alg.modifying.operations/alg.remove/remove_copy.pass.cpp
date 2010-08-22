@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, OutputIterator<auto, InIter::reference> OutIter, class T> 
-//   requires HasEqualTo<InIter::value_type, T> 
+// template<InputIterator InIter, OutputIterator<auto, InIter::reference> OutIter, class T>
+//   requires HasEqualTo<InIter::value_type, T>
 //   OutIter
 //   remove_copy(InIter first, InIter last, OutIter result, const T& value);
 

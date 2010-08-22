@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator Iter> 
-//   requires ShuffleIterator<Iter> 
-//         && LessThanComparable<Iter::value_type> 
+// template<BidirectionalIterator Iter>
+//   requires ShuffleIterator<Iter>
+//         && LessThanComparable<Iter::value_type>
 //   bool
 //   prev_permutation(Iter first, Iter last);
 

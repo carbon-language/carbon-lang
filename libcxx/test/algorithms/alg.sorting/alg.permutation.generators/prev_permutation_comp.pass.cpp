@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires ShuffleIterator<Iter> 
-//         && CopyConstructible<Compare> 
+// template<BidirectionalIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires ShuffleIterator<Iter>
+//         && CopyConstructible<Compare>
 //   bool
 //   prev_permutation(Iter first, Iter last, Compare comp);
 

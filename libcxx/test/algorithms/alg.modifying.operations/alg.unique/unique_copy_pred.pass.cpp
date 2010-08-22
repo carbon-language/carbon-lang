@@ -9,12 +9,12 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, class OutIter, 
-//          EquivalenceRelation<auto, InIter::value_type> Pred> 
-//   requires OutputIterator<OutIter, RvalueOf<InIter::value_type>::type> 
-//         && HasAssign<InIter::value_type, InIter::reference> 
-//         && Constructible<InIter::value_type, InIter::reference> 
-//         && CopyConstructible<Pred> 
+// template<InputIterator InIter, class OutIter,
+//          EquivalenceRelation<auto, InIter::value_type> Pred>
+//   requires OutputIterator<OutIter, RvalueOf<InIter::value_type>::type>
+//         && HasAssign<InIter::value_type, InIter::reference>
+//         && Constructible<InIter::value_type, InIter::reference>
+//         && CopyConstructible<Pred>
 //   OutIter
 //   unique_copy(InIter first, InIter last, OutIter result, Pred pred);
 

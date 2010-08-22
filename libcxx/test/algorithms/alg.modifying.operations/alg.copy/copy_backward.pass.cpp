@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<BidirectionalIterator InIter, BidirectionalIterator OutIter> 
-//   requires OutputIterator<OutIter, InIter::reference> 
+// template<BidirectionalIterator InIter, BidirectionalIterator OutIter>
+//   requires OutputIterator<OutIter, InIter::reference>
 //   OutIter
 //   copy_backward(InIter first, InIter last, OutIter result);
 

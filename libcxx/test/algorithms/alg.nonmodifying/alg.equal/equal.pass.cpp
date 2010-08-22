@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<InputIterator Iter1, InputIterator Iter2> 
-//   requires HasEqualTo<Iter1::value_type, Iter2::value_type> 
+// template<InputIterator Iter1, InputIterator Iter2>
+//   requires HasEqualTo<Iter1::value_type, Iter2::value_type>
 //   bool
 //   equal(Iter1 first1, Iter1 last1, Iter2 first2);
 

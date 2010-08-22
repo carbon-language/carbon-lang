@@ -9,9 +9,9 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires ShuffleIterator<Iter> 
-//         && CopyConstructible<Compare> 
+// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires ShuffleIterator<Iter>
+//         && CopyConstructible<Compare>
 //   void
 //   partial_sort(Iter first, Iter middle, Iter last, Compare comp);
 
@@ -29,7 +29,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 void
 test_larger_sorts(unsigned N, unsigned M)
@@ -83,5 +83,5 @@ int main()
     for (int i = 0; i < v.size()/2; ++i)
         assert(*v[i] == i);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

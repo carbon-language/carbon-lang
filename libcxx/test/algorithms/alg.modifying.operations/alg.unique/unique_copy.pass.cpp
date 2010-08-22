@@ -9,11 +9,11 @@
 
 // <algorithm>
 
-// template<InputIterator InIter, class OutIter> 
-//   requires OutputIterator<OutIter, RvalueOf<InIter::value_type>::type> 
-//         && EqualityComparable<InIter::value_type> 
-//         && HasAssign<InIter::value_type, InIter::reference> 
-//         && Constructible<InIter::value_type, InIter::reference> 
+// template<InputIterator InIter, class OutIter>
+//   requires OutputIterator<OutIter, RvalueOf<InIter::value_type>::type>
+//         && EqualityComparable<InIter::value_type>
+//         && HasAssign<InIter::value_type, InIter::reference>
+//         && Constructible<InIter::value_type, InIter::reference>
 //   OutIter
 //   unique_copy(InIter first, InIter last, OutIter result);
 

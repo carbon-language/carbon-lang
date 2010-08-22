@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<Iterator Iter1, Iterator Iter2> 
-//   requires HasSwap<Iter1::reference, Iter2::reference> 
+// template<Iterator Iter1, Iterator Iter2>
+//   requires HasSwap<Iter1::reference, Iter2::reference>
 //   void
 //   iter_swap(Iter1 a, Iter2 b);
 

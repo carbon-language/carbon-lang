@@ -9,10 +9,10 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T> 
+// template<ForwardIterator Iter, class T>
 //   requires OutputIterator<Iter, Iter::reference>
 //         && OutputIterator<Iter, const T&>
-//         && HasEqualTo<Iter::value_type, T> 
+//         && HasEqualTo<Iter::value_type, T>
 //   void
 //   replace(Iter first, Iter last, const T& old_value, const T& new_value);
 

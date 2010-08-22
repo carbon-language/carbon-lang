@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<ForwardIterator Iter, class T, Predicate<auto, T, Iter::value_type> Compare> 
-//   requires CopyConstructible<Compare> 
+// template<ForwardIterator Iter, class T, Predicate<auto, T, Iter::value_type> Compare>
+//   requires CopyConstructible<Compare>
 //   Iter
 //   upper_bound(Iter first, Iter last, const T& value, Compare comp);
 

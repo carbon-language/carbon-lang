@@ -9,8 +9,8 @@
 
 // <algorithm>
 
-// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare> 
-//   requires ShuffleIterator<Iter> && CopyConstructible<Compare> 
+// template<RandomAccessIterator Iter, StrictWeakOrder<auto, Iter::value_type> Compare>
+//   requires ShuffleIterator<Iter> && CopyConstructible<Compare>
 //   void
 //   sort_heap(Iter first, Iter last, Compare comp);
 
@@ -27,7 +27,7 @@ struct indirect_less
         {return *x < *y;}
 };
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 void test(unsigned N)
 {
@@ -62,5 +62,5 @@ int main()
     assert(std::is_sorted(ia, ia+N, indirect_less()));
     delete [] ia;
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

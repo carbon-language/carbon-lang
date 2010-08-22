@@ -10,8 +10,8 @@
 // <algorithm>
 
 // template<class Iter, IntegralLike Size, Callable Generator>
-//   requires OutputIterator<Iter, Generator::result_type> 
-//         && CopyConstructible<Generator> 
+//   requires OutputIterator<Iter, Generator::result_type>
+//         && CopyConstructible<Generator>
 //   void
 //   generate_n(Iter first, Size n, Generator gen);
 
