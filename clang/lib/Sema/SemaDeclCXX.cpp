@@ -5425,6 +5425,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   if (Constructor->isCopyConstructor() && ExprArgs.size() >= 1) {
     Expr *SubExpr = ((Expr **)ExprArgs.get())[0];
     Elidable = SubExpr->isTemporaryObject() &&
+      ConstructKind == CXXConstructExpr::CK_Complete &&
       Context.hasSameUnqualifiedType(SubExpr->getType(), 
                            Context.getTypeDeclType(Constructor->getParent()));
   }

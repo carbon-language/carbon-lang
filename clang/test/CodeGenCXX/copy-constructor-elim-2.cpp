@@ -5,3 +5,29 @@ A f() { return A(0); }
 // CHECK: define void @_Z1fv
 // CHECK: call void @_ZN1AC1Ei
 // CHECK-NEXT: ret void
+
+// Verify that we do not elide copies when constructing a base class.
+namespace no_elide_base {
+  struct Base { 
+    Base(const Base&);
+    ~Base();
+  };
+
+  struct Other {
+    operator Base() const;
+  };
+
+  struct Derived : public virtual Base { 
+    Derived(const Other &O);
+  };
+
+  // CHECK: define void @_ZN13no_elide_base7DerivedC1ERKNS_5OtherE
+  Derived::Derived(const Other &O) 
+    // CHECK: call void @_ZNK13no_elide_base5OthercvNS_4BaseEEv
+    // CHECK: call void @_ZN13no_elide_base4BaseC2ERKS0_
+    // CHECK: call void @_ZN13no_elide_base4BaseD1Ev
+    : Base(O)
+  {
+    // CHECK: ret void
+  }
+}
