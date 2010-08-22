@@ -11,12 +11,12 @@
 
 // time_point
 
-// template <class Clock, class Duration1, class Rep2, class Period2> 
-//   time_point<Clock, typename common_type<Duration1, duration<Rep2, Period2>>::type> 
+// template <class Clock, class Duration1, class Rep2, class Period2>
+//   time_point<Clock, typename common_type<Duration1, duration<Rep2, Period2>>::type>
 //   operator+(const time_point<Clock, Duration1>& lhs, const duration<Rep2, Period2>& rhs);
 
-// template <class Rep1, class Period1, class Clock, class Duration2> 
-//   time_point<Clock, typename common_type<duration<Rep1, Period1>, Duration2>::type> 
+// template <class Rep1, class Period1, class Clock, class Duration2>
+//   time_point<Clock, typename common_type<duration<Rep1, Period1>, Duration2>::type>
 //   operator+(const duration<Rep1, Period1>& lhs, const time_point<Clock, Duration2>& rhs);
 
 #include <chrono>

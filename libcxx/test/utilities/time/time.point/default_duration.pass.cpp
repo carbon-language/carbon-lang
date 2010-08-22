@@ -13,7 +13,7 @@
 
 // Test default template arg:
 
-// template <class Clock, class Duration = typename Clock::duration> 
+// template <class Clock, class Duration = typename Clock::duration>
 //   class time_point;
 
 #include <chrono>

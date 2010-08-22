@@ -23,4 +23,4 @@ public:
 
 int DefaultOnly::count = 0;
 
-#endif
+#endif  // DEFAULTONLY_H

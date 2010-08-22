@@ -15,4 +15,4 @@ public:
     Rep& operator/=(Rep x) {data_ /= x.data_; return *this;}
 };
 
-#endif
+#endif  // REP_H

@@ -11,19 +11,19 @@
 
 // time_point
 
-// template <class Clock, class Duration1, class Duration2> 
+// template <class Clock, class Duration1, class Duration2>
 //   bool
 //   operator< (const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
 
-// template <class Clock, class Duration1, class Duration2> 
+// template <class Clock, class Duration1, class Duration2>
 //   bool
 //   operator> (const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
 
-// template <class Clock, class Duration1, class Duration2> 
+// template <class Clock, class Duration1, class Duration2>
 //   bool
 //   operator<=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
 
-// template <class Clock, class Duration1, class Duration2> 
+// template <class Clock, class Duration1, class Duration2>
 //   bool
 //   operator>=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
 

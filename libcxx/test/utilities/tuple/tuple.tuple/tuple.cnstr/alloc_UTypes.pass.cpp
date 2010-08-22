@@ -35,7 +35,7 @@ int main()
         assert(std::get<1>(t) == 1);
     }
     {
-        std::tuple<MoveOnly, MoveOnly, MoveOnly> t(std::allocator_arg, A1<int>(), 
+        std::tuple<MoveOnly, MoveOnly, MoveOnly> t(std::allocator_arg, A1<int>(),
                                                    MoveOnly(0),
                                                    1, 2);
         assert(std::get<0>(t) == 0);
@@ -55,14 +55,14 @@ int main()
     }
     // extensions
     {
-        std::tuple<MoveOnly, MoveOnly, MoveOnly> t(std::allocator_arg, A1<int>(), 
+        std::tuple<MoveOnly, MoveOnly, MoveOnly> t(std::allocator_arg, A1<int>(),
                                                    0, 1);
         assert(std::get<0>(t) == 0);
         assert(std::get<1>(t) == 1);
         assert(std::get<2>(t) == MoveOnly());
     }
     {
-        std::tuple<MoveOnly, MoveOnly, MoveOnly> t(std::allocator_arg, A1<int>(), 
+        std::tuple<MoveOnly, MoveOnly, MoveOnly> t(std::allocator_arg, A1<int>(),
                                                    0);
         assert(std::get<0>(t) == 0);
         assert(std::get<1>(t) == MoveOnly());

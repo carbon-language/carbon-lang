@@ -9,8 +9,8 @@
 
 // <utility>
 
-// template<ValueType T, size_t N> 
-//   requires Swappable<T> 
+// template<ValueType T, size_t N>
+//   requires Swappable<T>
 //   void
 //   swap(T (&a)[N], T (&b)[N]);
 
@@ -54,7 +54,7 @@ test1()
     assert(*j[2] == 3);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {

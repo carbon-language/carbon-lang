@@ -26,5 +26,5 @@ int main()
         assert(*p.first == 3);
         assert(p.second == nullptr);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -29,13 +29,13 @@ public:
 
     A(A&&) {++move_ctor;}
     A& operator=(A&&);
-#else
+#else  // _LIBCPP_MOVE
     A(const A&) {++copy_ctor;}
     A& operator=(A&);
 
     operator std::__rv<A> () {return std::__rv<A>(*this);}
     A(std::__rv<A>) {++move_ctor;}
-#endif
+#endif  // _LIBCPP_MOVE
 
     A() {}
 };

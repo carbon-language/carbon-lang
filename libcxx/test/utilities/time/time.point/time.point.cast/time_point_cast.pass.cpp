@@ -11,7 +11,7 @@
 
 // time_point
 
-// template <class ToDuration, class Clock, class Duration> 
+// template <class ToDuration, class Clock, class Duration>
 //   time_point<Clock, ToDuration>
 //   time_point_cast(const time_point<Clock, Duration>& t);
 

@@ -41,5 +41,5 @@ int main()
             std::scoped_allocator_adaptor<A2<int>, A3<int>>(A2<int>(6), A3<int>(8))));
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

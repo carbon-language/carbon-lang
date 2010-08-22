@@ -14,4 +14,4 @@ class Clock
     static time_point now();
 };
 
-#endif
+#endif  // CLOCK_H

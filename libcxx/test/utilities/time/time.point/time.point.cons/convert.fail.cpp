@@ -11,7 +11,7 @@
 
 // time_point
 
-// template <class Duration2> 
+// template <class Duration2>
 //   time_point(const time_point<clock, Duration2>& t);
 
 // Duration2 shall be implicitly convertible to duration.

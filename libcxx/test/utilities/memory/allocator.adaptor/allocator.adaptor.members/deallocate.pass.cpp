@@ -42,5 +42,5 @@ int main()
         assert((A1<int>::deallocate_called == std::pair<int*, std::size_t>((int*)10, 20)));
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

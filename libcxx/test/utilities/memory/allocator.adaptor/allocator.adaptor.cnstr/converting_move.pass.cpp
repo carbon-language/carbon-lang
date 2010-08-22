@@ -71,5 +71,5 @@ int main()
         assert(a2 == a1);
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -31,5 +31,5 @@ int main()
         assert(p3.first == P1(3, nullptr));
         assert(p3.second == P2(nullptr, 4));
     }
-#endif
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 }

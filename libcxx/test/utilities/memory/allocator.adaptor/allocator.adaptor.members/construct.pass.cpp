@@ -111,7 +111,7 @@ struct F
 
 bool F::constructed = false;
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -189,5 +189,5 @@ int main()
         s->~S();
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

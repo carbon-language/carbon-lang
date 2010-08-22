@@ -39,5 +39,5 @@ int main()
         assert(a.max_size() == 200);
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

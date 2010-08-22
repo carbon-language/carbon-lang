@@ -34,7 +34,6 @@ struct D
     explicit D(int i) : B(i) {}
 };
 
-
 int main()
 {
     {

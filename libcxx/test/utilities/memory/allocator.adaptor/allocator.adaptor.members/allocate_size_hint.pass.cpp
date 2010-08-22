@@ -66,5 +66,5 @@ int main()
         assert(a.allocate(10, (const void*)20) == (int*)20);
         assert(A2<int>::allocate_called == true);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

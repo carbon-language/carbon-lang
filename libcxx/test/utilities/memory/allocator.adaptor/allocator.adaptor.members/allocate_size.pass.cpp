@@ -45,5 +45,5 @@ int main()
         assert(A1<int>::allocate_called == true);
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

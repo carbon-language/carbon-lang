@@ -28,5 +28,5 @@ int main()
         assert(*p2.first == 3);
         assert(p2.second == 4);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

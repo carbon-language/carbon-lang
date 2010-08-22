@@ -54,5 +54,5 @@ int main()
         assert(A3<int>::move_called == false);
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

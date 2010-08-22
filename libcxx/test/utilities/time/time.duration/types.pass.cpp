@@ -13,8 +13,8 @@
 
 // Test nested types
 
-// typedef Rep rep; 
-// typedef Period period; 
+// typedef Rep rep;
+// typedef Period period;
 
 #include <chrono>
 #include <type_traits>

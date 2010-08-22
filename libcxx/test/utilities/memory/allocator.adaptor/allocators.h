@@ -150,8 +150,6 @@ public:
     A3 select_on_container_copy_construction() const {return A3(-1);}
 };
 
-
-
 template <class T> bool A3<T>::copy_called = false;
 template <class T> bool A3<T>::move_called = false;
 template <class T> bool A3<T>::constructed = false;
@@ -171,6 +169,6 @@ bool operator!=(const A3<T>& x, const A3<U>& y)
     return !(x == y);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
-#endif
+#endif  // ALLOCATORS_H

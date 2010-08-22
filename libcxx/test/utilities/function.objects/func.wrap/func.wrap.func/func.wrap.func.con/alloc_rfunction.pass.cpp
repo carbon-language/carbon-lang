@@ -77,5 +77,5 @@ int main()
     assert(f.target<A>() == 0);
     assert(f.target<int(*)(int)>() == 0);
     }
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -17,20 +17,20 @@ class move_only
 #ifdef _LIBCPP_MOVE
     move_only(const move_only&);
     move_only& operator=(const move_only&);
-#else
+#else  // _LIBCPP_MOVE
     move_only(move_only&);
     move_only& operator=(move_only&);
-#endif
+#endif  // _LIBCPP_MOVE
 
 public:
 
 #ifdef _LIBCPP_MOVE
     move_only(move_only&&) {}
     move_only& operator=(move_only&&) {}
-#else
+#else  // _LIBCPP_MOVE
     operator std::__rv<move_only> () {return std::__rv<move_only>(*this);}
     move_only(std::__rv<move_only>) {}
-#endif
+#endif  // _LIBCPP_MOVE
 
     move_only() {}
 };

@@ -11,8 +11,8 @@
 
 // time_point
 
-// template <class Clock, class Duration1, class Duration2> 
-//   typename common_type<Duration1, Duration2>::type 
+// template <class Clock, class Duration1, class Duration2>
+//   typename common_type<Duration1, Duration2>::type
 //   operator-(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
 
 #include <chrono>

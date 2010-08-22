@@ -51,5 +51,5 @@ int main()
         assert(a2.inner_allocator().inner_allocator().outer_allocator().id() == -1);
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

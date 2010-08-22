@@ -66,5 +66,5 @@ int main()
         assert(A3<S>::destroy_called);
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

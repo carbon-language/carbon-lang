@@ -40,5 +40,5 @@ int main()
         assert(a.outer_allocator() == A1<int>(5));
     }
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

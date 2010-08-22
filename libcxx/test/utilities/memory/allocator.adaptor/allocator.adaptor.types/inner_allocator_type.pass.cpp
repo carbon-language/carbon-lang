@@ -35,5 +35,5 @@ int main()
         std::scoped_allocator_adaptor<A1<int>, A2<int>, A3<int>>::inner_allocator_type,
         std::scoped_allocator_adaptor<A2<int>, A3<int>>>::value), "");
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

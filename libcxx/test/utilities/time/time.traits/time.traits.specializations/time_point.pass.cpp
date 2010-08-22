@@ -9,10 +9,10 @@
 
 // <chrono>
 
-// template <class Clock, class Duration1, class Duration2> 
+// template <class Clock, class Duration1, class Duration2>
 // struct common_type<chrono::time_point<Clock, Duration1>, chrono::time_point<Clock, Duration2>>
-// { 
-//     typedef chrono::time_point<Clock, typename common_type<Duration1, Duration2>::type> type; 
+// {
+//     typedef chrono::time_point<Clock, typename common_type<Duration1, Duration2>::type> type;
 // };
 
 #include <chrono>

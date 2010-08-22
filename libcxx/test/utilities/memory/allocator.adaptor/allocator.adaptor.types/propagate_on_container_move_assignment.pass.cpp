@@ -35,5 +35,5 @@ int main()
         std::scoped_allocator_adaptor<A1<int>, A2<int>, A3<int>>::propagate_on_container_move_assignment,
         std::true_type>::value), "");
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

@@ -46,4 +46,4 @@ struct alloc_first
 
 bool alloc_first::allocator_constructed = false;
 
-#endif
+#endif  // ALLOC_FIRST_H

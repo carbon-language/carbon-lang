@@ -9,8 +9,8 @@
 
 // <utility>
 
-// template<class T> 
-//   requires MoveAssignable<T> && MoveConstructible<T> 
+// template<class T>
+//   requires MoveAssignable<T> && MoveConstructible<T>
 //   void
 //   swap(T& a, T& b);
 
@@ -42,7 +42,7 @@ test1()
     assert(*j == 1);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {

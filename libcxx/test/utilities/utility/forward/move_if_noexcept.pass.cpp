@@ -45,11 +45,11 @@ int main()
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&>::value), "");
-#else
+#else  // _LIBCPP_MOVE
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A>::value), "");
-#endif
+#endif  // _LIBCPP_MOVE
 
 }

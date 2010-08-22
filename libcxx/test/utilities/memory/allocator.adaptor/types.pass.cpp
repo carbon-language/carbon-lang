@@ -65,7 +65,6 @@ int main()
         std::scoped_allocator_adaptor<A1<int>>::const_void_pointer,
         const void*>::value), "");
 
-
     static_assert((std::is_base_of<
         A2<int>,
         std::scoped_allocator_adaptor<A2<int>, A1<int>>
@@ -99,5 +98,5 @@ int main()
         std::scoped_allocator_adaptor<A2<int>, A1<int>>::const_void_pointer,
         const void*>::value), "");
 
-#endif
+#endif  // _LIBCPP_MOVE
 }

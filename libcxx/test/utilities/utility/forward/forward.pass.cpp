@@ -32,7 +32,7 @@ two test(const A&);
 four test(A&&);
 eight test(const A&&);
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 int main()
 {
@@ -54,7 +54,7 @@ int main()
     static_assert(sizeof(test(std::forward<const A>(ca))) == 8, "");
     static_assert(sizeof(test(std::forward<const A>(csource()))) == 8, "");
 
-#else
+#else  // _LIBCPP_MOVE
 
     static_assert(sizeof(test(std::forward<A&>(a))) == 1, "");
     static_assert(sizeof(test(std::forward<A>(a))) == 1, "");
@@ -69,5 +69,5 @@ int main()
     static_assert(sizeof(test(std::forward<const A&>(csource()))) == 2, "");
     static_assert(sizeof(test(std::forward<const A>(ca))) == 2, "");
     static_assert(sizeof(test(std::forward<const A>(csource()))) == 2, "");
-#endif
+#endif  // _LIBCPP_MOVE
 }
