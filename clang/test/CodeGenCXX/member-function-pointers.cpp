@@ -198,3 +198,14 @@ namespace test7 {
   void (C::*ptr4)() = &B::vfoo;
   void (C::*ptr5)() = &C::vfoo;
 }
+
+namespace test8 {
+  struct X { };
+  typedef int (X::*pmf)(int);
+  
+  // CHECK: {{define.*_ZN5test81fEv}}
+  pmf f() {
+    // CHECK: {{ret.*zeroinitializer}}
+    return pmf();
+  }
+}

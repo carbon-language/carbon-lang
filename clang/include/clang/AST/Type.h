@@ -897,6 +897,7 @@ public:
   bool isFunctionPointerType() const;
   bool isMemberPointerType() const;
   bool isMemberFunctionPointerType() const;
+  bool isMemberDataPointerType() const;
   bool isArrayType() const;
   bool isConstantArrayType() const;
   bool isIncompleteArrayType() const;
@@ -3483,6 +3484,12 @@ inline bool Type::isMemberPointerType() const {
 inline bool Type::isMemberFunctionPointerType() const {
   if (const MemberPointerType* T = getAs<MemberPointerType>())
     return T->getPointeeType()->isFunctionType();
+  else
+    return false;
+}
+inline bool Type::isMemberDataPointerType() const {
+  if (const MemberPointerType* T = getAs<MemberPointerType>())
+    return !T->getPointeeType()->isFunctionType();
   else
     return false;
 }

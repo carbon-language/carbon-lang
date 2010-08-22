@@ -569,12 +569,9 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
   const llvm::Type *LTy = ConvertType(Ty);
   
-  if (!Ty->isMemberPointerType())
+  if (!Ty->isMemberDataPointerType())
     return llvm::Constant::getNullValue(LTy);
   
-  assert(!Ty->isMemberFunctionPointerType() &&
-         "member function pointers are not scalar!");
-
   // Itanium C++ ABI 2.3:
   //   A NULL pointer is represented as -1.
   return llvm::ConstantInt::get(LTy, -1ULL, /*isSigned=*/true);  
