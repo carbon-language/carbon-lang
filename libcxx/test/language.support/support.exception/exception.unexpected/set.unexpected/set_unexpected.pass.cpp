@@ -23,13 +23,13 @@ void f3()
 
 int main()
 {
-	std::unexpected_handler old = std::set_unexpected(f1);
+    std::unexpected_handler old = std::set_unexpected(f1);
     // verify there is a previous unexpected handler
-	assert(old);
-	// verify f1 was replace with f2
+    assert(old);
+    // verify f1 was replace with f2
     assert(std::set_unexpected(f2) == f1);
-	// verify calling original unexpected handler calls terminate
-	std::set_terminate(f3);
-	(*old)();
-	assert(0);
+    // verify calling original unexpected handler calls terminate
+    std::set_terminate(f3);
+    (*old)();
+    assert(0);
 }

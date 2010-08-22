@@ -35,7 +35,7 @@ void
 std::unexpected()
 {
     (*__unexpected_handler)();
-	// unexpected handler should not return
+    // unexpected handler should not return
     std::terminate();
 }
 
@@ -70,7 +70,7 @@ std::terminate()
 bool std::uncaught_exception() throw()
 {
 #if __APPLE__
-	// on Darwin, there is a helper function so __cxa_get_globals is private
+    // on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxxabiapple::__cxa_uncaught_exception();
 #else  // __APPLE__
     #warning uncaught_exception not yet implemented
@@ -107,8 +107,8 @@ exception_ptr::~exception_ptr()
 #if __APPLE__
     __cxxabiapple::__cxa_decrement_exception_refcount(__ptr_);
 #else
-	#warning exception_ptr not yet implemented
-	::abort();
+    #warning exception_ptr not yet implemented
+    ::abort();
 #endif  // __APPLE__
 }
 
@@ -118,8 +118,8 @@ exception_ptr::exception_ptr(const exception_ptr& other)
 #if __APPLE__
     __cxxabiapple::__cxa_increment_exception_refcount(__ptr_);
 #else
-	#warning exception_ptr not yet implemented
-	::abort();
+    #warning exception_ptr not yet implemented
+    ::abort();
 #endif  // __APPLE__
 }
 
@@ -130,12 +130,12 @@ exception_ptr& exception_ptr::operator=(const exception_ptr& other)
     {
         __cxxabiapple::__cxa_increment_exception_refcount(other.__ptr_);
         __cxxabiapple::__cxa_decrement_exception_refcount(__ptr_);
-		__ptr_ = other.__ptr_;
-	}
+        __ptr_ = other.__ptr_;
+    }
     return *this;
 #else  // __APPLE__
-	#warning exception_ptr not yet implemented
-	::abort();
+    #warning exception_ptr not yet implemented
+    ::abort();
 #endif  // __APPLE__
 }
 
@@ -161,26 +161,26 @@ nested_exception::rethrow_nested /*[[noreturn]]*/ () const
 std::exception_ptr std::current_exception()
 {
 #if __APPLE__
-	// be nicer if there was a constructor that took a ptr, then
-	// this whole function would be just:
-	//    return exception_ptr(__cxa_current_primary_exception());
+    // be nicer if there was a constructor that took a ptr, then
+    // this whole function would be just:
+    //    return exception_ptr(__cxa_current_primary_exception());
     std::exception_ptr ptr;
-	ptr.__ptr_ = __cxxabiapple::__cxa_current_primary_exception();
-	return ptr;
+    ptr.__ptr_ = __cxxabiapple::__cxa_current_primary_exception();
+    return ptr;
 #else  // __APPLE__
-	#warning exception_ptr not yet implemented
-	::abort();
+    #warning exception_ptr not yet implemented
+    ::abort();
 #endif  // __APPLE__
 }
 
 void std::rethrow_exception(exception_ptr p)
 {
 #if __APPLE__
-	__cxxabiapple::__cxa_rethrow_primary_exception(p.__ptr_);
-	// if p.__ptr_ is NULL, above returns so we terminate
+    __cxxabiapple::__cxa_rethrow_primary_exception(p.__ptr_);
+    // if p.__ptr_ is NULL, above returns so we terminate
     terminate();
 #else  // __APPLE__
-	#warning exception_ptr not yet implemented
-	::abort();
+    #warning exception_ptr not yet implemented
+    ::abort();
 #endif  // __APPLE__
 }

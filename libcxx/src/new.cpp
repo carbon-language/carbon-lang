@@ -14,11 +14,11 @@
 #if __APPLE__
     #include <cxxabi.h>
     // On Darwin, there are two STL shared libraries and a lower level ABI
-	// shared libray.  The global holding the current new handler is
+    // shared libray.  The global holding the current new handler is
     // in the ABI library and named __cxa_new_handler.
     #define __new_handler __cxxabiapple::__cxa_new_handler
 #else  // __APPLE__
-	static std::new_handler __new_handler;
+    static std::new_handler __new_handler;
 #endif
 
 // Implement all new and delete operators as weak definitions
@@ -34,8 +34,8 @@ operator new(std::size_t size) throw (std::bad_alloc)
     void* p;
     while ((p = ::malloc(size)) == 0)
     {
-		// If malloc fails and there is a new_handler,
-		// call it to try free up memory.
+        // If malloc fails and there is a new_handler,
+        // call it to try free up memory.
         if (__new_handler)
             __new_handler();
         else

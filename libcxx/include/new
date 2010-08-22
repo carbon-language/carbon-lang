@@ -65,7 +65,7 @@ class _LIBCPP_EXCEPTION_ABI bad_alloc
     : public exception
 {
 public:
-	bad_alloc() throw();
+    bad_alloc() throw();
     virtual ~bad_alloc() throw();
     virtual const char* what() const throw();
 };
