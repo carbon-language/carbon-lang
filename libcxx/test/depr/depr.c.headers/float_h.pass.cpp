@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
- 
+
  // test <float.h>
 
 #include <float.h>

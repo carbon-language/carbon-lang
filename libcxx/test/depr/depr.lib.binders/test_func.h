@@ -30,4 +30,4 @@ public:
         {return x*y;}
 };
 
-#endif
+#endif  // TEST_FUNC_H

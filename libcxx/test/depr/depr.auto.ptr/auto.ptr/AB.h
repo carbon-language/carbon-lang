@@ -38,4 +38,4 @@ public:
 
 int B::count = 0;
 
-#endif
+#endif  // AB_H

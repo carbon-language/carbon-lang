@@ -11,8 +11,8 @@
 
 // template <class X>
 // class auto_ptr
-// { 
-// public: 
+// {
+// public:
 //   typedef X element_type;
 //   ...
 // };

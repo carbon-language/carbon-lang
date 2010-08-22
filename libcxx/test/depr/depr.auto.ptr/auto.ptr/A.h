@@ -27,4 +27,4 @@ public:
 
 int A::count = 0;
 
-#endif
+#endif  // A_H

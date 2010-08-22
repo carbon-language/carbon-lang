@@ -9,18 +9,18 @@
 
 // <functional>
 
-// template <class Fn> 
-// class binder1st 
+// template <class Fn>
+// class binder1st
 //   : public unary_function<typename Fn::second_argument_type, typename Fn::result_type>
-// { 
+// {
 // protected:
-//   Fn op; 
+//   Fn op;
 //   typename Fn::first_argument_type value;
-// public: 
-//   binder2nd(const Fn& x, const typename Fn::second_argument_type& y); 
-// 
-//   typename Fn::result_type operator()(const typename Fn::first_argument_type& x) const; 
-//   typename Fn::result_type operator()(typename Fn::first_argument_type& x) const; 
+// public:
+//   binder2nd(const Fn& x, const typename Fn::second_argument_type& y);
+//
+//   typename Fn::result_type operator()(const typename Fn::first_argument_type& x) const;
+//   typename Fn::result_type operator()(typename Fn::first_argument_type& x) const;
 // };
 
 #include <functional>

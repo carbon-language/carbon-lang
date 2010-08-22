@@ -9,7 +9,7 @@
 
 // <functional>
 
-// template <class Fn, class T> 
+// template <class Fn, class T>
 //   binder1st<Fn>
 //   bind1st(const Fn& fn, const T& x);
 
