@@ -27,7 +27,7 @@ thread::join()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (ec)
         throw system_error(error_code(ec, system_category()), "thread::join failed");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     __t_ = 0;
 }
 
@@ -44,7 +44,7 @@ thread::detach()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (ec)
         throw system_error(error_code(ec, system_category()), "thread::detach failed");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 unsigned
@@ -56,11 +56,11 @@ thread::hardware_concurrency()
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);
     return n;
-#else  // !defined(CTL_HW && HW_NCPU)
+#else  // defined(CTL_HW) && defined(HW_NCPU)
     // TODO: grovel through /proc or check cpuid on x86 and similar
     // instructions on other architectures.
     return 0;  // Means not computable [thread.thread.static]
-#endif
+#endif  // defined(CTL_HW) && defined(HW_NCPU)
 }
 
 namespace this_thread

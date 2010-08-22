@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 random_device::random_device(const string& __token)

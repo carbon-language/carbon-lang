@@ -27,5 +27,4 @@ __ph<10> _10;
 
 }  // placeholders
 
-
 _LIBCPP_END_NAMESPACE_STD

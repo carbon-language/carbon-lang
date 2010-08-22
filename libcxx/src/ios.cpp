@@ -263,7 +263,7 @@ ios_base::clear(iostate state)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (((state | (__rdbuf_ ? goodbit : badbit)) & __exceptions_) != 0)
         throw failure("ios_base::clear");
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 // init
@@ -305,12 +305,12 @@ ios_base::copyfmt(const ios_base& rhs)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_callbacks)
             throw bad_alloc();
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         new_ints.reset((int*)malloc(sizeof(int) * rhs.__event_size_));
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_ints)
             throw bad_alloc();
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
     if (__iarray_cap_ < rhs.__iarray_size_)
     {
@@ -318,7 +318,7 @@ ios_base::copyfmt(const ios_base& rhs)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_longs)
             throw bad_alloc();
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
     if (__parray_cap_ < rhs.__parray_size_)
     {
@@ -326,7 +326,7 @@ ios_base::copyfmt(const ios_base& rhs)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_pointers)
             throw bad_alloc();
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     }
     // Got everything we need.  Copy everything but __rdstate_, __rdbuf_ and __exceptions_
     __fmtflags_ = rhs.__fmtflags_;
@@ -430,7 +430,7 @@ ios_base::__set_badbit_and_consider_rethrow()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__exceptions_ & badbit)
         throw;
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 void
@@ -440,7 +440,7 @@ ios_base::__set_failbit_and_consider_rethrow()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__exceptions_ & failbit)
         throw;
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 bool

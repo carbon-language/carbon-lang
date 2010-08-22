@@ -312,6 +312,4 @@ __match_any_but_newline<wchar_t>::__exec(__state& __s) const
     }
 }
 
-
-
 _LIBCPP_END_NAMESPACE_STD

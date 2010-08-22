@@ -30,7 +30,6 @@ decrement(T& t)
 
 }  // namespace
 
-
 const allocator_arg_t allocator_arg = allocator_arg_t();
 
 bad_weak_ptr::~bad_weak_ptr() throw() {}
@@ -115,7 +114,7 @@ __shared_weak_count::__get_deleter(const type_info&) const
     return 0;
 }
 
-#endif
+#endif  // _LIBCPP_NO_RTTI
 
 void
 declare_reachable(void*)

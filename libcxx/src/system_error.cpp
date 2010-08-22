@@ -67,7 +67,7 @@ __generic_error_category::message(int ev) const
 #ifdef ELAST
     if (ev > ELAST)
       return string("unspecified generic_category error");
-#endif
+#endif  // ELAST
     return __do_message::message(ev);
 }
 
@@ -99,7 +99,7 @@ __system_error_category::message(int ev) const
 #ifdef ELAST
     if (ev > ELAST)
       return string("unspecified system_category error");
-#endif
+#endif  // ELAST
     return __do_message::message(ev);
 }
 
@@ -109,7 +109,7 @@ __system_error_category::default_error_condition(int ev) const
 #ifdef ELAST
     if (ev > ELAST)
       return error_condition(ev, system_category());
-#endif
+#endif  // ELAST
     return error_condition(ev, generic_category());
 }
 

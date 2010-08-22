@@ -135,7 +135,7 @@ locale::__imp::__imp(const string& name, size_t refs)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         facets_ = locale::classic().__locale_->facets_;
         for (unsigned i = 0; i < facets_.size(); ++i)
             if (facets_[i])
@@ -169,7 +169,7 @@ locale::__imp::__imp(const string& name, size_t refs)
                 facets_[i]->__release_shared();
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 locale::__imp::__imp(const __imp& other)
@@ -193,7 +193,7 @@ locale::__imp::__imp(const __imp& other, const string& name, locale::category c)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         if (c & locale::collate)
         {
             install(new collate_byname<char>(name));
@@ -241,7 +241,7 @@ locale::__imp::__imp(const __imp& other, const string& name, locale::category c)
                 facets_[i]->__release_shared();
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 template<class F>
@@ -264,7 +264,7 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         if (c & locale::collate)
         {
             install_from<_STD::collate<char> >(one);
@@ -320,7 +320,7 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
                 facets_[i]->__release_shared();
         throw;
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 locale::__imp::__imp(const __imp& other, facet* f, long id)
@@ -361,7 +361,7 @@ locale::__imp::use_facet(long id) const
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (!has_facet(id))
         throw bad_cast();
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return facets_[id];
 }
 
@@ -431,7 +431,7 @@ locale::locale(const char* name)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     : __locale_(name ? new __imp(name)
                      : throw runtime_error("locale constructed with null"))
-#else
+#else  // _LIBCPP_NO_EXCEPTIONS
     : __locale_(new __imp(name))
 #endif
 {
@@ -448,7 +448,7 @@ locale::locale(const locale& other, const char* name, category c)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     : __locale_(name ? new __imp(*other.__locale_, name, c)
                      : throw runtime_error("locale constructed with null"))
-#else
+#else  // _LIBCPP_NO_EXCEPTIONS
     : __locale_(new __imp(*other.__locale_, name, c))
 #endif
 {
@@ -571,7 +571,7 @@ collate_byname<char>::collate_byname(const char* n, size_t refs)
     if (__l == 0)
         throw runtime_error("collate_byname<char>::collate_byname"
                             " failed to construct for " + string(n));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 collate_byname<char>::collate_byname(const string& name, size_t refs)
@@ -582,7 +582,7 @@ collate_byname<char>::collate_byname(const string& name, size_t refs)
     if (__l == 0)
         throw runtime_error("collate_byname<char>::collate_byname"
                             " failed to construct for " + name);
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 collate_byname<char>::~collate_byname()
@@ -623,7 +623,7 @@ collate_byname<wchar_t>::collate_byname(const char* n, size_t refs)
     if (__l == 0)
         throw runtime_error("collate_byname<wchar_t>::collate_byname(size_t refs)"
                             " failed to construct for " + string(n));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 collate_byname<wchar_t>::collate_byname(const string& name, size_t refs)
@@ -634,7 +634,7 @@ collate_byname<wchar_t>::collate_byname(const string& name, size_t refs)
     if (__l == 0)
         throw runtime_error("collate_byname<wchar_t>::collate_byname(size_t refs)"
                             " failed to construct for " + name);
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 collate_byname<wchar_t>::~collate_byname()
@@ -862,7 +862,7 @@ ctype_byname<char>::ctype_byname(const char* name, size_t refs)
     if (__l == 0)
         throw runtime_error("ctype_byname<char>::ctype_byname"
                             " failed to construct for " + string(name));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 ctype_byname<char>::ctype_byname(const string& name, size_t refs)
@@ -873,7 +873,7 @@ ctype_byname<char>::ctype_byname(const string& name, size_t refs)
     if (__l == 0)
         throw runtime_error("ctype_byname<char>::ctype_byname"
                             " failed to construct for " + name);
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 ctype_byname<char>::~ctype_byname()
@@ -919,7 +919,7 @@ ctype_byname<wchar_t>::ctype_byname(const char* name, size_t refs)
     if (__l == 0)
         throw runtime_error("ctype_byname<wchar_t>::ctype_byname"
                             " failed to construct for " + string(name));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 ctype_byname<wchar_t>::ctype_byname(const string& name, size_t refs)
@@ -930,7 +930,7 @@ ctype_byname<wchar_t>::ctype_byname(const string& name, size_t refs)
     if (__l == 0)
         throw runtime_error("ctype_byname<wchar_t>::ctype_byname"
                             " failed to construct for " + name);
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 ctype_byname<wchar_t>::~ctype_byname()
@@ -1057,15 +1057,15 @@ ctype_byname<wchar_t>::do_narrow(const char_type* low, const char_type* high, ch
 
 // template <> class codecvt<char, char, mbstate_t>
 
-locale::id codecvt<char, char, mbstate_t>::id; 
+locale::id codecvt<char, char, mbstate_t>::id;
 
 codecvt<char, char, mbstate_t>::~codecvt()
 {
 }
 
 codecvt<char, char, mbstate_t>::result
-codecvt<char, char, mbstate_t>::do_out(state_type&, 
-    const intern_type* frm, const intern_type*, const intern_type*& frm_nxt, 
+codecvt<char, char, mbstate_t>::do_out(state_type&,
+    const intern_type* frm, const intern_type*, const intern_type*& frm_nxt,
     extern_type* to, extern_type*, extern_type*& to_nxt) const
 {
     frm_nxt = frm;
@@ -1074,8 +1074,8 @@ codecvt<char, char, mbstate_t>::do_out(state_type&,
 }
 
 codecvt<char, char, mbstate_t>::result
-codecvt<char, char, mbstate_t>::do_in(state_type&, 
-    const extern_type* frm, const extern_type*, const extern_type*& frm_nxt, 
+codecvt<char, char, mbstate_t>::do_in(state_type&,
+    const extern_type* frm, const extern_type*, const extern_type*& frm_nxt,
     intern_type* to, intern_type*, intern_type*& to_nxt) const
 {
     frm_nxt = frm;
@@ -1084,7 +1084,7 @@ codecvt<char, char, mbstate_t>::do_in(state_type&,
 }
 
 codecvt<char, char, mbstate_t>::result
-codecvt<char, char, mbstate_t>::do_unshift(state_type&, 
+codecvt<char, char, mbstate_t>::do_unshift(state_type&,
     extern_type* to, extern_type*, extern_type*& to_nxt) const
 {
     to_nxt = to;
@@ -1118,7 +1118,7 @@ codecvt<char, char, mbstate_t>::do_max_length() const throw()
 
 // template <> class codecvt<wchar_t, char, mbstate_t>
 
-locale::id codecvt<wchar_t, char, mbstate_t>::id; 
+locale::id codecvt<wchar_t, char, mbstate_t>::id;
 
 codecvt<wchar_t, char, mbstate_t>::codecvt(size_t refs)
     : locale::facet(refs),
@@ -1134,7 +1134,7 @@ codecvt<wchar_t, char, mbstate_t>::codecvt(const char* nm, size_t refs)
     if (__l == 0)
         throw runtime_error("codecvt_byname<wchar_t, char, mbstate_t>::codecvt_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 codecvt<wchar_t, char, mbstate_t>::~codecvt()
@@ -1145,7 +1145,7 @@ codecvt<wchar_t, char, mbstate_t>::~codecvt()
 
 codecvt<wchar_t, char, mbstate_t>::result
 codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
-    const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt, 
+    const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt,
     extern_type* to, extern_type* to_end, extern_type*& to_nxt) const
 {
     // look for first internal null in frm
@@ -1201,7 +1201,7 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
 
 codecvt<wchar_t, char, mbstate_t>::result
 codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
-    const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt, 
+    const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt,
     intern_type* to, intern_type* to_end, intern_type*& to_nxt) const
 {
     // look for first internal null in frm
@@ -2730,7 +2730,7 @@ utf16le_to_ucs2_length(const uint8_t* frm, const uint8_t* frm_end,
 
 // template <> class codecvt<char16_t, char, mbstate_t>
 
-locale::id codecvt<char16_t, char, mbstate_t>::id; 
+locale::id codecvt<char16_t, char, mbstate_t>::id;
 
 codecvt<char16_t, char, mbstate_t>::~codecvt()
 {
@@ -2738,7 +2738,7 @@ codecvt<char16_t, char, mbstate_t>::~codecvt()
 
 codecvt<char16_t, char, mbstate_t>::result
 codecvt<char16_t, char, mbstate_t>::do_out(state_type&,
-    const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt, 
+    const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt,
     extern_type* to, extern_type* to_end, extern_type*& to_nxt) const
 {
     const uint16_t* _frm = reinterpret_cast<const uint16_t*>(frm);
@@ -2755,7 +2755,7 @@ codecvt<char16_t, char, mbstate_t>::do_out(state_type&,
 
 codecvt<char16_t, char, mbstate_t>::result
 codecvt<char16_t, char, mbstate_t>::do_in(state_type&,
-    const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt, 
+    const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt,
     intern_type* to, intern_type* to_end, intern_type*& to_nxt) const
 {
     const uint8_t* _frm = reinterpret_cast<const uint8_t*>(frm);
@@ -2807,7 +2807,7 @@ codecvt<char16_t, char, mbstate_t>::do_max_length() const throw()
 
 // template <> class codecvt<char32_t, char, mbstate_t>
 
-locale::id codecvt<char32_t, char, mbstate_t>::id; 
+locale::id codecvt<char32_t, char, mbstate_t>::id;
 
 codecvt<char32_t, char, mbstate_t>::~codecvt()
 {
@@ -2815,7 +2815,7 @@ codecvt<char32_t, char, mbstate_t>::~codecvt()
 
 codecvt<char32_t, char, mbstate_t>::result
 codecvt<char32_t, char, mbstate_t>::do_out(state_type&,
-    const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt, 
+    const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt,
     extern_type* to, extern_type* to_end, extern_type*& to_nxt) const
 {
     const uint32_t* _frm = reinterpret_cast<const uint32_t*>(frm);
@@ -2832,7 +2832,7 @@ codecvt<char32_t, char, mbstate_t>::do_out(state_type&,
 
 codecvt<char32_t, char, mbstate_t>::result
 codecvt<char32_t, char, mbstate_t>::do_in(state_type&,
-    const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt, 
+    const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt,
     intern_type* to, intern_type* to_end, intern_type*& to_nxt) const
 {
     const uint8_t* _frm = reinterpret_cast<const uint8_t*>(frm);
@@ -3876,7 +3876,7 @@ numpunct_byname<char>::__init(const char* nm)
         if (loc == 0)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         lconv* lc = localeconv_l(loc.get());
         if (*lc->decimal_point)
             __decimal_point_ = *lc->decimal_point;
@@ -3915,7 +3915,7 @@ numpunct_byname<wchar_t>::__init(const char* nm)
         if (loc == 0)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         lconv* lc = localeconv_l(loc.get());
         if (*lc->decimal_point)
             __decimal_point_ = *lc->decimal_point;
@@ -4322,7 +4322,7 @@ __time_get::__time_get(const char* nm)
     if (__loc_ == 0)
         throw runtime_error("time_get_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 __time_get::__time_get(const string& nm)
@@ -4332,7 +4332,7 @@ __time_get::__time_get(const string& nm)
     if (__loc_ == 0)
         throw runtime_error("time_get_byname"
                             " failed to construct for " + nm);
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 __time_get::~__time_get()
@@ -4973,7 +4973,7 @@ __time_put::__time_put(const char* nm)
     if (__loc_ == 0)
         throw runtime_error("time_put_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 __time_put::__time_put(const string& nm)
@@ -4983,7 +4983,7 @@ __time_put::__time_put(const string& nm)
     if (__loc_ == 0)
         throw runtime_error("time_put_byname"
                             " failed to construct for " + nm);
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
 __time_put::~__time_put()
@@ -5266,7 +5266,7 @@ moneypunct_byname<char, false>::init(const char* nm)
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = *lc->mon_decimal_point;
@@ -5304,7 +5304,7 @@ moneypunct_byname<char, true>::init(const char* nm)
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = *lc->mon_decimal_point;
@@ -5342,7 +5342,7 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = static_cast<wchar_t>(*lc->mon_decimal_point);
@@ -5403,7 +5403,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     if (loc == 0)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     lconv* lc = localeconv_l(loc.get());
     if (*lc->mon_decimal_point)
         __decimal_point_ = static_cast<wchar_t>(*lc->mon_decimal_point);
@@ -5526,4 +5526,4 @@ template class codecvt_byname<char32_t, char, mbstate_t>;
 template class __vector_base_common<true>;
 
 _LIBCPP_END_NAMESPACE_STD
-#endif  /* __APPLE__ */
+#endif  // __APPLE__

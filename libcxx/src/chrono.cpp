@@ -15,7 +15,7 @@
 #include <cerrno>  // errno
 #include <system_error>  // __throw_system_error
 #include <time.h>  // clock_gettime, CLOCK_MONOTONIC
-#endif  /* __APPLE__ */
+#endif  // __APPLE__
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -103,7 +103,7 @@ monotonic_clock::now()
     return time_point(duration(fp()));
 }
 
-#else  /* !APPLE */
+#else  // __APPLE__
 // FIXME: We assume that clock_gettime(CLOCK_MONOTONIC) works on
 // non-apple systems.  Instead, we should check _POSIX_TIMERS and
 // _POSIX_MONOTONIC_CLOCK and fall back to something else if those
@@ -121,7 +121,7 @@ monotonic_clock::now()
         __throw_system_error(errno, "clock_gettime(CLOCK_MONOTONIC) failed");
     return time_point(seconds(tp.tv_sec) + nanoseconds(tp.tv_nsec));
 }
-#endif  /* APPLE */
+#endif  // __APPLE__
 
 }
 

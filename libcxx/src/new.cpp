@@ -11,22 +11,19 @@
 
 #include "new"
 
-
 #if __APPLE__
-    #include <cxxabi.h> 
+    #include <cxxabi.h>
     // On Darwin, there are two STL shared libraries and a lower level ABI
 	// shared libray.  The global holding the current new handler is
     // in the ABI library and named __cxa_new_handler.
     #define __new_handler __cxxabiapple::__cxa_new_handler
-#else
+#else  // __APPLE__
 	static std::new_handler __new_handler;
 #endif
-
 
 // Implement all new and delete operators as weak definitions
 // in this shared library, so that they can be overriden by programs
 // that define non-weak copies of the functions.
-
 
 __attribute__((__weak__, __visibility__("default")))
 void *
@@ -37,7 +34,7 @@ operator new(std::size_t size) throw (std::bad_alloc)
     void* p;
     while ((p = ::malloc(size)) == 0)
     {
-		// If malloc fails and there is a new_handler, 
+		// If malloc fails and there is a new_handler,
 		// call it to try free up memory.
         if (__new_handler)
             __new_handler();
@@ -59,14 +56,14 @@ operator new(size_t size, const std::nothrow_t&) throw()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         p = ::operator new(size);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return p;
 }
 
@@ -85,14 +82,14 @@ operator new[](size_t size, const std::nothrow_t& nothrow) throw()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
     {
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
         p = ::operator new[](size);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
     }
-#endif
+#endif  // _LIBCPP_NO_EXCEPTIONS
     return p;
 }
 
@@ -111,7 +108,6 @@ operator delete(void* ptr, const std::nothrow_t&) throw ()
     ::operator delete(ptr);
 }
 
-
 __attribute__((__weak__, __visibility__("default")))
 void
 operator delete[] (void* ptr) throw ()
@@ -126,7 +122,6 @@ operator delete[] (void* ptr, const std::nothrow_t&) throw ()
     ::operator delete[](ptr);
 }
 
-
 namespace std
 {
 
@@ -140,20 +135,19 @@ set_new_handler(new_handler handler) throw()
     return r;
 }
 
-bad_alloc::bad_alloc() throw() 
-{ 
+bad_alloc::bad_alloc() throw()
+{
 }
 
-bad_alloc::~bad_alloc() throw() 
-{ 
+bad_alloc::~bad_alloc() throw()
+{
 }
 
-const char* 
+const char*
 bad_alloc::what() const throw()
 {
     return "std::bad_alloc";
 }
-
 
 bad_array_new_length::bad_array_new_length() throw()
 {
@@ -168,8 +162,6 @@ bad_array_new_length::what() const throw()
 {
     return "bad_array_new_length";
 }
-
-
 
 void
 __throw_bad_alloc()

@@ -126,14 +126,14 @@ const unsigned indices[] =
 
 // Returns:  If n == 0, returns 0.  Else returns the lowest prime number that
 // is greater than or equal to n.
-// 
+//
 // The algorithm creates a list of small primes, plus an open-ended list of
 // potential primes.  All prime numbers are potential prime numbers.  However
 // some potential prime numbers are not prime.  In an ideal world, all potential
 // prime numbers would be prime.  Candiate prime numbers are chosen as the next
 // highest potential prime.  Then this number is tested for prime by dividing it
 // by all potential prime numbers less than the sqrt of the candidate.
-// 
+//
 // This implementation defines potential primes as those numbers not divisible
 // by 2, 3, 5, and 7.  Other (common) implementations define potential primes
 // as those not divisible by 2.  A few other implementations define potential

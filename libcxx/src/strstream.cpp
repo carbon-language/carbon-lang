@@ -132,7 +132,7 @@ strstreambuf::operator=(strstreambuf&& __rhs)
     __rhs.setp(nullptr, nullptr);
 }
 
-#endif
+#endif  // _LIBCPP_MOVE
 
 strstreambuf::~strstreambuf()
 {
@@ -257,7 +257,6 @@ strstreambuf::underflow()
     return int_type((unsigned char)*gptr());
 }
 
-
 strstreambuf::pos_type
 strstreambuf::seekoff(off_type __off, ios_base::seekdir __way, ios_base::openmode __which)
 {
@@ -315,7 +314,6 @@ strstreambuf::seekoff(off_type __off, ios_base::seekdir __way, ios_base::openmod
     }
     return pos_type(__p);
 }
-
 
 strstreambuf::pos_type
 strstreambuf::seekpos(pos_type __sp, ios_base::openmode __which)
