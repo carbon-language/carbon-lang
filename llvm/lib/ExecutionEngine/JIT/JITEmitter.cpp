@@ -152,16 +152,6 @@ namespace {
       FunctionToCallSitesMap[F].insert(CallSite);
     }
 
-    // Returns the Function of the stub if a stub was erased, or NULL if there
-    // was no stub.  This function uses the call-site->function map to find a
-    // relevant function, but asserts that only stubs and not other call sites
-    // will be passed in.
-    Function *EraseStub(const MutexGuard &locked, void *Stub);
-
-    void EraseAllCallSitesFor(const MutexGuard &locked, Function *F) {
-      assert(locked.holds(TheJIT->lock));
-      EraseAllCallSitesForPrelocked(F);
-    }
     void EraseAllCallSitesForPrelocked(Function *F);
 
     // Erases _all_ call sites regardless of their function.  This is used to
@@ -222,9 +212,6 @@ namespace {
     /// getGlobalValueIndirectSym - Return an indirect symbol containing the
     /// specified GV address.
     void *getGlobalValueIndirectSym(GlobalValue *V, void *GVAddress);
-
-    void getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
-                           SmallVectorImpl<void*> &Ptrs);
 
     /// getGOTIndexForAddress - Return a new or existing index in the GOT for
     /// an address.  This function only manages slots, it does not manage the
@@ -398,7 +385,6 @@ namespace {
     /// classof - Methods for support type inquiry through isa, cast, and
     /// dyn_cast:
     ///
-    static inline bool classof(const JITEmitter*) { return true; }
     static inline bool classof(const MachineCodeEmitter*) { return true; }
 
     JITResolver &getJITResolver() { return Resolver; }
@@ -480,64 +466,15 @@ namespace {
       if (DE.get()) DE->setModuleInfo(Info);
     }
 
-    void setMemoryExecutable() {
-      MemMgr->setMemoryExecutable();
-    }
-
-    JITMemoryManager *getMemMgr() const { return MemMgr; }
-
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference,
                              bool MayNeedFarStub);
     void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference);
-    unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
-    unsigned addSizeOfGlobalsInConstantVal(
-      const Constant *C, unsigned Size,
-      SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
-      SmallVectorImpl<const GlobalVariable*> &Worklist);
-    unsigned addSizeOfGlobalsInInitializer(
-      const Constant *Init, unsigned Size,
-      SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
-      SmallVectorImpl<const GlobalVariable*> &Worklist);
-    unsigned GetSizeOfGlobalsInBytes(MachineFunction &MF);
   };
 }
 
 void CallSiteValueMapConfig::onDelete(JITResolverState *JRS, Function *F) {
   JRS->EraseAllCallSitesForPrelocked(F);
-}
-
-Function *JITResolverState::EraseStub(const MutexGuard &locked, void *Stub) {
-  CallSiteToFunctionMapTy::iterator C2F_I =
-    CallSiteToFunctionMap.find(Stub);
-  if (C2F_I == CallSiteToFunctionMap.end()) {
-    // Not a stub.
-    return NULL;
-  }
-
-  StubToResolverMap->UnregisterStubResolver(Stub);
-
-  Function *const F = C2F_I->second;
-#ifndef NDEBUG
-  void *RealStub = FunctionToLazyStubMap.lookup(F);
-  assert(RealStub == Stub &&
-         "Call-site that wasn't a stub passed in to EraseStub");
-#endif
-  FunctionToLazyStubMap.erase(F);
-  CallSiteToFunctionMap.erase(C2F_I);
-
-  // Remove the stub from the function->call-sites map, and remove the whole
-  // entry from the map if that was the last call site.
-  FunctionToCallSitesMapTy::iterator F2C_I = FunctionToCallSitesMap.find(F);
-  assert(F2C_I != FunctionToCallSitesMap.end() &&
-         "FunctionToCallSitesMap broken");
-  bool Erased = F2C_I->second.erase(Stub);
-  (void)Erased;
-  assert(Erased && "FunctionToCallSitesMap broken");
-  if (F2C_I->second.empty())
-    FunctionToCallSitesMap.erase(F2C_I);
-
-  return F;
 }
 
 void JITResolverState::EraseAllCallSitesForPrelocked(Function *F) {
@@ -690,28 +627,6 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
   return idx;
 }
 
-void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
-                                    SmallVectorImpl<void*> &Ptrs) {
-  MutexGuard locked(TheJIT->lock);
-
-  const FunctionToLazyStubMapTy &FM = state.getFunctionToLazyStubMap(locked);
-  GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
-
-  for (FunctionToLazyStubMapTy::const_iterator i = FM.begin(), e = FM.end();
-       i != e; ++i){
-    Function *F = i->first;
-    if (F->isDeclaration() && F->hasExternalLinkage()) {
-      GVs.push_back(i->first);
-      Ptrs.push_back(i->second);
-    }
-  }
-  for (GlobalToIndirectSymMapTy::iterator i = GM.begin(), e = GM.end();
-       i != e; ++i) {
-    GVs.push_back(i->first);
-    Ptrs.push_back(i->second);
-  }
-}
-
 /// JITCompilerFn - This function is called when a lazy compilation stub has
 /// been entered.  It looks up which function this stub corresponds to, compiles
 /// it if necessary, then returns the resultant function pointer.
@@ -856,167 +771,6 @@ static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
     const Type *Ty = CPE.getType();
     Size += TD->getTypeAllocSize(Ty);
   }
-  return Size;
-}
-
-/// addSizeOfGlobal - add the size of the global (plus any alignment padding)
-/// into the running total Size.
-
-unsigned JITEmitter::addSizeOfGlobal(const GlobalVariable *GV, unsigned Size) {
-  const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)TheJIT->getTargetData()->getTypeAllocSize(ElTy);
-  size_t GVAlign =
-      (size_t)TheJIT->getTargetData()->getPreferredAlignment(GV);
-  DEBUG(dbgs() << "JIT: Adding in size " << GVSize << " alignment " << GVAlign);
-  DEBUG(GV->dump());
-  // Assume code section ends with worst possible alignment, so first
-  // variable needs maximal padding.
-  if (Size==0)
-    Size = 1;
-  Size = ((Size+GVAlign-1)/GVAlign)*GVAlign;
-  Size += GVSize;
-  return Size;
-}
-
-/// addSizeOfGlobalsInConstantVal - find any globals that we haven't seen yet
-/// but are referenced from the constant; put them in SeenGlobals and the
-/// Worklist, and add their size into the running total Size.
-
-unsigned JITEmitter::addSizeOfGlobalsInConstantVal(
-    const Constant *C,
-    unsigned Size,
-    SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
-    SmallVectorImpl<const GlobalVariable*> &Worklist) {
-  // If its undefined, return the garbage.
-  if (isa<UndefValue>(C))
-    return Size;
-
-  // If the value is a ConstantExpr
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-    Constant *Op0 = CE->getOperand(0);
-    switch (CE->getOpcode()) {
-    case Instruction::GetElementPtr:
-    case Instruction::Trunc:
-    case Instruction::ZExt:
-    case Instruction::SExt:
-    case Instruction::FPTrunc:
-    case Instruction::FPExt:
-    case Instruction::UIToFP:
-    case Instruction::SIToFP:
-    case Instruction::FPToUI:
-    case Instruction::FPToSI:
-    case Instruction::PtrToInt:
-    case Instruction::IntToPtr:
-    case Instruction::BitCast: {
-      Size = addSizeOfGlobalsInConstantVal(Op0, Size, SeenGlobals, Worklist);
-      break;
-    }
-    case Instruction::Add:
-    case Instruction::FAdd:
-    case Instruction::Sub:
-    case Instruction::FSub:
-    case Instruction::Mul:
-    case Instruction::FMul:
-    case Instruction::UDiv:
-    case Instruction::SDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
-    case Instruction::And:
-    case Instruction::Or:
-    case Instruction::Xor: {
-      Size = addSizeOfGlobalsInConstantVal(Op0, Size, SeenGlobals, Worklist);
-      Size = addSizeOfGlobalsInConstantVal(CE->getOperand(1), Size,
-                                           SeenGlobals, Worklist);
-      break;
-    }
-    default: {
-       std::string msg;
-       raw_string_ostream Msg(msg);
-       Msg << "ConstantExpr not handled: " << *CE;
-       report_fatal_error(Msg.str());
-    }
-    }
-  }
-
-  if (C->getType()->getTypeID() == Type::PointerTyID)
-    if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
-      if (SeenGlobals.insert(GV)) {
-        Worklist.push_back(GV);
-        Size = addSizeOfGlobal(GV, Size);
-      }
-
-  return Size;
-}
-
-/// addSizeOfGLobalsInInitializer - handle any globals that we haven't seen yet
-/// but are referenced from the given initializer.
-
-unsigned JITEmitter::addSizeOfGlobalsInInitializer(
-    const Constant *Init,
-    unsigned Size,
-    SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
-    SmallVectorImpl<const GlobalVariable*> &Worklist) {
-  if (!isa<UndefValue>(Init) &&
-      !isa<ConstantVector>(Init) &&
-      !isa<ConstantAggregateZero>(Init) &&
-      !isa<ConstantArray>(Init) &&
-      !isa<ConstantStruct>(Init) &&
-      Init->getType()->isFirstClassType())
-    Size = addSizeOfGlobalsInConstantVal(Init, Size, SeenGlobals, Worklist);
-  return Size;
-}
-
-/// GetSizeOfGlobalsInBytes - walk the code for the function, looking for
-/// globals; then walk the initializers of those globals looking for more.
-/// If their size has not been considered yet, add it into the running total
-/// Size.
-
-unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
-  unsigned Size = 0;
-  SmallPtrSet<const GlobalVariable*, 8> SeenGlobals;
-
-  for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
-       MBB != E; ++MBB) {
-    for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-         I != E; ++I) {
-      const TargetInstrDesc &Desc = I->getDesc();
-      const MachineInstr &MI = *I;
-      unsigned NumOps = Desc.getNumOperands();
-      for (unsigned CurOp = 0; CurOp < NumOps; CurOp++) {
-        const MachineOperand &MO = MI.getOperand(CurOp);
-        if (MO.isGlobal()) {
-          const GlobalValue* V = MO.getGlobal();
-          const GlobalVariable *GV = dyn_cast<const GlobalVariable>(V);
-          if (!GV)
-            continue;
-          // If seen in previous function, it will have an entry here.
-          if (TheJIT->getPointerToGlobalIfAvailable(
-                const_cast<GlobalVariable *>(GV)))
-            continue;
-          // If seen earlier in this function, it will have an entry here.
-          // FIXME: it should be possible to combine these tables, by
-          // assuming the addresses of the new globals in this module
-          // start at 0 (or something) and adjusting them after codegen
-          // complete.  Another possibility is to grab a marker bit in GV.
-          if (SeenGlobals.insert(GV))
-            // A variable as yet unseen.  Add in its size.
-            Size = addSizeOfGlobal(GV, Size);
-        }
-      }
-    }
-  }
-  DEBUG(dbgs() << "JIT: About to look through initializers\n");
-  // Look for more globals that are referenced only from initializers.
-  SmallVector<const GlobalVariable*, 8> Worklist(
-    SeenGlobals.begin(), SeenGlobals.end());
-  while (!Worklist.empty()) {
-    const GlobalVariable* GV = Worklist.back();
-    Worklist.pop_back();
-    if (GV->hasInitializer())
-      Size = addSizeOfGlobalsInInitializer(GV->getInitializer(), Size,
-                                           SeenGlobals, Worklist);
-  }
-
   return Size;
 }
 
