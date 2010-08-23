@@ -19,6 +19,7 @@
 
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
@@ -83,6 +84,9 @@ class FileManager::UniqueFileContainer {
 public:
   FileEntry &getFile(const char *Name, struct stat &StatBuf) {
     std::string FullPath(GetFullPath(Name));
+    
+    // LowercaseString because Windows filesystem is case insensitive.
+    FullPath = llvm::LowercaseString(FullPath);
     return UniqueFiles.GetOrCreateValue(
                                FullPath.c_str(),
                                FullPath.c_str() + FullPath.size()
