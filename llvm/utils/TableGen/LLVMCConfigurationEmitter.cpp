@@ -2621,12 +2621,12 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
   O << "int PopulateLanguageMap (LanguageMap& langMap) {\n";
 
-  // Get the relevant field out of RecordKeeper
-  // TODO: change this to getAllDerivedDefinitions.
-  const Record* LangMapRecord = Records.getDef("LanguageMap");
+  const RecordVector& LanguageMaps =
+    Records.getAllDerivedDefinitions("LanguageMap");
 
-  if (LangMapRecord) {
-    ListInit* LangsToSuffixesList = LangMapRecord->getValueAsListInit("map");
+  for (RecordVector::const_iterator B = LanguageMaps.begin(),
+         E = LanguageMaps.end(); B!=E; ++B) {
+    ListInit* LangsToSuffixesList = (*B)->getValueAsListInit("map");
     if (!LangsToSuffixesList)
       throw "Error in the language map definition!";
 
