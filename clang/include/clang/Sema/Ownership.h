@@ -23,7 +23,14 @@
 
 namespace clang {
   class ActionBase;
+  class Attr;
+  class CXXBaseOrMemberInitializer;
+  class CXXBaseSpecifier;
   class Decl;
+  class Expr;
+  class NestedNameSpecifier;
+  class Stmt;
+  class TemplateParameterList;
 
   /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
   /// Parser doesn't know about but that Sema or another client does.  The UID
@@ -186,7 +193,7 @@ namespace clang {
   // Determines whether the low bit of the result pointer for the
   // given UID is always zero. If so, ActionResult will use that bit
   // for it's "invalid" flag.
-  template<unsigned UID>
+  template<class Ptr>
   struct IsResultPtrLowBitFree {
     static const bool value = false;
   };
@@ -202,13 +209,13 @@ namespace clang {
     // what types are required to be identical for the actions.
     typedef OpaquePtr<1> DeclGroupPtrTy;
     typedef OpaquePtr<2> TemplateTy;
-    typedef void AttrTy;
-    typedef void BaseTy;
-    typedef void MemInitTy;
-    typedef void ExprTy;
-    typedef void StmtTy;
-    typedef void TemplateParamsTy;
-    typedef void CXXScopeTy;
+    typedef Attr AttrTy;
+    typedef CXXBaseSpecifier BaseTy;
+    typedef CXXBaseOrMemberInitializer MemInitTy;
+    typedef Expr ExprTy;
+    typedef Stmt StmtTy;
+    typedef TemplateParameterList TemplateParamsTy;
+    typedef NestedNameSpecifier CXXScopeTy;
     typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<N>.
 
     /// ActionResult - This structure is used while parsing/acting on
@@ -216,18 +223,20 @@ namespace clang {
     /// the action, plus a sense of whether or not it is valid.
     /// When CompressInvalid is true, the "invalid" flag will be
     /// stored in the low bit of the Val pointer.
-    template<unsigned UID,
-             typename PtrTy = void*,
-             bool CompressInvalid = IsResultPtrLowBitFree<UID>::value>
+    template<class PtrTy,
+             bool CompressInvalid = IsResultPtrLowBitFree<PtrTy>::value>
     class ActionResult {
       PtrTy Val;
       bool Invalid;
 
     public:
       ActionResult(bool Invalid = false) : Val(PtrTy()), Invalid(Invalid) {}
-      template<typename ActualExprTy>
-      ActionResult(ActualExprTy val) : Val(val), Invalid(false) {}
+      ActionResult(PtrTy val) : Val(val), Invalid(false) {}
       ActionResult(const DiagnosticBuilder &) : Val(PtrTy()), Invalid(true) {}
+
+      // These two overloads prevent void* -> bool conversions.
+      ActionResult(const void *);
+      ActionResult(volatile void *);
 
       PtrTy get() const { return Val; }
       void set(PtrTy V) { Val = V; }
@@ -242,8 +251,8 @@ namespace clang {
 
     // This ActionResult partial specialization places the "invalid"
     // flag into the low bit of the pointer.
-    template<unsigned UID, typename PtrTy>
-    class ActionResult<UID, PtrTy, true> {
+    template<typename PtrTy>
+    class ActionResult<PtrTy, true> {
       // A pointer whose low bit is 1 if this result is invalid, 0
       // otherwise.
       uintptr_t PtrWithInvalid;
@@ -252,19 +261,15 @@ namespace clang {
       ActionResult(bool Invalid = false)
         : PtrWithInvalid(static_cast<uintptr_t>(Invalid)) { }
 
-      template<typename ActualExprTy>
-      ActionResult(ActualExprTy *val) {
-        PtrTy V(val);
-        void *VP = PtrTraits::getAsVoidPointer(V);
-        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
-        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
-      }
-
       ActionResult(PtrTy V) {
         void *VP = PtrTraits::getAsVoidPointer(V);
         PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
         assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
       }
+
+      // These two overloads prevent void* -> bool conversions.
+      ActionResult(const void *);
+      ActionResult(volatile void *);
 
       ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
 
@@ -298,80 +303,68 @@ namespace clang {
     virtual void DeleteTemplateParams(TemplateParamsTy *P) {}
   };
 
-  /// ASTDestroyer - The type of an AST node destruction function pointer.
-  typedef void (ActionBase::*ASTDestroyer)(void *);
-
-  /// For the transition phase: translate from an ASTDestroyer to its
-  /// ActionResult UID.
-  template <ASTDestroyer Destroyer> struct DestroyerToUID;
-  template <> struct DestroyerToUID<&ActionBase::DeleteExpr> {
-    static const unsigned UID = 0;
-  };
-  template <> struct DestroyerToUID<&ActionBase::DeleteStmt> {
-    static const unsigned UID = 1;
-  };
   /// ASTOwningResult - A moveable smart pointer for AST nodes that also
   /// has an extra flag to indicate an additional success status.
-  template <ASTDestroyer Destroyer> class ASTOwningResult;
+  template <typename PtrTy> class ASTOwningResult;
 
   /// ASTMultiPtr - A moveable smart pointer to multiple AST nodes. Only owns
   /// the individual pointers, not the array holding them.
-  template <ASTDestroyer Destroyer> class ASTMultiPtr;
+  template <typename PtrTy> class ASTMultiPtr;
 
   /// Kept only as a type-safe wrapper for a void pointer.
-  template <ASTDestroyer Destroyer>
-  class ASTOwningPtr {
-    void *Node;
+  template <typename PtrTy> class ASTOwningPtr {
+    PtrTy Node;
 
   public:
     explicit ASTOwningPtr(ActionBase &) : Node(0) {}
-    ASTOwningPtr(ActionBase &, void *node) : Node(node) {}
-    // Normal copying operators are defined implicitly.
-    ASTOwningPtr(const ASTOwningResult<Destroyer> &o);
+    ASTOwningPtr(ActionBase &, PtrTy node) : Node(node) {}
 
-    ASTOwningPtr & operator =(void *raw) {
+    // Normal copying operators are defined implicitly.
+    ASTOwningPtr(const ASTOwningResult<PtrTy> &o);
+
+    ASTOwningPtr & operator =(PtrTy raw) {
       Node = raw;
       return *this;
     }
 
     /// Access to the raw pointer.
-    void * get() const { return Node; }
+    PtrTy get() const { return Node; }
 
     /// Release the raw pointer.
-    void * take() {
-      return Node;
-    }
+    PtrTy take() { return Node; }
 
     /// Take outside ownership of the raw pointer and cast it down.
-    template<typename T>
-    T *takeAs() {
+    template<typename T> T *takeAs() {
       return static_cast<T*>(Node);
     }
 
     /// Alias for interface familiarity with unique_ptr.
-    void * release() {
+    PtrTy release() {
       return take();
     }
   };
 
-  template <ASTDestroyer Destroyer>
-  class ASTOwningResult {
+  template <class PtrTy> class ASTOwningResult {
   public:
-    typedef ActionBase::ActionResult<DestroyerToUID<Destroyer>::UID> DumbResult;
+    typedef ActionBase::ActionResult<PtrTy> DumbResult;
 
   private:
     DumbResult Result;
 
   public:
-    explicit ASTOwningResult(ActionBase &actions, bool invalid = false)
+    explicit ASTOwningResult(bool invalid = false)
       : Result(invalid) { }
-    ASTOwningResult(ActionBase &actions, void *node) : Result(node) { }
-    ASTOwningResult(ActionBase &actions, const DumbResult &res) : Result(res) { }
+    explicit ASTOwningResult(PtrTy node) : Result(node) { }
+    explicit ASTOwningResult(const DumbResult &res) : Result(res) { }
     // Normal copying semantics are defined implicitly.
-    ASTOwningResult(const ASTOwningPtr<Destroyer> &o) : Result(o.get()) { }
+    ASTOwningResult(const ASTOwningPtr<PtrTy> &o) : Result(o.get()) { }
+
+    // These two overloads prevent void* -> bool conversions.
+    explicit ASTOwningResult(const void *);
+    explicit ASTOwningResult(volatile void *);
 
     /// Assignment from a raw pointer. Takes ownership - beware!
-    ASTOwningResult & operator =(void *raw) {
+    ASTOwningResult & operator =(PtrTy raw) {
       Result = raw;
       return *this;
     }
@@ -383,7 +376,7 @@ namespace clang {
     }
 
     /// Access to the raw pointer.
-    void * get() const { return Result.get(); }
+    PtrTy get() const { return Result.get(); }
 
     bool isInvalid() const { return Result.isInvalid(); }
 
@@ -392,7 +385,7 @@ namespace clang {
     bool isUsable() const { return !Result.isInvalid() && get(); }
 
     /// Take outside ownership of the raw pointer.
-    void * take() {
+    PtrTy take() {
       return Result.get();
     }
 
@@ -403,32 +396,32 @@ namespace clang {
     }
 
     /// Alias for interface familiarity with unique_ptr.
-    void * release() { return take(); }
+    PtrTy release() { return take(); }
 
     /// Pass ownership to a classical ActionResult.
     DumbResult result() { return Result; }
   };
 
-  template <ASTDestroyer Destroyer>
+  template <class PtrTy>
   class ASTMultiPtr {
-    void **Nodes;
+    PtrTy *Nodes;
     unsigned Count;
 
   public:
     // Normal copying implicitly defined
     explicit ASTMultiPtr(ActionBase &) : Nodes(0), Count(0) {}
-    ASTMultiPtr(ActionBase &, void **nodes, unsigned count)
+    ASTMultiPtr(ActionBase &, PtrTy *nodes, unsigned count)
       : Nodes(nodes), Count(count) {}
     // Fake mover in Parse/AstGuard.h needs this:
-    ASTMultiPtr(void **nodes, unsigned count) : Nodes(nodes), Count(count) {}
+    ASTMultiPtr(PtrTy *nodes, unsigned count) : Nodes(nodes), Count(count) {}
 
     /// Access to the raw pointers.
-    void ** get() const { return Nodes; }
+    PtrTy *get() const { return Nodes; }
 
     /// Access to the count.
     unsigned size() const { return Count; }
 
-    void ** release() {
+    PtrTy *release() {
       return Nodes;
     }
   };
@@ -472,8 +465,8 @@ namespace clang {
   };
 
   /// \brief A small vector that owns a set of AST nodes.
-  template <ASTDestroyer Destroyer, unsigned N = 8>
-  class ASTOwningVector : public llvm::SmallVector<void *, N> {
+  template <class PtrTy, unsigned N = 8>
+  class ASTOwningVector : public llvm::SmallVector<PtrTy, N> {
     ASTOwningVector(ASTOwningVector &); // do not implement
     ASTOwningVector &operator=(ASTOwningVector &); // do not implement
 
@@ -481,60 +474,67 @@ namespace clang {
     explicit ASTOwningVector(ActionBase &Actions)
     { }
 
-    void **take() {
+    PtrTy *take() {
       return &this->front();
     }
 
-    template<typename T> T **takeAs() { return (T**)take(); }
+    template<typename T> T **takeAs() { return reinterpret_cast<T**>(take()); }
   };
 
   /// A SmallVector of statements, with stack size 32 (as that is the only one
   /// used.)
-  typedef ASTOwningVector<&ActionBase::DeleteStmt, 32> StmtVector;
+  typedef ASTOwningVector<Stmt*, 32> StmtVector;
   /// A SmallVector of expressions, with stack size 12 (the maximum used.)
-  typedef ASTOwningVector<&ActionBase::DeleteExpr, 12> ExprVector;
+  typedef ASTOwningVector<Expr*, 12> ExprVector;
 
-  template <ASTDestroyer Destroyer, unsigned N> inline
-  ASTMultiPtr<Destroyer> move_arg(ASTOwningVector<Destroyer, N> &vec) {
-    return ASTMultiPtr<Destroyer>(vec.take(), vec.size());
+  template <class T, unsigned N> inline
+  ASTMultiPtr<T> move_arg(ASTOwningVector<T, N> &vec) {
+    return ASTMultiPtr<T>(vec.take(), vec.size());
   }
 
-  template <ASTDestroyer Destroyer> inline
-  ASTOwningPtr<Destroyer>::ASTOwningPtr(const ASTOwningResult<Destroyer> &o)
+  template <class T> inline
+  ASTOwningPtr<T>::ASTOwningPtr(const ASTOwningResult<T> &o)
     : Node(o.get()) { }
 
   // These versions are hopefully no-ops.
-  template <ASTDestroyer Destroyer> inline
-  ASTOwningResult<Destroyer>& move(ASTOwningResult<Destroyer> &ptr) {
+  template <class T> inline
+  ASTOwningResult<T>& move(ASTOwningResult<T> &ptr) {
     return ptr;
   }
 
-  template <ASTDestroyer Destroyer> inline
-  ASTOwningPtr<Destroyer>& move(ASTOwningPtr<Destroyer> &ptr) {
+  template <class T> inline
+  ASTOwningPtr<T>& move(ASTOwningPtr<T> &ptr) {
     return ptr;
   }
 
-  template <ASTDestroyer Destroyer> inline
-  ASTMultiPtr<Destroyer>& move(ASTMultiPtr<Destroyer> &ptr) {
+  template <class T> inline
+  ASTMultiPtr<T>& move(ASTMultiPtr<T> &ptr) {
     return ptr;
   }
 
   // We can re-use the low bit of expression, statement, base, and
   // member-initializer pointers for the "invalid" flag of
   // ActionResult.
-  template<> struct IsResultPtrLowBitFree<0> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<1> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<3> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<4> { static const bool value = true;};
-  template<> struct IsResultPtrLowBitFree<5> { static const bool value = true;};
+  template<> struct IsResultPtrLowBitFree<Expr*> {
+    static const bool value = true;
+  };
+  template<> struct IsResultPtrLowBitFree<Stmt*> {
+    static const bool value = true;
+  };
+  template<> struct IsResultPtrLowBitFree<CXXBaseSpecifier*> {
+    static const bool value = true;
+  };
+  template<> struct IsResultPtrLowBitFree<CXXBaseOrMemberInitializer*> {
+    static const bool value = true;
+  };
 
-  typedef ActionBase::ActionResult<0> ExprResult;
-  typedef ActionBase::ActionResult<1> StmtResult;
-  typedef ActionBase::ActionResult<2> TypeResult;
-  typedef ActionBase::ActionResult<3> BaseResult;
-  typedef ActionBase::ActionResult<4> MemInitResult;
+  typedef ActionBase::ActionResult<Expr*> ExprResult;
+  typedef ActionBase::ActionResult<Stmt*> StmtResult;
+  typedef ActionBase::ActionResult<void*> TypeResult;
+  typedef ActionBase::ActionResult<CXXBaseSpecifier*> BaseResult;
+  typedef ActionBase::ActionResult<CXXBaseOrMemberInitializer*> MemInitResult;
 
-  typedef ActionBase::ActionResult<5, Decl*> DeclResult;
+  typedef ActionBase::ActionResult<Decl*> DeclResult;
 }
 
 #endif

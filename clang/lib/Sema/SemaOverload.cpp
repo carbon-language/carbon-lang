@@ -6556,7 +6556,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   // an expression with non-empty lookup results, which should never
   // end up here.
   return SemaRef.ActOnCallExpr(/*Scope*/ 0, move(NewFn), LParenLoc,
-                         Sema::MultiExprArg(SemaRef, (void**) Args, NumArgs),
+                         Sema::MultiExprArg(SemaRef, Args, NumArgs),
                                CommaLocs, RParenLoc);
 }
 

@@ -253,7 +253,7 @@ static bool InstantiateInitializationArguments(Sema &SemaRef,
                                                Expr **Args, unsigned NumArgs,
                            const MultiLevelTemplateArgumentList &TemplateArgs,
                          llvm::SmallVectorImpl<SourceLocation> &FakeCommaLocs,
-                           ASTOwningVector<&ActionBase::DeleteExpr> &InitArgs) {
+                           ASTOwningVector<Expr*> &InitArgs) {
   for (unsigned I = 0; I != NumArgs; ++I) {
     // When we hit the first defaulted argument, break out of the loop:
     // we don't pass those default arguments on.
@@ -292,7 +292,7 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                                    SourceLocation &LParenLoc,
                                llvm::SmallVector<SourceLocation, 4> &CommaLocs,
-                             ASTOwningVector<&ActionBase::DeleteExpr> &NewArgs,
+                             ASTOwningVector<Expr*> &NewArgs,
                                    SourceLocation &RParenLoc) {
   NewArgs.clear();
   LParenLoc = SourceLocation();
@@ -421,7 +421,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     // Instantiate the initializer.
     SourceLocation LParenLoc, RParenLoc;
     llvm::SmallVector<SourceLocation, 4> CommaLocs;
-    ASTOwningVector<&ActionBase::DeleteExpr> InitArgs(SemaRef);
+    ASTOwningVector<Expr*> InitArgs(SemaRef);
     if (!InstantiateInitializer(SemaRef, D->getInit(), TemplateArgs, LParenLoc,
                                 CommaLocs, InitArgs, RParenLoc)) {
       // Attach the initializer to the declaration.
@@ -591,7 +591,7 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   if (InstantiatedAssertExpr.isInvalid())
     return 0;
 
-  OwningExprResult Message(SemaRef, D->getMessage());
+  OwningExprResult Message(D->getMessage());
   D->getMessage()->Retain();
   return SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
                                               move(InstantiatedAssertExpr),
@@ -2251,7 +2251,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     CXXBaseOrMemberInitializer *Init = *Inits;
 
     SourceLocation LParenLoc, RParenLoc;
-    ASTOwningVector<&ActionBase::DeleteExpr> NewArgs(*this);
+    ASTOwningVector<Expr*> NewArgs(*this);
     llvm::SmallVector<SourceLocation, 4> CommaLocs;
 
     // Instantiate the initializer.

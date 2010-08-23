@@ -1510,7 +1510,7 @@ public:
                                                 SourceLocation LParenLoc,
                                                 ExprArg SubExpr,
                                                 SourceLocation RParenLoc) {
-    void *Sub = SubExpr.takeAs<Expr>();
+    Expr *Sub = SubExpr.get();
     return getSema().ActOnCXXTypeConstructExpr(TypeRange,
                                                TInfo->getType().getAsOpaquePtr(),
                                                LParenLoc,
@@ -1687,7 +1687,7 @@ public:
                                            MultiExprArg Args,
                                            bool RequiresZeroInit,
                              CXXConstructExpr::ConstructionKind ConstructKind) {
-    ASTOwningVector<&ActionBase::DeleteExpr> ConvertedArgs(SemaRef);
+    ASTOwningVector<Expr*> ConvertedArgs(SemaRef);
     if (getSema().CompleteConstructorCall(Constructor, move(Args), Loc, 
                                           ConvertedArgs))
       return getSema().ExprError();
@@ -3469,7 +3469,7 @@ Sema::OwningStmtResult
 TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
                                               bool IsStmtExpr) {
   bool SubStmtChanged = false;
-  ASTOwningVector<&ActionBase::DeleteStmt> Statements(getSema());
+  ASTOwningVector<Stmt*> Statements(getSema());
   for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
        B != BEnd; ++B) {
     OwningStmtResult Result = getDerived().TransformStmt(*B);
@@ -3493,7 +3493,7 @@ TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformCaseStmt(CaseStmt *S) {
-  OwningExprResult LHS(SemaRef), RHS(SemaRef);
+  OwningExprResult LHS, RHS;
   {
     // The case value expressions are not potentially evaluated.
     EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
@@ -3559,7 +3559,7 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
   // Transform the condition
-  OwningExprResult Cond(SemaRef);
+  OwningExprResult Cond;
   VarDecl *ConditionVar = 0;
   if (S->getConditionVariable()) {
     ConditionVar 
@@ -3617,7 +3617,7 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
   // Transform the condition.
-  OwningExprResult Cond(SemaRef);
+  OwningExprResult Cond;
   VarDecl *ConditionVar = 0;
   if (S->getConditionVariable()) {
     ConditionVar 
@@ -3655,7 +3655,7 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
   // Transform the condition
-  OwningExprResult Cond(SemaRef);
+  OwningExprResult Cond;
   VarDecl *ConditionVar = 0;
   if (S->getConditionVariable()) {
     ConditionVar 
@@ -3733,7 +3733,7 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
     return SemaRef.StmtError();
 
   // Transform the condition
-  OwningExprResult Cond(SemaRef);
+  OwningExprResult Cond;
   VarDecl *ConditionVar = 0;
   if (S->getConditionVariable()) {
     ConditionVar 
@@ -3874,12 +3874,12 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
   
-  ASTOwningVector<&ActionBase::DeleteExpr> Constraints(getSema());
-  ASTOwningVector<&ActionBase::DeleteExpr> Exprs(getSema());
+  ASTOwningVector<Expr*> Constraints(getSema());
+  ASTOwningVector<Expr*> Exprs(getSema());
   llvm::SmallVector<IdentifierInfo *, 4> Names;
 
-  OwningExprResult AsmString(SemaRef);
-  ASTOwningVector<&ActionBase::DeleteExpr> Clobbers(getSema());
+  OwningExprResult AsmString;
+  ASTOwningVector<Expr*> Clobbers(getSema());
 
   bool ExprsChanged = false;
   
@@ -3954,7 +3954,7 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
   
   // Transform the @catch statements (if present).
   bool AnyCatchChanged = false;
-  ASTOwningVector<&ActionBase::DeleteStmt> CatchStmts(SemaRef);
+  ASTOwningVector<Stmt*> CatchStmts(SemaRef);
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     OwningStmtResult Catch = getDerived().TransformStmt(S->getCatchStmt(I));
     if (Catch.isInvalid())
@@ -3965,7 +3965,7 @@ TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
   }
   
   // Transform the @finally statement (if present).
-  OwningStmtResult Finally(SemaRef);
+  OwningStmtResult Finally;
   if (S->getFinallyStmt()) {
     Finally = getDerived().TransformStmt(S->getFinallyStmt());
     if (Finally.isInvalid())
@@ -4041,7 +4041,7 @@ TreeTransform<Derived>::TransformObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformObjCAtThrowStmt(ObjCAtThrowStmt *S) {
-  OwningExprResult Operand(SemaRef);
+  OwningExprResult Operand;
   if (S->getThrowExpr()) {
     Operand = getDerived().TransformExpr(S->getThrowExpr());
     if (Operand.isInvalid())
@@ -4167,7 +4167,7 @@ TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
 
   // Transform the handlers.
   bool HandlerChanged = false;
-  ASTOwningVector<&ActionBase::DeleteStmt> Handlers(SemaRef);
+  ASTOwningVector<Stmt*> Handlers(SemaRef);
   for (unsigned I = 0, N = S->getNumHandlers(); I != N; ++I) {
     OwningStmtResult Handler
       = getDerived().TransformCXXCatchStmt(S->getHandler(I));
@@ -4393,7 +4393,7 @@ TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
                                              E->getSourceRange());
   }
 
-  Sema::OwningExprResult SubExpr(SemaRef);
+  Sema::OwningExprResult SubExpr;
   {
     // C++0x [expr.sizeof]p1:
     //   The operand is either an expression, which is an unevaluated operand
@@ -4446,7 +4446,7 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
 
   // Transform arguments.
   bool ArgChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+  ASTOwningVector<Expr*> Args(SemaRef);
   llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
     OwningExprResult Arg = getDerived().TransformExpr(E->getArg(I));
@@ -4700,7 +4700,7 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E) {
   bool InitChanged = false;
 
-  ASTOwningVector<&ActionBase::DeleteExpr, 4> Inits(SemaRef);
+  ASTOwningVector<Expr*, 4> Inits(SemaRef);
   for (unsigned I = 0, N = E->getNumInits(); I != N; ++I) {
     OwningExprResult Init = getDerived().TransformExpr(E->getInit(I));
     if (Init.isInvalid())
@@ -4728,7 +4728,7 @@ TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) {
     return SemaRef.ExprError();
 
   // transform the designators.
-  ASTOwningVector<&ActionBase::DeleteExpr, 4> ArrayExprs(SemaRef);
+  ASTOwningVector<Expr*, 4> ArrayExprs(SemaRef);
   bool ExprChanged = false;
   for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
                                              DEnd = E->designators_end();
@@ -4828,7 +4828,7 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E) {
   bool ArgumentChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr, 4> Inits(SemaRef);
+  ASTOwningVector<Expr*, 4> Inits(SemaRef);
   for (unsigned I = 0, N = E->getNumExprs(); I != N; ++I) {
     OwningExprResult Init = getDerived().TransformExpr(E->getExpr(I));
     if (Init.isInvalid())
@@ -4954,7 +4954,7 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
                               static_cast<Expr *>(Object.get())->getLocEnd());
 
     // Transform the call arguments.
-    ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+    ASTOwningVector<Expr*> Args(SemaRef);
     llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
     for (unsigned I = 1, N = E->getNumArgs(); I != N; ++I) {
       if (getDerived().DropCallArgument(E->getArg(I)))
@@ -5004,7 +5004,7 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   if (First.isInvalid())
     return SemaRef.ExprError();
 
-  OwningExprResult Second(SemaRef);
+  OwningExprResult Second;
   if (E->getNumArgs() == 2) {
     Second = getDerived().TransformExpr(E->getArg(1));
     if (Second.isInvalid())
@@ -5266,7 +5266,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
 
   // Transform the placement arguments (if any).
   bool ArgumentChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> PlacementArgs(SemaRef);
+  ASTOwningVector<Expr*> PlacementArgs(SemaRef);
   for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I) {
     OwningExprResult Arg = getDerived().TransformExpr(E->getPlacementArg(I));
     if (Arg.isInvalid())
@@ -5277,7 +5277,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   }
 
   // transform the constructor arguments (if any).
-  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(SemaRef);
+  ASTOwningVector<Expr*> ConstructorArgs(SemaRef);
   for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I) {
     if (getDerived().DropCallArgument(E->getConstructorArg(I)))
       break;
@@ -5660,7 +5660,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
     return SemaRef.ExprError();
 
   bool ArgumentChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+  ASTOwningVector<Expr*> Args(SemaRef);
   for (CXXConstructExpr::arg_iterator Arg = E->arg_begin(),
        ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
@@ -5743,7 +5743,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
     return SemaRef.ExprError();
 
   bool ArgumentChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+  ASTOwningVector<Expr*> Args(SemaRef);
   Args.reserve(E->getNumArgs());
   for (CXXTemporaryObjectExpr::arg_iterator Arg = E->arg_begin(),
                                          ArgEnd = E->arg_end();
@@ -5795,7 +5795,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
     return SemaRef.ExprError();
 
   bool ArgumentChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+  ASTOwningVector<Expr*> Args(SemaRef);
   llvm::SmallVector<SourceLocation, 8> FakeCommaLocs;
   for (CXXUnresolvedConstructExpr::arg_iterator Arg = E->arg_begin(),
                                              ArgEnd = E->arg_end();
@@ -5829,7 +5829,7 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                              CXXDependentScopeMemberExpr *E) {
   // Transform the base of the expression.
-  OwningExprResult Base(SemaRef, (Expr*) 0);
+  OwningExprResult Base((Expr*) 0);
   Expr *OldBase;
   QualType BaseType;
   QualType ObjectType;
@@ -5926,7 +5926,7 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old) {
   // Transform the base of the expression.
-  OwningExprResult Base(SemaRef, (Expr*) 0);
+  OwningExprResult Base((Expr*) 0);
   QualType BaseType;
   if (!Old->isImplicitAccess()) {
     Base = getDerived().TransformExpr(Old->getBase());
@@ -6049,7 +6049,7 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
   // Transform arguments.
   bool ArgChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+  ASTOwningVector<Expr*> Args(SemaRef);
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
     OwningExprResult Arg = getDerived().TransformExpr(E->getArg(I));
     if (Arg.isInvalid())
@@ -6211,7 +6211,7 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
   bool ArgumentChanged = false;
-  ASTOwningVector<&ActionBase::DeleteExpr> SubExprs(SemaRef);
+  ASTOwningVector<Expr*> SubExprs(SemaRef);
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I) {
     OwningExprResult SubExpr = getDerived().TransformExpr(E->getExpr(I));
     if (SubExpr.isInvalid())

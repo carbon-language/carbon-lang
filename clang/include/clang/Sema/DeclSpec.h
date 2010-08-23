@@ -30,6 +30,7 @@ namespace clang {
   class LangOptions;
   class Diagnostic;
   class IdentifierInfo;
+  class NestedNameSpecifier;
   class Preprocessor;
   class Declarator;
   struct TemplateIdAnnotation;
@@ -47,7 +48,7 @@ namespace clang {
 /// The actual scope is described by getScopeRep().
 class CXXScopeSpec {
   SourceRange Range;
-  void *ScopeRep;
+  NestedNameSpecifier *ScopeRep;
 
 public:
   CXXScopeSpec() : Range(), ScopeRep() { }
@@ -59,7 +60,7 @@ public:
   SourceLocation getBeginLoc() const { return Range.getBegin(); }
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
-  ActionBase::CXXScopeTy *getScopeRep() const { return ScopeRep; }
+  NestedNameSpecifier *getScopeRep() const { return ScopeRep; }
   void setScopeRep(ActionBase::CXXScopeTy *S) { ScopeRep = S; }
 
   /// No scope specifier.
@@ -799,7 +800,7 @@ struct DeclaratorChunk {
     /// This is the size of the array, or null if [] or [*] was specified.
     /// Since the parser is multi-purpose, and we don't want to impose a root
     /// expression class on all clients, NumElts is untyped.
-    ActionBase::ExprTy *NumElts;
+    Expr *NumElts;
     void destroy() {}
   };
 
@@ -1010,7 +1011,7 @@ struct DeclaratorChunk {
   /// getArray - Return a DeclaratorChunk for an array.
   ///
   static DeclaratorChunk getArray(unsigned TypeQuals, bool isStatic,
-                                  bool isStar, void *NumElts,
+                                  bool isStar, Expr *NumElts,
                                   SourceLocation LBLoc, SourceLocation RBLoc) {
     DeclaratorChunk I;
     I.Kind          = Array;

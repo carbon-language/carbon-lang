@@ -258,7 +258,7 @@ AttributeList* Parser::ParseMicrosoftDeclSpec(AttributeList *CurrAttr) {
       // correctly.
       OwningExprResult ArgExpr(ParseAssignmentExpression());
       if (!ArgExpr.isInvalid()) {
-        ExprTy* ExprList = ArgExpr.take();
+        Expr *ExprList = ArgExpr.take();
         CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
                                      SourceLocation(), &ExprList, 1,
                                      CurrAttr, true);
@@ -900,7 +900,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
 
       CXXScopeSpec SS;
-      SS.setScopeRep(Tok.getAnnotationValue());
+      SS.setScopeRep((NestedNameSpecifier*) Tok.getAnnotationValue());
       SS.setRange(Tok.getAnnotationRange());
 
       // We are looking for a qualified typename.
@@ -2052,7 +2052,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     SourceLocation IdentLoc = ConsumeToken();
 
     SourceLocation EqualLoc;
-    OwningExprResult AssignedVal(Actions);
+    OwningExprResult AssignedVal;
     if (Tok.is(tok::equal)) {
       EqualLoc = ConsumeToken();
       AssignedVal = ParseConstantExpression();
@@ -3283,7 +3283,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     }
     
     // Remember that we parsed the empty array type.
-    OwningExprResult NumElements(Actions);
+    OwningExprResult NumElements;
     D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false, 0,
                                             StartLoc, EndLoc),
                   EndLoc);
@@ -3329,7 +3329,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
-  OwningExprResult NumElements(Actions);
+  OwningExprResult NumElements;
 
   // Handle the case where we have '[*]' as the array size.  However, a leading
   // star could be the start of an expression, for example 'X[*p + 4]'.  Verify

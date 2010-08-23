@@ -145,17 +145,17 @@ public:
   
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
-  typedef Action::ExprTy ExprTy;
-  typedef Action::StmtTy StmtTy;
+  typedef Expr ExprTy;
+  typedef Stmt StmtTy;
   typedef Action::DeclGroupPtrTy DeclGroupPtrTy;
   typedef Action::TypeTy TypeTy;
-  typedef Action::BaseTy BaseTy;
-  typedef Action::MemInitTy MemInitTy;
-  typedef Action::CXXScopeTy CXXScopeTy;
-  typedef Action::TemplateParamsTy TemplateParamsTy;
+  typedef CXXBaseSpecifier BaseTy;
+  typedef CXXBaseOrMemberInitializer MemInitTy;
+  typedef NestedNameSpecifier CXXScopeTy;
+  typedef TemplateParameterList TemplateParamsTy;
   typedef Action::TemplateTy TemplateTy;
 
-  typedef llvm::SmallVector<TemplateParamsTy *, 4> TemplateParameterLists;
+  typedef llvm::SmallVector<TemplateParameterList *, 4> TemplateParameterLists;
 
   typedef Action::ExprResult        ExprResult;
   typedef Action::StmtResult        StmtResult;
@@ -172,20 +172,20 @@ public:
 
   /// Adorns a ExprResult with Actions to make it an OwningExprResult
   OwningExprResult Owned(ExprResult res) {
-    return OwningExprResult(Actions, res);
+    return OwningExprResult(res);
   }
   /// Adorns a StmtResult with Actions to make it an OwningStmtResult
   OwningStmtResult Owned(StmtResult res) {
-    return OwningStmtResult(Actions, res);
+    return OwningStmtResult(res);
   }
 
-  OwningExprResult ExprError() { return OwningExprResult(Actions, true); }
-  OwningStmtResult StmtError() { return OwningStmtResult(Actions, true); }
+  OwningExprResult ExprError() { return OwningExprResult(true); }
+  OwningStmtResult StmtError() { return OwningStmtResult(true); }
 
   OwningExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
 
-  OwningExprResult ExprEmpty() { return OwningExprResult(Actions, false); }
+  OwningExprResult ExprEmpty() { return OwningExprResult(false); }
 
   // Parsing methods.
 
@@ -949,16 +949,17 @@ private:
                                                      TypeTy *&CastTy,
                                                      SourceRange &CastRange);
 
-  static const unsigned ExprListSize = 12;
-  typedef llvm::SmallVector<ExprTy*, ExprListSize> ExprListTy;
-  typedef llvm::SmallVector<SourceLocation, ExprListSize> CommaLocsTy;
+  typedef llvm::SmallVector<Expr*, 20> ExprListTy;
+  typedef llvm::SmallVector<SourceLocation, 20> CommaLocsTy;
 
   /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
-  bool ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs,
-                           void (Action::*Completer)(Scope *S, void *Data,
-                                                     ExprTy **Args,
+  bool ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
+                           llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
+                           void (Action::*Completer)(Scope *S,
+                                                     Expr *Data,
+                                                     Expr **Args,
                                                      unsigned NumArgs) = 0,
-                           void *Data = 0);
+                           Expr *Data = 0);
 
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {
@@ -1040,7 +1041,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 5.3.4 and 5.3.5: C++ new and delete
-  bool ParseExpressionListOrTypeId(ExprListTy &Exprs, Declarator &D);
+  bool ParseExpressionListOrTypeId(llvm::SmallVectorImpl<Expr*> &Exprs,
+                                   Declarator &D);
   void ParseDirectNewDeclarator(Declarator &D);
   OwningExprResult ParseCXXNewExpression(bool UseGlobal, SourceLocation Start);
   OwningExprResult ParseCXXDeleteExpression(bool UseGlobal,

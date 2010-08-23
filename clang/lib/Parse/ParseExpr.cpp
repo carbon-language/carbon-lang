@@ -200,7 +200,7 @@ Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
 /// process of disambiguating between an expression and a declaration.
 Parser::OwningExprResult
 Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
-  OwningExprResult LHS(Actions, true);
+  OwningExprResult LHS(true);
   {
     // Silence extension warnings in the sub-expression
     ExtensionRAIIObject O(Diags);
@@ -290,7 +290,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
     ConsumeToken();
 
     // Special case handling for the ternary operator.
-    OwningExprResult TernaryMiddle(Actions, true);
+    OwningExprResult TernaryMiddle(true);
     if (NextTokPrec == prec::Conditional) {
       if (Tok.isNot(tok::colon)) {
         // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
@@ -357,7 +357,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
     // Therefore we need some special-casing here.
     // Also note that the third operand of the conditional operator is
     // an assignment-expression in C++.
-    OwningExprResult RHS(Actions);
+    OwningExprResult RHS;
     if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
       RHS = ParseAssignmentExpression();
     else
@@ -549,7 +549,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
                                                      bool &NotCastExpr,
                                                      TypeTy *TypeOfCast) {
-  OwningExprResult Res(Actions);
+  OwningExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
 
@@ -1127,7 +1127,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
           OpTok.is(tok::kw___alignof) || OpTok.is(tok::kw_alignof)) &&
           "Not a typeof/sizeof/alignof expression!");
 
-  OwningExprResult Operand(Actions);
+  OwningExprResult Operand;
 
   // If the operand doesn't start with an '(', it must be an expression.
   if (Tok.isNot(tok::l_paren)) {
@@ -1241,7 +1241,7 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
 /// [GNU]   offsetof-member-designator '[' expression ']'
 ///
 Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
-  OwningExprResult Res(Actions);
+  OwningExprResult Res;
   const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
 
   tok::TokenKind T = Tok.getKind();
@@ -1428,7 +1428,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   SourceLocation OpenLoc = ConsumeParen();
-  OwningExprResult Result(Actions, true);
+  OwningExprResult Result(true);
   bool isAmbiguousTypeId;
   CastTy = 0;
 
@@ -1479,7 +1479,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       // Note that this doesn't parse the subsequent cast-expression, it just
       // returns the parsed type to the callee.
       if (stopIfCastExpr)
-        return OwningExprResult(Actions);
+        return OwningExprResult();
       
       // Reject the cast of super idiom in ObjC.
       if (Tok.is(tok::identifier) && getLang().ObjC1 &&
@@ -1585,12 +1585,13 @@ Parser::OwningExprResult Parser::ParseStringLiteralExpression() {
 /// [C++]   assignment-expression
 /// [C++]   expression-list , assignment-expression
 ///
-bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs,
+bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
+                            llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
                                  void (Action::*Completer)(Scope *S, 
-                                                           void *Data,
-                                                           ExprTy **Args,
+                                                           Expr *Data,
+                                                           Expr **Args,
                                                            unsigned NumArgs),
-                                 void *Data) {
+                                 Expr *Data) {
   while (1) {
     if (Tok.is(tok::code_completion)) {
       if (Completer)
@@ -1723,7 +1724,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   }
 
 
-  OwningExprResult Result(Actions, true);
+  OwningExprResult Result(true);
   if (!Tok.is(tok::l_brace)) {
     // Saw something like: ^expr
     Diag(Tok, diag::err_expected_expression);

@@ -680,7 +680,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
       if (Seq) {
         Sema::OwningExprResult Result = 
           Seq.Perform(SemaRef, Entity, Kind,
-                      Sema::MultiExprArg(SemaRef, (void **)&expr, 1));
+                      Sema::MultiExprArg(SemaRef, &expr, 1));
         if (Result.isInvalid())
           hadError = true;
         
@@ -3411,7 +3411,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   }
 
   CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
-  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+  ASTOwningVector<Expr*> ConstructorArgs(S);
   CurInit.release(); // Ownership transferred into MultiExprArg, below.
 
   S.CheckConstructorAccess(Loc, Constructor, Entity,
@@ -3447,9 +3447,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   // constructor call (we might have derived-to-base conversions, or
   // the copy constructor may have default arguments).
   if (S.CompleteConstructorCall(Constructor,
-                                Sema::MultiExprArg(S, 
-                                                   (void **)&CurInitExpr,
-                                                   1),
+                                Sema::MultiExprArg(S, &CurInitExpr, 1),
                                 Loc, ConstructorArgs))
     return S.ExprError();
 
@@ -3530,7 +3528,7 @@ InitializationSequence::Perform(Sema &S,
     }
 
     if (Kind.getKind() == InitializationKind::IK_Copy || Kind.isExplicitCast())
-      return Sema::OwningExprResult(S, Args.release()[0]);
+      return Sema::OwningExprResult(Args.release()[0]);
 
     if (Args.size() == 0)
       return S.Owned((Expr *)0);
@@ -3579,7 +3577,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_StringInit:
   case SK_ObjCObjectConversion:
     assert(Args.size() == 1);
-    CurInit = Sema::OwningExprResult(S, ((Expr **)(Args.get()))[0]->Retain());
+    CurInit = Sema::OwningExprResult(((Expr **)(Args.get()))[0]->Retain());
     if (CurInit.isInvalid())
       return S.ExprError();
     break;
@@ -3703,16 +3701,14 @@ InitializationSequence::Perform(Sema &S,
       bool IsLvalue = false;
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Fn)) {
         // Build a call to the selected constructor.
-        ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+        ASTOwningVector<Expr*> ConstructorArgs(S);
         SourceLocation Loc = CurInitExpr->getLocStart();
         CurInit.release(); // Ownership transferred into MultiExprArg, below.
 
         // Determine the arguments required to actually perform the constructor
         // call.
         if (S.CompleteConstructorCall(Constructor,
-                                      Sema::MultiExprArg(S, 
-                                                         (void **)&CurInitExpr,
-                                                         1),
+                                      Sema::MultiExprArg(S, &CurInitExpr, 1),
                                       Loc, ConstructorArgs))
           return S.ExprError();
         
@@ -3838,7 +3834,7 @@ InitializationSequence::Perform(Sema &S,
         = cast<CXXConstructorDecl>(Step->Function.Function);
       
       // Build a call to the selected constructor.
-      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+      ASTOwningVector<Expr*> ConstructorArgs(S);
       SourceLocation Loc = (Kind.isCopyInit() && Kind.getEqualLoc().isValid())
                              ? Kind.getEqualLoc()
                              : Kind.getLocation();
@@ -4464,6 +4460,5 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
                                                            EqualLoc);
   InitializationSequence Seq(*this, Entity, Kind, &InitE, 1);
   Init.release();
-  return Seq.Perform(*this, Entity, Kind, 
-                     MultiExprArg(*this, (void**)&InitE, 1));
+  return Seq.Perform(*this, Entity, Kind, MultiExprArg(*this, &InitE, 1));
 }

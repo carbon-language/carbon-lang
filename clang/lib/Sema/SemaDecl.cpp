@@ -4136,7 +4136,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, ExprArg init, bool DirectInit) {
     } else if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
       OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                          MultiExprArg(*this, (void**)&Init, 1),
+                                                MultiExprArg(*this, &Init, 1),
                                                 &DclT);
       if (Result.isInvalid()) {
         VDecl->setInvalidDecl();
@@ -4207,7 +4207,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, ExprArg init, bool DirectInit) {
     if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
       OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                          MultiExprArg(*this, (void**)&Init, 1),
+                                                MultiExprArg(*this, &Init, 1),
                                                 &DclT);
       if (Result.isInvalid()) {
         VDecl->setInvalidDecl();

@@ -688,17 +688,17 @@ public:
 
   OwningExprResult Owned(Expr* E) {
     assert(!E || E->isRetained());
-    return OwningExprResult(*this, E);
+    return OwningExprResult(E);
   }
   OwningExprResult Owned(ExprResult R) {
     if (R.isInvalid())
       return ExprError();
     assert(!R.get() || ((Expr*) R.get())->isRetained());
-    return OwningExprResult(*this, R.get());
+    return OwningExprResult(R.get());
   }
   OwningStmtResult Owned(Stmt* S) {
     assert(!S || S->isRetained());
-    return OwningStmtResult(*this, S);
+    return OwningStmtResult(S);
   }
 
   virtual void ActOnEndOfTranslationUnit();
@@ -2398,7 +2398,7 @@ public:
   bool CompleteConstructorCall(CXXConstructorDecl *Constructor,
                                MultiExprArg ArgsPtr,
                                SourceLocation Loc,
-                      ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs);
+                               ASTOwningVector<Expr*> &ConvertedArgs);
 
   virtual TypeTy *getDestructorName(SourceLocation TildeLoc,
                                     IdentifierInfo &II, SourceLocation NameLoc,

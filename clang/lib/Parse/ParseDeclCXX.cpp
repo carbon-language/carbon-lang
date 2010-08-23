@@ -1070,7 +1070,7 @@ void Parser::ParseBaseClause(Decl *ClassDecl) {
   ConsumeToken();
 
   // Build up an array of parsed base specifiers.
-  llvm::SmallVector<BaseTy *, 8> BaseInfo;
+  llvm::SmallVector<CXXBaseSpecifier *, 8> BaseInfo;
 
   while (true) {
     // Parse a base-specifier.
@@ -1406,8 +1406,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   //   member-declarator-list ',' member-declarator
 
   llvm::SmallVector<Decl *, 8> DeclsInGroup;
-  OwningExprResult BitfieldSize(Actions);
-  OwningExprResult Init(Actions);
+  OwningExprResult BitfieldSize;
+  OwningExprResult Init;
   bool Deleted = false;
 
   while (1) {
@@ -1706,7 +1706,7 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
 
   SourceLocation ColonLoc = ConsumeToken();
 
-  llvm::SmallVector<MemInitTy*, 4> MemInitializers;
+  llvm::SmallVector<CXXBaseOrMemberInitializer*, 4> MemInitializers;
   bool AnyErrors = false;
 
   do {

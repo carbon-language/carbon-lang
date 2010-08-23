@@ -87,7 +87,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
 
   Action::PragmaPackKind Kind = Action::PPK_Default;
   IdentifierInfo *Name = 0;
-  Action::OwningExprResult Alignment(Actions);
+  Action::OwningExprResult Alignment;
   SourceLocation LParenLoc = Tok.getLocation();
   PP.Lex(Tok);
   if (Tok.is(tok::numeric_constant)) {

@@ -780,7 +780,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs.get();
   unsigned NumConsArgs = ConstructorArgs.size();
-  ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
+  ASTOwningVector<Expr*> ConvertedConstructorArgs(*this);
 
   // Array 'new' can't have any initializers.
   if (NumConsArgs && (ResultType->isArrayType() || ArraySize)) {
@@ -1592,10 +1592,10 @@ static Sema::OwningExprResult BuildCXXCastArgument(Sema &S,
   switch (Kind) {
   default: assert(0 && "Unhandled cast kind!");
   case CastExpr::CK_ConstructorConversion: {
-    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+    ASTOwningVector<Expr*> ConstructorArgs(S);
     
     if (S.CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
-                                  Sema::MultiExprArg(S, (void **)&From, 1),
+                                  Sema::MultiExprArg(S, &From, 1),
                                   CastLoc, ConstructorArgs))
       return S.ExprError();
     
@@ -1723,9 +1723,9 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
     if (SCS.Second == ICK_Derived_To_Base) {
-      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+      ASTOwningVector<Expr*> ConstructorArgs(*this);
       if (CompleteConstructorCall(cast<CXXConstructorDecl>(SCS.CopyConstructor),
-                                  MultiExprArg(*this, (void **)&From, 1),
+                                  MultiExprArg(*this, &From, 1),
                                   /*FIXME:ConstructLoc*/SourceLocation(), 
                                   ConstructorArgs))
         return true;
@@ -1741,7 +1741,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     OwningExprResult FromResult =
       BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                             ToType, SCS.CopyConstructor,
-                            MultiExprArg(*this, (void**)&From, 1));
+                            MultiExprArg(*this, &From, 1));
 
     if (FromResult.isInvalid())
       return true;
@@ -2187,7 +2187,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
                                                            SourceLocation());
   InitializationSequence InitSeq(Self, Entity, Kind, &E, 1);
   Sema::OwningExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
-                                    Sema::MultiExprArg(Self, (void **)&E, 1));
+                                    Sema::MultiExprArg(Self, &E, 1));
   if (Result.isInvalid())
     return true;
   
@@ -2569,14 +2569,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
 
     // Convert E1 to Composite1
     OwningExprResult E1Result
-      = E1ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,(void**)&E1,1));
+      = E1ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,&E1,1));
     if (E1Result.isInvalid())
       return QualType();
     E1 = E1Result.takeAs<Expr>();
 
     // Convert E2 to Composite1
     OwningExprResult E2Result
-      = E2ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,(void**)&E2,1));
+      = E2ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,&E2,1));
     if (E2Result.isInvalid())
       return QualType();
     E2 = E2Result.takeAs<Expr>();
@@ -2594,14 +2594,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
   
   // Convert E1 to Composite2
   OwningExprResult E1Result
-    = E1ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, (void**)&E1, 1));
+    = E1ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, &E1, 1));
   if (E1Result.isInvalid())
     return QualType();
   E1 = E1Result.takeAs<Expr>();
   
   // Convert E2 to Composite2
   OwningExprResult E2Result
-    = E2ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, (void**)&E2, 1));
+    = E2ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, &E2, 1));
   if (E2Result.isInvalid())
     return QualType();
   E2 = E2Result.takeAs<Expr>();

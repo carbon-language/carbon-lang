@@ -129,7 +129,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
                                                            EqualLoc);
   InitializationSequence InitSeq(*this, Entity, Kind, &Arg, 1);
   OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                          MultiExprArg(*this, (void**)&Arg, 1));
+                                            MultiExprArg(*this, &Arg, 1));
   if (Result.isInvalid())
     return true;
   Arg = Result.takeAs<Expr>();
@@ -1325,7 +1325,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   
   OwningExprResult MemberInit =
     InitSeq.Perform(*this, MemberEntity, Kind, 
-                    MultiExprArg(*this, (void**)Args, NumArgs), 0);
+                    MultiExprArg(*this, Args, NumArgs), 0);
   if (MemberInit.isInvalid())
     return true;
   
@@ -1457,7 +1457,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   
   OwningExprResult BaseInit =
     InitSeq.Perform(*this, BaseEntity, Kind, 
-                    MultiExprArg(*this, (void**)Args, NumArgs), 0);
+                    MultiExprArg(*this, Args, NumArgs), 0);
   if (BaseInit.isInvalid())
     return true;
   
@@ -1515,7 +1515,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec,
                                         IsInheritedVirtualBase);
 
-  Sema::OwningExprResult BaseInit(SemaRef);
+  Sema::OwningExprResult BaseInit;
   
   switch (ImplicitInitKind) {
   case IIK_Default: {
@@ -1553,7 +1553,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                    &CopyCtorArg, 1);
     BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind,
                                Sema::MultiExprArg(SemaRef, 
-                                                  (void**)&CopyCtorArg, 1));
+                                                  &CopyCtorArg, 1));
     break;
   }
 
@@ -1674,7 +1674,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     Sema::OwningExprResult MemberInit
       = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
-                        Sema::MultiExprArg(SemaRef, (void**)&CopyCtorArgE, 1));
+                        Sema::MultiExprArg(SemaRef, &CopyCtorArgE, 1));
     MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(move(MemberInit));
     if (MemberInit.isInvalid())
       return true;
@@ -4927,7 +4927,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   //   which they were declared in the class definition.
   
   // The statements that form the synthesized function body.
-  ASTOwningVector<&ActionBase::DeleteStmt> Statements(*this);
+  ASTOwningVector<Stmt*> Statements(*this);
   
   // The parameter for the "other" object, which we are copying from.
   ParmVarDecl *Other = CopyAssignOperator->getParamDecl(0);
@@ -5132,7 +5132,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
         assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
       }
           
-      ASTOwningVector<&ActionBase::DeleteExpr> CallArgs(*this);
+      ASTOwningVector<Expr*> CallArgs(*this);
       CallArgs.push_back(To.takeAs<Expr>());
       CallArgs.push_back(From.takeAs<Expr>());
       CallArgs.push_back(new (Context) IntegerLiteral(Size, SizeType, Loc));
@@ -5602,7 +5602,7 @@ bool
 Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
                               MultiExprArg ArgsPtr,
                               SourceLocation Loc,                                    
-                     ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs) {
+                              ASTOwningVector<Expr*> &ConvertedArgs) {
   // FIXME: This duplicates a lot of code from Sema::ConvertArgumentsForCall.
   unsigned NumArgs = ArgsPtr.size();
   Expr **Args = (Expr **)ArgsPtr.get();
@@ -6139,7 +6139,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
                                                                SourceLocation());
       InitializationSequence InitSeq(*this, Entity, Kind, &ExDeclRef, 1);
       OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind, 
-                                    MultiExprArg(*this, (void**)&ExDeclRef, 1));
+                                         MultiExprArg(*this, &ExDeclRef, 1));
       if (Result.isInvalid())
         Invalid = true;
       else 

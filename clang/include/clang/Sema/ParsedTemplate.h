@@ -70,9 +70,9 @@ namespace clang {
     }
     
     /// \brief Retrieve the non-type template argument's expression.
-    ActionBase::ExprTy *getAsExpr() const {
+    Expr *getAsExpr() const {
       assert(Kind == NonType && "Not a non-type template argument");
-      return Arg;
+      return static_cast<Expr*>(Arg);
     }
     
     /// \brief Retrieve the template template argument's template name.

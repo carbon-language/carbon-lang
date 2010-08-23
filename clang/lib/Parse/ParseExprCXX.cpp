@@ -64,7 +64,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
          "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope)) {
-    SS.setScopeRep(Tok.getAnnotationValue());
+    SS.setScopeRep(static_cast<NestedNameSpecifier*>(Tok.getAnnotationValue()));
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
     return false;
@@ -507,7 +507,7 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
       "typeid"))
     return ExprError();
 
-  OwningExprResult Result(Actions);
+  OwningExprResult Result;
 
   if (isTypeIdInParens()) {
     TypeResult Ty = ParseTypeName();
@@ -1698,7 +1698,8 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
 ///        new-placement:
 ///                   '(' expression-list ')'
 ///
-bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
+bool Parser::ParseExpressionListOrTypeId(
+                                   llvm::SmallVectorImpl<Expr*> &PlacementArgs,
                                          Declarator &D) {
   // The '(' was already consumed.
   if (isTypeIdInParens()) {
@@ -1809,7 +1810,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   assert(ExprType == CastExpr && "Compound literals are not ambiguous!");
   assert(isTypeIdInParens() && "Not a type-id!");
 
-  OwningExprResult Result(Actions, true);
+  OwningExprResult Result(true);
   CastTy = 0;
 
   // We need to disambiguate a very ugly part of the C++ syntax:

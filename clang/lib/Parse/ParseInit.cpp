@@ -137,7 +137,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     //   [4][foo bar]      -> obsolete GNU designation with objc message send.
     //
     SourceLocation StartLoc = ConsumeBracket();
-    OwningExprResult Idx(Actions);
+    OwningExprResult Idx;
 
     // If Objective-C is enabled and this is a typename (class message
     // send) or send to 'super', parse this as a message send
@@ -167,7 +167,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
-                                                           TypeOrExpr, 
+                                                           TypeOrExpr,
                                                            ExprArg(Actions));
       }
 
@@ -175,7 +175,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // whether we have a message send or an array designator; just
       // adopt the expression for further analysis below.
       // FIXME: potentially-potentially evaluated expression above?
-      Idx = OwningExprResult(Actions, TypeOrExpr);
+      Idx = OwningExprResult(static_cast<Expr*>(TypeOrExpr));
     } else if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IILoc = Tok.getLocation();
@@ -330,7 +330,7 @@ Parser::OwningExprResult Parser::ParseBraceInitializer() {
 
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
-    OwningExprResult SubElt(Actions);
+    OwningExprResult SubElt;
     if (MayBeDesignationStart(Tok.getKind(), PP))
       SubElt = ParseInitializerWithPotentialDesignator();
     else

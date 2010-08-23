@@ -967,7 +967,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     
   Sema::OwningExprResult Result
     = InitSeq.Perform(Self, Entity, InitKind,
-                      Action::MultiExprArg(Self, (void**)&SrcExpr, 1));
+                      Action::MultiExprArg(Self, &SrcExpr, 1));
   if (Result.isInvalid()) {
     msg = 0;
     return TC_Failed;

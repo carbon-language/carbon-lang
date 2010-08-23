@@ -3344,7 +3344,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
   BaseArg = MaybeConvertParenListExprToParenExpr(S, move(BaseArg));
 
   Expr *Base = BaseArg.takeAs<Expr>();
-  OwningExprResult Result(*this);
+  OwningExprResult Result;
   if (Base->getType()->isDependentType() || Name.isDependentName() ||
       isDependentScopeSpecifier(SS)) {
     Result = ActOnDependentMemberExpr(ExprArg(*this, Base), Base->getType(),
@@ -3417,7 +3417,7 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
       InitializationSequence InitSeq(*this, Entity, Kind, &ResultE, 1);
       Result = InitSeq.Perform(*this, Entity, Kind,
-                               MultiExprArg(*this, (void**)&ResultE, 1));
+                               MultiExprArg(*this, &ResultE, 1));
       if (Result.isInvalid())
         return ExprError();
 
@@ -3841,7 +3841,7 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
                                      /*IsCStyleCast=*/true);
   InitializationSequence InitSeq(*this, Entity, Kind, &literalExpr, 1);
   OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                   MultiExprArg(*this, (void**)&literalExpr, 1),
+                                       MultiExprArg(*this, &literalExpr, 1),
                                             &literalType);
   if (Result.isInvalid())
     return ExprError();
@@ -4108,7 +4108,7 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg EA) {
   if (!E)
     return Owned(expr);
 
-  OwningExprResult Result(*this, E->getExpr(0));
+  OwningExprResult Result(E->getExpr(0));
 
   for (unsigned i = 1, e = E->getNumExprs(); i != e && !Result.isInvalid(); ++i)
     Result = ActOnBinOp(S, E->getExprLoc(), tok::comma, move(Result),

@@ -22,6 +22,7 @@
 namespace clang {
   class IdentifierInfo;
   class Action;
+  class Expr;
 
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
 /// 4 forms of this construct...they are:
@@ -49,7 +50,7 @@ public:
   AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
                 IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
-                ActionBase::ExprTy **args, unsigned numargs,
+                Expr **args, unsigned numargs,
                 AttributeList *Next, bool declspec = false, bool cxx0x = false);
   ~AttributeList();
 

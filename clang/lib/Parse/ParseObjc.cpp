@@ -1458,7 +1458,7 @@ Decl *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 ///    throw expression[opt];
 ///
 Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
-  OwningExprResult Res(Actions);
+  OwningExprResult Res;
   ConsumeToken(); // consume throw
   if (Tok.isNot(tok::semi)) {
     Res = ParseExpression();
@@ -1529,7 +1529,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     return StmtError();
   }
   StmtVector CatchStmts(Actions);
-  OwningStmtResult FinallyStmt(Actions);
+  OwningStmtResult FinallyStmt;
   ParseScope TryScope(this, Scope::DeclScope);
   OwningStmtResult TryBody(ParseCompoundStatementBody());
   TryScope.Exit();
@@ -1574,7 +1574,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         else // Skip over garbage, until we get to ')'.  Eat the ')'.
           SkipUntil(tok::r_paren, true, false);
 
-        OwningStmtResult CatchBody(Actions, true);
+        OwningStmtResult CatchBody(true);
         if (Tok.is(tok::l_brace))
           CatchBody = ParseCompoundStatementBody();
         else
@@ -1600,7 +1600,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       ConsumeToken(); // consume finally
       ParseScope FinallyScope(this, Scope::DeclScope);
 
-      OwningStmtResult FinallyBody(Actions, true);
+      OwningStmtResult FinallyBody(true);
       if (Tok.is(tok::l_brace))
         FinallyBody = ParseCompoundStatementBody();
       else
@@ -1874,7 +1874,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 
     if (IsExpr)
       return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0,
-                                         OwningExprResult(Actions, TypeOrExpr));
+                           OwningExprResult(static_cast<Expr*>(TypeOrExpr)));
 
     return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
                                           TypeOrExpr, ExprArg(Actions));

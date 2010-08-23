@@ -76,7 +76,7 @@ using namespace clang;
 Parser::OwningStmtResult
 Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
-  OwningStmtResult Res(Actions);
+  OwningStmtResult Res;
   
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
@@ -272,7 +272,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
 
   // TopLevelCase - This is the highest level we have parsed.  'case 1' in the
   // example above.
-  OwningStmtResult TopLevelCase(Actions, true);
+  OwningStmtResult TopLevelCase(true);
 
   // DeepestParsedCaseStmt - This is the deepest statement we have parsed, which
   // gets updated each time a new case is parsed, and whose body is unset so
@@ -301,7 +301,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
 
     // GNU case range extension.
     SourceLocation DotDotDotLoc;
-    OwningExprResult RHS(Actions);
+    OwningExprResult RHS;
     if (Tok.is(tok::ellipsis)) {
       Diag(Tok, diag::ext_gnu_case_range);
       DotDotDotLoc = ConsumeToken();
@@ -336,7 +336,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
     } else {
       // If this is the first case statement we parsed, it becomes TopLevelCase.
       // Otherwise we link it into the current chain.
-      StmtTy *NextDeepest = Case.get();
+      Stmt *NextDeepest = Case.get();
       if (TopLevelCase.isInvalid())
         TopLevelCase = move(Case);
       else
@@ -350,7 +350,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
   assert(!TopLevelCase.isInvalid() && "Should have parsed at least one case!");
 
   // If we found a non-case statement, start by parsing it.
-  OwningStmtResult SubStmt(Actions);
+  OwningStmtResult SubStmt;
 
   if (Tok.isNot(tok::r_brace)) {
     SubStmt = ParseStatement();
@@ -468,7 +468,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   typedef StmtVector StmtsTy;
   StmtsTy Stmts(Actions);
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-    OwningStmtResult R(Actions);
+    OwningStmtResult R;
     if (Tok.isNot(tok::kw___extension__)) {
       R = ParseStatementOrDeclaration(false);
     } else {
@@ -611,7 +611,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   ParseScope IfScope(this, Scope::DeclScope | Scope::ControlScope, C99orCXX);
 
   // Parse the condition.
-  OwningExprResult CondExp(Actions);
+  OwningExprResult CondExp;
   Decl *CondVar = 0;
   if (ParseParenExprOrCondition(CondExp, CondVar, IfLoc, true))
     return StmtError();
@@ -649,7 +649,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   // If it has an else, parse it.
   SourceLocation ElseLoc;
   SourceLocation ElseStmtLoc;
-  OwningStmtResult ElseStmt(Actions);
+  OwningStmtResult ElseStmt;
 
   if (Tok.is(tok::kw_else)) {
     ElseLoc = ConsumeToken();
@@ -737,7 +737,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
   ParseScope SwitchScope(this, ScopeFlags);
 
   // Parse the condition.
-  OwningExprResult Cond(Actions);
+  OwningExprResult Cond;
   Decl *CondVar = 0;
   if (ParseParenExprOrCondition(Cond, CondVar, SwitchLoc, false))
     return StmtError();
@@ -827,7 +827,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
   ParseScope WhileScope(this, ScopeFlags);
 
   // Parse the condition.
-  OwningExprResult Cond(Actions);
+  OwningExprResult Cond;
   Decl *CondVar = 0;
   if (ParseParenExprOrCondition(Cond, CondVar, WhileLoc, true))
     return StmtError();
@@ -982,13 +982,13 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
   ParseScope ForScope(this, ScopeFlags);
 
   SourceLocation LParenLoc = ConsumeParen();
-  OwningExprResult Value(Actions);
+  OwningExprResult Value;
 
   bool ForEach = false;
-  OwningStmtResult FirstPart(Actions);
+  OwningStmtResult FirstPart;
   bool SecondPartIsInvalid = false;
   FullExprArg SecondPart(Actions);
-  OwningExprResult Collection(Actions);
+  OwningExprResult Collection;
   FullExprArg ThirdPart(Actions);
   Decl *SecondVar = 0;
   
@@ -1051,7 +1051,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
     if (Tok.is(tok::semi)) {  // for (...;;
       // no second part.
     } else {
-      OwningExprResult Second(Actions);
+      OwningExprResult Second;
       if (getLang().CPlusPlus)
         ParseCXXCondition(Second, SecondVar, ForLoc, true);
       else {
@@ -1132,7 +1132,7 @@ Parser::OwningStmtResult Parser::ParseGotoStatement(AttributeList *Attr) {
   assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
   SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
 
-  OwningStmtResult Res(Actions);
+  OwningStmtResult Res;
   if (Tok.is(tok::identifier)) {
     Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
                                 Tok.getIdentifierInfo());
@@ -1193,7 +1193,7 @@ Parser::OwningStmtResult Parser::ParseReturnStatement(AttributeList *Attr) {
   assert(Tok.is(tok::kw_return) && "Not a return stmt!");
   SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
 
-  OwningExprResult R(Actions);
+  OwningExprResult R;
   if (Tok.isNot(tok::semi)) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteReturn(getCurScope());

@@ -31,6 +31,7 @@ namespace clang {
   class CXXScopeSpec;
   class Declarator;
   class AttributeList;
+  class TemplateParameterList;
   struct FieldDeclarator;
   // Parse.
   class Scope;
@@ -84,23 +85,23 @@ public:
   typedef clang::StmtResult StmtResult;
   typedef clang::TypeResult TypeResult;
   typedef clang::BaseResult BaseResult;
-  typedef clang::MemInitResult MemInitResult;
   typedef clang::DeclResult DeclResult;
+  typedef clang::MemInitResult MemInitResult;
 
   /// Same, but with ownership.
-  typedef ASTOwningResult<&ActionBase::DeleteExpr> OwningExprResult;
-  typedef ASTOwningResult<&ActionBase::DeleteStmt> OwningStmtResult;
+  typedef ASTOwningResult<Expr*> OwningExprResult;
+  typedef ASTOwningResult<Stmt*> OwningStmtResult;
   // Note that these will replace ExprResult and StmtResult when the transition
   // is complete.
 
   /// Single expressions or statements as arguments.
-  typedef ASTOwningPtr<&ActionBase::DeleteExpr> ExprArg;
-  typedef ASTOwningPtr<&ActionBase::DeleteStmt> StmtArg;
+  typedef ASTOwningPtr<Expr*> ExprArg;
+  typedef ASTOwningPtr<Stmt*> StmtArg;
 
   /// Multiple expressions or statements as arguments.
-  typedef ASTMultiPtr<&ActionBase::DeleteExpr> MultiExprArg;
-  typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
-  typedef ASTMultiPtr<&ActionBase::DeleteTemplateParams> MultiTemplateParamsArg;
+  typedef ASTMultiPtr<Expr*> MultiExprArg;
+  typedef ASTMultiPtr<Stmt*> MultiStmtArg;
+  typedef ASTMultiPtr<TemplateParameterList*> MultiTemplateParamsArg;
 
   class FullExprArg {
   public:
@@ -143,14 +144,14 @@ public:
 
   // Utilities for Action implementations to return smart results.
 
-  OwningExprResult ExprError() { return OwningExprResult(*this, true); }
-  OwningStmtResult StmtError() { return OwningStmtResult(*this, true); }
+  OwningExprResult ExprError() { return OwningExprResult(true); }
+  OwningStmtResult StmtError() { return OwningStmtResult(true); }
 
   OwningExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
 
-  OwningExprResult ExprEmpty() { return OwningExprResult(*this, false); }
-  OwningStmtResult StmtEmpty() { return OwningStmtResult(*this, false); }
+  OwningExprResult ExprEmpty() { return OwningExprResult(false); }
+  OwningStmtResult StmtEmpty() { return OwningStmtResult(false); }
 
   /// Statistics.
   virtual void PrintStats() const {}
@@ -709,8 +710,8 @@ public:
                          IdentifierInfo *ClassName,
                          llvm::SmallVectorImpl<Decl *> &Decls) {}
   virtual Decl *ActOnField(Scope *S, Decl *TagD,
-                               SourceLocation DeclStart,
-                               Declarator &D, ExprTy *BitfieldWidth) {
+                           SourceLocation DeclStart,
+                           Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
   }
 
@@ -783,9 +784,7 @@ public:
   virtual void ActOnForEachDeclStmt(DeclGroupPtrTy Decl) {
   }
 
-  virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr) {
-    return OwningStmtResult(*this, Expr->release());
-  }
+  virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr)  = 0;
 
   /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
   /// which can specify an RHS value.  The sub-statement of the case is
@@ -2576,9 +2575,7 @@ public:
                                              SourceLocation LBracLoc,
                                              SourceLocation SelectorLoc,
                                              SourceLocation RBracLoc,
-                                             MultiExprArg Args) {
-    return OwningExprResult(*this);
-  }
+                                             MultiExprArg Args) = 0;
 
   /// \brief Parsed a message send to a class.
   ///
@@ -2595,9 +2592,7 @@ public:
                                              SourceLocation LBracLoc, 
                                              SourceLocation SelectorLoc,
                                              SourceLocation RBracLoc,
-                                             MultiExprArg Args) {
-    return OwningExprResult(*this);
-  }
+                                             MultiExprArg Args) = 0;
 
   /// \brief Parsed a message send to an object instance.
   ///
@@ -2614,9 +2609,7 @@ public:
                                                 SourceLocation LBracLoc, 
                                                 SourceLocation SelectorLoc, 
                                                 SourceLocation RBracLoc,
-                                                MultiExprArg Args) {
-    return OwningExprResult(*this);
-  }
+                                                MultiExprArg Args) = 0;
 
   virtual Decl *ActOnForwardClassDeclaration(
     SourceLocation AtClassLoc,
@@ -2847,8 +2840,8 @@ public:
   /// \param Args the arguments to the function call (so far).
   ///
   /// \param NumArgs the number of arguments in \p Args.
-  virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
-                                ExprTy **Args, unsigned NumArgs) { }
+  virtual void CodeCompleteCall(Scope *S, Expr *Fn,
+                                Expr **Args, unsigned NumArgs) { }
                  
   /// \brief Code completion for the initializer of a variable declaration.
   ///
