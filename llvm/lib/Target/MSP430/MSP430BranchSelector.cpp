@@ -10,7 +10,7 @@
 // This file contains a pass that scans a machine function to determine which
 // conditional branches need more than 10 bits of displacement to reach their
 // target basic block.  It does this in two passes; a calculation of basic block
-// positions pass, and a branch psuedo op to machine branch opcode pass.  This
+// positions pass, and a branch pseudo op to machine branch opcode pass.  This
 // pass should be run last, just before the assembly printer.
 //
 //===----------------------------------------------------------------------===//

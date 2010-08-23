@@ -702,7 +702,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     // base address.
     switch (Opcode) {
     default: 
-      llvm_unreachable("psuedo instructions should be removed before code"
+      llvm_unreachable("pseudo instructions should be removed before code"
                        " emission");
       break;
     // Do nothing for Int_MemBarrier - it's just a comment.  Add a debug
