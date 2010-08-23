@@ -101,8 +101,14 @@ class ARMFastISel : public FastISel {
     virtual bool TargetSelectInstruction(const Instruction *I);
 
   #include "ARMGenFastISel.inc"
+  
+    // Instruction selection routines.
+    virtual bool ARMSelectLoad(const Instruction *I);
 
+    // Utility routines.
   private:
+    bool ARMComputeRegOffset(const Instruction *I, unsigned &Reg, int &Offset);
+    
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
 };
@@ -301,8 +307,75 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
+bool ARMFastISel::ARMComputeRegOffset(const Instruction *I, unsigned &Reg,
+                                      int &Offset) {
+  // Some boilerplate from the X86 FastISel.
+  const User *U = NULL;
+  Value *Op1 = I->getOperand(0);
+  unsigned Opcode = Instruction::UserOp1;
+  if (const Instruction *I = dyn_cast<Instruction>(Op1)) {
+    // Don't walk into other basic blocks; it's possible we haven't
+    // visited them yet, so the instructions may not yet be assigned
+    // virtual registers.
+    if (FuncInfo.MBBMap[I->getParent()] != FuncInfo.MBB)
+      return false;
+
+    Opcode = I->getOpcode();
+    U = I;
+  } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Op1)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
+
+  if (const PointerType *Ty = dyn_cast<PointerType>(Op1->getType()))
+    if (Ty->getAddressSpace() > 255)
+      // Fast instruction selection doesn't support the special
+      // address spaces.
+      return false;
+  
+  switch (Opcode) {
+    default: 
+    //errs() << "Failing Opcode is: " << *Op1 << "\n";
+    break;
+    case Instruction::Alloca: {
+      // Do static allocas.
+      const AllocaInst *A = cast<AllocaInst>(Op1);
+      DenseMap<const AllocaInst*, int>::iterator SI =
+        FuncInfo.StaticAllocaMap.find(A);
+      if (SI != FuncInfo.StaticAllocaMap.end())
+        Offset =
+          TM.getRegisterInfo()->getFrameIndexReference(*FuncInfo.MF,
+                                                       SI->second, Reg);
+      else
+        return false;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
+  
+  unsigned Reg;
+  int Offset;
+  
+  // See if we can handle this as Reg + Offset
+  if (!ARMComputeRegOffset(I, Reg, Offset))
+    return false;
+    
+    
+  unsigned ResultReg = createResultReg(ARM::GPRRegisterClass);
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(ARM::LDR), ResultReg)
+                  .addImm(0).addReg(Reg).addImm(Offset));
+        
+  return true;
+}
+
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
+    case Instruction::Load:
+      return ARMSelectLoad(I);
     default: break;
   }
   return false;
