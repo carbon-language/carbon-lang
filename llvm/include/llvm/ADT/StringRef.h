@@ -150,7 +150,7 @@ namespace llvm {
 
     /// str - Get the contents as an std::string.
     std::string str() const {
-      if (Data == 0) return "";
+      if (Data == 0) return std::string();
       return std::string(Data, Length);
     }
 
@@ -231,7 +231,9 @@ namespace llvm {
 
     /// find_first_of - Find the first character in the string that is \arg C,
     /// or npos if not found. Same as find.
-    size_type find_first_of(char C, size_t = 0) const { return find(C); }
+    size_type find_first_of(char C, size_t From = 0) const {
+      return find(C, From);
+    }
 
     /// find_first_of - Find the first character in the string that is in \arg
     /// Chars, or npos if not found.
