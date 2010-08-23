@@ -20,6 +20,7 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
   COMMDirectiveAlignmentIsInBytes = false;
   HasLCOMMDirective = true;
+  HasSetDirective = false;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
   PrivateGlobalPrefix = "L";  // Prefix for private global symbols
