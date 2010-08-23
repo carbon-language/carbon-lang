@@ -370,23 +370,21 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   // Since the offset may be too large for the load instruction
   // get the reg+offset into a register.
   // TODO: Optimize this somewhat.
-  // FIXME: There is more than one register class in the world...
-  unsigned ScratchReg
-    = FuncInfo.MF->getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
   ARMCC::CondCodes Pred = ARMCC::AL;
   unsigned PredReg = 0;
   
   if (!AFI->isThumbFunction())
     emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            ScratchReg, Reg, Offset, Pred, PredReg,
+                            Reg, Reg, Offset, Pred, PredReg,
                             static_cast<const ARMBaseInstrInfo&>(TII));
   else {
     assert(AFI->isThumb2Function());
     emitT2RegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                           ScratchReg, Reg, Offset, Pred, PredReg,
+                           Reg, Reg, Offset, Pred, PredReg,
                            static_cast<const ARMBaseInstrInfo&>(TII));
   } 
-    
+  
+  // FIXME: There is more than one register class in the world...
   unsigned ResultReg = createResultReg(ARM::GPRRegisterClass);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::LDR), ResultReg)
