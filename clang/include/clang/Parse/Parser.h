@@ -1469,7 +1469,6 @@ private:
     
   //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
-  typedef llvm::SmallVector<Decl *, 4> TemplateParameterList;
 
   // C++ 14.1: Template Parameters [temp.param]
   Decl *ParseDeclarationStartingWithTemplate(unsigned Context,
@@ -1485,11 +1484,11 @@ private:
                                        SourceLocation &DeclEnd,
                                        AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth,
-                               TemplateParameterList &TemplateParams,
+                               llvm::SmallVectorImpl<Decl*> &TemplateParams,
                                SourceLocation &LAngleLoc,
                                SourceLocation &RAngleLoc);
   bool ParseTemplateParameterList(unsigned Depth,
-                                  TemplateParameterList &TemplateParams);
+                                  llvm::SmallVectorImpl<Decl*> &TemplateParams);
   bool isStartOfTemplateTypeParameter();
   Decl *ParseTemplateParameter(unsigned Depth, unsigned Position);
   Decl *ParseTypeParameter(unsigned Depth, unsigned Position);
