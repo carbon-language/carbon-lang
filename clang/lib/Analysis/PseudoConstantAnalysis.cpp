@@ -1,4 +1,4 @@
-//== PsuedoConstantAnalysis.cpp - Find Psuedoconstants in the AST-*- C++ -*-==//
+//== PseudoConstantAnalysis.cpp - Find Pseudoconstants in the AST-*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/Analyses/PsuedoConstantAnalysis.h"
+#include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
@@ -21,18 +21,38 @@
 
 using namespace clang;
 
+// The number of ValueDecls we want to keep track of by default (per-function)
+#define VARDECL_SET_SIZE 256
+typedef llvm::SmallPtrSet<const VarDecl*, VARDECL_SET_SIZE> VarDeclSet;
+
+PseudoConstantAnalysis::PseudoConstantAnalysis(const Stmt *DeclBody) :
+      DeclBody(DeclBody), Analyzed(false) {
+  NonConstantsImpl = new VarDeclSet;
+}
+
+PseudoConstantAnalysis::~PseudoConstantAnalysis() {
+  delete (VarDeclSet*)NonConstantsImpl;
+}
+
 // Returns true if the given ValueDecl is never written to in the given DeclBody
-bool PsuedoConstantAnalysis::isPsuedoConstant(const ValueDecl *VD) {
+bool PseudoConstantAnalysis::isPseudoConstant(const VarDecl *VD) {
+  // Only local and static variables can be pseudoconstants
+  if (!VD->hasLocalStorage() && !VD->isStaticLocal())
+    return false;
+
   if (!Analyzed) {
     RunAnalysis();
     Analyzed = true;
   }
 
-  return !NonConstants.count(VD);
+  VarDeclSet *NonConstants = (VarDeclSet*)NonConstantsImpl;
+
+  return !NonConstants->count(VD);
 }
 
-void PsuedoConstantAnalysis::RunAnalysis() {
+void PseudoConstantAnalysis::RunAnalysis() {
   std::deque<const Stmt *> WorkList;
+  VarDeclSet *NonConstants = (VarDeclSet*)NonConstantsImpl;
 
   // Start with the top level statement of the function
   WorkList.push_back(DeclBody);
@@ -65,10 +85,13 @@ void PsuedoConstantAnalysis::RunAnalysis() {
       case BinaryOperator::OrAssign:
       case BinaryOperator::XorAssign:
       case BinaryOperator::ShlAssign:
-      case BinaryOperator::ShrAssign:
+      case BinaryOperator::ShrAssign: {
         // The DeclRefExpr is being assigned to - mark it as non-constant
-        NonConstants.insert(DR->getDecl());
-        continue; // Continue without looking at children
+        const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+        if (VD)
+          NonConstants->insert(VD);
+        break;
+      }
 
       default:
         break;
@@ -95,15 +118,46 @@ void PsuedoConstantAnalysis::RunAnalysis() {
       case UnaryOperator::PreDec:
       case UnaryOperator::PreInc:
         // The DeclRefExpr is being changed - mark it as non-constant
-      case UnaryOperator::AddrOf:
+      case UnaryOperator::AddrOf: {
         // If we are taking the address of the DeclRefExpr, assume it is
         // non-constant.
-        NonConstants.insert(DR->getDecl());
+        const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+        if (VD)
+          NonConstants->insert(VD);
+        break;
+      }
 
       default:
         break;
       }
       break;
+    }
+
+    // Case 3: Reference Declarations
+    case Stmt::DeclStmtClass: {
+      const DeclStmt *DS = cast<DeclStmt>(Head);
+      // Iterate over each decl and see if any of them contain reference decls
+      for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+          I != E; ++I) {
+        // We only care about VarDecls
+        const VarDecl *VD = dyn_cast<VarDecl>(*I);
+        if (!VD)
+          continue;
+
+        // We found a VarDecl; make sure it is a reference type
+        if (!VD->getType().getTypePtr()->isReferenceType())
+          continue;
+
+        // Ignore VarDecls without a body
+        if (!VD->getBody())
+          continue;
+
+        // If the reference is to another var, add the var to the non-constant
+        // list
+        if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(VD->getBody()))
+          if (const VarDecl *RefVD = dyn_cast<VarDecl>(DR->getDecl()))
+            NonConstants->insert(RefVD);
+      }
     }
 
       default:

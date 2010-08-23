@@ -44,7 +44,7 @@
 
 #include "GRExprEngineExperimentalChecks.h"
 #include "clang/Analysis/CFGStmtMap.h"
-#include "clang/Analysis/Analyses/PsuedoConstantAnalysis.h"
+#include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerHelpers.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
@@ -83,6 +83,7 @@ class IdempotentOperationChecker
     static bool CanVary(const Expr *Ex, AnalysisContext *AC);
     static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
                                            AnalysisContext *AC);
+    static bool containsNonLocalVarDecl(const Stmt *S);
 
     // Hash table
     typedef llvm::DenseMap<const BinaryOperator *,
@@ -122,12 +123,17 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   const Expr *LHS = B->getLHS();
   const Expr *RHS = B->getRHS();
 
-  // Check if either side can vary. We only need to calculate this when we have
-  // no assumption.
-  bool LHSCanVary = true, RHSCanVary = true;
+  // At this stage we can calculate whether each side contains a false positive
+  // that applies to all operators. We only need to calculate this the first
+  // time.
+  bool LHSContainsFalsePositive = false, RHSContainsFalsePositive = false;
   if (A == Possible) {
-    LHSCanVary = CanVary(LHS, AC);
-    RHSCanVary = CanVary(RHS, AC);
+    // An expression contains a false positive if it can't vary, or if it
+    // contains a known false positive VarDecl.
+    LHSContainsFalsePositive = !CanVary(LHS, AC)
+        || containsNonLocalVarDecl(LHS);
+    RHSContainsFalsePositive = !CanVary(RHS, AC)
+        || containsNonLocalVarDecl(RHS);
   }
 
   const GRState *state = C.getState();
@@ -195,7 +201,8 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Xor:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (LHSVal != RHSVal || !LHSCanVary || !RHSCanVary)
+    if (LHSVal != RHSVal || LHSContainsFalsePositive
+        || RHSContainsFalsePositive)
       break;
     UpdateAssumption(A, Equal);
     return;
@@ -213,7 +220,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
    case BinaryOperator::Div:
    case BinaryOperator::LOr:
    case BinaryOperator::LAnd:
-     if (!RHSVal.isConstant(1) || !RHSCanVary)
+     if (!RHSVal.isConstant(1) || RHSContainsFalsePositive)
        break;
      UpdateAssumption(A, RHSis1);
      return;
@@ -229,7 +236,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Mul:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (!LHSVal.isConstant(1) || !LHSCanVary)
+    if (!LHSVal.isConstant(1) || LHSContainsFalsePositive)
       break;
     UpdateAssumption(A, LHSis1);
     return;
@@ -257,7 +264,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Shr:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (!RHSVal.isConstant(0) || !RHSCanVary)
+    if (!RHSVal.isConstant(0) || RHSContainsFalsePositive)
       break;
     UpdateAssumption(A, RHSis0);
     return;
@@ -289,7 +296,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BinaryOperator::Shr:
   case BinaryOperator::LOr:
   case BinaryOperator::LAnd:
-    if (!LHSVal.isConstant(0) || !LHSCanVary)
+    if (!LHSVal.isConstant(0) || LHSContainsFalsePositive)
       break;
     UpdateAssumption(A, LHSis0);
     return;
@@ -578,16 +585,35 @@ bool IdempotentOperationChecker::isConstantOrPseudoConstant(
   if (isa<EnumConstantDecl>(DR->getDecl()))
     return true;
 
-  // Check for a static variable
-  // FIXME: Analysis should model static vars
-  if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
-    if (VD->isStaticLocal())
-      return true;
-
-  // Check if the Decl behaves like a constant
-  PsuedoConstantAnalysis *PCA = AC->getPsuedoConstantAnalysis();
-  if (PCA->isPsuedoConstant(DR->getDecl()))
+  const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+  if (!VD)
     return true;
+
+  // Check if the Decl behaves like a constant. This check also takes care of
+  // static variables, which can only change between function calls if they are
+  // modified in the AST.
+  PseudoConstantAnalysis *PCA = AC->getPseudoConstantAnalysis();
+  if (PCA->isPseudoConstant(VD))
+    return true;
+
+  return false;
+}
+
+// Recursively find any substatements containing VarDecl's with storage other
+// than local
+bool IdempotentOperationChecker::containsNonLocalVarDecl(const Stmt *S) {
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
+
+  if (DR)
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
+      if (!VD->hasLocalStorage())
+        return true;
+
+  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
+      ++I)
+    if (const Stmt *child = *I)
+      if (containsNonLocalVarDecl(child))
+        return true;
 
   return false;
 }

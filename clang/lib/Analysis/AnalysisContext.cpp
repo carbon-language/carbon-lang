@@ -18,7 +18,7 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Analyses/PsuedoConstantAnalysis.h"
+#include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Support/BumpVector.h"
@@ -84,9 +84,9 @@ ParentMap &AnalysisContext::getParentMap() {
   return *PM;
 }
 
-PsuedoConstantAnalysis *AnalysisContext::getPsuedoConstantAnalysis() {
+PseudoConstantAnalysis *AnalysisContext::getPseudoConstantAnalysis() {
   if (!PCA)
-    PCA = new PsuedoConstantAnalysis(getBody());
+    PCA = new PseudoConstantAnalysis(getBody());
   return PCA;
 }
 

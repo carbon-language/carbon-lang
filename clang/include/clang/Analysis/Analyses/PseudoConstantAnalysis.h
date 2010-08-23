@@ -1,4 +1,4 @@
-//== PsuedoConstantAnalysis.h - Find Psuedo-constants in the AST -*- C++ -*-==//
+//== PseudoConstantAnalysis.h - Find Pseudo-constants in the AST -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,27 +13,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_PSUEDOCONSTANTANALYSIS
-#define LLVM_CLANG_ANALYSIS_PSUEDOCONSTANTANALYSIS
+#ifndef LLVM_CLANG_ANALYSIS_PSEUDOCONSTANTANALYSIS
+#define LLVM_CLANG_ANALYSIS_PSEUDOCONSTANTANALYSIS
 
 #include "clang/AST/Stmt.h"
 
-// The number of ValueDecls we want to keep track of by default (per-function)
-#define VALUEDECL_SET_SIZE 256
-
 namespace clang {
 
-class PsuedoConstantAnalysis {
+class PseudoConstantAnalysis {
 public:
-  PsuedoConstantAnalysis(const Stmt *DeclBody) :
-      DeclBody(DeclBody), Analyzed(false) {}
-  bool isPsuedoConstant(const ValueDecl *VD);
+  PseudoConstantAnalysis(const Stmt *DeclBody);
+  ~PseudoConstantAnalysis();
+
+  bool isPseudoConstant(const VarDecl *VD);
 
 private:
   void RunAnalysis();
 
   // for storing the result of analyzed ValueDecls
-  llvm::SmallPtrSet<const ValueDecl*, VALUEDECL_SET_SIZE> NonConstants;
+  void *NonConstantsImpl;
 
   const Stmt *DeclBody;
   bool Analyzed;

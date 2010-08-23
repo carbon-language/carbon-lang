@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -verify -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -verify %s
 
 // Basic tests
 
@@ -51,7 +51,7 @@ unsigned basic() {
   test(zero << x); // expected-warning {{The left operand to '<<' is always 0}}
   test(zero >> x); // expected-warning {{The left operand to '>>' is always 0}}
 
-  // Overwrite the values so these aren't marked as psuedoconstants
+  // Overwrite the values so these aren't marked as Pseudoconstants
   x = 1;
   zero = 2;
   one = 3;
@@ -102,12 +102,38 @@ unsigned false3(int param) {
   return nonparam;
 }
 
-// Psuedo-constants (vars only read) and constants should not be reported
+// Pseudo-constants (vars only read) and constants should not be reported
 unsigned false4() {
   // Trivial constant
-  const int height = 1; // no-warning
-  // Psuedo-constant (never changes after decl)
-  int width = height; // no-warning
+  const int height = 1;
+
+  // Pseudo-constant (never changes after decl)
+  int width = height;
+
+  // Pseudo-constant (blockvar)
+  __block int a = 0;
+  int b = 10;
+  a *= b; // no-warning
+  test(a);
 
   return width * 10; // no-warning
+}
+
+// Static vars are common false positives
+int false5() {
+  static int test = 0;
+  int a = 56;
+  a *= test; // no-warning
+  test++;
+  return a;
+}
+
+// Non-local storage vars are considered false positives
+int globalInt = 1;
+int false6() {
+  int localInt = 23;
+
+  localInt /= globalInt;
+
+  return localInt;
 }
