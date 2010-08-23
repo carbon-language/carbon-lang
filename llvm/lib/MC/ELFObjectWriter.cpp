@@ -152,12 +152,12 @@ namespace {
 
     void StringLE32(char *buf, uint32_t Value) {
       StringLE16(buf, uint16_t(Value >> 0));
-      StringLE16(buf, uint16_t(Value >> 16));
+      StringLE16(buf + 2, uint16_t(Value >> 16));
     }
 
     void StringLE64(char *buf, uint64_t Value) {
       StringLE32(buf, uint32_t(Value >> 0));
-      StringLE32(buf, uint32_t(Value >> 32));
+      StringLE32(buf + 4, uint32_t(Value >> 32));
     }
 
     void StringBE16(char *buf ,uint16_t Value) {
@@ -167,12 +167,12 @@ namespace {
 
     void StringBE32(char *buf, uint32_t Value) {
       StringBE16(buf, uint16_t(Value >> 16));
-      StringBE16(buf, uint16_t(Value >> 0));
+      StringBE16(buf + 2, uint16_t(Value >> 0));
     }
 
     void StringBE64(char *buf, uint64_t Value) {
       StringBE32(buf, uint32_t(Value >> 32));
-      StringBE32(buf, uint32_t(Value >> 0));
+      StringBE32(buf + 4, uint32_t(Value >> 0));
     }
 
     void String16(char *buf, uint16_t Value) {
