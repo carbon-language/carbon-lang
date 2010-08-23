@@ -73,6 +73,8 @@ public:
   Darwin(const HostInfo &Host, const llvm::Triple& Triple);
   ~Darwin();
 
+  std::string ComputeEffectiveClangTriple(const ArgList &Args) const;
+
   /// @name Darwin Specific Toolchain API
   /// {
 
@@ -250,6 +252,8 @@ class LLVM_LIBRARY_VISIBILITY Darwin_Generic_GCC : public Generic_GCC {
 public:
   Darwin_Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
     : Generic_GCC(Host, Triple) {}
+
+  std::string ComputeEffectiveClangTriple(const ArgList &Args) const;
 
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }
 };

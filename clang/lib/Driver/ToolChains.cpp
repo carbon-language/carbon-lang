@@ -19,6 +19,7 @@
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -200,6 +201,38 @@ Darwin::~Darwin() {
   for (llvm::DenseMap<unsigned, Tool*>::iterator
          it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
     delete it->second;
+}
+
+std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
+  llvm::Triple Triple(ComputeLLVMTriple(Args));
+
+  // If the target isn't initialized (e.g., an unknown Darwin platform, return
+  // the default triple).
+  if (!isTargetInitialized())
+    return Triple.getTriple();
+    
+  unsigned Version[3];
+  getTargetVersion(Version);
+
+  // Mangle the target version into the OS triple component.  For historical
+  // reasons that make little sense, the version passed here is the "darwin"
+  // version, which drops the 10 and offsets by 4. See inverse code when
+  // setting the OS version preprocessor define.
+  if (!isTargetIPhoneOS()) {
+    Version[0] = Version[1] + 4;
+    Version[1] = Version[2];
+    Version[2] = 0;
+  } else {
+    // Use the environment to communicate that we are targetting iPhoneOS.
+    Triple.setEnvironmentName("iphoneos");
+  }
+
+  llvm::SmallString<16> Str;
+  llvm::raw_svector_ostream(Str) << "darwin" << Version[0]
+                                 << "." << Version[1] << "." << Version[2];
+  Triple.setOSName(Str.str());
+
+  return Triple.getTriple();
 }
 
 Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
@@ -761,6 +794,11 @@ const char *Darwin::GetForcedPicModel() const {
 bool Darwin::SupportsObjCGC() const {
   // Garbage collection is supported everywhere except on iPhone OS.
   return !isTargetIPhoneOS();
+}
+
+std::string
+Darwin_Generic_GCC::ComputeEffectiveClangTriple(const ArgList &Args) const {
+  return ComputeLLVMTriple(Args);
 }
 
 /// Generic_GCC - A tool chain using the 'gcc' command to perform

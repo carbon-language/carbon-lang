@@ -337,35 +337,6 @@ static const char *getLLVMArchSuffixForARM(llvm::StringRef CPU) {
   return "";
 }
 
-/// getLLVMTriple - Get the LLVM triple to use for a particular toolchain, which
-/// may depend on command line arguments.
-static std::string getLLVMTriple(const ToolChain &TC, const ArgList &Args) {
-  switch (TC.getTriple().getArch()) {
-  default:
-    return TC.getTripleString();
-
-  case llvm::Triple::arm:
-  case llvm::Triple::thumb: {
-    // FIXME: Factor into subclasses.
-    llvm::Triple Triple = TC.getTriple();
-
-    // Thumb2 is the default for V7 on Darwin.
-    //
-    // FIXME: Thumb should just be another -target-feaure, not in the triple.
-    llvm::StringRef Suffix =
-      getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
-    bool ThumbDefault =
-      (Suffix == "v7" && TC.getTriple().getOS() == llvm::Triple::Darwin);
-    std::string ArchName = "arm";
-    if (Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault))
-      ArchName = "thumb";
-    Triple.setArchName(ArchName + Suffix.str());
-
-    return Triple.getTriple();
-  }
-  }
-}
-
 // FIXME: Move to target hook.
 static bool isSignedCharDefault(const llvm::Triple &Triple) {
   switch (Triple.getArch()) {
@@ -694,55 +665,6 @@ static bool needsExceptions(const ArgList &Args,  types::ID InputType,
   }
 }
 
-/// getEffectiveClangTriple - Get the "effective" target triple, which is the
-/// triple for the target but with the OS version potentially modified for
-/// Darwin's -mmacosx-version-min.
-static std::string getEffectiveClangTriple(const Driver &D,
-                                           const ToolChain &TC,
-                                           const ArgList &Args) {
-  llvm::Triple Triple(getLLVMTriple(TC, Args));
-
-  // Handle -mmacosx-version-min and -miphoneos-version-min.
-  if (Triple.getOS() != llvm::Triple::Darwin) {
-    // Diagnose use of -mmacosx-version-min and -miphoneos-version-min on
-    // non-Darwin.
-    if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
-                                 options::OPT_miphoneos_version_min_EQ))
-      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
-  } else {
-    const toolchains::Darwin &DarwinTC(
-      reinterpret_cast<const toolchains::Darwin&>(TC));
-
-    // If the target isn't initialized (e.g., an unknown Darwin platform, return
-    // the default triple).
-    if (!DarwinTC.isTargetInitialized())
-      return Triple.getTriple();
-    
-    unsigned Version[3];
-    DarwinTC.getTargetVersion(Version);
-
-    // Mangle the target version into the OS triple component.  For historical
-    // reasons that make little sense, the version passed here is the "darwin"
-    // version, which drops the 10 and offsets by 4. See inverse code when
-    // setting the OS version preprocessor define.
-    if (!DarwinTC.isTargetIPhoneOS()) {
-      Version[0] = Version[1] + 4;
-      Version[1] = Version[2];
-      Version[2] = 0;
-    } else {
-      // Use the environment to communicate that we are targetting iPhoneOS.
-      Triple.setEnvironmentName("iphoneos");
-    }
-
-    llvm::SmallString<16> Str;
-    llvm::raw_svector_ostream(Str) << "darwin" << Version[0]
-                                   << "." << Version[1] << "." << Version[2];
-    Triple.setOSName(Str.str());
-  }
-
-  return Triple.getTriple();
-}
-
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -762,7 +684,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
-  std::string TripleStr = getEffectiveClangTriple(D, getToolChain(), Args);
+  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
   // Select the appropriate action.
@@ -1543,7 +1465,6 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
                            const InputInfoList &Inputs,
                            const ArgList &Args,
                            const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   assert(Inputs.size() == 1 && "Unexpected number of inputs.");
@@ -1556,7 +1477,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
-  std::string TripleStr = getEffectiveClangTriple(D, getToolChain(), Args);
+  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
   // Set the output mode, we currently only expect to be used as a real
