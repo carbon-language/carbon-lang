@@ -1405,7 +1405,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     if (isInvalid) {
       assert(PrevSpec && "Method did not return previous specifier!");
       assert(DiagID);
-      Diag(Tok, DiagID) << PrevSpec;
+      
+      if (DiagID == diag::ext_duplicate_declspec)
+        Diag(Tok, DiagID)
+          << PrevSpec << FixItHint::CreateRemoval(Tok.getLocation());
+      else
+        Diag(Tok, DiagID) << PrevSpec;
     }
     DS.SetRangeEnd(Tok.getLocation());
     ConsumeToken();

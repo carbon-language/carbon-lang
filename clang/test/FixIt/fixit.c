@@ -38,3 +38,6 @@ int test_cond(int y, int fooBar) {
   int x = y ? 1 4+foobar;
   return x;
 }
+
+// CHECK: typedef int int_t;
+typedef typedef int int_t;
