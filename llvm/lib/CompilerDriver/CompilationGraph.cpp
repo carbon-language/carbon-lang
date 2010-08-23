@@ -55,6 +55,7 @@ namespace {
     int MaxWeight = 0;
     bool SingleMax = true;
 
+    // TODO: fix calculation of SingleMax.
     for (typename C::const_iterator B = EdgesContainer.begin(),
            E = EdgesContainer.end(); B != E; ++B) {
       const Edge* e = B->getPtr();
