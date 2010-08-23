@@ -6399,6 +6399,48 @@ Decl *Sema::ActOnIvar(Scope *S,
   return NewID;
 }
 
+/// ActOnLastBitfield - This routine handles synthesized bitfields rules for 
+/// class and class extensions. For every class @interface and class 
+/// extension @interface, if the last ivar is a bitfield of any type, 
+/// then add an implicit `char :0` ivar to the end of that interface.
+void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
+                             llvm::SmallVectorImpl<Decl *> &AllIvarDecls) {
+  if (!LangOpts.ObjCNonFragileABI2 || AllIvarDecls.empty())
+    return;
+  
+  Decl *ivarDecl = AllIvarDecls[AllIvarDecls.size()-1];
+  ObjCIvarDecl *Ivar = cast<ObjCIvarDecl>(ivarDecl);
+  
+  if (!Ivar->isBitField())
+    return;
+  uint64_t BitFieldSize =
+    Ivar->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+  if (BitFieldSize == 0)
+    return;
+  ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl);
+  if (!ID) {
+    if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
+      if (!CD->IsClassExtension())
+        return;
+    }
+    // No need to add this to end of @implementation.
+    else
+      return;
+  }
+  // All conditions are met. Add a new bitfield to the tail end of ivars.
+  llvm::APInt Zero(Context.getTypeSize(Context.CharTy), 0);
+  Expr * BW = 
+    new (Context) IntegerLiteral(Zero, Context.CharTy, DeclLoc);
+
+  Ivar = ObjCIvarDecl::Create(Context, cast<ObjCContainerDecl>(EnclosingDecl),
+                              DeclLoc, 0,
+                              Context.CharTy, 
+                              Context.CreateTypeSourceInfo(Context.CharTy),
+                              ObjCIvarDecl::Private, BW,
+                              true);
+  AllIvarDecls.push_back(Ivar);
+}
+
 void Sema::ActOnFields(Scope* S,
                        SourceLocation RecLoc, Decl *EnclosingDecl,
                        Decl **Fields, unsigned NumFields,

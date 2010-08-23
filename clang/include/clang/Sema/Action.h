@@ -722,6 +722,9 @@ public:
     return 0;
   }
 
+  virtual void ActOnLastBitfield(SourceLocation DeclStart, Decl *IntfDecl, 
+                         llvm::SmallVectorImpl<Decl *> &AllIvarDecls) {}
+
   virtual void ActOnFields(Scope* S, SourceLocation RecLoc, Decl *TagDecl,
                            Decl **Fields, unsigned NumFields,
                            SourceLocation LBrac, SourceLocation RBrac,

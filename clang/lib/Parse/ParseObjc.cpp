@@ -1097,7 +1097,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         return Field;
       }
     } Callback(*this, interfaceDecl, visibility, AllIvarDecls);
-
+    
     // Parse all the comma separated declarators.
     DeclSpec DS;
     ParseStructDeclaration(DS, Callback);
@@ -1111,6 +1111,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
     }
   }
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  Actions.ActOnLastBitfield(RBraceLoc, interfaceDecl, AllIvarDecls);
   // Call ActOnFields() even if we don't have any decls. This is useful
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl,

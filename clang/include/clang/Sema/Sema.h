@@ -1022,7 +1022,8 @@ public:
   bool CheckNontrivialField(FieldDecl *FD);
   void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);
   CXXSpecialMember getSpecialMember(const CXXMethodDecl *MD);
-
+  virtual void ActOnLastBitfield(SourceLocation DeclStart, Decl *IntfDecl, 
+                         llvm::SmallVectorImpl<Decl *> &AllIvarDecls);
   virtual Decl *ActOnIvar(Scope *S, SourceLocation DeclStart,
                               Decl *IntfDecl,
                               Declarator &D, ExprTy *BitfieldWidth,
