@@ -281,10 +281,9 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
 /// \brief Build a C++ typeid expression with an expression operand.
 Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                             SourceLocation TypeidLoc,
-                                            ExprArg Operand,
+                                            Expr *E,
                                             SourceLocation RParenLoc) {
   bool isUnevaluatedOperand = true;
-  Expr *E = static_cast<Expr *>(Operand.get());
   if (E && !E->isTypeDependent()) {
     QualType T = E->getType();
     if (const RecordType *RecordT = T->getAs<RecordType>()) {
@@ -317,8 +316,6 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
     if (!Context.hasSameType(T, UnqualT)) {
       T = UnqualT;
       ImpCastExprToType(E, UnqualT, CastExpr::CK_NoOp, CastCategory(E));
-      Operand.release();
-      Operand = Owned(E);
     }
   }
   
@@ -329,7 +326,7 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
     ExprEvalContexts.back().Context = Unevaluated;
   
   return Owned(new (Context) CXXTypeidExpr(TypeInfoType.withConst(),
-                                           Operand.takeAs<Expr>(),
+                                           E,
                                            SourceRange(TypeidLoc, RParenLoc)));  
 }
 
@@ -364,7 +361,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   }
 
   // The operand is an expression.  
-  return BuildCXXTypeId(TypeInfoType, OpLoc, Owned((Expr*)TyOrExpr), RParenLoc);
+  return BuildCXXTypeId(TypeInfoType, OpLoc, (Expr*)TyOrExpr, RParenLoc);
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
@@ -384,8 +381,7 @@ Sema::ActOnCXXNullPtrLiteral(SourceLocation Loc) {
 
 /// ActOnCXXThrow - Parse throw expressions.
 Action::OwningExprResult
-Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprArg E) {
-  Expr *Ex = E.takeAs<Expr>();
+Sema::ActOnCXXThrow(SourceLocation OpLoc, Expr *Ex) {
   if (Ex && !Ex->isTypeDependent() && CheckCXXThrowOperand(OpLoc, Ex))
     return ExprError();
   return Owned(new (Context) CXXThrowExpr(Ex, Context.VoidTy, OpLoc));
@@ -643,7 +639,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      AllocType,
                      D.getSourceRange().getBegin(),
                      R,
-                     Owned(ArraySize),
+                     ArraySize,
                      ConstructorLParen,
                      move(ConstructorArgs),
                      ConstructorRParen);
@@ -658,7 +654,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   QualType AllocType,
                   SourceLocation TypeLoc,
                   SourceRange TypeRange,
-                  ExprArg ArraySizeE,
+                  Expr *ArraySize,
                   SourceLocation ConstructorLParen,
                   MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen) {
@@ -667,12 +663,12 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   // Per C++0x [expr.new]p5, the type being constructed may be a
   // typedef of an array type.
-  if (!ArraySizeE.get()) {
+  if (!ArraySize) {
     if (const ConstantArrayType *Array
                               = Context.getAsConstantArrayType(AllocType)) {
-      ArraySizeE = Owned(new (Context) IntegerLiteral(Array->getSize(),
-                                                      Context.getSizeType(),
-                                                      TypeRange.getEnd()));
+      ArraySize = new (Context) IntegerLiteral(Array->getSize(),
+                                               Context.getSizeType(),
+                                               TypeRange.getEnd());
       AllocType = Array->getElementType();
     }
   }
@@ -681,13 +677,12 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
-  Expr *ArraySize = (Expr *)ArraySizeE.get();
   if (ArraySize && !ArraySize->isTypeDependent()) {
     
     QualType SizeType = ArraySize->getType();
     
     OwningExprResult ConvertedSize
-      = ConvertToIntegralOrEnumerationType(StartLoc, move(ArraySizeE), 
+      = ConvertToIntegralOrEnumerationType(StartLoc, ArraySize,
                                        PDiag(diag::err_array_size_not_integral),
                                      PDiag(diag::err_array_size_incomplete_type)
                                        << ArraySize->getSourceRange(),
@@ -700,8 +695,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     if (ConvertedSize.isInvalid())
       return ExprError();
     
-    ArraySize = ConvertedSize.takeAs<Expr>();
-    ArraySizeE = Owned(ArraySize);
+    ArraySize = ConvertedSize.take();
     SizeType = ArraySize->getType();
     if (!SizeType->isIntegralOrEnumerationType())
       return ExprError();
@@ -851,7 +845,6 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   
   PlacementArgs.release();
   ConstructorArgs.release();
-  ArraySizeE.release();
   
   // FIXME: The TypeSourceInfo should also be included in CXXNewExpr.
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
@@ -1382,7 +1375,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
 /// @code delete [] ptr; @endcode
 Action::OwningExprResult
 Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
-                     bool ArrayForm, ExprArg Operand) {
+                     bool ArrayForm, Expr *Ex) {
   // C++ [expr.delete]p1:
   //   The operand shall have a pointer type, or a class type having a single
   //   conversion function to a pointer type. The result has type void.
@@ -1391,7 +1384,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
   FunctionDecl *OperatorDelete = 0;
 
-  Expr *Ex = (Expr *)Operand.get();
   if (!Ex->isTypeDependent()) {
     QualType Type = Ex->getType();
 
@@ -1425,11 +1417,9 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         // We have a single conversion to a pointer-to-object type. Perform
         // that conversion.
         // TODO: don't redo the conversion calculation.
-        Operand.release();
         if (!PerformImplicitConversion(Ex,
                             ObjectPtrConversions.front()->getConversionType(),
                                       AA_Converting)) {
-          Operand = Owned(Ex);
           Type = Ex->getType();
         }
       }
@@ -1470,10 +1460,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     ImpCastExprToType(Ex, Context.getPointerType(Context.VoidTy), 
                       CastExpr::CK_NoOp);
     
-    // Update the operand.
-    Operand.take();
-    Operand = ExprArg(*this, Ex);
-    
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 
@@ -1505,7 +1491,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     // FIXME: Check access and ambiguity of operator delete and destructor.
   }
 
-  Operand.release();
   return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,
                                            OperatorDelete, Ex, StartLoc));
 }
@@ -1586,9 +1571,7 @@ static Sema::OwningExprResult BuildCXXCastArgument(Sema &S,
                                                    QualType Ty,
                                                    CastExpr::CastKind Kind,
                                                    CXXMethodDecl *Method,
-                                                   Sema::ExprArg Arg) {
-  Expr *From = Arg.takeAs<Expr>();
-  
+                                                   Expr *From) {
   switch (Kind) {
   default: assert(0 && "Unhandled cast kind!");
   case CastExpr::CK_ConstructorConversion: {
@@ -1674,7 +1657,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                From->getLocStart(),
                                ToType.getNonReferenceType(),
                                CastKind, cast<CXXMethodDecl>(FD), 
-                               Owned(From));
+                               From);
 
       if (CastArg.isInvalid())
         return true;
@@ -2694,16 +2677,15 @@ FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
 }
 
 Sema::OwningExprResult
-Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
+Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
                                    tok::TokenKind OpKind, TypeTy *&ObjectType,
                                    bool &MayBePseudoDestructor) {
   // Since this might be a postfix expression, get rid of ParenListExprs.
-  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+  OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
+  if (Result.isInvalid()) return ExprError();
+  Base = Result.get();
 
-  Expr *BaseExpr = (Expr*)Base.get();
-  assert(BaseExpr && "no record expansion");
-
-  QualType BaseType = BaseExpr->getType();
+  QualType BaseType = Base->getType();
   MayBePseudoDestructor = false;
   if (BaseType->isDependentType()) {
     // If we have a pointer to a dependent type and are using the -> operator,
@@ -2715,7 +2697,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
     
     ObjectType = BaseType.getAsOpaquePtr();
     MayBePseudoDestructor = true;
-    return move(Base);
+    return Owned(Base);
   }
 
   // C++ [over.match.oper]p8:
@@ -2728,13 +2710,13 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
     CTypes.insert(Context.getCanonicalType(BaseType));
     
     while (BaseType->isRecordType()) {
-      Base = BuildOverloadedArrowExpr(S, move(Base), OpLoc);
-      BaseExpr = (Expr*)Base.get();
-      if (BaseExpr == NULL)
+      Result = BuildOverloadedArrowExpr(S, Base, OpLoc);
+      if (Result.isInvalid())
         return ExprError();
-      if (CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(BaseExpr))
+      Base = Result.get();
+      if (CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(Base))
         Locations.push_back(OpCall->getDirectCallee()->getLocation());
-      BaseType = BaseExpr->getType();
+      BaseType = Base->getType();
       CanQualType CBaseType = Context.getCanonicalType(BaseType);
       if (!CTypes.insert(CBaseType)) {
         Diag(OpLoc, diag::err_operator_arrow_circular);
@@ -2761,7 +2743,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // pseudo-destructor-name.
     ObjectType = 0;
     MayBePseudoDestructor = true;
-    return move(Base);
+    return Owned(Base);
   }
 
   // The object type must be complete (or dependent).
@@ -2780,22 +2762,21 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
 }
 
 Sema::OwningExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
-                                                   ExprArg MemExpr) {
-  Expr *E = (Expr *) MemExpr.get();
+                                                   Expr *MemExpr) {
   SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(NameLoc);
-  Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
-    << isa<CXXPseudoDestructorExpr>(E)
+  Diag(MemExpr->getLocStart(), diag::err_dtor_expr_without_call)
+    << isa<CXXPseudoDestructorExpr>(MemExpr)
     << FixItHint::CreateInsertion(ExpectedLParenLoc, "()");
   
   return ActOnCallExpr(/*Scope*/ 0,
-                       move(MemExpr),
+                       MemExpr,
                        /*LPLoc*/ ExpectedLParenLoc,
                        Sema::MultiExprArg(*this, 0, 0),
                        /*CommaLocs*/ 0,
                        /*RPLoc*/ ExpectedLParenLoc);
 }
 
-Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
+Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
                                                        SourceLocation OpLoc,
                                                        tok::TokenKind OpKind,
                                                        const CXXScopeSpec &SS,
@@ -2810,12 +2791,11 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
   //   The left-hand side of the dot operator shall be of scalar type. The 
   //   left-hand side of the arrow operator shall be of pointer to scalar type.
   //   This scalar type is the object type. 
-  Expr *BaseE = (Expr *)Base.get();
-  QualType ObjectType = BaseE->getType();
+  QualType ObjectType = Base->getType();
   if (OpKind == tok::arrow) {
     if (const PointerType *Ptr = ObjectType->getAs<PointerType>()) {
       ObjectType = Ptr->getPointeeType();
-    } else if (!BaseE->isTypeDependent()) {
+    } else if (!Base->isTypeDependent()) {
       // The user wrote "p->" when she probably meant "p."; fix it.
       Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
         << ObjectType << true
@@ -2829,7 +2809,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
   
   if (!ObjectType->isDependentType() && !ObjectType->isScalarType()) {
     Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
-      << ObjectType << BaseE->getSourceRange();
+      << ObjectType << Base->getSourceRange();
     return ExprError();
   }
 
@@ -2843,7 +2823,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
     if (!DestructedType->isDependentType() && !ObjectType->isDependentType() &&
         !Context.hasSameUnqualifiedType(DestructedType, ObjectType)) {
       Diag(DestructedTypeStart, diag::err_pseudo_dtor_type_mismatch)
-        << ObjectType << DestructedType << BaseE->getSourceRange()
+        << ObjectType << DestructedType << Base->getSourceRange()
         << DestructedTypeInfo->getTypeLoc().getLocalSourceRange();
       
       // Recover by setting the destructed type to the object type.
@@ -2868,7 +2848,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
       
       Diag(ScopeTypeInfo->getTypeLoc().getLocalSourceRange().getBegin(),
            diag::err_pseudo_dtor_type_mismatch)
-        << ObjectType << ScopeType << BaseE->getSourceRange()
+        << ObjectType << ScopeType << Base->getSourceRange()
         << ScopeTypeInfo->getTypeLoc().getLocalSourceRange();
   
       ScopeType = QualType();
@@ -2876,25 +2856,22 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
     }
   }
   
-  OwningExprResult Result
-    = Owned(new (Context) CXXPseudoDestructorExpr(Context, 
-                                                  Base.takeAs<Expr>(),
-                                                  OpKind == tok::arrow,
-                                                  OpLoc,
-                                       (NestedNameSpecifier *) SS.getScopeRep(),
-                                                  SS.getRange(),
-                                                  ScopeTypeInfo,
-                                                  CCLoc,
-                                                  TildeLoc,
-                                                  Destructed));
+  Expr *Result
+    = new (Context) CXXPseudoDestructorExpr(Context, Base,
+                                            OpKind == tok::arrow, OpLoc,
+                                            SS.getScopeRep(), SS.getRange(),
+                                            ScopeTypeInfo,
+                                            CCLoc,
+                                            TildeLoc,
+                                            Destructed);
             
   if (HasTrailingLParen)
-    return move(Result);
+    return Owned(Result);
   
-  return DiagnoseDtorReference(Destructed.getLocation(), move(Result));
+  return DiagnoseDtorReference(Destructed.getLocation(), Result);
 }
 
-Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
                                                        SourceLocation OpLoc,
                                                        tok::TokenKind OpKind,
                                                        CXXScopeSpec &SS,
@@ -2910,13 +2887,11 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
           SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
          "Invalid second type name in pseudo-destructor");
 
-  Expr *BaseE = (Expr *)Base.get();
-  
   // C++ [expr.pseudo]p2:
   //   The left-hand side of the dot operator shall be of scalar type. The 
   //   left-hand side of the arrow operator shall be of pointer to scalar type.
   //   This scalar type is the object type. 
-  QualType ObjectType = BaseE->getType();
+  QualType ObjectType = Base->getType();
   if (OpKind == tok::arrow) {
     if (const PointerType *Ptr = ObjectType->getAs<PointerType>()) {
       ObjectType = Ptr->getPointeeType();
@@ -3043,7 +3018,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                   FirstTypeName.StartLocation);
 
     
-  return BuildPseudoDestructorExpr(move(Base), OpLoc, OpKind, SS,
+  return BuildPseudoDestructorExpr(Base, OpLoc, OpKind, SS,
                                    ScopeTypeInfo, CCLoc, TildeLoc,
                                    Destructed, HasTrailingLParen);
 }
@@ -3066,12 +3041,7 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
   return CE;
 }
 
-Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
-  Expr *FullExpr = Arg.takeAs<Expr>();
-  if (FullExpr)
-    FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr);
-  else
-    return ExprError();
-  
-  return Owned(FullExpr);
+Sema::OwningExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
+  if (!FullExpr) return ExprError();
+  return MaybeCreateCXXExprWithTemporaries(FullExpr);
 }

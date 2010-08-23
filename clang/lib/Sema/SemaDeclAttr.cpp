@@ -193,7 +193,7 @@ static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
 
   // Instantiate/Install the vector type, and let Sema build the type for us.
   // This will run the reguired checks.
-  QualType T = S.BuildExtVectorType(curType, S.Owned(sizeExpr), Attr.getLoc());
+  QualType T = S.BuildExtVectorType(curType, sizeExpr, Attr.getLoc());
   if (!T.isNull()) {
     // FIXME: preserve the old source info.
     tDecl->setTypeSourceInfo(S.Context.getTrivialTypeSourceInfo(T));

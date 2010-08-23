@@ -135,9 +135,8 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 
 Action::OwningExprResult
 Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
-                        TypeSourceInfo *DestTInfo, ExprArg E,
+                        TypeSourceInfo *DestTInfo, ExprArg Ex,
                         SourceRange AngleBrackets, SourceRange Parens) {
-  Expr *Ex = E.takeAs<Expr>();
   QualType DestType = DestTInfo->getType();
 
   SourceRange OpRange(OpLoc, Parens.getEnd());

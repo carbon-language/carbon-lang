@@ -584,7 +584,7 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                           unsigned Depth,
                                           unsigned Position,
                                           SourceLocation EqualLoc,
-                                          ExprArg DefaultArg) {
+                                          Expr *Default) {
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType T = TInfo->getType();
 
@@ -622,14 +622,14 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   }
   
   // Check the well-formedness of the default template argument, if provided.
-  if (Expr *Default = static_cast<Expr *>(DefaultArg.get())) {  
+  if (Default) {  
     TemplateArgument Converted;
     if (CheckTemplateArgument(Param, Param->getType(), Default, Converted)) {
       Param->setInvalidDecl();
       return Param;
     }
   
-    Param->setDefaultArgument(DefaultArg.takeAs<Expr>(), false);
+    Param->setDefaultArgument(Default, false);
   }
   
   return Param;
@@ -3057,7 +3057,8 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       QualType ClassType
         = Context.getTypeDeclType(cast<RecordDecl>(VD->getDeclContext()));
       NestedNameSpecifier *Qualifier
-        = NestedNameSpecifier::Create(Context, 0, false, ClassType.getTypePtr());
+        = NestedNameSpecifier::Create(Context, 0, false,
+                                      ClassType.getTypePtr());
       CXXScopeSpec SS;
       SS.setScopeRep(Qualifier);
       OwningExprResult RefExpr = BuildDeclRefExpr(VD, 
@@ -3067,7 +3068,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       if (RefExpr.isInvalid())
         return ExprError();
       
-      RefExpr = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, move(RefExpr));
+      RefExpr = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, RefExpr.get());
       
       // We might need to perform a trailing qualification conversion, since
       // the element type on the parameter could be more qualified than the
@@ -3108,7 +3109,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
     }
     
     // Take the address of everything else
-    return CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, move(RefExpr));
+    return CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, RefExpr.get());
   }
 
   // If the non-type template parameter has reference type, qualify the

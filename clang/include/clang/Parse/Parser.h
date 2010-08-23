@@ -158,17 +158,17 @@ public:
 
   typedef llvm::SmallVector<TemplateParameterList *, 4> TemplateParameterLists;
 
-  typedef Action::ExprResult        ExprResult;
-  typedef Action::StmtResult        StmtResult;
-  typedef Action::BaseResult        BaseResult;
-  typedef Action::MemInitResult     MemInitResult;
-  typedef Action::TypeResult        TypeResult;
+  typedef clang::ExprResult        ExprResult;
+  typedef clang::StmtResult        StmtResult;
+  typedef clang::BaseResult        BaseResult;
+  typedef clang::MemInitResult     MemInitResult;
+  typedef clang::TypeResult        TypeResult;
 
-  typedef Action::OwningExprResult OwningExprResult;
-  typedef Action::OwningStmtResult OwningStmtResult;
+  typedef clang::OwningExprResult OwningExprResult;
+  typedef clang::OwningStmtResult OwningStmtResult;
 
-  typedef Action::ExprArg ExprArg;
-  typedef Action::MultiStmtArg MultiStmtArg;
+  typedef Expr *ExprArg;
+  typedef ASTMultiPtr<Stmt*> MultiStmtArg;
   typedef Action::FullExprArg FullExprArg;
 
   /// Adorns a ExprResult with Actions to make it an OwningExprResult

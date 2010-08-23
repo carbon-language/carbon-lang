@@ -433,10 +433,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
                                               CommaLocs.data(),
                                               RParenLoc);
       } else if (InitArgs.size() == 1) {
-        Expr *Init = (Expr*)(InitArgs.take()[0]);
-        SemaRef.AddInitializerToDecl(Var, 
-                                     SemaRef.Owned(Init),
-                                     false);        
+        Expr *Init = InitArgs.take()[0];
+        SemaRef.AddInitializerToDecl(Var, Init, false);
       } else {
         assert(InitArgs.size() == 0);
         SemaRef.ActOnUninitializedDecl(Var, false);    
@@ -594,8 +592,8 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   OwningExprResult Message(D->getMessage());
   D->getMessage()->Retain();
   return SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
-                                              move(InstantiatedAssertExpr),
-                                              move(Message));
+                                              InstantiatedAssertExpr.get(),
+                                              Message.get());
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
@@ -638,7 +636,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     EnumConstantDecl *EnumConst
       = SemaRef.CheckEnumConstant(Enum, LastEnumConst,
                                   EC->getLocation(), EC->getIdentifier(),
-                                  move(Value));
+                                  Value.get());
 
     if (isInvalid) {
       if (EnumConst)
@@ -2113,7 +2111,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Body.isInvalid())
     Function->setInvalidDecl();
   
-  ActOnFinishFunctionBody(Function, move(Body),
+  ActOnFinishFunctionBody(Function, Body.get(),
                           /*IsInstantiation=*/true);
 
   PerformDependentDiagnostics(PatternDecl, TemplateArgs);

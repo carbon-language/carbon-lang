@@ -3192,7 +3192,7 @@ bool Sema::PerformContextuallyConvertToObjCId(Expr *&From) {
 /// \returns The expression, converted to an integral or enumeration type if
 /// successful.
 Sema::OwningExprResult 
-Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
+Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
                                          const PartialDiagnostic &NotIntDiag,
                                        const PartialDiagnostic &IncompleteDiag,
                                      const PartialDiagnostic &ExplicitConvDiag,
@@ -3200,16 +3200,14 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
                                          const PartialDiagnostic &AmbigDiag,
                                          const PartialDiagnostic &AmbigNote,
                                          const PartialDiagnostic &ConvDiag) {
-  Expr *From = static_cast<Expr *>(FromE.get());
-  
   // We can't perform any more checking for type-dependent expressions.
   if (From->isTypeDependent())
-    return move(FromE);
+    return Owned(From);
   
   // If the expression already has integral or enumeration type, we're golden.
   QualType T = From->getType();
   if (T->isIntegralOrEnumerationType())
-    return move(FromE);
+    return Owned(From);
 
   // FIXME: Check for missing '()' if T is a function type?
 
@@ -3219,12 +3217,12 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
   if (!RecordTy || !getLangOptions().CPlusPlus) {
     Diag(Loc, NotIntDiag)
       << T << From->getSourceRange();
-    return move(FromE);
+    return Owned(From);
   }
     
   // We must have a complete class type.
   if (RequireCompleteType(Loc, T, IncompleteDiag))
-    return move(FromE);
+    return Owned(From);
   
   // Look for a conversion to an integral or enumeration type.
   UnresolvedSet<4> ViableConversions;
@@ -3276,8 +3274,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
         return ExprError();
       
       CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
-      From = BuildCXXMemberCallExpr(FromE.takeAs<Expr>(), Found, Conversion);
-      FromE = Owned(From);
+      From = BuildCXXMemberCallExpr(From, Found, Conversion);
     }
     
     // We'll complain below about a non-integral condition type.
@@ -3300,9 +3297,8 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
         << T << ConvTy->isEnumeralType() << ConvTy << From->getSourceRange();
     }
     
-    From = BuildCXXMemberCallExpr(FromE.takeAs<Expr>(), Found,
+    From = BuildCXXMemberCallExpr(From, Found,
                           cast<CXXConversionDecl>(Found->getUnderlyingDecl()));
-    FromE = Owned(From);
     break;
   }
     
@@ -3316,14 +3312,14 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
       Diag(Conv->getLocation(), AmbigNote)
         << ConvTy->isEnumeralType() << ConvTy;
     }
-    return move(FromE);
+    return Owned(From);
   }
   
   if (!From->getType()->isIntegralOrEnumerationType())
     Diag(Loc, NotIntDiag)
       << From->getType() << From->getSourceRange();
 
-  return move(FromE);
+  return Owned(From);
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of
@@ -6553,7 +6549,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   // This shouldn't cause an infinite loop because we're giving it
   // an expression with non-empty lookup results, which should never
   // end up here.
-  return SemaRef.ActOnCallExpr(/*Scope*/ 0, move(NewFn), LParenLoc,
+  return SemaRef.ActOnCallExpr(/*Scope*/ 0, NewFn.take(), LParenLoc,
                          Sema::MultiExprArg(SemaRef, Args, NumArgs),
                                CommaLocs, RParenLoc);
 }
@@ -6662,9 +6658,8 @@ static bool IsOverloaded(const UnresolvedSetImpl &Functions) {
 Sema::OwningExprResult
 Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
                               const UnresolvedSetImpl &Fns,
-                              ExprArg input) {
+                              Expr *Input) {
   UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
-  Expr *Input = (Expr *)input.get();
 
   OverloadedOperatorKind Op = UnaryOperator::getOverloadedOperator(Opc);
   assert(Op != OO_None && "Invalid opcode for overloaded unary operator");
@@ -6687,7 +6682,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 
   if (Input->isTypeDependent()) {
     if (Fns.empty())
-      return Owned(new (Context) UnaryOperator(input.takeAs<Expr>(),
+      return Owned(new (Context) UnaryOperator(Input,
                                                Opc, 
                                                Context.DependentTy,
                                                OpLoc));
@@ -6698,7 +6693,6 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
                                      0, SourceRange(), OpNameInfo,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
-    input.release();
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    &Args[0], NumArgs,
                                                    Context.DependentTy,
@@ -6747,12 +6741,10 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
           = PerformCopyInitialization(InitializedEntity::InitializeParameter(
                                                       FnDecl->getParamDecl(0)),
                                       SourceLocation(), 
-                                      move(input));
+                                      Input);
         if (InputInit.isInvalid())
           return ExprError();
-        
-        input = move(InputInit);
-        Input = (Expr *)input.get();
+        Input = InputInit.take();
       }
 
       DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
@@ -6765,17 +6757,16 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
                                                SourceLocation());
       UsualUnaryConversions(FnExpr);
 
-      input.release();
       Args[0] = Input;
-      ExprOwningPtr<CallExpr> TheCall(this,
+      CallExpr *TheCall =
         new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                          Args, NumArgs, ResultTy, OpLoc));
+                                          Args, NumArgs, ResultTy, OpLoc);
 
-      if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
+      if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall, 
                               FnDecl))
         return ExprError();
 
-      return MaybeBindToTemporary(TheCall.release());
+      return MaybeBindToTemporary(TheCall);
     } else {
       // We matched a built-in operator. Convert the arguments, then
       // break out so that we will build the appropriate built-in
@@ -6813,8 +6804,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   // Either we found no viable overloaded operator or we matched a
   // built-in operator. In either case, fall through to trying to
   // build a built-in operation.
-  input.release();
-  return CreateBuiltinUnaryOp(OpLoc, Opc, Owned(Input));
+  return CreateBuiltinUnaryOp(OpLoc, Opc, Input);
 }
 
 /// \brief Create a binary operation that may resolve to an overloaded
@@ -6975,16 +6965,15 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                                  OpLoc);
         UsualUnaryConversions(FnExpr);
 
-        ExprOwningPtr<CXXOperatorCallExpr> 
-          TheCall(this, new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                                          Args, 2, ResultTy, 
-                                                          OpLoc));
+        CXXOperatorCallExpr *TheCall =
+          new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
+                                            Args, 2, ResultTy, OpLoc);
         
-        if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
+        if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall, 
                                 FnDecl))
           return ExprError();
 
-        return MaybeBindToTemporary(TheCall.release());
+        return MaybeBindToTemporary(TheCall);
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -7053,9 +7042,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 Action::OwningExprResult
 Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                          SourceLocation RLoc,
-                                         ExprArg Base, ExprArg Idx) {
-  Expr *Args[2] = { static_cast<Expr*>(Base.get()),
-                    static_cast<Expr*>(Idx.get()) };
+                                         Expr *Base, Expr *Idx) {
+  Expr *Args[2] = { Base, Idx };
   DeclarationName OpName =
       Context.DeclarationNames.getCXXOperatorName(OO_Subscript);
 
@@ -7075,8 +7063,6 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                      UnresolvedSetIterator());
     // Can't add any actual overloads yet
 
-    Base.release();
-    Idx.release();
     return Owned(new (Context) CXXOperatorCallExpr(Context, OO_Subscript, Fn,
                                                    Args, 2,
                                                    Context.DependentTy,
@@ -7135,18 +7121,16 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                                  LLoc);
         UsualUnaryConversions(FnExpr);
 
-        Base.release();
-        Idx.release();
-        ExprOwningPtr<CXXOperatorCallExpr>
-          TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
-                                                          FnExpr, Args, 2,
-                                                          ResultTy, RLoc));
+        CXXOperatorCallExpr *TheCall =
+          new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
+                                            FnExpr, Args, 2,
+                                            ResultTy, RLoc);
 
-        if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall.get(),
+        if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall,
                                 FnDecl))
           return ExprError();
 
-        return MaybeBindToTemporary(TheCall.release());
+        return MaybeBindToTemporary(TheCall);
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -7192,10 +7176,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     }
 
   // We matched a built-in operator; build it.
-  Base.release();
-  Idx.release();
-  return CreateBuiltinArraySubscriptExpr(Owned(Args[0]), LLoc,
-                                         Owned(Args[1]), RLoc);
+  return CreateBuiltinArraySubscriptExpr(Args[0], LLoc, Args[1], RLoc);
 }
 
 /// BuildCallToMemberFunction - Build a call to a member
@@ -7313,15 +7294,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   }
 
   assert(Method && "Member call to something that isn't a method?");
-  ExprOwningPtr<CXXMemberCallExpr>
-    TheCall(this, new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
-                                                  NumArgs,
-                                  Method->getCallResultType(),
-                                  RParenLoc));
+  CXXMemberCallExpr *TheCall = 
+    new (Context) CXXMemberCallExpr(Context, MemExprE, Args, NumArgs,
+                                    Method->getCallResultType(),
+                                    RParenLoc);
 
   // Check for a valid return type.
   if (CheckCallReturnType(Method->getResultType(), MemExpr->getMemberLoc(), 
-                          TheCall.get(), Method))
+                          TheCall, Method))
     return ExprError();
   
   // Convert the object argument (for a non-static member function call).
@@ -7336,14 +7316,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   // Convert the rest of the arguments
   const FunctionProtoType *Proto = Method->getType()->getAs<FunctionProtoType>();
-  if (ConvertArgumentsForCall(&*TheCall, MemExpr, Method, Proto, Args, NumArgs,
+  if (ConvertArgumentsForCall(TheCall, MemExpr, Method, Proto, Args, NumArgs,
                               RParenLoc))
     return ExprError();
 
-  if (CheckFunctionCall(Method, TheCall.get()))
+  if (CheckFunctionCall(Method, TheCall))
     return ExprError();
 
-  return MaybeBindToTemporary(TheCall.release());
+  return MaybeBindToTemporary(TheCall);
 }
 
 /// BuildCallToObjectOfClassType - Build a call to an object of class
@@ -7488,7 +7468,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(Object, Best->FoundDecl,
                                                    Conv);
       
-    return ActOnCallExpr(S, ExprArg(*this, CE), LParenLoc,
+    return ActOnCallExpr(S, CE, LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),
                          CommaLocs, RParenLoc).result();
   }
@@ -7526,13 +7506,13 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   // Once we've built TheCall, all of the expressions are properly
   // owned.
   QualType ResultTy = Method->getCallResultType();
-  ExprOwningPtr<CXXOperatorCallExpr>
-    TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Call, NewFn,
-                                                    MethodArgs, NumArgs + 1,
-                                                    ResultTy, RParenLoc));
+  CXXOperatorCallExpr *TheCall =
+    new (Context) CXXOperatorCallExpr(Context, OO_Call, NewFn,
+                                      MethodArgs, NumArgs + 1,
+                                      ResultTy, RParenLoc);
   delete [] MethodArgs;
 
-  if (CheckCallReturnType(Method->getResultType(), LParenLoc, TheCall.get(), 
+  if (CheckCallReturnType(Method->getResultType(), LParenLoc, TheCall, 
                           Method))
     return true;
   
@@ -7562,7 +7542,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       OwningExprResult InputInit
         = PerformCopyInitialization(InitializedEntity::InitializeParameter(
                                                     Method->getParamDecl(i)),
-                                    SourceLocation(), Owned(Arg));
+                                    SourceLocation(), Arg);
       
       IsError |= InputInit.isInvalid();
       Arg = InputInit.takeAs<Expr>();
@@ -7592,18 +7572,17 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
   if (IsError) return true;
 
-  if (CheckFunctionCall(Method, TheCall.get()))
+  if (CheckFunctionCall(Method, TheCall))
     return true;
 
-  return MaybeBindToTemporary(TheCall.release()).result();
+  return MaybeBindToTemporary(TheCall).result();
 }
 
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->
 ///  (if one exists), where @c Base is an expression of class type and
 /// @c Member is the name of the member we're trying to find.
 Sema::OwningExprResult
-Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
-  Expr *Base = static_cast<Expr *>(BaseIn.get());
+Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   assert(Base->getType()->isRecordType() && "left-hand side must have class type");
 
   SourceLocation Loc = Base->getExprLoc();
@@ -7673,23 +7652,20 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
                                           Best->FoundDecl, Method))
     return ExprError();
 
-  // No concerns about early exits now.
-  BaseIn.release();
-
   // Build the operator call.
   Expr *FnExpr = new (Context) DeclRefExpr(Method, Method->getType(),
                                            SourceLocation());
   UsualUnaryConversions(FnExpr);
   
   QualType ResultTy = Method->getCallResultType();
-  ExprOwningPtr<CXXOperatorCallExpr> 
-    TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, 
-                                                    &Base, 1, ResultTy, OpLoc));
+  CXXOperatorCallExpr *TheCall =
+    new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, 
+                                      &Base, 1, ResultTy, OpLoc);
 
-  if (CheckCallReturnType(Method->getResultType(), OpLoc, TheCall.get(), 
+  if (CheckCallReturnType(Method->getResultType(), OpLoc, TheCall, 
                           Method))
           return ExprError();
-  return move(TheCall);
+  return Owned(TheCall);
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

@@ -484,7 +484,7 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
                                        LAngleBracketLoc, CastTy.get(),
                                        RAngleBracketLoc,
-                                       LParenLoc, move(Result), RParenLoc);
+                                       LParenLoc, Result.take(), RParenLoc);
 
   return move(Result);
 }
@@ -613,7 +613,8 @@ Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
                                    /*TemplateKWLoc*/SourceLocation()))
     return ExprError();
 
-  return Actions.ActOnPseudoDestructorExpr(getCurScope(), move(Base), OpLoc, OpKind,
+  return Actions.ActOnPseudoDestructorExpr(getCurScope(), Base,
+                                           OpLoc, OpKind,
                                            SS, FirstTypeName, CCLoc,
                                            TildeLoc, SecondTypeName,
                                            Tok.is(tok::l_paren));
@@ -647,12 +648,12 @@ Parser::OwningExprResult Parser::ParseThrowExpression() {
   case tok::r_brace:
   case tok::colon:
   case tok::comma:
-    return Actions.ActOnCXXThrow(ThrowLoc, ExprArg(Actions));
+    return Actions.ActOnCXXThrow(ThrowLoc, 0);
 
   default:
     OwningExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid()) return move(Expr);
-    return Actions.ActOnCXXThrow(ThrowLoc, move(Expr));
+    return Actions.ActOnCXXThrow(ThrowLoc, Expr.take());
   }
 }
 
@@ -748,7 +749,7 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
     // If required, convert to a boolean value.
     if (ConvertToBoolean)
       ExprResult
-        = Actions.ActOnBooleanCondition(getCurScope(), Loc, move(ExprResult));
+        = Actions.ActOnBooleanCondition(getCurScope(), Loc, ExprResult.take());
     return ExprResult.isInvalid();
   }
 
@@ -790,7 +791,7 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
     SourceLocation EqualLoc = ConsumeToken();
     OwningExprResult AssignExpr(ParseAssignmentExpression());
     if (!AssignExpr.isInvalid()) 
-      Actions.AddInitializerToDecl(DeclResult, move(AssignExpr));
+      Actions.AddInitializerToDecl(DeclResult, AssignExpr.take());
   } else {
     // FIXME: C++0x allows a braced-init-list
     Diag(Tok, diag::err_expected_equal_after_declarator);
@@ -1745,7 +1746,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
   if (Operand.isInvalid())
     return move(Operand);
 
-  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, move(Operand));
+  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.take());
 }
 
 static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
@@ -1899,7 +1900,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
     // Result is what ParseCastExpression returned earlier.
     if (!Result.isInvalid())
       Result = Actions.ActOnCastExpr(getCurScope(), LParenLoc, CastTy, RParenLoc,
-                                     move(Result));
+                                     Result.take());
     return move(Result);
   }
 
@@ -1909,7 +1910,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   ExprType = SimpleExpr;
   Result = ParseExpression();
   if (!Result.isInvalid() && Tok.is(tok::r_paren))
-    Result = Actions.ActOnParenExpr(LParenLoc, Tok.getLocation(), move(Result));
+    Result = Actions.ActOnParenExpr(LParenLoc, Tok.getLocation(), Result.take());
 
   // Match the ')'.
   if (Result.isInvalid()) {

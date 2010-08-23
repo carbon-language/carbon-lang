@@ -443,7 +443,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
 
     if (Result.isInvalid())
       return DeclGroupPtrTy();
-    SingleDecl = Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), move(Result));
+    SingleDecl = Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.get());
     break;
   }
   case tok::at:
@@ -696,7 +696,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
     // Recover from error.
     if (!Tok.is(tok::l_brace)) {
-      Actions.ActOnFinishFunctionBody(Res, Action::StmtArg(Actions));
+      Actions.ActOnFinishFunctionBody(Res, 0);
       return Res;
     }
   } else

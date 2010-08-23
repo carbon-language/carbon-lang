@@ -659,7 +659,7 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
     // message to the superclass instance.
     QualType SuperTy = Context.getObjCInterfaceType(Super);
     SuperTy = Context.getObjCObjectPointerType(SuperTy);
-    return BuildInstanceMessage(ExprArg(*this), SuperTy, SuperLoc,
+    return BuildInstanceMessage(0, SuperTy, SuperLoc,
                                 Sel, /*Method=*/0, LBracLoc, RBracLoc, 
                                 move(Args));
   }
@@ -828,7 +828,7 @@ Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S,
 /// \param RBrac The location of the closing square bracket ']'.
 ///
 /// \param Args The message arguments.
-Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
+Sema::OwningExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                                   QualType ReceiverType,
                                                   SourceLocation SuperLoc,
                                                   Selector Sel,
@@ -838,7 +838,6 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
                                                   MultiExprArg ArgsIn) {
   // If we have a receiver expression, perform appropriate promotions
   // and determine receiver type.
-  Expr *Receiver = ReceiverE.takeAs<Expr>();
   if (Receiver) {
     if (Receiver->isTypeDependent()) {
       // If the receiver is type-dependent, we can't type-check anything
@@ -986,7 +985,7 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
           Receiver = ICE->getSubExpr();
           ReceiverType = Receiver->getType();
         }
-        return BuildInstanceMessage(Owned(Receiver),
+        return BuildInstanceMessage(Receiver,
                                     ReceiverType,
                                     SuperLoc,
                                     Sel,
@@ -1034,17 +1033,16 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 Sema::OwningExprResult Sema::ActOnInstanceMessage(Scope *S,
-                                                  ExprArg ReceiverE, 
+                                                  Expr *Receiver, 
                                                   Selector Sel,
                                                   SourceLocation LBracLoc,
                                                   SourceLocation SelectorLoc,
                                                   SourceLocation RBracLoc,
                                                   MultiExprArg Args) {
-  Expr *Receiver = static_cast<Expr *>(ReceiverE.get());
   if (!Receiver)
     return ExprError();
 
-  return BuildInstanceMessage(move(ReceiverE), Receiver->getType(),
+  return BuildInstanceMessage(Receiver, Receiver->getType(),
                               /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0, 
                               LBracLoc, RBracLoc, move(Args));
 }

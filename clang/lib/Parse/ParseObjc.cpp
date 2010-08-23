@@ -1470,7 +1470,7 @@ Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
   }
   // consume ';'
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@throw");
-  return Actions.ActOnObjCAtThrowStmt(atLoc, move(Res), getCurScope());
+  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.take(), getCurScope());
 }
 
 /// objc-synchronized-statement:
@@ -1507,7 +1507,7 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   BodyScope.Exit();
   if (SynchBody.isInvalid())
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, move(Res), move(SynchBody));
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.take(), SynchBody.take());
 }
 
 ///  objc-try-catch-statement:
@@ -1586,7 +1586,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         OwningStmtResult Catch = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
                                                               RParenLoc, 
                                                               FirstPart, 
-                                                              move(CatchBody));
+                                                              CatchBody.take());
         if (!Catch.isInvalid())
           CatchStmts.push_back(Catch.release());
         
@@ -1609,7 +1609,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       if (FinallyBody.isInvalid())
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
-                                                   move(FinallyBody));
+                                                   FinallyBody.take());
       catch_or_finally_seen = true;
       break;
     }
@@ -1619,9 +1619,9 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     return StmtError();
   }
   
-  return Actions.ActOnObjCAtTryStmt(atLoc, move(TryBody), 
+  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.take(), 
                                     move_arg(CatchStmts),
-                                    move(FinallyStmt));
+                                    FinallyStmt.take());
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1671,7 +1671,7 @@ Decl *Parser::ParseObjCMethodDefinition() {
                                        MultiStmtArg(Actions), false);
 
   // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, move(FnBody));
+  Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
 
   // Leave the function body scope.
   BodyScope.Exit();
@@ -1706,7 +1706,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-  return Actions.ActOnExprStmt(Actions.MakeFullExpr(Res));
+  return Actions.ActOnExprStmt(Actions.MakeFullExpr(Res.take()));
 }
 
 Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
@@ -1797,9 +1797,9 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
     // instance method.
     OwningExprResult Receiver = ParseCXXTypeConstructExpression(DS);
     if (!Receiver.isInvalid())
-      Receiver = ParsePostfixExpressionSuffix(move(Receiver));
+      Receiver = ParsePostfixExpressionSuffix(Receiver.take());
     if (!Receiver.isInvalid())
-      Receiver = ParseRHSOfBinaryExpression(move(Receiver), prec::Comma);
+      Receiver = ParseRHSOfBinaryExpression(Receiver.take(), prec::Comma);
     if (Receiver.isInvalid())
       return true;
 
@@ -1863,7 +1863,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
     if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
         NextToken().isNot(tok::period) && getCurScope()->isInObjcMethodScope())
       return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0, 
-                                            ExprArg(Actions));
+                                            0);
 
     // Parse the receiver, which is either a type or an expression.
     bool IsExpr;
@@ -1875,10 +1875,10 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 
     if (IsExpr)
       return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0,
-                           OwningExprResult(static_cast<Expr*>(TypeOrExpr)));
+                                            static_cast<Expr*>(TypeOrExpr));
 
     return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
-                                          TypeOrExpr, ExprArg(Actions));
+                                          TypeOrExpr, 0);
   }
   
   if (Tok.is(tok::identifier)) {
@@ -1890,8 +1890,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
                                        NextToken().is(tok::period),
                                        ReceiverType)) {
     case Action::ObjCSuperMessage:
-      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0,
-                                            ExprArg(Actions));
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0, 0);
 
     case Action::ObjCClassMessage:
       if (!ReceiverType) {
@@ -1902,8 +1901,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
       ConsumeToken(); // the type name
 
       return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
-                                            ReceiverType,
-                                            ExprArg(Actions));
+                                            ReceiverType, 0);
         
     case Action::ObjCInstanceMessage:
       // Fall through to parse an expression.
@@ -1919,7 +1917,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   }
 
   return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0, 
-                                        move(Res));
+                                        Res.take());
 }
 
 /// \brief Parse the remainder of an Objective-C message following the
@@ -1971,7 +1969,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     else if (ReceiverType)
       Actions.CodeCompleteObjCClassMessage(getCurScope(), ReceiverType, 0, 0);
     else
-      Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr.get(), 
+      Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr,
                                               0, 0);
     ConsumeCodeCompletionToken();
   }
@@ -2024,7 +2022,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                                KeyIdents.data(), 
                                                KeyIdents.size());
         else
-          Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr.get(),
+          Actions.CodeCompleteObjCInstanceMessage(getCurScope(), ReceiverExpr,
                                                   KeyIdents.data(), 
                                                   KeyIdents.size());
         ConsumeCodeCompletionToken();
@@ -2093,7 +2091,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                      Action::MultiExprArg(Actions, 
                                                           KeyExprs.take(), 
                                                           KeyExprs.size()));
-  return Actions.ActOnInstanceMessage(getCurScope(), move(ReceiverExpr), Sel,
+  return Actions.ActOnInstanceMessage(getCurScope(), ReceiverExpr, Sel,
                                       LBracLoc, SelectorLoc, RBracLoc,
                                       Action::MultiExprArg(Actions, 
                                                            KeyExprs.take(), 

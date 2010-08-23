@@ -593,7 +593,7 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
         SkipUntil(tok::comma, true, true);
         Actions.ActOnInitializerError(ThisDecl);
       } else
-        Actions.AddInitializerToDecl(ThisDecl, move(Init));
+        Actions.AddInitializerToDecl(ThisDecl, Init.take());
     }
   } else if (Tok.is(tok::l_paren)) {
     // Parse C++ direct initializer: '(' expression-list ')'
@@ -3136,7 +3136,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           } else {
             // Inform the actions module about the default argument
             Actions.ActOnParamDefaultArgument(Param, EqualLoc,
-                                              move(DefArgResult));
+                                              DefArgResult.take());
           }
         }
       }

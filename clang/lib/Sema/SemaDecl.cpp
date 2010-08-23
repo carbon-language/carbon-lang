@@ -4035,14 +4035,14 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   return true;
 }
 
-void Sema::AddInitializerToDecl(Decl *dcl, ExprArg init) {
-  AddInitializerToDecl(dcl, move(init), /*DirectInit=*/false);
+void Sema::AddInitializerToDecl(Decl *dcl, Expr *init) {
+  AddInitializerToDecl(dcl, init, /*DirectInit=*/false);
 }
 
 /// AddInitializerToDecl - Adds the initializer Init to the
 /// declaration dcl. If DirectInit is true, this is C++ direct
 /// initialization rather than copy initialization.
-void Sema::AddInitializerToDecl(Decl *RealDecl, ExprArg init, bool DirectInit) {
+void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
   if (RealDecl == 0)
@@ -4053,7 +4053,6 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, ExprArg init, bool DirectInit) {
     // distinguish between a normal initializer and a pure-specifier.
     // Thus this grotesque test.
     IntegerLiteral *IL;
-    Expr *Init = static_cast<Expr *>(init.get());
     if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
         Context.getCanonicalType(IL->getType()) == Context.IntTy)
       CheckPureMethod(Method, Init->getSourceRange());
@@ -4107,11 +4106,6 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, ExprArg init, bool DirectInit) {
 
   if (getLangOptions().CPlusPlus && VDecl->hasLocalStorage())
     setFunctionHasBranchProtectedScope();
-
-  // Take ownership of the expression, now that we're sure we have somewhere
-  // to put it.
-  Expr *Init = init.takeAs<Expr>();
-  assert(Init && "missing initializer");
 
   // Capture the variable that is being initialized and the style of
   // initialization.
@@ -4860,10 +4854,8 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *D, StmtArg BodyArg) {
   return ActOnFinishFunctionBody(D, move(BodyArg), false);
 }
 
-Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, StmtArg BodyArg,
-                                         bool IsInstantiation) {
-  Stmt *Body = BodyArg.takeAs<Stmt>();
-
+Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
+                                    bool IsInstantiation) {
   FunctionDecl *FD = 0;
   FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(dcl);
   if (FunTmpl)
@@ -6663,9 +6655,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
                                           EnumConstantDecl *LastEnumConst,
                                           SourceLocation IdLoc,
                                           IdentifierInfo *Id,
-                                          ExprArg val) {
-  Expr *Val = (Expr *)val.get();
-
+                                          Expr *Val) {
   unsigned IntWidth = Context.Target.getIntWidth();
   llvm::APSInt EnumVal(IntWidth);
   QualType EltTy;
@@ -6693,11 +6683,6 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           else if (!Context.hasSameType(Val->getType(), Context.IntTy)) {
             // Force the type of the expression to 'int'.
             ImpCastExprToType(Val, Context.IntTy, CastExpr::CK_IntegralCast);
-            
-            if (Val != val.get()) {
-              val.release();
-              val = Val;
-            }
           }
         }
         
@@ -6785,7 +6770,6 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
     EnumVal.setIsSigned(EltTy->isSignedIntegerType());
   }
   
-  val.release();
   return EnumConstantDecl::Create(Context, Enum, IdLoc, Id, EltTy,
                                   Val, EnumVal);
 }
@@ -6832,7 +6816,7 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl,
   }
 
   EnumConstantDecl *New = CheckEnumConstant(TheEnumDecl, LastEnumConst,
-                                            IdLoc, Id, Owned(Val));
+                                            IdLoc, Id, Val);
 
   // Register this decl in the current scope stack.
   if (New) {
@@ -7046,8 +7030,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                            NumPositiveBits, NumNegativeBits);
 }
 
-Decl *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr) {
-  StringLiteral *AsmString = cast<StringLiteral>(expr.takeAs<Expr>());
+Decl *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc, Expr *expr) {
+  StringLiteral *AsmString = cast<StringLiteral>(expr);
 
   FileScopeAsmDecl *New = FileScopeAsmDecl::Create(Context, CurContext,
                                                    Loc, AsmString);

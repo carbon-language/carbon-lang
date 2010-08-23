@@ -2107,7 +2107,7 @@ public:
     return GetTypeFromParser(Ty)->isVectorType();
   }
 
-  OwningExprResult MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg ME);
+  OwningExprResult MaybeConvertParenListExprToParenExpr(Scope *S, Expr *ME);
   OwningExprResult ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
                                             SourceLocation RParenLoc, ExprArg E,
                                             TypeSourceInfo *TInfo);
@@ -4779,22 +4779,6 @@ private:
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
   void CheckImplicitConversions(Expr *E);
-};
-
-//===--------------------------------------------------------------------===//
-// Typed version of Parser::ExprArg (smart pointer for wrapping Expr pointers).
-template <typename T>
-class ExprOwningPtr : public Action::ExprArg {
-public:
-  ExprOwningPtr(Sema *S, T *expr) : Action::ExprArg(*S, expr) {}
-
-  void reset(T* p) { Action::ExprArg::operator=(p); }
-  T* get() const { return static_cast<T*>(Action::ExprArg::get()); }
-  T* take() { return static_cast<T*>(Action::ExprArg::take()); }
-  T* release() { return take(); }
-
-  T& operator*() const { return *get(); }
-  T* operator->() const { return get(); }
 };
 
 }  // end namespace clang

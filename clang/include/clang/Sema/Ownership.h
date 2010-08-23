@@ -316,39 +316,6 @@ namespace clang {
   /// the individual pointers, not the array holding them.
   template <typename PtrTy> class ASTMultiPtr;
 
-  /// Kept only as a type-safe wrapper for a void pointer.
-  template <typename PtrTy> class ASTOwningPtr {
-    PtrTy Node;
-
-  public:
-    explicit ASTOwningPtr(ActionBase &) : Node(0) {}
-    ASTOwningPtr(ActionBase &, PtrTy node) : Node(node) {}
-
-    // Normal copying operators are defined implicitly.
-    ASTOwningPtr(const ASTOwningResult<PtrTy> &o);
-
-    ASTOwningPtr & operator =(PtrTy raw) {
-      Node = raw;
-      return *this;
-    }
-
-    /// Access to the raw pointer.
-    PtrTy get() const { return Node; }
-
-    /// Release the raw pointer.
-    PtrTy take() { return Node; }
-
-    /// Take outside ownership of the raw pointer and cast it down.
-    template<typename T> T *takeAs() {
-      return static_cast<T*>(Node);
-    }
-
-    /// Alias for interface familiarity with unique_ptr.
-    PtrTy release() {
-      return take();
-    }
-  };
-
   template <class PtrTy> class ASTOwningResult {
   public:
     typedef ActionBase::ActionResult<PtrTy> DumbResult;
@@ -359,46 +326,42 @@ namespace clang {
   public:
     explicit ASTOwningResult(bool invalid = false)
       : Result(invalid) { }
-    explicit ASTOwningResult(PtrTy node) : Result(node) { }
-    explicit ASTOwningResult(const DumbResult &res) : Result(res) { }
+    ASTOwningResult(PtrTy node) : Result(node) { }
+    ASTOwningResult(const DumbResult &res) : Result(res) { }
     // Normal copying semantics are defined implicitly.
-    ASTOwningResult(const ASTOwningPtr<PtrTy> &o) : Result(o.get()) { }
 
     // These two overloads prevent void* -> bool conversions.
     explicit ASTOwningResult(const void *);
     explicit ASTOwningResult(volatile void *);
 
-    /// Assignment from a raw pointer. Takes ownership - beware!
-    ASTOwningResult & operator =(PtrTy raw) {
+    /// Assignment from a raw pointer.
+    ASTOwningResult &operator=(PtrTy raw) {
       Result = raw;
       return *this;
     }
 
-    /// Assignment from an ActionResult. Takes ownership - beware!
-    ASTOwningResult & operator =(const DumbResult &res) {
+    /// Assignment from an ActionResult.
+    ASTOwningResult &operator=(const DumbResult &res) {
       Result = res;
       return *this;
     }
 
-    /// Access to the raw pointer.
-    PtrTy get() const { return Result.get(); }
-
     bool isInvalid() const { return Result.isInvalid(); }
 
-    /// Does this point to a usable AST node? To be usable, the node must be
-    /// valid and non-null.
+    /// Does this point to a usable AST node? To be usable, the node
+    /// must be valid and non-null.
     bool isUsable() const { return !Result.isInvalid() && get(); }
 
-    /// Take outside ownership of the raw pointer.
-    PtrTy take() {
-      return Result.get();
-    }
+    /// It is forbidden to call either of these methods on an invalid
+    /// pointer.  We should assert that, but we're not going to,
+    /// because it's likely to trigger it unpredictable ways on
+    /// invalid code.
+    PtrTy get() const { return Result.get(); }
+    PtrTy take() const { return get(); }
 
     /// Take outside ownership of the raw pointer and cast it down.
     template<typename T>
-    T *takeAs() {
-      return static_cast<T*>(take());
-    }
+    T *takeAs() { return static_cast<T*>(get()); }
 
     /// Alias for interface familiarity with unique_ptr.
     PtrTy release() { return take(); }
@@ -497,18 +460,9 @@ namespace clang {
     return ASTMultiPtr<T>(vec.take(), vec.size());
   }
 
-  template <class T> inline
-  ASTOwningPtr<T>::ASTOwningPtr(const ASTOwningResult<T> &o)
-    : Node(o.get()) { }
-
   // These versions are hopefully no-ops.
   template <class T> inline
-  ASTOwningResult<T>& move(ASTOwningResult<T> &ptr) {
-    return ptr;
-  }
-
-  template <class T> inline
-  ASTOwningPtr<T>& move(ASTOwningPtr<T> &ptr) {
+  ASTOwningResult<T> move(ASTOwningResult<T> &ptr) {
     return ptr;
   }
 
@@ -541,6 +495,25 @@ namespace clang {
 
   typedef ActionBase::ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
+
+  typedef ASTOwningResult<Expr*> OwningExprResult;
+  typedef ASTOwningResult<Stmt*> OwningStmtResult;
+
+  inline Expr *move(Expr *E) { return E; }
+  inline Stmt *move(Stmt *S) { return S; }
+
+  typedef ASTMultiPtr<Expr*> MultiExprArg;
+  typedef ASTMultiPtr<TemplateParameterList*> MultiTemplateParamsArg;
+
+  inline Expr *AssertSuccess(OwningExprResult R) {
+    assert(!R.isInvalid() && "operation was asserted to never fail!");
+    return R.get();
+  }
+
+  inline Stmt *AssertSuccess(OwningStmtResult R) {
+    assert(!R.isInvalid() && "operation was asserted to never fail!");
+    return R.get();
+  }
 }
 
 #endif

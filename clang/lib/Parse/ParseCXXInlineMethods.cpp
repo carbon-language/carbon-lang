@@ -147,7 +147,7 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
           else
             Diag(Tok.getLocation(), diag::err_default_arg_unparsed);
           Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
-                                            move(DefArgResult));
+                                            DefArgResult.take());
         }
 
         assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
@@ -231,7 +231,7 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
 
       // Error recovery.
       if (!Tok.is(tok::l_brace)) {
-        Actions.ActOnFinishFunctionBody(LM.D, Action::StmtArg(Actions));
+        Actions.ActOnFinishFunctionBody(LM.D, 0);
         continue;
       }
     } else

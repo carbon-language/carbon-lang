@@ -620,7 +620,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Create the parameter.
   return Actions.ActOnNonTypeTemplateParameter(getCurScope(), ParamDecl, 
                                                Depth, Position, EqualLoc, 
-                                               move(DefaultArg));
+                                               DefaultArg.take());
 }
 
 /// \brief Parses a template-id that after the template name has

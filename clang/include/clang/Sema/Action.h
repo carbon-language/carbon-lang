@@ -89,14 +89,14 @@ public:
   typedef clang::MemInitResult MemInitResult;
 
   /// Same, but with ownership.
-  typedef ASTOwningResult<Expr*> OwningExprResult;
-  typedef ASTOwningResult<Stmt*> OwningStmtResult;
+  typedef clang::OwningExprResult OwningExprResult;
+  typedef clang::OwningStmtResult OwningStmtResult;
   // Note that these will replace ExprResult and StmtResult when the transition
   // is complete.
 
   /// Single expressions or statements as arguments.
-  typedef ASTOwningPtr<Expr*> ExprArg;
-  typedef ASTOwningPtr<Stmt*> StmtArg;
+  typedef Expr *ExprArg;
+  typedef Stmt *StmtArg;
 
   /// Multiple expressions or statements as arguments.
   typedef ASTMultiPtr<Expr*> MultiExprArg;
@@ -105,25 +105,21 @@ public:
 
   class FullExprArg {
   public:
-    FullExprArg(ActionBase &actions) : Expr(actions) { }
+    FullExprArg(ActionBase &actions) : Expr(0) { }
                 
     // FIXME: The const_cast here is ugly. RValue references would make this
     // much nicer (or we could duplicate a bunch of the move semantics
     // emulation code from Ownership.h).
-    FullExprArg(const FullExprArg& Other)
-      : Expr(move(const_cast<FullExprArg&>(Other).Expr)) {}
-
-    FullExprArg &operator=(const FullExprArg& Other) {
-      Expr.operator=(move(const_cast<FullExprArg&>(Other).Expr));
-      return *this;
-    }
+    FullExprArg(const FullExprArg& Other): Expr(Other.Expr) {}
 
     OwningExprResult release() {
       return move(Expr);
     }
 
-    ExprArg* operator->() {
-      return &Expr;
+    ExprArg get() const { return Expr; }
+
+    ExprArg operator->() {
+      return Expr;
     }
 
   private:
@@ -131,15 +127,13 @@ public:
     // Action::FullExpr that needs access to the constructor below.
     friend class Action;
 
-    explicit FullExprArg(ExprArg expr)
-      : Expr(move(expr)) {}
+    explicit FullExprArg(Expr *expr) : Expr(expr) {}
 
-    ExprArg Expr;
+    Expr *Expr;
   };
 
-  template<typename T>
-  FullExprArg MakeFullExpr(T &Arg) {
-      return FullExprArg(ActOnFinishFullExpr(move(Arg)));
+  FullExprArg MakeFullExpr(Expr *Arg) {
+    return FullExprArg(ActOnFinishFullExpr(Arg).release());
   }
 
   // Utilities for Action implementations to return smart results.

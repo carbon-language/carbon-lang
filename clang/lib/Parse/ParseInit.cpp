@@ -150,7 +150,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                            ConsumeToken(), 0, 
-                                                           ExprArg(Actions));
+                                                           0);
       }
 
       // Parse the receiver, which is either a type or an expression.
@@ -168,7 +168,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
                                                            TypeOrExpr,
-                                                           ExprArg(Actions));
+                                                           0);
       }
 
       // If the receiver was an expression, we still don't know
@@ -195,7 +195,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
           return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                              ConsumeToken(),
                                                              0,
-                                                             ExprArg(Actions));
+                                                             0);
         ConsumeToken(); // the identifier
         if (!ReceiverType) {
           SkipUntil(tok::r_square);
@@ -205,7 +205,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
                                                            ReceiverType, 
-                                                           ExprArg(Actions));
+                                                           0);
 
       case Action::ObjCInstanceMessage:
         // Fall through; we'll just parse the expression and
@@ -239,7 +239,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       CheckArrayDesignatorSyntax(*this, Tok.getLocation(), Desig);
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(),
-                                                         0, move(Idx));
+                                                         0, Idx.take());
     }
 
     // If this is a normal array designator, remember it.

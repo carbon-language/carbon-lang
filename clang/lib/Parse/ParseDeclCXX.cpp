@@ -413,8 +413,9 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   DeclEnd = Tok.getLocation();
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_static_assert);
 
-  return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc, move(AssertExpr),
-                                              move(AssertMessage));
+  return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc,
+                                              AssertExpr.take(),
+                                              AssertMessage.take());
 }
 
 /// ParseDecltypeSpecifier - Parse a C++0x decltype specifier.
