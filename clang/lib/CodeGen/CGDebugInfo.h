@@ -92,6 +92,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const LValueReferenceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const MemberPointerType *Ty, llvm::DIFile F);
+  llvm::DIType CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit);
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DIFile F);
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);

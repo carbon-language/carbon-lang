@@ -1097,39 +1097,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
 llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
                                      llvm::DIFile Unit) {
-  EnumDecl *ED = Ty->getDecl();
+  return CreateEnumType(Ty->getDecl(), Unit);
 
-  llvm::SmallVector<llvm::DIDescriptor, 32> Enumerators;
-
-  // Create DIEnumerator elements for each enumerator.
-  for (EnumDecl::enumerator_iterator
-         Enum = ED->enumerator_begin(), EnumEnd = ED->enumerator_end();
-       Enum != EnumEnd; ++Enum) {
-    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getName(),
-                                            Enum->getInitVal().getZExtValue()));
-  }
-
-  // Return a CompositeType for the enum itself.
-  llvm::DIArray EltArray =
-    DebugFactory.GetOrCreateArray(Enumerators.data(), Enumerators.size());
-
-  llvm::DIFile DefUnit = getOrCreateFile(ED->getLocation());
-  unsigned Line = getLineNumber(ED->getLocation());
-
-  // Size and align of the type.
-  uint64_t Size = 0;
-  unsigned Align = 0;
-  if (!Ty->isIncompleteType()) {
-    Size = CGM.getContext().getTypeSize(Ty);
-    Align = CGM.getContext().getTypeAlign(Ty);
-  }
-
-  llvm::DIType DbgTy = 
-    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                     Unit, ED->getName(), DefUnit, Line,
-                                     Size, Align, 0, 0,
-                                     llvm::DIType(), EltArray);
-  return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const TagType *Ty,
@@ -1254,6 +1223,36 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
                                           U, llvm::StringRef("test"), 
                                           U, 0, FieldOffset, 
                                           0, 0, 0, llvm::DIType(), Elements);
+}
+
+/// CreateEnumType - get enumeration type.
+llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit){
+  llvm::SmallVector<llvm::DIDescriptor, 32> Enumerators;
+
+  // Create DIEnumerator elements for each enumerator.
+  for (EnumDecl::enumerator_iterator
+         Enum = ED->enumerator_begin(), EnumEnd = ED->enumerator_end();
+       Enum != EnumEnd; ++Enum) {
+    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getName(),
+                                            Enum->getInitVal().getZExtValue()));
+  }
+
+  // Return a CompositeType for the enum itself.
+  llvm::DIArray EltArray =
+    DebugFactory.GetOrCreateArray(Enumerators.data(), Enumerators.size());
+
+  llvm::DIFile DefUnit = getOrCreateFile(ED->getLocation());
+  unsigned Line = getLineNumber(ED->getLocation());
+  uint64_t Size = 0;
+  if (!ED->getTypeForDecl()->isIncompleteType())
+    CGM.getContext().getTypeSize(ED->getTypeForDecl());
+
+  llvm::DIType DbgTy = 
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
+                                     Unit, ED->getName(), DefUnit, Line,
+                                     Size, 0, 0, 0,
+                                     llvm::DIType(), EltArray);
+  return DbgTy;
 }
 
 static QualType UnwrapTypeForDebugInfo(QualType T) {
@@ -1828,6 +1827,10 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::StringRef Name = VD->getName();
   llvm::DIType Ty = getOrCreateType(VD->getType(), Unit);
+  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(VD)) {
+    if (const EnumDecl *ED = dyn_cast<EnumDecl>(ECD->getDeclContext()))
+      Ty = CreateEnumType(ED, Unit);
+  }
   // Do not use DIGlobalVariable for enums.
   if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
     return;
