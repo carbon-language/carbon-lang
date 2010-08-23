@@ -105,21 +105,21 @@ public:
 
   class FullExprArg {
   public:
-    FullExprArg(ActionBase &actions) : Expr(0) { }
+    FullExprArg(ActionBase &actions) : E(0) { }
                 
     // FIXME: The const_cast here is ugly. RValue references would make this
     // much nicer (or we could duplicate a bunch of the move semantics
     // emulation code from Ownership.h).
-    FullExprArg(const FullExprArg& Other): Expr(Other.Expr) {}
+    FullExprArg(const FullExprArg& Other): E(Other.E) {}
 
     OwningExprResult release() {
-      return move(Expr);
+      return move(E);
     }
 
-    ExprArg get() const { return Expr; }
+    Expr *get() const { return E; }
 
-    ExprArg operator->() {
-      return Expr;
+    Expr *operator->() {
+      return E;
     }
 
   private:
@@ -127,9 +127,9 @@ public:
     // Action::FullExpr that needs access to the constructor below.
     friend class Action;
 
-    explicit FullExprArg(Expr *expr) : Expr(expr) {}
+    explicit FullExprArg(Expr *expr) : E(expr) {}
 
-    Expr *Expr;
+    Expr *E;
   };
 
   FullExprArg MakeFullExpr(Expr *Arg) {
