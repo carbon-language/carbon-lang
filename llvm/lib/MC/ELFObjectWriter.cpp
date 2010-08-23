@@ -228,29 +228,8 @@ namespace {
                           const MCFragment *Fragment, const MCFixup &Fixup,
                           MCValue Target, uint64_t &FixedValue);
 
-    // XXX-PERF: this should be cached
-    uint64_t getNumOfLocalSymbols(const MCAssembler &Asm) {
-      std::vector<const MCSymbol*> Local;
-
-      uint64_t Index = 0;
-      for (MCAssembler::const_symbol_iterator it = Asm.symbol_begin(),
-             ie = Asm.symbol_end(); it != ie; ++it) {
-        const MCSymbol &Symbol = it->getSymbol();
-
-        // Ignore non-linker visible symbols.
-        if (!Asm.isSymbolLinkerVisible(Symbol))
-          continue;
-
-        if (it->isExternal() || Symbol.isUndefined())
-          continue;
-
-        Index++;
-      }
-
-      return Index;
-    }
-
-    uint64_t getSymbolIndexInSymbolTable(MCAssembler &Asm, const MCSymbol *S);
+    uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
+                                         const MCSymbol *S);
 
     /// ComputeSymbolTable - Compute the symbol table data
     ///
@@ -271,7 +250,10 @@ namespace {
 
     void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
-    void ExecutePostLayoutBinding(MCAssembler &Asm) {}
+    void ExecutePostLayoutBinding(MCAssembler &Asm) {
+      // Compute symbol table information.
+      ComputeSymbolTable(Asm);
+    }
 
     void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,
@@ -512,10 +494,10 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
 
     if (Base) {
       if (MCFragment *F = SD.getFragment()) {
-        Index = F->getParent()->getOrdinal() + getNumOfLocalSymbols(Asm) + 1;
+        Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
         Value += Layout.getSymbolAddress(&SD);
       } else
-        Index = getSymbolIndexInSymbolTable(const_cast<MCAssembler &>(Asm), Symbol);
+        Index = getSymbolIndexInSymbolTable(Asm, Symbol);
       if (Base != &SD)
         Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
       Addend = Value;
@@ -525,7 +507,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       if (F) {
         // Index of the section in .symtab against this symbol
         // is being relocated + 2 (empty section + abs. symbols).
-        Index = F->getParent()->getOrdinal() + getNumOfLocalSymbols(Asm) + 1;
+        Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
 
         MCSectionData *FSD = F->getParent();
         // Offset of the symbol in the section
@@ -597,62 +579,19 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   Relocations[Fragment->getParent()].push_back(ERE);
 }
 
-// XXX-PERF: this should be cached
-uint64_t ELFObjectWriterImpl::getSymbolIndexInSymbolTable(MCAssembler &Asm,
-                                                          const MCSymbol *S) {
-  std::vector<ELFSymbolData> Local;
-  std::vector<ELFSymbolData> External;
-  std::vector<ELFSymbolData> Undefined;
-
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Symbol = it->getSymbol();
-
-    // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(Symbol))
-      continue;
-
-    if (it->isExternal() || Symbol.isUndefined())
-      continue;
-
-    ELFSymbolData MSD;
-    MSD.SymbolData = it;
-
-    Local.push_back(MSD);
-  }
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Symbol = it->getSymbol();
-
-    // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(Symbol))
-      continue;
-
-    if (!it->isExternal() && !Symbol.isUndefined())
-      continue;
-
-    ELFSymbolData MSD;
-    MSD.SymbolData = it;
-
-    if (Symbol.isUndefined())
-      Undefined.push_back(MSD);
-    else
-      External.push_back(MSD);
-  }
-
-  array_pod_sort(Local.begin(), Local.end());
-  array_pod_sort(External.begin(), External.end());
-  array_pod_sort(Undefined.begin(), Undefined.end());
-
-  for (unsigned i = 0, e = Local.size(); i != e; ++i)
-    if (&Local[i].SymbolData->getSymbol() == S)
+uint64_t
+ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
+                                                 const MCSymbol *S) {
+  for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
+    if (&LocalSymbolData[i].SymbolData->getSymbol() == S)
       return i + /* empty symbol */ 1;
-  for (unsigned i = 0, e = External.size(); i != e; ++i)
-    if (&External[i].SymbolData->getSymbol() == S)
-      return i + Local.size() + Asm.size() + /* empty symbol */ 1;
-  for (unsigned i = 0, e = Undefined.size(); i != e; ++i)
-    if (&Undefined[i].SymbolData->getSymbol() == S)
-      return i + Local.size() + External.size() + Asm.size() + /* empty symbol */ 1;
+  for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
+    if (&ExternalSymbolData[i].SymbolData->getSymbol() == S)
+      return i + LocalSymbolData.size() + Asm.size() + /* empty symbol */ 1;
+  for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
+    if (&UndefinedSymbolData[i].SymbolData->getSymbol() == S)
+      return i + LocalSymbolData.size() + ExternalSymbolData.size() +
+             Asm.size() + /* empty symbol */ 1;
 
   llvm_unreachable("Cannot find symbol which should exist!");
 }
@@ -908,9 +847,6 @@ void ELFObjectWriterImpl::CreateMetadataSections(MCAssembler &Asm,
 
 void ELFObjectWriterImpl::WriteObject(const MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
-  // Compute symbol table information.
-  ComputeSymbolTable(const_cast<MCAssembler&>(Asm));
-
   CreateMetadataSections(const_cast<MCAssembler&>(Asm),
                          const_cast<MCAsmLayout&>(Layout));
 
