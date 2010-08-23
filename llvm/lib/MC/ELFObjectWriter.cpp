@@ -64,8 +64,8 @@ namespace {
 
       // Support lexicographic sorting.
       bool operator<(const ELFSymbolData &RHS) const {
-        const std::string &Name = SymbolData->getSymbol().getName();
-        return Name < RHS.SymbolData->getSymbol().getName();
+        return SymbolData->getSymbol().getName() <
+               RHS.SymbolData->getSymbol().getName();
       }
     };
 
@@ -151,21 +151,13 @@ namespace {
     }
 
     void StringLE32(char *buf, uint32_t Value) {
-      buf[0] = char(Value >> 0);
-      buf[1] = char(Value >> 8);
-      buf[2] = char(Value >> 16);
-      buf[3] = char(Value >> 24);
+      StringLE16(buf, uint16_t(Value >> 0));
+      StringLE16(buf, uint16_t(Value >> 16));
     }
 
     void StringLE64(char *buf, uint64_t Value) {
-      buf[0] = char(Value >> 0);
-      buf[1] = char(Value >> 8);
-      buf[2] = char(Value >> 16);
-      buf[3] = char(Value >> 24);
-      buf[4] = char(Value >> 32);
-      buf[5] = char(Value >> 40);
-      buf[6] = char(Value >> 48);
-      buf[7] = char(Value >> 56);
+      StringLE32(buf, uint32_t(Value >> 0));
+      StringLE32(buf, uint32_t(Value >> 32));
     }
 
     void StringBE16(char *buf ,uint16_t Value) {
@@ -174,21 +166,13 @@ namespace {
     }
 
     void StringBE32(char *buf, uint32_t Value) {
-      buf[0] = char(Value >> 24);
-      buf[1] = char(Value >> 16);
-      buf[2] = char(Value >> 8);
-      buf[3] = char(Value >> 0);
+      StringBE16(buf, uint16_t(Value >> 16));
+      StringBE16(buf, uint16_t(Value >> 0));
     }
 
     void StringBE64(char *buf, uint64_t Value) {
-      buf[0] = char(Value >> 56);
-      buf[1] = char(Value >> 48);
-      buf[2] = char(Value >> 40);
-      buf[3] = char(Value >> 32);
-      buf[4] = char(Value >> 24);
-      buf[5] = char(Value >> 16);
-      buf[6] = char(Value >> 8);
-      buf[7] = char(Value >> 0);
+      StringBE32(buf, uint32_t(Value >> 32));
+      StringBE32(buf, uint32_t(Value >> 0));
     }
 
     void String16(char *buf, uint16_t Value) {
