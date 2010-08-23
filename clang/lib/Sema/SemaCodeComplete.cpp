@@ -1666,6 +1666,20 @@ static void AddResultTypeChunk(ASTContext &Context,
   Result->AddResultTypeChunk(TypeStr);
 }
 
+static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
+                             CodeCompletionString *Result) {
+  if (SentinelAttr *Sentinel = FunctionOrMethod->getAttr<SentinelAttr>())
+    if (Sentinel->getSentinel() == 0) {
+      if (Context.getLangOptions().ObjC1 &&
+          Context.Idents.get("nil").hasMacroDefinition())
+        Result->AddTextChunk(", nil");
+      else if (Context.Idents.get("NULL").hasMacroDefinition())
+        Result->AddTextChunk(", NULL");
+      else
+        Result->AddTextChunk(", (void*)0");
+    }
+}
+
 /// \brief Add function parameter chunks to the given code completion string.
 static void AddFunctionParameterChunks(ASTContext &Context,
                                        FunctionDecl *Function,
@@ -1702,8 +1716,11 @@ static void AddFunctionParameterChunks(ASTContext &Context,
   
   if (const FunctionProtoType *Proto 
         = Function->getType()->getAs<FunctionProtoType>())
-    if (Proto->isVariadic())
+    if (Proto->isVariadic()) {
       CCStr->AddPlaceholderChunk(", ...");
+
+      MaybeAddSentinel(Context, Function, CCStr);
+    }
 }
 
 /// \brief Add template parameter chunks to the given code completion string.
@@ -2020,6 +2037,8 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S,
         Result->AddInformativeChunk(", ...");
       else
         Result->AddPlaceholderChunk(", ...");
+      
+      MaybeAddSentinel(S.Context, Method, Result);
     }
     
     return Result;

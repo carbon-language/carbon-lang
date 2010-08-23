@@ -12,6 +12,12 @@ void f2() { f1(17); }
 
 const char *str = "Hello, \nWorld";
 
+void f3(const char*, ...) __attribute__((sentinel(0)));
+
+#define NULL __null
+void f4(const char* str) {
+  f3(str, NULL);
+}
 // RUN: c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{TypedText __PRETTY_FUNCTION__} (60)
@@ -49,3 +55,8 @@ const char *str = "Hello, \nWorld";
 // RUN: c-index-test -code-completion-at=%s:13:28 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: NotImplemented:{TypedText void} (40)
 // CHECK-CC5: NotImplemented:{TypedText volatile} (40)
+
+// RUN: c-index-test -code-completion-at=%s:19:3 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder char const *}{Placeholder , ...}{Text , NULL}{RightParen )} (50)
+// CHECK-CC6: NotImplemented:{TypedText void} (40)
+// CHECK-CC6: NotImplemented:{TypedText volatile} (40)

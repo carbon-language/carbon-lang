@@ -1,6 +1,6 @@
 // Note: the run lines follow their respective tests, since line/column
 // matter in this test.
-
+#define nil (void*)0
 @protocol FooTestProtocol
 + protocolClassMethod;
 - protocolInstanceMethod : (int)value;
@@ -96,9 +96,9 @@ void test_overload(Overload *ovl) {
 }
 
 @interface Ellipsis
-- (int)Method:(int)i, ...;
+- (int)Method:(int)i, ...; 
+- (int)SentinelMethod:(int)i, ... __attribute__((sentinel(0,1)));
 @end
-
 void f(Ellipsis *e) {
   [e Method:1, 2, 3];
 }
@@ -171,6 +171,7 @@ void msg_id(id x) {
 // CHECK-CCA: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
 // CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}{Placeholder , ...}
+// CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText SentinelMethod:}{Placeholder (int)i}{Placeholder , ...}{Text , nil}
 // RUN: c-index-test -code-completion-at=%s:116:14 %s | FileCheck -check-prefix=CHECK-CCC %s
 // CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method}
 // CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
