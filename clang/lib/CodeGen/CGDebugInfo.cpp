@@ -977,6 +977,17 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   unsigned Line = getLineNumber(ID->getLocation());
   unsigned RuntimeLang = TheCU.getLanguage();
 
+  // If this is just a forward declaration, return a special forward-declaration
+  // debug type.
+  if (ID->isForwardDecl()) {
+    llvm::DICompositeType FwdDecl =
+      DebugFactory.CreateCompositeType(Tag, Unit, ID->getName(),
+                                       DefUnit, Line, 0, 0, 0, 0,
+                                       llvm::DIType(), llvm::DIArray(),
+                                       RuntimeLang);
+    return FwdDecl;
+  }
+
   // To handle recursive interface, we
   // first generate a debug descriptor for the struct as a forward declaration.
   // Then (if it is a definition) we go through and get debug info for all of
@@ -984,10 +995,6 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType();
-
-  // If this is just a forward declaration, return it.
-  if (ID->isForwardDecl())
-    return FwdDecl;
 
   llvm::MDNode *MN = FwdDecl;
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
