@@ -46,7 +46,7 @@ namespace {
     SmallVector<int64_t,16> LocalOffsets;
 
     void AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
-                           unsigned &MaxAlign);
+                           bool StackGrowsDown, unsigned &MaxAlign);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
     bool insertFrameReferenceRegisters(MachineFunction &Fn);
   public:
@@ -102,7 +102,12 @@ bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
 /// AdjustStackOffset - Helper function used to adjust the stack frame offset.
 void LocalStackSlotPass::AdjustStackOffset(MachineFrameInfo *MFI,
                                            int FrameIdx, int64_t &Offset,
+                                           bool StackGrowsDown,
                                            unsigned &MaxAlign) {
+  // If the stack grows down, add the object size to find the lowest address.
+  if (StackGrowsDown)
+    Offset += MFI->getObjectSize(FrameIdx);
+
   unsigned Align = MFI->getObjectAlignment(FrameIdx);
 
   // If the alignment of this object is greater than that of the stack, then
@@ -112,13 +117,16 @@ void LocalStackSlotPass::AdjustStackOffset(MachineFrameInfo *MFI,
   // Adjust to alignment boundary.
   Offset = (Offset + Align - 1) / Align * Align;
 
+  int64_t LocalOffset = StackGrowsDown ? -Offset : Offset;
   DEBUG(dbgs() << "Allocate FI(" << FrameIdx << ") to local offset "
-        << Offset << "\n");
+        << LocalOffset << "\n");
   // Keep the offset available for base register allocation
-  LocalOffsets[FrameIdx] = Offset;
+  LocalOffsets[FrameIdx] = LocalOffset;
   // And tell MFI about it for PEI to use later
-  MFI->mapLocalFrameObject(FrameIdx, Offset);
-  Offset += MFI->getObjectSize(FrameIdx);
+  MFI->mapLocalFrameObject(FrameIdx, LocalOffset);
+
+  if (!StackGrowsDown)
+    Offset += MFI->getObjectSize(FrameIdx);
 
   ++NumAllocations;
 }
@@ -129,6 +137,9 @@ void LocalStackSlotPass::AdjustStackOffset(MachineFrameInfo *MFI,
 void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *MFI = Fn.getFrameInfo();
+  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
+  bool StackGrowsDown =
+    TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
   int64_t Offset = 0;
   unsigned MaxAlign = 0;
 
@@ -136,7 +147,8 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // stack.
   SmallSet<int, 16> LargeStackObjs;
   if (MFI->getStackProtectorIndex() >= 0) {
-    AdjustStackOffset(MFI, MFI->getStackProtectorIndex(), Offset, MaxAlign);
+    AdjustStackOffset(MFI, MFI->getStackProtectorIndex(), Offset,
+                      StackGrowsDown, MaxAlign);
 
     // Assign large stack objects first.
     for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
@@ -147,7 +159,7 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
       if (!MFI->MayNeedStackProtector(i))
         continue;
 
-      AdjustStackOffset(MFI, i, Offset, MaxAlign);
+      AdjustStackOffset(MFI, i, Offset, StackGrowsDown, MaxAlign);
       LargeStackObjs.insert(i);
     }
   }
@@ -162,7 +174,7 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
     if (LargeStackObjs.count(i))
       continue;
 
-    AdjustStackOffset(MFI, i, Offset, MaxAlign);
+    AdjustStackOffset(MFI, i, Offset, StackGrowsDown, MaxAlign);
   }
 
   // Remember how big this blob of stack space is
@@ -173,8 +185,8 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
 static inline bool
 lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
                        std::pair<unsigned, int64_t> &RegOffset,
+                       int64_t FrameSizeAdjust,
                        int64_t LocalFrameOffset,
-                       bool StackGrowsDown,
                        const MachineInstr *MI,
                        const TargetRegisterInfo *TRI) {
   unsigned e = Regs.size();
@@ -182,9 +194,7 @@ lookupCandidateBaseReg(const SmallVector<std::pair<unsigned, int64_t>, 8> &Regs,
     RegOffset = Regs[i];
     // Check if the relative offset from the where the base register references
     // to the target address is in range for the instruction.
-    int64_t Offset = LocalFrameOffset - RegOffset.second;
-    if (StackGrowsDown)
-      Offset = -Offset;
+    int64_t Offset = FrameSizeAdjust + LocalFrameOffset - RegOffset.second;
     if (TRI->isFrameOffsetLegal(MI, Offset))
       return true;
   }
@@ -241,6 +251,8 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
           if (TRI->needsFrameBaseReg(MI, i)) {
             unsigned BaseReg = 0;
             int64_t Offset = 0;
+            int64_t FrameSizeAdjust = StackGrowsDown ? MFI->getLocalFrameSize()
+              : 0;
 
             DEBUG(dbgs() << "  Replacing FI in: " << *MI);
 
@@ -251,15 +263,15 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // register.
             std::pair<unsigned, int64_t> RegOffset;
             if (lookupCandidateBaseReg(BaseRegisters, RegOffset,
+                                       FrameSizeAdjust,
                                        LocalOffsets[FrameIdx],
-                                       StackGrowsDown, MI, TRI)) {
+                                       MI, TRI)) {
               DEBUG(dbgs() << "  Reusing base register " <<
                     RegOffset.first << "\n");
               // We found a register to reuse.
               BaseReg = RegOffset.first;
-              Offset = LocalOffsets[FrameIdx] - RegOffset.second;
-              if (StackGrowsDown)
-                Offset = -Offset;
+              Offset = FrameSizeAdjust + LocalOffsets[FrameIdx] -
+                RegOffset.second;
             } else {
               // No previously defined register was in range, so create a
               // new one.
@@ -280,9 +292,10 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
               // applied twice.
               Offset = -InstrOffset;
 
+              int64_t BaseOffset = FrameSizeAdjust + LocalOffsets[FrameIdx] +
+                InstrOffset;
               BaseRegisters.push_back(
-                std::pair<unsigned, int64_t>(BaseReg,
-                                      LocalOffsets[FrameIdx] + InstrOffset));
+                std::pair<unsigned, int64_t>(BaseReg, BaseOffset));
               ++NumBaseRegisters;
               UsedBaseReg = true;
             }
@@ -295,7 +308,6 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
 
             ++NumReplacements;
           }
-
         }
       }
     }
