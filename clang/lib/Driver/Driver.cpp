@@ -240,7 +240,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_host_triple))
     DefaultHostTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
-    Dir = A->getValue(*Args);
+    Dir = InstalledDir = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_B))
     PrefixDir = A->getValue(*Args);
 
