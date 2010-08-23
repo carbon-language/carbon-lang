@@ -215,7 +215,7 @@ public:
   /// @param bold bold/brighter text, default false
   /// @param bg if true change the background, default: change foreground
   /// @returns itself so it can be used within << invocations
-  virtual raw_ostream &changeColor(enum Colors, bool = false, bool = false) { 
+  virtual raw_ostream &changeColor(enum Colors, bool = false, bool = false) {
     return *this; }
 
   /// Resets the colors to terminal defaults. Call this when you are done
@@ -455,7 +455,7 @@ public:
   /// outside of the raw_svector_ostream's control.  It is only safe to do this
   /// if the raw_svector_ostream has previously been flushed.
   void resync();
-  
+
   /// str - Flushes the stream contents to the target vector and return a
   /// StringRef for the vector contents.
   StringRef str();
