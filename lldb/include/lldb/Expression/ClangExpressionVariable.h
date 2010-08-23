@@ -89,6 +89,7 @@ struct ClangExpressionVariable
         TypeFromParser          m_parser_type;  ///< The type of the variable according to the parser
         const clang::NamedDecl *m_named_decl;   ///< The Decl corresponding to this variable
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
+        lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
     };
     std::auto_ptr<ParserVars> m_parser_vars;
     
@@ -246,6 +247,27 @@ public:
         {
             ClangExpressionVariable &candidate (VariableAtIndex(index));
             if (!candidate.m_name.compare(name))
+                return &candidate;
+        }
+        return NULL;
+    }
+    
+    //----------------------------------------------------------------------
+    /// Finds a variable by NamedDecl in the list.
+    ///
+    /// @param[in] name
+    ///     The name of the requested variable.
+    ///
+    /// @return
+    ///     The variable requested, or NULL if that variable is not in the list.
+    //----------------------------------------------------------------------
+    ClangExpressionVariable *GetVariable (const clang::NamedDecl *decl)
+    {
+        for (uint64_t index = 0, size = Size(); index < size; ++index)
+        {
+            ClangExpressionVariable &candidate (VariableAtIndex(index));
+            if (candidate.m_parser_vars.get() && 
+                candidate.m_parser_vars->m_named_decl == decl)
                 return &candidate;
         }
         return NULL;

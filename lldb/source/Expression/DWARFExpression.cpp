@@ -2466,6 +2466,7 @@ DWARFExpression::Evaluate
         //----------------------------------------------------------------------
         case DW_OP_APPLE_extern:
             {
+                /*
                 uint32_t idx = opcodes.GetULEB128(&offset);
                 if (!decl_map)
                 {
@@ -2483,6 +2484,7 @@ DWARFExpression::Evaluate
                 Value *proxy = extern_var->CreateProxy();
                 stack.push_back(*proxy);
                 delete proxy;
+                */
             }
             break;
 

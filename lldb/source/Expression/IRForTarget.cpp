@@ -137,7 +137,7 @@ IRForTarget::createResultVariable(llvm::Module &M,
     std::string new_result_name;
     
     m_decl_map->GetPersistentResultName(new_result_name);
-    m_decl_map->AddPersistentVariable(new_result_name.c_str(), result_decl_type);
+    m_decl_map->AddPersistentVariable(result_decl, new_result_name.c_str(), result_decl_type);
     
     if (log)
         log->Printf("Creating a new result global: %s", new_result_name.c_str());
@@ -364,7 +364,7 @@ IRForTarget::RewritePersistentAlloc(llvm::Instruction *persistent_alloc,
     lldb_private::TypeFromParser result_decl_type (decl->getType().getAsOpaquePtr(),
                                                    &decl->getASTContext());
     
-    if (!m_decl_map->AddPersistentVariable(decl->getName().str().c_str(), result_decl_type))
+    if (!m_decl_map->AddPersistentVariable(decl, decl->getName().str().c_str(), result_decl_type))
         return false;
     
     GlobalVariable *persistent_global = new GlobalVariable(M, 
@@ -526,10 +526,8 @@ IRForTarget::MaybeHandleVariable(Module &M,
         size_t value_size = m_target_data->getTypeStoreSize(value_type);
         off_t value_alignment = m_target_data->getPrefTypeAlignment(value_type);
         
-        if (named_decl && !m_decl_map->AddValueToStruct(V, 
-                                                        named_decl,
-                                                        name,
-                                                        lldb_private::TypeFromParser(qual_type, ast_context),
+        if (named_decl && !m_decl_map->AddValueToStruct(named_decl,
+                                                        V,
                                                         value_size, 
                                                         value_alignment))
             return false;
@@ -939,6 +937,9 @@ IRForTarget::runOnModule(Module &M)
          bbi != function->end();
          ++bbi)
     {
+        if (!removeGuards(M, *bbi))
+            return false;
+        
         if (!rewritePersistentAllocs(M, *bbi))
             return false;
         
@@ -946,9 +947,6 @@ IRForTarget::runOnModule(Module &M)
             return false;
 
         if (!resolveExternals(M, *bbi))
-            return false;
-        
-        if (!removeGuards(M, *bbi))
             return false;
     }
     

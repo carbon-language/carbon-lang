@@ -51,34 +51,19 @@ ClangExpressionDeclMap::ClangExpressionDeclMap(ExecutionContext *exe_ctx) :
 }
 
 ClangExpressionDeclMap::~ClangExpressionDeclMap()
-{
-    uint32_t num_tuples = m_tuples.size ();
-    uint32_t tuple_index;
-    
-    for (tuple_index = 0; tuple_index < num_tuples; ++tuple_index)
-        delete m_tuples[tuple_index].m_value;
+{    
+    for (uint64_t entity_index = 0, num_entities = m_found_entities.Size();
+         entity_index < num_entities;
+         ++entity_index)
+    {
+        ClangExpressionVariable &entity(m_found_entities.VariableAtIndex(entity_index));
+        if (entity.m_parser_vars.get() &&
+            entity.m_parser_vars->m_lldb_value)
+            delete entity.m_parser_vars->m_lldb_value;
+    }
     
     if (m_sym_ctx)
         delete m_sym_ctx;
-}
-
-bool 
-ClangExpressionDeclMap::GetIndexForDecl (uint32_t &index,
-                                         const clang::Decl *decl)
-{
-    uint32_t num_tuples = m_tuples.size ();
-    uint32_t tuple_index;
-    
-    for (tuple_index = 0; tuple_index < num_tuples; ++tuple_index)
-    {
-        if (m_tuples[tuple_index].m_decl == decl) 
-        {
-            index = tuple_index;
-            return true;
-        }
-    }
-    
-    return false;
 }
 
 // Interface for IRForTarget
@@ -92,7 +77,9 @@ ClangExpressionDeclMap::GetPersistentResultName (std::string &name)
 }
 
 bool 
-ClangExpressionDeclMap::AddPersistentVariable (const char *name, TypeFromParser parser_type)
+ClangExpressionDeclMap::AddPersistentVariable (const clang::NamedDecl *decl, 
+                                               const char *name, 
+                                               TypeFromParser parser_type)
 {
     clang::ASTContext *context(m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     
@@ -101,40 +88,50 @@ ClangExpressionDeclMap::AddPersistentVariable (const char *name, TypeFromParser 
                                                      parser_type.GetOpaqueQualType()),
                             context);
     
-    return m_persistent_vars->CreatePersistentVariable (name, user_type);
+    if (!m_persistent_vars->CreatePersistentVariable (name, user_type))
+        return false;
+    
+    ClangExpressionVariable *var = m_persistent_vars->GetVariable(name);
+    
+    if (!var)
+        return false;
+    
+    var->EnableParserVars();
+    
+    var->m_parser_vars->m_named_decl = decl;
+    var->m_parser_vars->m_parser_type = parser_type;
+    
+    return true;
 }
 
 bool 
-ClangExpressionDeclMap::AddValueToStruct (llvm::Value *value,
-                                          const clang::NamedDecl *decl,
-                                          std::string &name,
-                                          TypeFromParser type,
+ClangExpressionDeclMap::AddValueToStruct (const clang::NamedDecl *decl,
+                                          llvm::Value *value,
                                           size_t size,
                                           off_t alignment)
 {
     m_struct_laid_out = false;
     
-    StructMemberIterator iter;
+    if (m_struct_members.GetVariable(decl))
+        return true;
     
-    for (iter = m_members.begin();
-         iter != m_members.end();
-         ++iter)
-    {
-        if (iter->m_decl == decl)
-            return true;
-    }
-
-    StructMember member;
+    ClangExpressionVariable *var = m_found_entities.GetVariable(decl);
     
-    member.m_value          = value;
-    member.m_decl           = decl;
-    member.m_name           = name;
-    member.m_parser_type    = type;
-    member.m_offset         = 0;
-    member.m_size           = size;
-    member.m_alignment      = alignment;
+    if (!var)
+        var = m_persistent_vars->GetVariable(decl);
     
-    m_members.push_back(member);
+    if (!var)
+        return false;
+    
+    // We know entity->m_parser_vars is valid because we used a parser variable
+    // to find it
+    var->m_parser_vars->m_llvm_value = value;
+    
+    var->EnableJITVars();
+    var->m_jit_vars->m_alignment = alignment;
+    var->m_jit_vars->m_size = size;
+    
+    m_struct_members.AddVariable(*var);
     
     return true;
 }
@@ -145,25 +142,28 @@ ClangExpressionDeclMap::DoStructLayout ()
     if (m_struct_laid_out)
         return true;
     
-    StructMemberIterator iter;
-    
     off_t cursor = 0;
     
     m_struct_alignment = 0;
     m_struct_size = 0;
     
-    for (iter = m_members.begin();
-         iter != m_members.end();
-         ++iter)
+    for (uint64_t member_index = 0, num_members = m_struct_members.Size();
+         member_index < num_members;
+         ++member_index)
     {
-        if (iter == m_members.begin())
-            m_struct_alignment = iter->m_alignment;
+        ClangExpressionVariable &member(m_struct_members.VariableAtIndex(member_index));
         
-        if (cursor % iter->m_alignment)
-            cursor += (iter->m_alignment - (cursor % iter->m_alignment));
+        if (!member.m_jit_vars.get())
+            return false;
         
-        iter->m_offset = cursor;
-        cursor += iter->m_size;
+        if (member_index == 0)
+            m_struct_alignment = member.m_jit_vars->m_alignment;
+        
+        if (cursor % member.m_jit_vars->m_alignment)
+            cursor += (member.m_jit_vars->m_alignment - (cursor % member.m_jit_vars->m_alignment));
+        
+        member.m_jit_vars->m_offset = cursor;
+        cursor += member.m_jit_vars->m_size;
     }
     
     m_struct_size = cursor;
@@ -179,7 +179,7 @@ bool ClangExpressionDeclMap::GetStructInfo (uint32_t &num_elements,
     if (!m_struct_laid_out)
         return false;
     
-    num_elements = m_members.size();
+    num_elements = m_struct_members.Size();
     size = m_struct_size;
     alignment = m_struct_alignment;
     
@@ -195,13 +195,19 @@ ClangExpressionDeclMap::GetStructElement (const clang::NamedDecl *&decl,
     if (!m_struct_laid_out)
         return false;
     
-    if (index >= m_members.size())
+    if (index >= m_struct_members.Size())
         return false;
     
-    decl = m_members[index].m_decl;
-    value = m_members[index].m_value;
-    offset = m_members[index].m_offset;
+    ClangExpressionVariable &member(m_struct_members.VariableAtIndex(index));
     
+    if (!member.m_parser_vars.get() ||
+        !member.m_jit_vars.get())
+        return false;
+    
+    decl = member.m_parser_vars->m_named_decl;
+    value = member.m_parser_vars->m_llvm_value;
+    offset = member.m_jit_vars->m_offset;
+        
     return true;
 }
 
@@ -210,21 +216,18 @@ ClangExpressionDeclMap::GetFunctionInfo (const clang::NamedDecl *decl,
                                          llvm::Value**& value, 
                                          uint64_t &ptr)
 {
-    TupleIterator iter;
+    ClangExpressionVariable *entity = m_found_entities.GetVariable(decl);
+
+    if (!entity)
+        return false;
     
-    for (iter = m_tuples.begin();
-         iter != m_tuples.end();
-         ++iter)
-    {
-        if (decl == iter->m_decl)
-        {
-            value = &iter->m_llvm_value;
-            ptr = iter->m_value->GetScalar().ULongLong();
-            return true;
-        }
-    }
+    // We know m_parser_vars is valid since we searched for the variable by
+    // its NamedDecl
     
-    return false;
+    value = &entity->m_parser_vars->m_llvm_value;
+    ptr = entity->m_parser_vars->m_lldb_value->GetScalar().ULongLong();
+    
+    return true;
 }
 
 bool
@@ -258,16 +261,6 @@ ClangExpressionDeclMap::GetFunctionAddress (const char *name,
     ptr = fun_address->GetLoadAddress(m_exe_ctx->process);
     
     return true;
-}
-
-// Interface for DwarfExpression
-lldb_private::Value 
-*ClangExpressionDeclMap::GetValueForIndex (uint32_t index)
-{
-    if (index >= m_tuples.size ())
-        return NULL;
-    
-    return m_tuples[index].m_value;
 }
 
 // Interface for CommandObjectExpression
@@ -334,23 +327,26 @@ ClangExpressionDeclMap::DumpMaterializedStruct(ExecutionContext *exe_ctx,
     
     DataExtractor extractor(data, exe_ctx->process->GetByteOrder(), exe_ctx->target->GetArchitecture().GetAddressByteSize());
     
-    StructMemberIterator iter;
-    
-    for (iter = m_members.begin();
-         iter != m_members.end();
-         ++iter)
+    for (uint64_t member_index = 0, num_members = m_struct_members.Size();
+         member_index < num_members;
+         ++member_index)
     {
-        s.Printf("[%s]\n", iter->m_name.c_str());
+        ClangExpressionVariable &member (m_struct_members.VariableAtIndex(member_index));
         
-        extractor.Dump(&s,                                          // stream
-                       iter->m_offset,                              // offset
-                       lldb::eFormatBytesWithASCII,                 // format
-                       1,                                           // byte size of individual entries
-                       iter->m_size,                                // number of entries
-                       16,                                          // entries per line
-                       m_materialized_location + iter->m_offset,    // address to print
-                       0,                                           // bit size (bitfields only; 0 means ignore)
-                       0);                                          // bit alignment (bitfields only; 0 means ignore)
+        s.Printf("[%s]\n", member.m_name.c_str());
+        
+        if (!member.m_jit_vars.get())
+            return false;
+        
+        extractor.Dump(&s,                                                      // stream
+                       member.m_jit_vars->m_offset,                             // offset
+                       lldb::eFormatBytesWithASCII,                             // format
+                       1,                                                       // byte size of individual entries
+                       member.m_jit_vars->m_size,                               // number of entries
+                       16,                                                      // entries per line
+                       m_materialized_location + member.m_jit_vars->m_offset,   // address to print
+                       0,                                                       // bit size (bitfields only; 0 means ignore)
+                       0);                                                      // bit alignment (bitfields only; 0 means ignore)
         
         s.PutChar('\n');
     }
@@ -407,81 +403,49 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
     m_materialized_location = m_allocated_area;
     
     if (m_materialized_location % m_struct_alignment)
-    {
         m_materialized_location += (m_struct_alignment - (m_materialized_location % m_struct_alignment));
-    }
-        
-    StructMemberIterator iter;
     
-    for (iter = m_members.begin();
-         iter != m_members.end();
-         ++iter)
+    for (uint64_t member_index = 0, num_members = m_struct_members.Size();
+         member_index < num_members;
+         ++member_index)
     {
-        uint32_t tuple_index;
+        ClangExpressionVariable &member (m_struct_members.VariableAtIndex(member_index));
         
-        if (!GetIndexForDecl(tuple_index, iter->m_decl)) 
-        {
-            if (iter->m_name.find("___clang_expr_result") != std::string::npos)
-            {
-                if (dematerialize)
-                {
-                    // Here we pick up the odd anomaly produced by 
-                    // IRForTarget::createResultVariable (and described in a comment
-                    // there).
-                    //
-                    // We rename the variable to the name of the result PVar and
-                    // incidentally drop the address of the PVar into *result
-                    // (if it's non-NULL, of course).  We then let this case fall 
-                    // through to the persistent variable handler.
-                    
-                    if (log)
-                        log->PutCString("Found result member in the struct");
-                    
-                    iter->m_name = m_result_name;
-                    
-                    if (result)
-                    {
-                        if (log)
-                            log->PutCString("Returning result PVar");
-                        
-                        *result = m_persistent_vars->GetVariable(m_result_name.c_str());
-                        
-                        if (!*result)
-                        {
-                            err.SetErrorStringWithFormat("Couldn't find persistent variable for result %s", m_result_name.c_str());
-                        }
-                    }
-                    else
-                    {
-                        if (log)
-                            log->PutCString("Didn't return result PVar; pointer was NULL");
-                    }
-                }
-                else
-                {
-                    // The result variable doesn't need to be materialized, ever.
-                    continue;
-                }
-            }
-            
-            if (iter->m_name[0] == '$')
-            {
-                if (!DoMaterializeOnePersistentVariable(dematerialize, *exe_ctx, iter->m_name.c_str(), m_materialized_location + iter->m_offset, err))
-                    return false;
-            }
-            else
-            {
-                err.SetErrorStringWithFormat("Unexpected variable %s", iter->m_name.c_str());
-                return false;
-            }
-            
-            continue;
-        }
-        
-        Tuple &tuple(m_tuples[tuple_index]);
-        
-        if (!DoMaterializeOneVariable(dematerialize, *exe_ctx, sym_ctx, iter->m_name.c_str(), tuple.m_user_type, m_materialized_location + iter->m_offset, err))
+        if (!member.m_parser_vars.get())
             return false;
+        
+        ClangExpressionVariable *entity = m_found_entities.GetVariable(member.m_parser_vars->m_named_decl);
+        ClangExpressionVariable *persistent_variable = m_persistent_vars->GetVariable(member.m_name.c_str());
+        
+        if (entity)
+        {
+            if (!member.m_jit_vars.get())
+                return false;
+            
+            if (!DoMaterializeOneVariable(dematerialize, *exe_ctx, sym_ctx, member.m_name.c_str(), member.m_user_type, m_materialized_location + member.m_jit_vars->m_offset, err))
+                return false;
+        }
+        else if (persistent_variable)
+        {
+            if (!member.m_name.compare(m_result_name) && !dematerialize)
+                continue;
+                
+            if (dematerialize)
+            {                
+                if (log)
+                    log->PutCString("Found result member in the struct");
+                    
+                *result = &member;
+            }
+            
+            if (!DoMaterializeOnePersistentVariable(dematerialize, *exe_ctx, persistent_variable->m_name.c_str(), m_materialized_location + member.m_jit_vars->m_offset, err))
+                return false;
+        }
+        else
+        {
+            err.SetErrorStringWithFormat("Unexpected variable %s", member.m_name.c_str());
+            return false;
+        }
     }
     
     return true;
@@ -901,15 +865,15 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
     
-    Tuple tuple;
+    ClangExpressionVariable &entity(m_found_entities.VariableAtIndex(m_found_entities.CreateVariable()));
+    entity.m_name       = context.Name.getAsString();
+    entity.m_user_type  = ut;
     
-    tuple.m_decl        = var_decl;
-    tuple.m_value       = var_location;
-    tuple.m_user_type   = ut;
-    tuple.m_parser_type = pt;
-    tuple.m_llvm_value  = NULL;
-    
-    m_tuples.push_back(tuple);
+    entity.EnableParserVars();
+    entity.m_parser_vars->m_parser_type = pt;
+    entity.m_parser_vars->m_named_decl  = var_decl;
+    entity.m_parser_vars->m_llvm_value  = NULL;
+    entity.m_parser_vars->m_lldb_value  = var_location;
     
     if (log)
         log->Printf("Found variable %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), var_decl);    
@@ -926,7 +890,13 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                                          user_type.GetOpaqueQualType()),
                                context.GetASTContext());
     
-    (void)context.AddVarDecl(parser_type.GetOpaqueQualType());
+    NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
+    
+    pvar->EnableParserVars();
+    pvar->m_parser_vars->m_parser_type = parser_type;
+    pvar->m_parser_vars->m_named_decl  = var_decl;
+    pvar->m_parser_vars->m_llvm_value  = NULL;
+    pvar->m_parser_vars->m_lldb_value  = NULL;
 }
 
 void
@@ -989,15 +959,15 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     fun_location->SetValueType(Value::eValueTypeLoadAddress);
     fun_location->GetScalar() = load_addr;
     
-    Tuple tuple;
+    ClangExpressionVariable &entity(m_found_entities.VariableAtIndex(m_found_entities.CreateVariable()));
+    entity.m_name       = context.Name.getAsString();
+    entity.m_user_type  = TypeFromUser(fun_opaque_type, fun_ast_context);;
     
-    tuple.m_decl        = fun_decl;
-    tuple.m_value       = fun_location.release();
-    tuple.m_user_type   = TypeFromUser(fun_opaque_type, fun_ast_context);
-    tuple.m_llvm_value  = NULL;
-    
-    m_tuples.push_back(tuple);
-    
+    entity.EnableParserVars();
+    entity.m_parser_vars->m_named_decl  = fun_decl;
+    entity.m_parser_vars->m_llvm_value  = NULL;
+    entity.m_parser_vars->m_lldb_value  = fun_location.release();
+        
     if (log)
         log->Printf("Found function %s, returned (NamedDecl)%p", context.Name.getAsString().c_str(), fun_decl);    
 }

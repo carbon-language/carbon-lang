@@ -93,6 +93,10 @@ public:
     /// [Used by IRForTarget] Add a variable to the list of persistent
     ///     variables for the process.
     ///
+    /// @param[in] decl
+    ///     The Clang declaration for the persistent variable, used for
+    ///     lookup during parsing.
+    ///
     /// @param[in] name
     ///     The name of the persistent variable, usually $something.
     ///
@@ -102,23 +106,19 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool AddPersistentVariable (const char *name, TypeFromParser type);
+    bool AddPersistentVariable (const clang::NamedDecl *decl,
+                                const char *name, 
+                                TypeFromParser type);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Add a variable to the struct that needs to
     ///     be materialized each time the expression runs.
     ///
-    /// @param[in] value
-    ///     The LLVM IR value for this variable.
-    ///
     /// @param[in] decl
     ///     The Clang declaration for the variable.
     ///
-    /// @param[in] name
-    ///     The name of the variable.
-    ///
-    /// @param[in] type
-    ///     The type of the variable.
+    /// @param[in] value
+    ///     The LLVM IR value for this variable.
     ///
     /// @param[in] size
     ///     The size of the variable in bytes.
@@ -129,10 +129,8 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool AddValueToStruct (llvm::Value *value,
-                           const clang::NamedDecl *decl,
-                           std::string &name,
-                           TypeFromParser type,
+    bool AddValueToStruct (const clang::NamedDecl *decl,
+                           llvm::Value *value,
                            size_t size,
                            off_t alignment);
     
@@ -239,19 +237,6 @@ public:
                              uint64_t &ptr);
     
     //------------------------------------------------------------------
-    /// [Used by DWARFExpression] Get the LLDB value for a variable given
-    /// its unique index into the value map.
-    ///
-    /// @param[in] index
-    ///     The index of the variable into the tuple array, which keeps track
-    ///     of Decls, types, and Values.
-    ///
-    /// @return
-    ///     The LLDB value for the variable.
-    //------------------------------------------------------------------
-    Value *GetValueForIndex (uint32_t index);
-    
-    //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct
     /// at a given address, which should be aligned as specified by 
     /// GetStructInfo().
@@ -335,51 +320,9 @@ public:
     void GetDecls (NameSearchContext &context,
                    const char *name);
 private:
-    //----------------------------------------------------------------------
-    /// @class Tuple ClangExpressionDeclMap.h "lldb/Expression/ClangExpressionDeclMap.h"
-    /// @brief A single entity that has been looked up on the behalf of the parser.
-    ///
-    /// When the Clang parser requests entities by name, ClangExpressionDeclMap
-    /// records what was looked up in a list of Tuples.
-    //----------------------------------------------------------------------
-    struct Tuple
-    {
-        const clang::NamedDecl  *m_decl;        ///< The Decl generated for the entity.
-        TypeFromParser          m_parser_type;  ///< The type of the entity, as reported to the parser.
-        TypeFromUser            m_user_type;    ///< The type of the entity, as found in LLDB.
-        lldb_private::Value     *m_value;       ///< [owned by ClangExpressionDeclMap] A LLDB Value for the entity.
-        llvm::Value             *m_llvm_value;  ///< A LLVM IR Value for the entity, usually a GlobalVariable.
-    };
+    ClangExpressionVariableStore    m_found_entities;       ///< All entities that were looked up for the parser.
+    ClangExpressionVariableList     m_struct_members;       ///< All entities that need to be placed in the struct.
     
-    //----------------------------------------------------------------------
-    /// @class StructMember ClangExpressionDeclMap.h "lldb/Expression/ClangExpressionDeclMap.h"
-    /// @brief An entity that needs to be materialized in order to make the
-    /// expression work.
-    ///
-    /// IRForTarget identifies those entities that actually made it into the
-    /// final IR and adds them to a list of StructMembers; this list is used
-    /// as the basis of struct layout and its fields are used for
-    /// materializing/dematerializing the struct.
-    //----------------------------------------------------------------------
-    struct StructMember
-    {
-        const clang::NamedDecl *m_decl;         ///< The Decl generated for the entity.
-        llvm::Value            *m_value;        ///< A LLVM IR Value for he entity, usually a GlobalVariable.
-        std::string             m_name;         ///< The name of the entity, for use in materialization.
-        TypeFromParser          m_parser_type;  ///< The expected type of the entity, for use in materialization.
-        off_t                   m_offset;       ///< The laid-out offset of the entity in the struct.  Only valid after DoStructLayout().
-        size_t                  m_size;         ///< The size of the entity.
-        off_t                   m_alignment;    ///< The required alignment of the entity, in bytes.
-    };
-    
-    typedef std::vector<Tuple> TupleVector;
-    typedef TupleVector::iterator TupleIterator;
-    
-    typedef std::vector<StructMember> StructMemberVector;
-    typedef StructMemberVector::iterator StructMemberIterator;
-    
-    TupleVector                 m_tuples;                   ///< All entities that were looked up for the parser.
-    StructMemberVector          m_members;                  ///< All fields of the struct that need to be materialized.
     ExecutionContext           *m_exe_ctx;                  ///< The execution context where this expression was first defined.  It determines types for all the external variables, even if the expression is re-used.
     SymbolContext              *m_sym_ctx;                  ///< [owned by ClangExpressionDeclMap] The symbol context where this expression was first defined.
     ClangPersistentVariables   *m_persistent_vars;          ///< The list of persistent variables to use when resolving symbols in the expression and when creating new ones (like the result).
@@ -414,22 +357,6 @@ private:
     Variable *FindVariableInScope(const SymbolContext &sym_ctx,
                                   const char *name,
                                   TypeFromUser *type = NULL);
-    
-    //------------------------------------------------------------------
-    /// Get the index into the Tuple array for the given Decl.  Implements
-    /// vanilla linear search.
-    ///
-    /// @param[out] index
-    ///     The index into the Tuple array that corresponds to the Decl.
-    ///
-    /// @param[in] decl
-    ///     The Decl to be looked up.
-    ///
-    /// @return
-    ///     True if the Decl was found; false otherwise.
-    //------------------------------------------------------------------
-    bool GetIndexForDecl (uint32_t &index,
-                          const clang::Decl *decl);
     
     //------------------------------------------------------------------
     /// Get the value of a variable in a given execution context and return
