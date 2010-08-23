@@ -57,6 +57,7 @@ class ARMFastISel : public FastISel {
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
+  const ARMFunctionInfo *AFI;
 
   public:
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo) 
@@ -65,6 +66,7 @@ class ARMFastISel : public FastISel {
       TII(*TM.getInstrInfo()),
       TLI(*TM.getTargetLowering()) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
+      AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
     }
 
     // Code from FastISel.cpp.
@@ -363,7 +365,6 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   if (!ARMComputeRegOffset(I, Reg, Offset))
     return false;
     
-    
   unsigned ResultReg = createResultReg(ARM::GPRRegisterClass);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::LDR), ResultReg)
@@ -373,6 +374,9 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
 }
 
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
+  // No Thumb-1 for now.
+  if (AFI->isThumbFunction() && !AFI->isThumb2Function()) return false;
+  
   switch (I->getOpcode()) {
     case Instruction::Load:
       return ARMSelectLoad(I);
