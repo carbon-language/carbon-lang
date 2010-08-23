@@ -588,6 +588,8 @@ protected:
       NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
+  virtual ~RecordLayoutBuilder() { }
+
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
