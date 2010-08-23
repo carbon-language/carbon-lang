@@ -501,11 +501,11 @@ ItaniumCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
 
   // For member function pointers, the tautologies are more complex.
   // The Itanium tautology is:
-  //   (L == R) <==> (L.ptr == R.ptr /\ (L.ptr == 0 \/ L.adj == R.adj))
+  //   (L == R) <==> (L.ptr == R.ptr && (L.ptr == 0 || L.adj == R.adj))
   // The ARM tautology is:
-  //   (L == R) <==> (L.ptr == R.ptr /\
-  //                  (L.adj == R.adj \/
-  //                   (L.ptr == 0 /\ ((L.adj|R.adj) & 1) == 0)))
+  //   (L == R) <==> (L.ptr == R.ptr &&
+  //                  (L.adj == R.adj ||
+  //                   (L.ptr == 0 && ((L.adj|R.adj) & 1) == 0)))
   // The inequality tautologies have exactly the same structure, except
   // applying De Morgan's laws.
   
