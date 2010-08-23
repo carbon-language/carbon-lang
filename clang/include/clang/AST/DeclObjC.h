@@ -919,6 +919,9 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   /// FIXME: this should not be a singly-linked list.  Move storage elsewhere.
   ObjCCategoryDecl *NextClassCategory;
 
+  /// true of class extension has at least one bitfield ivar.
+  bool HasSynthBitfield : 1;
+  
   /// \brief The location of the '@' in '@interface'
   SourceLocation AtLoc;
 
@@ -929,8 +932,8 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
                    SourceLocation ClassNameLoc, SourceLocation CategoryNameLoc,
                    IdentifierInfo *Id)
     : ObjCContainerDecl(ObjCCategory, DC, ClassNameLoc, Id),
-      ClassInterface(0), NextClassCategory(0), AtLoc(AtLoc), 
-      CategoryNameLoc(CategoryNameLoc) {
+      ClassInterface(0), NextClassCategory(0), HasSynthBitfield(false),
+      AtLoc(AtLoc), CategoryNameLoc(CategoryNameLoc) {
   }
 public:
 
@@ -981,6 +984,9 @@ public:
 
   bool IsClassExtension() const { return getIdentifier() == 0; }
   const ObjCCategoryDecl *getNextClassExtension() const;
+  
+  bool hasSynthBitfield() const { return HasSynthBitfield; }
+  void setHasSynthBitfield (bool val) { HasSynthBitfield = val; }
   
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
   ivar_iterator ivar_begin() const {
@@ -1154,11 +1160,15 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   CXXBaseOrMemberInitializer **IvarInitializers;
   unsigned NumIvarInitializers;
   
+  /// true of class extension has at least one bitfield ivar.
+  bool HasSynthBitfield : 1;
+  
   ObjCImplementationDecl(DeclContext *DC, SourceLocation L,
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
     : ObjCImplDecl(ObjCImplementation, DC, L, classInterface),
-       SuperClass(superDecl), IvarInitializers(0), NumIvarInitializers(0) {}
+       SuperClass(superDecl), IvarInitializers(0), NumIvarInitializers(0),
+       HasSynthBitfield(false) {}
 public:
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC,
                                         SourceLocation L,
@@ -1196,6 +1206,9 @@ public:
   void setIvarInitializers(ASTContext &C,
                            CXXBaseOrMemberInitializer ** initializers,
                            unsigned numInitializers);
+  
+  bool hasSynthBitfield() const { return HasSynthBitfield; }
+  void setHasSynthBitfield (bool val) { HasSynthBitfield = val; }
     
   /// getIdentifier - Get the identifier that names the class
   /// interface associated with this implementation.

@@ -428,6 +428,7 @@ void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
        PL != PLEnd; ++PL)
     Writer.AddSourceLocation(*PL, Record);
   Writer.AddDeclRef(D->getNextClassCategory(), Record);
+  Record.push_back(D->hasSynthBitfield());
   Writer.AddSourceLocation(D->getAtLoc(), Record);
   Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
   Code = serialization::DECL_OBJC_CATEGORY;
@@ -473,6 +474,7 @@ void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   Writer.AddDeclRef(D->getSuperClass(), Record);
   Writer.AddCXXBaseOrMemberInitializers(D->IvarInitializers,
                                         D->NumIvarInitializers, Record);
+  Record.push_back(D->hasSynthBitfield());
   Code = serialization::DECL_OBJC_IMPLEMENTATION;
 }
 

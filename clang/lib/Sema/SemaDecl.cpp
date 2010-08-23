@@ -6349,9 +6349,13 @@ Decl *Sema::ActOnIvar(Scope *S,
   ObjCContainerDecl *EnclosingContext;
   if (ObjCImplementationDecl *IMPDecl =
       dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
+    if (!LangOpts.ObjCNonFragileABI2) {
     // Case of ivar declared in an implementation. Context is that of its class.
-    EnclosingContext = IMPDecl->getClassInterface();
-    assert(EnclosingContext && "Implementation has no class interface!");
+      EnclosingContext = IMPDecl->getClassInterface();
+      assert(EnclosingContext && "Implementation has no class interface!");
+    }
+    else
+      EnclosingContext = EnclosingDecl;
   } else {
     if (ObjCCategoryDecl *CDecl = 
         dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {

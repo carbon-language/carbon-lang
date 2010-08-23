@@ -476,6 +476,7 @@ void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   CD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
                       *Reader.getContext());
   CD->setNextClassCategory(cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
+  CD->setHasSynthBitfield(Record[Idx++]);
   CD->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   CD->setCategoryNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -524,6 +525,7 @@ void ASTDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
   llvm::tie(D->IvarInitializers, D->NumIvarInitializers)
       = Reader.ReadCXXBaseOrMemberInitializers(Cursor, Record, Idx);
+  D->setHasSynthBitfield(Record[Idx++]);
 }
 
 
