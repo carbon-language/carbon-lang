@@ -2222,7 +2222,7 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
 void Sema::CodeCompleteOrdinaryName(Scope *S, 
                                     ParserCompletionContext CompletionContext) {
   typedef CodeCompleteConsumer::Result Result;
-  ResultBuilder Results(*this);
+  ResultBuilder Results(*this);  
 
   // Determine how to filter results, e.g., so that the names of
   // values (functions, enumerators, function templates, etc.) are
@@ -2266,6 +2266,45 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   HandleCodeCompleteResults(this, CodeCompleter,
                             mapCodeCompletionContext(*this, CompletionContext),
                             Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteDeclarator(Scope *S,
+                                  bool AllowNonIdentifiers,
+                                  bool AllowNestedNameSpecifiers) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);    
+  Results.EnterNewScope();
+  
+  // Type qualifiers can come after names.
+  Results.AddResult(Result("const"));
+  Results.AddResult(Result("volatile"));
+  if (getLangOptions().C99)
+    Results.AddResult(Result("restrict"));
+
+  if (getLangOptions().CPlusPlus) {
+    if (AllowNonIdentifiers) {
+      Results.AddResult(Result("operator")); 
+    }
+    
+    // Add nested-name-specifiers.
+    if (AllowNestedNameSpecifiers) {
+      Results.allowNestedNameSpecifiers();
+      CodeCompletionDeclConsumer Consumer(Results, CurContext);
+      LookupVisibleDecls(S, LookupNestedNameSpecifierName, Consumer,
+                         CodeCompleter->includeGlobals());
+    }
+  }
+  Results.ExitScope();
+
+  // Allow macros for names.
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, Results);
+  
+  HandleCodeCompleteResults(this, CodeCompleter,
+                        AllowNestedNameSpecifiers
+                          ? CodeCompletionContext::CCC_PotentiallyQualifiedName
+                          : CodeCompletionContext::CCC_Name,
+                            Results.data(), Results.size());
 }
 
 /// \brief Perform code-completion in an expression context when we know what

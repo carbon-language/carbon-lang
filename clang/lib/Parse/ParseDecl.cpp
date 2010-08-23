@@ -853,21 +853,7 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         const ParsedTemplateInfo &TemplateInfo,
                                         AccessSpecifier AS,
-                                        DeclSpecContext DSContext) {
-  if (Tok.is(tok::code_completion)) {
-    Action::ParserCompletionContext CCC = Action::PCC_Namespace;
-    if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
-      CCC = DSContext == DSC_class? Action::PCC_MemberTemplate 
-                                  : Action::PCC_Template;
-    else if (DSContext == DSC_class)
-      CCC = Action::PCC_Class;
-    else if (ObjCImpDecl)
-      CCC = Action::PCC_ObjCImplementation;
-    
-    Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);
-    ConsumeCodeCompletionToken();
-  }
-  
+                                        DeclSpecContext DSContext) {  
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     bool isInvalid = false;
@@ -883,6 +869,38 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP);
       return;
+
+    case tok::code_completion: {
+      Action::ParserCompletionContext CCC = Action::PCC_Namespace;
+      if (DS.hasTypeSpecifier()) {
+        bool AllowNonIdentifiers
+          = (getCurScope()->getFlags() & (Scope::ControlScope |
+                                          Scope::BlockScope |
+                                          Scope::TemplateParamScope |
+                                          Scope::FunctionPrototypeScope |
+                                          Scope::AtCatchScope)) == 0;
+        bool AllowNestedNameSpecifiers
+          = DSContext == DSC_top_level || 
+            (DSContext == DSC_class && DS.isFriendSpecified());
+
+        Actions.CodeCompleteDeclarator(getCurScope(), AllowNonIdentifiers, 
+                                       AllowNestedNameSpecifiers);
+        ConsumeCodeCompletionToken();
+        return;
+      } 
+      
+      if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
+        CCC = DSContext == DSC_class? Action::PCC_MemberTemplate 
+                                    : Action::PCC_Template;
+      else if (DSContext == DSC_class)
+        CCC = Action::PCC_Class;
+      else if (ObjCImpDecl)
+        CCC = Action::PCC_ObjCImplementation;
+      
+      Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);
+      ConsumeCodeCompletionToken();
+      return;
+    }
 
     case tok::coloncolon: // ::foo::bar
       // C++ scope specifier.  Annotate and loop, or bail out on error.
@@ -2501,6 +2519,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
                                      DirectDeclParseFunction DirectDeclParser) {
   if (Diags.hasAllExtensionsSilenced())
     D.setExtension();
+  
   // C++ member pointers start with a '::' or a nested-name.
   // Member pointers get special handling, since there's no place for the
   // scope spec in the generic path below.

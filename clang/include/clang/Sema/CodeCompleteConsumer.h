@@ -164,7 +164,12 @@ public:
     /// is expected.
     CCC_Namespace,
     /// \brief Code completion occurred where a type name is expected.
-    CCC_Type
+    CCC_Type,
+    /// \brief Code completion occurred where a new name is expected.
+    CCC_Name,
+    /// \brief Code completion occurred where a new name is expected and a
+    /// qualified name is permissible.
+    CCC_PotentiallyQualifiedName
   };
 
 private:

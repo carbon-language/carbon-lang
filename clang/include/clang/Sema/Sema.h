@@ -4640,6 +4640,9 @@ public:
   //@{
   virtual void CodeCompleteOrdinaryName(Scope *S,
                                      ParserCompletionContext CompletionContext);
+  virtual void CodeCompleteDeclarator(Scope *S,
+                                      bool AllowNonIdentifiers,
+                                      bool AllowNestedNameSpecifiers);
   virtual void CodeCompleteExpression(Scope *S, QualType T,
                                       bool IntegralConstantExpression = false);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,

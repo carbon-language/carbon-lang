@@ -2798,6 +2798,22 @@ public:
   virtual void CodeCompleteOrdinaryName(Scope *S, 
                                     ParserCompletionContext CompletionContext) { }
   
+  /// \brief Code completion for a declarator name.
+  ///
+  /// 
+  ///
+  /// \param S The scope in which code completion occurs.
+  ///
+  /// \param AllowNonIdentifiers Whether non-identifier names are allowed in
+  /// this context, e.g., operator+.
+  ///
+  /// \param AllowNestedNameSpecifiers Whether nested-name-specifiers are 
+  /// allowed in this context, e.g., because it is a top-level declaration or
+  /// a friend declaration.
+  virtual void CodeCompleteDeclarator(Scope *S,
+                                      bool AllowNonIdentifiers,
+                                      bool AllowNestedNameSpecifiers) { }
+  
   /// \brief Code completion for a member access expression.
   ///
   /// This code completion action is invoked when the code-completion token

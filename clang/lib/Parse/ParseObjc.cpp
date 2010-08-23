@@ -774,9 +774,9 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
 ///     __attribute__((unused))
 ///
 Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
-                                       tok::TokenKind mType,
-                                       Decl *IDecl,
-                                       tok::ObjCKeywordKind MethodImplKind) {
+                                  tok::TokenKind mType,
+                                  Decl *IDecl,
+                                  tok::ObjCKeywordKind MethodImplKind) {
   ParsingDeclRAIIObject PD(*this);
 
   if (Tok.is(tok::code_completion)) {
