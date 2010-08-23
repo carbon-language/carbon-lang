@@ -2058,7 +2058,12 @@ VisitConditionalOperator(const ConditionalOperator *E) {
     return Builder.CreateSelect(CondV, LHS, RHS, "cond");
   }
 
-
+  if (!E->getLHS() && CGF.getContext().getLangOptions().CPlusPlus) {
+    // Does not support GNU missing condition extension in C++ yet (see #7726)
+    CGF.ErrorUnsupported(E, "conditional operator with missing LHS");
+    return llvm::UndefValue::get(ConvertType(E->getType()));
+  }
+  
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
