@@ -276,9 +276,7 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
         | (1 << (CodeCompletionContext::CCC_Statement - 1))
         | (1 << (CodeCompletionContext::CCC_Expression - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-        | (1 << (CodeCompletionContext::CCC_Name - 1))
-        | (1 << (CodeCompletionContext::CCC_PotentiallyQualifiedName - 1));
+        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;

@@ -2296,10 +2296,6 @@ void Sema::CodeCompleteDeclarator(Scope *S,
   }
   Results.ExitScope();
 
-  // Allow macros for names.
-  if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
-  
   HandleCodeCompleteResults(this, CodeCompleter,
                         AllowNestedNameSpecifiers
                           ? CodeCompletionContext::CCC_PotentiallyQualifiedName
