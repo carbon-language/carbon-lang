@@ -54,7 +54,12 @@ o subdirectories of 'test'
   C/C++/ObjC source files; they were created to house the Python test case which
   does not involve lldb reading in an executable file at all.
 
-o unittest2
+o make directory
+
+  Contains Makefile.rules, which can be utilized by test cases to write Makefile
+  based rules to build native binaries.
+
+o unittest2 directory
 
   Many new features were added to unittest in Python 2.7, including test
   discovery. unittest2 allows you to use these features with earlier versions of
