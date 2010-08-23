@@ -63,5 +63,5 @@ def dummy : Tool<
                 (not_empty "foo_l"), (error)))
 ]>;
 
-def Graph : CompilationGraph<[Edge<"root", "dummy">]>;
+def Graph : CompilationGraph<[(edge "root", "dummy")]>;
 

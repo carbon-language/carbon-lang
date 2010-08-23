@@ -70,18 +70,18 @@ def llvm_ld : Tool<
 // Compilation graph
 
 def ClangCompilationGraph : CompilationGraph<[
-    OptionalEdge<"root", "clang_c",
-                         (case (switch_on "clang"), (inc_weight))>,
-    OptionalEdge<"root", "clang_cpp",
-                         (case (switch_on "clang"), (inc_weight))>,
-    OptionalEdge<"root", "clang_objective_c",
-                         (case (switch_on "clang"), (inc_weight))>,
-    OptionalEdge<"root", "clang_objective_cpp",
-                         (case (switch_on "clang"), (inc_weight))>,
-    Edge<"clang_c", "llc">,
-    Edge<"clang_cpp", "llc">,
-    Edge<"clang_objective_c", "llc">,
-    Edge<"clang_objective_cpp", "llc">,
-    OptionalEdge<"llc", "as", (case (switch_on "clang"), (inc_weight))>,
-    Edge<"as", "llvm_ld">
+    (optional_edge "root", "clang_c",
+                           (case (switch_on "clang"), (inc_weight))),
+    (optional_edge "root", "clang_cpp",
+                           (case (switch_on "clang"), (inc_weight))),
+    (optional_edge "root", "clang_objective_c",
+                           (case (switch_on "clang"), (inc_weight))),
+    (optional_edge "root", "clang_objective_cpp",
+                           (case (switch_on "clang"), (inc_weight))),
+    (edge "clang_c", "llc"),
+    (edge "clang_cpp", "llc"),
+    (edge "clang_objective_c", "llc"),
+    (edge "clang_objective_cpp", "llc"),
+    (optional_edge "llc", "as", (case (switch_on "clang"), (inc_weight))),
+    (edge "as", "llvm_ld")
 ]>;

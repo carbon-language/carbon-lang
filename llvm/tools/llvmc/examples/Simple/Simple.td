@@ -36,6 +36,6 @@ def gcc : Tool<
  (out_file_option "-o")
 ]>;
 
-def LanguageMap : LanguageMap<[LangToSuffixes<"c", ["c"]>]>;
+def LanguageMap : LanguageMap<[(lang_to_suffixes "c", "c")]>;
 
-def CompilationGraph : CompilationGraph<[Edge<"root", "gcc">]>;
+def CompilationGraph : CompilationGraph<[(edge "root", "gcc")]>;

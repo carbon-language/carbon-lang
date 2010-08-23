@@ -304,73 +304,78 @@ def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"@LLVMGXXCOMMAND@",
 
 // Language map
 
-def LanguageMap : LanguageMap<
-    [LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
-     LangToSuffixes<"c++-header", ["hpp"]>,
-     LangToSuffixes<"c", ["c"]>,
-     LangToSuffixes<"c-header", ["h"]>,
-     LangToSuffixes<"c-cpp-output", ["i"]>,
-     LangToSuffixes<"objective-c-cpp-output", ["mi"]>,
-     LangToSuffixes<"objective-c++", ["mm"]>,
-     LangToSuffixes<"objective-c++-header", ["hmm"]>,
-     LangToSuffixes<"objective-c", ["m"]>,
-     LangToSuffixes<"objective-c-header", ["hm"]>,
-     LangToSuffixes<"assembler", ["s"]>,
-     LangToSuffixes<"assembler-with-cpp", ["S"]>,
-     LangToSuffixes<"llvm-assembler", ["ll"]>,
-     LangToSuffixes<"llvm-bitcode", ["bc"]>,
-     LangToSuffixes<"object-code", ["o", "*empty*"]>,
-     LangToSuffixes<"static-library", ["a", "lib"]>,
-     LangToSuffixes<"executable", ["out"]>
-     ]>;
+def LanguageMap : LanguageMap<[
+    (lang_to_suffixes "c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]),
+    (lang_to_suffixes "c++-header", "hpp"),
+    (lang_to_suffixes "c", "c"),
+    (lang_to_suffixes "c-header", "h"),
+    (lang_to_suffixes "c-cpp-output", "i"),
+    (lang_to_suffixes "objective-c-cpp-output", "mi"),
+    (lang_to_suffixes "objective-c++", "mm"),
+    (lang_to_suffixes "objective-c++-header", "hmm"),
+    (lang_to_suffixes "objective-c", "m"),
+    (lang_to_suffixes "objective-c-header", "hm"),
+    (lang_to_suffixes "assembler", "s"),
+    (lang_to_suffixes "assembler-with-cpp", "S"),
+    (lang_to_suffixes "llvm-assembler", "ll"),
+    (lang_to_suffixes "llvm-bitcode", "bc"),
+    (lang_to_suffixes "object-code", ["o", "*empty*"]),
+    (lang_to_suffixes "static-library", ["a", "lib"]),
+    (lang_to_suffixes "executable", ["out"])
+]>;
 
 // Compilation graph
 
 def CompilationGraph : CompilationGraph<[
-    Edge<"root", "llvm_gcc_c">,
-    Edge<"root", "llvm_gcc_assembler">,
-    Edge<"root", "llvm_gcc_cpp">,
-    Edge<"root", "llvm_gcc_m">,
-    Edge<"root", "llvm_gcc_mxx">,
-    Edge<"root", "llc">,
+    (edge "root", "llvm_gcc_c"),
+    (edge "root", "llvm_gcc_assembler"),
+    (edge "root", "llvm_gcc_cpp"),
+    (edge "root", "llvm_gcc_m"),
+    (edge "root", "llvm_gcc_mxx"),
+    (edge "root", "llc"),
 
-    Edge<"root", "llvm_gcc_c_pch">,
-    Edge<"root", "llvm_gcc_cpp_pch">,
-    Edge<"root", "llvm_gcc_m_pch">,
-    Edge<"root", "llvm_gcc_mxx_pch">,
+    (edge "root", "llvm_gcc_c_pch"),
+    (edge "root", "llvm_gcc_cpp_pch"),
+    (edge "root", "llvm_gcc_m_pch"),
+    (edge "root", "llvm_gcc_mxx_pch"),
 
-    Edge<"llvm_gcc_c", "llc">,
-    Edge<"llvm_gcc_cpp", "llc">,
-    Edge<"llvm_gcc_m", "llc">,
-    Edge<"llvm_gcc_mxx", "llc">,
-    Edge<"llvm_as", "llc">,
+    (edge "llvm_gcc_c", "llc"),
+    (edge "llvm_gcc_cpp", "llc"),
+    (edge "llvm_gcc_m", "llc"),
+    (edge "llvm_gcc_mxx", "llc"),
+    (edge "llvm_as", "llc"),
 
-    OptionalEdge<"root", "llvm_as",
-                         (case (switch_on "emit-llvm"), (inc_weight))>,
-    OptionalEdge<"llvm_gcc_c", "opt", (case (switch_on "opt"), (inc_weight))>,
-    OptionalEdge<"llvm_gcc_cpp", "opt", (case (switch_on "opt"), (inc_weight))>,
-    OptionalEdge<"llvm_gcc_m", "opt", (case (switch_on "opt"), (inc_weight))>,
-    OptionalEdge<"llvm_gcc_mxx", "opt", (case (switch_on "opt"), (inc_weight))>,
-    OptionalEdge<"llvm_as", "opt", (case (switch_on "opt"), (inc_weight))>,
-    Edge<"opt", "llc">,
+    (optional_edge "root", "llvm_as",
+                   (case (switch_on "emit-llvm"), (inc_weight))),
+    (optional_edge "llvm_gcc_c", "opt",
+                   (case (switch_on "opt"), (inc_weight))),
+    (optional_edge "llvm_gcc_cpp", "opt",
+                   (case (switch_on "opt"), (inc_weight))),
+    (optional_edge "llvm_gcc_m", "opt",
+                   (case (switch_on "opt"), (inc_weight))),
+    (optional_edge "llvm_gcc_mxx", "opt",
+                   (case (switch_on "opt"), (inc_weight))),
+    (optional_edge "llvm_as", "opt",
+                   (case (switch_on "opt"), (inc_weight))),
+    (edge "opt", "llc"),
 
-    Edge<"llc", "llvm_gcc_assembler">,
-    Edge<"llvm_gcc_assembler", "llvm_gcc_linker">,
-    OptionalEdge<"llvm_gcc_assembler", "llvm_gcc_cpp_linker",
+    (edge "llc", "llvm_gcc_assembler"),
+    (edge "llvm_gcc_assembler", "llvm_gcc_linker"),
+    (optional_edge "llvm_gcc_assembler", "llvm_gcc_cpp_linker",
                  (case
                      (or (input_languages_contain "c++"),
                          (input_languages_contain "objective-c++")),
                      (inc_weight),
                      (or (parameter_equals "linker", "g++"),
-                         (parameter_equals "linker", "c++")), (inc_weight))>,
+                         (parameter_equals "linker", "c++")), (inc_weight))),
 
 
-    Edge<"root", "llvm_gcc_linker">,
-    OptionalEdge<"root", "llvm_gcc_cpp_linker",
+    (edge "root", "llvm_gcc_linker"),
+    (optional_edge "root", "llvm_gcc_cpp_linker",
                  (case
                      (or (input_languages_contain "c++"),
                          (input_languages_contain "objective-c++")),
                      (inc_weight),
                      (or (parameter_equals "linker", "g++"),
-                         (parameter_equals "linker", "c++")), (inc_weight))>
-    ]>;
+                         (parameter_equals "linker", "c++")), (inc_weight)))
+]>;

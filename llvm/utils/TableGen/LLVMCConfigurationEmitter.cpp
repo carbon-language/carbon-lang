@@ -33,6 +33,7 @@ namespace {
 /// Typedefs
 
 typedef std::vector<Record*> RecordVector;
+typedef std::vector<const DagInit*> DagVector;
 typedef std::vector<std::string> StrVector;
 
 //===----------------------------------------------------------------------===//
@@ -107,11 +108,6 @@ void CheckBooleanConstant(const Init* I) {
 void CheckNumberOfArguments (const DagInit& d, unsigned minArgs) {
   if (d.getNumArgs() < minArgs)
     throw GetOperatorName(d) + ": too few arguments!";
-}
-
-// IsDagEmpty - is this DAG marked with an empty marker?
-bool IsDagEmpty (const DagInit& d) {
-  return GetOperatorName(d) == "empty_dag_marker";
 }
 
 // EscapeVariableName - Escape commas and other symbols not allowed
@@ -622,7 +618,6 @@ void InvokeDagInitHandler(const FunctionObject* const Obj,
   ((Obj)->*(h))(Dag, IndentLevel, O);
 }
 
-
 template <typename H>
 typename HandlerTable<H>::HandlerMap HandlerTable<H>::Handlers_;
 
@@ -791,7 +786,6 @@ public:
 
     OptionDescription OD(Type, Name);
 
-
     CheckNumberOfArguments(d, 2);
 
     if (OD.isAlias()) {
@@ -820,15 +814,14 @@ private:
 
 /// CollectOptionDescriptions - Collects option properties from all
 /// OptionLists.
-void CollectOptionDescriptions (RecordVector::const_iterator B,
-                                RecordVector::const_iterator E,
+void CollectOptionDescriptions (const RecordVector& V,
                                 OptionDescriptions& OptDescs)
 {
   // For every OptionList:
-  for (; B!=E; ++B) {
-    RecordVector::value_type T = *B;
+  for (RecordVector::const_iterator B = V.begin(),
+         E = V.end(); B!=E; ++B) {
     // Throws an exception if the value does not exist.
-    ListInit* PropList = T->getValueAsListInit("options");
+    ListInit* PropList = (*B)->getValueAsListInit("options");
 
     // For every option description in this list:
     // collect the information and
@@ -1005,12 +998,12 @@ private:
 /// CollectToolDescriptions - Gather information about tool properties
 /// from the parsed TableGen data (basically a wrapper for the
 /// CollectToolProperties function object).
-void CollectToolDescriptions (RecordVector::const_iterator B,
-                              RecordVector::const_iterator E,
+void CollectToolDescriptions (const RecordVector& Tools,
                               ToolDescriptions& ToolDescs)
 {
   // Iterate over a properties list of every Tool definition
-  for (;B!=E;++B) {
+  for (RecordVector::const_iterator B = Tools.begin(),
+         E = Tools.end(); B!=E; ++B) {
     const Record* T = *B;
     // Throws an exception if the value does not exist.
     ListInit* PropList = T->getValueAsListInit("properties");
@@ -1026,13 +1019,16 @@ void CollectToolDescriptions (RecordVector::const_iterator B,
 
 /// FillInEdgeVector - Merge all compilation graph definitions into
 /// one single edge list.
-void FillInEdgeVector(RecordVector::const_iterator B,
-                      RecordVector::const_iterator E, RecordVector& Out) {
-  for (; B != E; ++B) {
-    const ListInit* edges = (*B)->getValueAsListInit("edges");
+void FillInEdgeVector(const RecordVector& CompilationGraphs,
+                      DagVector& Out) {
+  for (RecordVector::const_iterator B = CompilationGraphs.begin(),
+         E = CompilationGraphs.end(); B != E; ++B) {
+    const ListInit* Edges = (*B)->getValueAsListInit("edges");
 
-    for (unsigned i = 0; i < edges->size(); ++i)
-      Out.push_back(edges->getElementAsRecord(i));
+    for (ListInit::const_iterator B = Edges->begin(),
+           E = Edges->end(); B != E; ++B) {
+      Out.push_back(&InitPtrToDag(*B));
+    }
   }
 }
 
@@ -1053,18 +1049,18 @@ public:
 
 /// FilterNotInGraph - Filter out from ToolDescs all Tools not
 /// mentioned in the compilation graph definition.
-void FilterNotInGraph (const RecordVector& EdgeVector,
+void FilterNotInGraph (const DagVector& EdgeVector,
                        ToolDescriptions& ToolDescs) {
 
   // List all tools mentioned in the graph.
   llvm::StringSet<> ToolsInGraph;
 
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
+  for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
 
-    const Record* Edge = *B;
-    const std::string& NodeA = Edge->getValueAsString("a");
-    const std::string& NodeB = Edge->getValueAsString("b");
+    const DagInit* Edge = *B;
+    const std::string& NodeA = InitPtrToString(Edge->getArg(0));
+    const std::string& NodeB = InitPtrToString(Edge->getArg(1));
 
     if (NodeA != "root")
       ToolsInGraph.insert(NodeA);
@@ -1095,7 +1091,7 @@ void FillInToolToLang (const ToolDescriptions& ToolDescs,
 
 /// TypecheckGraph - Check that names for output and input languages
 /// on all edges do match.
-void TypecheckGraph (const RecordVector& EdgeVector,
+void TypecheckGraph (const DagVector& EdgeVector,
                      const ToolDescriptions& ToolDescs) {
   StringMap<StringSet<> > ToolToInLang;
   StringMap<std::string> ToolToOutLang;
@@ -1104,11 +1100,11 @@ void TypecheckGraph (const RecordVector& EdgeVector,
   StringMap<std::string>::iterator IAE = ToolToOutLang.end();
   StringMap<StringSet<> >::iterator IBE = ToolToInLang.end();
 
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
+  for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
-    const Record* Edge = *B;
-    const std::string& NodeA = Edge->getValueAsString("a");
-    const std::string& NodeB = Edge->getValueAsString("b");
+    const DagInit* Edge = *B;
+    const std::string& NodeA = InitPtrToString(Edge->getArg(0));
+    const std::string& NodeB = InitPtrToString(Edge->getArg(1));
     StringMap<std::string>::iterator IA = ToolToOutLang.find(NodeA);
     StringMap<StringSet<> >::iterator IB = ToolToInLang.find(NodeB);
 
@@ -1250,7 +1246,7 @@ public:
 /// CheckForSuperfluousOptions - Check that there are no side
 /// effect-free options (specified only in the OptionList). Otherwise,
 /// output a warning.
-void CheckForSuperfluousOptions (const RecordVector& Edges,
+void CheckForSuperfluousOptions (const DagVector& EdgeVector,
                                  const ToolDescriptions& ToolDescs,
                                  const OptionDescriptions& OptDescs) {
   llvm::StringSet<> nonSuperfluousOptions;
@@ -1268,13 +1264,13 @@ void CheckForSuperfluousOptions (const RecordVector& Edges,
   // Add all options mentioned in the 'case' clauses of the
   // OptionalEdges of the compilation graph to the set of
   // non-superfluous options.
-  for (RecordVector::const_iterator B = Edges.begin(), E = Edges.end();
-       B != E; ++B) {
-    const Record* Edge = *B;
-    DagInit& Weight = *Edge->getValueAsDag("weight");
-
-    if (!IsDagEmpty(Weight))
+  for (DagVector::const_iterator B = EdgeVector.begin(),
+         E = EdgeVector.end(); B != E; ++B) {
+    const DagInit* Edge = *B;
+    if (Edge->getNumArgs() > 2) {
+      const DagInit& Weight = InitPtrToDag(Edge->getArg(2));
       WalkCase(&Weight, ExtractOptionNames(nonSuperfluousOptions), Id());
+    }
   }
 
   // Check that all options in OptDescs belong to the set of
@@ -2616,31 +2612,72 @@ void EmitPreprocessOptions (const RecordKeeper& Records,
   O << "}\n\n";
 }
 
+class DoEmitPopulateLanguageMap;
+typedef void (DoEmitPopulateLanguageMap::* DoEmitPopulateLanguageMapHandler)
+(const DagInit& D);
+
+class DoEmitPopulateLanguageMap
+: public HandlerTable<DoEmitPopulateLanguageMapHandler>
+{
+private:
+  raw_ostream& O_;
+
+public:
+
+  explicit DoEmitPopulateLanguageMap (raw_ostream& O) : O_(O) {
+    if (!staticMembersInitialized_) {
+      AddHandler("lang_to_suffixes",
+                 &DoEmitPopulateLanguageMap::onLangToSuffixes);
+
+      staticMembersInitialized_ = true;
+    }
+  }
+
+  void operator() (Init* I) {
+    InvokeDagInitHandler(this, I);
+  }
+
+private:
+
+  void onLangToSuffixes (const DagInit& d) {
+    CheckNumberOfArguments(d, 2);
+
+    const std::string& Lang = InitPtrToString(d.getArg(0));
+    Init* Suffixes = d.getArg(1);
+
+    // Second argument to lang_to_suffixes is either a single string...
+    if (typeid(*Suffixes) == typeid(StringInit)) {
+      O_.indent(Indent1) << "langMap[\"" << InitPtrToString(Suffixes)
+                         << "\"] = \"" << Lang << "\";\n";
+    }
+    // ...or a list of strings.
+    else {
+      const ListInit& Lst = InitPtrToList(Suffixes);
+      assert(Lst.size() != 0);
+      for (ListInit::const_iterator B = Lst.begin(), E = Lst.end();
+           B != E; ++B) {
+        O_.indent(Indent1) << "langMap[\"" << InitPtrToString(*B)
+                           << "\"] = \"" << Lang << "\";\n";
+      }
+    }
+  }
+
+};
+
 /// EmitPopulateLanguageMap - Emit the PopulateLanguageMap() function.
 void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
   O << "int PopulateLanguageMap (LanguageMap& langMap) {\n";
 
-  const RecordVector& LanguageMaps =
+  // For each LangMap:
+  const RecordVector& LangMaps =
     Records.getAllDerivedDefinitions("LanguageMap");
 
-  for (RecordVector::const_iterator B = LanguageMaps.begin(),
-         E = LanguageMaps.end(); B!=E; ++B) {
-    ListInit* LangsToSuffixesList = (*B)->getValueAsListInit("map");
-    if (!LangsToSuffixesList)
-      throw "Error in the language map definition!";
-
-    for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
-      const Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
-
-      const std::string& Lang = LangToSuffixes->getValueAsString("lang");
-      const ListInit* Suffixes = LangToSuffixes->getValueAsListInit("suffixes");
-
-      for (unsigned i = 0; i < Suffixes->size(); ++i)
-        O.indent(Indent1) << "langMap[\""
-                          << InitPtrToString(Suffixes->getElement(i))
-                          << "\"] = \"" << Lang << "\";\n";
-    }
+  for (RecordVector::const_iterator B = LangMaps.begin(),
+         E = LangMaps.end(); B!=E; ++B) {
+    ListInit* LangMap = (*B)->getValueAsListInit("map");
+    std::for_each(LangMap->begin(), LangMap->end(),
+                  DoEmitPopulateLanguageMap(O));
   }
 
   O << '\n';
@@ -2681,7 +2718,7 @@ void EmitEdgePropertyHandlerCallback (const Init* i, unsigned IndentLevel,
 
 /// EmitEdgeClass - Emit a single Edge# class.
 void EmitEdgeClass (unsigned N, const std::string& Target,
-                    DagInit* Case, const OptionDescriptions& OptDescs,
+                    const DagInit* Case, const OptionDescriptions& OptDescs,
                     raw_ostream& O) {
 
   // Class constructor.
@@ -2704,24 +2741,26 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
 }
 
 /// EmitEdgeClasses - Emit Edge* classes that represent graph edges.
-void EmitEdgeClasses (const RecordVector& EdgeVector,
+void EmitEdgeClasses (const DagVector& EdgeVector,
                       const OptionDescriptions& OptDescs,
                       raw_ostream& O) {
   int i = 0;
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
+  for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
-    const Record* Edge = *B;
-    const std::string& NodeB = Edge->getValueAsString("b");
-    DagInit& Weight = *Edge->getValueAsDag("weight");
+    const DagInit* Edge = *B;
+    const std::string& NodeB = InitPtrToString(Edge->getArg(1));
 
-    if (!IsDagEmpty(Weight))
-      EmitEdgeClass(i, NodeB, &Weight, OptDescs, O);
+    if (Edge->getNumArgs() > 2) {
+      const DagInit* Weight = &InitPtrToDag(Edge->getArg(2));
+      EmitEdgeClass(i, NodeB, Weight, OptDescs, O);
+    }
+
     ++i;
   }
 }
 
 /// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraph() function.
-void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
+void EmitPopulateCompilationGraph (const DagVector& EdgeVector,
                                    const ToolDescriptions& ToolDescs,
                                    raw_ostream& O)
 {
@@ -2736,19 +2775,18 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
   // Insert edges.
 
   int i = 0;
-  for (RecordVector::const_iterator B = EdgeVector.begin(),
+  for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
-    const Record* Edge = *B;
-    const std::string& NodeA = Edge->getValueAsString("a");
-    const std::string& NodeB = Edge->getValueAsString("b");
-    DagInit& Weight = *Edge->getValueAsDag("weight");
+    const DagInit* Edge = *B;
+    const std::string& NodeA = InitPtrToString(Edge->getArg(0));
+    const std::string& NodeB = InitPtrToString(Edge->getArg(1));
 
     O.indent(Indent1) << "if (int ret = G.insertEdge(\"" << NodeA << "\", ";
 
-    if (IsDagEmpty(Weight))
-      O << "new SimpleEdge(\"" << NodeB << "\")";
-    else
+    if (Edge->getNumArgs() > 2)
       O << "new Edge" << i << "()";
+    else
+      O << "new SimpleEdge(\"" << NodeB << "\")";
 
     O << "))\n";
     O.indent(Indent2) << "return ret;\n";
@@ -2961,7 +2999,7 @@ void EmitIncludes(raw_ostream& O) {
 struct DriverData {
   OptionDescriptions OptDescs;
   ToolDescriptions ToolDescs;
-  RecordVector Edges;
+  DagVector Edges;
   bool HasSink;
 };
 
@@ -2982,19 +3020,17 @@ void CollectDriverData (const RecordKeeper& Records, DriverData& Data) {
   // Collect option properties.
   const RecordVector& OptionLists =
     Records.getAllDerivedDefinitions("OptionList");
-  CollectOptionDescriptions(OptionLists.begin(), OptionLists.end(),
-                            Data.OptDescs);
+  CollectOptionDescriptions(OptionLists, Data.OptDescs);
 
   // Collect tool properties.
   const RecordVector& Tools = Records.getAllDerivedDefinitions("Tool");
-  CollectToolDescriptions(Tools.begin(), Tools.end(), Data.ToolDescs);
+  CollectToolDescriptions(Tools, Data.ToolDescs);
   Data.HasSink = HasSink(Data.ToolDescs);
 
   // Collect compilation graph edges.
   const RecordVector& CompilationGraphs =
     Records.getAllDerivedDefinitions("CompilationGraph");
-  FillInEdgeVector(CompilationGraphs.begin(), CompilationGraphs.end(),
-                   Data.Edges);
+  FillInEdgeVector(CompilationGraphs, Data.Edges);
 }
 
 /// CheckDriverData - Perform some sanity checks on the collected data.
@@ -3035,6 +3071,7 @@ void EmitDriverCode(const DriverData& Data, raw_ostream& O) {
     EmitToolClassDefinition(*(*B), Data.OptDescs, O);
 
   // Emit Edge# classes.
+  // TODO: check for edge/optional_edge dag markers.
   EmitEdgeClasses(Data.Edges, Data.OptDescs, O);
 
   O << "} // End anonymous namespace.\n\n";

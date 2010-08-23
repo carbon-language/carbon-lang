@@ -18,4 +18,4 @@ def dummy_tool : Tool<[
          (not_empty "dummy"), (forward_as "dummy", "unique_name")))
 ]>;
 
-def DummyGraph : CompilationGraph<[SimpleEdge<"root", "dummy_tool">]>;
+def DummyGraph : CompilationGraph<[(edge "root", "dummy_tool")]>;

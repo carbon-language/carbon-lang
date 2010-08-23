@@ -96,9 +96,6 @@ def unset_option;
 // Increase the edge weight.
 def inc_weight;
 
-// Empty DAG marker.
-def empty_dag_marker;
-
 // Option list - a single place to specify options.
 class OptionList<list<dag> l> {
       list<dag> options = l;
@@ -111,31 +108,17 @@ class OptionPreprocessor<dag d> {
 
 // Map from suffixes to language names
 
-class LangToSuffixes<string str, list<string> lst> {
-      string lang = str;
-      list<string> suffixes = lst;
-}
+def lang_to_suffixes;
 
-class LanguageMap<list<LangToSuffixes> lst> {
-      list<LangToSuffixes> map = lst;
+class LanguageMap<list<dag> l> {
+      list<dag> map = l;
 }
 
 // Compilation graph
 
-class EdgeBase<string t1, string t2, dag d> {
-      string a = t1;
-      string b = t2;
-      dag weight = d;
-}
+def edge;
+def optional_edge;
 
-class Edge<string t1, string t2> : EdgeBase<t1, t2, (empty_dag_marker)>;
-
-// Edge and SimpleEdge are synonyms.
-class SimpleEdge<string t1, string t2> : EdgeBase<t1, t2, (empty_dag_marker)>;
-
-// Optionally enabled edge.
-class OptionalEdge<string t1, string t2, dag props> : EdgeBase<t1, t2, props>;
-
-class CompilationGraph<list<EdgeBase> lst> {
-      list<EdgeBase> edges = lst;
+class CompilationGraph<list<dag> l> {
+      list<dag> edges = l;
 }

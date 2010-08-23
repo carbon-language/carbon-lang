@@ -202,33 +202,33 @@ def mplink : Tool<[
 // Language map
 
 def LanguageMap : LanguageMap<[
-    LangToSuffixes<"c", ["c"]>,
-    LangToSuffixes<"c-cpp-output", ["i"]>,
-    LangToSuffixes<"assembler", ["s"]>,
-    LangToSuffixes<"assembler-with-cpp", ["S"]>,
-    LangToSuffixes<"llvm-assembler", ["ll"]>,
-    LangToSuffixes<"llvm-bitcode", ["bc"]>,
-    LangToSuffixes<"object-code", ["o"]>,
-    LangToSuffixes<"executable", ["cof"]>
+    (lang_to_suffixes "c", "c"),
+    (lang_to_suffixes "c-cpp-output", "i"),
+    (lang_to_suffixes "assembler", "s"),
+    (lang_to_suffixes "assembler-with-cpp", "S"),
+    (lang_to_suffixes "llvm-assembler", "ll"),
+    (lang_to_suffixes "llvm-bitcode", "bc"),
+    (lang_to_suffixes "object-code", "o"),
+    (lang_to_suffixes "executable", "cof")
 ]>;
 
 // Compilation graph
 
 def CompilationGraph : CompilationGraph<[
-    Edge<"root", "clang_cc">,
-    Edge<"root", "llvm_ld">,
-    OptionalEdge<"root", "llvm_ld_optimizer", (case
-                                         (switch_on "S"), (inc_weight),
-                                         (switch_on "c"), (inc_weight))>,
-    Edge<"root", "gpasm">,
-    Edge<"root", "mplink">,
-    Edge<"clang_cc", "llvm_ld">,
-    OptionalEdge<"clang_cc", "llvm_ld_optimizer", (case
-                                         (switch_on "S"), (inc_weight),
-                                         (switch_on "c"), (inc_weight))>,
-    Edge<"llvm_ld", "pic16passes">,
-    Edge<"llvm_ld_optimizer", "pic16passes">,
-    Edge<"pic16passes", "llc">,
-    Edge<"llc", "gpasm">,
-    Edge<"gpasm", "mplink">
+    (edge "root", "clang_cc"),
+    (edge "root", "llvm_ld"),
+    (optional_edge "root", "llvm_ld_optimizer",
+                   (case (switch_on "S"), (inc_weight),
+                         (switch_on "c"), (inc_weight))),
+    (edge "root", "gpasm"),
+    (edge "root", "mplink"),
+    (edge "clang_cc", "llvm_ld"),
+    (optional_edge "clang_cc", "llvm_ld_optimizer",
+                   (case (switch_on "S"), (inc_weight),
+                         (switch_on "c"), (inc_weight))),
+    (edge "llvm_ld", "pic16passes"),
+    (edge "llvm_ld_optimizer", "pic16passes"),
+    (edge "pic16passes", "llc"),
+    (edge "llc", "gpasm"),
+    (edge "gpasm", "mplink")
 ]>;

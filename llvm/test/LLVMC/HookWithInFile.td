@@ -13,4 +13,4 @@ def dummy_tool : Tool<[
 (out_language "dummy")
 ]>;
 
-def DummyGraph : CompilationGraph<[SimpleEdge<"root", "dummy_tool">]>;
+def DummyGraph : CompilationGraph<[(edge "root", "dummy_tool")]>;

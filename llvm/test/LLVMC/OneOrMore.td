@@ -22,4 +22,4 @@ def dummy_tool : Tool<[
          (not_empty "baz"), (forward "baz")))
 ]>;
 
-def DummyGraph : CompilationGraph<[SimpleEdge<"root", "dummy_tool">]>;
+def DummyGraph : CompilationGraph<[(edge "root", "dummy_tool")]>;
