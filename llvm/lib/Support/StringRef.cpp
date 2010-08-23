@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/APInt.h"
+#include <bitset>
 
 using namespace llvm;
 
@@ -153,11 +154,15 @@ size_t StringRef::rfind(StringRef Str) const {
 /// find_first_of - Find the first character in the string that is in \arg
 /// Chars, or npos if not found.
 ///
-/// Note: O(size() * Chars.size())
+/// Note: O(size() + Chars.size())
 StringRef::size_type StringRef::find_first_of(StringRef Chars,
                                               size_t From) const {
+  std::bitset<1 << CHAR_BIT> CharBits;
+  for (size_type i = 0; i != Chars.size(); ++i)
+    CharBits.set((unsigned char)Chars[i]);
+
   for (size_type i = min(From, Length), e = Length; i != e; ++i)
-    if (Chars.find(Data[i]) != npos)
+    if (CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
 }
@@ -174,11 +179,15 @@ StringRef::size_type StringRef::find_first_not_of(char C, size_t From) const {
 /// find_first_not_of - Find the first character in the string that is not
 /// in the string \arg Chars, or npos if not found.
 ///
-/// Note: O(size() * Chars.size())
+/// Note: O(size() + Chars.size())
 StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
                                                   size_t From) const {
+  std::bitset<1 << CHAR_BIT> CharBits;
+  for (size_type i = 0; i != Chars.size(); ++i)
+    CharBits.set((unsigned char)Chars[i]);
+
   for (size_type i = min(From, Length), e = Length; i != e; ++i)
-    if (Chars.find(Data[i]) == npos)
+    if (!CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
 }

@@ -238,7 +238,7 @@ namespace llvm {
     /// find_first_of - Find the first character in the string that is in \arg
     /// Chars, or npos if not found.
     ///
-    /// Note: O(size() * Chars.size())
+    /// Note: O(size() + Chars.size())
     size_type find_first_of(StringRef Chars, size_t From = 0) const;
 
     /// find_first_not_of - Find the first character in the string that is not
@@ -248,7 +248,7 @@ namespace llvm {
     /// find_first_not_of - Find the first character in the string that is not
     /// in the string \arg Chars, or npos if not found.
     ///
-    /// Note: O(size() * Chars.size())
+    /// Note: O(size() + Chars.size())
     size_type find_first_not_of(StringRef Chars, size_t From = 0) const;
 
     /// @}
