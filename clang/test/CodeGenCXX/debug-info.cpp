@@ -50,3 +50,8 @@ namespace VirtualBase {
     B b;
   }
 }
+
+void foo() {
+  const wchar_t c = L'x';
+  wchar_t d = c;
+}
