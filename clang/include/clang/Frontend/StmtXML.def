@@ -444,6 +444,14 @@ NODE_XML(CXXOperatorCallExpr, "CXXOperatorCallExpr")    // fnexpr(arg1, arg2, ..
   SUB_NODE_SEQUENCE_XML(Expr)                           // arg1..argN
 END_NODE_XML
 
+NODE_XML(CXXConstructExpr, "CXXConstructExpr")         // ctor(arg1, arg2, ...)
+  ATTRIBUTE_FILE_LOCATION_XML
+  TYPE_ATTRIBUTE_XML(getType())
+  ATTRIBUTE_XML(getNumArgs(), "num_args")               // unsigned
+  SUB_NODE_XML(Expr)                                    // fnexpr
+  SUB_NODE_SEQUENCE_XML(Expr)                           // arg1..argN
+END_NODE_XML
+
 NODE_XML(CXXNamedCastExpr, "CXXNamedCastExpr")          // xxx_cast<type>(expr)
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
