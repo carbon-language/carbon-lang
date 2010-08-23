@@ -1029,12 +1029,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   maxStoresPerMemmove = 3; // For @llvm.memmove -> sequence of stores
   setPrefLoopAlignment(16);
   benefitFromCodePlacementOpt = true;
-
-  // FIXME: Jump tables are currently broken for 64 bit COFF.
-  // See PR7960.
-  if (Subtarget->is64Bit() && Subtarget->isTargetCOFF()) {
-    DisableJumpTables = true;
-  }
 }
 
 
