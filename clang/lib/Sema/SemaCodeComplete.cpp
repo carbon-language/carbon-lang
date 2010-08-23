@@ -2189,6 +2189,18 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
   Results.ExitScope();
 }
 
+static void AddPrettyFunctionResults(const LangOptions &LangOpts, 
+                                     ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  
+  Results.EnterNewScope();
+  Results.AddResult(Result("__PRETTY_FUNCTION__", CCP_Constant));
+  Results.AddResult(Result("__FUNCTION__", CCP_Constant));
+  if (LangOpts.C99 || LangOpts.CPlusPlus0x)
+    Results.AddResult(Result("__func__", CCP_Constant));
+  Results.ExitScope();
+}
+
 static void HandleCodeCompleteResults(Sema *S,
                                       CodeCompleteConsumer *CodeCompleter,
                                       CodeCompletionContext Context,
@@ -2280,8 +2292,29 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   AddOrdinaryNameResults(CompletionContext, S, *this, Results);
   Results.ExitScope();
 
+  switch (CompletionContext) {
+    case PCC_Expression:
+    case PCC_Statement:
+    case PCC_RecoveryInFunction:
+      if (S->getFnParent())
+        AddPrettyFunctionResults(PP.getLangOptions(), Results);        
+      break;
+      
+    case PCC_Namespace:
+    case PCC_Class:
+    case PCC_ObjCInterface:
+    case PCC_ObjCImplementation:
+    case PCC_ObjCInstanceVariableList:
+    case PCC_Template:
+    case PCC_MemberTemplate:
+    case PCC_ForInit:
+    case PCC_Condition:
+      break;
+  }
+  
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
+  
   HandleCodeCompleteResults(this, CodeCompleter,
                             mapCodeCompletionContext(*this, CompletionContext),
                             Results.data(),Results.size());
@@ -2373,6 +2406,11 @@ void Sema::CodeCompleteExpression(Scope *S,
       || Data.PreferredType->isMemberPointerType() 
       || Data.PreferredType->isBlockPointerType();
   
+  if (S->getFnParent() && 
+      !Data.ObjCCollection && 
+      !Data.IntegralConstantExpression)
+    AddPrettyFunctionResults(PP.getLangOptions(), Results);        
+
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results, PreferredTypeIsPointer);
   HandleCodeCompleteResults(this, CodeCompleter, 
