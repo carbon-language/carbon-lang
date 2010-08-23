@@ -1094,9 +1094,7 @@ void FillInToolToLang (const ToolDescriptions& ToolDescs,
 }
 
 /// TypecheckGraph - Check that names for output and input languages
-/// on all edges do match. This doesn't do much when the information
-/// about the whole graph is not available (i.e. when compiling most
-/// plugins).
+/// on all edges do match.
 void TypecheckGraph (const RecordVector& EdgeVector,
                      const ToolDescriptions& ToolDescs) {
   StringMap<StringSet<> > ToolToInLang;
@@ -2628,9 +2626,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
   // TODO: change this to getAllDerivedDefinitions.
   const Record* LangMapRecord = Records.getDef("LanguageMap");
 
-  // It is allowed for a plugin to have no language map.
   if (LangMapRecord) {
-
     ListInit* LangsToSuffixesList = LangMapRecord->getValueAsListInit("map");
     if (!LangsToSuffixesList)
       throw "Error in the language map definition!";
@@ -2964,12 +2960,12 @@ void EmitIncludes(raw_ostream& O) {
 }
 
 
-/// PluginData - Holds all information about a plugin.
-struct PluginData {
+/// DriverData - Holds all information about the driver.
+struct DriverData {
   OptionDescriptions OptDescs;
-  bool HasSink;
   ToolDescriptions ToolDescs;
   RecordVector Edges;
+  bool HasSink;
 };
 
 /// HasSink - Go through the list of tool descriptions and check if
@@ -2983,9 +2979,9 @@ bool HasSink(const ToolDescriptions& ToolDescs) {
   return false;
 }
 
-/// CollectPluginData - Collect compilation graph edges, tool properties and
+/// CollectDriverData - Collect compilation graph edges, tool properties and
 /// option properties from the parse tree.
-void CollectPluginData (const RecordKeeper& Records, PluginData& Data) {
+void CollectDriverData (const RecordKeeper& Records, DriverData& Data) {
   // Collect option properties.
   const RecordVector& OptionLists =
     Records.getAllDerivedDefinitions("OptionList");
@@ -3004,8 +3000,8 @@ void CollectPluginData (const RecordKeeper& Records, PluginData& Data) {
                    Data.Edges);
 }
 
-/// CheckPluginData - Perform some sanity checks on the collected data.
-void CheckPluginData(PluginData& Data) {
+/// CheckDriverData - Perform some sanity checks on the collected data.
+void CheckDriverData(DriverData& Data) {
   // Filter out all tools not mentioned in the compilation graph.
   FilterNotInGraph(Data.Edges, Data.ToolDescs);
 
@@ -3017,7 +3013,7 @@ void CheckPluginData(PluginData& Data) {
   CheckForSuperfluousOptions(Data.Edges, Data.ToolDescs, Data.OptDescs);
 }
 
-void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
+void EmitDriverCode(const DriverData& Data, raw_ostream& O) {
   // Emit file header.
   EmitIncludes(O);
 
@@ -3072,13 +3068,13 @@ void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
 /// run - The back-end entry point.
 void LLVMCConfigurationEmitter::run (raw_ostream &O) {
   try {
-  PluginData Data;
+    DriverData Data;
 
-  CollectPluginData(Records, Data);
-  CheckPluginData(Data);
+    CollectDriverData(Records, Data);
+    CheckDriverData(Data);
 
-  this->EmitSourceFileHeader("LLVMC Configuration Library", O);
-  EmitPluginCode(Data, O);
+    this->EmitSourceFileHeader("llvmc-based driver: auto-generated code", O);
+    EmitDriverCode(Data, O);
 
   } catch (std::exception& Error) {
     throw Error.what() + std::string(" - usually this means a syntax error.");
