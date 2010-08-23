@@ -207,11 +207,6 @@ class MachineFrameInfo {
   /// LocalFrameSize - Size of the pre-allocated local frame block.
   int64_t LocalFrameSize;
 
-  /// LocalFrameBaseOffset - The base offset from the stack pointer at
-  /// function entry of the local frame blob. Set by PEI for use by
-  /// target in eliminateFrameIndex().
-  int64_t LocalFrameBaseOffset;
-
   /// Required alignment of the local object blob, which is the strictest
   /// alignment of any object in it.
   unsigned LocalFrameMaxAlign;
@@ -233,7 +228,6 @@ public:
     MaxCallFrameSize = 0;
     CSIValid = false;
     LocalFrameSize = 0;
-    LocalFrameBaseOffset = 0;
     LocalFrameMaxAlign = 0;
     UseLocalStackAllocationBlock = false;
   }
@@ -298,14 +292,6 @@ public:
   /// getLocalFrameObjectCount - Return the number of objects allocated into
   /// the local object block.
   int64_t getLocalFrameObjectCount() { return LocalFrameObjects.size(); }
-
-  /// setLocalFrameBaseOffset - Set the base SP offset of the local frame
-  /// blob.
-  void setLocalFrameBaseOffset(int64_t o) { LocalFrameBaseOffset = o; }
-
-  /// getLocalFrameBaseOffset - Get the base SP offset of the local frame
-  /// blob.
-  int64_t getLocalFrameBaseOffset() const { return LocalFrameBaseOffset; }
 
   /// setLocalFrameSize - Set the size of the local object blob.
   void setLocalFrameSize(int64_t sz) { LocalFrameSize = sz; }

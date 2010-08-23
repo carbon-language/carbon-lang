@@ -566,10 +566,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     // Adjust to alignment boundary.
     Offset = (Offset + Align - 1) / Align * Align;
 
-    // Store the offset of the start of the local allocation block. This
-    // will be used later when resolving frame base virtual register pseudos.
-    MFI->setLocalFrameBaseOffset(Offset);
-
     DEBUG(dbgs() << "Local frame base offset: " << Offset << "\n");
 
     // Resolve offsets for objects in the local block.
