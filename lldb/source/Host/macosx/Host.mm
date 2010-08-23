@@ -325,7 +325,13 @@ ThreadNameAccessor (bool get, lldb::pid_t pid, lldb::tid_t tid, const char *name
     Mutex::Locker locker(&g_mutex);
 
     typedef std::map<uint64_t, std::string> thread_name_map;
-    static thread_name_map g_thread_names;
+    // rdar://problem/8153284
+    // Fixed a crasher where during shutdown, loggings attempted to access the
+    // thread name but the static map instance had already been destructed.
+    // Another approach is to introduce a static guard object which monitors its
+    // own destruction and raises a flag, but this incurs more overhead.
+    static thread_name_map *g_thread_names_ptr = new thread_name_map();
+    thread_name_map &g_thread_names = *g_thread_names_ptr;
 
     if (get)
     {
