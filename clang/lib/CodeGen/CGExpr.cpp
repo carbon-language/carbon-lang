@@ -441,9 +441,12 @@ RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
     return RValue::getComplex(std::make_pair(U, U));
   }
   
+  // If this is a use of an undefined aggregate type, the aggregate must have an
+  // identifiable address.  Just because the contents of the value are undefined
+  // doesn't mean that the address can't be taken and compared.
   if (hasAggregateLLVMType(Ty)) {
-    const llvm::Type *LTy = llvm::PointerType::getUnqual(ConvertType(Ty));
-    return RValue::getAggregate(llvm::UndefValue::get(LTy));
+    llvm::Value *DestPtr = CreateMemTemp(Ty, "undef.agg.tmp");
+    return RValue::getAggregate(DestPtr);
   }
   
   return RValue::get(llvm::UndefValue::get(ConvertType(Ty)));

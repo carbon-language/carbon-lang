@@ -76,3 +76,27 @@ namespace PR5179 {
     return b2.b1.pa;
   }
 }
+
+namespace test5 {
+  struct Xbase { };
+  struct Empty { };
+  struct Y;
+  struct X : public Xbase {
+    Empty empty;
+    Y f();
+  };
+  struct Y : public X { 
+    Empty empty;
+  };
+  X getX();
+  int takeY(const Y&, int y);
+  void g() {
+    // rdar://8340348 - The temporary for the X object needs to have a defined
+    // address when passed into X::f as 'this'.
+    takeY(getX().f(), 42);
+  }
+  // CHECK: void @_ZN5test51gEv()
+  // CHECK: alloca %"struct.test5::Y"
+  // CHECK: alloca %"struct.test5::X"
+  // CHECK: alloca %"struct.test5::Y"
+}
