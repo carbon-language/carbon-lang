@@ -1861,6 +1861,21 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
   return I->second;
 }
 
+/// isUnsignedDIType - Return true if type encoding is unsigned.
+static bool isUnsignedDIType(DIType Ty) {
+  DIDerivedType DTy(Ty);
+  if (DTy.Verify())
+    return isUnsignedDIType(DTy.getTypeDerivedFrom());
+
+  DIBasicType BTy(Ty);
+  if (BTy.Verify()) {
+    unsigned Encoding = BTy.getEncoding();
+    if (Encoding == dwarf::DW_ATE_unsigned ||
+        Encoding == dwarf::DW_ATE_unsigned_char)
+      return true;
+  }
+  return false;
+}
 
 /// constructGlobalVariableDIE - Construct global variable DIE.
 void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
@@ -1930,17 +1945,12 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     } 
   } else if (Constant *C = GV.getConstant()) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
-      DIBasicType BTy(GTy);
-      if (BTy.Verify()) {
-        unsigned Encoding = BTy.getEncoding();
-        if (Encoding == dwarf::DW_ATE_unsigned ||
-            Encoding == dwarf::DW_ATE_unsigned_char)
+      if (isUnsignedDIType(GTy))
           addUInt(VariableDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
                   CI->getZExtValue());
         else
           addSInt(VariableDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
                  CI->getSExtValue());
-      }
     }
   }
   return;

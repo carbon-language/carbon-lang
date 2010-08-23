@@ -290,6 +290,9 @@ namespace llvm {
 
     unsigned getEncoding() const { return getUnsignedField(9); }
 
+    /// Verify - Verify that a basic type descriptor is well formed.
+    bool Verify() const;
+
     /// print - print basic type.
     void print(raw_ostream &OS) const;
 
@@ -312,6 +315,9 @@ namespace llvm {
     /// getOriginalTypeSize - If this type is derived from a base type then
     /// return base type size.
     uint64_t getOriginalTypeSize() const;
+
+    /// Verify - Verify that a derived type descriptor is well formed.
+    bool Verify() const;
 
     /// print - print derived type.
     void print(raw_ostream &OS) const;

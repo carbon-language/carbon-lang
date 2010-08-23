@@ -303,6 +303,16 @@ bool DIType::Verify() const {
   return true;
 }
 
+/// Verify - Verify that a basic type descriptor is well formed.
+bool DIBasicType::Verify() const {
+  return isBasicType();
+}
+
+/// Verify - Verify that a derived type descriptor is well formed.
+bool DIDerivedType::Verify() const {
+  return isDerivedType();
+}
+
 /// Verify - Verify that a composite type descriptor is well formed.
 bool DICompositeType::Verify() const {
   if (!DbgNode)
