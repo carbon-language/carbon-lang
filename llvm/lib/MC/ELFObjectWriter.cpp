@@ -511,9 +511,10 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
 
     if (Base) {
-      if (MCFragment *F = SD.getFragment())
+      if (MCFragment *F = SD.getFragment()) {
         Index = F->getParent()->getOrdinal() + getNumOfLocalSymbols(Asm) + 1;
-      else
+        Value += Layout.getSymbolAddress(&SD);
+      } else
         Index = getSymbolIndexInSymbolTable(const_cast<MCAssembler &>(Asm), Symbol);
       if (Base != &SD)
         Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
