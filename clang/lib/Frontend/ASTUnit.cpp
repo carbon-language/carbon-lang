@@ -194,6 +194,7 @@ void ASTUnit::CacheCodeCompletionResults() {
                                                         IsNestedNameSpecifier);
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
+      CachedResult.Availability = Results[I].Availability;
 
       // Keep track of the type of this completion in an ASTContext-agnostic 
       // way.
@@ -280,6 +281,7 @@ void ASTUnit::CacheCodeCompletionResults() {
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
+      CachedResult.Availability = Results[I].Availability;
       CachedResult.TypeClass = STC_Void;
       CachedResult.Type = 0;
       CachedCompletionResults.push_back(CachedResult);
@@ -1644,7 +1646,8 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
       }
     }
     
-    AllResults.push_back(Result(C->Completion, Priority, C->Kind));
+    AllResults.push_back(Result(C->Completion, Priority, C->Kind,
+                                C->Availability));
   }
   
   // If we did not add any cached completion results, just forward the

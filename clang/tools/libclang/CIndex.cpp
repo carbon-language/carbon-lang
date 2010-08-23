@@ -3018,6 +3018,21 @@ static CXLanguageKind getDeclLanguage(const Decl *D) {
 }
 
 extern "C" {
+  
+enum CXAvailabilityKind clang_getCursorAvailability(CXCursor cursor) {
+  if (clang_isDeclaration(cursor.kind))
+    if (Decl *D = cxcursor::getCursorDecl(cursor)) {
+      if (D->hasAttr<UnavailableAttr>() ||
+          (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isDeleted()))
+        return CXAvailability_Available;
+      
+      if (D->hasAttr<DeprecatedAttr>())
+        return CXAvailability_Deprecated;
+    }
+  
+  return CXAvailability_Available;
+}
+
 CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind))
     return getDeclLanguage(cxcursor::getCursorDecl(cursor));

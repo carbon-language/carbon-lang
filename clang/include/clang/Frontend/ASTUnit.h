@@ -239,6 +239,9 @@ public:
     /// result.
     CXCursorKind Kind;
     
+    /// \brief The availability of this code-completion result.
+    CXAvailabilityKind Availability;
+    
     /// \brief The simplified type class for a non-macro completion result.
     SimplifiedTypeClass TypeClass;
     

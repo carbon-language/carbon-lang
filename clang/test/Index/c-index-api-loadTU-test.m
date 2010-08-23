@@ -6,7 +6,7 @@
   __attribute__((iboutlet)) id myoutlet;
 }
 - (void) __attribute__((ibaction)) myMessage:(id)msg;
-- foo;
+- foo __attribute__((deprecated));
 + fooC;
 
 @end
@@ -78,7 +78,7 @@ struct X0  {};
 // CHECK: <invalid loc>:0:0: attribute(ibaction)=
 // CHECK: c-index-api-loadTU-test.m:8:50: ParmDecl=msg:8:50 (Definition) Extent=[8:47 - 8:53]
 // CHECK: c-index-api-loadTU-test.m:8:47: TypeRef=id:0:0 Extent=[8:47 - 8:49]
-// CHECK: c-index-api-loadTU-test.m:9:1: ObjCInstanceMethodDecl=foo:9:1 Extent=[9:1 - 9:7]
+// CHECK: c-index-api-loadTU-test.m:9:1: ObjCInstanceMethodDecl=foo:9:1 (deprecated) Extent=[9:1 - 9:35]
 // CHECK: c-index-api-loadTU-test.m:10:1: ObjCClassMethodDecl=fooC:10:1 Extent=[10:1 - 10:8]
 // CHECK: c-index-api-loadTU-test.m:14:12: ObjCInterfaceDecl=Bar:14:12 Extent=[14:1 - 18:5]
 // CHECK: c-index-api-loadTU-test.m:14:18: ObjCSuperClassRef=Foo:4:12 Extent=[14:18 - 14:21]

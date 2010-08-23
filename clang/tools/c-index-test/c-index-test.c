@@ -182,6 +182,19 @@ static void PrintCursor(CXCursor Cursor) {
 
     if (clang_isCursorDefinition(Cursor))
       printf(" (Definition)");
+    
+    switch (clang_getCursorAvailability(Cursor)) {
+      case CXAvailability_Available:
+        break;
+        
+      case CXAvailability_Deprecated:
+        printf(" (deprecated)");
+        break;
+        
+      case CXAvailability_NotAvailable:
+        printf(" (unavailable)");
+        break;
+    }
   }
 }
 
@@ -865,8 +878,21 @@ void print_completion_result(CXCompletionResult *completion_result,
   clang_disposeString(ks);
 
   print_completion_string(completion_result->CompletionString, file);
-  fprintf(file, " (%u)\n", 
+  fprintf(file, " (%u)", 
           clang_getCompletionPriority(completion_result->CompletionString));
+  switch (clang_getCompletionAvailability(completion_result->CompletionString)){
+  case CXAvailability_Available:
+    break;
+    
+  case CXAvailability_Deprecated:
+    fprintf(file, " (deprecated)");
+    break;
+    
+  case CXAvailability_NotAvailable:
+    fprintf(file, " (unavailable)");
+    break;
+  }
+  fprintf(file, "\n");
 }
 
 int perform_code_completion(int argc, const char **argv, int timing_only) {

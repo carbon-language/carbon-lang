@@ -48,11 +48,15 @@ namespace {
   /// This is the representation behind a CXCompletionString.
   class CXStoredCodeCompletionString : public CodeCompletionString {
     unsigned Priority;
+    CXAvailabilityKind Availability;
     
   public:
-    CXStoredCodeCompletionString(unsigned Priority) : Priority(Priority) { }
+    CXStoredCodeCompletionString(unsigned Priority,
+                                 CXAvailabilityKind Availability) 
+      : Priority(Priority), Availability(Availability) { }
     
     unsigned getPriority() const { return Priority; }
+    CXAvailabilityKind getAvailability() const { return Availability; }
   };
 }
 
@@ -210,6 +214,13 @@ unsigned clang_getCompletionPriority(CXCompletionString completion_string) {
   return CCStr? CCStr->getPriority() : unsigned(CCP_Unlikely);
 }
   
+enum CXAvailabilityKind 
+clang_getCompletionAvailability(CXCompletionString completion_string) {
+  CXStoredCodeCompletionString *CCStr
+    = (CXStoredCodeCompletionString *)completion_string;
+  return CCStr? CCStr->getAvailability() : CXAvailability_Available;
+}
+
 static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
                          unsigned &Value) {
   if (Memory + sizeof(unsigned) > MemoryEnd)
@@ -433,8 +444,13 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
       if (ReadUnsigned(Str, StrEnd, Priority))
         break;
       
+      unsigned Availability;
+      if (ReadUnsigned(Str, StrEnd, Availability))
+        break;
+      
       CXStoredCodeCompletionString *CCStr
-        = new CXStoredCodeCompletionString(Priority);
+        = new CXStoredCodeCompletionString(Priority, 
+                                           (CXAvailabilityKind)Availability);
       if (!CCStr->Deserialize(Str, StrEnd)) {
         delete CCStr;
         continue;
@@ -559,7 +575,8 @@ namespace {
       AllocatedResults.NumResults = NumResults;
       for (unsigned I = 0; I != NumResults; ++I) {
         CXStoredCodeCompletionString *StoredCompletion
-          = new CXStoredCodeCompletionString(Results[I].Priority);
+          = new CXStoredCodeCompletionString(Results[I].Priority,
+                                             Results[I].Availability);
         (void)Results[I].CreateCodeCompletionString(S, StoredCompletion);
         AllocatedResults.Results[I].CursorKind = Results[I].CursorKind;
         AllocatedResults.Results[I].CompletionString = StoredCompletion;
@@ -743,7 +760,7 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *ResultsIn) {
     = static_cast<AllocatedCXCodeCompleteResults*>(ResultsIn);
   delete Results;
 }
-
+  
 unsigned 
 clang_codeCompleteGetNumDiagnostics(CXCodeCompleteResults *ResultsIn) {
   AllocatedCXCodeCompleteResults *Results

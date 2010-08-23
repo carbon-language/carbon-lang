@@ -97,6 +97,19 @@ struct CXUnsavedFile {
   unsigned long Length;
 };
 
+/// \brief Describes the availability of a particular entity, which indicates
+/// whether the use of this entity will result in a warning or error due to
+/// it being deprecated or unavailable.
+enum CXAvailabilityKind {
+  /// \brief The entity is available.
+  CXAvailability_Available,
+  /// \brief The entity is available, but has been deprecated (and its use is
+  /// not recommended).
+  CXAvailability_Deprecated,
+  /// \brief The entity is not available; any use of it will be an error.
+  CXAvailability_NotAvailable
+};
+  
 /**
  * \defgroup CINDEX_STRING String manipulation routines
  *
@@ -1199,6 +1212,16 @@ enum CXLinkageKind {
 CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
 
 /**
+ * \brief Determine the availability of the entity that this cursor refers to.
+ *
+ * \param cursor The cursor to query.
+ *
+ * \returns The availability of the cursor.
+ */
+CINDEX_LINKAGE enum CXAvailabilityKind 
+clang_getCursorAvailability(CXCursor cursor);
+
+/**
  * \brief Describe the "language" of the entity referred to by a cursor.
  */
 CINDEX_LINKAGE enum CXLanguageKind {
@@ -2073,6 +2096,17 @@ CINDEX_LINKAGE unsigned
 clang_getCompletionPriority(CXCompletionString completion_string);
   
 /**
+ * \brief Determine the availability of the entity that this code-completion
+ * string refers to.
+ *
+ * \param completion_string The completion string to query.
+ *
+ * \returns The availability of the completion string.
+ */
+CINDEX_LINKAGE enum CXAvailabilityKind 
+clang_getCompletionAvailability(CXCompletionString completion_string);
+
+/**
  * \brief Contains the results of code-completion.
  *
  * This data structure contains the results of code completion, as
@@ -2294,7 +2328,7 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
  */
 CINDEX_LINKAGE
 void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
-
+  
 /**
  * \brief Determine the number of diagnostics produced prior to the
  * location where code completion was performed.

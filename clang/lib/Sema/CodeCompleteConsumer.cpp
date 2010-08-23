@@ -496,9 +496,16 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   }
 }
 
-void CodeCompleteConsumer::Result::computeCursorKind() {
+void CodeCompleteConsumer::Result::computeCursorKindAndAvailability() {
   switch (Kind) {
   case RK_Declaration:
+    // Set the availability based on attributes.
+    Availability = CXAvailability_Available;      
+    if (Declaration->getAttr<UnavailableAttr>())
+      Availability = CXAvailability_NotAvailable;
+    else if (Declaration->getAttr<DeprecatedAttr>())
+      Availability = CXAvailability_Deprecated;
+      
     switch (Declaration->getKind()) {
     case Decl::Record:
     case Decl::CXXRecord:
@@ -544,6 +551,8 @@ void CodeCompleteConsumer::Result::computeCursorKind() {
     case Decl::CXXDestructor:
     case Decl::CXXConversion:
       CursorKind = CXCursor_FunctionDecl;
+      if (cast<FunctionDecl>(Declaration)->isDeleted())
+        Availability = CXAvailability_NotAvailable;
       break;
         
     case Decl::Var:
@@ -589,10 +598,12 @@ void CodeCompleteConsumer::Result::computeCursorKind() {
     break;
 
   case Result::RK_Macro:
+    Availability = CXAvailability_Available;      
     CursorKind = CXCursor_MacroDefinition;
     break;
       
   case Result::RK_Keyword:
+    Availability = CXAvailability_Available;      
     CursorKind = CXCursor_NotImplemented;
     break;
       
@@ -611,6 +622,7 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
   for (unsigned I = 0; I != NumResults; ++I) {
     WriteUnsigned(OS, Results[I].CursorKind);
     WriteUnsigned(OS, Results[I].Priority);
+    WriteUnsigned(OS, Results[I].Availability);
     CodeCompletionString *CCS = Results[I].CreateCodeCompletionString(SemaRef);
     assert(CCS && "No code-completion string?");
     CCS->Serialize(OS);
@@ -626,6 +638,7 @@ CIndexCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   for (unsigned I = 0; I != NumCandidates; ++I) {
     WriteUnsigned(OS, CXCursor_NotImplemented);
     WriteUnsigned(OS, /*Priority=*/0);
+    WriteUnsigned(OS, /*Availability=*/CXAvailability_Available);
     CodeCompletionString *CCS
       = Candidates[I].CreateSignatureString(CurrentArg, SemaRef);
     assert(CCS && "No code-completion string?");

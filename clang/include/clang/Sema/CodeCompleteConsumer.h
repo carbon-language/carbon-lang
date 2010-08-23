@@ -476,6 +476,9 @@ public:
     /// \brief The cursor kind that describes this result.
     CXCursorKind CursorKind;
     
+    /// \brief The availability of this result.
+    CXAvailabilityKind Availability;
+    
     /// \brief Specifies which parameter (of a function, Objective-C method,
     /// macro, etc.) we should start with when formatting the result.
     unsigned StartParameter;
@@ -508,39 +511,43 @@ public:
            NestedNameSpecifier *Qualifier = 0,
            bool QualifierIsInformative = false)
       : Kind(RK_Declaration), Declaration(Declaration), 
-        Priority(getPriorityFromDecl(Declaration)), StartParameter(0), 
+        Priority(getPriorityFromDecl(Declaration)), 
+        Availability(CXAvailability_Available), StartParameter(0), 
         Hidden(false), QualifierIsInformative(QualifierIsInformative),
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         DeclaringEntity(false), Qualifier(Qualifier) { 
-      computeCursorKind();
+      computeCursorKindAndAvailability();
     }
     
     /// \brief Build a result that refers to a keyword or symbol.
     Result(const char *Keyword, unsigned Priority = CCP_Keyword)
       : Kind(RK_Keyword), Keyword(Keyword), Priority(Priority), 
+        Availability(CXAvailability_Available), 
         StartParameter(0), Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         DeclaringEntity(false), Qualifier(0) {
-      computeCursorKind();
+      computeCursorKindAndAvailability();
     }
     
     /// \brief Build a result that refers to a macro.
     Result(IdentifierInfo *Macro, unsigned Priority = CCP_Macro)
-      : Kind(RK_Macro), Macro(Macro), Priority(Priority), StartParameter(0), 
+      : Kind(RK_Macro), Macro(Macro), Priority(Priority), 
+        Availability(CXAvailability_Available), StartParameter(0), 
         Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         DeclaringEntity(false), Qualifier(0) { 
-      computeCursorKind();
+      computeCursorKindAndAvailability();
     }
 
     /// \brief Build a result that refers to a pattern.
     Result(CodeCompletionString *Pattern, unsigned Priority = CCP_CodePattern,
-           CXCursorKind CursorKind = CXCursor_NotImplemented)
+           CXCursorKind CursorKind = CXCursor_NotImplemented,
+           CXAvailabilityKind Availability = CXAvailability_Available)
       : Kind(RK_Pattern), Pattern(Pattern), Priority(Priority), 
-        CursorKind(CursorKind), StartParameter(0), Hidden(false), 
-        QualifierIsInformative(0), StartsNestedNameSpecifier(false), 
-        AllParametersAreInformative(false), DeclaringEntity(false), 
-        Qualifier(0) 
+        CursorKind(CursorKind), Availability(Availability), StartParameter(0), 
+        Hidden(false), QualifierIsInformative(0), 
+        StartsNestedNameSpecifier(false), AllParametersAreInformative(false), 
+        DeclaringEntity(false), Qualifier(0) 
     { 
     }
     
@@ -573,7 +580,7 @@ public:
     static unsigned getPriorityFromDecl(NamedDecl *ND);
     
   private:
-    void computeCursorKind();
+    void computeCursorKindAndAvailability();
   };
     
   class OverloadCandidate {
