@@ -1327,7 +1327,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
               break;
             case ISD::SEXTLOAD: ExtendOp = ISD::SIGN_EXTEND; break;
             case ISD::ZEXTLOAD: ExtendOp = ISD::ZERO_EXTEND; break;
-            default: assert(0 && "Unexpected extend load type!");
+            default: llvm_unreachable("Unexpected extend load type!");
             }
             Result = DAG.getNode(ExtendOp, dl, Node->getValueType(0), Load);
             Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.

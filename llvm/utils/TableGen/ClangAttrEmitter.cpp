@@ -71,6 +71,7 @@ namespace {
         upperName[0] = std::toupper(upperName[0]);
       }
     }
+    virtual ~Argument() {}
 
     StringRef getLowerName() const { return lowerName; }
     StringRef getUpperName() const { return upperName; }
