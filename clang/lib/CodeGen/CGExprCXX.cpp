@@ -340,6 +340,24 @@ static CharUnits CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
                   Ctx.getTypeAlignInChars(ElementType));
 }
 
+/// Check whether the given operator new[] is the global placement
+/// operator new[].
+static bool IsPlacementOperatorNewArray(ASTContext &Ctx,
+                                        const FunctionDecl *Fn) {
+  // Must be in global scope.  Note that allocation functions can't be
+  // declared in namespaces.
+  if (!Fn->getDeclContext()->getLookupContext()->isFileContext())
+    return false;
+
+  // Signature must be void *operator new[](size_t, void*).
+  // The size_t is common to all operator new[]s.
+  if (Fn->getNumParams() != 2)
+    return false;
+
+  CanQualType ParamType = Ctx.getCanonicalType(Fn->getParamDecl(1)->getType());
+  return (ParamType == Ctx.VoidPtrTy);
+}
+
 static CharUnits CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   if (!E->isArray())
     return CharUnits::Zero();
@@ -347,16 +365,9 @@ static CharUnits CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   // No cookie is required if the new operator being used is 
   // ::operator new[](size_t, void*).
   const FunctionDecl *OperatorNew = E->getOperatorNew();
-  if (OperatorNew->getDeclContext()->getLookupContext()->isFileContext()) {
-    if (OperatorNew->getNumParams() == 2) {
-      CanQualType ParamType = 
-        Ctx.getCanonicalType(OperatorNew->getParamDecl(1)->getType());
-      
-      if (ParamType == Ctx.VoidPtrTy)
-        return CharUnits::Zero();
-    }
-  }
-      
+  if (IsPlacementOperatorNewArray(Ctx, OperatorNew))
+    return CharUnits::Zero();
+
   return CalculateCookiePadding(Ctx, E->getAllocatedType());
 }
 
