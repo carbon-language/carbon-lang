@@ -1491,7 +1491,26 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
   llvm::CrashRecoveryContext CRC;
 
   if (!CRC.RunSafely(clang_parseTranslationUnit_Impl, &PTUI)) {
-    fprintf(stderr, "libclang: crash detected during parsing");
+    fprintf(stderr, "libclang: crash detected during parsing: {\n");
+    fprintf(stderr, "  'source_filename' : '%s'\n", source_filename);
+    fprintf(stderr, "  'command_line_args' : [");
+    for (int i = 0; i != num_command_line_args; ++i) {
+      if (i)
+        fprintf(stderr, ", ");
+      fprintf(stderr, "'%s'", command_line_args[i]);
+    }
+    fprintf(stderr, "],\n");
+    fprintf(stderr, "  'unsaved_files' : [");
+    for (unsigned i = 0; i != num_unsaved_files; ++i) {
+      if (i)
+        fprintf(stderr, ", ");
+      fprintf(stderr, "('%s', '...', %ld)", unsaved_files[i].Filename,
+              unsaved_files[i].Length);
+    }
+    fprintf(stderr, "],\n");
+    fprintf(stderr, "  'options' : %d,\n", options);
+    fprintf(stderr, "}\n");
+    
     return 0;
   }
 
