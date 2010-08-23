@@ -105,9 +105,8 @@ namespace {
 }
 char UnreachableMachineBlockElim::ID = 0;
 
-static RegisterPass<UnreachableMachineBlockElim>
-Y("unreachable-mbb-elimination",
-  "Remove unreachable machine basic blocks");
+INITIALIZE_PASS(UnreachableMachineBlockElim, "unreachable-mbb-elimination",
+  "Remove unreachable machine basic blocks", false, false);
 
 char &llvm::UnreachableMachineBlockElimID = UnreachableMachineBlockElim::ID;
 

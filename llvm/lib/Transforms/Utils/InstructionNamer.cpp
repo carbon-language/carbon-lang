@@ -48,8 +48,8 @@ namespace {
   };
   
   char InstNamer::ID = 0;
-  static RegisterPass<InstNamer> X("instnamer",
-                                   "Assign names to anonymous instructions");
+  INITIALIZE_PASS(InstNamer, "instnamer", 
+                  "Assign names to anonymous instructions", false, false);
 }
 
 

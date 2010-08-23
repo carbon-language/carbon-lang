@@ -79,10 +79,8 @@ namespace {
 }  // End of anonymous namespace
 
 char LoaderPass::ID = 0;
-static RegisterPass<LoaderPass>
-X("profile-loader", "Load profile information from llvmprof.out", false, true);
-
-static RegisterAnalysisGroup<ProfileInfo> Y(X);
+INITIALIZE_AG_PASS(LoaderPass, ProfileInfo, "profile-loader",
+              "Load profile information from llvmprof.out", false, true, false);
 
 char &llvm::ProfileLoaderPassID = LoaderPass::ID;
 

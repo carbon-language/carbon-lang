@@ -30,8 +30,8 @@ TEMPLATE_INSTANTIATION(MLIB);
 }
 
 char MachineLoopInfo::ID = 0;
-static RegisterPass<MachineLoopInfo>
-X("machine-loops", "Machine Natural Loop Construction", true);
+INITIALIZE_PASS(MachineLoopInfo, "machine-loops",
+                "Machine Natural Loop Construction", true, true);
 
 char &llvm::MachineLoopInfoID = MachineLoopInfo::ID;
 

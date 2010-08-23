@@ -79,8 +79,8 @@ namespace {
 }
 
 char LowerSwitch::ID = 0;
-static RegisterPass<LowerSwitch>
-X("lowerswitch", "Lower SwitchInst's to branches");
+INITIALIZE_PASS(LowerSwitch, "lowerswitch",
+                "Lower SwitchInst's to branches", false, false);
 
 // Publically exposed interface to pass...
 char &llvm::LowerSwitchID = LowerSwitch::ID;

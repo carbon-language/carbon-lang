@@ -59,8 +59,8 @@ namespace {
 }
   
 char RegToMem::ID = 0;
-static RegisterPass<RegToMem>
-X("reg2mem", "Demote all values to stack slots");
+INITIALIZE_PASS(RegToMem, "reg2mem", "Demote all values to stack slots",
+                false, false);
 
 
 bool RegToMem::runOnFunction(Function &F) {

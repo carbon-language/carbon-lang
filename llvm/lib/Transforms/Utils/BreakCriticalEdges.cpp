@@ -53,8 +53,8 @@ namespace {
 }
 
 char BreakCriticalEdges::ID = 0;
-static RegisterPass<BreakCriticalEdges>
-X("break-crit-edges", "Break critical edges in CFG");
+INITIALIZE_PASS(BreakCriticalEdges, "break-crit-edges",
+                "Break critical edges in CFG", false, false);
 
 // Publically exposed interface to pass...
 char &llvm::BreakCriticalEdgesID = BreakCriticalEdges::ID;

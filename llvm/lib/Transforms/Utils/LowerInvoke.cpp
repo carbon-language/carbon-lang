@@ -100,8 +100,9 @@ namespace {
 }
 
 char LowerInvoke::ID = 0;
-static RegisterPass<LowerInvoke>
-X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
+INITIALIZE_PASS(LowerInvoke, "lowerinvoke",
+                "Lower invoke and unwind, for unwindless code generators",
+                false, false);
 
 char &llvm::LowerInvokePassID = LowerInvoke::ID;
 

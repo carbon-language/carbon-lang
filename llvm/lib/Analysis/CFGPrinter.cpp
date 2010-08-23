@@ -95,8 +95,8 @@ namespace {
 }
 
 char CFGPrinter::ID = 0;
-static RegisterPass<CFGPrinter>
-P1("dot-cfg", "Print CFG of function to 'dot' file", false, true);
+INITIALIZE_PASS(CFGPrinter, "dot-cfg", "Print CFG of function to 'dot' file", 
+                false, true);
 
 namespace {
   struct CFGOnlyPrinter : public FunctionPass {
@@ -126,9 +126,9 @@ namespace {
 }
 
 char CFGOnlyPrinter::ID = 0;
-static RegisterPass<CFGOnlyPrinter>
-P2("dot-cfg-only",
-   "Print CFG of function to 'dot' file (with no function bodies)", false, true);
+INITIALIZE_PASS(CFGOnlyPrinter, "dot-cfg-only",
+   "Print CFG of function to 'dot' file (with no function bodies)",
+   false, true);
 
 /// viewCFG - This function is meant for use from the debugger.  You can just
 /// say 'call F->viewCFG()' and a ghostview window should pop up from the

@@ -72,10 +72,8 @@ namespace {
 }  // End of anonymous namespace
 
 char ProfileEstimatorPass::ID = 0;
-static RegisterPass<ProfileEstimatorPass>
-X("profile-estimator", "Estimate profiling information", false, true);
-
-static RegisterAnalysisGroup<ProfileInfo> Y(X);
+INITIALIZE_AG_PASS(ProfileEstimatorPass, ProfileInfo, "profile-estimator",
+                "Estimate profiling information", false, true, false);
 
 namespace llvm {
   char &ProfileEstimatorPassID = ProfileEstimatorPass::ID;

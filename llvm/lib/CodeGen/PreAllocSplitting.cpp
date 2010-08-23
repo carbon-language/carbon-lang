@@ -203,8 +203,9 @@ namespace {
 
 char PreAllocSplitting::ID = 0;
 
-static RegisterPass<PreAllocSplitting>
-X("pre-alloc-splitting", "Pre-Register Allocation Live Interval Splitting");
+INITIALIZE_PASS(PreAllocSplitting, "pre-alloc-splitting",
+                "Pre-Register Allocation Live Interval Splitting",
+                false, false);
 
 char &llvm::PreAllocSplittingID = PreAllocSplitting::ID;
 

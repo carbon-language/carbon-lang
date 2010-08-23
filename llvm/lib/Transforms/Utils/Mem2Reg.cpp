@@ -49,7 +49,8 @@ namespace {
 }  // end of anonymous namespace
 
 char PromotePass::ID = 0;
-static RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
+INITIALIZE_PASS(PromotePass, "mem2reg", "Promote Memory to Register",
+                false, false);
 
 bool PromotePass::runOnFunction(Function &F) {
   std::vector<AllocaInst*> Allocas;

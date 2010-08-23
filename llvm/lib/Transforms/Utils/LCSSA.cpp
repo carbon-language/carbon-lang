@@ -90,7 +90,7 @@ namespace {
 }
   
 char LCSSA::ID = 0;
-static RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
+INITIALIZE_PASS(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false);
 
 Pass *llvm::createLCSSAPass() { return new LCSSA(); }
 char &llvm::LCSSAID = LCSSA::ID;

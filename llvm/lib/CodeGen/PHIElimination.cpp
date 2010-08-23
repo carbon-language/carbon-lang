@@ -38,8 +38,8 @@ STATISTIC(NumAtomic, "Number of atomic phis lowered");
 STATISTIC(NumReused, "Number of reused lowered phis");
 
 char PHIElimination::ID = 0;
-static RegisterPass<PHIElimination>
-X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
+INITIALIZE_PASS(PHIElimination, "phi-node-elimination",
+                "Eliminate PHI nodes for register allocation", false, false);
 
 char &llvm::PHIEliminationID = PHIElimination::ID;
 

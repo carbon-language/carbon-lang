@@ -59,11 +59,9 @@ DisableCrossClassJoin("disable-cross-class-join",
                cl::desc("Avoid coalescing cross register class copies"),
                cl::init(false), cl::Hidden);
 
-static RegisterPass<SimpleRegisterCoalescing>
-X("simple-register-coalescing", "Simple Register Coalescing");
-
-// Declare that we implement the RegisterCoalescer interface
-static RegisterAnalysisGroup<RegisterCoalescer, true/*The Default*/> V(X);
+INITIALIZE_AG_PASS(SimpleRegisterCoalescing, RegisterCoalescer,
+                "simple-register-coalescing", "Simple Register Coalescing", 
+                false, false, true);
 
 char &llvm::SimpleRegisterCoalescingID = SimpleRegisterCoalescing::ID;
 

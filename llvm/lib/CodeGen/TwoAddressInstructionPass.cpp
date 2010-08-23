@@ -159,8 +159,8 @@ namespace {
 }
 
 char TwoAddressInstructionPass::ID = 0;
-static RegisterPass<TwoAddressInstructionPass>
-X("twoaddressinstruction", "Two-Address instruction pass");
+INITIALIZE_PASS(TwoAddressInstructionPass, "twoaddressinstruction",
+                "Two-Address instruction pass", false, false);
 
 char &llvm::TwoAddressInstructionPassID = TwoAddressInstructionPass::ID;
 

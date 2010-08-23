@@ -24,8 +24,8 @@ TEMPLATE_INSTANTIATION(class DominatorTreeBase<MachineBasicBlock>);
 
 char MachineDominatorTree::ID = 0;
 
-static RegisterPass<MachineDominatorTree>
-E("machinedomtree", "MachineDominator Tree Construction", true);
+INITIALIZE_PASS(MachineDominatorTree, "machinedomtree",
+                "MachineDominator Tree Construction", true, true);
 
 char &llvm::MachineDominatorsID = MachineDominatorTree::ID;
 

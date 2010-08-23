@@ -154,7 +154,8 @@ struct LowerAtomic : public BasicBlockPass {
 }
 
 char LowerAtomic::ID = 0;
-static RegisterPass<LowerAtomic>
-X("loweratomic", "Lower atomic intrinsics to non-atomic form");
+INITIALIZE_PASS(LowerAtomic, "loweratomic",
+                "Lower atomic intrinsics to non-atomic form",
+                false, false);
 
 Pass *llvm::createLowerAtomicPass() { return new LowerAtomic(); }
