@@ -106,15 +106,17 @@ unsigned false3(int param) {
 unsigned false4() {
   // Trivial constant
   const int height = 1;
-
-  // Pseudo-constant (never changes after decl)
-  int width = height;
+  int c = 42;
+  test(height * c); // no-warning
 
   // Pseudo-constant (blockvar)
   __block int a = 0;
   int b = 10;
   a *= b; // no-warning
   test(a);
+
+  // Pseudo-constant (never changes after decl)
+  int width = height;
 
   return width * 10; // no-warning
 }
