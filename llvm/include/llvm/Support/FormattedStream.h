@@ -164,7 +164,12 @@ namespace llvm
     void keep()            { return get_tool_output_file().keep(); }
     bool has_error() const { return get_tool_output_file().has_error(); }
     void clear_error()     { return get_tool_output_file().clear_error(); }
-    void close()           { return get_tool_output_file().close(); }
+    void close() {
+      // The inner stream is unbuffered; flush the outer stream's buffer.
+      flush();
+      // The inner stream can close its file descriptor now.
+      return get_tool_output_file().close();
+    }
   };
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for
