@@ -263,7 +263,7 @@ void DarwinGCC::AddLinkSearchPathArgs(const ArgList &Args,
     CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
                                          "/x86_64"));
   }
-  
+
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/" + ToolChainDir));
 
   Tmp = getDriver().Dir + "/../lib/gcc/" + ToolChainDir;
@@ -369,6 +369,32 @@ void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
     break;
   }
   P.appendComponent("4.2.1");
+
+  // Determine the arch specific GCC subdirectory.
+  const char *ArchSpecificDir = 0;
+  switch (getTriple().getArch()) {
+  default:
+    break;
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    // FIXME: Get the right subdirectory for ARM.
+    break;
+  case llvm::Triple::ppc64:
+    ArchSpecificDir = "ppc64";
+    break;
+  case llvm::Triple::x86_64:
+    ArchSpecificDir = "x86_64";
+    break;
+  }
+
+  if (ArchSpecificDir) {
+    P.appendComponent(ArchSpecificDir);
+    llvm::errs() << P.str() << "\n";
+    if (P.exists())
+      CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
+    P.eraseComponent();
+  }
+
   if (P.exists())
     CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
 }
