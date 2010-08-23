@@ -28,7 +28,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<wchar_t> C;
         C c;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -51,7 +51,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<wchar_t, 0x1000> C;
         C c;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -74,7 +74,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<wchar_t, 0x10ffff, std::consume_header> C;
         C c;
-        char n[7] = {0xEF, 0xBB, 0xBF, 0xF1, 0x80, 0x80, 0x83};
+        char n[7] = {char(0xEF), char(0xBB), char(0xBF), char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+7, 2);
         assert(r == 7);
@@ -97,7 +97,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<char32_t> C;
         C c;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -120,7 +120,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<char32_t, 0x1000> C;
         C c;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -143,7 +143,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<char32_t, 0x10ffff, std::consume_header> C;
         C c;
-        char n[7] = {0xEF, 0xBB, 0xBF, 0xF1, 0x80, 0x80, 0x83};
+        char n[7] = {char(0xEF), char(0xBB), char(0xBF), char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+7, 2);
         assert(r == 7);
@@ -166,7 +166,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<char16_t> C;
         C c;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -189,7 +189,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<char16_t, 0x1000> C;
         C c;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -212,7 +212,7 @@ int main()
     {
         typedef std::codecvt_utf8_utf16<char16_t, 0x10ffff, std::consume_header> C;
         C c;
-        char n[7] = {0xEF, 0xBB, 0xBF, 0xF1, 0x80, 0x80, 0x83};
+        char n[7] = {char(0xEF), char(0xBB), char(0xBF), char(0xF1), char(0x80), char(0x80), char(0x83)};
         std::mbstate_t m;
         int r = c.length(m, n, n+7, 2);
         assert(r == 7);

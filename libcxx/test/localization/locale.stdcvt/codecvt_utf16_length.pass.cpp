@@ -28,7 +28,7 @@ int main()
     {
         typedef std::codecvt_utf16<wchar_t> C;
         C c;
-        char n[4] = {0xD8, 0xC0, 0xDC, 0x03};
+        char n[4] = {char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -51,7 +51,7 @@ int main()
     {
         typedef std::codecvt_utf16<wchar_t, 0x1000> C;
         C c;
-        char n[4] = {0xD8, 0xC0, 0xDC, 0x03};
+        char n[4] = {char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -74,7 +74,7 @@ int main()
     {
         typedef std::codecvt_utf16<wchar_t, 0x10ffff, std::consume_header> C;
         C c;
-        char n[6] = {0xFE, 0xFF, 0xD8, 0xC0, 0xDC, 0x03};
+        char n[6] = {char(0xFE), char(0xFF), char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+6, 2);
         assert(r == 6);
@@ -97,7 +97,7 @@ int main()
     {
         typedef std::codecvt_utf16<wchar_t, 0x10ffff, std::little_endian> C;
         C c;
-        char n[4] = {0xC0, 0xD8, 0x03, 0xDC};
+        char n[4] = {char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -120,7 +120,7 @@ int main()
     {
         typedef std::codecvt_utf16<wchar_t, 0x1000, std::little_endian> C;
         C c;
-        char n[4] = {0xC0, 0xD8, 0x03, 0xDC};
+        char n[4] = {char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -145,7 +145,7 @@ int main()
                                                          std::consume_header |
                                                          std::little_endian)> C;
         C c;
-        char n[6] = {0xFF, 0xFE, 0xC0, 0xD8, 0x03, 0xDC};
+        char n[6] = {char(0xFF), char(0xFE), char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+6, 2);
         assert(r == 6);
@@ -168,7 +168,7 @@ int main()
     {
         typedef std::codecvt_utf16<char32_t> C;
         C c;
-        char n[4] = {0xD8, 0xC0, 0xDC, 0x03};
+        char n[4] = {char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -191,7 +191,7 @@ int main()
     {
         typedef std::codecvt_utf16<char32_t, 0x1000> C;
         C c;
-        char n[4] = {0xD8, 0xC0, 0xDC, 0x03};
+        char n[4] = {char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -214,7 +214,7 @@ int main()
     {
         typedef std::codecvt_utf16<char32_t, 0x10ffff, std::consume_header> C;
         C c;
-        char n[6] = {0xFE, 0xFF, 0xD8, 0xC0, 0xDC, 0x03};
+        char n[6] = {char(0xFE), char(0xFF), char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+6, 2);
         assert(r == 6);
@@ -237,7 +237,7 @@ int main()
     {
         typedef std::codecvt_utf16<char32_t, 0x10ffff, std::little_endian> C;
         C c;
-        char n[4] = {0xC0, 0xD8, 0x03, 0xDC};
+        char n[4] = {char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 4);
@@ -260,7 +260,7 @@ int main()
     {
         typedef std::codecvt_utf16<char32_t, 0x1000, std::little_endian> C;
         C c;
-        char n[4] = {0xC0, 0xD8, 0x03, 0xDC};
+        char n[4] = {char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -285,7 +285,7 @@ int main()
                                                          std::consume_header |
                                                          std::little_endian)> C;
         C c;
-        char n[6] = {0xFF, 0xFE, 0xC0, 0xD8, 0x03, 0xDC};
+        char n[6] = {char(0xFF), char(0xFE), char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+6, 2);
         assert(r == 6);
@@ -309,7 +309,7 @@ int main()
     {
         typedef std::codecvt_utf16<char16_t> C;
         C c;
-        char n[4] = {0xD8, 0xC0, 0xDC, 0x03};
+        char n[4] = {char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -332,7 +332,7 @@ int main()
     {
         typedef std::codecvt_utf16<char16_t, 0x1000> C;
         C c;
-        char n[4] = {0xD8, 0xC0, 0xDC, 0x03};
+        char n[4] = {char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -355,7 +355,7 @@ int main()
     {
         typedef std::codecvt_utf16<char16_t, 0x10ffff, std::consume_header> C;
         C c;
-        char n[6] = {0xFE, 0xFF, 0xD8, 0xC0, 0xDC, 0x03};
+        char n[6] = {char(0xFE), char(0xFF), char(0xD8), char(0xC0), char(0xDC), char(0x03)};
         std::mbstate_t m;
         int r = c.length(m, n, n+6, 2);
         assert(r == 2);
@@ -378,7 +378,7 @@ int main()
     {
         typedef std::codecvt_utf16<char16_t, 0x10ffff, std::little_endian> C;
         C c;
-        char n[4] = {0xC0, 0xD8, 0x03, 0xDC};
+        char n[4] = {char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -401,7 +401,7 @@ int main()
     {
         typedef std::codecvt_utf16<char16_t, 0x1000, std::little_endian> C;
         C c;
-        char n[4] = {0xC0, 0xD8, 0x03, 0xDC};
+        char n[4] = {char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+4, 2);
         assert(r == 0);
@@ -426,7 +426,7 @@ int main()
                                                          std::consume_header |
                                                          std::little_endian)> C;
         C c;
-        char n[6] = {0xFF, 0xFE, 0xC0, 0xD8, 0x03, 0xDC};
+        char n[6] = {char(0xFF), char(0xFE), char(0xC0), char(0xD8), char(0x03), char(0xDC)};
         std::mbstate_t m;
         int r = c.length(m, n, n+6, 2);
         assert(r == 2);

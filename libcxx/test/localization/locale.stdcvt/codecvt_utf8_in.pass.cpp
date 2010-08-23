@@ -31,7 +31,7 @@ int main()
         typedef std::codecvt_utf8<wchar_t> C;
         C c;
         wchar_t w = 0;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         wchar_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -70,7 +70,7 @@ int main()
         typedef std::codecvt_utf8<wchar_t, 0x1000> C;
         C c;
         wchar_t w = 0;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         wchar_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -109,7 +109,7 @@ int main()
         typedef std::codecvt_utf8<wchar_t, 0xFFFFFFFF, std::consume_header> C;
         C c;
         wchar_t w = 0;
-        char n[7] = {0xEF, 0xBB, 0xBF, 0xF1, 0x80, 0x80, 0x83};
+        char n[7] = {char(0xEF), char(0xBB), char(0xBF), char(0xF1), char(0x80), char(0x80), char(0x83)};
         wchar_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -151,7 +151,7 @@ int main()
         typedef std::codecvt_utf8<char32_t> C;
         C c;
         char32_t w = 0;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         char32_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -190,7 +190,7 @@ int main()
         typedef std::codecvt_utf8<char32_t, 0x1000> C;
         C c;
         char32_t w = 0;
-        char n[4] = {0xF1, 0x80, 0x80, 0x83};
+        char n[4] = {char(0xF1), char(0x80), char(0x80), char(0x83)};
         char32_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -229,7 +229,7 @@ int main()
         typedef std::codecvt_utf8<char32_t, 0xFFFFFFFF, std::consume_header> C;
         C c;
         char32_t w = 0;
-        char n[7] = {0xEF, 0xBB, 0xBF, 0xF1, 0x80, 0x80, 0x83};
+        char n[7] = {char(0xEF), char(0xBB), char(0xBF), char(0xF1), char(0x80), char(0x80), char(0x83)};
         char32_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -271,7 +271,7 @@ int main()
         typedef std::codecvt_utf8<char16_t> C;
         C c;
         char16_t w = 0;
-        char n[3] = {0xE1, 0x80, 0x85};
+        char n[3] = {char(0xE1), char(0x80), char(0x85)};
         char16_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -301,7 +301,7 @@ int main()
         typedef std::codecvt_utf8<char16_t, 0x1000> C;
         C c;
         char16_t w = 0;
-        char n[3] = {0xE1, 0x80, 0x85};
+        char n[3] = {char(0xE1), char(0x80), char(0x85)};
         char16_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
@@ -331,7 +331,7 @@ int main()
         typedef std::codecvt_utf8<char16_t, 0xFFFFFFFF, std::consume_header> C;
         C c;
         char16_t w = 0;
-        char n[6] = {0xEF, 0xBB, 0xBF, 0xE1, 0x80, 0x85};
+        char n[6] = {char(0xEF), char(0xBB), char(0xBF), char(0xE1), char(0x80), char(0x85)};
         char16_t* wp = nullptr;
         std::mbstate_t m;
         const char* np = nullptr;
