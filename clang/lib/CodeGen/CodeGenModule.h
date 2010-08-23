@@ -434,8 +434,6 @@ public:
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
                                    const AnnotateAttr *AA, unsigned LineNo);
 
-  llvm::Constant *EmitPointerToDataMember(const FieldDecl *FD);
-
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
   /// \param OmitOnError - If true, then this error should only be emitted if no

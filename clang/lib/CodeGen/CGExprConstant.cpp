@@ -454,22 +454,15 @@ public:
     return Visit(E->getInitializer());
   }
     
-  llvm::Constant *EmitMemberFunctionPointer(CXXMethodDecl *MD) {
-    return CGM.getCXXABI().EmitMemberFunctionPointer(MD);
-  }
-
   llvm::Constant *VisitUnaryAddrOf(UnaryOperator *E) {
     if (const MemberPointerType *MPT = 
           E->getType()->getAs<MemberPointerType>()) {
-      QualType T = MPT->getPointeeType();
       DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
-
       NamedDecl *ND = DRE->getDecl();
-      if (T->isFunctionProtoType())
-        return EmitMemberFunctionPointer(cast<CXXMethodDecl>(ND));
-      
-      // We have a pointer to data member.
-      return CGM.EmitPointerToDataMember(cast<FieldDecl>(ND));
+      if (MPT->isMemberFunctionPointer())
+        return CGM.getCXXABI().EmitMemberPointer(cast<CXXMethodDecl>(ND));
+      else 
+        return CGM.getCXXABI().EmitMemberPointer(cast<FieldDecl>(ND));
     }
 
     return 0;
@@ -535,24 +528,16 @@ public:
     }
     case CastExpr::CK_NullToMemberPointer: {
       const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
-      if (MPT->getPointeeType()->isFunctionType())
-        return CGM.getCXXABI().EmitNullMemberFunctionPointer(MPT);
-      return CGM.EmitNullConstant(E->getType());
+      return CGM.getCXXABI().EmitNullMemberPointer(MPT);
     }
       
     case CastExpr::CK_BaseToDerivedMemberPointer: {
-      const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
-
-      // TODO: support data-member conversions here!
-      if (!MPT->getPointeeType()->isFunctionType())
-        return 0;
-
       Expr *SubExpr = E->getSubExpr();
       llvm::Constant *C = 
         CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
       if (!C) return 0;
 
-      return CGM.getCXXABI().EmitMemberFunctionPointerConversion(C, E);
+      return CGM.getCXXABI().EmitMemberPointerConversion(C, E);
     }
 
     case CastExpr::CK_BitCast: 
@@ -1133,30 +1118,4 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   //   A NULL pointer is represented as -1.
   return llvm::ConstantInt::get(getTypes().ConvertTypeForMem(T), -1ULL, 
                                 /*isSigned=*/true);
-}
-
-llvm::Constant *
-CodeGenModule::EmitPointerToDataMember(const FieldDecl *FD) {
-
-  // Itanium C++ ABI 2.3:
-  //   A pointer to data member is an offset from the base address of the class
-  //   object containing it, represented as a ptrdiff_t
-
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(FD->getParent());
-  QualType ClassType = 
-    getContext().getTypeDeclType(const_cast<CXXRecordDecl *>(ClassDecl));
-  
-  const llvm::StructType *ClassLTy =
-    cast<llvm::StructType>(getTypes().ConvertType(ClassType));
-
-  const CGRecordLayout &RL =
-    getTypes().getCGRecordLayout(FD->getParent());
-  unsigned FieldNo = RL.getLLVMFieldNo(FD);
-  uint64_t Offset = 
-    getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
-
-  const llvm::Type *PtrDiffTy = 
-    getTypes().ConvertType(getContext().getPointerDiffType());
-
-  return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }

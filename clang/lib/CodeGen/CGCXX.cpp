@@ -318,6 +318,9 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
   return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }
 
+/// Implementation for CGCXXABI.  Possibly this should be moved into
+/// the incomplete ABI implementations?
+
 CGCXXABI::~CGCXXABI() {}
 
 static void ErrorUnsupportedABI(CodeGenFunction &CGF,
@@ -333,6 +336,11 @@ static void ErrorUnsupportedABI(CodeGenFunction &CGF,
 static llvm::Constant *GetBogusMemberPointer(CodeGenModule &CGM,
                                              QualType T) {
   return llvm::Constant::getNullValue(CGM.getTypes().ConvertType(T));
+}
+
+const llvm::Type *
+CGCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
+  return CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 }
 
 llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
@@ -351,46 +359,51 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   return llvm::Constant::getNullValue(FTy->getPointerTo());
 }
 
-llvm::Value *CGCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
-                                                           const CastExpr *E,
-                                                           llvm::Value *Src) {
+llvm::Value *CGCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                                   const CastExpr *E,
+                                                   llvm::Value *Src) {
   ErrorUnsupportedABI(CGF, "member function pointer conversions");
   return GetBogusMemberPointer(CGM, E->getType());
 }
 
 llvm::Value *
-CGCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
-                                              llvm::Value *L,
-                                              llvm::Value *R,
-                                              const MemberPointerType *MPT,
-                                              bool Inequality) {
+CGCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
+                                      llvm::Value *L,
+                                      llvm::Value *R,
+                                      const MemberPointerType *MPT,
+                                      bool Inequality) {
   ErrorUnsupportedABI(CGF, "member function pointer comparison");
   return CGF.Builder.getFalse();
 }
 
 llvm::Value *
-CGCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
-                                             llvm::Value *MemPtr,
-                                             const MemberPointerType *MPT) {
+CGCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
+                                     llvm::Value *MemPtr,
+                                     const MemberPointerType *MPT) {
   ErrorUnsupportedABI(CGF, "member function pointer null testing");
   return CGF.Builder.getFalse();
 }
 
 llvm::Constant *
-CGCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
-                                              const CastExpr *E) {
+CGCXXABI::EmitMemberPointerConversion(llvm::Constant *C, const CastExpr *E) {
   return GetBogusMemberPointer(CGM, E->getType());
 }
 
 llvm::Constant *
-CGCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
+CGCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
   return GetBogusMemberPointer(CGM, QualType(MPT, 0));
 }
 
-llvm::Constant *CGCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
+llvm::Constant *CGCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
   return GetBogusMemberPointer(CGM,
                          CGM.getContext().getMemberPointerType(MD->getType(),
                                          MD->getParent()->getTypeForDecl()));
+}
+
+llvm::Constant *CGCXXABI::EmitMemberPointer(const FieldDecl *FD) {
+  return GetBogusMemberPointer(CGM,
+                         CGM.getContext().getMemberPointerType(FD->getType(),
+                                         FD->getParent()->getTypeForDecl()));
 }
 
 bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {

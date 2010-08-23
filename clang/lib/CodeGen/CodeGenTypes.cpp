@@ -402,17 +402,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
 
   case Type::MemberPointer: {
-    // FIXME: This is ABI dependent. We use the Itanium C++ ABI.
-    // http://www.codesourcery.com/public/cxx-abi/abi.html#member-pointers
-    // If we ever want to support other ABIs this needs to be abstracted.
-
-    QualType ETy = cast<MemberPointerType>(Ty).getPointeeType();
-    const llvm::Type *PtrDiffTy =
-        ConvertTypeRecursive(Context.getPointerDiffType());
-    if (ETy->isFunctionType())
-      return llvm::StructType::get(TheModule.getContext(), PtrDiffTy, PtrDiffTy,
-                                   NULL);
-    return PtrDiffTy;
+    return getCXXABI().ConvertMemberPointerType(cast<MemberPointerType>(&Ty));
   }
   }
 

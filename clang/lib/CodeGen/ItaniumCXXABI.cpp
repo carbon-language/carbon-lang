@@ -19,10 +19,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCXXABI.h"
+#include "CGRecordLayout.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "Mangle.h"
 #include <clang/AST/Type.h>
+#include <llvm/Target/TargetData.h>
 #include <llvm/Value.h>
 
 using namespace clang;
@@ -30,12 +32,26 @@ using namespace CodeGen;
 
 namespace {
 class ItaniumCXXABI : public CodeGen::CGCXXABI {
+private:
+  const llvm::IntegerType *PtrDiffTy;
 protected:
   CodeGen::MangleContext MangleCtx;
   bool IsARM;
+
+  // It's a little silly for us to cache this.
+  const llvm::IntegerType *getPtrDiffTy() {
+    if (!PtrDiffTy) {
+      QualType T = CGM.getContext().getPointerDiffType();
+      const llvm::Type *Ty = CGM.getTypes().ConvertTypeRecursive(T);
+      PtrDiffTy = cast<llvm::IntegerType>(Ty);
+    }
+    return PtrDiffTy;
+  }
+
 public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
-    CGCXXABI(CGM), MangleCtx(CGM.getContext(), CGM.getDiags()), IsARM(IsARM) { }
+    CGCXXABI(CGM), PtrDiffTy(0), MangleCtx(CGM.getContext(), CGM.getDiags()),
+    IsARM(IsARM) { }
 
   CodeGen::MangleContext &getMangleContext() {
     return MangleCtx;
@@ -43,35 +59,34 @@ public:
 
   bool isZeroInitializable(const MemberPointerType *MPT);
 
+  const llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
+
   llvm::Value *EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                llvm::Value *&This,
                                                llvm::Value *MemFnPtr,
                                                const MemberPointerType *MPT);
 
-  llvm::Value *EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
-                                                   const CastExpr *E,
-                                                   llvm::Value *Src);
+  llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                           const CastExpr *E,
+                                           llvm::Value *Src);
 
-  llvm::Constant *EmitMemberFunctionPointerConversion(llvm::Constant *C,
-                                                      const CastExpr *E);
+  llvm::Constant *EmitMemberPointerConversion(llvm::Constant *C,
+                                              const CastExpr *E);
 
-  llvm::Constant *EmitNullMemberFunctionPointer(const MemberPointerType *MPT);
+  llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 
-  llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD);
+  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
+  llvm::Constant *EmitMemberPointer(const FieldDecl *FD);
 
-  llvm::Value *EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
-                                                   llvm::Value *L,
-                                                   llvm::Value *R,
-                                             const MemberPointerType *MPT,
-                                                   bool Inequality);
+  llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
+                                           llvm::Value *L,
+                                           llvm::Value *R,
+                                           const MemberPointerType *MPT,
+                                           bool Inequality);
 
-  llvm::Value *EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
-                                                  llvm::Value *Addr,
-                                            const MemberPointerType *MPT);
-
-private:
-  void GetMemberFunctionPointer(const CXXMethodDecl *MD,
-                                llvm::Constant *(&Array)[2]);
+  llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
+                                          llvm::Value *Addr,
+                                          const MemberPointerType *MPT);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -88,10 +103,14 @@ CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
   return new ARMCXXABI(CGM);
 }
 
-void ItaniumCXXABI::GetMemberFunctionPointer(const CXXMethodDecl *MD,
-                                             llvm::Constant *(&MemPtr)[2]) {
+const llvm::Type *
+ItaniumCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
+  if (MPT->isMemberDataPointer())
+    return getPtrDiffTy();
+  else
+    return llvm::StructType::get(CGM.getLLVMContext(),
+                                 getPtrDiffTy(), getPtrDiffTy(), NULL);
 }
-
 
 /// In the Itanium and ARM ABIs, method pointers have the form:
 ///   struct { ptrdiff_t ptr; ptrdiff_t adj; } memptr;
@@ -129,7 +148,7 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
                                    FPT->isVariadic());
 
-  const llvm::IntegerType *ptrdiff = CGF.IntPtrTy;
+  const llvm::IntegerType *ptrdiff = getPtrDiffTy();
   llvm::Constant *ptrdiff_1 = llvm::ConstantInt::get(ptrdiff, 1);
 
   llvm::BasicBlock *FnVirtual = CGF.createBasicBlock("memptr.virtual");
@@ -199,15 +218,34 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
 }
 
 /// Perform a derived-to-base or base-to-derived member pointer conversion.
+///
+/// Obligatory offset/adjustment diagram:
+///         <-- offset -->          <-- adjustment -->
+///   |--------------------------|----------------------|--------------------|
+///   ^Derived address point     ^Base address point    ^Member address point
+///
+/// So when converting a base member pointer to a derived member pointer,
+/// we add the offset to the adjustment because the address point has
+/// decreased;  and conversely, when converting a derived MP to a base MP
+/// we subtract the offset from the adjustment because the address point
+/// has increased.
+///
+/// The standard forbids (at compile time) conversion to and from
+/// virtual bases, which is why we don't have to consider them here.
+///
+/// The standard forbids (at run time) casting a derived MP to a base
+/// MP when the derived MP does not point to a member of the base.
+/// This is why -1 is a reasonable choice for null data member
+/// pointers.
 llvm::Value *
-ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
-                                                   const CastExpr *E,
-                                                   llvm::Value *Src) {
+ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                           const CastExpr *E,
+                                           llvm::Value *Src) {
   assert(E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer ||
          E->getCastKind() == CastExpr::CK_BaseToDerivedMemberPointer);
 
   if (isa<llvm::Constant>(Src))
-    return EmitMemberFunctionPointerConversion(cast<llvm::Constant>(Src), E);
+    return EmitMemberPointerConversion(cast<llvm::Constant>(Src), E);
 
   CGBuilderTy &Builder = CGF.Builder;
 
@@ -233,6 +271,21 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
                                          E->path_end());
   if (!Adj) return Src;
 
+  // For member data pointers, this is just a matter of adding the
+  // offset if the source is non-null.
+  if (SrcTy->isMemberDataPointer()) {
+    llvm::Value *Dst;
+    if (DerivedToBase)
+      Dst = Builder.CreateNSWSub(Src, Adj, "adj");
+    else
+      Dst = Builder.CreateNSWAdd(Src, Adj, "adj");
+
+    // Null check.
+    llvm::Value *Null = llvm::Constant::getAllOnesValue(Src->getType());
+    llvm::Value *IsNull = Builder.CreateICmpEQ(Src, Null, "memptr.isnull");
+    return Builder.CreateSelect(IsNull, Src, Dst);
+  }
+
   // The this-adjustment is left-shifted by 1 on ARM.
   if (IsARM) {
     uint64_t Offset = cast<llvm::ConstantInt>(Adj)->getZExtValue();
@@ -243,16 +296,16 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(CodeGenFunction &CGF,
   llvm::Value *SrcAdj = Builder.CreateExtractValue(Src, 1, "src.adj");
   llvm::Value *DstAdj;
   if (DerivedToBase)
-    DstAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
+    DstAdj = Builder.CreateNSWSub(SrcAdj, Adj, "adj");
   else
-    DstAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
+    DstAdj = Builder.CreateNSWAdd(SrcAdj, Adj, "adj");
 
   return Builder.CreateInsertValue(Src, DstAdj, 1);
 }
 
 llvm::Constant *
-ItaniumCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
-                                                   const CastExpr *E) {
+ItaniumCXXABI::EmitMemberPointerConversion(llvm::Constant *C,
+                                           const CastExpr *E) {
   const MemberPointerType *SrcTy = 
     E->getSubExpr()->getType()->getAs<MemberPointerType>();
   const MemberPointerType *DestTy = 
@@ -275,28 +328,68 @@ ItaniumCXXABI::EmitMemberFunctionPointerConversion(llvm::Constant *C,
   // If there's no offset, we're done.
   if (!Offset) return C;
 
+  // If the source is a member data pointer, we have to do a null
+  // check and then add the offset.  In the common case, we can fold
+  // away the offset.
+  if (SrcTy->isMemberDataPointer()) {
+    assert(C->getType() == getPtrDiffTy());
+
+    // If it's a constant int, just create a new constant int.
+    if (llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C)) {
+      int64_t Src = CI->getSExtValue();
+
+      // Null converts to null.
+      if (Src == -1) return CI;
+
+      // Otherwise, just add the offset.
+      int64_t OffsetV = cast<llvm::ConstantInt>(Offset)->getSExtValue();
+      int64_t Dst = (DerivedToBase ? Src - OffsetV : Src + OffsetV);
+      return llvm::ConstantInt::get(CI->getType(), Dst, /*signed*/ true);
+    }
+
+    // Otherwise, we have to form a constant select expression.
+    llvm::Constant *Null = llvm::Constant::getAllOnesValue(C->getType());
+
+    llvm::Constant *IsNull =
+      llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_EQ, C, Null);
+
+    llvm::Constant *Dst;
+    if (DerivedToBase)
+      Dst = llvm::ConstantExpr::getNSWSub(C, Offset);
+    else
+      Dst = llvm::ConstantExpr::getNSWAdd(C, Offset);
+
+    return llvm::ConstantExpr::getSelect(IsNull, Null, Dst);
+  }
+
   // The this-adjustment is left-shifted by 1 on ARM.
   if (IsARM) {
-    uint64_t OffsetV = cast<llvm::ConstantInt>(Offset)->getZExtValue();
+    int64_t OffsetV = cast<llvm::ConstantInt>(Offset)->getSExtValue();
     OffsetV <<= 1;
     Offset = llvm::ConstantInt::get(Offset->getType(), OffsetV);
   }
 
   llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
 
-  llvm::Constant *Values[2] = {
-    CS->getOperand(0),
-    llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset)
-  };
+  llvm::Constant *Values[2] = { CS->getOperand(0), 0 };
+  if (DerivedToBase)
+    Values[1] = llvm::ConstantExpr::getSub(CS->getOperand(1), Offset);
+  else
+    Values[1] = llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset);
+
   return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2,
                                    /*Packed=*/false);
 }        
 
 
 llvm::Constant *
-ItaniumCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
-  const llvm::Type *ptrdiff_t =
-    CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
+ItaniumCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
+  const llvm::Type *ptrdiff_t = getPtrDiffTy();
+
+  // Itanium C++ ABI 2.3:
+  //   A NULL pointer is represented as -1.
+  if (MPT->isMemberDataPointer()) 
+    return llvm::ConstantInt::get(ptrdiff_t, -1ULL, /*isSigned=*/true);
 
   llvm::Constant *Zero = llvm::ConstantInt::get(ptrdiff_t, 0);
   llvm::Constant *Values[2] = { Zero, Zero };
@@ -304,14 +397,29 @@ ItaniumCXXABI::EmitNullMemberFunctionPointer(const MemberPointerType *MPT) {
                                    /*Packed=*/false);
 }
 
-llvm::Constant *
-ItaniumCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
+llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const FieldDecl *FD) {
+  // Itanium C++ ABI 2.3:
+  //   A pointer to data member is an offset from the base address of
+  //   the class object containing it, represented as a ptrdiff_t
+
+  QualType ClassType = CGM.getContext().getTypeDeclType(FD->getParent());
+  const llvm::StructType *ClassLTy =
+    cast<llvm::StructType>(CGM.getTypes().ConvertType(ClassType));
+
+  const CGRecordLayout &RL = CGM.getTypes().getCGRecordLayout(FD->getParent());
+  unsigned FieldNo = RL.getLLVMFieldNo(FD);
+  uint64_t Offset = 
+    CGM.getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
+
+  return llvm::ConstantInt::get(getPtrDiffTy(), Offset);
+}
+
+llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
   assert(MD->isInstance() && "Member function must not be static!");
   MD = MD->getCanonicalDecl();
 
   CodeGenTypes &Types = CGM.getTypes();
-  const llvm::Type *ptrdiff_t = 
-    Types.ConvertType(CGM.getContext().getPointerDiffType());
+  const llvm::Type *ptrdiff_t = getPtrDiffTy();
 
   // Get the function pointer (or index if this is a virtual function).
   llvm::Constant *MemPtr[2];
@@ -367,25 +475,13 @@ ItaniumCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
 ///
 /// ARM is different here only because null-ness is more complicated.
 llvm::Value *
-ItaniumCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
-                                                   llvm::Value *L,
-                                                   llvm::Value *R,
-                                             const MemberPointerType *MPT,
-                                                   bool Inequality) {
+ItaniumCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
+                                           llvm::Value *L,
+                                           llvm::Value *R,
+                                           const MemberPointerType *MPT,
+                                           bool Inequality) {
   CGBuilderTy &Builder = CGF.Builder;
 
-  llvm::Value *LPtr = Builder.CreateExtractValue(L, 0, "lhs.memptr.ptr");
-  llvm::Value *RPtr = Builder.CreateExtractValue(R, 0, "rhs.memptr.ptr");
-
-  // The Itanium tautology is:
-  //   (L == R) <==> (L.ptr == R.ptr /\ (L.ptr == 0 \/ L.adj == R.adj))
-  // The ARM tautology is:
-  //   (L == R) <==> (L.ptr == R.ptr /\
-  //                  (L.adj == R.adj \/
-  //                   (L.ptr == 0 /\ ((L.adj|R.adj) & 1) == 0)))
-  // The inequality tautologies have exactly the same structure, except
-  // applying De Morgan's laws.
-  
   llvm::ICmpInst::Predicate Eq;
   llvm::Instruction::BinaryOps And, Or;
   if (Inequality) {
@@ -397,6 +493,24 @@ ItaniumCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
     And = llvm::Instruction::And;
     Or = llvm::Instruction::Or;
   }
+
+  // Member data pointers are easy because there's a unique null
+  // value, so it just comes down to bitwise equality.
+  if (MPT->isMemberDataPointer())
+    return Builder.CreateICmp(Eq, L, R);
+
+  // For member function pointers, the tautologies are more complex.
+  // The Itanium tautology is:
+  //   (L == R) <==> (L.ptr == R.ptr /\ (L.ptr == 0 \/ L.adj == R.adj))
+  // The ARM tautology is:
+  //   (L == R) <==> (L.ptr == R.ptr /\
+  //                  (L.adj == R.adj \/
+  //                   (L.ptr == 0 /\ ((L.adj|R.adj) & 1) == 0)))
+  // The inequality tautologies have exactly the same structure, except
+  // applying De Morgan's laws.
+  
+  llvm::Value *LPtr = Builder.CreateExtractValue(L, 0, "lhs.memptr.ptr");
+  llvm::Value *RPtr = Builder.CreateExtractValue(R, 0, "rhs.memptr.ptr");
 
   // This condition tests whether L.ptr == R.ptr.  This must always be
   // true for equality to hold.
@@ -435,10 +549,18 @@ ItaniumCXXABI::EmitMemberFunctionPointerComparison(CodeGenFunction &CGF,
 }
 
 llvm::Value *
-ItaniumCXXABI::EmitMemberFunctionPointerIsNotNull(CodeGenFunction &CGF,
-                                                  llvm::Value *MemPtr,
-                                            const MemberPointerType *MPT) {
+ItaniumCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
+                                          llvm::Value *MemPtr,
+                                          const MemberPointerType *MPT) {
   CGBuilderTy &Builder = CGF.Builder;
+
+  /// For member data pointers, this is just a check against -1.
+  if (MPT->isMemberDataPointer()) {
+    assert(MemPtr->getType() == getPtrDiffTy());
+    llvm::Value *NegativeOne =
+      llvm::Constant::getAllOnesValue(MemPtr->getType());
+    return Builder.CreateICmpNE(MemPtr, NegativeOne, "memptr.tobool");
+  }
   
   // In Itanium, a member function pointer is null if 'ptr' is null.
   llvm::Value *Ptr = Builder.CreateExtractValue(MemPtr, 0, "memptr.ptr");

@@ -65,12 +65,12 @@ llvm::AllocaInst *CodeGenFunction::CreateMemTemp(QualType Ty,
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
 /// expression and compare the result against zero, returning an Int1Ty value.
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
-  QualType BoolTy = getContext().BoolTy;
-  if (E->getType()->isMemberFunctionPointerType()) {
+  if (const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>()) {
     llvm::Value *MemPtr = EmitScalarExpr(E);
-    return CGM.getCXXABI().EmitMemberFunctionPointerIsNotNull(CGF, MemPtr,
-                                    E->getType()->getAs<MemberPointerType>());
+    return CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, MemPtr, MPT);
   }
+
+  QualType BoolTy = getContext().BoolTy;
   if (!E->getType()->isAnyComplexType())
     return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy);
 
@@ -1176,7 +1176,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   // we're actually emitting a member pointer.
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
     if (MD->isInstance()) {
-      llvm::Value *V = CGM.getCXXABI().EmitMemberFunctionPointer(MD);
+      llvm::Value *V = CGM.getCXXABI().EmitMemberPointer(MD);
       return MakeAddrLValue(V, MD->getType(), Alignment);
     }
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
@@ -1185,7 +1185,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   // If we're emitting a field as an independent lvalue, we're
   // actually emitting a member pointer.
   if (const FieldDecl *FD = dyn_cast<FieldDecl>(ND)) {
-    llvm::Value *V = CGM.EmitPointerToDataMember(FD);
+    llvm::Value *V = CGM.getCXXABI().EmitMemberPointer(FD);
     return MakeAddrLValue(V, FD->getType(), Alignment);
   }
   

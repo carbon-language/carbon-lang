@@ -414,11 +414,8 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
     return Builder.CreateFCmpUNE(Src, Zero, "tobool");
   }
 
-  if (SrcType->isMemberPointerType()) {
-    // Compare against -1.
-    llvm::Value *NegativeOne = llvm::Constant::getAllOnesValue(Src->getType());
-    return Builder.CreateICmpNE(Src, NegativeOne, "tobool");
-  }
+  if (const MemberPointerType *MPT = dyn_cast<MemberPointerType>(SrcType))
+    return CGF.CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, Src, MPT);
 
   assert((SrcType->isIntegerType() || isa<llvm::PointerType>(Src->getType())) &&
          "Unknown scalar type to convert");
@@ -567,14 +564,10 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 }
 
 Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
-  const llvm::Type *LTy = ConvertType(Ty);
-  
-  if (!Ty->isMemberDataPointerType())
-    return llvm::Constant::getNullValue(LTy);
-  
-  // Itanium C++ ABI 2.3:
-  //   A NULL pointer is represented as -1.
-  return llvm::ConstantInt::get(LTy, -1ULL, /*isSigned=*/true);  
+  if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
+    return CGF.CGM.getCXXABI().EmitNullMemberPointer(MPT);
+
+  return llvm::Constant::getNullValue(ConvertType(Ty));
 }
 
 //===----------------------------------------------------------------------===//
@@ -994,17 +987,15 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CastExpr::CK_FunctionToPointerDecay:
     return EmitLValue(E).getAddress();
 
-  case CastExpr::CK_NullToMemberPointer:
+  case CastExpr::CK_NullToMemberPointer: {
     // If the subexpression's type is the C++0x nullptr_t, emit the
     // subexpression, which may have side effects.
     if (E->getType()->isNullPtrType())
       (void) Visit(E);
 
-    if (CE->getType()->isMemberFunctionPointerType())
-      return CGF.CGM.getCXXABI().EmitNullMemberFunctionPointer(
-                                   CE->getType()->getAs<MemberPointerType>());
-
-    return CGF.CGM.EmitNullConstant(DestTy);
+    const MemberPointerType *MPT = CE->getType()->getAs<MemberPointerType>();
+    return CGF.CGM.getCXXABI().EmitNullMemberPointer(MPT);
+  }
 
   case CastExpr::CK_BaseToDerivedMemberPointer:
   case CastExpr::CK_DerivedToBaseMemberPointer: {
@@ -1016,33 +1007,9 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     // actual control flow may be required in order to perform the
     // check, which it is for data member pointers (but not member
     // function pointers on Itanium and ARM).
-
-    if (CE->getType()->isMemberFunctionPointerType())
-      return CGF.CGM.getCXXABI().EmitMemberFunctionPointerConversion(CGF, CE,
-                                                                     Src);
-
-    // See if we need to adjust the pointer.
-    const CXXRecordDecl *BaseDecl = 
-      cast<CXXRecordDecl>(E->getType()->getAs<MemberPointerType>()->
-                          getClass()->getAs<RecordType>()->getDecl());
-    const CXXRecordDecl *DerivedDecl = 
-      cast<CXXRecordDecl>(CE->getType()->getAs<MemberPointerType>()->
-                          getClass()->getAs<RecordType>()->getDecl());
-    if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
-      std::swap(DerivedDecl, BaseDecl);
-
-    if (llvm::Constant *Adj = 
-          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
-                                               CE->path_begin(),
-                                               CE->path_end())) {
-      if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
-        Src = Builder.CreateNSWSub(Src, Adj, "adj");
-      else
-        Src = Builder.CreateNSWAdd(Src, Adj, "adj");
-    }
-    
-    return Src;
+    return CGF.CGM.getCXXABI().EmitMemberPointerConversion(CGF, CE, Src);
   }
+  
 
   case CastExpr::CK_ConstructorConversion:
     assert(0 && "Should be unreachable!");
@@ -1096,10 +1063,13 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CastExpr::CK_FloatingCast:
     return EmitScalarConversion(Visit(E), E->getType(), DestTy);
 
-  case CastExpr::CK_MemberPointerToBoolean:
-    return CGF.EvaluateExprAsBool(E);
+  case CastExpr::CK_MemberPointerToBoolean: {
+    llvm::Value *MemPtr = Visit(E);
+    const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
+    return CGF.CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, MemPtr, MPT);
   }
-
+  }
+  
   // Handle cases where the source is an non-complex type.
 
   if (!CGF.hasAggregateLLVMType(E->getType())) {
@@ -1821,14 +1791,13 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
   TestAndClearIgnoreResultAssign();
   Value *Result;
   QualType LHSTy = E->getLHS()->getType();
-  if (LHSTy->isMemberFunctionPointerType()) {
+  if (const MemberPointerType *MPT = LHSTy->getAs<MemberPointerType>()) {
     assert(E->getOpcode() == BinaryOperator::EQ ||
            E->getOpcode() == BinaryOperator::NE);
     Value *LHS = CGF.EmitScalarExpr(E->getLHS());
     Value *RHS = CGF.EmitScalarExpr(E->getRHS());
-    Result = CGF.CGM.getCXXABI().EmitMemberFunctionPointerComparison(
-                         CGF, LHS, RHS, LHSTy->getAs<MemberPointerType>(),
-                                    E->getOpcode() == BinaryOperator::NE);
+    Result = CGF.CGM.getCXXABI().EmitMemberPointerComparison(
+                   CGF, LHS, RHS, MPT, E->getOpcode() == BinaryOperator::NE);
   } else if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());

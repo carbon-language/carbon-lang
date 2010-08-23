@@ -65,15 +65,21 @@ int A::*pa;
 int C::*pc;
 
 void f() {
-  // CHECK: store i64 -1, i64* @_ZN5Casts2paE
+  // CHECK:      store i64 -1, i64* @_ZN5Casts2paE
   pa = 0;
 
-  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = add nsw i64 {{.*}}, 4
-  // CHECK: store i64 [[ADJ]], i64* @_ZN5Casts2pcE
+  // CHECK-NEXT: [[TMP:%.*]] = load i64* @_ZN5Casts2paE, align 8
+  // CHECK-NEXT: [[ADJ:%.*]] = add nsw i64 [[TMP]], 4
+  // CHECK-NEXT: [[ISNULL:%.*]] = icmp eq i64 [[TMP]], -1
+  // CHECK-NEXT: [[RES:%.*]] = select i1 [[ISNULL]], i64 [[TMP]], i64 [[ADJ]]
+  // CHECK-NEXT: store i64 [[RES]], i64* @_ZN5Casts2pcE
   pc = pa;
 
-  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = sub nsw i64 {{.*}}, 4
-  // CHECK: store i64 [[ADJ]], i64* @_ZN5Casts2paE
+  // CHECK-NEXT: [[TMP:%.*]] = load i64* @_ZN5Casts2pcE, align 8
+  // CHECK-NEXT: [[ADJ:%.*]] = sub nsw i64 [[TMP]], 4
+  // CHECK-NEXT: [[ISNULL:%.*]] = icmp eq i64 [[TMP]], -1
+  // CHECK-NEXT: [[RES:%.*]] = select i1 [[ISNULL]], i64 [[TMP]], i64 [[ADJ]]
+  // CHECK-NEXT: store i64 [[RES]], i64* @_ZN5Casts2paE
   pa = static_cast<int A::*>(pc);
 }
 

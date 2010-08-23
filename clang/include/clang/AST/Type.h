@@ -1359,8 +1359,19 @@ protected:
   virtual Linkage getLinkageImpl() const;
   
 public:
-
   QualType getPointeeType() const { return PointeeType; }
+
+  /// Returns true if the member type (i.e. the pointee type) is a
+  /// function type rather than a data-member type.
+  bool isMemberFunctionPointer() const {
+    return PointeeType->isFunctionProtoType();
+  }
+
+  /// Returns true if the member type (i.e. the pointee type) is a
+  /// data type rather than a function type.
+  bool isMemberDataPointer() const {
+    return !PointeeType->isFunctionProtoType();
+  }
 
   const Type *getClass() const { return Class; }
 
@@ -3483,13 +3494,13 @@ inline bool Type::isMemberPointerType() const {
 }
 inline bool Type::isMemberFunctionPointerType() const {
   if (const MemberPointerType* T = getAs<MemberPointerType>())
-    return T->getPointeeType()->isFunctionType();
+    return T->isMemberFunctionPointer();
   else
     return false;
 }
 inline bool Type::isMemberDataPointerType() const {
   if (const MemberPointerType* T = getAs<MemberPointerType>())
-    return !T->getPointeeType()->isFunctionType();
+    return T->isMemberDataPointer();
   else
     return false;
 }
