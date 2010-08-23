@@ -258,7 +258,9 @@ MDNode *MDNode::getTemporary(LLVMContext &Context, Value *const *Vals,
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->use_empty() && "Temporary MDNode has uses!");
   assert(!N->getContext().pImpl->MDNodeSet.RemoveNode(N) &&
-         "Deleting a non-temporary node!");
+         "Deleting a non-temporary uniqued node!");
+  assert(!N->getContext().pImpl->NonUniquedMDNodes.erase(N) &&
+         "Deleting a non-temporary non-uniqued node!");
   assert((N->getSubclassDataFromValue() & NotUniquedBit) &&
          "Temporary MDNode does not have NotUniquedBit set!");
   assert((N->getSubclassDataFromValue() & DestroyFlag) == 0 &&
