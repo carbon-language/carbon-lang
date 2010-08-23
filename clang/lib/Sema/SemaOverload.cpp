@@ -4599,7 +4599,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       QualType ParamTy = *Ptr;
-      QualType PointeeTy = ParamTy->getAs<PointerType>()->getPointeeType();
+      QualType PointeeTy = ParamTy->getPointeeType();
       AddBuiltinCandidate(Context.getLValueReferenceType(PointeeTy),
                           &ParamTy, Args, 1, CandidateSet);
     }
@@ -5080,7 +5080,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
-      QualType PointeeType = (*Ptr)->getAs<PointerType>()->getPointeeType();
+      QualType PointeeType = (*Ptr)->getPointeeType();
       QualType ResultTy = Context.getLValueReferenceType(PointeeType);
 
       // T& operator[](T*, ptrdiff_t)
@@ -5108,18 +5108,16 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         QualType C1Ty = (*Ptr);
         QualType C1;
         QualifierCollector Q1;
-        if (const PointerType *PointerTy = C1Ty->getAs<PointerType>()) {
-          C1 = QualType(Q1.strip(PointerTy->getPointeeType()), 0);
-          if (!isa<RecordType>(C1))
-            continue;
-          // heuristic to reduce number of builtin candidates in the set.
-          // Add volatile/restrict version only if there are conversions to a
-          // volatile/restrict type.
-          if (!VisibleTypeConversionsQuals.hasVolatile() && Q1.hasVolatile())
-            continue;
-          if (!VisibleTypeConversionsQuals.hasRestrict() && Q1.hasRestrict())
-            continue;
-        }
+        C1 = QualType(Q1.strip(C1Ty->getPointeeType()), 0);
+        if (!isa<RecordType>(C1))
+          continue;
+        // heuristic to reduce number of builtin candidates in the set.
+        // Add volatile/restrict version only if there are conversions to a
+        // volatile/restrict type.
+        if (!VisibleTypeConversionsQuals.hasVolatile() && Q1.hasVolatile())
+          continue;
+        if (!VisibleTypeConversionsQuals.hasRestrict() && Q1.hasRestrict())
+          continue;
         for (BuiltinCandidateTypeSet::iterator
              MemPtr = CandidateTypes.member_pointer_begin(),
              MemPtrEnd = CandidateTypes.member_pointer_end();

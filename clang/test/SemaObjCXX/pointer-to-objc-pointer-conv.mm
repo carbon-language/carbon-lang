@@ -33,7 +33,17 @@ public:
   bool CompareClass(Class obj) { return *this == obj; }
   bool CompareI1(I1* obj) { return *this == obj; }
 
+  Wrapper &operator*();
+  Wrapper &operator[](int);
+  Wrapper& operator->*(int);
+
 private:
   long _value;
 };
 
+void f() {
+  Wrapper w;
+  w[0];
+  *w;
+  w->*(0);
+}
