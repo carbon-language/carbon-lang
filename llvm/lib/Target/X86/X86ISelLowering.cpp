@@ -2558,6 +2558,18 @@ X86TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
 
+static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
+              SDValue V1, SDValue V2, unsigned TargetMask, SelectionDAG &DAG) {
+
+  switch(Opc) {
+  default: llvm_unreachable("Unknown x86 shuffle node");
+  case X86ISD::PSHUFHW:
+  case X86ISD::PSHUFLW:
+    return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
+  }
+
+  return SDValue();
+}
 
 SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -4266,8 +4278,14 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     // If we've eliminated the use of V2, and the new mask is a pshuflw or
     // pshufhw, that's as cheap as it gets.  Return the new shuffle.
     if ((pshufhw && InOrder[0]) || (pshuflw && InOrder[1])) {
-      return DAG.getVectorShuffle(MVT::v8i16, dl, NewV,
+      unsigned Opc = pshufhw ? X86ISD::PSHUFHW : X86ISD::PSHUFLW;
+      unsigned TargetMask = 0;
+      NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV,
                                   DAG.getUNDEF(MVT::v8i16), &MaskVals[0]);
+      TargetMask = pshufhw ? X86::getShufflePSHUFHWImmediate(NewV.getNode()):
+                             X86::getShufflePSHUFLWImmediate(NewV.getNode());
+      V1 = NewV.getOperand(0);
+      return getTargetShuffleNode(Opc, dl, MVT::v8i16, V1, V1, TargetMask, DAG);
     }
   }
 
