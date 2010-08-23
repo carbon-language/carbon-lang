@@ -54,7 +54,8 @@ namespace clang {
     ParsedTemplateArgument(const CXXScopeSpec &SS,
                            ActionBase::TemplateTy Template, 
                            SourceLocation TemplateLoc) 
-      : Kind(ParsedTemplateArgument::Template), Arg(Template.get()), 
+      : Kind(ParsedTemplateArgument::Template),
+        Arg(Template.getAsOpaquePtr()), 
         Loc(TemplateLoc), SS(SS) { }
     
     /// \brief Determine whether the given template argument is invalid.
@@ -78,7 +79,7 @@ namespace clang {
     /// \brief Retrieve the template template argument's template name.
     ActionBase::TemplateTy getAsTemplate() const {
       assert(Kind == Template && "Not a template template argument");
-      return ActionBase::TemplateTy::make(Arg);
+      return ActionBase::TemplateTy::getFromOpaquePtr(Arg);
     }
     
     /// \brief Retrieve the location of the template argument.
@@ -128,8 +129,8 @@ namespace clang {
     OverloadedOperatorKind Operator;
     
     /// The declaration of the template corresponding to the
-    /// template-name. This is an Action::TemplateTy.
-    void *Template;
+    /// template-name.
+    ParsedTemplateTy Template;
     
     /// The kind of template that Template refers to.
     TemplateNameKind Kind;

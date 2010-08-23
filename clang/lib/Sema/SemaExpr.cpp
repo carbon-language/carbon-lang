@@ -671,8 +671,7 @@ static void DecomposeUnqualifiedId(Sema &SemaRef,
     SemaRef.translateTemplateArguments(TemplateArgsPtr, Buffer);
     TemplateArgsPtr.release();
 
-    TemplateName TName =
-      Sema::TemplateTy::make(Id.TemplateId->Template).getAsVal<TemplateName>();
+    TemplateName TName = Id.TemplateId->Template.get();
     SourceLocation TNameLoc = Id.TemplateId->TemplateNameLoc;
     NameInfo = SemaRef.Context.getNameForTemplate(TName, TNameLoc);
     TemplateArgs = &Buffer;

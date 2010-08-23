@@ -436,8 +436,7 @@ static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
   }
     
   case ParsedTemplateArgument::Template: {
-    TemplateName Template
-      = TemplateName::getFromVoidPointer(Arg.getAsTemplate().get());
+    TemplateName Template = Arg.getAsTemplate().get();
     return TemplateArgumentLoc(TemplateArgument(Template),
                                Arg.getScopeSpec().getRange(),
                                Arg.getLocation());

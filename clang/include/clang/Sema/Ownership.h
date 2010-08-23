@@ -27,59 +27,64 @@ namespace clang {
   class CXXBaseOrMemberInitializer;
   class CXXBaseSpecifier;
   class Decl;
+  class DeclGroupRef;
   class Expr;
   class NestedNameSpecifier;
   class Stmt;
+  class TemplateName;
   class TemplateParameterList;
 
   /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
   /// Parser doesn't know about but that Sema or another client does.  The UID
   /// template argument is used to make sure that "Decl" pointers are not
   /// compatible with "Type" pointers for example.
-  template<int UID>
+  template <class PtrTy>
   class OpaquePtr {
     void *Ptr;
+    explicit OpaquePtr(void *Ptr) : Ptr(Ptr) {}
+
   public:
     OpaquePtr() : Ptr(0) {}
 
-    template <typename T>
-    T* getAs() const {
-      return llvm::PointerLikeTypeTraits<T*>::getFromVoidPointer(Ptr);
+    static OpaquePtr make(PtrTy P) {
+      OpaquePtr OP; OP.set(P); return OP;
     }
 
-    template <typename T>
-    T getAsVal() const {
-      return llvm::PointerLikeTypeTraits<T>::getFromVoidPointer(Ptr);
+    template <typename T> T* getAs() const {
+      return get();
     }
 
-    void *get() const { return Ptr; }
-
-    template<typename T>
-    static OpaquePtr make(T P) {
-      OpaquePtr R; R.set(P); return R;
+    template <typename T> T getAsVal() const {
+      return get();
     }
 
-    template<typename T>
-    void set(T P) {
-      Ptr = llvm::PointerLikeTypeTraits<T>::getAsVoidPointer(P);
+    PtrTy get() const {
+      return llvm::PointerLikeTypeTraits<PtrTy>::getFromVoidPointer(Ptr);
+    }
+
+    void set(PtrTy P) {
+      Ptr = llvm::PointerLikeTypeTraits<PtrTy>::getAsVoidPointer(P);
     }
 
     operator bool() const { return Ptr != 0; }
+
+    void *getAsOpaquePtr() const { return Ptr; }
+    static OpaquePtr getFromOpaquePtr(void *P) { return OpaquePtr(P); }
   };
 }
 
 namespace llvm {
-  template <int UID>
-  class PointerLikeTypeTraits<clang::OpaquePtr<UID> > {
+  template <class T>
+  class PointerLikeTypeTraits<clang::OpaquePtr<T> > {
   public:
-    static inline void *getAsVoidPointer(clang::OpaquePtr<UID> P) {
+    static inline void *getAsVoidPointer(clang::OpaquePtr<T> P) {
       // FIXME: Doesn't work? return P.getAs< void >();
-      return P.get();
+      return P.getAsOpaquePtr();
     }
-    static inline clang::OpaquePtr<UID> getFromVoidPointer(void *P) {
-      return clang::OpaquePtr<UID>::make(P);
+    static inline clang::OpaquePtr<T> getFromVoidPointer(void *P) {
+      return clang::OpaquePtr<T>::getFromOpaquePtr(P);
     }
-    enum { NumLowBitsAvailable = 3 };
+    enum { NumLowBitsAvailable = 0 };
   };
 }
 
@@ -207,8 +212,8 @@ namespace clang {
 
     // Types - Though these don't actually enforce strong typing, they document
     // what types are required to be identical for the actions.
-    typedef OpaquePtr<1> DeclGroupPtrTy;
-    typedef OpaquePtr<2> TemplateTy;
+    typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
+    typedef OpaquePtr<TemplateName> TemplateTy;
     typedef Attr AttrTy;
     typedef CXXBaseSpecifier BaseTy;
     typedef CXXBaseOrMemberInitializer MemInitTy;
@@ -535,6 +540,7 @@ namespace clang {
   typedef ActionBase::ActionResult<CXXBaseOrMemberInitializer*> MemInitResult;
 
   typedef ActionBase::ActionResult<Decl*> DeclResult;
+  typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 }
 
 #endif

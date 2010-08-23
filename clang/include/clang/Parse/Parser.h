@@ -27,6 +27,7 @@ namespace clang {
   struct CXX0XAttributeList;
   class PragmaHandler;
   class Scope;
+  class DeclGroupRef;
   class DiagnosticBuilder;
   class Parser;
   class PragmaUnusedHandler;
@@ -147,13 +148,13 @@ public:
   // different actual classes based on the actions in place.
   typedef Expr ExprTy;
   typedef Stmt StmtTy;
-  typedef Action::DeclGroupPtrTy DeclGroupPtrTy;
+  typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
   typedef Action::TypeTy TypeTy;
   typedef CXXBaseSpecifier BaseTy;
   typedef CXXBaseOrMemberInitializer MemInitTy;
   typedef NestedNameSpecifier CXXScopeTy;
   typedef TemplateParameterList TemplateParamsTy;
-  typedef Action::TemplateTy TemplateTy;
+  typedef OpaquePtr<TemplateName> TemplateTy;
 
   typedef llvm::SmallVector<TemplateParameterList *, 4> TemplateParameterLists;
 
