@@ -24,6 +24,84 @@ $ python function_types/TestFunctionTypes.py
 Ran 1 test in 0.363s
 
 OK
+$ LLDB_COMMAND_TRACE=YES python array_types/TestArrayTypes.py
+LLDB_COMMAND_TRACE=YES python array_types/TestArrayTypes.py
+runCmd: file /Volumes/data/lldb/svn/trunk/test/array_types/a.out
+output: Current executable set to '/Volumes/data/lldb/svn/trunk/test/array_types/a.out' (x86_64).
+
+runCmd: breakpoint set -f main.c -l 42
+output: Breakpoint created: 1: file ='main.c', line = 42, locations = 1
+
+runCmd: run
+output: Launching '/Volumes/data/lldb/svn/trunk/test/array_types/a.out'  (x86_64)
+
+runCmd: thread list
+output: Process 24987 state is Stopped
+  thread #1: tid = 0x2e03, pc = 0x0000000100000df4, where = a.out`main + 612 at /Volumes/data/lldb/svn/trunk/test/array_types/main.c:45, stop reason = breakpoint 1.1, queue = com.apple.main-thread
+
+runCmd: breakpoint list
+output: Current breakpoints:
+1: file ='main.c', line = 42, locations = 1, resolved = 1
+  1.1: where = a.out`main + 612 at /Volumes/data/lldb/svn/trunk/test/array_types/main.c:45, address = 0x0000000100000df4, resolved, hit count = 1 
+
+
+runCmd: variable list strings
+output: (char *[4]) strings = {
+  (char *) strings[0] = 0x0000000100000f0c "Hello",
+  (char *) strings[1] = 0x0000000100000f12 "Hola",
+  (char *) strings[2] = 0x0000000100000f17 "Bonjour",
+  (char *) strings[3] = 0x0000000100000f1f "Guten Tag"
+}
+
+runCmd: variable list char_16
+output: (char [16]) char_16 = {
+  (char) char_16[0] = 'H',
+  (char) char_16[1] = 'e',
+  (char) char_16[2] = 'l',
+  (char) char_16[3] = 'l',
+  (char) char_16[4] = 'o',
+  (char) char_16[5] = ' ',
+  (char) char_16[6] = 'W',
+  (char) char_16[7] = 'o',
+  (char) char_16[8] = 'r',
+  (char) char_16[9] = 'l',
+  (char) char_16[10] = 'd',
+  (char) char_16[11] = '\n',
+  (char) char_16[12] = '\0',
+  (char) char_16[13] = '\0',
+  (char) char_16[14] = '\0',
+  (char) char_16[15] = '\0'
+}
+
+runCmd: variable list ushort_matrix
+output: (unsigned short [2][3]) ushort_matrix = {
+  (unsigned short [3]) ushort_matrix[0] = {
+    (unsigned short) ushort_matrix[0][0] = 0x0001,
+    (unsigned short) ushort_matrix[0][1] = 0x0002,
+    (unsigned short) ushort_matrix[0][2] = 0x0003
+  },
+  (unsigned short [3]) ushort_matrix[1] = {
+    (unsigned short) ushort_matrix[1][0] = 0x000b,
+    (unsigned short) ushort_matrix[1][1] = 0x0016,
+    (unsigned short) ushort_matrix[1][2] = 0x0021
+  }
+}
+
+runCmd: variable list long_6
+output: (long [6]) long_6 = {
+  (long) long_6[0] = 1,
+  (long) long_6[1] = 2,
+  (long) long_6[2] = 3,
+  (long) long_6[3] = 4,
+  (long) long_6[4] = 5,
+  (long) long_6[5] = 6
+}
+
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.349s
+
+OK
 $ 
 """
 
@@ -70,6 +148,9 @@ class TestBase(unittest2.TestCase):
     # State pertaining to the inferior process, if any.
     runStarted = False
 
+    # os.environ["LLDB_COMMAND_TRACE"], if set to "YES", will turn on this flag.
+    traceAlways = False;
+
     def setUp(self):
         #import traceback
         #traceback.print_stack()
@@ -84,6 +165,10 @@ class TestBase(unittest2.TestCase):
         # See also dotest.py which sets up ${LLDB_TEST}.
         if ("LLDB_TEST" in os.environ):
             os.chdir(os.path.join(os.environ["LLDB_TEST"], self.mydir));
+
+        if ("LLDB_COMMAND_TRACE" in os.environ and
+            os.environ["LLDB_COMMAND_TRACE"] == "YES"):
+            self.traceAlways = True
 
         # Create the debugger instance if necessary.
         try:
@@ -115,7 +200,7 @@ class TestBase(unittest2.TestCase):
         # Restore old working directory.
         os.chdir(self.oldcwd)
 
-    def runCmd(self, cmd, msg=None, check=True, verbose=False):
+    def runCmd(self, cmd, msg=None, check=True, trace=False):
         """
         Ask the command interpreter to handle the command and then check its
         return status.
@@ -124,7 +209,9 @@ class TestBase(unittest2.TestCase):
         if not cmd or len(cmd) == 0:
             raise Exception("Bad 'cmd' parameter encountered")
 
-        if verbose:
+        trace = (True if self.traceAlways else trace)
+
+        if trace:
             print >> sys.stderr, "runCmd:", cmd
 
         self.ci.HandleCommand(cmd, self.res)
@@ -132,7 +219,7 @@ class TestBase(unittest2.TestCase):
         if cmd.startswith("run"):
             self.runStarted = True
 
-        if verbose:
+        if trace:
             if self.res.Succeeded():
                 print >> sys.stderr, "output:", self.res.GetOutput()
             else:
@@ -142,7 +229,7 @@ class TestBase(unittest2.TestCase):
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
-    def expect(self, cmd, msg=None, startstr=None, substrs=None, verbose=False):
+    def expect(self, cmd, msg=None, startstr=None, substrs=None, trace=False):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -152,21 +239,23 @@ class TestBase(unittest2.TestCase):
         'startstr' and matches the substrings contained in 'substrs'.
         """
 
+        trace = (True if self.traceAlways else trace)
+
         # First run the command.
-        self.runCmd(cmd, verbose = (True if verbose else False))
+        self.runCmd(cmd, trace = (True if trace else False))
 
         # Then compare the output against expected strings.
         output = self.res.GetOutput()
         matched = output.startswith(startstr) if startstr else True
 
-        if not matched and startstr and verbose:
+        if not matched and startstr and trace:
             print >> sys.stderr, "Startstr not matched:", startstr
 
         if substrs:
             for str in substrs:
                 matched = output.find(str) > 0
                 if not matched:
-                    if verbose:
+                    if trace:
                         print >> sys.stderr, "Substring not matched:", str
                     break
 

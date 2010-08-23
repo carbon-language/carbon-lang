@@ -59,6 +59,7 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
+-t   : trace lldb command execution and result
 -v   : do verbose mode of unittest framework
 
 and:
@@ -118,11 +119,15 @@ def initTestdirs():
         usage()
         sys.exit(0)
     else:
-        # Process possible verbose flag.
+        # Process possible trace and/or verbose flag.
         index = 1
-        if sys.argv[1].find('-v') != -1:
-            verbose = 2
-            index += 1
+        for i in range(1, len(sys.argv) - 1):
+            if sys.argv[index].startswith('-t'):
+                os.environ["LLDB_COMMAND_TRACE"] = "YES"
+                index += 1
+            if sys.argv[index].startswith('-v'):
+                verbose = 2
+                index += 1
 
         # Gather all the dirs passed on the command line.
         if len(sys.argv) > index:

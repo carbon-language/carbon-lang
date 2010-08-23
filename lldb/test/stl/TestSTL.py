@@ -42,7 +42,7 @@ class TestSTL(TestBase):
         # This assertion currently always fails.
         # This might be related: rdar://problem/8247112.
         #
-        #self.runCmd("thread step-in", verbose=True)
+        #self.runCmd("thread step-in", trace=True)
         self.runCmd("thread step-in")
 
         self.expect("thread backtrace", "We have stepped in STL",
