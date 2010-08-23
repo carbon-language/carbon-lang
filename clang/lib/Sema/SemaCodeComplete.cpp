@@ -239,6 +239,7 @@ namespace {
     bool IsMember(NamedDecl *ND) const;
     bool IsObjCIvar(NamedDecl *ND) const;
     bool IsObjCMessageReceiver(NamedDecl *ND) const;
+    bool IsObjCCollection(NamedDecl *ND) const;
     //@}    
   };  
 }
@@ -366,8 +367,12 @@ getRequiredQualification(ASTContext &Context,
     DeclContext *Parent = TargetParents.back();
     TargetParents.pop_back();
     
-    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Parent))
+    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Parent)) {
+      if (!Namespace->getIdentifier())
+        continue;
+
       Result = NestedNameSpecifier::Create(Context, Result, Namespace);
+    }
     else if (TagDecl *TD = dyn_cast<TagDecl>(Parent))
       Result = NestedNameSpecifier::Create(Context, Result,
                                            false,
@@ -946,6 +951,20 @@ bool ResultBuilder::IsObjCMessageReceiver(NamedDecl *ND) const {
   return isObjCReceiverType(SemaRef.Context, T);
 }
 
+bool ResultBuilder::IsObjCCollection(NamedDecl *ND) const {
+  if ((SemaRef.getLangOptions().CPlusPlus && !IsOrdinaryName(ND)) ||
+      (!SemaRef.getLangOptions().CPlusPlus && !IsOrdinaryNonTypeName(ND)))
+    return false;
+  
+  QualType T = getDeclUsageType(SemaRef.Context, ND);
+  if (T.isNull())
+    return false;
+  
+  T = SemaRef.Context.getBaseElementType(T);
+  return T->isObjCObjectType() || T->isObjCObjectPointerType() ||
+         T->isObjCIdType() || 
+         (SemaRef.getLangOptions().CPlusPlus && T->isRecordType());
+}
 
 /// \rief Determines whether the given declaration is an Objective-C
 /// instance variable.
@@ -2303,23 +2322,42 @@ void Sema::CodeCompleteDeclarator(Scope *S,
                             Results.data(), Results.size());
 }
 
+struct Sema::CodeCompleteExpressionData {
+  CodeCompleteExpressionData(QualType PreferredType = QualType()) 
+    : PreferredType(PreferredType), IntegralConstantExpression(false),
+      ObjCCollection(false) { }
+  
+  QualType PreferredType;
+  bool IntegralConstantExpression;
+  bool ObjCCollection;
+  llvm::SmallVector<Decl *, 4> IgnoreDecls;
+};
+
 /// \brief Perform code-completion in an expression context when we know what
 /// type we're looking for.
 ///
 /// \param IntegralConstantExpression Only permit integral constant 
 /// expressions.
-void Sema::CodeCompleteExpression(Scope *S, QualType T,
-                                  bool IntegralConstantExpression) {
+void Sema::CodeCompleteExpression(Scope *S, 
+                                  const CodeCompleteExpressionData &Data) {
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this);
   
-  if (IntegralConstantExpression)
+  if (Data.ObjCCollection)
+    Results.setFilter(&ResultBuilder::IsObjCCollection);
+  else if (Data.IntegralConstantExpression)
     Results.setFilter(&ResultBuilder::IsIntegralConstantValue);
   else if (WantTypesInContext(PCC_Expression, getLangOptions()))
     Results.setFilter(&ResultBuilder::IsOrdinaryName);
   else
     Results.setFilter(&ResultBuilder::IsOrdinaryNonTypeName);
-  Results.setPreferredType(T.getNonReferenceType());
+
+  if (!Data.PreferredType.isNull())
+    Results.setPreferredType(Data.PreferredType.getNonReferenceType());
+  
+  // Ignore any declarations that we were told that we don't care about.
+  for (unsigned I = 0, N = Data.IgnoreDecls.size(); I != N; ++I)
+    Results.Ignore(Data.IgnoreDecls[I]);
   
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer,
@@ -2330,14 +2368,16 @@ void Sema::CodeCompleteExpression(Scope *S, QualType T,
   Results.ExitScope();
   
   bool PreferredTypeIsPointer = false;
-  if (!T.isNull())
-    PreferredTypeIsPointer = T->isAnyPointerType() || 
-      T->isMemberPointerType() || T->isBlockPointerType();
+  if (!Data.PreferredType.isNull())
+    PreferredTypeIsPointer = Data.PreferredType->isAnyPointerType()
+      || Data.PreferredType->isMemberPointerType() 
+      || Data.PreferredType->isBlockPointerType();
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results, PreferredTypeIsPointer);
   HandleCodeCompleteResults(this, CodeCompleter, 
-                CodeCompletionContext(CodeCompletionContext::CCC_Expression, T),
+                CodeCompletionContext(CodeCompletionContext::CCC_Expression, 
+                                      Data.PreferredType),
                             Results.data(),Results.size());
 }
 
@@ -2534,7 +2574,9 @@ void Sema::CodeCompleteCase(Scope *S) {
   
   SwitchStmt *Switch = getSwitchStack().back();
   if (!Switch->getCond()->getType()->isEnumeralType()) {
-    CodeCompleteExpression(S, Switch->getCond()->getType(), true);
+    CodeCompleteExpressionData Data(Switch->getCond()->getType());
+    Data.IntegralConstantExpression = true;
+    CodeCompleteExpression(S, Data);
     return;
   }
   
@@ -3750,6 +3792,22 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
                             Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCForCollection(Scope *S, 
+                                         DeclGroupPtrTy IterationVar) {
+  CodeCompleteExpressionData Data;
+  Data.ObjCCollection = true;
+  
+  if (IterationVar.getAsOpaquePtr()) {
+    DeclGroupRef DG = IterationVar.getAsVal<DeclGroupRef>();
+    for (DeclGroupRef::iterator I = DG.begin(), End = DG.end(); I != End; ++I) {
+      if (*I)
+        Data.IgnoreDecls.push_back(*I);
+    }
+  }
+  
+  CodeCompleteExpression(S, Data);
 }
 
 /// \brief Add all of the protocol declarations that we find in the given

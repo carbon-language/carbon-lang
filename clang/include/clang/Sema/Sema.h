@@ -4643,8 +4643,10 @@ public:
   virtual void CodeCompleteDeclarator(Scope *S,
                                       bool AllowNonIdentifiers,
                                       bool AllowNestedNameSpecifiers);
-  virtual void CodeCompleteExpression(Scope *S, QualType T,
-                                      bool IntegralConstantExpression = false);
+  
+  struct CodeCompleteExpressionData;
+  virtual void CodeCompleteExpression(Scope *S, 
+                                      const CodeCompleteExpressionData &Data);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);
@@ -4686,6 +4688,8 @@ public:
   virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                                IdentifierInfo **SelIdents,
                                                unsigned NumSelIdents);
+  virtual void CodeCompleteObjCForCollection(Scope *S, 
+                                             DeclGroupPtrTy IterationVar);
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols);
   virtual void CodeCompleteObjCProtocolDecl(Scope *S);

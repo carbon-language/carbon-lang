@@ -3052,6 +3052,15 @@ public:
                                                IdentifierInfo **SelIdents,
                                                unsigned NumSelIdents) { }
 
+  /// \brief Code completion for the collection argument of an Objective-C
+  /// for-each statement.
+  ///
+  /// \param S The Scope in which the completion occurs.
+  ///
+  /// \param IterationBar The iteration variable declaration.
+  virtual void CodeCompleteObjCForCollection(Scope *S, 
+                                             DeclGroupPtrTy IterationVar) { }
+  
   /// \brief Code completion for a list of protocol references in Objective-C,
   /// such as P1 and P2 in \c id<P1,P2>.
   ///

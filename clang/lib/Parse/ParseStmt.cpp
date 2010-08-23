@@ -1023,6 +1023,11 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
       Actions.ActOnForEachDeclStmt(DG);
       // ObjC: for (id x in expr)
       ConsumeToken(); // consume 'in'
+      
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteObjCForCollection(getCurScope(), DG);
+        ConsumeCodeCompletionToken();
+      }
       Collection = ParseExpression();
     } else {
       Diag(Tok, diag::err_expected_semi_for);
@@ -1039,6 +1044,11 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
       ConsumeToken();
     } else if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
+      
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteObjCForCollection(getCurScope(), DeclGroupPtrTy());
+        ConsumeCodeCompletionToken();
+      }
       Collection = ParseExpression();
     } else {
       if (!Value.isInvalid()) Diag(Tok, diag::err_expected_semi_for);
