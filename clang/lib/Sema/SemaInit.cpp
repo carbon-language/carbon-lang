@@ -2862,8 +2862,8 @@ static void TryDefaultInitialization(Sema &S,
   //       constructor for T is called (and the initialization is ill-formed if
   //       T has no accessible default constructor);
   if (DestType->isRecordType() && S.getLangOptions().CPlusPlus) {
-    return TryConstructorInitialization(S, Entity, Kind, 0, 0, DestType,
-                                        Sequence);
+    TryConstructorInitialization(S, Entity, Kind, 0, 0, DestType, Sequence);
+    return;
   }
   
   //     - otherwise, no initialization is performed.
@@ -3838,14 +3838,25 @@ InitializationSequence::Perform(Sema &S,
       SourceLocation Loc = (Kind.isCopyInit() && Kind.getEqualLoc().isValid())
                              ? Kind.getEqualLoc()
                              : Kind.getLocation();
-          
+
+      if (Kind.getKind() == InitializationKind::IK_Default) {
+        // Force even a trivial, implicit default constructor to be
+        // semantically checked. We do this explicitly because we don't build
+        // the definition for completely trivial constructors.
+        CXXRecordDecl *ClassDecl = Constructor->getParent();
+        assert(ClassDecl && "No parent class for constructor.");
+        if (Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
+            ClassDecl->hasTrivialConstructor() && !Constructor->isUsed(false))
+          S.DefineImplicitDefaultConstructor(Loc, Constructor);
+      }
+
       // Determine the arguments required to actually perform the constructor
       // call.
       if (S.CompleteConstructorCall(Constructor, move(Args), 
                                     Loc, ConstructorArgs))
         return S.ExprError();
           
-      // Build the expression that constructs a temporary.
+      
       if (Entity.getKind() == InitializedEntity::EK_Temporary &&
           NumArgs != 1 && // FIXME: Hack to work around cast weirdness
           (Kind.getKind() == InitializationKind::IK_Direct ||

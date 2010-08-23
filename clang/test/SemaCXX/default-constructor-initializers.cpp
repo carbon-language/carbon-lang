@@ -43,7 +43,6 @@ Y4 y4;
 
 // More tests
 
-
 struct Z1 { // expected-error {{must explicitly initialize the reference member 'z'}} \
             // expected-error {{must explicitly initialize the const member 'c1'}}
   int& z;       // expected-note {{declared here}}
@@ -51,5 +50,12 @@ struct Z1 { // expected-error {{must explicitly initialize the reference member 
   volatile int v1;
 };
 
+// Test default initialization which *requires* a constructor call for non-POD.
 Z1 z1; // expected-note {{first required here}}
 
+// Ensure that value initialization doesn't use trivial implicit constructors.
+namespace PR7948 {
+  // Note that this is also non-POD to ensure we don't just special case PODs.
+  struct S { const int x; ~S(); };
+  const S arr[2] = { { 42 } };
+}

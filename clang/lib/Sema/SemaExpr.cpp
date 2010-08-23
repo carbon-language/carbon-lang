@@ -7654,8 +7654,10 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
     unsigned TypeQuals;
     if (Constructor->isImplicit() && Constructor->isDefaultConstructor()) {
-        if (!Constructor->isUsed(false))
-          DefineImplicitDefaultConstructor(Loc, Constructor);
+      if (Constructor->getParent()->hasTrivialConstructor())
+        return;
+      if (!Constructor->isUsed(false))
+        DefineImplicitDefaultConstructor(Loc, Constructor);
     } else if (Constructor->isImplicit() &&
                Constructor->isCopyConstructor(TypeQuals)) {
       if (!Constructor->isUsed(false))
