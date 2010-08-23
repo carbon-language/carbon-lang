@@ -93,9 +93,8 @@ def error;
 def set_option;
 def unset_option;
 
-// Increase/decrease the edge weight.
+// Increase the edge weight.
 def inc_weight;
-def dec_weight;
 
 // Empty DAG marker.
 def empty_dag_marker;

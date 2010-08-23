@@ -46,7 +46,7 @@ namespace llvmc {
     virtual ~Edge() {}
 
     const std::string& ToolName() const { return ToolName_; }
-    virtual unsigned Weight(const InputLanguagesSet& InLangs) const = 0;
+    virtual int Weight(const InputLanguagesSet& InLangs) const = 0;
   private:
     std::string ToolName_;
   };
@@ -55,7 +55,7 @@ namespace llvmc {
   class SimpleEdge : public Edge {
   public:
     SimpleEdge(const std::string& T) : Edge(T) {}
-    unsigned Weight(const InputLanguagesSet&) const { return 1; }
+    int Weight(const InputLanguagesSet&) const { return 1; }
   };
 
   /// Node - A node (vertex) of the compilation graph.

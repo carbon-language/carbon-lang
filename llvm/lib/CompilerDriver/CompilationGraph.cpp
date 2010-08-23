@@ -46,19 +46,24 @@ namespace llvmc {
 
 namespace {
 
-  /// ChooseEdge - Return the edge with the maximum weight.
+  /// ChooseEdge - Return the edge with the maximum weight. Returns 0 on error.
   template <class C>
   const Edge* ChooseEdge(const C& EdgesContainer,
                          const InputLanguagesSet& InLangs,
                          const std::string& NodeName = "root") {
     const Edge* MaxEdge = 0;
-    unsigned MaxWeight = 0;
+    int MaxWeight = 0;
     bool SingleMax = true;
 
     for (typename C::const_iterator B = EdgesContainer.begin(),
            E = EdgesContainer.end(); B != E; ++B) {
       const Edge* e = B->getPtr();
-      unsigned EW = e->Weight(InLangs);
+      int EW = e->Weight(InLangs);
+      if (EW < 0) {
+        // (error) invocation in TableGen -> we don't need to print an error
+        // message.
+        return 0;
+      }
       if (EW > MaxWeight) {
         MaxEdge = e;
         MaxWeight = EW;
@@ -474,7 +479,7 @@ int CompilationGraph::CheckMultipleDefaultEdges() const {
   for (const_nodes_iterator B = this->NodesMap.begin(),
          E = this->NodesMap.end(); B != E; ++B) {
     const Node& N = B->second;
-    unsigned MaxWeight = 0;
+    int MaxWeight = 0;
 
     // Ignore the root node.
     if (!N.ToolPtr)
@@ -482,7 +487,7 @@ int CompilationGraph::CheckMultipleDefaultEdges() const {
 
     for (Node::const_iterator EB = N.EdgesBegin(), EE = N.EdgesEnd();
          EB != EE; ++EB) {
-      unsigned EdgeWeight = (*EB)->Weight(Dummy);
+      int EdgeWeight = (*EB)->Weight(Dummy);
       if (EdgeWeight > MaxWeight) {
         MaxWeight = EdgeWeight;
       }

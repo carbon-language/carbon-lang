@@ -1950,7 +1950,6 @@ struct ActionHandlingCallbackBase
 
 /// EmitActionHandlersCallback - Emit code that handles actions. Used by
 /// EmitGenerateActionMethod() as an argument to EmitCaseConstructHandler().
-
 class EmitActionHandlersCallback;
 
 typedef void (EmitActionHandlersCallback::* EmitActionHandlersCallbackHandler)
@@ -2649,21 +2648,18 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
   O << "}\n\n";
 }
 
-/// IncDecWeight - Helper function passed to EmitCaseConstructHandler()
-/// by EmitEdgeClass().
-void IncDecWeight (const Init* i, unsigned IndentLevel,
-                   raw_ostream& O) {
+/// EmitEdgePropertyHandlerCallback - Emits code that handles edge
+/// properties. Helper function passed to EmitCaseConstructHandler() by
+/// EmitEdgeClass().
+void EmitEdgePropertyHandlerCallback (const Init* i, unsigned IndentLevel,
+                                      raw_ostream& O) {
   const DagInit& d = InitPtrToDag(i);
   const std::string& OpName = GetOperatorName(d);
 
   if (OpName == "inc_weight") {
     O.indent(IndentLevel) << "ret += ";
   }
-  else if (OpName == "dec_weight") {
-    O.indent(IndentLevel) << "ret -= ";
-  }
   else if (OpName == "error") {
-    // TODO: fix this
     CheckNumberOfArguments(d, 1);
     O.indent(IndentLevel) << "PrintError(\""
                           << InitPtrToString(d.getArg(0))
@@ -2696,11 +2692,12 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
 
   // Function Weight().
   O.indent(Indent1)
-    << "unsigned Weight(const InputLanguagesSet& InLangs) const {\n";
+    << "int Weight(const InputLanguagesSet& InLangs) const {\n";
   O.indent(Indent2) << "unsigned ret = 0;\n";
 
   // Handle the 'case' construct.
-  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, false, OptDescs, O);
+  EmitCaseConstructHandler(Case, Indent2, EmitEdgePropertyHandlerCallback,
+                           false, OptDescs, O);
 
   O.indent(Indent2) << "return ret;\n";
   O.indent(Indent1) << "}\n\n};\n\n";
