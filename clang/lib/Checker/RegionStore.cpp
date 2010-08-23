@@ -181,6 +181,14 @@ public:
   }
 };
 
+void
+RegionStoreSubRegionMap::process(llvm::SmallVectorImpl<const SubRegion*> &WL,
+                                 const SubRegion *R) {
+  const MemRegion *superR = R->getSuperRegion();
+  if (add(superR, R))
+    if (const SubRegion *sr = dyn_cast<SubRegion>(superR))
+      WL.push_back(sr);
+}
 
 class RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
@@ -402,14 +410,6 @@ StoreManager *clang::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
   return new RegionStoreManager(StMgr, F);
 }
 
-void
-RegionStoreSubRegionMap::process(llvm::SmallVectorImpl<const SubRegion*> &WL,
-                                 const SubRegion *R) {
-  const MemRegion *superR = R->getSuperRegion();
-  if (add(superR, R))
-    if (const SubRegion *sr = dyn_cast<SubRegion>(superR))
-      WL.push_back(sr);
-}
 
 RegionStoreSubRegionMap*
 RegionStoreManager::getRegionStoreSubRegionMap(Store store) {
