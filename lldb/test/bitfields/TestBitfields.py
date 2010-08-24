@@ -11,7 +11,7 @@ class TestBitfields(TestBase):
 
     @unittest2.expectedFailure
     def test_variable_list_for_bitfields(self):
-        """Test 'variable list ...' and check for correct display."""
+        """Test 'variable list ...' on a variable with bitfields."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
