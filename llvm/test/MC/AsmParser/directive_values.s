@@ -19,3 +19,20 @@ TEST2:
 # CHECK: .quad 9
 TEST3:  
         .quad 9
+
+
+# rdar://7997827
+TEST4:
+        .quad 0b0100
+        .quad 4294967295
+        .quad 4294967295+1
+        .quad 4294967295LL+1
+        .quad 0b10LL + 07ULL + 0x42AULL
+# CHECK: TEST4
+# CHECK: 	.quad	4
+# CHECK: .quad	4294967295
+# CHECK: 	.quad	4294967296
+# CHECK: 	.quad	4294967296
+# CHECK: 	.quad	1075
+
+
