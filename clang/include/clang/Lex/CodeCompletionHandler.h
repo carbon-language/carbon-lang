@@ -16,6 +16,9 @@
 
 namespace clang {
 
+class IdentifierInfo;
+class MacroInfo;
+  
 /// \brief Callback handler that receives notifications when performing code 
 /// completion within the preprocessor.
 class CodeCompletionHandler {
@@ -42,6 +45,16 @@ public:
   /// \param IsDefinition Whether this is the definition of a macro, e.g.,
   /// in a #define.
   virtual void CodeCompleteMacroName(bool IsDefinition) { }
+  
+  /// \brief Callback invoked when performing code completion in a preprocessor
+  /// expression, such as the condition of an #if or #elif directive.
+  virtual void CodeCompletePreprocessorExpression() { }
+  
+  /// \brief Callback invoked when performing code completion inside a 
+  /// function-like macro argument.
+  virtual void CodeCompleteMacroArgument(IdentifierInfo *Macro,
+                                         MacroInfo *MacroInfo,
+                                         unsigned ArgumentIndex) { }
 };
   
 }

@@ -11,6 +11,8 @@
 #if defined(FOO)
 #endif
 
+FOO(in,t) value;
+
 // RUN: c-index-test -code-completion-at=%s:4:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{TypedText define}{HorizontalSpace  }{Placeholder macro} (30)
 // CHECK-CC1-NEXT: NotImplemented:{TypedText define}{HorizontalSpace  }{Placeholder macro}{LeftParen (}{Placeholder args}{RightParen )} (30)
@@ -55,3 +57,18 @@
 // CHECK-CC3: NotImplemented:{TypedText FOO} (30)
 // RUN: c-index-test -code-completion-at=%s:11:12 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: c-index-test -code-completion-at=%s:11:13 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: c-index-test -code-completion-at=%s:11:5 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: macro definition:{TypedText BAR} (70)
+// CHECK-CC4: macro definition:{TypedText FOO}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (70)
+// RUN: c-index-test -code-completion-at=%s:14:5 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: NotImplemented:{TypedText const} (40)
+// CHECK-CC5: NotImplemented:{TypedText double} (40)
+// CHECK-CC5: NotImplemented:{TypedText enum} (40)
+// CHECK-CC5: NotImplemented:{TypedText extern} (30)
+// CHECK-CC5: NotImplemented:{TypedText float} (40)
+// CHECK-CC5: macro definition:{TypedText FOO}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (70)
+// CHECK-CC5: macro definition:{TypedText i386} (70)
+// CHECK-CC5: TypedefDecl:{TypedText id} (40)
+// CHECK-CC5: NotImplemented:{TypedText inline} (30)
+// CHECK-CC5: NotImplemented:{TypedText int} (40)
+// CHECK-CC5: NotImplemented:{TypedText long} (40)

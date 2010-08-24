@@ -4633,9 +4633,14 @@ public:
                                                   ParsedType ReturnType,
                                                   IdentifierInfo **SelIdents,
                                                   unsigned NumSelIdents);
-  virtual void CodeCompletePreprocessorDirective(Scope *S, bool InConditional);
+  virtual void CodeCompletePreprocessorDirective(bool InConditional);
   virtual void CodeCompleteInPreprocessorConditionalExclusion(Scope *S);
-  virtual void CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition);
+  virtual void CodeCompletePreprocessorMacroName(bool IsDefinition);
+  virtual void CodeCompletePreprocessorExpression();
+  virtual void CodeCompletePreprocessorMacroArgument(Scope *S,
+                                                     IdentifierInfo *Macro,
+                                                     MacroInfo *MacroInfo,
+                                                     unsigned Argument);
   void GatherGlobalCodeCompletions(
                   llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results);
   //@}

@@ -19,6 +19,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
@@ -323,6 +324,13 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // an argument value in a macro could expand to ',' or '(' or ')'.
       LexUnexpandedToken(Tok);
 
+      if (Tok.is(tok::code_completion)) {
+        if (CodeComplete)
+          CodeComplete->CodeCompleteMacroArgument(MacroName.getIdentifierInfo(),
+                                                  MI, NumActuals);
+        LexUnexpandedToken(Tok);
+      }
+      
       if (Tok.is(tok::eof) || Tok.is(tok::eom)) { // "#if f(<eof>" & "#if f(\n"
         Diag(MacroName, diag::err_unterm_macro_invoc);
         // Do not lose the EOF/EOM.  Return it to the client.

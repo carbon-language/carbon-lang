@@ -4608,7 +4608,7 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
                             Results.data(),Results.size());
 }
 
-void Sema::CodeCompletePreprocessorDirective(Scope *S, bool InConditional) {
+void Sema::CodeCompletePreprocessorDirective(bool InConditional) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   
@@ -4785,11 +4785,12 @@ void Sema::CodeCompletePreprocessorDirective(Scope *S, bool InConditional) {
 }
 
 void Sema::CodeCompleteInPreprocessorConditionalExclusion(Scope *S) {
-  CodeCompleteOrdinaryName(S, Action::PCC_RecoveryInFunction);
+  CodeCompleteOrdinaryName(S,
+                           S->getFnParent()? Action::PCC_RecoveryInFunction 
+                                           : Action::PCC_Namespace);
 }
 
-void Sema::CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition) {
-  typedef CodeCompleteConsumer::Result Result;
+void Sema::CodeCompletePreprocessorMacroName(bool IsDefinition) {
   ResultBuilder Results(*this);
   if (!IsDefinition && (!CodeCompleter || CodeCompleter->includeMacros())) {
     // Add just the names of macros, not their arguments.    
@@ -4810,6 +4811,40 @@ void Sema::CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition) {
                       IsDefinition? CodeCompletionContext::CCC_MacroName
                                   : CodeCompletionContext::CCC_MacroNameUse,
                             Results.data(), Results.size()); 
+}
+
+void Sema::CodeCompletePreprocessorExpression() {
+  ResultBuilder Results(*this);
+  
+  if (!CodeCompleter || CodeCompleter->includeMacros())
+    AddMacroResults(PP, Results);
+  
+    // defined (<macro>)
+  Results.EnterNewScope();
+  CodeCompletionString *Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("defined");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("macro");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Results.AddResult(Pattern);
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, 
+                            CodeCompletionContext::CCC_PreprocessorExpression,
+                            Results.data(), Results.size()); 
+}
+
+void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
+                                                 IdentifierInfo *Macro,
+                                                 MacroInfo *MacroInfo,
+                                                 unsigned Argument) {
+  // FIXME: In the future, we could provide "overload" results, much like we
+  // do for function calls.
+  
+  CodeCompleteOrdinaryName(S,
+                           S->getFnParent()? Action::PCC_RecoveryInFunction 
+                                           : Action::PCC_Namespace);
 }
 
 void Sema::GatherGlobalCodeCompletions(

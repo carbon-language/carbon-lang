@@ -43,7 +43,8 @@ namespace clang {
   // Lex.
   class Preprocessor;
   class Token;
-
+  class MacroInfo;
+  
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
 /// into something useful: e.g. a parse tree.
@@ -3207,9 +3208,8 @@ public:
   
   /// \brief Code completion for a preprocessor directive.
   ///
-  /// \brief S The scope in which the preprocessor directive is being parsed.
   /// \brief InConditional Whether we're inside a preprocessor conditional.
-  virtual void CodeCompletePreprocessorDirective(Scope *S, bool InConditional) { 
+  virtual void CodeCompletePreprocessorDirective(bool InConditional) { 
   }
   
   /// \brief Code completion while in an area of the translation unit that was
@@ -3219,13 +3219,31 @@ public:
   /// \brief Code completion in the preprocessor where an already-defined
   /// macro name is expected, e.g., an #ifdef or #undef.
   ///
-  /// \param S The scope in which the macro name occurs.
-  ///
   /// \param IsDefinition Whether this code completion for a macro name occurs
   /// in a definition of the macro (#define) or in another use that already
   /// expects that the macro is defined (e.g., #undef or #ifdef).
-  virtual void CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition) { 
+  virtual void CodeCompletePreprocessorMacroName(bool IsDefinition) { 
   }
+  
+  /// \brief Callback invoked when performing code completion in a preprocessor
+  /// expression, such as the condition of an #if or #elif directive.
+  virtual void CodeCompletePreprocessorExpression() { }
+  
+  /// \brief Callback invoked when performing code completion inside a 
+  /// function-like macro argument.
+  ///
+  /// \param S The scope in which this macro is being expanded.
+  ///
+  /// \param Macro The name of the macro that is going to be expanded.
+  ///
+  /// \param MacroInfo Information about the macro that is going to be
+  /// expanded.
+  ///
+  /// \param Argument The argument in which the code-completion token occurs.
+  virtual void CodeCompletePreprocessorMacroArgument(Scope *S,
+                                                     IdentifierInfo *Macro,
+                                                     MacroInfo *MacroInfo,
+                                                     unsigned Argument) { }
   //@}
 };
 

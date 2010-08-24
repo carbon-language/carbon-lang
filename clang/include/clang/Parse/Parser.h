@@ -1536,6 +1536,10 @@ private:
   virtual void CodeCompleteDirective(bool InConditional);
   virtual void CodeCompleteInConditionalExclusion();
   virtual void CodeCompleteMacroName(bool IsDefinition);
+  virtual void CodeCompletePreprocessorExpression();
+  virtual void CodeCompleteMacroArgument(IdentifierInfo *Macro,
+                                         MacroInfo *MacroInfo,
+                                         unsigned ArgumentIndex);
 };
 
 }  // end namespace clang

@@ -278,7 +278,8 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1 << (CodeCompletionContext::CCC_Statement - 1))
         | (1 << (CodeCompletionContext::CCC_Expression - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-        | (1 << (CodeCompletionContext::CCC_MacroNameUse - 1));
+        | (1 << (CodeCompletionContext::CCC_MacroNameUse - 1))
+        | (1 << (CodeCompletionContext::CCC_PreprocessorExpression - 1));
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
@@ -1550,6 +1551,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_ObjCProtocolName:
   case CodeCompletionContext::CCC_MacroName:
   case CodeCompletionContext::CCC_MacroNameUse:
+  case CodeCompletionContext::CCC_PreprocessorExpression:
     // If we're just looking for protocol or macro names, nothing can hide them.
     return;
   }

@@ -1133,7 +1133,7 @@ void Parser::FieldCallback::_anchor() {
 // Code-completion pass-through functions
 
 void Parser::CodeCompleteDirective(bool InConditional) {
-  Actions.CodeCompletePreprocessorDirective(getCurScope(), InConditional);
+  Actions.CodeCompletePreprocessorDirective(InConditional);
 }
 
 void Parser::CodeCompleteInConditionalExclusion() {
@@ -1141,5 +1141,16 @@ void Parser::CodeCompleteInConditionalExclusion() {
 }
 
 void Parser::CodeCompleteMacroName(bool IsDefinition) {
-  Actions.CodeCompletePreprocessorMacroName(getCurScope(), IsDefinition);
+  Actions.CodeCompletePreprocessorMacroName(IsDefinition);
+}
+
+void Parser::CodeCompletePreprocessorExpression() { 
+  Actions.CodeCompletePreprocessorExpression();
+}
+
+void Parser::CodeCompleteMacroArgument(IdentifierInfo *Macro,
+                                       MacroInfo *MacroInfo,
+                                       unsigned ArgumentIndex) {
+  Actions.CodeCompletePreprocessorMacroArgument(getCurScope(), Macro, MacroInfo, 
+                                                ArgumentIndex);
 }

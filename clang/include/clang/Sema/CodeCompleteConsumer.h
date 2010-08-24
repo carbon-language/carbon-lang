@@ -174,7 +174,9 @@ public:
     CCC_MacroName,
     /// \brief Code completion occurred where a macro name is expected
     /// (without any arguments, in the case of a function-like macro).
-    CCC_MacroNameUse
+    CCC_MacroNameUse,
+    /// \brief Code completion occurred within a preprocessor expression.
+    CCC_PreprocessorExpression
   };
 
 private:

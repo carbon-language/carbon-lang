@@ -149,6 +149,12 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
                           bool ValueLive, Preprocessor &PP) {
   DT.State = DefinedTracker::Unknown;
 
+  if (PeekTok.is(tok::code_completion)) {
+    if (PP.getCodeCompletionHandler())
+      PP.getCodeCompletionHandler()->CodeCompletePreprocessorExpression();
+    PP.LexUnexpandedToken(PeekTok);
+  }
+      
   // If this token's spelling is a pp-identifier, check to see if it is
   // 'defined' or if it is a macro.  Note that we check here because many
   // keywords are pp-identifiers, so we can't check the kind.
