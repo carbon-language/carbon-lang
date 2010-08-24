@@ -317,25 +317,27 @@ package llvm is
       LLVMGhostLinkage,
       LLVMCommonLinkage,
       LLVMLinkerPrivateLinkage,
-      LLVMLinkerPrivateWeakLinkage);
+      LLVMLinkerPrivateWeakLinkage,
+      LinkerPrivateWeakDefAutoLinkage);
 
    for LLVMLinkage use
-     (LLVMExternalLinkage            => 0,
-      LLVMAvailableExternallyLinkage => 1,
-      LLVMLinkOnceAnyLinkage         => 2,
-      LLVMLinkOnceODRLinkage         => 3,
-      LLVMWeakAnyLinkage             => 4,
-      LLVMWeakODRLinkage             => 5,
-      LLVMAppendingLinkage           => 6,
-      LLVMInternalLinkage            => 7,
-      LLVMPrivateLinkage             => 8,
-      LLVMDLLImportLinkage           => 9,
-      LLVMDLLExportLinkage           => 10,
-      LLVMExternalWeakLinkage        => 11,
-      LLVMGhostLinkage               => 12,
-      LLVMCommonLinkage              => 13,
-      LLVMLinkerPrivateLinkage       => 14,
-      LLVMLinkerPrivateWeakLinkage   => 15);
+     (LLVMExternalLinkage             => 0,
+      LLVMAvailableExternallyLinkage  => 1,
+      LLVMLinkOnceAnyLinkage          => 2,
+      LLVMLinkOnceODRLinkage          => 3,
+      LLVMWeakAnyLinkage              => 4,
+      LLVMWeakODRLinkage              => 5,
+      LLVMAppendingLinkage            => 6,
+      LLVMInternalLinkage             => 7,
+      LLVMPrivateLinkage              => 8,
+      LLVMDLLImportLinkage            => 9,
+      LLVMDLLExportLinkage            => 10,
+      LLVMExternalWeakLinkage         => 11,
+      LLVMGhostLinkage                => 12,
+      LLVMCommonLinkage               => 13,
+      LLVMLinkerPrivateLinkage        => 14,
+      LLVMLinkerPrivateWeakLinkage    => 15,
+      LinkerPrivateWeakDefAutoLinkage => 16);
 
    pragma Convention (C, LLVMLinkage);
 
