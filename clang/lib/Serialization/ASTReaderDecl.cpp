@@ -1402,10 +1402,26 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       if (ReadDeclContextStorage(DeclsCursor, Offsets, Info))
         return 0;
       DeclContextInfos &Infos = DeclContextOffsets[DC];
-      // Reading the TU will happen after reading its update blocks, so we need
-      // to make sure we insert in front. For all other contexts, the vector
-      // is empty here anyway, so there's no loss in efficiency.
+      // Reading the TU will happen after reading its lexical update blocks,
+      // so we need to make sure we insert in front. For all other contexts,
+      // the vector is empty here anyway, so there's no loss in efficiency.
       Infos.insert(Infos.begin(), Info);
+
+      // Now add the pending visible updates for this decl context, if it has
+      // any.
+      DeclContextVisibleUpdatesPending::iterator I =
+          PendingVisibleUpdates.find(ID);
+      if (I != PendingVisibleUpdates.end()) {
+        DeclContextVisibleUpdates &U = I->second;
+        Info.LexicalDecls = 0;
+        Info.NumLexicalDecls = 0;
+        for (DeclContextVisibleUpdates::iterator UI = U.begin(), UE = U.end();
+             UI != UE; ++UI) {
+          Info.NameLookupTableData = *UI;
+          Infos.push_back(Info);
+        }
+        PendingVisibleUpdates.erase(I);
+      }
     }
   }
   assert(Idx == Record.size());

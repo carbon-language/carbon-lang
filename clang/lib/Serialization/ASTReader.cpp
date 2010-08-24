@@ -412,43 +412,6 @@ void PCHValidator::ReadCounter(unsigned Value) {
 // AST reader implementation
 //===----------------------------------------------------------------------===//
 
-ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
-                     const char *isysroot, bool DisableValidation)
-  : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
-    SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
-    Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
-    NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
-    TotalNumSLocEntries(0), NumStatementsRead(0), TotalNumStatements(0),
-    NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
-    NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
-    TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
-    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
-  RelocatablePCH = false;
-}
-
-ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
-                     Diagnostic &Diags, const char *isysroot,
-                     bool DisableValidation)
-  : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
-    Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
-    NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
-    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
-    TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
-    NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0),
-    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
-    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
-    NumCurrentElementsDeserializing(0) {
-  RelocatablePCH = false;
-}
-
-ASTReader::~ASTReader() {
-  for (unsigned i = 0, e = Chain.size(); i != e; ++i)
-    delete Chain[e - i - 1];
-}
-
 void
 ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
   DeserializationListener = Listener;
@@ -1767,6 +1730,22 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         BlobLen / sizeof(DeclID)
       };
       DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
+      break;
+    }
+
+    case UPDATE_VISIBLE: {
+      serialization::DeclID ID = Record[0];
+      void *Table = ASTDeclContextNameLookupTable::Create(
+                        (const unsigned char *)BlobStart + Record[1],
+                        (const unsigned char *)BlobStart,
+                        ASTDeclContextNameLookupTrait(*this));
+      if (ID == 1) { // Is it the TU?
+        DeclContextInfo Info = {
+          Table, /* No lexical inforamtion */ 0, 0
+        };
+        DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
+      } else
+        PendingVisibleUpdates[ID].push_back(Table);
       break;
     }
 
@@ -3130,7 +3109,7 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
 
 TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
   if (!DeclsLoaded[0]) {
-    ReadDeclRecord(0, 0);
+    ReadDeclRecord(0, 1);
     if (DeserializationListener)
       DeserializationListener->DeclRead(1, DeclsLoaded[0]);
   }
@@ -4082,6 +4061,63 @@ void ASTReader::FinishedDeserializing() {
       PassInterestingDeclsToConsumer();
   }
   --NumCurrentElementsDeserializing;
+}
+
+ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
+                     const char *isysroot, bool DisableValidation)
+  : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
+    SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
+    Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
+    Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
+    NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
+    TotalNumSLocEntries(0), NumStatementsRead(0), TotalNumStatements(0),
+    NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
+    NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
+    TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
+    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
+    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
+  RelocatablePCH = false;
+}
+
+ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
+                     Diagnostic &Diags, const char *isysroot,
+                     bool DisableValidation)
+  : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
+    Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
+    isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
+    NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
+    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
+    TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
+    NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0),
+    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
+    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
+    NumCurrentElementsDeserializing(0) {
+  RelocatablePCH = false;
+}
+
+ASTReader::~ASTReader() {
+  for (unsigned i = 0, e = Chain.size(); i != e; ++i)
+    delete Chain[e - i - 1];
+  // Delete all visible decl lookup tables
+  for (DeclContextOffsetsMap::iterator I = DeclContextOffsets.begin(),
+                                       E = DeclContextOffsets.end();
+       I != E; ++I) {
+    for (DeclContextInfos::iterator J = I->second.begin(), F = I->second.end();
+         J != F; ++J) {
+      if (J->NameLookupTableData)
+        delete static_cast<ASTDeclContextNameLookupTable*>(
+            J->NameLookupTableData);
+    }
+  }
+  for (DeclContextVisibleUpdatesPending::iterator
+           I = PendingVisibleUpdates.begin(),
+           E = PendingVisibleUpdates.end();
+       I != E; ++I) {
+    for (DeclContextVisibleUpdates::iterator J = I->second.begin(),
+                                             F = I->second.end();
+         J != F; ++J)
+      delete static_cast<ASTDeclContextNameLookupTable*>(*J);
+  }
 }
 
 ASTReader::PerFileData::PerFileData()

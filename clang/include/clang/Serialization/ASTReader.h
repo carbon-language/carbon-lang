@@ -343,13 +343,28 @@ private:
     const serialization::DeclID *LexicalDecls;
     unsigned NumLexicalDecls;
   };
+  // In a full chain, there could be multiple updates to every decl context,
+  // so this is a vector. However, typically a chain is only two elements long,
+  // with only one file containing updates, so there will be only one update
+  // per decl context.
   typedef llvm::SmallVector<DeclContextInfo, 1> DeclContextInfos;
   typedef llvm::DenseMap<const DeclContext *, DeclContextInfos>
-    DeclContextOffsetsMap;
+      DeclContextOffsetsMap;
+  // Updates for visible decls can occur for other contexts than just the
+  // TU, and when we read those update records, the actual context will not
+  // be available yet (unless it's the TU), so have this pending map using the
+  // ID as a key. It will be realized when the context is actually loaded.
+  typedef llvm::SmallVector<void *, 1> DeclContextVisibleUpdates;
+  typedef llvm::DenseMap<serialization::DeclID, DeclContextVisibleUpdates>
+      DeclContextVisibleUpdatesPending;
 
   /// \brief Offsets of the lexical and visible declarations for each
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
+
+  /// \brief Updates to the visible declarations of declaration contexts that
+  /// haven't been loaded yet.
+  DeclContextVisibleUpdatesPending PendingVisibleUpdates;
 
   typedef llvm::DenseMap<serialization::DeclID, serialization::DeclID>
       FirstLatestDeclIDMap;
