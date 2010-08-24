@@ -58,6 +58,9 @@ class ARMFastISel : public FastISel {
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
   const ARMFunctionInfo *AFI;
+  
+  // FIXME: Remove this and replace it with queries.
+  const TargetRegisterClass *FixedRC;
 
   public:
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo) 
@@ -67,6 +70,7 @@ class ARMFastISel : public FastISel {
       TLI(*TM.getTargetLowering()) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
+      FixedRC = ARM::GPRRegisterClass;
     }
 
     // Code from FastISel.cpp.
@@ -109,6 +113,7 @@ class ARMFastISel : public FastISel {
 
     // Utility routines.
   private:
+    bool ARMLoadAlloca(const Instruction *I);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
@@ -340,22 +345,14 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
     //errs() << "Failing Opcode is: " << *Op1 << "\n";
     break;
     case Instruction::Alloca: {
-      // Do static allocas.
-      const AllocaInst *A = cast<AllocaInst>(Obj);
-      DenseMap<const AllocaInst*, int>::iterator SI =
-        FuncInfo.StaticAllocaMap.find(A);
-      if (SI != FuncInfo.StaticAllocaMap.end())
-        Offset =
-          TM.getRegisterInfo()->getFrameIndexReference(*FuncInfo.MF,
-                                                       SI->second, Reg);
-      else
-        return false;
-      return true;
+      assert(false && "Alloca should have been handled earlier!");
+      return false;
     }
   }
   
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
     //errs() << "Failing GV is: " << GV << "\n";
+    (void)GV;
     return false;
   }
   
@@ -364,12 +361,37 @@ bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
   return Reg != 0;  
 }
 
+bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
+  Value *Op0 = I->getOperand(0);
+
+  // Verify it's an alloca.
+  const Instruction *Inst = dyn_cast<Instruction>(Op0);
+  if (!Inst || Inst->getOpcode() != Instruction::Alloca) return false;
+
+  const AllocaInst *AI = cast<AllocaInst>(Op0);
+  DenseMap<const AllocaInst*, int>::iterator SI =
+    FuncInfo.StaticAllocaMap.find(AI);
+    
+  if (SI != FuncInfo.StaticAllocaMap.end()) {
+    unsigned ResultReg = createResultReg(FixedRC);
+    TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
+                              ResultReg, SI->second, FixedRC,
+                              TM.getRegisterInfo());
+    UpdateValueMap(I, ResultReg);
+    return true;
+  }
+  
+  return false;
+}
+
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   // Our register and offset with innocuous defaults.
   unsigned Reg = 0;
   int Offset = 0;
   
   // TODO: Think about using loadRegFromStackSlot() here when we can.
+  if (ARMLoadAlloca(I))
+    return true;
   
   // See if we can handle this as Reg + Offset
   if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
@@ -393,10 +415,11 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   } 
   
   // FIXME: There is more than one register class in the world...
-  unsigned ResultReg = createResultReg(ARM::GPRRegisterClass);
+  unsigned ResultReg = createResultReg(FixedRC);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::LDR), ResultReg)
                   .addImm(0).addReg(Reg).addImm(Offset));
+  UpdateValueMap(I, ResultReg);
         
   return true;
 }
