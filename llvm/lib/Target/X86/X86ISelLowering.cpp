@@ -2559,7 +2559,7 @@ X86TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
 //===----------------------------------------------------------------------===//
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
-              SDValue V1, SDValue V2, unsigned TargetMask, SelectionDAG &DAG) {
+                          SDValue V1, unsigned TargetMask, SelectionDAG &DAG) {
 
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
@@ -4285,7 +4285,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
       TargetMask = pshufhw ? X86::getShufflePSHUFHWImmediate(NewV.getNode()):
                              X86::getShufflePSHUFLWImmediate(NewV.getNode());
       V1 = NewV.getOperand(0);
-      return getTargetShuffleNode(Opc, dl, MVT::v8i16, V1, V1, TargetMask, DAG);
+      return getTargetShuffleNode(Opc, dl, MVT::v8i16, V1, TargetMask, DAG);
     }
   }
 
@@ -4359,6 +4359,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
       MaskV.push_back(i);
     NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV, DAG.getUNDEF(MVT::v8i16),
                                 &MaskV[0]);
+
+    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE && Subtarget->hasSSSE3())
+      NewV = getTargetShuffleNode(X86ISD::PSHUFLW, dl, MVT::v8i16,
+                               NewV.getOperand(0),
+                               X86::getShufflePSHUFLWImmediate(NewV.getNode()),
+                               DAG);
   }
 
   // If BestHi >= 0, generate a pshufhw to put the high elements in order,
@@ -4381,6 +4387,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     }
     NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV, DAG.getUNDEF(MVT::v8i16),
                                 &MaskV[0]);
+
+    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE && Subtarget->hasSSSE3())
+      NewV = getTargetShuffleNode(X86ISD::PSHUFHW, dl, MVT::v8i16,
+                              NewV.getOperand(0),
+                              X86::getShufflePSHUFHWImmediate(NewV.getNode()),
+                              DAG);
   }
 
   // In case BestHi & BestLo were both -1, which means each quadword has a word
