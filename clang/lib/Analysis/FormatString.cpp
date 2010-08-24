@@ -277,6 +277,23 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
         C.getCanonicalType(PT->getPointeeType()).getUnqualifiedType();
       return pointeeTy == C.getWCharType();
     }
+    
+    case WIntTy: {
+      // Instead of doing a lookup for the definition of 'wint_t' (which
+      // is defined by the system headers) instead see if wchar_t and
+      // the argument type promote to the same type.
+      QualType PromoWChar =
+        C.getWCharType()->isPromotableIntegerType() 
+          ? C.getPromotedIntegerType(C.getWCharType()) : C.getWCharType();
+      QualType PromoArg = 
+        argTy->isPromotableIntegerType()
+          ? C.getPromotedIntegerType(argTy) : argTy;
+      
+      PromoWChar = C.getCanonicalType(PromoWChar).getUnqualifiedType();
+      PromoArg = C.getCanonicalType(PromoArg).getUnqualifiedType();
+      
+      return PromoWChar == PromoArg;
+    }
 
     case CPointerTy:
       return argTy->getAs<PointerType>() != NULL ||
@@ -308,6 +325,10 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
       return C.ObjCBuiltinIdTy;
     case CPointerTy:
       return C.VoidPtrTy;
+    case WIntTy: {
+      QualType WC = C.getWCharType();
+      return WC->isPromotableIntegerType() ? C.getPromotedIntegerType(WC) : WC;
+    }
   }
 
   // FIXME: Should be unreachable, but Clang is currently emitting

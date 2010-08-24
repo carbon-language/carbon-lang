@@ -199,7 +199,7 @@ protected:
 class ArgTypeResult {
 public:
   enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CPointerTy,
-    CStrTy, WCStrTy };
+    CStrTy, WCStrTy, WIntTy };
 private:
   const Kind K;
   QualType T;

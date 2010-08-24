@@ -281,6 +281,14 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   if (!CS.consumesDataArgument())
     return ArgTypeResult::Invalid();
 
+  if (CS.getKind() == ConversionSpecifier::cArg)
+    switch (LM.getKind()) {
+      case LengthModifier::None: return Ctx.IntTy;
+      case LengthModifier::AsLong: return ArgTypeResult::WIntTy;
+      default:
+        return ArgTypeResult::Invalid();
+    }
+  
   if (CS.isIntArg())
     switch (LM.getKind()) {
       case LengthModifier::AsLongDouble:

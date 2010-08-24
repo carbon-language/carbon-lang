@@ -1595,6 +1595,9 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
       llvm::raw_svector_ostream os(buf);
       fixedFS.toString(os);
 
+      // FIXME: getRepresentativeType() perhaps should return a string
+      // instead of a QualType to better handle when the representative
+      // type is 'wint_t' (which is defined in the system headers).
       S.Diag(getLocationOfByte(CS.getStart()),
           diag::warn_printf_conversion_argument_type_mismatch)
         << ATR.getRepresentativeType(S.Context) << Ex->getType()
