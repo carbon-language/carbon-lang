@@ -1838,7 +1838,7 @@ bool GenericAsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
 
 
 /// ParseDirectiveLoc
-/// ::= .loc FileNumber LineNumber [ColumnPos] [basic_block] [prologue_end]
+/// ::= .loc FileNumber [LineNumber] [ColumnPos] [basic_block] [prologue_end]
 ///                                [epilogue_begin] [is_stmt VALUE] [isa VALUE]
 /// The first number is a file number, must have been previously assigned with
 /// a .file directive, the second number is the line number and optionally the
@@ -1855,12 +1855,13 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
     return TokError("unassigned file number in '.loc' directive");
   Lex();
 
-  if (getLexer().isNot(AsmToken::Integer))
-    return TokError("unexpected token in '.loc' directive");
-  int64_t LineNumber = getTok().getIntVal();
-  if (LineNumber < 1)
-    return TokError("line number less than one in '.loc' directive");
-  Lex();
+  int64_t LineNumber = 0;
+  if (getLexer().is(AsmToken::Integer)) {
+    LineNumber = getTok().getIntVal();
+    if (LineNumber < 1)
+      return TokError("line number less than one in '.loc' directive");
+    Lex();
+  }
 
   int64_t ColumnPos = 0;
   if (getLexer().is(AsmToken::Integer)) {
