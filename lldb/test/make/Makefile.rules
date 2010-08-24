@@ -100,6 +100,9 @@ $(DYLIB_NAME) : $(DYLIB_OBJECTS)
 # files by replacing all .c files with .d.
 #----------------------------------------------------------------------
 PREREQS := $(OBJECTS:.o=.d)
+ifneq "$(DYLIB_NAME)" ""
+	DYLIB_PREREQS := $(DYLIB_OBJECTS:.o=.d)
+endif
 
 #----------------------------------------------------------------------
 # Rule for Generating Prerequisites Automatically using .d files and
@@ -135,6 +138,9 @@ PREREQS := $(OBJECTS:.o=.d)
 # to manually track all of the prerequisites for each source file.
 #----------------------------------------------------------------------
 sinclude $(PREREQS)
+ifneq "$(DYLIB_NAME)" ""
+	sinclude $(DYLIB_PREREQS)
+endif
 
 .PHONY: clean
 dsym:	$(DSYM)
