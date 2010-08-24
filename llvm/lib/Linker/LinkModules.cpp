@@ -1244,9 +1244,6 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       AppendingVars.insert(std::make_pair(I->getName(), I));
   }
 
-  // Insert all of the named mdnoes in Src into the Dest module.
-  LinkNamedMDNodes(Dest, Src, ValueMap);
-
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).
   if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, ErrorMsg))
@@ -1279,6 +1276,11 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   // Resolve all uses of aliases with aliasees
   if (ResolveAliases(Dest)) return true;
+
+  // Remap all of the named mdnoes in Src into the Dest module. We do this
+  // after linking GlobalValues so that MDNodes that reference GlobalValues
+  // are properly remapped.
+  LinkNamedMDNodes(Dest, Src, ValueMap);
 
   // If the source library's module id is in the dependent library list of the
   // destination library, remove it since that module is now linked in.
