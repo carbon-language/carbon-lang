@@ -106,7 +106,8 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
   for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
                                  NE = ArgsEvaluated.end(); NI != NE; ++NI) {
     const GRState *state = GetState(*NI);
-    // Setup 'this' region.
+    // Setup 'this' region, so that the ctor is evaluated on the object pointed
+    // by 'Dest'.
     state = state->bindLoc(loc::MemRegionVal(ThisR), Dest);
     ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     if (N)
