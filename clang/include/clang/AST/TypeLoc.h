@@ -341,6 +341,10 @@ private:
 template <class Base, class Derived, class TypeClass>
 class InheritingConcreteTypeLoc : public Base {
 public:
+  static bool classofType(const Type *Ty) {
+    return TypeClass::classof(Ty);
+  }
+
   static bool classof(const TypeLoc *TL) {
     return Derived::classofType(TL->getTypePtr());
   }
