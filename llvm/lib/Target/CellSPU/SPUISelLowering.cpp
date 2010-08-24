@@ -1324,41 +1324,23 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (Ins.empty())
     return Chain;
 
+  // Now handle the return value(s)
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCRetInfo(CallConv, isVarArg, getTargetMachine(),
+                    RVLocs, *DAG.getContext());
+  CCRetInfo.AnalyzeCallResult(Ins, CCC_SPU);
+
+
   // If the call has results, copy the values out of the ret val registers.
-  switch (Ins[0].VT.getSimpleVT().SimpleTy) {
-  default: llvm_unreachable("Unexpected ret value!");
-  case MVT::Other: break;
-  case MVT::i32:
-    if (Ins.size() > 1 && Ins[1].VT == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R4,
-                                 MVT::i32, InFlag).getValue(1);
-      InVals.push_back(Chain.getValue(0));
-      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      InVals.push_back(Chain.getValue(0));
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32,
-                                 InFlag).getValue(1);
-      InVals.push_back(Chain.getValue(0));
-    }
-    break;
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i64:
-  case MVT::i128:
-  case MVT::f32:
-  case MVT::f64:
-  case MVT::v2f64:
-  case MVT::v2i64:
-  case MVT::v4f32:
-  case MVT::v4i32:
-  case MVT::v8i16:
-  case MVT::v16i8:
-    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, Ins[0].VT,
-                                   InFlag).getValue(1);
-    InVals.push_back(Chain.getValue(0));
-    break;
-  }
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign VA = RVLocs[i];
+    
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+                                     InFlag);
+    Chain = Val.getValue(1);
+    InFlag = Val.getValue(2);
+    InVals.push_back(Val);
+   }
 
   return Chain;
 }
