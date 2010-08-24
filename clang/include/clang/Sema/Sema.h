@@ -24,7 +24,6 @@
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaDiagnostic.h"
-#include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -2301,21 +2300,20 @@ public:
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
+  ///
+  /// \param ConstructKind - a CXXConstructExpr::ConstructionKind
   ExprResult
   BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                         CXXConstructorDecl *Constructor, MultiExprArg Exprs,
-                        bool RequiresZeroInit = false,
-                        CXXConstructExpr::ConstructionKind ConstructKind =
-                        CXXConstructExpr::CK_Complete);
+                        bool RequiresZeroInit, unsigned ConstructKind);
 
   // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
   // the constructor can be elidable?
   ExprResult
   BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                         CXXConstructorDecl *Constructor, bool Elidable,
-                        MultiExprArg Exprs, bool RequiresZeroInit = false,
-                        CXXConstructExpr::ConstructionKind ConstructKind =
-                        CXXConstructExpr::CK_Complete);
+                        MultiExprArg Exprs, bool RequiresZeroInit,
+                        unsigned ConstructKind);
 
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
   /// the default expr if needed.

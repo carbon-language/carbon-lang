@@ -3454,7 +3454,9 @@ static ExprResult CopyObject(Sema &S,
 
   // Actually perform the constructor call.
   CurInit = S.BuildCXXConstructExpr(Loc, T, Constructor, Elidable,
-                                    move_arg(ConstructorArgs));
+                                    move_arg(ConstructorArgs),
+                                    /*ZeroInit*/ false,
+                                    CXXConstructExpr::CK_Complete);
   
   // If we're supposed to bind temporaries, do so.
   if (!CurInit.isInvalid() && shouldBindAsTemporary(Entity))
@@ -3715,7 +3717,9 @@ InitializationSequence::Perform(Sema &S,
         
         // Build the an expression that constructs a temporary.
         CurInit = S.BuildCXXConstructExpr(Loc, Step->Type, Constructor, 
-                                          move_arg(ConstructorArgs));
+                                          move_arg(ConstructorArgs),
+                                          /*ZeroInit*/ false,
+                                          CXXConstructExpr::CK_Complete);
         if (CurInit.isInvalid())
           return S.ExprError();
 

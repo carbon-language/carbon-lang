@@ -1588,7 +1588,8 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     
     ExprResult Result = 
     S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
-                            move_arg(ConstructorArgs));
+                            move_arg(ConstructorArgs),
+                            /*ZeroInit*/ false, CXXConstructExpr::CK_Complete);
     if (Result.isInvalid())
       return S.ExprError();
     
@@ -1719,7 +1720,9 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       ExprResult FromResult =
         BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                               ToType, SCS.CopyConstructor,
-                              move_arg(ConstructorArgs));
+                              move_arg(ConstructorArgs),
+                              /*ZeroInit*/ false,
+                              CXXConstructExpr::CK_Complete);
       if (FromResult.isInvalid())
         return true;
       From = FromResult.takeAs<Expr>();
@@ -1728,7 +1731,9 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ExprResult FromResult =
       BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                             ToType, SCS.CopyConstructor,
-                            MultiExprArg(*this, &From, 1));
+                            MultiExprArg(*this, &From, 1),
+                            /*ZeroInit*/ false,
+                            CXXConstructExpr::CK_Complete);
 
     if (FromResult.isInvalid())
       return true;

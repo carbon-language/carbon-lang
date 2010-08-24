@@ -5398,7 +5398,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
                             MultiExprArg ExprArgs,
                             bool RequiresZeroInit,
-                            CXXConstructExpr::ConstructionKind ConstructKind) {
+                            unsigned ConstructKind) {
   bool Elidable = false;
 
   // C++0x [class.copy]p34:
@@ -5431,14 +5431,15 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
                             MultiExprArg ExprArgs,
                             bool RequiresZeroInit,
-                            CXXConstructExpr::ConstructionKind ConstructKind) {
+                            unsigned ConstructKind) {
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
   MarkDeclarationReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
                                         Constructor, Elidable, Exprs, NumExprs, 
-                                        RequiresZeroInit, ConstructKind));
+                                        RequiresZeroInit,
+              static_cast<CXXConstructExpr::ConstructionKind>(ConstructKind)));
 }
 
 bool Sema::InitializeVarWithConstructor(VarDecl *VD,
@@ -5446,7 +5447,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         MultiExprArg Exprs) {
   ExprResult TempResult =
     BuildCXXConstructExpr(VD->getLocation(), VD->getType(), Constructor,
-                          move(Exprs));
+                          move(Exprs), false, CXXConstructExpr::CK_Complete);
   if (TempResult.isInvalid())
     return true;
 
