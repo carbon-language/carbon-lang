@@ -3192,9 +3192,10 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
 
   llvm::SmallVector<NamedDecl *, 64> Decls;
   // There might be visible decls in multiple parts of the chain, for the TU
-  // and namespaces.
+  // and namespaces. For any given name, the last available results replace
+  // all earlier ones. For this reason, we walk in reverse.
   DeclContextInfos &Infos = DeclContextOffsets[DC];
-  for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
+  for (DeclContextInfos::reverse_iterator I = Infos.rbegin(), E = Infos.rend();
        I != E; ++I) {
     if (!I->NameLookupTableData)
       continue;
@@ -3208,6 +3209,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     ASTDeclContextNameLookupTrait::data_type Data = *Pos;
     for (; Data.first != Data.second; ++Data.first)
       Decls.push_back(cast<NamedDecl>(GetDecl(*Data.first)));
+    break;
   }
 
   ++NumVisibleDeclContextsRead;

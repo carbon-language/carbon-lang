@@ -2101,23 +2101,13 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   ASTDeclContextNameLookupTrait Trait(*this);
 
   // Create the hash table.
-  llvm::SmallVector<NamedDecl *, 16> Decls;
   for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
        D != DEnd; ++D) {
     DeclarationName Name = D->first;
     DeclContext::lookup_result Result = D->second.getLookupResult();
-    // Need to filter these results to only include decls that are not from
-    // an existing PCH.
-    Decls.clear();
-    for (; Result.first != Result.second; ++Result.first) {
-      if ((*Result.first)->getPCHLevel() == 0)
-        Decls.push_back(*Result.first);
-    }
-    if (!Decls.empty()) {
-      Result.first = Decls.data();
-      Result.second = Result.first + Decls.size();
-      Generator.insert(Name, Result, Trait);
-    }
+    // For any name that appears in this table, the results are complete, i.e.
+    // they overwrite results from previous PCHs. Merging is always a mess.
+    Generator.insert(Name, Result, Trait);
   }
 
   // Create the on-disk hash table in a buffer.
