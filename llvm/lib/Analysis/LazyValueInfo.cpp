@@ -367,6 +367,7 @@ namespace {
     ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
     /// added to cache but that are not in sorted order.
     DenseSet<BasicBlock*> NewBlockInfo;
+    
   public:
     
     LVIQuery(Value *V, LazyValueInfoCache &P,
@@ -448,12 +449,24 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   BBLV.markOverdefined();
   Cache[BB] = BBLV;
   
-  // If V is live into BB, see if our predecessors know anything about it.
   Instruction *BBI = dyn_cast<Instruction>(Val);
   if (BBI == 0 || BBI->getParent() != BB) {
     LVILatticeVal Result;  // Start Undefined.
-    unsigned NumPreds = 0;
     
+    // If this is a pointer, and there's a load from that pointer in this BB,
+    // then we know that the pointer can't be NULL.
+    if (Val->getType()->isPointerTy()) {
+      const PointerType *PTy = cast<PointerType>(Val->getType());
+      for (Value::use_iterator UI = Val->use_begin(), UE = Val->use_end();
+           UI != UE; ++UI) {
+        LoadInst *L = dyn_cast<LoadInst>(*UI);
+        if (L && L->getParent() == BB) {
+          return LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
+        }
+      }
+    }
+    
+    unsigned NumPreds = 0;    
     // Loop over all of our predecessors, merging what we know from them into
     // result.
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
@@ -694,8 +707,8 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
         << BB->getName() << "'\n");
   
   LVILatticeVal Result = LVIQuery(V, *this,
-                                  ValueCache[LVIValueHandle(V, this)], 
-                                  OverDefinedCache).getBlockValue(BB);
+                                ValueCache[LVIValueHandle(V, this)], 
+                                OverDefinedCache).getBlockValue(BB);
   
   DEBUG(dbgs() << "  Result = " << Result << "\n");
   return Result;
