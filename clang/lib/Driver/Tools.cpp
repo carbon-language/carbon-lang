@@ -708,6 +708,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                       options::OPT_mno_relax_all,
                       !IsOpt))
       CmdArgs.push_back("-mrelax-all");
+
+    // When using an integrated assembler, we send -Wa, and -Xassembler options
+    // to -cc1.
+    Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                         options::OPT_Xassembler);
   } else if (isa<PrecompileJobAction>(JA)) {
     // Use PCH if the user requested it.
     bool UsePCH = D.CCCUsePCH;
@@ -1322,7 +1327,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fdiagnostics-show-category");
     CmdArgs.push_back(A->getValue(Args));
   }
-  
+
   // Color diagnostics are the default, unless the terminal doesn't support
   // them.
   if (Args.hasFlag(options::OPT_fcolor_diagnostics,
@@ -1337,7 +1342,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fspell_checking,
                     options::OPT_fno_spell_checking))
     CmdArgs.push_back("-fno-spell-checking");
-  
+
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);
 
@@ -1426,7 +1431,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     for (ArgList::const_iterator it = Args.begin(),
            ie = Args.end(); it != ie; ++it)
       (*it)->render(Args, OriginalArgs);
-    
+
     llvm::SmallString<256> Flags;
     Flags += Exec;
     for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
