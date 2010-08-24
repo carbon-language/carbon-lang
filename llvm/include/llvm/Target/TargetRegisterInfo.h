@@ -653,7 +653,7 @@ public:
   /// reference would be better served by a base register other than FP
   /// or SP. Used by LocalStackFrameAllocation to determine which frame index
   /// references it should create new base registers for.
-  virtual bool needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
+  virtual bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
     return false;
   }
 

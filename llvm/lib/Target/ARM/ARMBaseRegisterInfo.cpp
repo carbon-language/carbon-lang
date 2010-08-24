@@ -44,7 +44,7 @@ cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
 static cl::opt<bool>
-ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(true),
+ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(false),
           cl::desc("Force use of virtual base registers for stack load/store"));
 static cl::opt<bool>
 EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(false), cl::Hidden,
@@ -1436,9 +1436,10 @@ getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const {
 /// or SP. Used by LocalStackFrameAllocation to determine which frame index
 /// references it should create new base registers for.
 bool ARMBaseRegisterInfo::
-needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
-  assert (MI->getOperand(operand).isFI() &&
-          "needsFrameBaseReg() called on non Frame Index operand!");
+needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
+  for (unsigned i = 0; !MI->getOperand(i).isFI(); ++i) {
+    assert(i < MI->getNumOperands() &&"Instr doesn't have FrameIndex operand!");
+  }
 
   // It's the load/store FI references that cause issues, as it can be difficult
   // to materialize the offset if it won't fit in the literal field. Estimate
@@ -1465,12 +1466,49 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
     return false;
   }
 
-  // FIXME: TODO
   // Without a virtual base register, if the function has variable sized
   // objects, all fixed-size local references will be via the frame pointer,
-  // otherwise via the stack pointer. Approximate the offset and see if it's
-  // legal for the instruction.
+  // Approximate the offset and see if it's legal for the instruction.
+  // Note that the incoming offset is based on the SP value at function entry,
+  // so it'll be negative.
+  MachineFunction &MF = *MI->getParent()->getParent();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
+  // Estimate an offset from the frame pointer.
+  // Conservatively assume all callee-saved registers get pushed. R4-R6
+  // will be earlier than the FP, so we ignore those.
+  // R7, LR
+  int64_t FPOffset = Offset - 8;
+  // ARM and Thumb2 functions also need to consider R8-R11 and D8-D15
+  if (!AFI->isThumbFunction() || !AFI->isThumb1OnlyFunction())
+    FPOffset -= 80;
+  // Estimate an offset from the stack pointer.
+  Offset = -Offset;
+  // Assume that we'll have at least some spill slots allocated.
+  // FIXME: This is a total SWAG number. We should run some statistics
+  //        and pick a real one.
+  Offset += 128; // 128 bytes of spill slots
+
+  // If there is a frame pointer, try using it.
+  // The FP is only available if there is no dynamic realignment. We
+  // don't know for sure yet whether we'll need that, so we guess based
+  // on whether there are any local variables that would trigger it.
+  unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  if (hasFP(MF) &&
+      !((MFI->getLocalFrameMaxAlign() > StackAlign) && canRealignStack(MF))) {
+    if (isFrameOffsetLegal(MI, FPOffset))
+      return false;
+  }
+  // If we can reference via the stack pointer, try that.
+  // FIXME: This (and the code that resolves the references) can be improved
+  //        to only disallow SP relative references in the live range of
+  //        the VLA(s). In practice, it's unclear how much difference that
+  //        would make, but it may be worth doing.
+  if (!MFI->hasVarSizedObjects() && isFrameOffsetLegal(MI, Offset))
+    return false;
+
+  // The offset likely isn't legal, we want to allocate a virtual base register.
   return true;
 }
 

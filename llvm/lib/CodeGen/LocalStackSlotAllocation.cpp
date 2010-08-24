@@ -250,7 +250,7 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             continue;
 
           DEBUG(dbgs() << "Considering: " << *MI);
-          if (TRI->needsFrameBaseReg(MI, i)) {
+          if (TRI->needsFrameBaseReg(MI, LocalOffsets[FrameIdx])) {
             unsigned BaseReg = 0;
             int64_t Offset = 0;
             int64_t FrameSizeAdjust = StackGrowsDown ? MFI->getLocalFrameSize()
