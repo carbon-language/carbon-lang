@@ -415,10 +415,13 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   } 
   
   // FIXME: There is more than one register class in the world...
+  // TODO: Verify the additions above work, otherwise we'll need to add the
+  // offset instead of 0 and do all sorts of operand munging.
   unsigned ResultReg = createResultReg(FixedRC);
+  unsigned Opc = AFI->isThumb2Function() ? ARM::tLDR : ARM::LDR;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::LDR), ResultReg)
-                  .addImm(0).addReg(Reg).addImm(Offset));
+                          TII.get(Opc), ResultReg)
+                  .addReg(Reg).addReg(0).addImm(0));
   UpdateValueMap(I, ResultReg);
         
   return true;
