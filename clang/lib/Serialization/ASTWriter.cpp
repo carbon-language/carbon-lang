@@ -2013,7 +2013,7 @@ public:
 /// visible from the given DeclContext.
 ///
 /// \returns the offset of the DECL_CONTEXT_VISIBLE block within the
-/// bistream, or 0 if no block was written.
+/// bitstream, or 0 if no block was written.
 uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
                                                  DeclContext *DC) {
   if (DC->getPrimaryContext() != DC)
@@ -2078,6 +2078,64 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   Stream.EmitRecord(DECL_CONTEXT_VISIBLE, Record);
   ++NumVisibleDeclContexts;
   return Offset;
+}
+
+/// \brief Write an UPDATE_VISIBLE block for the given context.
+///
+/// UPDATE_VISIBLE blocks contain the declarations that are added to an existing
+/// DeclContext in a dependent AST file. As such, they only exist for the TU
+/// (in C++) and for namespaces.
+void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
+  assert((DC->isTranslationUnit() || DC->isNamespace()) &&
+         "Only TU and namespaces should have visible decl updates.");
+
+  // Make the context build its lookup table, but don't make it load external
+  // decls.
+  DC->lookup(DeclarationName());
+
+  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
+  if (!Map || Map->empty())
+    return;
+
+  OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait> Generator;
+  ASTDeclContextNameLookupTrait Trait(*this);
+
+  // Create the hash table.
+  llvm::SmallVector<NamedDecl *, 16> Decls;
+  for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
+       D != DEnd; ++D) {
+    DeclarationName Name = D->first;
+    DeclContext::lookup_result Result = D->second.getLookupResult();
+    // Need to filter these results to only include decls that are not from
+    // an existing PCH.
+    Decls.clear();
+    for (; Result.first != Result.second; ++Result.first) {
+      if ((*Result.first)->getPCHLevel() == 0)
+        Decls.push_back(*Result.first);
+    }
+    if (!Decls.empty()) {
+      Result.first = Decls.data();
+      Result.second = Result.first + Decls.size();
+      Generator.insert(Name, Result, Trait);
+    }
+  }
+
+  // Create the on-disk hash table in a buffer.
+  llvm::SmallString<4096> LookupTable;
+  uint32_t BucketOffset;
+  {
+    llvm::raw_svector_ostream Out(LookupTable);
+    // Make sure that no bucket is at offset 0
+    clang::io::Emit32(Out, 0);
+    BucketOffset = Generator.Emit(Out, Trait);
+  }
+
+  // Write the lookup table
+  RecordData Record;
+  Record.push_back(UPDATE_VISIBLE);
+  Record.push_back(getDeclID(cast<Decl>(DC)));
+  Record.push_back(BucketOffset);
+  Stream.EmitRecordWithBlob(UpdateVisibleAbbrev, Record, LookupTable.str());
 }
 
 //===----------------------------------------------------------------------===//
@@ -2406,6 +2464,16 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.EmitRecordWithBlob(TuUpdateLexicalAbbrev, Record,
                           reinterpret_cast<const char*>(NewGlobalDecls.data()),
                           NewGlobalDecls.size() * sizeof(DeclID));
+  // And in C++, a visible updates block for the TU.
+  if (Context.getLangOptions().CPlusPlus) {
+    Abv = new llvm::BitCodeAbbrev();
+    Abv->Add(llvm::BitCodeAbbrevOp(UPDATE_VISIBLE));
+    Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+    Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Fixed, 32));
+    Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
+    UpdateVisibleAbbrev = Stream.EmitAbbrev(Abv);
+    WriteDeclContextVisibleUpdate(TU);
+  }
 
   // Build a record containing all of the new tentative definitions in this
   // file, in TentativeDefinitions order.
@@ -2571,6 +2639,13 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
     Stream.EmitRecord(SEMA_DECL_REFS, SemaDeclRefs);
+
+  // Write the updates to C++ namespaces.
+  for (llvm::SmallPtrSet<const NamespaceDecl *, 16>::iterator
+           I = UpdatedNamespaces.begin(),
+           E = UpdatedNamespaces.end();
+         I != E; ++I)
+    WriteDeclContextVisibleUpdate(*I);
 
   Record.clear();
   Record.push_back(NumStatements);

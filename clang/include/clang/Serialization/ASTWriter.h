@@ -265,10 +265,12 @@ private:
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributeRecord(const AttrVec &Attrs);
   void WriteDeclUpdateBlock();
+  void WriteDeclContextVisibleUpdate(const DeclContext *DC);
 
   unsigned ParmVarDeclAbbrev;
   unsigned DeclContextLexicalAbbrev;
   unsigned DeclContextVisibleLookupAbbrev;
+  unsigned UpdateVisibleAbbrev;
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
 
