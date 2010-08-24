@@ -2380,6 +2380,9 @@ void Sema::CodeCompleteDeclarator(Scope *S,
   }
   Results.ExitScope();
 
+  // Note that we intentionally suppress macro results here, since we do not
+  // encourage using macros to produce the names of entities.
+
   HandleCodeCompleteResults(this, CodeCompleter,
                         AllowNestedNameSpecifiers
                           ? CodeCompletionContext::CCC_PotentiallyQualifiedName
