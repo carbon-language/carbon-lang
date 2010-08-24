@@ -419,10 +419,15 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   // TODO: Verify the additions above work, otherwise we'll need to add the
   // offset instead of 0 and do all sorts of operand munging.
   unsigned ResultReg = createResultReg(FixedRC);
-  unsigned Opc = AFI->isThumb2Function() ? ARM::tLDR : ARM::LDR;
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(Opc), ResultReg)
-                  .addReg(Reg).addReg(0).addImm(0));
+  // TODO: Fix the Addressing modes so that these can share some code.
+  if (AFI->isThumb2Function())
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::tLDR), ResultReg)
+                    .addReg(Reg).addImm(0).addReg(0));
+  else
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::LDR), ResultReg)
+                    .addReg(Reg).addReg(0).addImm(0));
   UpdateValueMap(I, ResultReg);
         
   return true;
