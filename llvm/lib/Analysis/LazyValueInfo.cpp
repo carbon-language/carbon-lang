@@ -671,9 +671,28 @@ LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
   // If the edge was formed by a switch on the value, then we may know exactly
   // what it is.
   if (SwitchInst *SI = dyn_cast<SwitchInst>(BBFrom->getTerminator())) {
-    // If BBTo is the default destination of the switch, we don't know anything.
-    // Given a more powerful range analysis we could know stuff.
-    if (SI->getCondition() == Val && SI->getDefaultDest() != BBTo) {
+    // If BBTo is the default destination of the switch, we know that it 
+    // doesn't have the same value as any of the cases.
+    if (SI->getCondition() == Val) {
+      if (SI->getDefaultDest() == BBTo) {
+        const IntegerType *IT = cast<IntegerType>(Val->getType());
+        ConstantRange CR(IT->getBitWidth());
+        
+        for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+          const APInt CaseVal = SI->getCaseValue(i)->getValue();
+          ConstantRange CaseRange(CaseVal, CaseVal+1);
+          CaseRange = CaseRange.inverse();
+          CR = CR.intersectWith(CaseRange);
+        }
+        
+        LVILatticeVal Result;
+        if (CR.isFullSet() || CR.isEmptySet())
+          Result.markOverdefined();
+        else
+          Result.markConstantRange(CR);
+        return Result;
+      }
+      
       // We only know something if there is exactly one value that goes from
       // BBFrom to BBTo.
       unsigned NumEdges = 0;
