@@ -1,9 +1,9 @@
-; RUN: llc -filetype=obj %s -o %t
-; RUN: coff-dump.py %abs_tmp | FileCheck %s
+; This test checks that the COFF object emitter works for the most basic
+; programs.
 
-; ModuleID = '-'
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f80:128:128-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
-target triple = "i686-pc-win32"
+; RUN: llc -filetype=obj -mtriple i686-pc-win32 %s -o %t
+; RUN: coff-dump.py %abs_tmp | FileCheck %s
+; RUN: llc -filetype=obj -mtriple x86_64-pc-win32 %s -o %t
 
 @.str = private constant [12 x i8] c"Hello World\00" ; <[12 x i8]*> [#uses=1]
 

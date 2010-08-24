@@ -125,6 +125,7 @@ public:
   typedef DenseMap<MCSectionData const *, COFFSection *> section_map;
 
   // Root level file contents.
+  bool Is64Bit;
   COFF::header Header;
   sections     Sections;
   symbols      Symbols;
@@ -274,10 +275,11 @@ size_t StringTable::insert(llvm::StringRef String) {
 // WinCOFFObjectWriter class implementation
 
 WinCOFFObjectWriter::WinCOFFObjectWriter(raw_ostream &OS, bool is64Bit)
-                                : MCObjectWriter(OS, true) {
+  : MCObjectWriter(OS, true)
+  , Is64Bit(is64Bit) {
   memset(&Header, 0, sizeof(Header));
 
-  is64Bit ? Header.Machine = COFF::IMAGE_FILE_MACHINE_AMD64
+  Is64Bit ? Header.Machine = COFF::IMAGE_FILE_MACHINE_AMD64
           : Header.Machine = COFF::IMAGE_FILE_MACHINE_I386;
 }
 
@@ -565,22 +567,34 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                            MCValue Target,
                                            uint64_t &FixedValue) {
   assert(Target.getSymA() != NULL && "Relocation must reference a symbol!");
-  assert(Target.getSymB() == NULL &&
-         "Relocation must reference only one symbol!");
+
+  const MCSymbol *A = &Target.getSymA()->getSymbol();
+  MCSymbolData &A_SD = Asm.getSymbolData(*A);
 
   MCSectionData const *SectionData = Fragment->getParent();
-  MCSymbolData const *SymbolData =
-                              &Asm.getSymbolData(Target.getSymA()->getSymbol());
 
+  // Mark this symbol as requiring an entry in the symbol table.
   assert(SectionMap.find(SectionData) != SectionMap.end() &&
          "Section must already have been defined in ExecutePostLayoutBinding!");
-  assert(SymbolMap.find(SymbolData) != SymbolMap.end() &&
+  assert(SymbolMap.find(&A_SD) != SymbolMap.end() &&
          "Symbol must already have been defined in ExecutePostLayoutBinding!");
 
   COFFSection *coff_section = SectionMap[SectionData];
-  COFFSymbol *coff_symbol = SymbolMap[SymbolData];
+  COFFSymbol *coff_symbol = SymbolMap[&A_SD];
 
-  FixedValue = Target.getConstant();
+  if (Target.getSymB()) {
+    const MCSymbol *B = &Target.getSymB()->getSymbol();
+    MCSymbolData &B_SD = Asm.getSymbolData(*B);
+
+    FixedValue = Layout.getSymbolAddress(&A_SD) - Layout.getSymbolAddress(&B_SD);
+
+    // In the case where we have SymbA and SymB, we just need to store the delta
+    // between the two symbols.  Update FixedValue to account for the delta, and
+    // skip recording the relocation.
+    return;
+  } else {
+    FixedValue = Target.getConstant();
+  }
 
   COFFRelocation Reloc;
 
@@ -590,40 +604,29 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
 
-  COFF::RelocationTypeX86 Type;
-
-  if (Header.Machine == COFF::IMAGE_FILE_MACHINE_I386) {
-    switch (Fixup.getKind()) {
-    case X86::reloc_pcrel_4byte:
-      Type = COFF::IMAGE_REL_I386_REL32;
-      FixedValue += 4;
-      break;
-    case FK_Data_4:
-      Type = COFF::IMAGE_REL_I386_DIR32;
-      break;
-    default:
+  switch (Fixup.getKind()) {
+  case X86::reloc_pcrel_4byte:
+  case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_movq_load:
+    Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_REL32
+                              : COFF::IMAGE_REL_I386_REL32;
+    // FIXME: Can anyone explain what this does other than adjust for the size
+    // of the offset?
+    FixedValue += 4;
+    break;
+  case FK_Data_4:
+    Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32
+                              : COFF::IMAGE_REL_I386_DIR32;
+    break;
+  case FK_Data_8:
+    if (Is64Bit)
+      Reloc.Data.Type = COFF::IMAGE_REL_AMD64_ADDR64;
+    else
       llvm_unreachable("unsupported relocation type");
-    }
-  } else if (Header.Machine == COFF::IMAGE_FILE_MACHINE_AMD64) {
-    switch (Fixup.getKind()) {
-    case FK_Data_8:
-      Type = COFF::IMAGE_REL_AMD64_ADDR64;
-      break;
-    case X86::reloc_pcrel_4byte:
-    case X86::reloc_riprel_4byte:
-      Type = COFF::IMAGE_REL_AMD64_REL32;
-      FixedValue += 4;
-      break;
-    case FK_Data_4:
-      Type = COFF::IMAGE_REL_AMD64_ADDR32;
-      break;
-    default:
-      llvm_unreachable("unsupported relocation type");
-    }
-  } else
-    llvm_unreachable("unknown target architecture");
-
-  Reloc.Data.Type = Type;
+    break;
+  default:
+    llvm_unreachable("unsupported relocation type");
+  }
 
   coff_section->Relocations.push_back(Reloc);
 }
