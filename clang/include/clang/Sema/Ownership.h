@@ -222,7 +222,8 @@ namespace clang {
     bool Invalid;
 
   public:
-    ActionResult(bool Invalid = false) : Val(PtrTy()), Invalid(Invalid) {}
+    ActionResult(bool Invalid = false)
+      : Val(PtrTy()), Invalid(Invalid) {}
     ActionResult(PtrTy val) : Val(val), Invalid(false) {}
     ActionResult(const DiagnosticBuilder &) : Val(PtrTy()), Invalid(true) {}
 
@@ -230,9 +231,15 @@ namespace clang {
     ActionResult(const void *);
     ActionResult(volatile void *);
 
-    PtrTy get() const { return Val; }
-    void set(PtrTy V) { Val = V; }
     bool isInvalid() const { return Invalid; }
+    bool isUsable() const { return !Invalid && Val; }
+
+    PtrTy get() const { return Val; }
+    PtrTy release() const { return Val; }
+    PtrTy take() const { return Val; }
+    template <typename T> T *takeAs() { return static_cast<T*>(get()); }
+
+    void set(PtrTy V) { Val = V; }
 
     const ActionResult &operator=(PtrTy RHS) {
       Val = RHS;
@@ -258,25 +265,28 @@ namespace clang {
       PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
       assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
     }
+    ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
 
     // These two overloads prevent void* -> bool conversions.
     ActionResult(const void *);
     ActionResult(volatile void *);
 
-    ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
+    bool isInvalid() const { return PtrWithInvalid & 0x01; }
+    bool isUsable() const { return PtrWithInvalid > 0x01; }
 
     PtrTy get() const {
       void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01);
       return PtrTraits::getFromVoidPointer(VP);
     }
+    PtrTy take() const { return get(); }
+    PtrTy release() const { return get(); }
+    template <typename T> T *takeAs() { return static_cast<T*>(get()); }
 
     void set(PtrTy V) {
       void *VP = PtrTraits::getAsVoidPointer(V);
       PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
       assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
     }
-
-    bool isInvalid() const { return PtrWithInvalid & 0x01; }
 
     const ActionResult &operator=(PtrTy RHS) {
       void *VP = PtrTraits::getAsVoidPointer(RHS);
@@ -286,67 +296,9 @@ namespace clang {
     }
   };
 
-  /// ASTOwningResult - A moveable smart pointer for AST nodes that also
-  /// has an extra flag to indicate an additional success status.
-  template <typename PtrTy> class ASTOwningResult;
-
   /// ASTMultiPtr - A moveable smart pointer to multiple AST nodes. Only owns
   /// the individual pointers, not the array holding them.
   template <typename PtrTy> class ASTMultiPtr;
-
-  template <class PtrTy> class ASTOwningResult {
-  public:
-    typedef ActionResult<PtrTy> DumbResult;
-
-  private:
-    DumbResult Result;
-
-  public:
-    explicit ASTOwningResult(bool invalid = false)
-      : Result(invalid) { }
-    ASTOwningResult(PtrTy node) : Result(node) { }
-    ASTOwningResult(const DumbResult &res) : Result(res) { }
-    // Normal copying semantics are defined implicitly.
-
-    // These two overloads prevent void* -> bool conversions.
-    explicit ASTOwningResult(const void *);
-    explicit ASTOwningResult(volatile void *);
-
-    /// Assignment from a raw pointer.
-    ASTOwningResult &operator=(PtrTy raw) {
-      Result = raw;
-      return *this;
-    }
-
-    /// Assignment from an ActionResult.
-    ASTOwningResult &operator=(const DumbResult &res) {
-      Result = res;
-      return *this;
-    }
-
-    bool isInvalid() const { return Result.isInvalid(); }
-
-    /// Does this point to a usable AST node? To be usable, the node
-    /// must be valid and non-null.
-    bool isUsable() const { return !Result.isInvalid() && get(); }
-
-    /// It is forbidden to call either of these methods on an invalid
-    /// pointer.  We should assert that, but we're not going to,
-    /// because it's likely to trigger it unpredictable ways on
-    /// invalid code.
-    PtrTy get() const { return Result.get(); }
-    PtrTy take() const { return get(); }
-
-    /// Take outside ownership of the raw pointer and cast it down.
-    template<typename T>
-    T *takeAs() { return static_cast<T*>(get()); }
-
-    /// Alias for interface familiarity with unique_ptr.
-    PtrTy release() { return take(); }
-
-    /// Pass ownership to a classical ActionResult.
-    DumbResult result() { return Result; }
-  };
 
   template <class PtrTy>
   class ASTMultiPtr {
@@ -439,8 +391,8 @@ namespace clang {
   }
 
   // These versions are hopefully no-ops.
-  template <class T> inline
-  ASTOwningResult<T> move(ASTOwningResult<T> &ptr) {
+  template <class T, bool C>
+  inline ActionResult<T,C> move(ActionResult<T,C> &ptr) {
     return ptr;
   }
 
@@ -479,8 +431,8 @@ namespace clang {
   typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 
-  typedef ASTOwningResult<Expr*> OwningExprResult;
-  typedef ASTOwningResult<Stmt*> OwningStmtResult;
+  typedef ActionResult<Expr*> OwningExprResult;
+  typedef ActionResult<Stmt*> OwningStmtResult;
 
   inline Expr *move(Expr *E) { return E; }
   inline Stmt *move(Stmt *S) { return S; }
