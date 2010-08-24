@@ -250,16 +250,21 @@ class TestBase(unittest2.TestCase):
         output = self.res.GetOutput()
         matched = output.startswith(startstr) if startstr else True
 
-        if not matched and startstr and trace:
-            print >> sys.stderr, "Startstr not matched:", startstr
+        if startstr and trace:
+            print >> sys.stderr, "Expecting start string:", startstr
+            print >> sys.stderr, "Matched" if matched else "Not matched"
+            print >> sys.stderr
 
         if substrs:
             for str in substrs:
                 matched = output.find(str) > 0
+                if trace:
+                    print >> sys.stderr, "Expecting sub string:", str
+                    print >> sys.stderr, "Matched" if matched else "Not matched"
                 if not matched:
-                    if trace:
-                        print >> sys.stderr, "Substring not matched:", str
                     break
+            if trace:
+                print >> sys.stderr
 
         self.assertTrue(matched, msg if msg else CMD_MSG(cmd))
 
