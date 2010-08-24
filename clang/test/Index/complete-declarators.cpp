@@ -34,6 +34,6 @@ struct Z {
 // CHECK-CC4: NotImplemented:{TypedText N}{Text ::} (75)
 // CHECK-CC4: NotImplemented:{TypedText operator} (30)
 // CHECK-CC4: NotImplemented:{TypedText volatile} (30)
-// CHECK-CC4: StructDecl:{TypedText Y} (40)
+// CHECK-CC4: StructDecl:{TypedText Y} (65)
 // CHECK-CC4: StructDecl:{TypedText Z} (20)
 
