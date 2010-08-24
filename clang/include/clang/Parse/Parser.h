@@ -908,7 +908,7 @@ private:
 
   bool isTokIdentifier_in() const;
 
-  TypeTy *ParseObjCTypeName(ObjCDeclSpec &DS);
+  TypeTy *ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter);
   void ParseObjCMethodRequirement();
   Decl *ParseObjCMethodPrototype(Decl *classOrCat,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
@@ -1185,7 +1185,7 @@ private:
 
   void ParseSpecifierQualifierList(DeclSpec &DS);
 
-  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
+  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter);
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),                          AccessSpecifier AS = AS_none);

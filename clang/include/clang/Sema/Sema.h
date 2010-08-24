@@ -4679,6 +4679,7 @@ public:
   virtual void CodeCompleteObjCPropertySetter(Scope *S, Decl *ClassDecl,
                                               Decl **Methods,
                                               unsigned NumMethods);
+  virtual void CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS);
   virtual void CodeCompleteObjCMessageReceiver(Scope *S);
   virtual void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                             IdentifierInfo **SelIdents,

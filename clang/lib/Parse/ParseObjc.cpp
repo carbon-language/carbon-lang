@@ -680,8 +680,13 @@ bool Parser::isTokIdentifier_in() const {
 ///     objc-type-qualifier
 ///     objc-type-qualifiers objc-type-qualifier
 ///
-void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS) {
+void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter) {
   while (1) {
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCPassingType(getCurScope(), DS);
+      ConsumeCodeCompletionToken();
+    }
+    
     if (Tok.isNot(tok::identifier))
       return;
 
@@ -715,14 +720,14 @@ void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS) {
 ///     '(' objc-type-qualifiers[opt] type-name ')'
 ///     '(' objc-type-qualifiers[opt] ')'
 ///
-Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
+Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter) {
   assert(Tok.is(tok::l_paren) && "expected (");
 
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation TypeStartLoc = Tok.getLocation();
 
   // Parse type qualifiers, in, inout, etc.
-  ParseObjCTypeQualifierList(DS);
+  ParseObjCTypeQualifierList(DS, IsParameter);
 
   TypeTy *Ty = 0;
   if (isTypeSpecifierQualifier()) {
@@ -789,7 +794,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   TypeTy *ReturnType = 0;
   ObjCDeclSpec DSRet;
   if (Tok.is(tok::l_paren))
-    ReturnType = ParseObjCTypeName(DSRet);
+    ReturnType = ParseObjCTypeName(DSRet, false);
 
   // If attributes exist before the method, parse them.
   llvm::OwningPtr<AttributeList> MethodAttrs;
@@ -849,7 +854,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
     ArgInfo.Type = 0;
     if (Tok.is(tok::l_paren)) // Parse the argument type if present.
-      ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec);
+      ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec, true);
 
     // If attributes exist before the argument name, parse them.
     ArgInfo.ArgAttrs = 0;

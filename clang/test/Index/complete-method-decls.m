@@ -53,7 +53,11 @@
 @end
 
 @implementation D
-- (int)first:(int)x second2:(float)y third:(double)z;
+- (int)first:(int)x second2:(float)y third:(double)z { }
+@end
+
+@interface Passing
+- (oneway void)method:(in id x);
 @end
 
 // RUN: c-index-test -code-completion-at=%s:17:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -116,3 +120,40 @@
 // RUN: c-index-test -code-completion-at=%s:56:38 %s | FileCheck -check-prefix=CHECK-CCE %s
 // CHECK-CCE: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (20)
 // CHECK-CCE: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{Informative second2:}{TypedText third:}{Text (double)z} (5)
+// RUN: c-index-test -code-completion-at=%s:60:4 %s | FileCheck -check-prefix=CHECK-CCF %s
+// CHECK-CCF: ObjCInterfaceDecl:{TypedText A} (40)
+// CHECK-CCF: ObjCInterfaceDecl:{TypedText B} (40)
+// CHECK-CCF: NotImplemented:{TypedText bycopy} (30)
+// CHECK-CCF: NotImplemented:{TypedText byref} (30)
+// CHECK-CCF: NotImplemented:{TypedText in} (30)
+// CHECK-CCF: NotImplemented:{TypedText inout} (30)
+// CHECK-CCF: NotImplemented:{TypedText oneway} (30)
+// CHECK-CCF: NotImplemented:{TypedText out} (30)
+// CHECK-CCF: NotImplemented:{TypedText unsigned} (40)
+// CHECK-CCF: NotImplemented:{TypedText void} (40)
+// CHECK-CCF: NotImplemented:{TypedText volatile} (40)
+// RUN: c-index-test -code-completion-at=%s:60:11 %s | FileCheck -check-prefix=CHECK-CCG %s
+// CHECK-CCG: ObjCInterfaceDecl:{TypedText A} (40)
+// CHECK-CCG: ObjCInterfaceDecl:{TypedText B} (40)
+// CHECK-CCG-NOT: NotImplemented:{TypedText bycopy} (30)
+// CHECK-CCG-NOT: NotImplemented:{TypedText byref} (30)
+// CHECK-CCG: NotImplemented:{TypedText in} (30)
+// CHECK-CCG: NotImplemented:{TypedText inout} (30)
+// CHECK-CCG-NOT: NotImplemented:{TypedText oneway} (30)
+// CHECK-CCG: NotImplemented:{TypedText out} (30)
+// CHECK-CCG: NotImplemented:{TypedText unsigned} (40)
+// CHECK-CCG: NotImplemented:{TypedText void} (40)
+// CHECK-CCG: NotImplemented:{TypedText volatile} (40)
+// RUN: c-index-test -code-completion-at=%s:60:24 %s | FileCheck -check-prefix=CHECK-CCF %s
+// RUN: c-index-test -code-completion-at=%s:60:26 %s | FileCheck -check-prefix=CHECK-CCH %s
+// CHECK-CCH: ObjCInterfaceDecl:{TypedText A} (40)
+// CHECK-CCH: ObjCInterfaceDecl:{TypedText B} (40)
+// CHECK-CCH: NotImplemented:{TypedText bycopy} (30)
+// CHECK-CCH: NotImplemented:{TypedText byref} (30)
+// CHECK-CCH-NOT: NotImplemented:{TypedText in} (30)
+// CHECK-CCH: NotImplemented:{TypedText inout} (30)
+// CHECK-CCH: NotImplemented:{TypedText oneway} (30)
+// CHECK-CCH: NotImplemented:{TypedText out} (30)
+// CHECK-CCH: NotImplemented:{TypedText unsigned} (40)
+// CHECK-CCH: NotImplemented:{TypedText void} (40)
+// CHECK-CCH: NotImplemented:{TypedText volatile} (40)

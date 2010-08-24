@@ -2782,7 +2782,9 @@ public:
     /// \brief Code completion occurs within the body of a function on a 
     /// recovery path, where we do not have a specific handle on our position
     /// in the grammar.
-    PCC_RecoveryInFunction
+    PCC_RecoveryInFunction,
+    /// \brief Code completion occurs where only a type is permitted.
+    PCC_Type
   };
     
   /// \brief Code completion for an ordinary name that occurs within the given
@@ -2999,6 +3001,16 @@ public:
                                               unsigned NumMethods) {
   }
 
+  /// \brief Code completion for an Objective-C method parameter or return type.
+  ///
+  /// This code completion action is invoked when we are parsing the type of
+  /// an Objective-C method parameter or return type.
+  ///
+  /// \param S The scope in which the code-completion occurs.
+  /// \param DS The Objective-C declaration specifiers so far.
+  virtual void CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS){
+  }
+  
   /// \brief Code completion for the receiver in an Objective-C message send.
   ///
   /// This code completion action is invoked when we see a '[' that indicates

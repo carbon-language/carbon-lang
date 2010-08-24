@@ -895,7 +895,10 @@ bool ResultBuilder::IsNamespaceOrAlias(NamedDecl *ND) const {
 
 /// \brief Determines whether the given declaration is a type.
 bool ResultBuilder::IsType(NamedDecl *ND) const {
-  return isa<TypeDecl>(ND);
+  if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(ND))
+    ND = Using->getTargetDecl();
+  
+  return isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND);
 }
 
 /// \brief Determines which members of a class should be visible via
@@ -1107,6 +1110,7 @@ static void AddFunctionSpecifiers(Action::ParserCompletionContext CCC,
   case Action::PCC_ForInit:
   case Action::PCC_Condition:
   case Action::PCC_RecoveryInFunction:
+  case Action::PCC_Type:
     break;
   }
 }
@@ -1147,6 +1151,7 @@ static bool WantTypesInContext(Action::ParserCompletionContext CCC,
   case Action::PCC_MemberTemplate:
   case Action::PCC_Statement:
   case Action::PCC_RecoveryInFunction:
+  case Action::PCC_Type:
     return true;
     
   case Action::PCC_ObjCInterface:
@@ -1621,12 +1626,15 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
     Results.AddResult(Result(Pattern));
     break;
   }
+      
+  case Action::PCC_Type:
+    break;
   }
 
   if (WantTypesInContext(CCC, SemaRef.getLangOptions()))
     AddTypeSpecifierResults(SemaRef.getLangOptions(), Results);
 
-  if (SemaRef.getLangOptions().CPlusPlus)
+  if (SemaRef.getLangOptions().CPlusPlus && CCC != Action::PCC_Type)
     Results.AddResult(Result("operator"));
 }
 
@@ -3524,6 +3532,51 @@ void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl,
   HandleCodeCompleteResults(this, CodeCompleter,
                             CodeCompletionContext::CCC_Other,
                             Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // Add context-sensitive, Objective-C parameter-passing keywords.
+  bool AddedInOut = false;
+  if ((DS.getObjCDeclQualifier() & 
+       (ObjCDeclSpec::DQ_In | ObjCDeclSpec::DQ_Inout)) == 0) {
+    Results.AddResult("in");
+    Results.AddResult("inout");
+    AddedInOut = true;
+  }
+  if ((DS.getObjCDeclQualifier() & 
+       (ObjCDeclSpec::DQ_Out | ObjCDeclSpec::DQ_Inout)) == 0) {
+    Results.AddResult("out");
+    if (!AddedInOut)
+      Results.AddResult("inout");
+  }
+  if ((DS.getObjCDeclQualifier() & 
+       (ObjCDeclSpec::DQ_Bycopy | ObjCDeclSpec::DQ_Byref |
+        ObjCDeclSpec::DQ_Oneway)) == 0) {
+     Results.AddResult("bycopy");
+     Results.AddResult("byref");
+     Results.AddResult("oneway");
+  }
+  
+  // Add various builtin type names and specifiers.
+  AddOrdinaryNameResults(PCC_Type, S, *this, Results);
+  Results.ExitScope();
+  
+  // Add the various type names
+  Results.setFilter(&ResultBuilder::IsOrdinaryNonValueName);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer,
+                     CodeCompleter->includeGlobals());
+  
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, Results);
+
+  HandleCodeCompleteResults(this, CodeCompleter,
+                            CodeCompletionContext::CCC_Type,
+                            Results.data(), Results.size());
 }
 
 /// \brief When we have an expression with type "id", we may assume
