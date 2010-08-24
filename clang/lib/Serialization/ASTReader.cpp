@@ -927,6 +927,8 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
                     (const unsigned char *)Blob + Record[0],
                     (const unsigned char *)Blob,
                     ASTDeclContextNameLookupTrait(*this));
+  } else {
+    Info.NameLookupTableData = 0;
   }
 
   return false;
