@@ -67,7 +67,6 @@ FOO(in,t) value;
 // CHECK-CC5: NotImplemented:{TypedText extern} (30)
 // CHECK-CC5: NotImplemented:{TypedText float} (40)
 // CHECK-CC5: macro definition:{TypedText FOO}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (70)
-// CHECK-CC5: macro definition:{TypedText i386} (70)
 // CHECK-CC5: TypedefDecl:{TypedText id} (40)
 // CHECK-CC5: NotImplemented:{TypedText inline} (30)
 // CHECK-CC5: NotImplemented:{TypedText int} (40)
