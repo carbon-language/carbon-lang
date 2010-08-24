@@ -1690,6 +1690,102 @@ static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
     }
 }
 
+static std::string FormatFunctionParameter(ASTContext &Context,
+                                           ParmVarDecl *Param) {
+  bool ObjCMethodParam = isa<ObjCMethodDecl>(Param->getDeclContext());
+  if (Param->getType()->isDependentType() ||
+      !Param->getType()->isBlockPointerType()) {
+    // The argument for a dependent or non-block parameter is a placeholder 
+    // containing that parameter's type.
+    std::string Result;
+    
+    if (Param->getIdentifier() && !ObjCMethodParam)
+      Result = Param->getIdentifier()->getName();
+    
+    Param->getType().getAsStringInternal(Result, 
+                                         Context.PrintingPolicy);
+    
+    if (ObjCMethodParam) {
+      Result = "(" + Result;
+      Result += ")";
+      if (Param->getIdentifier())
+        Result += Param->getIdentifier()->getName();
+    }
+    return Result;
+  }
+  
+  // The argument for a block pointer parameter is a block literal with
+  // the appropriate type.
+  FunctionProtoTypeLoc *Block = 0;
+  TypeLoc TL;
+  if (TypeSourceInfo *TSInfo = Param->getTypeSourceInfo()) {
+    TL = TSInfo->getTypeLoc().getUnqualifiedLoc();
+    while (true) {
+      // Look through typedefs.
+      if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
+        if (TypeSourceInfo *InnerTSInfo
+            = TypedefTL->getTypedefDecl()->getTypeSourceInfo()) {
+          TL = InnerTSInfo->getTypeLoc().getUnqualifiedLoc();
+          continue;
+        }
+      }
+      
+      // Look through qualified types
+      if (QualifiedTypeLoc *QualifiedTL = dyn_cast<QualifiedTypeLoc>(&TL)) {
+        TL = QualifiedTL->getUnqualifiedLoc();
+        continue;
+      }
+      
+      // Try to get the function prototype behind the block pointer type,
+      // then we're done.
+      if (BlockPointerTypeLoc *BlockPtr
+          = dyn_cast<BlockPointerTypeLoc>(&TL)) {
+        TL = BlockPtr->getPointeeLoc();
+        Block = dyn_cast<FunctionProtoTypeLoc>(&TL);
+      }
+      break;
+    }
+  }
+
+  if (!Block) {
+    // We were unable to find a FunctionProtoTypeLoc with parameter names
+    // for the block; just use the parameter type as a placeholder.
+    std::string Result;
+    Param->getType().getUnqualifiedType().
+                            getAsStringInternal(Result, Context.PrintingPolicy);
+    
+    if (ObjCMethodParam) {
+      Result = "(" + Result;
+      Result += ")";
+      if (Param->getIdentifier())
+        Result += Param->getIdentifier()->getName();
+    }
+      
+    return Result;
+  }
+  
+  // We have the function prototype behind the block pointer type, as it was
+  // written in the source.
+  std::string Result = "(^)(";
+  for (unsigned I = 0, N = Block->getNumArgs(); I != N; ++I) {
+    if (I)
+      Result += ", ";
+    Result += FormatFunctionParameter(Context, Block->getArg(I));
+  }
+  if (Block->getTypePtr()->isVariadic()) {
+    if (Block->getNumArgs() > 0)
+      Result += ", ...";
+    else
+      Result += "...";
+  } else if (Block->getNumArgs() == 0 && !Context.getLangOptions().CPlusPlus)
+    Result += "void";
+             
+  Result += ")";
+  Block->getTypePtr()->getResultType().getAsStringInternal(Result, 
+                                                        Context.PrintingPolicy);
+  return Result;
+}
+
 /// \brief Add function parameter chunks to the given code completion string.
 static void AddFunctionParameterChunks(ASTContext &Context,
                                        FunctionDecl *Function,
@@ -1713,13 +1809,8 @@ static void AddFunctionParameterChunks(ASTContext &Context,
       CCStr->AddChunk(Chunk(CodeCompletionString::CK_Comma));
     
     // Format the placeholder string.
-    std::string PlaceholderStr;
-    if (Param->getIdentifier())
-      PlaceholderStr = Param->getIdentifier()->getName();
-    
-    Param->getType().getAsStringInternal(PlaceholderStr, 
-                                         Context.PrintingPolicy);
-    
+    std::string PlaceholderStr = FormatFunctionParameter(Context, Param);
+        
     // Add the placeholder string.
     CCStr->AddPlaceholderChunk(PlaceholderStr);
   }
@@ -2028,10 +2119,16 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S,
         continue;
 
       std::string Arg;
-      (*P)->getType().getAsStringInternal(Arg, S.Context.PrintingPolicy);
-      Arg = "(" + Arg + ")";
-      if (IdentifierInfo *II = (*P)->getIdentifier())
-        Arg += II->getName().str();
+      
+      if ((*P)->getType()->isBlockPointerType() && !DeclaringEntity)
+        Arg = FormatFunctionParameter(S.Context, *P);
+      else {
+        (*P)->getType().getAsStringInternal(Arg, S.Context.PrintingPolicy);
+        Arg = "(" + Arg + ")";
+        if (IdentifierInfo *II = (*P)->getIdentifier())
+          Arg += II->getName().str();
+      }
+      
       if (DeclaringEntity)
         Result->AddTextChunk(Arg);
       else if (AllParametersAreInformative)
