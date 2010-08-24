@@ -16,19 +16,21 @@ namespace clang {
 /// output (e.g., -E).
 class PreprocessorOutputOptions {
 public:
-  unsigned ShowCPP : 1;           ///< Print normal preprocessed output.
-  unsigned ShowMacros : 1;        ///< Print macro definitions.
-  unsigned ShowLineMarkers : 1;   ///< Show #line markers.
-  unsigned ShowComments : 1;      ///< Show comments.
-  unsigned ShowMacroComments : 1; ///< Show comments, even in macros.
+  unsigned ShowCPP : 1;            ///< Print normal preprocessed output.
+  unsigned ShowComments : 1;       ///< Show comments.
+  unsigned ShowHeaderIncludes : 1; ///< Show header inclusions (-H).
+  unsigned ShowLineMarkers : 1;    ///< Show #line markers.
+  unsigned ShowMacroComments : 1;  ///< Show comments, even in macros.
+  unsigned ShowMacros : 1;         ///< Print macro definitions.
 
 public:
   PreprocessorOutputOptions() {
     ShowCPP = 1;
-    ShowMacros = 0;
-    ShowLineMarkers = 1;
     ShowComments = 0;
+    ShowHeaderIncludes = 0;
+    ShowLineMarkers = 1;
     ShowMacroComments = 0;
+    ShowMacros = 0;
   }
 };
 

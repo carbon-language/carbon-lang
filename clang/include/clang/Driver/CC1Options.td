@@ -556,3 +556,5 @@ def dM : Flag<"-dM">,
   HelpText<"Print macro definitions in -E mode instead of normal output">;
 def dD : Flag<"-dD">,
   HelpText<"Print macro definitions in -E mode in addition to normal output">;
+def H : Flag<"-H">,
+  HelpText<"Show header includes and nesting depth">;

@@ -85,6 +85,10 @@ public:
   llvm::raw_ostream &OS;
 private:
   unsigned CurLine;
+
+  /// The current include nesting level, used by header include dumping (-H).
+  unsigned CurrentIncludeDepth;
+
   bool EmittedTokensOnThisLine;
   bool EmittedMacroOnThisLine;
   SrcMgr::CharacteristicKind FileType;
@@ -92,19 +96,22 @@ private:
   bool Initialized;
   bool DisableLineMarkers;
   bool DumpDefines;
+  bool DumpHeaderIncludes;
   bool UseLineDirective;
+  bool HasProcessedPredefines;
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os,
-                           bool lineMarkers, bool defines)
+                           bool lineMarkers, bool defines, bool headers)
      : PP(pp), SM(PP.getSourceManager()),
        ConcatInfo(PP), OS(os), DisableLineMarkers(lineMarkers),
-       DumpDefines(defines) {
-    CurLine = 0;
+       DumpDefines(defines), DumpHeaderIncludes(headers) {
+    CurLine = CurrentIncludeDepth = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
     EmittedMacroOnThisLine = false;
     FileType = SrcMgr::C_User;
     Initialized = false;
+    HasProcessedPredefines = false;
 
     // If we're in microsoft mode, use normal #line instead of line markers.
     UseLineDirective = PP.getLangOptions().Microsoft;
@@ -219,7 +226,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   PresumedLoc UserLoc = SourceMgr.getPresumedLoc(Loc);
   unsigned NewLine = UserLoc.getLine();
-  
+
   if (Reason == PPCallbacks::EnterFile) {
     SourceLocation IncludeLoc = SourceMgr.getPresumedLoc(Loc).getIncludeLoc();
     if (IncludeLoc.isValid())
@@ -231,16 +238,41 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
     // directive and emits a bunch of spaces that aren't needed.  Emulate this
     // strange behavior.
   }
+
+  // Adjust the current include depth.
+  if (Reason == PPCallbacks::EnterFile) {
+    ++CurrentIncludeDepth;
+  } else {
+    if (CurrentIncludeDepth)
+      --CurrentIncludeDepth;
+
+    // We track when we are done with the predefines by watching for the first
+    // place where we drop back to a nesting depth of 0.
+    if (CurrentIncludeDepth == 0 && !HasProcessedPredefines)
+      HasProcessedPredefines = true;
+  }
   
   CurLine = NewLine;
-
-  if (DisableLineMarkers) return;
 
   CurFilename.clear();
   CurFilename += UserLoc.getFilename();
   Lexer::Stringify(CurFilename);
   FileType = NewFileType;
 
+  // Dump the header include information, if enabled and we are past the
+  // predefines buffer.
+  if (DumpHeaderIncludes && HasProcessedPredefines &&
+      Reason == PPCallbacks::EnterFile) {
+    llvm::SmallString<256> Msg;
+    llvm::raw_svector_ostream OS(Msg);
+    for (unsigned i = 0; i != CurrentIncludeDepth; ++i)
+      OS << '.';
+    OS << ' ' << CurFilename << '\n';
+    llvm::errs() << OS.str();
+  }
+
+  if (DisableLineMarkers) return;
+  
   if (!Initialized) {
     WriteLineInfo(CurLine);
     Initialized = true;
@@ -529,7 +561,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
 
   PrintPPOutputPPCallbacks *Callbacks =
       new PrintPPOutputPPCallbacks(PP, *OS, !Opts.ShowLineMarkers,
-                                   Opts.ShowMacros);
+                                   Opts.ShowMacros, Opts.ShowHeaderIncludes);
   PP.AddPragmaHandler(new UnknownPragmaHandler("#pragma", Callbacks));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                       Callbacks));

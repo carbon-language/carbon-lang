@@ -689,6 +689,8 @@ static void PreprocessorOutputOptsToArgs(const PreprocessorOutputOptions &Opts,
   else if (!Opts.ShowCPP && Opts.ShowMacros)
     Res.push_back("-dM");
 
+  if (Opts.ShowHeaderIncludes)
+    Res.push_back("-H");
   if (!Opts.ShowLineMarkers)
     Res.push_back("-P");
   if (Opts.ShowComments)
@@ -1456,10 +1458,11 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
                                         ArgList &Args) {
   using namespace cc1options;
   Opts.ShowCPP = !Args.hasArg(OPT_dM);
-  Opts.ShowMacros = Args.hasArg(OPT_dM) || Args.hasArg(OPT_dD);
-  Opts.ShowLineMarkers = !Args.hasArg(OPT_P);
   Opts.ShowComments = Args.hasArg(OPT_C);
+  Opts.ShowHeaderIncludes = Args.hasArg(OPT_H);
+  Opts.ShowLineMarkers = !Args.hasArg(OPT_P);
   Opts.ShowMacroComments = Args.hasArg(OPT_CC);
+  Opts.ShowMacros = Args.hasArg(OPT_dM) || Args.hasArg(OPT_dD);
 }
 
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
