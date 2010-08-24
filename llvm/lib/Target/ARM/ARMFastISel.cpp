@@ -418,7 +418,8 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   // offset instead of 0 and do all sorts of operand munging.
   unsigned ResultReg = createResultReg(FixedRC);
   // TODO: Fix the Addressing modes so that these can share some code.
-  if (AFI->isThumb2Function())
+  // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
+  if (AFI->isThumbFunction())
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::tLDR), ResultReg)
                     .addReg(Reg).addImm(0).addReg(0));
