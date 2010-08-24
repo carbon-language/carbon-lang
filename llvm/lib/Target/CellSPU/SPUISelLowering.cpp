@@ -514,8 +514,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::ADD64_MARKER] = "SPUISD::ADD64_MARKER";
     node_names[(unsigned) SPUISD::SUB64_MARKER] = "SPUISD::SUB64_MARKER";
     node_names[(unsigned) SPUISD::MUL64_MARKER] = "SPUISD::MUL64_MARKER";
-    node_names[(unsigned) SPUISD::HALF2VEC] = "SPUISD::HALF2VEC";
-    node_names[(unsigned) SPUISD::VEC2HALF] = "SPUISD::VEC2HALF";
   }
 
   std::map<unsigned, const char *>::iterator i = node_names.find(Opcode);
@@ -736,14 +734,12 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
   unsigned alignment = SN->getAlignment();
-  const bool isVec = VT.isVector();
-  EVT eltTy = isVec ? VT.getVectorElementType(): VT;
 
   switch (SN->getAddressingMode()) {
   case ISD::UNINDEXED: {
     // The vector type we really want to load from the 16-byte chunk.
     EVT vecVT = EVT::getVectorVT(*DAG.getContext(),
-                                 eltTy, (128 / eltTy.getSizeInBits()));
+                                 VT, (128 / VT.getSizeInBits()));
 
     SDValue alignLoadVec;
     SDValue basePtr = SN->getBasePtr();
@@ -846,19 +842,11 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       }
 #endif
 
-    SDValue insertEltOp;
-    SDValue vectorizeOp;
-    if (isVec)
-    {
-      // FIXME: this works only if the vector is 64bit!
-      insertEltOp = DAG.getNode(SPUISD::SHUFFLE_MASK, dl, MVT::v2i64, insertEltOffs);
-      vectorizeOp = DAG.getNode(SPUISD::HALF2VEC, dl, vecVT, theValue);
-    }
-    else
-    {
-      insertEltOp = DAG.getNode(SPUISD::SHUFFLE_MASK, dl, vecVT, insertEltOffs);
-      vectorizeOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, vecVT, theValue);
-    }
+    SDValue insertEltOp = DAG.getNode(SPUISD::SHUFFLE_MASK, dl, vecVT,
+                                      insertEltOffs);
+    SDValue vectorizeOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, vecVT, 
+                                      theValue);
+
     result = DAG.getNode(SPUISD::SHUFB, dl, vecVT,
                          vectorizeOp, alignLoadVec,
                          DAG.getNode(ISD::BIT_CONVERT, dl,
