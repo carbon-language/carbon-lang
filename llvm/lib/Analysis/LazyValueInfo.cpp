@@ -460,7 +460,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
       for (Value::use_iterator UI = Val->use_begin(), UE = Val->use_end();
            UI != UE; ++UI) {
         LoadInst *L = dyn_cast<LoadInst>(*UI);
-        if (L && L->getParent() == BB) {
+        if (L && L->getParent() == BB && L->getPointerAddressSpace() == 0) {
           return LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
         }
       }
