@@ -50,7 +50,7 @@ public:
     GetStackID();
 
     Address&
-    GetPC();
+    GetFrameCodeAddress();
     
     void
     ChangePC (lldb::addr_t pc);

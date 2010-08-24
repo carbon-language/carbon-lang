@@ -43,20 +43,30 @@ public:
     {
     }
 
+    void
+    Clear ()
+    {
+        m_base_addr = 0;
+        m_byte_size = 0;  
+    }
+
     // Set the start and end values
-    void Reset (lldb::addr_t start_addr, lldb::addr_t end_addr)
+    void 
+    Reset (lldb::addr_t start_addr, lldb::addr_t end_addr)
     {
         SetBaseAddress (start_addr);
         SetEndAddress (end_addr);
     }
 
     // Set the start value for the range, and keep the same size
-    void SetBaseAddress (lldb::addr_t base_addr)
+    void
+    SetBaseAddress (lldb::addr_t base_addr)
     {
         m_base_addr = base_addr;
     }
 
-    void SetEndAddress (lldb::addr_t end_addr)
+    void
+    SetEndAddress (lldb::addr_t end_addr)
     {
         const lldb::addr_t base_addr = GetBaseAddress();
         if (end_addr > base_addr)
@@ -92,7 +102,7 @@ public:
     bool
     IsValid() const
     {
-        return GetByteSize() > 0;
+        return m_byte_size > 0;
     }
 
     bool
@@ -101,7 +111,8 @@ public:
         return (GetBaseAddress() <= addr) && (addr < GetEndAddress());
     }
 
-    bool Contains (const VMRange& range) const
+    bool 
+    Contains (const VMRange& range) const
     {
         if (Contains(range.GetBaseAddress()))
         {

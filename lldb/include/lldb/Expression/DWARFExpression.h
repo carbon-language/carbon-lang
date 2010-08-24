@@ -118,6 +118,9 @@ public:
     bool
     LocationListContainsLoadAddress (Process* process, const Address &addr) const;
 
+    bool
+    LocationListContainsLoadAddress (Process* process, lldb::addr_t load_addr) const;
+    
     //------------------------------------------------------------------
     /// Make the expression parser read its location information from a
     /// given data source.  Does not change the offset and length

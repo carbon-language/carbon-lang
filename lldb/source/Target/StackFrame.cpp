@@ -29,8 +29,8 @@ using namespace lldb_private;
 // The first bits in the flags are reserved for the SymbolContext::Scope bits
 // so we know if we have tried to look up information in our internal symbol
 // context (m_sc) already.
-#define RESOLVED_PC_SO_ADDR (uint32_t(eSymbolContextEverything + 1))
-#define RESOLVED_FRAME_ID   (RESOLVED_PC_SO_ADDR << 1)
+#define RESOLVED_FRAME_ADDR (uint32_t(eSymbolContextEverything + 1))
+#define RESOLVED_FRAME_ID   (RESOLVED_FRAME_ADDR << 1)
 #define GOT_FRAME_BASE      (RESOLVED_FRAME_ID << 1)
 #define FRAME_IS_OBSOLETE   (GOT_FRAME_BASE << 1)
 #define RESOLVED_VARIABLES  (FRAME_IS_OBSOLETE << 1)
@@ -169,53 +169,29 @@ StackFrame::GetStackID()
         // Resolve our PC to section offset if we haven't alreday done so
         // and if we don't have a module. The resolved address section will
         // contain the module to which it belongs.
-        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_PC_SO_ADDR))
-            GetPC();
+        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_ADDR))
+            GetFrameCodeAddress();
 
-        const uint32_t resolve_scope = eSymbolContextModule |
-                                       eSymbolContextCompUnit |
-                                       eSymbolContextFunction;
-
-        if (m_sc.module_sp)
+        if (GetSymbolContext (eSymbolContextFunction).function)
         {
-            if (m_sc.module_sp->ResolveSymbolContextForAddress (GetPC(), resolve_scope, m_sc) & eSymbolContextFunction)
-            {
-                assert (m_sc.function);
-                m_id.SetStartAddress(m_sc.function->GetAddressRange().GetBaseAddress());
-            }
-            else if (m_sc.module_sp->ResolveSymbolContextForAddress (GetPC(), resolve_scope, m_sc) & eSymbolContextSymbol)
-            {
-                assert (m_sc.symbol);
-                AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRangePtr();
-                if (symbol_range_ptr)
-                    m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress());
-            }
+            m_id.SetStartAddress (m_sc.function->GetAddressRange().GetBaseAddress());
         }
-//      else if (m_sc.target != NULL)
-//      {
-//          if (m_sc.target->GetImages().ResolveSymbolContextForAddress (GetPC(), resolve_scope, m_sc) & eSymbolContextFunction)
-//          {
-//              assert (m_sc.function);
-//              m_id.GetAddressRange() = m_sc.function->GetAddressRange();
-//          }
-//          else if (m_sc.target->GetImages().ResolveSymbolContextForAddress (GetPC(), resolve_scope, m_sc) & eSymbolContextSymbol)
-//          {
-//              assert (m_sc.symbol);
-//              AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRange();
-//              if (symbol_range_ptr)
-//                  m_id.GetAddressRange() = *symbol_range_ptr;
-//          }
-//      }
+        else if (GetSymbolContext (eSymbolContextSymbol).symbol)
+        {
+            AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRangePtr();
+            if (symbol_range_ptr)
+                m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress());
+        }
     }
     return m_id;
 }
 
 Address&
-StackFrame::GetPC()
+StackFrame::GetFrameCodeAddress()
 {
-    if (m_flags.IsClear(RESOLVED_PC_SO_ADDR) && !m_pc.IsSectionOffset())
+    if (m_flags.IsClear(RESOLVED_FRAME_ADDR) && !m_pc.IsSectionOffset())
     {
-        m_flags.Set (RESOLVED_PC_SO_ADDR);
+        m_flags.Set (RESOLVED_FRAME_ADDR);
 
         // Resolve the PC into a temporary address because if ResolveLoadAddress
         // fails to resolve the address, it will clear the address object...
@@ -279,20 +255,19 @@ const SymbolContext&
 StackFrame::GetSymbolContext (uint32_t resolve_scope)
 {
     // Copy our internal symbol context into "sc".
-
     if ((m_flags.GetAllFlagBits() & resolve_scope) != resolve_scope)
     {
         // Resolve our PC to section offset if we haven't alreday done so
         // and if we don't have a module. The resolved address section will
         // contain the module to which it belongs
-        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_PC_SO_ADDR))
-            GetPC();
+        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_ADDR))
+            GetFrameCodeAddress();
 
         // If this is not frame zero, then we need to subtract 1 from the PC
         // value when doing address lookups since the PC will be on the 
         // instruction following the function call instruction...
         
-        Address lookup_addr(GetPC());
+        Address lookup_addr(GetFrameCodeAddress());
         if (m_frame_index > 0 && lookup_addr.IsValid())
         {
             addr_t offset = lookup_addr.GetOffset();
@@ -300,6 +275,8 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 lookup_addr.SetOffset(offset - 1);
         }
 
+
+        uint32_t resolved = 0;
         if (m_sc.module_sp)
         {
             // We have something in our stack frame symbol context, lets check
@@ -313,7 +290,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 if (m_flags.IsClear (eSymbolContextCompUnit))
                 {
                     if (m_sc.comp_unit)
-                        m_flags.Set (eSymbolContextCompUnit);
+                        resolved |= eSymbolContextCompUnit;
                     else
                         actual_resolve_scope |= eSymbolContextCompUnit;
                 }
@@ -324,7 +301,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 if (m_flags.IsClear (eSymbolContextFunction))
                 {
                     if (m_sc.function)
-                        m_flags.Set (eSymbolContextFunction);
+                        resolved |= eSymbolContextFunction;
                     else
                         actual_resolve_scope |= eSymbolContextFunction;
                 }
@@ -335,7 +312,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 if (m_flags.IsClear (eSymbolContextBlock))
                 {
                     if (m_sc.block)
-                        m_flags.Set (eSymbolContextBlock);
+                        resolved |= eSymbolContextBlock;
                     else
                         actual_resolve_scope |= eSymbolContextBlock;
                 }
@@ -346,7 +323,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 if (m_flags.IsClear (eSymbolContextSymbol))
                 {
                     if (m_sc.symbol)
-                        m_flags.Set (eSymbolContextSymbol);
+                        resolved |= eSymbolContextSymbol;
                     else
                         actual_resolve_scope |= eSymbolContextSymbol;
                 }
@@ -357,7 +334,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 if (m_flags.IsClear (eSymbolContextLineEntry))
                 {
                     if (m_sc.line_entry.IsValid())
-                        m_flags.Set (eSymbolContextLineEntry);
+                        resolved |= eSymbolContextLineEntry;
                     else
                         actual_resolve_scope |= eSymbolContextLineEntry;
                 }
@@ -371,15 +348,21 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 // already found in "m_sc"
                 SymbolContext sc;
                 // Set flags that indicate what we have tried to resolve
-                const uint32_t resolved = m_sc.module_sp->ResolveSymbolContextForAddress (lookup_addr, actual_resolve_scope, sc);
+                resolved |= m_sc.module_sp->ResolveSymbolContextForAddress (lookup_addr, actual_resolve_scope, sc);
                 // Only replace what we didn't already have as we may have 
                 // information for an inlined function scope that won't match
                 // what a standard lookup by address would match
-                if (resolved & eSymbolContextCompUnit)  m_sc.comp_unit  = sc.comp_unit;
-                if (resolved & eSymbolContextFunction)  m_sc.function   = sc.function;
-                if (resolved & eSymbolContextBlock)     m_sc.block      = sc.block;
-                if (resolved & eSymbolContextSymbol)    m_sc.symbol     = sc.symbol;
-                if (resolved & eSymbolContextLineEntry) m_sc.line_entry = sc.line_entry;
+                if ((resolved & eSymbolContextCompUnit)  && m_sc.comp_unit == NULL)  
+                    m_sc.comp_unit = sc.comp_unit;
+                if ((resolved & eSymbolContextFunction)  && m_sc.function == NULL)  
+                    m_sc.function = sc.function;
+                if ((resolved & eSymbolContextBlock)     && m_sc.block == NULL)  
+                    m_sc.block = sc.block;
+                if ((resolved & eSymbolContextSymbol)    && m_sc.symbol == NULL)  
+                    m_sc.symbol = sc.symbol;
+                if ((resolved & eSymbolContextLineEntry) && !m_sc.line_entry.IsValid()) 
+                    m_sc.line_entry = sc.line_entry;
+
             }
         }
         else
@@ -387,16 +370,23 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
             // If we don't have a module, then we can't have the compile unit,
             // function, block, line entry or symbol, so we can safely call
             // ResolveSymbolContextForAddress with our symbol context member m_sc.
-            m_thread.GetProcess().GetTarget().GetImages().ResolveSymbolContextForAddress (lookup_addr, resolve_scope, m_sc);
+            resolved |= m_thread.GetProcess().GetTarget().GetImages().ResolveSymbolContextForAddress (lookup_addr, resolve_scope, m_sc);
         }
 
         // If the target was requested add that:
         if (m_sc.target_sp.get() == NULL)
+        {
             m_sc.target_sp = CalculateProcess()->GetTarget().GetSP();
+            if (m_sc.target_sp)
+                resolved |= eSymbolContextTarget;
+        }
 
         // Update our internal flags so we remember what we have tried to locate so
         // we don't have to keep trying when more calls to this function are made.
-        m_flags.Set(resolve_scope);
+        // We might have dug up more information that was requested (for example
+        // if we were asked to only get the block, we will have gotten the 
+        // compile unit, and function) so set any additional bits that we resolved
+        m_flags.Set (resolve_scope | resolved);
     }
 
     // Return the symbol context with everything that was possible to resolve
@@ -412,8 +402,7 @@ StackFrame::GetVariableList ()
     {
         m_flags.Set(RESOLVED_VARIABLES);
 
-        GetSymbolContext(eSymbolContextFunction);
-        if (m_sc.function)
+        if (GetSymbolContext (eSymbolContextFunction).function)
         {
             bool get_child_variables = true;
             bool can_create = true;
@@ -474,7 +463,7 @@ StackFrame::GetRegisterContext ()
 bool
 StackFrame::HasDebugInformation ()
 {
-    GetSymbolContext(eSymbolContextLineEntry);
+    GetSymbolContext (eSymbolContextLineEntry);
     return m_sc.line_entry.IsValid();
 }
 
@@ -525,12 +514,12 @@ StackFrame::Dump (Stream *strm, bool show_frame_index)
 
     if (show_frame_index)
         strm->Printf("frame #%u: ", m_frame_index);
-    strm->Printf("pc = 0x%0*llx", m_thread.GetProcess().GetAddressByteSize() * 2, GetRegisterContext()->GetPC());
-    SymbolContext sc (GetSymbolContext(eSymbolContextEverything));
+    strm->Printf("0x%0*llx", m_thread.GetProcess().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess()));
+    GetSymbolContext(eSymbolContextEverything);
     strm->PutCString(", where = ");
     // TODO: need to get the
     const bool show_module = true;
     const bool show_inline = true;
-    sc.DumpStopContext(strm, &m_thread.GetProcess(), GetPC(), show_module, show_inline);
+    m_sc.DumpStopContext(strm, &m_thread.GetProcess(), GetFrameCodeAddress(), show_module, show_inline);
 }
 

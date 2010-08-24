@@ -926,18 +926,21 @@ Thread::GetStackFrameAtIndex (uint32_t idx)
                     Block *parent_block = m_inlined_frame_info[idx].block->GetParent();
                     parent_block->CalculateSymbolContext(&inline_sc);
                 }
+
+                Address backed_up_pc (previous_frame_sp->GetFrameCodeAddress());
+                backed_up_pc.SetOffset(backed_up_pc.GetOffset()-1);
+                AddressRange range;
+                m_inlined_frame_info[idx].block->GetRangeContainingAddress (backed_up_pc, range);
                     
-                InlineFunctionInfo* inline_info = m_inlined_frame_info[idx].block->InlinedFunctionInfo();
+                const InlineFunctionInfo* inline_info = m_inlined_frame_info[idx].block->InlinedFunctionInfo();
                 assert (inline_info);
-                inline_sc.line_entry.range.GetBaseAddress() = previous_frame_sp->GetPC();
+                inline_sc.line_entry.range.GetBaseAddress() = previous_frame_sp->GetFrameCodeAddress();
                 inline_sc.line_entry.file = inline_info->GetCallSite().GetFile();
                 inline_sc.line_entry.line = inline_info->GetCallSite().GetLine();
                 inline_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
 
                 StackFrameSP concrete_frame_sp (m_concrete_frames.GetFrameAtIndex (m_inlined_frame_info[idx].concrete_frame_index));
                 assert (previous_frame_sp.get());
-                AddressRange range;
-                m_inlined_frame_info[idx].block->GetRangeContainingAddress (previous_frame_sp->GetPC(), range);
                 
                 frame_sp.reset (new StackFrame (idx, 
                                                 m_inlined_frame_info[idx].concrete_frame_index,
@@ -949,7 +952,6 @@ Thread::GetStackFrameAtIndex (uint32_t idx)
                                                 &inline_sc));                                           // The symbol context for this inline frame
                 
             }
-
         }
         else
         {

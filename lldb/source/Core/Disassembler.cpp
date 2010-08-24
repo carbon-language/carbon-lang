@@ -311,7 +311,7 @@ Disassembler::Disassemble
         }
         else
         {
-            range.GetBaseAddress() = exe_ctx.frame->GetPC();
+            range.GetBaseAddress() = exe_ctx.frame->GetFrameCodeAddress();
         }
 
         if (range.GetBaseAddress().IsValid() && range.GetByteSize() == 0)

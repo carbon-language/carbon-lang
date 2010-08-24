@@ -121,12 +121,11 @@ SBFrame::GetFrameID () const
         return UINT32_MAX;
 }
 
-
 lldb::addr_t
 SBFrame::GetPC () const
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetPC().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess());
+        return m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess());
     return LLDB_INVALID_ADDRESS;
 }
 
@@ -161,7 +160,7 @@ SBFrame::GetPCAddress () const
 {
     SBAddress sb_addr;
     if (m_opaque_sp)
-        sb_addr.SetAddress (&m_opaque_sp->GetPC());
+        sb_addr.SetAddress (&m_opaque_sp->GetFrameCodeAddress());
     return sb_addr;
 }
 

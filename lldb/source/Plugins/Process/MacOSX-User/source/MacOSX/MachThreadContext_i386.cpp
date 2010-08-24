@@ -210,7 +210,7 @@ MachThreadContext_i386::GetStackFrameData(StackFrame *first_frame, std::vector<s
 
             if (addr_range_ptr)
             {
-                if (first_frame->GetPC() == addr_range_ptr->GetBaseAddress())
+                if (first_frame->GetFrameCodeAddress() == addr_range_ptr->GetBaseAddress())
                 {
                     // We are at the first instruction, so we can recover the
                     // previous PC by dereferencing the SP

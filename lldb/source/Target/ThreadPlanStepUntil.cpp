@@ -63,7 +63,8 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     // FIXME - can we do this more securely if we know first_insn?
 
     StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
-    m_return_addr = return_frame->GetPC().GetLoadAddress(&m_thread.GetProcess());
+    // TODO: add inline functionality
+    m_return_addr = return_frame->GetRegisterContext()->GetPC();
     Breakpoint *return_bp = target.CreateBreakpoint (m_return_addr, true).get();
     if (return_bp != NULL)
     {

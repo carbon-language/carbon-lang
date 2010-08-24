@@ -14,6 +14,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 
@@ -142,7 +143,7 @@ Variable::IsInScope (StackFrame *frame)
             // It is a location list. We just need to tell if the location
             // list contains the current address when converted to a load
             // address
-            return m_location.LocationListContainsLoadAddress (&frame->GetThread().GetProcess(), frame->GetPC());
+            return m_location.LocationListContainsLoadAddress (&frame->GetThread().GetProcess(), frame->GetRegisterContext()->GetPC());
         }
         else
         {

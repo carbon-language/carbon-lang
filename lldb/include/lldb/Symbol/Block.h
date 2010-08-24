@@ -182,8 +182,28 @@ public:
     Block *
     GetParent () const;
     
+    
+    //------------------------------------------------------------------
+    /// Get the inlined block that contains this block.
+    ///
+    /// @return
+    ///     If this block contains inlined function info, it will return
+    ///     this block, else parent blocks will be searched to see if
+    ///     any contain this block. NULL will be returned if this block
+    ///     nor any parent blocks are inlined function blocks.
+    //------------------------------------------------------------------
     Block *
-    GetInlinedParent () const;
+    GetContainingInlinedBlock ();
+
+    //------------------------------------------------------------------
+    /// Get the inlined parent block for this block.
+    ///
+    /// @return
+    ///     The parent block pointer, or NULL if this block has no 
+    ///     parent.
+    //------------------------------------------------------------------
+    Block *
+    GetInlinedParent ();
 
     //------------------------------------------------------------------
     /// Get the sibling block for this block.
@@ -206,7 +226,12 @@ public:
     ///     children.
     //------------------------------------------------------------------
     Block *
-    GetFirstChild () const;
+    GetFirstChild () const
+    {
+        if (m_children.empty())
+            return NULL;
+        return m_children.front().get();
+    }
 
     //------------------------------------------------------------------
     /// Get the variable list for this block and optionally all child
@@ -266,16 +291,6 @@ public:
                      VariableList *variable_list);
 
     //------------------------------------------------------------------
-    /// Get accessor for any inlined function information.
-    ///
-    /// @return
-    ///     A pointer to any inlined function information, or NULL if
-    ///     this is a regular block.
-    //------------------------------------------------------------------
-    InlineFunctionInfo*
-    InlinedFunctionInfo ();
-
-    //------------------------------------------------------------------
     /// Get const accessor for any inlined function information.
     ///
     /// @return
@@ -283,7 +298,10 @@ public:
     ///     if this is a regular block.
     //------------------------------------------------------------------
     const InlineFunctionInfo*
-    InlinedFunctionInfo () const;
+    InlinedFunctionInfo () const
+    {
+        return m_inlineInfoSP.get();
+    }
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
@@ -348,7 +366,11 @@ public:
     ///     A shared pointer to a VariableList.
     //------------------------------------------------------------------
     void
-    SetVariableList (lldb::VariableListSP& variable_list_sp);
+    SetVariableList (lldb::VariableListSP& variable_list_sp)
+    {
+        m_variable_list_sp = variable_list_sp;
+    }
+
 
 
     bool
@@ -364,6 +386,9 @@ public:
     FindBlockByID (lldb::user_id_t block_id);
 
     bool
+    GetRangeContainingOffset (const lldb::addr_t offset, VMRange &range);
+
+    bool
     GetRangeContainingAddress (const Address& addr, AddressRange &range);
 
     
@@ -377,7 +402,7 @@ protected:
     collection m_children;
     VMRange::collection m_ranges; ///< A list of address offset ranges relative to the function's section/offset address.
     lldb::InlineFunctionInfoSP m_inlineInfoSP; ///< Inlined function information.
-    lldb::VariableListSP m_variables; ///< The variable list for all local, static and paramter variables scoped to this block.
+    lldb::VariableListSP m_variable_list_sp; ///< The variable list for all local, static and paramter variables scoped to this block.
     bool m_parsed_block_info:1,         ///< Set to true if this block and it's children have all been parsed
          m_parsed_block_variables:1,
          m_parsed_child_blocks:1;

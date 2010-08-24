@@ -53,7 +53,8 @@ ThreadPlanStepOut::ThreadPlanStepOut
     StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
     if (return_frame)
     {
-        m_return_addr = return_frame->GetPC().GetLoadAddress(&m_thread.GetProcess());
+        // TODO: check for inlined frames and do the right thing...
+        m_return_addr = return_frame->GetRegisterContext()->GetPC();
         Breakpoint *return_bp = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_return_addr, true).get();
         if (return_bp != NULL)
         {

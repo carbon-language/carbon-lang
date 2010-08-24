@@ -688,13 +688,18 @@ ReadRegisterValueAsScalar
 bool
 DWARFExpression::LocationListContainsLoadAddress (Process* process, const Address &addr) const
 {
+    return LocationListContainsLoadAddress(process, addr.GetLoadAddress(process));
+}
+
+bool
+DWARFExpression::LocationListContainsLoadAddress (Process* process, addr_t load_addr) const
+{
+    if (load_addr == LLDB_INVALID_ADDRESS)
+        return false;
+
     if (IsLocationList())
     {
         uint32_t offset = 0;
-        const addr_t load_addr = addr.GetLoadAddress(process);
-
-        if (load_addr == LLDB_INVALID_ADDRESS)
-            return false;
 
         addr_t loc_list_base_addr = m_loclist_base_addr.GetLoadAddress(process);
 
@@ -722,6 +727,7 @@ DWARFExpression::LocationListContainsLoadAddress (Process* process, const Addres
     }
     return false;
 }
+
 bool
 DWARFExpression::Evaluate
 (
@@ -749,7 +755,7 @@ DWARFExpression::Evaluate
     if (IsLocationList())
     {
         uint32_t offset = 0;
-        addr_t pc = exe_ctx->frame->GetPC().GetLoadAddress(exe_ctx->process);
+        addr_t pc = exe_ctx->frame->GetRegisterContext()->GetPC();
 
         if (pc == LLDB_INVALID_ADDRESS)
         {

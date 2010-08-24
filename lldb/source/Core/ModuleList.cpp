@@ -267,7 +267,7 @@ ModuleList::FindModules
 }
 
 ModuleSP
-ModuleList::FindModule (lldb_private::Module *module_ptr)
+ModuleList::FindModule (const Module *module_ptr)
 {
     ModuleSP module_sp;
 
@@ -450,7 +450,7 @@ GetSharedModuleList ()
 }
 
 const lldb::ModuleSP
-ModuleList::GetModuleSP (lldb_private::Module *module_ptr)
+ModuleList::GetModuleSP (const Module *module_ptr)
 {
     lldb::ModuleSP module_sp;
     if (module_ptr)

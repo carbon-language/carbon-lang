@@ -148,7 +148,7 @@ CommandObjectArgs::Execute
         return false;
     }
     
-    Module *thread_module = thread_cur_frame->GetPC ().GetModule ();
+    Module *thread_module = thread_cur_frame->GetFrameCodeAddress ().GetModule ();
     if (!thread_module)
     {
         result.AppendError ("The PC has no associated module.");

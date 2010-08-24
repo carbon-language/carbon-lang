@@ -248,7 +248,7 @@ CommandObjectDisassemble::Execute
                 else if (sc.symbol && sc.symbol->GetAddressRangePtr())
                     range = *sc.symbol->GetAddressRangePtr();
                 else
-                    range.GetBaseAddress() = exe_ctx.frame->GetPC();
+                    range.GetBaseAddress() = exe_ctx.frame->GetFrameCodeAddress();
             }
             else
             {

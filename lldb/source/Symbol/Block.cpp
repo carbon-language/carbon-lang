@@ -24,7 +24,7 @@ Block::Block(lldb::user_id_t uid) :
     m_children (),
     m_ranges (),
     m_inlineInfoSP (),
-    m_variables (),
+    m_variable_list_sp (),
     m_parsed_block_info (false),
     m_parsed_block_variables (false),
     m_parsed_child_blocks (false)
@@ -104,9 +104,9 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
     {
         s->IndentMore();
 
-        if (m_variables.get())
+        if (m_variable_list_sp.get())
         {
-            m_variables->Dump(s, show_context);
+            m_variable_list_sp->Dump(s, show_context);
         }
 
         for (Block *child_block = GetFirstChild(); child_block != NULL; child_block = child_block->GetSibling())
@@ -137,7 +137,7 @@ Block::FindBlockByID (user_id_t block_id)
 }
 
 void
-Block::CalculateSymbolContext(SymbolContext* sc)
+Block::CalculateSymbolContext (SymbolContext* sc)
 {
     if (m_parent_scope)
         m_parent_scope->CalculateSymbolContext(sc);
@@ -149,7 +149,7 @@ Block::DumpStopContext (Stream *s, const SymbolContext *sc)
 {
     Block* parent_block = GetParent();
 
-    InlineFunctionInfo* inline_info = InlinedFunctionInfo ();
+    const InlineFunctionInfo* inline_info = InlinedFunctionInfo ();
     if (inline_info)
     {
         const Declaration &call_site = inline_info->GetCallSite();
@@ -226,7 +226,15 @@ Block::GetParent () const
 }
 
 Block *
-Block::GetInlinedParent () const
+Block::GetContainingInlinedBlock ()
+{
+    if (InlinedFunctionInfo())
+        return this;
+    return GetInlinedParent ();
+}
+
+Block *
+Block::GetInlinedParent ()
 {
     Block *parent_block = GetParent ();
     if (parent_block)
@@ -237,6 +245,20 @@ Block::GetInlinedParent () const
             return parent_block->GetInlinedParent();
     }
     return NULL;
+}
+
+
+bool
+Block::GetRangeContainingOffset (const addr_t offset, VMRange &range)
+{
+    uint32_t range_idx = VMRange::FindRangeIndexThatContainsValue (m_ranges, offset);
+    if (range_idx < m_ranges.size())
+    {
+        range = m_ranges[range_idx];
+        return true;
+    }
+    range.Clear();
+    return false;
 }
 
 
@@ -278,18 +300,6 @@ Block::AddRange(addr_t start_offset, addr_t end_offset)
     m_ranges.back().Reset(start_offset, end_offset);
 }
 
-InlineFunctionInfo*
-Block::InlinedFunctionInfo ()
-{
-    return m_inlineInfoSP.get();
-}
-
-const InlineFunctionInfo*
-Block::InlinedFunctionInfo () const
-{
-    return m_inlineInfoSP.get();
-}
-
 // Return the current number of bytes that this object occupies in memory
 size_t
 Block::MemorySize() const
@@ -297,18 +307,10 @@ Block::MemorySize() const
     size_t mem_size = sizeof(Block) + m_ranges.size() * sizeof(VMRange);
     if (m_inlineInfoSP.get())
         mem_size += m_inlineInfoSP->MemorySize();
-    if (m_variables.get())
-        mem_size += m_variables->MemorySize();
+    if (m_variable_list_sp.get())
+        mem_size += m_variable_list_sp->MemorySize();
     return mem_size;
 
-}
-
-Block *
-Block::GetFirstChild () const
-{
-    if (m_children.empty())
-        return NULL;
-    return m_children.front().get();
 }
 
 void
@@ -343,7 +345,7 @@ Block::GetVariableList (bool get_child_variables, bool can_create)
     VariableListSP variable_list_sp;
     if (m_parsed_block_variables == false)
     {
-        if (m_variables.get() == NULL && can_create)
+        if (m_variable_list_sp.get() == NULL && can_create)
         {
             m_parsed_block_variables = true;
             SymbolContext sc;
@@ -353,11 +355,11 @@ Block::GetVariableList (bool get_child_variables, bool can_create)
         }
     }
 
-    if (m_variables.get())
+    if (m_variable_list_sp.get())
     {
         variable_list_sp.reset(new VariableList());
         if (variable_list_sp.get())
-            variable_list_sp->AddVariables(m_variables.get());
+            variable_list_sp->AddVariables(m_variable_list_sp.get());
 
         if (get_child_variables)
         {
@@ -404,13 +406,6 @@ Block::AppendVariables
             num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, stop_if_block_is_inlined_function, variable_list);
     }
     return num_variables_added;
-}
-
-
-void
-Block::SetVariableList(VariableListSP& variables)
-{
-    m_variables = variables;
 }
 
 void

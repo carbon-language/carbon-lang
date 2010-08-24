@@ -131,10 +131,10 @@ SymbolContext::DumpStopContext
 
         if (show_inlined_frames && block)
         {
-            InlineFunctionInfo *inline_info = block->InlinedFunctionInfo();
+            const InlineFunctionInfo *inline_info = block->InlinedFunctionInfo();
             if (inline_info == NULL)
             {
-                Block *parent_inline_block = block->GetInlinedParent();
+                const Block *parent_inline_block = block->GetInlinedParent();
                 if (parent_inline_block)
                     inline_info = parent_inline_block->InlinedFunctionInfo();
             }

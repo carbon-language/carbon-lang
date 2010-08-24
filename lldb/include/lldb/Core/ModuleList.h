@@ -259,7 +259,7 @@ public:
                  ModuleList& matching_module_list) const;
 
     lldb::ModuleSP
-    FindModule (lldb_private::Module *module_ptr);
+    FindModule (const Module *module_ptr);
 
     lldb::ModuleSP
     FindFirstModuleForFileSpec (const FileSpec &file_spec,
@@ -355,7 +355,7 @@ public:
     GetSize () const;
 
     static const lldb::ModuleSP
-    GetModuleSP (lldb_private::Module *module_ptr);
+    GetModuleSP (const Module *module_ptr);
 
     static Error
     GetSharedModule (const FileSpec& file_spec,
