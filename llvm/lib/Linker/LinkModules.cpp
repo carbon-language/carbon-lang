@@ -338,9 +338,9 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 static void PrintMap(const std::map<const Value*, Value*> &M) {
   for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
-    dbgs() << " Fr: " << (void*)I->first << " ";
+    dbgs() << " Fr: " << (const void*)I->first << " ";
     I->first->dump();
-    dbgs() << " To: " << (void*)I->second << " ";
+    dbgs() << " To: " << (const void*)I->second << " ";
     I->second->dump();
     dbgs() << "\n";
   }
@@ -419,7 +419,7 @@ static Value *RemapOperand(const Value *In,
   dbgs() << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
 
-  dbgs() << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
+  dbgs() << "Couldn't remap value: " << (const void*)In << " " << *In << "\n";
   llvm_unreachable("Couldn't remap value!");
 #endif
   return 0;
