@@ -1295,7 +1295,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   // FIXME: Also add this declaration to the IdentifierResolver, but
   // make sure it is at the end of the chain to coincide with the
   // global scope.
-  ((DeclContext *)TUScope->getEntity())->addDecl(Alloc);
+  Context.getTranslationUnitDecl()->addDecl(Alloc);
 }
 
 bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,

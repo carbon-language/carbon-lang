@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"

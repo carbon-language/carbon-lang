@@ -14,6 +14,8 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/CXXFieldCollector.h"
+#include "clang/Sema/Scope.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -477,6 +479,17 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
 
 bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S) {
   return IdResolver.isDeclInScope(D, Ctx, Context, S);
+}
+
+Scope *Sema::getScopeForDeclContext(Scope *S, DeclContext *DC) {
+  DeclContext *TargetDC = DC->getPrimaryContext();
+  do {
+    if (DeclContext *ScopeDC = (DeclContext*) S->getEntity())
+      if (ScopeDC->getPrimaryContext() == TargetDC)
+        return S;
+  } while ((S = S->getParent()));
+
+  return 0;
 }
 
 static bool isOutOfScopePreviousDeclaration(NamedDecl *,

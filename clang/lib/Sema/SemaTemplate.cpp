@@ -11,6 +11,7 @@
 
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Sema/Template.h"
 #include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"

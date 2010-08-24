@@ -14,6 +14,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/Sema/Scope.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"

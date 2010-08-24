@@ -18,11 +18,9 @@
 #include "clang/Sema/Action.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
-#include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
-#include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
@@ -106,6 +104,7 @@ namespace clang {
   class VisibleDeclConsumer;
   class TargetAttributesSema;
   class ADLResult;
+  class CXXFieldCollector;
 
 /// \brief Retains information about a function, method, or block that is
 /// currently being parsed.
@@ -1105,16 +1104,7 @@ public:
 
   /// Finds the scope corresponding to the given decl context, if it
   /// happens to be an enclosing scope.  Otherwise return NULL.
-  Scope *getScopeForDeclContext(Scope *S, DeclContext *DC) {
-    DeclContext *TargetDC = DC->getPrimaryContext();
-    do {
-      if (DeclContext *ScopeDC = (DeclContext*) S->getEntity())
-        if (ScopeDC->getPrimaryContext() == TargetDC)
-          return S;
-    } while ((S = S->getParent()));
-
-    return NULL;
-  }
+  static Scope *getScopeForDeclContext(Scope *S, DeclContext *DC);
 
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
