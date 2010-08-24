@@ -932,25 +932,8 @@ public:
 
   /// \brief Diagnose any unused parameters in the given sequence of
   /// ParmVarDecl pointers.
-  template<typename InputIterator>
-  void DiagnoseUnusedParameters(InputIterator Param, InputIterator ParamEnd) {
-    if (Diags.getDiagnosticLevel(diag::warn_unused_parameter) ==
-          Diagnostic::Ignored)
-      return;
-
-    // Don't diagnose unused-parameter errors in template instantiations; we
-    // will already have done so in the template itself.
-    if (!ActiveTemplateInstantiations.empty())
-      return;
-
-    for (; Param != ParamEnd; ++Param) {
-      if (!(*Param)->isUsed() && (*Param)->getDeclName() &&
-          !(*Param)->template hasAttr<UnusedAttr>()) {
-        Diag((*Param)->getLocation(), diag::warn_unused_parameter)
-          << (*Param)->getDeclName();
-      }
-    }
-  }
+  void DiagnoseUnusedParameters(ParmVarDecl * const *Begin,
+                                ParmVarDecl * const *End);
 
   void DiagnoseInvalidJumps(Stmt *Body);
   virtual Decl *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
