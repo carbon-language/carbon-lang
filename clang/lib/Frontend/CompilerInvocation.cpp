@@ -1149,7 +1149,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
          ie = Args.filtered_end(); it != ie; ++it)
     Opts.AddPath((*it)->getValue(Args), frontend::Angled, true,
-                 /*IsFramework=*/ (*it)->getOption().matches(OPT_F));
+                 /*IsFramework=*/ (*it)->getOption().matches(OPT_F), true);
 
   // Add -iprefix/-iwith-prefix/-iwithprefixbefore options.
   llvm::StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
@@ -1161,21 +1161,22 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
       Prefix = A->getValue(Args);
     else if (A->getOption().matches(OPT_iwithprefix))
       Opts.AddPath(Prefix.str() + A->getValue(Args),
-                   frontend::System, false, false);
+                   frontend::System, false, false, true);
     else
       Opts.AddPath(Prefix.str() + A->getValue(Args),
-                   frontend::Angled, false, false);
+                   frontend::Angled, false, false, true);
   }
 
   for (arg_iterator it = Args.filtered_begin(OPT_idirafter),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(Args), frontend::After, true, false);
+    Opts.AddPath((*it)->getValue(Args), frontend::After, true, false, true);
   for (arg_iterator it = Args.filtered_begin(OPT_iquote),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(Args), frontend::Quoted, true, false);
+    Opts.AddPath((*it)->getValue(Args), frontend::Quoted, true, false, true);
   for (arg_iterator it = Args.filtered_begin(OPT_isystem, OPT_iwithsysroot),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(Args), frontend::System, true, false);
+    Opts.AddPath((*it)->getValue(Args), frontend::System, true, false,
+                 (*it)->getOption().matches(OPT_iwithsysroot));
 
   // FIXME: Need options for the various environment variables!
 }

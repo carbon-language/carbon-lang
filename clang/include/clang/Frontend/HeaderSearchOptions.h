@@ -35,11 +35,16 @@ public:
     frontend::IncludeDirGroup Group;
     unsigned IsUserSupplied : 1;
     unsigned IsFramework : 1;
+    
+    /// IsSysRootRelative - This is true if an absolute path should be treated
+    /// relative to the sysroot, or false if it should always be the absolute
+    /// path.
+    unsigned IsSysRootRelative : 1;
 
-    Entry(llvm::StringRef _Path, frontend::IncludeDirGroup _Group,
-          bool _IsUserSupplied, bool _IsFramework)
-      : Path(_Path), Group(_Group), IsUserSupplied(_IsUserSupplied),
-        IsFramework(_IsFramework) {}
+    Entry(llvm::StringRef path, frontend::IncludeDirGroup group,
+          bool isUserSupplied, bool isFramework, bool isSysRootRelative)
+      : Path(path), Group(group), IsUserSupplied(isUserSupplied),
+        IsFramework(isFramework), IsSysRootRelative(isSysRootRelative) {}
   };
 
   /// If non-empty, the directory to use as a "virtual system root" for include
@@ -85,8 +90,9 @@ public:
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
   void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,
-               bool IsUserSupplied, bool IsFramework) {
-    UserEntries.push_back(Entry(Path, Group, IsUserSupplied, IsFramework));
+               bool IsUserSupplied, bool IsFramework, bool IsSysRootRelative) {
+    UserEntries.push_back(Entry(Path, Group, IsUserSupplied, IsFramework,
+                                IsSysRootRelative));
   }
 };
 

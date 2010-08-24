@@ -912,7 +912,7 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   for (unsigned i = 0, e = HSOpts.UserEntries.size(); i != e; ++i) {
     const HeaderSearchOptions::Entry &E = HSOpts.UserEntries[i];
     Init.AddPath(E.Path, E.Group, false, E.IsUserSupplied, E.IsFramework,
-                 false);
+                 !E.IsSysRootRelative);
   }
 
   // Add entries from CPATH and friends.
