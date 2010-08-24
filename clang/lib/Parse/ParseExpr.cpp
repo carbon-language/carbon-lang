@@ -1166,7 +1166,8 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
       // sizeof/alignof or in C++. Therefore, the parenthesized expression is
       // the start of a unary-expression, but doesn't include any postfix 
       // pieces. Parse these now if present.
-      Operand = ParsePostfixExpressionSuffix(Operand.take());
+      if (!Operand.isInvalid())
+        Operand = ParsePostfixExpressionSuffix(Operand.get());
     }
   }
 
