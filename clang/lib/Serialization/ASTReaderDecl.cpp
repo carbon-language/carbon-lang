@@ -1424,6 +1424,20 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       }
     }
   }
+
+  // If this is a template, read additional specializations that may be in a
+  // different part of the chain.
+  if (isa<RedeclarableTemplateDecl>(D)) {
+    AdditionalTemplateSpecializationsMap::iterator F =
+        AdditionalTemplateSpecializationsPending.find(ID);
+    if (F != AdditionalTemplateSpecializationsPending.end()) {
+      for (AdditionalTemplateSpecializations::iterator I = F->second.begin(),
+                                                       E = F->second.end();
+           I != E; ++I)
+        GetDecl(*I);
+      AdditionalTemplateSpecializationsPending.erase(F);
+    }
+  }
   assert(Idx == Record.size());
 
   // If we have deserialized a declaration that has a definition the

@@ -372,6 +372,16 @@ private:
   /// most recent declarations in another AST file.
   FirstLatestDeclIDMap FirstLatestDeclIDs;
 
+  typedef llvm::SmallVector<serialization::DeclID, 4>
+      AdditionalTemplateSpecializations;
+  typedef llvm::DenseMap<serialization::DeclID,
+                         AdditionalTemplateSpecializations>
+      AdditionalTemplateSpecializationsMap;
+
+  /// \brief Additional specializations (including partial) of templates that
+  /// were introduced after the template was serialized.
+  AdditionalTemplateSpecializationsMap AdditionalTemplateSpecializationsPending;
+
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
                               const std::pair<uint64_t, uint64_t> &Offsets,

@@ -316,7 +316,11 @@ namespace clang {
       /// \brief Record code for an update to a decl context's lookup table.
       ///
       /// In practice, this should only be used for the TU and namespaces.
-      UPDATE_VISIBLE = 34
+      UPDATE_VISIBLE = 34,
+
+      /// \brief Record code for template specializations introduced after
+      /// serializations of the original template decl.
+      ADDITIONAL_TEMPLATE_SPECIALIZATIONS = 35
     };
 
     /// \brief Record types used within a source manager block.
