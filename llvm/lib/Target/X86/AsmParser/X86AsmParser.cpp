@@ -588,7 +588,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
         }
       }
     } else if (getLexer().isNot(AsmToken::RParen)) {
-      // Otherwise we have the unsupported form of a scale amount without an
+      // A scale amount without an index is ignored.
       // index.
       SMLoc Loc = Parser.getTok().getLoc();
 
@@ -596,8 +596,9 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
       if (getParser().ParseAbsoluteExpression(Value))
         return 0;
 
-      Error(Loc, "cannot have scale factor without index register");
-      return 0;
+      if (Value != 1)
+        Warning(Loc, "scale factor without index register is ignored");
+      Scale = 1;
     }
   }
 
