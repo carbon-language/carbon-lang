@@ -1127,6 +1127,30 @@ bool AsmParser::ParseAssignment(StringRef Name) {
 ///   ::= identifier
 ///   ::= string
 bool AsmParser::ParseIdentifier(StringRef &Res) {
+  // The assembler has relaxed rules for accepting identifiers, in particular we
+  // allow things like '.globl $foo', which would normally be separate
+  // tokens. At this level, we have already lexed so we cannot (currently)
+  // handle this as a context dependent token, instead we detect adjacent tokens
+  // and return the combined identifier.
+  if (Lexer.is(AsmToken::Dollar)) {
+    SMLoc DollarLoc = getLexer().getLoc();
+
+    // Consume the dollar sign, and check for a following identifier.
+    Lex();
+    if (Lexer.isNot(AsmToken::Identifier))
+      return true;
+
+    // We have a '$' followed by an identifier, make sure they are adjacent.
+    if (DollarLoc.getPointer() + 1 != getTok().getLoc().getPointer())
+      return true;
+
+    // Construct the joined identifier and consume the token.
+    Res = StringRef(DollarLoc.getPointer(),
+                    getTok().getIdentifier().size() + 1);
+    Lex();
+    return false;
+  }
+
   if (Lexer.isNot(AsmToken::Identifier) &&
       Lexer.isNot(AsmToken::String))
     return true;
