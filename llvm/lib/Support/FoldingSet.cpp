@@ -135,19 +135,19 @@ void FoldingSetNodeID::AddString(StringRef String) {
 /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to 
 /// lookup the node in the FoldingSetImpl.
 unsigned FoldingSetNodeID::ComputeHash() const {
-  return FoldingSetNodeIDRef(&Bits[0], Bits.size()).ComputeHash();
+  return FoldingSetNodeIDRef(Bits.data(), Bits.size()).ComputeHash();
 }
 
 /// operator== - Used to compare two nodes to each other.
 ///
 bool FoldingSetNodeID::operator==(const FoldingSetNodeID &RHS)const{
-  return *this == FoldingSetNodeIDRef(&RHS.Bits[0], RHS.Bits.size());
+  return *this == FoldingSetNodeIDRef(RHS.Bits.data(), RHS.Bits.size());
 }
 
 /// operator== - Used to compare two nodes to each other.
 ///
 bool FoldingSetNodeID::operator==(FoldingSetNodeIDRef RHS) const {
-  return FoldingSetNodeIDRef(&Bits[0], Bits.size()) == RHS;
+  return FoldingSetNodeIDRef(Bits.data(), Bits.size()) == RHS;
 }
 
 /// Intern - Copy this node's data to a memory region allocated from the
