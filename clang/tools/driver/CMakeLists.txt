@@ -1,6 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
 set( LLVM_USED_LIBS
+  clangFrontendTool
   clangFrontend
   clangDriver
   clangSerialization

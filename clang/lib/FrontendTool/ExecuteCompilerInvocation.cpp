@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/Utils.h"
+#include "clang/FrontendTool/Utils.h"
 #include "clang/Checker/FrontendActions.h"
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Driver/CC1Options.h"

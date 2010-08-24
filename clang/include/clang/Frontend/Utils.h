@@ -77,13 +77,6 @@ void AttachDependencyFileGen(Preprocessor &PP,
 /// a seekable stream.
 void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);
 
-
-/// ExecuteCompilerInvocation - Execute the given actions described by the
-/// compiler invocation object in the given compiler instance.
-///
-/// \return - True on success.
-bool ExecuteCompilerInvocation(CompilerInstance *Clang);
-
 }  // end namespace clang
 
 #endif

@@ -23,7 +23,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Frontend/Utils.h"
+#include "clang/FrontendTool/Utils.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"

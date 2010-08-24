@@ -12,7 +12,6 @@ add_clang_library(clangFrontend
   DependencyFile.cpp
   DiagChecker.cpp
   DocumentXML.cpp
-  ExecuteCompilerInvocation.cpp
   FrontendAction.cpp
   FrontendActions.cpp
   FrontendOptions.cpp
