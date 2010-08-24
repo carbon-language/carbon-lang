@@ -57,6 +57,6 @@ void f4(const char* str) {
 // CHECK-CC5: NotImplemented:{TypedText volatile} (65)
 
 // RUN: c-index-test -code-completion-at=%s:19:3 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC6 %s
-// CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder char const *}{Placeholder , ...}{Text , NULL}{RightParen )} (50)
+// CHECK-CC6: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder char const *}{Placeholder , ...}{Text , NULL}{RightParen )} (45)
 // CHECK-CC6: NotImplemented:{TypedText void} (65)
 // CHECK-CC6: NotImplemented:{TypedText volatile} (65)

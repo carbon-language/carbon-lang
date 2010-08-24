@@ -23,6 +23,6 @@ void f(int x) {
 // CHECK-DIAG: preamble.h:4:7:{4:9-4:13}: warning: incompatible pointer types assigning to 'int *' from 'float *'
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:6:1 -I %S/Inputs -include %t %s 2> %t.stderr.txt | FileCheck -check-prefix CHECK-CC %s
 // CHECK-CC: FunctionDecl:{ResultType int}{TypedText bar}{LeftParen (}{Placeholder int i}{RightParen )} (50)
-// CHECK-CC: FunctionDecl:{ResultType void}{TypedText f}{LeftParen (}{Placeholder int x}{RightParen )} (50)
+// CHECK-CC: FunctionDecl:{ResultType void}{TypedText f}{LeftParen (}{Placeholder int x}{RightParen )} (45)
 // CHECK-CC: FunctionDecl:{ResultType int}{TypedText foo}{LeftParen (}{Placeholder int}{RightParen )} (50)
 // CHECK-CC: FunctionDecl:{ResultType int}{TypedText wibble}{LeftParen (}{Placeholder int}{RightParen )} (50)

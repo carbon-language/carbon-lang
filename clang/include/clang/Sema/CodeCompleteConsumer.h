@@ -59,7 +59,12 @@ enum {
 /// based on the context of the result.
 enum {
   /// \brief The result is in a base class.
-  CCD_InBaseClass = 2
+  CCD_InBaseClass = 2,
+  /// \brief The result is a type match against void.
+  ///
+  /// Since everything converts to "void", we don't give as drastic an 
+  /// adjustment for matching void.
+  CCD_VoidMatch = -5
 };
 
 /// \brief Priority value factors by which we will divide or multiply the
