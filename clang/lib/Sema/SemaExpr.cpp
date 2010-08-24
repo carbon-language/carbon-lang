@@ -6278,7 +6278,10 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
     if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
-      if (vd->getStorageClass() == VarDecl::Register) {
+      // in C++ it is not error to take address of a register
+      // variable (c++03 7.1.1P3)
+      if (vd->getStorageClass() == VarDecl::Register &&
+          !getLangOptions().CPlusPlus) {
         Diag(OpLoc, diag::err_typecheck_address_of)
           << "register variable" << op->getSourceRange();
         return QualType();
