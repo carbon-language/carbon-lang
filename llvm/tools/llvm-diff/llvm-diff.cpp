@@ -75,7 +75,6 @@ struct DiffContext {
 };
 
 void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering) {
-  unsigned BBN = 0;
   unsigned IN = 0;
 
   // Arguments get the first numbers.
@@ -86,9 +85,8 @@ void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering) {
 
   // Walk the basic blocks in order.
   for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI) {
-    // Basic blocks have their own 'namespace'.
     if (!FI->hasName())
-      Numbering[&*FI] = BBN++;
+      Numbering[&*FI] = IN++;
 
     // Walk the instructions in order.
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ++BI)

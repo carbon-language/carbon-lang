@@ -27,6 +27,7 @@ add_subdirectory(llvm-link)
 add_subdirectory(lli)
 
 add_subdirectory(llvm-extract)
+add_subdirectory(llvm-diff)
 
 add_subdirectory(bugpoint)
 add_subdirectory(bugpoint-passes)

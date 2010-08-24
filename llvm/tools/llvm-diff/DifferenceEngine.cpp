@@ -590,6 +590,39 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
     unify(&*LI, &*RI);
     ++LI, ++RI;
   }
+
+  // If the terminators have different kinds, but one is an invoke and the
+  // other is an unconditional branch immediately following a call, unify
+  // the results and the destinations.
+  TerminatorInst *LTerm = LStart->getParent()->getTerminator();
+  TerminatorInst *RTerm = RStart->getParent()->getTerminator();
+  if (isa<BranchInst>(LTerm) && isa<InvokeInst>(RTerm)) {
+    if (cast<BranchInst>(LTerm)->isConditional()) return;
+    BasicBlock::iterator I = LTerm;
+    if (I == LStart->getParent()->begin()) return;
+    --I;
+    if (!isa<CallInst>(*I)) return;
+    CallInst *LCall = cast<CallInst>(&*I);
+    InvokeInst *RInvoke = cast<InvokeInst>(RTerm);
+    if (!equivalentAsOperands(LCall->getCalledValue(), RInvoke->getCalledValue()))
+      return;
+    if (!LCall->use_empty())
+      Values[LCall] = RInvoke;
+    tryUnify(LTerm->getSuccessor(0), RInvoke->getNormalDest());
+  } else if (isa<InvokeInst>(LTerm) && isa<BranchInst>(RTerm)) {
+    if (cast<BranchInst>(RTerm)->isConditional()) return;
+    BasicBlock::iterator I = RTerm;
+    if (I == RStart->getParent()->begin()) return;
+    --I;
+    if (!isa<CallInst>(*I)) return;
+    CallInst *RCall = cast<CallInst>(I);
+    InvokeInst *LInvoke = cast<InvokeInst>(LTerm);
+    if (!equivalentAsOperands(LInvoke->getCalledValue(), RCall->getCalledValue()))
+      return;
+    if (!LInvoke->use_empty())
+      Values[LInvoke] = RCall;
+    tryUnify(LInvoke->getNormalDest(), RTerm->getSuccessor(0));
+  }
 }
 
 }
