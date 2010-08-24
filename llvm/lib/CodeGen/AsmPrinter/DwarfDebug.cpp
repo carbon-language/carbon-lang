@@ -388,7 +388,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
-  DwarfDebugLineSectionSym = CurrentLineSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
   {
@@ -1808,9 +1807,8 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   // simplifies debug range entries.
   addUInt(Die, dwarf::DW_AT_entry_pc, dwarf::DW_FORM_addr, 0);
   // DW_AT_stmt_list is a offset of line number information for this
-  // compile unit in debug_line section. This offset is calculated
-  // during endMoudle().
-  addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
+  // compile unit in debug_line section.
+  addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
 
   if (!Dir.empty())
     addString(Die, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string, Dir);
@@ -2137,14 +2135,14 @@ void DwarfDebug::endModule() {
   // Compute DIE offsets and sizes.
   computeSizeAndOffsets();
 
-  // Emit source line correspondence into a debug line section.
-  emitDebugLines();
-
   // Emit all the DIEs into a debug info section
   emitDebugInfo();
 
   // Corresponding abbreviations into a abbrev section.
   emitAbbreviations();
+
+  // Emit source line correspondence into a debug line section.
+  emitDebugLines();
 
   // Emit info into a debug pubnames section.
   emitDebugPubNames();
@@ -3064,8 +3062,7 @@ void DwarfDebug::EmitSectionLabels() {
   if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
     EmitSectionSym(Asm, MacroInfo);
 
-  DwarfDebugLineSectionSym =
-    EmitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
+  EmitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   EmitSectionSym(Asm, TLOF.getDwarfLocSection());
   EmitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
   EmitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
@@ -3126,11 +3123,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
                                      V->getValue(),
                                      DwarfDebugRangeSectionSym,
                                      4);
-      break;
-    }
-    case dwarf::DW_AT_stmt_list: {
-      Asm->EmitLabelDifference(CurrentLineSectionSym,
-                               DwarfDebugLineSectionSym, 4);
       break;
     }
     case dwarf::DW_AT_location: {
@@ -3278,8 +3270,6 @@ void DwarfDebug::emitDebugLines() {
                             Asm->getObjFileLowering().getDwarfLineSection());
 
   // Construct the section header.
-  CurrentLineSectionSym = Asm->GetTempSymbol("section_line_begin");
-  Asm->OutStreamer.EmitLabel(CurrentLineSectionSym);
   Asm->OutStreamer.AddComment("Length of Source Line Info");
   Asm->EmitLabelDifference(Asm->GetTempSymbol("line_end"),
                            Asm->GetTempSymbol("line_begin"), 4);
