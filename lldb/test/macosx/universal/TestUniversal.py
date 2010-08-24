@@ -9,7 +9,6 @@ class TestUniversal(TestBase):
 
     mydir = "macosx/universal"
 
-    @unittest2.expectedFailure
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
 
@@ -38,9 +37,7 @@ class TestUniversal(TestBase):
         self.expect("breakpoint set -f main.c -l 5", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.c', line = 5, locations = 1")
 
-        # We should be able to launch the i386 executable.
-        # Process launch for i386 architecture currently fails.
-        # rdar://problem/8349784
+        # We should be able to launch the i386 executable as well.
         self.runCmd("run", RUN_STOPPED)
         self.runCmd("continue")
 
