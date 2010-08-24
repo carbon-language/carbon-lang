@@ -521,7 +521,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     if (getLangOptions().ObjCNonFragileABI2) {
       // Diagnose if an ivar was lazily synthesdized due to a previous
       // use and if 1) property is @dynamic or 2) property is synthesized
-      // but it requires a dirreferently named ivar.
+      // but it requires an ivar of different name.
       ObjCInterfaceDecl *ClassDeclared;
       ObjCIvarDecl *Ivar = 0;
       if (!Synthesize)
@@ -530,7 +530,9 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         if (PropertyIvar && PropertyIvar != PropertyId)
           Ivar = IDecl->lookupInstanceVariable(PropertyId, ClassDeclared);
       }
-      if (Ivar && Ivar->getSynthesize()) {
+      // Issue diagnostics only if Ivar belongs to current class.
+      if (Ivar && Ivar->getSynthesize() && 
+          IC->getClassInterface() == ClassDeclared) {
         Diag(Ivar->getLocation(), diag::err_undeclared_var_use) 
         << PropertyId;
         Ivar->setInvalidDecl();
