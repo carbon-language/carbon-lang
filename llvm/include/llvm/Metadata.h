@@ -38,7 +38,6 @@ class MDString : public Value {
   MDString(const MDString &);            // DO NOT IMPLEMENT
 
   StringRef Str;
-protected:
   explicit MDString(LLVMContext &C, StringRef S);
 
 public:
@@ -111,9 +110,8 @@ class MDNode : public Value, public FoldingSetNode {
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
 
-protected:
-  explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-                  bool isFunctionLocal);
+  MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
+         bool isFunctionLocal);
   
   static MDNode *getMDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                            FunctionLocalness FL, bool Insert = true);
@@ -201,7 +199,6 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
 
   void setParent(Module *M) { Parent = M; }
 
-protected:
   explicit NamedMDNode(const Twine &N);
 
 public:
