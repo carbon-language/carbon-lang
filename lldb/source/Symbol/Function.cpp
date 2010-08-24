@@ -148,6 +148,16 @@ InlineFunctionInfo::DumpStopContext (Stream *s) const
         s->PutCString (m_name.AsCString());
 }
 
+
+const ConstString &
+InlineFunctionInfo::GetName () const
+{
+    if (m_mangled)
+        return m_mangled.GetName();
+    return m_name;
+}
+
+
 Declaration &
 InlineFunctionInfo::GetCallSite ()
 {

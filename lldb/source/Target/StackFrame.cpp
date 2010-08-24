@@ -35,38 +35,118 @@ using namespace lldb_private;
 #define FRAME_IS_OBSOLETE   (GOT_FRAME_BASE << 1)
 #define RESOLVED_VARIABLES  (FRAME_IS_OBSOLETE << 1)
 
-StackFrame::StackFrame (lldb::user_id_t frame_idx, Thread &thread, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr) :
-    UserID (frame_idx),
+StackFrame::StackFrame 
+(
+    lldb::user_id_t frame_idx, 
+    lldb::user_id_t concrete_frame_index, 
+    Thread &thread, 
+    lldb::addr_t cfa, 
+    uint32_t inline_height, 
+    lldb::addr_t pc, 
+    const SymbolContext *sc_ptr
+) :
+    m_frame_index (frame_idx),
+    m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
-    m_reg_context_sp(),
-    m_id(cfa),
-    m_pc(NULL, pc),
-    m_sc(),
-    m_flags(),
-    m_frame_base(),
-    m_frame_base_error(),
+    m_reg_context_sp (),
+    m_id (cfa, inline_height),
+    m_pc (NULL, pc),
+    m_sc (),
+    m_flags (),
+    m_frame_base (),
+    m_frame_base_error (),
     m_variable_list_sp (),
     m_value_object_list ()
 {
     if (sc_ptr != NULL)
+    {
         m_sc = *sc_ptr;
+        m_flags.Set(m_sc.GetResolvedMask ());
+    }
 }
 
-StackFrame::StackFrame (lldb::user_id_t frame_idx, Thread &thread, RegisterContextSP &reg_context_sp, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr) :
-    UserID (frame_idx),
+StackFrame::StackFrame 
+(
+    lldb::user_id_t frame_idx, 
+    lldb::user_id_t concrete_frame_index, 
+    Thread &thread, 
+    const RegisterContextSP &reg_context_sp, 
+    lldb::addr_t cfa, 
+    uint32_t inline_height, 
+    lldb::addr_t pc, 
+    const SymbolContext *sc_ptr
+) :
+    m_frame_index (frame_idx),
+    m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
-    m_reg_context_sp(reg_context_sp),
-    m_id(cfa),
-    m_pc(NULL, pc),
-    m_sc(),
-    m_flags(),
-    m_frame_base(),
-    m_frame_base_error(),
+    m_reg_context_sp (reg_context_sp),
+    m_id (cfa, inline_height),
+    m_pc (NULL, pc),
+    m_sc (),
+    m_flags (),
+    m_frame_base (),
+    m_frame_base_error (),
     m_variable_list_sp (),
     m_value_object_list ()
 {
     if (sc_ptr != NULL)
+    {
         m_sc = *sc_ptr;
+        m_flags.Set(m_sc.GetResolvedMask ());
+    }
+    
+    if (reg_context_sp && !m_sc.target_sp)
+    {
+        m_sc.target_sp = reg_context_sp->GetThread().GetProcess().GetTarget().GetSP();
+        m_flags.Set (eSymbolContextTarget);
+    }
+}
+
+StackFrame::StackFrame 
+(
+    lldb::user_id_t frame_idx, 
+    lldb::user_id_t concrete_frame_index, 
+    Thread &thread, 
+    const RegisterContextSP &reg_context_sp, 
+    lldb::addr_t cfa, 
+    uint32_t inline_height, 
+    const Address& pc_addr,
+    const SymbolContext *sc_ptr
+) :
+    m_frame_index (frame_idx),
+    m_concrete_frame_index (concrete_frame_index),    
+    m_thread (thread),
+    m_reg_context_sp (reg_context_sp),
+    m_id (cfa, inline_height),
+    m_pc (pc_addr),
+    m_sc (),
+    m_flags (),
+    m_frame_base (),
+    m_frame_base_error (),
+    m_variable_list_sp (),
+    m_value_object_list ()
+{
+    if (sc_ptr != NULL)
+    {
+        m_sc = *sc_ptr;
+        m_flags.Set(m_sc.GetResolvedMask ());
+    }
+    
+    if (m_sc.target_sp.get() == NULL && reg_context_sp)
+    {
+        m_sc.target_sp = reg_context_sp->GetThread().GetProcess().GetTarget().GetSP();
+        m_flags.Set (eSymbolContextTarget);
+    }
+    
+    if (m_sc.module_sp.get() == NULL && pc_addr.GetSection())
+    {
+        Module *pc_module = pc_addr.GetSection()->GetModule();
+        if (pc_module)
+        {
+            m_sc.module_sp = pc_module->GetSP();
+            m_flags.Set (eSymbolContextModule);
+        }
+    }
 }
 
 
@@ -213,7 +293,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
         // instruction following the function call instruction...
         
         Address lookup_addr(GetPC());
-        if (GetID() > 0 && lookup_addr.IsValid())
+        if (m_frame_index > 0 && lookup_addr.IsValid())
         {
             addr_t offset = lookup_addr.GetOffset();
             if (offset > 0)
@@ -225,11 +305,65 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
             // We have something in our stack frame symbol context, lets check
             // if we haven't already tried to lookup one of those things. If we
             // haven't then we will do the query.
-            if ((m_sc.comp_unit == NULL     && (resolve_scope & eSymbolContextCompUnit ) && m_flags.IsClear(eSymbolContextCompUnit   )) ||
-                (m_sc.function  == NULL     && (resolve_scope & eSymbolContextFunction ) && m_flags.IsClear(eSymbolContextFunction   )) ||
-                (m_sc.block     == NULL     && (resolve_scope & eSymbolContextBlock    ) && m_flags.IsClear(eSymbolContextBlock      )) ||
-                (m_sc.symbol    == NULL     && (resolve_scope & eSymbolContextSymbol   ) && m_flags.IsClear(eSymbolContextSymbol     )) ||
-                (!m_sc.line_entry.IsValid() && (resolve_scope & eSymbolContextLineEntry) && m_flags.IsClear(eSymbolContextLineEntry  )))
+            
+            uint32_t actual_resolve_scope = 0;
+            
+            if (resolve_scope & eSymbolContextCompUnit)
+            {
+                if (m_flags.IsClear (eSymbolContextCompUnit))
+                {
+                    if (m_sc.comp_unit)
+                        m_flags.Set (eSymbolContextCompUnit);
+                    else
+                        actual_resolve_scope |= eSymbolContextCompUnit;
+                }
+            }
+
+            if (resolve_scope & eSymbolContextFunction)
+            {
+                if (m_flags.IsClear (eSymbolContextFunction))
+                {
+                    if (m_sc.function)
+                        m_flags.Set (eSymbolContextFunction);
+                    else
+                        actual_resolve_scope |= eSymbolContextFunction;
+                }
+            }
+
+            if (resolve_scope & eSymbolContextBlock)
+            {
+                if (m_flags.IsClear (eSymbolContextBlock))
+                {
+                    if (m_sc.block)
+                        m_flags.Set (eSymbolContextBlock);
+                    else
+                        actual_resolve_scope |= eSymbolContextBlock;
+                }
+            }
+
+            if (resolve_scope & eSymbolContextSymbol)
+            {
+                if (m_flags.IsClear (eSymbolContextSymbol))
+                {
+                    if (m_sc.symbol)
+                        m_flags.Set (eSymbolContextSymbol);
+                    else
+                        actual_resolve_scope |= eSymbolContextSymbol;
+                }
+            }
+
+            if (resolve_scope & eSymbolContextLineEntry)
+            {
+                if (m_flags.IsClear (eSymbolContextLineEntry))
+                {
+                    if (m_sc.line_entry.IsValid())
+                        m_flags.Set (eSymbolContextLineEntry);
+                    else
+                        actual_resolve_scope |= eSymbolContextLineEntry;
+                }
+            }
+            
+            if (actual_resolve_scope)
             {
                 // We might be resolving less information than what is already
                 // in our current symbol context so resolve into a temporary 
@@ -237,7 +371,10 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
                 // already found in "m_sc"
                 SymbolContext sc;
                 // Set flags that indicate what we have tried to resolve
-                const uint32_t resolved = m_sc.module_sp->ResolveSymbolContextForAddress (lookup_addr, resolve_scope, sc);
+                const uint32_t resolved = m_sc.module_sp->ResolveSymbolContextForAddress (lookup_addr, actual_resolve_scope, sc);
+                // Only replace what we didn't already have as we may have 
+                // information for an inlined function scope that won't match
+                // what a standard lookup by address would match
                 if (resolved & eSymbolContextCompUnit)  m_sc.comp_unit  = sc.comp_unit;
                 if (resolved & eSymbolContextFunction)  m_sc.function   = sc.function;
                 if (resolved & eSymbolContextBlock)     m_sc.block      = sc.block;
@@ -387,10 +524,13 @@ StackFrame::Dump (Stream *strm, bool show_frame_index)
         return;
 
     if (show_frame_index)
-        strm->Printf("frame #%u: ", GetID());
+        strm->Printf("frame #%u: ", m_frame_index);
     strm->Printf("pc = 0x%0*llx", m_thread.GetProcess().GetAddressByteSize() * 2, GetRegisterContext()->GetPC());
     SymbolContext sc (GetSymbolContext(eSymbolContextEverything));
     strm->PutCString(", where = ");
-    sc.DumpStopContext(strm, &m_thread.GetProcess(), GetPC());
+    // TODO: need to get the
+    const bool show_module = true;
+    const bool show_inline = true;
+    sc.DumpStopContext(strm, &m_thread.GetProcess(), GetPC(), show_module, show_inline);
 }
 

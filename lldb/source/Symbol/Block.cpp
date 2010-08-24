@@ -225,6 +225,52 @@ Block::GetParent () const
     return NULL;
 }
 
+Block *
+Block::GetInlinedParent () const
+{
+    Block *parent_block = GetParent ();
+    if (parent_block)
+    {
+        if (parent_block->InlinedFunctionInfo())
+            return parent_block;
+        else
+            return parent_block->GetInlinedParent();
+    }
+    return NULL;
+}
+
+
+bool
+Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
+{
+    SymbolContext sc;
+    CalculateSymbolContext(&sc);
+    if (sc.function)
+    {
+        const AddressRange &func_range = sc.function->GetAddressRange();
+        if (addr.GetSection() == func_range.GetBaseAddress().GetSection())
+        {
+            const addr_t addr_offset = addr.GetOffset();
+            const addr_t func_offset = func_range.GetBaseAddress().GetOffset();
+            if (addr_offset >= func_offset && addr_offset < func_offset + func_range.GetByteSize())
+            {
+                addr_t offset = addr_offset - func_offset;
+                
+                uint32_t range_idx = VMRange::FindRangeIndexThatContainsValue (m_ranges, offset);
+                if (range_idx < m_ranges.size())
+                {
+                    range.GetBaseAddress() = func_range.GetBaseAddress();
+                    range.GetBaseAddress().SetOffset(func_offset + m_ranges[range_idx].GetBaseAddress());
+                    range.SetByteSize(m_ranges[range_idx].GetByteSize());
+                    return true;
+                }
+            }
+        }
+    }
+    range.Clear();
+    return false;
+}
+
 void
 Block::AddRange(addr_t start_offset, addr_t end_offset)
 {
@@ -330,22 +376,32 @@ Block::GetVariableList (bool get_child_variables, bool can_create)
 }
 
 uint32_t
-Block::AppendVariables (bool can_create, bool get_parent_variables, VariableList *variable_list)
+Block::AppendVariables 
+(
+    bool can_create, 
+    bool get_parent_variables, 
+    bool stop_if_block_is_inlined_function,
+    VariableList *variable_list
+)
 {
     uint32_t num_variables_added = 0;
     VariableListSP variable_list_sp(GetVariableList(false, can_create));
 
+    bool is_inlined_function = InlinedFunctionInfo() != NULL;
     if (variable_list_sp.get())
     {
         num_variables_added = variable_list_sp->GetSize();
         variable_list->AddVariables(variable_list_sp.get());
     }
-
+    
     if (get_parent_variables)
     {
+        if (stop_if_block_is_inlined_function && is_inlined_function)
+            return num_variables_added;
+            
         Block* parent_block = GetParent();
         if (parent_block)
-            num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, variable_list);
+            num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, stop_if_block_is_inlined_function, variable_list);
     }
     return num_variables_added;
 }

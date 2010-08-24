@@ -238,7 +238,7 @@ Disassembler::Disassemble
                                         if (offset != 0)
                                             strm.EOL();
 
-                                        sc.DumpStopContext(&strm, process, addr);
+                                        sc.DumpStopContext(&strm, process, addr, true, false);
 
                                         if (sc.comp_unit && sc.line_entry.IsValid())
                                         {

@@ -791,7 +791,7 @@ DWARFExpression::Evaluate
             }
         }
         if (error_ptr)
-            error_ptr->SetErrorStringWithFormat("Out of scope.\n", pc);
+            error_ptr->SetErrorStringWithFormat("Out of scope.");
         return false;
     }
 
@@ -995,7 +995,7 @@ DWARFExpression::Evaluate
         //  1 - uint8_t that specifies the size of the data to dereference.
         // DESCRIPTION: Behaves like the DW_OP_xderef operation: the entry at
         // the top of the stack is treated as an address. The second stack
-        // entry is treated as an “address space identifier” for those
+        // entry is treated as an "address space identifier" for those
         // architectures that support multiple address spaces. The top two
         // stack elements are popped, a data item is retrieved through an
         // implementation-defined address calculation and pushed as the new

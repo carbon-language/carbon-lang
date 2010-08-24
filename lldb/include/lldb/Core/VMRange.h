@@ -148,6 +148,11 @@ public:
     static bool
     ContainsRange(const VMRange::collection& coll, const VMRange& range);
 
+    // Returns a valid index into coll when a match is found, else UINT32_MAX
+    // is returned
+    static uint32_t
+    FindRangeIndexThatContainsValue (const VMRange::collection& coll, lldb::addr_t value);
+
 protected:
     lldb::addr_t m_base_addr;
     lldb::addr_t m_byte_size;

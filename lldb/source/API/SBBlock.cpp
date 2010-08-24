@@ -39,7 +39,8 @@ SBBlock::AppendVariables (bool can_create, bool get_parent_variables, lldb_priva
 {
     if (IsValid())
     {
-        m_opaque_ptr->AppendVariables (can_create, get_parent_variables, var_list);
+        bool show_inline = true;
+        m_opaque_ptr->AppendVariables (can_create, get_parent_variables, show_inline, var_list);
     }
 }
 

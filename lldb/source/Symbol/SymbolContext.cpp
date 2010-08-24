@@ -114,7 +114,8 @@ SymbolContext::DumpStopContext
     Stream *s,
     ExecutionContextScope *exe_scope,
     const Address &addr,
-    bool show_module
+    bool show_module,
+    bool show_inlined_frames
 ) const
 {
     if (show_module && module_sp)
@@ -127,6 +128,30 @@ SymbolContext::DumpStopContext
         if (function->GetMangled().GetName())
             function->GetMangled().GetName().Dump(s);
 
+
+        if (show_inlined_frames && block)
+        {
+            InlineFunctionInfo *inline_info = block->InlinedFunctionInfo();
+            if (inline_info == NULL)
+            {
+                Block *parent_inline_block = block->GetInlinedParent();
+                if (parent_inline_block)
+                    inline_info = parent_inline_block->InlinedFunctionInfo();
+            }
+
+            if (inline_info)
+            {
+                s->PutCString(" [inlined] ");
+                inline_info->GetName().Dump(s);
+                
+                if (line_entry.IsValid())
+                {
+                    s->PutCString(" at ");
+                    line_entry.DumpStopContext(s);
+                }
+                return;
+            }
+        }
         const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
         if (function_offset)
             s->Printf(" + %llu", function_offset);
@@ -237,6 +262,19 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *
     }
 }
 
+uint32_t
+SymbolContext::GetResolvedMask () const
+{
+    uint32_t resolved_mask = 0;
+    if (target_sp)              resolved_mask |= eSymbolContextTarget;
+    if (module_sp)              resolved_mask |= eSymbolContextModule;
+    if (comp_unit)              resolved_mask |= eSymbolContextCompUnit;
+    if (function)               resolved_mask |= eSymbolContextFunction;
+    if (block)                  resolved_mask |= eSymbolContextBlock;
+    if (line_entry.IsValid())   resolved_mask |= eSymbolContextLineEntry;
+    if (symbol)                 resolved_mask |= eSymbolContextSymbol;
+    return resolved_mask;
+}
 
 
 void

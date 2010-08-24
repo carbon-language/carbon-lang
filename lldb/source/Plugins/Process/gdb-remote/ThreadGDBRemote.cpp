@@ -177,11 +177,11 @@ ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
     uint32_t frame_idx = 0;
     
     if (frame)
-        frame_idx = frame->GetID();
+        frame_idx = frame->GetFrameIndex ();
 
     if (frame_idx == 0)
         return new GDBRemoteRegisterContext (*this, frame, GetGDBProcess().m_register_info, read_all_registers_at_once);
-    else if (m_unwinder_ap.get() && frame_idx < m_unwinder_ap->GetFrameCount())
+    else if (m_unwinder_ap.get())
         return m_unwinder_ap->CreateRegisterContextForFrame (frame);
     return NULL;
 }

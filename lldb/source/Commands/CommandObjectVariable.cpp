@@ -255,7 +255,7 @@ public:
                 s.Printf ("Variable{0x%8.8x}: ", variable->GetID());
 
             if (!expr_success)
-                s.Printf ("%s = ERROR (%s)", variable->GetName().AsCString(NULL), expr_error.AsCString());
+                s.Printf ("%s = ERROR: %s\n", variable->GetName().AsCString(NULL), expr_error.AsCString());
             else
             {
                 Value::ValueType expr_value_type = expr_result.GetValueType();
@@ -318,8 +318,8 @@ public:
                     }
                     break;
                 }
+                s.EOL();
             }
-            s.EOL();
         }
     }
 
@@ -484,9 +484,10 @@ public:
         {
             VariableList variable_list;
 
+            bool show_inlined = true;   // TODO: Get this from the process
             SymbolContext frame_sc = exe_ctx.frame->GetSymbolContext (eSymbolContextEverything);
             if (exe_ctx.frame && frame_sc.block)
-                frame_sc.block->AppendVariables(true, true, &variable_list);
+                frame_sc.block->AppendVariables(true, true, show_inlined, &variable_list);
             VariableSP var_sp;
             ValueObjectSP valobj_sp;
             //ValueObjectList &valobj_list = exe_ctx.frame->GetValueObjectList();

@@ -21,22 +21,25 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 StackID::StackID() :
     m_start_address(),
-    m_cfa()
+    m_cfa (0),
+    m_inline_height (0)
 {
 }
 
 //----------------------------------------------------------------------
 // StackID constructor with args
 //----------------------------------------------------------------------
-StackID::StackID (const Address& start_address, lldb::addr_t cfa) :
+StackID::StackID (const Address& start_address, lldb::addr_t cfa, uint32_t inline_id) :
     m_start_address (start_address),
-    m_cfa (cfa)
+    m_cfa (cfa),
+    m_inline_height (inline_id)
 {
 }
 
-StackID::StackID (lldb::addr_t cfa) :
+StackID::StackID (lldb::addr_t cfa, uint32_t inline_id) :
     m_start_address (),
-    m_cfa (cfa)
+    m_cfa (cfa),
+    m_inline_height (inline_id)
 {
 }
 
@@ -45,7 +48,8 @@ StackID::StackID (lldb::addr_t cfa) :
 //----------------------------------------------------------------------
 StackID::StackID(const StackID& rhs) :
     m_start_address (rhs.m_start_address),
-    m_cfa (rhs.m_cfa)
+    m_cfa (rhs.m_cfa),
+    m_inline_height (rhs.m_inline_height)
 {
 }
 
@@ -59,6 +63,7 @@ StackID::operator=(const StackID& rhs)
     {
         m_start_address = rhs.m_start_address;
         m_cfa = rhs.m_cfa;
+        m_inline_height = rhs.m_inline_height;
     }
     return *this;
 }
@@ -70,36 +75,20 @@ StackID::~StackID()
 {
 }
 
-
-const Address&
-StackID::GetStartAddress() const
-{
-    return m_start_address;
-}
-
-void
-StackID::SetStartAddress(const Address& start_address)
-{
-    m_start_address = start_address;
-}
-
-lldb::addr_t
-StackID::GetCallFrameAddress() const
-{
-    return m_cfa;
-}
-
-
 bool
 lldb_private::operator== (const StackID& lhs, const StackID& rhs)
 {
-    return lhs.GetCallFrameAddress() == rhs.GetCallFrameAddress() && lhs.GetStartAddress() == rhs.GetStartAddress();
+    return  lhs.GetCallFrameAddress()   == rhs.GetCallFrameAddress() && 
+            lhs.GetInlineHeight()       == rhs.GetInlineHeight() &&
+            lhs.GetStartAddress()       == rhs.GetStartAddress();
 }
 
 bool
 lldb_private::operator!= (const StackID& lhs, const StackID& rhs)
 {
-    return lhs.GetCallFrameAddress() != rhs.GetCallFrameAddress() || lhs.GetStartAddress() != rhs.GetStartAddress();
+    return lhs.GetCallFrameAddress() != rhs.GetCallFrameAddress() || 
+           lhs.GetInlineHeight()     != rhs.GetInlineHeight() || 
+           lhs.GetStartAddress()     != rhs.GetStartAddress();
 }
 
 bool

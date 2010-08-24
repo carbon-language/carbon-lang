@@ -241,6 +241,9 @@ public:
     void
     DumpStopContext (Stream *s) const;
 
+    const ConstString &
+    GetName () const;
+
     //------------------------------------------------------------------
     /// Get accessor for the call site declaration information.
     ///

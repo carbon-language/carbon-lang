@@ -163,7 +163,8 @@ public:
     DumpStopContext (Stream *s,
                      ExecutionContextScope *exe_scope,
                      const Address &so_addr,
-                     bool show_module = true) const;
+                     bool show_module,
+                     bool show_inlined_frames) const;
 
     //------------------------------------------------------------------
     /// Get the address range contained within a symbol context.
@@ -190,6 +191,10 @@ public:
                    lldb::DescriptionLevel level, 
                    Process *process) const;
     
+    uint32_t
+    GetResolvedMask () const;
+
+
     //------------------------------------------------------------------
     /// Find a function matching the given name, working out from this
     /// symbol context.

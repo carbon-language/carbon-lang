@@ -156,16 +156,22 @@ Target::CreateBreakpoint (const FileSpec *containingModule, const FileSpec &file
 
 
 BreakpointSP
-Target::CreateBreakpoint (lldb::addr_t load_addr, bool internal)
+Target::CreateBreakpoint (lldb::addr_t addr, bool internal)
 {
-    BreakpointSP bp_sp;
     Address so_addr;
     // Attempt to resolve our load address if possible, though it is ok if
     // it doesn't resolve to section/offset.
 
     Process *process = GetProcessSP().get();
-    if (process && process->ResolveLoadAddress(load_addr, so_addr))
-        bp_sp = CreateBreakpoint(so_addr, internal);
+    // Try and resolve as a load address if possible
+    if (process)
+        process->ResolveLoadAddress(addr, so_addr);
+    if (!so_addr.IsValid())
+    {
+        // The address didn't resolve, so just set this as an absolute address
+        so_addr.SetOffset (addr);
+    }
+    BreakpointSP bp_sp (CreateBreakpoint(so_addr, internal));
     return bp_sp;
 }
 

@@ -341,7 +341,7 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
                     strm.PutCString(" in ");
                 }
             }
-            sc.DumpStopContext(&strm, interpreter.GetDebugger().GetExecutionContext().process, sc.line_entry.range.GetBaseAddress());
+            sc.DumpStopContext(&strm, interpreter.GetDebugger().GetExecutionContext().process, sc.line_entry.range.GetBaseAddress(), true, false);
         }
     }
     strm.IndentLess ();

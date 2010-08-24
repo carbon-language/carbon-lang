@@ -181,6 +181,9 @@ public:
     //------------------------------------------------------------------
     Block *
     GetParent () const;
+    
+    Block *
+    GetInlinedParent () const;
 
     //------------------------------------------------------------------
     /// Get the sibling block for this block.
@@ -243,6 +246,11 @@ public:
     ///     If \b true, all variables from all parent blocks will be
     ///     added to the variable list.
     ///
+    /// @param[in] stop_if_block_is_inlined_function
+    ///     If \b true, all variables from all parent blocks will be
+    ///     added to the variable list until there are no parent blocks
+    ///     or the parent block has inlined function info.
+    ///
     /// @param[in/out] variable_list
     ///     All variables in this block, and optionally all parent
     ///     blocks will be added to this list.
@@ -252,7 +260,10 @@ public:
     ///     variable_list.
     //------------------------------------------------------------------
     uint32_t
-    AppendVariables(bool can_create, bool get_parent_variables, VariableList *variable_list);
+    AppendVariables (bool can_create, 
+                     bool get_parent_variables, 
+                     bool stop_if_block_is_inlined_function,
+                     VariableList *variable_list);
 
     //------------------------------------------------------------------
     /// Get accessor for any inlined function information.
@@ -352,6 +363,10 @@ public:
     Block *
     FindBlockByID (lldb::user_id_t block_id);
 
+    bool
+    GetRangeContainingAddress (const Address& addr, AddressRange &range);
+
+    
 protected:
     typedef std::vector<lldb::BlockSP> collection;
     //------------------------------------------------------------------

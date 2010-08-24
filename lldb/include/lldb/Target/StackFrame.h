@@ -27,15 +27,15 @@
 namespace lldb_private {
 
 class StackFrame :
-    public UserID,
     public ExecutionContextScope
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    StackFrame (lldb::user_id_t frame_idx, Thread &thread, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr = NULL);
-    StackFrame (lldb::user_id_t frame_idx, Thread &thread, lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr = NULL);
+    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, lldb::addr_t cfa, uint32_t inline_height, lldb::addr_t pc, const SymbolContext *sc_ptr);
+    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, uint32_t inline_height, lldb::addr_t pc, const SymbolContext *sc_ptr);
+    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, uint32_t inline_height, const Address& pc, const SymbolContext *sc_ptr);
     virtual ~StackFrame ();
 
     Thread &
@@ -64,6 +64,12 @@ public:
     RegisterContext *
     GetRegisterContext ();
 
+    const lldb::RegisterContextSP &
+    GetRegisterContextSP () const
+    {
+        return m_reg_context_sp;
+    }
+
     VariableList *
     GetVariableList ();
 
@@ -79,6 +85,17 @@ public:
     void
     Dump (Stream *strm, bool show_frame_index);
 
+    uint32_t
+    GetFrameIndex () const
+    {
+        return m_frame_index;
+    }
+
+    uint32_t
+    GetConcreteFrameIndex () const
+    {
+        return m_concrete_frame_index;
+    }
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -108,6 +125,8 @@ private:
     // For StackFrame only
     //------------------------------------------------------------------
     Thread &m_thread;
+    uint32_t m_frame_index;
+    uint32_t m_concrete_frame_index;
     lldb::RegisterContextSP m_reg_context_sp;
     StackID m_id;
     Address m_pc;   // PC as a section/offset address

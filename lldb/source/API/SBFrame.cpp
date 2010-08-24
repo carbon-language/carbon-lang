@@ -116,7 +116,7 @@ uint32_t
 SBFrame::GetFrameID () const
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetID();
+        return m_opaque_sp->GetFrameIndex ();
     else
         return UINT32_MAX;
 }

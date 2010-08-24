@@ -162,7 +162,7 @@ lldb_private::DisplayFramesForExecutionContext
                       true,     // Dump the stop reason?
                       true,     // Dump the thread name?
                       true,     // Dump the queue name?
-                      0);       // Dump info for stack frame zero
+                      num_frames > 1 ? UINT32_MAX : first_frame);  // Dump info for the first stack frame if we are showing only on frame
     strm.EOL();
     strm.IndentMore();
 
