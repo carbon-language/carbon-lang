@@ -27,10 +27,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <deque>
-#include <list>
-#include <map>
 #include <string>
-#include <vector>
 
 namespace llvm {
   class APSInt;
@@ -343,11 +340,11 @@ public:
   llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
 
   /// \brief All the tentative definitions encountered in the TU.
-  std::vector<VarDecl *> TentativeDefinitions;
+  llvm::SmallVector<VarDecl *, 2> TentativeDefinitions;
 
   /// \brief The set of file scoped decls seen so far that have not been used
   /// and must warn if not used. Only contains the first declaration.
-  std::vector<const DeclaratorDecl*> UnusedFileScopedDecls;
+  llvm::SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
 
   class AccessedEntity {
   public:
@@ -536,11 +533,11 @@ public:
 
   /// \brief The set of declarations that have been referenced within
   /// a potentially evaluated expression.
-  typedef std::vector<std::pair<SourceLocation, Decl *> >
+  typedef llvm::SmallVector<std::pair<SourceLocation, Decl *>, 10>
     PotentiallyReferencedDecls;
 
   /// \brief A set of diagnostics that may be emitted.
-  typedef std::vector<std::pair<SourceLocation, PartialDiagnostic> >
+  typedef llvm::SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
     PotentiallyEmittedDiagnostics;
 
   /// \brief Data structure used to record current or nested

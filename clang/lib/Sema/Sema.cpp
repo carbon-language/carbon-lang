@@ -371,7 +371,7 @@ void Sema::ActOnEndOfTranslationUnit() {
   }
   
   // Output warning for unused file scoped decls.
-  for (std::vector<const DeclaratorDecl*>::iterator
+  for (llvm::SmallVectorImpl<const DeclaratorDecl*>::iterator
          I = UnusedFileScopedDecls.begin(),
          E = UnusedFileScopedDecls.end(); I != E; ++I) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
