@@ -7,3 +7,10 @@ void test() {
   // Result of ! must be type bool.
   int i = choice(!1);
 }
+
+// rdar://8018252
+void f0() {
+  extern void f0_1(int*);
+  register int x;
+  f0_1(&x);
+}
