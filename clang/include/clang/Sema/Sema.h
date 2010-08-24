@@ -4692,6 +4692,7 @@ public:
                                                   unsigned NumSelIdents);
   virtual void CodeCompletePreprocessorDirective(Scope *S, bool InConditional);
   virtual void CodeCompleteInPreprocessorConditionalExclusion(Scope *S);
+  virtual void CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition);
   void GatherGlobalCodeCompletions(
                   llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results);
   //@}

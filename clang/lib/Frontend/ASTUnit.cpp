@@ -277,7 +277,8 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1 << (CodeCompletionContext::CCC_ClassStructUnion - 1))
         | (1 << (CodeCompletionContext::CCC_Statement - 1))
         | (1 << (CodeCompletionContext::CCC_Expression - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
+        | (1 << (CodeCompletionContext::CCC_MacroNameUse - 1));
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
@@ -1547,7 +1548,9 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
     break;
     
   case CodeCompletionContext::CCC_ObjCProtocolName:
-    // If we're just looking for protocol names, nothing can hide them.
+  case CodeCompletionContext::CCC_MacroName:
+  case CodeCompletionContext::CCC_MacroNameUse:
+    // If we're just looking for protocol or macro names, nothing can hide them.
     return;
   }
   
@@ -1595,7 +1598,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
 
   // Contains the set of names that are hidden by "local" completion results.
   llvm::StringSet<> HiddenNames;
-  
+  llvm::SmallVector<CodeCompletionString *, 4> StringsToDestroy;
   typedef CodeCompleteConsumer::Result Result;
   llvm::SmallVector<Result, 8> AllResults;
   for (ASTUnit::cached_completion_iterator 
@@ -1623,10 +1626,11 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
     
     // Adjust priority based on similar type classes.
     unsigned Priority = C->Priority;
+    CodeCompletionString *Completion = C->Completion;
     if (!Context.getPreferredType().isNull()) {
       if (C->Kind == CXCursor_MacroDefinition) {
         Priority = getMacroUsagePriority(C->Completion->getTypedText(),
-                               Context.getPreferredType()->isAnyPointerType());
+                               Context.getPreferredType()->isAnyPointerType());        
       } else if (C->Type) {
         CanQualType Expected
           = S.Context.getCanonicalType(
@@ -1646,7 +1650,17 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
       }
     }
     
-    AllResults.push_back(Result(C->Completion, Priority, C->Kind,
+    // Adjust the completion string, if required.
+    if (C->Kind == CXCursor_MacroDefinition &&
+        Context.getKind() == CodeCompletionContext::CCC_MacroNameUse) {
+      // Create a new code-completion string that just contains the
+      // macro name, without its arguments.
+      Completion = new CodeCompletionString;
+      Completion->AddTypedTextChunk(C->Completion->getTypedText());
+      StringsToDestroy.push_back(Completion);
+    }
+    
+    AllResults.push_back(Result(Completion, Priority, C->Kind, 
                                 C->Availability));
   }
   
@@ -1659,6 +1673,9 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   
   Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
                                   AllResults.size());
+  
+  for (unsigned I = 0, N = StringsToDestroy.size(); I != N; ++I)
+    delete StringsToDestroy[I];
 }
 
 

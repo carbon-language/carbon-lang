@@ -19,6 +19,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LiteralSupport.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/APSInt.h"
@@ -92,6 +93,12 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.LexUnexpandedToken(PeekTok);
   }
 
+  if (PeekTok.is(tok::code_completion)) {
+    if (PP.getCodeCompletionHandler())
+      PP.getCodeCompletionHandler()->CodeCompleteMacroName(false);
+    PP.LexUnexpandedToken(PeekTok);
+  }
+  
   // If we don't have a pp-identifier now, this is an error.
   if ((II = PeekTok.getIdentifierInfo()) == 0) {
     PP.Diag(PeekTok, diag::err_pp_defined_requires_identifier);
@@ -697,7 +704,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // Peek ahead one token.
   Token Tok;
   Lex(Tok);
-
+  
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
   unsigned BitWidth = getTargetInfo().getIntMaxTWidth();
 

@@ -4,7 +4,12 @@
 #if 1
 #endif
 
-
+#define FOO(a, b) a##b
+#define BAR
+#ifdef FOO
+#endif
+#if defined(FOO)
+#endif
 
 // RUN: c-index-test -code-completion-at=%s:4:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{TypedText define}{HorizontalSpace  }{Placeholder macro} (30)
@@ -45,3 +50,8 @@
 // CHECK-CC2-NEXT: NotImplemented:{TypedText pragma}{HorizontalSpace  }{Placeholder arguments} (30)
 // CHECK-CC2-NEXT: NotImplemented:{TypedText undef}{HorizontalSpace  }{Placeholder macro} (30)
 // CHECK-CC2-NEXT: NotImplemented:{TypedText warning}{HorizontalSpace  }{Placeholder message} (30)
+// RUN: c-index-test -code-completion-at=%s:9:8 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// CHECK-CC3: NotImplemented:{TypedText BAR} (30)
+// CHECK-CC3: NotImplemented:{TypedText FOO} (30)
+// RUN: c-index-test -code-completion-at=%s:11:12 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: c-index-test -code-completion-at=%s:11:13 %s | FileCheck -check-prefix=CHECK-CC3 %s

@@ -4787,6 +4787,30 @@ void Sema::CodeCompleteInPreprocessorConditionalExclusion(Scope *S) {
   CodeCompleteOrdinaryName(S, Action::PCC_RecoveryInFunction);
 }
 
+void Sema::CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  if (!IsDefinition && (!CodeCompleter || CodeCompleter->includeMacros())) {
+    // Add just the names of macros, not their arguments.    
+    Results.EnterNewScope();
+    for (Preprocessor::macro_iterator M = PP.macro_begin(), 
+                                   MEnd = PP.macro_end();
+         M != MEnd; ++M) {
+      CodeCompletionString *Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk(M->first->getName());
+      Results.AddResult(Pattern);
+    }
+    Results.ExitScope();
+  } else if (IsDefinition) {
+    // FIXME: Can we detect when the user just wrote an include guard above?
+  }
+  
+  HandleCodeCompleteResults(this, CodeCompleter, 
+                      IsDefinition? CodeCompletionContext::CCC_MacroName
+                                  : CodeCompletionContext::CCC_MacroNameUse,
+                            Results.data(), Results.size()); 
+}
+
 void Sema::GatherGlobalCodeCompletions(
                  llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results) {
   ResultBuilder Builder(*this);

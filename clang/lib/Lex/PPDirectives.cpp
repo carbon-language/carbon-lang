@@ -75,6 +75,13 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   // Read the token, don't allow macro expansion on it.
   LexUnexpandedToken(MacroNameTok);
 
+  if (MacroNameTok.is(tok::code_completion)) {
+    if (CodeComplete)
+      CodeComplete->CodeCompleteMacroName(isDefineUndef == 1);
+    LexUnexpandedToken(MacroNameTok);
+    return;
+  }
+  
   // Missing macro name?
   if (MacroNameTok.is(tok::eom)) {
     Diag(MacroNameTok, diag::err_pp_missing_macro_name);

@@ -1535,6 +1535,7 @@ private:
   // Preprocessor code-completion pass-through
   virtual void CodeCompleteDirective(bool InConditional);
   virtual void CodeCompleteInConditionalExclusion();
+  virtual void CodeCompleteMacroName(bool IsDefinition);
 };
 
 }  // end namespace clang

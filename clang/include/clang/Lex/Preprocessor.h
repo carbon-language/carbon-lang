@@ -382,6 +382,11 @@ public:
     CodeComplete = &Handler;
   }
   
+  /// \brief Retrieve the current code-completion handler.
+  CodeCompletionHandler *getCodeCompletionHandler() const {
+    return CodeComplete;
+  }
+  
   /// \brief Clear out the code completion handler.
   void clearCodeCompletionHandler() {
     CodeComplete = 0;

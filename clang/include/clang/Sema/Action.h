@@ -3215,6 +3215,17 @@ public:
   /// \brief Code completion while in an area of the translation unit that was
   /// excluded due to preprocessor conditionals.
   virtual void CodeCompleteInPreprocessorConditionalExclusion(Scope *S) { }
+  
+  /// \brief Code completion in the preprocessor where an already-defined
+  /// macro name is expected, e.g., an #ifdef or #undef.
+  ///
+  /// \param S The scope in which the macro name occurs.
+  ///
+  /// \param IsDefinition Whether this code completion for a macro name occurs
+  /// in a definition of the macro (#define) or in another use that already
+  /// expects that the macro is defined (e.g., #undef or #ifdef).
+  virtual void CodeCompletePreprocessorMacroName(Scope *S, bool IsDefinition) { 
+  }
   //@}
 };
 

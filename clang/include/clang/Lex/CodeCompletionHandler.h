@@ -35,6 +35,13 @@ public:
   /// \brief Callback invoked when performing code completion within a block of
   /// code that was excluded due to preprocessor conditionals.
   virtual void CodeCompleteInConditionalExclusion() { }
+  
+  /// \brief Callback invoked when performing code completion in a context
+  /// where the name of a macro is expected.
+  ///
+  /// \param IsDefinition Whether this is the definition of a macro, e.g.,
+  /// in a #define.
+  virtual void CodeCompleteMacroName(bool IsDefinition) { }
 };
   
 }

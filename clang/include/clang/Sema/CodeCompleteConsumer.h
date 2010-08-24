@@ -169,7 +169,12 @@ public:
     CCC_Name,
     /// \brief Code completion occurred where a new name is expected and a
     /// qualified name is permissible.
-    CCC_PotentiallyQualifiedName
+    CCC_PotentiallyQualifiedName,
+    /// \brief Code completion occurred where an macro is being defined.
+    CCC_MacroName,
+    /// \brief Code completion occurred where a macro name is expected
+    /// (without any arguments, in the case of a function-like macro).
+    CCC_MacroNameUse
   };
 
 private:

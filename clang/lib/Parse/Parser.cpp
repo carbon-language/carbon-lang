@@ -1139,3 +1139,7 @@ void Parser::CodeCompleteDirective(bool InConditional) {
 void Parser::CodeCompleteInConditionalExclusion() {
   Actions.CodeCompleteInPreprocessorConditionalExclusion(getCurScope());
 }
+
+void Parser::CodeCompleteMacroName(bool IsDefinition) {
+  Actions.CodeCompletePreprocessorMacroName(getCurScope(), IsDefinition);
+}
