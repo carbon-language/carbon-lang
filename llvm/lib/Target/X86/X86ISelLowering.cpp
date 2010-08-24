@@ -8171,6 +8171,7 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
                                               const Type *Ty) const {
   // X86 supports extremely general addressing modes.
   CodeModel::Model M = getTargetMachine().getCodeModel();
+  Reloc::Model R = getTargetMachine().getRelocationModel();
 
   // X86 allows a sign-extended 32-bit immediate field as a displacement.
   if (!X86::isOffsetSuitableForCodeModel(AM.BaseOffs, M, AM.BaseGV != NULL))
@@ -8190,7 +8191,8 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
       return false;
 
     // If lower 4G is not available, then we must use rip-relative addressing.
-    if (Subtarget->is64Bit() && (AM.BaseOffs || AM.Scale > 1))
+    if ((M != CodeModel::Small || R != Reloc::Static) &&
+        Subtarget->is64Bit() && (AM.BaseOffs || AM.Scale > 1))
       return false;
   }
 
