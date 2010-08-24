@@ -6216,13 +6216,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // C++ [over.over]p1:
   //   [...] The overloaded function name can be preceded by the &
   //   operator.
-  OverloadExpr *OvlExpr = OverloadExpr::find(From).getPointer();
-  TemplateArgumentListInfo ETABuffer, *ExplicitTemplateArgs = 0;
-  if (OvlExpr->hasExplicitTemplateArgs()) {
-    OvlExpr->getExplicitTemplateArgs().copyInto(ETABuffer);
-    ExplicitTemplateArgs = &ETABuffer;
-  }
-  
+  llvm::PointerIntPair<OverloadExpr*,1> Ovl = OverloadExpr::find(From);
+  OverloadExpr *OvlExpr = Ovl.getPointer();
+
   // We expect a pointer or reference to function, or a function pointer.
   FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
   if (!FunctionType->isFunctionType()) {
@@ -6231,6 +6227,30 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
         << OvlExpr->getName() << ToType;
     
     return 0;
+  }
+
+  // If the overload expression doesn't have the form of a pointer to
+  // member, don't try to convert it to a pointer-to-member type:
+  //   C++ [expr.unary.op]p4:
+  //     A pointer to member is only formed when an explicit & is used
+  //     and its operand is a qualified-id not enclosed in
+  //     parentheses.
+  // We don't diagnose the parentheses here, though.  Should we?
+  if (IsMember && !(Ovl.getInt() && OvlExpr->getQualifier())) {
+    if (!Complain) return 0;
+
+    // TODO: Should we condition this on whether any functions might
+    // have matched, or is it more appropriate to do that in callers?
+    // TODO: a fixit wouldn't hurt.
+    Diag(OvlExpr->getNameLoc(), diag::err_addr_ovl_no_qualifier)
+      << ToType << OvlExpr->getSourceRange();
+    return 0;
+  }
+
+  TemplateArgumentListInfo ETABuffer, *ExplicitTemplateArgs = 0;
+  if (OvlExpr->hasExplicitTemplateArgs()) {
+    OvlExpr->getExplicitTemplateArgs().copyInto(ETABuffer);
+    ExplicitTemplateArgs = &ETABuffer;
   }
 
   assert(From->getType() == Context.OverloadTy);

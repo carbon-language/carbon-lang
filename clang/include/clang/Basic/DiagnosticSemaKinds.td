@@ -1286,6 +1286,8 @@ def err_addr_ovl_ambiguous : Error<
   "address of overloaded function %0 is ambiguous">;
 def err_addr_ovl_not_func_ptrref : Error<
   "address of overloaded function %0 cannot be converted to type %1">;
+def err_addr_ovl_no_qualifier : Error<
+  "can't form member pointer of type %0 without '&' and class name">;
   
 // C++ Template Declarations
 def err_template_param_shadow : Error<

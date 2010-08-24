@@ -1063,10 +1063,10 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
 }
 
 ExprResult Sema::ActOnIdExpression(Scope *S,
-                                               CXXScopeSpec &SS,
-                                               UnqualifiedId &Id,
-                                               bool HasTrailingLParen,
-                                               bool isAddressOfOperand) {
+                                   CXXScopeSpec &SS,
+                                   UnqualifiedId &Id,
+                                   bool HasTrailingLParen,
+                                   bool isAddressOfOperand) {
   assert(!(isAddressOfOperand && HasTrailingLParen) &&
          "cannot be direct & operand and have a trailing lparen");
 
@@ -1223,12 +1223,16 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
   }
 
   // Check whether this might be a C++ implicit instance member access.
-  // C++ [expr.prim.general]p6:
-  //   Within the definition of a non-static member function, an
-  //   identifier that names a non-static member is transformed to a
-  //   class member access expression.
-  // But note that &SomeClass::foo is grammatically distinct, even
-  // though we don't parse it that way.
+  // C++ [class.mfct.non-static]p3:
+  //   When an id-expression that is not part of a class member access
+  //   syntax and not used to form a pointer to member is used in the
+  //   body of a non-static member function of class X, if name lookup
+  //   resolves the name in the id-expression to a non-static non-type
+  //   member of some class C, the id-expression is transformed into a
+  //   class member access expression using (*this) as the
+  //   postfix-expression to the left of the . operator.
+  // So if we found a class member with an expression of form other
+  // than &A::foo, we have to try to build an implicit member expr.
   if (!R.empty() && (*R.begin())->isCXXClassMember()) {
     bool isAbstractMemberPointer = (isAddressOfOperand && !SS.isEmpty());
     if (!isAbstractMemberPointer)
