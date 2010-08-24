@@ -12,7 +12,7 @@ void foo( void )
 {
   kernel_tea_cheese_t *wonky = &_wonky_gesticulate_cheese;
   struct load_wine *cmd = (void*) &wonky[1];
-  cmd = cmd; // expected-warning{{Assigned value is always the same as the existing value}}
+  cmd = cmd;
   char *p = (void*) &wonky[1];
   *p = 1;
   kernel_tea_cheese_t *q = &wonky[1];

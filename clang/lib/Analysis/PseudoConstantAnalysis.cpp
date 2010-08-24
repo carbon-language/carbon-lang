@@ -28,10 +28,12 @@ typedef llvm::SmallPtrSet<const VarDecl*, VARDECL_SET_SIZE> VarDeclSet;
 PseudoConstantAnalysis::PseudoConstantAnalysis(const Stmt *DeclBody) :
       DeclBody(DeclBody), Analyzed(false) {
   NonConstantsImpl = new VarDeclSet;
+  UsedVarsImpl = new VarDeclSet;
 }
 
 PseudoConstantAnalysis::~PseudoConstantAnalysis() {
   delete (VarDeclSet*)NonConstantsImpl;
+  delete (VarDeclSet*)UsedVarsImpl;
 }
 
 // Returns true if the given ValueDecl is never written to in the given DeclBody
@@ -50,9 +52,22 @@ bool PseudoConstantAnalysis::isPseudoConstant(const VarDecl *VD) {
   return !NonConstants->count(VD);
 }
 
+// Returns true if the variable was used (self assignments don't count)
+bool PseudoConstantAnalysis::wasReferenced(const VarDecl *VD) {
+  if (!Analyzed) {
+    RunAnalysis();
+    Analyzed = true;
+  }
+
+  VarDeclSet *UsedVars = (VarDeclSet*)UsedVarsImpl;
+
+  return UsedVars->count(VD);
+}
+
 void PseudoConstantAnalysis::RunAnalysis() {
   std::deque<const Stmt *> WorkList;
   VarDeclSet *NonConstants = (VarDeclSet*)NonConstantsImpl;
+  VarDeclSet *UsedVars = (VarDeclSet*)UsedVarsImpl;
 
   // Start with the top level statement of the function
   WorkList.push_back(DeclBody);
@@ -65,7 +80,7 @@ void PseudoConstantAnalysis::RunAnalysis() {
     // Case 1: Assignment operators modifying ValueDecl
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator *BO = cast<BinaryOperator>(Head);
-      const Expr *LHS = BO->getLHS()->IgnoreParenImpCasts();
+      const Expr *LHS = BO->getLHS()->IgnoreParenCasts();
       const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(LHS);
 
       // We only care about DeclRefExprs on the LHS
@@ -76,7 +91,16 @@ void PseudoConstantAnalysis::RunAnalysis() {
       // for any of the assignment operators, implying that this Decl is being
       // written to.
       switch (BO->getOpcode()) {
-      case BinaryOperator::Assign:
+      case BinaryOperator::Assign: {
+        const Expr *RHS = BO->getRHS()->IgnoreParenCasts();
+        if (const DeclRefExpr *RHSDecl = dyn_cast<DeclRefExpr>(RHS)) {
+          // Self-assignments don't count as use of a variable
+          if (DR->getDecl() == RHSDecl->getDecl())
+            // Do not visit the children
+            continue;
+        }
+
+      }
       case BinaryOperator::AddAssign:
       case BinaryOperator::SubAssign:
       case BinaryOperator::MulAssign:
@@ -148,16 +172,37 @@ void PseudoConstantAnalysis::RunAnalysis() {
         if (!VD->getType().getTypePtr()->isReferenceType())
           continue;
 
-        // Ignore VarDecls without a body
-        if (!VD->getBody())
-          continue;
-
         // If the reference is to another var, add the var to the non-constant
         // list
-        if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(VD->getBody()))
-          if (const VarDecl *RefVD = dyn_cast<VarDecl>(DR->getDecl()))
+        if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(VD->getInit()))
+          if (const VarDecl *RefVD = dyn_cast<VarDecl>(DR->getDecl())) {
             NonConstants->insert(RefVD);
+            continue;
+          }
       }
+      break;
+    }
+
+    // Case 4: Block variable references
+    case Stmt::BlockDeclRefExprClass: {
+      // Any block variables are assumed to be non-constant
+      const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(Head);
+      if (const VarDecl *VD = dyn_cast<VarDecl>(BDR->getDecl())) {
+        NonConstants->insert(VD);
+        UsedVars->insert(VD);
+        continue;
+      }
+      break;
+    }
+
+    // Case 5: Variable references
+    case Stmt::DeclRefExprClass: {
+      const DeclRefExpr *DR = cast<DeclRefExpr>(Head);
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        UsedVars->insert(VD);
+        continue;
+      }
+      break;
     }
 
       default:

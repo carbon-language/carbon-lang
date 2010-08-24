@@ -158,7 +158,7 @@ int f16(int x) {
 // Self-assignments should not be flagged as dead stores.
 void f17() {
   int x = 1;
-  x = x; // expected-warning{{Assigned value is always the same as the existing value}}
+  x = x;
 }
 
 // <rdar://problem/6506065>

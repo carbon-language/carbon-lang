@@ -26,12 +26,14 @@ public:
   ~PseudoConstantAnalysis();
 
   bool isPseudoConstant(const VarDecl *VD);
+  bool wasReferenced(const VarDecl *VD);
 
 private:
   void RunAnalysis();
 
   // for storing the result of analyzed ValueDecls
   void *NonConstantsImpl;
+  void *UsedVarsImpl;
 
   const Stmt *DeclBody;
   bool Analyzed;

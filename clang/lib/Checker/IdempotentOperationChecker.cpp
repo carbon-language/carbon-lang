@@ -74,7 +74,9 @@ class IdempotentOperationChecker
     void UpdateAssumption(Assumption &A, const Assumption &New);
 
     // False positive reduction methods
-    static bool isParameterSelfAssign(const Expr *LHS, const Expr *RHS);
+    static bool isUnusedSelfAssign(const Expr *LHS,
+                                      const Expr *RHS,
+                                      AnalysisContext *AC);
     static bool isTruncationExtensionAssignment(const Expr *LHS,
                                                 const Expr *RHS);
     static bool PathWasCompletelyAnalyzed(const CFG *C,
@@ -182,12 +184,19 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
 
   // Fall through intentional
   case BinaryOperator::Assign:
-    // x Assign x has a few more false positives we can check for
-    if (isParameterSelfAssign(RHS, LHS)
-        || isTruncationExtensionAssignment(RHS, LHS)) {
+    // x Assign x can be used to silence unused variable warnings intentionally,
+    // and has a slightly different definition for false positives.
+    if (isUnusedSelfAssign(RHS, LHS, AC)
+        || isTruncationExtensionAssignment(RHS, LHS)
+        || containsNonLocalVarDecl(RHS)
+        || containsNonLocalVarDecl(LHS)) {
       A = Impossible;
       return;
     }
+    if (LHSVal != RHSVal)
+      break;
+    UpdateAssumption(A, Equal);
+    return;
 
   case BinaryOperator::SubAssign:
   case BinaryOperator::DivAssign:
@@ -397,10 +406,12 @@ inline void IdempotentOperationChecker::UpdateAssumption(Assumption &A,
   }
 }
 
-// Check for a statement were a parameter is self assigned (to avoid an unused
-// variable warning)
-bool IdempotentOperationChecker::isParameterSelfAssign(const Expr *LHS,
-                                                       const Expr *RHS) {
+// Check for a statement where a variable is self assigned to avoid an unused
+// variable warning. We still report if the variable is used after the self
+// assignment.
+bool IdempotentOperationChecker::isUnusedSelfAssign(const Expr *LHS,
+                                                    const Expr *RHS,
+                                                    AnalysisContext *AC) {
   LHS = LHS->IgnoreParenCasts();
   RHS = RHS->IgnoreParenCasts();
 
@@ -408,15 +419,22 @@ bool IdempotentOperationChecker::isParameterSelfAssign(const Expr *LHS,
   if (!LHS_DR)
     return false;
 
-  const ParmVarDecl *PD = dyn_cast<ParmVarDecl>(LHS_DR->getDecl());
-  if (!PD)
+  const VarDecl *VD = dyn_cast<VarDecl>(LHS_DR->getDecl());
+  if (!VD)
     return false;
 
   const DeclRefExpr *RHS_DR = dyn_cast<DeclRefExpr>(RHS);
   if (!RHS_DR)
     return false;
 
-  return PD == RHS_DR->getDecl();
+  if (VD != RHS_DR->getDecl())
+    return false;
+
+  // If the var was used outside of a selfassign, then we should still report
+  if (AC->getPseudoConstantAnalysis()->wasReferenced(VD))
+    return false;
+
+  return true;
 }
 
 // Check for self casts truncating/extending a variable

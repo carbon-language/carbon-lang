@@ -91,15 +91,18 @@ unsigned false2() {
   return enum1 + a; // no-warning
 }
 
-// Self assignments of parameters are common false positives
-unsigned false3(int param) {
+// Self assignments of unused variables are common false positives
+unsigned false3(int param, int param2) {
   param = param; // no-warning
+
+  // if a self assigned variable is used later, then it should be reported still
+  param2 = param2; // expected-warning{{Assigned value is always the same as the existing value}}
 
   unsigned nonparam = 5;
 
   nonparam = nonparam; // expected-warning{{Assigned value is always the same as the existing value}}
 
-  return nonparam;
+  return param2 + nonparam;
 }
 
 // Pseudo-constants (vars only read) and constants should not be reported
