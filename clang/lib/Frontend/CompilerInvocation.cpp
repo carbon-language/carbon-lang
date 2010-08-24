@@ -1173,7 +1173,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   for (arg_iterator it = Args.filtered_begin(OPT_iquote),
          ie = Args.filtered_end(); it != ie; ++it)
     Opts.AddPath((*it)->getValue(Args), frontend::Quoted, true, false);
-  for (arg_iterator it = Args.filtered_begin(OPT_isystem),
+  for (arg_iterator it = Args.filtered_begin(OPT_isystem, OPT_iwithsysroot),
          ie = Args.filtered_end(); it != ie; ++it)
     Opts.AddPath((*it)->getValue(Args), frontend::System, true, false);
 

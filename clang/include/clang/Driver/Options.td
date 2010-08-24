@@ -423,7 +423,7 @@ def isysroot : JoinedOrSeparate<"-isysroot">, Group<clang_i_Group>;
 def isystem : JoinedOrSeparate<"-isystem">, Group<clang_i_Group>;
 def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">, Group<clang_i_Group>;
 def iwithprefix : JoinedOrSeparate<"-iwithprefix">, Group<clang_i_Group>;
-def iwithsysroot : JoinedOrSeparate<"-iwithsysroot">, Group<i_Group>;
+def iwithsysroot : JoinedOrSeparate<"-iwithsysroot">, Group<clang_i_Group>;
 def i : Joined<"-i">, Group<i_Group>;
 def keep__private__externs : Flag<"-keep_private_externs">;
 def l : JoinedOrSeparate<"-l">, Flags<[LinkerInput, RenderJoined]>;
