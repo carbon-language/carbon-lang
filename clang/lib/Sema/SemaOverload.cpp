@@ -6216,9 +6216,24 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // C++ [over.over]p1:
   //   [...] The overloaded function name can be preceded by the &
   //   operator.
-  llvm::PointerIntPair<OverloadExpr*,1> Ovl = OverloadExpr::find(From);
-  OverloadExpr *OvlExpr = Ovl.getPointer();
-
+  // However, remember whether the expression has member-pointer form:
+  // C++ [expr.unary.op]p4:
+  //     A pointer to member is only formed when an explicit & is used
+  //     and its operand is a qualified-id not enclosed in
+  //     parentheses.
+  bool HasFormOfMemberPointer = false;
+  OverloadExpr *OvlExpr;
+  {
+    Expr *Tmp = From->IgnoreParens();
+    if (isa<UnaryOperator>(Tmp)) {
+      Tmp = cast<UnaryOperator>(Tmp)->getSubExpr();
+      OvlExpr = cast<OverloadExpr>(Tmp->IgnoreParens());
+      HasFormOfMemberPointer = (Tmp == OvlExpr && OvlExpr->getQualifier());
+    } else {
+      OvlExpr = cast<OverloadExpr>(Tmp);
+    }
+  }
+  
   // We expect a pointer or reference to function, or a function pointer.
   FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
   if (!FunctionType->isFunctionType()) {
@@ -6230,13 +6245,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   // If the overload expression doesn't have the form of a pointer to
-  // member, don't try to convert it to a pointer-to-member type:
-  //   C++ [expr.unary.op]p4:
-  //     A pointer to member is only formed when an explicit & is used
-  //     and its operand is a qualified-id not enclosed in
-  //     parentheses.
-  // We don't diagnose the parentheses here, though.  Should we?
-  if (IsMember && !(Ovl.getInt() && OvlExpr->getQualifier())) {
+  // member, don't try to convert it to a pointer-to-member type.
+  if (IsMember && !HasFormOfMemberPointer) {
     if (!Complain) return 0;
 
     // TODO: Should we condition this on whether any functions might

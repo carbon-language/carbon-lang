@@ -91,28 +91,3 @@ namespace test2 {
     a.test3(); // expected-note {{in instantiation}}
   }
 }
-
-namespace test3 {
-  struct A {
-    void foo(void (A::*)(int)); // expected-note {{passing argument to parameter here}}
-    template<typename T> void g(T);
-
-    void test() {
-      foo(&g<int>); // expected-error {{cannot initialize a parameter}}
-    }
-  };
-}
-
-// This should succeed.
-namespace test4 {
-  struct A {
-    static void f(void (A::*)());
-    static void f(void (*)(int));
-    void g();
-    static void g(int);
-
-    void test() {
-      f(&g);
-    }
-  };
-}
