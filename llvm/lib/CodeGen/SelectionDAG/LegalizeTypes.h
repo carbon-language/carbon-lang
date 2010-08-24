@@ -86,8 +86,7 @@ private:
       //   2) For vectors, use a wider vector type (e.g. v3i32 -> v4i32).
       if (!VT.isVector())
         return PromoteInteger;
-      else
-        return WidenVector;
+      return WidenVector;
     case TargetLowering::Expand:
       // Expand can mean
       // 1) split scalar in half, 2) convert a float to an integer,
@@ -95,16 +94,15 @@ private:
       if (!VT.isVector()) {
         if (VT.isInteger())
           return ExpandInteger;
-        else if (VT.getSizeInBits() ==
-                 TLI.getTypeToTransformTo(*DAG.getContext(), VT).getSizeInBits())
+        if (VT.getSizeInBits() ==
+                TLI.getTypeToTransformTo(*DAG.getContext(), VT).getSizeInBits())
           return SoftenFloat;
-        else
-          return ExpandFloat;
-      } else if (VT.getVectorNumElements() == 1) {
-        return ScalarizeVector;
-      } else {
-        return SplitVector;
+        return ExpandFloat;
       }
+        
+      if (VT.getVectorNumElements() == 1)
+        return ScalarizeVector;
+      return SplitVector;
     }
   }
 
