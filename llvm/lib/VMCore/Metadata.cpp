@@ -187,6 +187,19 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
                           unsigned NumVals, FunctionLocalness FL,
                           bool Insert) {
   LLVMContextImpl *pImpl = Context.pImpl;
+
+  // Add all the operand pointers. Note that we don't have to add the
+  // isFunctionLocal bit because that's implied by the operands.
+  FoldingSetNodeID ID;
+  for (unsigned i = 0; i != NumVals; ++i)
+    ID.AddPointer(Vals[i]);
+
+  void *InsertPoint;
+  MDNode *N = NULL;
+  
+  if ((N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)))
+    return N;
+    
   bool isFunctionLocal = false;
   switch (FL) {
   case FL_Unknown:
@@ -207,20 +220,6 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
     break;
   }
 
-  FoldingSetNodeID ID;
-  for (unsigned i = 0; i != NumVals; ++i)
-    ID.AddPointer(Vals[i]);
-  ID.AddBoolean(isFunctionLocal);
-
-  void *InsertPoint;
-  MDNode *N = NULL;
-  
-  if ((N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)))
-    return N;
-    
-  if (!Insert)
-    return NULL;
-    
   // Coallocate space for the node and Operands together, then placement new.
   void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
   N = new (Ptr) MDNode(Context, Vals, NumVals, isFunctionLocal);
@@ -275,9 +274,10 @@ Value *MDNode::getOperand(unsigned i) const {
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
+  // Add all the operand pointers. Note that we don't have to add the
+  // isFunctionLocal bit because that's implied by the operands.
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     ID.AddPointer(getOperand(i));
-  ID.AddBoolean(isFunctionLocal());
 }
 
 void MDNode::setIsNotUniqued() {
