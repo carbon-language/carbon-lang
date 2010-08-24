@@ -3210,7 +3210,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                       DeclContext::lookup_iterator(0));
 
   llvm::SmallVector<NamedDecl *, 64> Decls;
-  // There might be lexical decls in multiple parts of the chain, for the TU
+  // There might be visible decls in multiple parts of the chain, for the TU
   // and namespaces.
   DeclContextInfos &Infos = DeclContextOffsets[DC];
   for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();

@@ -311,7 +311,12 @@ namespace clang {
       /// If a declaration is modified after having been deserialized, and then
       /// written to a dependent AST file, its ID and offset must be added to
       /// the replacement block.
-      DECL_REPLACEMENTS = 33
+      DECL_REPLACEMENTS = 33,
+
+      /// \brief Record code for an update to a decl context's lookup table.
+      ///
+      /// In practice, this should only be used for the TU and namespaces.
+      UPDATE_VISIBLE = 34
     };
 
     /// \brief Record types used within a source manager block.

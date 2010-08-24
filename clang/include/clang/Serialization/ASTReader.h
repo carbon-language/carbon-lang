@@ -10,7 +10,7 @@
 //  This file defines the ASTReader class, which reads AST files.
 //
 //===----------------------------------------------------------------------===//
-                                                                          
+
 #ifndef LLVM_CLANG_FRONTEND_AST_READER_H
 #define LLVM_CLANG_FRONTEND_AST_READER_H
 
