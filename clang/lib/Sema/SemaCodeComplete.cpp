@@ -2272,6 +2272,9 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
       
   case Action::PCC_Statement:
     return CodeCompletionContext::CCC_Statement;
+
+  case Action::PCC_Type:
+    return CodeCompletionContext::CCC_Type;
   }
   
   return CodeCompletionContext::CCC_Other;
@@ -2293,6 +2296,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case PCC_ObjCInstanceVariableList:
   case PCC_Template:
   case PCC_MemberTemplate:
+  case PCC_Type:
     Results.setFilter(&ResultBuilder::IsOrdinaryNonValueName);
     break;
 
@@ -2320,23 +2324,24 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   Results.ExitScope();
 
   switch (CompletionContext) {
-    case PCC_Expression:
-    case PCC_Statement:
-    case PCC_RecoveryInFunction:
-      if (S->getFnParent())
-        AddPrettyFunctionResults(PP.getLangOptions(), Results);        
-      break;
-      
-    case PCC_Namespace:
-    case PCC_Class:
-    case PCC_ObjCInterface:
-    case PCC_ObjCImplementation:
-    case PCC_ObjCInstanceVariableList:
-    case PCC_Template:
-    case PCC_MemberTemplate:
-    case PCC_ForInit:
-    case PCC_Condition:
-      break;
+  case PCC_Expression:
+  case PCC_Statement:
+  case PCC_RecoveryInFunction:
+    if (S->getFnParent())
+      AddPrettyFunctionResults(PP.getLangOptions(), Results);        
+    break;
+    
+  case PCC_Namespace:
+  case PCC_Class:
+  case PCC_ObjCInterface:
+  case PCC_ObjCImplementation:
+  case PCC_ObjCInstanceVariableList:
+  case PCC_Template:
+  case PCC_MemberTemplate:
+  case PCC_ForInit:
+  case PCC_Condition:
+  case PCC_Type:
+    break;
   }
   
   if (CodeCompleter->includeMacros())
