@@ -330,6 +330,7 @@ public:
     {
         m_concrete_frames.Clear();
         m_inlined_frames.Clear();
+        m_inlined_frame_info.clear();
     }
 
     void
