@@ -18,3 +18,15 @@ namespace ns {
 // Specialize template from primary
 template <>
 struct S<int> { typedef int I; };
+
+// Partially specialize
+template <typename T>
+struct S<T &> { typedef int J; };
+
+// Specialize previous partial specialization
+template <>
+struct S<int *> { typedef int K; };
+
+// Specialize the partial specialization from this file
+template <>
+struct S<int &> { typedef int L; };

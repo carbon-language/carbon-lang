@@ -888,13 +888,21 @@ void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
   llvm::PointerUnion<ClassTemplateDecl *,
                      ClassTemplatePartialSpecializationDecl *> InstFrom
     = D->getSpecializedTemplateOrPartial();
+  Decl *InstFromD;
   if (InstFrom.is<ClassTemplateDecl *>()) {
-    Writer.AddDeclRef(InstFrom.get<ClassTemplateDecl *>(), Record);
+    InstFromD = InstFrom.get<ClassTemplateDecl *>();
+    Writer.AddDeclRef(InstFromD, Record);
   } else {
-    Writer.AddDeclRef(InstFrom.get<ClassTemplatePartialSpecializationDecl *>(),
-                      Record);
+    InstFromD = InstFrom.get<ClassTemplatePartialSpecializationDecl *>();
+    Writer.AddDeclRef(InstFromD, Record);
     Writer.AddTemplateArgumentList(&D->getTemplateInstantiationArgs(), Record);
+    InstFromD = cast<ClassTemplatePartialSpecializationDecl>(InstFromD)->
+                    getSpecializedTemplate();
   }
+  // Is this a specialization of an already-serialized template?
+  if (InstFromD->getCanonicalDecl()->getPCHLevel() != 0)
+    Writer.AddAdditionalTemplateSpecialization(Writer.getDeclID(InstFromD),
+                                               Writer.getDeclID(D));
 
   // Explicit info.
   Writer.AddTypeSourceInfo(D->getTypeAsWritten(), Record);

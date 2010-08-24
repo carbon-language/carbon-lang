@@ -2129,6 +2129,21 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   Stream.EmitRecordWithBlob(UpdateVisibleAbbrev, Record, LookupTable.str());
 }
 
+/// \brief Write ADDITIONAL_TEMPLATE_SPECIALIZATIONS blocks for all templates
+/// that have new specializations in the current AST file.
+void ASTWriter::WriteAdditionalTemplateSpecializations() {
+  RecordData Record;
+  for (AdditionalTemplateSpecializationsMap::iterator
+           I = AdditionalTemplateSpecializations.begin(),
+           E = AdditionalTemplateSpecializations.end();
+       I != E; ++I) {
+    Record.clear();
+    Record.push_back(I->first);
+    Record.insert(Record.end(), I->second.begin(), I->second.end());
+    Stream.EmitRecord(ADDITIONAL_TEMPLATE_SPECIALIZATIONS, Record);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // General Serialization Routines
 //===----------------------------------------------------------------------===//
@@ -2637,6 +2652,10 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
            E = UpdatedNamespaces.end();
          I != E; ++I)
     WriteDeclContextVisibleUpdate(*I);
+
+  // Write the updates to C++ template specialization lists.
+  if (!AdditionalTemplateSpecializations.empty())
+    WriteAdditionalTemplateSpecializations();
 
   Record.clear();
   Record.push_back(NumStatements);

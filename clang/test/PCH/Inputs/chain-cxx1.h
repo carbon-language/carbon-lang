@@ -12,4 +12,8 @@ namespace ns {
 }
 
 template <typename T>
-struct S {};
+struct S { typedef int G; };
+
+// Partially specialize
+template <typename T>
+struct S<T *> { typedef int H; };

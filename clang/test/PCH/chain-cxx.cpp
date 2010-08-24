@@ -19,5 +19,10 @@ void test() {
   ns::pg();
   ns::g2();
 
-  //typedef S<int>::I J;
+  typedef S<double>::G T1;
+  typedef S<double *>::H T2;
+  typedef S<int>::I T3;
+  typedef S<double &>::J T4;
+  typedef S<int *>::K T5;
+  typedef S<int &>::L T6;
 }

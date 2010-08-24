@@ -217,6 +217,16 @@ private:
   llvm::SmallVector<std::pair<serialization::DeclID, uint64_t>, 16>
       ReplacedDecls;
 
+  typedef llvm::SmallVector<serialization::DeclID, 4>
+      AdditionalTemplateSpecializationsList;
+  typedef llvm::DenseMap<serialization::DeclID,
+                         AdditionalTemplateSpecializationsList>
+      AdditionalTemplateSpecializationsMap;
+
+  /// \brief Additional specializations (including partial) of templates that
+  /// were introduced after the template was serialized.
+  AdditionalTemplateSpecializationsMap AdditionalTemplateSpecializations;
+
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
   llvm::SmallVector<Stmt *, 16> StmtsToEmit;
@@ -266,6 +276,7 @@ private:
   void WriteAttributeRecord(const AttrVec &Attrs);
   void WriteDeclUpdateBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
+  void WriteAdditionalTemplateSpecializations();
 
   unsigned ParmVarDeclAbbrev;
   unsigned DeclContextLexicalAbbrev;
@@ -418,6 +429,13 @@ public:
   /// \brief Mark a namespace as needing an update.
   void AddUpdatedNamespace(const NamespaceDecl *NS) {
     UpdatedNamespaces.insert(NS);
+  }
+
+  /// \brief Record a template specialization or partial specialization of
+  /// a template from a previous PCH file.
+  void AddAdditionalTemplateSpecialization(serialization::DeclID Templ,
+                                           serialization::DeclID Spec) {
+    AdditionalTemplateSpecializations[Templ].push_back(Spec);
   }
 
   /// \brief Note that the identifier II occurs at the given offset
