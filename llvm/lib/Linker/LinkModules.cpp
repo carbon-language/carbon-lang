@@ -451,14 +451,16 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
 }
 
 // Insert all of the named mdnoes in Src into the Dest module.
-static void LinkNamedMDNodes(Module *Dest, Module *Src) {
+static void LinkNamedMDNodes(Module *Dest, Module *Src,
+                             ValueToValueMapTy &ValueMap) {
   for (Module::const_named_metadata_iterator I = Src->named_metadata_begin(),
          E = Src->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *SrcNMD = I;
     NamedMDNode *DestNMD = Dest->getOrInsertNamedMetadata(SrcNMD->getName());
     // Add Src elements into Dest node.
     for (unsigned i = 0, e = SrcNMD->getNumOperands(); i != e; ++i) 
-      DestNMD->addOperand(SrcNMD->getOperand(i));
+      DestNMD->addOperand(cast<MDNode>(MapValue(SrcNMD->getOperand(i),
+                                                ValueMap)));
   }
 }
 
@@ -1243,7 +1245,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   }
 
   // Insert all of the named mdnoes in Src into the Dest module.
-  LinkNamedMDNodes(Dest, Src);
+  LinkNamedMDNodes(Dest, Src, ValueMap);
 
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).
