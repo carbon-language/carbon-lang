@@ -17,8 +17,8 @@ TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := jit interpreter nativecodegen bitreader bitwriter ipo \
 	selectiondag asmparser
-USEDLIBS = clangFrontend.a clangDriver.a clangCodeGen.a clangSema.a \
-           clangChecker.a clangAnalysis.a clangRewrite.a  clangAST.a \
-           clangParse.a clangLex.a clangBasic.a
+USEDLIBS = clangSerialization.a clangFrontend.a clangDriver.a clangCodeGen.a \
+           clangSema.a clangChecker.a clangAnalysis.a clangRewrite.a \
+           clangAST.a clangParse.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
