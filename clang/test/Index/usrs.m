@@ -49,12 +49,24 @@ int z;
 static int local_func(int x) { return x; }
 
 @interface CWithExt
+- (id) meth1;
 @end
 @interface CWithExt ()
+- (id) meth2;
 @end
 @interface CWithExt ()
+- (id) meth3;
+@end
+@interface CWithExt (Bar)
+- (id) meth4;
 @end
 @implementation CWithExt
+- (id) meth1 { return 0; }
+- (id) meth2 { return 0; }
+- (id) meth3 { return 0; }
+@end
+@implementation CWithExt (Bar)
+- (id) meth4 { return 0; }
 @end
 
 // CHECK: usrs.m c:usrs.m@85@F@my_helper Extent=[3:19 - 3:60]
@@ -93,10 +105,18 @@ static int local_func(int x) { return x; }
 // CHECK: usrs.m c:@z Extent=[47:1 - 47:6]
 // CHECK: usrs.m c:usrs.m@540@F@local_func Extent=[49:12 - 49:43]
 // CHECK: usrs.m c:usrs.m@551@F@local_func@x Extent=[49:23 - 49:28]
-// CHECK: usrs.m c:objc(cs)CWithExt Extent=[51:1 - 52:5]
-// CHECK: usrs.m c:objc(cy)CWithExt@ Extent=[53:1 - 54:5]
-// CHECK: usrs.m c:objc(cy)CWithExt@ Extent=[55:1 - 56:5]
-// CHECK: usrs.m c:objc(cs)CWithExt Extent=[57:1 - 58:2]
-
-
+// CHECK: usrs.m c:objc(cs)CWithExt Extent=[51:1 - 53:5]
+// CHECK: usrs.m c:objc(cs)CWithExt(im)meth1 Extent=[52:1 - 52:14]
+// CHECK: usrs.m c:objc(ext)CWithExt@usrs.m@612 Extent=[54:1 - 56:5]
+// CHECK: usrs.m c:objc(cs)CWithExt(im)meth2 Extent=[55:1 - 55:14]
+// CHECK: usrs.m c:objc(ext)CWithExt@usrs.m@654 Extent=[57:1 - 59:5]
+// CHECK: usrs.m c:objc(cs)CWithExt(im)meth3 Extent=[58:1 - 58:14]
+// CHECK: usrs.m c:objc(cy)CWithExt@Bar Extent=[60:1 - 62:5]
+// CHECK: usrs.m c:objc(cy)CWithExt@Bar(im)meth4 Extent=[61:1 - 61:14]
+// CHECK: usrs.m c:objc(cs)CWithExt Extent=[63:1 - 67:2]
+// CHECK: usrs.m c:objc(cs)CWithExt(im)meth1 Extent=[64:1 - 64:27]
+// CHECK: usrs.m c:objc(cs)CWithExt(im)meth2 Extent=[65:1 - 65:27]
+// CHECK: usrs.m c:objc(cs)CWithExt(im)meth3 Extent=[66:1 - 66:27]
+// CHECK: usrs.m c:objc(cy)CWithExt@Bar Extent=[68:1 - 70:2]
+// CHECK: usrs.m c:objc(cy)CWithExt@Bar(im)meth4 Extent=[69:1 - 69:27]
 

@@ -227,7 +227,20 @@ void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
-  Visit(cast<Decl>(D->getDeclContext()));
+  Decl *container = cast<Decl>(D->getDeclContext());
+  
+  // The USR for a method declared in a class extension is based on
+  // the ObjCInterfaceDecl, not the ObjCCategoryDecl.
+  do {
+    if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(container))
+      if (CD->IsClassExtension()) {
+        Visit(CD->getClassInterface());
+        break;
+      }    
+    Visit(cast<Decl>(D->getDeclContext()));
+  }
+  while (false);
+  
   // Ideally we would use 'GenObjCMethod', but this is such a hot path
   // for Objective-C code that we don't want to use
   // DeclarationName::getAsString().
@@ -267,7 +280,15 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
         IgnoreResults = true;
         return;
       }
-      GenObjCCategory(ID->getName(), CD->getName());
+      // Specially handle class extensions, which are anonymous categories.
+      // We want to mangle in the location to uniquely distinguish them.
+      if (CD->IsClassExtension()) {
+        Out << "objc(ext)" << ID->getName() << '@';
+        GenLoc(CD);
+      }
+      else
+        GenObjCCategory(ID->getName(), CD->getName());
+
       break;
     }
     case Decl::ObjCCategoryImpl: {
