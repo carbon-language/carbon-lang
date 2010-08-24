@@ -42,6 +42,7 @@ class CommentHandler;
 class ScratchBuffer;
 class TargetInfo;
 class PPCallbacks;
+class CodeCompletionHandler;
 class DirectoryLookup;
 class PreprocessingRecord;
   
@@ -131,6 +132,9 @@ class Preprocessor {
   /// with this preprocessor.
   std::vector<CommentHandler *> CommentHandlers;
 
+  /// \brief The code-completion handler.
+  CodeCompletionHandler *CodeComplete;
+  
   /// \brief The file that we're performing code-completion for, if any.
   const FileEntry *CodeCompletionFile;
 
@@ -373,6 +377,16 @@ public:
   /// It is an error to remove a handler that has not been registered.
   void RemoveCommentHandler(CommentHandler *Handler);
 
+  /// \brief Set the code completion handler to the given object.
+  void setCodeCompletionHandler(CodeCompletionHandler &Handler) {
+    CodeComplete = &Handler;
+  }
+  
+  /// \brief Clear out the code completion handler.
+  void clearCodeCompletionHandler() {
+    CodeComplete = 0;
+  }
+  
   /// \brief Retrieve the preprocessing record, or NULL if there is no
   /// preprocessing record.
   PreprocessingRecord *getPreprocessingRecord() const { return Record; }

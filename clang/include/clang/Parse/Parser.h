@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Specifiers.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Sema/Action.h"
 #include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -70,7 +71,7 @@ namespace prec {
 /// parsing units of the grammar, productions are invoked to handle whatever has
 /// been read.
 ///
-class Parser {
+class Parser : public CodeCompletionHandler {
   friend class PragmaUnusedHandler;
   friend class ColonProtectionRAIIObject;
   friend class ParenBraceBracketBalancer;
@@ -1529,6 +1530,11 @@ private:
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
   ExprResult ParseUnaryTypeTrait();
+
+  //===--------------------------------------------------------------------===//
+  // Preprocessor code-completion pass-through
+  virtual void CodeCompleteDirective(bool InConditional);
+  virtual void CodeCompleteInConditionalExclusion();
 };
 
 }  // end namespace clang

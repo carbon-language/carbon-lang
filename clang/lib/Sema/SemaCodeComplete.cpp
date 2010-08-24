@@ -4607,6 +4607,186 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
                             Results.data(),Results.size());
 }
 
+void Sema::CodeCompletePreprocessorDirective(Scope *S, bool InConditional) {
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // #if <condition>
+  CodeCompletionString *Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("if");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("condition");
+  Results.AddResult(Pattern);
+  
+  // #ifdef <macro>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("ifdef");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("macro");
+  Results.AddResult(Pattern);
+
+  // #ifndef <macro>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("ifndef");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("macro");
+  Results.AddResult(Pattern);
+
+  if (InConditional) {
+    // #elif <condition>
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("elif");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddPlaceholderChunk("condition");
+    Results.AddResult(Pattern);
+
+    // #else
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("else");
+    Results.AddResult(Pattern);
+
+    // #endif
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("endif");
+    Results.AddResult(Pattern);
+  }
+  
+  // #include "header"
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("include");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddTextChunk("\"");
+  Pattern->AddPlaceholderChunk("header");
+  Pattern->AddTextChunk("\"");
+  Results.AddResult(Pattern);
+
+  // #include <header>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("include");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddTextChunk("<");
+  Pattern->AddPlaceholderChunk("header");
+  Pattern->AddTextChunk(">");
+  Results.AddResult(Pattern);
+  
+  // #define <macro>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("define");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("macro");
+  Results.AddResult(Pattern);
+  
+  // #define <macro>(<args>)
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("define");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("macro");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("args");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Results.AddResult(Pattern);
+  
+  // #undef <macro>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("undef");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("macro");
+  Results.AddResult(Pattern);
+
+  // #line <number>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("line");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("number");
+  Results.AddResult(Pattern);
+  
+  // #line <number> "filename"
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("line");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("number");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddTextChunk("\"");
+  Pattern->AddPlaceholderChunk("filename");
+  Pattern->AddTextChunk("\"");
+  Results.AddResult(Pattern);
+  
+  // #error <message>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("error");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("message");
+  Results.AddResult(Pattern);
+
+  // #pragma <arguments>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("pragma");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("arguments");
+  Results.AddResult(Pattern);
+
+  if (getLangOptions().ObjC1) {
+    // #import "header"
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("import");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddTextChunk("\"");
+    Pattern->AddPlaceholderChunk("header");
+    Pattern->AddTextChunk("\"");
+    Results.AddResult(Pattern);
+    
+    // #import <header>
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("import");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddTextChunk("<");
+    Pattern->AddPlaceholderChunk("header");
+    Pattern->AddTextChunk(">");
+    Results.AddResult(Pattern);
+  }
+  
+  // #include_next "header"
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("include_next");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddTextChunk("\"");
+  Pattern->AddPlaceholderChunk("header");
+  Pattern->AddTextChunk("\"");
+  Results.AddResult(Pattern);
+  
+  // #include_next <header>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("include_next");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddTextChunk("<");
+  Pattern->AddPlaceholderChunk("header");
+  Pattern->AddTextChunk(">");
+  Results.AddResult(Pattern);
+
+  // #warning <message>
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("warning");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("message");
+  Results.AddResult(Pattern);
+
+  // Note: #ident and #sccs are such crazy anachronisms that we don't provide
+  // completions for them. And __include_macros is a Clang-internal extension
+  // that we don't want to encourage anyone to use.
+
+  // FIXME: we don't support #assert or #unassert, so don't suggest them.
+  Results.ExitScope();
+  
+  // FIXME: Create a new code-completion context for this?
+  HandleCodeCompleteResults(this, CodeCompleter, 
+                            CodeCompletionContext::CCC_Other,
+                            Results.data(), Results.size());
+}
+
+void Sema::CodeCompleteInPreprocessorConditionalExclusion(Scope *S) {
+  CodeCompleteOrdinaryName(S, Action::PCC_RecoveryInFunction);
+}
+
 void Sema::GatherGlobalCodeCompletions(
                  llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results) {
   ResultBuilder Builder(*this);

@@ -16,6 +16,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APInt.h"
@@ -177,6 +178,12 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   while (1) {
     CurLexer->Lex(Tok);
 
+    if (Tok.is(tok::code_completion)) {
+      if (CodeComplete)
+        CodeComplete->CodeCompleteInConditionalExclusion();
+      continue;
+    }
+    
     // If this is the end of the buffer, we have an error.
     if (Tok.is(tok::eof)) {
       // Emit errors for each unterminated conditional on the stack, including
@@ -522,7 +529,11 @@ TryAgain:
     // Handle stuff like "# /*foo*/ define X" in -E -C mode.
     LexUnexpandedToken(Result);
     goto TryAgain;
-
+  case tok::code_completion:
+    if (CodeComplete)
+      CodeComplete->CodeCompleteDirective(
+                                    CurPPLexer->getConditionalStackDepth() > 0);
+    return;
   case tok::numeric_constant:  // # 7  GNU line marker directive.
     if (getLangOptions().AsmPreprocessor)
       break;  // # 4 is not a preprocessor directive in .S files.

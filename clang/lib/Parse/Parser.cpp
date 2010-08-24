@@ -50,6 +50,8 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 
   WeakHandler.reset(new PragmaWeakHandler(actions));
   PP.AddPragmaHandler(WeakHandler.get());
+      
+  PP.setCodeCompletionHandler(*this);
 }
 
 /// If a crash happens while the parser is active, print out a line indicating
@@ -316,6 +318,7 @@ Parser::~Parser() {
   UnusedHandler.reset();
   PP.RemovePragmaHandler(WeakHandler.get());
   WeakHandler.reset();
+  PP.clearCodeCompletionHandler();
 }
 
 /// Initialize - Warm up the parser.
@@ -1125,4 +1128,14 @@ void Parser::CodeCompletionRecovery() {
 // destroying FieldCallbacks can actually be slightly
 // performance-sensitive.
 void Parser::FieldCallback::_anchor() {
+}
+
+// Code-completion pass-through functions
+
+void Parser::CodeCompleteDirective(bool InConditional) {
+  Actions.CodeCompletePreprocessorDirective(getCurScope(), InConditional);
+}
+
+void Parser::CodeCompleteInConditionalExclusion() {
+  Actions.CodeCompleteInPreprocessorConditionalExclusion(getCurScope());
 }

@@ -1523,6 +1523,22 @@ std::string Lexer::ReadToEndOfLine() {
 /// This returns true if Result contains a token, false if PP.Lex should be
 /// called again.
 bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
+  // Check if we are performing code completion.
+  if (PP && PP->isCodeCompletionFile(FileLoc)) {
+    // We're at the end of the file, but we've been asked to consider the
+    // end of the file to be a code-completion token. Return the
+    // code-completion token.
+    Result.startToken();
+    FormTokenWithChars(Result, CurPtr, tok::code_completion);
+    
+    // Only do the eof -> code_completion translation once.
+    PP->SetCodeCompletionPoint(0, 0, 0);
+    
+    // Silence any diagnostics that occur once we hit the code-completion point.
+    PP->getDiagnostics().setSuppressAllDiagnostics(true);
+    return true;
+  }
+
   // If we hit the end of the file while parsing a preprocessor directive,
   // end the preprocessor directive first.  The next token returned will
   // then be the end of file.
@@ -1545,25 +1561,9 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     FormTokenWithChars(Result, BufferEnd, tok::eof);
     return true;
   }
-
-  // Otherwise, check if we are code-completing, then issue diagnostics for 
-  // unterminated #if and missing newline.
-
-  if (PP && PP->isCodeCompletionFile(FileLoc)) {
-    // We're at the end of the file, but we've been asked to consider the
-    // end of the file to be a code-completion token. Return the
-    // code-completion token.
-    Result.startToken();
-    FormTokenWithChars(Result, CurPtr, tok::code_completion);
-    
-    // Only do the eof -> code_completion translation once.
-    PP->SetCodeCompletionPoint(0, 0, 0);
-    
-    // Silence any diagnostics that occur once we hit the code-completion point.
-    PP->getDiagnostics().setSuppressAllDiagnostics(true);
-    return true;
-  }
   
+  // Issue diagnostics for unterminated #if and missing newline.
+
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
     if (!PP->isCodeCompletionFile(FileLoc))

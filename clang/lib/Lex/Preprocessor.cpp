@@ -34,6 +34,7 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -53,9 +54,9 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
-    Identifiers(opts, IILookup), BuiltinInfo(Target), CodeCompletionFile(0),
-    SkipMainFilePreamble(0, true), CurPPLexer(0), CurDirLookup(0), Callbacks(0), 
-    MacroArgCache(0), Record(0) {
+    Identifiers(opts, IILookup), BuiltinInfo(Target), CodeComplete(0),
+    CodeCompletionFile(0), SkipMainFilePreamble(0, true), CurPPLexer(0), 
+    CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -645,6 +646,8 @@ bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
 }
 
 CommentHandler::~CommentHandler() { }
+
+CodeCompletionHandler::~CodeCompletionHandler() { }
 
 void Preprocessor::createPreprocessingRecord() {
   if (Record)

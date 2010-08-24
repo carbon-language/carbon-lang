@@ -3205,6 +3205,16 @@ public:
                                                   IdentifierInfo **SelIdents,
                                                   unsigned NumSelIdents) { }
   
+  /// \brief Code completion for a preprocessor directive.
+  ///
+  /// \brief S The scope in which the preprocessor directive is being parsed.
+  /// \brief InConditional Whether we're inside a preprocessor conditional.
+  virtual void CodeCompletePreprocessorDirective(Scope *S, bool InConditional) { 
+  }
+  
+  /// \brief Code completion while in an area of the translation unit that was
+  /// excluded due to preprocessor conditionals.
+  virtual void CodeCompleteInPreprocessorConditionalExclusion(Scope *S) { }
   //@}
 };
 
