@@ -109,7 +109,7 @@ class ARMFastISel : public FastISel {
 
     // Utility routines.
   private:
-    bool ARMComputeRegOffset(const Instruction *I, unsigned &Reg, int &Offset);
+    bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
@@ -309,13 +309,13 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
-bool ARMFastISel::ARMComputeRegOffset(const Instruction *I, unsigned &Reg,
+// Computes the Reg+Offset to get to an object.
+bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
                                       int &Offset) {
   // Some boilerplate from the X86 FastISel.
   const User *U = NULL;
-  Value *Op1 = I->getOperand(0);
   unsigned Opcode = Instruction::UserOp1;
-  if (const Instruction *I = dyn_cast<Instruction>(Op1)) {
+  if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
     // Don't walk into other basic blocks; it's possible we haven't
     // visited them yet, so the instructions may not yet be assigned
     // virtual registers.
@@ -324,12 +324,12 @@ bool ARMFastISel::ARMComputeRegOffset(const Instruction *I, unsigned &Reg,
 
     Opcode = I->getOpcode();
     U = I;
-  } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Op1)) {
+  } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Obj)) {
     Opcode = C->getOpcode();
     U = C;
   }
 
-  if (const PointerType *Ty = dyn_cast<PointerType>(Op1->getType()))
+  if (const PointerType *Ty = dyn_cast<PointerType>(Obj->getType()))
     if (Ty->getAddressSpace() > 255)
       // Fast instruction selection doesn't support the special
       // address spaces.
@@ -341,7 +341,7 @@ bool ARMFastISel::ARMComputeRegOffset(const Instruction *I, unsigned &Reg,
     break;
     case Instruction::Alloca: {
       // Do static allocas.
-      const AllocaInst *A = cast<AllocaInst>(Op1);
+      const AllocaInst *A = cast<AllocaInst>(Obj);
       DenseMap<const AllocaInst*, int>::iterator SI =
         FuncInfo.StaticAllocaMap.find(A);
       if (SI != FuncInfo.StaticAllocaMap.end())
@@ -353,18 +353,26 @@ bool ARMFastISel::ARMComputeRegOffset(const Instruction *I, unsigned &Reg,
       return true;
     }
   }
-  return false;
+  
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
+    //errs() << "Failing GV is: " << GV << "\n";
+    return false;
+  }
+  
+  // Try to get this in a register if nothing else has worked.
+  Reg = getRegForValue(Obj);
+  return Reg != 0;  
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
-  
-  unsigned Reg;
-  int Offset;
+  // Our register and offset with innocuous defaults.
+  unsigned Reg = 0;
+  int Offset = 0;
   
   // TODO: Think about using loadRegFromStackSlot() here when we can.
   
   // See if we can handle this as Reg + Offset
-  if (!ARMComputeRegOffset(I, Reg, Offset))
+  if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
     return false;
     
   // Since the offset may be too large for the load instruction
