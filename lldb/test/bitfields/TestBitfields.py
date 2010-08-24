@@ -10,7 +10,7 @@ class TestBitfields(TestBase):
     mydir = "bitfields"
 
     @unittest2.expectedFailure
-    def test_global_variables(self):
+    def test_variable_list_for_bitfields(self):
         """Test 'variable list ...' and check for correct display."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
