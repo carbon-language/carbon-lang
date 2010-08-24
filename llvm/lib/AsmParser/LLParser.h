@@ -307,6 +307,7 @@ namespace llvm {
     bool ParseGlobalValue(const Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
+    bool ParseMetadataListValue(ValID &ID, PerFunctionState *PFS);
     bool ParseMetadataValue(ValID &ID, PerFunctionState *PFS);
     bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);

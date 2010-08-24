@@ -72,6 +72,11 @@ private:
   /// When a function is incorporated, this is the size of the Values list
   /// before incorporation.
   unsigned NumModuleValues;
+
+  /// When a function is incorporated, this is the size of the MDValues list
+  /// before incorporation.
+  unsigned NumModuleMDValues;
+
   unsigned FirstFuncConstantID;
   unsigned FirstInstID;
   
@@ -132,7 +137,9 @@ public:
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
     
+  void EnumerateMDNodeOperands(const MDNode *N);
   void EnumerateMetadata(const Value *MD);
+  void EnumerateFunctionLocalMetadata(const MDNode *N);
   void EnumerateNamedMDNode(const NamedMDNode *NMD);
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);

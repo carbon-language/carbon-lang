@@ -1124,23 +1124,33 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
       return TokError("expected metadata after comma");
 
     std::string Name = Lex.getStrVal();
+    unsigned MDK = M->getMDKindID(Name.c_str());
     Lex.Lex();
 
     MDNode *Node;
     unsigned NodeID;
     SMLoc Loc = Lex.getLoc();
-    if (ParseToken(lltok::exclaim, "expected '!' here") ||
-        ParseMDNodeID(Node, NodeID))
+
+    if (ParseToken(lltok::exclaim, "expected '!' here"))
       return true;
 
-    unsigned MDK = M->getMDKindID(Name.c_str());
-    if (Node) {
-      // If we got the node, add it to the instruction.
-      Inst->setMetadata(MDK, Node);
+    if (Lex.getKind() == lltok::lbrace) {
+      ValID ID;
+      if (ParseMetadataListValue(ID, PFS))
+        return true;
+      assert(ID.Kind == ValID::t_MDNode);
+      Inst->setMetadata(MDK, ID.MDNodeVal);
     } else {
-      MDRef R = { Loc, MDK, NodeID };
-      // Otherwise, remember that this should be resolved later.
-      ForwardRefInstMetadata[Inst].push_back(R);
+      if (ParseMDNodeID(Node, NodeID))
+        return true;
+      if (Node) {
+        // If we got the node, add it to the instruction.
+        Inst->setMetadata(MDK, Node);
+      } else {
+        MDRef R = { Loc, MDK, NodeID };
+        // Otherwise, remember that this should be resolved later.
+        ForwardRefInstMetadata[Inst].push_back(R);
+      }
     }
 
     // If this is the end of the list, we're done.
@@ -2505,6 +2515,20 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts) {
   return false;
 }
 
+bool LLParser::ParseMetadataListValue(ValID &ID, PerFunctionState *PFS) {
+  assert(Lex.getKind() == lltok::lbrace);
+  Lex.Lex();
+
+  SmallVector<Value*, 16> Elts;
+  if (ParseMDNodeVector(Elts, PFS) ||
+      ParseToken(lltok::rbrace, "expected end of metadata node"))
+    return true;
+
+  ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size());
+  ID.Kind = ValID::t_MDNode;
+  return false;
+}
+
 /// ParseMetadataValue
 ///  ::= !42
 ///  ::= !{...}
@@ -2515,16 +2539,8 @@ bool LLParser::ParseMetadataValue(ValID &ID, PerFunctionState *PFS) {
 
   // MDNode:
   // !{ ... }
-  if (EatIfPresent(lltok::lbrace)) {
-    SmallVector<Value*, 16> Elts;
-    if (ParseMDNodeVector(Elts, PFS) ||
-        ParseToken(lltok::rbrace, "expected end of metadata node"))
-      return true;
-
-    ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size());
-    ID.Kind = ValID::t_MDNode;
-    return false;
-  }
+  if (Lex.getKind() == lltok::lbrace)
+    return ParseMetadataListValue(ID, PFS);
 
   // Standalone metadata reference
   // !42
