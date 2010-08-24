@@ -614,10 +614,10 @@ namespace {
     QualType RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
                                    NestedNameSpecifier *NNS, QualType T);
 
-    Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E);
-    Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
-    Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
-    Sema::OwningExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
+    ExprResult TransformPredefinedExpr(PredefinedExpr *E);
+    ExprResult TransformDeclRefExpr(DeclRefExpr *E);
+    ExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
+    ExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
                                                 NonTypeTemplateParmDecl *D);
 
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
@@ -631,9 +631,9 @@ namespace {
                                            TemplateTypeParmTypeLoc TL,
                                            QualType ObjectType);
 
-    Sema::OwningExprResult TransformCallExpr(CallExpr *CE) {
+    ExprResult TransformCallExpr(CallExpr *CE) {
       getSema().CallsUndergoingInstantiation.push_back(CE);
-      OwningExprResult Result =
+      ExprResult Result =
           TreeTransform<TemplateInstantiator>::TransformCallExpr(CE);
       getSema().CallsUndergoingInstantiation.pop_back();
       return move(Result);
@@ -768,7 +768,7 @@ TemplateInstantiator::RebuildElaboratedType(ElaboratedTypeKeyword Keyword,
                                                                     NNS, T);
 }
 
-Sema::OwningExprResult 
+ExprResult 
 TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   if (!E->isTypeDependent())
     return SemaRef.Owned(E->Retain());
@@ -790,7 +790,7 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   return getSema().Owned(PE);
 }
 
-Sema::OwningExprResult
+ExprResult
 TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
                                                NonTypeTemplateParmDecl *NTTP) {
   // If the corresponding template argument is NULL or non-existent, it's
@@ -837,7 +837,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
 }
                                                    
 
-Sema::OwningExprResult
+ExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
@@ -851,7 +851,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   return TreeTransform<TemplateInstantiator>::TransformDeclRefExpr(E);
 }
 
-Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
+ExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
     CXXDefaultArgExpr *E) {
   assert(!cast<FunctionDecl>(E->getParam()->getDeclContext())->
              getDescribedFunctionTemplate() &&
@@ -1579,7 +1579,7 @@ Sema::InstantiateClassTemplateSpecializationMembers(
                           TSK);
 }
 
-Sema::OwningStmtResult
+StmtResult
 Sema::SubstStmt(Stmt *S, const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (!S)
     return Owned(S);
@@ -1590,7 +1590,7 @@ Sema::SubstStmt(Stmt *S, const MultiLevelTemplateArgumentList &TemplateArgs) {
   return Instantiator.TransformStmt(S);
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::SubstExpr(Expr *E, const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (!E)
     return Owned(E);

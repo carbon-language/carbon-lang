@@ -131,7 +131,7 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
 
             // now parse the non-empty comma separated list of expressions
             while (1) {
-              OwningExprResult ArgExpr(ParseAssignmentExpression());
+              ExprResult ArgExpr(ParseAssignmentExpression());
               if (ArgExpr.isInvalid()) {
                 ArgExprsOk = false;
                 SkipUntil(tok::r_paren);
@@ -191,7 +191,7 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
 
             // now parse the list of expressions
             while (1) {
-              OwningExprResult ArgExpr(ParseAssignmentExpression());
+              ExprResult ArgExpr(ParseAssignmentExpression());
               if (ArgExpr.isInvalid()) {
                 ArgExprsOk = false;
                 SkipUntil(tok::r_paren);
@@ -256,7 +256,7 @@ AttributeList* Parser::ParseMicrosoftDeclSpec(AttributeList *CurrAttr) {
       ConsumeParen();
       // FIXME: This doesn't parse __declspec(property(get=get_func_name))
       // correctly.
-      OwningExprResult ArgExpr(ParseAssignmentExpression());
+      ExprResult ArgExpr(ParseAssignmentExpression());
       if (!ArgExpr.isInvalid()) {
         Expr *ExprList = ArgExpr.take();
         CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
@@ -514,7 +514,7 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   // If a simple-asm-expr is present, parse it.
   if (Tok.is(tok::kw_asm)) {
     SourceLocation Loc;
-    OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
+    ExprResult AsmLabel(ParseSimpleAsm(&Loc));
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi, true, true);
       return 0;
@@ -582,7 +582,7 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
         return ThisDecl;
       }
       
-      OwningExprResult Init(ParseInitializer());
+      ExprResult Init(ParseInitializer());
 
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
@@ -1756,7 +1756,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
 
     if (Tok.is(tok::colon)) {
       ConsumeToken();
-      OwningExprResult Res(ParseConstantExpression());
+      ExprResult Res(ParseConstantExpression());
       if (Res.isInvalid())
         SkipUntil(tok::semi, true, true);
       else
@@ -2078,7 +2078,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     SourceLocation IdentLoc = ConsumeToken();
 
     SourceLocation EqualLoc;
-    OwningExprResult AssignedVal;
+    ExprResult AssignedVal;
     if (Tok.is(tok::equal)) {
       EqualLoc = ConsumeToken();
       AssignedVal = ParseConstantExpression();
@@ -3131,7 +3131,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           // Consume the '='.
           ConsumeToken();
 
-          OwningExprResult DefArgResult(ParseAssignmentExpression());
+          ExprResult DefArgResult(ParseAssignmentExpression());
           if (DefArgResult.isInvalid()) {
             Actions.ActOnParamDefaultArgumentError(Param);
             SkipUntil(tok::comma, tok::r_paren, true, true);
@@ -3309,7 +3309,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     }
     
     // Remember that we parsed the empty array type.
-    OwningExprResult NumElements;
+    ExprResult NumElements;
     D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false, 0,
                                             StartLoc, EndLoc),
                   EndLoc);
@@ -3317,7 +3317,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   } else if (Tok.getKind() == tok::numeric_constant &&
              GetLookAheadToken(1).is(tok::r_square)) {
     // [4] is very common.  Parse the numeric constant expression.
-    OwningExprResult ExprRes(Actions.ActOnNumericConstant(Tok));
+    ExprResult ExprRes(Actions.ActOnNumericConstant(Tok));
     ConsumeToken();
 
     SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
@@ -3355,7 +3355,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
-  OwningExprResult NumElements;
+  ExprResult NumElements;
 
   // Handle the case where we have '[*]' as the array size.  However, a leading
   // star could be the start of an expression, for example 'X[*p + 4]'.  Verify
@@ -3422,7 +3422,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   bool isCastExpr;
   ParsedType CastTy;
   SourceRange CastRange;
-  OwningExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
+  ExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
                                                                isCastExpr,
                                                                CastTy,
                                                                CastRange);

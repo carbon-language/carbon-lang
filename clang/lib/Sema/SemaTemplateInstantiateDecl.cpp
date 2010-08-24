@@ -32,8 +32,6 @@ namespace {
     const MultiLevelTemplateArgumentList &TemplateArgs;
 
   public:
-    typedef Sema::OwningExprResult OwningExprResult;
-
     TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
                              const MultiLevelTemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
@@ -151,7 +149,7 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                                                      Action::Unevaluated);
 
         if (Aligned->isAlignmentExpr()) {
-          OwningExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
+          ExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
                                               TemplateArgs);
           if (!Result.isInvalid())
             AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>());
@@ -260,7 +258,7 @@ static bool InstantiateInitializationArguments(Sema &SemaRef,
     if (Args[I]->isDefaultArgument())
       break;
   
-    Sema::OwningExprResult Arg = SemaRef.SubstExpr(Args[I], TemplateArgs);
+    ExprResult Arg = SemaRef.SubstExpr(Args[I], TemplateArgs);
     if (Arg.isInvalid())
       return true;
   
@@ -335,7 +333,7 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
     }
   }
  
-  Sema::OwningExprResult Result = S.SubstExpr(Init, TemplateArgs);
+  ExprResult Result = S.SubstExpr(Init, TemplateArgs);
   if (Result.isInvalid())
     return true;
 
@@ -496,7 +494,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     // The bit-width expression is not potentially evaluated.
     EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
 
-    OwningExprResult InstantiatedBitWidth
+    ExprResult InstantiatedBitWidth
       = SemaRef.SubstExpr(BitWidth, TemplateArgs);
     if (InstantiatedBitWidth.isInvalid()) {
       Invalid = true;
@@ -584,12 +582,12 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   // The expression in a static assertion is not potentially evaluated.
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
 
-  OwningExprResult InstantiatedAssertExpr
+  ExprResult InstantiatedAssertExpr
     = SemaRef.SubstExpr(AssertExpr, TemplateArgs);
   if (InstantiatedAssertExpr.isInvalid())
     return 0;
 
-  OwningExprResult Message(D->getMessage());
+  ExprResult Message(D->getMessage());
   D->getMessage()->Retain();
   return SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
                                               InstantiatedAssertExpr.get(),
@@ -617,7 +615,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
          ECEnd = D->enumerator_end();
        EC != ECEnd; ++EC) {
     // The specified value for the enumerator.
-    OwningExprResult Value = SemaRef.Owned((Expr *)0);
+    ExprResult Value = SemaRef.Owned((Expr *)0);
     if (Expr *UninstValue = EC->getInitExpr()) {
       // The enumerator's value expression is not potentially evaluated.
       EnterExpressionEvaluationContext Unevaluated(SemaRef,
@@ -2106,7 +2104,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   }
 
   // Instantiate the function body.
-  OwningStmtResult Body = SubstStmt(Pattern, TemplateArgs);
+  StmtResult Body = SubstStmt(Pattern, TemplateArgs);
 
   if (Body.isInvalid())
     Function->setInvalidDecl();

@@ -121,9 +121,9 @@ bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
   return false;
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
-  OwningExprResult TheCallResult(Owned(TheCall));
+  ExprResult TheCallResult(Owned(TheCall));
 
   switch (BuiltinID) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
@@ -390,8 +390,8 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
 ///
 /// This function goes through and does final semantic checking for these
 /// builtins,
-Sema::OwningExprResult
-Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
+ExprResult
+Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   CallExpr *TheCall = (CallExpr *)TheCallResult.get();
   DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
   FunctionDecl *FDecl = cast<FunctionDecl>(DRE->getDecl());
@@ -746,7 +746,7 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
 
 /// SemaBuiltinShuffleVector - Handle __builtin_shufflevector.
 // This is declared to take (...), so we have to check everything.
-Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
+ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 2)
     return ExprError(Diag(TheCall->getLocEnd(),
                           diag::err_typecheck_call_too_few_args_at_least)

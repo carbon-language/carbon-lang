@@ -464,7 +464,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       Expr *IvarRefExpr =
         new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), AtLoc,
                                       SelfExpr, true, true);
-      OwningExprResult Res = 
+      ExprResult Res = 
         PerformCopyInitialization(InitializedEntity::InitializeResult(
                                     SourceLocation(),
                                     getterMethod->getResultType(),
@@ -494,8 +494,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       ParmVarDecl *Param = (*P);
       Expr *rhs = new (Context) DeclRefExpr(Param,Param->getType(),
                                             SourceLocation());
-      OwningExprResult Res = BuildBinOp(S, SourceLocation(), 
-                                        BinaryOperator::Assign, lhs, rhs);
+      ExprResult Res = BuildBinOp(S, SourceLocation(), 
+                                  BinaryOperator::Assign, lhs, rhs);
       PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());
     }
   }

@@ -3707,7 +3707,7 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
       // an instance method.
       QualType SuperTy = Context.getObjCInterfaceType(CDecl);
       SuperTy = Context.getObjCObjectPointerType(SuperTy);
-      OwningExprResult Super
+      ExprResult Super
         = Owned(new (Context) ObjCSuperExpr(SuperLoc, SuperTy));
       return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
                                              SelIdents, NumSelIdents);
@@ -3733,7 +3733,7 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
       CXXScopeSpec SS;
       UnqualifiedId id;
       id.setIdentifier(Super, SuperLoc);
-      OwningExprResult SuperExpr = ActOnIdExpression(S, SS, id, false, false);
+      ExprResult SuperExpr = ActOnIdExpression(S, SS, id, false, false);
       return CodeCompleteObjCInstanceMessage(S, (Expr *)SuperExpr.get(),
                                              SelIdents, NumSelIdents);
     }

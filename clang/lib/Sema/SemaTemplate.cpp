@@ -344,7 +344,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
 /// ActOnDependentIdExpression - Handle a dependent id-expression that
 /// was just parsed.  This is only possible with an explicit scope
 /// specifier naming a dependent type.
-Sema::OwningExprResult
+ExprResult
 Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                  const DeclarationNameInfo &NameInfo,
                                  bool isAddressOfOperand,
@@ -376,7 +376,7 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
   return BuildDependentDeclRefExpr(SS, NameInfo, TemplateArgs);
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
                                 const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
@@ -1578,7 +1578,7 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
   return ParsedType::make(ElabType);
 }
 
-Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
+ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
                                                  LookupResult &R,
                                                  bool RequiresADL,
                                  const TemplateArgumentListInfo &TemplateArgs) {
@@ -1615,7 +1615,7 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
 }
 
 // We actually only call this from template instantiation.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
                                    const DeclarationNameInfo &NameInfo,
                              const TemplateArgumentListInfo &TemplateArgs) {
@@ -1860,7 +1860,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
 /// parameters that precede \p Param in the template parameter list.
 ///
 /// \returns the substituted template argument, or NULL if an error occurred.
-static Sema::OwningExprResult
+static ExprResult
 SubstDefaultTemplateArgument(Sema &SemaRef,
                              TemplateDecl *Template,
                              SourceLocation TemplateLoc,
@@ -1956,7 +1956,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
     if (!NonTypeParm->hasDefaultArgument())
       return TemplateArgumentLoc();
 
-    OwningExprResult Arg = SubstDefaultTemplateArgument(*this, Template,
+    ExprResult Arg = SubstDefaultTemplateArgument(*this, Template,
                                                         TemplateLoc,
                                                         RAngleLoc,
                                                         NonTypeParm,
@@ -2279,7 +2279,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         break;
       }
 
-      Sema::OwningExprResult E = SubstDefaultTemplateArgument(*this, Template,
+      ExprResult E = SubstDefaultTemplateArgument(*this, Template,
                                                               TemplateLoc, 
                                                               RAngleLoc, 
                                                               NTTP, 
@@ -3038,7 +3038,7 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
 /// declaration and the type of its corresponding non-type template
 /// parameter, produce an expression that properly refers to that
 /// declaration.
-Sema::OwningExprResult 
+ExprResult 
 Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
                                               QualType ParamType,
                                               SourceLocation Loc) {
@@ -3061,7 +3061,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
                                       ClassType.getTypePtr());
       CXXScopeSpec SS;
       SS.setScopeRep(Qualifier);
-      OwningExprResult RefExpr = BuildDeclRefExpr(VD, 
+      ExprResult RefExpr = BuildDeclRefExpr(VD, 
                                            VD->getType().getNonReferenceType(), 
                                                   Loc,
                                                   &SS);
@@ -3092,7 +3092,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
   if (ParamType->isPointerType()) {
     // When the non-type template parameter is a pointer, take the
     // address of the declaration.
-    OwningExprResult RefExpr = BuildDeclRefExpr(VD, T, Loc);
+    ExprResult RefExpr = BuildDeclRefExpr(VD, T, Loc);
     if (RefExpr.isInvalid())
       return ExprError();
 
@@ -3128,7 +3128,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
 /// This routine takes care of the mapping from an integral template
 /// argument (which may have any integral type) to the appropriate
 /// literal value.
-Sema::OwningExprResult 
+ExprResult 
 Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
                                                   SourceLocation Loc) {
   assert(Arg.getKind() == TemplateArgument::Integral &&
@@ -5485,7 +5485,7 @@ TypeSourceInfo *Sema::RebuildTypeInCurrentInstantiation(TypeSourceInfo *T,
   return Rebuilder.TransformType(T);
 }
 
-OwningExprResult Sema::RebuildExprInCurrentInstantiation(Expr *E) {
+ExprResult Sema::RebuildExprInCurrentInstantiation(Expr *E) {
   CurrentInstantiationRebuilder Rebuilder(*this, E->getExprLoc(),
                                           DeclarationName());
   return Rebuilder.TransformExpr(E);

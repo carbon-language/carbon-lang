@@ -71,7 +71,7 @@ static void CheckArrayDesignatorSyntax(Parser &P, SourceLocation Loc,
 /// initializer (because it is an expression).  We need to consider this case
 /// when parsing array designators.
 ///
-Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
+ExprResult Parser::ParseInitializerWithPotentialDesignator() {
 
   // If this is the old-style GNU extension:
   //   designation ::= identifier ':'
@@ -137,7 +137,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     //   [4][foo bar]      -> obsolete GNU designation with objc message send.
     //
     SourceLocation StartLoc = ConsumeBracket();
-    OwningExprResult Idx;
+    ExprResult Idx;
 
     // If Objective-C is enabled and this is a typename (class message
     // send) or send to 'super', parse this as a message send
@@ -176,7 +176,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // whether we have a message send or an array designator; just
       // adopt the expression for further analysis below.
       // FIXME: potentially-potentially evaluated expression above?
-      Idx = OwningExprResult(static_cast<Expr*>(TypeOrExpr));
+      Idx = ExprResult(static_cast<Expr*>(TypeOrExpr));
     } else if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IILoc = Tok.getLocation();
@@ -252,7 +252,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       Diag(Tok, diag::ext_gnu_array_range);
       SourceLocation EllipsisLoc = ConsumeToken();
 
-      OwningExprResult RHS(ParseConstantExpression());
+      ExprResult RHS(ParseConstantExpression());
       if (RHS.isInvalid()) {
         SkipUntil(tok::r_square);
         return move(RHS);
@@ -309,7 +309,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
 ///         designation[opt] initializer
 ///         initializer-list ',' designation[opt] initializer
 ///
-Parser::OwningExprResult Parser::ParseBraceInitializer() {
+ExprResult Parser::ParseBraceInitializer() {
   SourceLocation LBraceLoc = ConsumeBrace();
 
   /// InitExprs - This is the actual list of expressions contained in the
@@ -332,7 +332,7 @@ Parser::OwningExprResult Parser::ParseBraceInitializer() {
 
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
-    OwningExprResult SubElt;
+    ExprResult SubElt;
     if (MayBeDesignationStart(Tok.getKind(), PP))
       SubElt = ParseInitializerWithPotentialDesignator();
     else

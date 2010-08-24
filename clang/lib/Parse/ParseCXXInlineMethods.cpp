@@ -138,7 +138,7 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
         assert(Tok.is(tok::equal) && "Default argument not starting with '='");
         SourceLocation EqualLoc = ConsumeToken();
 
-        OwningExprResult DefArgResult(ParseAssignmentExpression());
+        ExprResult DefArgResult(ParseAssignmentExpression());
         if (DefArgResult.isInvalid())
           Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
         else {

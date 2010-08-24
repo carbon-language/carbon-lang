@@ -263,7 +263,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
       return;
     }
     
-    Sema::OwningExprResult MemberInit
+    ExprResult MemberInit
       = InitSeq.Perform(SemaRef, MemberEntity, Kind, 
                         Sema::MultiExprArg(SemaRef, 0, 0));
     if (MemberInit.isInvalid()) {
@@ -373,7 +373,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         return;
       }
 
-      Sema::OwningExprResult ElementInit
+      ExprResult ElementInit
         = InitSeq.Perform(SemaRef, ElementEntity, Kind, 
                           Sema::MultiExprArg(SemaRef, 0, 0));
       if (ElementInit.isInvalid()) {
@@ -678,7 +678,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
       InitializationSequence Seq(SemaRef, Entity, Kind, &expr, 1);
       
       if (Seq) {
-        Sema::OwningExprResult Result = 
+        ExprResult Result = 
           Seq.Perform(SemaRef, Entity, Kind,
                       Sema::MultiExprArg(SemaRef, &expr, 1));
         if (Result.isInvalid())
@@ -758,7 +758,7 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
       return;
     }
 
-    Sema::OwningExprResult Result =
+    ExprResult Result =
       SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
                                         SemaRef.Owned(expr));
 
@@ -805,7 +805,7 @@ void InitListChecker::CheckReferenceType(const InitializedEntity &Entity,
       return;
     }
 
-    Sema::OwningExprResult Result =
+    ExprResult Result =
       SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
                                         SemaRef.Owned(expr));
 
@@ -1813,10 +1813,10 @@ CheckArrayDesignatorExpr(Sema &S, Expr *Index, llvm::APSInt &Value) {
   return false;
 }
 
-Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
+ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
                                                         SourceLocation Loc,
                                                         bool GNUSyntax,
-                                                        OwningExprResult Init) {
+                                                        ExprResult Init) {
   typedef DesignatedInitExpr::Designator ASTDesignator;
 
   bool Invalid = false;
@@ -3298,10 +3298,10 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
 /// \returns An expression that copies the initializer expression into
 /// a temporary object, or an error expression if a copy could not be
 /// created.
-static Sema::OwningExprResult CopyObject(Sema &S,
+static ExprResult CopyObject(Sema &S,
                                          QualType T,
                                          const InitializedEntity &Entity,
-                                         Sema::OwningExprResult CurInit,
+                                         ExprResult CurInit,
                                          bool IsExtraneousCopy) {
   // Determine which class type we're copying to.
   Expr *CurInitExpr = (Expr *)CurInit.get();
@@ -3475,7 +3475,7 @@ void InitializationSequence::PrintInitLocationNote(Sema &S,
   }
 }
 
-Action::OwningExprResult 
+ExprResult 
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
                                 const InitializationKind &Kind,
@@ -3528,7 +3528,7 @@ InitializationSequence::Perform(Sema &S,
     }
 
     if (Kind.getKind() == InitializationKind::IK_Copy || Kind.isExplicitCast())
-      return Sema::OwningExprResult(Args.release()[0]);
+      return ExprResult(Args.release()[0]);
 
     if (Args.size() == 0)
       return S.Owned((Expr *)0);
@@ -3552,7 +3552,7 @@ InitializationSequence::Perform(Sema &S,
     *ResultType = Entity.getDecl() ? Entity.getDecl()->getType() :
                                      Entity.getType();
 
-  Sema::OwningExprResult CurInit = S.Owned((Expr *)0);
+  ExprResult CurInit = S.Owned((Expr *)0);
   
   assert(!Steps.empty() && "Cannot have an empty initialization sequence");
   
@@ -3577,7 +3577,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_StringInit:
   case SK_ObjCObjectConversion:
     assert(Args.size() == 1);
-    CurInit = Sema::OwningExprResult(((Expr **)(Args.get()))[0]->Retain());
+    CurInit = ExprResult(((Expr **)(Args.get()))[0]->Retain());
     if (CurInit.isInvalid())
       return S.ExprError();
     break;
@@ -4454,10 +4454,10 @@ void InitializationSequence::dump() const {
 //===----------------------------------------------------------------------===//
 // Initialization helper functions
 //===----------------------------------------------------------------------===//
-Sema::OwningExprResult 
+ExprResult 
 Sema::PerformCopyInitialization(const InitializedEntity &Entity,
                                 SourceLocation EqualLoc,
-                                OwningExprResult Init) {
+                                ExprResult Init) {
   if (Init.isInvalid())
     return ExprError();
 

@@ -1463,8 +1463,8 @@ Decl *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 ///  objc-throw-statement:
 ///    throw expression[opt];
 ///
-Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
-  OwningExprResult Res;
+StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
+  ExprResult Res;
   ConsumeToken(); // consume throw
   if (Tok.isNot(tok::semi)) {
     Res = ParseExpression();
@@ -1481,7 +1481,7 @@ Parser::OwningStmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
 /// objc-synchronized-statement:
 ///   @synchronized '(' expression ')' compound-statement
 ///
-Parser::OwningStmtResult
+StmtResult
 Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   ConsumeToken(); // consume synchronized
   if (Tok.isNot(tok::l_paren)) {
@@ -1489,7 +1489,7 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
     return StmtError();
   }
   ConsumeParen();  // '('
-  OwningExprResult Res(ParseExpression());
+  ExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::semi);
     return StmtError();
@@ -1507,7 +1507,7 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
   // statements can always hold declarations.
   ParseScope BodyScope(this, Scope::DeclScope);
 
-  OwningStmtResult SynchBody(ParseCompoundStatementBody());
+  StmtResult SynchBody(ParseCompoundStatementBody());
 
   BodyScope.Exit();
   if (SynchBody.isInvalid())
@@ -1526,7 +1526,7 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
 ///     parameter-declaration
 ///     '...' [OBJC2]
 ///
-Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
+StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   bool catch_or_finally_seen = false;
 
   ConsumeToken(); // consume try
@@ -1535,9 +1535,9 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     return StmtError();
   }
   StmtVector CatchStmts(Actions);
-  OwningStmtResult FinallyStmt;
+  StmtResult FinallyStmt;
   ParseScope TryScope(this, Scope::DeclScope);
-  OwningStmtResult TryBody(ParseCompoundStatementBody());
+  StmtResult TryBody(ParseCompoundStatementBody());
   TryScope.Exit();
   if (TryBody.isInvalid())
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
@@ -1580,7 +1580,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         else // Skip over garbage, until we get to ')'.  Eat the ')'.
           SkipUntil(tok::r_paren, true, false);
 
-        OwningStmtResult CatchBody(true);
+        StmtResult CatchBody(true);
         if (Tok.is(tok::l_brace))
           CatchBody = ParseCompoundStatementBody();
         else
@@ -1588,7 +1588,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
         
-        OwningStmtResult Catch = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
+        StmtResult Catch = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
                                                               RParenLoc, 
                                                               FirstPart, 
                                                               CatchBody.take());
@@ -1606,7 +1606,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       ConsumeToken(); // consume finally
       ParseScope FinallyScope(this, Scope::DeclScope);
 
-      OwningStmtResult FinallyBody(true);
+      StmtResult FinallyBody(true);
       if (Tok.is(tok::l_brace))
         FinallyBody = ParseCompoundStatementBody();
       else
@@ -1668,7 +1668,7 @@ Decl *Parser::ParseObjCMethodDefinition() {
   // specified Declarator for the method.
   Actions.ActOnStartOfObjCMethodDef(getCurScope(), MDecl);
 
-  OwningStmtResult FnBody(ParseCompoundStatementBody());
+  StmtResult FnBody(ParseCompoundStatementBody());
 
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
@@ -1684,7 +1684,7 @@ Decl *Parser::ParseObjCMethodDefinition() {
   return MDecl;
 }
 
-Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
+StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtStatement(getCurScope());
     ConsumeCodeCompletionToken();
@@ -1700,7 +1700,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   if (Tok.isObjCAtKeyword(tok::objc_synchronized))
     return ParseObjCSynchronizedStmt(AtLoc);
   
-  OwningExprResult Res(ParseExpressionWithLeadingAt(AtLoc));
+  ExprResult Res(ParseExpressionWithLeadingAt(AtLoc));
   if (Res.isInvalid()) {
     // If the expression is invalid, skip ahead to the next semicolon. Not
     // doing this opens us up to the possibility of infinite loops if
@@ -1714,7 +1714,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   return Actions.ActOnExprStmt(Actions.MakeFullExpr(Res.take()));
 }
 
-Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
+ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   switch (Tok.getKind()) {
   case tok::code_completion:
     Actions.CodeCompleteObjCAtExpression(getCurScope());
@@ -1771,7 +1771,7 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
   if (!isCXXSimpleTypeSpecifier()) {
     //   objc-receiver:
     //     expression
-    OwningExprResult Receiver = ParseExpression();
+    ExprResult Receiver = ParseExpression();
     if (Receiver.isInvalid())
       return true;
 
@@ -1800,7 +1800,7 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
     // postfix-expression suffix, followed by the (optional)
     // right-hand side of the binary expression. We have an
     // instance method.
-    OwningExprResult Receiver = ParseCXXTypeConstructExpression(DS);
+    ExprResult Receiver = ParseCXXTypeConstructExpression(DS);
     if (!Receiver.isInvalid())
       Receiver = ParsePostfixExpressionSuffix(Receiver.take());
     if (!Receiver.isInvalid())
@@ -1847,7 +1847,7 @@ bool Parser::isSimpleObjCMessageExpression() {
 ///     class-name
 ///     type-name
 ///
-Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
+ExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.is(tok::l_square) && "'[' expected");
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
@@ -1918,7 +1918,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   }
   
   // Otherwise, an arbitrary expression can be the receiver of a send.
-  OwningExprResult Res(ParseExpression());
+  ExprResult Res(ParseExpression());
   if (Res.isInvalid()) {
     SkipUntil(tok::r_square);
     return move(Res);
@@ -1966,7 +1966,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 ///     assignment-expression
 ///     nonempty-expr-list , assignment-expression
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        SourceLocation SuperLoc,
                                        ParsedType ReceiverType,
@@ -2007,7 +2007,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
       ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':'
-      OwningExprResult Res(ParseAssignmentExpression());
+      ExprResult Res(ParseAssignmentExpression());
       if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
@@ -2046,7 +2046,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     while (Tok.is(tok::comma)) {
       ConsumeToken(); // Eat the ','.
       ///  Parse the expression after ','
-      OwningExprResult Res(ParseAssignmentExpression());
+      ExprResult Res(ParseAssignmentExpression());
       if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
@@ -2106,8 +2106,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                                            KeyExprs.size()));
 }
 
-Parser::OwningExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
-  OwningExprResult Res(ParseStringLiteralExpression());
+ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
+  ExprResult Res(ParseStringLiteralExpression());
   if (Res.isInvalid()) return move(Res);
 
   // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string
@@ -2125,7 +2125,7 @@ Parser::OwningExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
     if (!isTokenStringLiteral())
       return ExprError(Diag(Tok, diag::err_objc_concat_string));
 
-    OwningExprResult Lit(ParseStringLiteralExpression());
+    ExprResult Lit(ParseStringLiteralExpression());
     if (Lit.isInvalid())
       return move(Lit);
 
@@ -2138,7 +2138,7 @@ Parser::OwningExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
 
 ///    objc-encode-expression:
 ///      @encode ( type-name )
-Parser::OwningExprResult
+ExprResult
 Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_encode) && "Not an @encode expression!");
 
@@ -2162,7 +2162,7 @@ Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
 
 ///     objc-protocol-expression
 ///       @protocol ( protocol-name )
-Parser::OwningExprResult
+ExprResult
 Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
   SourceLocation ProtoLoc = ConsumeToken();
 
@@ -2185,8 +2185,7 @@ Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
 
 ///     objc-selector-expression
 ///       @selector '(' objc-keyword-selector ')'
-Parser::OwningExprResult
-Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
+ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   SourceLocation SelectorLoc = ConsumeToken();
 
   if (Tok.isNot(tok::l_paren))

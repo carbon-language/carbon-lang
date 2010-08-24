@@ -126,7 +126,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
   InitializationKind Kind = InitializationKind::CreateCopy(Param->getLocation(),
                                                            EqualLoc);
   InitializationSequence InitSeq(*this, Entity, Kind, &Arg, 1);
-  OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+  ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                             MultiExprArg(*this, &Arg, 1));
   if (Result.isInvalid())
     return true;
@@ -1317,7 +1317,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   
   InitializationSequence InitSeq(*this, MemberEntity, Kind, Args, NumArgs);
   
-  OwningExprResult MemberInit =
+  ExprResult MemberInit =
     InitSeq.Perform(*this, MemberEntity, Kind, 
                     MultiExprArg(*this, Args, NumArgs), 0);
   if (MemberInit.isInvalid())
@@ -1409,7 +1409,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   if (Dependent) {
     // Can't check initialization for a base of dependent type or when
     // any of the arguments are type-dependent expressions.
-    OwningExprResult BaseInit
+    ExprResult BaseInit
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                           RParenLoc));
 
@@ -1448,7 +1448,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   
   InitializationSequence InitSeq(*this, BaseEntity, Kind, Args, NumArgs);
   
-  OwningExprResult BaseInit =
+  ExprResult BaseInit =
     InitSeq.Perform(*this, BaseEntity, Kind, 
                     MultiExprArg(*this, Args, NumArgs), 0);
   if (BaseInit.isInvalid())
@@ -1473,7 +1473,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
     for (unsigned I = 0; I != NumArgs; ++I)
       Args[I]->Retain();
 
-    OwningExprResult Init
+    ExprResult Init
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                           RParenLoc));
     return new (Context) CXXBaseOrMemberInitializer(Context, BaseTInfo,
@@ -1508,7 +1508,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     = InitializedEntity::InitializeBase(SemaRef.Context, BaseSpec,
                                         IsInheritedVirtualBase);
 
-  Sema::OwningExprResult BaseInit;
+  ExprResult BaseInit;
   
   switch (ImplicitInitKind) {
   case IIK_Default: {
@@ -1597,7 +1597,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                               Sema::LookupMemberName);
     MemberLookup.addDecl(Field, AS_public);
     MemberLookup.resolveKind();
-    Sema::OwningExprResult CopyCtorArg 
+    ExprResult CopyCtorArg 
       = SemaRef.BuildMemberReferenceExpr(MemberExprBase,
                                          ParamType, Loc,
                                          /*IsArrow=*/false,
@@ -1633,7 +1633,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       IndexVariables.push_back(IterationVar);
       
       // Create a reference to the iteration variable.
-      Sema::OwningExprResult IterationVarRef
+      ExprResult IterationVarRef
         = SemaRef.BuildDeclRefExpr(IterationVar, SizeType, Loc);
       assert(!IterationVarRef.isInvalid() &&
              "Reference to invented variable cannot fail!");
@@ -1668,7 +1668,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     InitializationSequence InitSeq(SemaRef, Entities.back(), InitKind,
                                    &CopyCtorArgE, 1);
     
-    Sema::OwningExprResult MemberInit
+    ExprResult MemberInit
       = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
                         Sema::MultiExprArg(SemaRef, &CopyCtorArgE, 1));
     MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(MemberInit.get());
@@ -1694,7 +1694,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       InitializationKind::CreateDefault(Loc);
     
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
-    Sema::OwningExprResult MemberInit = 
+    ExprResult MemberInit = 
       InitSeq.Perform(SemaRef, InitEntity, InitKind, 
                       Sema::MultiExprArg(SemaRef, 0, 0));
     if (MemberInit.isInvalid())
@@ -4540,7 +4540,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 /// \param Depth Internal parameter recording the depth of the recursion.
 ///
 /// \returns A statement or a loop that copies the expressions.
-static OwningStmtResult
+static StmtResult
 BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T, 
                       Expr *To, Expr *From,
                       bool CopyingBaseSubobject, unsigned Depth = 0) {
@@ -4600,7 +4600,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                T.getTypePtr()));
     
     // Create the reference to operator=.
-    OwningExprResult OpEqualRef
+    ExprResult OpEqualRef
       = S.BuildMemberReferenceExpr(To, T, Loc, /*isArrow=*/false, SS, 
                                    /*FirstQualifierInScope=*/0, OpLookup, 
                                    /*TemplateArgs=*/0,
@@ -4610,7 +4610,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     
     // Build the call to the assignment operator.
 
-    OwningExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0, 
+    ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0, 
                                                       OpEqualRef.takeAs<Expr>(),
                                                         Loc, &From, 1, 0, Loc);
     if (Call.isInvalid())
@@ -4623,7 +4623,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   //       operator is used.
   const ConstantArrayType *ArrayTy = S.Context.getAsConstantArrayType(T);  
   if (!ArrayTy) {
-    OwningExprResult Assignment = S.CreateBuiltinBinOp(Loc,
+    ExprResult Assignment = S.CreateBuiltinBinOp(Loc,
                                                        BinaryOperator::Assign,
                                                        To,
                                                        From);
@@ -4690,7 +4690,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                        IterationVarRef, Loc));
   
   // Build the copy for an individual element of the array.
-  OwningStmtResult Copy = BuildSingleCopyAssign(S, Loc, 
+  StmtResult Copy = BuildSingleCopyAssign(S, Loc, 
                                                 ArrayTy->getElementType(),
                                                 To, From, 
                                                 CopyingBaseSubobject, Depth+1);
@@ -4970,7 +4970,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                       ImplicitCastExpr::LValue, &BasePath);
 
     // Dereference "this".
-    OwningExprResult To = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref, This);
+    ExprResult To = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref, This);
     
     // Implicitly cast "this" to the appropriately-qualified base type.
     Expr *ToE = To.takeAs<Expr>();
@@ -4982,7 +4982,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     To = Owned(ToE);
 
     // Build the copy.
-    OwningStmtResult Copy = BuildSingleCopyAssign(*this, Loc, BaseType,
+    StmtResult Copy = BuildSingleCopyAssign(*this, Loc, BaseType,
                                                   To.get(), From,
                                                 /*CopyingBaseSubobject=*/true);
     if (Copy.isInvalid()) {
@@ -5041,10 +5041,10 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                               LookupMemberName);
     MemberLookup.addDecl(*Field);
     MemberLookup.resolveKind();
-    OwningExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
+    ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
                                                      Loc, /*IsArrow=*/false,
                                                      SS, 0, MemberLookup, 0);
-    OwningExprResult To = BuildMemberReferenceExpr(This, This->getType(),
+    ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
                                                    Loc, /*IsArrow=*/true,
                                                    SS, 0, MemberLookup, 0);
     assert(!From.isInvalid() && "Implicit field reference cannot fail");
@@ -5128,7 +5128,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       llvm::SmallVector<SourceLocation, 4> Commas; // FIXME: Silly
       Commas.push_back(Loc);
       Commas.push_back(Loc);
-      OwningExprResult Call = ExprError();
+      ExprResult Call = ExprError();
       if (NeedsCollectableMemCpy)
         Call = ActOnCallExpr(/*Scope=*/0,
                              CollectableMemCpyRef,
@@ -5146,7 +5146,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     }
     
     // Build the copy of this field.
-    OwningStmtResult Copy = BuildSingleCopyAssign(*this, Loc, FieldType, 
+    StmtResult Copy = BuildSingleCopyAssign(*this, Loc, FieldType, 
                                                   To.get(), From.get(),
                                               /*CopyingBaseSubobject=*/false);
     if (Copy.isInvalid()) {
@@ -5162,10 +5162,10 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
   if (!Invalid) {
     // Add a "return *this;"
-    OwningExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref,
+    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref,
                                                     This);
     
-    OwningStmtResult Return = ActOnReturnStmt(Loc, ThisObj.get());
+    StmtResult Return = ActOnReturnStmt(Loc, ThisObj.get());
     if (Return.isInvalid())
       Invalid = true;
     else {
@@ -5184,7 +5184,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     return;
   }
   
-  OwningStmtResult Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
+  StmtResult Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
                                             /*isStmtExpr=*/false);
   assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
@@ -5393,7 +5393,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   CopyConstructor->setUsed();
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
                             MultiExprArg ExprArgs,
@@ -5426,7 +5426,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
 /// including handling of its default argument expressions.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
                             MultiExprArg ExprArgs,
@@ -5444,7 +5444,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         MultiExprArg Exprs) {
-  OwningExprResult TempResult =
+  ExprResult TempResult =
     BuildCXXConstructExpr(VD->getLocation(), VD->getType(), Constructor,
                           move(Exprs));
   if (TempResult.isInvalid())
@@ -5579,7 +5579,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
   
   InitializationSequence InitSeq(*this, Entity, Kind, 
                                  Exprs.get(), Exprs.size());
-  OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(Exprs));
+  ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(Exprs));
   if (Result.isInvalid()) {
     VDecl->setInvalidDecl();
     return;
@@ -6146,7 +6146,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
       InitializationKind Kind = InitializationKind::CreateCopy(Loc, 
                                                                SourceLocation());
       InitializationSequence InitSeq(*this, Entity, Kind, &ExDeclRef, 1);
-      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind, 
+      ExprResult Result = InitSeq.Perform(*this, Entity, Kind, 
                                          MultiExprArg(*this, &ExDeclRef, 1));
       if (Result.isInvalid())
         Invalid = true;
@@ -6934,7 +6934,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
         InitializationKind::CreateDefault(ObjCImplementation->getLocation());
       
       InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);
-      Sema::OwningExprResult MemberInit = 
+      ExprResult MemberInit = 
         InitSeq.Perform(*this, InitEntity, InitKind, 
                         Sema::MultiExprArg(*this, 0, 0));
       MemberInit = MaybeCreateCXXExprWithTemporaries(MemberInit.get());

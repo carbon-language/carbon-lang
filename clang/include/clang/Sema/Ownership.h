@@ -431,21 +431,18 @@ namespace clang {
   typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 
-  typedef ActionResult<Expr*> OwningExprResult;
-  typedef ActionResult<Stmt*> OwningStmtResult;
-
   inline Expr *move(Expr *E) { return E; }
   inline Stmt *move(Stmt *S) { return S; }
 
   typedef ASTMultiPtr<Expr*> MultiExprArg;
   typedef ASTMultiPtr<TemplateParameterList*> MultiTemplateParamsArg;
 
-  inline Expr *AssertSuccess(OwningExprResult R) {
+  inline Expr *AssertSuccess(ExprResult R) {
     assert(!R.isInvalid() && "operation was asserted to never fail!");
     return R.get();
   }
 
-  inline Stmt *AssertSuccess(OwningStmtResult R) {
+  inline Stmt *AssertSuccess(StmtResult R) {
     assert(!R.isInvalid() && "operation was asserted to never fail!");
     return R.get();
   }

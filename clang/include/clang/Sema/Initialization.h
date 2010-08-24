@@ -625,11 +625,11 @@ public:
   /// \returns an expression that performs the actual object initialization, if
   /// the initialization is well-formed. Otherwise, emits diagnostics
   /// and returns an invalid expression.
-  Action::OwningExprResult Perform(Sema &S,
-                                   const InitializedEntity &Entity,
-                                   const InitializationKind &Kind,
-                                   Action::MultiExprArg Args,
-                                   QualType *ResultType = 0);
+  ExprResult Perform(Sema &S,
+                     const InitializedEntity &Entity,
+                     const InitializationKind &Kind,
+                     Action::MultiExprArg Args,
+                     QualType *ResultType = 0);
   
   /// \brief Diagnose an potentially-invalid initialization sequence.
   ///

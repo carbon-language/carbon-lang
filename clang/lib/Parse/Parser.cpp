@@ -436,7 +436,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
       Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
         << Attr.Range;
 
-    OwningExprResult Result(ParseSimpleAsm());
+    ExprResult Result(ParseSimpleAsm());
 
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
@@ -829,13 +829,13 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 /// [GNU] asm-string-literal:
 ///         string-literal
 ///
-Parser::OwningExprResult Parser::ParseAsmStringLiteral() {
+Parser::ExprResult Parser::ParseAsmStringLiteral() {
   if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
     return ExprError();
   }
 
-  OwningExprResult Res(ParseStringLiteralExpression());
+  ExprResult Res(ParseStringLiteralExpression());
   if (Res.isInvalid()) return move(Res);
 
   // TODO: Diagnose: wide string literal in 'asm'
@@ -848,7 +848,7 @@ Parser::OwningExprResult Parser::ParseAsmStringLiteral() {
 /// [GNU] simple-asm-expr:
 ///         'asm' '(' asm-string-literal ')'
 ///
-Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
+Parser::ExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
   SourceLocation Loc = ConsumeToken();
 
@@ -869,7 +869,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
 
   Loc = ConsumeParen();
 
-  OwningExprResult Result(ParseAsmStringLiteral());
+  ExprResult Result(ParseAsmStringLiteral());
 
   if (Result.isInvalid()) {
     SkipUntil(tok::r_paren, true, true);

@@ -99,12 +99,6 @@ public:
   typedef clang::DeclResult DeclResult;
   typedef clang::MemInitResult MemInitResult;
 
-  /// Same, but with ownership.
-  typedef clang::OwningExprResult OwningExprResult;
-  typedef clang::OwningStmtResult OwningStmtResult;
-  // Note that these will replace ExprResult and StmtResult when the transition
-  // is complete.
-
   /// Single expressions or statements as arguments.
   typedef Expr *ExprArg;
   typedef Stmt *StmtArg;
@@ -123,7 +117,7 @@ public:
     // emulation code from Ownership.h).
     FullExprArg(const FullExprArg& Other): E(Other.E) {}
 
-    OwningExprResult release() {
+    ExprResult release() {
       return move(E);
     }
 
@@ -149,14 +143,14 @@ public:
 
   // Utilities for Action implementations to return smart results.
 
-  OwningExprResult ExprError() { return OwningExprResult(true); }
-  OwningStmtResult StmtError() { return OwningStmtResult(true); }
+  ExprResult ExprError() { return ExprResult(true); }
+  StmtResult StmtError() { return StmtResult(true); }
 
-  OwningExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
-  OwningStmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
+  ExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
+  StmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
 
-  OwningExprResult ExprEmpty() { return OwningExprResult(false); }
-  OwningStmtResult StmtEmpty() { return OwningStmtResult(false); }
+  ExprResult ExprEmpty() { return ExprResult(false); }
+  StmtResult StmtEmpty() { return StmtResult(false); }
 
   /// Statistics.
   virtual void PrintStats() const {}
@@ -774,16 +768,16 @@ public:
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
 
-  virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc) {
+  virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc) {
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
+  virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                              MultiStmtArg Elts,
                                              bool isStmtExpr) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
+  virtual StmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
                                          SourceLocation StartLoc,
                                          SourceLocation EndLoc) {
     return StmtEmpty();
@@ -792,12 +786,12 @@ public:
   virtual void ActOnForEachDeclStmt(DeclGroupPtrTy Decl) {
   }
 
-  virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr)  = 0;
+  virtual StmtResult ActOnExprStmt(FullExprArg Expr)  = 0;
 
   /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
   /// which can specify an RHS value.  The sub-statement of the case is
   /// specified in a separate action.
-  virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
+  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
                                          SourceLocation DotDotDotLoc,
                                          ExprArg RHSVal,
                                          SourceLocation ColonLoc) {
@@ -807,13 +801,13 @@ public:
   /// ActOnCaseStmtBody - This installs a statement as the body of a case.
   virtual void ActOnCaseStmtBody(StmtTy *CaseStmt, StmtArg SubStmt) {}
 
-  virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
+  virtual StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                             SourceLocation ColonLoc,
                                             StmtArg SubStmt, Scope *CurScope){
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnLabelStmt(SourceLocation IdentLoc,
+  virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc,
                                           IdentifierInfo *II,
                                           SourceLocation ColonLoc,
                                           StmtArg SubStmt) {
@@ -835,7 +829,7 @@ public:
   /// \param ElseLoc the location of the "else" keyword.
   ///
   /// \param ElseVal the "else" statement.
-  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc,
+  virtual StmtResult ActOnIfStmt(SourceLocation IfLoc,
                                        FullExprArg CondVal, 
                                        Decl *CondVar,
                                        StmtArg ThenVal,
@@ -853,13 +847,13 @@ public:
   ///
   /// \param CondVar if the "switch" condition was parsed as a condition 
   /// variable, the condition variable itself.
-  virtual OwningStmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
+  virtual StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
                                                   ExprArg Cond,
                                                   Decl *CondVar) {
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
+  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body) {
     return StmtEmpty();
   }
@@ -873,12 +867,12 @@ public:
   /// variable, the condition variable itself.
   ///
   /// \param Body the body of the "while" loop.
-  virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
+  virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc,
                                           FullExprArg Cond, Decl *CondVar,
                                           StmtArg Body) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
+  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
                                        SourceLocation WhileLoc,
                                        SourceLocation CondLParen,
                                        ExprArg Cond,
@@ -906,7 +900,7 @@ public:
   /// \param RParenLoc the location of the right parentheses.
   ///
   /// \param Body the body of the "body" loop.
-  virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
+  virtual StmtResult ActOnForStmt(SourceLocation ForLoc,
                                         SourceLocation LParenLoc,
                                         StmtArg First, FullExprArg Second,
                                         Decl *SecondVar, FullExprArg Third, 
@@ -915,35 +909,35 @@ public:
     return StmtEmpty();
   }
   
-  virtual OwningStmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
+  virtual StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
                                        SourceLocation LParenLoc,
                                        StmtArg First, ExprArg Second,
                                        SourceLocation RParenLoc, StmtArg Body) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnGotoStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                          SourceLocation LabelLoc,
                                          IdentifierInfo *LabelII) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
                                                  SourceLocation StarLoc,
                                                  ExprArg DestExp) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
+  virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
                                              Scope *CurScope) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnBreakStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc,
                                           Scope *CurScope) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
+  virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                            ExprArg RetValExp) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
                                         bool IsSimple,
                                         bool IsVolatile,
                                         unsigned NumOutputs,
@@ -971,7 +965,7 @@ public:
   /// this is a @catch(...) block.
   ///
   /// \param Body The body of the @catch block.
-  virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
+  virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
                                                 Decl *Parm, StmtArg Body) {
     return StmtEmpty();
@@ -982,7 +976,7 @@ public:
   /// \param AtLoc The location of the '@' starting the '@finally'.
   ///
   /// \param Body The body of the @finally block.
-  virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
+  virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
                                                   StmtArg Body) {
     return StmtEmpty();
   }
@@ -996,20 +990,20 @@ public:
   /// \param CatchStmts The @catch statements.
   ///
   /// \param Finally The @finally statement.
-  virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
+  virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
                                               StmtArg Try, 
                                               MultiStmtArg CatchStmts,
                                               StmtArg Finally) {
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
+  virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
                                                 ExprArg Throw,
                                                 Scope *CurScope) {
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
+  virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
                                                        ExprArg SynchExpr,
                                                        StmtArg SynchBody) {
     return StmtEmpty();
@@ -1020,13 +1014,13 @@ public:
     return 0;
   }
 
-  virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
+  virtual StmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
                                               Decl *ExceptionDecl,
                                               StmtArg HandlerBlock) {
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
+  virtual StmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
                                             StmtArg TryBlock,
                                             MultiStmtArg Handlers) {
     return StmtEmpty();
@@ -1095,7 +1089,7 @@ public:
   /// \param IsAddressOfOperand whether the token that precedes this 
   /// id-expression or identifier was an ampersand ('&'), indicating that 
   /// we will be taking the address of this expression.
-  virtual OwningExprResult ActOnIdExpression(Scope *S,
+  virtual ExprResult ActOnIdExpression(Scope *S,
                                              CXXScopeSpec &SS,
                                              UnqualifiedId &Name,
                                              bool HasTrailingLParen,
@@ -1103,30 +1097,30 @@ public:
     return ExprEmpty();
   }
   
-  virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
+  virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                                tok::TokenKind Kind) {
     return ExprEmpty();
   }
-  virtual OwningExprResult ActOnCharacterConstant(const Token &) {
+  virtual ExprResult ActOnCharacterConstant(const Token &) {
     return ExprEmpty();
   }
-  virtual OwningExprResult ActOnNumericConstant(const Token &) {
+  virtual ExprResult ActOnNumericConstant(const Token &) {
     return ExprEmpty();
   }
 
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual OwningExprResult ActOnStringLiteral(const Token *Toks,
+  virtual ExprResult ActOnStringLiteral(const Token *Toks,
                                               unsigned NumToks) {
     return ExprEmpty();
   }
 
-  virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
+  virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                           ExprArg Val) {
     return move(Val);  // Default impl returns operand.
   }
 
-  virtual OwningExprResult ActOnParenOrParenListExpr(SourceLocation L,
+  virtual ExprResult ActOnParenOrParenListExpr(SourceLocation L,
                                                      SourceLocation R,
                                                      MultiExprArg Val,
                                                      ParsedType TypeOfCast
@@ -1135,12 +1129,12 @@ public:
   }
 
   // Postfix Expressions.
-  virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
+  virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                                                tok::TokenKind Kind,
                                                ExprArg Input) {
     return ExprEmpty();
   }
-  virtual OwningExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
+  virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
                                                    SourceLocation LLoc,
                                                    ExprArg Idx,
                                                    SourceLocation RLoc) {
@@ -1172,7 +1166,7 @@ public:
   ///
   /// \param HasTrailingLParen whether this member name is immediately followed
   /// by a left parentheses ('(').
-  virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
+  virtual ExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
                                                  SourceLocation OpLoc,
                                                  tok::TokenKind OpKind,
                                                  CXXScopeSpec &SS,
@@ -1186,7 +1180,7 @@ public:
   /// This provides the location of the left/right parens and a list of comma
   /// locations.  There are guaranteed to be one fewer commas than arguments,
   /// unless there are zero arguments.
-  virtual OwningExprResult ActOnCallExpr(Scope *S, ExprArg Fn,
+  virtual ExprResult ActOnCallExpr(Scope *S, ExprArg Fn,
                                          SourceLocation LParenLoc,
                                          MultiExprArg Args,
                                          SourceLocation *CommaLocs,
@@ -1195,23 +1189,23 @@ public:
   }
 
   // Unary Operators.  'Tok' is the token for the operator.
-  virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
+  virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                         tok::TokenKind Op, ExprArg Input) {
     return ExprEmpty();
   }
-  virtual OwningExprResult
+  virtual ExprResult
     ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                            void *TyOrEx, const SourceRange &ArgRange) {
     return ExprEmpty();
   }
 
-  virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParen,
+  virtual ExprResult ActOnCompoundLiteral(SourceLocation LParen,
                                                 ParsedType Ty,
                                                 SourceLocation RParen,
                                                 ExprArg Op) {
     return ExprEmpty();
   }
-  virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
+  virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
                                          MultiExprArg InitList,
                                          SourceLocation RParenLoc) {
     return ExprEmpty();
@@ -1229,14 +1223,14 @@ public:
   ///
   /// @param Init The value that the entity (or entities) described by
   /// the designation will be initialized with.
-  virtual OwningExprResult ActOnDesignatedInitializer(Designation &Desig,
+  virtual ExprResult ActOnDesignatedInitializer(Designation &Desig,
                                                       SourceLocation Loc,
                                                       bool GNUSyntax,
-                                                      OwningExprResult Init) {
+                                                      ExprResult Init) {
     return ExprEmpty();
   }
 
-  virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
+  virtual ExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
                                          ParsedType Ty, SourceLocation RParenLoc,
                                          ExprArg Op) {
     return ExprEmpty();
@@ -1246,7 +1240,7 @@ public:
     return false;
   }
 
-  virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
+  virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                       tok::TokenKind Kind,
                                       ExprArg LHS, ExprArg RHS) {
     return ExprEmpty();
@@ -1254,7 +1248,7 @@ public:
 
   /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
-  virtual OwningExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
+  virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
                                               SourceLocation ColonLoc,
                                               ExprArg Cond, ExprArg LHS,
                                               ExprArg RHS) {
@@ -1263,13 +1257,13 @@ public:
 
   //===---------------------- GNU Extension Expressions -------------------===//
 
-  virtual OwningExprResult ActOnAddrLabel(SourceLocation OpLoc,
+  virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc,
                                           SourceLocation LabLoc,
                                           IdentifierInfo *LabelII) { // "&&foo"
     return ExprEmpty();
   }
 
-  virtual OwningExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtArg SubStmt,
+  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtArg SubStmt,
                                          SourceLocation RPLoc) { // "({..})"
     return ExprEmpty();
   }
@@ -1284,7 +1278,7 @@ public:
     } U;
   };
 
-  virtual OwningExprResult ActOnBuiltinOffsetOf(Scope *S,
+  virtual ExprResult ActOnBuiltinOffsetOf(Scope *S,
                                                 SourceLocation BuiltinLoc,
                                                 SourceLocation TypeLoc,
                                                 ParsedType Arg1,
@@ -1295,21 +1289,21 @@ public:
   }
 
   // __builtin_types_compatible_p(type1, type2)
-  virtual OwningExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                                     ParsedType arg1,
                                                     ParsedType arg2,
                                                     SourceLocation RPLoc) {
     return ExprEmpty();
   }
   // __builtin_choose_expr(constExpr, expr1, expr2)
-  virtual OwningExprResult ActOnChooseExpr(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc,
                                            ExprArg cond, ExprArg expr1,
                                            ExprArg expr2, SourceLocation RPLoc){
     return ExprEmpty();
   }
 
   // __builtin_va_arg(expr, type)
-  virtual OwningExprResult ActOnVAArg(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
                                       ExprArg expr, ParsedType type,
                                       SourceLocation RPLoc) {
     return ExprEmpty();
@@ -1317,7 +1311,7 @@ public:
 
   /// ActOnGNUNullExpr - Parsed the GNU __null expression, the token
   /// for which is at position TokenLoc.
-  virtual OwningExprResult ActOnGNUNullExpr(SourceLocation TokenLoc) {
+  virtual ExprResult ActOnGNUNullExpr(SourceLocation TokenLoc) {
     return ExprEmpty();
   }
 
@@ -1337,7 +1331,7 @@ public:
 
   /// ActOnBlockStmtExpr - This is called when the body of a block statement
   /// literal was successfully completed.  ^(int x){...}
-  virtual OwningExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
+  virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
                                               StmtArg Body,
                                               Scope *CurScope) {
     return ExprEmpty();
@@ -1558,7 +1552,7 @@ public:
 
 
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
+  virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
                                              tok::TokenKind Kind,
                                              SourceLocation LAngleBracketLoc,
                                              ParsedType Ty,
@@ -1570,7 +1564,7 @@ public:
   }
 
   /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
-  virtual OwningExprResult ActOnCXXTypeid(SourceLocation OpLoc,
+  virtual ExprResult ActOnCXXTypeid(SourceLocation OpLoc,
                                           SourceLocation LParenLoc, bool isType,
                                           void *TyOrExpr,
                                           SourceLocation RParenLoc) {
@@ -1578,23 +1572,23 @@ public:
   }
 
   /// ActOnCXXThis - Parse the C++ 'this' pointer.
-  virtual OwningExprResult ActOnCXXThis(SourceLocation ThisLoc) {
+  virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc) {
     return ExprEmpty();
   }
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
-  virtual OwningExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
+  virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                                tok::TokenKind Kind) {
     return ExprEmpty();
   }
 
   /// ActOnCXXNullPtrLiteral - Parse 'nullptr'.
-  virtual OwningExprResult ActOnCXXNullPtrLiteral(SourceLocation Loc) {
+  virtual ExprResult ActOnCXXNullPtrLiteral(SourceLocation Loc) {
     return ExprEmpty();
   }
 
   /// ActOnCXXThrow - Parse throw expressions.
-  virtual OwningExprResult ActOnCXXThrow(SourceLocation OpLoc, ExprArg Op) {
+  virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc, ExprArg Op) {
     return ExprEmpty();
   }
 
@@ -1602,7 +1596,7 @@ public:
   /// Can be interpreted either as function-style casting ("int(x)")
   /// or class type construction ("ClassType(x,y,z)")
   /// or creation of a value-initialized type ("int()").
-  virtual OwningExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
+  virtual ExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
                                                      ParsedType TypeRep,
                                                      SourceLocation LParenLoc,
                                                      MultiExprArg Exprs,
@@ -1638,7 +1632,7 @@ public:
   /// a boolean value.
   ///
   /// \param SubExpr The expression that is being converted to bool.
-  virtual OwningExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+  virtual ExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
                                                  ExprArg SubExpr) {
     return move(SubExpr);
   }
@@ -1671,7 +1665,7 @@ public:
   ///
   /// \param ConstructorRParen The location of the closing parenthesis (')') for
   /// the constructor arguments, if any.
-  virtual OwningExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
+  virtual ExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                        SourceLocation PlacementLParen,
                                        MultiExprArg PlacementArgs,
                                        SourceLocation PlacementRParen,
@@ -1685,13 +1679,13 @@ public:
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression. UseGlobal is true if
   /// the delete was qualified (::delete). ArrayForm is true if the array form
   /// was used (delete[]).
-  virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
+  virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc,
                                           bool UseGlobal, bool ArrayForm,
                                           ExprArg Operand) {
     return ExprEmpty();
   }
 
-  virtual OwningExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
+  virtual ExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                SourceLocation KWLoc,
                                                SourceLocation LParen,
                                                ParsedType Ty,
@@ -1723,7 +1717,7 @@ public:
   /// object type is a scalar and when the object type is dependent.
   ///
   /// \returns the (possibly modified) \p Base expression
-  virtual OwningExprResult ActOnStartCXXMemberReference(Scope *S,
+  virtual ExprResult ActOnStartCXXMemberReference(Scope *S,
                                                         ExprArg Base,
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
@@ -1766,7 +1760,7 @@ public:
   ///
   /// \param HasTrailingLParen Whether the next token in the stream is
   /// a left parentheses.
-  virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+  virtual ExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                      SourceLocation OpLoc,
                                                      tok::TokenKind OpKind,
                                                      CXXScopeSpec &SS,
@@ -1780,7 +1774,7 @@ public:
 
   /// ActOnFinishFullExpr - Called whenever a full expression has been parsed.
   /// (C++ [intro.execution]p12).
-  virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr) {
+  virtual ExprResult ActOnFinishFullExpr(ExprArg Expr) {
     return move(Expr);
   }
 
@@ -2515,7 +2509,7 @@ public:
     return 0;
   }
 
-  virtual OwningExprResult
+  virtual ExprResult
   ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
                             IdentifierInfo &propertyName,
                             SourceLocation receiverNameLoc,
@@ -2580,7 +2574,7 @@ public:
   /// \param SelectorLoc The location of the first identifier in the selector.
   /// \param RBrac The location of the closing square bracket ']'.
   /// \param Args The message arguments.
-  virtual OwningExprResult ActOnSuperMessage(Scope *S, SourceLocation SuperLoc,
+  virtual ExprResult ActOnSuperMessage(Scope *S, SourceLocation SuperLoc,
                                              Selector Sel,
                                              SourceLocation LBracLoc,
                                              SourceLocation SelectorLoc,
@@ -2596,13 +2590,13 @@ public:
   /// \param SelectorLoc The location of the first identifier in the selector.
   /// \param RBrac The location of the closing square bracket ']'.
   /// \param Args The message arguments.
-  virtual OwningExprResult ActOnClassMessage(Scope *S,
-                                             ParsedType Receiver,
-                                             Selector Sel,
-                                             SourceLocation LBracLoc, 
-                                             SourceLocation SelectorLoc,
-                                             SourceLocation RBracLoc,
-                                             MultiExprArg Args) = 0;
+  virtual ExprResult ActOnClassMessage(Scope *S,
+                                       ParsedType Receiver,
+                                       Selector Sel,
+                                       SourceLocation LBracLoc, 
+                                       SourceLocation SelectorLoc,
+                                       SourceLocation RBracLoc,
+                                       MultiExprArg Args) = 0;
 
   /// \brief Parsed a message send to an object instance.
   ///
@@ -2613,13 +2607,13 @@ public:
   /// \param SelectorLoc The location of the first identifier in the selector.
   /// \param RBrac The location of the closing square bracket ']'.
   /// \param Args The message arguments.
-  virtual OwningExprResult ActOnInstanceMessage(Scope *S,
-                                                ExprArg Receiver,
-                                                Selector Sel,
-                                                SourceLocation LBracLoc, 
-                                                SourceLocation SelectorLoc, 
-                                                SourceLocation RBracLoc,
-                                                MultiExprArg Args) = 0;
+  virtual ExprResult ActOnInstanceMessage(Scope *S,
+                                          ExprArg Receiver,
+                                          Selector Sel,
+                                          SourceLocation LBracLoc, 
+                                          SourceLocation SelectorLoc, 
+                                          SourceLocation RBracLoc,
+                                          MultiExprArg Args) = 0;
 
   virtual Decl *ActOnForwardClassDeclaration(
     SourceLocation AtClassLoc,

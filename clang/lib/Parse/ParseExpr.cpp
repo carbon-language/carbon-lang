@@ -175,8 +175,8 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         assignment-expression
 ///         expression ',' assignment-expression
 ///
-Parser::OwningExprResult Parser::ParseExpression() {
-  OwningExprResult LHS(ParseAssignmentExpression());
+ExprResult Parser::ParseExpression() {
+  ExprResult LHS(ParseAssignmentExpression());
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
@@ -187,9 +187,9 @@ Parser::OwningExprResult Parser::ParseExpression() {
 /// routine is necessary to disambiguate @try-statement from,
 /// for example, @encode-expression.
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
-  OwningExprResult LHS(ParseObjCAtExpression(AtLoc));
+  ExprResult LHS(ParseObjCAtExpression(AtLoc));
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
@@ -198,9 +198,9 @@ Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
 /// This routine is called when a leading '__extension__' is seen and
 /// consumed.  This is necessary because the token gets consumed in the
 /// process of disambiguating between an expression and a declaration.
-Parser::OwningExprResult
+ExprResult
 Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
-  OwningExprResult LHS(true);
+  ExprResult LHS(true);
   {
     // Silence extension warnings in the sub-expression
     ExtensionRAIIObject O(Diags);
@@ -218,7 +218,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
 ///
-Parser::OwningExprResult Parser::ParseAssignmentExpression() {
+ExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Expression);
     ConsumeCodeCompletionToken();
@@ -227,7 +227,7 @@ Parser::OwningExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 
-  OwningExprResult LHS(ParseCastExpression(false));
+  ExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(LHS.take(), prec::Assignment);
@@ -241,12 +241,12 @@ Parser::OwningExprResult Parser::ParseAssignmentExpression() {
 ///
 /// Since this handles full assignment-expression's, it handles postfix
 /// expressions and other binary operators for these expressions as well.
-Parser::OwningExprResult
+ExprResult
 Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
                                                     SourceLocation SuperLoc,
                                                     ParsedType ReceiverType,
                                                     Expr *ReceiverExpr) {
-  OwningExprResult R
+  ExprResult R
     = ParseObjCMessageExpressionBody(LBracLoc, SuperLoc,
                                      ReceiverType, ReceiverExpr);
   if (R.isInvalid()) return move(R);
@@ -256,14 +256,14 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
 }
 
 
-Parser::OwningExprResult Parser::ParseConstantExpression() {
+ExprResult Parser::ParseConstantExpression() {
   // C++ [basic.def.odr]p2:
   //   An expression is potentially evaluated unless it appears where an
   //   integral constant expression is required (see 5.19) [...].
   EnterExpressionEvaluationContext Unevaluated(Actions,
                                                Action::Unevaluated);
 
-  OwningExprResult LHS(ParseCastExpression(false));
+  ExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(LHS.take(), prec::Conditional);
@@ -271,8 +271,8 @@ Parser::OwningExprResult Parser::ParseConstantExpression() {
 
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
 /// LHS and has a precedence of at least MinPrec.
-Parser::OwningExprResult
-Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
+ExprResult
+Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
   prec::Level NextTokPrec = getBinOpPrecedence(Tok.getKind(),
                                                GreaterThanIsOperator,
                                                getLang().CPlusPlus0x);
@@ -290,7 +290,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
     ConsumeToken();
 
     // Special case handling for the ternary operator.
-    OwningExprResult TernaryMiddle(true);
+    ExprResult TernaryMiddle(true);
     if (NextTokPrec == prec::Conditional) {
       if (Tok.isNot(tok::colon)) {
         // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
@@ -357,7 +357,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
     // Therefore we need some special-casing here.
     // Also note that the third operand of the conditional operator is
     // an assignment-expression in C++.
-    OwningExprResult RHS;
+    ExprResult RHS;
     if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
       RHS = ParseAssignmentExpression();
     else
@@ -421,11 +421,11 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
 /// id-expression that is the operand of address-of gets special treatment
 /// due to member pointers.
 ///
-Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
+ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
                                                      ParsedType TypeOfCast) {
   bool NotCastExpr;
-  OwningExprResult Res = ParseCastExpression(isUnaryExpression,
+  ExprResult Res = ParseCastExpression(isUnaryExpression,
                                              isAddressOfOperand,
                                              NotCastExpr,
                                              TypeOfCast);
@@ -545,11 +545,11 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [GNU] binary-type-trait:
 ///                   '__is_base_of'                          [TODO]
 ///
-Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
+ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
                                                      bool &NotCastExpr,
                                                      ParsedType TypeOfCast) {
-  OwningExprResult Res;
+  ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
 
@@ -942,8 +942,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///         argument-expression
 ///         argument-expression-list ',' assignment-expression
 ///
-Parser::OwningExprResult
-Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
+ExprResult
+Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
   // Now that the primary-expression piece of the postfix-expression has been
   // parsed, see if there are any postfix-expression pieces here.
   SourceLocation Loc;
@@ -963,7 +963,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         return move(LHS);
           
       Loc = ConsumeBracket();
-      OwningExprResult Idx(ParseExpression());
+      ExprResult Idx(ParseExpression());
 
       SourceLocation RLoc = Tok.getLocation();
 
@@ -1105,7 +1105,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 ///           typeof ( type-name )
 /// [GNU/C++] typeof unary-expression
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
                                           bool &isCastExpr,
                                           ParsedType &CastTy,
@@ -1115,7 +1115,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
           OpTok.is(tok::kw___alignof) || OpTok.is(tok::kw_alignof)) &&
           "Not a typeof/sizeof/alignof expression!");
 
-  OwningExprResult Operand;
+  ExprResult Operand;
 
   // If the operand doesn't start with an '(', it must be an expression.
   if (Tok.isNot(tok::l_paren)) {
@@ -1183,7 +1183,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
 /// [C++0x] 'alignof' '(' type-id ')'
-Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
+ExprResult Parser::ParseSizeofAlignofExpression() {
   assert((Tok.is(tok::kw_sizeof) || Tok.is(tok::kw___alignof)
           || Tok.is(tok::kw_alignof)) &&
          "Not a sizeof/alignof expression!");
@@ -1193,7 +1193,7 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
   bool isCastExpr;
   ParsedType CastTy;
   SourceRange CastRange;
-  OwningExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
+  ExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
                                                                isCastExpr,
                                                                CastTy,
                                                                CastRange);
@@ -1228,8 +1228,8 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
 /// [GNU]   offsetof-member-designator '.' identifier
 /// [GNU]   offsetof-member-designator '[' expression ']'
 ///
-Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
-  OwningExprResult Res;
+ExprResult Parser::ParseBuiltinPrimaryExpression() {
+  ExprResult Res;
   const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
 
   tok::TokenKind T = Tok.getKind();
@@ -1246,7 +1246,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
   switch (T) {
   default: assert(0 && "Not a builtin primary expression!");
   case tok::kw___builtin_va_arg: {
-    OwningExprResult Expr(ParseAssignmentExpression());
+    ExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid()) {
       SkipUntil(tok::r_paren);
       return ExprError();
@@ -1340,7 +1340,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     break;
   }
   case tok::kw___builtin_choose_expr: {
-    OwningExprResult Cond(ParseAssignmentExpression());
+    ExprResult Cond(ParseAssignmentExpression());
     if (Cond.isInvalid()) {
       SkipUntil(tok::r_paren);
       return move(Cond);
@@ -1348,7 +1348,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprError();
 
-    OwningExprResult Expr1(ParseAssignmentExpression());
+    ExprResult Expr1(ParseAssignmentExpression());
     if (Expr1.isInvalid()) {
       SkipUntil(tok::r_paren);
       return move(Expr1);
@@ -1356,7 +1356,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprError();
 
-    OwningExprResult Expr2(ParseAssignmentExpression());
+    ExprResult Expr2(ParseAssignmentExpression());
     if (Expr2.isInvalid()) {
       SkipUntil(tok::r_paren);
       return move(Expr2);
@@ -1412,20 +1412,20 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 ///       cast-expression: [C99 6.5.4]
 ///         '(' type-name ')' cast-expression
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                              ParsedType TypeOfCast, ParsedType &CastTy,
                              SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   SourceLocation OpenLoc = ConsumeParen();
-  OwningExprResult Result(true);
+  ExprResult Result(true);
   bool isAmbiguousTypeId;
   CastTy = ParsedType();
 
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    OwningStmtResult Stmt(ParseCompoundStatement(0, true));
+    StmtResult Stmt(ParseCompoundStatement(0, true));
     ExprType = CompoundStmt;
 
     // If the substmt parsed correctly, build the AST node.
@@ -1470,7 +1470,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       // Note that this doesn't parse the subsequent cast-expression, it just
       // returns the parsed type to the callee.
       if (stopIfCastExpr)
-        return OwningExprResult();
+        return ExprResult();
       
       // Reject the cast of super idiom in ObjC.
       if (Tok.is(tok::identifier) && getLang().ObjC1 &&
@@ -1531,14 +1531,14 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 ///         '(' type-name ')' '{' initializer-list '}'
 ///         '(' type-name ')' '{' initializer-list ',' '}'
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseCompoundLiteralExpression(ParsedType Ty,
                                        SourceLocation LParenLoc,
                                        SourceLocation RParenLoc) {
   assert(Tok.is(tok::l_brace) && "Not a compound literal!");
   if (!getLang().C99)   // Compound literals don't exist in C90.
     Diag(LParenLoc, diag::ext_c99_compound_literal);
-  OwningExprResult Result = ParseInitializer();
+  ExprResult Result = ParseInitializer();
   if (!Result.isInvalid() && Ty)
     return Actions.ActOnCompoundLiteral(LParenLoc, Ty, RParenLoc, Result.take());
   return move(Result);
@@ -1550,7 +1550,7 @@ Parser::ParseCompoundLiteralExpression(ParsedType Ty,
 ///
 ///       primary-expression: [C99 6.5.1]
 ///         string-literal
-Parser::OwningExprResult Parser::ParseStringLiteralExpression() {
+ExprResult Parser::ParseStringLiteralExpression() {
   assert(isTokenStringLiteral() && "Not a string literal!");
 
   // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
@@ -1590,7 +1590,7 @@ bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
       ConsumeCodeCompletionToken();
     }
     
-    OwningExprResult Expr(ParseAssignmentExpression());
+    ExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid())
       return true;
 
@@ -1640,7 +1640,7 @@ void Parser::ParseBlockId() {
 /// [clang] block-args:
 /// [clang]   '(' parameter-list ')'
 ///
-Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
+ExprResult Parser::ParseBlockLiteralExpression() {
   assert(Tok.is(tok::caret) && "block literal starts with ^");
   SourceLocation CaretLoc = ConsumeToken();
 
@@ -1715,7 +1715,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   }
 
 
-  OwningExprResult Result(true);
+  ExprResult Result(true);
   if (!Tok.is(tok::l_brace)) {
     // Saw something like: ^expr
     Diag(Tok, diag::err_expected_expression);
@@ -1723,7 +1723,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     return ExprError();
   }
 
-  OwningStmtResult Stmt(ParseCompoundStatementBody());
+  StmtResult Stmt(ParseCompoundStatementBody());
   if (!Stmt.isInvalid())
     Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.take(), getCurScope());
   else

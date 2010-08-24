@@ -397,7 +397,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
 /// the only place where a qualified-id naming a non-static class member may
 /// appear.
 ///
-Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
+ExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   // qualified-id:
   //   '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
   //   '::' unqualified-id
@@ -446,7 +446,7 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
 ///         'reinterpret_cast' '<' type-name '>' '(' expression ')'
 ///         'const_cast' '<' type-name '>' '(' expression ')'
 ///
-Parser::OwningExprResult Parser::ParseCXXCasts() {
+ExprResult Parser::ParseCXXCasts() {
   tok::TokenKind Kind = Tok.getKind();
   const char *CastName = 0;     // For error messages
 
@@ -475,7 +475,7 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
   if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after, CastName))
     return ExprError();
 
-  OwningExprResult Result = ParseExpression();
+  ExprResult Result = ParseExpression();
 
   // Match the ')'.
   RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
@@ -495,7 +495,7 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
 ///         'typeid' '(' expression ')'
 ///         'typeid' '(' type-id ')'
 ///
-Parser::OwningExprResult Parser::ParseCXXTypeid() {
+ExprResult Parser::ParseCXXTypeid() {
   assert(Tok.is(tok::kw_typeid) && "Not 'typeid'!");
 
   SourceLocation OpLoc = ConsumeToken();
@@ -507,7 +507,7 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
       "typeid"))
     return ExprError();
 
-  OwningExprResult Result;
+  ExprResult Result;
 
   if (isTypeIdInParens()) {
     TypeResult Ty = ParseTypeName();
@@ -561,7 +561,7 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
 ///                 ~type-name 
 ///         ::[opt] nested-name-specifier[opt] ~type-name
 ///       
-Parser::OwningExprResult 
+ExprResult 
 Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
                                  tok::TokenKind OpKind,
                                  CXXScopeSpec &SS,
@@ -625,7 +625,7 @@ Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
 ///       boolean-literal: [C++ 2.13.5]
 ///         'true'
 ///         'false'
-Parser::OwningExprResult Parser::ParseCXXBoolLiteral() {
+ExprResult Parser::ParseCXXBoolLiteral() {
   tok::TokenKind Kind = Tok.getKind();
   return Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind);
 }
@@ -634,7 +634,7 @@ Parser::OwningExprResult Parser::ParseCXXBoolLiteral() {
 ///
 ///       throw-expression: [C++ 15]
 ///         'throw' assignment-expression[opt]
-Parser::OwningExprResult Parser::ParseThrowExpression() {
+ExprResult Parser::ParseThrowExpression() {
   assert(Tok.is(tok::kw_throw) && "Not throw!");
   SourceLocation ThrowLoc = ConsumeToken();           // Eat the throw token.
 
@@ -651,7 +651,7 @@ Parser::OwningExprResult Parser::ParseThrowExpression() {
     return Actions.ActOnCXXThrow(ThrowLoc, 0);
 
   default:
-    OwningExprResult Expr(ParseAssignmentExpression());
+    ExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid()) return move(Expr);
     return Actions.ActOnCXXThrow(ThrowLoc, Expr.take());
   }
@@ -662,7 +662,7 @@ Parser::OwningExprResult Parser::ParseThrowExpression() {
 /// C++ 9.3.2: In the body of a non-static member function, the keyword this is
 /// a non-lvalue expression whose value is the address of the object for which
 /// the function is called.
-Parser::OwningExprResult Parser::ParseCXXThis() {
+ExprResult Parser::ParseCXXThis() {
   assert(Tok.is(tok::kw_this) && "Not 'this'!");
   SourceLocation ThisLoc = ConsumeToken();
   return Actions.ActOnCXXThis(ThisLoc);
@@ -677,7 +677,7 @@ Parser::OwningExprResult Parser::ParseCXXThis() {
 ///         simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
 ///         typename-specifier '(' expression-list[opt] ')'         [TODO]
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParsedType TypeRep = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo).get();
@@ -730,8 +730,8 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 /// converted to a boolean value.
 ///
 /// \returns true if there was a parsing, false otherwise.
-bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
-                               Decl *&DeclResult,
+bool Parser::ParseCXXCondition(ExprResult &ExprOut,
+                               Decl *&DeclOut,
                                SourceLocation Loc,
                                bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
@@ -741,16 +741,16 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
 
   if (!isCXXConditionDeclaration()) {
     // Parse the expression.
-    ExprResult = ParseExpression(); // expression
-    DeclResult = 0;
-    if (ExprResult.isInvalid())
+    ExprOut = ParseExpression(); // expression
+    DeclOut = 0;
+    if (ExprOut.isInvalid())
       return true;
 
     // If required, convert to a boolean value.
     if (ConvertToBoolean)
-      ExprResult
-        = Actions.ActOnBooleanCondition(getCurScope(), Loc, ExprResult.take());
-    return ExprResult.isInvalid();
+      ExprOut
+        = Actions.ActOnBooleanCondition(getCurScope(), Loc, ExprOut.get());
+    return ExprOut.isInvalid();
   }
 
   // type-specifier-seq
@@ -764,7 +764,7 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
   // simple-asm-expr[opt]
   if (Tok.is(tok::kw_asm)) {
     SourceLocation Loc;
-    OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
+    ExprResult AsmLabel(ParseSimpleAsm(&Loc));
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
       return true;
@@ -781,17 +781,17 @@ bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
   }
 
   // Type-check the declaration itself.
-  Action::DeclResult Dcl = Actions.ActOnCXXConditionDeclaration(getCurScope(), 
+  DeclResult Dcl = Actions.ActOnCXXConditionDeclaration(getCurScope(), 
                                                                 DeclaratorInfo);
-  DeclResult = Dcl.get();
-  ExprResult = ExprError();
+  DeclOut = Dcl.get();
+  ExprOut = ExprError();
   
   // '=' assignment-expression
   if (Tok.is(tok::equal)) {
     SourceLocation EqualLoc = ConsumeToken();
-    OwningExprResult AssignExpr(ParseAssignmentExpression());
+    ExprResult AssignExpr(ParseAssignmentExpression());
     if (!AssignExpr.isInvalid()) 
-      Actions.AddInitializerToDecl(DeclResult, AssignExpr.take());
+      Actions.AddInitializerToDecl(DeclOut, AssignExpr.take());
   } else {
     // FIXME: C++0x allows a braced-init-list
     Diag(Tok, diag::err_expected_equal_after_declarator);
@@ -1566,7 +1566,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
 ///                   '(' expression-list[opt] ')'
 /// [C++0x]           braced-init-list                                   [TODO]
 ///
-Parser::OwningExprResult
+ExprResult
 Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
   assert(Tok.is(tok::kw_new) && "expected 'new' token");
   ConsumeToken();   // Consume 'new'
@@ -1670,7 +1670,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
   bool first = true;
   while (Tok.is(tok::l_square)) {
     SourceLocation LLoc = ConsumeBracket();
-    OwningExprResult Size(first ? ParseExpression()
+    ExprResult Size(first ? ParseExpression()
                                 : ParseConstantExpression());
     if (Size.isInvalid()) {
       // Recover
@@ -1727,7 +1727,7 @@ bool Parser::ParseExpressionListOrTypeId(
 ///        delete-expression:
 ///                   '::'[opt] 'delete' cast-expression
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
-Parser::OwningExprResult
+ExprResult
 Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
   assert(Tok.is(tok::kw_delete) && "Expected 'delete' keyword");
   ConsumeToken(); // Consume 'delete'
@@ -1742,7 +1742,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
       return ExprError();
   }
 
-  OwningExprResult Operand(ParseCastExpression(false));
+  ExprResult Operand(ParseCastExpression(false));
   if (Operand.isInvalid())
     return move(Operand);
 
@@ -1778,7 +1778,7 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
 ///       primary-expression:
 /// [GNU]             unary-type-trait '(' type-id ')'
 ///
-Parser::OwningExprResult Parser::ParseUnaryTypeTrait() {
+ExprResult Parser::ParseUnaryTypeTrait() {
   UnaryTypeTrait UTT = UnaryTypeTraitFromTokKind(Tok.getKind());
   SourceLocation Loc = ConsumeToken();
 
@@ -1802,7 +1802,7 @@ Parser::OwningExprResult Parser::ParseUnaryTypeTrait() {
 /// ParseCXXAmbiguousParenExpression - We have parsed the left paren of a
 /// parenthesized ambiguous type-id. This uses tentative parsing to disambiguate
 /// based on the context past the parens.
-Parser::OwningExprResult
+ExprResult
 Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
                                          ParsedType &CastTy,
                                          SourceLocation LParenLoc,
@@ -1811,7 +1811,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   assert(ExprType == CastExpr && "Compound literals are not ambiguous!");
   assert(isTypeIdInParens() && "Not a type-id!");
 
-  OwningExprResult Result(true);
+  ExprResult Result(true);
   CastTy = ParsedType();
 
   // We need to disambiguate a very ugly part of the C++ syntax:

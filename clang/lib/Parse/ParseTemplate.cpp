@@ -601,7 +601,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Per C++0x [basic.scope.pdecl]p9, we parse the default argument before
   // we introduce the template parameter into the local scope.
   SourceLocation EqualLoc;
-  OwningExprResult DefaultArg;
+  ExprResult DefaultArg;
   if (Tok.is(tok::equal)) {
     EqualLoc = ConsumeToken();
 
@@ -988,7 +988,7 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
   
   // Parse a non-type template argument. 
   SourceLocation Loc = Tok.getLocation();
-  OwningExprResult ExprArg = ParseConstantExpression();
+  ExprResult ExprArg = ParseConstantExpression();
   if (ExprArg.isInvalid() || !ExprArg.get())
     return ParsedTemplateArgument();
 

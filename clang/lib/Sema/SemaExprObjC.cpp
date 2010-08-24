@@ -241,7 +241,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
       return true;
 
     InitializedEntity Entity = InitializedEntity::InitializeParameter(Param);
-    OwningExprResult ArgE = PerformCopyInitialization(Entity,
+    ExprResult ArgE = PerformCopyInitialization(Entity,
                                                       SourceLocation(),
                                                       Owned(argExpr->Retain()));
     if (ArgE.isInvalid())
@@ -331,7 +331,7 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
 
 /// HandleExprPropertyRefExpr - Handle foo.bar where foo is a pointer to an
 /// objective C interface.  This is a property reference expression.
-Action::OwningExprResult Sema::
+ExprResult Sema::
 HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                           Expr *BaseExpr, DeclarationName MemberName,
                           SourceLocation MemberLoc) {
@@ -433,7 +433,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
 
 
-Action::OwningExprResult Sema::
+ExprResult Sema::
 ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
                           IdentifierInfo &propertyName,
                           SourceLocation receiverNameLoc,
@@ -624,7 +624,7 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   return ObjCInstanceMessage;
 }
 
-Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S, 
+ExprResult Sema::ActOnSuperMessage(Scope *S, 
                                                SourceLocation SuperLoc,
                                                Selector Sel,
                                                SourceLocation LBracLoc,
@@ -700,7 +700,7 @@ Sema::OwningExprResult Sema::ActOnSuperMessage(Scope *S,
 /// \param RBrac The location of the closing square bracket ']'.
 ///
 /// \param Args The message arguments.
-Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
+ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                                QualType ReceiverType,
                                                SourceLocation SuperLoc,
                                                Selector Sel,
@@ -779,7 +779,7 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
-Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S, 
+ExprResult Sema::ActOnClassMessage(Scope *S, 
                                                ParsedType Receiver,
                                                Selector Sel,
                                                SourceLocation LBracLoc,
@@ -828,7 +828,7 @@ Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S,
 /// \param RBrac The location of the closing square bracket ']'.
 ///
 /// \param Args The message arguments.
-Sema::OwningExprResult Sema::BuildInstanceMessage(Expr *Receiver,
+ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                                   QualType ReceiverType,
                                                   SourceLocation SuperLoc,
                                                   Selector Sel,
@@ -1032,13 +1032,13 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(Expr *Receiver,
 // ActOnInstanceMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
-Sema::OwningExprResult Sema::ActOnInstanceMessage(Scope *S,
-                                                  Expr *Receiver, 
-                                                  Selector Sel,
-                                                  SourceLocation LBracLoc,
-                                                  SourceLocation SelectorLoc,
-                                                  SourceLocation RBracLoc,
-                                                  MultiExprArg Args) {
+ExprResult Sema::ActOnInstanceMessage(Scope *S,
+                                      Expr *Receiver, 
+                                      Selector Sel,
+                                      SourceLocation LBracLoc,
+                                      SourceLocation SelectorLoc,
+                                      SourceLocation RBracLoc,
+                                      MultiExprArg Args) {
   if (!Receiver)
     return ExprError();
 

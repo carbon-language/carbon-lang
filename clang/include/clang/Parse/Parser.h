@@ -163,29 +163,26 @@ public:
   typedef clang::MemInitResult     MemInitResult;
   typedef clang::TypeResult        TypeResult;
 
-  typedef clang::OwningExprResult OwningExprResult;
-  typedef clang::OwningStmtResult OwningStmtResult;
-
   typedef Expr *ExprArg;
   typedef ASTMultiPtr<Stmt*> MultiStmtArg;
   typedef Action::FullExprArg FullExprArg;
 
-  /// Adorns a ExprResult with Actions to make it an OwningExprResult
-  OwningExprResult Owned(ExprResult res) {
-    return OwningExprResult(res);
+  /// Adorns a ExprResult with Actions to make it an ExprResult
+  ExprResult Owned(ExprResult res) {
+    return ExprResult(res);
   }
-  /// Adorns a StmtResult with Actions to make it an OwningStmtResult
-  OwningStmtResult Owned(StmtResult res) {
-    return OwningStmtResult(res);
+  /// Adorns a StmtResult with Actions to make it an StmtResult
+  StmtResult Owned(StmtResult res) {
+    return StmtResult(res);
   }
 
-  OwningExprResult ExprError() { return OwningExprResult(true); }
-  OwningStmtResult StmtError() { return OwningStmtResult(true); }
+  ExprResult ExprError() { return ExprResult(true); }
+  StmtResult StmtError() { return StmtResult(true); }
 
-  OwningExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
-  OwningStmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
+  ExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
+  StmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
 
-  OwningExprResult ExprEmpty() { return OwningExprResult(false); }
+  ExprResult ExprEmpty() { return ExprResult(false); }
 
   // Parsing methods.
 
@@ -876,8 +873,8 @@ private:
   void ParseKNRParamDeclarations(Declarator &D);
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the simple-asm.
-  OwningExprResult ParseSimpleAsm(SourceLocation *EndLoc = 0);
-  OwningExprResult ParseAsmStringLiteral();
+  ExprResult ParseSimpleAsm(SourceLocation *EndLoc = 0);
+  ExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
   Decl *ParseObjCAtDirectives();
@@ -931,29 +928,29 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
   
-  OwningExprResult ParseExpression();
-  OwningExprResult ParseConstantExpression();
+  ExprResult ParseExpression();
+  ExprResult ParseConstantExpression();
   // Expr that doesn't include commas.
-  OwningExprResult ParseAssignmentExpression();
+  ExprResult ParseAssignmentExpression();
 
-  OwningExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
+  ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
-  OwningExprResult ParseExpressionWithLeadingExtension(SourceLocation ExtLoc);
+  ExprResult ParseExpressionWithLeadingExtension(SourceLocation ExtLoc);
 
-  OwningExprResult ParseRHSOfBinaryExpression(OwningExprResult LHS,
+  ExprResult ParseRHSOfBinaryExpression(ExprResult LHS,
                                               prec::Level MinPrec);
-  OwningExprResult ParseCastExpression(bool isUnaryExpression,
+  ExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
                                        bool &NotCastExpr,
                                        ParsedType TypeOfCast);
-  OwningExprResult ParseCastExpression(bool isUnaryExpression,
+  ExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand = false,
                                        ParsedType TypeOfCast = ParsedType());
-  OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
-  OwningExprResult ParseSizeofAlignofExpression();
-  OwningExprResult ParseBuiltinPrimaryExpression();
+  ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
+  ExprResult ParseSizeofAlignofExpression();
+  ExprResult ParseBuiltinPrimaryExpression();
 
-  OwningExprResult ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
+  ExprResult ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
                                                      bool &isCastExpr,
                                                      ParsedType &CastTy,
                                                      SourceRange &CastRange);
@@ -977,26 +974,26 @@ private:
     CompoundLiteral, // Also allow '(' type-name ')' '{' ... '}'
     CastExpr         // Also allow '(' type-name ')' <anything>
   };
-  OwningExprResult ParseParenExpression(ParenParseOption &ExprType,
+  ExprResult ParseParenExpression(ParenParseOption &ExprType,
                                         bool stopIfCastExpr,
                                         ParsedType TypeOfCast,
                                         ParsedType &CastTy,
                                         SourceLocation &RParenLoc);
 
-  OwningExprResult ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
+  ExprResult ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
                                                     ParsedType &CastTy,
                                                     SourceLocation LParenLoc,
                                                     SourceLocation &RParenLoc);
 
-  OwningExprResult ParseCompoundLiteralExpression(ParsedType Ty,
+  ExprResult ParseCompoundLiteralExpression(ParsedType Ty,
                                                   SourceLocation LParenLoc,
                                                   SourceLocation RParenLoc);
 
-  OwningExprResult ParseStringLiteralExpression();
+  ExprResult ParseStringLiteralExpression();
 
   //===--------------------------------------------------------------------===//
   // C++ Expressions
-  OwningExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
+  ExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                       ParsedType ObjectType,
@@ -1005,26 +1002,26 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
-  OwningExprResult ParseCXXCasts();
+  ExprResult ParseCXXCasts();
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Type Identification
-  OwningExprResult ParseCXXTypeid();
+  ExprResult ParseCXXTypeid();
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2.4: C++ Pseudo-Destructor Expressions
-  OwningExprResult ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
+  ExprResult ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
                                             tok::TokenKind OpKind,
                                             CXXScopeSpec &SS,
                                             ParsedType ObjectType);
 
   //===--------------------------------------------------------------------===//
   // C++ 9.3.2: C++ 'this' pointer
-  OwningExprResult ParseCXXThis();
+  ExprResult ParseCXXThis();
 
   //===--------------------------------------------------------------------===//
   // C++ 15: C++ Throw Expression
-  OwningExprResult ParseThrowExpression();
+  ExprResult ParseThrowExpression();
   // EndLoc is filled with the location of the last token of the specification.
   bool ParseExceptionSpecification(SourceLocation &EndLoc,
                                    llvm::SmallVectorImpl<ParsedType> &Exns,
@@ -1033,11 +1030,11 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals
-  OwningExprResult ParseCXXBoolLiteral();
+  ExprResult ParseCXXBoolLiteral();
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2.3: Explicit type conversion (functional notation)
-  OwningExprResult ParseCXXTypeConstructExpression(const DeclSpec &DS);
+  ExprResult ParseCXXTypeConstructExpression(const DeclSpec &DS);
 
   bool isCXXSimpleTypeSpecifier() const;
 
@@ -1053,13 +1050,13 @@ private:
   bool ParseExpressionListOrTypeId(llvm::SmallVectorImpl<Expr*> &Exprs,
                                    Declarator &D);
   void ParseDirectNewDeclarator(Declarator &D);
-  OwningExprResult ParseCXXNewExpression(bool UseGlobal, SourceLocation Start);
-  OwningExprResult ParseCXXDeleteExpression(bool UseGlobal,
+  ExprResult ParseCXXNewExpression(bool UseGlobal, SourceLocation Start);
+  ExprResult ParseCXXDeleteExpression(bool UseGlobal,
                                             SourceLocation Start);
 
   //===--------------------------------------------------------------------===//
   // C++ if/switch/while condition expression.
-  bool ParseCXXCondition(OwningExprResult &ExprResult, Decl *&DeclResult,
+  bool ParseCXXCondition(ExprResult &ExprResult, Decl *&DeclResult,
                          SourceLocation Loc, bool ConvertToBoolean);
 
   //===--------------------------------------------------------------------===//
@@ -1072,33 +1069,33 @@ private:
   ///       initializer: [C99 6.7.8]
   ///         assignment-expression
   ///         '{' ...
-  OwningExprResult ParseInitializer() {
+  ExprResult ParseInitializer() {
     if (Tok.isNot(tok::l_brace))
       return ParseAssignmentExpression();
     return ParseBraceInitializer();
   }
-  OwningExprResult ParseBraceInitializer();
-  OwningExprResult ParseInitializerWithPotentialDesignator();
+  ExprResult ParseBraceInitializer();
+  ExprResult ParseInitializerWithPotentialDesignator();
 
   //===--------------------------------------------------------------------===//
   // clang Expressions
 
-  OwningExprResult ParseBlockLiteralExpression();  // ^{...}
+  ExprResult ParseBlockLiteralExpression();  // ^{...}
 
   //===--------------------------------------------------------------------===//
   // Objective-C Expressions
-  OwningExprResult ParseObjCAtExpression(SourceLocation AtLocation);
-  OwningExprResult ParseObjCStringLiteral(SourceLocation AtLoc);
-  OwningExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
-  OwningExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
-  OwningExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
+  ExprResult ParseObjCAtExpression(SourceLocation AtLocation);
+  ExprResult ParseObjCStringLiteral(SourceLocation AtLoc);
+  ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
+  ExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
+  ExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
   bool isSimpleObjCMessageExpression();
-  OwningExprResult ParseObjCMessageExpression();
-  OwningExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
+  ExprResult ParseObjCMessageExpression();
+  ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
                                                   SourceLocation SuperLoc,
                                                   ParsedType ReceiverType,
                                                   ExprArg ReceiverExpr);
-  OwningExprResult ParseAssignmentExprWithObjCMessageExprStart(
+  ExprResult ParseAssignmentExprWithObjCMessageExprStart(
       SourceLocation LBracloc, SourceLocation SuperLoc,
       ParsedType ReceiverType, ExprArg ReceiverExpr);
   bool ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr);
@@ -1106,31 +1103,31 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
 
-  OwningStmtResult ParseStatement() {
+  StmtResult ParseStatement() {
     return ParseStatementOrDeclaration(true);
   }
-  OwningStmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
-  OwningStmtResult ParseLabeledStatement(AttributeList *Attr);
-  OwningStmtResult ParseCaseStatement(AttributeList *Attr);
-  OwningStmtResult ParseDefaultStatement(AttributeList *Attr);
-  OwningStmtResult ParseCompoundStatement(AttributeList *Attr,
+  StmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
+  StmtResult ParseLabeledStatement(AttributeList *Attr);
+  StmtResult ParseCaseStatement(AttributeList *Attr);
+  StmtResult ParseDefaultStatement(AttributeList *Attr);
+  StmtResult ParseCompoundStatement(AttributeList *Attr,
                                           bool isStmtExpr = false);
-  OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
-  bool ParseParenExprOrCondition(OwningExprResult &ExprResult,
+  StmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
+  bool ParseParenExprOrCondition(ExprResult &ExprResult,
                                  Decl *&DeclResult,
                                  SourceLocation Loc,
                                  bool ConvertToBoolean);
-  OwningStmtResult ParseIfStatement(AttributeList *Attr);
-  OwningStmtResult ParseSwitchStatement(AttributeList *Attr);
-  OwningStmtResult ParseWhileStatement(AttributeList *Attr);
-  OwningStmtResult ParseDoStatement(AttributeList *Attr);
-  OwningStmtResult ParseForStatement(AttributeList *Attr);
-  OwningStmtResult ParseGotoStatement(AttributeList *Attr);
-  OwningStmtResult ParseContinueStatement(AttributeList *Attr);
-  OwningStmtResult ParseBreakStatement(AttributeList *Attr);
-  OwningStmtResult ParseReturnStatement(AttributeList *Attr);
-  OwningStmtResult ParseAsmStatement(bool &msAsm);
-  OwningStmtResult FuzzyParseMicrosoftAsmStatement();
+  StmtResult ParseIfStatement(AttributeList *Attr);
+  StmtResult ParseSwitchStatement(AttributeList *Attr);
+  StmtResult ParseWhileStatement(AttributeList *Attr);
+  StmtResult ParseDoStatement(AttributeList *Attr);
+  StmtResult ParseForStatement(AttributeList *Attr);
+  StmtResult ParseGotoStatement(AttributeList *Attr);
+  StmtResult ParseContinueStatement(AttributeList *Attr);
+  StmtResult ParseBreakStatement(AttributeList *Attr);
+  StmtResult ParseReturnStatement(AttributeList *Attr);
+  StmtResult ParseAsmStatement(bool &msAsm);
+  StmtResult FuzzyParseMicrosoftAsmStatement();
   bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
                            llvm::SmallVectorImpl<ExprTy *> &Constraints,
                            llvm::SmallVectorImpl<ExprTy *> &Exprs);
@@ -1138,17 +1135,17 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 6: Statements and Blocks
 
-  OwningStmtResult ParseCXXTryBlock(AttributeList *Attr);
-  OwningStmtResult ParseCXXTryBlockCommon(SourceLocation TryLoc);
-  OwningStmtResult ParseCXXCatchBlock();
+  StmtResult ParseCXXTryBlock(AttributeList *Attr);
+  StmtResult ParseCXXTryBlockCommon(SourceLocation TryLoc);
+  StmtResult ParseCXXCatchBlock();
 
   //===--------------------------------------------------------------------===//
   // Objective-C Statements
 
-  OwningStmtResult ParseObjCAtStatement(SourceLocation atLoc);
-  OwningStmtResult ParseObjCTryStmt(SourceLocation atLoc);
-  OwningStmtResult ParseObjCThrowStmt(SourceLocation atLoc);
-  OwningStmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
+  StmtResult ParseObjCAtStatement(SourceLocation atLoc);
+  StmtResult ParseObjCTryStmt(SourceLocation atLoc);
+  StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
+  StmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
 
 
   //===--------------------------------------------------------------------===//
@@ -1358,7 +1355,7 @@ private:
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);
   
-  OwningExprResult ParseCXX0XAlignArgument(SourceLocation Start);
+  ExprResult ParseCXX0XAlignArgument(SourceLocation Start);
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
   /// enter a new C++ declarator scope and exit it when the function is
@@ -1530,7 +1527,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
-  OwningExprResult ParseUnaryTypeTrait();
+  ExprResult ParseUnaryTypeTrait();
 };
 
 }  // end namespace clang

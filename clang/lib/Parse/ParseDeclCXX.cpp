@@ -389,7 +389,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
 
   SourceLocation LParenLoc = ConsumeParen();
 
-  OwningExprResult AssertExpr(ParseConstantExpression());
+  ExprResult AssertExpr(ParseConstantExpression());
   if (AssertExpr.isInvalid()) {
     SkipUntil(tok::semi);
     return 0;
@@ -404,7 +404,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
     return 0;
   }
 
-  OwningExprResult AssertMessage(ParseStringLiteralExpression());
+  ExprResult AssertMessage(ParseStringLiteralExpression());
   if (AssertMessage.isInvalid())
     return 0;
 
@@ -440,7 +440,7 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   //   The operand of the decltype specifier is an unevaluated operand.
   EnterExpressionEvaluationContext Unevaluated(Actions,
                                                Action::Unevaluated);
-  OwningExprResult Result = ParseExpression();
+  ExprResult Result = ParseExpression();
   if (Result.isInvalid()) {
     SkipUntil(tok::r_paren);
     return;
@@ -1404,8 +1404,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   //   member-declarator-list ',' member-declarator
 
   llvm::SmallVector<Decl *, 8> DeclsInGroup;
-  OwningExprResult BitfieldSize;
-  OwningExprResult Init;
+  ExprResult BitfieldSize;
+  ExprResult Init;
   bool Deleted = false;
 
   while (1) {
@@ -1444,7 +1444,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // If a simple-asm-expr is present, parse it.
     if (Tok.is(tok::kw_asm)) {
       SourceLocation Loc;
-      OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
+      ExprResult AsmLabel(ParseSimpleAsm(&Loc));
       if (AsmLabel.isInvalid())
         SkipUntil(tok::comma, true, true);
  
@@ -2015,7 +2015,7 @@ CXX0XAttributeList Parser::ParseCXX0XAttributes(SourceLocation *EndLoc) {
         }
         SourceLocation ParamLoc = ConsumeParen();
 
-        OwningExprResult ArgExpr = ParseCXX0XAlignArgument(ParamLoc);
+        ExprResult ArgExpr = ParseCXX0XAlignArgument(ParamLoc);
 
         MatchRHSPunctuation(tok::r_paren, ParamLoc);
 
@@ -2060,7 +2060,7 @@ CXX0XAttributeList Parser::ParseCXX0XAttributes(SourceLocation *EndLoc) {
 ///
 /// [C++0x] 'align' '(' type-id ')'
 /// [C++0x] 'align' '(' assignment-expression ')'
-Parser::OwningExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
+ExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
   if (isTypeIdInParens()) {
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                   Action::Unevaluated);

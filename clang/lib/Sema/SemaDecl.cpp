@@ -2147,7 +2147,7 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
 
   case DeclSpec::TST_typeofExpr: {
     Expr *E = DS.getRepAsExpr();
-    OwningExprResult Result = S.RebuildExprInCurrentInstantiation(E);
+    ExprResult Result = S.RebuildExprInCurrentInstantiation(E);
     if (Result.isInvalid()) return true;
     DS.UpdateExprRep(Result.get());
     break;
@@ -4156,7 +4156,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+      ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                                 MultiExprArg(*this, &Init, 1),
                                                 &DclT);
       if (Result.isInvalid()) {
@@ -4227,7 +4227,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+      ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                                 MultiExprArg(*this, &Init, 1),
                                                 &DclT);
       if (Result.isInvalid()) {
@@ -4465,8 +4465,8 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
         = InitializationKind::CreateDefault(Var->getLocation());
     
       InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
-      OwningExprResult Init = InitSeq.Perform(*this, Entity, Kind,
-                                              MultiExprArg(*this, 0, 0));
+      ExprResult Init = InitSeq.Perform(*this, Entity, Kind,
+                                        MultiExprArg(*this, 0, 0));
       if (Init.isInvalid())
         Var->setInvalidDecl();
       else if (Init.get()) {

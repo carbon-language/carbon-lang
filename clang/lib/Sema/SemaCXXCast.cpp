@@ -116,7 +116,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
                                         CastExpr::CastKind &Kind);
 
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation LAngleBracketLoc, ParsedType Ty,
                         SourceLocation RAngleBracketLoc,
@@ -133,7 +133,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                            SourceRange(LParenLoc, RParenLoc));
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         TypeSourceInfo *DestTInfo, ExprArg Ex,
                         SourceRange AngleBrackets, SourceRange Parens) {
@@ -964,7 +964,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       (CStyle || !DestType->isReferenceType()))
     return TC_NotApplicable;
     
-  Sema::OwningExprResult Result
+  ExprResult Result
     = InitSeq.Perform(Self, Entity, InitKind,
                       Action::MultiExprArg(Self, &SrcExpr, 1));
   if (Result.isInvalid()) {

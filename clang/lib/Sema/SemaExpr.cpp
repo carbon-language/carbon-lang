@@ -371,7 +371,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 /// multiple tokens.  However, the common case is that StringToks points to one
 /// string.
 ///
-Action::OwningExprResult
+ExprResult
 Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
@@ -459,7 +459,7 @@ static bool ShouldSnapshotBlockValueReference(Sema &S, BlockScopeInfo *CurBlock,
 }
 
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
                        const CXXScopeSpec *SS) {
   DeclarationNameInfo NameInfo(D->getDeclName(), Loc);
@@ -467,7 +467,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
 }
 
 /// BuildDeclRefExpr - Build a DeclRefExpr.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty,
                        const DeclarationNameInfo &NameInfo,
                        const CXXScopeSpec *SS) {
@@ -543,7 +543,7 @@ VarDecl *Sema::BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
   return BaseObject;
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                                                FieldDecl *Field,
                                                Expr *BaseObjectExpr,
@@ -1061,7 +1061,7 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
   return 0;
 }
 
-Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
+ExprResult Sema::ActOnIdExpression(Scope *S,
                                                CXXScopeSpec &SS,
                                                UnqualifiedId &Id,
                                                bool HasTrailingLParen,
@@ -1134,7 +1134,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // If this reference is in an Objective-C method, then we need to do
     // some special Objective-C lookup, too.
     if (IvarLookupFollowUp) {
-      OwningExprResult E(LookupInObjCMethod(R, S, II, true));
+      ExprResult E(LookupInObjCMethod(R, S, II, true));
       if (E.isInvalid())
         return ExprError();
 
@@ -1180,7 +1180,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
       // reference the ivar.
       if (ObjCIvarDecl *Ivar = R.getAsSingle<ObjCIvarDecl>()) {
         R.clear();
-        OwningExprResult E(LookupInObjCMethod(R, S, Ivar->getIdentifier()));
+        ExprResult E(LookupInObjCMethod(R, S, Ivar->getIdentifier()));
         assert(E.isInvalid() || E.get());
         return move(E);
       }
@@ -1241,7 +1241,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
 }
 
 /// Builds an expression which might be an implicit member expression.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
                                       LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs) {
@@ -1280,7 +1280,7 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
 /// declaration name, generally during template instantiation.
 /// There's a large number of things which don't need to be done along
 /// this path.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
                                         const DeclarationNameInfo &NameInfo) {
   DeclContext *DC;
@@ -1313,7 +1313,7 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
 /// actually quite a lot of extra work involved.
 ///
 /// Returns a null sentinel to indicate trivial success.
-Sema::OwningExprResult
+ExprResult
 Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
                          IdentifierInfo *II, bool AllowBuiltinCreation) {
   SourceLocation Loc = Lookup.getNameLoc();
@@ -1368,7 +1368,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       UnqualifiedId SelfName;
       SelfName.setIdentifier(&II, SourceLocation());
       CXXScopeSpec SelfScopeSpec;
-      OwningExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
+      ExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
                                                     SelfName, false, false);
       MarkDeclarationReferenced(Loc, IV);
       return Owned(new (Context)
@@ -1593,7 +1593,7 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
 /// is known to be an instance method, and the given unqualified lookup
 /// set is known to contain only instance members, at least one of which
 /// is from an appropriate type.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
                               LookupResult &R,
                               const TemplateArgumentListInfo *TemplateArgs,
@@ -1709,7 +1709,7 @@ static bool CheckDeclInExpr(Sema &S, SourceLocation Loc, NamedDecl *D) {
   return false;
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                LookupResult &R,
                                bool NeedsADL) {
@@ -1745,7 +1745,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
 
 
 /// \brief Complete semantic analysis for a reference to the given declaration.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                const DeclarationNameInfo &NameInfo,
                                NamedDecl *D) {
@@ -1828,7 +1828,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                     DeclRefExpr(const_cast<ValueDecl*>(BDRE->getDecl()), T,
                                           SourceLocation());
       
-        OwningExprResult Res = PerformCopyInitialization(
+        ExprResult Res = PerformCopyInitialization(
                           InitializedEntity::InitializeBlock(VD->getLocation(), 
                                                          T, false),
                                                          SourceLocation(),
@@ -1849,7 +1849,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                           NameInfo, &SS);
 }
 
-Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
+ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
                                                  tok::TokenKind Kind) {
   PredefinedExpr::IdentType IT;
 
@@ -1884,7 +1884,7 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
   return Owned(new (Context) PredefinedExpr(Loc, ResTy, IT));
 }
 
-Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
+ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
   bool Invalid = false;
   llvm::StringRef ThisTok = PP.getSpelling(Tok, CharBuffer, &Invalid);
@@ -1911,7 +1911,7 @@ Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
                                               Ty, Tok.getLocation()));
 }
 
-Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
+ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // Fast path for a single digit (which is quite common).  A single digit
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
@@ -2073,7 +2073,7 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   return Owned(Res);
 }
 
-Action::OwningExprResult Sema::ActOnParenExpr(SourceLocation L,
+ExprResult Sema::ActOnParenExpr(SourceLocation L,
                                               SourceLocation R, Expr *E) {
   assert((E != 0) && "ActOnParenExpr() missing expr");
   return Owned(new (Context) ParenExpr(L, R, E));
@@ -2158,7 +2158,7 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
 }
 
 /// \brief Build a sizeof or alignof expression given a type operand.
-Action::OwningExprResult
+ExprResult
 Sema::CreateSizeOfAlignOfExpr(TypeSourceInfo *TInfo,
                               SourceLocation OpLoc,
                               bool isSizeOf, SourceRange R) {
@@ -2179,7 +2179,7 @@ Sema::CreateSizeOfAlignOfExpr(TypeSourceInfo *TInfo,
 
 /// \brief Build a sizeof or alignof expression given an expression
 /// operand.
-Action::OwningExprResult
+ExprResult
 Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
                               bool isSizeOf, SourceRange R) {
   // Verify that the operand is valid.
@@ -2207,7 +2207,7 @@ Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
 /// ActOnSizeOfAlignOfExpr - Handle @c sizeof(type) and @c sizeof @c expr and
 /// the same for @c alignof and @c __alignof
 /// Note that the ArgRange is invalid if isType is false.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                              void *TyOrEx, const SourceRange &ArgRange) {
   // If error parsing type, ignore.
@@ -2220,7 +2220,7 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
   }
 
   Expr *ArgEx = (Expr *)TyOrEx;
-  Action::OwningExprResult Result
+  ExprResult Result
     = CreateSizeOfAlignOfExpr(ArgEx, OpLoc, isSizeof, ArgEx->getSourceRange());
 
   if (Result.isInvalid())
@@ -2249,7 +2249,7 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
 
 
 
-Action::OwningExprResult
+ExprResult
 Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                           tok::TokenKind Kind, Expr *Input) {
   UnaryOperator::Opcode Opc;
@@ -2262,11 +2262,11 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
   return BuildUnaryOp(S, OpLoc, Opc, Input);
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::ActOnArraySubscriptExpr(Scope *S, Expr *Base, SourceLocation LLoc,
                               Expr *Idx, SourceLocation RLoc) {
   // Since this might be a postfix expression, get rid of ParenListExprs.
-  OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
+  ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
   if (Result.isInvalid()) return ExprError();
   Base = Result.take();
 
@@ -2290,7 +2290,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, Expr *Base, SourceLocation LLoc,
 }
 
 
-Action::OwningExprResult
+ExprResult
 Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
                                      Expr *Idx, SourceLocation RLoc) {
   Expr *LHSExp = Base;
@@ -2541,7 +2541,7 @@ static Decl *FindGetterNameDecl(const ObjCObjectPointerType *QIdTy,
   return GDecl;
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::ActOnDependentMemberExpr(Expr *BaseExpr, QualType BaseType,
                                bool IsArrow, SourceLocation OpLoc,
                                const CXXScopeSpec &SS,
@@ -2718,7 +2718,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   return false;
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
                                SourceLocation OpLoc, bool IsArrow,
                                CXXScopeSpec &SS,
@@ -2745,7 +2745,7 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
 
   // Explicit member accesses.
   } else {
-    OwningExprResult Result =
+    ExprResult Result =
       LookupMemberExpr(R, Base, IsArrow, OpLoc,
                        SS, /*ObjCImpDecl*/ 0, TemplateArgs != 0);
 
@@ -2766,7 +2766,7 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
                                   R, TemplateArgs);
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
                                SourceLocation OpLoc, bool IsArrow,
                                const CXXScopeSpec &SS,
@@ -2957,7 +2957,7 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
 ///
 /// The ObjCImpDecl bit is a gross hack that will need to be properly
 /// fixed for ObjC++.
-Sema::OwningExprResult
+ExprResult
 Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                        bool &IsArrow, SourceLocation OpLoc,
                        CXXScopeSpec &SS,
@@ -2991,7 +2991,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           << QualType(Fun, 0)
           << FixItHint::CreateInsertion(Loc, "()");
 
-        OwningExprResult NewBase
+        ExprResult NewBase
           = ActOnCallExpr(0, BaseExpr, Loc,
                           MultiExprArg(*this, 0, 0), 0, Loc);
         BaseExpr = 0;
@@ -3304,7 +3304,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 /// \param ObjCImpDecl the current ObjC @implementation decl;
 ///   this is an ugly hack around the fact that ObjC @implementations
 ///   aren't properly put in the context chain
-Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
+ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
                                                    SourceLocation OpLoc,
                                                    tok::TokenKind OpKind,
                                                    CXXScopeSpec &SS,
@@ -3330,7 +3330,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
                        static_cast<NestedNameSpecifier*>(SS.getScopeRep())));
 
   // This is a postfix expression, so get rid of ParenListExprs.
-  OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
+  ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
   if (Result.isInvalid()) return ExprError();
   Base = Result.take();
 
@@ -3370,7 +3370,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   return move(Result);
 }
 
-Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
+ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
                                                     FunctionDecl *FD,
                                                     ParmVarDecl *Param) {
   if (Param->hasUnparsedDefaultArg()) {
@@ -3392,7 +3392,7 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       InstantiatingTemplate Inst(*this, CallLoc, Param, Innermost.first,
                                  Innermost.second);
 
-      OwningExprResult Result = SubstExpr(UninstExpr, ArgList);
+      ExprResult Result = SubstExpr(UninstExpr, ArgList);
       if (Result.isInvalid())
         return ExprError();
 
@@ -3525,7 +3525,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
       InitializedEntity Entity =
         Param? InitializedEntity::InitializeParameter(Param)
              : InitializedEntity::InitializeParameter(ProtoArgType);
-      OwningExprResult ArgE = PerformCopyInitialization(Entity,
+      ExprResult ArgE = PerformCopyInitialization(Entity,
                                                         SourceLocation(),
                                                         Owned(Arg));
       if (ArgE.isInvalid())
@@ -3535,7 +3535,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
     } else {
       ParmVarDecl *Param = FDecl->getParamDecl(i);
 
-      OwningExprResult ArgExpr =
+      ExprResult ArgExpr =
         BuildCXXDefaultArgExpr(CallLoc, FDecl, Param);
       if (ArgExpr.isInvalid())
         return true;
@@ -3560,14 +3560,14 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
                     MultiExprArg args,
                     SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   unsigned NumArgs = args.size();
 
   // Since this might be a postfix expression, get rid of ParenListExprs.
-  OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Fn);
+  ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Fn);
   if (Result.isInvalid()) return ExprError();
   Fn = Result.take();
 
@@ -3690,7 +3690,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
 /// block-pointer type.
 ///
 /// \param NDecl the declaration being called, if available
-Sema::OwningExprResult
+ExprResult
 Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                             SourceLocation LParenLoc,
                             Expr **Args, unsigned NumArgs,
@@ -3791,7 +3791,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   return MaybeBindToTemporary(TheCall);
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, ParsedType Ty,
                            SourceLocation RParenLoc, Expr *InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
@@ -3806,7 +3806,7 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, ParsedType Ty,
   return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, InitExpr);
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
                                SourceLocation RParenLoc, Expr *literalExpr) {
   QualType literalType = TInfo->getType();
@@ -3828,7 +3828,7 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
     = InitializationKind::CreateCast(SourceRange(LParenLoc, RParenLoc),
                                      /*IsCStyleCast=*/true);
   InitializationSequence InitSeq(*this, Entity, Kind, &literalExpr, 1);
-  OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+  ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                        MultiExprArg(*this, &literalExpr, 1),
                                             &literalType);
   if (Result.isInvalid())
@@ -3845,7 +3845,7 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
                                                  literalExpr, isFileScope));
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
                     SourceLocation RBraceLoc) {
   unsigned NumInit = initlist.size();
@@ -4046,7 +4046,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
   return false;
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, ParsedType Ty,
                     SourceLocation RParenLoc, Expr *castExpr) {
   assert((Ty != 0) && (castExpr != 0) &&
@@ -4065,7 +4065,7 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, ParsedType Ty,
   return BuildCStyleCastExpr(LParenLoc, castTInfo, RParenLoc, castExpr);
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
                           SourceLocation RParenLoc, Expr *castExpr) {
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
@@ -4082,13 +4082,13 @@ Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
 
 /// This is not an AltiVec-style cast, so turn the ParenListExpr into a sequence
 /// of comma binary operators.
-OwningExprResult
+ExprResult
 Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *expr) {
   ParenListExpr *E = dyn_cast<ParenListExpr>(expr);
   if (!E)
     return Owned(expr);
 
-  OwningExprResult Result(E->getExpr(0));
+  ExprResult Result(E->getExpr(0));
 
   for (unsigned i = 1, e = E->getNumExprs(); i != e && !Result.isInvalid(); ++i)
     Result = ActOnBinOp(S, E->getExprLoc(), tok::comma, Result.get(),
@@ -4099,7 +4099,7 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *expr) {
   return ActOnParenExpr(E->getLParenLoc(), E->getRParenLoc(), Result.get());
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
                                SourceLocation RParenLoc, Expr *Op,
                                TypeSourceInfo *TInfo) {
@@ -4139,13 +4139,13 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
   } else {
     // This is not an AltiVec-style cast, so turn the ParenListExpr into a
     // sequence of BinOp comma operators.
-    OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Op);
+    ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Op);
     if (Result.isInvalid()) return ExprError();
     return BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc, Result.take());
   }
 }
 
-Action::OwningExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
+ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
                                                   SourceLocation R,
                                                   MultiExprArg Val,
                                                   ParsedType TypeOfCast) {
@@ -4483,7 +4483,7 @@ QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
 
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
-Action::OwningExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
+ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
                                                   SourceLocation ColonLoc,
                                                   Expr *CondExpr, Expr *LHSExpr,
                                                   Expr *RHSExpr) {
@@ -6418,7 +6418,7 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
-Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
+ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                                   unsigned Op,
                                                   Expr *lhs, Expr *rhs) {
   QualType ResultTy;     // Result type of the binary operator.
@@ -6628,7 +6628,7 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperator::Opcode Opc,
 }
 
 // Binary Operators.  'Tok' is the token for the operator.
-Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
+ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                           tok::TokenKind Kind,
                                           Expr *lhs, Expr *rhs) {
   BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
@@ -6641,7 +6641,7 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   return BuildBinOp(S, TokLoc, Opc, lhs, rhs);
 }
 
-Action::OwningExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
+ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                                           BinaryOperator::Opcode Opc,
                                           Expr *lhs, Expr *rhs) {
   if (getLangOptions().CPlusPlus &&
@@ -6666,7 +6666,7 @@ Action::OwningExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
   return CreateBuiltinBinOp(OpLoc, Opc, lhs, rhs);
 }
 
-Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
+ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                                     unsigned OpcIn,
                                                     Expr *Input) {
   UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
@@ -6750,7 +6750,7 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   return Owned(new (Context) UnaryOperator(Input, Opc, resultType, OpLoc));
 }
 
-Action::OwningExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
+ExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
                                             UnaryOperator::Opcode Opc,
                                             Expr *Input) {
   if (getLangOptions().CPlusPlus && Input->getType()->isOverloadableType() &&
@@ -6772,13 +6772,13 @@ Action::OwningExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
 }
 
 // Unary Operators.  'Tok' is the token for the operator.
-Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
+ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                             tok::TokenKind Op, Expr *Input) {
   return BuildUnaryOp(S, OpLoc, ConvertTokenKindToUnaryOpcode(Op), Input);
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
-Sema::OwningExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
+ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
                                             SourceLocation LabLoc,
                                             IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
@@ -6794,7 +6794,7 @@ Sema::OwningExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
                                        Context.getPointerType(Context.VoidTy)));
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
                     SourceLocation RPLoc) { // "({..})"
   assert(SubStmt && isa<CompoundStmt>(SubStmt) && "Invalid action invocation!");
@@ -6829,7 +6829,7 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
   return Owned(new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc));
 }
 
-Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
+ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
                                                   TypeSourceInfo *TInfo,
                                                   OffsetOfComponent *CompPtr,
                                                   unsigned NumComponents,
@@ -6985,7 +6985,7 @@ Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
                                     Exprs.data(), Exprs.size(), RParenLoc));  
 }
 
-Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
+ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
                                                   SourceLocation BuiltinLoc,
                                                   SourceLocation TypeLoc,
                                                   ParsedType argty,
@@ -7006,7 +7006,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 }
 
 
-Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
+ExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                                       ParsedType arg1,ParsedType arg2,
                                                       SourceLocation RPLoc) {
   TypeSourceInfo *argTInfo1;
@@ -7019,7 +7019,7 @@ Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
   return BuildTypesCompatibleExpr(BuiltinLoc, argTInfo1, argTInfo2, RPLoc);
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                TypeSourceInfo *argTInfo1,
                                TypeSourceInfo *argTInfo2,
@@ -7035,7 +7035,7 @@ Sema::BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
 }
 
 
-Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
+ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
                                              Expr *CondExpr,
                                              Expr *LHSExpr, Expr *RHSExpr,
                                              SourceLocation RPLoc) {
@@ -7197,7 +7197,7 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
 
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
 /// literal was successfully completed.  ^(int x){...}
-Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
+ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
                                                 Stmt *Body, Scope *CurScope) {
   // If blocks are disabled, emit an error.
   if (!LangOpts.Blocks)
@@ -7296,7 +7296,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   return Owned(Result);
 }
 
-Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
+ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                                         Expr *expr, ParsedType type,
                                         SourceLocation RPLoc) {
   TypeSourceInfo *TInfo;
@@ -7304,7 +7304,7 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   return BuildVAArgExpr(BuiltinLoc, expr, TInfo, RPLoc);
 }
 
-Sema::OwningExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
+ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
                                             Expr *E, TypeSourceInfo *TInfo,
                                             SourceLocation RPLoc) {
   Expr *OrigExpr = E;
@@ -7342,7 +7342,7 @@ Sema::OwningExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
   return Owned(new (Context) VAArgExpr(BuiltinLoc, E, TInfo, RPLoc, T));
 }
 
-Sema::OwningExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
+ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   // The type of __null will be int or long, depending on the size of
   // pointers on the target.
   QualType Ty;
@@ -7870,8 +7870,8 @@ bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
   return false;
 }
 
-Sema::OwningExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
-                                                   Expr *Sub) {
+ExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
+                                       Expr *Sub) {
   if (!Sub)
     return ExprError();
   

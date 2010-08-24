@@ -3191,7 +3191,7 @@ bool Sema::PerformContextuallyConvertToObjCId(Expr *&From) {
 ///
 /// \returns The expression, converted to an integral or enumeration type if
 /// successful.
-Sema::OwningExprResult 
+ExprResult 
 Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
                                          const PartialDiagnostic &NotIntDiag,
                                        const PartialDiagnostic &IncompleteDiag,
@@ -6505,7 +6505,7 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
 /// Attempts to recover from a call where no functions were found.
 ///
 /// Returns true if new candidates were found.
-static Sema::OwningExprResult
+static ExprResult
 BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       UnresolvedLookupExpr *ULE,
                       SourceLocation LParenLoc,
@@ -6535,7 +6535,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   // Build an implicit member call if appropriate.  Just drop the
   // casts and such from the call, we don't really care.
-  Sema::OwningExprResult NewFn = SemaRef.ExprError();
+  ExprResult NewFn = SemaRef.ExprError();
   if ((*R.begin())->isCXXClassMember())
     NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, R, ExplicitTemplateArgs);
   else if (ExplicitTemplateArgs)
@@ -6561,7 +6561,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 /// the function declaration produced by overload
 /// resolution. Otherwise, emits diagnostics, deletes all of the
 /// arguments and Fn, and returns NULL.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                               SourceLocation LParenLoc,
                               Expr **Args, unsigned NumArgs,
@@ -6655,7 +6655,7 @@ static bool IsOverloaded(const UnresolvedSetImpl &Functions) {
 /// by CreateOverloadedUnaryOp().
 ///
 /// \param input The input argument.
-Sema::OwningExprResult
+ExprResult
 Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
                               const UnresolvedSetImpl &Fns,
                               Expr *Input) {
@@ -6737,7 +6737,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
           return ExprError();
       } else {
         // Convert the arguments.
-        OwningExprResult InputInit
+        ExprResult InputInit
           = PerformCopyInitialization(InitializedEntity::InitializeParameter(
                                                       FnDecl->getParamDecl(0)),
                                       SourceLocation(), 
@@ -6824,7 +6824,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 ///
 /// \param LHS Left-hand argument.
 /// \param RHS Right-hand argument.
-Sema::OwningExprResult
+ExprResult
 Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                             unsigned OpcIn,
                             const UnresolvedSetImpl &Fns,
@@ -6916,7 +6916,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           // Best->Access is only meaningful for class members.
           CheckMemberOperatorAccess(OpLoc, Args[0], Args[1], Best->FoundDecl);
 
-          OwningExprResult Arg1
+          ExprResult Arg1
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
                                                         FnDecl->getParamDecl(0)),
@@ -6932,7 +6932,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           Args[1] = RHS = Arg1.takeAs<Expr>();
         } else {
           // Convert the arguments.
-          OwningExprResult Arg0
+          ExprResult Arg0
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
                                                         FnDecl->getParamDecl(0)),
@@ -6941,7 +6941,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           if (Arg0.isInvalid())
             return ExprError();
 
-          OwningExprResult Arg1
+          ExprResult Arg1
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
                                                         FnDecl->getParamDecl(1)),
@@ -6999,7 +6999,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       // For class as left operand for assignment or compound assigment operator
       // do not fall through to handling in built-in, but report that no overloaded
       // assignment operator found
-      OwningExprResult Result = ExprError();
+      ExprResult Result = ExprError();
       if (Args[0]->getType()->isRecordType() && 
           Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
         Diag(OpLoc,  diag::err_ovl_no_viable_oper)
@@ -7039,7 +7039,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 }
 
-Action::OwningExprResult
+ExprResult
 Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                          SourceLocation RLoc,
                                          Expr *Base, Expr *Idx) {
@@ -7101,7 +7101,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
           return ExprError();
 
         // Convert the arguments.
-        OwningExprResult InputInit
+        ExprResult InputInit
           = PerformCopyInitialization(InitializedEntity::InitializeParameter(
                                                       FnDecl->getParamDecl(0)),
                                       SourceLocation(), 
@@ -7186,7 +7186,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 /// parameter). The caller needs to validate that the member
 /// expression refers to a member function or an overloaded member
 /// function.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                 SourceLocation LParenLoc, Expr **Args,
                                 unsigned NumArgs, SourceLocation *CommaLocs,
@@ -7539,7 +7539,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
       // Pass the argument.
 
-      OwningExprResult InputInit
+      ExprResult InputInit
         = PerformCopyInitialization(InitializedEntity::InitializeParameter(
                                                     Method->getParamDecl(i)),
                                     SourceLocation(), Arg);
@@ -7547,7 +7547,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       IsError |= InputInit.isInvalid();
       Arg = InputInit.takeAs<Expr>();
     } else {
-      OwningExprResult DefArg
+      ExprResult DefArg
         = BuildCXXDefaultArgExpr(LParenLoc, Method, Method->getParamDecl(i));
       if (DefArg.isInvalid()) {
         IsError = true;
@@ -7581,7 +7581,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->
 ///  (if one exists), where @c Base is an expression of class type and
 /// @c Member is the name of the member we're trying to find.
-Sema::OwningExprResult
+ExprResult
 Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   assert(Base->getType()->isRecordType() && "left-hand side must have class type");
 
@@ -7806,9 +7806,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
   return E->Retain();
 }
 
-Sema::OwningExprResult Sema::FixOverloadedFunctionReference(OwningExprResult E, 
-                                                          DeclAccessPair Found,
-                                                            FunctionDecl *Fn) {
+ExprResult Sema::FixOverloadedFunctionReference(ExprResult E, 
+                                                DeclAccessPair Found,
+                                                FunctionDecl *Fn) {
   return Owned(FixOverloadedFunctionReference((Expr *)E.get(), Found, Fn));
 }
 

@@ -258,7 +258,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 }
 
 /// \brief Build a C++ typeid expression with a type operand.
-Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
+ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                             SourceLocation TypeidLoc,
                                             TypeSourceInfo *Operand,
                                             SourceLocation RParenLoc) {
@@ -281,7 +281,7 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
 }
 
 /// \brief Build a C++ typeid expression with an expression operand.
-Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
+ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                             SourceLocation TypeidLoc,
                                             Expr *E,
                                             SourceLocation RParenLoc) {
@@ -333,7 +333,7 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
 }
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ) or typeid (expression);
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
   // Find the std::type_info type.
@@ -368,7 +368,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind == tok::kw_true || Kind == tok::kw_false) &&
          "Unknown C++ Boolean value!");
@@ -377,13 +377,13 @@ Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
 }
 
 /// ActOnCXXNullPtrLiteral - Parse 'nullptr'.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXNullPtrLiteral(SourceLocation Loc) {
   return Owned(new (Context) CXXNullPtrLiteralExpr(Context.NullPtrTy, Loc));
 }
 
 /// ActOnCXXThrow - Parse throw expressions.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, Expr *Ex) {
   if (Ex && !Ex->isTypeDependent() && CheckCXXThrowOperand(OpLoc, Ex))
     return ExprError();
@@ -431,7 +431,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   InitializedEntity Entity =
     InitializedEntity::InitializeException(ThrowLoc, E->getType(),
                                            /*NRVO=*/false);
-  OwningExprResult Res = PerformCopyInitialization(Entity,
+  ExprResult Res = PerformCopyInitialization(Entity,
                                                    SourceLocation(),
                                                    Owned(E));
   if (Res.isInvalid())
@@ -463,7 +463,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   return false;
 }
 
-Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
+ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
   /// C++ 9.3.2: In the body of a non-static member function, the keyword this
   /// is a non-lvalue expression whose value is the address of the object for
   /// which the function is called.
@@ -482,7 +482,7 @@ Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
 /// Can be interpreted either as function-style casting ("int(x)")
 /// or class type construction ("ClassType(x,y,z)")
 /// or creation of a value-initialized type ("int()").
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
                                 SourceLocation LParenLoc,
                                 MultiExprArg exprs,
@@ -554,7 +554,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
                  : InitializationKind::CreateValue(TypeRange.getBegin(), 
                                                    LParenLoc, RParenLoc);
     InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
-    OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+    ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                               move(exprs));
 
     // FIXME: Improve AST representation?
@@ -586,7 +586,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
 /// or
 /// @code ::new Foo(23, "hello") @endcode
 /// For the interpretation of this heap of arguments, consult the base version.
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementLParen, MultiExprArg PlacementArgs,
                   SourceLocation PlacementRParen, SourceRange TypeIdParens, 
@@ -648,7 +648,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      ConstructorRParen);
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementLParen,
                   MultiExprArg PlacementArgs,
@@ -684,7 +684,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     
     QualType SizeType = ArraySize->getType();
     
-    OwningExprResult ConvertedSize
+    ExprResult ConvertedSize
       = ConvertToIntegralOrEnumerationType(StartLoc, ArraySize,
                                        PDiag(diag::err_array_size_not_integral),
                                      PDiag(diag::err_array_size_incomplete_type)
@@ -807,7 +807,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     InitializedEntity Entity
       = InitializedEntity::InitializeNew(StartLoc, AllocType);
     InitializationSequence InitSeq(*this, Entity, Kind, ConsArgs, NumConsArgs);
-    OwningExprResult FullInit = InitSeq.Perform(*this, Entity, Kind, 
+    ExprResult FullInit = InitSeq.Perform(*this, Entity, Kind, 
                                                 move(ConstructorArgs));
     if (FullInit.isInvalid())
       return ExprError();
@@ -1133,7 +1133,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // Watch out for variadic allocator function.
     unsigned NumArgsInFnDecl = FnDecl->getNumParams();
     for (unsigned i = 0; (i < NumArgs && i < NumArgsInFnDecl); ++i) {
-      OwningExprResult Result
+      ExprResult Result
         = PerformCopyInitialization(InitializedEntity::InitializeParameter(
                                                        FnDecl->getParamDecl(i)),
                                     SourceLocation(),
@@ -1376,7 +1376,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
 /// @code ::delete ptr; @endcode
 /// or
 /// @code delete [] ptr; @endcode
-Action::OwningExprResult
+ExprResult
 Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                      bool ArrayForm, Expr *Ex) {
   // C++ [expr.delete]p1:
@@ -1500,7 +1500,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
 /// \brief Check the use of the given variable as a C++ condition in an if,
 /// while, do-while, or switch statement.
-Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
+ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
                                                       SourceLocation StmtLoc,
                                                       bool ConvertToBoolean) {
   QualType T = ConditionVar->getType();
@@ -1569,7 +1569,7 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
   return false;
 }
 
-static Sema::OwningExprResult BuildCXXCastArgument(Sema &S, 
+static ExprResult BuildCXXCastArgument(Sema &S, 
                                                    SourceLocation CastLoc,
                                                    QualType Ty,
                                                    CastExpr::CastKind Kind,
@@ -1585,7 +1585,7 @@ static Sema::OwningExprResult BuildCXXCastArgument(Sema &S,
                                   CastLoc, ConstructorArgs))
       return S.ExprError();
     
-    Sema::OwningExprResult Result = 
+    ExprResult Result = 
     S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
                             move_arg(ConstructorArgs));
     if (Result.isInvalid())
@@ -1655,7 +1655,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
           return true;
       }
     
-      OwningExprResult CastArg 
+      ExprResult CastArg 
         = BuildCXXCastArgument(*this,
                                From->getLocStart(),
                                ToType.getNonReferenceType(),
@@ -1715,7 +1715,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                   /*FIXME:ConstructLoc*/SourceLocation(), 
                                   ConstructorArgs))
         return true;
-      OwningExprResult FromResult =
+      ExprResult FromResult =
         BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                               ToType, SCS.CopyConstructor,
                               move_arg(ConstructorArgs));
@@ -1724,7 +1724,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       From = FromResult.takeAs<Expr>();
       return false;
     }
-    OwningExprResult FromResult =
+    ExprResult FromResult =
       BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                             ToType, SCS.CopyConstructor,
                             MultiExprArg(*this, &From, 1));
@@ -1922,7 +1922,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   return false;
 }
 
-Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
+ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                  SourceLocation KWLoc,
                                                  SourceLocation LParen,
                                                  ParsedType Ty,
@@ -2172,7 +2172,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
   InitializationKind Kind = InitializationKind::CreateCopy(E->getLocStart(),
                                                            SourceLocation());
   InitializationSequence InitSeq(Self, Entity, Kind, &E, 1);
-  Sema::OwningExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
+  ExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
                                     Sema::MultiExprArg(Self, &E, 1));
   if (Result.isInvalid())
     return true;
@@ -2312,13 +2312,13 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     if (LTy->isRecordType()) {
       // The operands have class type. Make a temporary copy.
       InitializedEntity Entity = InitializedEntity::InitializeTemporary(LTy);
-      OwningExprResult LHSCopy = PerformCopyInitialization(Entity, 
+      ExprResult LHSCopy = PerformCopyInitialization(Entity, 
                                                            SourceLocation(), 
                                                            Owned(LHS));
       if (LHSCopy.isInvalid())
         return QualType();
         
-      OwningExprResult RHSCopy = PerformCopyInitialization(Entity, 
+      ExprResult RHSCopy = PerformCopyInitialization(Entity, 
                                                            SourceLocation(), 
                                                            Owned(RHS));
       if (RHSCopy.isInvalid())
@@ -2554,14 +2554,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
     }
 
     // Convert E1 to Composite1
-    OwningExprResult E1Result
+    ExprResult E1Result
       = E1ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,&E1,1));
     if (E1Result.isInvalid())
       return QualType();
     E1 = E1Result.takeAs<Expr>();
 
     // Convert E2 to Composite1
-    OwningExprResult E2Result
+    ExprResult E2Result
       = E2ToC1.Perform(*this, Entity1, Kind, MultiExprArg(*this,&E2,1));
     if (E2Result.isInvalid())
       return QualType();
@@ -2579,14 +2579,14 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
     return QualType();
   
   // Convert E1 to Composite2
-  OwningExprResult E1Result
+  ExprResult E1Result
     = E1ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, &E1, 1));
   if (E1Result.isInvalid())
     return QualType();
   E1 = E1Result.takeAs<Expr>();
   
   // Convert E2 to Composite2
-  OwningExprResult E2Result
+  ExprResult E2Result
     = E2ToC2.Perform(*this, Entity2, Kind, MultiExprArg(*this, &E2, 1));
   if (E2Result.isInvalid())
     return QualType();
@@ -2595,7 +2595,7 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
   return Composite2;
 }
 
-Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
+ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!Context.getLangOptions().CPlusPlus)
     return Owned(E);
 
@@ -2655,8 +2655,8 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
   return E;
 }
 
-Sema::OwningExprResult 
-Sema::MaybeCreateCXXExprWithTemporaries(OwningExprResult SubExpr) {
+ExprResult 
+Sema::MaybeCreateCXXExprWithTemporaries(ExprResult SubExpr) {
   if (SubExpr.isInvalid())
     return ExprError();
   
@@ -2679,12 +2679,12 @@ FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
   return E;
 }
 
-Sema::OwningExprResult
+ExprResult
 Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
                                    tok::TokenKind OpKind, ParsedType &ObjectType,
                                    bool &MayBePseudoDestructor) {
   // Since this might be a postfix expression, get rid of ParenListExprs.
-  OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
+  ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
   if (Result.isInvalid()) return ExprError();
   Base = Result.get();
 
@@ -2764,7 +2764,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   return move(Base);
 }
 
-Sema::OwningExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
+ExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
                                                    Expr *MemExpr) {
   SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(NameLoc);
   Diag(MemExpr->getLocStart(), diag::err_dtor_expr_without_call)
@@ -2779,7 +2779,7 @@ Sema::OwningExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
                        /*RPLoc*/ ExpectedLParenLoc);
 }
 
-Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
+ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
                                                        SourceLocation OpLoc,
                                                        tok::TokenKind OpKind,
                                                        const CXXScopeSpec &SS,
@@ -2874,7 +2874,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
   return DiagnoseDtorReference(Destructed.getLocation(), Result);
 }
 
-Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
+ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
                                                        SourceLocation OpLoc,
                                                        tok::TokenKind OpKind,
                                                        CXXScopeSpec &SS,
@@ -3044,7 +3044,7 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
   return CE;
 }
 
-Sema::OwningExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
+ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
   if (!FullExpr) return ExprError();
   return MaybeCreateCXXExprWithTemporaries(FullExpr);
 }
