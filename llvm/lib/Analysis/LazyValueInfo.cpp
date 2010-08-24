@@ -216,6 +216,8 @@ public:
           return markOverdefined();
         else
           return markConstantRange(NewR);
+      } else if (!isUndefined()) {
+        return markOverdefined();
       }
       
       assert(isUndefined() && "Unexpected lattice");
@@ -541,7 +543,12 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   ConstantRange RHSRange(1);
   const IntegerType *ResultTy = cast<IntegerType>(BBI->getType());
   if (isa<BinaryOperator>(BBI)) {
-    RHS = cast<ConstantInt>(BBI->getOperand(1));
+    RHS = dyn_cast<ConstantInt>(BBI->getOperand(1));
+    if (!RHS) {
+      Result.markOverdefined();
+      return Result;
+    }
+    
     RHSRange = ConstantRange(RHS->getValue(), RHS->getValue()+1);
   }
       
@@ -842,7 +849,9 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
   }
   
   if (Result.isConstantRange()) {
-    ConstantInt *CI = cast<ConstantInt>(C);
+    ConstantInt *CI = dyn_cast<ConstantInt>(C);
+    if (!CI) return Unknown;
+    
     ConstantRange CR = Result.getConstantRange();
     if (Pred == ICmpInst::ICMP_EQ) {
       if (!CR.contains(CI->getValue()))
