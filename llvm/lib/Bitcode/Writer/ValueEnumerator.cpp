@@ -217,8 +217,7 @@ void ValueEnumerator::EnumerateNamedMetadata(const Module *M) {
 
 void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
   for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
-    if (MDNode *E = MD->getOperand(i))
-      EnumerateValue(E);
+    EnumerateMetadata(MD->getOperand(i));
 }
 
 void ValueEnumerator::EnumerateMetadata(const Value *MD) {
