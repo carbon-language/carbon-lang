@@ -365,20 +365,18 @@ bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
   Value *Op0 = I->getOperand(0);
 
   // Verify it's an alloca.
-  const Instruction *Inst = dyn_cast<Instruction>(Op0);
-  if (!Inst || Inst->getOpcode() != Instruction::Alloca) return false;
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Op0)) {
+    DenseMap<const AllocaInst*, int>::iterator SI =
+      FuncInfo.StaticAllocaMap.find(AI);
 
-  const AllocaInst *AI = cast<AllocaInst>(Op0);
-  DenseMap<const AllocaInst*, int>::iterator SI =
-    FuncInfo.StaticAllocaMap.find(AI);
-    
-  if (SI != FuncInfo.StaticAllocaMap.end()) {
-    unsigned ResultReg = createResultReg(FixedRC);
-    TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                              ResultReg, SI->second, FixedRC,
-                              TM.getRegisterInfo());
-    UpdateValueMap(I, ResultReg);
-    return true;
+    if (SI != FuncInfo.StaticAllocaMap.end()) {
+      unsigned ResultReg = createResultReg(FixedRC);
+      TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
+                               ResultReg, SI->second, FixedRC,
+                               TM.getRegisterInfo());
+      UpdateValueMap(I, ResultReg);
+      return true;
+    }
   }
   
   return false;
