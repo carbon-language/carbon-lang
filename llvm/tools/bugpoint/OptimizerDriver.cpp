@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -150,16 +151,8 @@ bool BugDriver::runPasses(Module *Program,
 
   // setup the child process' arguments
   SmallVector<const char*, 8> Args;
-  std::string Opt;
-  llvm::StringRef TN(ToolName);
-  if (TN.find('/') == llvm::StringRef::npos) {
-    Opt = "opt";
-  } else {
-    std::pair<llvm::StringRef, llvm::StringRef> P = TN.rsplit('/');
-    Opt = P.first.str() + "/" + "opt";
-  }
-
-  sys::Path tool = sys::Program::FindProgramByName(Opt);
+  sys::Path tool = FindExecutable("opt", getToolName(), (void*)"opt");
+  std::string Opt = tool.str();
   if (UseValgrind) {
     Args.push_back("valgrind");
     Args.push_back("--error-exitcode=1");
