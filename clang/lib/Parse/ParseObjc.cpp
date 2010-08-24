@@ -720,7 +720,7 @@ void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter) {
 ///     '(' objc-type-qualifiers[opt] type-name ')'
 ///     '(' objc-type-qualifiers[opt] ')'
 ///
-Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter) {
+ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter) {
   assert(Tok.is(tok::l_paren) && "expected (");
 
   SourceLocation LParenLoc = ConsumeParen();
@@ -729,7 +729,7 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter) {
   // Parse type qualifiers, in, inout, etc.
   ParseObjCTypeQualifierList(DS, IsParameter);
 
-  TypeTy *Ty = 0;
+  ParsedType Ty;
   if (isTypeSpecifierQualifier()) {
     TypeResult TypeSpec = ParseTypeName();
     if (!TypeSpec.isInvalid())
@@ -786,12 +786,12 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCMethodDecl(getCurScope(), mType == tok::minus, 
-                                       /*ReturnType=*/0, IDecl);
+                                       /*ReturnType=*/ ParsedType(), IDecl);
     ConsumeCodeCompletionToken();
   }
 
   // Parse the return type if present.
-  TypeTy *ReturnType = 0;
+  ParsedType ReturnType;
   ObjCDeclSpec DSRet;
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName(DSRet, false);
@@ -852,7 +852,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     }
     ConsumeToken(); // Eat the ':'.
 
-    ArgInfo.Type = 0;
+    ArgInfo.Type = ParsedType();
     if (Tok.is(tok::l_paren)) // Parse the argument type if present.
       ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec, true);
 
@@ -1822,7 +1822,7 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
     return true;
 
   IsExpr = false;
-  TypeOrExpr = Type.get();
+  TypeOrExpr = Type.get().getAsOpaquePtr();
   return false;
 }
 
@@ -1867,8 +1867,8 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
     // get in Objective-C.
     if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
         NextToken().isNot(tok::period) && getCurScope()->isInObjcMethodScope())
-      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0, 
-                                            0);
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(),
+                                            ParsedType(), 0);
 
     // Parse the receiver, which is either a type or an expression.
     bool IsExpr;
@@ -1879,23 +1879,26 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
     }
 
     if (IsExpr)
-      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0,
+      return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
+                                            ParsedType(),
                                             static_cast<Expr*>(TypeOrExpr));
 
     return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
-                                          TypeOrExpr, 0);
+                              ParsedType::getFromOpaquePtr(TypeOrExpr),
+                                          0);
   }
   
   if (Tok.is(tok::identifier)) {
     IdentifierInfo *Name = Tok.getIdentifierInfo();
     SourceLocation NameLoc = Tok.getLocation();
-    TypeTy *ReceiverType;
+    ParsedType ReceiverType;
     switch (Actions.getObjCMessageKind(getCurScope(), Name, NameLoc,
                                        Name == Ident_super,
                                        NextToken().is(tok::period),
                                        ReceiverType)) {
     case Action::ObjCSuperMessage:
-      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(), 0, 0);
+      return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(),
+                                            ParsedType(), 0);
 
     case Action::ObjCClassMessage:
       if (!ReceiverType) {
@@ -1921,8 +1924,8 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
     return move(Res);
   }
 
-  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 0, 
-                                        Res.take());
+  return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
+                                        ParsedType(), Res.take());
 }
 
 /// \brief Parse the remainder of an Objective-C message following the
@@ -1966,7 +1969,7 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
 Parser::OwningExprResult
 Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        SourceLocation SuperLoc,
-                                       TypeTy *ReceiverType,
+                                       ParsedType ReceiverType,
                                        ExprArg ReceiverExpr) {
   if (Tok.is(tok::code_completion)) {
     if (SuperLoc.isValid())

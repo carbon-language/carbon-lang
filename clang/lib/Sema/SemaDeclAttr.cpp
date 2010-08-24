@@ -291,13 +291,13 @@ static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
   if (!II)
     II = &S.Context.Idents.get("id");
   
-  Sema::TypeTy *TypeRep = S.getTypeName(*II, Attr.getLoc(), 
+  ParsedType TypeRep = S.getTypeName(*II, Attr.getLoc(), 
                         S.getScopeForContext(d->getDeclContext()->getParent()));
   if (!TypeRep) {
     S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
     return;
   }
-  QualType QT(QualType::getFromOpaquePtr(TypeRep));
+  QualType QT = TypeRep.get();
   // Diagnose use of non-object type in iboutletcollection attribute.
   // FIXME. Gnu attribute extension ignores use of builtin types in
   // attributes. So, __attribute__((iboutletcollection(char))) will be

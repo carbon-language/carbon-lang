@@ -52,7 +52,7 @@ namespace clang {
     ///
     /// \param TemplateLoc the location of the template name.
     ParsedTemplateArgument(const CXXScopeSpec &SS,
-                           ActionBase::TemplateTy Template, 
+                           ParsedTemplateTy Template, 
                            SourceLocation TemplateLoc) 
       : Kind(ParsedTemplateArgument::Template),
         Arg(Template.getAsOpaquePtr()), 
@@ -65,9 +65,9 @@ namespace clang {
     KindType getKind() const { return Kind; }
     
     /// \brief Retrieve the template type argument's type.
-    ActionBase::TypeTy *getAsType() const {
+    ParsedType getAsType() const {
       assert(Kind == Type && "Not a template type argument");
-      return Arg;
+      return ParsedType::getFromOpaquePtr(Arg);
     }
     
     /// \brief Retrieve the non-type template argument's expression.
@@ -77,9 +77,9 @@ namespace clang {
     }
     
     /// \brief Retrieve the template template argument's template name.
-    ActionBase::TemplateTy getAsTemplate() const {
+    ParsedTemplateTy getAsTemplate() const {
       assert(Kind == Template && "Not a template template argument");
-      return ActionBase::TemplateTy::getFromOpaquePtr(Arg);
+      return ParsedTemplateTy::getFromOpaquePtr(Arg);
     }
     
     /// \brief Retrieve the location of the template argument.

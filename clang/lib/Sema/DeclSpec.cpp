@@ -54,7 +54,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
                                              bool hasExceptionSpec,
                                              SourceLocation ThrowLoc,
                                              bool hasAnyExceptionSpec,
-                                             ActionBase::TypeTy **Exceptions,
+                                             ParsedType *Exceptions,
                                              SourceRange *ExceptionRanges,
                                              unsigned NumExceptions,
                                              SourceLocation LPLoc,
@@ -291,7 +291,63 @@ bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc,
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
-                               void *Rep, bool Owned) {
+                               ParsedType Rep) {
+  assert(isTypeRep(T) && "T does not store a type");
+  assert(Rep && "no type provided!");
+  if (TypeSpecType != TST_unspecified) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_decl_spec_combination;
+    return true;
+  }
+  TypeSpecType = T;
+  TypeRep = Rep;
+  TSTLoc = Loc;
+  TypeSpecOwned = false;
+  return false;
+}
+
+bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
+                               const char *&PrevSpec,
+                               unsigned &DiagID,
+                               Expr *Rep) {
+  assert(isExprRep(T) && "T does not store an expr");
+  assert(Rep && "no expression provided!");
+  if (TypeSpecType != TST_unspecified) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_decl_spec_combination;
+    return true;
+  }
+  TypeSpecType = T;
+  ExprRep = Rep;
+  TSTLoc = Loc;
+  TypeSpecOwned = false;
+  return false;
+}
+
+bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
+                               const char *&PrevSpec,
+                               unsigned &DiagID,
+                               Decl *Rep, bool Owned) {
+  assert(isDeclRep(T) && "T does not store a decl");
+  // Unlike the other cases, we don't assert that we actually get a decl.
+
+  if (TypeSpecType != TST_unspecified) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_decl_spec_combination;
+    return true;
+  }
+  TypeSpecType = T;
+  DeclRep = Rep;
+  TSTLoc = Loc;
+  TypeSpecOwned = Owned;
+  return false;
+}
+
+bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
+                               const char *&PrevSpec,
+                               unsigned &DiagID) {
+  assert(!isDeclRep(T) && !isTypeRep(T) && !isExprRep(T) &&
+         "rep required for these type-spec kinds!");
   if (TypeSpecType != TST_unspecified) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
     DiagID = diag::err_invalid_decl_spec_combination;
@@ -303,9 +359,8 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
     return false;
   }
   TypeSpecType = T;
-  TypeRep = Rep;
   TSTLoc = Loc;
-  TypeSpecOwned = Owned;
+  TypeSpecOwned = false;
   if (TypeAltiVecVector && !TypeAltiVecBool && (TypeSpecType == TST_double)) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
     DiagID = diag::err_invalid_vector_decl_spec;
@@ -341,7 +396,6 @@ bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
 
 bool DeclSpec::SetTypeSpecError() {
   TypeSpecType = TST_error;
-  TypeRep = 0;
   TSTLoc = SourceLocation();
   return false;
 }
@@ -577,11 +631,8 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
 
 bool DeclSpec::isMissingDeclaratorOk() {
   TST tst = getTypeSpecType();
-  return (tst == TST_union
-       || tst == TST_struct
-       || tst == TST_class
-       || tst == TST_enum
-          ) && getTypeRep() != 0 && StorageClassSpec != DeclSpec::SCS_typedef;
+  return isDeclRep(tst) && getRepAsDecl() != 0 &&
+    StorageClassSpec != DeclSpec::SCS_typedef;
 }
 
 void UnqualifiedId::clear() {

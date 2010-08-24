@@ -1466,7 +1466,7 @@ bool containsInvalidMethodImplAttribute(const AttrVec &A) {
 Decl *Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
     tok::TokenKind MethodType, Decl *ClassDecl,
-    ObjCDeclSpec &ReturnQT, TypeTy *ReturnType,
+    ObjCDeclSpec &ReturnQT, ParsedType ReturnType,
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().

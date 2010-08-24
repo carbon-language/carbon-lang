@@ -3741,14 +3741,14 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
     // Fall through
   }
 
-  TypeTy *Receiver = 0;
+  ParsedType Receiver;
   if (CDecl)
-    Receiver = Context.getObjCInterfaceType(CDecl).getAsOpaquePtr();
+    Receiver = ParsedType::make(Context.getObjCInterfaceType(CDecl));
   return CodeCompleteObjCClassMessage(S, Receiver, SelIdents, 
                                       NumSelIdents);
 }
 
-void Sema::CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
+void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         IdentifierInfo **SelIdents,
                                         unsigned NumSelIdents) {
   typedef CodeCompleteConsumer::Result Result;
@@ -4295,7 +4295,7 @@ static void FindImplementableMethods(ASTContext &Context,
 
 void Sema::CodeCompleteObjCMethodDecl(Scope *S, 
                                       bool IsInstanceMethod,
-                                      TypeTy *ReturnTy,
+                                      ParsedType ReturnTy,
                                       Decl *IDecl) {
   // Determine the return type of the method we're declaring, if
   // provided.
@@ -4445,7 +4445,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
 void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S, 
                                               bool IsInstanceMethod,
                                               bool AtParameterName,
-                                              TypeTy *ReturnTy,
+                                              ParsedType ReturnTy,
                                               IdentifierInfo **SelIdents,
                                               unsigned NumSelIdents) {
   // If we have an external source, load the entire class method

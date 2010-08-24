@@ -19,7 +19,7 @@ using namespace clang;
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              IdentifierInfo *sName, SourceLocation sLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
-                             ActionBase::ExprTy **ExprList, unsigned numArgs,
+                             Expr **ExprList, unsigned numArgs,
                              AttributeList *n, bool declspec, bool cxx0x)
   : AttrName(aName), AttrLoc(aLoc), ScopeName(sName), ScopeLoc(sLoc),
     ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(n),
@@ -28,7 +28,7 @@ AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
   if (numArgs == 0)
     Args = 0;
   else {
-    Args = new ActionBase::ExprTy*[numArgs];
+    Args = new Expr*[numArgs];
     memcpy(Args, ExprList, numArgs*sizeof(Args[0]));
   }
 }

@@ -244,7 +244,7 @@ Parser::OwningExprResult Parser::ParseAssignmentExpression() {
 Parser::OwningExprResult
 Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
                                                     SourceLocation SuperLoc,
-                                                    TypeTy *ReceiverType,
+                                                    ParsedType ReceiverType,
                                                     Expr *ReceiverExpr) {
   OwningExprResult R
     = ParseObjCMessageExpressionBody(LBracLoc, SuperLoc,
@@ -423,7 +423,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
-                                                     TypeTy *TypeOfCast) {
+                                                     ParsedType TypeOfCast) {
   bool NotCastExpr;
   OwningExprResult Res = ParseCastExpression(isUnaryExpression,
                                              isAddressOfOperand,
@@ -548,7 +548,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
                                                      bool &NotCastExpr,
-                                                     TypeTy *TypeOfCast) {
+                                                     ParsedType TypeOfCast) {
   OwningExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
@@ -570,7 +570,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // not start a cast expression.
     ParenParseOption ParenExprType =
       (isUnaryExpression && !getLang().CPlusPlus)? CompoundLiteral : CastExpr;
-    TypeTy *CastTy;
+    ParsedType CastTy;
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
     
@@ -826,7 +826,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         // type, translate it into a type and continue parsing as a
         // cast expression.
         CXXScopeSpec SS;
-        ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
+        ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
         AnnotateTemplateIdTokenAsType(&SS);
         return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
                                    NotCastExpr, TypeOfCast);
@@ -1027,7 +1027,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       SourceLocation OpLoc = ConsumeToken();  // Eat the "." or "->" token.
 
       CXXScopeSpec SS;
-      Action::TypeTy *ObjectType = 0;
+      ParsedType ObjectType;
       bool MayBePseudoDestructor = false;
       if (getLang().CPlusPlus && !LHS.isInvalid()) {
         LHS = Actions.ActOnStartCXXMemberReference(getCurScope(), LHS.take(),
@@ -1039,7 +1039,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ParseOptionalCXXScopeSpecifier(SS, ObjectType, false,
                                        &MayBePseudoDestructor);
         if (SS.isNotEmpty())
-          ObjectType = 0;
+          ObjectType = ParsedType();
       }
 
       if (Tok.is(tok::code_completion)) {
@@ -1108,7 +1108,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 Parser::OwningExprResult
 Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
                                           bool &isCastExpr,
-                                          TypeTy *&CastTy,
+                                          ParsedType &CastTy,
                                           SourceRange &CastRange) {
 
   assert((OpTok.is(tok::kw_typeof)    || OpTok.is(tok::kw_sizeof) ||
@@ -1151,8 +1151,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                  Action::Unevaluated);
     Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, 
-                                   0/*TypeOfCast*/,
-                                   CastTy, RParenLoc);
+                                   ParsedType(), CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);
 
     // If ParseParenExpression parsed a '(typename)' sequence only, then this is
@@ -1192,7 +1191,7 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
   ConsumeToken();
 
   bool isCastExpr;
-  TypeTy *CastTy;
+  ParsedType CastTy;
   SourceRange CastRange;
   OwningExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
                                                                isCastExpr,
@@ -1202,7 +1201,8 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
   if (isCastExpr)
     return Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
                                           OpTok.is(tok::kw_sizeof),
-                                          /*isType=*/true, CastTy,
+                                          /*isType=*/true,
+                                          CastTy.getAsOpaquePtr(),
                                           CastRange);
 
   // If we get here, the operand to the sizeof/alignof was an expresion.
@@ -1414,14 +1414,14 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 ///
 Parser::OwningExprResult
 Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
-                             TypeTy *TypeOfCast, TypeTy *&CastTy,
+                             ParsedType TypeOfCast, ParsedType &CastTy,
                              SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   SourceLocation OpenLoc = ConsumeParen();
   OwningExprResult Result(true);
   bool isAmbiguousTypeId;
-  CastTy = 0;
+  CastTy = ParsedType();
 
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
@@ -1532,7 +1532,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 ///         '(' type-name ')' '{' initializer-list ',' '}'
 ///
 Parser::OwningExprResult
-Parser::ParseCompoundLiteralExpression(TypeTy *Ty,
+Parser::ParseCompoundLiteralExpression(ParsedType Ty,
                                        SourceLocation LParenLoc,
                                        SourceLocation RParenLoc) {
   assert(Tok.is(tok::l_brace) && "Not a compound literal!");

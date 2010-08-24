@@ -149,7 +149,6 @@ public:
   typedef Expr ExprTy;
   typedef Stmt StmtTy;
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
-  typedef Action::TypeTy TypeTy;
   typedef CXXBaseSpecifier BaseTy;
   typedef CXXBaseOrMemberInitializer MemInitTy;
   typedef NestedNameSpecifier CXXScopeTy;
@@ -348,6 +347,15 @@ private:
   /// consuming it.
   const Token &NextToken() {
     return PP.LookAhead(0);
+  }
+
+  /// getTypeAnnotation - Read a parsed type out of an annotation token.
+  static ParsedType getTypeAnnotation(Token &Tok) {
+    return ParsedType::getFromOpaquePtr(Tok.getAnnotationValue());
+  }
+
+  static void setTypeAnnotation(Token &Tok, ParsedType T) {
+    Tok.setAnnotationValue(T.getAsOpaquePtr());
   }
 
   /// TryAnnotateTypeOrScopeToken - If the current token position is on a
@@ -908,7 +916,7 @@ private:
 
   bool isTokIdentifier_in() const;
 
-  TypeTy *ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter);
+  ParsedType ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter);
   void ParseObjCMethodRequirement();
   Decl *ParseObjCMethodPrototype(Decl *classOrCat,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
@@ -937,17 +945,17 @@ private:
   OwningExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
                                        bool &NotCastExpr,
-                                       TypeTy *TypeOfCast);
+                                       ParsedType TypeOfCast);
   OwningExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand = false,
-                                       TypeTy *TypeOfCast = 0);
+                                       ParsedType TypeOfCast = ParsedType());
   OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
   OwningExprResult ParseSizeofAlignofExpression();
   OwningExprResult ParseBuiltinPrimaryExpression();
 
   OwningExprResult ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
                                                      bool &isCastExpr,
-                                                     TypeTy *&CastTy,
+                                                     ParsedType &CastTy,
                                                      SourceRange &CastRange);
 
   typedef llvm::SmallVector<Expr*, 20> ExprListTy;
@@ -971,16 +979,16 @@ private:
   };
   OwningExprResult ParseParenExpression(ParenParseOption &ExprType,
                                         bool stopIfCastExpr,
-                                        TypeTy *TypeOfCast,
-                                        TypeTy *&CastTy,
+                                        ParsedType TypeOfCast,
+                                        ParsedType &CastTy,
                                         SourceLocation &RParenLoc);
 
   OwningExprResult ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
-                                                    TypeTy *&CastTy,
+                                                    ParsedType &CastTy,
                                                     SourceLocation LParenLoc,
                                                     SourceLocation &RParenLoc);
 
-  OwningExprResult ParseCompoundLiteralExpression(TypeTy *Ty,
+  OwningExprResult ParseCompoundLiteralExpression(ParsedType Ty,
                                                   SourceLocation LParenLoc,
                                                   SourceLocation RParenLoc);
 
@@ -991,7 +999,7 @@ private:
   OwningExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
-                                      TypeTy *ObjectType,
+                                      ParsedType ObjectType,
                                       bool EnteringContext,
                                       bool *MayBePseudoDestructor = 0);
 
@@ -1008,7 +1016,7 @@ private:
   OwningExprResult ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
                                             tok::TokenKind OpKind,
                                             CXXScopeSpec &SS,
-                                            Action::TypeTy *ObjectType);
+                                            ParsedType ObjectType);
 
   //===--------------------------------------------------------------------===//
   // C++ 9.3.2: C++ 'this' pointer
@@ -1019,8 +1027,8 @@ private:
   OwningExprResult ParseThrowExpression();
   // EndLoc is filled with the location of the last token of the specification.
   bool ParseExceptionSpecification(SourceLocation &EndLoc,
-                                   llvm::SmallVector<TypeTy*, 2> &Exceptions,
-                                   llvm::SmallVector<SourceRange, 2> &Ranges,
+                                   llvm::SmallVectorImpl<ParsedType> &Exns,
+                                   llvm::SmallVectorImpl<SourceRange> &Ranges,
                                    bool &hasAnyExceptionSpec);
 
   //===--------------------------------------------------------------------===//
@@ -1088,11 +1096,11 @@ private:
   OwningExprResult ParseObjCMessageExpression();
   OwningExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
                                                   SourceLocation SuperLoc,
-                                                  TypeTy *ReceiverType,
+                                                  ParsedType ReceiverType,
                                                   ExprArg ReceiverExpr);
   OwningExprResult ParseAssignmentExprWithObjCMessageExprStart(
       SourceLocation LBracloc, SourceLocation SuperLoc,
-      TypeTy *ReceiverType, ExprArg ReceiverExpr);
+      ParsedType ReceiverType, ExprArg ReceiverExpr);
   bool ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr);
 
   //===--------------------------------------------------------------------===//
@@ -1455,17 +1463,17 @@ private:
                                     IdentifierInfo *Name,
                                     SourceLocation NameLoc,
                                     bool EnteringContext,
-                                    TypeTy *ObjectType,
+                                    ParsedType ObjectType,
                                     UnqualifiedId &Id,
                                     bool AssumeTemplateId,
                                     SourceLocation TemplateKWLoc);
   bool ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
-                                  TypeTy *ObjectType,
+                                  ParsedType ObjectType,
                                   UnqualifiedId &Result);
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                           bool AllowDestructorName,
                           bool AllowConstructorName,
-                          TypeTy *ObjectType,
+                          ParsedType ObjectType,
                           UnqualifiedId &Result);
     
   //===--------------------------------------------------------------------===//

@@ -22,7 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 namespace clang {
-  class ActionBase;
+  class Action;
   class Attr;
   class CXXBaseOrMemberInitializer;
   class CXXBaseSpecifier;
@@ -30,6 +30,7 @@ namespace clang {
   class DeclGroupRef;
   class Expr;
   class NestedNameSpecifier;
+  class QualType;
   class Stmt;
   class TemplateName;
   class TemplateParameterList;
@@ -43,12 +44,12 @@ namespace clang {
     void *Ptr;
     explicit OpaquePtr(void *Ptr) : Ptr(Ptr) {}
 
+    typedef llvm::PointerLikeTypeTraits<PtrTy> Traits;
+
   public:
     OpaquePtr() : Ptr(0) {}
 
-    static OpaquePtr make(PtrTy P) {
-      OpaquePtr OP; OP.set(P); return OP;
-    }
+    static OpaquePtr make(PtrTy P) { OpaquePtr OP; OP.set(P); return OP; }
 
     template <typename T> T* getAs() const {
       return get();
@@ -59,17 +60,36 @@ namespace clang {
     }
 
     PtrTy get() const {
-      return llvm::PointerLikeTypeTraits<PtrTy>::getFromVoidPointer(Ptr);
+      return Traits::getFromVoidPointer(Ptr);
     }
 
     void set(PtrTy P) {
-      Ptr = llvm::PointerLikeTypeTraits<PtrTy>::getAsVoidPointer(P);
+      Ptr = Traits::getAsVoidPointer(P);
     }
 
     operator bool() const { return Ptr != 0; }
 
     void *getAsOpaquePtr() const { return Ptr; }
     static OpaquePtr getFromOpaquePtr(void *P) { return OpaquePtr(P); }
+  };
+
+  /// UnionOpaquePtr - A version of OpaquePtr suitable for membership
+  /// in a union.
+  template <class T> struct UnionOpaquePtr {
+    void *Ptr;
+
+    static UnionOpaquePtr make(OpaquePtr<T> P) {
+      UnionOpaquePtr OP = { P.getAsOpaquePtr() };
+      return OP;
+    }
+
+    OpaquePtr<T> get() const { return OpaquePtr<T>::getFromOpaquePtr(Ptr); }
+    operator OpaquePtr<T>() const { return get(); }
+
+    UnionOpaquePtr &operator=(OpaquePtr<T> P) {
+      Ptr = P.getAsOpaquePtr();
+      return *this;
+    }
   };
 }
 
@@ -178,19 +198,6 @@ namespace llvm {
 // move_* functions, which help the compiler out with some explicit
 // conversions.
 
-namespace llvm {
-  template<>
-  class PointerLikeTypeTraits<clang::ActionBase*> {
-    typedef clang::ActionBase* PT;
-  public:
-    static inline void *getAsVoidPointer(PT P) { return P; }
-    static inline PT getFromVoidPointer(void *P) {
-      return static_cast<PT>(P);
-    }
-    enum { NumLowBitsAvailable = 2 };
-  };
-}
-
 namespace clang {
   // Basic
   class DiagnosticBuilder;
@@ -203,109 +210,80 @@ namespace clang {
     static const bool value = false;
   };
 
-  /// ActionBase - A small part split from Action because of the horrible
-  /// definition order dependencies between Action and the smart pointers.
-  class ActionBase {
+  /// ActionResult - This structure is used while parsing/acting on
+  /// expressions, stmts, etc.  It encapsulates both the object returned by
+  /// the action, plus a sense of whether or not it is valid.
+  /// When CompressInvalid is true, the "invalid" flag will be
+  /// stored in the low bit of the Val pointer.
+  template<class PtrTy,
+           bool CompressInvalid = IsResultPtrLowBitFree<PtrTy>::value>
+  class ActionResult {
+    PtrTy Val;
+    bool Invalid;
+
   public:
-    /// Out-of-line virtual destructor to provide home for this class.
-    virtual ~ActionBase();
+    ActionResult(bool Invalid = false) : Val(PtrTy()), Invalid(Invalid) {}
+    ActionResult(PtrTy val) : Val(val), Invalid(false) {}
+    ActionResult(const DiagnosticBuilder &) : Val(PtrTy()), Invalid(true) {}
 
-    // Types - Though these don't actually enforce strong typing, they document
-    // what types are required to be identical for the actions.
-    typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
-    typedef OpaquePtr<TemplateName> TemplateTy;
-    typedef Attr AttrTy;
-    typedef CXXBaseSpecifier BaseTy;
-    typedef CXXBaseOrMemberInitializer MemInitTy;
-    typedef Expr ExprTy;
-    typedef Stmt StmtTy;
-    typedef TemplateParameterList TemplateParamsTy;
-    typedef NestedNameSpecifier CXXScopeTy;
-    typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<N>.
+    // These two overloads prevent void* -> bool conversions.
+    ActionResult(const void *);
+    ActionResult(volatile void *);
 
-    /// ActionResult - This structure is used while parsing/acting on
-    /// expressions, stmts, etc.  It encapsulates both the object returned by
-    /// the action, plus a sense of whether or not it is valid.
-    /// When CompressInvalid is true, the "invalid" flag will be
-    /// stored in the low bit of the Val pointer.
-    template<class PtrTy,
-             bool CompressInvalid = IsResultPtrLowBitFree<PtrTy>::value>
-    class ActionResult {
-      PtrTy Val;
-      bool Invalid;
+    PtrTy get() const { return Val; }
+    void set(PtrTy V) { Val = V; }
+    bool isInvalid() const { return Invalid; }
 
-    public:
-      ActionResult(bool Invalid = false) : Val(PtrTy()), Invalid(Invalid) {}
-      ActionResult(PtrTy val) : Val(val), Invalid(false) {}
-      ActionResult(const DiagnosticBuilder &) : Val(PtrTy()), Invalid(true) {}
+    const ActionResult &operator=(PtrTy RHS) {
+      Val = RHS;
+      Invalid = false;
+      return *this;
+    }
+  };
 
-      // These two overloads prevent void* -> bool conversions.
-      ActionResult(const void *);
-      ActionResult(volatile void *);
+  // This ActionResult partial specialization places the "invalid"
+  // flag into the low bit of the pointer.
+  template<typename PtrTy>
+  class ActionResult<PtrTy, true> {
+    // A pointer whose low bit is 1 if this result is invalid, 0
+    // otherwise.
+    uintptr_t PtrWithInvalid;
+    typedef llvm::PointerLikeTypeTraits<PtrTy> PtrTraits;
+  public:
+    ActionResult(bool Invalid = false)
+      : PtrWithInvalid(static_cast<uintptr_t>(Invalid)) { }
 
-      PtrTy get() const { return Val; }
-      void set(PtrTy V) { Val = V; }
-      bool isInvalid() const { return Invalid; }
+    ActionResult(PtrTy V) {
+      void *VP = PtrTraits::getAsVoidPointer(V);
+      PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
+      assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
+    }
 
-      const ActionResult &operator=(PtrTy RHS) {
-        Val = RHS;
-        Invalid = false;
-        return *this;
-      }
-    };
+    // These two overloads prevent void* -> bool conversions.
+    ActionResult(const void *);
+    ActionResult(volatile void *);
 
-    // This ActionResult partial specialization places the "invalid"
-    // flag into the low bit of the pointer.
-    template<typename PtrTy>
-    class ActionResult<PtrTy, true> {
-      // A pointer whose low bit is 1 if this result is invalid, 0
-      // otherwise.
-      uintptr_t PtrWithInvalid;
-      typedef llvm::PointerLikeTypeTraits<PtrTy> PtrTraits;
-    public:
-      ActionResult(bool Invalid = false)
-        : PtrWithInvalid(static_cast<uintptr_t>(Invalid)) { }
+    ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
 
-      ActionResult(PtrTy V) {
-        void *VP = PtrTraits::getAsVoidPointer(V);
-        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
-        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
-      }
+    PtrTy get() const {
+      void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01);
+      return PtrTraits::getFromVoidPointer(VP);
+    }
 
-      // These two overloads prevent void* -> bool conversions.
-      ActionResult(const void *);
-      ActionResult(volatile void *);
+    void set(PtrTy V) {
+      void *VP = PtrTraits::getAsVoidPointer(V);
+      PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
+      assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
+    }
 
-      ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
+    bool isInvalid() const { return PtrWithInvalid & 0x01; }
 
-      PtrTy get() const {
-        void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01);
-        return PtrTraits::getFromVoidPointer(VP);
-      }
-
-      void set(PtrTy V) {
-        void *VP = PtrTraits::getAsVoidPointer(V);
-        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
-        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
-      }
-
-      bool isInvalid() const { return PtrWithInvalid & 0x01; }
-
-      const ActionResult &operator=(PtrTy RHS) {
-        void *VP = PtrTraits::getAsVoidPointer(RHS);
-        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
-        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
-        return *this;
-      }
-    };
-
-    /// Deletion callbacks - Since the parser doesn't know the concrete types of
-    /// the AST nodes being generated, it must do callbacks to delete objects
-    /// when recovering from errors. These are in ActionBase because the smart
-    /// pointers need access to them.
-    virtual void DeleteExpr(ExprTy *E) {}
-    virtual void DeleteStmt(StmtTy *S) {}
-    virtual void DeleteTemplateParams(TemplateParamsTy *P) {}
+    const ActionResult &operator=(PtrTy RHS) {
+      void *VP = PtrTraits::getAsVoidPointer(RHS);
+      PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
+      assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
+      return *this;
+    }
   };
 
   /// ASTOwningResult - A moveable smart pointer for AST nodes that also
@@ -318,7 +296,7 @@ namespace clang {
 
   template <class PtrTy> class ASTOwningResult {
   public:
-    typedef ActionBase::ActionResult<PtrTy> DumbResult;
+    typedef ActionResult<PtrTy> DumbResult;
 
   private:
     DumbResult Result;
@@ -377,8 +355,8 @@ namespace clang {
 
   public:
     // Normal copying implicitly defined
-    explicit ASTMultiPtr(ActionBase &) : Nodes(0), Count(0) {}
-    ASTMultiPtr(ActionBase &, PtrTy *nodes, unsigned count)
+    explicit ASTMultiPtr(Action &) : Nodes(0), Count(0) {}
+    ASTMultiPtr(Action &, PtrTy *nodes, unsigned count)
       : Nodes(nodes), Count(count) {}
     // Fake mover in Parse/AstGuard.h needs this:
     ASTMultiPtr(PtrTy *nodes, unsigned count) : Nodes(nodes), Count(count) {}
@@ -401,7 +379,7 @@ namespace clang {
     mutable unsigned Count;
 
   public:
-    ASTTemplateArgsPtr(ActionBase &actions, ParsedTemplateArgument *args,
+    ASTTemplateArgsPtr(Action &actions, ParsedTemplateArgument *args,
                        unsigned count) :
       Args(args), Count(count) { }
 
@@ -439,7 +417,7 @@ namespace clang {
     ASTOwningVector &operator=(ASTOwningVector &); // do not implement
 
   public:
-    explicit ASTOwningVector(ActionBase &Actions)
+    explicit ASTOwningVector(Action &Actions)
     { }
 
     PtrTy *take() {
@@ -487,13 +465,18 @@ namespace clang {
     static const bool value = true;
   };
 
-  typedef ActionBase::ActionResult<Expr*> ExprResult;
-  typedef ActionBase::ActionResult<Stmt*> StmtResult;
-  typedef ActionBase::ActionResult<void*> TypeResult;
-  typedef ActionBase::ActionResult<CXXBaseSpecifier*> BaseResult;
-  typedef ActionBase::ActionResult<CXXBaseOrMemberInitializer*> MemInitResult;
+  /// An opaque type for threading parsed type information through the
+  /// parser.
+  typedef OpaquePtr<QualType> ParsedType;
+  typedef UnionOpaquePtr<QualType> UnionParsedType;
 
-  typedef ActionBase::ActionResult<Decl*> DeclResult;
+  typedef ActionResult<Expr*> ExprResult;
+  typedef ActionResult<Stmt*> StmtResult;
+  typedef ActionResult<ParsedType> TypeResult;
+  typedef ActionResult<CXXBaseSpecifier*> BaseResult;
+  typedef ActionResult<CXXBaseOrMemberInitializer*> MemInitResult;
+
+  typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 
   typedef ASTOwningResult<Expr*> OwningExprResult;

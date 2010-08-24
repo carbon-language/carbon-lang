@@ -39,7 +39,7 @@ class AttributeList {
   SourceLocation ScopeLoc;
   IdentifierInfo *ParmName;
   SourceLocation ParmLoc;
-  ActionBase::ExprTy **Args;
+  Expr **Args;
   unsigned NumArgs;
   AttributeList *Next;
   bool DeclspecAttribute, CXX0XAttribute;
@@ -151,16 +151,16 @@ public:
   unsigned getNumArgs() const { return NumArgs; }
 
   /// getArg - Return the specified argument.
-  ActionBase::ExprTy *getArg(unsigned Arg) const {
+  Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
     return Args[Arg];
   }
 
   class arg_iterator {
-    ActionBase::ExprTy** X;
+    Expr** X;
     unsigned Idx;
   public:
-    arg_iterator(ActionBase::ExprTy** x, unsigned idx) : X(x), Idx(idx) {}
+    arg_iterator(Expr** x, unsigned idx) : X(x), Idx(idx) {}
 
     arg_iterator& operator++() {
       ++Idx;
@@ -177,7 +177,7 @@ public:
       return !operator==(I);
     }
 
-    ActionBase::ExprTy* operator*() const {
+    Expr* operator*() const {
       return X[Idx];
     }
 

@@ -27,12 +27,12 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
-Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
-                                        IdentifierInfo &II, 
-                                        SourceLocation NameLoc,
-                                        Scope *S, CXXScopeSpec &SS,
-                                        TypeTy *ObjectTypePtr,
-                                        bool EnteringContext) {
+ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
+                                   IdentifierInfo &II, 
+                                   SourceLocation NameLoc,
+                                   Scope *S, CXXScopeSpec &SS,
+                                   ParsedType ObjectTypePtr,
+                                   bool EnteringContext) {
   // Determine where to perform name lookup.
 
   // FIXME: This area of the standard is very messy, and the current
@@ -149,7 +149,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
 
     // FIXME: Should we be suppressing ambiguities here?
     if (Found.isAmbiguous())
-      return 0;
+      return ParsedType();
 
     if (TypeDecl *Type = Found.getAsSingle<TypeDecl>()) {
       QualType T = Context.getTypeDeclType(Type);
@@ -158,7 +158,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
           Context.hasSameUnqualifiedType(T, SearchType)) {
         // We found our type!
 
-        return T.getAsOpaquePtr();
+        return ParsedType::make(T);
       }
     }
 
@@ -191,7 +191,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
               = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
           if (Spec->getSpecializedTemplate()->getCanonicalDecl() ==
                 Template->getCanonicalDecl())
-            return MemberOfType.getAsOpaquePtr();
+            return ParsedType::make(MemberOfType);
         }
 
         continue;
@@ -210,7 +210,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
         // specialized.
         if (TemplateDecl *SpecTemplate = SpecName.getAsTemplateDecl()) {
           if (SpecTemplate->getCanonicalDecl() == Template->getCanonicalDecl())
-            return MemberOfType.getAsOpaquePtr();
+            return ParsedType::make(MemberOfType);
 
           continue;
         }
@@ -221,7 +221,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
                                     = SpecName.getAsDependentTemplateName()) {
           if (DepTemplate->isIdentifier() &&
               DepTemplate->getIdentifier() == Template->getIdentifier())
-            return MemberOfType.getAsOpaquePtr();
+            return ParsedType::make(MemberOfType);
 
           continue;
         }
@@ -242,8 +242,10 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
       Range = SourceRange(NameLoc);
     }
 
-    return CheckTypenameType(ETK_None, NNS, II, SourceLocation(),
-                             Range, NameLoc).getAsOpaquePtr();
+    QualType T = CheckTypenameType(ETK_None, NNS, II,
+                                   SourceLocation(),
+                                   Range, NameLoc);
+    return ParsedType::make(T);
   }
 
   if (ObjectTypePtr)
@@ -252,7 +254,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
   else
     Diag(NameLoc, diag::err_destructor_class_name);
 
-  return 0;
+  return ParsedType();
 }
 
 /// \brief Build a C++ typeid expression with a type operand.
@@ -350,7 +352,8 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   if (isType) {
     // The operand is a type; handle it as such.
     TypeSourceInfo *TInfo = 0;
-    QualType T = GetTypeFromParser(TyOrExpr, &TInfo);
+    QualType T = GetTypeFromParser(ParsedType::getFromOpaquePtr(TyOrExpr),
+                                   &TInfo);
     if (T.isNull())
       return ExprError();
     
@@ -480,7 +483,7 @@ Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
 /// or class type construction ("ClassType(x,y,z)")
 /// or creation of a value-initialized type ("int()").
 Action::OwningExprResult
-Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
+Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
                                 SourceLocation LParenLoc,
                                 MultiExprArg exprs,
                                 SourceLocation *CommaLocs,
@@ -1922,7 +1925,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                  SourceLocation KWLoc,
                                                  SourceLocation LParen,
-                                                 TypeTy *Ty,
+                                                 ParsedType Ty,
                                                  SourceLocation RParen) {
   QualType T = GetTypeFromParser(Ty);
 
@@ -2678,7 +2681,7 @@ FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
 
 Sema::OwningExprResult
 Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
-                                   tok::TokenKind OpKind, TypeTy *&ObjectType,
+                                   tok::TokenKind OpKind, ParsedType &ObjectType,
                                    bool &MayBePseudoDestructor) {
   // Since this might be a postfix expression, get rid of ParenListExprs.
   OwningExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
@@ -2695,7 +2698,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
       if (const PointerType *Ptr = BaseType->getAs<PointerType>())
         BaseType = Ptr->getPointeeType();
     
-    ObjectType = BaseType.getAsOpaquePtr();
+    ObjectType = ParsedType::make(BaseType);
     MayBePseudoDestructor = true;
     return Owned(Base);
   }
@@ -2741,7 +2744,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
     //
     // This also indicates that we should be parsing a
     // pseudo-destructor-name.
-    ObjectType = 0;
+    ObjectType = ParsedType();
     MayBePseudoDestructor = true;
     return Owned(Base);
   }
@@ -2757,7 +2760,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   //   unqualified-id, and the type of the object expression is of a class
   //   type C (or of pointer to a class type C), the unqualified-id is looked
   //   up in the scope of class C. [...]
-  ObjectType = BaseType.getAsOpaquePtr();
+  ObjectType = ParsedType::make(BaseType);
   return move(Base);
 }
 
@@ -2909,12 +2912,12 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
 
   // Compute the object type that we should use for name lookup purposes. Only
   // record types and dependent types matter.
-  void *ObjectTypePtrForLookup = 0;
+  ParsedType ObjectTypePtrForLookup;
   if (!SS.isSet()) {
-    ObjectTypePtrForLookup = const_cast<RecordType*>(
-                                               ObjectType->getAs<RecordType>());
-    if (!ObjectTypePtrForLookup && ObjectType->isDependentType())
-      ObjectTypePtrForLookup = Context.DependentTy.getAsOpaquePtr();
+    if (const Type *T = ObjectType->getAs<RecordType>())
+      ObjectTypePtrForLookup = ParsedType::make(QualType(T, 0));
+    else if (ObjectType->isDependentType())
+      ObjectTypePtrForLookup = ParsedType::make(Context.DependentTy);
   }
   
   // Convert the name of the type being destructed (following the ~) into a 
@@ -2923,9 +2926,9 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
   TypeSourceInfo *DestructedTypeInfo = 0;
   PseudoDestructorTypeStorage Destructed;
   if (SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) {
-    TypeTy *T = getTypeName(*SecondTypeName.Identifier, 
-                            SecondTypeName.StartLocation,
-                            S, &SS, true, ObjectTypePtrForLookup);
+    ParsedType T = getTypeName(*SecondTypeName.Identifier, 
+                               SecondTypeName.StartLocation,
+                               S, &SS, true, ObjectTypePtrForLookup);
     if (!T && 
         ((SS.isSet() && !computeDeclContext(SS, false)) ||
          (!SS.isSet() && ObjectType->isDependentType()))) {
@@ -2979,9 +2982,9 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
   if (FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId || 
       FirstTypeName.Identifier) {
     if (FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) {
-      TypeTy *T = getTypeName(*FirstTypeName.Identifier, 
-                              FirstTypeName.StartLocation,
-                              S, &SS, false, ObjectTypePtrForLookup);
+      ParsedType T = getTypeName(*FirstTypeName.Identifier, 
+                                 FirstTypeName.StartLocation,
+                                 S, &SS, false, ObjectTypePtrForLookup);
       if (!T) {
         Diag(FirstTypeName.StartLocation, 
              diag::err_pseudo_dtor_destructor_non_type)

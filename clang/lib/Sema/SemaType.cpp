@@ -265,8 +265,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
   case DeclSpec::TST_enum:
   case DeclSpec::TST_union:
   case DeclSpec::TST_struct: {
-    TypeDecl *D 
-      = dyn_cast_or_null<TypeDecl>(static_cast<Decl *>(DS.getTypeRep()));
+    TypeDecl *D = dyn_cast_or_null<TypeDecl>(DS.getRepAsDecl());
     if (!D) {
       // This can happen in C++ with ambiguous lookups.
       Result = Context.IntTy;
@@ -298,7 +297,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
-    Result = TheSema.GetTypeFromParser(DS.getTypeRep());
+    Result = TheSema.GetTypeFromParser(DS.getRepAsType());
     if (Result.isNull())
       TheDeclarator.setInvalidType(true);
     else if (DeclSpec::ProtocolQualifierListTy PQ
@@ -337,13 +336,13 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
   }
   case DeclSpec::TST_typeofType:
     // FIXME: Preserve type source info.
-    Result = TheSema.GetTypeFromParser(DS.getTypeRep());
+    Result = TheSema.GetTypeFromParser(DS.getRepAsType());
     assert(!Result.isNull() && "Didn't get a type for typeof?");
     // TypeQuals handled by caller.
     Result = Context.getTypeOfType(Result);
     break;
   case DeclSpec::TST_typeofExpr: {
-    Expr *E = static_cast<Expr *>(DS.getTypeRep());
+    Expr *E = DS.getRepAsExpr();
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
     Result = TheSema.BuildTypeofExprType(E);
@@ -354,7 +353,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
     break;
   }
   case DeclSpec::TST_decltype: {
-    Expr *E = static_cast<Expr *>(DS.getTypeRep());
+    Expr *E = DS.getRepAsExpr();
     assert(E && "Didn't get an expression for decltype?");
     // TypeQuals handled by caller.
     Result = TheSema.BuildDecltypeType(E);
@@ -926,8 +925,8 @@ QualType Sema::BuildBlockPointerType(QualType T,
   return Context.getBlockPointerType(T);
 }
 
-QualType Sema::GetTypeFromParser(TypeTy *Ty, TypeSourceInfo **TInfo) {
-  QualType QT = QualType::getFromOpaquePtr(Ty);
+QualType Sema::GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo) {
+  QualType QT = Ty.get();
   if (QT.isNull()) {
     if (TInfo) *TInfo = 0;
     return QualType();
@@ -969,7 +968,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     T = ConvertDeclSpecToType(*this, D, FnAttrsFromDeclSpec);
     
     if (!D.isInvalidType() && D.getDeclSpec().isTypeSpecOwned()) {
-      TagDecl* Owned = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
+      TagDecl* Owned = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
       // Owned is embedded if it was defined here, or if it is the
       // very first (i.e., canonical) declaration of this tag type.
       Owned->setEmbeddedInDeclarator(Owned->isDefinition() ||
@@ -1188,7 +1187,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       if (getLangOptions().CPlusPlus && D.getDeclSpec().isTypeSpecOwned()) {
         // C++ [dcl.fct]p6:
         //   Types shall not be defined in return or parameter types.
-        TagDecl *Tag = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
+        TagDecl *Tag = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
         if (Tag->isDefinition())
           Diag(Tag->getLocation(), diag::err_type_defined_in_result_type)
             << Context.getTypeDeclType(Tag);
@@ -1472,7 +1471,7 @@ namespace {
     }
     void VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
       TypeSourceInfo *TInfo = 0;
-      Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
 
       // If we got no declarator info from previous Sema routines,
       // just fill with the typespec loc.
@@ -1500,9 +1499,9 @@ namespace {
       assert(DS.getTypeSpecType() == DeclSpec::TST_typeofType);
       TL.setTypeofLoc(DS.getTypeSpecTypeLoc());
       TL.setParensRange(DS.getTypeofParensRange());
-      assert(DS.getTypeRep());
+      assert(DS.getRepAsType());
       TypeSourceInfo *TInfo = 0;
-      Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       TL.setUnderlyingTInfo(TInfo);
     }
     void VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
@@ -1525,7 +1524,7 @@ namespace {
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
       if (Keyword == ETK_Typename) {
         TypeSourceInfo *TInfo = 0;
-        Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+        Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
           TL.copy(cast<ElaboratedTypeLoc>(TInfo->getTypeLoc()));
           return;
@@ -1543,7 +1542,7 @@ namespace {
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
       if (Keyword == ETK_Typename) {
         TypeSourceInfo *TInfo = 0;
-        Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+        Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
           TL.copy(cast<DependentNameTypeLoc>(TInfo->getTypeLoc()));
           return;
@@ -1563,7 +1562,7 @@ namespace {
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
       if (Keyword == ETK_Typename) {
         TypeSourceInfo *TInfo = 0;
-        Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+        Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
           TL.copy(cast<DependentTemplateSpecializationTypeLoc>(
                     TInfo->getTypeLoc()));
@@ -1668,24 +1667,21 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
     CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();
   }
   
-  TypeSpecLocFiller(D.getDeclSpec()).Visit(CurrTL);
-  
-  // We have source information for the return type that was not in the
-  // declaration specifiers; copy that information into the current type
-  // location so that it will be retained. This occurs, for example, with 
-  // a C++ conversion function, where the return type occurs within the
-  // declarator-id rather than in the declaration specifiers.
-  if (ReturnTypeInfo && D.getDeclSpec().getTypeSpecType() == TST_unspecified) {
+  // If we have different source information for the return type, use
+  // that.  This really only applies to C++ conversion functions.
+  if (ReturnTypeInfo) {
     TypeLoc TL = ReturnTypeInfo->getTypeLoc();
     assert(TL.getFullDataSize() == CurrTL.getFullDataSize());
     memcpy(CurrTL.getOpaqueData(), TL.getOpaqueData(), TL.getFullDataSize());
+  } else {
+    TypeSpecLocFiller(D.getDeclSpec()).Visit(CurrTL);
   }
       
   return TInfo;
 }
 
 /// \brief Create a LocInfoType to hold the given QualType and TypeSourceInfo.
-QualType Sema::CreateLocInfoType(QualType T, TypeSourceInfo *TInfo) {
+ParsedType Sema::CreateParsedType(QualType T, TypeSourceInfo *TInfo) {
   // FIXME: LocInfoTypes are "transient", only needed for passing to/from Parser
   // and Sema during declaration parsing. Try deallocating/caching them when
   // it's appropriate, instead of allocating them and keeping them around.
@@ -1693,7 +1689,7 @@ QualType Sema::CreateLocInfoType(QualType T, TypeSourceInfo *TInfo) {
   new (LocT) LocInfoType(T, TInfo);
   assert(LocT->getTypeClass() != T->getTypeClass() &&
          "LocInfoType's TypeClass conflicts with an existing Type class");
-  return QualType(LocT, 0);
+  return ParsedType::make(QualType(LocT, 0));
 }
 
 void LocInfoType::getAsStringInternal(std::string &Str,
@@ -1727,8 +1723,7 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
         << Context.getTypeDeclType(OwnedTag);
   }
 
-  T = CreateLocInfoType(T, TInfo);
-  return T.getAsOpaquePtr();
+  return CreateParsedType(T, TInfo);
 }
 
 

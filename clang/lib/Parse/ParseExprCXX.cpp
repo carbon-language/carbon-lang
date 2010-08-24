@@ -57,7 +57,7 @@ using namespace clang;
 ///
 /// \returns true if there was an error parsing a scope specifier
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
-                                            Action::TypeTy *ObjectType,
+                                            ParsedType ObjectType,
                                             bool EnteringContext,
                                             bool *MayBePseudoDestructor) {
   assert(getLang().CPlusPlus &&
@@ -104,7 +104,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       //
       // To implement this, we clear out the object type as soon as we've
       // seen a leading '::' or part of a nested-name-specifier.
-      ObjectType = 0;
+      ObjectType = ParsedType();
       
       if (Tok.is(tok::code_completion)) {
         // Code completion for a nested-name-specifier, where the code
@@ -212,13 +212,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           HasScopeSpecifier = true;
         }
 
-        if (TypeToken.getAnnotationValue())
-          SS.setScopeRep(
-            Actions.ActOnCXXNestedNameSpecifier(getCurScope(), SS,
-                                                TypeToken.getAnnotationValue(),
+        if (ParsedType T = getTypeAnnotation(TypeToken)) {
+          CXXScopeTy *Scope =
+            Actions.ActOnCXXNestedNameSpecifier(getCurScope(), SS, T,
                                                 TypeToken.getAnnotationRange(),
-                                                CCLoc));
-        else
+                                                CCLoc);
+          SS.setScopeRep(Scope);
+        } else
           SS.setScopeRep(0);
         SS.setEndLoc(CCLoc);
         continue;
@@ -403,14 +403,14 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   //   '::' unqualified-id
   //
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
   
   UnqualifiedId Name;
   if (ParseUnqualifiedId(SS, 
                          /*EnteringContext=*/false, 
                          /*AllowDestructorName=*/false, 
                          /*AllowConstructorName=*/false, 
-                         /*ObjectType=*/0,
+                         /*ObjectType=*/ ParsedType(),
                          Name))
     return ExprError();
 
@@ -519,7 +519,7 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
       return ExprError();
 
     Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/true,
-                                    Ty.get(), RParenLoc);
+                                    Ty.get().getAsOpaquePtr(), RParenLoc);
   } else {
     // C++0x [expr.typeid]p3:
     //   When typeid is applied to an expression other than an lvalue of a
@@ -565,7 +565,7 @@ Parser::OwningExprResult
 Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
                                  tok::TokenKind OpKind,
                                  CXXScopeSpec &SS,
-                                 Action::TypeTy *ObjectType) {
+                                 ParsedType ObjectType) {
   // We're parsing either a pseudo-destructor-name or a dependent
   // member access that has the same form as a
   // pseudo-destructor-name. We parse both in the same way and let
@@ -680,7 +680,7 @@ Parser::OwningExprResult Parser::ParseCXXThis() {
 Parser::OwningExprResult
 Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-  TypeTy *TypeRep = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo).get();
+  ParsedType TypeRep = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo).get();
 
   assert(Tok.is(tok::l_paren) && "Expected '('!");
   SourceLocation LParenLoc = ConsumeParen();
@@ -876,7 +876,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   // type-name
   case tok::annot_typename: {
     DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID,
-                       Tok.getAnnotationValue());
+                       getTypeAnnotation(Tok));
     break;
   }
 
@@ -1004,7 +1004,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
                                           IdentifierInfo *Name,
                                           SourceLocation NameLoc,
                                           bool EnteringContext,
-                                          TypeTy *ObjectType,
+                                          ParsedType ObjectType,
                                           UnqualifiedId &Id,
                                           bool AssumeTemplateId,
                                           SourceLocation TemplateKWLoc) {
@@ -1085,7 +1085,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
                                    EnteringContext, Template,
                                    MemberOfUnknownSpecialization);
       
-      if (TNK == TNK_Non_template && Id.DestructorName == 0) {
+      if (TNK == TNK_Non_template && !Id.DestructorName.get()) {
         Diag(NameLoc, diag::err_destructor_template_id)
           << Name << SS.getRange();
         return true;        
@@ -1203,7 +1203,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
 ///
 /// \returns true if parsing fails, false otherwise.
 bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
-                                        TypeTy *ObjectType,
+                                        ParsedType ObjectType,
                                         UnqualifiedId &Result) {
   assert(Tok.is(tok::kw_operator) && "Expected 'operator' keyword");
   
@@ -1382,7 +1382,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
 bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                                 bool AllowDestructorName,
                                 bool AllowConstructorName,
-                                TypeTy *ObjectType,
+                                ParsedType ObjectType,
                                 UnqualifiedId &Result) {
 
   // Handle 'A::template B'. This is for template-ids which have not
@@ -1516,17 +1516,17 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     SourceLocation ClassNameLoc = ConsumeToken();
     
     if (TemplateSpecified || Tok.is(tok::less)) {
-      Result.setDestructorName(TildeLoc, 0, ClassNameLoc);
+      Result.setDestructorName(TildeLoc, ParsedType(), ClassNameLoc);
       return ParseUnqualifiedIdTemplateId(SS, ClassName, ClassNameLoc,
                                           EnteringContext, ObjectType, Result,
                                           TemplateSpecified, TemplateKWLoc);
     }
     
     // Note that this is a destructor name.
-    Action::TypeTy *Ty = Actions.getDestructorName(TildeLoc, *ClassName, 
-                                                   ClassNameLoc, getCurScope(),
-                                                   SS, ObjectType,
-                                                   EnteringContext);
+    ParsedType Ty = Actions.getDestructorName(TildeLoc, *ClassName, 
+                                              ClassNameLoc, getCurScope(),
+                                              SS, ObjectType,
+                                              EnteringContext);
     if (!Ty)
       return true;
 
@@ -1804,7 +1804,7 @@ Parser::OwningExprResult Parser::ParseUnaryTypeTrait() {
 /// based on the context past the parens.
 Parser::OwningExprResult
 Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
-                                         TypeTy *&CastTy,
+                                         ParsedType &CastTy,
                                          SourceLocation LParenLoc,
                                          SourceLocation &RParenLoc) {
   assert(getLang().CPlusPlus && "Should only be called for C++!");
@@ -1812,7 +1812,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   assert(isTypeIdInParens() && "Not a type-id!");
 
   OwningExprResult Result(true);
-  CastTy = 0;
+  CastTy = ParsedType();
 
   // We need to disambiguate a very ugly part of the C++ syntax:
   //
@@ -1857,7 +1857,8 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
       // will be consumed.
       Result = ParseCastExpression(false/*isUnaryExpression*/,
                                    false/*isAddressofOperand*/,
-                                   NotCastExpr, 0/*TypeOfCast*/);
+                                   NotCastExpr,
+                                   ParsedType()/*TypeOfCast*/);
     }
 
     // If we parsed a cast-expression, it's really a type-id, otherwise it's

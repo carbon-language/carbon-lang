@@ -135,7 +135,7 @@ Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation EncodeLoc,
                                                  SourceLocation LParenLoc,
-                                                 TypeTy *ty,
+                                                 ParsedType ty,
                                                  SourceLocation RParenLoc) {
   // FIXME: Preserve type source info ?
   TypeSourceInfo *TInfo;
@@ -531,8 +531,8 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
                                                SourceLocation NameLoc,
                                                bool IsSuper,
                                                bool HasTrailingDot,
-                                               TypeTy *&ReceiverType) {
-  ReceiverType = 0;
+                                               ParsedType &ReceiverType) {
+  ReceiverType = ParsedType();
 
   // If the identifier is "super" and there is no trailing dot, we're
   // messaging super.
@@ -579,7 +579,7 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
     //  We have a class message, and T is the type we're
     //  messaging. Build source-location information for it.
     TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
-    ReceiverType = CreateLocInfoType(T, TSInfo).getAsOpaquePtr();
+    ReceiverType = CreateParsedType(T, TSInfo);
     return ObjCClassMessage;
   }
   }
@@ -606,7 +606,7 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
 
         QualType T = Context.getObjCInterfaceType(Class);
         TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
-        ReceiverType = CreateLocInfoType(T, TSInfo).getAsOpaquePtr();
+        ReceiverType = CreateParsedType(T, TSInfo);
         return ObjCClassMessage;
       }
     } else if (Result.empty() && Corrected.getAsIdentifierInfo() &&
@@ -780,7 +780,7 @@ Sema::OwningExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 Sema::OwningExprResult Sema::ActOnClassMessage(Scope *S, 
-                                               TypeTy *Receiver,
+                                               ParsedType Receiver,
                                                Selector Sel,
                                                SourceLocation LBracLoc,
                                                SourceLocation SelectorLoc,

@@ -584,7 +584,7 @@ void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
 Sema::BaseResult
 Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
-                         TypeTy *basetype, SourceLocation BaseLoc) {
+                         ParsedType basetype, SourceLocation BaseLoc) {
   if (!classdecl)
     return true;
 
@@ -906,7 +906,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     isFunc = true;
   else if (D.getNumTypeObjects() == 0 &&
            D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typename) {
-    QualType TDType = GetTypeFromParser(DS.getTypeRep());
+    QualType TDType = GetTypeFromParser(DS.getRepAsType());
     isFunc = TDType->isFunctionType();
   }
 
@@ -1058,7 +1058,7 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           Scope *S,
                           CXXScopeSpec &SS,
                           IdentifierInfo *MemberOrBase,
-                          TypeTy *TemplateTypeTy,
+                          ParsedType TemplateTypeTy,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
                           ExprTy **Args, unsigned NumArgs,

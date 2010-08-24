@@ -481,7 +481,7 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   // Per C++0x [basic.scope.pdecl]p9, we parse the default argument before
   // we introduce the type parameter into the local scope.
   SourceLocation EqualLoc;
-  TypeTy *DefaultArg = 0;
+  ParsedType DefaultArg;
   if (Tok.is(tok::equal)) {
     EqualLoc = ConsumeToken();
     DefaultArg = ParseTypeName().get();
@@ -587,7 +587,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Parse this as a typename.
   Declarator ParamDecl(DS, Declarator::TemplateParamContext);
   ParseDeclarator(ParamDecl);
-  if (DS.getTypeSpecType() == DeclSpec::TST_unspecified && !DS.getTypeRep()) {
+  if (DS.getTypeSpecType() == DeclSpec::TST_unspecified) {
     // This probably shouldn't happen - and it's more of a Sema thing, but
     // basically we didn't parse the type name because we couldn't associate
     // it with an AST node. we should just skip to the comma or greater.
@@ -785,7 +785,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
     }
 
     Tok.setKind(tok::annot_typename);
-    Tok.setAnnotationValue(Type.get());
+    setTypeAnnotation(Tok, Type.get());
     if (SS && SS->isNotEmpty())
       Tok.setLocation(SS->getBeginLoc());
     else if (TemplateKWLoc.isValid())
@@ -858,7 +858,7 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
                                   TemplateId->RAngleLoc);
   // Create the new "type" annotation token.
   Tok.setKind(tok::annot_typename);
-  Tok.setAnnotationValue(Type.isInvalid()? 0 : Type.get());
+  setTypeAnnotation(Tok, Type.isInvalid() ? ParsedType() : Type.get());
   if (SS && SS->isNotEmpty()) // it was a C++ qualified type name.
     Tok.setLocation(SS->getBeginLoc());
   // End location stays the same
@@ -893,7 +893,7 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
   // followed by a token that terminates a template argument, such as ',', 
   // '>', or (in some cases) '>>'.
   CXXScopeSpec SS; // nested-name-specifier, if present
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, 
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(),
                                  /*EnteringContext=*/false);
   
   if (SS.isSet() && Tok.is(tok::kw_template)) {
@@ -912,8 +912,9 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       // template argument.
       TemplateTy Template;
       if (isEndOfTemplateArgument(Tok) &&
-          Actions.ActOnDependentTemplateName(getCurScope(), TemplateLoc, SS, Name, 
-                                             /*ObjectType=*/0,
+          Actions.ActOnDependentTemplateName(getCurScope(), TemplateLoc,
+                                             SS, Name, 
+                                             /*ObjectType=*/ ParsedType(),
                                              /*EnteringContext=*/false,
                                              Template))
         return ParsedTemplateArgument(SS, Template, Name.StartLocation);
@@ -930,7 +931,7 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       TemplateNameKind TNK = Actions.isTemplateName(getCurScope(), SS,
                                                /*hasTemplateKeyword=*/false,
                                                     Name,
-                                                    /*ObjectType=*/0, 
+                                               /*ObjectType=*/ ParsedType(), 
                                                     /*EnteringContext=*/false, 
                                                     Template,
                                                 MemberOfUnknownSpecialization);
@@ -965,7 +966,8 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
     if (TypeArg.isInvalid())
       return ParsedTemplateArgument();
     
-    return ParsedTemplateArgument(ParsedTemplateArgument::Type, TypeArg.get(), 
+    return ParsedTemplateArgument(ParsedTemplateArgument::Type,
+                                  TypeArg.get().getAsOpaquePtr(), 
                                   Loc);
   }
   

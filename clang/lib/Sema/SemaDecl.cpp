@@ -59,14 +59,14 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr) {
 ///
 /// If name lookup results in an ambiguity, this routine will complain
 /// and then return NULL.
-Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                                Scope *S, CXXScopeSpec *SS,
-                                bool isClassName,
-                                TypeTy *ObjectTypePtr) {
+ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+                             Scope *S, CXXScopeSpec *SS,
+                             bool isClassName,
+                             ParsedType ObjectTypePtr) {
   // Determine where we will perform name lookup.
   DeclContext *LookupCtx = 0;
   if (ObjectTypePtr) {
-    QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
+    QualType ObjectType = ObjectTypePtr.get();
     if (ObjectType->isRecordType())
       LookupCtx = computeDeclContext(ObjectType);
   } else if (SS && SS->isNotEmpty()) {
@@ -84,22 +84,22 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         // We therefore do not perform any name lookup if the result would
         // refer to a member of an unknown specialization.
         if (!isClassName)
-          return 0;
+          return ParsedType();
         
         // We know from the grammar that this name refers to a type,
         // so build a dependent node to describe the type.
-        return CheckTypenameType(ETK_None,
-                                 (NestedNameSpecifier *)SS->getScopeRep(), II,
-                                 SourceLocation(), SS->getRange(), NameLoc
-                                 ).getAsOpaquePtr();
+        QualType T =
+          CheckTypenameType(ETK_None, SS->getScopeRep(), II,
+                            SourceLocation(), SS->getRange(), NameLoc);
+        return ParsedType::make(T);
       }
       
-      return 0;
+      return ParsedType();
     }
     
     if (!LookupCtx->isDependentContext() &&
         RequireCompleteDeclContext(*SS, LookupCtx))
-      return 0;
+      return ParsedType();
   }
 
   // FIXME: LookupNestedNameSpecifierName isn't the right kind of
@@ -135,7 +135,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   case LookupResult::FoundOverloaded:
   case LookupResult::FoundUnresolvedValue:
     Result.suppressDiagnostics();
-    return 0;
+    return ParsedType();
 
   case LookupResult::Ambiguous:
     // Recover from type-hiding ambiguities by hiding the type.  We'll
@@ -145,7 +145,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     // that only makes sense if the identifier was treated like a type.
     if (Result.getAmbiguityKind() == LookupResult::AmbiguousTagHiding) {
       Result.suppressDiagnostics();
-      return 0;
+      return ParsedType();
     }
 
     // Look to see if we have a type anywhere in the list of results.
@@ -167,7 +167,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       // will produce the ambiguity, or will complain that it expected
       // a type name.
       Result.suppressDiagnostics();
-      return 0;
+      return ParsedType();
     }
 
     // We found a type within the ambiguous lookup; diagnose the
@@ -198,10 +198,10 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   } else {
     // If it's not plausibly a type, suppress diagnostics.
     Result.suppressDiagnostics();
-    return 0;
+    return ParsedType();
   }
 
-  return T.getAsOpaquePtr();
+  return ParsedType::make(T);
 }
 
 /// isTagName() - This method is called *for error recovery purposes only*
@@ -232,9 +232,9 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
                                    SourceLocation IILoc,
                                    Scope *S,
                                    CXXScopeSpec *SS,
-                                   TypeTy *&SuggestedType) {
+                                   ParsedType &SuggestedType) {
   // We don't have anything to suggest (yet).
-  SuggestedType = 0;
+  SuggestedType = ParsedType();
   
   // There may have been a typo in the name of the type. Look up typo
   // results, in case we have something that we can suggest.
@@ -282,7 +282,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
     TemplateTy TemplateResult;
     bool MemberOfUnknownSpecialization;
     if (isTemplateName(S, SS ? *SS : EmptySS, /*hasTemplateKeyword=*/false,
-                       Name, 0, true, TemplateResult,
+                       Name, ParsedType(), true, TemplateResult,
                        MemberOfUnknownSpecialization) == TNK_Type_template) {
       TemplateName TplName = TemplateResult.getAsVal<TemplateName>();
       Diag(IILoc, diag::err_template_missing_args) << TplName;
@@ -1594,7 +1594,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       DS.getTypeSpecType() == DeclSpec::TST_struct ||
       DS.getTypeSpecType() == DeclSpec::TST_union ||
       DS.getTypeSpecType() == DeclSpec::TST_enum) {
-    TagD = static_cast<Decl *>(DS.getTypeRep());
+    TagD = DS.getRepAsDecl();
 
     if (!TagD) // We probably had an error
       return 0;
@@ -2123,11 +2123,10 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   switch (DS.getTypeSpecType()) {
   case DeclSpec::TST_typename:
   case DeclSpec::TST_typeofType:
-  case DeclSpec::TST_typeofExpr:
   case DeclSpec::TST_decltype: {
     // Grab the type from the parser.
     TypeSourceInfo *TSI = 0;
-    QualType T = S.GetTypeFromParser(DS.getTypeRep(), &TSI);
+    QualType T = S.GetTypeFromParser(DS.getRepAsType(), &TSI);
     if (T.isNull() || !T->isDependentType()) break;
 
     // Make sure there's a type source info.  This isn't really much
@@ -2141,8 +2140,16 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
     if (!TSI) return true;
 
     // Store the new type back in the decl spec.
-    QualType LocType = S.CreateLocInfoType(TSI->getType(), TSI);
-    DS.UpdateTypeRep(LocType.getAsOpaquePtr());
+    ParsedType LocType = S.CreateParsedType(TSI->getType(), TSI);
+    DS.UpdateTypeRep(LocType);
+    break;
+  }
+
+  case DeclSpec::TST_typeofExpr: {
+    Expr *E = DS.getRepAsExpr();
+    OwningExprResult Result = S.RebuildExprInCurrentInstantiation(E);
+    if (Result.isInvalid()) return true;
+    DS.UpdateExprRep(Result.get());
     break;
   }
 
@@ -4478,13 +4485,13 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
   }
 }
 
-Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
-                                                   Decl **Group,
-                                                   unsigned NumDecls) {
+Sema::DeclGroupPtrTy
+Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
+                              Decl **Group, unsigned NumDecls) {
   llvm::SmallVector<Decl*, 8> Decls;
 
   if (DS.isTypeSpecOwned())
-    Decls.push_back((Decl*)DS.getTypeRep());
+    Decls.push_back(DS.getRepAsDecl());
 
   for (unsigned i = 0; i != NumDecls; ++i)
     if (Decl *D = Group[i])

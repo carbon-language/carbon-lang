@@ -149,7 +149,8 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
           NextToken().isNot(tok::period) && getCurScope()->isInObjcMethodScope()) {
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
-                                                           ConsumeToken(), 0, 
+                                                           ConsumeToken(),
+                                                           ParsedType(), 
                                                            0);
       }
 
@@ -167,7 +168,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
-                                                           TypeOrExpr,
+                                   ParsedType::getFromOpaquePtr(TypeOrExpr),
                                                            0);
       }
 
@@ -179,7 +180,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     } else if (getLang().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IILoc = Tok.getLocation();
-      TypeTy *ReceiverType;
+      ParsedType ReceiverType;
       // Three cases. This is a message send to a type: [type foo]
       // This is a message send to super:  [super foo]
       // This is a message sent to an expr:  [super.bar foo]
@@ -194,7 +195,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
         if (Kind == Action::ObjCSuperMessage)
           return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                              ConsumeToken(),
-                                                             0,
+                                                             ParsedType(),
                                                              0);
         ConsumeToken(); // the identifier
         if (!ReceiverType) {
@@ -239,7 +240,8 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       CheckArrayDesignatorSyntax(*this, Tok.getLocation(), Desig);
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(),
-                                                         0, Idx.take());
+                                                         ParsedType(),
+                                                         Idx.take());
     }
 
     // If this is a normal array designator, remember it.

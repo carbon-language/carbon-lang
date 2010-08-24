@@ -921,7 +921,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false))
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/ParsedType(), false))
       return true;
     if (!SS.isSet()) {
       Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
@@ -949,7 +949,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       if (Tok.getAnnotationValue())
         Ty = Actions.ActOnTypenameType(getCurScope(), TypenameLoc, SS, 
                                        SourceLocation(),
-                                       Tok.getAnnotationValue());
+                                       getTypeAnnotation(Tok));
       else
         Ty = true;
     } else {
@@ -960,7 +960,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
 
     SourceLocation EndLoc = Tok.getLastLoc();
     Tok.setKind(tok::annot_typename);
-    Tok.setAnnotationValue(Ty.isInvalid()? 0 : Ty.get());
+    setTypeAnnotation(Tok, Ty.isInvalid() ? ParsedType() : Ty.get());
     Tok.setAnnotationEndLoc(EndLoc);
     Tok.setLocation(TypenameLoc);
     PP.AnnotateCachedTokens(Tok);
@@ -972,17 +972,18 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
+    if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
       return true;
 
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
-    if (TypeTy *Ty = Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                         Tok.getLocation(), getCurScope(), &SS)) {
+    if (ParsedType Ty = Actions.getTypeName(*Tok.getIdentifierInfo(),
+                                            Tok.getLocation(), getCurScope(),
+                                            &SS)) {
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
       Tok.setKind(tok::annot_typename);
-      Tok.setAnnotationValue(Ty);
+      setTypeAnnotation(Tok, Ty);
       Tok.setAnnotationEndLoc(Tok.getLocation());
       if (SS.isNotEmpty()) // it was a C++ qualified type name.
         Tok.setLocation(SS.getBeginLoc());
@@ -1009,7 +1010,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       if (TemplateNameKind TNK
           = Actions.isTemplateName(getCurScope(), SS,
                                    /*hasTemplateKeyword=*/false, TemplateName,
-                                   /*ObjectType=*/0, EnteringContext,
+                                   /*ObjectType=*/ ParsedType(),
+                                   EnteringContext,
                                    Template, MemberOfUnknownSpecialization)) {
         // Consume the identifier.
         ConsumeToken();
@@ -1077,7 +1079,7 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
-  if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
+  if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
     return true;
   if (SS.isEmpty())
     return false;

@@ -104,7 +104,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
                                       CXXScopeSpec &SS,
                                       bool hasTemplateKeyword,
                                       UnqualifiedId &Name,
-                                      TypeTy *ObjectTypePtr,
+                                      ParsedType ObjectTypePtr,
                                       bool EnteringContext,
                                       TemplateTy &TemplateResult,
                                       bool &MemberOfUnknownSpecialization) {
@@ -131,7 +131,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     return TNK_Non_template;
   }
 
-  QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
+  QualType ObjectType = ObjectTypePtr.get();
 
   LookupResult R(*this, TName, Name.getSourceRange().getBegin(), 
                  LookupOrdinaryName);
@@ -472,7 +472,7 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
                                SourceLocation ParamNameLoc,
                                unsigned Depth, unsigned Position,
                                SourceLocation EqualLoc,
-                               TypeTy *DefaultArg) {
+                               ParsedType DefaultArg) {
   assert(S->isTemplateParamScope() &&
          "Template type parameter not in template parameter scope!");
   bool Invalid = false;
@@ -1540,7 +1540,7 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
     TL.setArgLocInfo(i, TemplateArgs[i].getLocInfo());
 
-  return CreateLocInfoType(Result, DI).getAsOpaquePtr();
+  return CreateParsedType(Result, DI);
 }
 
 Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
@@ -1575,7 +1575,7 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
     = TypeWithKeyword::getKeywordForTagTypeKind(TagKind);
   QualType ElabType = Context.getElaboratedType(Keyword, /*NNS=*/0, Type);
 
-  return ElabType.getAsOpaquePtr();
+  return ParsedType::make(ElabType);
 }
 
 Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
@@ -1661,7 +1661,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
                                                   SourceLocation TemplateKWLoc,
                                                   CXXScopeSpec &SS,
                                                   UnqualifiedId &Name,
-                                                  TypeTy *ObjectType,
+                                                  ParsedType ObjectType,
                                                   bool EnteringContext,
                                                   TemplateTy &Result) {
   if (TemplateKWLoc.isValid() && S && !S->getTemplateParamParent() &&
@@ -1673,7 +1673,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
   if (SS.isSet())
     LookupCtx = computeDeclContext(SS, EnteringContext);
   if (!LookupCtx && ObjectType)
-    LookupCtx = computeDeclContext(QualType::getFromOpaquePtr(ObjectType));
+    LookupCtx = computeDeclContext(ObjectType.get());
   if (LookupCtx) {
     // C++0x [temp.names]p5:
     //   If a name prefixed by the keyword template is not the name of
@@ -5224,7 +5224,7 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
 
   ElaboratedTypeKeyword Kwd = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
-  return Context.getDependentNameType(Kwd, NNS, Name).getAsOpaquePtr();
+  return ParsedType::make(Context.getDependentNameType(Kwd, NNS, Name));
 }
 
 Sema::TypeResult
@@ -5259,13 +5259,13 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(IdLoc);
   }
   
-  return CreateLocInfoType(T, TSI).getAsOpaquePtr();
+  return CreateParsedType(T, TSI);
 }
 
 Sema::TypeResult
 Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
                         const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
-                        TypeTy *Ty) {
+                        ParsedType Ty) {
   if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
       !getLangOptions().CPlusPlus0x)
     Diag(TypenameLoc, diag::ext_typename_outside_of_template)
@@ -5296,7 +5296,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     TL.setQualifierRange(SS.getRange());
 
     TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);
-    return CreateLocInfoType(T, TSI).getAsOpaquePtr();
+    return CreateParsedType(T, TSI);
   }
 
   // TODO: it's really silly that we make a template specialization
@@ -5327,7 +5327,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   }
   TL.setKeywordLoc(TypenameLoc);
   TL.setQualifierRange(SS.getRange());
-  return CreateLocInfoType(T, TSI).getAsOpaquePtr();
+  return CreateParsedType(T, TSI);
 }
 
 /// \brief Build the type that describes a C++ typename specifier,
@@ -5483,6 +5483,12 @@ TypeSourceInfo *Sema::RebuildTypeInCurrentInstantiation(TypeSourceInfo *T,
 
   CurrentInstantiationRebuilder Rebuilder(*this, Loc, Name);
   return Rebuilder.TransformType(T);
+}
+
+OwningExprResult Sema::RebuildExprInCurrentInstantiation(Expr *E) {
+  CurrentInstantiationRebuilder Rebuilder(*this, E->getExprLoc(),
+                                          DeclarationName());
+  return Rebuilder.TransformExpr(E);
 }
 
 bool Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {

@@ -773,7 +773,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
   // This is almost certainly an invalid type name. Let the action emit a 
   // diagnostic and attempt to recover.
-  Action::TypeTy *T = 0;
+  ParsedType T;
   if (Actions.DiagnoseUnknownTypeName(*Tok.getIdentifierInfo(), Loc,
                                       getCurScope(), SS, T)) {
     // The action emitted a diagnostic, so we don't have to.
@@ -783,8 +783,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       // name token, and we're done.
       const char *PrevSpec;
       unsigned DiagID;
-      DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID, T, 
-                         false);
+      DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID, T);
       DS.SetRangeEnd(Tok.getLocation());
       ConsumeToken();
       
@@ -981,10 +980,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (Next.is(tok::annot_typename)) {
         DS.getTypeSpecScope() = SS;
         ConsumeToken(); // The C++ scope.
-        if (Tok.getAnnotationValue())
+        if (Tok.getAnnotationValue()) {
+          ParsedType T = getTypeAnnotation(Tok);
           isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, 
-                                         PrevSpec, DiagID, 
-                                         Tok.getAnnotationValue());
+                                         PrevSpec, DiagID, T);
+        }
         else
           DS.SetTypeSpecError();
         DS.SetRangeEnd(Tok.getAnnotationEndLoc());
@@ -1013,8 +1013,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           << Next.getIdentifierInfo();
       }
 
-      TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
-                                            Next.getLocation(), getCurScope(), &SS);
+      ParsedType TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
+                                               Next.getLocation(),
+                                               getCurScope(), &SS);
 
       // If the referenced identifier is not a type, then this declspec is
       // erroneous: We already checked about that it has no type specifier, and
@@ -1041,10 +1042,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     }
 
     case tok::annot_typename: {
-      if (Tok.getAnnotationValue())
+      if (Tok.getAnnotationValue()) {
+        ParsedType T = getTypeAnnotation(Tok);
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
-                                       DiagID, Tok.getAnnotationValue());
-      else
+                                       DiagID, T);
+      } else
         DS.SetTypeSpecError();
       
       if (isInvalid)
@@ -1097,12 +1099,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         break;
 
       // It has to be available as a typedef too!
-      TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                            Tok.getLocation(), getCurScope());
+      ParsedType TypeRep =
+        Actions.getTypeName(*Tok.getIdentifierInfo(),
+                            Tok.getLocation(), getCurScope());
 
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
-      if (TypeRep == 0) {
+      if (!TypeRep) {
         if (ParseImplicitInt(DS, 0, TemplateInfo, AS)) continue;
         goto DoneWithDeclSpec;
       }
@@ -1520,10 +1523,10 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
   // simple-type-specifier:
   case tok::annot_typename: {
-    if (Tok.getAnnotationValue())
+    if (ParsedType T = getTypeAnnotation(Tok)) {
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
-                                     DiagID, Tok.getAnnotationValue());
-    else
+                                     DiagID, T);
+    } else
       DS.SetTypeSpecError();
     DS.SetRangeEnd(Tok.getAnnotationEndLoc());
     ConsumeToken(); // The typename
@@ -1930,7 +1933,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLang().CPlusPlus) {
-    if (ParseOptionalCXXScopeSpecifier(SS, 0, false))
+    if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false))
       return;
 
     if (SS.isSet() && Tok.isNot(tok::identifier)) {
@@ -2016,7 +2019,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     }
     
     if (DS.SetTypeSpecType(DeclSpec::TST_typename, TSTLoc, PrevSpec, DiagID,
-                           Type.get(), false))
+                           Type.get()))
       Diag(StartLoc, DiagID) << PrevSpec;
     
     return;
@@ -2037,8 +2040,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
 
-  // FIXME: The DeclSpec should keep the locations of both the keyword and the
-  // name (if there is one).
+  // FIXME: The DeclSpec should keep the locations of both the keyword
+  // and the name (if there is one).
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, TSTLoc, PrevSpec, DiagID,
                          TagDecl, Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
@@ -2371,7 +2374,7 @@ bool Parser::isConstructorDeclarator() {
 
   // Parse the C++ scope specifier.
   CXXScopeSpec SS;
-  if (ParseOptionalCXXScopeSpecifier(SS, 0, true)) {
+  if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), true)) {
     TPA.Revert();
     return false;
   }
@@ -2527,7 +2530,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
       (Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
        Tok.is(tok::annot_cxxscope))) {
     CXXScopeSpec SS;
-    ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true); // ignore fail
+    ParseOptionalCXXScopeSpecifier(SS, ParsedType(), true); // ignore fail
 
     if (SS.isNotEmpty()) {
       if (Tok.isNot(tok::star)) {
@@ -2686,8 +2689,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   if (getLang().CPlusPlus && D.mayHaveIdentifier()) {
     // ParseDeclaratorInternal might already have parsed the scope.
     if (D.getCXXScopeSpec().isEmpty()) {
-      ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0,
-                                     true);
+      ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), ParsedType(), true);
     }
 
     if (D.getCXXScopeSpec().isValid()) {
@@ -2716,7 +2718,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
                              /*EnteringContext=*/true, 
                              /*AllowDestructorName=*/true, 
                              AllowConstructorName,
-                             /*ObjectType=*/0,
+                             ParsedType(),
                              D.getName()) ||
           // Once we're past the identifier, if the scope was bad, mark the
           // whole declarator bad.
@@ -2951,7 +2953,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     bool hasExceptionSpec = false;
     SourceLocation ThrowLoc;
     bool hasAnyExceptionSpec = false;
-    llvm::SmallVector<TypeTy*, 2> Exceptions;
+    llvm::SmallVector<ParsedType, 2> Exceptions;
     llvm::SmallVector<SourceRange, 2> ExceptionRanges;
     if (getLang().CPlusPlus) {
       ParseTypeQualifierListOpt(DS, false /*no attributes*/);
@@ -3178,7 +3180,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   bool hasExceptionSpec = false;
   SourceLocation ThrowLoc;
   bool hasAnyExceptionSpec = false;
-  llvm::SmallVector<TypeTy*, 2> Exceptions;
+  llvm::SmallVector<ParsedType, 2> Exceptions;
   llvm::SmallVector<SourceRange, 2> ExceptionRanges;
   
   if (getLang().CPlusPlus) {
@@ -3418,7 +3420,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   const bool hasParens = Tok.is(tok::l_paren);
 
   bool isCastExpr;
-  TypeTy *CastTy;
+  ParsedType CastTy;
   SourceRange CastRange;
   OwningExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
                                                                isCastExpr,
@@ -3458,7 +3460,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   unsigned DiagID;
   // Check for duplicate type specifiers (e.g. "int typeof(int)").
   if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec,
-                         DiagID, Operand.release()))
+                         DiagID, Operand.get()))
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 

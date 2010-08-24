@@ -26,13 +26,14 @@
 
 namespace clang {
   // Semantic.
-  class DeclSpec;
-  class ObjCDeclSpec;
+  class AttributeList;
   class CXXScopeSpec;
   class Declarator;
-  class AttributeList;
-  class TemplateParameterList;
+  class DeclSpec;
   struct FieldDeclarator;
+  class ObjCDeclSpec;
+  class TemplateParameterList;
+
   // Parse.
   class Scope;
   class Action;
@@ -54,7 +55,7 @@ namespace clang {
 /// All of the methods here are optional except getTypeName() and
 /// isCurrentClassName(), which must be specified in order for the
 /// parse to complete accurately.
-class Action : public ActionBase {
+class Action {
   /// \brief The parser's current scope.
   ///
   /// The parser maintains this state here so that is accessible to \c Action 
@@ -75,8 +76,18 @@ public:
 
   // Types - Though these don't actually enforce strong typing, they document
   // what types are required to be identical for the actions.
-  typedef ActionBase::ExprTy ExprTy;
-  typedef ActionBase::StmtTy StmtTy;
+  // Types - Though these don't actually enforce strong typing, they document
+  // what types are required to be identical for the actions.
+  typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
+  typedef OpaquePtr<TemplateName> TemplateTy;
+  typedef OpaquePtr<QualType> TypeTy;
+  typedef Attr AttrTy;
+  typedef CXXBaseSpecifier BaseTy;
+  typedef CXXBaseOrMemberInitializer MemInitTy;
+  typedef Expr ExprTy;
+  typedef Stmt StmtTy;
+  typedef TemplateParameterList TemplateParamsTy;
+  typedef NestedNameSpecifier CXXScopeTy;
 
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
   /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and
@@ -105,7 +116,7 @@ public:
 
   class FullExprArg {
   public:
-    FullExprArg(ActionBase &actions) : E(0) { }
+    FullExprArg(Action &actions) : E(0) { }
                 
     // FIXME: The const_cast here is ugly. RValue references would make this
     // much nicer (or we could duplicate a bunch of the move semantics
@@ -207,10 +218,10 @@ public:
   /// 
   /// \returns the type referred to by this identifier, or NULL if the type
   /// does not name an identifier.
-  virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, CXXScopeSpec *SS = 0,
-                              bool isClassName = false,
-                              TypeTy *ObjectType = 0) = 0;
+  virtual ParsedType getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+                                 Scope *S, CXXScopeSpec *SS = 0,
+                                 bool isClassName = false,
+                                 ParsedType ObjectType = ParsedType()) = 0;
 
   /// isTagName() - This method is called *for error recovery purposes only*
   /// to determine if the specified name is a valid tag name ("struct foo").  If
@@ -247,7 +258,7 @@ public:
                                        SourceLocation IILoc,
                                        Scope *S,
                                        CXXScopeSpec *SS,
-                                       TypeTy *&SuggestedType) {
+                                       ParsedType &SuggestedType) {
     return false;
   }
                                        
@@ -293,7 +304,7 @@ public:
                                           CXXScopeSpec &SS,
                                           bool hasTemplateKeyword,
                                           UnqualifiedId &Name,
-                                          TypeTy *ObjectType,
+                                          ParsedType ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template,
                                       bool &MemberOfUnknownSpecialization) = 0;
@@ -343,7 +354,7 @@ public:
   virtual bool isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
                                             SourceLocation IdLoc,
                                             IdentifierInfo &II,
-                                            TypeTy *ObjectType) {
+                                            ParsedType ObjectType) {
     return false;
   }
   
@@ -386,7 +397,7 @@ public:
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
-                                                  TypeTy *ObjectType,
+                                                  ParsedType ObjectType,
                                                   bool EnteringContext) {
     return 0;
   }
@@ -400,7 +411,7 @@ public:
   virtual bool IsInvalidUnlessNestedName(Scope *S,
                                          CXXScopeSpec &SS,
                                          IdentifierInfo &II,
-                                         TypeTy *ObjectType,
+                                         ParsedType ObjectType,
                                          bool EnteringContext) {
     return false;
   }
@@ -415,7 +426,7 @@ public:
   /// CCLoc is the location of the trailing '::'.
   virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
                                                   const CXXScopeSpec &SS,
-                                                  TypeTy *Type,
+                                                  ParsedType Type,
                                                   SourceRange TypeRange,
                                                   SourceLocation CCLoc) {
     return 0;
@@ -1116,9 +1127,10 @@ public:
   }
 
   virtual OwningExprResult ActOnParenOrParenListExpr(SourceLocation L,
-                                              SourceLocation R,
-                                              MultiExprArg Val,
-                                              TypeTy *TypeOfCast=0) {
+                                                     SourceLocation R,
+                                                     MultiExprArg Val,
+                                                     ParsedType TypeOfCast
+                                                       = ParsedType()) {
     return ExprEmpty();
   }
 
@@ -1194,7 +1206,7 @@ public:
   }
 
   virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParen,
-                                                TypeTy *Ty,
+                                                ParsedType Ty,
                                                 SourceLocation RParen,
                                                 ExprArg Op) {
     return ExprEmpty();
@@ -1225,12 +1237,12 @@ public:
   }
 
   virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
-                                         TypeTy *Ty, SourceLocation RParenLoc,
+                                         ParsedType Ty, SourceLocation RParenLoc,
                                          ExprArg Op) {
     return ExprEmpty();
   }
 
-  virtual bool TypeIsVectorType(TypeTy *Ty) {
+  virtual bool TypeIsVectorType(ParsedType Ty) {
     return false;
   }
 
@@ -1275,7 +1287,7 @@ public:
   virtual OwningExprResult ActOnBuiltinOffsetOf(Scope *S,
                                                 SourceLocation BuiltinLoc,
                                                 SourceLocation TypeLoc,
-                                                TypeTy *Arg1,
+                                                ParsedType Arg1,
                                                 OffsetOfComponent *CompPtr,
                                                 unsigned NumComponents,
                                                 SourceLocation RParenLoc) {
@@ -1284,7 +1296,8 @@ public:
 
   // __builtin_types_compatible_p(type1, type2)
   virtual OwningExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                                    TypeTy *arg1, TypeTy *arg2,
+                                                    ParsedType arg1,
+                                                    ParsedType arg2,
                                                     SourceLocation RPLoc) {
     return ExprEmpty();
   }
@@ -1297,7 +1310,7 @@ public:
 
   // __builtin_va_arg(expr, type)
   virtual OwningExprResult ActOnVAArg(SourceLocation BuiltinLoc,
-                                      ExprArg expr, TypeTy *type,
+                                      ExprArg expr, ParsedType type,
                                       SourceLocation RPLoc) {
     return ExprEmpty();
   }
@@ -1354,7 +1367,7 @@ public:
                                         CXXScopeSpec &SS,
                                         SourceLocation IdentLoc,
                                         IdentifierInfo *NamespcName,
-                                        AttributeList *AttrList);
+                                        AttributeList *AttrList) = 0;
 
   /// ActOnNamespaceAliasDef - This is called when a namespace alias definition
   /// is parsed.
@@ -1412,7 +1425,7 @@ public:
                                           UnqualifiedId &Name,
                                           AttributeList *AttrList,
                                           bool IsTypeName,
-                                          SourceLocation TypenameLoc);
+                                          SourceLocation TypenameLoc) = 0;
 
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
   virtual void ActOnParamDefaultArgument(Decl *param,
@@ -1535,10 +1548,10 @@ public:
   /// \brief Parsed a destructor name or pseudo-destructor name. 
   ///
   /// \returns the type being destructed.
-  virtual TypeTy *getDestructorName(SourceLocation TildeLoc,
+  virtual ParsedType getDestructorName(SourceLocation TildeLoc,
                                     IdentifierInfo &II, SourceLocation NameLoc,
                                     Scope *S, CXXScopeSpec &SS,
-                                    TypeTy *ObjectType,
+                                    ParsedType ObjectType,
                                     bool EnteringContext) {
     return getTypeName(II, NameLoc, S, &SS, false, ObjectType);
   }
@@ -1548,7 +1561,7 @@ public:
   virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
                                              tok::TokenKind Kind,
                                              SourceLocation LAngleBracketLoc,
-                                             TypeTy *Ty,
+                                             ParsedType Ty,
                                              SourceLocation RAngleBracketLoc,
                                              SourceLocation LParenLoc,
                                              ExprArg Op,
@@ -1590,7 +1603,7 @@ public:
   /// or class type construction ("ClassType(x,y,z)")
   /// or creation of a value-initialized type ("int()").
   virtual OwningExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
-                                                     TypeTy *TypeRep,
+                                                     ParsedType TypeRep,
                                                      SourceLocation LParenLoc,
                                                      MultiExprArg Exprs,
                                                      SourceLocation *CommaLocs,
@@ -1681,7 +1694,7 @@ public:
   virtual OwningExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                SourceLocation KWLoc,
                                                SourceLocation LParen,
-                                               TypeTy *Ty,
+                                               ParsedType Ty,
                                                SourceLocation RParen) {
     return ExprEmpty();
   }
@@ -1714,7 +1727,7 @@ public:
                                                         ExprArg Base,
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
-                                                        TypeTy *&ObjectType,
+                                                        ParsedType &ObjectType,
                                                   bool &MayBePseudoDestructor) {
     return ExprEmpty();
   }
@@ -1776,7 +1789,7 @@ public:
   virtual BaseResult ActOnBaseSpecifier(Decl *classdecl,
                                         SourceRange SpecifierRange,
                                         bool Virtual, AccessSpecifier Access,
-                                        TypeTy *basetype,
+                                        ParsedType basetype,
                                         SourceLocation BaseLoc) {
     return BaseResult();
   }
@@ -1813,7 +1826,7 @@ public:
                                             Scope *S,
                                             CXXScopeSpec &SS,
                                             IdentifierInfo *MemberOrBase,
-                                            TypeTy *TemplateTypeTy,
+                                            ParsedType TemplateTypeTy,
                                             SourceLocation IdLoc,
                                             SourceLocation LParenLoc,
                                             ExprTy **Args, unsigned NumArgs,
@@ -1895,7 +1908,7 @@ public:
                                        SourceLocation ParamNameLoc,
                                        unsigned Depth, unsigned Position,
                                        SourceLocation EqualLoc,
-                                       TypeTy *DefaultArg) {
+                                       ParsedType DefaultArg) {
     return 0;
   }
 
@@ -2095,7 +2108,7 @@ public:
                                                 SourceLocation TemplateKWLoc,
                                                 CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
-                                                TypeTy *ObjectType,
+                                                ParsedType ObjectType,
                                                 bool EnteringContext,
                                                 TemplateTy &Template) {
     return TNK_Non_template;
@@ -2350,7 +2363,7 @@ public:
   virtual TypeResult
   ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
                     const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
-                    TypeTy *Ty) {
+                    ParsedType Ty) {
     return TypeResult();
   }
 
@@ -2455,7 +2468,7 @@ public:
     SourceLocation NameLoc;
     // The Type is null if no type was specified, and the DeclSpec is invalid
     // in this case.
-    TypeTy *Type;
+    ParsedType Type;
     ObjCDeclSpec DeclSpec;
 
     /// ArgAttrs - Attribute list for this argument.
@@ -2467,9 +2480,9 @@ public:
     SourceLocation BeginLoc,   // location of the + or -.
     SourceLocation EndLoc,     // location of the ; or {.
     tok::TokenKind MethodType, // tok::minus for instance, tok::plus for class.
-    Decl *ClassDecl,       // class this methods belongs to.
+    Decl *ClassDecl,           // class this methods belongs to.
     ObjCDeclSpec &ReturnQT,    // for return type's in inout etc.
-    TypeTy *ReturnType,        // the method return type.
+    ParsedType ReturnType,     // the method return type.
     Selector Sel,              // a unique name for the method.
     ObjCArgInfo *ArgInfo,      // ArgInfo: Has 'Sel.getNumArgs()' entries.
     DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
@@ -2556,7 +2569,7 @@ public:
                                              SourceLocation NameLoc,
                                              bool IsSuper,
                                              bool HasTrailingDot,
-                                             TypeTy *&ReceiverType);
+                                             ParsedType &ReceiverType) = 0;
 
   /// \brief Parsed a message send to 'super'.
   ///
@@ -2584,7 +2597,7 @@ public:
   /// \param RBrac The location of the closing square bracket ']'.
   /// \param Args The message arguments.
   virtual OwningExprResult ActOnClassMessage(Scope *S,
-                                             TypeTy *Receiver,
+                                             ParsedType Receiver,
                                              Selector Sel,
                                              SourceLocation LBracLoc, 
                                              SourceLocation SelectorLoc,
@@ -2643,7 +2656,7 @@ public:
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                SourceLocation EncLoc,
                                                SourceLocation LParenLoc,
-                                               TypeTy *Ty,
+                                               ParsedType Ty,
                                                SourceLocation RParenLoc) {
     return ExprResult();
   }
@@ -3043,7 +3056,7 @@ public:
   /// \param Receiver The type of the class that is receiving a message.
   /// \param SelIdents The identifiers that describe the selector (thus far).
   /// \param NumSelIdents The number of identifiers in \p SelIdents.
-  virtual void CodeCompleteObjCClassMessage(Scope *S, TypeTy *Receiver,
+  virtual void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                             IdentifierInfo **SelIdents,
                                             unsigned NumSelIdents) { }
   
@@ -3169,7 +3182,7 @@ public:
   /// declaration or definition occurs.
   virtual void CodeCompleteObjCMethodDecl(Scope *S, 
                                           bool IsInstanceMethod,
-                                          TypeTy *ReturnType,
+                                          ParsedType ReturnType,
                                           Decl *IDecl) {
   }
   
@@ -3194,7 +3207,7 @@ public:
   virtual void CodeCompleteObjCMethodDeclSelector(Scope *S, 
                                                   bool IsInstanceMethod,
                                                   bool AtParameterName,
-                                                  TypeTy *ReturnType,
+                                                  ParsedType ReturnType,
                                                   IdentifierInfo **SelIdents,
                                                   unsigned NumSelIdents) { }
   

@@ -2215,7 +2215,7 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
 
   if (isType) {
     TypeSourceInfo *TInfo;
-    (void) GetTypeFromParser(TyOrEx, &TInfo);
+    (void) GetTypeFromParser(ParsedType::getFromOpaquePtr(TyOrEx), &TInfo);
     return CreateSizeOfAlignOfExpr(TInfo, OpLoc, isSizeof, ArgRange);
   }
 
@@ -3792,7 +3792,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
 }
 
 Action::OwningExprResult
-Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
+Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, ParsedType Ty,
                            SourceLocation RParenLoc, Expr *InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
   // FIXME: put back this assert when initializers are worked out.
@@ -4047,7 +4047,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
 }
 
 Action::OwningExprResult
-Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
+Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, ParsedType Ty,
                     SourceLocation RParenLoc, Expr *castExpr) {
   assert((Ty != 0) && (castExpr != 0) &&
          "ActOnCastExpr(): missing type or expr");
@@ -4148,7 +4148,7 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
 Action::OwningExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
                                                   SourceLocation R,
                                                   MultiExprArg Val,
-                                                  TypeTy *TypeOfCast) {
+                                                  ParsedType TypeOfCast) {
   unsigned nexprs = Val.size();
   Expr **exprs = reinterpret_cast<Expr**>(Val.release());
   assert((exprs != 0) && "ActOnParenOrParenListExpr() missing expr list");
@@ -6988,7 +6988,7 @@ Sema::OwningExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
 Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
                                                   SourceLocation BuiltinLoc,
                                                   SourceLocation TypeLoc,
-                                                  TypeTy *argty,
+                                                  ParsedType argty,
                                                   OffsetOfComponent *CompPtr,
                                                   unsigned NumComponents,
                                                   SourceLocation RPLoc) {
@@ -7007,7 +7007,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 
 
 Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                                      TypeTy *arg1,TypeTy *arg2,
+                                                      ParsedType arg1,ParsedType arg2,
                                                       SourceLocation RPLoc) {
   TypeSourceInfo *argTInfo1;
   QualType argT1 = GetTypeFromParser(arg1, &argTInfo1);
@@ -7297,7 +7297,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 }
 
 Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
-                                        Expr *expr, TypeTy *type,
+                                        Expr *expr, ParsedType type,
                                         SourceLocation RPLoc) {
   TypeSourceInfo *TInfo;
   QualType T = GetTypeFromParser(type, &TInfo);

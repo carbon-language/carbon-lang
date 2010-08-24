@@ -21,6 +21,7 @@
 #define LLVM_CLANG_SEMA_DECLSPEC_H
 
 #include "clang/Sema/AttributeList.h"
+#include "clang/Sema/Ownership.h"
 #include "clang/Lex/Token.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
@@ -61,7 +62,7 @@ public:
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
   NestedNameSpecifier *getScopeRep() const { return ScopeRep; }
-  void setScopeRep(ActionBase::CXXScopeTy *S) { ScopeRep = S; }
+  void setScopeRep(NestedNameSpecifier *S) { ScopeRep = S; }
 
   /// No scope specifier.
   bool isEmpty() const { return !Range.isValid(); }
@@ -197,10 +198,11 @@ private:
 
   /*SCS*/unsigned StorageClassSpecAsWritten : 3;
 
-  /// TypeRep - This contains action-specific information about a specific TST.
-  /// For example, for a typedef or struct, it might contain the declaration for
-  /// these.
-  void *TypeRep;
+  union {
+    UnionParsedType TypeRep;
+    Decl *DeclRep;
+    Expr *ExprRep;
+  };
 
   // attributes.
   AttributeList *AttrList;
@@ -231,6 +233,17 @@ private:
   void SaveWrittenBuiltinSpecs();
   void SaveStorageSpecifierAsWritten();
 
+  static bool isTypeRep(TST T) {
+    return (T == TST_typename || T == TST_typeofType);
+  }
+  static bool isExprRep(TST T) {
+    return (T == TST_typeofExpr || T == TST_decltype);
+  }
+  static bool isDeclRep(TST T) {
+    return (T == TST_enum || T == TST_struct ||
+            T == TST_union || T == TST_class);
+  }
+
   DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
 public:
@@ -254,7 +267,6 @@ public:
       Friend_specified(false),
       Constexpr_specified(false),
       StorageClassSpecAsWritten(SCS_unspecified),
-      TypeRep(0),
       AttrList(0),
       ProtocolQualifiers(0),
       NumProtocolQualifiers(0),
@@ -294,7 +306,18 @@ public:
   bool isTypeAltiVecPixel() const { return TypeAltiVecPixel; }
   bool isTypeAltiVecBool() const { return TypeAltiVecBool; }
   bool isTypeSpecOwned() const { return TypeSpecOwned; }
-  void *getTypeRep() const { return TypeRep; }
+  ParsedType getRepAsType() const {
+    assert(isTypeRep((TST) TypeSpecType) && "DeclSpec does not store a type");
+    return TypeRep;
+  }
+  Decl *getRepAsDecl() const {
+    assert(isDeclRep((TST) TypeSpecType) && "DeclSpec does not store a decl");
+    return DeclRep;
+  }
+  Expr *getRepAsExpr() const {
+    assert(isExprRep((TST) TypeSpecType) && "DeclSpec does not store an expr");
+    return ExprRep;
+  }
   CXXScopeSpec &getTypeSpecScope() { return TypeScope; }
   const CXXScopeSpec &getTypeSpecScope() const { return TypeScope; }
 
@@ -391,13 +414,30 @@ public:
   bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec,
                        unsigned &DiagID);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
-                       unsigned &DiagID, void *Rep = 0, bool Owned = false);
+                       unsigned &DiagID);
+  bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
+                       unsigned &DiagID, ParsedType Rep);
+  bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
+                       unsigned &DiagID, Decl *Rep, bool Owned);
+  bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
+                       unsigned &DiagID, Expr *Rep);
   bool SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,
                        const char *&PrevSpec, unsigned &DiagID);
   bool SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
                        const char *&PrevSpec, unsigned &DiagID);
   bool SetTypeSpecError();
-  void UpdateTypeRep(void *Rep) { TypeRep = Rep; }
+  void UpdateDeclRep(Decl *Rep) {
+    assert(isDeclRep((TST) TypeSpecType));
+    DeclRep = Rep;
+  }
+  void UpdateTypeRep(ParsedType Rep) {
+    assert(isTypeRep((TST) TypeSpecType));
+    TypeRep = Rep;
+  }
+  void UpdateExprRep(Expr *Rep) {
+    assert(isExprRep((TST) TypeSpecType));
+    ExprRep = Rep;
+  }
 
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    unsigned &DiagID, const LangOptions &Lang);
@@ -589,15 +629,15 @@ public:
     
     /// \brief When Kind == IK_ConversionFunctionId, the type that the 
     /// conversion function names.
-    ActionBase::TypeTy *ConversionFunctionId;
+    UnionParsedType ConversionFunctionId;
 
     /// \brief When Kind == IK_ConstructorName, the class-name of the type
     /// whose constructor is being referenced.
-    ActionBase::TypeTy *ConstructorName;
+    UnionParsedType ConstructorName;
     
     /// \brief When Kind == IK_DestructorName, the type referred to by the
     /// class-name.
-    ActionBase::TypeTy *DestructorName;
+    UnionParsedType DestructorName;
     
     /// \brief When Kind == IK_TemplateId or IK_ConstructorTemplateId,
     /// the template-id annotation that contains the template name and
@@ -674,7 +714,7 @@ public:
   ///
   /// \param EndLoc the location of the last token that makes up the type name.
   void setConversionFunctionId(SourceLocation OperatorLoc, 
-                               ActionBase::TypeTy *Ty,
+                               ParsedType Ty,
                                SourceLocation EndLoc) {
     Kind = IK_ConversionFunctionId;
     StartLocation = OperatorLoc;
@@ -705,7 +745,7 @@ public:
   /// \param ClassNameLoc the location of the class name.
   ///
   /// \param EndLoc the location of the last token that makes up the type name.
-  void setConstructorName(ActionBase::TypeTy *ClassType, 
+  void setConstructorName(ParsedType ClassType, 
                           SourceLocation ClassNameLoc,
                           SourceLocation EndLoc) {
     Kind = IK_ConstructorName;
@@ -728,7 +768,8 @@ public:
   /// name.
   ///
   /// \param ClassType the name of the class referred to by the destructor name.
-  void setDestructorName(SourceLocation TildeLoc, ActionBase::TypeTy *ClassType,
+  void setDestructorName(SourceLocation TildeLoc,
+                         ParsedType ClassType,
                          SourceLocation EndLoc) {
     Kind = IK_DestructorName;
     StartLocation = TildeLoc;
@@ -831,7 +872,7 @@ struct DeclaratorChunk {
   };
 
   struct TypeAndRange {
-    ActionBase::TypeTy *Ty;
+    ParsedType Ty;
     SourceRange Range;
   };
 
@@ -1032,7 +1073,7 @@ struct DeclaratorChunk {
                                      unsigned TypeQuals, bool hasExceptionSpec,
                                      SourceLocation ThrowLoc,
                                      bool hasAnyExceptionSpec,
-                                     ActionBase::TypeTy **Exceptions,
+                                     ParsedType *Exceptions,
                                      SourceRange *ExceptionRanges,
                                      unsigned NumExceptions,
                                      SourceLocation LPLoc, SourceLocation RPLoc,
@@ -1116,7 +1157,7 @@ private:
   AttributeList *AttrList;
 
   /// AsmLabel - The asm label, if specified.
-  ActionBase::ExprTy *AsmLabel;
+  Expr *AsmLabel;
 
   /// InlineParams - This is a local array used for the first function decl
   /// chunk to avoid going to the heap for the common case when we have one
@@ -1315,8 +1356,8 @@ public:
     return false;
   }
 
-  void setAsmLabel(ActionBase::ExprTy *E) { AsmLabel = E; }
-  ActionBase::ExprTy *getAsmLabel() const { return AsmLabel; }
+  void setAsmLabel(Expr *E) { AsmLabel = E; }
+  Expr *getAsmLabel() const { return AsmLabel; }
 
   void setExtension(bool Val = true) { Extension = Val; }
   bool getExtension() const { return Extension; }
@@ -1334,7 +1375,7 @@ public:
 /// structure field declarators, which is basically just a bitfield size.
 struct FieldDeclarator {
   Declarator D;
-  ActionBase::ExprTy *BitfieldSize;
+  Expr *BitfieldSize;
   explicit FieldDeclarator(DeclSpec &DS) : D(DS, Declarator::MemberContext) {
     BitfieldSize = 0;
   }

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines interfaces used to represent Designators in the parser and
-// is the input to Actions module.
+// This file defines interfaces used to represent designators (a la
+// C99 designated initializers) during parsing.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,7 +19,9 @@
 
 namespace clang {
 
-/// Designator - This class is a discriminated union which holds the various
+/// Designator - A designator in a C99 designated initializer.
+///
+/// This class is a discriminated union which holds the various
 /// different sorts of designators possible.  A Designation is an array of
 /// these.  An example of a designator are things like this:
 ///     [8] .field [47]        // C99 designation: 3 designators
@@ -41,12 +43,12 @@ private:
     unsigned NameLoc;
   };
   struct ArrayDesignatorInfo {
-    ActionBase::ExprTy *Index;
+    Expr *Index;
     unsigned LBracketLoc;
     mutable unsigned  RBracketLoc;
   };
   struct ArrayRangeDesignatorInfo {
-    ActionBase::ExprTy *Start, *End;
+    Expr *Start, *End;
     unsigned LBracketLoc, EllipsisLoc;
     mutable unsigned RBracketLoc;
   };
@@ -79,16 +81,16 @@ public:
     return SourceLocation::getFromRawEncoding(FieldInfo.NameLoc);
   }
 
-  ActionBase::ExprTy *getArrayIndex() const {
+  Expr *getArrayIndex() const {
     assert(isArrayDesignator() && "Invalid accessor");
     return ArrayInfo.Index;
   }
 
-  ActionBase::ExprTy *getArrayRangeStart() const {
+  Expr *getArrayRangeStart() const {
     assert(isArrayRangeDesignator() && "Invalid accessor");
     return ArrayRangeInfo.Start;
   }
-  ActionBase::ExprTy *getArrayRangeEnd() const {
+  Expr *getArrayRangeEnd() const {
     assert(isArrayRangeDesignator() && "Invalid accessor");
     return ArrayRangeInfo.End;
   }
@@ -126,7 +128,7 @@ public:
     return D;
   }
 
-  static Designator getArray(ActionBase::ExprTy *Index,
+  static Designator getArray(Expr *Index,
                              SourceLocation LBracketLoc) {
     Designator D;
     D.Kind = ArrayDesignator;
@@ -136,8 +138,8 @@ public:
     return D;
   }
 
-  static Designator getArrayRange(ActionBase::ExprTy *Start,
-                                  ActionBase::ExprTy *End,
+  static Designator getArrayRange(Expr *Start,
+                                  Expr *End,
                                   SourceLocation LBracketLoc,
                                   SourceLocation EllipsisLoc) {
     Designator D;
@@ -159,35 +161,13 @@ public:
       ArrayRangeInfo.RBracketLoc = RBracketLoc.getRawEncoding();
   }
 
-  /// ClearExprs - Null out any expression references, which prevents them from
-  /// being 'delete'd later.
-  void ClearExprs(Action &Actions) {
-    switch (Kind) {
-    case FieldDesignator: return;
-    case ArrayDesignator:
-      ArrayInfo.Index = 0;
-      return;
-    case ArrayRangeDesignator:
-      ArrayRangeInfo.Start = 0;
-      ArrayRangeInfo.End = 0;
-      return;
-    }
-  }
+  /// ClearExprs - Null out any expression references, which prevents
+  /// them from being 'delete'd later.
+  void ClearExprs(Action &Actions) {}
 
-  /// FreeExprs - Release any unclaimed memory for the expressions in this
-  /// designator.
-  void FreeExprs(Action &Actions) {
-    switch (Kind) {
-    case FieldDesignator: return; // nothing to free.
-    case ArrayDesignator:
-      Actions.DeleteExpr(getArrayIndex());
-      return;
-    case ArrayRangeDesignator:
-      Actions.DeleteExpr(getArrayRangeStart());
-      Actions.DeleteExpr(getArrayRangeEnd());
-      return;
-    }
-  }
+  /// FreeExprs - Release any unclaimed memory for the expressions in
+  /// this designator.
+  void FreeExprs(Action &Actions) {}
 };
 
 
@@ -221,17 +201,11 @@ public:
 
   /// ClearExprs - Null out any expression references, which prevents them from
   /// being 'delete'd later.
-  void ClearExprs(Action &Actions) {
-    for (unsigned i = 0, e = Designators.size(); i != e; ++i)
-      Designators[i].ClearExprs(Actions);
-  }
+  void ClearExprs(Action &Actions) {}
 
   /// FreeExprs - Release any unclaimed memory for the expressions in this
   /// designation.
-  void FreeExprs(Action &Actions) {
-    for (unsigned i = 0, e = Designators.size(); i != e; ++i)
-      Designators[i].FreeExprs(Actions);
-  }
+  void FreeExprs(Action &Actions) {}
 };
 
 } // end namespace clang

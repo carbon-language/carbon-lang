@@ -118,7 +118,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
 Action::OwningExprResult
 Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
-                        SourceLocation LAngleBracketLoc, TypeTy *Ty,
+                        SourceLocation LAngleBracketLoc, ParsedType Ty,
                         SourceLocation RAngleBracketLoc,
                         SourceLocation LParenLoc, ExprArg E,
                         SourceLocation RParenLoc) {

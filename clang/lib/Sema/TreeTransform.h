@@ -1500,7 +1500,7 @@ public:
                                                 Expr *Sub,
                                                 SourceLocation RParenLoc) {
     return getSema().ActOnCXXTypeConstructExpr(TypeRange,
-                                               TInfo->getType().getAsOpaquePtr(),
+                                             ParsedType::make(TInfo->getType()),
                                                LParenLoc,
                                          Sema::MultiExprArg(getSema(), &Sub, 1),
                                                /*CommaLocs=*/0,
@@ -1572,7 +1572,7 @@ public:
                                                QualType T,
                                                SourceLocation RParenLoc) {
     return getSema().ActOnCXXTypeConstructExpr(SourceRange(TypeStartLoc),
-                                               T.getAsOpaquePtr(), LParenLoc,
+                                               ParsedType::make(T), LParenLoc,
                                                MultiExprArg(getSema(), 0, 0),
                                                0, RParenLoc);
   }
@@ -1630,7 +1630,7 @@ public:
                                          QualType T,
                                          SourceLocation RParenLoc) {
     return getSema().ActOnUnaryTypeTrait(Trait, StartLoc, LParenLoc,
-                                         T.getAsOpaquePtr(), RParenLoc);
+                                         ParsedType::make(T), RParenLoc);
   }
 
   /// \brief Build a new (previously unresolved) declaration reference
@@ -1696,7 +1696,7 @@ public:
                                                  SourceLocation *Commas,
                                                  SourceLocation RParenLoc) {
     return getSema().ActOnCXXTypeConstructExpr(SourceRange(TypeBeginLoc),
-                                               T.getAsOpaquePtr(),
+                                               ParsedType::make(T),
                                                LParenLoc,
                                                move(Args),
                                                Commas,
@@ -1715,7 +1715,7 @@ public:
                                                      SourceLocation RParenLoc) {
     return getSema().ActOnCXXTypeConstructExpr(SourceRange(TypeBeginLoc,
                                                            /*FIXME*/LParenLoc),
-                                               T.getAsOpaquePtr(),
+                                               ParsedType::make(T),
                                                LParenLoc,
                                                move(Args),
                                                Commas,
@@ -5391,7 +5391,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
 
-  Sema::TypeTy *ObjectTypePtr = 0;
+  ParsedType ObjectTypePtr;
   bool MayBePseudoDestructor = false;
   Base = SemaRef.ActOnStartCXXMemberReference(0, Base.get(), 
                                               E->getOperatorLoc(),
@@ -5401,7 +5401,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
                                               
-  QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
+  QualType ObjectType = ObjectTypePtr.get();
   NestedNameSpecifier *Qualifier
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                 E->getQualifierRange(),
@@ -5429,7 +5429,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
       SS.setRange(E->getQualifierRange());
     }
     
-    Sema::TypeTy *T = SemaRef.getDestructorName(E->getTildeLoc(),
+    ParsedType T = SemaRef.getDestructorName(E->getTildeLoc(),
                                               *E->getDestroyedTypeIdentifier(),
                                                 E->getDestroyedTypeLoc(),
                                                 /*Scope=*/0,
@@ -5814,7 +5814,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
       return SemaRef.ExprError();
 
     // Start the member reference and compute the object's type.
-    Sema::TypeTy *ObjectTy = 0;
+    ParsedType ObjectTy;
     bool MayBePseudoDestructor = false;
     Base = SemaRef.ActOnStartCXXMemberReference(0, Base.get(),
                                                 E->getOperatorLoc(),
@@ -5824,7 +5824,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
     if (Base.isInvalid())
       return SemaRef.ExprError();
 
-    ObjectType = QualType::getFromOpaquePtr(ObjectTy);
+    ObjectType = ObjectTy.get();
     BaseType = ((Expr*) Base.get())->getType();
   } else {
     OldBase = 0;
@@ -6556,7 +6556,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                        /*FIXME:*/getDerived().getBaseLocation(),
                                        SS,
                                        Name,
-                                       ObjectType.getAsOpaquePtr(),
+                                       ParsedType::make(ObjectType),
                                        /*EnteringContext=*/false,
                                        Template);
   return Template.template getAsVal<TemplateName>();
@@ -6579,7 +6579,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                        /*FIXME:*/getDerived().getBaseLocation(),
                                        SS,
                                        Name,
-                                       ObjectType.getAsOpaquePtr(),
+                                       ParsedType::make(ObjectType),
                                        /*EnteringContext=*/false,
                                        Template);
   return Template.template getAsVal<TemplateName>();

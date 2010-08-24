@@ -141,7 +141,7 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
 
   if (SS.isInvalid() || Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_namespace_name);
@@ -274,7 +274,7 @@ Decl *Parser::ParseUsingDirective(unsigned Context,
 
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
 
   IdentifierInfo *NamespcName = 0;
   SourceLocation IdentLoc = SourceLocation();
@@ -336,7 +336,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     IsTypeName = false;
 
   // Parse nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
 
   // Check nested-name specifier.
   if (SS.isInvalid()) {
@@ -352,7 +352,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                          /*EnteringContext=*/false,
                          /*AllowDestructorName=*/true,
                          /*AllowConstructorName=*/true,
-                         /*ObjectType=*/0,
+                         ParsedType(),
                          Name)) {
     SkipUntil(tok::semi);
     return 0;
@@ -485,7 +485,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
       AnnotateTemplateIdTokenAsType(SS);
 
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
-      TypeTy *Type = Tok.getAnnotationValue();
+      ParsedType Type = getTypeAnnotation(Tok);
       EndLocation = Tok.getAnnotationEndLoc();
       ConsumeToken();
 
@@ -538,13 +538,13 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
     // Retrieve the type from the annotation token, consume that token, and
     // return.
     EndLocation = Tok.getAnnotationEndLoc();
-    TypeTy *Type = Tok.getAnnotationValue();
+    ParsedType Type = getTypeAnnotation(Tok);
     ConsumeToken();
     return Type;
   }
 
   // We have an identifier; check whether it is actually a type.
-  TypeTy *Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), SS, true);
+  ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), SS, true);
   if (!Type) {
     Diag(IdLoc, diag::err_expected_class_name);
     return true;
@@ -682,7 +682,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // "FOO : BAR" is not a potential typo for "FOO::BAR".
     ColonProtectionRAIIObject X(*this);
 
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true))
+    if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), true))
       DS.SetTypeSpecError();
     if (SS.isSet())
       if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
@@ -962,27 +962,25 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
   }
 
-  void *Result;
+  // FIXME: The DeclSpec should keep the locations of both the keyword and the
+  // name (if there is one).
+  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
+
+  const char *PrevSpec = 0;
+  unsigned DiagID;
+  bool Result;
   if (!TypeResult.isInvalid()) {
-    TagType = DeclSpec::TST_typename;
-    Result = TypeResult.get();
-    Owned = false;
+    Result = DS.SetTypeSpecType(DeclSpec::TST_typename, TSTLoc,
+                                PrevSpec, DiagID, TypeResult.get());
   } else if (!TagOrTempResult.isInvalid()) {
-    Result = TagOrTempResult.get();
+    Result = DS.SetTypeSpecType(TagType, TSTLoc, PrevSpec, DiagID,
+                                TagOrTempResult.get(), Owned);
   } else {
     DS.SetTypeSpecError();
     return;
   }
 
-  const char *PrevSpec = 0;
-  unsigned DiagID;
-
-  // FIXME: The DeclSpec should keep the locations of both the keyword and the
-  // name (if there is one).
-  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
-
-  if (DS.SetTypeSpecType(TagType, TSTLoc, PrevSpec, DiagID,
-                         Result, Owned))
+  if (Result)
     Diag(StartLoc, DiagID) << PrevSpec;
 
   // At this point, we've successfully parsed a class-specifier in 'definition'
@@ -1138,8 +1136,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
 
   // Parse optional '::' and optional nested-name-specifier.
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0,
-                                 /*EnteringContext=*/false);
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
 
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();
@@ -1252,11 +1249,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (isAccessDecl) {
       // Collect the scope specifier token we annotated earlier.
       CXXScopeSpec SS;
-      ParseOptionalCXXScopeSpecifier(SS, /*ObjectType*/ 0, false);
+      ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
 
       // Try to parse an unqualified-id.
       UnqualifiedId Name;
-      if (ParseUnqualifiedId(SS, false, true, true, /*ObjectType*/ 0, Name)) {
+      if (ParseUnqualifiedId(SS, false, true, true, ParsedType(), Name)) {
         SkipUntil(tok::semi);
         return;
       }
@@ -1748,8 +1745,8 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
 Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   // parse '::'[opt] nested-name-specifier[opt]
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
-  TypeTy *TemplateTypeTy = 0;
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
+  ParsedType TemplateTypeTy;
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
@@ -1757,7 +1754,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
         TemplateId->Kind == TNK_Dependent_template_name) {
       AnnotateTemplateIdTokenAsType(&SS);
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
-      TemplateTypeTy = Tok.getAnnotationValue();
+      TemplateTypeTy = getTypeAnnotation(Tok);
     }
   }
   if (!TemplateTypeTy && Tok.isNot(tok::identifier)) {
@@ -1806,9 +1803,9 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 ///         type-id-list ',' type-id
 ///
 bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
-                                         llvm::SmallVector<TypeTy*, 2>
+                                         llvm::SmallVectorImpl<ParsedType>
                                              &Exceptions,
-                                         llvm::SmallVector<SourceRange, 2>
+                                         llvm::SmallVectorImpl<SourceRange>
                                              &Ranges,
                                          bool &hasAnyExceptionSpec) {
   assert(Tok.is(tok::kw_throw) && "expected throw");
@@ -2068,9 +2065,10 @@ Parser::OwningExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                   Action::Unevaluated);
     SourceLocation TypeLoc = Tok.getLocation();
-    TypeTy *Ty = ParseTypeName().get();
+    ParsedType Ty = ParseTypeName().get();
     SourceRange TypeRange(Start, Tok.getLocation());
-    return Actions.ActOnSizeOfAlignOfExpr(TypeLoc, false, true, Ty, TypeRange);
+    return Actions.ActOnSizeOfAlignOfExpr(TypeLoc, false, true,
+                                          Ty.getAsOpaquePtr(), TypeRange);
   } else
     return ParseConstantExpression();
 }

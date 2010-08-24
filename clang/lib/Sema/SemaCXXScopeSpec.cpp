@@ -283,7 +283,7 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
 bool Sema::isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
                                         SourceLocation IdLoc,
                                         IdentifierInfo &II,
-                                        TypeTy *ObjectTypePtr) {
+                                        ParsedType ObjectTypePtr) {
   QualType ObjectType = GetTypeFromParser(ObjectTypePtr);
   LookupResult Found(*this, &II, IdLoc, LookupNestedNameSpecifierName);
   
@@ -567,10 +567,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
-                                                    TypeTy *ObjectTypePtr,
+                                                    ParsedType ObjectTypePtr,
                                                     bool EnteringContext) {
   return BuildCXXNestedNameSpecifier(S, SS, IdLoc, CCLoc, II,
-                                     QualType::getFromOpaquePtr(ObjectTypePtr),
+                                     GetTypeFromParser(ObjectTypePtr),
                                      /*ScopeLookupResult=*/0, EnteringContext,
                                      false);
 }
@@ -582,21 +582,20 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 ///
 /// The arguments are the same as those passed to ActOnCXXNestedNameSpecifier.
 bool Sema::IsInvalidUnlessNestedName(Scope *S, CXXScopeSpec &SS,
-                                     IdentifierInfo &II, TypeTy *ObjectType,
+                                     IdentifierInfo &II, ParsedType ObjectType,
                                      bool EnteringContext) {
   return BuildCXXNestedNameSpecifier(S, SS, SourceLocation(), SourceLocation(),
-                                     II, QualType::getFromOpaquePtr(ObjectType),
+                                     II, GetTypeFromParser(ObjectType),
                                      /*ScopeLookupResult=*/0, EnteringContext,
                                      true);
 }
 
 Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     const CXXScopeSpec &SS,
-                                                    TypeTy *Ty,
+                                                    ParsedType Ty,
                                                     SourceRange TypeRange,
                                                     SourceLocation CCLoc) {
-  NestedNameSpecifier *Prefix
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  NestedNameSpecifier *Prefix = SS.getScopeRep();
   QualType T = GetTypeFromParser(Ty);
   return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
                                      T.getTypePtr());
