@@ -168,3 +168,25 @@ float t21(long double x) {
   // CHECK: call x86_fp80 asm sideeffect "frndint"
   // CHECK-NEXT: fptrunc x86_fp80 {{.*}} to float
 }
+
+// <rdar://problem/8348447> - accept 'l' constraint
+unsigned char t22(unsigned char a, unsigned char b) {
+  unsigned int la = a;
+  unsigned int lb = b;
+  unsigned int bigres;
+  unsigned char res;
+  __asm__ ("0:\n1:\n" : [bigres] "=la"(bigres) : [la] "0"(la), [lb] "c"(lb) :
+                        "edx", "cc");
+  res = bigres;
+  return res;
+}
+
+// <rdar://problem/8348447> - accept 'l' constraint
+unsigned char t23(unsigned char a, unsigned char b) {
+  unsigned int la = a;
+  unsigned int lb = b;
+  unsigned char res;
+  __asm__ ("0:\n1:\n" : [res] "=la"(res) : [la] "0"(la), [lb] "c"(lb) :
+                        "edx", "cc");
+  return res;
+}

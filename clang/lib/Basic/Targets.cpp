@@ -1202,6 +1202,15 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &Info) const {
   switch (*Name) {
   default: return false;
+  case 'Y': // first letter of a pair:
+    switch (*(Name+1)) {
+    default: return false;
+    case '0':  // First SSE register.
+    case 't':  // Any SSE register, when SSE2 is enabled.
+    case 'i':  // Any SSE register, when SSE2 and inter-unit moves enabled.
+    case 'm':  // any MMX register, when inter-unit moves enabled.
+      break;   // falls through to setAllowsRegister.
+  }
   case 'a': // eax.
   case 'b': // ebx.
   case 'c': // ecx.
@@ -1209,22 +1218,27 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
   case 'S': // esi.
   case 'D': // edi.
   case 'A': // edx:eax.
+  case 'f': // any x87 floating point stack register.
   case 't': // top of floating point stack.
   case 'u': // second from top of floating point stack.
   case 'q': // Any register accessible as [r]l: a, b, c, and d.
   case 'y': // Any MMX register.
   case 'x': // Any SSE register.
   case 'Q': // Any register accessible as [r]h: a, b, c, and d.
+  case 'R': // "Legacy" registers: ax, bx, cx, dx, di, si, sp, bp.
+  case 'l': // "Index" registers: any general register that can be used as an
+            // index in a base+index memory access.
+    Info.setAllowsRegister();
+    return true;
+  case 'C': // SSE floating point constant.
+  case 'G': // x87 floating point constant.
   case 'e': // 32-bit signed integer constant for use with zero-extending
             // x86_64 instructions.
   case 'Z': // 32-bit unsigned integer constant for use with zero-extending
             // x86_64 instructions.
-  case 'N': // unsigned 8-bit integer constant for use with in and out
-            // instructions.
-  case 'R': // "legacy" registers: ax, bx, cx, dx, di, si, sp, bp.
-    Info.setAllowsRegister();
     return true;
   }
+  return false;
 }
 
 std::string
