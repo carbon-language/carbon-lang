@@ -1117,7 +1117,8 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
 
 /// ParseInstructionMetadata
 ///   ::= !dbg !42 (',' !dbg !57)*
-bool LLParser::ParseInstructionMetadata(Instruction *Inst) {
+bool LLParser::ParseInstructionMetadata(Instruction *Inst,
+                                        PerFunctionState *PFS) {
   do {
     if (Lex.getKind() != lltok::MetadataVar)
       return TokError("expected metadata after comma");
@@ -2981,7 +2982,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       // With a normal result, we check to see if the instruction is followed by
       // a comma and metadata.
       if (EatIfPresent(lltok::comma))
-        if (ParseInstructionMetadata(Inst))
+        if (ParseInstructionMetadata(Inst, &PFS))
           return true;
       break;
     case InstExtraComma:
@@ -2989,7 +2990,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
 
       // If the instruction parser ate an extra comma at the end of it, it
       // *must* be followed by metadata.
-      if (ParseInstructionMetadata(Inst))
+      if (ParseInstructionMetadata(Inst, &PFS))
         return true;
       break;        
     }

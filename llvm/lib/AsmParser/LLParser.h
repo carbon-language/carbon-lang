@@ -180,7 +180,6 @@ namespace llvm {
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseOptionalStackAlignment(unsigned &Alignment);
-    bool ParseInstructionMetadata(Instruction *Inst);
     bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
@@ -310,6 +309,7 @@ namespace llvm {
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
     bool ParseMetadataValue(ValID &ID, PerFunctionState *PFS);
     bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS);
+    bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
 
     // Function Parsing.
     struct ArgInfo {
