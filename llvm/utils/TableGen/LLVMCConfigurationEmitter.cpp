@@ -1243,6 +1243,11 @@ public:
   }
 };
 
+/// IsOptionalEdge - Validate that the 'optional_edge' has proper structure.
+bool IsOptionalEdge (const DagInit& Edg) {
+  return (GetOperatorName(Edg) == "optional_edge") && (Edg.getNumArgs() > 2);
+}
+
 /// CheckForSuperfluousOptions - Check that there are no side
 /// effect-free options (specified only in the OptionList). Otherwise,
 /// output a warning.
@@ -1266,9 +1271,9 @@ void CheckForSuperfluousOptions (const DagVector& EdgeVector,
   // non-superfluous options.
   for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
-    const DagInit* Edge = *B;
-    if (Edge->getNumArgs() > 2) {
-      const DagInit& Weight = InitPtrToDag(Edge->getArg(2));
+    const DagInit& Edge = **B;
+    if (IsOptionalEdge(Edge)) {
+      const DagInit& Weight = InitPtrToDag(Edge.getArg(2));
       WalkCase(&Weight, ExtractOptionNames(nonSuperfluousOptions), Id());
     }
   }
@@ -2718,7 +2723,7 @@ void EmitEdgePropertyHandlerCallback (const Init* i, unsigned IndentLevel,
 
 /// EmitEdgeClass - Emit a single Edge# class.
 void EmitEdgeClass (unsigned N, const std::string& Target,
-                    const DagInit* Case, const OptionDescriptions& OptDescs,
+                    const DagInit& Case, const OptionDescriptions& OptDescs,
                     raw_ostream& O) {
 
   // Class constructor.
@@ -2733,7 +2738,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
   O.indent(Indent2) << "unsigned ret = 0;\n";
 
   // Handle the 'case' construct.
-  EmitCaseConstructHandler(Case, Indent2, EmitEdgePropertyHandlerCallback,
+  EmitCaseConstructHandler(&Case, Indent2, EmitEdgePropertyHandlerCallback,
                            false, OptDescs, O);
 
   O.indent(Indent2) << "return ret;\n";
@@ -2747,12 +2752,18 @@ void EmitEdgeClasses (const DagVector& EdgeVector,
   int i = 0;
   for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
-    const DagInit* Edge = *B;
-    const std::string& NodeB = InitPtrToString(Edge->getArg(1));
+    const DagInit& Edge = **B;
+    const std::string& Name = GetOperatorName(Edge);
 
-    if (Edge->getNumArgs() > 2) {
-      const DagInit* Weight = &InitPtrToDag(Edge->getArg(2));
+    if (Name == "optional_edge") {
+      assert(IsOptionalEdge(Edge));
+      const std::string& NodeB = InitPtrToString(Edge.getArg(1));
+
+      const DagInit& Weight = InitPtrToDag(Edge.getArg(2));
       EmitEdgeClass(i, NodeB, Weight, OptDescs, O);
+    }
+    else if (Name != "edge") {
+      throw "Unknown edge class: '" + Name + "'!";
     }
 
     ++i;
@@ -2777,13 +2788,13 @@ void EmitPopulateCompilationGraph (const DagVector& EdgeVector,
   int i = 0;
   for (DagVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
-    const DagInit* Edge = *B;
-    const std::string& NodeA = InitPtrToString(Edge->getArg(0));
-    const std::string& NodeB = InitPtrToString(Edge->getArg(1));
+    const DagInit& Edge = **B;
+    const std::string& NodeA = InitPtrToString(Edge.getArg(0));
+    const std::string& NodeB = InitPtrToString(Edge.getArg(1));
 
     O.indent(Indent1) << "if (int ret = G.insertEdge(\"" << NodeA << "\", ";
 
-    if (Edge->getNumArgs() > 2)
+    if (IsOptionalEdge(Edge))
       O << "new Edge" << i << "()";
     else
       O << "new SimpleEdge(\"" << NodeB << "\")";
@@ -3071,7 +3082,6 @@ void EmitDriverCode(const DriverData& Data, raw_ostream& O) {
     EmitToolClassDefinition(*(*B), Data.OptDescs, O);
 
   // Emit Edge# classes.
-  // TODO: check for edge/optional_edge dag markers.
   EmitEdgeClasses(Data.Edges, Data.OptDescs, O);
 
   O << "} // End anonymous namespace.\n\n";
