@@ -5,6 +5,6 @@
 // RUN: FileCheck < %t.err -check-prefix=CHECK-REPARSE-SOURCE-CRASH %s
 // CHECK-REPARSE-SOURCE-CRASH: Unable to reparse translation unit
 //
-// XFAIL: win32
+// REQUIRES: crash-recovery
 
 #warning parsing original file

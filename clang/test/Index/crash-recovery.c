@@ -2,6 +2,6 @@
 // RUN: FileCheck < %t.err -check-prefix=CHECK-LOAD-SOURCE-CRASH %s
 // CHECK-LOAD-SOURCE-CRASH: Unable to load translation unit
 //
-// XFAIL: win32
+// REQUIRES: crash-recovery
 
 #pragma clang __debug crash

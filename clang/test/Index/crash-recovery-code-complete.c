@@ -5,6 +5,6 @@
 // RUN: FileCheck < %t.err -check-prefix=CHECK-CODE-COMPLETE-CRASH %s
 // CHECK-CODE-COMPLETE-CRASH: Unable to perform code completion!
 //
-// XFAIL: win32
+// REQUIRES: crash-recovery
 
 #warning parsing original file
