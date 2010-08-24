@@ -1240,13 +1240,15 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit){
   llvm::DIFile DefUnit = getOrCreateFile(ED->getLocation());
   unsigned Line = getLineNumber(ED->getLocation());
   uint64_t Size = 0;
-  if (!ED->getTypeForDecl()->isIncompleteType())
-    CGM.getContext().getTypeSize(ED->getTypeForDecl());
-
+  uint64_t Align = 0;
+  if (!ED->getTypeForDecl()->isIncompleteType()) {
+    Size = CGM.getContext().getTypeSize(ED->getTypeForDecl());
+    Align = CGM.getContext().getTypeAlign(ED->getTypeForDecl());
+  }
   llvm::DIType DbgTy = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
                                      Unit, ED->getName(), DefUnit, Line,
-                                     Size, 0, 0, 0,
+                                     Size, Align, 0, 0,
                                      llvm::DIType(), EltArray);
   return DbgTy;
 }
