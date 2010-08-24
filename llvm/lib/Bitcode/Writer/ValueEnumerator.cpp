@@ -287,10 +287,10 @@ void ValueEnumerator::EnumerateFunctionLocalMetadata(const MDNode *N) {
   // MDNodes and all function-local values they reference.
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (Value *V = N->getOperand(i)) {
-      if (MDNode *O = dyn_cast<MDNode>(V))
+      if (MDNode *O = dyn_cast<MDNode>(V)) {
         if (O->isFunctionLocal() && O->getFunction())
           EnumerateFunctionLocalMetadata(O);
-      else if (isa<Instruction>(V) || isa<Argument>(V))
+      } else if (isa<Instruction>(V) || isa<Argument>(V))
         EnumerateValue(V);
     }
 
