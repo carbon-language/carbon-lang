@@ -27,17 +27,36 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
   // NOTE: VMSlot can be invalidated by any reference to VM, which can grow the
   // DenseMap.  This includes any recursive calls to MapValue.
 
-  // Global values and non-function-local metadata do not need to be seeded into
-  // the VM if they are using the identity mapping.
-  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
-      (isa<MDNode>(V) && !cast<MDNode>(V)->isFunctionLocal()))
+  // Global values do not need to be seeded into the VM if they
+  // are using the identity mapping.
+  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V))
     return VMSlot = const_cast<Value*>(V);
 
   if (const MDNode *MD = dyn_cast<MDNode>(V)) {
-    SmallVector<Value*, 4> Elts;
-    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
-      Elts.push_back(MD->getOperand(i) ? MapValue(MD->getOperand(i), VM) : 0);
-    return VM[V] = MDNode::get(V->getContext(), Elts.data(), Elts.size());
+    // Start by assuming that we'll use the identity mapping.
+    VMSlot = const_cast<Value*>(V);
+
+    // Check all operands to see if any need to be remapped.
+    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
+      Value *OP = MD->getOperand(i);
+      if (!OP || MapValue(OP, VM) == OP) continue;
+
+      // Ok, at least one operand needs remapping.
+      MDNode *Dummy = MDNode::getTemporary(V->getContext(), 0, 0);
+      VM[V] = Dummy;
+      SmallVector<Value*, 4> Elts;
+      Elts.reserve(MD->getNumOperands());
+      for (i = 0; i != e; ++i)
+        Elts.push_back(MD->getOperand(i) ? 
+                       MapValue(MD->getOperand(i), VM) : 0);
+      MDNode *NewMD = MDNode::get(V->getContext(), Elts.data(), Elts.size());
+      Dummy->replaceAllUsesWith(NewMD);
+      MDNode::deleteTemporary(Dummy);
+      return VM[V] = NewMD;
+    }
+
+    // No operands needed remapping; keep the identity map.
+    return const_cast<Value*>(V);
   }
 
   Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V));
