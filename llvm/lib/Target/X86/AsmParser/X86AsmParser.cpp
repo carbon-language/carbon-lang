@@ -826,6 +826,14 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.erase(Operands.begin() + 2);
   }
 
+  // FIXME: Hack to handle "imul A, B" which is an alias for "imul A, B, B".
+  if (Name.startswith("imul") && Operands.size() == 3 &&
+      static_cast<X86Operand*>(Operands.back())->isReg()) {
+    X86Operand *Op = static_cast<X86Operand*>(Operands.back());
+    Operands.push_back(X86Operand::CreateReg(Op->getReg(), Op->getStartLoc(),
+                                             Op->getEndLoc()));
+  }
+
   return false;
 }
 
