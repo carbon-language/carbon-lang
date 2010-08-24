@@ -97,16 +97,24 @@ struct CXUnsavedFile {
   unsigned long Length;
 };
 
-/// \brief Describes the availability of a particular entity, which indicates
-/// whether the use of this entity will result in a warning or error due to
-/// it being deprecated or unavailable.
+/**
+ * \brief Describes the availability of a particular entity, which indicates
+ * whether the use of this entity will result in a warning or error due to
+ * it being deprecated or unavailable.
+ */
 enum CXAvailabilityKind {
-  /// \brief The entity is available.
+  /**
+   * \brief The entity is available.
+   */
   CXAvailability_Available,
-  /// \brief The entity is available, but has been deprecated (and its use is
-  /// not recommended).
+  /**
+   * \brief The entity is available, but has been deprecated (and its use is
+   * not recommended).
+   */
   CXAvailability_Deprecated,
-  /// \brief The entity is not available; any use of it will be an error.
+  /**
+   * \brief The entity is not available; any use of it will be an error.
+   */
   CXAvailability_NotAvailable
 };
   
