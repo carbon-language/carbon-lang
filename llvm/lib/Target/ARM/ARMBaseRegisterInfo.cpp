@@ -43,9 +43,12 @@ namespace llvm {
 cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
-cl::opt<bool>
+static cl::opt<bool>
 ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(true),
           cl::desc("Force use of virtual base registers for stack load/store"));
+static cl::opt<bool>
+EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(false), cl::Hidden,
+          cl::desc("Enable pre-regalloc stack frame index allocation"));
 }
 
 using namespace llvm;
@@ -1283,6 +1286,11 @@ requiresRegisterScavenging(const MachineFunction &MF) const {
 bool ARMBaseRegisterInfo::
 requiresFrameIndexScavenging(const MachineFunction &MF) const {
   return true;
+}
+
+bool ARMBaseRegisterInfo::
+requiresVirtualBaseRegisters(const MachineFunction &MF) const {
+  return EnableLocalStackAlloc;
 }
 
 // hasReservedCallFrame - Under normal circumstances, when a frame pointer is

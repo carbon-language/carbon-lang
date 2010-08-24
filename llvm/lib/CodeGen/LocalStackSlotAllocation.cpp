@@ -74,10 +74,12 @@ FunctionPass *llvm::createLocalStackSlotAllocationPass() {
 
 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
   unsigned LocalObjectCount = MFI->getObjectIndexEnd();
 
-  // Early exit if there are no locals to consider
-  if (!LocalObjectCount)
+  // If the target doesn't want/need this pass, or if there are no locals
+  // to consider, early exit.
+  if (!TRI->requiresVirtualBaseRegisters(MF) || LocalObjectCount == 0)
     return true;
 
   // Make sure we have enough space to store the local offsets.

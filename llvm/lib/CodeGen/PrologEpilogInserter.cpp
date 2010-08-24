@@ -41,10 +41,6 @@
 
 using namespace llvm;
 
-// FIXME: For testing purposes only. Remove once the pre-allocation pass
-// is done.
-extern cl::opt<bool> EnableLocalStackAlloc;
-
 char PEI::ID = 0;
 
 INITIALIZE_PASS(PEI, "prologepilog",
@@ -560,7 +556,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // check for whether the frame is large enough to want to use virtual
   // frame index registers. Functions which don't want/need this optimization
   // will continue to use the existing code path.
-  if (EnableLocalStackAlloc && MFI->getUseLocalStackAllocationBlock()) {
+  if (MFI->getUseLocalStackAllocationBlock()) {
     unsigned Align = MFI->getLocalFrameMaxAlign();
 
     // Adjust to alignment boundary.

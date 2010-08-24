@@ -593,6 +593,13 @@ public:
     return false;
   }
 
+  /// requiresVirtualBaseRegisters - Returns true if the target wants the
+  /// LocalStackAllocation pass to be run and virtual base registers
+  /// used for more efficient stack access.
+  virtual bool requiresVirtualBaseRegisters(const MachineFunction &MF) const {
+    return false;
+  }
+
   /// hasFP - Return true if the specified function should have a dedicated
   /// frame pointer register. For most targets this is true only if the function
   /// has variable sized allocas or if frame pointer elimination is disabled.
