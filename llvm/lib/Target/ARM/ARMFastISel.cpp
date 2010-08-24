@@ -389,7 +389,8 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
   unsigned Reg = 0;
   int Offset = 0;
   
-  // TODO: Think about using loadRegFromStackSlot() here when we can.
+  // If we're an alloca we know we have a frame index and can emit the load
+  // directly in short order.
   if (ARMLoadAlloca(I))
     return true;
   
