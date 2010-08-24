@@ -2392,7 +2392,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result 
-        = S.BestViableFunction(CandidateSet, DeclLoc, Best))
+        = CandidateSet.BestViableFunction(S, DeclLoc, Best))
     return Result;
 
   FunctionDecl *Function = Best->Function;
@@ -2777,7 +2777,7 @@ static void TryConstructorInitialization(Sema &S,
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result 
-        = S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
+        = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
     Sequence.SetOverloadFailure(
                           InitializationSequence::FK_ConstructorOverloadFailed, 
                                 Result);
@@ -2987,7 +2987,7 @@ static void TryUserDefinedConversion(Sema &S,
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result
-        = S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
+        = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
     Sequence.SetOverloadFailure(
                         InitializationSequence::FK_UserConversionOverloadFailed, 
                                 Result);
@@ -3027,24 +3027,6 @@ static void TryUserDefinedConversion(Sema &S,
     ICS.Standard = Best->FinalConversion;
     Sequence.AddConversionSequenceStep(ICS, DestType);
   }
-}
-
-bool Sema::TryImplicitConversion(InitializationSequence &Sequence,
-                                 const InitializedEntity &Entity,
-                                 Expr *Initializer,
-                                 bool SuppressUserConversions,
-                                 bool AllowExplicitConversions,
-                                 bool InOverloadResolution) {
-  ImplicitConversionSequence ICS
-    = TryImplicitConversion(Initializer, Entity.getType(),
-                            SuppressUserConversions,
-                            AllowExplicitConversions, 
-                            InOverloadResolution);
-  if (ICS.isBad()) return true;
-
-  // Perform the actual conversion.
-  Sequence.AddConversionSequenceStep(ICS, Entity.getType());
-  return false;
 }
 
 InitializationSequence::InitializationSequence(Sema &S,
@@ -3378,7 +3360,7 @@ static ExprResult CopyObject(Sema &S,
   }
   
   OverloadCandidateSet::iterator Best;
-  switch (S.BestViableFunction(CandidateSet, Loc, Best)) {
+  switch (CandidateSet.BestViableFunction(S, Loc, Best)) {
   case OR_Success:
     break;
       
@@ -3388,8 +3370,7 @@ static ExprResult CopyObject(Sema &S,
            : diag::err_temp_copy_no_viable)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates,
-                              &CurInitExpr, 1);
+    CandidateSet.NoteCandidates(S, OCD_AllCandidates, &CurInitExpr, 1);
     if (!IsExtraneousCopy || S.isSFINAEContext())
       return S.ExprError();
     return move(CurInit);
@@ -3398,8 +3379,7 @@ static ExprResult CopyObject(Sema &S,
     S.Diag(Loc, diag::err_temp_copy_ambiguous)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_ViableCandidates,
-                              &CurInitExpr, 1);
+    CandidateSet.NoteCandidates(S, OCD_ViableCandidates, &CurInitExpr, 1);
     return S.ExprError();
     
   case OR_Deleted:
@@ -4034,16 +4014,14 @@ bool InitializationSequence::Diagnose(Sema &S,
           << DestType << Args[0]->getType()
           << Args[0]->getSourceRange();
 
-      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_ViableCandidates,
-                                Args, NumArgs);
+      FailedCandidateSet.NoteCandidates(S, OCD_ViableCandidates, Args, NumArgs);
       break;
         
     case OR_No_Viable_Function:
       S.Diag(Kind.getLocation(), diag::err_typecheck_nonviable_condition)
         << Args[0]->getType() << DestType.getNonReferenceType()
         << Args[0]->getSourceRange();
-      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates,
-                                Args, NumArgs);
+      FailedCandidateSet.NoteCandidates(S, OCD_AllCandidates, Args, NumArgs);
       break;
         
     case OR_Deleted: {
@@ -4051,9 +4029,8 @@ bool InitializationSequence::Diagnose(Sema &S,
         << Args[0]->getType() << DestType.getNonReferenceType()
         << Args[0]->getSourceRange();
       OverloadCandidateSet::iterator Best;
-      OverloadingResult Ovl = S.BestViableFunction(FailedCandidateSet,
-                                                   Kind.getLocation(),
-                                                   Best);
+      OverloadingResult Ovl
+        = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best);
       if (Ovl == OR_Deleted) {
         S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
           << Best->Function->isDeleted();
@@ -4146,8 +4123,8 @@ bool InitializationSequence::Diagnose(Sema &S,
       case OR_Ambiguous:
         S.Diag(Kind.getLocation(), diag::err_ovl_ambiguous_init)
           << DestType << ArgsRange;
-        S.PrintOverloadCandidates(FailedCandidateSet,
-                                  Sema::OCD_ViableCandidates, Args, NumArgs);
+        FailedCandidateSet.NoteCandidates(S, OCD_ViableCandidates,
+                                          Args, NumArgs);
         break;
         
       case OR_No_Viable_Function:
@@ -4192,17 +4169,15 @@ bool InitializationSequence::Diagnose(Sema &S,
 
         S.Diag(Kind.getLocation(), diag::err_ovl_no_viable_function_in_init)
           << DestType << ArgsRange;
-        S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates,
-                                  Args, NumArgs);
+        FailedCandidateSet.NoteCandidates(S, OCD_AllCandidates, Args, NumArgs);
         break;
         
       case OR_Deleted: {
         S.Diag(Kind.getLocation(), diag::err_ovl_deleted_init)
           << true << DestType << ArgsRange;
         OverloadCandidateSet::iterator Best;
-        OverloadingResult Ovl = S.BestViableFunction(FailedCandidateSet,
-                                                     Kind.getLocation(),
-                                                     Best);
+        OverloadingResult Ovl
+          = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best);
         if (Ovl == OR_Deleted) {
           S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
             << Best->Function->isDeleted();

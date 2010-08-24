@@ -1124,7 +1124,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
 
   // Do the resolution.
   OverloadCandidateSet::iterator Best;
-  switch(BestViableFunction(Candidates, StartLoc, Best)) {
+  switch (Candidates.BestViableFunction(*this, StartLoc, Best)) {
   case OR_Success: {
     // Got one!
     FunctionDecl *FnDecl = Best->Function;
@@ -1152,20 +1152,20 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   case OR_No_Viable_Function:
     Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
       << Name << Range;
-    PrintOverloadCandidates(Candidates, OCD_AllCandidates, Args, NumArgs);
+    Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     return true;
 
   case OR_Ambiguous:
     Diag(StartLoc, diag::err_ovl_ambiguous_call)
       << Name << Range;
-    PrintOverloadCandidates(Candidates, OCD_ViableCandidates, Args, NumArgs);
+    Candidates.NoteCandidates(*this, OCD_ViableCandidates, Args, NumArgs);
     return true;
 
   case OR_Deleted:
     Diag(StartLoc, diag::err_ovl_deleted_call)
       << Best->Function->isDeleted()
       << Name << Range;
-    PrintOverloadCandidates(Candidates, OCD_AllCandidates, Args, NumArgs);
+    Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     return true;
   }
   assert(false && "Unreachable, bad result from BestViableFunction");
@@ -1674,7 +1674,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   }
 
   case ImplicitConversionSequence::AmbiguousConversion:
-    DiagnoseAmbiguousConversion(ICS, From->getExprLoc(),
+    ICS.DiagnoseAmbiguousConversion(*this, From->getExprLoc(),
                           PDiag(diag::err_typecheck_ambiguous_condition)
                             << From->getSourceRange());
      return true;
@@ -2140,7 +2140,7 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
   Self.AddBuiltinOperatorCandidates(OO_Conditional, Loc, Args, 2, CandidateSet);
 
   OverloadCandidateSet::iterator Best;
-  switch (Self.BestViableFunction(CandidateSet, Loc, Best)) {
+  switch (CandidateSet.BestViableFunction(Self, Loc, Best)) {
     case OR_Success:
       // We found a match. Perform the conversions on the arguments and move on.
       if (Self.PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],

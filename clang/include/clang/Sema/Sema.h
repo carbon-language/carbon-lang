@@ -1135,14 +1135,6 @@ public:
                              bool AllowExplicit,
                              bool InOverloadResolution);
 
-  ImplicitConversionSequence
-  TryImplicitConversion(Expr* From, QualType ToType,
-                        bool SuppressUserConversions,
-                        bool AllowExplicit,
-                        bool InOverloadResolution);
-  bool IsStandardConversion(Expr *From, QualType ToType,
-                            bool InOverloadResolution,
-                            StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsComplexPromotion(QualType FromType, QualType ToType);
@@ -1166,44 +1158,18 @@ public:
                                     CXXCastPath &BasePath,
                                     bool IgnoreBaseAccess);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
-  OverloadingResult IsUserDefinedConversion(Expr *From, QualType ToType,
-                               UserDefinedConversionSequence& User,
-                               OverloadCandidateSet& Conversions,
-                               bool AllowExplicit);
   bool DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType);
 
 
-  ImplicitConversionSequence::CompareKind
-  CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
-                                     const ImplicitConversionSequence& ICS2);
-
-  ImplicitConversionSequence::CompareKind
-  CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
-                                     const StandardConversionSequence& SCS2);
-
-  ImplicitConversionSequence::CompareKind
-  CompareQualificationConversions(const StandardConversionSequence& SCS1,
-                                  const StandardConversionSequence& SCS2);
-
-  ImplicitConversionSequence::CompareKind
-  CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
-                                  const StandardConversionSequence& SCS2);
-
   ExprResult PerformCopyInitialization(const InitializedEntity &Entity,
-                                             SourceLocation EqualLoc,
-                                             ExprResult Init);
-  ImplicitConversionSequence
-  TryObjectArgumentInitialization(QualType FromType, CXXMethodDecl *Method,
-                                  CXXRecordDecl *ActingContext);
+                                       SourceLocation EqualLoc,
+                                       ExprResult Init);
   bool PerformObjectArgumentInitialization(Expr *&From,
                                            NestedNameSpecifier *Qualifier,
                                            NamedDecl *FoundDecl,
                                            CXXMethodDecl *Method);
 
-  ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
   bool PerformContextuallyConvertToBool(Expr *&From);
-
-  ImplicitConversionSequence TryContextuallyConvertToObjCId(Expr *From);
   bool PerformContextuallyConvertToObjCId(Expr *&From);
 
   ExprResult 
@@ -1302,31 +1268,8 @@ public:
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
                                             bool PartialOverloading = false);
-  bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
-                                 const OverloadCandidate& Cand2,
-                                 SourceLocation Loc);
-  OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
-                                       SourceLocation Loc,
-                                       OverloadCandidateSet::iterator& Best);
-
-  enum OverloadCandidateDisplayKind {
-    /// Requests that all candidates be shown.  Viable candidates will
-    /// be printed first.
-    OCD_AllCandidates,
-
-    /// Requests that only viable candidates be shown.
-    OCD_ViableCandidates
-  };
-  void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
-                               OverloadCandidateDisplayKind OCD,
-                               Expr **Args, unsigned NumArgs,
-                               const char *Opc = 0,
-                               SourceLocation Loc = SourceLocation());
 
   void NoteOverloadCandidate(FunctionDecl *Fn);
-  void DiagnoseAmbiguousConversion(const ImplicitConversionSequence &ICS,
-                                   SourceLocation CaretLoc,
-                                   const PartialDiagnostic &PDiag);
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain,

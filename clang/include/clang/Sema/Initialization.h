@@ -13,7 +13,7 @@
 #ifndef LLVM_CLANG_SEMA_INITIALIZATION_H
 #define LLVM_CLANG_SEMA_INITIALIZATION_H
 
-#include "clang/Sema/Action.h"
+#include "clang/Sema/Ownership.h"
 #include "clang/Sema/Overload.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
@@ -628,7 +628,7 @@ public:
   ExprResult Perform(Sema &S,
                      const InitializedEntity &Entity,
                      const InitializationKind &Kind,
-                     Action::MultiExprArg Args,
+                     MultiExprArg Args,
                      QualType *ResultType = 0);
   
   /// \brief Diagnose an potentially-invalid initialization sequence.

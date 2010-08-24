@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Scope.h"
@@ -2837,7 +2838,7 @@ namespace {
     
     bool 
     operator()(const OverloadCandidate &X, const OverloadCandidate &Y) const {
-      return S.isBetterOverloadCandidate(X, Y, Loc);
+      return isBetterOverloadCandidate(S, X, Y, Loc);
     }
   };
 }

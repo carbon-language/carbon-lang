@@ -29,6 +29,7 @@ namespace clang {
   class CXXConstructorDecl;
   class CXXConversionDecl;
   class FunctionDecl;
+  class Sema;
 
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.
@@ -38,7 +39,16 @@ namespace clang {
     OR_Ambiguous,           ///< Ambiguous candidates found.
     OR_Deleted              ///< Succeeded, but refers to a deleted function.
   };
-    
+  
+  enum OverloadCandidateDisplayKind {
+    /// Requests that all candidates be shown.  Viable candidates will
+    /// be printed first.
+    OCD_AllCandidates,
+
+    /// Requests that only viable candidates be shown.
+    OCD_ViableCandidates
+  };
+
   /// ImplicitConversionKind - The kind of implicit conversion used to
   /// convert an argument to a parameter's type. The enumerator values
   /// match with Table 9 of (C++ 13.3.3.1.1) and are listed such that
@@ -461,6 +471,10 @@ namespace clang {
       Worse = 1
     };
 
+    void DiagnoseAmbiguousConversion(Sema &S,
+                                     SourceLocation CaretLoc,
+                                     const PartialDiagnostic &PDiag) const;
+
     void DebugPrint() const;
   };
 
@@ -611,7 +625,22 @@ namespace clang {
     void clear();
     
     ~OverloadCandidateSet() { clear(); }
+
+    /// Find the best viable function on this overload set, if it exists.
+    OverloadingResult BestViableFunction(Sema &S, SourceLocation Loc,
+                                         OverloadCandidateSet::iterator& Best);
+
+    void NoteCandidates(Sema &S,
+                        OverloadCandidateDisplayKind OCD,
+                        Expr **Args, unsigned NumArgs,
+                        const char *Opc = 0,
+                        SourceLocation Loc = SourceLocation());
   };
+
+  bool isBetterOverloadCandidate(Sema &S,
+                                 const OverloadCandidate& Cand1,
+                                 const OverloadCandidate& Cand2,
+                                 SourceLocation Loc);
 } // end namespace clang
 
 #endif // LLVM_CLANG_SEMA_OVERLOAD_H
