@@ -405,7 +405,8 @@ void Parser::ParseTranslationUnit() {
 ///           ';'
 ///
 /// [C++0x/GNU] 'extern' 'template' declaration
-Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr) {
+Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
+                                                        ParsingDeclSpec *DS) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
   
   Decl *SingleDecl = 0;
@@ -494,7 +495,10 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
 
   default:
     // We can't tell whether this is a function-definition or declaration yet.
-    return ParseDeclarationOrFunctionDefinition(Attr.AttrList);
+    if (DS)
+      return ParseDeclarationOrFunctionDefinition(*DS, Attr.AttrList);
+    else
+      return ParseDeclarationOrFunctionDefinition(Attr.AttrList);
   }
 
   // This routine returns a DeclGroup, if the thing we parsed only contains a

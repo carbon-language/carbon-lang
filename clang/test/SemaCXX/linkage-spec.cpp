@@ -77,3 +77,12 @@ extern "C" {
     s0(const s0 &);
   };
 }
+
+//PR7754
+extern "C++" template <class T> int pr7754(T param);
+
+namespace N {
+  int value;
+}
+
+extern "C++" using N::value;

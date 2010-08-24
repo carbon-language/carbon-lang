@@ -197,7 +197,7 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS,
 
   if (Tok.isNot(tok::l_brace)) {
     DS.setExternInLinkageSpec(true);
-    ParseDeclarationOrFunctionDefinition(DS, Attr.AttrList);
+    ParseExternalDeclaration(Attr, &DS);
     return Actions.ActOnFinishLinkageSpecification(getCurScope(), LinkageSpec,
                                                    SourceLocation());
   }
