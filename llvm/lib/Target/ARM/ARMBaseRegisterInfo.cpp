@@ -43,6 +43,9 @@ namespace llvm {
 cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
+cl::opt<bool>
+ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(true),
+          cl::desc("Force use of virtual base registers for stack load/store"));
 }
 
 using namespace llvm;
@@ -1436,10 +1439,9 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
   // we don't know everything for certain yet) whether this offset is likely
   // to be out of range of the immediate. Return true if so.
 
-  // FIXME: For testing, return true for all loads/stores and false for
-  // everything else. We want to create lots of base regs to shake out bugs.
+  // We only generate virtual base registers for loads and stores, so
+  // return false for everything else.
   unsigned Opc = MI->getOpcode();
-
   switch (Opc) {
   case ARM::LDR: case ARM::LDRH: case ARM::LDRB:
   case ARM::STR: case ARM::STRH: case ARM::STRB:
@@ -1448,10 +1450,20 @@ needsFrameBaseReg(MachineInstr *MI, unsigned operand) const {
   case ARM::VLDRS: case ARM::VLDRD:
   case ARM::VSTRS: case ARM::VSTRD:
   case ARM::tSTRspi: case ARM::tLDRspi:
-    return true;
+    if (ForceAllBaseRegAlloc)
+      return true;
+    break;
   default:
     return false;
   }
+
+  // FIXME: TODO
+  // Without a virtual base register, if the function has variable sized
+  // objects, all fixed-size local references will be via the frame pointer,
+  // otherwise via the stack pointer. Approximate the offset and see if it's
+  // legal for the instruction.
+
+  return true;
 }
 
 /// materializeFrameBaseRegister - Insert defining instruction(s) for
