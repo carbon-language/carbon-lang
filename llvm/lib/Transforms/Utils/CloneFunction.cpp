@@ -23,7 +23,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Support/CFG.h"
-#include "ValueMapper.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/SmallVector.h"

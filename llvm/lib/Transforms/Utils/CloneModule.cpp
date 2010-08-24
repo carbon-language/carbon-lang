@@ -17,7 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Constant.h"
-#include "ValueMapper.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 using namespace llvm;
 
 /// CloneModule - Return an exact copy of the specified module.  This is not as

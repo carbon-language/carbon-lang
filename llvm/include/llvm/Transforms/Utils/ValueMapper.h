@@ -1,4 +1,4 @@
-//===- ValueMapper.h - Interface shared by lib/Transforms/Utils -*- C++ -*-===//
+//===- ValueMapper.h - Remapping for constants and metadata -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef VALUEMAPPER_H
-#define VALUEMAPPER_H
+#ifndef LLVM_TRANSFORMS_UTILS_VALUEMAPPER_H
+#define LLVM_TRANSFORMS_UTILS_VALUEMAPPER_H
 
 #include "llvm/ADT/ValueMap.h"
 
