@@ -352,7 +352,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
           EnumerateOperandType(Elem);
     }
   } else if (isa<MDString>(V) || isa<MDNode>(V))
-    EnumerateValue(V);
+    EnumerateMetadata(V);
 }
 
 void ValueEnumerator::EnumerateAttributes(const AttrListPtr &PAL) {
