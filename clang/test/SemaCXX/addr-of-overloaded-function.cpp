@@ -86,3 +86,13 @@ namespace test0 {
     myFunction(bar);
   }
 }
+
+namespace PR7971 {
+  struct S {
+    void g() {
+      f(&g);
+    }
+    void f(bool (*)(int, char));
+    static bool g(int, char);
+  };
+}

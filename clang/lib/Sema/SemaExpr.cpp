@@ -6271,7 +6271,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // FIXME: Can LHS ever be null here?
     if (!CheckAddressOfOperand(CO->getTrueExpr(), OpLoc).isNull())
       return CheckAddressOfOperand(CO->getFalseExpr(), OpLoc);
-  } else if (isa<UnresolvedLookupExpr>(op)) {
+  } else if (isa<OverloadExpr>(op)) {
     return Context.OverloadTy;
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
