@@ -24,7 +24,8 @@ typedef StringMap<const MCSectionELF*> ELFUniqueMapTy;
 typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
-MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0) {
+MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0),
+                     CurrentDwarfLoc(0,0,0,0,0) {
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
   COFFUniquingMap = 0;
@@ -32,6 +33,8 @@ MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0) {
   SecureLogFile = getenv("AS_SECURE_LOG_FILE");
   SecureLog = 0;
   SecureLogUsed = false;
+
+  DwarfLocSeen = false;
 }
 
 MCContext::~MCContext() {
@@ -246,4 +249,17 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
 
   // return the allocated FileNumber.
   return FileNumber;
+}
+
+/// ValidateDwarfFileNumber - takes a dwarf file number and returns true if it
+/// currently is assigned and false otherwise.
+bool MCContext::ValidateDwarfFileNumber(unsigned FileNumber) {
+  if(FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
+    return false;
+
+  MCDwarfFile *&ExistingFile = MCDwarfFiles[FileNumber];
+  if (ExistingFile)
+    return true;
+  else
+    return false;
 }

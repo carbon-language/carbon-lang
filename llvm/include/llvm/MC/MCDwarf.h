@@ -57,6 +57,50 @@ namespace llvm {
     void dump() const;
   };
 
+  /// MCDwarfLoc - Instances of this class represent the information from a
+  /// dwarf .loc directive.
+  class MCDwarfLoc {
+    // FileNum - the file number.
+    unsigned FileNum;
+    // Line - the line number.
+    unsigned Line;
+    // Column - the column position.
+    unsigned Column;
+    // Flags (see #define's below)
+    unsigned Flags;
+    // Isa
+    unsigned Isa;
+
+#define DWARF2_FLAG_IS_STMT        (1 << 0)
+#define DWARF2_FLAG_BASIC_BLOCK    (1 << 1)
+#define DWARF2_FLAG_PROLOGUE_END   (1 << 2)
+#define DWARF2_FLAG_EPILOGUE_BEGIN (1 << 3)
+
+  private:  // MCContext manages these
+    friend class MCContext;
+    MCDwarfLoc(unsigned fileNum, unsigned line, unsigned column, unsigned flags,
+               unsigned isa)
+      : FileNum(fileNum), Line(line), Column(column), Flags(flags), Isa(isa) {}
+
+    MCDwarfLoc(const MCDwarfLoc&);       // DO NOT IMPLEMENT
+    void operator=(const MCDwarfLoc&); // DO NOT IMPLEMENT
+  public:
+    /// setFileNum - Set the FileNum of this MCDwarfLoc.
+    void setFileNum(unsigned fileNum) { FileNum = fileNum; }
+
+    /// setLine - Set the Line of this MCDwarfLoc.
+    void setLine(unsigned line) { Line = line; }
+
+    /// setColumn - Set the Column of this MCDwarfLoc.
+    void setColumn(unsigned column) { Column = column; }
+
+    /// setFlags - Set the Flags of this MCDwarfLoc.
+    void setFlags(unsigned flags) { Flags = flags; }
+
+    /// setIsa - Set the Isa of this MCDwarfLoc.
+    void setIsa(unsigned isa) { Isa = isa; }
+  };
+
   inline raw_ostream &operator<<(raw_ostream &OS, const MCDwarfFile &DwarfFile){
     DwarfFile.print(OS);
     return OS;

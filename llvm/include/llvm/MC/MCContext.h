@@ -11,6 +11,7 @@
 #define LLVM_MC_MCCONTEXT_H
 
 #include "llvm/MC/SectionKind.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
@@ -24,6 +25,7 @@ namespace llvm {
   class MCSymbol;
   class MCLabel;
   class MCDwarfFile;
+  class MCDwarfLoc;
   class StringRef;
   class Twine;
   class MCSectionMachO;
@@ -68,6 +70,10 @@ namespace llvm {
     /// The dwarf file and directory tables from the dwarf .file directive.
     std::vector<MCDwarfFile *> MCDwarfFiles;
     std::vector<StringRef> MCDwarfDirs;
+
+    /// The current dwarf line information from the last dwarf .loc directive.
+    MCDwarfLoc CurrentDwarfLoc;
+    bool DwarfLocSeen;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -149,11 +155,26 @@ namespace llvm {
     /// GetDwarfFile - creates an entry in the dwarf file and directory tables.
     unsigned GetDwarfFile(StringRef FileName, unsigned FileNumber);
 
+    bool ValidateDwarfFileNumber(unsigned FileNumber);
+
     const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
       return MCDwarfFiles;
     }
     const std::vector<StringRef> &getMCDwarfDirs() {
       return MCDwarfDirs;
+    }
+
+    /// setCurrentDwarfLoc - saves the information from the currently parsed
+    /// dwarf .loc directive and sets DwarfLocSeen.  When the next instruction      /// is assembled an entry in the line number table with this information and
+    /// the address of the instruction will be created.
+    void setCurrentDwarfLoc(unsigned FileNum, unsigned Line, unsigned Column,
+                            unsigned Flags, unsigned Isa) {
+      CurrentDwarfLoc.setFileNum(FileNum);
+      CurrentDwarfLoc.setLine(Line);
+      CurrentDwarfLoc.setColumn(Column);
+      CurrentDwarfLoc.setFlags(Flags);
+      CurrentDwarfLoc.setIsa(Isa);
+      DwarfLocSeen = true;
     }
 
     /// @}

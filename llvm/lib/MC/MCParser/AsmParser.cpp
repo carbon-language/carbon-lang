@@ -1838,39 +1838,101 @@ bool GenericAsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
 
 
 /// ParseDirectiveLoc
-/// ::= .loc number [number [number]]
+/// ::= .loc FileNumber LineNumber [ColumnPos] [basic_block] [prologue_end]
+///                                [epilogue_begin] [is_stmt VALUE] [isa VALUE]
+/// The first number is a file number, must have been previously assigned with
+/// a .file directive, the second number is the line number and optionally the
+/// third number is a column position (zero if not specified).  The remaining
+/// optional items are .loc sub-directives.
 bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
+
   if (getLexer().isNot(AsmToken::Integer))
     return TokError("unexpected token in '.loc' directive");
-
-  // FIXME: What are these fields?
   int64_t FileNumber = getTok().getIntVal();
-  (void) FileNumber;
-  // FIXME: Validate file.
-
+  if (FileNumber < 1)
+    return TokError("file number less than one in '.loc' directive");
+  if (!getContext().ValidateDwarfFileNumber(FileNumber))
+    return TokError("unassigned file number in '.loc' directive");
   Lex();
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    if (getLexer().isNot(AsmToken::Integer))
-      return TokError("unexpected token in '.loc' directive");
 
-    int64_t Param2 = getTok().getIntVal();
-    (void) Param2;
+  if (getLexer().isNot(AsmToken::Integer))
+    return TokError("unexpected token in '.loc' directive");
+  int64_t LineNumber = getTok().getIntVal();
+  if (LineNumber < 1)
+    return TokError("line number less than one in '.loc' directive");
+  Lex();
+
+  int64_t ColumnPos = 0;
+  if (getLexer().is(AsmToken::Integer)) {
+    ColumnPos = getTok().getIntVal();
+    if (ColumnPos < 0)
+      return TokError("column position less than zero in '.loc' directive");
     Lex();
+  }
 
-    if (getLexer().isNot(AsmToken::EndOfStatement)) {
-      if (getLexer().isNot(AsmToken::Integer))
+  unsigned Flags = 0;
+  unsigned Isa = 0;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+
+      StringRef Name;
+      SMLoc Loc = getTok().getLoc();
+      if (getParser().ParseIdentifier(Name))
         return TokError("unexpected token in '.loc' directive");
 
-      int64_t Param3 = getTok().getIntVal();
-      (void) Param3;
-      Lex();
+      if (Name == "basic_block")
+        Flags |= DWARF2_FLAG_BASIC_BLOCK;
+      else if (Name == "prologue_end")
+        Flags |= DWARF2_FLAG_PROLOGUE_END;
+      else if (Name == "epilogue_begin")
+        Flags |= DWARF2_FLAG_EPILOGUE_BEGIN;
+      else if (Name == "is_stmt") {
+        SMLoc Loc = getTok().getLoc();
+        const MCExpr *Value;
+        if (getParser().ParseExpression(Value))
+          return true;
+        // The expression must be the constant 0 or 1.
+        if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(Value)) {
+          int Value = MCE->getValue();
+          if (Value == 0)
+            Flags &= ~DWARF2_FLAG_IS_STMT;
+          else if (Value == 1)
+            Flags |= DWARF2_FLAG_IS_STMT;
+          else
+            return Error(Loc, "is_stmt value not 0 or 1");
+	}
+        else {
+          return Error(Loc, "is_stmt value not the constant value of 0 or 1");
+        }
+      }
+      else if (Name == "isa") {
+        SMLoc Loc = getTok().getLoc();
+        const MCExpr *Value;
+        if (getParser().ParseExpression(Value))
+          return true;
+        // The expression must be a constant greater or equal to 0.
+        if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(Value)) {
+          int Value = MCE->getValue();
+          if (Value < 0)
+            return Error(Loc, "isa number less than zero");
+          Isa = Value;
+	}
+        else {
+          return Error(Loc, "isa number not a constant value");
+        }
+      }
+      else {
+        return Error(Loc, "unknown sub-directive in '.loc' directive");
+      }
 
-      // FIXME: Do something with the .loc.
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
     }
   }
 
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in '.file' directive");
+  getContext().setCurrentDwarfLoc(FileNumber, LineNumber, ColumnPos, Flags,Isa);
 
   return false;
 }
