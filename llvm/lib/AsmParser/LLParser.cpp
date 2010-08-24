@@ -1134,6 +1134,10 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     if (ParseToken(lltok::exclaim, "expected '!' here"))
       return true;
 
+    // This code is similar to that of ParseMetadataValue, however it needs to
+    // have special-case code for a forward reference; see the comments on
+    // ForwardRefInstMetadata for details. Also, MDStrings are not supported
+    // at the top level here.
     if (Lex.getKind() == lltok::lbrace) {
       ValID ID;
       if (ParseMetadataListValue(ID, PFS))
