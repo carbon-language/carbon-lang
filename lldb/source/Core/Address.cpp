@@ -240,27 +240,6 @@ ReadCStringFromMemory (ExecutionContextScope *exe_scope, const Address &address,
     return total_len;
 }
 
-Address::Address () :
-    SymbolContextScope(),
-    m_section (NULL),
-    m_offset (LLDB_INVALID_ADDRESS)
-{
-}
-
-Address::Address (const Address& rhs) :
-    SymbolContextScope(rhs),
-    m_section (rhs.m_section),
-    m_offset (rhs.m_offset)
-{
-}
-
-Address::Address (const Section* section, addr_t offset) :
-    SymbolContextScope(),
-    m_section (section),
-    m_offset (offset)
-{
-}
-
 Address::Address (addr_t address, const SectionList * sections) :
     SymbolContextScope(),
     m_section (NULL),
@@ -278,18 +257,6 @@ Address::operator= (const Address& rhs)
         m_offset = rhs.m_offset;
     }
     return *this;
-}
-
-bool
-Address::IsValid() const
-{
-    return m_offset != LLDB_INVALID_ADDRESS;
-}
-
-bool
-Address::IsSectionOffset() const
-{
-    return m_section != NULL && IsValid();
 }
 
 bool
@@ -390,22 +357,6 @@ Address::GetLoadAddress (Process *process) const
     // No section, we just return the offset since it is the value in this case
     return m_offset;
 }
-
-bool
-Address::SetOffset (addr_t offset)
-{
-    bool changed = m_offset != offset;
-    m_offset = offset;
-    return changed;
-}
-
-void
-Address::Clear()
-{
-    m_section = NULL;
-    m_offset = LLDB_INVALID_ADDRESS;
-}
-
 
 bool
 Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, DumpStyle fallback_style, uint32_t addr_size) const

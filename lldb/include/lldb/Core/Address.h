@@ -97,7 +97,13 @@ public:
     /// Initialize with a invalid section (NULL) and an invalid
     /// offset (LLDB_INVALID_ADDRESS).
     //------------------------------------------------------------------
-    Address ();
+    Address () :
+        SymbolContextScope(),
+        m_section (NULL),
+        m_offset (LLDB_INVALID_ADDRESS)
+    {
+    }
+
 
     //------------------------------------------------------------------
     /// Copy constructor
@@ -107,7 +113,12 @@ public:
     /// @param[in] rhs
     ///     A const Address object reference to copy.
     //------------------------------------------------------------------
-    Address (const Address& rhs);
+    Address (const Address& rhs) :
+        SymbolContextScope(rhs),
+        m_section (rhs.m_section),
+        m_offset (rhs.m_offset)
+    {
+    }
 
     //------------------------------------------------------------------
     /// Construct with a section pointer and offset.
@@ -122,7 +133,12 @@ public:
     /// @param[in] offset
     ///     The offset in bytes into \a section.
     //------------------------------------------------------------------
-    Address (const Section* section, lldb::addr_t offset);
+    Address (const Section* section, lldb::addr_t offset) :
+        SymbolContextScope(),
+        m_section (section),
+        m_offset (offset)
+    {
+    }
 
     //------------------------------------------------------------------
     /// Construct with a virtual address and section list.
@@ -161,7 +177,11 @@ public:
     /// offset (LLDB_INVALID_ADDRESS).
     //------------------------------------------------------------------
     void
-    Clear ();
+    Clear ()
+    {
+        m_section = NULL;
+        m_offset = LLDB_INVALID_ADDRESS;
+    }
 
     //------------------------------------------------------------------
     /// Compare two Address objects.
@@ -301,7 +321,10 @@ public:
     ///     offset, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    IsSectionOffset() const;
+    IsSectionOffset() const
+    {
+        return m_section != NULL && IsValid();
+    }
 
     //------------------------------------------------------------------
     /// Check if the object state is valid.
@@ -315,7 +338,11 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     bool
-    IsValid() const;
+    IsValid() const
+    {
+        return m_offset != LLDB_INVALID_ADDRESS;
+    }
+
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
@@ -376,7 +403,23 @@ public:
     ///     Returns \b true if the offset changed, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    SetOffset (lldb::addr_t offset);
+    SetOffset (lldb::addr_t offset)
+    {
+        bool changed = m_offset != offset;
+        m_offset = offset;
+        return changed;
+    }
+
+    bool
+    Slide (int64_t offset)
+    {
+        if (m_offset != LLDB_INVALID_ADDRESS)
+        {
+            m_offset += offset;
+            return true;
+        }
+        return false;
+    }
 
     //------------------------------------------------------------------
     /// Set accessor for the section.

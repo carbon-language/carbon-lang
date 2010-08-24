@@ -473,6 +473,11 @@ StackFrame::GetValueObjectList()
     return m_value_object_list;
 }
 
+bool
+StackFrame::IsConcrete () const
+{
+    return m_id.GetInlineHeight () == 0;
+}
 
 Target *
 StackFrame::CalculateTarget ()

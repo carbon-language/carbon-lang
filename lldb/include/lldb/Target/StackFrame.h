@@ -96,6 +96,10 @@ public:
     {
         return m_concrete_frame_index;
     }
+    
+    bool
+    IsConcrete () const;
+
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------

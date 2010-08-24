@@ -926,11 +926,13 @@ Thread::GetStackFrameAtIndex (uint32_t idx)
                     Block *parent_block = m_inlined_frame_info[idx].block->GetParent();
                     parent_block->CalculateSymbolContext(&inline_sc);
                 }
+                
+                Address previous_frame_lookup_addr (previous_frame_sp->GetFrameCodeAddress());
+                if (previous_frame_sp->IsConcrete () && previous_frame_sp->GetFrameIndex() > 0)
+                    previous_frame_lookup_addr.Slide (-1);
 
-                Address backed_up_pc (previous_frame_sp->GetFrameCodeAddress());
-                backed_up_pc.SetOffset(backed_up_pc.GetOffset()-1);
                 AddressRange range;
-                m_inlined_frame_info[idx].block->GetRangeContainingAddress (backed_up_pc, range);
+                m_inlined_frame_info[idx].block->GetRangeContainingAddress (previous_frame_lookup_addr, range);
                     
                 const InlineFunctionInfo* inline_info = m_inlined_frame_info[idx].block->InlinedFunctionInfo();
                 assert (inline_info);

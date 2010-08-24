@@ -28,135 +28,7 @@ class Thread :
     public UserID,
     public ExecutionContextScope
 {
-friend class ThreadPlan;
 public:
-//    //----------------------------------------------------------------------
-//    // StopInfo
-//    //
-//    // Describes the reason the thread it was created with stopped.
-//    //----------------------------------------------------------------------
-//    class StopInfo
-//    {
-//    public:
-//        StopInfo(Thread *thread = NULL);
-//
-//        ~StopInfo();
-//
-//        // Clear clears the stop reason, but it does not clear the thread this
-//        // StopInfo is tied to.
-//        void
-//        Clear();
-//
-//        lldb::StopReason
-//        GetStopReason() const;
-//
-//        void
-//        SetThread (Thread *thread);
-//
-//        Thread *
-//        GetThread ();
-//
-//        void
-//        SetStopReasonWithBreakpointSiteID (lldb::user_id_t break_id);
-//
-//        void
-//        SetStopReasonWithWatchpointID (lldb::user_id_t watch_id);
-//
-//        void
-//        SetStopReasonWithSignal (int signo);
-//
-//        void
-//        SetStopReasonToTrace ();
-//
-//        void
-//        SetStopReasonWithGenericException (uint32_t exc_type, size_t exc_data_count);
-//
-//        void
-//        SetStopReasonWithPlan (lldb::ThreadPlanSP &plan);
-//
-//        void
-//        SetStopReasonToNone ();
-//
-//        const char *
-//        GetStopDescription() const;
-//
-//        void
-//        SetStopDescription(const char *desc);
-//        
-//        void
-//        SetStopReasonWithMachException (uint32_t exc_type, 
-//                                        size_t exc_data_count, 
-//                                        const lldb::addr_t *exc_data);
-//
-//        lldb::user_id_t
-//        GetBreakpointSiteID() const;
-//
-//        lldb::user_id_t
-//        GetWatchpointID() const;
-//
-//        int
-//        GetSignal() const;
-//
-//        lldb::user_id_t
-//        GetPlanID () const;
-//
-//        uint32_t
-//        GetExceptionType() const;
-//
-//        size_t
-//        GetExceptionDataCount() const;
-//
-//        lldb::addr_t
-//        GetExceptionDataAtIndex (uint32_t idx) const;
-//
-//        bool
-//        SetExceptionDataAtIndex (uint32_t idx, lldb::addr_t data);
-//
-//        void
-//        Dump (Stream *s) const;
-//
-//    protected:
-//        lldb::StopReason m_reason;
-//        //--------------------------------------------------------------
-//        // For eStopReasonPlan the completed plan is stored in this shared pointer.
-//        //--------------------------------------------------------------
-//        lldb::ThreadPlanSP m_completed_plan_sp;
-//        Thread *m_thread;
-//        char m_description[256];
-//        union
-//        {
-//            //--------------------------------------------------------------
-//            // eStopReasonBreakpoint
-//            //--------------------------------------------------------------
-//            struct
-//            {
-//                lldb::user_id_t bp_site_id;
-//            } breakpoint;
-//            //--------------------------------------------------------------
-//            // eStopReasonWatchpoint
-//            //--------------------------------------------------------------
-//            struct
-//            {
-//                lldb::user_id_t watch_id;
-//            } watchpoint;
-//            //--------------------------------------------------------------
-//            // eStopReasonSignal
-//            //--------------------------------------------------------------
-//            struct
-//            {
-//                int signo;
-//            } signal;
-//            //--------------------------------------------------------------
-//            // eStopReasonException
-//            //--------------------------------------------------------------
-//            struct
-//            {
-//                uint32_t type;
-//                size_t data_count;
-//                lldb::addr_t data[LLDB_THREAD_MAX_STOP_EXC_DATA];
-//            } exception;
-//        } m_details;
-//    };
 
     class RegisterCheckpoint
     {
@@ -648,6 +520,9 @@ public:
     Calculate (ExecutionContext &exe_ctx);
 
 protected:
+
+    friend class ThreadPlan;
+
     void
     PushPlan (lldb::ThreadPlanSP &plan_sp);
 
