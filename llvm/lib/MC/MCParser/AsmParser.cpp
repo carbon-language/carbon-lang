@@ -449,10 +449,17 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
       return true;
     Res = MCUnaryExpr::CreateLNot(Res, getContext());
     return false;
+  case AsmToken::Dollar:
   case AsmToken::String:
   case AsmToken::Identifier: {
+    EndLoc = Lexer.getLoc();
+
+    StringRef Identifier;
+    if (ParseIdentifier(Identifier))
+      return false;
+
     // This is a symbol reference.
-    std::pair<StringRef, StringRef> Split = getTok().getIdentifier().split('@');
+    std::pair<StringRef, StringRef> Split = Identifier.split('@');
     MCSymbol *Sym = getContext().GetOrCreateSymbol(Split.first);
 
     // Mark the symbol as used in an expression.
@@ -460,11 +467,8 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 
     // Lookup the symbol variant if used.
     MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-    if (Split.first.size() != getTok().getIdentifier().size())
+    if (Split.first.size() != Identifier.size())
       Variant = MCSymbolRefExpr::getVariantKindForName(Split.second);
-
-    EndLoc = Lexer.getLoc();
-    Lex(); // Eat identifier.
 
     // If this is an absolute variable reference, substitute it now to preserve
     // semantics in the face of reassignment.

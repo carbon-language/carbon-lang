@@ -3,3 +3,5 @@
 
 // CHECK: .globl $foo
 .globl $foo
+// CHECK: .long ($foo)
+.long ($foo)
