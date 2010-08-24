@@ -13,8 +13,8 @@
 #ifndef LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
 #define LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
 
-#include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/Sema/ObjCMethodList.h"
 
 namespace clang {
 

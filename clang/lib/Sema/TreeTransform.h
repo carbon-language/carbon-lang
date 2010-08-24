@@ -17,6 +17,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"

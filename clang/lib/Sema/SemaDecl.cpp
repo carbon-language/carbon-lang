@@ -18,6 +18,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
@@ -2175,6 +2176,10 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   }
 
   return false;
+}
+
+Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
+  return HandleDeclarator(S, D, MultiTemplateParamsArg(*this), false);
 }
 
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,

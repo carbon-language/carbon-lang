@@ -33,6 +33,7 @@
 #include "clang/Sema/Designator.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/Template.h"
 using namespace clang;
 
 

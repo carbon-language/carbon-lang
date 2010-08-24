@@ -101,7 +101,7 @@ namespace clang {
   };
   
   /// \brief The context in which partial ordering of function templates occurs.
-  enum TemplatePartialOrderingContext {
+  enum TPOC {
     /// \brief Partial ordering of function templates for a function call.
     TPOC_Call,
     /// \brief Partial ordering of function templates for a call to a 
@@ -111,6 +111,17 @@ namespace clang {
     /// taking the address of a function template or matching a function 
     /// template specialization to a function template.
     TPOC_Other
+  };
+
+  // This is lame but unavoidable in a world without forward
+  // declarations of enums.  The alternatives are to either pollute
+  // Sema.h (by including this file) or sacrifice type safety (by
+  // making Sema.h declare things as enums).
+  class TemplatePartialOrderingContext {
+    TPOC Value;
+  public:
+    TemplatePartialOrderingContext(TPOC Value) : Value(Value) {}
+    operator TPOC() const { return Value; }
   };
 
   /// \brief Captures a template argument whose value has been deduced

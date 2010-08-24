@@ -12,7 +12,9 @@
 
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Template.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Expr.h"

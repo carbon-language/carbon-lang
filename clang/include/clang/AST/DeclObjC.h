@@ -321,21 +321,6 @@ public:
   }
 };
 
-/// ObjCMethodList - a linked list of methods with different signatures.
-struct ObjCMethodList {
-  ObjCMethodDecl *Method;
-  ObjCMethodList *Next;
-
-  ObjCMethodList() {
-    Method = 0;
-    Next = 0;
-  }
-  ObjCMethodList(ObjCMethodDecl *M, ObjCMethodList *C) {
-    Method = M;
-    Next = C;
-  }
-};
-
 /// ObjCContainerDecl - Represents a container for method declarations.
 /// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl,
 /// ObjCProtocolDecl, and ObjCImplDecl.

@@ -16,12 +16,15 @@
 #define LLVM_CLANG_AST_SEMA_IDENTIFIERRESOLVER_H
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Sema/Scope.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclarationName.h"
-#include "clang/AST/DeclCXX.h"
 
 namespace clang {
+
+class ASTContext;
+class Decl;
+class DeclContext;
+class DeclarationName;
+class NamedDecl;
+class Scope;
 
 /// IdentifierResolver - Keeps track of shadowed decls on enclosing
 /// scopes.  It manages the shadowing chains of declaration names and
@@ -95,6 +98,8 @@ public:
     }
 
     friend class IdentifierResolver;
+
+    void incrementSlowCase();
   public:
     iterator() : Ptr(0) {}
 
@@ -116,18 +121,8 @@ public:
     iterator& operator++() {
       if (!isIterator()) // common case.
         Ptr = 0;
-      else {
-        NamedDecl *D = **this;
-        void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
-        assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
-        IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
-
-        BaseIter I = getIterator();
-        if (I != Info->decls_begin())
-          *this = iterator(I-1);
-        else // No more decls.
-          *this = iterator();
-      }
+      else
+        incrementSlowCase();
       return *this;
     }
 

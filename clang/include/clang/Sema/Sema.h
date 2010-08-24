@@ -12,24 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_SEMA_H
-#define LLVM_CLANG_AST_SEMA_H
+#ifndef LLVM_CLANG_SEMA_SEMA_H
+#define LLVM_CLANG_SEMA_SEMA_H
 
 #include "clang/Sema/Action.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/CXXFieldCollector.h"
+#include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/Overload.h"
-#include "clang/Sema/Template.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
-#include "clang/AST/Attr.h"
-#include "clang/AST/DeclBase.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclObjC.h"
-#include "clang/AST/DeclTemplate.h"
-#include "clang/AST/ExprCXX.h"
-#include "clang/AST/FullExpr.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -83,8 +78,12 @@ namespace clang {
   class TemplateArgumentList;
   class TemplateParameterList;
   class TemplateTemplateParmDecl;
+  class MultiLevelTemplateArgumentList;
+  class DeducedTemplateArgument;
+  class TemplatePartialOrderingContext;
   class ClassTemplatePartialSpecializationDecl;
   class ClassTemplateDecl;
+  template <class T> class ObjCList;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
@@ -855,9 +854,7 @@ public:
                                        CXXScopeSpec *SS,
                                        ParsedType &SuggestedType);
 
-  virtual Decl *ActOnDeclarator(Scope *S, Declarator &D) {
-    return HandleDeclarator(S, D, MultiTemplateParamsArg(*this), false);
-  }
+  virtual Decl *ActOnDeclarator(Scope *S, Declarator &D);
 
   Decl *HandleDeclarator(Scope *S, Declarator &D,
                          MultiTemplateParamsArg TemplateParameterLists,
@@ -2323,8 +2320,8 @@ public:
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
   /// the default expr if needed.
   ExprResult BuildCXXDefaultArgExpr(SourceLocation CallLoc,
-                                          FunctionDecl *FD,
-                                          ParmVarDecl *Param);
+                                    FunctionDecl *FD,
+                                    ParmVarDecl *Param);
 
   /// FinalizeVarWithDestructor - Prepare for calling destructor on the
   /// constructed variable.

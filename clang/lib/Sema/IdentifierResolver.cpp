@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/IdentifierResolver.h"
+#include "clang/Sema/Scope.h"
+#include "clang/AST/Decl.h"
 #include "clang/Basic/LangOptions.h"
 
 using namespace clang;
@@ -270,4 +272,17 @@ IdentifierResolver::IdDeclInfoMap::operator[](DeclarationName Name) {
                                                                      );
   ++CurIndex;
   return *IDI;
+}
+
+void IdentifierResolver::iterator::incrementSlowCase() {
+  NamedDecl *D = **this;
+  void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
+  assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
+  IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
+
+  BaseIter I = getIterator();
+  if (I != Info->decls_begin())
+    *this = iterator(I-1);
+  else // No more decls.
+    *this = iterator();
 }

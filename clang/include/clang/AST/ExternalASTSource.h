@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
 #include <cassert>
@@ -22,8 +23,6 @@
 namespace clang {
 
 class ASTConsumer;
-class Decl;
-class DeclContext;
 class ExternalSemaSource; // layering violation required for downcasting
 class Stmt;
 
