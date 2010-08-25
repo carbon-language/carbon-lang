@@ -19,6 +19,32 @@ __m128i shift_right(__m128i value, unsigned long offset) {
 
 //===---------------------------------------------------------------------===//
 
+SSE has instructions for doing operations on complex numbers, we should pattern
+match them.  Compiling this:
+
+_Complex float f32(_Complex float A, _Complex float B) {
+  return A+B;
+}
+
+into:
+
+_f32:
+	movdqa	%xmm0, %xmm2
+	addss	%xmm1, %xmm2
+	pshufd	$16, %xmm2, %xmm2
+	pshufd	$1, %xmm1, %xmm1
+	pshufd	$1, %xmm0, %xmm0
+	addss	%xmm1, %xmm0
+	pshufd	$16, %xmm0, %xmm1
+	movdqa	%xmm2, %xmm0
+	unpcklps	%xmm1, %xmm0
+	ret
+
+seems silly. 
+
+
+//===---------------------------------------------------------------------===//
+
 Expand libm rounding functions inline:  Significant speedups possible.
 http://gcc.gnu.org/ml/gcc-patches/2006-10/msg00909.html
 
