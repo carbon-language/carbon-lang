@@ -67,27 +67,11 @@ namespace {
     return isInt<10>(CN->getSExtValue());
   }
 
-  //! SDNode predicate for i16 sign-extended, 10-bit immediate values
-  bool
-  isI16IntS10Immediate(SDNode *N)
-  {
-    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
-    return (CN != 0 && isI16IntS10Immediate(CN));
-  }
-
   //! ConstantSDNode predicate for i16 unsigned 10-bit immediate values
   bool
   isI16IntU10Immediate(ConstantSDNode *CN)
   {
     return isUInt<10>((short) CN->getZExtValue());
-  }
-
-  //! SDNode predicate for i16 sign-extended, 10-bit immediate values
-  bool
-  isI16IntU10Immediate(SDNode *N)
-  {
-    return (N->getOpcode() == ISD::Constant
-            && isI16IntU10Immediate(cast<ConstantSDNode>(N)));
   }
 
   //! ConstantSDNode predicate for signed 16-bit values
@@ -119,14 +103,6 @@ namespace {
     return false;
   }
 
-  //! SDNode predicate for signed 16-bit values.
-  bool
-  isIntS16Immediate(SDNode *N, short &Imm)
-  {
-    return (N->getOpcode() == ISD::Constant
-            && isIntS16Immediate(cast<ConstantSDNode>(N), Imm));
-  }
-
   //! ConstantFPSDNode predicate for representing floats as 16-bit sign ext.
   static bool
   isFPS16Immediate(ConstantFPSDNode *FPN, short &Imm)
@@ -140,16 +116,6 @@ namespace {
     }
 
     return false;
-  }
-
-  bool
-  isHighLow(const SDValue &Op)
-  {
-    return (Op.getOpcode() == SPUISD::IndirectAddr
-            && ((Op.getOperand(0).getOpcode() == SPUISD::Hi
-                 && Op.getOperand(1).getOpcode() == SPUISD::Lo)
-                || (Op.getOperand(0).getOpcode() == SPUISD::Lo
-                    && Op.getOperand(1).getOpcode() == SPUISD::Hi)));
   }
 
   //===------------------------------------------------------------------===//
