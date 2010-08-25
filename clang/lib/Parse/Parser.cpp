@@ -1154,3 +1154,7 @@ void Parser::CodeCompleteMacroArgument(IdentifierInfo *Macro,
   Actions.CodeCompletePreprocessorMacroArgument(getCurScope(), Macro, MacroInfo, 
                                                 ArgumentIndex);
 }
+
+void Parser::CodeCompleteNaturalLanguage() {
+  Actions.CodeCompleteNaturalLanguage();
+}

@@ -4363,6 +4363,7 @@ public:
                                                      IdentifierInfo *Macro,
                                                      MacroInfo *MacroInfo,
                                                      unsigned Argument);
+  virtual void CodeCompleteNaturalLanguage();
   void GatherGlobalCodeCompletions(
                   llvm::SmallVectorImpl<CodeCompletionResult> &Results);
   //@}

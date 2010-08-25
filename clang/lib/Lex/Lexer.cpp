@@ -27,6 +27,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
@@ -962,8 +963,9 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
     
     if (C == '\n' || C == '\r' ||             // Newline.
         (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode() && !Features.AsmPreprocessor &&
-          !PP->isCodeCompletionFile(FileLoc))
+      if (C == 0 && PP && PP->isCodeCompletionFile(FileLoc))
+        PP->CodeCompleteNaturalLanguage();
+      else if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::err_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
@@ -1040,8 +1042,9 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode() && !Features.AsmPreprocessor &&
-          !PP->isCodeCompletionFile(FileLoc))
+      if (C == 0 && PP && PP->isCodeCompletionFile(FileLoc))
+        PP->CodeCompleteNaturalLanguage();
+      else if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::err_unterminated_char);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
@@ -1185,7 +1188,13 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
         }
     }
 
-    if (CurPtr == BufferEnd+1) { --CurPtr; break; }
+    if (CurPtr == BufferEnd+1) { 
+      if (PP && PP->isCodeCompletionFile(FileLoc))
+        PP->CodeCompleteNaturalLanguage();
+
+      --CurPtr; 
+      break; 
+    }
   } while (C != '\n' && C != '\r');
 
   // Found but did not consume the newline.  Notify comment handlers about the
@@ -1424,7 +1433,9 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
           Diag(CurPtr-1, diag::warn_nested_block_comment);
       }
     } else if (C == 0 && CurPtr == BufferEnd+1) {
-      if (!isLexingRawMode() && !PP->isCodeCompletionFile(FileLoc))
+      if (PP && PP->isCodeCompletionFile(FileLoc))
+        PP->CodeCompleteNaturalLanguage();
+      else if (!isLexingRawMode())
         Diag(BufferPtr, diag::err_unterminated_block_comment);
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
@@ -1510,6 +1521,11 @@ std::string Lexer::ReadToEndOfLine() {
 
       // Next, lex the character, which should handle the EOM transition.
       Lex(Tmp);
+      if (Tmp.is(tok::code_completion)) {
+        if (PP && PP->getCodeCompletionHandler())
+          PP->getCodeCompletionHandler()->CodeCompleteNaturalLanguage();
+        Lex(Tmp);
+      }
       assert(Tmp.is(tok::eom) && "Unexpected token!");
 
       // Finally, we're done, return the string we found.

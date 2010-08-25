@@ -392,6 +392,10 @@ public:
     CodeComplete = 0;
   }
   
+  /// \brief Hook used by the lexer to invoke the "natural language" code
+  /// completion point.
+  void CodeCompleteNaturalLanguage();
+  
   /// \brief Retrieve the preprocessing record, or NULL if there is no
   /// preprocessing record.
   PreprocessingRecord *getPreprocessingRecord() const { return Record; }

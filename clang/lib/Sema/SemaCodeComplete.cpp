@@ -4873,6 +4873,13 @@ void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
                                            : Action::PCC_Namespace);
 }
 
+void Sema::CodeCompleteNaturalLanguage() {
+  // FIXME: Use a dedicated completion context for this!
+  HandleCodeCompleteResults(this, CodeCompleter,
+                            CodeCompletionContext::CCC_Other,
+                            0, 0);
+}
+
 void Sema::GatherGlobalCodeCompletions(
                  llvm::SmallVectorImpl<CodeCompletionResult> &Results) {
   ResultBuilder Builder(*this);

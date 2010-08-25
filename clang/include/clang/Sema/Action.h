@@ -3244,6 +3244,10 @@ public:
                                                      IdentifierInfo *Macro,
                                                      MacroInfo *MacroInfo,
                                                      unsigned Argument) { }
+  
+  /// \brief Callback invoked when performing code completion in a context where
+  /// we expect a natural language, e.g., inside a comment or string.
+  virtual void CodeCompleteNaturalLanguage() { }
   //@}
 };
 

@@ -55,6 +55,11 @@ public:
   virtual void CodeCompleteMacroArgument(IdentifierInfo *Macro,
                                          MacroInfo *MacroInfo,
                                          unsigned ArgumentIndex) { }
+
+  /// \brief Callback invoked when performing code completion in a part of the
+  /// file where we expect natural language, e.g., a comment, string, or 
+  /// #error directive.
+  virtual void CodeCompleteNaturalLanguage() { }
 };
   
 }

@@ -284,6 +284,13 @@ bool Preprocessor::isCodeCompletionFile(SourceLocation FileLoc) const {
       == CodeCompletionFile;
 }
 
+void Preprocessor::CodeCompleteNaturalLanguage() {
+  SetCodeCompletionPoint(0, 0, 0);
+  getDiagnostics().setSuppressAllDiagnostics(true);
+  if (CodeComplete)
+    CodeComplete->CodeCompleteNaturalLanguage();
+}
+
 //===----------------------------------------------------------------------===//
 // Token Spelling
 //===----------------------------------------------------------------------===//

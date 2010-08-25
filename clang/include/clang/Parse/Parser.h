@@ -1540,6 +1540,7 @@ private:
   virtual void CodeCompleteMacroArgument(IdentifierInfo *Macro,
                                          MacroInfo *MacroInfo,
                                          unsigned ArgumentIndex);
+  virtual void CodeCompleteNaturalLanguage();
 };
 
 }  // end namespace clang
