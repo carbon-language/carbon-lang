@@ -19,8 +19,10 @@ using namespace clang;
 void ASTRecordLayout::Destroy(ASTContext &Ctx) {
   if (FieldOffsets)
     Ctx.Deallocate(FieldOffsets);
-  if (CXXInfo)
+  if (CXXInfo) {
     Ctx.Deallocate(CXXInfo);
+    CXXInfo->~CXXRecordLayoutInfo();
+  }
   this->~ASTRecordLayout();
   Ctx.Deallocate(this);
 }
