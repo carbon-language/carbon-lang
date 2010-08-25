@@ -48,7 +48,7 @@ void FunctionScopeInfo::Clear(unsigned NumErrors) {
 
 BlockScopeInfo::~BlockScopeInfo() { }
 
-void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
+void Sema::ActOnTranslationUnitScope(Scope *S) {
   TUScope = S;
   PushDeclContext(S, Context.getTranslationUnitDecl());
 

@@ -574,7 +574,7 @@ public:
 
   /// ActOnTranslationUnitScope - This callback is called once, immediately
   /// after creating the translation unit scope (in Parser::Initialize).
-  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {}
+  virtual void ActOnTranslationUnitScope(Scope *S) {}
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.

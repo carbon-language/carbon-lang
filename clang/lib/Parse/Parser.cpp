@@ -324,13 +324,13 @@ Parser::~Parser() {
 /// Initialize - Warm up the parser.
 ///
 void Parser::Initialize() {
-  // Prime the lexer look-ahead.
-  ConsumeToken();
-
   // Create the translation unit scope.  Install it as the current scope.
   assert(getCurScope() == 0 && "A scope is already active?");
   EnterScope(Scope::DeclScope);
-  Actions.ActOnTranslationUnitScope(Tok.getLocation(), getCurScope());
+  Actions.ActOnTranslationUnitScope(getCurScope());
+
+  // Prime the lexer look-ahead.
+  ConsumeToken();
 
   if (Tok.is(tok::eof) &&
       !getLang().CPlusPlus)  // Empty source file is an extension in C
