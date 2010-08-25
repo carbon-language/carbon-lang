@@ -50,7 +50,7 @@ namespace SrcMgr {
     C_User, C_System, C_ExternCSystem
   };
 
-  /// ContentCache - Once instance of this struct is kept for every file
+  /// ContentCache - One instance of this struct is kept for every file
   /// loaded or used.  This object owns the MemoryBuffer object.
   class ContentCache {
     enum CCFlags {
