@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LIVEVALUES_H
-#define LLVM_ANALYSIS_LIVEVALUES_H
+#ifndef LLVM_ANALYSIS_LAZYVALUEINFO_H
+#define LLVM_ANALYSIS_LAZYVALUEINFO_H
 
 #include "llvm/Pass.h"
 
