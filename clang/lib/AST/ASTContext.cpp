@@ -5606,10 +5606,6 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (VD->isThisDeclarationADefinition() == VarDecl::DeclarationOnly)
     return false;
 
-  // Always emit volatiles.
-  if (VD->getType().isVolatileQualified())
-    return true;
-
   // Structs that have non-trivial constructors or destructors are required.
 
   // FIXME: Handle references.
