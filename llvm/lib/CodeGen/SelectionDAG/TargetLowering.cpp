@@ -697,6 +697,7 @@ TargetLowering::findRepresentativeClass(EVT VT) const {
   return std::make_pair(BestRC, 1);
 }
 
+
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
 void TargetLowering::computeRegisterProperties() {
@@ -782,6 +783,28 @@ void TargetLowering::computeRegisterProperties() {
     MVT VT = (MVT::SimpleValueType)i;
     if (isTypeLegal(VT)) continue;
     
+    // Determine if there is a legal wider type.  If so, we should promote to
+    // that wider vector type.
+    EVT EltVT = VT.getVectorElementType();
+    unsigned NElts = VT.getVectorNumElements();
+    if (NElts != 1) {
+      bool IsLegalWiderType = false;
+      for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+        EVT SVT = (MVT::SimpleValueType)nVT;
+        if (SVT.getVectorElementType() == EltVT &&
+            SVT.getVectorNumElements() > NElts && 
+            isTypeSynthesizable(SVT)) {
+          TransformToType[i] = SVT;
+          RegisterTypeForVT[i] = SVT;
+          NumRegistersForVT[i] = 1;
+          ValueTypeActions.setTypeAction(VT, Promote);
+          IsLegalWiderType = true;
+          break;
+        }
+      }
+      if (IsLegalWiderType) continue;
+    }
+    
     MVT IntermediateVT;
     EVT RegisterVT;
     unsigned NumIntermediates;
@@ -790,30 +813,14 @@ void TargetLowering::computeRegisterProperties() {
                                 RegisterVT, this);
     RegisterTypeForVT[i] = RegisterVT;
     
-    // Determine if there is a legal wider type.
-    bool IsLegalWiderType = false;
-    EVT EltVT = VT.getVectorElementType();
-    unsigned NElts = VT.getVectorNumElements();
-    for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
-      EVT SVT = (MVT::SimpleValueType)nVT;
-      if (isTypeSynthesizable(SVT) && SVT.getVectorElementType() == EltVT &&
-          SVT.getVectorNumElements() > NElts && NElts != 1) {
-        TransformToType[i] = SVT;
-        ValueTypeActions.setTypeAction(VT, Promote);
-        IsLegalWiderType = true;
-        break;
-      }
-    }
-    if (!IsLegalWiderType) {
-      EVT NVT = VT.getPow2VectorType();
-      if (NVT == VT) {
-        // Type is already a power of 2.  The default action is to split.
-        TransformToType[i] = MVT::Other;
-        ValueTypeActions.setTypeAction(VT, Expand);
-      } else {
-        TransformToType[i] = NVT;
-        ValueTypeActions.setTypeAction(VT, Promote);
-      }
+    EVT NVT = VT.getPow2VectorType();
+    if (NVT == VT) {
+      // Type is already a power of 2.  The default action is to split.
+      TransformToType[i] = MVT::Other;
+      ValueTypeActions.setTypeAction(VT, Expand);
+    } else {
+      TransformToType[i] = NVT;
+      ValueTypeActions.setTypeAction(VT, Promote);
     }
   }
 
@@ -857,8 +864,21 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
                                                 EVT &IntermediateVT,
                                                 unsigned &NumIntermediates,
                                                 EVT &RegisterVT) const {
-  // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = VT.getVectorNumElements();
+  
+  // If there is a wider vector type with the same element type as this one,
+  // we should widen to that legal vector type.  This handles things like
+  // <2 x float> -> <4 x float>.
+  if (NumElts != 1 && getTypeAction(Context, VT) == Promote) {
+    RegisterVT = getTypeToTransformTo(Context, VT);
+    if (isTypeLegal(RegisterVT)) {
+      IntermediateVT = RegisterVT;
+      NumIntermediates = 1;
+      return 1;
+    }
+  }
+  
+  // Figure out the right, legal destination reg to copy into.
   EVT EltTy = VT.getVectorElementType();
   
   unsigned NumVectorRegs = 1;
@@ -887,16 +907,12 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
 
   EVT DestVT = getRegisterType(Context, NewVT);
   RegisterVT = DestVT;
-  if (DestVT.bitsLT(NewVT)) {
-    // Value is expanded, e.g. i64 -> i16.
+  if (DestVT.bitsLT(NewVT))   // Value is expanded, e.g. i64 -> i16.
     return NumVectorRegs*(NewVT.getSizeInBits()/DestVT.getSizeInBits());
-  } else {
-    // Otherwise, promotion or legal types use the same number of registers as
-    // the vector decimated to the appropriate level.
-    return NumVectorRegs;
-  }
   
-  return 1;
+  // Otherwise, promotion or legal types use the same number of registers as
+  // the vector decimated to the appropriate level.
+  return NumVectorRegs;
 }
 
 /// Get the EVTs and ArgFlags collections that represent the legalized return 

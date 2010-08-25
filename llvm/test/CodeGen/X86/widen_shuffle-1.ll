@@ -3,7 +3,8 @@
 ; widening shuffle v3float and then a add
 define void @shuf(<3 x float>* %dst.addr, <3 x float> %src1,<3 x float> %src2) nounwind {
 entry:
-; CHECK: insertps
+; CHECK: shuf:
+; CHECK: extractps
 ; CHECK: extractps
 	%x = shufflevector <3 x float> %src1, <3 x float> %src2, <3 x i32> < i32 0, i32 1, i32 2>
 	%val = fadd <3 x float> %x, %src2
@@ -15,7 +16,8 @@ entry:
 ; widening shuffle v3float with a different mask and then a add
 define void @shuf2(<3 x float>* %dst.addr, <3 x float> %src1,<3 x float> %src2) nounwind {
 entry:
-; CHECK: insertps
+; CHECK: shuf2:
+; CHECK: extractps
 ; CHECK: extractps
 	%x = shufflevector <3 x float> %src1, <3 x float> %src2, <3 x i32> < i32 0, i32 4, i32 2>
 	%val = fadd <3 x float> %x, %src2
@@ -26,7 +28,7 @@ entry:
 ; Example of when widening a v3float operation causes the DAG to replace a node
 ; with the operation that we are currently widening, i.e. when replacing
 ; opA with opB, the DAG will produce new operations with opA.
-define void @shuf3(<4 x float> %tmp10, <4 x float> %vecinit15, <4 x float>* %dst) {
+define void @shuf3(<4 x float> %tmp10, <4 x float> %vecinit15, <4 x float>* %dst) nounwind {
 entry:
 ; CHECK: pshufd
   %shuffle.i.i.i12 = shufflevector <4 x float> %tmp10, <4 x float> %vecinit15, <4 x i32> <i32 0, i32 1, i32 4, i32 5>

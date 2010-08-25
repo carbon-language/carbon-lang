@@ -252,8 +252,21 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
   if (PartVT == ValueVT)
     return Val;
   
-  if (PartVT.isVector())  // Vector/Vector bitcast.
+  if (PartVT.isVector()) {
+    // If the element type of the source/dest vectors are the same, but the
+    // parts vector has more elements than the value vector, then we have a
+    // vector widening case (e.g. <2 x float> -> <4 x float>).  Extract the
+    // elements we want.
+    if (PartVT.getVectorElementType() == ValueVT.getVectorElementType()) {
+      assert(PartVT.getVectorNumElements() > ValueVT.getVectorNumElements() &&
+             "Cannot narrow, it would be a lossy transformation");
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, ValueVT, Val,
+                         DAG.getIntPtrConstant(0));
+    }                                      
+    
+    // Vector/Vector bitcast.
     return DAG.getNode(ISD::BIT_CONVERT, DL, ValueVT, Val);
+  }
   
   assert(ValueVT.getVectorElementType() == PartVT &&
          ValueVT.getVectorNumElements() == 1 &&
@@ -392,16 +405,39 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   
   if (NumParts == 1) {
-    if (PartVT != ValueVT) {
-      if (PartVT.getSizeInBits() == ValueVT.getSizeInBits()) {
-        Val = DAG.getNode(ISD::BIT_CONVERT, DL, PartVT, Val);
-      } else {
-        assert(ValueVT.getVectorElementType() == PartVT &&
-               ValueVT.getVectorNumElements() == 1 &&
-               "Only trivial vector-to-scalar conversions should get here!");
-        Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
-                          PartVT, Val, DAG.getIntPtrConstant(0));
-      }
+    if (PartVT == ValueVT) {
+      // Nothing to do.
+    } else if (PartVT.getSizeInBits() == ValueVT.getSizeInBits()) {
+      // Bitconvert vector->vector case.
+      Val = DAG.getNode(ISD::BIT_CONVERT, DL, PartVT, Val);
+    } else if (PartVT.isVector() &&
+               PartVT.getVectorElementType() == ValueVT.getVectorElementType()&&
+               PartVT.getVectorNumElements() > ValueVT.getVectorNumElements()) {
+      EVT ElementVT = PartVT.getVectorElementType();
+      // Vector widening case, e.g. <2 x float> -> <4 x float>.  Shuffle in
+      // undef elements.
+      SmallVector<SDValue, 16> Ops;
+      for (unsigned i = 0, e = ValueVT.getVectorNumElements(); i != e; ++i)
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
+                                  ElementVT, Val, DAG.getIntPtrConstant(i)));
+      
+      for (unsigned i = ValueVT.getVectorNumElements(),
+           e = PartVT.getVectorNumElements(); i != e; ++i)
+        Ops.push_back(DAG.getUNDEF(ElementVT));
+
+      Val = DAG.getNode(ISD::BUILD_VECTOR, DL, PartVT, &Ops[0], Ops.size());
+
+      // FIXME: Use CONCAT for 2x -> 4x.
+      
+      //SDValue UndefElts = DAG.getUNDEF(VectorTy);
+      //Val = DAG.getNode(ISD::CONCAT_VECTORS, DL, PartVT, Val, UndefElts);
+    } else {
+      // Vector -> scalar conversion.
+      assert(ValueVT.getVectorElementType() == PartVT &&
+             ValueVT.getVectorNumElements() == 1 &&
+             "Only trivial vector-to-scalar conversions should get here!");
+      Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
+                        PartVT, Val, DAG.getIntPtrConstant(0));
     }
     
     Parts[0] = Val;
@@ -428,8 +464,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
                    DAG.getIntPtrConstant(i * (NumElements / NumIntermediates)));
     else
       Ops[i] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
-                           IntermediateVT, Val,
-                           DAG.getIntPtrConstant(i));
+                           IntermediateVT, Val, DAG.getIntPtrConstant(i));
   }
   
   // Split the intermediate operands into legal parts.

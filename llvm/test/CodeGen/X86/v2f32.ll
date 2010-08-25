@@ -10,15 +10,16 @@ define void @test1(<2 x float> %Q, float *%P2) nounwind {
   store float %c, float* %P2
   ret void
 ; X64: test1:
-; X64-NEXT: addss	%xmm1, %xmm0
-; X64-NEXT: movss	%xmm0, (%rdi)
+; X64-NEXT: pshufd	$1, %xmm0, %xmm1
+; X64-NEXT: addss	%xmm0, %xmm1
+; X64-NEXT: movss	%xmm1, (%rdi)
 ; X64-NEXT: ret
 
 ; X32: test1:
-; X32-NEXT: movss	4(%esp), %xmm0
-; X32-NEXT: addss	8(%esp), %xmm0
-; X32-NEXT: movl	12(%esp), %eax
-; X32-NEXT: movss	%xmm0, (%eax)
+; X32-NEXT: pshufd	$1, %xmm0, %xmm1
+; X32-NEXT: addss	%xmm0, %xmm1
+; X32-NEXT: movl	4(%esp), %eax
+; X32-NEXT: movss	%xmm1, (%eax)
 ; X32-NEXT: ret
 }
 
@@ -28,12 +29,42 @@ define <2 x float> @test2(<2 x float> %Q, <2 x float> %R, <2 x float> *%P) nounw
   ret <2 x float> %Z
   
 ; X64: test2:
-; X64-NEXT: insertps $0
-; X64-NEXT: insertps $16
-; X64-NEXT: insertps $0
-; X64-NEXT: insertps $16
-; X64-NEXT: addps
-; X64-NEXT: movaps
-; X64-NEXT: pshufd
+; X64-NEXT: addps	%xmm1, %xmm0
 ; X64-NEXT: ret
 }
+
+
+define <2 x float> @test3(<4 x float> %A) nounwind {
+	%B = shufflevector <4 x float> %A, <4 x float> undef, <2 x i32> <i32 0, i32 1>
+	%C = fadd <2 x float> %B, %B
+	ret <2 x float> %C
+; CHECK: test3:
+; CHECK-NEXT: 	addps	%xmm0, %xmm0
+; CHECK-NEXT: 	ret
+}
+
+define <2 x float> @test4(<2 x float> %A) nounwind {
+	%C = fadd <2 x float> %A, %A
+	ret <2 x float> %C
+; CHECK: test4:
+; CHECK-NEXT: 	addps	%xmm0, %xmm0
+; CHECK-NEXT: 	ret
+}
+
+define <4 x float> @test5(<4 x float> %A) nounwind {
+	%B = shufflevector <4 x float> %A, <4 x float> undef, <2 x i32> <i32 0, i32 1>
+	%C = fadd <2 x float> %B, %B
+        br label %BB
+        
+BB:
+        %D = fadd <2 x float> %C, %C
+	%E = shufflevector <2 x float> %D, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+	ret <4 x float> %E
+        
+; CHECK: _test5:
+; CHECK-NEXT: 	addps	%xmm0, %xmm0
+; CHECK-NEXT: 	addps	%xmm0, %xmm0
+; CHECK-NEXT: 	ret
+}
+
+

@@ -214,24 +214,59 @@ public:
     /// ValueTypeActions - For each value type, keep a LegalizeAction enum
     /// that indicates how instruction selection should deal with the type.
     uint8_t ValueTypeActions[MVT::LAST_VALUETYPE];
+    
+    LegalizeAction getExtendedTypeAction(EVT VT) const {
+      // Handle non-vector integers.
+      if (!VT.isVector()) {
+        assert(VT.isInteger() && "Unsupported extended type!");
+        unsigned BitSize = VT.getSizeInBits();
+        // First promote to a power-of-two size, then expand if necessary.
+        if (BitSize < 8 || !isPowerOf2_32(BitSize))
+          return Promote;
+        return Expand;
+      }
+      
+      // If this is a type smaller than a legal vector type, promote to that
+      // type, e.g. <2 x float> -> <4 x float>.
+      if (VT.getVectorElementType().isSimple() &&
+          VT.getVectorNumElements() != 1) {
+        MVT EltType = VT.getVectorElementType().getSimpleVT();
+        unsigned NumElts = VT.getVectorNumElements();
+        while (1) {
+          // Round up to the nearest power of 2.
+          NumElts = (unsigned)NextPowerOf2(NumElts);
+          
+          MVT LargerVector = MVT::getVectorVT(EltType, NumElts);
+          if (LargerVector == MVT()) break;
+          
+          // If this the larger type is legal, promote to it.
+          if (getTypeAction(LargerVector) == Legal) return Promote;
+        }
+      }
+      
+      return VT.isPow2VectorType() ? Expand : Promote;
+    }      
   public:
     ValueTypeActionImpl() {
       std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
     }
+    
+    /// FIXME: This Context argument is now dead, zap it.
     LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
-      if (VT.isExtended()) {
-        if (VT.isVector()) {
-          return VT.isPow2VectorType() ? Expand : Promote;
-        }
-        if (VT.isInteger())
-          // First promote to a power-of-two size, then expand if necessary.
-          return VT == VT.getRoundIntegerType(Context) ? Expand : Promote;
-        assert(0 && "Unsupported extended type!");
-        return Legal;
-      }
-      unsigned I = VT.getSimpleVT().SimpleTy;
-      return (LegalizeAction)ValueTypeActions[I];
+      return getTypeAction(VT);
     }
+    
+    LegalizeAction getTypeAction(EVT VT) const {
+      if (!VT.isExtended())
+        return getTypeAction(VT.getSimpleVT());
+      return getExtendedTypeAction(VT);
+    }
+    
+    LegalizeAction getTypeAction(MVT VT) const {
+      return (LegalizeAction)ValueTypeActions[VT.SimpleTy];
+    }
+    
+    
     void setTypeAction(EVT VT, LegalizeAction Action) {
       unsigned I = VT.getSimpleVT().SimpleTy;
       ValueTypeActions[I] = Action;
