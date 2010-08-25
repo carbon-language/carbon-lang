@@ -58,9 +58,6 @@ class ARMFastISel : public FastISel {
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
   const ARMFunctionInfo *AFI;
-  
-  // FIXME: Remove this and replace it with queries.
-  const TargetRegisterClass *FixedRC;
 
   public:
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo) 
@@ -70,7 +67,6 @@ class ARMFastISel : public FastISel {
       TLI(*TM.getTargetLowering()) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
-      FixedRC = ARM::GPRRegisterClass;
     }
 
     // Code from FastISel.cpp.
@@ -113,6 +109,8 @@ class ARMFastISel : public FastISel {
 
     // Utility routines.
   private:
+    bool isTypeLegal(const Type *Ty, EVT &VT);
+    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, unsigned Reg, int Offset);
     bool ARMLoadAlloca(const Instruction *I);
     bool ARMComputeRegOffset(const Value *Obj, unsigned &Reg, int &Offset);
     
@@ -314,6 +312,16 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   return ResultReg;
 }
 
+bool ARMFastISel::isTypeLegal(const Type *Ty, EVT &VT) {
+  VT = TLI.getValueType(Ty, true);
+  
+  // Only handle simple types.
+  if (VT == MVT::Other || !VT.isSimple()) return false;
+  
+  // For now, only handle 32-bit types.
+  return VT == MVT::i32;
+}
+
 // Computes the Reg+Offset to get to an object.
 bool ARMFastISel::ARMComputeRegOffset(const Value *Obj, unsigned &Reg,
                                       int &Offset) {
@@ -370,9 +378,10 @@ bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
       FuncInfo.StaticAllocaMap.find(AI);
 
     if (SI != FuncInfo.StaticAllocaMap.end()) {
-      unsigned ResultReg = createResultReg(FixedRC);
+      TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
+      unsigned ResultReg = createResultReg(RC);
       TII.loadRegFromStackSlot(*FuncInfo.MBB, *FuncInfo.InsertPt,
-                               ResultReg, SI->second, FixedRC,
+                               ResultReg, SI->second, RC,
                                TM.getRegisterInfo());
       UpdateValueMap(I, ResultReg);
       return true;
@@ -380,6 +389,29 @@ bool ARMFastISel::ARMLoadAlloca(const Instruction *I) {
   }
   
   return false;
+}
+
+bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
+                              unsigned Reg, int Offset) {
+  
+  assert(VT.isSimple() && "Non-simple types are invalid here!");
+  switch (VT.getSimpleVT().SimpleTy) {
+    default: return false;
+    case MVT::i32: {
+      ResultReg = createResultReg(ARM::GPRRegisterClass);
+      // TODO: Fix the Addressing modes so that these can share some code.
+      // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
+      if (AFI->isThumbFunction())
+        AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                TII.get(ARM::tLDR), ResultReg)
+                        .addReg(Reg).addImm(Offset).addReg(0));
+      else
+        AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                TII.get(ARM::LDR), ResultReg)
+                        .addReg(Reg).addReg(0).addImm(Offset));
+      return true;
+    }
+  }
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
@@ -413,22 +445,16 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
                            static_cast<const ARMBaseInstrInfo&>(TII));
   } 
   
-  // FIXME: There is more than one register class in the world...
+  EVT VT;
+  if (!isTypeLegal(I->getType(), VT))
+    return false;
+
+  unsigned ResultReg;
   // TODO: Verify the additions above work, otherwise we'll need to add the
   // offset instead of 0 and do all sorts of operand munging.
-  unsigned ResultReg = createResultReg(FixedRC);
-  // TODO: Fix the Addressing modes so that these can share some code.
-  // Since this is a Thumb1 load this will work in Thumb1 or 2 mode.
-  if (AFI->isThumbFunction())
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(ARM::tLDR), ResultReg)
-                    .addReg(Reg).addImm(0).addReg(0));
-  else
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(ARM::LDR), ResultReg)
-                    .addReg(Reg).addReg(0).addImm(0));
+  if (!ARMEmitLoad(VT, ResultReg, Reg, 0)) return false;
+  
   UpdateValueMap(I, ResultReg);
-        
   return true;
 }
 
