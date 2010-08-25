@@ -1,4 +1,4 @@
-; RUN: llc < %s -fast-isel -fast-isel-abort -march=arm
+; RUN: llc < %s -O0 -arm-fast-isel -fast-isel-abort -mtriple=armv7-apple-darwin
 
 ; Very basic fast-isel functionality.
 
