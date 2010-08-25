@@ -24,7 +24,6 @@ namespace lldb_private {
 class StackFrameList
 {
 public:
-    friend class Thread;
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
