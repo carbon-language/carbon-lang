@@ -501,6 +501,12 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   RunCleanupsScope ForScope(*this);
 
+  CGDebugInfo *DI = getDebugInfo();
+  if (DI) {
+    DI->setLocation(S.getSourceRange().getBegin());
+    DI->EmitRegionStart(Builder);
+  }
+
   // Evaluate the first part before the loop.
   if (S.getInit())
     EmitStmt(S.getInit());
@@ -557,12 +563,6 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   // Store the blocks to use for break and continue.
   BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
-
-  CGDebugInfo *DI = getDebugInfo();
-  if (DI) {
-    DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitRegionStart(Builder);
-  }
 
   {
     // Create a separate cleanup scope for the body, in case it is not
