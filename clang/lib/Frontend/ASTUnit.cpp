@@ -1797,7 +1797,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
       if (const FileStatus *MainStatus = MainPath.getFileStatus())
         if (CompleteFileStatus->getUniqueID() == MainStatus->getUniqueID())
           OverrideMainBuffer
-            = getMainBufferWithPrecompiledPreamble(CCInvocation, false, Line);
+            = getMainBufferWithPrecompiledPreamble(CCInvocation, false, 
+                                                   Line - 1);
   }
 
   // If the main file has been overridden due to the use of a preamble,
