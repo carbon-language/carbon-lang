@@ -615,6 +615,62 @@ void CodeCompletionResult::computeCursorKindAndAvailability() {
   }
 }
 
+/// \brief Retrieve the name that should be used to order a result.
+///
+/// If the name needs to be constructed as a string, that string will be
+/// saved into Saved and the returned StringRef will refer to it.
+static llvm::StringRef getOrderedName(const CodeCompletionResult &R,
+                                    std::string &Saved) {
+  switch (R.Kind) {
+    case CodeCompletionResult::RK_Keyword:
+      return R.Keyword;
+      
+    case CodeCompletionResult::RK_Pattern:
+      return R.Pattern->getTypedText();
+      
+    case CodeCompletionResult::RK_Macro:
+      return R.Macro->getName();
+      
+    case CodeCompletionResult::RK_Declaration:
+      // Handle declarations below.
+      break;
+  }
+  
+  DeclarationName Name = R.Declaration->getDeclName();
+  
+  // If the name is a simple identifier (by far the common case), or a
+  // zero-argument selector, just return a reference to that identifier.
+  if (IdentifierInfo *Id = Name.getAsIdentifierInfo())
+    return Id->getName();
+  if (Name.isObjCZeroArgSelector())
+    if (IdentifierInfo *Id
+        = Name.getObjCSelector().getIdentifierInfoForSlot(0))
+      return Id->getName();
+  
+  Saved = Name.getAsString();
+  return Saved;
+}
+    
+bool clang::operator<(const CodeCompletionResult &X, 
+                      const CodeCompletionResult &Y) {
+  std::string XSaved, YSaved;
+  llvm::StringRef XStr = getOrderedName(X, XSaved);
+  llvm::StringRef YStr = getOrderedName(Y, YSaved);
+  int cmp = XStr.compare_lower(YStr);
+  if (cmp)
+    return cmp < 0;
+  
+  // Non-hidden names precede hidden names.
+  if (X.Hidden != Y.Hidden)
+    return !X.Hidden;
+  
+  // Non-nested-name-specifiers precede nested-name-specifiers.
+  if (X.StartsNestedNameSpecifier != Y.StartsNestedNameSpecifier)
+    return !X.StartsNestedNameSpecifier;
+  
+  return false;
+}
+
 void 
 CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
                                                  CodeCompletionContext Context,

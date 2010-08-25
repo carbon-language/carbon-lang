@@ -182,6 +182,9 @@ public:
     CCC_MacroNameUse,
     /// \brief Code completion occurred within a preprocessor expression.
     CCC_PreprocessorExpression,
+    /// \brief Code completion occurred where a preprocessor directive is 
+    /// expected.
+    CCC_PreprocessorDirective,
     /// \brief Code completion occurred in a context where natural language is
     /// expected, e.g., a comment or string literal.
     ///
@@ -579,6 +582,24 @@ public:
 private:
   void computeCursorKindAndAvailability();
 };
+  
+bool operator<(const CodeCompletionResult &X, const CodeCompletionResult &Y);
+  
+inline bool operator>(const CodeCompletionResult &X, 
+                      const CodeCompletionResult &Y) {
+  return Y < X;
+}
+  
+inline bool operator<=(const CodeCompletionResult &X, 
+                      const CodeCompletionResult &Y) {
+  return !(Y < X);
+}
+
+inline bool operator>=(const CodeCompletionResult &X, 
+                       const CodeCompletionResult &Y) {
+  return !(X < Y);
+}
+
   
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, 
                               const CodeCompletionString &CCS);

@@ -2231,67 +2231,6 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
   return Result;
 }
 
-namespace {
-  struct SortCodeCompleteResult {
-    typedef CodeCompletionResult Result;
-    
-    /// \brief Retrieve the name that should be used to order a result.
-    ///
-    /// If the name needs to be constructed as a string, that string will be
-    /// saved into Saved and the returned StringRef will refer to it.
-    static llvm::StringRef getOrderedName(const Result &R,
-                                          std::string &Saved) {
-      switch (R.Kind) {
-      case Result::RK_Keyword:
-        return R.Keyword;
-          
-      case Result::RK_Pattern:
-        return R.Pattern->getTypedText();
-          
-      case Result::RK_Macro:
-        return R.Macro->getName();
-          
-      case Result::RK_Declaration:
-        // Handle declarations below.
-        break;
-      }
-            
-      DeclarationName Name = R.Declaration->getDeclName();
-      
-      // If the name is a simple identifier (by far the common case), or a
-      // zero-argument selector, just return a reference to that identifier.
-      if (IdentifierInfo *Id = Name.getAsIdentifierInfo())
-        return Id->getName();
-      if (Name.isObjCZeroArgSelector())
-        if (IdentifierInfo *Id
-                          = Name.getObjCSelector().getIdentifierInfoForSlot(0))
-          return Id->getName();
-      
-      Saved = Name.getAsString();
-      return Saved;
-    }
-    
-    bool operator()(const Result &X, const Result &Y) const {
-      std::string XSaved, YSaved;
-      llvm::StringRef XStr = getOrderedName(X, XSaved);
-      llvm::StringRef YStr = getOrderedName(Y, YSaved);
-      int cmp = XStr.compare_lower(YStr);
-      if (cmp)
-        return cmp < 0;
-      
-      // Non-hidden names precede hidden names.
-      if (X.Hidden != Y.Hidden)
-        return !X.Hidden;
-      
-      // Non-nested-name-specifiers precede nested-name-specifiers.
-      if (X.StartsNestedNameSpecifier != Y.StartsNestedNameSpecifier)
-        return !X.StartsNestedNameSpecifier;
-      
-      return false;
-    }
-  };
-}
-
 unsigned clang::getMacroUsagePriority(llvm::StringRef MacroName, 
                                       bool PreferredTypeIsPointer) {
   unsigned Priority = CCP_Macro;
@@ -2338,7 +2277,7 @@ static void HandleCodeCompleteResults(Sema *S,
                                       CodeCompletionContext Context,
                                       CodeCompletionResult *Results,
                                       unsigned NumResults) {
-  std::stable_sort(Results, Results + NumResults, SortCodeCompleteResult());
+  std::stable_sort(Results, Results + NumResults);
 
   if (CodeCompleter)
     CodeCompleter->ProcessCodeCompleteResults(*S, Context, Results, NumResults);
@@ -4804,9 +4743,8 @@ void Sema::CodeCompletePreprocessorDirective(bool InConditional) {
   // FIXME: we don't support #assert or #unassert, so don't suggest them.
   Results.ExitScope();
   
-  // FIXME: Create a new code-completion context for this?
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_PreprocessorDirective,
                             Results.data(), Results.size());
 }
 

@@ -26,12 +26,7 @@ void f4(const char* str) {
 // CHECK-CC1-NOT: NotImplemented:{TypedText float} (65)
 // CHECK-CC1: ParmDecl:{ResultType int}{TypedText j} (2)
 // CHECK-CC1: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
-// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1a %s
-// CHECK-CC1a: NotImplemented:{TypedText __PRETTY_FUNCTION__} (60)
-// CHECK-CC1a: ParmDecl:{ResultType int}{TypedText j} (2)
-// CHECK-CC1a: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (30)
-// CHECK-CC1a: FunctionDecl:{ResultType int}{TypedText f}{LeftParen (}{Placeholder int}{RightParen )} (12)
-// CHECK-CC1a: macro definition:{TypedText __VERSION__} (70)
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:9 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: c-index-test -code-completion-at=%s:7:14 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:7:14 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: macro definition:{TypedText __VERSION__} (70)

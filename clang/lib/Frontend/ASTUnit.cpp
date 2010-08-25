@@ -1552,8 +1552,10 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_MacroName:
   case CodeCompletionContext::CCC_MacroNameUse:
   case CodeCompletionContext::CCC_PreprocessorExpression:
+  case CodeCompletionContext::CCC_PreprocessorDirective:
   case CodeCompletionContext::CCC_NaturalLanguage:
-    // If we're just looking for protocol or macro names, nothing can hide them.
+    // We're looking for nothing, or we're looking for names that cannot
+    // be hidden.
     return;
   }
   
@@ -1676,7 +1678,9 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
     Next.ProcessCodeCompleteResults(S, Context, Results, NumResults);
     return;
   }
-  
+
+  // Sort the completion results before passing them on to the actual consumer.
+  std::stable_sort(AllResults.begin(), AllResults.end());
   Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
                                   AllResults.size());
   

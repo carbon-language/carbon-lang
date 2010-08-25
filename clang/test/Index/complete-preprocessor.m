@@ -71,3 +71,10 @@ FOO(in,t) value;
 // CHECK-CC5: NotImplemented:{TypedText inline} (30)
 // CHECK-CC5: NotImplemented:{TypedText int} (65)
 // CHECK-CC5: NotImplemented:{TypedText long} (65)
+
+// Same tests as above, but with completion caching.
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:4:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:5:2 %s | FileCheck -check-prefix=CHECK-CC2 %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:9:8 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:11:5 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:14:5 %s | FileCheck -check-prefix=CHECK-CC5 %s
