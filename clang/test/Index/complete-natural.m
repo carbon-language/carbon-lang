@@ -32,3 +32,25 @@ char in_char = 'a';
 // RUN: echo "DONE" >> %t
 // RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
 
+// Same tests as above, but with completion caching.
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:4:32 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:5:18 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:6:7 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:7 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:8:10 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:9:9 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:10:19 %s > %t
+// RUN: echo "DONE" >> %t
+// RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
