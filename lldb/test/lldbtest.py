@@ -133,7 +133,7 @@ STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
 
 DATA_TYPES_DISPLAYED_CORRECTLY = "Data type(s) displayed correctly"
 
-VARIABLES_DISPLAYED_CORRECTLY = "Show specified variable(s) correctly"
+VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 
 #
 # And a generic "Command '%s' returns successfully" message generator.
@@ -276,7 +276,7 @@ class TestBase(unittest2.TestCase):
             print >> sys.stderr, "Matched" if matched else "Not matched"
             print >> sys.stderr
 
-        if substrs:
+        if substrs and matched:
             for str in substrs:
                 matched = output.find(str) > 0
                 if trace:
