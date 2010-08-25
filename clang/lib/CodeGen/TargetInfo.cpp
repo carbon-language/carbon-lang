@@ -147,7 +147,7 @@ static bool hasNonTrivialDestructorOrCopyConstructor(const RecordType *RT) {
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
   if (!RD)
     return false;
-  
+
   return !RD->hasTrivialDestructor() || !RD->hasTrivialCopyConstructor();
 }
 
@@ -180,7 +180,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     return 0;
 
   const Type *Found = 0;
-  
+
   // If this is a C++ record, check the bases first.
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
     for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
@@ -292,7 +292,7 @@ namespace {
 class DefaultABIInfo : public ABIInfo {
 public:
   DefaultABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
-  
+
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
@@ -333,7 +333,7 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty) const {
 //===----------------------------------------------------------------------===//
 // X86-32 ABI Implementation
 //===----------------------------------------------------------------------===//
-  
+
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
   bool IsDarwinVectorABI;
@@ -446,7 +446,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
 ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
-  
+
   if (const VectorType *VT = RetTy->getAs<VectorType>()) {
     // On Darwin, some vectors are returned in registers.
     if (IsDarwinVectorABI) {
@@ -471,19 +471,19 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
 
     return ABIArgInfo::getDirect();
   }
-  
+
   if (isAggregateTypeForABI(RetTy)) {
     if (const RecordType *RT = RetTy->getAs<RecordType>()) {
       // Structures with either a non-trivial destructor or a non-trivial
       // copy constructor are always indirect.
       if (hasNonTrivialDestructorOrCopyConstructor(RT))
         return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
-      
+
       // Structures with flexible arrays are always indirect.
       if (RT->getDecl()->hasFlexibleArrayMember())
         return ABIArgInfo::getIndirect(0);
     }
-    
+
     // If specified, structs and unions are always indirect.
     if (!IsSmallStructInRegABI && !RetTy->isAnyComplexType())
       return ABIArgInfo::getIndirect(0);
@@ -499,14 +499,14 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
           return ABIArgInfo::getDirect(
             llvm::IntegerType::get(getVMContext(), (unsigned)Size));
         }
-        
+
         if (BT->getKind() == BuiltinType::Float) {
           assert(getContext().getTypeSize(RetTy) ==
                  getContext().getTypeSize(SeltTy) &&
                  "Unexpect single element structure size!");
           return ABIArgInfo::getDirect(llvm::Type::getFloatTy(getVMContext()));
         }
-        
+
         if (BT->getKind() == BuiltinType::Double) {
           assert(getContext().getTypeSize(RetTy) ==
                  getContext().getTypeSize(SeltTy) &&
@@ -538,7 +538,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
 
     return ABIArgInfo::getIndirect(0);
   }
-  
+
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
     RetTy = EnumTy->getDecl()->getIntegerType();
@@ -587,8 +587,8 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
       return ABIArgInfo::getExpand();
 
     return getIndirectResult(Ty);
-  } 
-  
+  }
+
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
@@ -641,7 +641,7 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
 
   const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
   llvm::Value *Four8 = llvm::ConstantInt::get(i8, 4);
-    
+
   // 0-7 are the eight integer registers;  the order is different
   //   on Darwin (for EH), but the range is the same.
   // 8 is %eip.
@@ -653,7 +653,7 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
     // platforms with 8-byte alignment for that type.
     llvm::Value *Sixteen8 = llvm::ConstantInt::get(i8, 16);
     AssignToArrayRange(Builder, Address, Sixteen8, 12, 16);
-      
+
   } else {
     // 9 is %eflags, which doesn't get a size on Darwin for some
     // reason.
@@ -729,7 +729,7 @@ class X86_64ABIInfo : public ABIInfo {
   const llvm::Type *GetINTEGERTypeAtOffset(const llvm::Type *IRType,
                                            unsigned IROffset, QualType SourceTy,
                                            unsigned SourceOffset) const;
-  
+
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be returned in memory.
   ABIArgInfo getIndirectReturnResult(QualType Ty) const;
@@ -768,7 +768,7 @@ public:
 
     const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
     llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
-      
+
     // 0-15 are the 16 integer registers.
     // 16 is %rip.
     AssignToArrayRange(Builder, Address, Eight8, 0, 16);
@@ -854,18 +854,18 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
     return;
   }
-  
+
   if (const EnumType *ET = Ty->getAs<EnumType>()) {
     // Classify the underlying integer type.
     classify(ET->getDecl()->getIntegerType(), OffsetBase, Lo, Hi);
     return;
   }
-  
+
   if (Ty->hasPointerRepresentation()) {
     Current = Integer;
     return;
   }
-  
+
   if (Ty->isMemberPointerType()) {
     if (Ty->isMemberFunctionPointerType())
       Lo = Hi = Integer;
@@ -873,7 +873,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       Current = Integer;
     return;
   }
-  
+
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
     uint64_t Size = getContext().getTypeSize(VT);
     if (Size == 32) {
@@ -908,7 +908,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     }
     return;
   }
-  
+
   if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
     QualType ET = getContext().getCanonicalType(CT->getElementType());
 
@@ -931,10 +931,10 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     uint64_t EB_Imag = (OffsetBase + getContext().getTypeSize(ET)) / 64;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
-    
+
     return;
   }
-  
+
   if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
     // Arrays are treated like structures.
 
@@ -972,7 +972,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp array classification.");
     return;
   }
-  
+
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     uint64_t Size = getContext().getTypeSize(Ty);
 
@@ -1140,7 +1140,7 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
 /// vector register.
 const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
   const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
-  
+
   // Wrapper structs that just contain vectors are passed just like vectors,
   // strip them off if present.
   const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType);
@@ -1148,7 +1148,7 @@ const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
     IRType = STy->getElementType(0);
     STy = dyn_cast<llvm::StructType>(IRType);
   }
-  
+
   // If the preferred type is a 16-byte vector, prefer to pass it.
   if (const llvm::VectorType *VT = dyn_cast<llvm::VectorType>(IRType)){
     const llvm::Type *EltTy = VT->getElementType();
@@ -1159,7 +1159,7 @@ const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
          EltTy->isIntegerTy(128)))
       return VT;
   }
-  
+
   return llvm::VectorType::get(llvm::Type::getDoubleTy(getVMContext()), 2);
 }
 
@@ -1188,7 +1188,7 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
       // If the element is after the span we care about, then we're done..
       unsigned EltOffset = i*EltSize;
       if (EltOffset >= EndBit) break;
-      
+
       unsigned EltStart = EltOffset < StartBit ? StartBit-EltOffset :0;
       if (!BitsContainNoUserData(AT->getElementType(), EltStart,
                                  EndBit-EltOffset, Context))
@@ -1197,11 +1197,11 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
     // If it overlaps no elements, then it is safe to process as padding.
     return true;
   }
-  
+
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     const RecordDecl *RD = RT->getDecl();
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    
+
     // If this is a C++ record, check the bases first.
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
       for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
@@ -1210,18 +1210,18 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
                "Unexpected base class!");
         const CXXRecordDecl *Base =
           cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        
+
         // If the base is after the span we care about, ignore it.
         unsigned BaseOffset = (unsigned)Layout.getBaseClassOffset(Base);
         if (BaseOffset >= EndBit) continue;
-        
+
         unsigned BaseStart = BaseOffset < StartBit ? StartBit-BaseOffset :0;
         if (!BitsContainNoUserData(i->getType(), BaseStart,
                                    EndBit-BaseOffset, Context))
           return false;
       }
     }
-    
+
     // Verify that no field has data that overlaps the region of interest.  Yes
     // this could be sped up a lot by being smarter about queried fields,
     // however we're only looking at structs up to 16 bytes, so we don't care
@@ -1230,7 +1230,7 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
     for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i, ++idx) {
       unsigned FieldOffset = (unsigned)Layout.getFieldOffset(idx);
-      
+
       // If we found a field after the region we care about, then we're done.
       if (FieldOffset >= EndBit) break;
 
@@ -1239,12 +1239,12 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
                                  Context))
         return false;
     }
-   
+
     // If nothing in this record overlapped the area of interest, then we're
     // clean.
     return true;
   }
-  
+
   return false;
 }
 
@@ -1257,7 +1257,7 @@ static bool ContainsFloatAtOffset(const llvm::Type *IRType, unsigned IROffset,
   // Base case if we find a float.
   if (IROffset == 0 && IRType->isFloatTy())
     return true;
-    
+
   // If this is a struct, recurse into the field at the specified offset.
   if (const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType)) {
     const llvm::StructLayout *SL = TD.getStructLayout(STy);
@@ -1265,7 +1265,7 @@ static bool ContainsFloatAtOffset(const llvm::Type *IRType, unsigned IROffset,
     IROffset -= SL->getElementOffset(Elt);
     return ContainsFloatAtOffset(STy->getElementType(Elt), IROffset, TD);
   }
-  
+
   // If this is an array, recurse into the field at the specified offset.
   if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(IRType)) {
     const llvm::Type *EltTy = ATy->getElementType();
@@ -1289,7 +1289,7 @@ GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
   if (BitsContainNoUserData(SourceTy, SourceOffset*8+32,
                             SourceOffset*8+64, getContext()))
     return llvm::Type::getFloatTy(getVMContext());
-  
+
   // We want to pass as <2 x float> if the LLVM IR type contains a float at
   // offset+0 and offset+4.  Walk the LLVM IR type to find out if this is the
   // case.
@@ -1297,10 +1297,10 @@ GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
       ContainsFloatAtOffset(IRType, IROffset+4, getTargetData())) {
     // FIXME: <2 x float> doesn't pass as one XMM register yet.  Don't enable
     // this code until it does.
-    //return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2); 
-    
+    //return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2);
+
   }
-  
+
   return llvm::Type::getDoubleTy(getVMContext());
 }
 
@@ -1338,7 +1338,7 @@ GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
     if (IRType->isIntegerTy(8) || IRType->isIntegerTy(16) ||
         IRType->isIntegerTy(32)) {
       unsigned BitWidth = cast<llvm::IntegerType>(IRType)->getBitWidth();
-      
+
       if (BitsContainNoUserData(SourceTy, SourceOffset*8+BitWidth,
                                 SourceOffset*8+64, getContext()))
         return IRType;
@@ -1351,12 +1351,12 @@ GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
     if (IROffset < SL->getSizeInBytes()) {
       unsigned FieldIdx = SL->getElementContainingOffset(IROffset);
       IROffset -= SL->getElementOffset(FieldIdx);
-      
+
       return GetINTEGERTypeAtOffset(STy->getElementType(FieldIdx), IROffset,
                                     SourceTy, SourceOffset);
-    }      
+    }
   }
-  
+
   if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(IRType)) {
     const llvm::Type *EltTy = ATy->getElementType();
     unsigned EltSize = getTargetData().getTypeAllocSize(EltTy);
@@ -1364,14 +1364,14 @@ GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
     return GetINTEGERTypeAtOffset(EltTy, IROffset-EltOffset, SourceTy,
                                   SourceOffset);
   }
-  
+
   // Okay, we don't have any better idea of what to pass, so we pass this in an
   // integer register that isn't too big to fit the rest of the struct.
   unsigned TySizeInBytes =
     (unsigned)getContext().getTypeSizeInChars(SourceTy).getQuantity();
 
   assert(TySizeInBytes != SourceOffset && "Empty field?");
-  
+
   // It is always safe to classify this as an integer type up to i64 that
   // isn't larger than the structure.
   return llvm::IntegerType::get(getVMContext(),
@@ -1414,14 +1414,14 @@ classifyReturnType(QualType RetTy) const {
   case Integer:
     ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0,
                                      RetTy, 0);
-      
+
     // If we have a sign or zero extended integer, make sure to return Extend
     // so that the parameter gets the right LLVM IR attributes.
     if (Hi == NoClass && isa<llvm::IntegerType>(ResType)) {
       // Treat an enum type as its underlying type.
       if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
         RetTy = EnumTy->getDecl()->getIntegerType();
-      
+
       if (RetTy->isIntegralOrEnumerationType() &&
           RetTy->isPromotableIntegerType())
         return ABIArgInfo::getExtend();
@@ -1503,7 +1503,7 @@ classifyReturnType(QualType RetTy) const {
         GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
       if (Lo == NoClass)  // Return HiType at offset 8 in memory.
         return ABIArgInfo::getDirect(HiType, 8);
-        
+
       ResType = llvm::StructType::get(getVMContext(), ResType, HiType, NULL);
     }
     break;
@@ -1516,7 +1516,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
                                                unsigned &neededSSE) const {
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
-  
+
   // Check some invariants.
   // FIXME: Enforce these by construction.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
@@ -1534,7 +1534,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     assert((Hi == SSE || Hi == Integer || Hi == X87Up) &&
            "Unknown missing lo part");
     break;
-      
+
     // AMD64-ABI 3.2.3p3: Rule 1. If the class is MEMORY, pass the argument
     // on the stack.
   case Memory:
@@ -1554,7 +1554,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // and %r9 is used.
   case Integer:
     ++neededInt;
-    
+
     // Pick an 8-byte type based on the preferred type.
     ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
 
@@ -1564,12 +1564,12 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
       // Treat an enum type as its underlying type.
       if (const EnumType *EnumTy = Ty->getAs<EnumType>())
         Ty = EnumTy->getDecl()->getIntegerType();
-      
+
       if (Ty->isIntegralOrEnumerationType() &&
           Ty->isPromotableIntegerType())
         return ABIArgInfo::getExtend();
     }
-      
+
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1592,13 +1592,13 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     break;
 
   case NoClass: break;
-      
+
   case Integer: {
     ++neededInt;
     // Pick an 8-byte type based on the preferred type.
     const llvm::Type *HiType =
       GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
-    
+
     if (Lo == NoClass)  // Pass HiType at offset 8 in memory.
       return ABIArgInfo::getDirect(HiType, 8);
 
@@ -1612,7 +1612,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case SSE: {
     const llvm::Type *HiType =
       GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
-    
+
     if (Lo == NoClass)  // Pass HiType at offset 8 in memory.
       return ABIArgInfo::getDirect(HiType, 8);
 
@@ -1623,7 +1623,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 
     // AMD64-ABI 3.2.3p3: Rule 4. If the class is SSEUP, the
     // eightbyte is passed in the upper half of the last used SSE
-    // register.  This only happens when 128-bit vectors are passed. 
+    // register.  This only happens when 128-bit vectors are passed.
   case SSEUp:
     assert(Lo == SSE && "Unexpected SSEUp classification");
     ResType = Get16ByteVectorType(Ty);
@@ -1634,7 +1634,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
-  
+
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
 
   // Keep track of the number of assigned registers.
@@ -1728,7 +1728,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   //   i8* reg_save_area;
   // };
   unsigned neededInt, neededSSE;
-  
+
   Ty = CGF.getContext().getCanonicalType(Ty);
   ABIArgInfo AI = classifyArgumentType(Ty, neededInt, neededSSE);
 
@@ -1886,7 +1886,7 @@ namespace {
 class PIC16ABIInfo : public ABIInfo {
 public:
   PIC16ABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
-  
+
   ABIArgInfo classifyReturnType(QualType RetTy) const;
 
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
@@ -1953,14 +1953,14 @@ namespace {
 class PPC32TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
 public:
   PPC32TargetCodeGenInfo(CodeGenTypes &CGT) : DefaultTargetCodeGenInfo(CGT) {}
-  
+
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
     // This is recovered from gcc output.
     return 1; // r1 is the dedicated stack pointer
   }
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
-                               llvm::Value *Address) const;  
+                               llvm::Value *Address) const;
 };
 
 }
@@ -2004,7 +2004,7 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
   // 113: sfp
   AssignToArrayRange(Builder, Address, Four8, 109, 113);
 
-  return false;  
+  return false;
 }
 
 
@@ -2191,7 +2191,7 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
 
     if (!isIntegerLikeType(FD->getType(), Context, VMContext))
       return false;
-    
+
     // Only allow at most one field in a structure. This doesn't match the
     // wording above, but follows gcc in situations with a field following an
     // empty structure.
@@ -2446,7 +2446,7 @@ public:
   }
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
-                               llvm::Value *Address) const;  
+                               llvm::Value *Address) const;
 };
 }
 
