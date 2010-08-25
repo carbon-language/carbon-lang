@@ -5071,8 +5071,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // Instantiate static data member.
     Prev->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
     if (TSK == TSK_ExplicitInstantiationDefinition)
-      InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false,
-                                            /*DefinitionRequired=*/true);
+      InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev);
     
     // FIXME: Create an ExplicitInstantiation node?
     return (Decl*) 0;
@@ -5179,8 +5178,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   Specialization->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
   
   if (TSK == TSK_ExplicitInstantiationDefinition)
-    InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
-                                  false, /*DefinitionRequired=*/true);
+    InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization);
  
   // C++0x [temp.explicit]p2:
   //   If the explicit instantiation is for a member function, a member class 

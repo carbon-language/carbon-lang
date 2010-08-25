@@ -2040,8 +2040,12 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
         Diag(PatternDecl->getLocation(), 
              diag::note_explicit_instantiation_here);
       Function->setInvalidDecl();
+    } else if (Function->getTemplateSpecializationKind()
+                 == TSK_ExplicitInstantiationDefinition) {
+      PendingImplicitInstantiations.push_back(
+        std::make_pair(Function, PointOfInstantiation));
     }
-      
+
     return;
   }
 
@@ -2176,8 +2180,12 @@ void Sema::InstantiateStaticDataMemberDefinition(
            diag::err_explicit_instantiation_undefined_member)
         << 2 << Var->getDeclName() << Var->getDeclContext();
       Diag(Def->getLocation(), diag::note_explicit_instantiation_here);
-    }    
-    
+    } else if (Var->getTemplateSpecializationKind()
+                 == TSK_ExplicitInstantiationDefinition) {
+      PendingImplicitInstantiations.push_back(
+        std::make_pair(Var, PointOfInstantiation));
+    }
+
     return;
   }
 
@@ -2714,8 +2722,10 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
                                             Function->getLocation(), *this,
                                             Context.getSourceManager(),
                                            "instantiating function definition");
-
-      InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true);
+      bool DefinitionRequired = Function->getTemplateSpecializationKind() ==
+                                TSK_ExplicitInstantiationDefinition;
+      InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true,
+                                    DefinitionRequired);
       continue;
     }
 
@@ -2734,9 +2744,12 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
     case TSK_Undeclared:
       assert(false && "Cannot instantitiate an undeclared specialization.");
     case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
     case TSK_ExplicitSpecialization:
-      continue;  // No longer need implicit instantiation.
+      continue;  // No longer need to instantiate this type.
+    case TSK_ExplicitInstantiationDefinition:
+      // We only need an instantiation if the pending instantiation *is* the
+      // explicit instantiation.
+      if (Var != Var->getMostRecentDeclaration()) continue;
     case TSK_ImplicitInstantiation:
       break;
     }
@@ -2746,7 +2759,10 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
                                           "instantiating static data member "
                                           "definition");
 
-    InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true);
+    bool DefinitionRequired = Var->getTemplateSpecializationKind() ==
+                              TSK_ExplicitInstantiationDefinition;
+    InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true,
+                                          DefinitionRequired);
   }
 }
 

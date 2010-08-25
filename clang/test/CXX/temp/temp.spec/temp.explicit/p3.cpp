@@ -2,8 +2,9 @@
 
 // A declaration of a function template shall be in scope at the point of the 
 // explicit instantiation of the function template.
-template<typename T> void f0(T) { }
+template<typename T> void f0(T);
 template void f0(int); // okay
+template<typename T> void f0(T) { }
 
 // A definition of the class or class template containing a member function 
 // template shall be in scope at the point of the explicit instantiation of 
@@ -47,3 +48,27 @@ template X2<int>::X2(); // expected-error{{not an instantiation}}
 template X2<int>::X2(const X2&); // expected-error{{not an instantiation}}
 template X2<int>::~X2(); // expected-error{{not an instantiation}}
 template X2<int> &X2<int>::operator=(const X2<int>&); // expected-error{{not an instantiation}}
+
+
+// A definition of a class template is sufficient to explicitly
+// instantiate a member of the class template which itself is not yet defined.
+namespace PR7979 {
+  template <typename T> struct S {
+    void f();
+    static void g();
+    static int i;
+    struct S2 {
+      void h();
+    };
+  };
+
+  template void S<int>::f();
+  template void S<int>::g();
+  template int S<int>::i;
+  template void S<int>::S2::h();
+
+  template <typename T> void S<T>::f() {}
+  template <typename T> void S<T>::g() {}
+  template <typename T> int S<T>::i;
+  template <typename T> void S<T>::S2::h() {}
+}
