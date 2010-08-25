@@ -707,6 +707,39 @@ public:
 
 };
 
+/// Specialize SmallVector at N=0.  This specialization guarantees
+/// that it can be instantiated at an incomplete T if none of its
+/// members are required.
+template <typename T>
+class SmallVector<T,0> : public SmallVectorImpl<T> {
+public:
+  SmallVector() : SmallVectorImpl<T>(0) {
+  }
+
+  explicit SmallVector(unsigned Size, const T &Value = T())
+    : SmallVectorImpl<T>(0) {
+    this->reserve(Size);
+    while (Size--)
+      this->push_back(Value);
+  }
+
+  template<typename ItTy>
+  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(0) {
+    this->append(S, E);
+  }
+
+  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(0) {
+    if (!RHS.empty())
+      SmallVectorImpl<T>::operator=(RHS);
+  }
+
+  const SmallVector &operator=(const SmallVector &RHS) {
+    SmallVectorImpl<T>::operator=(RHS);
+    return *this;
+  }
+
+};
+
 } // End llvm namespace
 
 namespace std {
