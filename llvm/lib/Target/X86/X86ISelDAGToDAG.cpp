@@ -1312,13 +1312,6 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
 
-static SDNode *FindCallStartFromCall(SDNode *Node) {
-  if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
-    assert(Node->getOperand(0).getValueType() == MVT::Other &&
-         "Node doesn't have a token chain argument!");
-  return FindCallStartFromCall(Node->getOperand(0).getNode());
-}
-
 SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue Chain = Node->getOperand(0);
   SDValue In1 = Node->getOperand(1);
