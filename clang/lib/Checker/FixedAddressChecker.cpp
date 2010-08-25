@@ -40,7 +40,7 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
   // Using a fixed address is not portable because that address will probably
   // not be valid in all environments or platforms.
 
-  if (B->getOpcode() != BinaryOperator::Assign)
+  if (B->getOpcode() != BO_Assign)
     return;
 
   QualType T = B->getType();

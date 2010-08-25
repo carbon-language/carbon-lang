@@ -117,7 +117,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   SVal EleSizeVal = ValMgr.makeIntVal(EleSize.getQuantity(), SizeTy);
 
   // Multiply the array length by the element size.
-  SVal ArraySizeVal = SV.EvalBinOpNN(state, BinaryOperator::Mul, ArrayLength,
+  SVal ArraySizeVal = SV.EvalBinOpNN(state, BO_Mul, ArrayLength,
                                      cast<NonLoc>(EleSizeVal), SizeTy);
 
   // Finally, Assume that the array's extent matches the given size.

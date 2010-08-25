@@ -1067,7 +1067,7 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildUnaryOperator(SourceLocation OpLoc,
-                                        UnaryOperator::Opcode Opc,
+                                        UnaryOperatorKind Opc,
                                         Expr *SubExpr) {
     return getSema().BuildUnaryOp(/*Scope=*/0, OpLoc, Opc, SubExpr);
   }
@@ -1188,7 +1188,7 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildBinaryOperator(SourceLocation OpLoc,
-                                         BinaryOperator::Opcode Opc,
+                                         BinaryOperatorKind Opc,
                                          Expr *LHS, Expr *RHS) {
     return getSema().BuildBinOp(/*Scope=*/0, OpLoc, Opc, LHS, RHS);
   }
@@ -6610,7 +6610,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
     if (!First->getType()->isOverloadableType()) {
       // The argument is not of overloadable type, so try to create a
       // built-in unary operation.
-      UnaryOperator::Opcode Opc
+      UnaryOperatorKind Opc
         = UnaryOperator::getOverloadedOpcode(Op, isPostIncDec);
 
       return getSema().CreateBuiltinUnaryOp(OpLoc, Opc, First);
@@ -6620,7 +6620,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
         !Second->getType()->isOverloadableType()) {
       // Neither of the arguments is an overloadable type, so try to
       // create a built-in binary operation.
-      BinaryOperator::Opcode Opc = BinaryOperator::getOverloadedOpcode(Op);
+      BinaryOperatorKind Opc = BinaryOperator::getOverloadedOpcode(Op);
       ExprResult Result
         = SemaRef.CreateBuiltinBinOp(OpLoc, Opc, First, Second);
       if (Result.isInvalid())
@@ -6650,7 +6650,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
 
   // Create the overloaded operator invocation for unary operators.
   if (NumArgs == 1 || isPostIncDec) {
-    UnaryOperator::Opcode Opc
+    UnaryOperatorKind Opc
       = UnaryOperator::getOverloadedOpcode(Op, isPostIncDec);
     return SemaRef.CreateOverloadedUnaryOp(OpLoc, Opc, Functions, First);
   }
@@ -6662,8 +6662,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
                                                       Second);
 
   // Create the overloaded operator invocation for binary operators.
-  BinaryOperator::Opcode Opc =
-    BinaryOperator::getOverloadedOpcode(Op);
+  BinaryOperatorKind Opc = BinaryOperator::getOverloadedOpcode(Op);
   ExprResult Result
     = SemaRef.CreateOverloadedBinOp(OpLoc, Opc, Functions, Args[0], Args[1]);
   if (Result.isInvalid())

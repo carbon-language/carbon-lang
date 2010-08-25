@@ -202,19 +202,19 @@ const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
   nonloc::ConcreteInt Min = BVF.getMinValue(IndexTy);
 
   // Adjust the index.
-  SVal NewIdx = SV.EvalBinOpNN(this, BinaryOperator::Add,
+  SVal NewIdx = SV.EvalBinOpNN(this, BO_Add,
                                cast<NonLoc>(Idx), Min, IndexTy);
   if (NewIdx.isUnknownOrUndef())
     return this;
 
   // Adjust the upper bound.
-  SVal NewBound = SV.EvalBinOpNN(this, BinaryOperator::Add,
+  SVal NewBound = SV.EvalBinOpNN(this, BO_Add,
                                  cast<NonLoc>(UpperBound), Min, IndexTy);
   if (NewBound.isUnknownOrUndef())
     return this;
 
   // Build the actual comparison.
-  SVal InBound = SV.EvalBinOpNN(this, BinaryOperator::LT,
+  SVal InBound = SV.EvalBinOpNN(this, BO_LT,
                                 cast<NonLoc>(NewIdx), cast<NonLoc>(NewBound),
                                 Ctx.IntTy);
   if (InBound.isUnknownOrUndef())

@@ -2417,7 +2417,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   bool AddressTaken = false;
   SourceLocation AddrOpLoc;
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
-    if (UnOp->getOpcode() == UnaryOperator::AddrOf) {
+    if (UnOp->getOpcode() == UO_AddrOf) {
       DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr());
       AddressTaken = true;
       AddrOpLoc = UnOp->getOperatorLoc();
@@ -2664,7 +2664,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
 
   // A pointer-to-member constant written &Class::member.
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
-    if (UnOp->getOpcode() == UnaryOperator::AddrOf) {
+    if (UnOp->getOpcode() == UO_AddrOf) {
       DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr());
       if (DRE && !DRE->getQualifier())
         DRE = 0;
@@ -2799,7 +2799,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
                !ParamType->isEnumeralType()) {
       // This is an integral promotion or conversion.
-      ImpCastExprToType(Arg, ParamType, CastExpr::CK_IntegralCast);
+      ImpCastExprToType(Arg, ParamType, CK_IntegralCast);
     } else {
       // We can't perform this conversion.
       Diag(Arg->getSourceRange().getBegin(),
@@ -2920,7 +2920,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                                             Arg, Converted);
 
     if (IsQualificationConversion(ArgType, ParamType.getNonReferenceType())) {
-      ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp, CastCategory(Arg));
+      ImpCastExprToType(Arg, ParamType, CK_NoOp, CastCategory(Arg));
     } else if (!Context.hasSameUnqualifiedType(ArgType,
                                            ParamType.getNonReferenceType())) {
       // We can't perform this conversion.
@@ -2983,7 +2983,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (Context.hasSameUnqualifiedType(ParamType, ArgType)) {
     // Types match exactly: nothing more to do here.
   } else if (IsQualificationConversion(ArgType, ParamType)) {
-    ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp, CastCategory(Arg));
+    ImpCastExprToType(Arg, ParamType, CK_NoOp, CastCategory(Arg));
   } else {
     // We can't perform this conversion.
     Diag(Arg->getSourceRange().getBegin(),
@@ -3072,7 +3072,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       if (RefExpr.isInvalid())
         return ExprError();
       
-      RefExpr = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, RefExpr.get());
+      RefExpr = CreateBuiltinUnaryOp(Loc, UO_AddrOf, RefExpr.get());
       
       // We might need to perform a trailing qualification conversion, since
       // the element type on the parameter could be more qualified than the
@@ -3080,8 +3080,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       if (IsQualificationConversion(((Expr*) RefExpr.get())->getType(),
                                     ParamType.getUnqualifiedType())) {
         Expr *RefE = RefExpr.takeAs<Expr>();
-        ImpCastExprToType(RefE, ParamType.getUnqualifiedType(),
-                          CastExpr::CK_NoOp);
+        ImpCastExprToType(RefE, ParamType.getUnqualifiedType(), CK_NoOp);
         RefExpr = Owned(RefE);
       }
       
@@ -3113,7 +3112,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
     }
     
     // Take the address of everything else
-    return CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, RefExpr.get());
+    return CreateBuiltinUnaryOp(Loc, UO_AddrOf, RefExpr.get());
   }
 
   // If the non-type template parameter has reference type, qualify the

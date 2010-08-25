@@ -242,7 +242,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //===----------------------------------------------------------------------===//
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
-  if (!DestPtr && E->getCastKind() != CastExpr::CK_Dynamic) {
+  if (!DestPtr && E->getCastKind() != CK_Dynamic) {
     Visit(E->getSubExpr());
     return;
   }
@@ -250,7 +250,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   switch (E->getCastKind()) {
   default: assert(0 && "Unhandled cast kind!");
 
-  case CastExpr::CK_Dynamic: {
+  case CK_Dynamic: {
     assert(isa<CXXDynamicCastExpr>(E) && "CK_Dynamic without a dynamic_cast?");
     LValue LV = CGF.EmitCheckedLValue(E->getSubExpr());
     // FIXME: Do we also need to handle property references here?
@@ -264,7 +264,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
       
-  case CastExpr::CK_ToUnion: {
+  case CK_ToUnion: {
     // GCC union extension
     QualType Ty = E->getSubExpr()->getType();
     QualType PtrTy = CGF.getContext().getPointerType(Ty);
@@ -275,26 +275,26 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
 
-  case CastExpr::CK_DerivedToBase:
-  case CastExpr::CK_BaseToDerived:
-  case CastExpr::CK_UncheckedDerivedToBase: {
+  case CK_DerivedToBase:
+  case CK_BaseToDerived:
+  case CK_UncheckedDerivedToBase: {
     assert(0 && "cannot perform hierarchy conversion in EmitAggExpr: "
                 "should have been unpacked before we got here");
     break;
   }
 
   // FIXME: Remove the CK_Unknown check here.
-  case CastExpr::CK_Unknown:
-  case CastExpr::CK_NoOp:
-  case CastExpr::CK_UserDefinedConversion:
-  case CastExpr::CK_ConstructorConversion:
+  case CK_Unknown:
+  case CK_NoOp:
+  case CK_UserDefinedConversion:
+  case CK_ConstructorConversion:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
                                                    E->getType()) &&
            "Implicit cast types must be compatible");
     Visit(E->getSubExpr());
     break;
 
-  case CastExpr::CK_LValueBitCast:
+  case CK_LValueBitCast:
     llvm_unreachable("there are no lvalue bit-casts on aggregates");
     break;
   }
@@ -337,8 +337,7 @@ void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  if (E->getOpcode() == BinaryOperator::PtrMemD ||
-      E->getOpcode() == BinaryOperator::PtrMemI)
+  if (E->getOpcode() == BO_PtrMemD || E->getOpcode() == BO_PtrMemI)
     VisitPointerToDataMemberBinaryOperator(E);
   else
     CGF.ErrorUnsupported(E, "aggregate binary expression");

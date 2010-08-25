@@ -976,7 +976,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
       // function, update the type of the resulting expression accordingly.
       if (FromType->getAs<FunctionType>())
         if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(From->IgnoreParens()))
-          if (UnOp->getOpcode() == UnaryOperator::AddrOf)
+          if (UnOp->getOpcode() == UO_AddrOf)
             FromType = S.Context.getPointerType(FromType);
  
       // Check that we've computed the proper type after overload resolution.
@@ -1722,7 +1722,7 @@ bool Sema::FunctionArgTypesAreEqual(FunctionProtoType*  OldType,
 /// true. It returns true and produces a diagnostic if there was an
 /// error, or returns false otherwise.
 bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
-                                  CastExpr::CastKind &Kind,
+                                  CastKind &Kind,
                                   CXXCastPath& BasePath,
                                   bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
@@ -1749,7 +1749,7 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
           return true;
         
         // The conversion was successful.
-        Kind = CastExpr::CK_DerivedToBase;
+        Kind = CK_DerivedToBase;
       }
     }
   if (const ObjCObjectPointerType *FromPtrType =
@@ -1814,7 +1814,7 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// true and produces a diagnostic if there was an error, or returns false
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
-                                        CastExpr::CastKind &Kind,
+                                        CastKind &Kind,
                                         CXXCastPath &BasePath,
                                         bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
@@ -1824,7 +1824,7 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
     assert(From->isNullPointerConstant(Context, 
                                        Expr::NPC_ValueDependentIsNull) &&
            "Expr must be null pointer constant!");
-    Kind = CastExpr::CK_NullToMemberPointer;
+    Kind = CK_NullToMemberPointer;
     return false;
   }
 
@@ -1868,7 +1868,7 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
 
   // Must be a base to derived member conversion.
   BuildBasePathArray(Paths, BasePath);
-  Kind = CastExpr::CK_BaseToDerivedMemberPointer;
+  Kind = CK_BaseToDerivedMemberPointer;
   return false;
 }
 
@@ -3160,7 +3160,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From,
     return PerformObjectMemberConversion(From, Qualifier, FoundDecl, Method);
 
   if (!Context.hasSameType(From->getType(), DestType))
-    ImpCastExprToType(From, DestType, CastExpr::CK_NoOp,
+    ImpCastExprToType(From, DestType, CK_NoOp,
                       From->getType()->isPointerType() ? VK_RValue : VK_LValue);
   return false;
 }
@@ -3846,7 +3846,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                             From->getLocStart());
   ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
                                 Context.getPointerType(Conversion->getType()),
-                                CastExpr::CK_FunctionToPointerDecay,
+                                CK_FunctionToPointerDecay,
                                 &ConversionRef, VK_RValue);
 
   // Note that it is safe to allocate CallExpr on the stack here because
@@ -6762,7 +6762,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   // For post-increment and post-decrement, add the implicit '0' as
   // the second argument, so that we know this is a post-increment or
   // post-decrement.
-  if (Opc == UnaryOperator::PostInc || Opc == UnaryOperator::PostDec) {
+  if (Opc == UO_PostInc || Opc == UO_PostDec) {
     llvm::APSInt Zero(Context.getTypeSize(Context.IntTy), false);
     Args[1] = new (Context) IntegerLiteral(Zero, Context.IntTy,
                                            SourceLocation());
@@ -6932,7 +6932,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     if (Fns.empty()) {
       // If there are no functions to store, just build a dependent 
       // BinaryOperator or CompoundAssignment.
-      if (Opc <= BinaryOperator::Assign || Opc > BinaryOperator::OrAssign)
+      if (Opc <= BO_Assign || Opc > BO_OrAssign)
         return Owned(new (Context) BinaryOperator(Args[0], Args[1], Opc,
                                                   Context.DependentTy, OpLoc));
       
@@ -6960,7 +6960,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
   // If this is the .* operator, which is not overloadable, just
   // create a built-in binary operator.
-  if (Opc == BinaryOperator::PtrMemD)
+  if (Opc == BO_PtrMemD)
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // If this is the assignment operator, we only perform overload resolution
@@ -6969,7 +6969,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // various built-in candidates, but as DR507 points out, this can lead to
   // problems. So we do it this way, which pretty much follows what GCC does.
   // Note that we go the traditional code path for compound assignment forms.
-  if (Opc==BinaryOperator::Assign && !Args[0]->getType()->isOverloadableType())
+  if (Opc == BO_Assign && !Args[0]->getType()->isOverloadableType())
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // Build an empty overload set.
@@ -7083,7 +7083,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       //   If the operator is the operator , [...] and there are no
       //   viable functions, then the operator is assumed to be the
       //   built-in operator and interpreted according to clause 5.
-      if (Opc == BinaryOperator::Comma)
+      if (Opc == BO_Comma)
         break;
 
       // For class as left operand for assignment or compound assigment operator
@@ -7091,7 +7091,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       // assignment operator found
       ExprResult Result = ExprError();
       if (Args[0]->getType()->isRecordType() && 
-          Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
+          Opc >= BO_Assign && Opc <= BO_OrAssign) {
         Diag(OpLoc,  diag::err_ovl_no_viable_oper)
              << BinaryOperator::getOpcodeStr(Opc)
              << Args[0]->getSourceRange() << Args[1]->getSourceRange();
@@ -7793,7 +7793,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
   } 
   
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
-    assert(UnOp->getOpcode() == UnaryOperator::AddrOf &&
+    assert(UnOp->getOpcode() == UO_AddrOf &&
            "Can only take the address of an overloaded function");
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
       if (Method->isStatic()) {
@@ -7821,7 +7821,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
         QualType MemPtrType
           = Context.getMemberPointerType(Fn->getType(), ClassType.getTypePtr());
 
-        return new (Context) UnaryOperator(SubExpr, UnaryOperator::AddrOf,
+        return new (Context) UnaryOperator(SubExpr, UO_AddrOf,
                                            MemPtrType, UnOp->getOperatorLoc());
       }
     }
@@ -7830,7 +7830,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     if (SubExpr == UnOp->getSubExpr())
       return UnOp->Retain();
     
-    return new (Context) UnaryOperator(SubExpr, UnaryOperator::AddrOf,
+    return new (Context) UnaryOperator(SubExpr, UO_AddrOf,
                                      Context.getPointerType(SubExpr->getType()),
                                        UnOp->getOperatorLoc());
   } 

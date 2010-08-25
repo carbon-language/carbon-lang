@@ -210,7 +210,7 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
 
   // If this is a derived-to-base cast to a through a virtual base, we
   // need a vtable.
-  if (Kind == CastExpr::CK_DerivedToBase && 
+  if (Kind == CK_DerivedToBase && 
       BasePathInvolvesVirtualBase(*BasePath)) {
     QualType T = Expr->getType();
     if (const PointerType *Pointer = T->getAs<PointerType>())

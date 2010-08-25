@@ -216,8 +216,8 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
       } 
 
       if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
-        if ((CE->getCastKind() == CastExpr::CK_DerivedToBase ||
-             CE->getCastKind() == CastExpr::CK_UncheckedDerivedToBase) &&
+        if ((CE->getCastKind() == CK_DerivedToBase ||
+             CE->getCastKind() == CK_UncheckedDerivedToBase) &&
             E->getType()->isRecordType()) {
           E = CE->getSubExpr();
           CXXRecordDecl *Derived 
@@ -226,7 +226,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
           continue;
         }
 
-        if (CE->getCastKind() == CastExpr::CK_NoOp) {
+        if (CE->getCastKind() == CK_NoOp) {
           E = CE->getSubExpr();
           continue;
         }
@@ -1207,13 +1207,13 @@ LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   // __extension__ doesn't affect lvalue-ness.
-  if (E->getOpcode() == UnaryOperator::Extension)
+  if (E->getOpcode() == UO_Extension)
     return EmitLValue(E->getSubExpr());
 
   QualType ExprTy = getContext().getCanonicalType(E->getSubExpr()->getType());
   switch (E->getOpcode()) {
   default: assert(0 && "Unknown unary operator lvalue!");
-  case UnaryOperator::Deref: {
+  case UO_Deref: {
     QualType T = E->getSubExpr()->getType()->getPointeeType();
     assert(!T.isNull() && "CodeGenFunction::EmitUnaryOpLValue: Illegal type");
 
@@ -1230,18 +1230,18 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
       LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
     return LV;
   }
-  case UnaryOperator::Real:
-  case UnaryOperator::Imag: {
+  case UO_Real:
+  case UO_Imag: {
     LValue LV = EmitLValue(E->getSubExpr());
-    unsigned Idx = E->getOpcode() == UnaryOperator::Imag;
+    unsigned Idx = E->getOpcode() == UO_Imag;
     return MakeAddrLValue(Builder.CreateStructGEP(LV.getAddress(),
                                                     Idx, "idx"),
                           ExprTy);
   }
-  case UnaryOperator::PreInc:
-  case UnaryOperator::PreDec: {
+  case UO_PreInc:
+  case UO_PreDec: {
     LValue LV = EmitLValue(E->getSubExpr());
-    bool isInc = E->getOpcode() == UnaryOperator::PreInc;
+    bool isInc = E->getOpcode() == UO_PreInc;
     
     if (E->getType()->isAnyComplexType())
       EmitComplexPrePostIncDec(E, LV, isInc, true/*isPre*/);
@@ -1340,7 +1340,7 @@ llvm::BasicBlock *CodeGenFunction::getTrapBB() {
 static const Expr *isSimpleArrayDecayOperand(const Expr *E) {
   // If this isn't just an array->pointer decay, bail out.
   const CastExpr *CE = dyn_cast<CastExpr>(E);
-  if (CE == 0 || CE->getCastKind() != CastExpr::CK_ArrayToPointerDecay)
+  if (CE == 0 || CE->getCastKind() != CK_ArrayToPointerDecay)
     return 0;
   
   // If this is a decay from variable width array, bail out.
@@ -1377,7 +1377,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   if (CatchUndefined) {
     if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E->getBase())){
       if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
-        if (ICE->getCastKind() == CastExpr::CK_ArrayToPointerDecay) {
+        if (ICE->getCastKind() == CK_ArrayToPointerDecay) {
           if (const ConstantArrayType *CAT
               = getContext().getAsConstantArrayType(DRE->getType())) {
             llvm::APInt Size = CAT->getSize();
@@ -1745,10 +1745,10 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
 /// cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   switch (E->getCastKind()) {
-  case CastExpr::CK_ToVoid:
+  case CK_ToVoid:
     return EmitUnsupportedLValue(E, "unexpected cast lvalue");
    
-  case CastExpr::CK_NoOp:
+  case CK_NoOp:
     if (E->getSubExpr()->Classify(getContext()).getKind() 
                                           != Expr::Classification::CL_PRValue) {
       LValue LV = EmitLValue(E->getSubExpr());
@@ -1763,22 +1763,22 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     }
     // Fall through to synthesize a temporary.
       
-  case CastExpr::CK_Unknown:
-  case CastExpr::CK_BitCast:
-  case CastExpr::CK_ArrayToPointerDecay:
-  case CastExpr::CK_FunctionToPointerDecay:
-  case CastExpr::CK_NullToMemberPointer:
-  case CastExpr::CK_IntegralToPointer:
-  case CastExpr::CK_PointerToIntegral:
-  case CastExpr::CK_VectorSplat:
-  case CastExpr::CK_IntegralCast:
-  case CastExpr::CK_IntegralToFloating:
-  case CastExpr::CK_FloatingToIntegral:
-  case CastExpr::CK_FloatingCast:
-  case CastExpr::CK_DerivedToBaseMemberPointer:
-  case CastExpr::CK_BaseToDerivedMemberPointer:
-  case CastExpr::CK_MemberPointerToBoolean:
-  case CastExpr::CK_AnyPointerToBlockPointerCast: {
+  case CK_Unknown:
+  case CK_BitCast:
+  case CK_ArrayToPointerDecay:
+  case CK_FunctionToPointerDecay:
+  case CK_NullToMemberPointer:
+  case CK_IntegralToPointer:
+  case CK_PointerToIntegral:
+  case CK_VectorSplat:
+  case CK_IntegralCast:
+  case CK_IntegralToFloating:
+  case CK_FloatingToIntegral:
+  case CK_FloatingCast:
+  case CK_DerivedToBaseMemberPointer:
+  case CK_BaseToDerivedMemberPointer:
+  case CK_MemberPointerToBoolean:
+  case CK_AnyPointerToBlockPointerCast: {
     // These casts only produce lvalues when we're binding a reference to a 
     // temporary realized from a (converted) pure rvalue. Emit the expression
     // as a value, copy it into a temporary, and return an lvalue referring to
@@ -1788,20 +1788,20 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return MakeAddrLValue(V, E->getType());
   }
 
-  case CastExpr::CK_Dynamic: {
+  case CK_Dynamic: {
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *V = LV.getAddress();
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(E);
     return MakeAddrLValue(EmitDynamicCast(V, DCE), E->getType());
   }
 
-  case CastExpr::CK_ConstructorConversion:
-  case CastExpr::CK_UserDefinedConversion:
-  case CastExpr::CK_AnyPointerToObjCPointerCast:
+  case CK_ConstructorConversion:
+  case CK_UserDefinedConversion:
+  case CK_AnyPointerToObjCPointerCast:
     return EmitLValue(E->getSubExpr());
   
-  case CastExpr::CK_UncheckedDerivedToBase:
-  case CastExpr::CK_DerivedToBase: {
+  case CK_UncheckedDerivedToBase:
+  case CK_DerivedToBase: {
     const RecordType *DerivedClassTy = 
       E->getSubExpr()->getType()->getAs<RecordType>();
     CXXRecordDecl *DerivedClassDecl = 
@@ -1825,9 +1825,9 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     return MakeAddrLValue(Base, E->getType());
   }
-  case CastExpr::CK_ToUnion:
+  case CK_ToUnion:
     return EmitAggExprToLValue(E);
-  case CastExpr::CK_BaseToDerived: {
+  case CK_BaseToDerived: {
     const RecordType *DerivedClassTy = E->getType()->getAs<RecordType>();
     CXXRecordDecl *DerivedClassDecl = 
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
@@ -1842,7 +1842,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     return MakeAddrLValue(Derived, E->getType());
   }
-  case CastExpr::CK_LValueBitCast: {
+  case CK_LValueBitCast: {
     // This must be a reinterpret_cast (or c-style equivalent).
     const ExplicitCastExpr *CE = cast<ExplicitCastExpr>(E);
     
@@ -1851,7 +1851,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
                                            ConvertType(CE->getTypeAsWritten()));
     return MakeAddrLValue(V, E->getType());
   }
-  case CastExpr::CK_ObjCObjectLValueCast: {
+  case CK_ObjCObjectLValueCast: {
     LValue LV = EmitLValue(E->getSubExpr());
     QualType ToType = getContext().getLValueReferenceType(E->getType());
     llvm::Value *V = Builder.CreateBitCast(LV.getAddress(), 
@@ -1916,19 +1916,19 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
 
 LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   // Comma expressions just emit their LHS then their RHS as an l-value.
-  if (E->getOpcode() == BinaryOperator::Comma) {
+  if (E->getOpcode() == BO_Comma) {
     EmitAnyExpr(E->getLHS());
     EnsureInsertPoint();
     return EmitLValue(E->getRHS());
   }
 
-  if (E->getOpcode() == BinaryOperator::PtrMemD ||
-      E->getOpcode() == BinaryOperator::PtrMemI)
+  if (E->getOpcode() == BO_PtrMemD ||
+      E->getOpcode() == BO_PtrMemI)
     return EmitPointerToDataMemberBinaryExpr(E);
   
   // Can only get l-value for binary operator expressions which are a
   // simple assignment of aggregate type.
-  if (E->getOpcode() != BinaryOperator::Assign)
+  if (E->getOpcode() != BO_Assign)
     return EmitUnsupportedLValue(E, "binary l-value expression");
 
   if (!hasAggregateLLVMType(E->getType())) {
@@ -2085,7 +2085,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
 LValue CodeGenFunction::
 EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E) {
   llvm::Value *BaseV;
-  if (E->getOpcode() == BinaryOperator::PtrMemI)
+  if (E->getOpcode() == BO_PtrMemI)
     BaseV = EmitScalarExpr(E->getLHS());
   else
     BaseV = EmitLValue(E->getLHS()).getAddress();

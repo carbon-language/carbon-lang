@@ -229,10 +229,10 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   Expr *E = U->getSubExpr();
 
   switch (U->getOpcode()) {
-  case UnaryOperator::PostInc:
-  case UnaryOperator::PostDec:
-  case UnaryOperator::PreInc:
-  case UnaryOperator::PreDec:
+  case UO_PostInc:
+  case UO_PostDec:
+  case UO_PreInc:
+  case UO_PreDec:
     // Walk through the subexpressions, blasting through ParenExprs
     // until we either find a DeclRefExpr or some non-DeclRefExpr
     // expression.
@@ -268,7 +268,7 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
 
       // Handle things like +=, etc., which also generate "uses"
       // of a variable.  Do this just by visiting the subexpression.
-      if (B->getOpcode() != BinaryOperator::Assign)
+      if (B->getOpcode() != BO_Assign)
         VisitDeclRefExpr(DR);
     }
   }

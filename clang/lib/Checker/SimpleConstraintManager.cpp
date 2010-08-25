@@ -31,17 +31,17 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
     if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
       switch (SIE->getOpcode()) {
           // We don't reason yet about bitwise-constraints on symbolic values.
-        case BinaryOperator::And:
-        case BinaryOperator::Or:
-        case BinaryOperator::Xor:
+        case BO_And:
+        case BO_Or:
+        case BO_Xor:
           return false;
         // We don't reason yet about these arithmetic constraints on
         // symbolic values.
-        case BinaryOperator::Mul:
-        case BinaryOperator::Div:
-        case BinaryOperator::Rem:
-        case BinaryOperator::Shl:
-        case BinaryOperator::Shr:
+        case BO_Mul:
+        case BO_Div:
+        case BO_Rem:
+        case BO_Shl:
+        case BO_Shr:
           return false;
         // All other cases.
         default:
@@ -125,12 +125,12 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   switch (op) {
   default:
     assert(false && "Invalid opcode.");
-  case BinaryOperator::LT: return BinaryOperator::GE;
-  case BinaryOperator::GT: return BinaryOperator::LE;
-  case BinaryOperator::LE: return BinaryOperator::GT;
-  case BinaryOperator::GE: return BinaryOperator::LT;
-  case BinaryOperator::EQ: return BinaryOperator::NE;
-  case BinaryOperator::NE: return BinaryOperator::EQ;
+  case BO_LT: return BO_GE;
+  case BO_GT: return BO_LE;
+  case BO_LE: return BO_GT;
+  case BO_GE: return BO_LT;
+  case BO_EQ: return BO_NE;
+  case BO_NE: return BO_EQ;
   }
 }
 
@@ -178,7 +178,7 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
     if (!BinaryOperator::isComparisonOp(op)) {
       QualType T = SymMgr.getType(SE);
       const llvm::APSInt &zero = BasicVals.getValue(0, T);
-      op = (Assumption ? BinaryOperator::NE : BinaryOperator::EQ);
+      op = (Assumption ? BO_NE : BO_EQ);
       return AssumeSymRel(state, SE, op, zero);
     }
 
@@ -238,10 +238,10 @@ const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
 
     // Get the constant out of the expression "($sym+constant1)".
     switch (SE->getOpcode()) {
-    case BinaryOperator::Add:
+    case BO_Add:
       Adjustment = SE->getRHS();
       break;
-    case BinaryOperator::Sub:
+    case BO_Sub:
       Adjustment = -SE->getRHS();
       break;
     default:
@@ -276,22 +276,22 @@ const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
     // No logic yet for other operators.  Assume the constraint is feasible.
     return state;
 
-  case BinaryOperator::EQ:
+  case BO_EQ:
     return AssumeSymEQ(state, Sym, ConvertedInt, Adjustment);
 
-  case BinaryOperator::NE:
+  case BO_NE:
     return AssumeSymNE(state, Sym, ConvertedInt, Adjustment);
 
-  case BinaryOperator::GT:
+  case BO_GT:
     return AssumeSymGT(state, Sym, ConvertedInt, Adjustment);
 
-  case BinaryOperator::GE:
+  case BO_GE:
     return AssumeSymGE(state, Sym, ConvertedInt, Adjustment);
 
-  case BinaryOperator::LT:
+  case BO_LT:
     return AssumeSymLT(state, Sym, ConvertedInt, Adjustment);
 
-  case BinaryOperator::LE:
+  case BO_LE:
     return AssumeSymLE(state, Sym, ConvertedInt, Adjustment);
   } // end switch
 }

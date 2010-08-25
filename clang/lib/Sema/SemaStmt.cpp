@@ -536,7 +536,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       // If the LHS is not the same type as the condition, insert an implicit
       // cast.
-      ImpCastExprToType(Lo, CondType, CastExpr::CK_IntegralCast);
+      ImpCastExprToType(Lo, CondType, CK_IntegralCast);
       CS->setLHS(Lo);
 
       // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
@@ -615,7 +615,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
         // If the LHS is not the same type as the condition, insert an implicit
         // cast.
-        ImpCastExprToType(Hi, CondType, CastExpr::CK_IntegralCast);
+        ImpCastExprToType(Hi, CondType, CK_IntegralCast);
         CR->setRHS(Hi);
 
         // If the low value is bigger than the high value, the case is empty.

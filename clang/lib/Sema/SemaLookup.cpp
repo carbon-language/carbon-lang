@@ -1958,7 +1958,7 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
     // parameter types and return type.
     Arg = Arg->IgnoreParens();
     if (UnaryOperator *unaryOp = dyn_cast<UnaryOperator>(Arg))
-      if (unaryOp->getOpcode() == UnaryOperator::AddrOf)
+      if (unaryOp->getOpcode() == UO_AddrOf)
         Arg = unaryOp->getSubExpr();
 
     UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(Arg);

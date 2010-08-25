@@ -526,15 +526,15 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
 
     // See if this is a known constant.
     TryResult KnownVal = TryEvaluateBool(B->getLHS());
-    if (KnownVal.isKnown() && (B->getOpcode() == BinaryOperator::LOr))
+    if (KnownVal.isKnown() && (B->getOpcode() == BO_LOr))
       KnownVal.negate();
 
     // Now link the LHSBlock with RHSBlock.
-    if (B->getOpcode() == BinaryOperator::LOr) {
+    if (B->getOpcode() == BO_LOr) {
       AddSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
       AddSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
     } else {
-      assert(B->getOpcode() == BinaryOperator::LAnd);
+      assert(B->getOpcode() == BO_LAnd);
       AddSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
       AddSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
     }
@@ -543,7 +543,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     Block = LHSBlock;
     return addStmt(B->getLHS());
   }
-  else if (B->getOpcode() == BinaryOperator::Comma) { // ,
+  else if (B->getOpcode() == BO_Comma) { // ,
     autoCreateBlock();
     AppendStmt(Block, B, asc);
     addStmt(B->getRHS());
@@ -2084,10 +2084,10 @@ public:
     B->getLHS()->printPretty(OS, Helper, Policy);
 
     switch (B->getOpcode()) {
-      case BinaryOperator::LOr:
+      case BO_LOr:
         OS << " || ...";
         return;
-      case BinaryOperator::LAnd:
+      case BO_LAnd:
         OS << " && ...";
         return;
       default:
@@ -2130,7 +2130,7 @@ static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
 
     // special printing for comma expressions.
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(Terminator)) {
-      if (B->getOpcode() == BinaryOperator::Comma) {
+      if (B->getOpcode() == BO_Comma) {
         OS << "... , ";
         Helper->handledStmt(B->getRHS(),OS);
         OS << '\n';

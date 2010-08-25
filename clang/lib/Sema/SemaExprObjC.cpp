@@ -974,10 +974,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           << Receiver->getSourceRange();
         if (ReceiverType->isPointerType())
           ImpCastExprToType(Receiver, Context.getObjCIdType(), 
-                            CastExpr::CK_BitCast);
+                            CK_BitCast);
         else
           ImpCastExprToType(Receiver, Context.getObjCIdType(),
-                            CastExpr::CK_IntegralToPointer);
+                            CK_IntegralToPointer);
         ReceiverType = Receiver->getType();
       } 
       else if (getLangOptions().CPlusPlus &&

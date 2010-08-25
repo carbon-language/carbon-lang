@@ -36,8 +36,7 @@ void *PointerArithChecker::getTag() {
 
 void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
                                                  const BinaryOperator *B) {
-  if (B->getOpcode() != BinaryOperator::Sub &&
-      B->getOpcode() != BinaryOperator::Add)
+  if (B->getOpcode() != BO_Sub && B->getOpcode() != BO_Add)
     return;
 
   const GRState *state = C.getState();

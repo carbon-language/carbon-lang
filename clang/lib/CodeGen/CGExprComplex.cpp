@@ -347,7 +347,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
 
   // FIXME: We should be looking at all of the cast kinds here, not
   // cherry-picking the ones we have test cases for.
-  if (CK == CastExpr::CK_LValueBitCast) {
+  if (CK == CK_LValueBitCast) {
     llvm::Value *V = CGF.EmitLValue(Op).getAddress();
     V = Builder.CreateBitCast(V, 
                       CGF.ConvertType(CGF.getContext().getPointerType(DestTy)));
@@ -532,7 +532,7 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   // improve codegen a little.  It is possible for the RHS to be complex or
   // scalar.
   OpInfo.Ty = E->getComputationResultType();
-  OpInfo.RHS = EmitCast(CastExpr::CK_Unknown, E->getRHS(), OpInfo.Ty);
+  OpInfo.RHS = EmitCast(CK_Unknown, E->getRHS(), OpInfo.Ty);
   
   LValue LHS = CGF.EmitLValue(E->getLHS());
   // We know the LHS is a complex lvalue.

@@ -250,8 +250,8 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
                                  BinaryOperator::Opcode Op,
                                  const loc::ConcreteInt& R) const {
 
-  assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub ||
-          (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE));
+  assert (Op == BO_Add || Op == BO_Sub ||
+          (Op >= BO_LT && Op <= BO_NE));
 
   const llvm::APSInt* X = BasicVals.EvaluateAPSInt(Op, getValue(), R.getValue());
 

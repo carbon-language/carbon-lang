@@ -44,8 +44,8 @@ bool Expr::isKnownToHaveBooleanValue() const {
   
   if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(this)) {
     switch (UO->getOpcode()) {
-    case UnaryOperator::Plus:
-    case UnaryOperator::Extension:
+    case UO_Plus:
+    case UO_Extension:
       return UO->getSubExpr()->isKnownToHaveBooleanValue();
     default:
       return false;
@@ -60,25 +60,25 @@ bool Expr::isKnownToHaveBooleanValue() const {
   if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(this)) {
     switch (BO->getOpcode()) {
     default: return false;
-    case BinaryOperator::LT:   // Relational operators.
-    case BinaryOperator::GT:
-    case BinaryOperator::LE:
-    case BinaryOperator::GE:
-    case BinaryOperator::EQ:   // Equality operators.
-    case BinaryOperator::NE:
-    case BinaryOperator::LAnd: // AND operator.
-    case BinaryOperator::LOr:  // Logical OR operator.
+    case BO_LT:   // Relational operators.
+    case BO_GT:
+    case BO_LE:
+    case BO_GE:
+    case BO_EQ:   // Equality operators.
+    case BO_NE:
+    case BO_LAnd: // AND operator.
+    case BO_LOr:  // Logical OR operator.
       return true;
         
-    case BinaryOperator::And:  // Bitwise AND operator.
-    case BinaryOperator::Xor:  // Bitwise XOR operator.
-    case BinaryOperator::Or:   // Bitwise OR operator.
+    case BO_And:  // Bitwise AND operator.
+    case BO_Xor:  // Bitwise XOR operator.
+    case BO_Or:   // Bitwise OR operator.
       // Handle things like (x==2)|(y==12).
       return BO->getLHS()->isKnownToHaveBooleanValue() &&
              BO->getRHS()->isKnownToHaveBooleanValue();
         
-    case BinaryOperator::Comma:
-    case BinaryOperator::Assign:
+    case BO_Comma:
+    case BO_Assign:
       return BO->getRHS()->isKnownToHaveBooleanValue();
     }
   }
@@ -434,47 +434,47 @@ void StringLiteral::setString(ASTContext &C, llvm::StringRef Str) {
 const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
   default: assert(0 && "Unknown unary operator");
-  case PostInc: return "++";
-  case PostDec: return "--";
-  case PreInc:  return "++";
-  case PreDec:  return "--";
-  case AddrOf:  return "&";
-  case Deref:   return "*";
-  case Plus:    return "+";
-  case Minus:   return "-";
-  case Not:     return "~";
-  case LNot:    return "!";
-  case Real:    return "__real";
-  case Imag:    return "__imag";
-  case Extension: return "__extension__";
+  case UO_PostInc: return "++";
+  case UO_PostDec: return "--";
+  case UO_PreInc:  return "++";
+  case UO_PreDec:  return "--";
+  case UO_AddrOf:  return "&";
+  case UO_Deref:   return "*";
+  case UO_Plus:    return "+";
+  case UO_Minus:   return "-";
+  case UO_Not:     return "~";
+  case UO_LNot:    return "!";
+  case UO_Real:    return "__real";
+  case UO_Imag:    return "__imag";
+  case UO_Extension: return "__extension__";
   }
 }
 
-UnaryOperator::Opcode
+UnaryOperatorKind
 UnaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO, bool Postfix) {
   switch (OO) {
   default: assert(false && "No unary operator for overloaded function");
-  case OO_PlusPlus:   return Postfix ? PostInc : PreInc;
-  case OO_MinusMinus: return Postfix ? PostDec : PreDec;
-  case OO_Amp:        return AddrOf;
-  case OO_Star:       return Deref;
-  case OO_Plus:       return Plus;
-  case OO_Minus:      return Minus;
-  case OO_Tilde:      return Not;
-  case OO_Exclaim:    return LNot;
+  case OO_PlusPlus:   return Postfix ? UO_PostInc : UO_PreInc;
+  case OO_MinusMinus: return Postfix ? UO_PostDec : UO_PreDec;
+  case OO_Amp:        return UO_AddrOf;
+  case OO_Star:       return UO_Deref;
+  case OO_Plus:       return UO_Plus;
+  case OO_Minus:      return UO_Minus;
+  case OO_Tilde:      return UO_Not;
+  case OO_Exclaim:    return UO_LNot;
   }
 }
 
 OverloadedOperatorKind UnaryOperator::getOverloadedOperator(Opcode Opc) {
   switch (Opc) {
-  case PostInc: case PreInc: return OO_PlusPlus;
-  case PostDec: case PreDec: return OO_MinusMinus;
-  case AddrOf: return OO_Amp;
-  case Deref: return OO_Star;
-  case Plus: return OO_Plus;
-  case Minus: return OO_Minus;
-  case Not: return OO_Tilde;
-  case LNot: return OO_Exclaim;
+  case UO_PostInc: case UO_PreInc: return OO_PlusPlus;
+  case UO_PostDec: case UO_PreDec: return OO_MinusMinus;
+  case UO_AddrOf: return OO_Amp;
+  case UO_Deref: return OO_Star;
+  case UO_Plus: return OO_Plus;
+  case UO_Minus: return OO_Minus;
+  case UO_Not: return OO_Tilde;
+  case UO_LNot: return OO_Exclaim;
   default: return OO_None;
   }
 }
@@ -694,61 +694,61 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
 
 const char *CastExpr::getCastKindName() const {
   switch (getCastKind()) {
-  case CastExpr::CK_Unknown:
+  case CK_Unknown:
     return "Unknown";
-  case CastExpr::CK_BitCast:
+  case CK_BitCast:
     return "BitCast";
-  case CastExpr::CK_LValueBitCast:
+  case CK_LValueBitCast:
     return "LValueBitCast";
-  case CastExpr::CK_NoOp:
+  case CK_NoOp:
     return "NoOp";
-  case CastExpr::CK_BaseToDerived:
+  case CK_BaseToDerived:
     return "BaseToDerived";
-  case CastExpr::CK_DerivedToBase:
+  case CK_DerivedToBase:
     return "DerivedToBase";
-  case CastExpr::CK_UncheckedDerivedToBase:
+  case CK_UncheckedDerivedToBase:
     return "UncheckedDerivedToBase";
-  case CastExpr::CK_Dynamic:
+  case CK_Dynamic:
     return "Dynamic";
-  case CastExpr::CK_ToUnion:
+  case CK_ToUnion:
     return "ToUnion";
-  case CastExpr::CK_ArrayToPointerDecay:
+  case CK_ArrayToPointerDecay:
     return "ArrayToPointerDecay";
-  case CastExpr::CK_FunctionToPointerDecay:
+  case CK_FunctionToPointerDecay:
     return "FunctionToPointerDecay";
-  case CastExpr::CK_NullToMemberPointer:
+  case CK_NullToMemberPointer:
     return "NullToMemberPointer";
-  case CastExpr::CK_BaseToDerivedMemberPointer:
+  case CK_BaseToDerivedMemberPointer:
     return "BaseToDerivedMemberPointer";
-  case CastExpr::CK_DerivedToBaseMemberPointer:
+  case CK_DerivedToBaseMemberPointer:
     return "DerivedToBaseMemberPointer";
-  case CastExpr::CK_UserDefinedConversion:
+  case CK_UserDefinedConversion:
     return "UserDefinedConversion";
-  case CastExpr::CK_ConstructorConversion:
+  case CK_ConstructorConversion:
     return "ConstructorConversion";
-  case CastExpr::CK_IntegralToPointer:
+  case CK_IntegralToPointer:
     return "IntegralToPointer";
-  case CastExpr::CK_PointerToIntegral:
+  case CK_PointerToIntegral:
     return "PointerToIntegral";
-  case CastExpr::CK_ToVoid:
+  case CK_ToVoid:
     return "ToVoid";
-  case CastExpr::CK_VectorSplat:
+  case CK_VectorSplat:
     return "VectorSplat";
-  case CastExpr::CK_IntegralCast:
+  case CK_IntegralCast:
     return "IntegralCast";
-  case CastExpr::CK_IntegralToFloating:
+  case CK_IntegralToFloating:
     return "IntegralToFloating";
-  case CastExpr::CK_FloatingToIntegral:
+  case CK_FloatingToIntegral:
     return "FloatingToIntegral";
-  case CastExpr::CK_FloatingCast:
+  case CK_FloatingCast:
     return "FloatingCast";
-  case CastExpr::CK_MemberPointerToBoolean:
+  case CK_MemberPointerToBoolean:
     return "MemberPointerToBoolean";
-  case CastExpr::CK_AnyPointerToObjCPointerCast:
+  case CK_AnyPointerToObjCPointerCast:
     return "AnyPointerToObjCPointerCast";
-  case CastExpr::CK_AnyPointerToBlockPointerCast:
+  case CK_AnyPointerToBlockPointerCast:
     return "AnyPointerToBlockPointerCast";
-  case CastExpr::CK_ObjCObjectLValueCast:
+  case CK_ObjCObjectLValueCast:
     return "ObjCObjectLValueCast";
   }
 
@@ -768,9 +768,9 @@ Expr *CastExpr::getSubExprAsWritten() {
     
     // Conversions by constructor and conversion functions have a
     // subexpression describing the call; strip it off.
-    if (E->getCastKind() == CastExpr::CK_ConstructorConversion)
+    if (E->getCastKind() == CK_ConstructorConversion)
       SubExpr = cast<CXXConstructExpr>(SubExpr)->getArg(0);
-    else if (E->getCastKind() == CastExpr::CK_UserDefinedConversion)
+    else if (E->getCastKind() == CK_UserDefinedConversion)
       SubExpr = cast<CXXMemberCallExpr>(SubExpr)->getImplicitObjectArgument();
     
     // If the subexpression we're left with is an implicit cast, look
@@ -844,78 +844,78 @@ CStyleCastExpr *CStyleCastExpr::CreateEmpty(ASTContext &C, unsigned PathSize) {
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
-  case PtrMemD:   return ".*";
-  case PtrMemI:   return "->*";
-  case Mul:       return "*";
-  case Div:       return "/";
-  case Rem:       return "%";
-  case Add:       return "+";
-  case Sub:       return "-";
-  case Shl:       return "<<";
-  case Shr:       return ">>";
-  case LT:        return "<";
-  case GT:        return ">";
-  case LE:        return "<=";
-  case GE:        return ">=";
-  case EQ:        return "==";
-  case NE:        return "!=";
-  case And:       return "&";
-  case Xor:       return "^";
-  case Or:        return "|";
-  case LAnd:      return "&&";
-  case LOr:       return "||";
-  case Assign:    return "=";
-  case MulAssign: return "*=";
-  case DivAssign: return "/=";
-  case RemAssign: return "%=";
-  case AddAssign: return "+=";
-  case SubAssign: return "-=";
-  case ShlAssign: return "<<=";
-  case ShrAssign: return ">>=";
-  case AndAssign: return "&=";
-  case XorAssign: return "^=";
-  case OrAssign:  return "|=";
-  case Comma:     return ",";
+  case BO_PtrMemD:   return ".*";
+  case BO_PtrMemI:   return "->*";
+  case BO_Mul:       return "*";
+  case BO_Div:       return "/";
+  case BO_Rem:       return "%";
+  case BO_Add:       return "+";
+  case BO_Sub:       return "-";
+  case BO_Shl:       return "<<";
+  case BO_Shr:       return ">>";
+  case BO_LT:        return "<";
+  case BO_GT:        return ">";
+  case BO_LE:        return "<=";
+  case BO_GE:        return ">=";
+  case BO_EQ:        return "==";
+  case BO_NE:        return "!=";
+  case BO_And:       return "&";
+  case BO_Xor:       return "^";
+  case BO_Or:        return "|";
+  case BO_LAnd:      return "&&";
+  case BO_LOr:       return "||";
+  case BO_Assign:    return "=";
+  case BO_MulAssign: return "*=";
+  case BO_DivAssign: return "/=";
+  case BO_RemAssign: return "%=";
+  case BO_AddAssign: return "+=";
+  case BO_SubAssign: return "-=";
+  case BO_ShlAssign: return "<<=";
+  case BO_ShrAssign: return ">>=";
+  case BO_AndAssign: return "&=";
+  case BO_XorAssign: return "^=";
+  case BO_OrAssign:  return "|=";
+  case BO_Comma:     return ",";
   }
 
   return "";
 }
 
-BinaryOperator::Opcode
+BinaryOperatorKind
 BinaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO) {
   switch (OO) {
   default: assert(false && "Not an overloadable binary operator");
-  case OO_Plus: return Add;
-  case OO_Minus: return Sub;
-  case OO_Star: return Mul;
-  case OO_Slash: return Div;
-  case OO_Percent: return Rem;
-  case OO_Caret: return Xor;
-  case OO_Amp: return And;
-  case OO_Pipe: return Or;
-  case OO_Equal: return Assign;
-  case OO_Less: return LT;
-  case OO_Greater: return GT;
-  case OO_PlusEqual: return AddAssign;
-  case OO_MinusEqual: return SubAssign;
-  case OO_StarEqual: return MulAssign;
-  case OO_SlashEqual: return DivAssign;
-  case OO_PercentEqual: return RemAssign;
-  case OO_CaretEqual: return XorAssign;
-  case OO_AmpEqual: return AndAssign;
-  case OO_PipeEqual: return OrAssign;
-  case OO_LessLess: return Shl;
-  case OO_GreaterGreater: return Shr;
-  case OO_LessLessEqual: return ShlAssign;
-  case OO_GreaterGreaterEqual: return ShrAssign;
-  case OO_EqualEqual: return EQ;
-  case OO_ExclaimEqual: return NE;
-  case OO_LessEqual: return LE;
-  case OO_GreaterEqual: return GE;
-  case OO_AmpAmp: return LAnd;
-  case OO_PipePipe: return LOr;
-  case OO_Comma: return Comma;
-  case OO_ArrowStar: return PtrMemI;
+  case OO_Plus: return BO_Add;
+  case OO_Minus: return BO_Sub;
+  case OO_Star: return BO_Mul;
+  case OO_Slash: return BO_Div;
+  case OO_Percent: return BO_Rem;
+  case OO_Caret: return BO_Xor;
+  case OO_Amp: return BO_And;
+  case OO_Pipe: return BO_Or;
+  case OO_Equal: return BO_Assign;
+  case OO_Less: return BO_LT;
+  case OO_Greater: return BO_GT;
+  case OO_PlusEqual: return BO_AddAssign;
+  case OO_MinusEqual: return BO_SubAssign;
+  case OO_StarEqual: return BO_MulAssign;
+  case OO_SlashEqual: return BO_DivAssign;
+  case OO_PercentEqual: return BO_RemAssign;
+  case OO_CaretEqual: return BO_XorAssign;
+  case OO_AmpEqual: return BO_AndAssign;
+  case OO_PipeEqual: return BO_OrAssign;
+  case OO_LessLess: return BO_Shl;
+  case OO_GreaterGreater: return BO_Shr;
+  case OO_LessLessEqual: return BO_ShlAssign;
+  case OO_GreaterGreaterEqual: return BO_ShrAssign;
+  case OO_EqualEqual: return BO_EQ;
+  case OO_ExclaimEqual: return BO_NE;
+  case OO_LessEqual: return BO_LE;
+  case OO_GreaterEqual: return BO_GE;
+  case OO_AmpAmp: return BO_LAnd;
+  case OO_PipePipe: return BO_LOr;
+  case OO_Comma: return BO_Comma;
+  case OO_ArrowStar: return BO_PtrMemI;
   }
 }
 
@@ -1030,24 +1030,24 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
 
     switch (UO->getOpcode()) {
     default: break;
-    case UnaryOperator::PostInc:
-    case UnaryOperator::PostDec:
-    case UnaryOperator::PreInc:
-    case UnaryOperator::PreDec:                 // ++/--
+    case UO_PostInc:
+    case UO_PostDec:
+    case UO_PreInc:
+    case UO_PreDec:                 // ++/--
       return false;  // Not a warning.
-    case UnaryOperator::Deref:
+    case UO_Deref:
       // Dereferencing a volatile pointer is a side-effect.
       if (Ctx.getCanonicalType(getType()).isVolatileQualified())
         return false;
       break;
-    case UnaryOperator::Real:
-    case UnaryOperator::Imag:
+    case UO_Real:
+    case UO_Imag:
       // accessing a piece of a volatile complex is a side-effect.
       if (Ctx.getCanonicalType(UO->getSubExpr()->getType())
           .isVolatileQualified())
         return false;
       break;
-    case UnaryOperator::Extension:
+    case UO_Extension:
       return UO->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx);
     }
     Loc = UO->getOperatorLoc();
@@ -1061,7 +1061,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
         break;
       // Consider the RHS of comma for side effects. LHS was checked by
       // Sema::CheckCommaOperands.
-      case BinaryOperator::Comma:
+      case BO_Comma:
         // ((foo = <blah>), 0) is an idiom for hiding the result (and
         // lvalue-ness) of an assignment written in a macro.
         if (IntegerLiteral *IE =
@@ -1070,8 +1070,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
             return false;
         return BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx);
       // Consider '||', '&&' to have side effects if the LHS or RHS does.
-      case BinaryOperator::LAnd:
-      case BinaryOperator::LOr:
+      case BO_LAnd:
+      case BO_LOr:
         if (!BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
             !BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx))
           return false;
@@ -1204,8 +1204,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     
     // If this is a cast to void or a constructor conversion, check the operand.
     // Otherwise, the result of the cast is unused.
-    if (CE->getCastKind() == CastExpr::CK_ToVoid ||
-        CE->getCastKind() == CastExpr::CK_ConstructorConversion)
+    if (CE->getCastKind() == CK_ToVoid ||
+        CE->getCastKind() == CK_ConstructorConversion)
       return (cast<CastExpr>(this)->getSubExpr()
               ->isUnusedResultAWarning(Loc, R1, R2, Ctx));
     Loc = cast<CXXFunctionalCastExpr>(this)->getTypeBeginLoc();
@@ -1354,7 +1354,7 @@ bool Expr::isDefaultArgument() const {
 /// expressions.
 static const Expr *skipTemporaryBindingsAndNoOpCasts(const Expr *E) {
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->getCastKind() == CastExpr::CK_NoOp)
+    if (ICE->getCastKind() == CK_NoOp)
       E = ICE->getSubExpr();
     else
       break;
@@ -1364,7 +1364,7 @@ static const Expr *skipTemporaryBindingsAndNoOpCasts(const Expr *E) {
     E = BE->getSubExpr();
 
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->getCastKind() == CastExpr::CK_NoOp)
+    if (ICE->getCastKind() == CK_NoOp)
       E = ICE->getSubExpr();
     else
       break;
@@ -1381,8 +1381,8 @@ const Expr *Expr::getTemporaryObject() const {
   if (const CastExpr *Cast = dyn_cast<CastExpr>(E)) {
     // Only user-defined and constructor conversions can produce
     // temporary objects.
-    if (Cast->getCastKind() != CastExpr::CK_ConstructorConversion &&
-        Cast->getCastKind() != CastExpr::CK_UserDefinedConversion)
+    if (Cast->getCastKind() != CK_ConstructorConversion &&
+        Cast->getCastKind() != CK_UserDefinedConversion)
       return 0;
 
     // Strip off temporary bindings and no-op casts.
@@ -1390,12 +1390,12 @@ const Expr *Expr::getTemporaryObject() const {
 
     // If this is a constructor conversion, see if we have an object
     // construction.
-    if (Cast->getCastKind() == CastExpr::CK_ConstructorConversion)
+    if (Cast->getCastKind() == CK_ConstructorConversion)
       return dyn_cast<CXXConstructExpr>(Sub);
 
     // If this is a user-defined conversion, see if we have a call to
     // a function that itself returns a temporary object.
-    if (Cast->getCastKind() == CastExpr::CK_UserDefinedConversion)
+    if (Cast->getCastKind() == CK_UserDefinedConversion)
       if (const CallExpr *CE = dyn_cast<CallExpr>(Sub))
         if (CE->getCallReturnType()->isRecordType())
           return CE;
@@ -1497,7 +1497,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
       ->isConstantInitializer(Ctx, IsForRef);
   case UnaryOperatorClass: {
     const UnaryOperator* Exp = cast<UnaryOperator>(this);
-    if (Exp->getOpcode() == UnaryOperator::Extension)
+    if (Exp->getOpcode() == UO_Extension)
       return Exp->getSubExpr()->isConstantInitializer(Ctx, false);
     break;
   }
@@ -1505,7 +1505,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
     // Special case &&foo - &&bar.  It would be nice to generalize this somehow
     // but this handles the common case.
     const BinaryOperator *Exp = cast<BinaryOperator>(this);
-    if (Exp->getOpcode() == BinaryOperator::Sub &&
+    if (Exp->getOpcode() == BO_Sub &&
         isa<AddrLabelExpr>(Exp->getLHS()->IgnoreParenNoopCasts(Ctx)) &&
         isa<AddrLabelExpr>(Exp->getRHS()->IgnoreParenNoopCasts(Ctx)))
       return true;
@@ -1601,7 +1601,7 @@ FieldDecl *Expr::getBitField() {
 
   while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
     if (ICE->getValueKind() != VK_RValue &&
-        ICE->getCastKind() == CastExpr::CK_NoOp)
+        ICE->getCastKind() == CK_NoOp)
       E = ICE->getSubExpr()->IgnoreParens();
     else
       break;
@@ -1624,7 +1624,7 @@ bool Expr::refersToVectorElement() const {
   
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
     if (ICE->getValueKind() != VK_RValue &&
-        ICE->getCastKind() == CastExpr::CK_NoOp)
+        ICE->getCastKind() == CK_NoOp)
       E = ICE->getSubExpr()->IgnoreParens();
     else
       break;

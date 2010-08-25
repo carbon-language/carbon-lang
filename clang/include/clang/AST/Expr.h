@@ -1040,19 +1040,6 @@ public:
 class UnaryOperator : public Expr {
 public:
   typedef UnaryOperatorKind Opcode;
-  static const Opcode PostInc = UO_PostInc;
-  static const Opcode PostDec = UO_PostDec;
-  static const Opcode PreInc = UO_PreInc;
-  static const Opcode PreDec = UO_PreDec;
-  static const Opcode AddrOf = UO_AddrOf;
-  static const Opcode Deref = UO_Deref;
-  static const Opcode Plus = UO_Plus;
-  static const Opcode Minus = UO_Minus;
-  static const Opcode Not = UO_Not;
-  static const Opcode LNot = UO_LNot;
-  static const Opcode Real = UO_Real;
-  static const Opcode Imag = UO_Imag;
-  static const Opcode Extension = UO_Extension;
 
 private:
   unsigned Opc : 5;
@@ -1068,7 +1055,7 @@ public:
 
   /// \brief Build an empty unary operator.
   explicit UnaryOperator(EmptyShell Empty)
-    : Expr(UnaryOperatorClass, Empty), Opc(AddrOf) { }
+    : Expr(UnaryOperatorClass, Empty), Opc(UO_AddrOf) { }
 
   Opcode getOpcode() const { return static_cast<Opcode>(Opc); }
   void setOpcode(Opcode O) { Opc = O; }
@@ -1082,19 +1069,25 @@ public:
 
   /// isPostfix - Return true if this is a postfix operation, like x++.
   static bool isPostfix(Opcode Op) {
-    return Op == PostInc || Op == PostDec;
+    return Op == UO_PostInc || Op == UO_PostDec;
   }
 
   /// isPostfix - Return true if this is a prefix operation, like --x.
   static bool isPrefix(Opcode Op) {
-    return Op == PreInc || Op == PreDec;
+    return Op == UO_PreInc || Op == UO_PreDec;
   }
 
   bool isPrefix() const { return isPrefix(getOpcode()); }
   bool isPostfix() const { return isPostfix(getOpcode()); }
-  bool isIncrementOp() const { return Opc == PreInc || getOpcode() == PostInc; }
-  bool isIncrementDecrementOp() const { return Opc >= PostInc && Opc<=PreDec; }
-  static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
+  bool isIncrementOp() const {
+    return Opc == UO_PreInc || getOpcode() == UO_PostInc;
+  }
+  bool isIncrementDecrementOp() const {
+    return Opc >= UO_PostInc && Opc <= UO_PreDec;
+  }
+  static bool isArithmeticOp(Opcode Op) {
+    return Op >= UO_Plus && Op <= UO_LNot;
+  }
   bool isArithmeticOp() const { return isArithmeticOp(getOpcode()); }
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -1897,116 +1890,6 @@ class CastExpr : public Expr {
 public:
   typedef clang::CastKind CastKind;
 
-  /// CK_Unknown - Unknown cast kind.
-  /// FIXME: The goal is to get rid of this and make all casts have a
-  /// kind so that the AST client doesn't have to try to figure out what's
-  /// going on.
-  static const CastKind CK_Unknown = clang::CK_Unknown;
-  
-  /// CK_BitCast - Used for reinterpret_cast.
-  static const CastKind CK_BitCast = clang::CK_BitCast;
-
-  /// CK_LValueBitCast - Used for reinterpret_cast of expressions to
-  /// a reference type.
-  static const CastKind CK_LValueBitCast = clang::CK_LValueBitCast;
-  
-  /// CK_NoOp - Used for const_cast.
-  static const CastKind CK_NoOp = clang::CK_NoOp;
-
-  /// CK_BaseToDerived - Base to derived class casts.
-  static const CastKind CK_BaseToDerived = clang::CK_BaseToDerived;
-
-  /// CK_DerivedToBase - Derived to base class casts.
-  static const CastKind CK_DerivedToBase = clang::CK_DerivedToBase;
-
-  /// CK_UncheckedDerivedToBase - Derived to base class casts that
-  /// assume that the derived pointer is not null.
-  static const CastKind CK_UncheckedDerivedToBase
-    = clang::CK_UncheckedDerivedToBase;
-
-  /// CK_Dynamic - Dynamic cast.
-  static const CastKind CK_Dynamic = clang::CK_Dynamic;
-
-  /// CK_ToUnion - Cast to union (GCC extension).
-  static const CastKind CK_ToUnion = clang::CK_ToUnion;
-
-  /// CK_ArrayToPointerDecay - Array to pointer decay.
-  static const CastKind CK_ArrayToPointerDecay
-    = clang::CK_ArrayToPointerDecay;
-
-  // CK_FunctionToPointerDecay - Function to pointer decay.
-  static const CastKind CK_FunctionToPointerDecay
-    = clang::CK_FunctionToPointerDecay;
-
-  /// CK_NullToMemberPointer - Null pointer to member pointer.
-  static const CastKind CK_NullToMemberPointer
-    = clang::CK_NullToMemberPointer;
-
-  /// CK_BaseToDerivedMemberPointer - Member pointer in base class to
-  /// member pointer in derived class.
-  static const CastKind CK_BaseToDerivedMemberPointer
-    = clang::CK_BaseToDerivedMemberPointer;
-
-  /// CK_DerivedToBaseMemberPointer - Member pointer in derived class to
-  /// member pointer in base class.
-  static const CastKind CK_DerivedToBaseMemberPointer
-    = clang::CK_DerivedToBaseMemberPointer;
-  
-  /// CK_UserDefinedConversion - Conversion using a user defined type
-  /// conversion function.
-  static const CastKind CK_UserDefinedConversion
-    = clang::CK_UserDefinedConversion;
-
-  /// CK_ConstructorConversion - Conversion by constructor
-  static const CastKind CK_ConstructorConversion
-    = clang::CK_ConstructorConversion;
-  
-  /// CK_IntegralToPointer - Integral to pointer
-  static const CastKind CK_IntegralToPointer = clang::CK_IntegralToPointer;
-  
-  /// CK_PointerToIntegral - Pointer to integral
-  static const CastKind CK_PointerToIntegral = clang::CK_PointerToIntegral;
-  
-  /// CK_ToVoid - Cast to void.
-  static const CastKind CK_ToVoid = clang::CK_ToVoid;
-  
-  /// CK_VectorSplat - Casting from an integer/floating type to an extended
-  /// vector type with the same element type as the src type. Splats the 
-  /// src expression into the destination expression.
-  static const CastKind CK_VectorSplat = clang::CK_VectorSplat;
-  
-  /// CK_IntegralCast - Casting between integral types of different size.
-  static const CastKind CK_IntegralCast = clang::CK_IntegralCast;
-
-  /// CK_IntegralToFloating - Integral to floating point.
-  static const CastKind CK_IntegralToFloating = clang::CK_IntegralToFloating;
-  
-  /// CK_FloatingToIntegral - Floating point to integral.
-  static const CastKind CK_FloatingToIntegral = clang::CK_FloatingToIntegral;
-  
-  /// CK_FloatingCast - Casting between floating types of different size.
-  static const CastKind CK_FloatingCast = clang::CK_FloatingCast;
-  
-  /// CK_MemberPointerToBoolean - Member pointer to boolean
-  static const CastKind CK_MemberPointerToBoolean
-    = clang::CK_MemberPointerToBoolean;
-
-  /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c 
-  /// pointer
-  static const CastKind CK_AnyPointerToObjCPointerCast
-    = clang::CK_AnyPointerToObjCPointerCast;
-
-  /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block 
-  /// pointer
-  static const CastKind CK_AnyPointerToBlockPointerCast
-    = clang::CK_AnyPointerToBlockPointerCast;
-
-  /// \brief Converting between two Objective-C object types, which
-  /// can occur when performing reference binding to an Objective-C
-  /// object.
-  static const CastKind CK_ObjCObjectLValueCast
-    = clang::CK_ObjCObjectLValueCast;
-
 private:
   unsigned Kind : 5;
   unsigned BasePathSize : BitsRemaining - 5;
@@ -2289,39 +2172,6 @@ class BinaryOperator : public Expr {
 public:
   typedef BinaryOperatorKind Opcode;
 
-  static const Opcode PtrMemD = BO_PtrMemD;
-  static const Opcode PtrMemI = BO_PtrMemI;
-  static const Opcode Mul = BO_Mul;
-  static const Opcode Div = BO_Div;
-  static const Opcode Rem = BO_Rem;
-  static const Opcode Add = BO_Add;
-  static const Opcode Sub = BO_Sub;
-  static const Opcode Shl = BO_Shl;
-  static const Opcode Shr = BO_Shr;
-  static const Opcode LT = BO_LT;
-  static const Opcode GT = BO_GT;
-  static const Opcode LE = BO_LE;
-  static const Opcode GE = BO_GE;
-  static const Opcode EQ = BO_EQ;
-  static const Opcode NE = BO_NE;
-  static const Opcode And = BO_And;
-  static const Opcode Xor = BO_Xor;
-  static const Opcode Or = BO_Or;
-  static const Opcode LAnd = BO_LAnd;
-  static const Opcode LOr = BO_LOr;
-  static const Opcode Assign = BO_Assign;
-  static const Opcode MulAssign = BO_MulAssign;
-  static const Opcode DivAssign = BO_DivAssign;
-  static const Opcode RemAssign = BO_RemAssign;
-  static const Opcode AddAssign = BO_AddAssign;
-  static const Opcode SubAssign = BO_SubAssign;
-  static const Opcode ShlAssign = BO_ShlAssign;
-  static const Opcode ShrAssign = BO_ShrAssign;
-  static const Opcode AndAssign = BO_AndAssign;
-  static const Opcode XorAssign = BO_XorAssign;
-  static const Opcode OrAssign = BO_OrAssign;
-  static const Opcode Comma = BO_Comma;
-
 private:
   unsigned Opc : 6;
   SourceLocation OpLoc;
@@ -2344,7 +2194,7 @@ public:
 
   /// \brief Construct an empty binary operator.
   explicit BinaryOperator(EmptyShell Empty)
-    : Expr(BinaryOperatorClass, Empty), Opc(Comma) { }
+    : Expr(BinaryOperatorClass, Empty), Opc(BO_Comma) { }
 
   SourceLocation getOperatorLoc() const { return OpLoc; }
   void setOperatorLoc(SourceLocation L) { OpLoc = L; }
@@ -2376,30 +2226,34 @@ public:
   static OverloadedOperatorKind getOverloadedOperator(Opcode Opc);
 
   /// predicates to categorize the respective opcodes.
-  bool isMultiplicativeOp() const { return Opc >= Mul && Opc <= Rem; }
-  static bool isAdditiveOp(Opcode Opc) { return Opc == Add || Opc == Sub; }
+  bool isMultiplicativeOp() const { return Opc >= BO_Mul && Opc <= BO_Rem; }
+  static bool isAdditiveOp(Opcode Opc) { return Opc == BO_Add || Opc==BO_Sub; }
   bool isAdditiveOp() const { return isAdditiveOp(getOpcode()); }
-  static bool isShiftOp(Opcode Opc) { return Opc == Shl || Opc == Shr; }
+  static bool isShiftOp(Opcode Opc) { return Opc == BO_Shl || Opc == BO_Shr; }
   bool isShiftOp() const { return isShiftOp(getOpcode()); }
 
-  static bool isBitwiseOp(Opcode Opc) { return Opc >= And && Opc <= Or; }
+  static bool isBitwiseOp(Opcode Opc) { return Opc >= BO_And && Opc <= BO_Or; }
   bool isBitwiseOp() const { return isBitwiseOp(getOpcode()); }
 
-  static bool isRelationalOp(Opcode Opc) { return Opc >= LT && Opc <= GE; }
+  static bool isRelationalOp(Opcode Opc) { return Opc >= BO_LT && Opc<=BO_GE; }
   bool isRelationalOp() const { return isRelationalOp(getOpcode()); }
 
-  static bool isEqualityOp(Opcode Opc) { return Opc == EQ || Opc == NE; }
+  static bool isEqualityOp(Opcode Opc) { return Opc == BO_EQ || Opc == BO_NE; }
   bool isEqualityOp() const { return isEqualityOp(getOpcode()); }
 
-  static bool isComparisonOp(Opcode Opc) { return Opc >= LT && Opc <= NE; }
+  static bool isComparisonOp(Opcode Opc) { return Opc >= BO_LT && Opc<=BO_NE; }
   bool isComparisonOp() const { return isComparisonOp(getOpcode()); }
 
-  static bool isLogicalOp(Opcode Opc) { return Opc == LAnd || Opc == LOr; }
+  static bool isLogicalOp(Opcode Opc) { return Opc == BO_LAnd || Opc==BO_LOr; }
   bool isLogicalOp() const { return isLogicalOp(getOpcode()); }
 
-  bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
-  bool isCompoundAssignmentOp() const { return Opc > Assign && Opc <= OrAssign;}
-  bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
+  bool isAssignmentOp() const { return Opc >= BO_Assign && Opc <= BO_OrAssign; }
+  bool isCompoundAssignmentOp() const {
+    return Opc > BO_Assign && Opc <= BO_OrAssign;
+  }
+  bool isShiftAssignOp() const {
+    return Opc == BO_ShlAssign || Opc == BO_ShrAssign;
+  }
 
   static bool classof(const Stmt *S) {
     return S->getStmtClass() >= firstBinaryOperatorConstant &&
@@ -2423,7 +2277,7 @@ protected:
   }
 
   BinaryOperator(StmtClass SC, EmptyShell Empty)
-    : Expr(SC, Empty), Opc(MulAssign) { }
+    : Expr(SC, Empty), Opc(BO_MulAssign) { }
 };
 
 /// CompoundAssignOperator - For compound assignments (e.g. +=), we keep

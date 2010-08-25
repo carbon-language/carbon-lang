@@ -320,7 +320,7 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
     QualType UnqualT = Context.getUnqualifiedArrayType(T, Quals);
     if (!Context.hasSameType(T, UnqualT)) {
       T = UnqualT;
-      ImpCastExprToType(E, UnqualT, CastExpr::CK_NoOp, CastCategory(E));
+      ImpCastExprToType(E, UnqualT, CK_NoOp, CastCategory(E));
     }
   }
   
@@ -402,7 +402,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   //   the type from "array of T" or "function returning T" to "pointer to T" 
   //   or "pointer to function returning T", [...]
   if (E->getType().hasQualifiers())
-    ImpCastExprToType(E, E->getType().getUnqualifiedType(), CastExpr::CK_NoOp,
+    ImpCastExprToType(E, E->getType().getUnqualifiedType(), CK_NoOp,
                       CastCategory(E));
   
   DefaultFunctionArrayConversion(E);
@@ -534,7 +534,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, ParsedType TypeRep,
   // corresponding cast expression.
   //
   if (NumExprs == 1) {
-    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    CastKind Kind = CK_Unknown;
     CXXCastPath BasePath;
     if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, BasePath,
                        /*FunctionalStyle=*/true))
@@ -742,7 +742,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
     
     ImpCastExprToType(ArraySize, Context.getSizeType(),
-                      CastExpr::CK_IntegralCast);
+                      CK_IntegralCast);
   }
 
   FunctionDecl *OperatorNew = 0;
@@ -1464,7 +1464,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     //   (5.2.11) of the pointer expression before it is used as the operand 
     //   of the delete-expression. ]
     ImpCastExprToType(Ex, Context.getPointerType(Context.VoidTy), 
-                      CastExpr::CK_NoOp);
+                      CK_NoOp);
     
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
@@ -1573,14 +1573,14 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 }
 
 static ExprResult BuildCXXCastArgument(Sema &S, 
-                                                   SourceLocation CastLoc,
-                                                   QualType Ty,
-                                                   CastExpr::CastKind Kind,
-                                                   CXXMethodDecl *Method,
-                                                   Expr *From) {
+                                       SourceLocation CastLoc,
+                                       QualType Ty,
+                                       CastKind Kind,
+                                       CXXMethodDecl *Method,
+                                       Expr *From) {
   switch (Kind) {
   default: assert(0 && "Unhandled cast kind!");
-  case CastExpr::CK_ConstructorConversion: {
+  case CK_ConstructorConversion: {
     ASTOwningVector<Expr*> ConstructorArgs(S);
     
     if (S.CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
@@ -1598,7 +1598,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     return S.MaybeBindToTemporary(Result.takeAs<Expr>());
   }
     
-  case CastExpr::CK_UserDefinedConversion: {
+  case CK_UserDefinedConversion: {
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
     
     // Create an implicit call expr that calls it.
@@ -1629,10 +1629,10 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   case ImplicitConversionSequence::UserDefinedConversion: {
     
       FunctionDecl *FD = ICS.UserDefined.ConversionFunction;
-      CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
+      CastKind CastKind = CK_Unknown;
       QualType BeforeToType;
       if (const CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(FD)) {
-        CastKind = CastExpr::CK_UserDefinedConversion;
+        CastKind = CK_UserDefinedConversion;
         
         // If the user-defined conversion is specified by a conversion function,
         // the initial standard conversion sequence converts the source type to
@@ -1640,7 +1640,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         BeforeToType = Context.getTagDeclType(Conv->getParent());
       } else if (const CXXConstructorDecl *Ctor = 
                   dyn_cast<CXXConstructorDecl>(FD)) {
-        CastKind = CastExpr::CK_ConstructorConversion;
+        CastKind = CK_ConstructorConversion;
         // Do no conversion if dealing with ... for the first conversion.
         if (!ICS.UserDefined.EllipsisConversion) {
           // If the user-defined conversion is specified by a constructor, the 
@@ -1768,12 +1768,12 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
   case ICK_Array_To_Pointer:
     FromType = Context.getArrayDecayedType(FromType);
-    ImpCastExprToType(From, FromType, CastExpr::CK_ArrayToPointerDecay);
+    ImpCastExprToType(From, FromType, CK_ArrayToPointerDecay);
     break;
 
   case ICK_Function_To_Pointer:
     FromType = Context.getPointerType(FromType);
-    ImpCastExprToType(From, FromType, CastExpr::CK_FunctionToPointerDecay);
+    ImpCastExprToType(From, FromType, CK_FunctionToPointerDecay);
     break;
 
   default:
@@ -1798,33 +1798,33 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return true;      
       
     ImpCastExprToType(From, Context.getNoReturnType(From->getType(), false),
-                      CastExpr::CK_NoOp);
+                      CK_NoOp);
     break;
       
   case ICK_Integral_Promotion:
   case ICK_Integral_Conversion:
-    ImpCastExprToType(From, ToType, CastExpr::CK_IntegralCast);
+    ImpCastExprToType(From, ToType, CK_IntegralCast);
     break;
 
   case ICK_Floating_Promotion:
   case ICK_Floating_Conversion:
-    ImpCastExprToType(From, ToType, CastExpr::CK_FloatingCast);
+    ImpCastExprToType(From, ToType, CK_FloatingCast);
     break;
 
   case ICK_Complex_Promotion:
   case ICK_Complex_Conversion:
-    ImpCastExprToType(From, ToType, CastExpr::CK_Unknown);
+    ImpCastExprToType(From, ToType, CK_Unknown);
     break;
 
   case ICK_Floating_Integral:
     if (ToType->isRealFloatingType())
-      ImpCastExprToType(From, ToType, CastExpr::CK_IntegralToFloating);
+      ImpCastExprToType(From, ToType, CK_IntegralToFloating);
     else
-      ImpCastExprToType(From, ToType, CastExpr::CK_FloatingToIntegral);
+      ImpCastExprToType(From, ToType, CK_FloatingToIntegral);
     break;
 
   case ICK_Compatible_Conversion:
-    ImpCastExprToType(From, ToType, CastExpr::CK_NoOp);
+    ImpCastExprToType(From, ToType, CK_NoOp);
     break;
 
   case ICK_Pointer_Conversion: {
@@ -1837,7 +1837,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     }
 
     
-    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    CastKind Kind = CK_Unknown;
     CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, IgnoreBaseAccess))
       return true;
@@ -1846,7 +1846,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   }
   
   case ICK_Pointer_Member: {
-    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    CastKind Kind = CK_Unknown;
     CXXCastPath BasePath;
     if (CheckMemberPointerConversion(From, ToType, Kind, BasePath,
                                      IgnoreBaseAccess))
@@ -1857,9 +1857,9 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
   }
   case ICK_Boolean_Conversion: {
-    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    CastKind Kind = CK_Unknown;
     if (FromType->isMemberPointerType())
-      Kind = CastExpr::CK_MemberPointerToBoolean;
+      Kind = CK_MemberPointerToBoolean;
     
     ImpCastExprToType(From, Context.BoolTy, Kind);
     break;
@@ -1876,21 +1876,21 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return true;
 
     ImpCastExprToType(From, ToType.getNonReferenceType(),
-                      CastExpr::CK_DerivedToBase, CastCategory(From),
+                      CK_DerivedToBase, CastCategory(From),
                       &BasePath);
     break;
   }
 
   case ICK_Vector_Conversion:
-    ImpCastExprToType(From, ToType, CastExpr::CK_BitCast);
+    ImpCastExprToType(From, ToType, CK_BitCast);
     break;
 
   case ICK_Vector_Splat:
-    ImpCastExprToType(From, ToType, CastExpr::CK_VectorSplat);
+    ImpCastExprToType(From, ToType, CK_VectorSplat);
     break;
       
   case ICK_Complex_Real:
-    ImpCastExprToType(From, ToType, CastExpr::CK_Unknown);
+    ImpCastExprToType(From, ToType, CK_Unknown);
     break;
       
   case ICK_Lvalue_To_Rvalue:
@@ -1913,7 +1913,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ExprValueKind VK = ToType->isReferenceType() ?
                                   CastCategory(From) : VK_RValue;
     ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
-                      CastExpr::CK_NoOp, VK);
+                      CK_NoOp, VK);
 
     if (SCS.DeprecatedStringLiteralToCharPtr)
       Diag(From->getLocStart(), diag::warn_deprecated_string_literal_conversion)
@@ -2418,16 +2418,16 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
   //   the type of the other operand.
   if (E1->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     if (T2->isMemberPointerType())
-      ImpCastExprToType(E1, T2, CastExpr::CK_NullToMemberPointer);
+      ImpCastExprToType(E1, T2, CK_NullToMemberPointer);
     else
-      ImpCastExprToType(E1, T2, CastExpr::CK_IntegralToPointer);
+      ImpCastExprToType(E1, T2, CK_IntegralToPointer);
     return T2;
   }
   if (E2->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     if (T1->isMemberPointerType())
-      ImpCastExprToType(E2, T1, CastExpr::CK_NullToMemberPointer);
+      ImpCastExprToType(E2, T1, CK_NullToMemberPointer);
     else
-      ImpCastExprToType(E2, T1, CastExpr::CK_IntegralToPointer);
+      ImpCastExprToType(E2, T1, CK_IntegralToPointer);
     return T1;
   }
 

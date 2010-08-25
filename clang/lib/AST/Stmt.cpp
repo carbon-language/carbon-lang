@@ -119,7 +119,7 @@ bool Stmt::hasImplicitControlFlow() const {
 
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator* B = cast<BinaryOperator>(this);
-      if (B->isLogicalOp() || B->getOpcode() == BinaryOperator::Comma)
+      if (B->isLogicalOp() || B->getOpcode() == BO_Comma)
         return true;
       else
         return false;

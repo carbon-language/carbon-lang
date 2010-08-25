@@ -491,7 +491,7 @@ public:
     
   llvm::Constant *VisitCastExpr(CastExpr* E) {
     switch (E->getCastKind()) {
-    case CastExpr::CK_ToUnion: {
+    case CK_ToUnion: {
       // GCC cast to union extension
       assert(E->getType()->isUnionType() &&
              "Destination type is not union type!");
@@ -526,12 +526,12 @@ public:
         llvm::StructType::get(C->getType()->getContext(), Types, false);
       return llvm::ConstantStruct::get(STy, Elts);
     }
-    case CastExpr::CK_NullToMemberPointer: {
+    case CK_NullToMemberPointer: {
       const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
       return CGM.getCXXABI().EmitNullMemberPointer(MPT);
     }
       
-    case CastExpr::CK_BaseToDerivedMemberPointer: {
+    case CK_BaseToDerivedMemberPointer: {
       Expr *SubExpr = E->getSubExpr();
       llvm::Constant *C = 
         CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
@@ -540,7 +540,7 @@ public:
       return CGM.getCXXABI().EmitMemberPointerConversion(C, E);
     }
 
-    case CastExpr::CK_BitCast: 
+    case CK_BitCast: 
       // This must be a member function pointer cast.
       return Visit(E->getSubExpr());
 

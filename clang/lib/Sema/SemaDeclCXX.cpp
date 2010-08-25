@@ -1539,7 +1539,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     CXXCastPath BasePath;
     BasePath.push_back(BaseSpec);
     SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
-                              CastExpr::CK_UncheckedDerivedToBase,
+                              CK_UncheckedDerivedToBase,
                               VK_LValue, &BasePath);
 
     InitializationKind InitKind
@@ -4636,10 +4636,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   //       operator is used.
   const ConstantArrayType *ArrayTy = S.Context.getAsConstantArrayType(T);  
   if (!ArrayTy) {
-    ExprResult Assignment = S.CreateBuiltinBinOp(Loc,
-                                                       BinaryOperator::Assign,
-                                                       To,
-                                                       From);
+    ExprResult Assignment = S.CreateBuiltinBinOp(Loc, BO_Assign, To, From);
     if (Assignment.isInvalid())
       return S.StmtError();
     
@@ -4688,12 +4685,12 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   Expr *Comparison
     = new (S.Context) BinaryOperator(IterationVarRef->Retain(),
                            new (S.Context) IntegerLiteral(Upper, SizeType, Loc),
-                                    BinaryOperator::NE, S.Context.BoolTy, Loc);
+                                    BO_NE, S.Context.BoolTy, Loc);
   
   // Create the pre-increment of the iteration variable.
   Expr *Increment
     = new (S.Context) UnaryOperator(IterationVarRef->Retain(),
-                                    UnaryOperator::PreInc,
+                                    UO_PreInc,
                                     SizeType, Loc);
   
   // Subscript the "from" and "to" expressions with the iteration variable.
@@ -5085,8 +5082,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       }
           
       // Take the address of the field references for "from" and "to".
-      From = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, From.get());
-      To = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, To.get());
+      From = CreateBuiltinUnaryOp(Loc, UO_AddrOf, From.get());
+      To = CreateBuiltinUnaryOp(Loc, UO_AddrOf, To.get());
           
       bool NeedsCollectableMemCpy = 
           (BaseType->isRecordType() && 
@@ -5175,8 +5172,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
   if (!Invalid) {
     // Add a "return *this;"
-    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref,
-                                                    This);
+    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
     
     StmtResult Return = ActOnReturnStmt(Loc, ThisObj.get());
     if (Return.isInvalid())

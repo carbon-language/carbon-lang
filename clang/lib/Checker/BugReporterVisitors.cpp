@@ -31,7 +31,7 @@ const Stmt *clang::bugreporter::GetDerefExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
 
   if (const UnaryOperator *U = dyn_cast<UnaryOperator>(S)) {
-    if (U->getOpcode() == UnaryOperator::Deref)
+    if (U->getOpcode() == UO_Deref)
       return U->getSubExpr()->IgnoreParenCasts();
   }
   else if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {

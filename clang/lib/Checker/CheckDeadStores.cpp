@@ -268,7 +268,7 @@ public:
     // Check for '&'.  Any VarDecl whose value has its address-taken we
     // treat as escaped.
     Expr* E = U->getSubExpr()->IgnoreParenCasts();
-    if (U->getOpcode() == UnaryOperator::AddrOf)
+    if (U->getOpcode() == UO_AddrOf)
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
         if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
           Escaped.insert(VD);

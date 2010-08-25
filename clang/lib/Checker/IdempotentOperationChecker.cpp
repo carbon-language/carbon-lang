@@ -156,16 +156,16 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     break;
 
   // Fall through intentional
-  case BinaryOperator::AddAssign:
-  case BinaryOperator::SubAssign:
-  case BinaryOperator::MulAssign:
-  case BinaryOperator::DivAssign:
-  case BinaryOperator::AndAssign:
-  case BinaryOperator::OrAssign:
-  case BinaryOperator::XorAssign:
-  case BinaryOperator::ShlAssign:
-  case BinaryOperator::ShrAssign:
-  case BinaryOperator::Assign:
+  case BO_AddAssign:
+  case BO_SubAssign:
+  case BO_MulAssign:
+  case BO_DivAssign:
+  case BO_AndAssign:
+  case BO_OrAssign:
+  case BO_XorAssign:
+  case BO_ShlAssign:
+  case BO_ShrAssign:
+  case BO_Assign:
   // Assign statements have one extra level of indirection
     if (!isa<Loc>(LHSVal)) {
       A = Impossible;
@@ -183,7 +183,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     break; // We don't care about any other operators.
 
   // Fall through intentional
-  case BinaryOperator::Assign:
+  case BO_Assign:
     // x Assign x can be used to silence unused variable warnings intentionally,
     // and has a slightly different definition for false positives.
     if (isUnusedSelfAssign(RHS, LHS, AC)
@@ -198,18 +198,18 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     UpdateAssumption(A, Equal);
     return;
 
-  case BinaryOperator::SubAssign:
-  case BinaryOperator::DivAssign:
-  case BinaryOperator::AndAssign:
-  case BinaryOperator::OrAssign:
-  case BinaryOperator::XorAssign:
-  case BinaryOperator::Sub:
-  case BinaryOperator::Div:
-  case BinaryOperator::And:
-  case BinaryOperator::Or:
-  case BinaryOperator::Xor:
-  case BinaryOperator::LOr:
-  case BinaryOperator::LAnd:
+  case BO_SubAssign:
+  case BO_DivAssign:
+  case BO_AndAssign:
+  case BO_OrAssign:
+  case BO_XorAssign:
+  case BO_Sub:
+  case BO_Div:
+  case BO_And:
+  case BO_Or:
+  case BO_Xor:
+  case BO_LOr:
+  case BO_LAnd:
     if (LHSVal != RHSVal || LHSContainsFalsePositive
         || RHSContainsFalsePositive)
       break;
@@ -223,12 +223,12 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
      break; // We don't care about any other operators.
 
    // Fall through intentional
-   case BinaryOperator::MulAssign:
-   case BinaryOperator::DivAssign:
-   case BinaryOperator::Mul:
-   case BinaryOperator::Div:
-   case BinaryOperator::LOr:
-   case BinaryOperator::LAnd:
+   case BO_MulAssign:
+   case BO_DivAssign:
+   case BO_Mul:
+   case BO_Div:
+   case BO_LOr:
+   case BO_LAnd:
      if (!RHSVal.isConstant(1) || RHSContainsFalsePositive)
        break;
      UpdateAssumption(A, RHSis1);
@@ -241,10 +241,10 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     break; // We don't care about any other operators.
 
   // Fall through intentional
-  case BinaryOperator::MulAssign:
-  case BinaryOperator::Mul:
-  case BinaryOperator::LOr:
-  case BinaryOperator::LAnd:
+  case BO_MulAssign:
+  case BO_Mul:
+  case BO_LOr:
+  case BO_LAnd:
     if (!LHSVal.isConstant(1) || LHSContainsFalsePositive)
       break;
     UpdateAssumption(A, LHSis1);
@@ -257,22 +257,22 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     break; // We don't care about any other operators.
 
   // Fall through intentional
-  case BinaryOperator::AddAssign:
-  case BinaryOperator::SubAssign:
-  case BinaryOperator::MulAssign:
-  case BinaryOperator::AndAssign:
-  case BinaryOperator::OrAssign:
-  case BinaryOperator::XorAssign:
-  case BinaryOperator::Add:
-  case BinaryOperator::Sub:
-  case BinaryOperator::Mul:
-  case BinaryOperator::And:
-  case BinaryOperator::Or:
-  case BinaryOperator::Xor:
-  case BinaryOperator::Shl:
-  case BinaryOperator::Shr:
-  case BinaryOperator::LOr:
-  case BinaryOperator::LAnd:
+  case BO_AddAssign:
+  case BO_SubAssign:
+  case BO_MulAssign:
+  case BO_AndAssign:
+  case BO_OrAssign:
+  case BO_XorAssign:
+  case BO_Add:
+  case BO_Sub:
+  case BO_Mul:
+  case BO_And:
+  case BO_Or:
+  case BO_Xor:
+  case BO_Shl:
+  case BO_Shr:
+  case BO_LOr:
+  case BO_LAnd:
     if (!RHSVal.isConstant(0) || RHSContainsFalsePositive)
       break;
     UpdateAssumption(A, RHSis0);
@@ -285,26 +285,26 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     break; // We don't care about any other operators.
 
   // Fall through intentional
-  //case BinaryOperator::AddAssign: // Common false positive
-  case BinaryOperator::SubAssign: // Check only if unsigned
-  case BinaryOperator::MulAssign:
-  case BinaryOperator::DivAssign:
-  case BinaryOperator::AndAssign:
-  //case BinaryOperator::OrAssign: // Common false positive
-  //case BinaryOperator::XorAssign: // Common false positive
-  case BinaryOperator::ShlAssign:
-  case BinaryOperator::ShrAssign:
-  case BinaryOperator::Add:
-  case BinaryOperator::Sub:
-  case BinaryOperator::Mul:
-  case BinaryOperator::Div:
-  case BinaryOperator::And:
-  case BinaryOperator::Or:
-  case BinaryOperator::Xor:
-  case BinaryOperator::Shl:
-  case BinaryOperator::Shr:
-  case BinaryOperator::LOr:
-  case BinaryOperator::LAnd:
+  //case BO_AddAssign: // Common false positive
+  case BO_SubAssign: // Check only if unsigned
+  case BO_MulAssign:
+  case BO_DivAssign:
+  case BO_AndAssign:
+  //case BO_OrAssign: // Common false positive
+  //case BO_XorAssign: // Common false positive
+  case BO_ShlAssign:
+  case BO_ShrAssign:
+  case BO_Add:
+  case BO_Sub:
+  case BO_Mul:
+  case BO_Div:
+  case BO_And:
+  case BO_Or:
+  case BO_Xor:
+  case BO_Shl:
+  case BO_Shr:
+  case BO_LOr:
+  case BO_LAnd:
     if (!LHSVal.isConstant(0) || LHSContainsFalsePositive)
       break;
     UpdateAssumption(A, LHSis0);
@@ -351,7 +351,7 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
     llvm::raw_svector_ostream os(buf);
     switch (A) {
     case Equal:
-      if (B->getOpcode() == BinaryOperator::Assign)
+      if (B->getOpcode() == BO_Assign)
         os << "Assigned value is always the same as the existing value";
       else
         os << "Both operands to '" << B->getOpcodeStr()
@@ -577,7 +577,7 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
     const UnaryOperator *U = cast<const UnaryOperator>(Ex);
     // Handle trivial case first
     switch (U->getOpcode()) {
-    case UnaryOperator::Extension:
+    case UO_Extension:
       return false;
     default:
       return CanVary(U->getSubExpr(), AC);

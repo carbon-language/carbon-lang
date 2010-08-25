@@ -241,19 +241,19 @@ NODE_XML(UnaryOperator, "UnaryOperator")                // op(expr) or (expr)op
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
   ATTRIBUTE_ENUM_XML(getOpcode(), "kind")
-    ENUM_XML(UnaryOperator::PostInc, "postinc")
-    ENUM_XML(UnaryOperator::PostDec, "postdec")
-    ENUM_XML(UnaryOperator::PreInc,  "preinc")
-    ENUM_XML(UnaryOperator::PreDec,  "predec")
-    ENUM_XML(UnaryOperator::AddrOf,  "addrof")
-    ENUM_XML(UnaryOperator::Deref,   "deref")
-    ENUM_XML(UnaryOperator::Plus,    "plus")
-    ENUM_XML(UnaryOperator::Minus,   "minus")
-    ENUM_XML(UnaryOperator::Not,     "not")             // bitwise not
-    ENUM_XML(UnaryOperator::LNot,    "lnot")            // boolean not
-    ENUM_XML(UnaryOperator::Real,    "__real")
-    ENUM_XML(UnaryOperator::Imag,    "__imag")
-    ENUM_XML(UnaryOperator::Extension, "__extension__")
+    ENUM_XML(UO_PostInc, "postinc")
+    ENUM_XML(UO_PostDec, "postdec")
+    ENUM_XML(UO_PreInc,  "preinc")
+    ENUM_XML(UO_PreDec,  "predec")
+    ENUM_XML(UO_AddrOf,  "addrof")
+    ENUM_XML(UO_Deref,   "deref")
+    ENUM_XML(UO_Plus,    "plus")
+    ENUM_XML(UO_Minus,   "minus")
+    ENUM_XML(UO_Not,     "not")             // bitwise not
+    ENUM_XML(UO_LNot,    "lnot")            // boolean not
+    ENUM_XML(UO_Real,    "__real")
+    ENUM_XML(UO_Imag,    "__imag")
+    ENUM_XML(UO_Extension, "__extension__")
   END_ENUM_XML
   SUB_NODE_XML(Expr)                                    // expr
 END_NODE_XML
@@ -262,38 +262,38 @@ NODE_XML(BinaryOperator, "BinaryOperator")              // (expr1) op (expr2)
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
   ATTRIBUTE_ENUM_XML(getOpcode(), "kind")
-    ENUM_XML(BinaryOperator::PtrMemD  , "ptrmemd")
-    ENUM_XML(BinaryOperator::PtrMemI  , "ptrmemi")
-    ENUM_XML(BinaryOperator::Mul      , "mul")
-    ENUM_XML(BinaryOperator::Div      , "div")
-    ENUM_XML(BinaryOperator::Rem      , "rem")
-    ENUM_XML(BinaryOperator::Add      , "add")
-    ENUM_XML(BinaryOperator::Sub      , "sub")
-    ENUM_XML(BinaryOperator::Shl      , "shl")
-    ENUM_XML(BinaryOperator::Shr      , "shr")
-    ENUM_XML(BinaryOperator::LT       , "lt")
-    ENUM_XML(BinaryOperator::GT       , "gt")
-    ENUM_XML(BinaryOperator::LE       , "le")
-    ENUM_XML(BinaryOperator::GE       , "ge")
-    ENUM_XML(BinaryOperator::EQ       , "eq")
-    ENUM_XML(BinaryOperator::NE       , "ne")
-    ENUM_XML(BinaryOperator::And      , "and")          // bitwise and
-    ENUM_XML(BinaryOperator::Xor      , "xor")
-    ENUM_XML(BinaryOperator::Or       , "or")           // bitwise or
-    ENUM_XML(BinaryOperator::LAnd     , "land")         // boolean and
-    ENUM_XML(BinaryOperator::LOr      , "lor")          // boolean or
-    ENUM_XML(BinaryOperator::Assign   , "assign")
-    ENUM_XML(BinaryOperator::MulAssign, "mulassign")
-    ENUM_XML(BinaryOperator::DivAssign, "divassign")
-    ENUM_XML(BinaryOperator::RemAssign, "remassign")
-    ENUM_XML(BinaryOperator::AddAssign, "addassign")
-    ENUM_XML(BinaryOperator::SubAssign, "subassign")
-    ENUM_XML(BinaryOperator::ShlAssign, "shlassign")
-    ENUM_XML(BinaryOperator::ShrAssign, "shrassign")
-    ENUM_XML(BinaryOperator::AndAssign, "andassign")
-    ENUM_XML(BinaryOperator::XorAssign, "xorassign")
-    ENUM_XML(BinaryOperator::OrAssign , "orassign")
-    ENUM_XML(BinaryOperator::Comma    , "comma")
+    ENUM_XML(BO_PtrMemD  , "ptrmemd")
+    ENUM_XML(BO_PtrMemI  , "ptrmemi")
+    ENUM_XML(BO_Mul      , "mul")
+    ENUM_XML(BO_Div      , "div")
+    ENUM_XML(BO_Rem      , "rem")
+    ENUM_XML(BO_Add      , "add")
+    ENUM_XML(BO_Sub      , "sub")
+    ENUM_XML(BO_Shl      , "shl")
+    ENUM_XML(BO_Shr      , "shr")
+    ENUM_XML(BO_LT       , "lt")
+    ENUM_XML(BO_GT       , "gt")
+    ENUM_XML(BO_LE       , "le")
+    ENUM_XML(BO_GE       , "ge")
+    ENUM_XML(BO_EQ       , "eq")
+    ENUM_XML(BO_NE       , "ne")
+    ENUM_XML(BO_And      , "and")          // bitwise and
+    ENUM_XML(BO_Xor      , "xor")
+    ENUM_XML(BO_Or       , "or")           // bitwise or
+    ENUM_XML(BO_LAnd     , "land")         // boolean and
+    ENUM_XML(BO_LOr      , "lor")          // boolean or
+    ENUM_XML(BO_Assign   , "assign")
+    ENUM_XML(BO_MulAssign, "mulassign")
+    ENUM_XML(BO_DivAssign, "divassign")
+    ENUM_XML(BO_RemAssign, "remassign")
+    ENUM_XML(BO_AddAssign, "addassign")
+    ENUM_XML(BO_SubAssign, "subassign")
+    ENUM_XML(BO_ShlAssign, "shlassign")
+    ENUM_XML(BO_ShrAssign, "shrassign")
+    ENUM_XML(BO_AndAssign, "andassign")
+    ENUM_XML(BO_XorAssign, "xorassign")
+    ENUM_XML(BO_OrAssign , "orassign")
+    ENUM_XML(BO_Comma    , "comma")
   END_ENUM_XML
   SUB_NODE_XML(Expr)                                    // expr1
   SUB_NODE_XML(Expr)                                    // expr2

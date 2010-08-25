@@ -337,7 +337,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
                                             SourceLocation());
               if (VD->getType()->isReferenceType()) {
                 E = new (getContext())
-                    UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
+                    UnaryOperator(const_cast<Expr*>(E), UO_AddrOf,
                                 getContext().getPointerType(E->getType()),
                                 SourceLocation());
               } 
@@ -347,7 +347,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       if (BDRE->isByRef()) {
         E = new (getContext())
-          UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
+          UnaryOperator(const_cast<Expr*>(E), UO_AddrOf,
                         getContext().getPointerType(E->getType()),
                         SourceLocation());
       }

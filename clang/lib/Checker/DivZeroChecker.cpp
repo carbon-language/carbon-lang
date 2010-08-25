@@ -40,10 +40,10 @@ void *DivZeroChecker::getTag() {
 void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
                                             const BinaryOperator *B) {
   BinaryOperator::Opcode Op = B->getOpcode();
-  if (Op != BinaryOperator::Div &&
-      Op != BinaryOperator::Rem &&
-      Op != BinaryOperator::DivAssign &&
-      Op != BinaryOperator::RemAssign)
+  if (Op != BO_Div &&
+      Op != BO_Rem &&
+      Op != BO_DivAssign &&
+      Op != BO_RemAssign)
     return;
 
   if (!B->getRHS()->getType()->isIntegerType() ||

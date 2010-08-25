@@ -436,8 +436,8 @@ void StmtProfiler::VisitBlockDeclRefExpr(BlockDeclRefExpr *S) {
 }
 
 static Stmt::StmtClass DecodeOperatorCall(CXXOperatorCallExpr *S,
-                                          UnaryOperator::Opcode &UnaryOp,
-                                          BinaryOperator::Opcode &BinaryOp) {
+                                          UnaryOperatorKind &UnaryOp,
+                                          BinaryOperatorKind &BinaryOp) {
   switch (S->getOperator()) {
   case OO_None:
   case OO_New:
@@ -453,165 +453,165 @@ static Stmt::StmtClass DecodeOperatorCall(CXXOperatorCallExpr *S,
       
   case OO_Plus:
     if (S->getNumArgs() == 1) {
-      UnaryOp = UnaryOperator::Plus;
+      UnaryOp = UO_Plus;
       return Stmt::UnaryOperatorClass;
     }
     
-    BinaryOp = BinaryOperator::Add;
+    BinaryOp = BO_Add;
     return Stmt::BinaryOperatorClass;
       
   case OO_Minus:
     if (S->getNumArgs() == 1) {
-      UnaryOp = UnaryOperator::Minus;
+      UnaryOp = UO_Minus;
       return Stmt::UnaryOperatorClass;
     }
     
-    BinaryOp = BinaryOperator::Sub;
+    BinaryOp = BO_Sub;
     return Stmt::BinaryOperatorClass;
 
   case OO_Star:
     if (S->getNumArgs() == 1) {
-      UnaryOp = UnaryOperator::Minus;
+      UnaryOp = UO_Minus;
       return Stmt::UnaryOperatorClass;
     }
     
-    BinaryOp = BinaryOperator::Sub;
+    BinaryOp = BO_Sub;
     return Stmt::BinaryOperatorClass;
 
   case OO_Slash:
-    BinaryOp = BinaryOperator::Div;
+    BinaryOp = BO_Div;
     return Stmt::BinaryOperatorClass;
       
   case OO_Percent:
-    BinaryOp = BinaryOperator::Rem;
+    BinaryOp = BO_Rem;
     return Stmt::BinaryOperatorClass;
 
   case OO_Caret:
-    BinaryOp = BinaryOperator::Xor;
+    BinaryOp = BO_Xor;
     return Stmt::BinaryOperatorClass;
 
   case OO_Amp:
     if (S->getNumArgs() == 1) {
-      UnaryOp = UnaryOperator::AddrOf;
+      UnaryOp = UO_AddrOf;
       return Stmt::UnaryOperatorClass;
     }
     
-    BinaryOp = BinaryOperator::And;
+    BinaryOp = BO_And;
     return Stmt::BinaryOperatorClass;
       
   case OO_Pipe:
-    BinaryOp = BinaryOperator::Or;
+    BinaryOp = BO_Or;
     return Stmt::BinaryOperatorClass;
 
   case OO_Tilde:
-    UnaryOp = UnaryOperator::Not;
+    UnaryOp = UO_Not;
     return Stmt::UnaryOperatorClass;
 
   case OO_Exclaim:
-    UnaryOp = UnaryOperator::LNot;
+    UnaryOp = UO_LNot;
     return Stmt::UnaryOperatorClass;
 
   case OO_Equal:
-    BinaryOp = BinaryOperator::Assign;
+    BinaryOp = BO_Assign;
     return Stmt::BinaryOperatorClass;
 
   case OO_Less:
-    BinaryOp = BinaryOperator::LT;
+    BinaryOp = BO_LT;
     return Stmt::BinaryOperatorClass;
 
   case OO_Greater:
-    BinaryOp = BinaryOperator::GT;
+    BinaryOp = BO_GT;
     return Stmt::BinaryOperatorClass;
       
   case OO_PlusEqual:
-    BinaryOp = BinaryOperator::AddAssign;
+    BinaryOp = BO_AddAssign;
     return Stmt::CompoundAssignOperatorClass;
 
   case OO_MinusEqual:
-    BinaryOp = BinaryOperator::SubAssign;
+    BinaryOp = BO_SubAssign;
     return Stmt::CompoundAssignOperatorClass;
 
   case OO_StarEqual:
-    BinaryOp = BinaryOperator::MulAssign;
+    BinaryOp = BO_MulAssign;
     return Stmt::CompoundAssignOperatorClass;
 
   case OO_SlashEqual:
-    BinaryOp = BinaryOperator::DivAssign;
+    BinaryOp = BO_DivAssign;
     return Stmt::CompoundAssignOperatorClass;
 
   case OO_PercentEqual:
-    BinaryOp = BinaryOperator::RemAssign;
+    BinaryOp = BO_RemAssign;
     return Stmt::CompoundAssignOperatorClass;
 
   case OO_CaretEqual:
-    BinaryOp = BinaryOperator::XorAssign;
+    BinaryOp = BO_XorAssign;
     return Stmt::CompoundAssignOperatorClass;
     
   case OO_AmpEqual:
-    BinaryOp = BinaryOperator::AndAssign;
+    BinaryOp = BO_AndAssign;
     return Stmt::CompoundAssignOperatorClass;
     
   case OO_PipeEqual:
-    BinaryOp = BinaryOperator::OrAssign;
+    BinaryOp = BO_OrAssign;
     return Stmt::CompoundAssignOperatorClass;
       
   case OO_LessLess:
-    BinaryOp = BinaryOperator::Shl;
+    BinaryOp = BO_Shl;
     return Stmt::BinaryOperatorClass;
     
   case OO_GreaterGreater:
-    BinaryOp = BinaryOperator::Shr;
+    BinaryOp = BO_Shr;
     return Stmt::BinaryOperatorClass;
 
   case OO_LessLessEqual:
-    BinaryOp = BinaryOperator::ShlAssign;
+    BinaryOp = BO_ShlAssign;
     return Stmt::CompoundAssignOperatorClass;
     
   case OO_GreaterGreaterEqual:
-    BinaryOp = BinaryOperator::ShrAssign;
+    BinaryOp = BO_ShrAssign;
     return Stmt::CompoundAssignOperatorClass;
 
   case OO_EqualEqual:
-    BinaryOp = BinaryOperator::EQ;
+    BinaryOp = BO_EQ;
     return Stmt::BinaryOperatorClass;
     
   case OO_ExclaimEqual:
-    BinaryOp = BinaryOperator::NE;
+    BinaryOp = BO_NE;
     return Stmt::BinaryOperatorClass;
       
   case OO_LessEqual:
-    BinaryOp = BinaryOperator::LE;
+    BinaryOp = BO_LE;
     return Stmt::BinaryOperatorClass;
     
   case OO_GreaterEqual:
-    BinaryOp = BinaryOperator::GE;
+    BinaryOp = BO_GE;
     return Stmt::BinaryOperatorClass;
       
   case OO_AmpAmp:
-    BinaryOp = BinaryOperator::LAnd;
+    BinaryOp = BO_LAnd;
     return Stmt::BinaryOperatorClass;
     
   case OO_PipePipe:
-    BinaryOp = BinaryOperator::LOr;
+    BinaryOp = BO_LOr;
     return Stmt::BinaryOperatorClass;
 
   case OO_PlusPlus:
-    UnaryOp = S->getNumArgs() == 1? UnaryOperator::PreInc 
-                                  : UnaryOperator::PostInc;
+    UnaryOp = S->getNumArgs() == 1? UO_PreInc 
+                                  : UO_PostInc;
     return Stmt::UnaryOperatorClass;
 
   case OO_MinusMinus:
-    UnaryOp = S->getNumArgs() == 1? UnaryOperator::PreDec
-                                  : UnaryOperator::PostDec;
+    UnaryOp = S->getNumArgs() == 1? UO_PreDec
+                                  : UO_PostDec;
     return Stmt::UnaryOperatorClass;
 
   case OO_Comma:
-    BinaryOp = BinaryOperator::Comma;
+    BinaryOp = BO_Comma;
     return Stmt::BinaryOperatorClass;
 
 
   case OO_ArrowStar:
-    BinaryOp = BinaryOperator::PtrMemI;
+    BinaryOp = BO_PtrMemI;
     return Stmt::BinaryOperatorClass;
       
   case OO_Subscript:
@@ -626,8 +626,8 @@ void StmtProfiler::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *S) {
   if (S->isTypeDependent()) {
     // Type-dependent operator calls are profiled like their underlying
     // syntactic operator.
-    UnaryOperator::Opcode UnaryOp = UnaryOperator::Extension;
-    BinaryOperator::Opcode BinaryOp = BinaryOperator::Comma;
+    UnaryOperatorKind UnaryOp = UO_Extension;
+    BinaryOperatorKind BinaryOp = BO_Comma;
     Stmt::StmtClass SC = DecodeOperatorCall(S, UnaryOp, BinaryOp);
     
     ID.AddInteger(SC);

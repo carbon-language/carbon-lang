@@ -37,67 +37,57 @@ public:
     if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
       switch (BinOp->getOpcode()) {
       default: assert(0 && "Unknown binary operator!");
-      case BinaryOperator::PtrMemD:   DISPATCH(BinPtrMemD,   BinaryOperator);
-      case BinaryOperator::PtrMemI:   DISPATCH(BinPtrMemI,   BinaryOperator);
-      case BinaryOperator::Mul:       DISPATCH(BinMul,       BinaryOperator);
-      case BinaryOperator::Div:       DISPATCH(BinDiv,       BinaryOperator);
-      case BinaryOperator::Rem:       DISPATCH(BinRem,       BinaryOperator);
-      case BinaryOperator::Add:       DISPATCH(BinAdd,       BinaryOperator);
-      case BinaryOperator::Sub:       DISPATCH(BinSub,       BinaryOperator);
-      case BinaryOperator::Shl:       DISPATCH(BinShl,       BinaryOperator);
-      case BinaryOperator::Shr:       DISPATCH(BinShr,       BinaryOperator);
+      case BO_PtrMemD:   DISPATCH(BinPtrMemD,   BinaryOperator);
+      case BO_PtrMemI:   DISPATCH(BinPtrMemI,   BinaryOperator);
+      case BO_Mul:       DISPATCH(BinMul,       BinaryOperator);
+      case BO_Div:       DISPATCH(BinDiv,       BinaryOperator);
+      case BO_Rem:       DISPATCH(BinRem,       BinaryOperator);
+      case BO_Add:       DISPATCH(BinAdd,       BinaryOperator);
+      case BO_Sub:       DISPATCH(BinSub,       BinaryOperator);
+      case BO_Shl:       DISPATCH(BinShl,       BinaryOperator);
+      case BO_Shr:       DISPATCH(BinShr,       BinaryOperator);
 
-      case BinaryOperator::LT:        DISPATCH(BinLT,        BinaryOperator);
-      case BinaryOperator::GT:        DISPATCH(BinGT,        BinaryOperator);
-      case BinaryOperator::LE:        DISPATCH(BinLE,        BinaryOperator);
-      case BinaryOperator::GE:        DISPATCH(BinGE,        BinaryOperator);
-      case BinaryOperator::EQ:        DISPATCH(BinEQ,        BinaryOperator);
-      case BinaryOperator::NE:        DISPATCH(BinNE,        BinaryOperator);
+      case BO_LT:        DISPATCH(BinLT,        BinaryOperator);
+      case BO_GT:        DISPATCH(BinGT,        BinaryOperator);
+      case BO_LE:        DISPATCH(BinLE,        BinaryOperator);
+      case BO_GE:        DISPATCH(BinGE,        BinaryOperator);
+      case BO_EQ:        DISPATCH(BinEQ,        BinaryOperator);
+      case BO_NE:        DISPATCH(BinNE,        BinaryOperator);
 
-      case BinaryOperator::And:       DISPATCH(BinAnd,       BinaryOperator);
-      case BinaryOperator::Xor:       DISPATCH(BinXor,       BinaryOperator);
-      case BinaryOperator::Or :       DISPATCH(BinOr,        BinaryOperator);
-      case BinaryOperator::LAnd:      DISPATCH(BinLAnd,      BinaryOperator);
-      case BinaryOperator::LOr :      DISPATCH(BinLOr,       BinaryOperator);
-      case BinaryOperator::Assign:    DISPATCH(BinAssign,    BinaryOperator);
-      case BinaryOperator::MulAssign:
-        DISPATCH(BinMulAssign, CompoundAssignOperator);
-      case BinaryOperator::DivAssign:
-        DISPATCH(BinDivAssign, CompoundAssignOperator);
-      case BinaryOperator::RemAssign:
-        DISPATCH(BinRemAssign, CompoundAssignOperator);
-      case BinaryOperator::AddAssign:
-        DISPATCH(BinAddAssign, CompoundAssignOperator);
-      case BinaryOperator::SubAssign:
-        DISPATCH(BinSubAssign, CompoundAssignOperator);
-      case BinaryOperator::ShlAssign:
-        DISPATCH(BinShlAssign, CompoundAssignOperator);
-      case BinaryOperator::ShrAssign:
-        DISPATCH(BinShrAssign, CompoundAssignOperator);
-      case BinaryOperator::AndAssign:
-        DISPATCH(BinAndAssign, CompoundAssignOperator);
-      case BinaryOperator::OrAssign:
-        DISPATCH(BinOrAssign,  CompoundAssignOperator);
-      case BinaryOperator::XorAssign:
-        DISPATCH(BinXorAssign, CompoundAssignOperator);
-      case BinaryOperator::Comma:     DISPATCH(BinComma,     BinaryOperator);
+      case BO_And:       DISPATCH(BinAnd,       BinaryOperator);
+      case BO_Xor:       DISPATCH(BinXor,       BinaryOperator);
+      case BO_Or :       DISPATCH(BinOr,        BinaryOperator);
+      case BO_LAnd:      DISPATCH(BinLAnd,      BinaryOperator);
+      case BO_LOr :      DISPATCH(BinLOr,       BinaryOperator);
+      case BO_Assign:    DISPATCH(BinAssign,    BinaryOperator);
+      case BO_MulAssign: DISPATCH(BinMulAssign, CompoundAssignOperator);
+      case BO_DivAssign: DISPATCH(BinDivAssign, CompoundAssignOperator);
+      case BO_RemAssign: DISPATCH(BinRemAssign, CompoundAssignOperator);
+      case BO_AddAssign: DISPATCH(BinAddAssign, CompoundAssignOperator);
+      case BO_SubAssign: DISPATCH(BinSubAssign, CompoundAssignOperator);
+      case BO_ShlAssign: DISPATCH(BinShlAssign, CompoundAssignOperator);
+      case BO_ShrAssign: DISPATCH(BinShrAssign, CompoundAssignOperator);
+      case BO_AndAssign: DISPATCH(BinAndAssign, CompoundAssignOperator);
+      case BO_OrAssign:  DISPATCH(BinOrAssign,  CompoundAssignOperator);
+      case BO_XorAssign: DISPATCH(BinXorAssign, CompoundAssignOperator);
+      case BO_Comma:     DISPATCH(BinComma,     BinaryOperator);
       }
     } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(S)) {
       switch (UnOp->getOpcode()) {
       default: assert(0 && "Unknown unary operator!");
-      case UnaryOperator::PostInc:      DISPATCH(UnaryPostInc,   UnaryOperator);
-      case UnaryOperator::PostDec:      DISPATCH(UnaryPostDec,   UnaryOperator);
-      case UnaryOperator::PreInc:       DISPATCH(UnaryPreInc,    UnaryOperator);
-      case UnaryOperator::PreDec:       DISPATCH(UnaryPreDec,    UnaryOperator);
-      case UnaryOperator::AddrOf:       DISPATCH(UnaryAddrOf,    UnaryOperator);
-      case UnaryOperator::Deref:        DISPATCH(UnaryDeref,     UnaryOperator);
-      case UnaryOperator::Plus:         DISPATCH(UnaryPlus,      UnaryOperator);
-      case UnaryOperator::Minus:        DISPATCH(UnaryMinus,     UnaryOperator);
-      case UnaryOperator::Not:          DISPATCH(UnaryNot,       UnaryOperator);
-      case UnaryOperator::LNot:         DISPATCH(UnaryLNot,      UnaryOperator);
-      case UnaryOperator::Real:         DISPATCH(UnaryReal,      UnaryOperator);
-      case UnaryOperator::Imag:         DISPATCH(UnaryImag,      UnaryOperator);
-      case UnaryOperator::Extension:    DISPATCH(UnaryExtension, UnaryOperator);
+      case UO_PostInc:   DISPATCH(UnaryPostInc,   UnaryOperator);
+      case UO_PostDec:   DISPATCH(UnaryPostDec,   UnaryOperator);
+      case UO_PreInc:    DISPATCH(UnaryPreInc,    UnaryOperator);
+      case UO_PreDec:    DISPATCH(UnaryPreDec,    UnaryOperator);
+      case UO_AddrOf:    DISPATCH(UnaryAddrOf,    UnaryOperator);
+      case UO_Deref:     DISPATCH(UnaryDeref,     UnaryOperator);
+      case UO_Plus:      DISPATCH(UnaryPlus,      UnaryOperator);
+      case UO_Minus:     DISPATCH(UnaryMinus,     UnaryOperator);
+      case UO_Not:       DISPATCH(UnaryNot,       UnaryOperator);
+      case UO_LNot:      DISPATCH(UnaryLNot,      UnaryOperator);
+      case UO_Real:      DISPATCH(UnaryReal,      UnaryOperator);
+      case UO_Imag:      DISPATCH(UnaryImag,      UnaryOperator);
+      case UO_Extension: DISPATCH(UnaryExtension, UnaryOperator);
       }
     }
 

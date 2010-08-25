@@ -376,14 +376,14 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
     switch (BinOp->getOpcode()) {
 #define OPERATOR(NAME) \
-    case BinaryOperator::NAME: DISPATCH(Bin##PtrMemD, BinaryOperator, S);
+    case BO_##NAME: DISPATCH(Bin##PtrMemD, BinaryOperator, S);
 
     BINOP_LIST()
 #undef OPERATOR
 #undef BINOP_LIST
 
 #define OPERATOR(NAME)                                          \
-    case BinaryOperator::NAME##Assign:                          \
+    case BO_##NAME##Assign:                          \
       DISPATCH(Bin##NAME##Assign, CompoundAssignOperator, S);
 
     CAO_LIST()
@@ -393,7 +393,7 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(S)) {
     switch (UnOp->getOpcode()) {
 #define OPERATOR(NAME)                                                  \
-    case UnaryOperator::NAME: DISPATCH(Unary##NAME, UnaryOperator, S);
+    case UO_##NAME: DISPATCH(Unary##NAME, UnaryOperator, S);
 
     UNARYOP_LIST()
 #undef OPERATOR

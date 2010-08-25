@@ -86,7 +86,7 @@ public:
         BinaryOperator* B = cast<BinaryOperator>(S);
         if (B->isLogicalOp())
           return static_cast<ImplClass*>(this)->BlockStmt_VisitLogicalOp(B);
-        else if (B->getOpcode() == BinaryOperator::Comma)
+        else if (B->getOpcode() == BO_Comma)
           return static_cast<ImplClass*>(this)->BlockStmt_VisitComma(B);
         // Fall through.
       }
@@ -149,7 +149,7 @@ public:
 
       case Stmt::BinaryOperatorClass: {
         BinaryOperator* B = cast<BinaryOperator>(S);
-        if (B->getOpcode() != BinaryOperator::Comma) break;
+        if (B->getOpcode() != BO_Comma) break;
         static_cast<ImplClass*>(this)->Visit(B->getRHS());
         return;
       }

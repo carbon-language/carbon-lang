@@ -165,7 +165,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   // Emit the 'this' pointer.
   llvm::Value *This;
   
-  if (BO->getOpcode() == BinaryOperator::PtrMemI)
+  if (BO->getOpcode() == BO_PtrMemI)
     This = EmitScalarExpr(BaseExpr);
   else 
     This = EmitLValue(BaseExpr).getAddress();
@@ -827,7 +827,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   // to void*.
   const Expr *Arg = E->getArgument();
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
-    if (ICE->getCastKind() != CastExpr::CK_UserDefinedConversion &&
+    if (ICE->getCastKind() != CK_UserDefinedConversion &&
         ICE->getType()->isVoidPointerType())
       Arg = ICE->getSubExpr();
     else
@@ -913,7 +913,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       // FIXME: PointerType->hasAttr<NonNullAttr>()
       bool CanBeZero = false;
       if (UnaryOperator *UO = dyn_cast<UnaryOperator>(subE->IgnoreParens()))
-        if (UO->getOpcode() == UnaryOperator::Deref)
+        if (UO->getOpcode() == UO_Deref)
           CanBeZero = true;
       if (CanBeZero) {
         llvm::BasicBlock *NonZeroBlock = createBasicBlock();

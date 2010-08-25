@@ -497,7 +497,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       Expr *rhs = new (Context) DeclRefExpr(Param,Param->getType(),
                                             SourceLocation());
       ExprResult Res = BuildBinOp(S, SourceLocation(), 
-                                  BinaryOperator::Assign, lhs, rhs);
+                                  BO_Assign, lhs, rhs);
       PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());
     }
   }

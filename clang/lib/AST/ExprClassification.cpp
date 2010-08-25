@@ -111,20 +111,20 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
       // C++ [expr.unary.op]p1: The unary * operator performs indirection:
       //   [...] the result is an lvalue referring to the object or function
       //   to which the expression points.
-    case UnaryOperator::Deref:
+    case UO_Deref:
       return Cl::CL_LValue;
 
       // GNU extensions, simply look through them.
-    case UnaryOperator::Real:
-    case UnaryOperator::Imag:
-    case UnaryOperator::Extension:
+    case UO_Real:
+    case UO_Imag:
+    case UO_Extension:
       return ClassifyInternal(Ctx, cast<UnaryOperator>(E)->getSubExpr());
 
       // C++ [expr.pre.incr]p1: The result is the updated operand; it is an
       //   lvalue, [...]
       // Not so in C.
-    case UnaryOperator::PreInc:
-    case UnaryOperator::PreDec:
+    case UO_PreInc:
+    case UO_PreDec:
       return Lang.CPlusPlus ? Cl::CL_LValue : Cl::CL_PRValue;
 
     default:
@@ -321,19 +321,19 @@ static Cl::Kinds ClassifyBinaryOp(ASTContext &Ctx, const BinaryOperator *E) {
 
   // C++ [expr.comma]p1: the result is of the same value category as its right
   //   operand, [...].
-  if (E->getOpcode() == BinaryOperator::Comma)
+  if (E->getOpcode() == BO_Comma)
     return ClassifyInternal(Ctx, E->getRHS());
 
   // C++ [expr.mptr.oper]p6: The result of a .* expression whose second operand
   //   is a pointer to a data member is of the same value category as its first
   //   operand.
-  if (E->getOpcode() == BinaryOperator::PtrMemD)
+  if (E->getOpcode() == BO_PtrMemD)
     return E->getType()->isFunctionType() ? Cl::CL_MemberFunction :
       ClassifyInternal(Ctx, E->getLHS());
 
   // C++ [expr.mptr.oper]p6: The result of an ->* expression is an lvalue if its
   //   second operand is a pointer to data member and a prvalue otherwise.
-  if (E->getOpcode() == BinaryOperator::PtrMemI)
+  if (E->getOpcode() == BO_PtrMemI)
     return E->getType()->isFunctionType() ?
       Cl::CL_MemberFunction : Cl::CL_LValue;
 

@@ -39,7 +39,7 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
                                                const BinaryOperator *B) {
   // When doing pointer subtraction, if the two pointers do not point to the
   // same memory chunk, emit a warning.
-  if (B->getOpcode() != BinaryOperator::Sub)
+  if (B->getOpcode() != BO_Sub)
     return;
 
   const GRState *state = C.getState();

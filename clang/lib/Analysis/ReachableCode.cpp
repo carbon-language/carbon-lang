@@ -41,7 +41,7 @@ top:
   switch (S->getStmtClass()) {
     case Expr::BinaryOperatorClass: {
       const BinaryOperator *BO = cast<BinaryOperator>(S);
-      if (BO->getOpcode() == BinaryOperator::Comma) {
+      if (BO->getOpcode() == BO_Comma) {
         if (sn+1 < b.size())
           return b[sn+1].getStmt()->getLocStart();
         const CFGBlock *n = &b;

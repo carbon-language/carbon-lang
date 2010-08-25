@@ -660,13 +660,13 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
     // it might be concatenated incorrectly like '+'.
     switch (Node->getOpcode()) {
     default: break;
-    case UnaryOperator::Real:
-    case UnaryOperator::Imag:
-    case UnaryOperator::Extension:
+    case UO_Real:
+    case UO_Imag:
+    case UO_Extension:
       OS << ' ';
       break;
-    case UnaryOperator::Plus:
-    case UnaryOperator::Minus:
+    case UO_Plus:
+    case UO_Minus:
       if (isa<UnaryOperator>(Node->getSubExpr()))
         OS << ' ';
       break;

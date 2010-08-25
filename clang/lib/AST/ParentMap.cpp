@@ -73,7 +73,7 @@ bool ParentMap::isConsumedExpr(Expr* E) const {
       BinaryOperator *BE = cast<BinaryOperator>(P);
       // If it is a comma, only the right side is consumed.
       // If it isn't a comma, both sides are consumed.
-      return BE->getOpcode()!=BinaryOperator::Comma ||DirectChild==BE->getRHS();
+      return BE->getOpcode()!=BO_Comma ||DirectChild==BE->getRHS();
     }
     case Stmt::ForStmtClass:
       return DirectChild == cast<ForStmt>(P)->getCond();

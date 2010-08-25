@@ -557,7 +557,7 @@ void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
 
   SVal Count = state->getSVal(CE->getArg(0));
   SVal EleSize = state->getSVal(CE->getArg(1));
-  SVal TotalSize = SVator.EvalBinOp(state, BinaryOperator::Mul, Count, EleSize,
+  SVal TotalSize = SVator.EvalBinOp(state, BO_Mul, Count, EleSize,
                                     ValMgr.getContext().getSizeType());
   
   SVal Zero = ValMgr.makeZeroVal(ValMgr.getContext().CharTy);

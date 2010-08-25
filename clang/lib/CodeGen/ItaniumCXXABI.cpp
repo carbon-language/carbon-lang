@@ -241,8 +241,8 @@ llvm::Value *
 ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
                                            const CastExpr *E,
                                            llvm::Value *Src) {
-  assert(E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer ||
-         E->getCastKind() == CastExpr::CK_BaseToDerivedMemberPointer);
+  assert(E->getCastKind() == CK_DerivedToBaseMemberPointer ||
+         E->getCastKind() == CK_BaseToDerivedMemberPointer);
 
   if (isa<llvm::Constant>(Src))
     return EmitMemberPointerConversion(cast<llvm::Constant>(Src), E);
@@ -257,7 +257,7 @@ ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   const CXXRecordDecl *DestDecl = DestTy->getClass()->getAsCXXRecordDecl();
 
   bool DerivedToBase =
-    E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer;
+    E->getCastKind() == CK_DerivedToBaseMemberPointer;
 
   const CXXRecordDecl *BaseDecl, *DerivedDecl;
   if (DerivedToBase)
@@ -312,7 +312,7 @@ ItaniumCXXABI::EmitMemberPointerConversion(llvm::Constant *C,
     E->getType()->getAs<MemberPointerType>();
 
   bool DerivedToBase =
-    E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer;
+    E->getCastKind() == CK_DerivedToBaseMemberPointer;
 
   const CXXRecordDecl *DerivedDecl;
   if (DerivedToBase)

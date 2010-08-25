@@ -4238,7 +4238,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
             << Init->getSourceRange();
           VDecl->setInvalidDecl();
         } else if (!VDecl->getType()->isDependentType())
-          ImpCastExprToType(Init, VDecl->getType(), CastExpr::CK_IntegralCast);
+          ImpCastExprToType(Init, VDecl->getType(), CK_IntegralCast);
       }
     }
   } else if (VDecl->isFileVarDecl()) {
@@ -6751,7 +6751,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
               << (EnumVal.isUnsigned() || EnumVal.isNonNegative());
           else if (!Context.hasSameType(Val->getType(), Context.IntTy)) {
             // Force the type of the expression to 'int'.
-            ImpCastExprToType(Val, Context.IntTy, CastExpr::CK_IntegralCast);
+            ImpCastExprToType(Val, Context.IntTy, CK_IntegralCast);
           }
         }
         
@@ -7082,7 +7082,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     // Adjust the Expr initializer and type.
     if (ECD->getInitExpr())
       ECD->setInitExpr(ImplicitCastExpr::Create(Context, NewTy,
-                                                CastExpr::CK_IntegralCast,
+                                                CK_IntegralCast,
                                                 ECD->getInitExpr(),
                                                 /*base paths*/ 0,
                                                 VK_RValue));

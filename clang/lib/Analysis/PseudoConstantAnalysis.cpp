@@ -91,7 +91,7 @@ void PseudoConstantAnalysis::RunAnalysis() {
       // for any of the assignment operators, implying that this Decl is being
       // written to.
       switch (BO->getOpcode()) {
-      case BinaryOperator::Assign: {
+      case BO_Assign: {
         const Expr *RHS = BO->getRHS()->IgnoreParenCasts();
         if (const DeclRefExpr *RHSDecl = dyn_cast<DeclRefExpr>(RHS)) {
           // Self-assignments don't count as use of a variable
@@ -101,15 +101,15 @@ void PseudoConstantAnalysis::RunAnalysis() {
         }
 
       }
-      case BinaryOperator::AddAssign:
-      case BinaryOperator::SubAssign:
-      case BinaryOperator::MulAssign:
-      case BinaryOperator::DivAssign:
-      case BinaryOperator::AndAssign:
-      case BinaryOperator::OrAssign:
-      case BinaryOperator::XorAssign:
-      case BinaryOperator::ShlAssign:
-      case BinaryOperator::ShrAssign: {
+      case BO_AddAssign:
+      case BO_SubAssign:
+      case BO_MulAssign:
+      case BO_DivAssign:
+      case BO_AndAssign:
+      case BO_OrAssign:
+      case BO_XorAssign:
+      case BO_ShlAssign:
+      case BO_ShrAssign: {
         // The DeclRefExpr is being assigned to - mark it as non-constant
         const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
         if (VD)
@@ -137,12 +137,12 @@ void PseudoConstantAnalysis::RunAnalysis() {
       // check for any of the increment/decrement operators, as well as
       // addressOf.
       switch (UO->getOpcode()) {
-      case UnaryOperator::PostDec:
-      case UnaryOperator::PostInc:
-      case UnaryOperator::PreDec:
-      case UnaryOperator::PreInc:
+      case UO_PostDec:
+      case UO_PostInc:
+      case UO_PreDec:
+      case UO_PreInc:
         // The DeclRefExpr is being changed - mark it as non-constant
-      case UnaryOperator::AddrOf: {
+      case UO_AddrOf: {
         // If we are taking the address of the DeclRefExpr, assume it is
         // non-constant.
         const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());

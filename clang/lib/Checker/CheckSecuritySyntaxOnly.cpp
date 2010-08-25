@@ -131,7 +131,7 @@ GetIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
 
   if (const BinaryOperator *B = dyn_cast<BinaryOperator>(expr)) {
     if (!(B->isAssignmentOp() || B->isCompoundAssignmentOp() ||
-          B->getOpcode() == BinaryOperator::Comma))
+          B->getOpcode() == BO_Comma))
       return NULL;
 
     if (const DeclRefExpr *lhs = GetIncrementedVar(B->getLHS(), x, y))

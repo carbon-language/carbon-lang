@@ -798,8 +798,8 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
     default:
       // Handle it normally.
       break;
-    case BinaryOperator::Add:
-    case BinaryOperator::Sub:
+    case BO_Add:
+    case BO_Sub:
       // FIXME: does this need to be casted to match resultTy?
       return L;
     }

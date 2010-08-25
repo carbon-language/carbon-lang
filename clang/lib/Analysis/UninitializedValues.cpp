@@ -121,7 +121,7 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 
   if (VarDecl* VD = FindBlockVarDecl(B->getLHS()))
     if (B->isAssignmentOp()) {
-      if (B->getOpcode() == BinaryOperator::Assign)
+      if (B->getOpcode() == BO_Assign)
         return V(VD,AD) = Visit(B->getRHS());
       else // Handle +=, -=, *=, etc.  We do want '&', not '&&'.
         return V(VD,AD) = Visit(B->getLHS()) & Visit(B->getRHS());
@@ -168,7 +168,7 @@ bool TransferFuncs::VisitCallExpr(CallExpr* C) {
 
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   switch (U->getOpcode()) {
-    case UnaryOperator::AddrOf: {
+    case UO_AddrOf: {
       VarDecl* VD = FindBlockVarDecl(U->getSubExpr());
       if (VD && VD->isBlockVarDecl())
         return V(VD,AD) = Initialized;

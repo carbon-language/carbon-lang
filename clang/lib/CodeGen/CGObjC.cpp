@@ -404,13 +404,13 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     if (getContext().getCanonicalType(Ivar->getType()) !=
         getContext().getCanonicalType(ArgDecl->getType())) {
       ImplicitCastExpr ArgCasted(ImplicitCastExpr::OnStack,
-                                 Ivar->getType(), CastExpr::CK_BitCast, &Arg,
+                                 Ivar->getType(), CK_BitCast, &Arg,
                                  VK_RValue);
-      BinaryOperator Assign(&IvarRef, &ArgCasted, BinaryOperator::Assign,
+      BinaryOperator Assign(&IvarRef, &ArgCasted, BO_Assign,
                             Ivar->getType(), Loc);
       EmitStmt(&Assign);
     } else {
-      BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
+      BinaryOperator Assign(&IvarRef, &Arg, BO_Assign,
                             Ivar->getType(), Loc);
       EmitStmt(&Assign);
     }

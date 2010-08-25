@@ -463,7 +463,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
         break;
 
       SVal V = state->getSVal(loc::MemRegionVal(R));
-      SVal Constraint_untested = EvalBinOp(state, BinaryOperator::GT, V,
+      SVal Constraint_untested = EvalBinOp(state, BO_GT, V,
                                            ValMgr.makeZeroVal(T),
                                            getContext().IntTy);
 
@@ -867,7 +867,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
         VisitLogicalExpr(B, Pred, Dst);
         break;
       }
-      else if (B->getOpcode() == BinaryOperator::Comma) {
+      else if (B->getOpcode() == BO_Comma) {
         const GRState* state = GetState(Pred);
         MakeNode(Dst, B, Pred, state->BindExpr(B, state->getSVal(B->getRHS())));
         break;
@@ -1046,7 +1046,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
 
     case Stmt::UnaryOperatorClass: {
       const UnaryOperator *U = cast<UnaryOperator>(S);
-      if (AMgr.shouldEagerlyAssume()&&(U->getOpcode() == UnaryOperator::LNot)) {
+      if (AMgr.shouldEagerlyAssume()&&(U->getOpcode() == UO_LNot)) {
         ExplodedNodeSet Tmp;
         VisitUnaryOperator(U, Pred, Tmp, false);
         EvalEagerlyAssume(Dst, Tmp, U);
@@ -1242,7 +1242,7 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
       const BinaryOperator* B = cast<BinaryOperator>(Terminator);
       BinaryOperator::Opcode Op = B->getOpcode();
 
-      assert (Op == BinaryOperator::LAnd || Op == BinaryOperator::LOr);
+      assert (Op == BO_LAnd || Op == BO_LOr);
 
       // For &&, if we take the true branch, then the value of the whole
       // expression is that of the RHS expression.
@@ -1250,8 +1250,8 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
       // For ||, if we take the false branch, then the value of the whole
       // expression is that of the RHS expression.
 
-      const Expr* Ex = (Op == BinaryOperator::LAnd && branchTaken) ||
-                       (Op == BinaryOperator::LOr && !branchTaken)
+      const Expr* Ex = (Op == BO_LAnd && branchTaken) ||
+                       (Op == BO_LOr && !branchTaken)
                        ? B->getRHS() : B->getLHS();
 
       return state->BindExpr(B, UndefinedVal(Ex));
@@ -1618,8 +1618,8 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
 void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
                                     ExplodedNodeSet& Dst) {
 
-  assert(B->getOpcode() == BinaryOperator::LAnd ||
-         B->getOpcode() == BinaryOperator::LOr);
+  assert(B->getOpcode() == BO_LAnd ||
+         B->getOpcode() == BO_LOr);
 
   assert(B==CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(B));
 
@@ -1659,7 +1659,7 @@ void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
     // We took the LHS expression.  Depending on whether we are '&&' or
     // '||' we know what the value of the expression is via properties of
     // the short-circuiting.
-    X = ValMgr.makeIntVal(B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U,
+    X = ValMgr.makeIntVal(B->getOpcode() == BO_LAnd ? 0U : 1U,
                           B->getType());
     MakeNode(Dst, B, Pred, state->BindExpr(B, X));
   }
@@ -2559,14 +2559,14 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   }
 
   switch (CastE->getCastKind()) {
-  case CastExpr::CK_ToVoid:
+  case CK_ToVoid:
     assert(!asLValue);
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I)
       Dst.Add(*I);
     return;
 
-  case CastExpr::CK_NoOp:
-  case CastExpr::CK_FunctionToPointerDecay:
+  case CK_NoOp:
+  case CK_FunctionToPointerDecay:
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
       // Copy the SVal of Ex to CastE.
       ExplodedNode *N = *I;
@@ -2577,21 +2577,21 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     }
     return;
 
-  case CastExpr::CK_Unknown:
-  case CastExpr::CK_ArrayToPointerDecay:
-  case CastExpr::CK_BitCast:
-  case CastExpr::CK_LValueBitCast:
-  case CastExpr::CK_IntegralCast:
-  case CastExpr::CK_IntegralToPointer:
-  case CastExpr::CK_PointerToIntegral:
-  case CastExpr::CK_IntegralToFloating:
-  case CastExpr::CK_FloatingToIntegral:
-  case CastExpr::CK_FloatingCast:
-  case CastExpr::CK_AnyPointerToObjCPointerCast:
-  case CastExpr::CK_AnyPointerToBlockPointerCast:
-  case CastExpr::CK_DerivedToBase:
-  case CastExpr::CK_UncheckedDerivedToBase:
-  case CastExpr::CK_ObjCObjectLValueCast: {
+  case CK_Unknown:
+  case CK_ArrayToPointerDecay:
+  case CK_BitCast:
+  case CK_LValueBitCast:
+  case CK_IntegralCast:
+  case CK_IntegralToPointer:
+  case CK_PointerToIntegral:
+  case CK_IntegralToFloating:
+  case CK_FloatingToIntegral:
+  case CK_FloatingCast:
+  case CK_AnyPointerToObjCPointerCast:
+  case CK_AnyPointerToBlockPointerCast:
+  case CK_DerivedToBase:
+  case CK_UncheckedDerivedToBase:
+  case CK_ObjCObjectLValueCast: {
     // Delegate to SValuator to process.
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
       ExplodedNode* N = *I;
@@ -2605,16 +2605,16 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   }
   
   // Various C++ casts that are not handled yet.
-  case CastExpr::CK_Dynamic:  
-  case CastExpr::CK_ToUnion:
-  case CastExpr::CK_BaseToDerived:
-  case CastExpr::CK_NullToMemberPointer:
-  case CastExpr::CK_BaseToDerivedMemberPointer:
-  case CastExpr::CK_DerivedToBaseMemberPointer:
-  case CastExpr::CK_UserDefinedConversion:
-  case CastExpr::CK_ConstructorConversion:
-  case CastExpr::CK_VectorSplat:
-  case CastExpr::CK_MemberPointerToBoolean: {
+  case CK_Dynamic:  
+  case CK_ToUnion:
+  case CK_BaseToDerived:
+  case CK_NullToMemberPointer:
+  case CK_BaseToDerivedMemberPointer:
+  case CK_DerivedToBaseMemberPointer:
+  case CK_UserDefinedConversion:
+  case CK_ConstructorConversion:
+  case CK_VectorSplat:
+  case CK_MemberPointerToBoolean: {
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     Builder->BuildSinks = true;
     MakeNode(Dst, CastE, Pred, GetState(Pred));
@@ -2920,7 +2920,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
     default:
       break;
 
-    case UnaryOperator::Deref: {
+    case UO_Deref: {
 
       const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
@@ -2941,7 +2941,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       return;
     }
 
-    case UnaryOperator::Real: {
+    case UO_Real: {
 
       const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
@@ -2956,7 +2956,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           continue;
         }
 
-        // For all other types, UnaryOperator::Real is an identity operation.
+        // For all other types, UO_Real is an identity operation.
         assert (U->getType() == Ex->getType());
         const GRState* state = GetState(*I);
         MakeNode(Dst, U, *I, state->BindExpr(U, state->getSVal(Ex)));
@@ -2965,7 +2965,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       return;
     }
 
-    case UnaryOperator::Imag: {
+    case UO_Imag: {
 
       const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
@@ -2979,7 +2979,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           continue;
         }
 
-        // For all other types, UnaryOperator::Imag returns 0.
+        // For all other types, UO_Imag returns 0.
         const GRState* state = GetState(*I);
         SVal X = ValMgr.makeZeroVal(Ex->getType());
         MakeNode(Dst, U, *I, state->BindExpr(U, X));
@@ -2988,8 +2988,8 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       return;
     }
       
-    case UnaryOperator::Plus: assert(!asLValue);  // FALL-THROUGH.
-    case UnaryOperator::Extension: {
+    case UO_Plus: assert(!asLValue);  // FALL-THROUGH.
+    case UO_Extension: {
 
       // Unary "+" is a no-op, similar to a parentheses.  We still have places
       // where it may be a block-level expression, so we need to
@@ -3012,7 +3012,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       return;
     }
 
-    case UnaryOperator::AddrOf: {
+    case UO_AddrOf: {
 
       assert(!asLValue);
       const Expr* Ex = U->getSubExpr()->IgnoreParens();
@@ -3029,9 +3029,9 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       return;
     }
 
-    case UnaryOperator::LNot:
-    case UnaryOperator::Minus:
-    case UnaryOperator::Not: {
+    case UO_LNot:
+    case UO_Minus:
+    case UO_Not: {
 
       assert (!asLValue);
       const Expr* Ex = U->getSubExpr()->IgnoreParens();
@@ -3065,17 +3065,17 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
             assert(false && "Invalid Opcode.");
             break;
 
-          case UnaryOperator::Not:
+          case UO_Not:
             // FIXME: Do we need to handle promotions?
             state = state->BindExpr(U, EvalComplement(cast<NonLoc>(V)));
             break;
 
-          case UnaryOperator::Minus:
+          case UO_Minus:
             // FIXME: Do we need to handle promotions?
             state = state->BindExpr(U, EvalMinus(cast<NonLoc>(V)));
             break;
 
-          case UnaryOperator::LNot:
+          case UO_LNot:
 
             // C99 6.5.3.3: "The expression !E is equivalent to (0==E)."
             //
@@ -3085,12 +3085,12 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
 
             if (isa<Loc>(V)) {
               Loc X = ValMgr.makeNull();
-              Result = EvalBinOp(state, BinaryOperator::EQ, cast<Loc>(V), X,
+              Result = EvalBinOp(state, BO_EQ, cast<Loc>(V), X,
                                  U->getType());
             }
             else {
               nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
-              Result = EvalBinOp(state, BinaryOperator::EQ, cast<NonLoc>(V), X,
+              Result = EvalBinOp(state, BO_EQ, cast<NonLoc>(V), X,
                                  U->getType());
             }
 
@@ -3135,8 +3135,8 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       DefinedSVal V2 = cast<DefinedSVal>(V2_untested);
 
       // Handle all other values.
-      BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
-                                                     : BinaryOperator::Sub;
+      BinaryOperator::Opcode Op = U->isIncrementOp() ? BO_Add
+                                                     : BO_Sub;
 
       // If the UnaryOperator has non-location type, use its type to create the
       // constant value. If the UnaryOperator has location type, create the
@@ -3335,7 +3335,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
 
       BinaryOperator::Opcode Op = B->getOpcode();
 
-      if (Op == BinaryOperator::Assign) {
+      if (Op == BO_Assign) {
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
         QualType T = RHS->getType();
@@ -3381,16 +3381,16 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       switch (Op) {
         default:
           assert(0 && "Invalid opcode for compound assignment.");
-        case BinaryOperator::MulAssign: Op = BinaryOperator::Mul; break;
-        case BinaryOperator::DivAssign: Op = BinaryOperator::Div; break;
-        case BinaryOperator::RemAssign: Op = BinaryOperator::Rem; break;
-        case BinaryOperator::AddAssign: Op = BinaryOperator::Add; break;
-        case BinaryOperator::SubAssign: Op = BinaryOperator::Sub; break;
-        case BinaryOperator::ShlAssign: Op = BinaryOperator::Shl; break;
-        case BinaryOperator::ShrAssign: Op = BinaryOperator::Shr; break;
-        case BinaryOperator::AndAssign: Op = BinaryOperator::And; break;
-        case BinaryOperator::XorAssign: Op = BinaryOperator::Xor; break;
-        case BinaryOperator::OrAssign:  Op = BinaryOperator::Or;  break;
+        case BO_MulAssign: Op = BO_Mul; break;
+        case BO_DivAssign: Op = BO_Div; break;
+        case BO_RemAssign: Op = BO_Rem; break;
+        case BO_AddAssign: Op = BO_Add; break;
+        case BO_SubAssign: Op = BO_Sub; break;
+        case BO_ShlAssign: Op = BO_Shl; break;
+        case BO_ShrAssign: Op = BO_Shr; break;
+        case BO_AndAssign: Op = BO_And; break;
+        case BO_XorAssign: Op = BO_Xor; break;
+        case BO_OrAssign:  Op = BO_Or;  break;
       }
 
       // Perform a load (the LHS).  This performs the checks for

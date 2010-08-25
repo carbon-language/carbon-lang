@@ -265,13 +265,13 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
 
   // Compute the offset of the last element to be accessed: size-1.
   NonLoc One = cast<NonLoc>(VM.makeIntVal(1, SizeTy));
-  NonLoc LastOffset = cast<NonLoc>(SV.EvalBinOpNN(state, BinaryOperator::Sub,
+  NonLoc LastOffset = cast<NonLoc>(SV.EvalBinOpNN(state, BO_Sub,
                                                   *Length, One, SizeTy));
 
   // Check that the first buffer is sufficently long.
   SVal BufStart = SV.EvalCast(BufVal, PtrTy, FirstBuf->getType());
   if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
-    SVal BufEnd = SV.EvalBinOpLN(state, BinaryOperator::Add, *BufLoc,
+    SVal BufEnd = SV.EvalBinOpLN(state, BO_Add, *BufLoc,
                                  LastOffset, PtrTy);
     state = CheckLocation(C, state, FirstBuf, BufEnd, FirstIsDestination);
 
@@ -289,7 +289,7 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
 
     BufStart = SV.EvalCast(BufVal, PtrTy, SecondBuf->getType());
     if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
-      SVal BufEnd = SV.EvalBinOpLN(state, BinaryOperator::Add, *BufLoc,
+      SVal BufEnd = SV.EvalBinOpLN(state, BO_Add, *BufLoc,
                                    LastOffset, PtrTy);
       state = CheckLocation(C, state, SecondBuf, BufEnd);
     }
@@ -345,7 +345,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
 
   // Which value comes first?
   QualType CmpTy = Ctx.IntTy;
-  SVal Reverse = SV.EvalBinOpLL(state, BinaryOperator::GT,
+  SVal Reverse = SV.EvalBinOpLL(state, BO_GT,
                                 *FirstLoc, *SecondLoc, CmpTy);
   DefinedOrUnknownSVal *ReverseTest = dyn_cast<DefinedOrUnknownSVal>(&Reverse);
   if (!ReverseTest)
@@ -385,14 +385,14 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
     return state;
 
   // Compute the end of the first buffer. Bail out if THAT fails.
-  SVal FirstEnd = SV.EvalBinOpLN(state, BinaryOperator::Add,
+  SVal FirstEnd = SV.EvalBinOpLN(state, BO_Add,
                                  *FirstStartLoc, *Length, CharPtrTy);
   Loc *FirstEndLoc = dyn_cast<Loc>(&FirstEnd);
   if (!FirstEndLoc)
     return state;
 
   // Is the end of the first buffer past the start of the second buffer?
-  SVal Overlap = SV.EvalBinOpLL(state, BinaryOperator::GT,
+  SVal Overlap = SV.EvalBinOpLL(state, BO_GT,
                                 *FirstEndLoc, *SecondLoc, CmpTy);
   DefinedOrUnknownSVal *OverlapTest = dyn_cast<DefinedOrUnknownSVal>(&Overlap);
   if (!OverlapTest)
@@ -852,7 +852,7 @@ void CStringChecker::EvalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     if (NonLoc *KnownStrLen = dyn_cast<NonLoc>(&StrLen)) {
       SValuator &SV = C.getSValuator();
 
-      SVal LastElement = SV.EvalBinOpLN(state, BinaryOperator::Add,
+      SVal LastElement = SV.EvalBinOpLN(state, BO_Add,
                                         *DstRegVal, *KnownStrLen,
                                         Dst->getType());
 

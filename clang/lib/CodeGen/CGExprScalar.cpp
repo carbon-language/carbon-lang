@@ -883,7 +883,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
 static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
   const Expr *E = CE->getSubExpr();
 
-  if (CE->getCastKind() == CastExpr::CK_UncheckedDerivedToBase)
+  if (CE->getCastKind() == CK_UncheckedDerivedToBase)
     return false;
   
   if (isa<CXXThisExpr>(E)) {
@@ -906,7 +906,7 @@ static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
 Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   Expr *E = CE->getSubExpr();
   QualType DestTy = CE->getType();
-  CastExpr::CastKind Kind = CE->getCastKind();
+  CastKind Kind = CE->getCastKind();
   
   if (!DestTy->isVoidType())
     TestAndClearIgnoreResultAssign();
@@ -915,30 +915,30 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   // a default case, so the compiler will warn on a missing case.  The cases
   // are in the same order as in the CastKind enum.
   switch (Kind) {
-  case CastExpr::CK_Unknown:
+  case CK_Unknown:
     // FIXME: All casts should have a known kind!
     //assert(0 && "Unknown cast kind!");
     break;
 
-  case CastExpr::CK_LValueBitCast: 
-  case CastExpr::CK_ObjCObjectLValueCast: {
+  case CK_LValueBitCast: 
+  case CK_ObjCObjectLValueCast: {
     Value *V = EmitLValue(E).getAddress();
     V = Builder.CreateBitCast(V, 
                           ConvertType(CGF.getContext().getPointerType(DestTy)));
     return EmitLoadOfLValue(CGF.MakeAddrLValue(V, DestTy), DestTy);
   }
       
-  case CastExpr::CK_AnyPointerToObjCPointerCast:
-  case CastExpr::CK_AnyPointerToBlockPointerCast:
-  case CastExpr::CK_BitCast: {
+  case CK_AnyPointerToObjCPointerCast:
+  case CK_AnyPointerToBlockPointerCast:
+  case CK_BitCast: {
     Value *Src = Visit(const_cast<Expr*>(E));
     return Builder.CreateBitCast(Src, ConvertType(DestTy));
   }
-  case CastExpr::CK_NoOp:
-  case CastExpr::CK_UserDefinedConversion:
+  case CK_NoOp:
+  case CK_UserDefinedConversion:
     return Visit(const_cast<Expr*>(E));
 
-  case CastExpr::CK_BaseToDerived: {
+  case CK_BaseToDerived: {
     const CXXRecordDecl *DerivedClassDecl = 
       DestTy->getCXXRecordDeclForPointerType();
     
@@ -946,8 +946,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
                                         CE->path_begin(), CE->path_end(),
                                         ShouldNullCheckClassCastValue(CE));
   }
-  case CastExpr::CK_UncheckedDerivedToBase:
-  case CastExpr::CK_DerivedToBase: {
+  case CK_UncheckedDerivedToBase:
+  case CK_DerivedToBase: {
     const RecordType *DerivedClassTy = 
       E->getType()->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
     CXXRecordDecl *DerivedClassDecl = 
@@ -957,16 +957,16 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
                                      CE->path_begin(), CE->path_end(),
                                      ShouldNullCheckClassCastValue(CE));
   }
-  case CastExpr::CK_Dynamic: {
+  case CK_Dynamic: {
     Value *V = Visit(const_cast<Expr*>(E));
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
     return CGF.EmitDynamicCast(V, DCE);
   }
-  case CastExpr::CK_ToUnion:
+  case CK_ToUnion:
     assert(0 && "Should be unreachable!");
     break;
 
-  case CastExpr::CK_ArrayToPointerDecay: {
+  case CK_ArrayToPointerDecay: {
     assert(E->getType()->isArrayType() &&
            "Array to pointer decay must have array source type!");
 
@@ -984,10 +984,10 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
     return V;
   }
-  case CastExpr::CK_FunctionToPointerDecay:
+  case CK_FunctionToPointerDecay:
     return EmitLValue(E).getAddress();
 
-  case CastExpr::CK_NullToMemberPointer: {
+  case CK_NullToMemberPointer: {
     // If the subexpression's type is the C++0x nullptr_t, emit the
     // subexpression, which may have side effects.
     if (E->getType()->isNullPtrType())
@@ -997,8 +997,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return CGF.CGM.getCXXABI().EmitNullMemberPointer(MPT);
   }
 
-  case CastExpr::CK_BaseToDerivedMemberPointer:
-  case CastExpr::CK_DerivedToBaseMemberPointer: {
+  case CK_BaseToDerivedMemberPointer:
+  case CK_DerivedToBaseMemberPointer: {
     Value *Src = Visit(E);
     
     // Note that the AST doesn't distinguish between checked and
@@ -1011,11 +1011,11 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   }
   
 
-  case CastExpr::CK_ConstructorConversion:
+  case CK_ConstructorConversion:
     assert(0 && "Should be unreachable!");
     break;
 
-  case CastExpr::CK_IntegralToPointer: {
+  case CK_IntegralToPointer: {
     Value *Src = Visit(const_cast<Expr*>(E));
 
     // First, convert to the correct width so that we control the kind of
@@ -1027,7 +1027,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
     return Builder.CreateIntToPtr(IntResult, ConvertType(DestTy));
   }
-  case CastExpr::CK_PointerToIntegral: {
+  case CK_PointerToIntegral: {
     Value *Src = Visit(const_cast<Expr*>(E));
 
     // Handle conversion to bool correctly.
@@ -1036,14 +1036,14 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
-  case CastExpr::CK_ToVoid: {
+  case CK_ToVoid: {
     if (E->Classify(CGF.getContext()).isGLValue())
       CGF.EmitLValue(E);
     else
       CGF.EmitAnyExpr(E, 0, false, true);
     return 0;
   }
-  case CastExpr::CK_VectorSplat: {
+  case CK_VectorSplat: {
     const llvm::Type *DstTy = ConvertType(DestTy);
     Value *Elt = Visit(const_cast<Expr*>(E));
 
@@ -1062,13 +1062,13 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
     return Yay;
   }
-  case CastExpr::CK_IntegralCast:
-  case CastExpr::CK_IntegralToFloating:
-  case CastExpr::CK_FloatingToIntegral:
-  case CastExpr::CK_FloatingCast:
+  case CK_IntegralCast:
+  case CK_IntegralToFloating:
+  case CK_FloatingToIntegral:
+  case CK_FloatingCast:
     return EmitScalarConversion(Visit(E), E->getType(), DestTy);
 
-  case CastExpr::CK_MemberPointerToBoolean: {
+  case CK_MemberPointerToBoolean: {
     llvm::Value *MemPtr = Visit(E);
     const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
     return CGF.CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, MemPtr, MPT);
@@ -1192,7 +1192,7 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
         BinOp.LHS = InVal;
         BinOp.RHS = NextVal;
         BinOp.Ty = E->getType();
-        BinOp.Opcode = BinaryOperator::Add;
+        BinOp.Opcode = BO_Add;
         BinOp.E = E;
         NextVal = EmitOverflowCheckedBinOp(BinOp);
         break;
@@ -1242,7 +1242,7 @@ Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   else 
     BinOp.LHS = llvm::Constant::getNullValue(BinOp.RHS->getType());
   BinOp.Ty = E->getType();
-  BinOp.Opcode = BinaryOperator::Sub;
+  BinOp.Opcode = BO_Sub;
   BinOp.E = E;
   return EmitSub(BinOp);
 }
@@ -1512,18 +1512,18 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   unsigned OpID = 0;
 
   switch (Ops.Opcode) {
-  case BinaryOperator::Add:
-  case BinaryOperator::AddAssign:
+  case BO_Add:
+  case BO_AddAssign:
     OpID = 1;
     IID = llvm::Intrinsic::sadd_with_overflow;
     break;
-  case BinaryOperator::Sub:
-  case BinaryOperator::SubAssign:
+  case BO_Sub:
+  case BO_SubAssign:
     OpID = 2;
     IID = llvm::Intrinsic::ssub_with_overflow;
     break;
-  case BinaryOperator::Mul:
-  case BinaryOperator::MulAssign:
+  case BO_Mul:
+  case BO_MulAssign:
     OpID = 3;
     IID = llvm::Intrinsic::smul_with_overflow;
     break;
@@ -1797,12 +1797,12 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
   Value *Result;
   QualType LHSTy = E->getLHS()->getType();
   if (const MemberPointerType *MPT = LHSTy->getAs<MemberPointerType>()) {
-    assert(E->getOpcode() == BinaryOperator::EQ ||
-           E->getOpcode() == BinaryOperator::NE);
+    assert(E->getOpcode() == BO_EQ ||
+           E->getOpcode() == BO_NE);
     Value *LHS = CGF.EmitScalarExpr(E->getLHS());
     Value *RHS = CGF.EmitScalarExpr(E->getRHS());
     Result = CGF.CGM.getCXXABI().EmitMemberPointerComparison(
-                   CGF, LHS, RHS, MPT, E->getOpcode() == BinaryOperator::NE);
+                   CGF, LHS, RHS, MPT, E->getOpcode() == BO_NE);
   } else if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
@@ -1846,10 +1846,10 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
                                    LHS.second, RHS.second, "cmp.i");
     }
 
-    if (E->getOpcode() == BinaryOperator::EQ) {
+    if (E->getOpcode() == BO_EQ) {
       Result = Builder.CreateAnd(ResultR, ResultI, "and.ri");
     } else {
-      assert(E->getOpcode() == BinaryOperator::NE &&
+      assert(E->getOpcode() == BO_NE &&
              "Complex comparison other than == or != ?");
       Result = Builder.CreateOr(ResultR, ResultI, "or.ri");
     }
@@ -2234,7 +2234,7 @@ LValue CodeGenFunction::EmitCompoundAssignOperatorLValue(
   Value *Result = 0;
   switch (E->getOpcode()) {
 #define COMPOUND_OP(Op)                                                       \
-    case BinaryOperator::Op##Assign:                                          \
+    case BO_##Op##Assign:                                                     \
       return Scalar.EmitCompoundAssignLValue(E, &ScalarExprEmitter::Emit##Op, \
                                              Result)
   COMPOUND_OP(Mul);
@@ -2249,28 +2249,28 @@ LValue CodeGenFunction::EmitCompoundAssignOperatorLValue(
   COMPOUND_OP(Or);
 #undef COMPOUND_OP
       
-  case BinaryOperator::PtrMemD:
-  case BinaryOperator::PtrMemI:
-  case BinaryOperator::Mul:
-  case BinaryOperator::Div:
-  case BinaryOperator::Rem:
-  case BinaryOperator::Add:
-  case BinaryOperator::Sub:
-  case BinaryOperator::Shl:
-  case BinaryOperator::Shr:
-  case BinaryOperator::LT:
-  case BinaryOperator::GT:
-  case BinaryOperator::LE:
-  case BinaryOperator::GE:
-  case BinaryOperator::EQ:
-  case BinaryOperator::NE:
-  case BinaryOperator::And:
-  case BinaryOperator::Xor:
-  case BinaryOperator::Or:
-  case BinaryOperator::LAnd:
-  case BinaryOperator::LOr:
-  case BinaryOperator::Assign:
-  case BinaryOperator::Comma:
+  case BO_PtrMemD:
+  case BO_PtrMemI:
+  case BO_Mul:
+  case BO_Div:
+  case BO_Rem:
+  case BO_Add:
+  case BO_Sub:
+  case BO_Shl:
+  case BO_Shr:
+  case BO_LT:
+  case BO_GT:
+  case BO_LE:
+  case BO_GE:
+  case BO_EQ:
+  case BO_NE:
+  case BO_And:
+  case BO_Xor:
+  case BO_Or:
+  case BO_LAnd:
+  case BO_LOr:
+  case BO_Assign:
+  case BO_Comma:
     assert(false && "Not valid compound assignment operators");
     break;
   }

@@ -455,7 +455,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
 
   if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
     // Handle X && Y in a condition.
-    if (CondBOp->getOpcode() == BinaryOperator::LAnd) {
+    if (CondBOp->getOpcode() == BO_LAnd) {
       // If we have "1 && X", simplify the code.  "0 && X" would have constant
       // folded if the case was simple enough.
       if (ConstantFoldsToSimpleInteger(CondBOp->getLHS()) == 1) {
@@ -482,7 +482,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EndConditionalBranch();
 
       return;
-    } else if (CondBOp->getOpcode() == BinaryOperator::LOr) {
+    } else if (CondBOp->getOpcode() == BO_LOr) {
       // If we have "0 || X", simplify the code.  "1 || X" would have constant
       // folded if the case was simple enough.
       if (ConstantFoldsToSimpleInteger(CondBOp->getLHS()) == -1) {
@@ -514,7 +514,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
 
   if (const UnaryOperator *CondUOp = dyn_cast<UnaryOperator>(Cond)) {
     // br(!x, t, f) -> br(x, f, t)
-    if (CondUOp->getOpcode() == UnaryOperator::LNot)
+    if (CondUOp->getOpcode() == UO_LNot)
       return EmitBranchOnBoolExpr(CondUOp->getSubExpr(), FalseBlock, TrueBlock);
   }
 

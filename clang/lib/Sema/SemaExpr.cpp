@@ -195,7 +195,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
 
   if (Ty->isFunctionType())
     ImpCastExprToType(E, Context.getPointerType(Ty),
-                      CastExpr::CK_FunctionToPointerDecay);
+                      CK_FunctionToPointerDecay);
   else if (Ty->isArrayType()) {
     // In C90 mode, arrays only promote to pointers if the array expression is
     // an lvalue.  The relevant legalese is C90 6.2.2.1p3: "an lvalue that has
@@ -211,7 +211,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
     if (getLangOptions().C99 || getLangOptions().CPlusPlus ||
         E->isLvalue(Context) == Expr::LV_Valid)
       ImpCastExprToType(E, Context.getArrayDecayedType(Ty),
-                        CastExpr::CK_ArrayToPointerDecay);
+                        CK_ArrayToPointerDecay);
   }
 }
 
@@ -232,7 +232,7 @@ void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
     //   If the lvalue has qualified type, the value has the unqualified
     //   version of the type of the lvalue; otherwise, the value has the
     //   type of the lvalue.
-    ImpCastExprToType(E, Ty.getUnqualifiedType(), CastExpr::CK_NoOp);
+    ImpCastExprToType(E, Ty.getUnqualifiedType(), CK_NoOp);
   }
 }
 
@@ -261,12 +261,12 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
   //   other types are unchanged by the integer promotions.
   QualType PTy = Context.isPromotableBitField(Expr);
   if (!PTy.isNull()) {
-    ImpCastExprToType(Expr, PTy, CastExpr::CK_IntegralCast);
+    ImpCastExprToType(Expr, PTy, CK_IntegralCast);
     return Expr;
   }
   if (Ty->isPromotableIntegerType()) {
     QualType PT = Context.getPromotedIntegerType(Ty);
-    ImpCastExprToType(Expr, PT, CastExpr::CK_IntegralCast);
+    ImpCastExprToType(Expr, PT, CK_IntegralCast);
     return Expr;
   }
 
@@ -284,7 +284,7 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   // If this is a 'float' (CVR qualified or typedef) promote to double.
   if (Ty->isSpecificBuiltinType(BuiltinType::Float))
     return ImpCastExprToType(Expr, Context.DoubleTy,
-                             CastExpr::CK_FloatingCast);
+                             CK_FloatingCast);
 
   UsualUnaryConversions(Expr);
 }
@@ -358,8 +358,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
   QualType destType = Context.UsualArithmeticConversionsType(lhs, rhs);
   if (!isCompAssign)
-    ImpCastExprToType(lhsExpr, destType, CastExpr::CK_Unknown);
-  ImpCastExprToType(rhsExpr, destType, CastExpr::CK_Unknown);
+    ImpCastExprToType(lhsExpr, destType, CK_Unknown);
+  ImpCastExprToType(rhsExpr, destType, CK_Unknown);
   return destType;
 }
 
@@ -1555,7 +1555,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       QualType UType = URecordType;
       if (PointerConversions)
         UType = Context.getPointerType(UType);
-      ImpCastExprToType(From, UType, CastExpr::CK_UncheckedDerivedToBase,
+      ImpCastExprToType(From, UType, CK_UncheckedDerivedToBase,
                         VK, &BasePath);
       FromType = UType;
       FromRecordType = URecordType;
@@ -1572,7 +1572,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
                                    IgnoreAccess))
     return true;
 
-  ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
+  ImpCastExprToType(From, DestType, CK_UncheckedDerivedToBase,
                     VK, &BasePath);
   return false;
 }
@@ -2259,11 +2259,11 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
 ExprResult
 Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                           tok::TokenKind Kind, Expr *Input) {
-  UnaryOperator::Opcode Opc;
+  UnaryOperatorKind Opc;
   switch (Kind) {
   default: assert(0 && "Unknown unary op!");
-  case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
-  case tok::minusminus: Opc = UnaryOperator::PostDec; break;
+  case tok::plusplus:   Opc = UO_PostInc; break;
+  case tok::minusminus: Opc = UO_PostDec; break;
   }
 
   return BuildUnaryOp(S, OpLoc, Opc, Input);
@@ -2355,7 +2355,7 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
     Diag(LHSExp->getLocStart(), diag::ext_subscript_non_lvalue) <<
         LHSExp->getSourceRange();
     ImpCastExprToType(LHSExp, Context.getArrayDecayedType(LHSTy),
-                      CastExpr::CK_ArrayToPointerDecay);
+                      CK_ArrayToPointerDecay);
     LHSTy = LHSExp->getType();
 
     BaseExpr = LHSExp;
@@ -2366,7 +2366,7 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
     Diag(RHSExp->getLocStart(), diag::ext_subscript_non_lvalue) <<
         RHSExp->getSourceRange();
     ImpCastExprToType(RHSExp, Context.getArrayDecayedType(RHSTy),
-                      CastExpr::CK_ArrayToPointerDecay);
+                      CK_ArrayToPointerDecay);
     RHSTy = RHSExp->getType();
 
     BaseExpr = RHSExp;
@@ -3029,7 +3029,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     // is a reference to 'isa'.
     if (BaseType != Context.ObjCIdRedefinitionType) {
       BaseType = Context.ObjCIdRedefinitionType;
-      ImpCastExprToType(BaseExpr, BaseType, CastExpr::CK_BitCast);
+      ImpCastExprToType(BaseExpr, BaseType, CK_BitCast);
     }
   }
 
@@ -3040,7 +3040,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     // is a reference to 'sel_id'.
     if (BaseType != Context.ObjCSelRedefinitionType) {
       BaseType = Context.ObjCSelRedefinitionType;
-      ImpCastExprToType(BaseExpr, BaseType, CastExpr::CK_BitCast);
+      ImpCastExprToType(BaseExpr, BaseType, CK_BitCast);
     }
   }
 
@@ -3099,7 +3099,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   if (BaseType->isObjCClassType() &&
       BaseType != Context.ObjCClassRedefinitionType) {
     BaseType = Context.ObjCClassRedefinitionType;
-    ImpCastExprToType(BaseExpr, BaseType, CastExpr::CK_BitCast);
+    ImpCastExprToType(BaseExpr, BaseType, CK_BitCast);
   }
 
   if (IsArrow) {
@@ -3644,8 +3644,8 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
 
     // Determine whether this is a call to a pointer-to-member function.
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(NakedFn)) {
-      if (BO->getOpcode() == BinaryOperator::PtrMemD ||
-          BO->getOpcode() == BinaryOperator::PtrMemI) {
+      if (BO->getOpcode() == BO_PtrMemD ||
+          BO->getOpcode() == BO_PtrMemI) {
         if (const FunctionProtoType *FPT
                                 = BO->getType()->getAs<FunctionProtoType>()) {
           QualType ResultTy = FPT->getCallResultType(Context);
@@ -3867,44 +3867,44 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   return Owned(E);
 }
 
-static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
+static CastKind getScalarCastKind(ASTContext &Context,
                                             QualType SrcTy, QualType DestTy) {
   if (Context.hasSameUnqualifiedType(SrcTy, DestTy))
-    return CastExpr::CK_NoOp;
+    return CK_NoOp;
 
   if (SrcTy->hasPointerRepresentation()) {
     if (DestTy->hasPointerRepresentation())
       return DestTy->isObjCObjectPointerType() ?
-                CastExpr::CK_AnyPointerToObjCPointerCast :
-                CastExpr::CK_BitCast;
+                CK_AnyPointerToObjCPointerCast :
+                CK_BitCast;
     if (DestTy->isIntegerType())
-      return CastExpr::CK_PointerToIntegral;
+      return CK_PointerToIntegral;
   }
 
   if (SrcTy->isIntegerType()) {
     if (DestTy->isIntegerType())
-      return CastExpr::CK_IntegralCast;
+      return CK_IntegralCast;
     if (DestTy->hasPointerRepresentation())
-      return CastExpr::CK_IntegralToPointer;
+      return CK_IntegralToPointer;
     if (DestTy->isRealFloatingType())
-      return CastExpr::CK_IntegralToFloating;
+      return CK_IntegralToFloating;
   }
 
   if (SrcTy->isRealFloatingType()) {
     if (DestTy->isRealFloatingType())
-      return CastExpr::CK_FloatingCast;
+      return CK_FloatingCast;
     if (DestTy->isIntegerType())
-      return CastExpr::CK_FloatingToIntegral;
+      return CK_FloatingToIntegral;
   }
 
   // FIXME: Assert here.
   // assert(false && "Unhandled cast combination!");
-  return CastExpr::CK_Unknown;
+  return CK_Unknown;
 }
 
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
-                          CastExpr::CastKind& Kind,
+                          CastKind& Kind,
                           CXXCastPath &BasePath,
                           bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
@@ -3917,7 +3917,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   // type needs to be scalar.
   if (castType->isVoidType()) {
     // Cast to void allows any expr type.
-    Kind = CastExpr::CK_ToVoid;
+    Kind = CK_ToVoid;
     return false;
   }
 
@@ -3932,7 +3932,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       // FIXME: Check that the cast destination type is complete.
       Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar)
         << castType << castExpr->getSourceRange();
-      Kind = CastExpr::CK_NoOp;
+      Kind = CK_NoOp;
       return false;
     }
 
@@ -3952,7 +3952,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       if (Field == FieldEnd)
         return Diag(TyR.getBegin(), diag::err_typecheck_cast_to_union_no_type)
           << castExpr->getType() << castExpr->getSourceRange();
-      Kind = CastExpr::CK_ToUnion;
+      Kind = CK_ToUnion;
       return false;
     }
 
@@ -3995,14 +3995,14 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
 
   Kind = getScalarCastKind(Context, castExpr->getType(), castType);
 
-  if (Kind == CastExpr::CK_Unknown || Kind == CastExpr::CK_BitCast)
+  if (Kind == CK_Unknown || Kind == CK_BitCast)
     CheckCastAlign(castExpr, castType, TyR);
 
   return false;
 }
 
 bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
-                           CastExpr::CastKind &Kind) {
+                           CastKind &Kind) {
   assert(VectorTy->isVectorType() && "Not a vector type!");
 
   if (Ty->isVectorType() || Ty->isIntegerType()) {
@@ -4017,12 +4017,12 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
                 diag::err_invalid_conversion_between_vector_and_scalar)
       << VectorTy << Ty << R;
 
-  Kind = CastExpr::CK_BitCast;
+  Kind = CK_BitCast;
   return false;
 }
 
 bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
-                              CastExpr::CastKind &Kind) {
+                              CastKind &Kind) {
   assert(DestTy->isExtVectorType() && "Not an extended vector type!");
 
   QualType SrcTy = CastExpr->getType();
@@ -4033,7 +4033,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
     if (Context.getTypeSize(DestTy) != Context.getTypeSize(SrcTy))
       return Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
         << DestTy << SrcTy << R;
-    Kind = CastExpr::CK_BitCast;
+    Kind = CK_BitCast;
     return false;
   }
 
@@ -4049,7 +4049,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
   ImpCastExprToType(CastExpr, DestElemTy,
                     getScalarCastKind(Context, SrcTy, DestElemTy));
 
-  Kind = CastExpr::CK_VectorSplat;
+  Kind = CK_VectorSplat;
   return false;
 }
 
@@ -4075,7 +4075,7 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, ParsedType Ty,
 ExprResult
 Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
                           SourceLocation RParenLoc, Expr *castExpr) {
-  CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+  CastKind Kind = CK_Unknown;
   CXXCastPath BasePath;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
                      Kind, BasePath))
@@ -4221,8 +4221,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     if (!RHSTy->isVoidType())
       Diag(LHS->getLocStart(), diag::ext_typecheck_cond_one_void)
         << LHS->getSourceRange();
-    ImpCastExprToType(LHS, Context.VoidTy, CastExpr::CK_ToVoid);
-    ImpCastExprToType(RHS, Context.VoidTy, CastExpr::CK_ToVoid);
+    ImpCastExprToType(LHS, Context.VoidTy, CK_ToVoid);
+    ImpCastExprToType(RHS, Context.VoidTy, CK_ToVoid);
     return Context.VoidTy;
   }
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
@@ -4230,12 +4230,12 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if ((LHSTy->isAnyPointerType() || LHSTy->isBlockPointerType()) &&
       RHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     // promote the null to a pointer.
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_Unknown);
+    ImpCastExprToType(RHS, LHSTy, CK_Unknown);
     return LHSTy;
   }
   if ((RHSTy->isAnyPointerType() || RHSTy->isBlockPointerType()) &&
       LHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_Unknown);
+    ImpCastExprToType(LHS, RHSTy, CK_Unknown);
     return RHSTy;
   }
 
@@ -4251,8 +4251,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     if (!LHSTy->isBlockPointerType() || !RHSTy->isBlockPointerType()) {
       if (LHSTy->isVoidPointerType() || RHSTy->isVoidPointerType()) {
         QualType destType = Context.getPointerType(Context.VoidTy);
-        ImpCastExprToType(LHS, destType, CastExpr::CK_BitCast);
-        ImpCastExprToType(RHS, destType, CastExpr::CK_BitCast);
+        ImpCastExprToType(LHS, destType, CK_BitCast);
+        ImpCastExprToType(RHS, destType, CK_BitCast);
         return destType;
       }
       Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
@@ -4276,13 +4276,13 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       // reason, but this is what gcc does, and we do have to pick
       // to get a consistent AST.
       QualType incompatTy = Context.getPointerType(Context.VoidTy);
-      ImpCastExprToType(LHS, incompatTy, CastExpr::CK_BitCast);
-      ImpCastExprToType(RHS, incompatTy, CastExpr::CK_BitCast);
+      ImpCastExprToType(LHS, incompatTy, CK_BitCast);
+      ImpCastExprToType(RHS, incompatTy, CK_BitCast);
       return incompatTy;
     }
     // The block pointer types are compatible.
-    ImpCastExprToType(LHS, LHSTy, CastExpr::CK_BitCast);
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, LHSTy, CK_BitCast);
+    ImpCastExprToType(RHS, LHSTy, CK_BitCast);
     return LHSTy;
   }
 
@@ -4299,9 +4299,9 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
         = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
       QualType destType = Context.getPointerType(destPointee);
       // Add qualifiers if necessary.
-      ImpCastExprToType(LHS, destType, CastExpr::CK_NoOp);
+      ImpCastExprToType(LHS, destType, CK_NoOp);
       // Promote to void*.
-      ImpCastExprToType(RHS, destType, CastExpr::CK_BitCast);
+      ImpCastExprToType(RHS, destType, CK_BitCast);
       return destType;
     }
     if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
@@ -4309,9 +4309,9 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
         = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
       QualType destType = Context.getPointerType(destPointee);
       // Add qualifiers if necessary.
-      ImpCastExprToType(RHS, destType, CastExpr::CK_NoOp);
+      ImpCastExprToType(RHS, destType, CK_NoOp);
       // Promote to void*.
-      ImpCastExprToType(LHS, destType, CastExpr::CK_BitCast);
+      ImpCastExprToType(LHS, destType, CK_BitCast);
       return destType;
     }
 
@@ -4327,8 +4327,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       // reason, but this is what gcc does, and we do have to pick
       // to get a consistent AST.
       QualType incompatTy = Context.getPointerType(Context.VoidTy);
-      ImpCastExprToType(LHS, incompatTy, CastExpr::CK_BitCast);
-      ImpCastExprToType(RHS, incompatTy, CastExpr::CK_BitCast);
+      ImpCastExprToType(LHS, incompatTy, CK_BitCast);
+      ImpCastExprToType(RHS, incompatTy, CK_BitCast);
       return incompatTy;
     }
     // The pointer types are compatible.
@@ -4338,8 +4338,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     // type.
     // FIXME: Need to calculate the composite type.
     // FIXME: Need to add qualifiers
-    ImpCastExprToType(LHS, LHSTy, CastExpr::CK_BitCast);
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, LHSTy, CK_BitCast);
+    ImpCastExprToType(RHS, LHSTy, CK_BitCast);
     return LHSTy;
   }
 
@@ -4347,13 +4347,13 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (RHSTy->isPointerType() && LHSTy->isIntegerType()) {
     Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
       << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_IntegralToPointer);
+    ImpCastExprToType(LHS, RHSTy, CK_IntegralToPointer);
     return RHSTy;
   }
   if (LHSTy->isPointerType() && RHSTy->isIntegerType()) {
     Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
       << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_IntegralToPointer);
+    ImpCastExprToType(RHS, LHSTy, CK_IntegralToPointer);
     return LHSTy;
   }
 
@@ -4375,34 +4375,34 @@ QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
   // redefinition type if an attempt is made to access its fields.
   if (LHSTy->isObjCClassType() &&
       (RHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(RHS, LHSTy, CK_BitCast);
     return LHSTy;
   }
   if (RHSTy->isObjCClassType() &&
       (LHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, RHSTy, CK_BitCast);
     return RHSTy;
   }
   // And the same for struct objc_object* / id
   if (LHSTy->isObjCIdType() &&
       (RHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(RHS, LHSTy, CK_BitCast);
     return LHSTy;
   }
   if (RHSTy->isObjCIdType() &&
       (LHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, RHSTy, CK_BitCast);
     return RHSTy;
   }
   // And the same for struct objc_selector* / SEL
   if (Context.isObjCSelType(LHSTy) &&
       (RHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(RHS, LHSTy, CK_BitCast);
     return LHSTy;
   }
   if (Context.isObjCSelType(RHSTy) &&
       (LHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, RHSTy, CK_BitCast);
     return RHSTy;
   }
   // Check constraints for Objective-C object pointers types.
@@ -4451,13 +4451,13 @@ QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
       << LHSTy << RHSTy
       << LHS->getSourceRange() << RHS->getSourceRange();
       QualType incompatTy = Context.getObjCIdType();
-      ImpCastExprToType(LHS, incompatTy, CastExpr::CK_BitCast);
-      ImpCastExprToType(RHS, incompatTy, CastExpr::CK_BitCast);
+      ImpCastExprToType(LHS, incompatTy, CK_BitCast);
+      ImpCastExprToType(RHS, incompatTy, CK_BitCast);
       return incompatTy;
     }
     // The object pointer types are compatible.
-    ImpCastExprToType(LHS, compositeType, CastExpr::CK_BitCast);
-    ImpCastExprToType(RHS, compositeType, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, compositeType, CK_BitCast);
+    ImpCastExprToType(RHS, compositeType, CK_BitCast);
     return compositeType;
   }
   // Check Objective-C object pointer types and 'void *'
@@ -4468,9 +4468,9 @@ QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
     = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
     QualType destType = Context.getPointerType(destPointee);
     // Add qualifiers if necessary.
-    ImpCastExprToType(LHS, destType, CastExpr::CK_NoOp);
+    ImpCastExprToType(LHS, destType, CK_NoOp);
     // Promote to void*.
-    ImpCastExprToType(RHS, destType, CastExpr::CK_BitCast);
+    ImpCastExprToType(RHS, destType, CK_BitCast);
     return destType;
   }
   if (LHSTy->isObjCObjectPointerType() && RHSTy->isVoidPointerType()) {
@@ -4480,9 +4480,9 @@ QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
     = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
     QualType destType = Context.getPointerType(destPointee);
     // Add qualifiers if necessary.
-    ImpCastExprToType(RHS, destType, CastExpr::CK_NoOp);
+    ImpCastExprToType(RHS, destType, CK_NoOp);
     // Promote to void*.
-    ImpCastExprToType(LHS, destType, CastExpr::CK_BitCast);
+    ImpCastExprToType(LHS, destType, CK_BitCast);
     return destType;
   }
   return QualType();
@@ -4904,14 +4904,14 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
       // 2) null pointer constant
       if (FromType->isPointerType())
         if (FromType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
-          ImpCastExprToType(rExpr, it->getType(), CastExpr::CK_BitCast);
+          ImpCastExprToType(rExpr, it->getType(), CK_BitCast);
           InitField = *it;
           break;
         }
 
       if (rExpr->isNullPointerConstant(Context,
                                        Expr::NPC_ValueDependentIsNull)) {
-        ImpCastExprToType(rExpr, it->getType(), CastExpr::CK_IntegralToPointer);
+        ImpCastExprToType(rExpr, it->getType(), CK_IntegralToPointer);
         InitField = *it;
         break;
       }
@@ -4955,7 +4955,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
        lhsType->isBlockPointerType())
       && rExpr->isNullPointerConstant(Context,
                                       Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(rExpr, lhsType, CastExpr::CK_Unknown);
+    ImpCastExprToType(rExpr, lhsType, CK_Unknown);
     return Compatible;
   }
 
@@ -4979,7 +4979,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // does not have reference type.
   if (result != Incompatible && rExpr->getType() != lhsType)
     ImpCastExprToType(rExpr, lhsType.getNonLValueExprType(Context),
-                      CastExpr::CK_Unknown);
+                      CK_Unknown);
   return result;
 }
 
@@ -5011,11 +5011,11 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
         if (LV->getElementType() == RV->getElementType() &&
             LV->getNumElements() == RV->getNumElements()) {
           if (lhsType->isExtVectorType()) {
-            ImpCastExprToType(rex, lhsType, CastExpr::CK_BitCast);
+            ImpCastExprToType(rex, lhsType, CK_BitCast);
             return lhsType;
           } 
 
-          ImpCastExprToType(lex, rhsType, CastExpr::CK_BitCast);
+          ImpCastExprToType(lex, rhsType, CK_BitCast);
           return rhsType;
         }
     }
@@ -5024,7 +5024,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   // Handle the case of equivalent AltiVec and GCC vector types
   if (lhsType->isVectorType() && rhsType->isVectorType() &&
       Context.areCompatibleVectorTypes(lhsType, rhsType)) {
-    ImpCastExprToType(lex, rhsType, CastExpr::CK_BitCast);
+    ImpCastExprToType(lex, rhsType, CK_BitCast);
     return rhsType;
   }
 
@@ -5042,7 +5042,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
     QualType EltTy = LV->getElementType();
     if (EltTy->isIntegralType(Context) && rhsType->isIntegralType(Context)) {
       if (Context.getIntegerTypeOrder(EltTy, rhsType) >= 0) {
-        ImpCastExprToType(rex, lhsType, CastExpr::CK_IntegralCast);
+        ImpCastExprToType(rex, lhsType, CK_IntegralCast);
         if (swapped) std::swap(rex, lex);
         return lhsType;
       }
@@ -5050,7 +5050,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
     if (EltTy->isRealFloatingType() && rhsType->isScalarType() &&
         rhsType->isRealFloatingType()) {
       if (Context.getFloatingTypeOrder(EltTy, rhsType) >= 0) {
-        ImpCastExprToType(rex, lhsType, CastExpr::CK_FloatingCast);
+        ImpCastExprToType(rex, lhsType, CK_FloatingCast);
         if (swapped) std::swap(rex, lex);
         return lhsType;
       }
@@ -5350,7 +5350,7 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       LHSTy = Context.getPromotedIntegerType(LHSTy);
   }
   if (!isCompAssign)
-    ImpCastExprToType(lex, LHSTy, CastExpr::CK_IntegralCast);
+    ImpCastExprToType(lex, LHSTy, CK_IntegralCast);
 
   UsualUnaryConversions(rex);
 
@@ -5386,7 +5386,7 @@ static bool IsWithinTemplateSpecialization(Decl *D) {
 // C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     unsigned OpaqueOpc, bool isRelational) {
-  BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)OpaqueOpc;
+  BinaryOperatorKind Opc = (BinaryOperatorKind) OpaqueOpc;
 
   // Handle vector comparisons separately.
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
@@ -5415,19 +5415,19 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
             !IsWithinTemplateSpecialization(DRL->getDecl())) {
           DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
                               << 0 // self-
-                              << (Opc == BinaryOperator::EQ
-                                  || Opc == BinaryOperator::LE
-                                  || Opc == BinaryOperator::GE));
+                              << (Opc == BO_EQ
+                                  || Opc == BO_LE
+                                  || Opc == BO_GE));
         } else if (lType->isArrayType() && rType->isArrayType() &&
                    !DRL->getDecl()->getType()->isReferenceType() &&
                    !DRR->getDecl()->getType()->isReferenceType()) {
             // what is it always going to eval to?
             char always_evals_to;
             switch(Opc) {
-            case BinaryOperator::EQ: // e.g. array1 == array2
+            case BO_EQ: // e.g. array1 == array2
               always_evals_to = 0; // false
               break;
-            case BinaryOperator::NE: // e.g. array1 != array2
+            case BO_NE: // e.g. array1 != array2
               always_evals_to = 1; // true
               break;
             default:
@@ -5467,12 +5467,12 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     if (literalString) {
       std::string resultComparison;
       switch (Opc) {
-      case BinaryOperator::LT: resultComparison = ") < 0"; break;
-      case BinaryOperator::GT: resultComparison = ") > 0"; break;
-      case BinaryOperator::LE: resultComparison = ") <= 0"; break;
-      case BinaryOperator::GE: resultComparison = ") >= 0"; break;
-      case BinaryOperator::EQ: resultComparison = ") == 0"; break;
-      case BinaryOperator::NE: resultComparison = ") != 0"; break;
+      case BO_LT: resultComparison = ") < 0"; break;
+      case BO_GT: resultComparison = ") > 0"; break;
+      case BO_LE: resultComparison = ") <= 0"; break;
+      case BO_GE: resultComparison = ") >= 0"; break;
+      case BO_EQ: resultComparison = ") == 0"; break;
+      case BO_NE: resultComparison = ") != 0"; break;
       default: assert(false && "Invalid comparison operator");
       }
 
@@ -5542,7 +5542,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           if (isSFINAEContext())
             return QualType();
           
-          ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+          ImpCastExprToType(rex, lType, CK_BitCast);
           return ResultTy;
         }
       }
@@ -5568,8 +5568,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           << lex->getSourceRange() << rex->getSourceRange();
       }
 
-      ImpCastExprToType(lex, T, CastExpr::CK_BitCast);
-      ImpCastExprToType(rex, T, CastExpr::CK_BitCast);
+      ImpCastExprToType(lex, T, CK_BitCast);
+      ImpCastExprToType(rex, T, CK_BitCast);
       return ResultTy;
     }
     // C99 6.5.9p2 and C99 6.5.8p2
@@ -5594,7 +5594,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
     if (LCanPointeeTy != RCanPointeeTy)
-      ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+      ImpCastExprToType(rex, lType, CK_BitCast);
     return ResultTy;
   }
 
@@ -5606,8 +5606,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
          (!isRelational && lType->isMemberPointerType()))) {
       ImpCastExprToType(rex, lType, 
                         lType->isMemberPointerType()
-                          ? CastExpr::CK_NullToMemberPointer
-                          : CastExpr::CK_IntegralToPointer);
+                          ? CK_NullToMemberPointer
+                          : CK_IntegralToPointer);
       return ResultTy;
     }
     if (LHSIsNull &&
@@ -5615,8 +5615,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
          (!isRelational && rType->isMemberPointerType()))) {
       ImpCastExprToType(lex, rType, 
                         rType->isMemberPointerType()
-                          ? CastExpr::CK_NullToMemberPointer
-                          : CastExpr::CK_IntegralToPointer);
+                          ? CK_NullToMemberPointer
+                          : CK_IntegralToPointer);
       return ResultTy;
     }
 
@@ -5647,8 +5647,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           << lex->getSourceRange() << rex->getSourceRange();
       }
 
-      ImpCastExprToType(lex, T, CastExpr::CK_BitCast);
-      ImpCastExprToType(rex, T, CastExpr::CK_BitCast);
+      ImpCastExprToType(lex, T, CK_BitCast);
+      ImpCastExprToType(rex, T, CK_BitCast);
       return ResultTy;
     }
 
@@ -5667,7 +5667,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
-    ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+    ImpCastExprToType(rex, lType, CK_BitCast);
     return ResultTy;
   }
   // Allow block pointers to be compared with null pointer constants.
@@ -5682,7 +5682,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
-    ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+    ImpCastExprToType(rex, lType, CK_BitCast);
     return ResultTy;
   }
 
@@ -5700,14 +5700,14 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
       }
-      ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+      ImpCastExprToType(rex, lType, CK_BitCast);
       return ResultTy;
     }
     if (lType->isObjCObjectPointerType() && rType->isObjCObjectPointerType()) {
       if (!Context.areComparableObjCPointerTypes(lType, rType))
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-      ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+      ImpCastExprToType(rex, lType, CK_BitCast);
       return ResultTy;
     }
   }
@@ -5735,21 +5735,21 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     }
     
     if (lType->isIntegerType())
-      ImpCastExprToType(lex, rType, CastExpr::CK_IntegralToPointer);
+      ImpCastExprToType(lex, rType, CK_IntegralToPointer);
     else
-      ImpCastExprToType(rex, lType, CastExpr::CK_IntegralToPointer);
+      ImpCastExprToType(rex, lType, CK_IntegralToPointer);
     return ResultTy;
   }
   
   // Handle block pointers.
   if (!isRelational && RHSIsNull
       && lType->isBlockPointerType() && rType->isIntegerType()) {
-    ImpCastExprToType(rex, lType, CastExpr::CK_IntegralToPointer);
+    ImpCastExprToType(rex, lType, CK_IntegralToPointer);
     return ResultTy;
   }
   if (!isRelational && LHSIsNull
       && lType->isIntegerType() && rType->isBlockPointerType()) {
-    ImpCastExprToType(lex, rType, CastExpr::CK_IntegralToPointer);
+    ImpCastExprToType(lex, rType, CK_IntegralToPointer);
     return ResultTy;
   }
   return InvalidOperands(Loc, lex, rex);
@@ -5844,8 +5844,8 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
         Result.Val.getInt() != 0 && Result.Val.getInt() != 1) {
       Diag(Loc, diag::warn_logical_instead_of_bitwise)
        << rex->getSourceRange()
-        << (Opc == BinaryOperator::LAnd ? "&&" : "||")
-        << (Opc == BinaryOperator::LAnd ? "&" : "|");
+        << (Opc == BO_LAnd ? "&&" : "||")
+        << (Opc == BO_LAnd ? "&" : "|");
     }
   }
   
@@ -6002,8 +6002,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(RHSCheck))
       RHSCheck = ICE->getSubExpr();
     if (UnaryOperator *UO = dyn_cast<UnaryOperator>(RHSCheck)) {
-      if ((UO->getOpcode() == UnaryOperator::Plus ||
-           UO->getOpcode() == UnaryOperator::Minus) &&
+      if ((UO->getOpcode() == UO_Plus ||
+           UO->getOpcode() == UO_Minus) &&
           Loc.isFileID() && UO->getOperatorLoc().isFileID() &&
           // Only if the two operators are exactly adjacent.
           Loc.getFileLocWithOffset(1) == UO->getOperatorLoc() &&
@@ -6012,7 +6012,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
           Loc.getFileLocWithOffset(2) != UO->getSubExpr()->getLocStart() &&
           UO->getSubExpr()->getLocStart().isFileID()) {
         Diag(Loc, diag::warn_not_compound_assign)
-          << (UO->getOpcode() == UnaryOperator::Plus ? "+" : "-")
+          << (UO->getOpcode() == UO_Plus ? "+" : "-")
           << SourceRange(UO->getOperatorLoc(), UO->getOperatorLoc());
       }
     }
@@ -6033,7 +6033,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   // only handles the pattern "*null = whatever", which is a very syntactic
   // check.
   if (UnaryOperator *UO = dyn_cast<UnaryOperator>(LHS->IgnoreParenCasts()))
-    if (UO->getOpcode() == UnaryOperator::Deref &&
+    if (UO->getOpcode() == UO_Deref &&
         UO->getSubExpr()->IgnoreParenCasts()->
           isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) &&
         !UO->getType().isVolatileQualified()) {
@@ -6178,9 +6178,9 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
     UnaryOperator *UO = cast<UnaryOperator>(E);
 
     switch(UO->getOpcode()) {
-    case UnaryOperator::Real:
-    case UnaryOperator::Imag:
-    case UnaryOperator::Extension:
+    case UO_Real:
+    case UO_Imag:
+    case UO_Extension:
       return getPrimaryDecl(UO->getSubExpr());
     default:
       return 0;
@@ -6214,7 +6214,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   if (getLangOptions().C99) {
     // Implement C99-only parts of addressof rules.
     if (UnaryOperator* uOp = dyn_cast<UnaryOperator>(op)) {
-      if (uOp->getOpcode() == UnaryOperator::Deref)
+      if (uOp->getOpcode() == UO_Deref)
         // Per C99 6.5.3.2, the address of a deref always returns a valid result
         // (assuming the deref expression is valid).
         return uOp->getSubExpr()->getType();
@@ -6364,63 +6364,63 @@ QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   return Result;
 }
 
-static inline BinaryOperator::Opcode ConvertTokenKindToBinaryOpcode(
+static inline BinaryOperatorKind ConvertTokenKindToBinaryOpcode(
   tok::TokenKind Kind) {
-  BinaryOperator::Opcode Opc;
+  BinaryOperatorKind Opc;
   switch (Kind) {
   default: assert(0 && "Unknown binop!");
-  case tok::periodstar:           Opc = BinaryOperator::PtrMemD; break;
-  case tok::arrowstar:            Opc = BinaryOperator::PtrMemI; break;
-  case tok::star:                 Opc = BinaryOperator::Mul; break;
-  case tok::slash:                Opc = BinaryOperator::Div; break;
-  case tok::percent:              Opc = BinaryOperator::Rem; break;
-  case tok::plus:                 Opc = BinaryOperator::Add; break;
-  case tok::minus:                Opc = BinaryOperator::Sub; break;
-  case tok::lessless:             Opc = BinaryOperator::Shl; break;
-  case tok::greatergreater:       Opc = BinaryOperator::Shr; break;
-  case tok::lessequal:            Opc = BinaryOperator::LE; break;
-  case tok::less:                 Opc = BinaryOperator::LT; break;
-  case tok::greaterequal:         Opc = BinaryOperator::GE; break;
-  case tok::greater:              Opc = BinaryOperator::GT; break;
-  case tok::exclaimequal:         Opc = BinaryOperator::NE; break;
-  case tok::equalequal:           Opc = BinaryOperator::EQ; break;
-  case tok::amp:                  Opc = BinaryOperator::And; break;
-  case tok::caret:                Opc = BinaryOperator::Xor; break;
-  case tok::pipe:                 Opc = BinaryOperator::Or; break;
-  case tok::ampamp:               Opc = BinaryOperator::LAnd; break;
-  case tok::pipepipe:             Opc = BinaryOperator::LOr; break;
-  case tok::equal:                Opc = BinaryOperator::Assign; break;
-  case tok::starequal:            Opc = BinaryOperator::MulAssign; break;
-  case tok::slashequal:           Opc = BinaryOperator::DivAssign; break;
-  case tok::percentequal:         Opc = BinaryOperator::RemAssign; break;
-  case tok::plusequal:            Opc = BinaryOperator::AddAssign; break;
-  case tok::minusequal:           Opc = BinaryOperator::SubAssign; break;
-  case tok::lesslessequal:        Opc = BinaryOperator::ShlAssign; break;
-  case tok::greatergreaterequal:  Opc = BinaryOperator::ShrAssign; break;
-  case tok::ampequal:             Opc = BinaryOperator::AndAssign; break;
-  case tok::caretequal:           Opc = BinaryOperator::XorAssign; break;
-  case tok::pipeequal:            Opc = BinaryOperator::OrAssign; break;
-  case tok::comma:                Opc = BinaryOperator::Comma; break;
+  case tok::periodstar:           Opc = BO_PtrMemD; break;
+  case tok::arrowstar:            Opc = BO_PtrMemI; break;
+  case tok::star:                 Opc = BO_Mul; break;
+  case tok::slash:                Opc = BO_Div; break;
+  case tok::percent:              Opc = BO_Rem; break;
+  case tok::plus:                 Opc = BO_Add; break;
+  case tok::minus:                Opc = BO_Sub; break;
+  case tok::lessless:             Opc = BO_Shl; break;
+  case tok::greatergreater:       Opc = BO_Shr; break;
+  case tok::lessequal:            Opc = BO_LE; break;
+  case tok::less:                 Opc = BO_LT; break;
+  case tok::greaterequal:         Opc = BO_GE; break;
+  case tok::greater:              Opc = BO_GT; break;
+  case tok::exclaimequal:         Opc = BO_NE; break;
+  case tok::equalequal:           Opc = BO_EQ; break;
+  case tok::amp:                  Opc = BO_And; break;
+  case tok::caret:                Opc = BO_Xor; break;
+  case tok::pipe:                 Opc = BO_Or; break;
+  case tok::ampamp:               Opc = BO_LAnd; break;
+  case tok::pipepipe:             Opc = BO_LOr; break;
+  case tok::equal:                Opc = BO_Assign; break;
+  case tok::starequal:            Opc = BO_MulAssign; break;
+  case tok::slashequal:           Opc = BO_DivAssign; break;
+  case tok::percentequal:         Opc = BO_RemAssign; break;
+  case tok::plusequal:            Opc = BO_AddAssign; break;
+  case tok::minusequal:           Opc = BO_SubAssign; break;
+  case tok::lesslessequal:        Opc = BO_ShlAssign; break;
+  case tok::greatergreaterequal:  Opc = BO_ShrAssign; break;
+  case tok::ampequal:             Opc = BO_AndAssign; break;
+  case tok::caretequal:           Opc = BO_XorAssign; break;
+  case tok::pipeequal:            Opc = BO_OrAssign; break;
+  case tok::comma:                Opc = BO_Comma; break;
   }
   return Opc;
 }
 
-static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
+static inline UnaryOperatorKind ConvertTokenKindToUnaryOpcode(
   tok::TokenKind Kind) {
-  UnaryOperator::Opcode Opc;
+  UnaryOperatorKind Opc;
   switch (Kind) {
   default: assert(0 && "Unknown unary op!");
-  case tok::plusplus:     Opc = UnaryOperator::PreInc; break;
-  case tok::minusminus:   Opc = UnaryOperator::PreDec; break;
-  case tok::amp:          Opc = UnaryOperator::AddrOf; break;
-  case tok::star:         Opc = UnaryOperator::Deref; break;
-  case tok::plus:         Opc = UnaryOperator::Plus; break;
-  case tok::minus:        Opc = UnaryOperator::Minus; break;
-  case tok::tilde:        Opc = UnaryOperator::Not; break;
-  case tok::exclaim:      Opc = UnaryOperator::LNot; break;
-  case tok::kw___real:    Opc = UnaryOperator::Real; break;
-  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
-  case tok::kw___extension__: Opc = UnaryOperator::Extension; break;
+  case tok::plusplus:     Opc = UO_PreInc; break;
+  case tok::minusminus:   Opc = UO_PreDec; break;
+  case tok::amp:          Opc = UO_AddrOf; break;
+  case tok::star:         Opc = UO_Deref; break;
+  case tok::plus:         Opc = UO_Plus; break;
+  case tok::minus:        Opc = UO_Minus; break;
+  case tok::tilde:        Opc = UO_Not; break;
+  case tok::exclaim:      Opc = UO_LNot; break;
+  case tok::kw___real:    Opc = UO_Real; break;
+  case tok::kw___imag:    Opc = UO_Imag; break;
+  case tok::kw___extension__: Opc = UO_Extension; break;
   }
   return Opc;
 }
@@ -6429,107 +6429,107 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
 ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
-                                                  unsigned Op,
-                                                  Expr *lhs, Expr *rhs) {
+                                    unsigned Op,
+                                    Expr *lhs, Expr *rhs) {
   QualType ResultTy;     // Result type of the binary operator.
-  BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)Op;
+  BinaryOperatorKind Opc = (BinaryOperatorKind) Op;
   // The following two variables are used for compound assignment operators
   QualType CompLHSTy;    // Type of LHS after promotions for computation
   QualType CompResultTy; // Type of computation result
 
   switch (Opc) {
-  case BinaryOperator::Assign:
+  case BO_Assign:
     ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, QualType());
     break;
-  case BinaryOperator::PtrMemD:
-  case BinaryOperator::PtrMemI:
+  case BO_PtrMemD:
+  case BO_PtrMemI:
     ResultTy = CheckPointerToMemberOperands(lhs, rhs, OpLoc,
-                                            Opc == BinaryOperator::PtrMemI);
+                                            Opc == BO_PtrMemI);
     break;
-  case BinaryOperator::Mul:
-  case BinaryOperator::Div:
+  case BO_Mul:
+  case BO_Div:
     ResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, false,
-                                           Opc == BinaryOperator::Div);
+                                           Opc == BO_Div);
     break;
-  case BinaryOperator::Rem:
+  case BO_Rem:
     ResultTy = CheckRemainderOperands(lhs, rhs, OpLoc);
     break;
-  case BinaryOperator::Add:
+  case BO_Add:
     ResultTy = CheckAdditionOperands(lhs, rhs, OpLoc);
     break;
-  case BinaryOperator::Sub:
+  case BO_Sub:
     ResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc);
     break;
-  case BinaryOperator::Shl:
-  case BinaryOperator::Shr:
+  case BO_Shl:
+  case BO_Shr:
     ResultTy = CheckShiftOperands(lhs, rhs, OpLoc);
     break;
-  case BinaryOperator::LE:
-  case BinaryOperator::LT:
-  case BinaryOperator::GE:
-  case BinaryOperator::GT:
+  case BO_LE:
+  case BO_LT:
+  case BO_GE:
+  case BO_GT:
     ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, Opc, true);
     break;
-  case BinaryOperator::EQ:
-  case BinaryOperator::NE:
+  case BO_EQ:
+  case BO_NE:
     ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, Opc, false);
     break;
-  case BinaryOperator::And:
-  case BinaryOperator::Xor:
-  case BinaryOperator::Or:
+  case BO_And:
+  case BO_Xor:
+  case BO_Or:
     ResultTy = CheckBitwiseOperands(lhs, rhs, OpLoc);
     break;
-  case BinaryOperator::LAnd:
-  case BinaryOperator::LOr:
+  case BO_LAnd:
+  case BO_LOr:
     ResultTy = CheckLogicalOperands(lhs, rhs, OpLoc, Opc);
     break;
-  case BinaryOperator::MulAssign:
-  case BinaryOperator::DivAssign:
+  case BO_MulAssign:
+  case BO_DivAssign:
     CompResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true,
-                                              Opc == BinaryOperator::DivAssign);
+                                              Opc == BO_DivAssign);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
-  case BinaryOperator::RemAssign:
+  case BO_RemAssign:
     CompResultTy = CheckRemainderOperands(lhs, rhs, OpLoc, true);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
-  case BinaryOperator::AddAssign:
+  case BO_AddAssign:
     CompResultTy = CheckAdditionOperands(lhs, rhs, OpLoc, &CompLHSTy);
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
-  case BinaryOperator::SubAssign:
+  case BO_SubAssign:
     CompResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc, &CompLHSTy);
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
-  case BinaryOperator::ShlAssign:
-  case BinaryOperator::ShrAssign:
+  case BO_ShlAssign:
+  case BO_ShrAssign:
     CompResultTy = CheckShiftOperands(lhs, rhs, OpLoc, true);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
-  case BinaryOperator::AndAssign:
-  case BinaryOperator::XorAssign:
-  case BinaryOperator::OrAssign:
+  case BO_AndAssign:
+  case BO_XorAssign:
+  case BO_OrAssign:
     CompResultTy = CheckBitwiseOperands(lhs, rhs, OpLoc, true);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
-  case BinaryOperator::Comma:
+  case BO_Comma:
     ResultTy = CheckCommaOperands(lhs, rhs, OpLoc);
     break;
   }
   if (ResultTy.isNull())
     return ExprError();
   if (ResultTy->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
-    if (Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) 
+    if (Opc >= BO_Assign && Opc <= BO_OrAssign) 
           Diag(OpLoc, diag::err_assignment_requires_nonfragile_object)
                 << ResultTy;
   }
@@ -6584,7 +6584,7 @@ static void SuggestParentheses(Sema &Self, SourceLocation Loc,
 /// operators are mixed in a way that suggests that the programmer forgot that
 /// comparison operators have higher precedence. The most typical example of
 /// such code is "flags & 0x0020 != 0", which is equivalent to "flags & 1".
-static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
+static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
                                       SourceLocation OpLoc,Expr *lhs,Expr *rhs){
   typedef BinaryOperator BinOp;
   BinOp::Opcode lhsopc = static_cast<BinOp::Opcode>(-1),
@@ -6631,7 +6631,7 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
 /// precedence. This currently diagnoses only "arg1 'bitwise' arg2 'eq' arg3".
 /// But it could also warn about arg1 && arg2 || arg3, as GCC 4.3+ does.
-static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperator::Opcode Opc,
+static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
                                     SourceLocation OpLoc, Expr *lhs, Expr *rhs){
   if (BinaryOperator::isBitwiseOp(Opc))
     DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
@@ -6639,9 +6639,9 @@ static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperator::Opcode Opc,
 
 // Binary Operators.  'Tok' is the token for the operator.
 ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
-                                          tok::TokenKind Kind,
-                                          Expr *lhs, Expr *rhs) {
-  BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
+                            tok::TokenKind Kind,
+                            Expr *lhs, Expr *rhs) {
+  BinaryOperatorKind Opc = ConvertTokenKindToBinaryOpcode(Kind);
   assert((lhs != 0) && "ActOnBinOp(): missing left expression");
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
 
@@ -6652,8 +6652,8 @@ ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 }
 
 ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
-                                          BinaryOperator::Opcode Opc,
-                                          Expr *lhs, Expr *rhs) {
+                            BinaryOperatorKind Opc,
+                            Expr *lhs, Expr *rhs) {
   if (getLangOptions().CPlusPlus &&
       (lhs->getType()->isOverloadableType() ||
        rhs->getType()->isOverloadableType())) {
@@ -6679,29 +6679,29 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
 ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                                     unsigned OpcIn,
                                                     Expr *Input) {
-  UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
+  UnaryOperatorKind Opc = static_cast<UnaryOperatorKind>(OpcIn);
 
   QualType resultType;
   switch (Opc) {
-  case UnaryOperator::PreInc:
-  case UnaryOperator::PreDec:
-  case UnaryOperator::PostInc:
-  case UnaryOperator::PostDec:
+  case UO_PreInc:
+  case UO_PreDec:
+  case UO_PostInc:
+  case UO_PostDec:
     resultType = CheckIncrementDecrementOperand(Input, OpLoc,
-                                                Opc == UnaryOperator::PreInc ||
-                                                Opc == UnaryOperator::PostInc,
-                                                Opc == UnaryOperator::PreInc ||
-                                                Opc == UnaryOperator::PreDec);
+                                                Opc == UO_PreInc ||
+                                                Opc == UO_PostInc,
+                                                Opc == UO_PreInc ||
+                                                Opc == UO_PreDec);
     break;
-  case UnaryOperator::AddrOf:
+  case UO_AddrOf:
     resultType = CheckAddressOfOperand(Input, OpLoc);
     break;
-  case UnaryOperator::Deref:
+  case UO_Deref:
     DefaultFunctionArrayLvalueConversion(Input);
     resultType = CheckIndirectionOperand(Input, OpLoc);
     break;
-  case UnaryOperator::Plus:
-  case UnaryOperator::Minus:
+  case UO_Plus:
+  case UO_Minus:
     UsualUnaryConversions(Input);
     resultType = Input->getType();
     if (resultType->isDependentType())
@@ -6713,13 +6713,13 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
              resultType->isEnumeralType())
       break;
     else if (getLangOptions().CPlusPlus && // C++ [expr.unary.op]p6
-             Opc == UnaryOperator::Plus &&
+             Opc == UO_Plus &&
              resultType->isPointerType())
       break;
 
     return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
       << resultType << Input->getSourceRange());
-  case UnaryOperator::Not: // bitwise complement
+  case UO_Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
     if (resultType->isDependentType())
@@ -6733,7 +6733,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
     break;
-  case UnaryOperator::LNot: // logical negation
+  case UO_LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
     DefaultFunctionArrayLvalueConversion(Input);
     resultType = Input->getType();
@@ -6746,11 +6746,11 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     // In C++, it's bool. C++ 5.3.1p8
     resultType = getLangOptions().CPlusPlus ? Context.BoolTy : Context.IntTy;
     break;
-  case UnaryOperator::Real:
-  case UnaryOperator::Imag:
-    resultType = CheckRealImagOperand(Input, OpLoc, Opc == UnaryOperator::Real);
+  case UO_Real:
+  case UO_Imag:
+    resultType = CheckRealImagOperand(Input, OpLoc, Opc == UO_Real);
     break;
-  case UnaryOperator::Extension:
+  case UO_Extension:
     resultType = Input->getType();
     break;
   }
@@ -6761,10 +6761,10 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
 }
 
 ExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
-                                            UnaryOperator::Opcode Opc,
-                                            Expr *Input) {
+                              UnaryOperatorKind Opc,
+                              Expr *Input) {
   if (getLangOptions().CPlusPlus && Input->getType()->isOverloadableType() &&
-      Opc != UnaryOperator::Extension) {
+      Opc != UO_Extension) {
     // Find all of the overloaded operators visible from this
     // point. We perform both an operator-name lookup from the local
     // scope and an argument-dependent lookup based on the types of
@@ -7820,7 +7820,7 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
 
   if (isa<BinaryOperator>(E)) {
     BinaryOperator *Op = cast<BinaryOperator>(E);
-    if (Op->getOpcode() != BinaryOperator::Assign)
+    if (Op->getOpcode() != BO_Assign)
       return;
 
     // Greylist some idioms by putting them into a warning subcategory.

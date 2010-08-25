@@ -168,12 +168,12 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   switch (op) {
   default:
     assert(false && "Invalid opcode.");
-  case BinaryOperator::LT: return BinaryOperator::GE;
-  case BinaryOperator::GT: return BinaryOperator::LE;
-  case BinaryOperator::LE: return BinaryOperator::GT;
-  case BinaryOperator::GE: return BinaryOperator::LT;
-  case BinaryOperator::EQ: return BinaryOperator::NE;
-  case BinaryOperator::NE: return BinaryOperator::EQ;
+  case BO_LT: return BO_GE;
+  case BO_GT: return BO_LE;
+  case BO_LE: return BO_GT;
+  case BO_GE: return BO_LT;
+  case BO_EQ: return BO_NE;
+  case BO_NE: return BO_EQ;
   }
 }
 
@@ -181,12 +181,12 @@ static BinaryOperator::Opcode ReverseComparison(BinaryOperator::Opcode op) {
   switch (op) {
   default:
     assert(false && "Invalid opcode.");
-  case BinaryOperator::LT: return BinaryOperator::GT;
-  case BinaryOperator::GT: return BinaryOperator::LT;
-  case BinaryOperator::LE: return BinaryOperator::GE;
-  case BinaryOperator::GE: return BinaryOperator::LE;
-  case BinaryOperator::EQ:
-  case BinaryOperator::NE:
+  case BO_LT: return BO_GT;
+  case BO_GT: return BO_LT;
+  case BO_LE: return BO_GE;
+  case BO_GE: return BO_LE;
+  case BO_EQ:
+  case BO_NE:
     return op;
   }
 }
@@ -202,14 +202,14 @@ SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
   default:
     // We can't reduce this case; just treat it normally.
     break;
-  case BinaryOperator::Mul:
+  case BO_Mul:
     // a*0 and a*1
     if (RHS == 0)
       return ValMgr.makeIntVal(0, resultTy);
     else if (RHS == 1)
       isIdempotent = true;
     break;
-  case BinaryOperator::Div:
+  case BO_Div:
     // a/0 and a/1
     if (RHS == 0)
       // This is also handled elsewhere.
@@ -217,7 +217,7 @@ SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
     else if (RHS == 1)
       isIdempotent = true;
     break;
-  case BinaryOperator::Rem:
+  case BO_Rem:
     // a%0 and a%1
     if (RHS == 0)
       // This is also handled elsewhere.
@@ -225,23 +225,23 @@ SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
     else if (RHS == 1)
       return ValMgr.makeIntVal(0, resultTy);
     break;
-  case BinaryOperator::Add:
-  case BinaryOperator::Sub:
-  case BinaryOperator::Shl:
-  case BinaryOperator::Shr:
-  case BinaryOperator::Xor:
+  case BO_Add:
+  case BO_Sub:
+  case BO_Shl:
+  case BO_Shr:
+  case BO_Xor:
     // a+0, a-0, a<<0, a>>0, a^0
     if (RHS == 0)
       isIdempotent = true;
     break;
-  case BinaryOperator::And:
+  case BO_And:
     // a&0 and a&(~0)
     if (RHS == 0)
       return ValMgr.makeIntVal(0, resultTy);
     else if (RHS.isAllOnesValue())
       isIdempotent = true;
     break;
-  case BinaryOperator::Or:
+  case BO_Or:
     // a|0 and a|(~0)
     if (RHS == 0)
       isIdempotent = true;
@@ -275,19 +275,19 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
     switch (op) {
       default:
         break;
-      case BinaryOperator::EQ:
-      case BinaryOperator::LE:
-      case BinaryOperator::GE:
+      case BO_EQ:
+      case BO_LE:
+      case BO_GE:
         return ValMgr.makeTruthVal(true, resultTy);
-      case BinaryOperator::LT:
-      case BinaryOperator::GT:
-      case BinaryOperator::NE:
+      case BO_LT:
+      case BO_GT:
+      case BO_NE:
         return ValMgr.makeTruthVal(false, resultTy);
-      case BinaryOperator::Xor:
-      case BinaryOperator::Sub:
+      case BO_Xor:
+      case BO_Sub:
         return ValMgr.makeIntVal(0, resultTy);
-      case BinaryOperator::Or:
-      case BinaryOperator::And:
+      case BO_Or:
+      case BO_And:
         return EvalCastNL(lhs, resultTy);
     }
 
@@ -312,9 +312,9 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
         }
         default:
           switch (op) {
-            case BinaryOperator::EQ:
+            case BO_EQ:
               return ValMgr.makeTruthVal(false, resultTy);
-            case BinaryOperator::NE:
+            case BO_NE:
               return ValMgr.makeTruthVal(true, resultTy);
             default:
               // This case also handles pointer arithmetic.
@@ -333,7 +333,7 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
         return UnknownVal();
 
       // Is this a logical not? (!x is represented as x == 0.)
-      if (op == BinaryOperator::EQ && rhs.isZeroConstant()) {
+      if (op == BO_EQ && rhs.isZeroConstant()) {
         // We know how to negate certain expressions. Simplify them here.
 
         BinaryOperator::Opcode opc = symIntExpr->getOpcode();
@@ -342,34 +342,34 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
           // We don't know how to negate this operation.
           // Just handle it as if it were a normal comparison to 0.
           break;
-        case BinaryOperator::LAnd:
-        case BinaryOperator::LOr:
+        case BO_LAnd:
+        case BO_LOr:
           assert(false && "Logical operators handled by branching logic.");
           return UnknownVal();
-        case BinaryOperator::Assign:
-        case BinaryOperator::MulAssign:
-        case BinaryOperator::DivAssign:
-        case BinaryOperator::RemAssign:
-        case BinaryOperator::AddAssign:
-        case BinaryOperator::SubAssign:
-        case BinaryOperator::ShlAssign:
-        case BinaryOperator::ShrAssign:
-        case BinaryOperator::AndAssign:
-        case BinaryOperator::XorAssign:
-        case BinaryOperator::OrAssign:
-        case BinaryOperator::Comma:
+        case BO_Assign:
+        case BO_MulAssign:
+        case BO_DivAssign:
+        case BO_RemAssign:
+        case BO_AddAssign:
+        case BO_SubAssign:
+        case BO_ShlAssign:
+        case BO_ShrAssign:
+        case BO_AndAssign:
+        case BO_XorAssign:
+        case BO_OrAssign:
+        case BO_Comma:
           assert(false && "'=' and ',' operators handled by GRExprEngine.");
           return UnknownVal();
-        case BinaryOperator::PtrMemD:
-        case BinaryOperator::PtrMemI:
+        case BO_PtrMemD:
+        case BO_PtrMemI:
           assert(false && "Pointer arithmetic not handled here.");
           return UnknownVal();
-        case BinaryOperator::LT:
-        case BinaryOperator::GT:
-        case BinaryOperator::LE:
-        case BinaryOperator::GE:
-        case BinaryOperator::EQ:
-        case BinaryOperator::NE:
+        case BO_LT:
+        case BO_GT:
+        case BO_LE:
+        case BO_GE:
+        case BO_EQ:
+        case BO_NE:
           // Negate the comparison and make a value.
           opc = NegateComparison(opc);
           assert(symIntExpr->getType(ValMgr.getContext()) == resultTy);
@@ -402,9 +402,9 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
 
           const llvm::APSInt *newRHS;
           if (lop == op)
-            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Add, first, second);
+            newRHS = BVF.EvaluateAPSInt(BO_Add, first, second);
           else
-            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Sub, first, second);
+            newRHS = BVF.EvaluateAPSInt(BO_Sub, first, second);
           return MakeSymIntVal(symIntExpr->getLHS(), lop, *newRHS, resultTy);
         }
       }
@@ -429,26 +429,26 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
         lhs = tmp;
 
         switch (op) {
-          case BinaryOperator::LT:
-          case BinaryOperator::GT:
-          case BinaryOperator::LE:
-          case BinaryOperator::GE:
+          case BO_LT:
+          case BO_GT:
+          case BO_LE:
+          case BO_GE:
             op = ReverseComparison(op);
             continue;
-          case BinaryOperator::EQ:
-          case BinaryOperator::NE:
-          case BinaryOperator::Add:
-          case BinaryOperator::Mul:
-          case BinaryOperator::And:
-          case BinaryOperator::Xor:
-          case BinaryOperator::Or:
+          case BO_EQ:
+          case BO_NE:
+          case BO_Add:
+          case BO_Mul:
+          case BO_And:
+          case BO_Xor:
+          case BO_Or:
             continue;
-          case BinaryOperator::Shr:
+          case BO_Shr:
             if (lhsValue.isAllOnesValue() && lhsValue.isSigned())
               // At this point lhs and rhs have been swapped.
               return rhs;
             // FALL-THROUGH
-          case BinaryOperator::Shl:
+          case BO_Shl:
             if (lhsValue == 0)
               // At this point lhs and rhs have been swapped.
               return rhs;
@@ -525,7 +525,7 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
   // calling this function with another operation (PR7527). We don't attempt to
   // model this for now, but it could be useful, particularly when the
   // "location" is actually an integer value that's been passed through a void*.
-  if (!(BinaryOperator::isComparisonOp(op) || op == BinaryOperator::Sub))
+  if (!(BinaryOperator::isComparisonOp(op) || op == BO_Sub))
     return UnknownVal();
 
   // Special cases for when both sides are identical.
@@ -534,15 +534,15 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
     default:
       assert(false && "Unimplemented operation for two identical values");
       return UnknownVal();
-    case BinaryOperator::Sub:
+    case BO_Sub:
       return ValMgr.makeZeroVal(resultTy);
-    case BinaryOperator::EQ:
-    case BinaryOperator::LE:
-    case BinaryOperator::GE:
+    case BO_EQ:
+    case BO_LE:
+    case BO_GE:
       return ValMgr.makeTruthVal(true, resultTy);
-    case BinaryOperator::NE:
-    case BinaryOperator::LT:
-    case BinaryOperator::GT:
+    case BO_NE:
+    case BO_LT:
+    case BO_GT:
       return ValMgr.makeTruthVal(false, resultTy);
     }
   }
@@ -558,15 +558,15 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
       switch (op) {
       default:
         break;
-      case BinaryOperator::Sub:
+      case BO_Sub:
         return EvalCastL(lhs, resultTy);
-      case BinaryOperator::EQ:
-      case BinaryOperator::LE:
-      case BinaryOperator::LT:
+      case BO_EQ:
+      case BO_LE:
+      case BO_LT:
         return ValMgr.makeTruthVal(false, resultTy);
-      case BinaryOperator::NE:
-      case BinaryOperator::GT:
-      case BinaryOperator::GE:
+      case BO_NE:
+      case BO_GT:
+      case BO_GE:
         return ValMgr.makeTruthVal(true, resultTy);
       }
     }
@@ -609,13 +609,13 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
       switch (op) {
       default:
         break;
-      case BinaryOperator::EQ:
-      case BinaryOperator::GT:
-      case BinaryOperator::GE:
+      case BO_EQ:
+      case BO_GT:
+      case BO_GE:
         return ValMgr.makeTruthVal(false, resultTy);
-      case BinaryOperator::NE:
-      case BinaryOperator::LT:
-      case BinaryOperator::LE:
+      case BO_NE:
+      case BO_LT:
+      case BO_LE:
         return ValMgr.makeTruthVal(true, resultTy);
       }
     }
@@ -639,15 +639,15 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
         switch (op) {
         default:
           break;
-        case BinaryOperator::Sub:
+        case BO_Sub:
           return EvalCastL(lhs, resultTy);
-        case BinaryOperator::EQ:
-        case BinaryOperator::LT:
-        case BinaryOperator::LE:
+        case BO_EQ:
+        case BO_LT:
+        case BO_LE:
           return ValMgr.makeTruthVal(false, resultTy);
-        case BinaryOperator::NE:
-        case BinaryOperator::GT:
-        case BinaryOperator::GE:
+        case BO_NE:
+        case BO_GT:
+        case BO_GE:
           return ValMgr.makeTruthVal(true, resultTy);
         }
       }
@@ -675,9 +675,9 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
       switch (op) {
       default:
         return UnknownVal();
-      case BinaryOperator::EQ:
+      case BO_EQ:
         return ValMgr.makeTruthVal(false, resultTy);
-      case BinaryOperator::NE:
+      case BO_NE:
         return ValMgr.makeTruthVal(true, resultTy);
       }
     }
@@ -737,17 +737,17 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
         switch (op) {
         default:
           return UnknownVal();
-        case BinaryOperator::LT:
+        case BO_LT:
           return ValMgr.makeTruthVal(left < right, resultTy);
-        case BinaryOperator::GT:
+        case BO_GT:
           return ValMgr.makeTruthVal(left > right, resultTy);
-        case BinaryOperator::LE:
+        case BO_LE:
           return ValMgr.makeTruthVal(left <= right, resultTy);
-        case BinaryOperator::GE:
+        case BO_GE:
           return ValMgr.makeTruthVal(left >= right, resultTy);
-        case BinaryOperator::EQ:
+        case BO_EQ:
           return ValMgr.makeTruthVal(left == right, resultTy);
-        case BinaryOperator::NE:
+        case BO_NE:
           return ValMgr.makeTruthVal(left != right, resultTy);
         }
       }
@@ -785,16 +785,16 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
 
       // We know for sure that the two fields are not the same, since that
       // would have given us the same SVal.
-      if (op == BinaryOperator::EQ)
+      if (op == BO_EQ)
         return ValMgr.makeTruthVal(false, resultTy);
-      if (op == BinaryOperator::NE)
+      if (op == BO_NE)
         return ValMgr.makeTruthVal(true, resultTy);
 
       // Iterate through the fields and see which one comes first.
       // [C99 6.7.2.1.13] "Within a structure object, the non-bit-field
       // members and the units in which bit-fields reside have addresses that
       // increase in the order in which they are declared."
-      bool leftFirst = (op == BinaryOperator::LT || op == BinaryOperator::LE);
+      bool leftFirst = (op == BO_LT || op == BO_LE);
       for (RecordDecl::field_iterator I = RD->field_begin(),
            E = RD->field_end(); I!=E; ++I) {
         if (*I == LeftFD)

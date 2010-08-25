@@ -544,7 +544,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
-    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    CastKind Kind = CK_Unknown;
     CXXCastPath BasePath;
     if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind, BasePath))
       return ExprError();
@@ -1870,7 +1870,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     // is AddrOf.  All others don't make sense as pointers.
     UnaryOperator *U = cast<UnaryOperator>(E);
 
-    if (U->getOpcode() == UnaryOperator::AddrOf)
+    if (U->getOpcode() == UO_AddrOf)
       return EvalVal(U->getSubExpr());
     else
       return NULL;
@@ -1880,9 +1880,9 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     // Handle pointer arithmetic.  All other binary operators are not valid
     // in this context.
     BinaryOperator *B = cast<BinaryOperator>(E);
-    BinaryOperator::Opcode op = B->getOpcode();
+    BinaryOperatorKind op = B->getOpcode();
 
-    if (op != BinaryOperator::Add && op != BinaryOperator::Sub)
+    if (op != BO_Add && op != BO_Sub)
       return NULL;
 
     Expr *Base = B->getLHS();
@@ -1997,7 +1997,7 @@ do {
     // handling all sorts of rvalues passed to a unary operator.
     UnaryOperator *U = cast<UnaryOperator>(E);
 
-    if (U->getOpcode() == UnaryOperator::Deref)
+    if (U->getOpcode() == UO_Deref)
       return EvalAddr(U->getSubExpr());
 
     return NULL;
@@ -2215,13 +2215,13 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
   // user has an explicit widening cast, we should treat the value as
   // being of the new, wider type.
   if (ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (CE->getCastKind() == CastExpr::CK_NoOp)
+    if (CE->getCastKind() == CK_NoOp)
       return GetExprRange(C, CE->getSubExpr(), MaxWidth);
 
     IntRange OutputTypeRange = IntRange::forType(C, CE->getType());
 
-    bool isIntegerCast = (CE->getCastKind() == CastExpr::CK_IntegralCast);
-    if (!isIntegerCast && CE->getCastKind() == CastExpr::CK_Unknown)
+    bool isIntegerCast = (CE->getCastKind() == CK_IntegralCast);
+    if (!isIntegerCast && CE->getCastKind() == CK_Unknown)
       isIntegerCast = CE->getSubExpr()->getType()->isIntegerType();
 
     // Assume that non-integer casts can span the full range of the type.
@@ -2260,38 +2260,38 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     switch (BO->getOpcode()) {
 
     // Boolean-valued operations are single-bit and positive.
-    case BinaryOperator::LAnd:
-    case BinaryOperator::LOr:
-    case BinaryOperator::LT:
-    case BinaryOperator::GT:
-    case BinaryOperator::LE:
-    case BinaryOperator::GE:
-    case BinaryOperator::EQ:
-    case BinaryOperator::NE:
+    case BO_LAnd:
+    case BO_LOr:
+    case BO_LT:
+    case BO_GT:
+    case BO_LE:
+    case BO_GE:
+    case BO_EQ:
+    case BO_NE:
       return IntRange::forBoolType();
 
     // The type of these compound assignments is the type of the LHS,
     // so the RHS is not necessarily an integer.
-    case BinaryOperator::MulAssign:
-    case BinaryOperator::DivAssign:
-    case BinaryOperator::RemAssign:
-    case BinaryOperator::AddAssign:
-    case BinaryOperator::SubAssign:
+    case BO_MulAssign:
+    case BO_DivAssign:
+    case BO_RemAssign:
+    case BO_AddAssign:
+    case BO_SubAssign:
       return IntRange::forType(C, E->getType());
 
     // Operations with opaque sources are black-listed.
-    case BinaryOperator::PtrMemD:
-    case BinaryOperator::PtrMemI:
+    case BO_PtrMemD:
+    case BO_PtrMemI:
       return IntRange::forType(C, E->getType());
 
     // Bitwise-and uses the *infinum* of the two source ranges.
-    case BinaryOperator::And:
-    case BinaryOperator::AndAssign:
+    case BO_And:
+    case BO_AndAssign:
       return IntRange::meet(GetExprRange(C, BO->getLHS(), MaxWidth),
                             GetExprRange(C, BO->getRHS(), MaxWidth));
 
     // Left shift gets black-listed based on a judgement call.
-    case BinaryOperator::Shl:
+    case BO_Shl:
       // ...except that we want to treat '1 << (blah)' as logically
       // positive.  It's an important idiom.
       if (IntegerLiteral *I
@@ -2303,12 +2303,12 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
       }
       // fallthrough
 
-    case BinaryOperator::ShlAssign:
+    case BO_ShlAssign:
       return IntRange::forType(C, E->getType());
 
     // Right shift by a constant can narrow its left argument.
-    case BinaryOperator::Shr:
-    case BinaryOperator::ShrAssign: {
+    case BO_Shr:
+    case BO_ShrAssign: {
       IntRange L = GetExprRange(C, BO->getLHS(), MaxWidth);
 
       // If the shift amount is a positive constant, drop the width by
@@ -2327,11 +2327,11 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     }
 
     // Comma acts as its right operand.
-    case BinaryOperator::Comma:
+    case BO_Comma:
       return GetExprRange(C, BO->getRHS(), MaxWidth);
 
     // Black-list pointer subtractions.
-    case BinaryOperator::Sub:
+    case BO_Sub:
       if (BO->getLHS()->getType()->isPointerType())
         return IntRange::forType(C, E->getType());
       // fallthrough
@@ -2350,12 +2350,12 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
   if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
     switch (UO->getOpcode()) {
     // Boolean-valued operations are white-listed.
-    case UnaryOperator::LNot:
+    case UO_LNot:
       return IntRange::forBoolType();
 
     // Operations with opaque sources are black-listed.
-    case UnaryOperator::Deref:
-    case UnaryOperator::AddrOf: // should be impossible
+    case UO_Deref:
+    case UO_AddrOf: // should be impossible
       return IntRange::forType(C, E->getType());
 
     default:
@@ -2428,20 +2428,20 @@ bool IsZero(Sema &S, Expr *E) {
 }
 
 void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
-  BinaryOperator::Opcode op = E->getOpcode();
-  if (op == BinaryOperator::LT && IsZero(S, E->getRHS())) {
+  BinaryOperatorKind op = E->getOpcode();
+  if (op == BO_LT && IsZero(S, E->getRHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
       << "< 0" << "false"
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
-  } else if (op == BinaryOperator::GE && IsZero(S, E->getRHS())) {
+  } else if (op == BO_GE && IsZero(S, E->getRHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
       << ">= 0" << "true"
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
-  } else if (op == BinaryOperator::GT && IsZero(S, E->getLHS())) {
+  } else if (op == BO_GT && IsZero(S, E->getLHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_runsigned_always_true_comparison)
       << "0 >" << "false" 
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
-  } else if (op == BinaryOperator::LE && IsZero(S, E->getLHS())) {
+  } else if (op == BO_LE && IsZero(S, E->getLHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_runsigned_always_true_comparison)
       << "0 <=" << "true" 
       << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();

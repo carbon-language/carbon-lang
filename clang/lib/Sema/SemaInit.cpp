@@ -3621,7 +3621,7 @@ InitializationSequence::Perform(Sema &S,
                    VK_RValue);
       CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
                                                  Step->Type,
-                                                 CastExpr::CK_DerivedToBase,
+                                                 CK_DerivedToBase,
                                                  CurInit.get(),
                                                  &BasePath, VK));
       break;
@@ -3672,7 +3672,7 @@ InitializationSequence::Perform(Sema &S,
     case SK_UserConversion: {
       // We have a user-defined conversion that invokes either a constructor
       // or a conversion function.
-      CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
+      CastKind CastKind = CK_Unknown;
       bool IsCopy = false;
       FunctionDecl *Fn = Step->Function.Function;
       DeclAccessPair FoundFn = Step->Function.FoundDecl;
@@ -3703,7 +3703,7 @@ InitializationSequence::Perform(Sema &S,
                                  FoundFn.getAccess());
         S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
         
-        CastKind = CastExpr::CK_ConstructorConversion;
+        CastKind = CK_ConstructorConversion;
         QualType Class = S.Context.getTypeDeclType(Constructor->getParent());
         if (S.Context.hasSameUnqualifiedType(SourceType, Class) ||
             S.IsDerivedFrom(SourceType, Class))
@@ -3735,7 +3735,7 @@ InitializationSequence::Perform(Sema &S,
         if (CurInit.isInvalid() || !CurInit.get())
           return S.ExprError();
         
-        CastKind = CastExpr::CK_UserDefinedConversion;
+        CastKind = CK_UserDefinedConversion;
         
         CreatedObject = Conversion->getResultType()->isRecordType();
       }
@@ -3780,7 +3780,7 @@ InitializationSequence::Perform(Sema &S,
               (Step->Kind == SK_QualificationConversionXValue ?
                    VK_XValue :
                    VK_RValue);
-      S.ImpCastExprToType(CurInitExpr, Step->Type, CastExpr::CK_NoOp, VK);
+      S.ImpCastExprToType(CurInitExpr, Step->Type, CK_NoOp, VK);
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
       break;
@@ -3949,7 +3949,7 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_ObjCObjectConversion:
       S.ImpCastExprToType(CurInitExpr, Step->Type, 
-                          CastExpr::CK_ObjCObjectLValueCast,
+                          CK_ObjCObjectLValueCast,
                           S.CastCategory(CurInitExpr));
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);

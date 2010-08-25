@@ -28,22 +28,22 @@ static void print(llvm::raw_ostream& os, BinaryOperator::Opcode Op) {
     default:
       assert(false && "operator printing not implemented");
       break;
-    case BinaryOperator::Mul: os << '*'  ; break;
-    case BinaryOperator::Div: os << '/'  ; break;
-    case BinaryOperator::Rem: os << '%'  ; break;
-    case BinaryOperator::Add: os << '+'  ; break;
-    case BinaryOperator::Sub: os << '-'  ; break;
-    case BinaryOperator::Shl: os << "<<" ; break;
-    case BinaryOperator::Shr: os << ">>" ; break;
-    case BinaryOperator::LT:  os << "<"  ; break;
-    case BinaryOperator::GT:  os << '>'  ; break;
-    case BinaryOperator::LE:  os << "<=" ; break;
-    case BinaryOperator::GE:  os << ">=" ; break;
-    case BinaryOperator::EQ:  os << "==" ; break;
-    case BinaryOperator::NE:  os << "!=" ; break;
-    case BinaryOperator::And: os << '&'  ; break;
-    case BinaryOperator::Xor: os << '^'  ; break;
-    case BinaryOperator::Or:  os << '|'  ; break;
+    case BO_Mul: os << '*'  ; break;
+    case BO_Div: os << '/'  ; break;
+    case BO_Rem: os << '%'  ; break;
+    case BO_Add: os << '+'  ; break;
+    case BO_Sub: os << '-'  ; break;
+    case BO_Shl: os << "<<" ; break;
+    case BO_Shr: os << ">>" ; break;
+    case BO_LT:  os << "<"  ; break;
+    case BO_GT:  os << '>'  ; break;
+    case BO_LE:  os << "<=" ; break;
+    case BO_GE:  os << ">=" ; break;
+    case BO_EQ:  os << "==" ; break;
+    case BO_NE:  os << "!=" ; break;
+    case BO_And: os << '&'  ; break;
+    case BO_Xor: os << '^'  ; break;
+    case BO_Or:  os << '|'  ; break;
   }
 }
 

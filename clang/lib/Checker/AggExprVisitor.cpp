@@ -38,8 +38,8 @@ void AggExprVisitor::VisitCastExpr(CastExpr *E) {
   switch (E->getCastKind()) {
   default: 
     assert(0 && "Unhandled cast kind");
-  case CastExpr::CK_NoOp:
-  case CastExpr::CK_ConstructorConversion:
+  case CK_NoOp:
+  case CK_ConstructorConversion:
     Visit(E->getSubExpr());
     break;
   }

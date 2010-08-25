@@ -94,8 +94,8 @@ static const Stmt* GetNextStmt(const ExplodedNode* N) {
         case Stmt::ChooseExprClass:
         case Stmt::ConditionalOperatorClass: continue;
         case Stmt::BinaryOperatorClass: {
-          BinaryOperator::Opcode Op = cast<BinaryOperator>(S)->getOpcode();
-          if (Op == BinaryOperator::LAnd || Op == BinaryOperator::LOr)
+          BinaryOperatorKind Op = cast<BinaryOperator>(S)->getOpcode();
+          if (Op == BO_LAnd || Op == BO_LOr)
             continue;
           break;
         }
@@ -664,7 +664,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           llvm::raw_string_ostream os(sbuf);
           os << "Left side of '";
 
-          if (B->getOpcode() == BinaryOperator::LAnd) {
+          if (B->getOpcode() == BO_LAnd) {
             os << "&&" << "' is ";
 
             if (*(Src->succ_begin()+1) == Dst) {
@@ -683,7 +683,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             }
           }
           else {
-            assert(B->getOpcode() == BinaryOperator::LOr);
+            assert(B->getOpcode() == BO_LOr);
             os << "||" << "' is ";
 
             if (*(Src->succ_begin()+1) == Dst) {

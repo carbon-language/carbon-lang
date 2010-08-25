@@ -149,22 +149,22 @@ BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
     default:
       assert (false && "Invalid Opcode.");
 
-    case BinaryOperator::Mul:
+    case BO_Mul:
       return &getValue( V1 * V2 );
 
-    case BinaryOperator::Div:
+    case BO_Div:
       return &getValue( V1 / V2 );
 
-    case BinaryOperator::Rem:
+    case BO_Rem:
       return &getValue( V1 % V2 );
 
-    case BinaryOperator::Add:
+    case BO_Add:
       return &getValue( V1 + V2 );
 
-    case BinaryOperator::Sub:
+    case BO_Sub:
       return &getValue( V1 - V2 );
 
-    case BinaryOperator::Shl: {
+    case BO_Shl: {
 
       // FIXME: This logic should probably go higher up, where we can
       // test these conditions symbolically.
@@ -182,7 +182,7 @@ BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
       return &getValue( V1.operator<<( (unsigned) Amt ));
     }
 
-    case BinaryOperator::Shr: {
+    case BO_Shr: {
 
       // FIXME: This logic should probably go higher up, where we can
       // test these conditions symbolically.
@@ -200,33 +200,33 @@ BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
       return &getValue( V1.operator>>( (unsigned) Amt ));
     }
 
-    case BinaryOperator::LT:
+    case BO_LT:
       return &getTruthValue( V1 < V2 );
 
-    case BinaryOperator::GT:
+    case BO_GT:
       return &getTruthValue( V1 > V2 );
 
-    case BinaryOperator::LE:
+    case BO_LE:
       return &getTruthValue( V1 <= V2 );
 
-    case BinaryOperator::GE:
+    case BO_GE:
       return &getTruthValue( V1 >= V2 );
 
-    case BinaryOperator::EQ:
+    case BO_EQ:
       return &getTruthValue( V1 == V2 );
 
-    case BinaryOperator::NE:
+    case BO_NE:
       return &getTruthValue( V1 != V2 );
 
       // Note: LAnd, LOr, Comma are handled specially by higher-level logic.
 
-    case BinaryOperator::And:
+    case BO_And:
       return &getValue( V1 & V2 );
 
-    case BinaryOperator::Or:
+    case BO_Or:
       return &getValue( V1 | V2 );
 
-    case BinaryOperator::Xor:
+    case BO_Xor:
       return &getValue( V1 ^ V2 );
   }
 }
