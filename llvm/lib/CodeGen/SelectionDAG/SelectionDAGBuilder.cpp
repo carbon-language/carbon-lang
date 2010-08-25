@@ -853,7 +853,7 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
     uint64_t Offset = DI->getOffset();
     SDDbgValue *SDV;
     if (Val.getNode()) {
-      if (!EmitFuncArgumentDbgValue(*DI, V, Variable, Offset, Val)) {
+      if (!EmitFuncArgumentDbgValue(V, Variable, Offset, Val)) {
         SDV = DAG.getDbgValue(Variable, Val.getNode(),
                               Val.getResNo(), Offset, dl, DbgSDNodeOrder);
         DAG.AddDbgValue(SDV, Val.getNode(), false);
@@ -3888,8 +3888,7 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
 /// argument, create the corresponding DBG_VALUE machine instruction for it now.
 /// At the end of instruction selection, they will be inserted to the entry BB.
 bool
-SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
-                                              const Value *V, MDNode *Variable,
+SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
                                               uint64_t Offset,
                                               const SDValue &N) {
   if (!isa<Argument>(V))
@@ -4106,7 +4105,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         // Check unused arguments map.
         N = UnusedArgNodeMap[V];
       if (N.getNode()) {
-        if (!EmitFuncArgumentDbgValue(DI, V, Variable, Offset, N)) {
+        if (!EmitFuncArgumentDbgValue(V, Variable, Offset, N)) {
           SDV = DAG.getDbgValue(Variable, N.getNode(),
                                 N.getResNo(), Offset, dl, SDNodeOrder);
           DAG.AddDbgValue(SDV, N.getNode(), false);
