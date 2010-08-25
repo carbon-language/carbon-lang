@@ -402,42 +402,90 @@ private:
   /// been loaded.
   llvm::SmallVector<Selector, 16> SelectorsLoaded;
 
-  /// \brief Method selectors used in a @selector expression. Used for
-  /// implementation of -Wselector.
-  llvm::SmallVector<long long unsigned int,64u> ReferencedSelectorsData;
-      
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
-      
-  /// \brief The set of external definitions stored in the the chain.
+
+  /// \name CodeGen-relevant special data
+  /// \brief Fields containing data that is relevant to CodeGen.
+  //@{
+
+  /// \brief The IDs of all declarations that fulfill the criteria of
+  /// "interesting" decls.
+  ///
+  /// This contains the data loaded from all EXTERNAL_DEFINITIONS blocks in the
+  /// chain. The referenced declarations are deserialized and passed to the
+  /// consumer eagerly.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
-  /// \brief The set of tentative definitions stored in the the chain.
+  /// \brief The IDs of all tentative definitions stored in the the chain.
+  ///
+  /// Sema keeps track of all tentative definitions in a TU because it has to
+  /// complete them and pass them on to CodeGen. Thus, tentative definitions in
+  /// the PCH chain must be eagerly deserialized.
   llvm::SmallVector<uint64_t, 16> TentativeDefinitions;
-      
-  /// \brief The set of unused file scoped decls stored in the the chain.
-  llvm::SmallVector<uint64_t, 16> UnusedFileScopedDecls;
-  
-  /// \brief The set of weak undeclared identifiers stored in the chain.
-  llvm::SmallVector<uint64_t, 64> WeakUndeclaredIdentifiers;
 
-  /// \brief The set of locally-scoped external declarations stored in the chain
-  llvm::SmallVector<uint64_t, 16> LocallyScopedExternalDecls;
-
-  /// \brief The set of ext_vector type declarations stored in the the chain.
-  llvm::SmallVector<uint64_t, 4> ExtVectorDecls;
-
-  /// \brief The set of VTable uses of CXXRecordDecls stored in the chain.
+  /// \brief The IDs of all CXXRecordDecls stored in the chain whose VTables are
+  /// used.
+  ///
+  /// CodeGen has to emit VTables for these records, so they have to be eagerly
+  /// deserialized.
   llvm::SmallVector<uint64_t, 64> VTableUses;
 
-  /// \brief The set of dynamic CXXRecord declarations stored in the chain.
-  llvm::SmallVector<uint64_t, 16> DynamicClasses;
+  //@}
 
-  /// \brief The set of pending implicit instantiations stored in the chain.
+  /// \name Diagnostic-relevant special data
+  /// \brief Fields containing data that is used for generating diagnostics
+  //@{
+
+  /// \brief Method selectors used in a @selector expression. Used for
+  /// implementation of -Wselector.
+  llvm::SmallVector<uint64_t, 64> ReferencedSelectorsData;
+
+  /// \brief A snapshot of Sema's unused file-scoped variable tracking, for
+  /// generating warnings.
+  llvm::SmallVector<uint64_t, 16> UnusedFileScopedDecls;
+
+  /// \brief A snapshot of Sema's weak undeclared identifier tracking, for
+  /// generating warnings.
+  llvm::SmallVector<uint64_t, 64> WeakUndeclaredIdentifiers;
+
+  /// \brief The IDs of type aliases for ext_vectors that exist in the chain.
+  ///
+  /// Used by Sema for finding sugared names for ext_vectors in diagnostics.
+  llvm::SmallVector<uint64_t, 4> ExtVectorDecls;
+
+  //@}
+
+  /// \name Sema-relevant special data
+  /// \brief Fields containing data that is used for semantic analysis
+  //@{
+
+  /// \brief The IDs of all locally scoped external decls in the chain.
+  ///
+  /// Sema tracks these to validate that the types are consistent across all
+  /// local external declarations.
+  llvm::SmallVector<uint64_t, 16> LocallyScopedExternalDecls;
+
+  /// \brief A snapshot of the implicit instantiations in the chain.
+  ///
+  /// This record tracks the instantiations that Sema has to perform at the end
+  /// of the TU. It consists of a pair of values for every pending instantiation
+  /// where the first value is the ID of the decl and the second is the
+  /// instantiation location.
   llvm::SmallVector<uint64_t, 64> PendingImplicitInstantiations;
 
-  /// \brief The set of Sema declaration references stored in the chain.
+  /// \brief The IDs of all dynamic class declarations in the chain.
+  ///
+  /// Sema tracks these because it checks for the key functions being defined
+  /// at the end of the TU, in which case it directs CodeGen to emit the VTable.
+  llvm::SmallVector<uint64_t, 16> DynamicClasses;
+
+  /// \brief The IDs of the declarations Sema stores directly.
+  ///
+  /// Sema tracks a few important decls, such as namespace std, directly.
   llvm::SmallVector<uint64_t, 4> SemaDeclRefs;
+
+  //@}
 
   /// \brief The original file name that was used to build the primary AST file,
   /// which may have been modified for relocatable-pch support.
