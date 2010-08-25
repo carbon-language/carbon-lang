@@ -3506,7 +3506,8 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                            IdentifierInfo **SelIdents,
                            unsigned NumSelIdents,
                            DeclContext *CurContext,
-                           ResultBuilder &Results) {
+                           ResultBuilder &Results,
+                           bool InOriginalClass = true) {
   typedef CodeCompleteConsumer::Result Result;
   for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
                                        MEnd = Container->meth_end();
@@ -3520,6 +3521,8 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
       Result R = Result(*M, 0);
       R.StartParameter = NumSelIdents;
       R.AllParametersAreInformative = (WantKind != MK_Any);
+      if (!InOriginalClass)
+        R.Priority += CCD_InBaseClass;
       Results.MaybeAddResult(R, CurContext);
     }
   }
@@ -3534,13 +3537,13 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                             E = Protocols.end(); 
        I != E; ++I)
     AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
-                   CurContext, Results);
+                   CurContext, Results, false);
   
   // Add methods in categories.
   for (ObjCCategoryDecl *CatDecl = IFace->getCategoryList(); CatDecl;
        CatDecl = CatDecl->getNextClassCategory()) {
     AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents, 
-                   NumSelIdents, CurContext, Results);
+                   NumSelIdents, CurContext, Results, InOriginalClass);
     
     // Add a categories protocol methods.
     const ObjCList<ObjCProtocolDecl> &Protocols 
@@ -3549,23 +3552,23 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                                               E = Protocols.end();
          I != E; ++I)
       AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, 
-                     NumSelIdents, CurContext, Results);
+                     NumSelIdents, CurContext, Results, false);
     
     // Add methods in category implementations.
     if (ObjCCategoryImplDecl *Impl = CatDecl->getImplementation())
       AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents, 
-                     NumSelIdents, CurContext, Results);
+                     NumSelIdents, CurContext, Results, InOriginalClass);
   }
   
   // Add methods in superclass.
   if (IFace->getSuperClass())
     AddObjCMethods(IFace->getSuperClass(), WantInstanceMethods, WantKind, 
-                   SelIdents, NumSelIdents, CurContext, Results);
+                   SelIdents, NumSelIdents, CurContext, Results, false);
 
   // Add methods in our implementation, if any.
   if (ObjCImplementationDecl *Impl = IFace->getImplementation())
     AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents,
-                   NumSelIdents, CurContext, Results);
+                   NumSelIdents, CurContext, Results, InOriginalClass);
 }
 
 
@@ -4326,7 +4329,10 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
                             Results.data(),Results.size());
 }
 
-typedef llvm::DenseMap<Selector, ObjCMethodDecl *> KnownMethodsMap;
+// Mapping from selectors to the methods that implement that selector, along
+// with the "in original class" flag.
+typedef llvm::DenseMap<Selector, std::pair<ObjCMethodDecl *, bool> > 
+  KnownMethodsMap;
 
 /// \brief Find all of the methods that reside in the given container
 /// (and its superclasses, protocols, etc.) that meet the given
@@ -4337,7 +4343,8 @@ static void FindImplementableMethods(ASTContext &Context,
                                      bool WantInstanceMethods,
                                      QualType ReturnType,
                                      bool IsInImplementation,
-                                     KnownMethodsMap &KnownMethods) {
+                                     KnownMethodsMap &KnownMethods,
+                                     bool InOriginalClass = true) {
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)) {
     // Recurse into protocols.
     const ObjCList<ObjCProtocolDecl> &Protocols
@@ -4346,14 +4353,16 @@ static void FindImplementableMethods(ASTContext &Context,
            E = Protocols.end(); 
          I != E; ++I)
       FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods);
+                               IsInImplementation, KnownMethods,
+                               InOriginalClass);
 
     // If we're not in the implementation of a class, also visit the
     // superclass.
     if (!IsInImplementation && IFace->getSuperClass())
       FindImplementableMethods(Context, IFace->getSuperClass(), 
                                WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods);
+                               IsInImplementation, KnownMethods,
+                               false);
 
     // Add methods from any class extensions (but not from categories;
     // those should go into category implementations).
@@ -4361,7 +4370,8 @@ static void FindImplementableMethods(ASTContext &Context,
          Cat = Cat->getNextClassExtension())
       FindImplementableMethods(Context, const_cast<ObjCCategoryDecl*>(Cat), 
                                WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods);      
+                               IsInImplementation, KnownMethods,
+                               InOriginalClass);      
   }
 
   if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Container)) {
@@ -4372,7 +4382,8 @@ static void FindImplementableMethods(ASTContext &Context,
            E = Protocols.end(); 
          I != E; ++I)
       FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods);
+                               IsInImplementation, KnownMethods,
+                               InOriginalClass);
   }
 
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
@@ -4383,7 +4394,7 @@ static void FindImplementableMethods(ASTContext &Context,
            E = Protocols.end(); 
          I != E; ++I)
       FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               IsInImplementation, KnownMethods);
+                               IsInImplementation, KnownMethods, false);
   }
 
   // Add methods in this container. This operation occurs last because
@@ -4397,7 +4408,7 @@ static void FindImplementableMethods(ASTContext &Context,
           !Context.hasSameUnqualifiedType(ReturnType, (*M)->getResultType()))
         continue;
 
-      KnownMethods[(*M)->getSelector()] = *M;
+      KnownMethods[(*M)->getSelector()] = std::make_pair(*M, InOriginalClass);
     }
   }
 }
@@ -4470,7 +4481,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   for (KnownMethodsMap::iterator M = KnownMethods.begin(), 
                               MEnd = KnownMethods.end();
        M != MEnd; ++M) {
-    ObjCMethodDecl *Method = M->second;
+    ObjCMethodDecl *Method = M->second.first;
     CodeCompletionString *Pattern = new CodeCompletionString;
     
     // If the result type was not already provided, add it to the
@@ -4538,7 +4549,11 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
     }
 
-    Results.AddResult(Result(Pattern, CCP_CodePattern, 
+    unsigned Priority = CCP_CodePattern;
+    if (!M->second.second)
+      Priority += CCD_InBaseClass;
+    
+    Results.AddResult(Result(Pattern, Priority, 
                              Method->isInstanceMethod()
                                ? CXCursor_ObjCInstanceMethodDecl
                                : CXCursor_ObjCClassMethodDecl));

@@ -122,6 +122,18 @@ void msg_id(id x) {
   [id Method:1 Arg1:1 OtherArg:ovl];
 }
 
+@interface A
+- (void)method1;
+@end 
+
+@interface B : A
+- (void)method2;
+@end
+
+void test_ranking(B *b) {
+  [b method1];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{HorizontalSpace  }{Text withKeyword:}{Placeholder (int)b}
@@ -228,3 +240,6 @@ void msg_id(id x) {
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText new}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType id}{TypedText protocolClassMethod}
+// RUN: c-index-test -code-completion-at=%s:134:6 %s | FileCheck -check-prefix=CHECK-CCI %s
+// CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method1} (22)
+// CHECK-CCI: ObjCInstanceMethodDecl:{ResultType void}{TypedText method2} (20)
