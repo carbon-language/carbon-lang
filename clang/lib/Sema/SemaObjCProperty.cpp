@@ -953,6 +953,12 @@ void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
     // Property may have been synthesized by user.
     if (IMPDecl->FindPropertyImplDecl(Prop->getIdentifier()))
       continue;
+    if (IMPDecl->getInstanceMethod(Prop->getGetterName())) {
+      if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readonly)
+        continue;
+      if (IMPDecl->getInstanceMethod(Prop->getSetterName()))
+        continue;
+    }
 
     ActOnPropertyImplDecl(S, IMPDecl->getLocation(), IMPDecl->getLocation(),
                           true, IMPDecl,

@@ -85,4 +85,32 @@
 }
 @end
 
+// rdar://8349319
+// No default synthesis if implementation has getter (readonly) and setter(readwrite) methods.
+@interface DSATextSearchResult 
+@property(assign,readonly) float relevance;
+@property(assign,readonly) char isTitleMatch;
+@end
+
+@interface DSANodeSearchResult : DSATextSearchResult {}
+@end
+
+
+@implementation DSATextSearchResult 
+-(char)isTitleMatch {
+    return (char)0;
+}
+
+-(float)relevance {
+    return 0.0;
+}
+@end
+
+@implementation DSANodeSearchResult
+-(id)initWithNode:(id )node relevance:(float)relevance isTitleMatch:(char)isTitleMatch {
+        relevance = 0.0;        
+        isTitleMatch = 'a';
+	return self;
+}
+@end
 
