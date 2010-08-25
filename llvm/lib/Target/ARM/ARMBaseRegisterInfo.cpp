@@ -1397,7 +1397,7 @@ getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const {
   case ARMII::AddrMode5: {
     // VFP address mode.
     const MachineOperand &OffOp = MI->getOperand(Idx+1);
-    int InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
+    InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
     if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
       InstrOffs = -InstrOffs;
     Scale = 4;
@@ -1593,7 +1593,7 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
   case ARMII::AddrMode5: {
     // VFP address mode.
     const MachineOperand &OffOp = MI->getOperand(i+1);
-    int InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
+    InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
     if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
       InstrOffs = -InstrOffs;
     NumBits = 8;
