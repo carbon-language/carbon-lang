@@ -107,6 +107,7 @@ $
 
 import os
 import sys
+import time
 import unittest2
 import lldb
 
@@ -150,6 +151,14 @@ class TestBase(unittest2.TestCase):
     # State pertaining to the inferior process, if any.
     runStarted = False
 
+    # Maximum allowed attempts when launching the inferior process.
+    # Can be overridden by the LLDB_MAX_LAUNCH_COUNT environment variable.
+    maxLaunchCount = 3;
+
+    # Time to wait before the next launching attempt in second(s).
+    # Can be overridden by the LLDB_TIME_WAIT environment variable.
+    timeWait = 1.0;
+
     # os.environ["LLDB_COMMAND_TRACE"], if set to "YES", will turn on this flag.
     traceAlways = False;
 
@@ -167,6 +176,12 @@ class TestBase(unittest2.TestCase):
         # See also dotest.py which sets up ${LLDB_TEST}.
         if ("LLDB_TEST" in os.environ):
             os.chdir(os.path.join(os.environ["LLDB_TEST"], self.mydir));
+
+        if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
+            self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
+
+        if "LLDB_TIME_WAIT" in os.environ:
+            self.timeWait = float(os.environ["LLDB_TIME_WAIT"])
 
         if ("LLDB_COMMAND_TRACE" in os.environ and
             os.environ["LLDB_COMMAND_TRACE"] == "YES"):
@@ -213,19 +228,25 @@ class TestBase(unittest2.TestCase):
 
         trace = (True if self.traceAlways else trace)
 
-        if trace:
-            print >> sys.stderr, "runCmd:", cmd
+        self.runStarted = (cmd.startswith("run") or
+                           cmd.startswith("process launch"))
 
-        self.ci.HandleCommand(cmd, self.res)
+        for i in range(self.maxLaunchCount if self.runStarted else 1):
+            self.ci.HandleCommand(cmd, self.res)
 
-        if cmd.startswith("run"):
-            self.runStarted = True
+            if trace:
+                print >> sys.stderr, "runCmd:", cmd
+                if self.res.Succeeded():
+                    print >> sys.stderr, "output:", self.res.GetOutput()
+                else:
+                    print >> sys.stderr, self.res.GetError()
 
-        if trace:
             if self.res.Succeeded():
-                print >> sys.stderr, "output:", self.res.GetOutput()
+                break
             else:
-                print >> sys.stderr, self.res.GetError()
+                if self.runStarted:
+                    # Process launch failed, wait some time before the next try.
+                    time.sleep(self.timeWait)
 
         if check:
             self.assertTrue(self.res.Succeeded(),
