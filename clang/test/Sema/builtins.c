@@ -90,3 +90,8 @@ void test14() {
   int old;
   old = __sync_fetch_and_min((volatile int *)&old, 1);
 }
+
+// <rdar://problem/8336581>
+void test15(const char *s) {
+  __builtin_printf("string is %s\n", s);
+}
