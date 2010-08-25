@@ -1080,10 +1080,10 @@ public:
   bool isPrefix() const { return isPrefix(getOpcode()); }
   bool isPostfix() const { return isPostfix(getOpcode()); }
   bool isIncrementOp() const {
-    return Opc == UO_PreInc || getOpcode() == UO_PostInc;
+    return Opc == UO_PreInc || Opc == UO_PostInc;
   }
   bool isIncrementDecrementOp() const {
-    return Opc >= UO_PostInc && Opc <= UO_PreDec;
+    return Opc <= UO_PreDec;
   }
   static bool isArithmeticOp(Opcode Op) {
     return Op >= UO_Plus && Op <= UO_LNot;
