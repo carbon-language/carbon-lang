@@ -26,6 +26,14 @@ class TestUniversal(TestBase):
 
         # We should be able to launch the x86_64 executable.
         self.runCmd("run", RUN_STOPPED)
+
+        # Check whether we have a 64-bit process launched.
+        target = self.dbg.GetCurrentTarget()
+        process = target.GetProcess()
+        self.assertTrue(target.IsValid() and process.IsValid() and
+                        self.invoke(process, 'GetAddressByteSize') == 8,
+                        "64-bit process launched")
+
         self.runCmd("continue")
 
         # Now specify i386 as the architecture for "testit".
@@ -39,6 +47,14 @@ class TestUniversal(TestBase):
 
         # We should be able to launch the i386 executable as well.
         self.runCmd("run", RUN_STOPPED)
+
+        # Check whether we have a 32-bit process launched.
+        target = self.dbg.GetCurrentTarget()
+        process = target.GetProcess()
+        self.assertTrue(target.IsValid() and process.IsValid() and
+                        self.invoke(process, 'GetAddressByteSize') == 4,
+                        "32-bit process launched")
+
         self.runCmd("continue")
 
 
