@@ -34,74 +34,74 @@ namespace llvm {
 }
 
 namespace clang {
-  class ASTContext;
+  class ADLResult;
   class ASTConsumer;
-  class Preprocessor;
+  class ASTContext;
+  class ArrayType;
+  class CXXBasePath;
+  class CXXBasePaths;
+  class CXXFieldCollector;
+  class CXXTemporary;
+  class CXXTryStmt;
+  class CallExpr;
+  class ClassTemplateDecl;
+  class ClassTemplatePartialSpecializationDecl;
   class Decl;
   class DeclContext;
-  class DeclSpec;
-  class ExternalSemaSource;
-  class NamedDecl;
-  class Stmt;
-  class Expr;
-  class InitListExpr;
-  class ParenListExpr;
-  class DesignatedInitExpr;
-  class CallExpr;
   class DeclRefExpr;
+  class DeclSpec;
+  class DeducedTemplateArgument;
+  class DesignatedInitExpr;
+  class Expr;
+  class ExtVectorType;
+  class ExternalSemaSource;
+  class FunctionDecl;
+  class FunctionProtoType;
+  class InitListExpr;
+  class InitializationKind;
+  class InitializationSequence;
+  class InitializedEntity;
+  class IntegerLiteral;
+  class LabelStmt;
+  class LangOptions;
+  class LookupResult;
+  class MultiLevelTemplateArgumentList;
+  class NamedDecl;
+  class ObjCCategoryDecl;
+  class ObjCCategoryImplDecl;
+  class ObjCCompatibleAliasDecl;
+  class ObjCContainerDecl;
+  class ObjCImplDecl;
+  class ObjCImplementationDecl;
+  class ObjCInterfaceDecl;
+  class ObjCIvarDecl;
+  template <class T> class ObjCList;
+  class ObjCMethodDecl;
+  class ObjCPropertyDecl;
+  class ObjCProtocolDecl;
+  class ParenListExpr;
+  class ParmVarDecl;
+  class Preprocessor;
+  class PseudoDestructorTypeStorage;
+  class QualType;
+  class Stmt;
+  class StringLiteral;
+  class SwitchStmt;
+  class TargetAttributesSema;
+  class TemplateArgument;
+  class TemplateArgumentList;
+  class TemplateArgumentLoc;
+  class TemplateDecl;
+  class TemplateParameterList;
+  class TemplatePartialOrderingContext;
+  class TemplateTemplateParmDecl;
+  class Token;
+  class TypedefDecl;
+  class TypedefDecl;
   class UnresolvedLookupExpr;
   class UnresolvedMemberExpr;
   class VarDecl;
-  class ParmVarDecl;
-  class TypedefDecl;
-  class FunctionDecl;
-  class QualType;
-  class LangOptions;
-  class Token;
-  class IntegerLiteral;
-  class StringLiteral;
-  class ArrayType;
-  class LabelStmt;
-  class SwitchStmt;
-  class CXXTryStmt;
-  class ExtVectorType;
-  class TypedefDecl;
-  class TemplateDecl;
-  class TemplateArgument;
-  class TemplateArgumentLoc;
-  class TemplateArgumentList;
-  class TemplateParameterList;
-  class TemplateTemplateParmDecl;
-  class MultiLevelTemplateArgumentList;
-  class DeducedTemplateArgument;
-  class TemplatePartialOrderingContext;
-  class ClassTemplatePartialSpecializationDecl;
-  class ClassTemplateDecl;
-  template <class T> class ObjCList;
-  class ObjCInterfaceDecl;
-  class ObjCCompatibleAliasDecl;
-  class ObjCProtocolDecl;
-  class ObjCImplDecl;
-  class ObjCImplementationDecl;
-  class ObjCCategoryImplDecl;
-  class ObjCCategoryDecl;
-  class ObjCIvarDecl;
-  class ObjCMethodDecl;
-  class ObjCPropertyDecl;
-  class ObjCContainerDecl;
-  class PseudoDestructorTypeStorage;
-  class FunctionProtoType;
-  class CXXBasePath;
-  class CXXBasePaths;
-  class CXXTemporary;
-  class LookupResult;
-  class InitializedEntity;
-  class InitializationKind;
-  class InitializationSequence;
   class VisibleDeclConsumer;
-  class TargetAttributesSema;
-  class ADLResult;
-  class CXXFieldCollector;
 
 /// \brief Retains information about a function, method, or block that is
 /// currently being parsed.
@@ -289,8 +289,8 @@ public:
   /// \brief Cached function scope object used for the top function scope
   /// and when there is no function scope (in error cases).
   ///
-  /// This should never be accessed directly; rather, it's address will be
-  /// pushed into \c FunctionScopes when we want to re-use it.
+  /// This should never be accessed directly; rather, its address will
+  /// be pushed into \c FunctionScopes when we want to re-use it.
   FunctionScopeInfo TopFunctionScope;
 
   /// ExprTemporaries - This is the stack of temporaries that are created by
