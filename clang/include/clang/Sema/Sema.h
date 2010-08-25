@@ -17,7 +17,6 @@
 
 #include "clang/Sema/Action.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
-#include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/SemaDiagnostic.h"
@@ -54,6 +53,8 @@ namespace clang {
   class ClassTemplateDecl;
   class ClassTemplatePartialSpecializationDecl;
   class ClassTemplateSpecializationDecl;
+  class CodeCompleteConsumer;
+  class CodeCompletionResult;
   class Decl;
   class DeclAccessPair;
   class DeclContext;
@@ -4497,7 +4498,7 @@ public:
                                                      MacroInfo *MacroInfo,
                                                      unsigned Argument);
   void GatherGlobalCodeCompletions(
-                  llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results);
+                  llvm::SmallVectorImpl<CodeCompletionResult> &Results);
   //@}
 
   //===--------------------------------------------------------------------===//

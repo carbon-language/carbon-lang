@@ -569,7 +569,7 @@ namespace {
 
     virtual void ProcessCodeCompleteResults(Sema &S, 
                                             CodeCompletionContext Context,
-                                            Result *Results,
+                                            CodeCompletionResult *Results,
                                             unsigned NumResults) {
       AllocatedResults.Results = new CXCompletionResult [NumResults];
       AllocatedResults.NumResults = NumResults;

@@ -40,7 +40,7 @@ namespace {
     /// filtered out (returns false).
     typedef bool (ResultBuilder::*LookupFilter)(NamedDecl *) const;
     
-    typedef CodeCompleteConsumer::Result Result;
+    typedef CodeCompletionResult Result;
     
   private:
     /// \brief The actual results we have found.
@@ -1001,7 +1001,7 @@ namespace {
 /// \brief Add type specifiers for the current language as keyword results.
 static void AddTypeSpecifierResults(const LangOptions &LangOpts,
                                     ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   Results.AddResult(Result("short", CCP_Type));
   Results.AddResult(Result("long", CCP_Type));
   Results.AddResult(Result("signed", CCP_Type));
@@ -1079,7 +1079,7 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts,
 static void AddStorageSpecifiers(Action::ParserCompletionContext CCC,
                                  const LangOptions &LangOpts, 
                                  ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   // Note: we don't suggest either "auto" or "register", because both
   // are pointless as storage specifiers. Elsewhere, we suggest "auto"
   // in C++0x as a type specifier.
@@ -1090,7 +1090,7 @@ static void AddStorageSpecifiers(Action::ParserCompletionContext CCC,
 static void AddFunctionSpecifiers(Action::ParserCompletionContext CCC,
                                   const LangOptions &LangOpts, 
                                   ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   switch (CCC) {
   case Action::PCC_Class:
   case Action::PCC_MemberTemplate:
@@ -1141,7 +1141,7 @@ static void AddTypedefResult(ResultBuilder &Results) {
   Pattern->AddPlaceholderChunk("type");
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("name");
-  Results.AddResult(CodeCompleteConsumer::Result(Pattern));        
+  Results.AddResult(CodeCompletionResult(Pattern));        
 }
 
 static bool WantTypesInContext(Action::ParserCompletionContext CCC,
@@ -1178,7 +1178,7 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
                                    Scope *S,
                                    Sema &SemaRef,
                                    ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   switch (CCC) {
   case Action::PCC_Namespace:
     if (SemaRef.getLangOptions().CPlusPlus) {
@@ -1942,7 +1942,7 @@ static void AddFunctionTypeQualsToCompletionString(CodeCompletionString *Result,
 /// how to use this result, or NULL to indicate that the string or name of the
 /// result is all that is needed.
 CodeCompletionString *
-CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S,
+CodeCompletionResult::CreateCodeCompletionString(Sema &S,
                                                CodeCompletionString *Result) {
   typedef CodeCompletionString::Chunk Chunk;
   
@@ -2231,7 +2231,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
 
 namespace {
   struct SortCodeCompleteResult {
-    typedef CodeCompleteConsumer::Result Result;
+    typedef CodeCompletionResult Result;
     
     /// \brief Retrieve the name that should be used to order a result.
     ///
@@ -2306,7 +2306,7 @@ unsigned clang::getMacroUsagePriority(llvm::StringRef MacroName,
 
 static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
                             bool TargetTypeIsPointer = false) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   Results.EnterNewScope();
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
@@ -2321,7 +2321,7 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
 
 static void AddPrettyFunctionResults(const LangOptions &LangOpts, 
                                      ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   Results.EnterNewScope();
   Results.AddResult(Result("__PRETTY_FUNCTION__", CCP_Constant));
@@ -2334,7 +2334,7 @@ static void AddPrettyFunctionResults(const LangOptions &LangOpts,
 static void HandleCodeCompleteResults(Sema *S,
                                       CodeCompleteConsumer *CodeCompleter,
                                       CodeCompletionContext Context,
-                                      CodeCompleteConsumer::Result *Results,
+                                      CodeCompletionResult *Results,
                                       unsigned NumResults) {
   std::stable_sort(Results, Results + NumResults, SortCodeCompleteResult());
 
@@ -2385,7 +2385,7 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
 
 void Sema::CodeCompleteOrdinaryName(Scope *S, 
                                     ParserCompletionContext CompletionContext) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);  
 
   // Determine how to filter results, e.g., so that the names of
@@ -2464,7 +2464,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
 void Sema::CodeCompleteDeclarator(Scope *S,
                                   bool AllowNonIdentifiers,
                                   bool AllowNestedNameSpecifiers) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);    
   Results.EnterNewScope();
   
@@ -2517,7 +2517,7 @@ struct Sema::CodeCompleteExpressionData {
 /// expressions.
 void Sema::CodeCompleteExpression(Scope *S, 
                                   const CodeCompleteExpressionData &Data) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   
   if (Data.ObjCCollection)
@@ -2568,7 +2568,7 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
                               bool AllowCategories,
                               DeclContext *CurContext,
                               ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
 
   // Add properties in this container.
   for (ObjCContainerDecl::prop_iterator P = Container->prop_begin(),
@@ -2617,7 +2617,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   if (!BaseE || !CodeCompleter)
     return;
   
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   Expr *Base = static_cast<Expr *>(BaseE);
   QualType BaseType = Base->getType();
@@ -2706,7 +2706,7 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   if (!CodeCompleter)
     return;
   
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder::LookupFilter Filter = 0;
   enum CodeCompletionContext::Kind ContextKind
     = CodeCompletionContext::CCC_Other;
@@ -2824,7 +2824,7 @@ void Sema::CodeCompleteCase(Scope *S) {
     if (EnumeratorsSeen.count(*E))
       continue;
     
-    Results.AddResult(CodeCompleteConsumer::Result(*E, Qualifier),
+    Results.AddResult(CodeCompletionResult(*E, Qualifier),
                       CurContext, 0, false);
   }
   Results.ExitScope();
@@ -3043,7 +3043,7 @@ void Sema::CodeCompleteUsing(Scope *S) {
   
   // If we aren't in class scope, we could see the "namespace" keyword.
   if (!S->isClassScope())
-    Results.AddResult(CodeCompleteConsumer::Result("namespace"));
+    Results.AddResult(CodeCompletionResult("namespace"));
   
   // After "using", we can see anything that would start a 
   // nested-name-specifier.
@@ -3100,7 +3100,7 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     for (std::map<NamespaceDecl *, NamespaceDecl *>::iterator 
          NS = OrigToLatest.begin(), NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
-      Results.AddResult(CodeCompleteConsumer::Result(NS->second, 0),
+      Results.AddResult(CodeCompletionResult(NS->second, 0),
                         CurContext, 0, false);
     Results.ExitScope();
   }
@@ -3128,7 +3128,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   if (!CodeCompleter)
     return;
 
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, &ResultBuilder::IsType);
   Results.EnterNewScope();
   
@@ -3159,7 +3159,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 static void AddObjCImplementationResults(const LangOptions &LangOpts,
                                          ResultBuilder &Results,
                                          bool NeedAt) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   // Since we have an implementation, we can end it.
   Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end)));
   
@@ -3184,7 +3184,7 @@ static void AddObjCImplementationResults(const LangOptions &LangOpts,
 static void AddObjCInterfaceResults(const LangOptions &LangOpts,
                                     ResultBuilder &Results,
                                     bool NeedAt) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   // Since we have an interface or protocol, we can end it.
   Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end)));
@@ -3202,7 +3202,7 @@ static void AddObjCInterfaceResults(const LangOptions &LangOpts,
 }
 
 static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   CodeCompletionString *Pattern = 0;
   
   // @class name ;
@@ -3249,7 +3249,7 @@ static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
 
 void Sema::CodeCompleteObjCAtDirective(Scope *S, Decl *ObjCImpDecl,
                                        bool InInterface) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   if (ObjCImpDecl)
@@ -3265,7 +3265,7 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, Decl *ObjCImpDecl,
 }
 
 static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   CodeCompletionString *Pattern = 0;
 
   // @encode ( type-name )
@@ -3294,7 +3294,7 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
 }
 
 static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   CodeCompletionString *Pattern = 0;
   
   if (Results.includeCodePatterns()) {
@@ -3344,7 +3344,7 @@ static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {
 static void AddObjCVisibilityResults(const LangOptions &LangOpts,
                                      ResultBuilder &Results,
                                      bool NeedAt) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,private)));
   Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,protected)));
   Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,public)));
@@ -3419,34 +3419,34 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
   
   unsigned Attributes = ODS.getPropertyAttributes();
   
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readonly))
-    Results.AddResult(CodeCompleteConsumer::Result("readonly"));
+    Results.AddResult(CodeCompletionResult("readonly"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_assign))
-    Results.AddResult(CodeCompleteConsumer::Result("assign"));
+    Results.AddResult(CodeCompletionResult("assign"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readwrite))
-    Results.AddResult(CodeCompleteConsumer::Result("readwrite"));
+    Results.AddResult(CodeCompletionResult("readwrite"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_retain))
-    Results.AddResult(CodeCompleteConsumer::Result("retain"));
+    Results.AddResult(CodeCompletionResult("retain"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_copy))
-    Results.AddResult(CodeCompleteConsumer::Result("copy"));
+    Results.AddResult(CodeCompletionResult("copy"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_nonatomic))
-    Results.AddResult(CodeCompleteConsumer::Result("nonatomic"));
+    Results.AddResult(CodeCompletionResult("nonatomic"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_setter)) {
     CodeCompletionString *Setter = new CodeCompletionString;
     Setter->AddTypedTextChunk("setter");
     Setter->AddTextChunk(" = ");
     Setter->AddPlaceholderChunk("method");
-    Results.AddResult(CodeCompleteConsumer::Result(Setter));
+    Results.AddResult(CodeCompletionResult(Setter));
   }
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_getter)) {
     CodeCompletionString *Getter = new CodeCompletionString;
     Getter->AddTypedTextChunk("getter");
     Getter->AddTextChunk(" = ");
     Getter->AddPlaceholderChunk("method");
-    Results.AddResult(CodeCompleteConsumer::Result(Getter));
+    Results.AddResult(CodeCompletionResult(Getter));
   }
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, 
@@ -3508,7 +3508,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                            DeclContext *CurContext,
                            ResultBuilder &Results,
                            bool InOriginalClass = true) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
                                        MEnd = Container->meth_end();
        M != MEnd; ++M) {
@@ -3575,7 +3575,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
 void Sema::CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl,
                                           Decl **Methods,
                                           unsigned NumMethods) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
 
   // Try to find the interface where getters might live.
   ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(ClassDecl);
@@ -3615,7 +3615,7 @@ void Sema::CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl,
 void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl,
                                           Decl **Methods,
                                           unsigned NumMethods) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
 
   // Try to find the interface where setters might live.
   ObjCInterfaceDecl *Class
@@ -3655,7 +3655,7 @@ void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl,
 }
 
 void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   
@@ -3770,7 +3770,7 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
 }
 
 void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   
   // Find anything that looks like it could be a message receiver.
@@ -3863,7 +3863,7 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
 void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         IdentifierInfo **SelIdents,
                                         unsigned NumSelIdents) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ObjCInterfaceDecl *CDecl = 0;
 
   // If the given name refers to an interface type, retrieve the
@@ -3926,7 +3926,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
 void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                            IdentifierInfo **SelIdents,
                                            unsigned NumSelIdents) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
   
@@ -4045,7 +4045,7 @@ void Sema::CodeCompleteObjCForCollection(Scope *S,
 static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
                                bool OnlyForwardDeclarations,
                                ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
                                DEnd = Ctx->decls_end();
@@ -4110,7 +4110,7 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
                                 bool OnlyForwardDeclarations,
                                 bool OnlyUnimplemented,
                                 ResultBuilder &Results) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
                                DEnd = Ctx->decls_end();
@@ -4185,7 +4185,7 @@ void Sema::CodeCompleteObjCImplementationDecl(Scope *S) {
 void Sema::CodeCompleteObjCInterfaceCategory(Scope *S, 
                                              IdentifierInfo *ClassName,
                                              SourceLocation ClassNameLoc) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   ResultBuilder Results(*this);
   
@@ -4218,7 +4218,7 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
 void Sema::CodeCompleteObjCImplementationCategory(Scope *S, 
                                                   IdentifierInfo *ClassName,
                                                   SourceLocation ClassNameLoc) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   
   // Find the corresponding interface. If we couldn't find the interface, the
   // program itself is ill-formed. However, we'll try to be helpful still by
@@ -4255,7 +4255,7 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
 }
 
 void Sema::CodeCompleteObjCPropertyDefinition(Scope *S, Decl *ObjCImpDecl) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
 
   // Figure out where this @synthesize lives.
@@ -4292,7 +4292,7 @@ void Sema::CodeCompleteObjCPropertyDefinition(Scope *S, Decl *ObjCImpDecl) {
 void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
                                                   IdentifierInfo *PropertyName,
                                                   Decl *ObjCImpDecl) {
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
 
   // Figure out where this @synthesize lives.
@@ -4473,7 +4473,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   }
 
   // Add declarations or definitions for each of the known methods.
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   PrintingPolicy Policy(Context.PrintingPolicy);
@@ -4586,7 +4586,7 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
   }
 
   // Build the set of methods we can see.
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
   
   if (ReturnTy)
@@ -4872,7 +4872,7 @@ void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
 }
 
 void Sema::GatherGlobalCodeCompletions(
-                 llvm::SmallVectorImpl<CodeCompleteConsumer::Result> &Results) {
+                 llvm::SmallVectorImpl<CodeCompletionResult> &Results) {
   ResultBuilder Builder(*this);
 
   if (!CodeCompleter || CodeCompleter->includeGlobals()) {

@@ -376,14 +376,14 @@ bool CodeCompletionString::Deserialize(const char *&Str, const char *StrEnd) {
   return true;
 }
 
-void CodeCompleteConsumer::Result::Destroy() {
+void CodeCompletionResult::Destroy() {
   if (Kind == RK_Pattern) {
     delete Pattern;
     Pattern = 0;
   }
 }
 
-unsigned CodeCompleteConsumer::Result::getPriorityFromDecl(NamedDecl *ND) {
+unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
   if (!ND)
     return CCP_Unlikely;
   
@@ -441,13 +441,13 @@ CodeCompleteConsumer::~CodeCompleteConsumer() { }
 void 
 PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
                                                  CodeCompletionContext Context,
-                                                         Result *Results, 
+                                                 CodeCompletionResult *Results,
                                                          unsigned NumResults) {
   // Print the results.
   for (unsigned I = 0; I != NumResults; ++I) {
     OS << "COMPLETION: ";
     switch (Results[I].Kind) {
-    case Result::RK_Declaration:
+    case CodeCompletionResult::RK_Declaration:
       OS << Results[I].Declaration;
       if (Results[I].Hidden)
         OS << " (Hidden)";
@@ -460,11 +460,11 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
       OS << '\n';
       break;
       
-    case Result::RK_Keyword:
+    case CodeCompletionResult::RK_Keyword:
       OS << Results[I].Keyword << '\n';
       break;
         
-    case Result::RK_Macro: {
+    case CodeCompletionResult::RK_Macro: {
       OS << Results[I].Macro->getName();
       if (CodeCompletionString *CCS 
             = Results[I].CreateCodeCompletionString(SemaRef)) {
@@ -475,7 +475,7 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
       break;
     }
         
-    case Result::RK_Pattern: {
+    case CodeCompletionResult::RK_Pattern: {
       OS << "Pattern : " 
          << Results[I].Pattern->getAsString() << '\n';
       break;
@@ -498,7 +498,7 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   }
 }
 
-void CodeCompleteConsumer::Result::computeCursorKindAndAvailability() {
+void CodeCompletionResult::computeCursorKindAndAvailability() {
   switch (Kind) {
   case RK_Declaration:
     // Set the availability based on attributes.
@@ -599,17 +599,17 @@ void CodeCompleteConsumer::Result::computeCursorKindAndAvailability() {
     }
     break;
 
-  case Result::RK_Macro:
+  case RK_Macro:
     Availability = CXAvailability_Available;      
     CursorKind = CXCursor_MacroDefinition;
     break;
       
-  case Result::RK_Keyword:
+  case RK_Keyword:
     Availability = CXAvailability_Available;      
     CursorKind = CXCursor_NotImplemented;
     break;
       
-  case Result::RK_Pattern:
+  case RK_Pattern:
     // Do nothing: Patterns can come with cursor kinds!
     break;
   }
@@ -618,7 +618,7 @@ void CodeCompleteConsumer::Result::computeCursorKindAndAvailability() {
 void 
 CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
                                                  CodeCompletionContext Context,
-                                                       Result *Results, 
+                                                 CodeCompletionResult *Results,
                                                        unsigned NumResults) {
   // Print the results.
   for (unsigned I = 0; I != NumResults; ++I) {

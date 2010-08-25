@@ -176,7 +176,7 @@ void ASTUnit::CacheCodeCompletionResults() {
   ClearCachedCompletionResults();
   
   // Gather the set of global code completions.
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   llvm::SmallVector<Result, 8> Results;
   TheSema->GatherGlobalCodeCompletions(Results);
   
@@ -1506,7 +1506,7 @@ namespace {
     
     virtual void ProcessCodeCompleteResults(Sema &S, 
                                             CodeCompletionContext Context,
-                                            Result *Results,
+                                            CodeCompletionResult *Results,
                                             unsigned NumResults);
     
     virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
@@ -1520,7 +1520,7 @@ namespace {
 /// \brief Helper function that computes which global names are hidden by the
 /// local code-completion results.
 void CalculateHiddenNames(const CodeCompletionContext &Context,
-                          CodeCompleteConsumer::Result *Results,
+                          CodeCompletionResult *Results,
                           unsigned NumResults,
                           ASTContext &Ctx,
                           llvm::StringSet<> &HiddenNames) {
@@ -1556,7 +1556,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
     return;
   }
   
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   for (unsigned I = 0; I != NumResults; ++I) {
     if (Results[I].Kind != Result::RK_Declaration)
       continue;
@@ -1590,7 +1590,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
 
 void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
                                             CodeCompletionContext Context,
-                                            Result *Results,
+                                            CodeCompletionResult *Results,
                                             unsigned NumResults) { 
   // Merge the results we were given with the results we cached.
   bool AddedResult = false;
@@ -1601,7 +1601,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   // Contains the set of names that are hidden by "local" completion results.
   llvm::StringSet<> HiddenNames;
   llvm::SmallVector<CodeCompletionString *, 4> StringsToDestroy;
-  typedef CodeCompleteConsumer::Result Result;
+  typedef CodeCompletionResult Result;
   llvm::SmallVector<Result, 8> AllResults;
   for (ASTUnit::cached_completion_iterator 
             C = AST.cached_completion_begin(),
