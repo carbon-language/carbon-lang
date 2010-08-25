@@ -2333,6 +2333,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
   }
 
+  // FIXME: Check for unresolved forward-declared metadata references
+  // and clean up leaks.
+
   // See if anything took the address of blocks in this function.  If so,
   // resolve them now.
   DenseMap<Function*, std::vector<BlockAddrRefTy> >::iterator BAFRI =
