@@ -2560,14 +2560,37 @@ X86TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
                           SDValue V1, unsigned TargetMask, SelectionDAG &DAG) {
-
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
+  case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
 
+  return SDValue();
+}
+
+static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
+               SDValue V1, SDValue V2, unsigned TargetMask, SelectionDAG &DAG) {
+  switch(Opc) {
+  default: llvm_unreachable("Unknown x86 shuffle node");
+  case X86ISD::SHUFPD:
+  case X86ISD::SHUFPS:
+    return DAG.getNode(Opc, dl, VT, V1, V2,
+                       DAG.getConstant(TargetMask, MVT::i8));
+  }
+  return SDValue();
+}
+
+static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
+                                    SDValue V1, SDValue V2, SelectionDAG &DAG) {
+  switch(Opc) {
+  default: llvm_unreachable("Unknown x86 shuffle node");
+  case X86ISD::MOVLHPS:
+  case X86ISD::PUNPCKLDQ:
+    return DAG.getNode(Opc, dl, VT, V1, V2);
+  }
   return SDValue();
 }
 
@@ -4239,8 +4262,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     NewV = DAG.getVectorShuffle(MVT::v2i64, dl,
                   DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2i64, V1),
                   DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v2i64, V2), &MaskV[0]);
-    if (NewV.getOpcode() == ISD::VECTOR_SHUFFLE)
-      NewV = LowerVECTOR_SHUFFLE(NewV, DAG);
     NewV = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v8i16, NewV);
 
     // Rewrite the MaskVals and assign NewV to V1 if NewV now contains all the
@@ -4819,6 +4840,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
   bool V1IsSplat = false;
   bool V2IsSplat = false;
+  bool HasSSE2 = Subtarget->hasSSE2() || Subtarget->hasAVX();
+  MachineFunction &MF = DAG.getMachineFunction();
+  bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
   if (isZeroShuffle(SVOp))
     return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
@@ -4855,8 +4879,30 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  if (X86::isPSHUFDMask(SVOp))
-    return Op;
+  if (X86::isPSHUFDMask(SVOp)) {
+    // The actual implementation will match the mask in the if above and then
+    // during isel it can match several different instructions, not only pshufd
+    // as its name says, sad but true, emulate the behavior for now...
+    if (X86::isMOVDDUPMask(SVOp) && ((VT == MVT::v4f32 || VT == MVT::v2i64)))
+        return getTargetShuffleNode(X86ISD::MOVLHPS, dl, VT, V1, V1, DAG);
+
+    if (OptForSize && HasSSE2 && X86::isUNPCKL_v_undef_Mask(SVOp) &&
+        VT == MVT::v4i32)
+      return getTargetShuffleNode(X86ISD::PUNPCKLDQ, dl, VT, V1, V1, DAG);
+
+    unsigned TargetMask = X86::getShuffleSHUFImmediate(SVOp);
+
+    if (HasSSE2 && (VT == MVT::v4f32 || VT == MVT::v4i32))
+      return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
+
+    if (HasSSE2 && (VT == MVT::v2i64 || VT == MVT::v2f64))
+      return getTargetShuffleNode(X86ISD::SHUFPD, dl, VT, V1, V1,
+                                  TargetMask, DAG);
+
+    if (VT == MVT::v4f32)
+      return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V1, V1,
+                                  TargetMask, DAG);
+  }
 
   // Check if this can be converted into a logical shift.
   bool isLeft = false;
