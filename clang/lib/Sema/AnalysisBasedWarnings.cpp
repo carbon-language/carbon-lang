@@ -380,12 +380,9 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       S.SourceMgr.isInSystemHeader(D->getLocation()))
     return;
 
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // For function templates, class templates and member function templates
-    // we'll do the analysis at instantiation time.
-    if (FD->isDependentContext())
-      return;
-  }
+  // For code in dependent contexts, we'll do this at instantiation time.
+  if (cast<DeclContext>(D)->isDependentContext())
+    return;
 
   const Stmt *Body = D->getBody();
   assert(Body);
@@ -405,4 +402,22 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Warning: check for unreachable code
   if (P.enableCheckUnreachable)
     CheckUnreachable(S, AC);
+}
+
+void clang::sema::
+AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
+                                     const BlockExpr *E) {
+  return IssueWarnings(P, E->getBlockDecl(), E->getType());
+}
+
+void clang::sema::
+AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
+                                     const ObjCMethodDecl *D) {
+  return IssueWarnings(P, D, QualType());
+}
+
+void clang::sema::
+AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
+                                     const FunctionDecl *D) {
+  return IssueWarnings(P, D, QualType());
 }

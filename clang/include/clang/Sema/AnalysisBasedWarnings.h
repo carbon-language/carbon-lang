@@ -14,13 +14,16 @@
 #ifndef LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 #define LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 
-#include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 
+class BlockExpr;
+class Decl;
 class FunctionDecl;
+class ObjCMethodDecl;
+class QualType;
 class Sema;
 
 namespace sema {
@@ -44,12 +47,16 @@ private:
   enum VisitFlag { NotVisited = 0, Visited = 1, Pending = 2 };
   llvm::DenseMap<const FunctionDecl*, VisitFlag> VisitedFD;
 
+  void IssueWarnings(Policy P, const Decl *D, QualType BlockTy);
+
 public:
   AnalysisBasedWarnings(Sema &s);
 
   Policy getDefaultPolicy() { return DefaultPolicy; }
 
-  void IssueWarnings(Policy P, const Decl *D, QualType BlockTy = QualType());
+  void IssueWarnings(Policy P, const BlockExpr *E);
+  void IssueWarnings(Policy P, const FunctionDecl *D);
+  void IssueWarnings(Policy P, const ObjCMethodDecl *D);
 };
 
 }} // end namespace clang::sema

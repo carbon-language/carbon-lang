@@ -5035,13 +5035,11 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       // enabled.
       QualType ResultType;
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(dcl)) {
-        ResultType = FD->getResultType();
-      }
-      else {
+        AnalysisWarnings.IssueWarnings(WP, FD);
+      } else {
         ObjCMethodDecl *MD = cast<ObjCMethodDecl>(dcl);
-        ResultType = MD->getResultType();
+        AnalysisWarnings.IssueWarnings(WP, MD);
       }
-      AnalysisWarnings.IssueWarnings(WP, dcl);
     }
 
     assert(ExprTemporaries.empty() && "Leftover temporaries in function");

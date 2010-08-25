@@ -7293,13 +7293,14 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     return ExprError();
   }
 
+  BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy,
+                                              BSI->hasBlockDeclRefExprs);
+
   // Issue any analysis-based warnings.
   const sema::AnalysisBasedWarnings::Policy &WP =
     AnalysisWarnings.getDefaultPolicy();
-  AnalysisWarnings.IssueWarnings(WP, BSI->TheDecl, BlockTy);
+  AnalysisWarnings.IssueWarnings(WP, Result);
 
-  Expr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy,
-                                         BSI->hasBlockDeclRefExprs);
   PopFunctionOrBlockScope();
   return Owned(Result);
 }
