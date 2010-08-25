@@ -1294,12 +1294,8 @@ GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
   // offset+0 and offset+4.  Walk the LLVM IR type to find out if this is the
   // case.
   if (ContainsFloatAtOffset(IRType, IROffset, getTargetData()) &&
-      ContainsFloatAtOffset(IRType, IROffset+4, getTargetData())) {
-    // FIXME: <2 x float> doesn't pass as one XMM register yet.  Don't enable
-    // this code until it does.
-    //return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2);
-
-  }
+      ContainsFloatAtOffset(IRType, IROffset+4, getTargetData()))
+    return llvm::VectorType::get(llvm::Type::getFloatTy(getVMContext()), 2);
 
   return llvm::Type::getDoubleTy(getVMContext());
 }

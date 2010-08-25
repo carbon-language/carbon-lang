@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o %t %s
-// RUN: FileCheck < %t %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s| FileCheck %s
 
 // CHECK: %0 = type { i64, double }
 
@@ -215,8 +214,14 @@ void f30(struct S0 p_4) {
 // rdar://8251384
 struct f31foo { float a, b, c; };
 float f31(struct f31foo X) {
-  // CHECK: define float @f31(double %X.coerce0, float %X.coerce1)
+  // CHECK: define float @f31(<2 x float> %X.coerce0, float %X.coerce1)
   return X.c;
+}
+
+_Complex float f32(_Complex float A, _Complex float B) {
+  // rdar://6379669
+  // CHECK: define <2 x float> @f32(<2 x float> %A.coerce, <2 x float> %B.coerce)
+  return A+B;
 }
 
 
