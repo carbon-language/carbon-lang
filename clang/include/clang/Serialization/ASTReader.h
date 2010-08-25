@@ -472,7 +472,7 @@ private:
   /// of the TU. It consists of a pair of values for every pending instantiation
   /// where the first value is the ID of the decl and the second is the
   /// instantiation location.
-  llvm::SmallVector<uint64_t, 64> PendingImplicitInstantiations;
+  llvm::SmallVector<uint64_t, 64> PendingInstantiations;
 
   /// \brief The IDs of all dynamic class declarations in the chain.
   ///

@@ -1927,11 +1927,11 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case PENDING_IMPLICIT_INSTANTIATIONS:
       // Optimization for the first block.
-      if (PendingImplicitInstantiations.empty())
-        PendingImplicitInstantiations.swap(Record);
+      if (PendingInstantiations.empty())
+        PendingInstantiations.swap(Record);
       else
-        PendingImplicitInstantiations.insert(
-             PendingImplicitInstantiations.end(), Record.begin(), Record.end());
+        PendingInstantiations.insert(PendingInstantiations.end(),
+                                     Record.begin(), Record.end());
       break;
 
     case SEMA_DECL_REFS:
@@ -3430,12 +3430,11 @@ void ASTReader::InitializeSema(Sema &S) {
 
   // If there were any pending implicit instantiations, deserialize them
   // and add them to Sema's queue of such instantiations.
-  assert(PendingImplicitInstantiations.size() % 2 == 0 &&
-         "Expected pairs of entries");
-  for (unsigned Idx = 0, N = PendingImplicitInstantiations.size(); Idx < N;) {
-    ValueDecl *D=cast<ValueDecl>(GetDecl(PendingImplicitInstantiations[Idx++]));
-    SourceLocation Loc = ReadSourceLocation(PendingImplicitInstantiations, Idx);
-    SemaObj->PendingImplicitInstantiations.push_back(std::make_pair(D, Loc));
+  assert(PendingInstantiations.size() % 2 == 0 && "Expected pairs of entries");
+  for (unsigned Idx = 0, N = PendingInstantiations.size(); Idx < N;) {
+    ValueDecl *D=cast<ValueDecl>(GetDecl(PendingInstantiations[Idx++]));
+    SourceLocation Loc = ReadSourceLocation(PendingInstantiations, Idx);
+    SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
   }
 
   // Load the offsets of the declarations that Sema references.

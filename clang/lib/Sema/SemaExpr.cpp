@@ -7678,8 +7678,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
           PendingLocalImplicitInstantiations.push_back(std::make_pair(Function,
                                                                       Loc));
         else
-          PendingImplicitInstantiations.push_back(std::make_pair(Function,
-                                                                 Loc));
+          PendingInstantiations.push_back(std::make_pair(Function, Loc));
       }
     }
 
@@ -7698,7 +7697,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       if (MSInfo->getPointOfInstantiation().isInvalid() &&
           MSInfo->getTemplateSpecializationKind()== TSK_ImplicitInstantiation) {
         MSInfo->setPointOfInstantiation(Loc);
-        PendingImplicitInstantiations.push_back(std::make_pair(Var, Loc));
+        PendingInstantiations.push_back(std::make_pair(Var, Loc));
       }
     }
 

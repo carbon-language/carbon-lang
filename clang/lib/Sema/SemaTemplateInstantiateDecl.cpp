@@ -2042,7 +2042,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       Function->setInvalidDecl();
     } else if (Function->getTemplateSpecializationKind()
                  == TSK_ExplicitInstantiationDefinition) {
-      PendingImplicitInstantiations.push_back(
+      PendingInstantiations.push_back(
         std::make_pair(Function, PointOfInstantiation));
     }
 
@@ -2065,9 +2065,9 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
-  std::deque<PendingImplicitInstantiation> SavedPendingImplicitInstantiations;
+  std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
   if (Recursive)
-    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+    PendingInstantiations.swap(SavedPendingInstantiations);
 
   EnterExpressionEvaluationContext EvalContext(*this, 
                                                Action::PotentiallyEvaluated);
@@ -2126,16 +2126,16 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   // This class may have local implicit instantiations that need to be
   // instantiation within this scope.
-  PerformPendingImplicitInstantiations(/*LocalOnly=*/true);
+  PerformPendingInstantiations(/*LocalOnly=*/true);
   Scope.Exit();
 
   if (Recursive) {
     // Instantiate any pending implicit instantiations found during the
     // instantiation of this template.
-    PerformPendingImplicitInstantiations();
+    PerformPendingInstantiations();
 
     // Restore the set of pending implicit instantiations.
-    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+    PendingInstantiations.swap(SavedPendingInstantiations);
   }
 }
 
@@ -2182,7 +2182,7 @@ void Sema::InstantiateStaticDataMemberDefinition(
       Diag(Def->getLocation(), diag::note_explicit_instantiation_here);
     } else if (Var->getTemplateSpecializationKind()
                  == TSK_ExplicitInstantiationDefinition) {
-      PendingImplicitInstantiations.push_back(
+      PendingInstantiations.push_back(
         std::make_pair(Var, PointOfInstantiation));
     }
 
@@ -2208,9 +2208,9 @@ void Sema::InstantiateStaticDataMemberDefinition(
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
-  std::deque<PendingImplicitInstantiation> SavedPendingImplicitInstantiations;
+  std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
   if (Recursive)
-    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+    PendingInstantiations.swap(SavedPendingInstantiations);
 
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
@@ -2234,10 +2234,10 @@ void Sema::InstantiateStaticDataMemberDefinition(
   if (Recursive) {
     // Instantiate any pending implicit instantiations found during the
     // instantiation of this template.
-    PerformPendingImplicitInstantiations();
+    PerformPendingInstantiations();
 
     // Restore the set of pending implicit instantiations.
-    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+    PendingInstantiations.swap(SavedPendingInstantiations);
   }
 }
 
@@ -2703,14 +2703,14 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
 
 /// \brief Performs template instantiation for all implicit template
 /// instantiations we have seen until this point.
-void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
+void Sema::PerformPendingInstantiations(bool LocalOnly) {
   while (!PendingLocalImplicitInstantiations.empty() ||
-         (!LocalOnly && !PendingImplicitInstantiations.empty())) {
+         (!LocalOnly && !PendingInstantiations.empty())) {
     PendingImplicitInstantiation Inst;
 
     if (PendingLocalImplicitInstantiations.empty()) {
-      Inst = PendingImplicitInstantiations.front();
-      PendingImplicitInstantiations.pop_front();
+      Inst = PendingInstantiations.front();
+      PendingInstantiations.pop_front();
     } else {
       Inst = PendingLocalImplicitInstantiations.front();
       PendingLocalImplicitInstantiations.pop_front();

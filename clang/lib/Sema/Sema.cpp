@@ -300,7 +300,7 @@ void Sema::ActOnEndOfTranslationUnit() {
       // common behavior for C++ compilers, it is technically wrong. In the
       // future, we either need to be able to filter the results of name lookup
       // or we need to perform template instantiations earlier.
-      PerformPendingImplicitInstantiations();
+      PerformPendingInstantiations();
 
       /// If DefinedUsedVTables ends up marking any virtual member
       /// functions it might lead to more pending template

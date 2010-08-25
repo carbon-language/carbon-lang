@@ -3558,7 +3558,7 @@ public:
 
   /// \brief The queue of implicit template instantiations that are required
   /// but have not yet been performed.
-  std::deque<PendingImplicitInstantiation> PendingImplicitInstantiations;
+  std::deque<PendingImplicitInstantiation> PendingInstantiations;
 
   /// \brief The queue of implicit template instantiations that are required
   /// and must be performed within the current local scope.
@@ -3569,7 +3569,7 @@ public:
   /// types, static variables, enumerators, etc.
   std::deque<PendingImplicitInstantiation> PendingLocalImplicitInstantiations;
 
-  void PerformPendingImplicitInstantiations(bool LocalOnly = false);
+  void PerformPendingInstantiations(bool LocalOnly = false);
 
   TypeSourceInfo *SubstType(TypeSourceInfo *T,
                             const MultiLevelTemplateArgumentList &TemplateArgs,

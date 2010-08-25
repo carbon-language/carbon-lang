@@ -2301,12 +2301,12 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
 
   // Build a record containing all of pending implicit instantiations.
-  RecordData PendingImplicitInstantiations;
+  RecordData PendingInstantiations;
   for (std::deque<Sema::PendingImplicitInstantiation>::iterator
-         I = SemaRef.PendingImplicitInstantiations.begin(),
-         N = SemaRef.PendingImplicitInstantiations.end(); I != N; ++I) {
-    AddDeclRef(I->first, PendingImplicitInstantiations);
-    AddSourceLocation(I->second, PendingImplicitInstantiations);
+         I = SemaRef.PendingInstantiations.begin(),
+         N = SemaRef.PendingInstantiations.end(); I != N; ++I) {
+    AddDeclRef(I->first, PendingInstantiations);
+    AddSourceLocation(I->second, PendingInstantiations);
   }
   assert(SemaRef.PendingLocalImplicitInstantiations.empty() &&
          "There are local ones at end of translation unit!");
@@ -2404,9 +2404,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     Stream.EmitRecord(DYNAMIC_CLASSES, DynamicClasses);
 
   // Write the record containing pending implicit instantiations.
-  if (!PendingImplicitInstantiations.empty())
-    Stream.EmitRecord(PENDING_IMPLICIT_INSTANTIATIONS,
-                      PendingImplicitInstantiations);
+  if (!PendingInstantiations.empty())
+    Stream.EmitRecord(PENDING_IMPLICIT_INSTANTIATIONS, PendingInstantiations);
 
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
@@ -2553,13 +2552,13 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
 
   // Build a record containing all of pending implicit instantiations.
-  RecordData PendingImplicitInstantiations;
+  RecordData PendingInstantiations;
   for (std::deque<Sema::PendingImplicitInstantiation>::iterator
-         I = SemaRef.PendingImplicitInstantiations.begin(),
-         N = SemaRef.PendingImplicitInstantiations.end(); I != N; ++I) {
+         I = SemaRef.PendingInstantiations.begin(),
+         N = SemaRef.PendingInstantiations.end(); I != N; ++I) {
     if (I->first->getPCHLevel() == 0) {
-      AddDeclRef(I->first, PendingImplicitInstantiations);
-      AddSourceLocation(I->second, PendingImplicitInstantiations);
+      AddDeclRef(I->first, PendingInstantiations);
+      AddSourceLocation(I->second, PendingInstantiations);
     }
   }
   assert(SemaRef.PendingLocalImplicitInstantiations.empty() &&
@@ -2639,9 +2638,8 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     Stream.EmitRecord(DYNAMIC_CLASSES, DynamicClasses);
 
   // Write the record containing pending implicit instantiations.
-  if (!PendingImplicitInstantiations.empty())
-    Stream.EmitRecord(PENDING_IMPLICIT_INSTANTIATIONS,
-                      PendingImplicitInstantiations);
+  if (!PendingInstantiations.empty())
+    Stream.EmitRecord(PENDING_IMPLICIT_INSTANTIATIONS, PendingInstantiations);
 
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
