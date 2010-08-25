@@ -112,9 +112,10 @@ struct OperandsSignature {
       if (!RC)
         return false;
 
-      // For now, all the operands must have the same register class.
+      // For now, all the operands must have the same register class or be
+      // a strict subclass of the destination.
       if (DstRC) {
-        if (DstRC != RC)
+        if (DstRC != RC && !DstRC->hasSubClass(RC))
           return false;
       } else
         DstRC = RC;
