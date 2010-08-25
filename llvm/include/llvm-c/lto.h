@@ -213,14 +213,6 @@ lto_codegen_set_cpu(lto_code_gen_t cg, const char *cpu);
 
 
 /**
- * Sets the location of the "gcc" to run. If not set, libLTO will search for
- * "gcc" on the path.
- */
-extern void
-lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path);
-
-
-/**
  * Sets the location of the assembler tool to run. If not set, libLTO
  * will use gcc to invoke the assembler.
  */
