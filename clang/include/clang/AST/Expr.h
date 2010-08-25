@@ -1055,22 +1055,22 @@ public:
   static const Opcode Extension = UO_Extension;
 
 private:
-  Stmt *Val;
-  Opcode Opc;
+  unsigned Opc : 5;
   SourceLocation Loc;
+  Stmt *Val;
 public:
 
   UnaryOperator(Expr *input, Opcode opc, QualType type, SourceLocation l)
     : Expr(UnaryOperatorClass, type,
            input->isTypeDependent() || type->isDependentType(),
            input->isValueDependent()),
-      Val(input), Opc(opc), Loc(l) {}
+      Opc(opc), Loc(l), Val(input) {}
 
   /// \brief Build an empty unary operator.
   explicit UnaryOperator(EmptyShell Empty)
     : Expr(UnaryOperatorClass, Empty), Opc(AddrOf) { }
 
-  Opcode getOpcode() const { return Opc; }
+  Opcode getOpcode() const { return static_cast<Opcode>(Opc); }
   void setOpcode(Opcode O) { Opc = O; }
 
   Expr *getSubExpr() const { return cast<Expr>(Val); }
@@ -1090,12 +1090,12 @@ public:
     return Op == PreInc || Op == PreDec;
   }
 
-  bool isPrefix() const { return isPrefix(Opc); }
-  bool isPostfix() const { return isPostfix(Opc); }
-  bool isIncrementOp() const {return Opc==PreInc || Opc==PostInc; }
-  bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
+  bool isPrefix() const { return isPrefix(getOpcode()); }
+  bool isPostfix() const { return isPostfix(getOpcode()); }
+  bool isIncrementOp() const { return Opc == PreInc || getOpcode() == PostInc; }
+  bool isIncrementDecrementOp() const { return Opc >= PostInc && Opc<=PreDec; }
   static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
-  bool isArithmeticOp() const { return isArithmeticOp(Opc); }
+  bool isArithmeticOp() const { return isArithmeticOp(getOpcode()); }
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
@@ -2323,10 +2323,11 @@ public:
   static const Opcode Comma = BO_Comma;
 
 private:
+  unsigned Opc : 6;
+  SourceLocation OpLoc;
+
   enum { LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR];
-  Opcode Opc;
-  SourceLocation OpLoc;
 public:
 
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
@@ -2348,7 +2349,7 @@ public:
   SourceLocation getOperatorLoc() const { return OpLoc; }
   void setOperatorLoc(SourceLocation L) { OpLoc = L; }
 
-  Opcode getOpcode() const { return Opc; }
+  Opcode getOpcode() const { return static_cast<Opcode>(Opc); }
   void setOpcode(Opcode O) { Opc = O; }
 
   Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
@@ -2364,7 +2365,7 @@ public:
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
 
-  const char *getOpcodeStr() const { return getOpcodeStr(Opc); }
+  const char *getOpcodeStr() const { return getOpcodeStr(getOpcode()); }
 
   /// \brief Retrieve the binary opcode that corresponds to the given
   /// overloaded operator.
@@ -2377,24 +2378,24 @@ public:
   /// predicates to categorize the respective opcodes.
   bool isMultiplicativeOp() const { return Opc >= Mul && Opc <= Rem; }
   static bool isAdditiveOp(Opcode Opc) { return Opc == Add || Opc == Sub; }
-  bool isAdditiveOp() const { return isAdditiveOp(Opc); }
+  bool isAdditiveOp() const { return isAdditiveOp(getOpcode()); }
   static bool isShiftOp(Opcode Opc) { return Opc == Shl || Opc == Shr; }
-  bool isShiftOp() const { return isShiftOp(Opc); }
+  bool isShiftOp() const { return isShiftOp(getOpcode()); }
 
   static bool isBitwiseOp(Opcode Opc) { return Opc >= And && Opc <= Or; }
-  bool isBitwiseOp() const { return isBitwiseOp(Opc); }
+  bool isBitwiseOp() const { return isBitwiseOp(getOpcode()); }
 
   static bool isRelationalOp(Opcode Opc) { return Opc >= LT && Opc <= GE; }
-  bool isRelationalOp() const { return isRelationalOp(Opc); }
+  bool isRelationalOp() const { return isRelationalOp(getOpcode()); }
 
   static bool isEqualityOp(Opcode Opc) { return Opc == EQ || Opc == NE; }
-  bool isEqualityOp() const { return isEqualityOp(Opc); }
+  bool isEqualityOp() const { return isEqualityOp(getOpcode()); }
 
   static bool isComparisonOp(Opcode Opc) { return Opc >= LT && Opc <= NE; }
-  bool isComparisonOp() const { return isComparisonOp(Opc); }
+  bool isComparisonOp() const { return isComparisonOp(getOpcode()); }
 
   static bool isLogicalOp(Opcode Opc) { return Opc == LAnd || Opc == LOr; }
-  bool isLogicalOp() const { return isLogicalOp(Opc); }
+  bool isLogicalOp() const { return isLogicalOp(getOpcode()); }
 
   bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
   bool isCompoundAssignmentOp() const { return Opc > Assign && Opc <= OrAssign;}
