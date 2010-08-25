@@ -261,7 +261,6 @@ public:
       return (LegalizeAction)ValueTypeActions[VT.SimpleTy];
     }
     
-    
     void setTypeAction(EVT VT, LegalizeAction Action) {
       unsigned I = VT.getSimpleVT().SimpleTy;
       ValueTypeActions[I] = Action;
@@ -279,7 +278,10 @@ public:
   LegalizeAction getTypeAction(EVT VT) const {
     return ValueTypeActions.getTypeAction(VT);
   }
-
+  LegalizeAction getTypeAction(MVT VT) const {
+    return ValueTypeActions.getTypeAction(VT);
+  }
+  
   /// getTypeToTransformTo - For types supported by the target, this is an
   /// identity function.  For types that must be promoted to larger types, this
   /// returns the larger type to promote to.  For integer types that are larger
