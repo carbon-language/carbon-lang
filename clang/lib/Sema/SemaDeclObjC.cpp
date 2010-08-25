@@ -19,6 +19,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Sema/DeclSpec.h"
+#include "llvm/ADT/DenseSet.h"
+
 using namespace clang;
 
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible

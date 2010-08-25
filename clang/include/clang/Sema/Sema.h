@@ -24,7 +24,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclarationName.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -33,6 +32,8 @@
 
 namespace llvm {
   class APSInt;
+  template <typename ValueT> struct DenseMapInfo;
+  template <typename ValueT, typename ValueInfoT> class DenseSet;
 }
 
 namespace clang {
@@ -1534,6 +1535,8 @@ public:
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
                           ObjCInterfaceDecl *IDecl);
 
+  typedef llvm::DenseSet<Selector, llvm::DenseMapInfo<Selector> > SelectorSet;
+
   /// CheckProtocolMethodDefs - This routine checks unimplemented
   /// methods declared in protocol, and those referenced by it.
   /// \param IDecl - Used for checking for methods which may have been
@@ -1541,8 +1544,8 @@ public:
   void CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                ObjCProtocolDecl *PDecl,
                                bool& IncompleteImpl,
-                               const llvm::DenseSet<Selector> &InsMap,
-                               const llvm::DenseSet<Selector> &ClsMap,
+                               const SelectorSet &InsMap,
+                               const SelectorSet &ClsMap,
                                ObjCContainerDecl *CDecl);
 
   /// CheckImplementationIvars - This routine checks if the instance variables
@@ -1561,7 +1564,7 @@ public:
   /// which must be implemented by this implementation.
   void DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                        ObjCContainerDecl *CDecl,
-                                       const llvm::DenseSet<Selector>& InsMap);
+                                       const SelectorSet &InsMap);
 
   /// DefaultSynthesizeProperties - This routine default synthesizes all 
   /// properties which must be synthesized in class's @implementation.
@@ -1627,10 +1630,10 @@ public:
 
   /// MatchAllMethodDeclarations - Check methods declaraed in interface or
   /// or protocol against those declared in their implementations.
-  void MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
-                                  const llvm::DenseSet<Selector> &ClsMap,
-                                  llvm::DenseSet<Selector> &InsMapSeen,
-                                  llvm::DenseSet<Selector> &ClsMapSeen,
+  void MatchAllMethodDeclarations(const SelectorSet &InsMap,
+                                  const SelectorSet &ClsMap,
+                                  SelectorSet &InsMapSeen,
+                                  SelectorSet &ClsMapSeen,
                                   ObjCImplDecl* IMPDecl,
                                   ObjCContainerDecl* IDecl,
                                   bool &IncompleteImpl,

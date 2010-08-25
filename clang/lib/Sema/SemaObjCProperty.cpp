@@ -16,6 +16,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
+#include "llvm/ADT/DenseSet.h"
 
 using namespace clang;
 
