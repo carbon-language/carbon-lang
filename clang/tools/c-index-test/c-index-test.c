@@ -1,6 +1,7 @@
 /* c-index-test.c */
 
 #include "clang-c/Index.h"
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -895,6 +896,84 @@ void print_completion_result(CXCompletionResult *completion_result,
   fprintf(file, "\n");
 }
 
+int my_stricmp(const char *s1, const char *s2) {
+  while (*s1 && *s2) {
+    int c1 = tolower(*s1), c2 = tolower(*s2);
+    if (c1 < c2)
+      return -1;
+    else if (c1 > c2)
+      return 1;
+    
+    ++s1;
+    ++s2;
+  }
+  
+  if (*s1)
+    return 1;
+  else if (*s2)
+    return -1;
+  return 0;
+}
+
+int compare_completion_string(const void *xv, const void *yv) {
+  CXCompletionString x = ((CXCompletionResult *)xv)->CompletionString;
+  CXCompletionString y = ((CXCompletionResult *)yv)->CompletionString;
+  CXString xText, yText;
+  int I, N;
+  int result;
+  int FoundXText = 0, FoundYText = 0;
+  
+  /* Find the typed text in x. */
+  for (I = 0, N = clang_getNumCompletionChunks(x); I != N; ++I) {
+    if (clang_getCompletionChunkKind(x, I) == CXCompletionChunk_TypedText) {
+      xText = clang_getCompletionChunkText(x, I);
+      FoundXText = 1;
+      break;
+    }
+  }
+  
+  /* Find the typed text in x. */
+  for (I = 0, N = clang_getNumCompletionChunks(y); I != N; ++I) {
+    if (clang_getCompletionChunkKind(y, I) == CXCompletionChunk_TypedText) {
+      yText = clang_getCompletionChunkText(y, I);
+      FoundYText = 1;
+      break;
+    }
+  }
+  
+  if (!FoundXText || !FoundYText) {
+    /* At least one of the results is missing a TypedText chunk. */
+    if (FoundXText)
+      clang_disposeString(xText);
+    if (FoundYText)
+      clang_disposeString(xText);
+    
+    if (FoundXText || FoundYText)
+      return FoundXText? -1 : 1;
+  } else {
+    /* First, try case-insensitive comparisons. */
+    result = my_stricmp(clang_getCString(xText), clang_getCString(yText));
+
+    /* If that fails, try case-sensitive comparison. */
+    if (!result)
+      result = strcmp(clang_getCString(xText), clang_getCString(yText));
+    
+    clang_disposeString(xText);
+    clang_disposeString(yText);
+    if (result)
+      return result;
+  }
+  
+  /* The completion strings appear to be the same; try to order based on
+     priority. */
+  if (clang_getCompletionPriority(x) < clang_getCompletionPriority(y))
+    return -1;
+  else if (clang_getCompletionPriority(x) > clang_getCompletionPriority(y))
+    return 1;
+  
+  return 0;
+}
+
 int perform_code_completion(int argc, const char **argv, int timing_only) {
   const char *input = argv[1];
   char *filename = 0;
@@ -950,9 +1029,14 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
 
   if (results) {
     unsigned i, n = results->NumResults;
-    if (!timing_only)
+    if (!timing_only) {      
+      /* Sort the code-completion results based on the typed text. */
+      mergesort(results->Results, results->NumResults, 
+                sizeof(CXCompletionResult), &compare_completion_string);
+
       for (i = 0; i != n; ++i)
         print_completion_result(results->Results + i, stdout);
+    }
     n = clang_codeCompleteGetNumDiagnostics(results);
     for (i = 0; i != n; ++i) {
       CXDiagnostic diag = clang_codeCompleteGetDiagnostic(results, i);
