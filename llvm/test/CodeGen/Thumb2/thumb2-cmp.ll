@@ -39,3 +39,17 @@ define i1 @f5(i32 %a) {
     %tmp = icmp eq i32 %a, 1114112
     ret i1 %tmp
 }
+
+; Check that we don't do an invalid (a > b) --> !(a < b + 1) transform.
+;
+; CHECK: f6:
+; CHECK-NOT: cmp.w r0, #-2147483648
+; CHECK: bx lr
+define i32 @f6(i32 %a) {
+    %tmp = icmp sgt i32 %a, 2147483647
+    br i1 %tmp, label %true, label %false
+true:
+    ret i32 2
+false:
+    ret i32 0
+}
