@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Analysis/Analyses/FormatString.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
@@ -32,6 +33,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include <limits>
 using namespace clang;
+using namespace sema;
 
 /// getLocationOfStringLiteralByte - Return a source location that points to the
 /// specified byte of the specified string literal.

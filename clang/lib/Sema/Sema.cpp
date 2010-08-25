@@ -20,6 +20,7 @@
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
@@ -30,6 +31,7 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
+using namespace sema;
 
 FunctionScopeInfo::~FunctionScopeInfo() { }
 
@@ -129,7 +131,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
-    PackContext(0), VisContext(0), TopFunctionScope(0), ParsingDeclDepth(0),
+    PackContext(0), VisContext(0), ParsingDeclDepth(0),
     IdResolver(pp.getLangOptions()), GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), SuppressAccessChecking(false),
@@ -146,6 +148,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 
   ExprEvalContexts.push_back(
                   ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));  
+
+  FunctionScopes.push_back(new FunctionScopeInfo(Diags.getNumErrors()));
 }
 
 void Sema::Initialize() {
@@ -166,8 +170,12 @@ Sema::~Sema() {
   if (PackContext) FreePackedContext();
   if (VisContext) FreeVisContext();
   delete TheTargetAttributesSema;
-  while (!FunctionScopes.empty())
-    PopFunctionOrBlockScope();
+
+  // Kill all the active scopes.
+  for (unsigned I = 1, E = FunctionScopes.size(); I != E; ++I)
+    delete FunctionScopes[I];
+  if (FunctionScopes.size() == 1)
+    delete FunctionScopes[0];
   
   // Tell the SemaConsumer to forget about us; we're going out of scope.
   if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
@@ -510,11 +518,11 @@ Scope *Sema::getScopeForContext(DeclContext *Ctx) {
 
 /// \brief Enter a new function scope
 void Sema::PushFunctionScope() {
-  if (FunctionScopes.empty()) {
-    // Use the "top" function scope rather than having to allocate memory for
-    // a new scope.
-    TopFunctionScope.Clear(getDiagnostics().getNumErrors());
-    FunctionScopes.push_back(&TopFunctionScope);
+  if (FunctionScopes.size() == 1) {
+    // Use the "top" function scope rather than having to allocate
+    // memory for a new scope.
+    FunctionScopes.back()->Clear(getDiagnostics().getNumErrors());
+    FunctionScopes.push_back(FunctionScopes.back());
     return;
   }
   
@@ -528,21 +536,17 @@ void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
 }
 
 void Sema::PopFunctionOrBlockScope() {
-  if (FunctionScopes.back() != &TopFunctionScope)
-    delete FunctionScopes.back();
-  else
-    TopFunctionScope.Clear(getDiagnostics().getNumErrors());
-  
-  FunctionScopes.pop_back();
+  FunctionScopeInfo *Scope = FunctionScopes.pop_back_val();
+  assert(!FunctionScopes.empty() && "mismatched push/pop!");
+  if (FunctionScopes.back() != Scope)
+    delete Scope;
 }
 
 /// \brief Determine whether any errors occurred within this function/method/
 /// block.
 bool Sema::hasAnyErrorsInThisFunction() const {
-  unsigned NumErrors = TopFunctionScope.NumErrorsAtStartOfFunction;
-  if (!FunctionScopes.empty())
-    NumErrors = FunctionScopes.back()->NumErrorsAtStartOfFunction;
-  return NumErrors != getDiagnostics().getNumErrors();
+  return getCurFunction()->NumErrorsAtStartOfFunction
+             != getDiagnostics().getNumErrors();
 }
 
 BlockScopeInfo *Sema::getCurBlock() {

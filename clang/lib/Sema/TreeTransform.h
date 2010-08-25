@@ -16,6 +16,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -32,6 +33,7 @@
 #include <algorithm>
 
 namespace clang {
+using namespace sema;
 
 /// \brief A semantic tree transformation that allows one to transform one
 /// abstract syntax tree into another.

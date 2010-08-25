@@ -32,9 +32,11 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Designator.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Template.h"
 using namespace clang;
+using namespace sema;
 
 
 /// \brief Determine whether the use of this declaration is valid, and
@@ -6790,7 +6792,7 @@ ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
                                             SourceLocation LabLoc,
                                             IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = getLabelMap()[LabelII];
+  LabelStmt *&LabelDecl = getCurFunction()->LabelMap[LabelII];
 
   // If we haven't seen this label yet, create a forward reference. It
   // will be validated and/or cleaned up in ActOnFinishFunctionBody.
@@ -7268,7 +7270,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   // If needed, diagnose invalid gotos and switches in the block.
-  if (FunctionNeedsScopeChecking() && !hasAnyErrorsInThisFunction())
+  if (getCurFunction()->NeedsScopeChecking() && !hasAnyErrorsInThisFunction())
     DiagnoseInvalidJumps(cast<CompoundStmt>(Body));
 
   BSI->TheDecl->setBody(cast<CompoundStmt>(Body));

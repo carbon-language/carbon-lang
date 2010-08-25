@@ -13,6 +13,7 @@
 
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
@@ -27,6 +28,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
+using namespace sema;
 
 StmtResult Sema::ActOnExprStmt(FullExprArg expr) {
   Expr *E = expr.get();
@@ -190,14 +192,14 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
     RHSVal = 0;  // Recover by just forgetting about it.
   }
 
-  if (getSwitchStack().empty()) {
+  if (getCurFunction()->SwitchStack.empty()) {
     Diag(CaseLoc, diag::err_case_not_in_switch);
     return StmtError();
   }
 
   CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc, DotDotDotLoc,
                                         ColonLoc);
-  getSwitchStack().back()->addSwitchCase(CS);
+  getCurFunction()->SwitchStack.back()->addSwitchCase(CS);
   return Owned(CS);
 }
 
@@ -210,13 +212,13 @@ void Sema::ActOnCaseStmtBody(Stmt *caseStmt, Stmt *SubStmt) {
 StmtResult
 Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
                        Stmt *SubStmt, Scope *CurScope) {
-  if (getSwitchStack().empty()) {
+  if (getCurFunction()->SwitchStack.empty()) {
     Diag(DefaultLoc, diag::err_default_not_in_switch);
     return Owned(SubStmt);
   }
 
   DefaultStmt *DS = new (Context) DefaultStmt(DefaultLoc, ColonLoc, SubStmt);
-  getSwitchStack().back()->addSwitchCase(DS);
+  getCurFunction()->SwitchStack.back()->addSwitchCase(DS);
   return Owned(DS);
 }
 
@@ -224,7 +226,7 @@ StmtResult
 Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                      SourceLocation ColonLoc, Stmt *SubStmt) {
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = getLabelMap()[II];
+  LabelStmt *&LabelDecl = getCurFunction()->LabelMap[II];
 
   // If not forward referenced or defined already, just create a new LabelStmt.
   if (LabelDecl == 0)
@@ -421,10 +423,10 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
     Cond = CondResult.take();
   }
 
-  setFunctionHasBranchIntoScope();
+  getCurFunction()->setHasBranchIntoScope();
     
   SwitchStmt *SS = new (Context) SwitchStmt(Context, ConditionVar, Cond);
-  getSwitchStack().push_back(SS);
+  getCurFunction()->SwitchStack.push_back(SS);
   return Owned(SS);
 }
 
@@ -432,10 +434,11 @@ StmtResult
 Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
                             Stmt *BodyStmt) {
   SwitchStmt *SS = cast<SwitchStmt>(Switch);
-  assert(SS == getSwitchStack().back() && "switch stack missing push/pop!");
+  assert(SS == getCurFunction()->SwitchStack.back() &&
+         "switch stack missing push/pop!");
 
   SS->setBody(BodyStmt, SwitchLoc);
-  getSwitchStack().pop_back();
+  getCurFunction()->SwitchStack.pop_back();
 
   if (SS->getCond() == 0)
     return StmtError();
@@ -941,9 +944,9 @@ StmtResult
 Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                     IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = getLabelMap()[LabelII];
+  LabelStmt *&LabelDecl = getCurFunction()->LabelMap[LabelII];
 
-  setFunctionHasBranchIntoScope();
+  getCurFunction()->setHasBranchIntoScope();
 
   // If we haven't seen this label yet, create a forward reference.
   if (LabelDecl == 0)
@@ -965,7 +968,7 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
       return StmtError();
   }
 
-  setFunctionHasIndirectGoto();
+  getCurFunction()->setHasIndirectGoto();
 
   return Owned(new (Context) IndirectGotoStmt(GotoLoc, StarLoc, E));
 }
@@ -1482,7 +1485,7 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, Stmt *Body) {
 StmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try, 
                          MultiStmtArg CatchStmts, Stmt *Finally) {
-  setFunctionHasBranchProtectedScope();
+  getCurFunction()->setHasBranchProtectedScope();
   unsigned NumCatchStmts = CatchStmts.size();
   return Owned(ObjCAtTryStmt::Create(Context, AtLoc, Try,
                                      CatchStmts.release(),
@@ -1526,7 +1529,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
 StmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, Expr *SyncExpr,
                                   Stmt *SyncBody) {
-  setFunctionHasBranchProtectedScope();
+  getCurFunction()->setHasBranchProtectedScope();
 
   // Make sure the expression type is an ObjC pointer or "void *".
   if (!SyncExpr->getType()->isDependentType() &&
@@ -1632,7 +1635,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
     }
   }
 
-  setFunctionHasBranchProtectedScope();
+  getCurFunction()->setHasBranchProtectedScope();
 
   // FIXME: We should detect handlers that cannot catch anything because an
   // earlier handler catches a superclass. Need to find a method that is not

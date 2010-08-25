@@ -15,6 +15,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -2986,7 +2987,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
       if (S && S->getContinueParent())
         Consumer.addKeywordResult(Context, "continue");
       
-      if (!getSwitchStack().empty()) {
+      if (!getCurFunction()->SwitchStack.empty()) {
         Consumer.addKeywordResult(Context, "case");
         Consumer.addKeywordResult(Context, "default");
       }

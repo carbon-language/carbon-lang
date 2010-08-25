@@ -16,6 +16,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -39,6 +40,7 @@
 #include <cstring>
 #include <functional>
 using namespace clang;
+using namespace sema;
 
 /// getDeclName - Return a pretty name for the specified decl if possible, or
 /// an empty string if not.  This is used for pretty crash reporting.
@@ -2546,7 +2548,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // that redeclarations will match.
   QualType T = NewTD->getUnderlyingType();
   if (T->isVariablyModifiedType()) {
-    setFunctionHasBranchProtectedScope();
+    getCurFunction()->setHasBranchProtectedScope();
 
     if (S->getFnParent() == 0) {
       bool SizeIsNegative;
@@ -2983,7 +2985,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||
       NewVD->hasAttr<BlocksAttr>())
-    setFunctionHasBranchProtectedScope();
+    getCurFunction()->setHasBranchProtectedScope();
 
   if ((isVM && NewVD->hasLinkage()) ||
       (T->isVariableArrayType() && NewVD->hasGlobalStorage())) {
@@ -4152,7 +4154,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   }  
 
   if (getLangOptions().CPlusPlus && VDecl->hasLocalStorage())
-    setFunctionHasBranchProtectedScope();
+    getCurFunction()->setHasBranchProtectedScope();
 
   // Capture the variable that is being initialized and the style of
   // initialization.
@@ -4477,7 +4479,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       // clarifies that this applies to a "variable with automatic
       // storage duration", not a "local variable".
       if (getLangOptions().CPlusPlus && Var->hasLocalStorage())
-        setFunctionHasBranchProtectedScope();
+        getCurFunction()->setHasBranchProtectedScope();
 
       InitializedEntity Entity = InitializedEntity::InitializeVariable(Var);
       InitializationKind Kind
@@ -4901,9 +4903,11 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
 /// FIXME: Employ a smarter algorithm that accounts for multiple return 
 /// statements and the lifetimes of the NRVO candidates. We should be able to
 /// find a maximal set of NRVO variables.
-static void ComputeNRVO(Stmt *Body, ReturnStmt **Returns, unsigned NumReturns) {
+static void ComputeNRVO(Stmt *Body, FunctionScopeInfo *Scope) {
+  ReturnStmt **Returns = Scope->Returns.data();
+
   const VarDecl *NRVOCandidate = 0;
-  for (unsigned I = 0; I != NumReturns; ++I) {
+  for (unsigned I = 0, E = Scope->Returns.size(); I != E; ++I) {
     if (!Returns[I]->getNRVOCandidate())
       return;
     
@@ -4948,8 +4952,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(FD))
         MarkVTableUsed(FD->getLocation(), Constructor->getParent());
       
-      ComputeNRVO(Body, FunctionScopes.back()->Returns.data(),
-                  FunctionScopes.back()->Returns.size());
+      ComputeNRVO(Body, getCurFunction());
     }
     
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
@@ -4966,8 +4969,9 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   // Verify and clean out per-function state.
 
   // Check goto/label use.
+  FunctionScopeInfo *CurFn = getCurFunction();
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
-       I = getLabelMap().begin(), E = getLabelMap().end(); I != E; ++I) {
+         I = CurFn->LabelMap.begin(), E = CurFn->LabelMap.end(); I != E; ++I) {
     LabelStmt *L = I->second;
 
     // Verify that we have no forward references left.  If so, there was a goto
@@ -5013,7 +5017,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     
     // Verify that that gotos and switch cases don't jump into scopes illegally.
     // Verify that that gotos and switch cases don't jump into scopes illegally.
-    if (FunctionNeedsScopeChecking() &&
+    if (getCurFunction()->NeedsScopeChecking() &&
         !dcl->isInvalidDecl() &&
         !hasAnyErrorsInThisFunction())
       DiagnoseInvalidJumps(Body);

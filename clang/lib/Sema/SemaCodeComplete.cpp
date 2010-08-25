@@ -16,6 +16,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -29,6 +30,7 @@
 #include <vector>
 
 using namespace clang;
+using namespace sema;
 
 namespace {
   /// \brief A container of code-completion results.
@@ -1376,7 +1378,7 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
     }
     
     // Switch-specific statements.
-    if (!SemaRef.getSwitchStack().empty()) {
+    if (!SemaRef.getCurFunction()->SwitchStack.empty()) {
       // case expression:
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("case");
@@ -2751,10 +2753,10 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
 }
 
 void Sema::CodeCompleteCase(Scope *S) {
-  if (getSwitchStack().empty() || !CodeCompleter)
+  if (getCurFunction()->SwitchStack.empty() || !CodeCompleter)
     return;
   
-  SwitchStmt *Switch = getSwitchStack().back();
+  SwitchStmt *Switch = getCurFunction()->SwitchStack.back();
   if (!Switch->getCond()->getType()->isEnumeralType()) {
     CodeCompleteExpressionData Data(Switch->getCond()->getType());
     Data.IntegralConstantExpression = true;
