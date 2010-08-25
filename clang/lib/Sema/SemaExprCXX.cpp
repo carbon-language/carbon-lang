@@ -940,9 +940,11 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                         IsArray ? OO_Array_Delete : OO_Delete);
 
-  if (AllocType->isRecordType() && !UseGlobal) {
+  QualType AllocElemType = Context.getBaseElementType(AllocType);
+
+  if (AllocElemType->isRecordType() && !UseGlobal) {
     CXXRecordDecl *Record
-      = cast<CXXRecordDecl>(AllocType->getAs<RecordType>()->getDecl());
+      = cast<CXXRecordDecl>(AllocElemType->getAs<RecordType>()->getDecl());
     if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
                           AllocArgs.size(), Record, /*AllowMissing=*/true,
                           OperatorNew))
@@ -980,9 +982,9 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   //   the allocated type is not a class type or array thereof, the
   //   deallocation function’s name is looked up in the global scope.
   LookupResult FoundDelete(*this, DeleteName, StartLoc, LookupOrdinaryName);
-  if (AllocType->isRecordType() && !UseGlobal) {
+  if (AllocElemType->isRecordType() && !UseGlobal) {
     CXXRecordDecl *RD
-      = cast<CXXRecordDecl>(AllocType->getAs<RecordType>()->getDecl());
+      = cast<CXXRecordDecl>(AllocElemType->getAs<RecordType>()->getDecl());
     LookupQualifiedName(FoundDelete, RD);
   }
   if (FoundDelete.isAmbiguous())
@@ -1469,7 +1471,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 
-    if (const RecordType *RT = Pointee->getAs<RecordType>()) {
+    QualType PointeeElem = Context.getBaseElementType(Pointee);
+    if (const RecordType *RT = PointeeElem->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
 
       if (!UseGlobal && 
