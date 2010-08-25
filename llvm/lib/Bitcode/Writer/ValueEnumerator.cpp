@@ -445,7 +445,6 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
 
   FirstInstID = Values.size();
 
-  FunctionLocalMDs.clear();
   SmallVector<MDNode *, 8> FnLocalMDVector;
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
@@ -488,6 +487,7 @@ void ValueEnumerator::purgeFunction() {
   Values.resize(NumModuleValues);
   MDValues.resize(NumModuleMDValues);
   BasicBlocks.clear();
+  FunctionLocalMDs.clear();
 }
 
 static void IncorporateFunctionInfoGlobalBBIDs(const Function *F,
