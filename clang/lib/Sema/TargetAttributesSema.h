@@ -13,7 +13,7 @@
 namespace clang {
   class Scope;
   class Decl;
-  class Attr;
+  class AttributeList;
   class Sema;
 
   class TargetAttributesSema {

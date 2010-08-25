@@ -17,6 +17,7 @@
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtObjC.h"

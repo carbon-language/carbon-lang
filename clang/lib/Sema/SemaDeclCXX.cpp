@@ -3430,6 +3430,16 @@ void Sema::ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace) {
     PopPragmaVisibility();
 }
 
+CXXRecordDecl *Sema::getStdBadAlloc() const {
+  return cast_or_null<CXXRecordDecl>(
+                                  StdBadAlloc.get(Context.getExternalSource()));
+}
+
+NamespaceDecl *Sema::getStdNamespace() const {
+  return cast_or_null<NamespaceDecl>(
+                                 StdNamespace.get(Context.getExternalSource()));
+}
+
 /// \brief Retrieve the special "std" namespace, which may require us to 
 /// implicitly define the namespace.
 NamespaceDecl *Sema::getOrCreateStdNamespace() {

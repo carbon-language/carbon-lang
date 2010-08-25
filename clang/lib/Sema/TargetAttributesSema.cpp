@@ -12,9 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/Sema.h"
 #include "TargetAttributesSema.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/AST/DeclCXX.h"
 #include "llvm/ADT/Triple.h"
 
 using namespace clang;

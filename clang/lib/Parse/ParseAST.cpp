@@ -17,6 +17,7 @@
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/Parser.h"

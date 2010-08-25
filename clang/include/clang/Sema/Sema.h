@@ -21,7 +21,6 @@
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclarationName.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -396,7 +395,8 @@ public:
                    CXXRecordDecl *DerivedClass,
                    AccessSpecifier Access)
       : Access(Access), IsMember(false),
-        Target(BaseClass), NamingClass(DerivedClass),
+        Target(reinterpret_cast<NamedDecl*>(BaseClass)),
+        NamingClass(DerivedClass),
         Diag(0, Context.getDiagAllocator()) {
     }
 
@@ -409,7 +409,9 @@ public:
     CXXRecordDecl *getNamingClass() const { return NamingClass; }
 
     // ...and these apply to hierarchy conversions.
-    CXXRecordDecl *getBaseClass() const { return cast<CXXRecordDecl>(Target); }
+    CXXRecordDecl *getBaseClass() const {
+      assert(!IsMember); return reinterpret_cast<CXXRecordDecl*>(Target);
+    }
     CXXRecordDecl *getDerivedClass() const { return NamingClass; }
 
     /// Retrieves the base object type, important when accessing
@@ -2157,16 +2159,10 @@ public:
                                            AttributeList *AttrList);
   virtual void ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace);
 
-  NamespaceDecl *getStdNamespace() const {
-    return cast_or_null<NamespaceDecl>(
-                                 StdNamespace.get(Context.getExternalSource()));
-  }
+  NamespaceDecl *getStdNamespace() const;
   NamespaceDecl *getOrCreateStdNamespace();
 
-  CXXRecordDecl *getStdBadAlloc() const {
-    return cast_or_null<CXXRecordDecl>(
-                                  StdBadAlloc.get(Context.getExternalSource()));
-  }
+  CXXRecordDecl *getStdBadAlloc() const;
 
   virtual Decl *ActOnUsingDirective(Scope *CurScope,
                                         SourceLocation UsingLoc,
