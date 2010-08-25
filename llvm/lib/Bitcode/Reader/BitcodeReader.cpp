@@ -1986,6 +1986,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         } while(OpNum != Record.size());
 
         const Type *ReturnType = F->getReturnType();
+        // Handle multiple return values. FIXME: Remove in LLVM 3.0.
         if (Vs.size() > 1 ||
             (ReturnType->isStructTy() &&
              (Vs.empty() || Vs[0]->getType() != ReturnType))) {
