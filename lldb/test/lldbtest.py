@@ -290,7 +290,7 @@ class TestBase(unittest2.TestCase):
         self.assertTrue(matched, msg if msg else CMD_MSG(cmd))
 
     def invoke(self, obj, name, trace=False):
-        """Use reflection to call a method dynamically without any argument."""
+        """Use reflection to call a method dynamically with no argument."""
 
         trace = (True if self.traceAlways else trace)
         
