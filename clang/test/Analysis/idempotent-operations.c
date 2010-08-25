@@ -112,16 +112,32 @@ unsigned false4() {
   int c = 42;
   test(height * c); // no-warning
 
-  // Pseudo-constant (blockvar)
-  __block int a = 0;
-  int b = 10;
-  a *= b; // no-warning
-  test(a);
-
   // Pseudo-constant (never changes after decl)
   int width = height;
 
   return width * 10; // no-warning
+}
+
+// Block pseudoconstants
+void false4a() {
+  // Pseudo-constant
+  __block int a = 1;
+  int b = 10;
+  __block int c = 0;
+  b *= a; // no-warning
+
+  ^{
+    // Psuedoconstant block var
+    test(b * c); // no-warning
+
+    // Non-pseudoconstant block var
+    int d = 0;
+    test(b * d); // expected-warning{{The right operand to '*' is always 0}}
+    d = 5;
+    test(d);
+  }();
+
+  test(a + b);
 }
 
 // Static vars are common false positives

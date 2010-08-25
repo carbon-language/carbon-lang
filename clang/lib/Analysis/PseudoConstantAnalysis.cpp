@@ -64,6 +64,16 @@ bool PseudoConstantAnalysis::wasReferenced(const VarDecl *VD) {
   return UsedVars->count(VD);
 }
 
+// Returns a Decl from a (Block)DeclRefExpr (if any)
+const Decl *PseudoConstantAnalysis::getDecl(const Expr *E) {
+  if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
+    return DR->getDecl();
+  else if (const BlockDeclRefExpr *BDR = dyn_cast<BlockDeclRefExpr>(E))
+    return BDR->getDecl();
+  else
+    return 0;
+}
+
 void PseudoConstantAnalysis::RunAnalysis() {
   std::deque<const Stmt *> WorkList;
   VarDeclSet *NonConstants = (VarDeclSet*)NonConstantsImpl;
@@ -77,28 +87,28 @@ void PseudoConstantAnalysis::RunAnalysis() {
     WorkList.pop_front();
 
     switch (Head->getStmtClass()) {
-    // Case 1: Assignment operators modifying ValueDecl
+    // Case 1: Assignment operators modifying VarDecls
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator *BO = cast<BinaryOperator>(Head);
-      const Expr *LHS = BO->getLHS()->IgnoreParenCasts();
-      const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(LHS);
+      // Look for a Decl on the LHS
+      const Decl *LHSDecl = getDecl(BO->getLHS()->IgnoreParenCasts());
 
-      // We only care about DeclRefExprs on the LHS
-      if (!DR)
+      if (!LHSDecl)
         break;
 
       // We found a binary operator with a DeclRefExpr on the LHS. We now check
       // for any of the assignment operators, implying that this Decl is being
       // written to.
       switch (BO->getOpcode()) {
+      // Self-assignments don't count as use of a variable
       case BO_Assign: {
-        const Expr *RHS = BO->getRHS()->IgnoreParenCasts();
-        if (const DeclRefExpr *RHSDecl = dyn_cast<DeclRefExpr>(RHS)) {
-          // Self-assignments don't count as use of a variable
-          if (DR->getDecl() == RHSDecl->getDecl())
-            // Do not visit the children
-            continue;
-        }
+        // Look for a DeclRef on the RHS
+        const Decl *RHSDecl = getDecl(BO->getRHS()->IgnoreParenCasts());
+
+        // If the Decls match, we have self-assignment
+        if (LHSDecl == RHSDecl)
+          // Do not visit the children
+          continue;
 
       }
       case BO_AddAssign:
@@ -110,8 +120,8 @@ void PseudoConstantAnalysis::RunAnalysis() {
       case BO_XorAssign:
       case BO_ShlAssign:
       case BO_ShrAssign: {
+        const VarDecl *VD = dyn_cast<VarDecl>(LHSDecl);
         // The DeclRefExpr is being assigned to - mark it as non-constant
-        const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
         if (VD)
           NonConstants->insert(VD);
         break;
@@ -126,14 +136,11 @@ void PseudoConstantAnalysis::RunAnalysis() {
     // Case 2: Pre/post increment/decrement and address of
     case Stmt::UnaryOperatorClass: {
       const UnaryOperator *UO = cast<UnaryOperator>(Head);
-      const Expr *SubExpr = UO->getSubExpr()->IgnoreParenImpCasts();
-      const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(SubExpr);
 
-      // We only care about DeclRefExprs in the subexpression
-      if (!DR)
-        break;
+      // Look for a DeclRef in the subexpression
+      const Decl *D = getDecl(UO->getSubExpr()->IgnoreParenCasts());
 
-      // We found a unary operator with a DeclRefExpr as a subexpression. We now
+      // We found a unary operator with a DeclRef as a subexpression. We now
       // check for any of the increment/decrement operators, as well as
       // addressOf.
       switch (UO->getOpcode()) {
@@ -141,11 +148,11 @@ void PseudoConstantAnalysis::RunAnalysis() {
       case UO_PostInc:
       case UO_PreDec:
       case UO_PreInc:
-        // The DeclRefExpr is being changed - mark it as non-constant
+        // The DeclRef is being changed - mark it as non-constant
       case UO_AddrOf: {
         // If we are taking the address of the DeclRefExpr, assume it is
         // non-constant.
-        const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+        const VarDecl *VD = dyn_cast<VarDecl>(D);
         if (VD)
           NonConstants->insert(VD);
         break;
@@ -161,8 +168,8 @@ void PseudoConstantAnalysis::RunAnalysis() {
     case Stmt::DeclStmtClass: {
       const DeclStmt *DS = cast<DeclStmt>(Head);
       // Iterate over each decl and see if any of them contain reference decls
-      for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-          I != E; ++I) {
+      for (DeclStmt::const_decl_iterator I = DS->decl_begin(),
+          E = DS->decl_end(); I != E; ++I) {
         // We only care about VarDecls
         const VarDecl *VD = dyn_cast<VarDecl>(*I);
         if (!VD)
@@ -172,23 +179,24 @@ void PseudoConstantAnalysis::RunAnalysis() {
         if (!VD->getType().getTypePtr()->isReferenceType())
           continue;
 
+        // Try to find a Decl in the initializer
+        const Decl *D = getDecl(VD->getInit()->IgnoreParenCasts());
+
         // If the reference is to another var, add the var to the non-constant
         // list
-        if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(VD->getInit()))
-          if (const VarDecl *RefVD = dyn_cast<VarDecl>(DR->getDecl())) {
-            NonConstants->insert(RefVD);
-            continue;
-          }
+        if (const VarDecl *RefVD = dyn_cast<VarDecl>(D)) {
+          NonConstants->insert(RefVD);
+          continue;
+        }
       }
       break;
     }
 
     // Case 4: Block variable references
     case Stmt::BlockDeclRefExprClass: {
-      // Any block variables are assumed to be non-constant
       const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(Head);
       if (const VarDecl *VD = dyn_cast<VarDecl>(BDR->getDecl())) {
-        NonConstants->insert(VD);
+        // Add the Decl to the used list
         UsedVars->insert(VD);
         continue;
       }
@@ -199,10 +207,19 @@ void PseudoConstantAnalysis::RunAnalysis() {
     case Stmt::DeclRefExprClass: {
       const DeclRefExpr *DR = cast<DeclRefExpr>(Head);
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        // Add the Decl to the used list
         UsedVars->insert(VD);
         continue;
       }
       break;
+    }
+
+    // Case 6: Block expressions
+    case Stmt::BlockExprClass: {
+      const BlockExpr *B = cast<BlockExpr>(Head);
+      // Add the body of the block to the list
+      WorkList.push_back(B->getBody());
+      continue;
     }
 
       default:

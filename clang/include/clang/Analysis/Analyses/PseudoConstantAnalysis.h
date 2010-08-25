@@ -30,6 +30,7 @@ public:
 
 private:
   void RunAnalysis();
+  inline static const Decl *getDecl(const Expr *E);
 
   // for storing the result of analyzed ValueDecls
   void *NonConstantsImpl;
