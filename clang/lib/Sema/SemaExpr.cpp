@@ -7683,7 +7683,10 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     }
 
     // FIXME: keep track of references to static functions
-    Function->setUsed(true);
+
+    // Recursive functions should be marked when used from another function.
+    if (CurContext != Function)
+      Function->setUsed(true);
 
     return;
   }

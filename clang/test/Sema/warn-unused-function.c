@@ -44,3 +44,6 @@ static void f11(void) { }  // expected-warning{{unused}}
 
 static void f12(void) { }  // expected-warning{{unused}}
 static void f12(void);
+
+// PR7923
+static void unused(void) { unused(); }  // expected-warning{{unused}}
