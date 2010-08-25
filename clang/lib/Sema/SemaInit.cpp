@@ -2095,12 +2095,12 @@ void InitializationSequence::AddAddressOverloadResolutionStep(
 }
 
 void InitializationSequence::AddDerivedToBaseCastStep(QualType BaseType, 
-                                    ImplicitCastExpr::ResultCategory Category) {
+                                                      ExprValueKind VK) {
   Step S;
-  switch (Category) {
-  case ImplicitCastExpr::RValue: S.Kind = SK_CastDerivedToBaseRValue; break;
-  case ImplicitCastExpr::XValue: S.Kind = SK_CastDerivedToBaseXValue; break;
-  case ImplicitCastExpr::LValue: S.Kind = SK_CastDerivedToBaseLValue; break;
+  switch (VK) {
+  case VK_RValue: S.Kind = SK_CastDerivedToBaseRValue; break;
+  case VK_XValue: S.Kind = SK_CastDerivedToBaseXValue; break;
+  case VK_LValue: S.Kind = SK_CastDerivedToBaseLValue; break;
   default: llvm_unreachable("No such category");
   }
   S.Type = BaseType;
@@ -2134,19 +2134,18 @@ void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
 }
 
 void InitializationSequence::AddQualificationConversionStep(QualType Ty,
-                                    ImplicitCastExpr::ResultCategory Category) {
+                                                            ExprValueKind VK) {
   Step S;
-  switch (Category) {
-  case ImplicitCastExpr::RValue:
+  switch (VK) {
+  case VK_RValue:
     S.Kind = SK_QualificationConversionRValue;
     break;
-  case ImplicitCastExpr::XValue:
+  case VK_XValue:
     S.Kind = SK_QualificationConversionXValue;
     break;
-  case ImplicitCastExpr::LValue:
+  case VK_LValue:
     S.Kind = SK_QualificationConversionLValue;
     break;
-  default: llvm_unreachable("No such category");
   }
   S.Type = Ty;
   Steps.push_back(S);
@@ -2409,12 +2408,11 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
 
   // Determine whether we need to perform derived-to-base or 
   // cv-qualification adjustments.
-  ImplicitCastExpr::ResultCategory Category = ImplicitCastExpr::RValue;
+  ExprValueKind VK = VK_RValue;
   if (T2->isLValueReferenceType())
-    Category = ImplicitCastExpr::LValue;
+    VK = VK_LValue;
   else if (const RValueReferenceType *RRef = T2->getAs<RValueReferenceType>())
-    Category = RRef->getPointeeType()->isFunctionType() ?
-        ImplicitCastExpr::LValue : ImplicitCastExpr::XValue;
+    VK = RRef->getPointeeType()->isFunctionType() ? VK_LValue : VK_XValue;
 
   bool NewDerivedToBase = false;
   bool NewObjCConversion = false;
@@ -2436,14 +2434,14 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     Sequence.AddDerivedToBaseCastStep(
                                 S.Context.getQualifiedType(T1,
                                   T2.getNonReferenceType().getQualifiers()), 
-                                      Category);
+                                      VK);
   else if (NewObjCConversion)
     Sequence.AddObjCObjectConversionStep(
                                 S.Context.getQualifiedType(T1,
                                   T2.getNonReferenceType().getQualifiers()));
 
   if (cv1T1.getQualifiers() != T2.getNonReferenceType().getQualifiers())
-    Sequence.AddQualificationConversionStep(cv1T1, Category);
+    Sequence.AddQualificationConversionStep(cv1T1, VK);
   
   Sequence.AddReferenceBindingStep(cv1T1, !T2->isReferenceType());
   return OR_Success;
@@ -2520,13 +2518,13 @@ static void TryReferenceInitialization(Sema &S,
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
                          S.Context.getQualifiedType(T1, T2Quals), 
-                         ImplicitCastExpr::LValue);
+                         VK_LValue);
       else if (ObjCConversion)
         Sequence.AddObjCObjectConversionStep(
                                      S.Context.getQualifiedType(T1, T2Quals));
 
       if (T1Quals != T2Quals)
-        Sequence.AddQualificationConversionStep(cv1T1,ImplicitCastExpr::LValue);
+        Sequence.AddQualificationConversionStep(cv1T1, VK_LValue);
       bool BindingTemporary = T1Quals.hasConst() && !T1Quals.hasVolatile() &&
         (Initializer->getBitField() || Initializer->refersToVectorElement());
       Sequence.AddReferenceBindingStep(cv1T1, BindingTemporary);
@@ -2603,16 +2601,14 @@ static void TryReferenceInitialization(Sema &S,
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
                          S.Context.getQualifiedType(T1, T2Quals), 
-                         isXValue ? ImplicitCastExpr::XValue
-                                  : ImplicitCastExpr::RValue);
+                         isXValue ? VK_XValue : VK_RValue);
       else if (ObjCConversion)
         Sequence.AddObjCObjectConversionStep(
                                      S.Context.getQualifiedType(T1, T2Quals));
 
       if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1,
-                     isXValue ? ImplicitCastExpr::XValue
-                              : ImplicitCastExpr::RValue);
+                                            isXValue ? VK_XValue : VK_RValue);
       Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/!isXValue);
       return;
     }
@@ -3617,17 +3613,17 @@ InitializationSequence::Perform(Sema &S,
                            cast<CXXRecordDecl>(RecordTy->getDecl()));
       }
 
-      ImplicitCastExpr::ResultCategory Category =
+      ExprValueKind VK =
           Step->Kind == SK_CastDerivedToBaseLValue ?
-              ImplicitCastExpr::LValue :
+              VK_LValue :
               (Step->Kind == SK_CastDerivedToBaseXValue ?
-                   ImplicitCastExpr::XValue :
-                   ImplicitCastExpr::RValue);
+                   VK_XValue :
+                   VK_RValue);
       CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
                                                  Step->Type,
                                                  CastExpr::CK_DerivedToBase,
-                                                 (Expr*)CurInit.release(),
-                                                 &BasePath, Category));
+                                                 CurInit.get(),
+                                                 &BasePath, VK));
       break;
     }
         
@@ -3765,7 +3761,7 @@ InitializationSequence::Perform(Sema &S,
       CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
                                                  CurInitExpr->getType(),
                                                  CastKind, CurInitExpr, 0,
-               IsLvalue ? ImplicitCastExpr::LValue : ImplicitCastExpr::RValue));
+                                           IsLvalue ? VK_LValue : VK_RValue));
       
       if (RequiresCopy)
         CurInit = CopyObject(S, Entity.getType().getNonReferenceType(), Entity,
@@ -3778,13 +3774,13 @@ InitializationSequence::Perform(Sema &S,
     case SK_QualificationConversionXValue:
     case SK_QualificationConversionRValue: {
       // Perform a qualification conversion; these can never go wrong.
-      ImplicitCastExpr::ResultCategory Category =
+      ExprValueKind VK =
           Step->Kind == SK_QualificationConversionLValue ?
-              ImplicitCastExpr::LValue :
+              VK_LValue :
               (Step->Kind == SK_QualificationConversionXValue ?
-                   ImplicitCastExpr::XValue :
-                   ImplicitCastExpr::RValue);
-      S.ImpCastExprToType(CurInitExpr, Step->Type, CastExpr::CK_NoOp, Category);
+                   VK_XValue :
+                   VK_RValue);
+      S.ImpCastExprToType(CurInitExpr, Step->Type, CastExpr::CK_NoOp, VK);
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
       break;

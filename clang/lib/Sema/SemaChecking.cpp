@@ -555,7 +555,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.
-    ImpCastExprToType(Arg, ValType, Kind, ImplicitCastExpr::RValue, &BasePath);
+    ImpCastExprToType(Arg, ValType, Kind, VK_RValue, &BasePath);
     TheCall->setArg(i+1, Arg);
   }
 
@@ -1966,7 +1966,7 @@ do {
   switch (E->getStmtClass()) {
   case Stmt::ImplicitCastExprClass: {
     ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
-    if (IE->getCategory() == ImplicitCastExpr::LValue) {
+    if (IE->getValueKind() == VK_LValue) {
       E = IE->getSubExpr();
       continue;
     }

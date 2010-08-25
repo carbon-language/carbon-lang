@@ -598,7 +598,7 @@ void ASTStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
 
 void ASTStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
-  E->setCategory(static_cast<ImplicitCastExpr::ResultCategory>(Record[Idx++]));
+  E->setValueKind(static_cast<ExprValueKind>(Record[Idx++]));
 }
 
 void ASTStmtReader::VisitExplicitCastExpr(ExplicitCastExpr *E) {

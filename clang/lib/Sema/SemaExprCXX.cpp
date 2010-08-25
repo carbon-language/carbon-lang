@@ -1841,7 +1841,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, IgnoreBaseAccess))
       return true;
-    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, &BasePath);
+    ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath);
     break;
   }
   
@@ -1853,7 +1853,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return true;
     if (CheckExceptionSpecCompatibility(From, ToType))
       return true;
-    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, &BasePath);
+    ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath);
     break;
   }
   case ICK_Boolean_Conversion: {
@@ -1910,10 +1910,10 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   case ICK_Qualification: {
     // The qualification keeps the category of the inner expression, unless the
     // target type isn't a reference.
-    ImplicitCastExpr::ResultCategory Category = ToType->isReferenceType() ?
-                                  CastCategory(From) : ImplicitCastExpr::RValue;
+    ExprValueKind VK = ToType->isReferenceType() ?
+                                  CastCategory(From) : VK_RValue;
     ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
-                      CastExpr::CK_NoOp, Category);
+                      CastExpr::CK_NoOp, VK);
 
     if (SCS.DeprecatedStringLiteralToCharPtr)
       Diag(From->getLocStart(), diag::warn_deprecated_string_literal_conversion)
@@ -2007,13 +2007,12 @@ QualType Sema::CheckPointerToMemberOperands(
     }
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
-    ImplicitCastExpr::ResultCategory Category =
-        isIndirect ? ImplicitCastExpr::RValue : CastCategory(lex);
+    ExprValueKind VK =
+        isIndirect ? VK_RValue : CastCategory(lex);
 
     CXXCastPath BasePath;
     BuildBasePathArray(Paths, BasePath);
-    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, Category,
-                      &BasePath);
+    ImpCastExprToType(lex, UseType, CK_DerivedToBase, VK, &BasePath);
   }
 
   if (isa<CXXScalarValueInitExpr>(rex->IgnoreParens())) {

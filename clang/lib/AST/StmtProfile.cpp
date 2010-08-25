@@ -325,7 +325,7 @@ void StmtProfiler::VisitCastExpr(CastExpr *S) {
 
 void StmtProfiler::VisitImplicitCastExpr(ImplicitCastExpr *S) {
   VisitCastExpr(S);
-  ID.AddInteger(S->getCategory());
+  ID.AddInteger(S->getValueKind());
 }
 
 void StmtProfiler::VisitExplicitCastExpr(ExplicitCastExpr *S) {

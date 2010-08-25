@@ -2055,7 +2055,7 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   QualType pToFunc = Context->getPointerType(msgSendType);
   ImplicitCastExpr *ICE = 
     ImplicitCastExpr::Create(*Context, pToFunc, CastExpr::CK_Unknown,
-                             DRE, 0, ImplicitCastExpr::RValue);
+                             DRE, 0, VK_RValue);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 

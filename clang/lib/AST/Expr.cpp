@@ -802,12 +802,12 @@ void CastExpr::setCastPath(const CXXCastPath &Path) {
 ImplicitCastExpr *ImplicitCastExpr::Create(ASTContext &C, QualType T,
                                            CastKind Kind, Expr *Operand,
                                            const CXXCastPath *BasePath,
-                                           ResultCategory Cat) {
+                                           ExprValueKind VK) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer =
     C.Allocate(sizeof(ImplicitCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
   ImplicitCastExpr *E =
-    new (Buffer) ImplicitCastExpr(T, Kind, Operand, PathSize, Cat);
+    new (Buffer) ImplicitCastExpr(T, Kind, Operand, PathSize, VK);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -1600,7 +1600,7 @@ FieldDecl *Expr::getBitField() {
   Expr *E = this->IgnoreParens();
 
   while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->getCategory() != ImplicitCastExpr::RValue &&
+    if (ICE->getValueKind() != VK_RValue &&
         ICE->getCastKind() == CastExpr::CK_NoOp)
       E = ICE->getSubExpr()->IgnoreParens();
     else
@@ -1623,7 +1623,7 @@ bool Expr::refersToVectorElement() const {
   const Expr *E = this->IgnoreParens();
   
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->getCategory() != ImplicitCastExpr::RValue &&
+    if (ICE->getValueKind() != VK_RValue &&
         ICE->getCastKind() == CastExpr::CK_NoOp)
       E = ICE->getSubExpr()->IgnoreParens();
     else

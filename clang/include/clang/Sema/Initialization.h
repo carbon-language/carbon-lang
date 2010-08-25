@@ -680,7 +680,7 @@ public:
   /// \param IsLValue true if the result of this cast will be treated as 
   /// an lvalue.
   void AddDerivedToBaseCastStep(QualType BaseType,
-                                ImplicitCastExpr::ResultCategory Category);
+                                ExprValueKind Category);
      
   /// \brief Add a new step binding a reference to an object.
   ///
@@ -713,7 +713,7 @@ public:
   /// \brief Add a new step that performs a qualification conversion to the
   /// given type.
   void AddQualificationConversionStep(QualType Ty,
-                                     ImplicitCastExpr::ResultCategory Category);
+                                     ExprValueKind Category);
   
   /// \brief Add a new step that applies an implicit conversion sequence.
   void AddConversionSequenceStep(const ImplicitConversionSequence &ICS,

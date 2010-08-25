@@ -191,8 +191,7 @@ Sema::~Sema() {
 /// If there is already an implicit cast, merge into the existing one.
 /// The result is of the given category.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
-                             CastExpr::CastKind Kind, 
-                             ImplicitCastExpr::ResultCategory Category,
+                             CastKind Kind, ExprValueKind VK,
                              const CXXCastPath *BasePath) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
@@ -224,21 +223,18 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind && (!BasePath || BasePath->empty())) {
       ImpCast->setType(Ty);
-      ImpCast->setCategory(Category);
+      ImpCast->setValueKind(VK);
       return;
     }
   }
 
-  Expr = ImplicitCastExpr::Create(Context, Ty, Kind, Expr, BasePath, Category);
+  Expr = ImplicitCastExpr::Create(Context, Ty, Kind, Expr, BasePath, VK);
 }
 
-ImplicitCastExpr::ResultCategory Sema::CastCategory(Expr *E) {
+ExprValueKind Sema::CastCategory(Expr *E) {
   Expr::Classification Classification = E->Classify(Context);
-  return Classification.isRValue() ?
-      ImplicitCastExpr::RValue :
-      (Classification.isLValue() ?
-          ImplicitCastExpr::LValue :
-          ImplicitCastExpr::XValue);
+  return Classification.isRValue() ? VK_RValue :
+      (Classification.isLValue() ? VK_LValue : VK_XValue);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

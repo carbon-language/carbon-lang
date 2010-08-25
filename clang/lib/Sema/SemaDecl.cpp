@@ -7085,7 +7085,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                                                 CastExpr::CK_IntegralCast,
                                                 ECD->getInitExpr(),
                                                 /*base paths*/ 0,
-                                                ImplicitCastExpr::RValue));
+                                                VK_RValue));
     if (getLangOptions().CPlusPlus)
       // C++ [dcl.enum]p4: Following the closing brace of an
       // enum-specifier, each enumerator has the type of its

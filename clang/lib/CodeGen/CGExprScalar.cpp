@@ -893,7 +893,7 @@ static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
   
   if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(CE)) {
     // And that glvalue casts are never null.
-    if (ICE->getCategory() != ImplicitCastExpr::RValue)
+    if (ICE->getValueKind() != VK_RValue)
       return false;
   }
 

@@ -3161,8 +3161,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From,
 
   if (!Context.hasSameType(From->getType(), DestType))
     ImpCastExprToType(From, DestType, CastExpr::CK_NoOp,
-                      From->getType()->isPointerType() ?
-                          ImplicitCastExpr::RValue : ImplicitCastExpr::LValue);
+                      From->getType()->isPointerType() ? VK_RValue : VK_LValue);
   return false;
 }
 
@@ -3848,7 +3847,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
                                 Context.getPointerType(Conversion->getType()),
                                 CastExpr::CK_FunctionToPointerDecay,
-                                &ConversionRef, ImplicitCastExpr::RValue);
+                                &ConversionRef, VK_RValue);
 
   // Note that it is safe to allocate CallExpr on the stack here because
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
@@ -7790,7 +7789,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     return ImplicitCastExpr::Create(Context, ICE->getType(), 
                                     ICE->getCastKind(),
                                     SubExpr, 0,
-                                    ICE->getCategory());
+                                    ICE->getValueKind());
   } 
   
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {

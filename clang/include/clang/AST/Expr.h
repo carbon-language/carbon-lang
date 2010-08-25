@@ -18,6 +18,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclAccessPair.h"
+#include "clang/AST/OperationKinds.h"
 #include "clang/AST/ASTVector.h"
 #include "clang/AST/UsuallyTinyPtrVector.h"
 #include "llvm/ADT/APSInt.h"
@@ -61,10 +62,14 @@ protected:
   /// (C++ [temp.dep.constexpr]).
   bool ValueDependent : 1;
 
-  enum { BitsRemaining = 30 };
+  /// ValueKind - The value classification of this expression.
+  /// Only actually used by certain subclasses.
+  unsigned ValueKind : 2;
+
+  enum { BitsRemaining = 28 };
 
   Expr(StmtClass SC, QualType T, bool TD, bool VD)
-    : Stmt(SC), TypeDependent(TD), ValueDependent(VD) {
+    : Stmt(SC), TypeDependent(TD), ValueDependent(VD), ValueKind(0) {
     setType(T);
   }
 
@@ -1034,16 +1039,21 @@ public:
 ///
 class UnaryOperator : public Expr {
 public:
-  // Note that additions to this should also update the StmtVisitor class.
-  enum Opcode {
-    PostInc, PostDec, // [C99 6.5.2.4] Postfix increment and decrement operators
-    PreInc, PreDec,   // [C99 6.5.3.1] Prefix increment and decrement operators.
-    AddrOf, Deref,    // [C99 6.5.3.2] Address and indirection operators.
-    Plus, Minus,      // [C99 6.5.3.3] Unary arithmetic operators.
-    Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
-    Real, Imag,       // "__real expr"/"__imag expr" Extension.
-    Extension         // __extension__ marker.
-  };
+  typedef UnaryOperatorKind Opcode;
+  static const Opcode PostInc = UO_PostInc;
+  static const Opcode PostDec = UO_PostDec;
+  static const Opcode PreInc = UO_PreInc;
+  static const Opcode PreDec = UO_PreDec;
+  static const Opcode AddrOf = UO_AddrOf;
+  static const Opcode Deref = UO_Deref;
+  static const Opcode Plus = UO_Plus;
+  static const Opcode Minus = UO_Minus;
+  static const Opcode Not = UO_Not;
+  static const Opcode LNot = UO_LNot;
+  static const Opcode Real = UO_Real;
+  static const Opcode Imag = UO_Imag;
+  static const Opcode Extension = UO_Extension;
+
 private:
   Stmt *Val;
   Opcode Opc;
@@ -1885,105 +1895,117 @@ public:
 /// classes).
 class CastExpr : public Expr {
 public:
-  /// CastKind - the kind of cast this represents.
-  enum CastKind {
-    /// CK_Unknown - Unknown cast kind.
-    /// FIXME: The goal is to get rid of this and make all casts have a
-    /// kind so that the AST client doesn't have to try to figure out what's
-    /// going on.
-    CK_Unknown,
+  typedef clang::CastKind CastKind;
 
-    /// CK_BitCast - Used for reinterpret_cast.
-    CK_BitCast,
+  /// CK_Unknown - Unknown cast kind.
+  /// FIXME: The goal is to get rid of this and make all casts have a
+  /// kind so that the AST client doesn't have to try to figure out what's
+  /// going on.
+  static const CastKind CK_Unknown = clang::CK_Unknown;
+  
+  /// CK_BitCast - Used for reinterpret_cast.
+  static const CastKind CK_BitCast = clang::CK_BitCast;
 
-    /// CK_LValueBitCast - Used for reinterpret_cast of expressions to
-    /// a reference type.
-    CK_LValueBitCast,
-    
-    /// CK_NoOp - Used for const_cast.
-    CK_NoOp,
+  /// CK_LValueBitCast - Used for reinterpret_cast of expressions to
+  /// a reference type.
+  static const CastKind CK_LValueBitCast = clang::CK_LValueBitCast;
+  
+  /// CK_NoOp - Used for const_cast.
+  static const CastKind CK_NoOp = clang::CK_NoOp;
 
-    /// CK_BaseToDerived - Base to derived class casts.
-    CK_BaseToDerived,
+  /// CK_BaseToDerived - Base to derived class casts.
+  static const CastKind CK_BaseToDerived = clang::CK_BaseToDerived;
 
-    /// CK_DerivedToBase - Derived to base class casts.
-    CK_DerivedToBase,
+  /// CK_DerivedToBase - Derived to base class casts.
+  static const CastKind CK_DerivedToBase = clang::CK_DerivedToBase;
 
-    /// CK_UncheckedDerivedToBase - Derived to base class casts that
-    /// assume that the derived pointer is not null.
-    CK_UncheckedDerivedToBase,
+  /// CK_UncheckedDerivedToBase - Derived to base class casts that
+  /// assume that the derived pointer is not null.
+  static const CastKind CK_UncheckedDerivedToBase
+    = clang::CK_UncheckedDerivedToBase;
 
-    /// CK_Dynamic - Dynamic cast.
-    CK_Dynamic,
+  /// CK_Dynamic - Dynamic cast.
+  static const CastKind CK_Dynamic = clang::CK_Dynamic;
 
-    /// CK_ToUnion - Cast to union (GCC extension).
-    CK_ToUnion,
+  /// CK_ToUnion - Cast to union (GCC extension).
+  static const CastKind CK_ToUnion = clang::CK_ToUnion;
 
-    /// CK_ArrayToPointerDecay - Array to pointer decay.
-    CK_ArrayToPointerDecay,
+  /// CK_ArrayToPointerDecay - Array to pointer decay.
+  static const CastKind CK_ArrayToPointerDecay
+    = clang::CK_ArrayToPointerDecay;
 
-    // CK_FunctionToPointerDecay - Function to pointer decay.
-    CK_FunctionToPointerDecay,
+  // CK_FunctionToPointerDecay - Function to pointer decay.
+  static const CastKind CK_FunctionToPointerDecay
+    = clang::CK_FunctionToPointerDecay;
 
-    /// CK_NullToMemberPointer - Null pointer to member pointer.
-    CK_NullToMemberPointer,
+  /// CK_NullToMemberPointer - Null pointer to member pointer.
+  static const CastKind CK_NullToMemberPointer
+    = clang::CK_NullToMemberPointer;
 
-    /// CK_BaseToDerivedMemberPointer - Member pointer in base class to
-    /// member pointer in derived class.
-    CK_BaseToDerivedMemberPointer,
+  /// CK_BaseToDerivedMemberPointer - Member pointer in base class to
+  /// member pointer in derived class.
+  static const CastKind CK_BaseToDerivedMemberPointer
+    = clang::CK_BaseToDerivedMemberPointer;
 
-    /// CK_DerivedToBaseMemberPointer - Member pointer in derived class to
-    /// member pointer in base class.
-    CK_DerivedToBaseMemberPointer,
-    
-    /// CK_UserDefinedConversion - Conversion using a user defined type
-    /// conversion function.
-    CK_UserDefinedConversion,
+  /// CK_DerivedToBaseMemberPointer - Member pointer in derived class to
+  /// member pointer in base class.
+  static const CastKind CK_DerivedToBaseMemberPointer
+    = clang::CK_DerivedToBaseMemberPointer;
+  
+  /// CK_UserDefinedConversion - Conversion using a user defined type
+  /// conversion function.
+  static const CastKind CK_UserDefinedConversion
+    = clang::CK_UserDefinedConversion;
 
-    /// CK_ConstructorConversion - Conversion by constructor
-    CK_ConstructorConversion,
-    
-    /// CK_IntegralToPointer - Integral to pointer
-    CK_IntegralToPointer,
-    
-    /// CK_PointerToIntegral - Pointer to integral
-    CK_PointerToIntegral,
-    
-    /// CK_ToVoid - Cast to void.
-    CK_ToVoid,
-    
-    /// CK_VectorSplat - Casting from an integer/floating type to an extended
-    /// vector type with the same element type as the src type. Splats the 
-    /// src expression into the destination expression.
-    CK_VectorSplat,
-    
-    /// CK_IntegralCast - Casting between integral types of different size.
-    CK_IntegralCast,
+  /// CK_ConstructorConversion - Conversion by constructor
+  static const CastKind CK_ConstructorConversion
+    = clang::CK_ConstructorConversion;
+  
+  /// CK_IntegralToPointer - Integral to pointer
+  static const CastKind CK_IntegralToPointer = clang::CK_IntegralToPointer;
+  
+  /// CK_PointerToIntegral - Pointer to integral
+  static const CastKind CK_PointerToIntegral = clang::CK_PointerToIntegral;
+  
+  /// CK_ToVoid - Cast to void.
+  static const CastKind CK_ToVoid = clang::CK_ToVoid;
+  
+  /// CK_VectorSplat - Casting from an integer/floating type to an extended
+  /// vector type with the same element type as the src type. Splats the 
+  /// src expression into the destination expression.
+  static const CastKind CK_VectorSplat = clang::CK_VectorSplat;
+  
+  /// CK_IntegralCast - Casting between integral types of different size.
+  static const CastKind CK_IntegralCast = clang::CK_IntegralCast;
 
-    /// CK_IntegralToFloating - Integral to floating point.
-    CK_IntegralToFloating,
-    
-    /// CK_FloatingToIntegral - Floating point to integral.
-    CK_FloatingToIntegral,
-    
-    /// CK_FloatingCast - Casting between floating types of different size.
-    CK_FloatingCast,
-    
-    /// CK_MemberPointerToBoolean - Member pointer to boolean
-    CK_MemberPointerToBoolean,
+  /// CK_IntegralToFloating - Integral to floating point.
+  static const CastKind CK_IntegralToFloating = clang::CK_IntegralToFloating;
+  
+  /// CK_FloatingToIntegral - Floating point to integral.
+  static const CastKind CK_FloatingToIntegral = clang::CK_FloatingToIntegral;
+  
+  /// CK_FloatingCast - Casting between floating types of different size.
+  static const CastKind CK_FloatingCast = clang::CK_FloatingCast;
+  
+  /// CK_MemberPointerToBoolean - Member pointer to boolean
+  static const CastKind CK_MemberPointerToBoolean
+    = clang::CK_MemberPointerToBoolean;
 
-    /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c 
-    /// pointer
-    CK_AnyPointerToObjCPointerCast,
-    /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block 
-    /// pointer
-    CK_AnyPointerToBlockPointerCast,
+  /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c 
+  /// pointer
+  static const CastKind CK_AnyPointerToObjCPointerCast
+    = clang::CK_AnyPointerToObjCPointerCast;
 
-    /// \brief Converting between two Objective-C object types, which
-    /// can occur when performing reference binding to an Objective-C
-    /// object.
-    CK_ObjCObjectLValueCast
-  };
+  /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block 
+  /// pointer
+  static const CastKind CK_AnyPointerToBlockPointerCast
+    = clang::CK_AnyPointerToBlockPointerCast;
+
+  /// \brief Converting between two Objective-C object types, which
+  /// can occur when performing reference binding to an Objective-C
+  /// object.
+  static const CastKind CK_ObjCObjectLValueCast
+    = clang::CK_ObjCObjectLValueCast;
 
 private:
   unsigned Kind : 5;
@@ -2114,19 +2136,12 @@ public:
 /// }
 /// @endcode
 class ImplicitCastExpr : public CastExpr {
-public:
-  enum ResultCategory {
-    RValue, LValue, XValue
-  };
-
 private:
-  /// Category - The category this cast produces.
-  ResultCategory Category;
-
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op,
-                   unsigned BasePathLength, ResultCategory Cat)
-    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePathLength),
-      Category(Cat) { }
+                   unsigned BasePathLength, ExprValueKind VK)
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePathLength) {
+    ValueKind = VK;
+  }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell, unsigned PathSize)
@@ -2135,14 +2150,15 @@ private:
 public:
   enum OnStack_t { OnStack };
   ImplicitCastExpr(OnStack_t _, QualType ty, CastKind kind, Expr *op,
-                   ResultCategory Cat)
-    : CastExpr(ImplicitCastExprClass, ty, kind, op, 0),
-      Category(Cat) { }
+                   ExprValueKind VK)
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, 0) {
+    ValueKind = VK;
+  }
 
   static ImplicitCastExpr *Create(ASTContext &Context, QualType T,
                                   CastKind Kind, Expr *Operand,
                                   const CXXCastPath *BasePath,
-                                  ResultCategory Cat);
+                                  ExprValueKind Cat);
 
   static ImplicitCastExpr *CreateEmpty(ASTContext &Context, unsigned PathSize);
 
@@ -2150,11 +2166,13 @@ public:
     return getSubExpr()->getSourceRange();
   }
 
-  /// getCategory - The value category this cast produces.
-  ResultCategory getCategory() const { return Category; }
+  /// getValueKind - The value kind that this cast produces.
+  ExprValueKind getValueKind() const {
+    return static_cast<ExprValueKind>(ValueKind);
+  }
 
-  /// setCategory - Set the value category this cast produces.
-  void setCategory(ResultCategory Cat) { Category = Cat; }
+  /// setValueKind - Set the value kind this cast produces.
+  void setValueKind(ExprValueKind Cat) { ValueKind = Cat; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImplicitCastExprClass;
@@ -2269,28 +2287,41 @@ public:
 /// be used to express the computation.
 class BinaryOperator : public Expr {
 public:
-  enum Opcode {
-    // Operators listed in order of precedence.
-    // Note that additions to this should also update the StmtVisitor class.
-    PtrMemD, PtrMemI, // [C++ 5.5] Pointer-to-member operators.
-    Mul, Div, Rem,    // [C99 6.5.5] Multiplicative operators.
-    Add, Sub,         // [C99 6.5.6] Additive operators.
-    Shl, Shr,         // [C99 6.5.7] Bitwise shift operators.
-    LT, GT, LE, GE,   // [C99 6.5.8] Relational operators.
-    EQ, NE,           // [C99 6.5.9] Equality operators.
-    And,              // [C99 6.5.10] Bitwise AND operator.
-    Xor,              // [C99 6.5.11] Bitwise XOR operator.
-    Or,               // [C99 6.5.12] Bitwise OR operator.
-    LAnd,             // [C99 6.5.13] Logical AND operator.
-    LOr,              // [C99 6.5.14] Logical OR operator.
-    Assign, MulAssign,// [C99 6.5.16] Assignment operators.
-    DivAssign, RemAssign,
-    AddAssign, SubAssign,
-    ShlAssign, ShrAssign,
-    AndAssign, XorAssign,
-    OrAssign,
-    Comma             // [C99 6.5.17] Comma operator.
-  };
+  typedef BinaryOperatorKind Opcode;
+
+  static const Opcode PtrMemD = BO_PtrMemD;
+  static const Opcode PtrMemI = BO_PtrMemI;
+  static const Opcode Mul = BO_Mul;
+  static const Opcode Div = BO_Div;
+  static const Opcode Rem = BO_Rem;
+  static const Opcode Add = BO_Add;
+  static const Opcode Sub = BO_Sub;
+  static const Opcode Shl = BO_Shl;
+  static const Opcode Shr = BO_Shr;
+  static const Opcode LT = BO_LT;
+  static const Opcode GT = BO_GT;
+  static const Opcode LE = BO_LE;
+  static const Opcode GE = BO_GE;
+  static const Opcode EQ = BO_EQ;
+  static const Opcode NE = BO_NE;
+  static const Opcode And = BO_And;
+  static const Opcode Xor = BO_Xor;
+  static const Opcode Or = BO_Or;
+  static const Opcode LAnd = BO_LAnd;
+  static const Opcode LOr = BO_LOr;
+  static const Opcode Assign = BO_Assign;
+  static const Opcode MulAssign = BO_MulAssign;
+  static const Opcode DivAssign = BO_DivAssign;
+  static const Opcode RemAssign = BO_RemAssign;
+  static const Opcode AddAssign = BO_AddAssign;
+  static const Opcode SubAssign = BO_SubAssign;
+  static const Opcode ShlAssign = BO_ShlAssign;
+  static const Opcode ShrAssign = BO_ShrAssign;
+  static const Opcode AndAssign = BO_AndAssign;
+  static const Opcode XorAssign = BO_XorAssign;
+  static const Opcode OrAssign = BO_OrAssign;
+  static const Opcode Comma = BO_Comma;
+
 private:
   enum { LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR];

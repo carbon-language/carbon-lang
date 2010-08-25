@@ -134,13 +134,13 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     // Implicit casts are lvalues if they're lvalue casts. Other than that, we
     // only specifically record class temporaries.
   case Expr::ImplicitCastExprClass:
-    switch (cast<ImplicitCastExpr>(E)->getCategory()) {
-    case ImplicitCastExpr::RValue:
+    switch (cast<ImplicitCastExpr>(E)->getValueKind()) {
+    case VK_RValue:
       return Lang.CPlusPlus && E->getType()->isRecordType() ?
         Cl::CL_ClassTemporary : Cl::CL_PRValue;
-    case ImplicitCastExpr::LValue:
+    case VK_LValue:
       return Cl::CL_LValue;
-    case ImplicitCastExpr::XValue:
+    case VK_XValue:
       return Cl::CL_XValue;
     }
     llvm_unreachable("Invalid value category of implicit cast.");

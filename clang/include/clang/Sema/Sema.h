@@ -20,6 +20,7 @@
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/AST/OperationKinds.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclarationName.h"
@@ -46,6 +47,7 @@ namespace clang {
   class CXXConversionDecl;
   class CXXDestructorDecl;
   class CXXFieldCollector;
+  class CXXMemberCallExpr;
   class CXXMethodDecl;
   class CXXTemporary;
   class CXXTryStmt;
@@ -66,6 +68,7 @@ namespace clang {
   class ExtVectorType;
   class ExternalSemaSource;
   class FriendDecl;
+  class FullExpr;
   class FunctionDecl;
   class FunctionProtoType;
   class ImplicitConversionSequence;
@@ -116,6 +119,9 @@ namespace clang {
   class TypedefDecl;
   class UnresolvedLookupExpr;
   class UnresolvedMemberExpr;
+  class UnresolvedSetIterator;
+  class UsingDecl;
+  class UsingShadowDecl;
   class VarDecl;
   class VisibleDeclConsumer;
 
@@ -220,7 +226,9 @@ public:
   /// \brief Stack containing information about each of the nested
   /// function, block, and method scopes that are currently active.
   ///
-  /// This array is never empty, but the first element is meaningless.
+  /// This array is never empty.  Clients should ignore the first
+  /// element, which is used to cache a single FunctionScopeInfo
+  /// that's used to parse every top-level function.
   llvm::SmallVector<sema::FunctionScopeInfo *, 4> FunctionScopes;
 
   /// ExprTemporaries - This is the stack of temporaries that are created by
@@ -613,20 +621,9 @@ public:
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
-  ExprResult Owned(Expr* E) {
-    assert(!E || E->isRetained());
-    return ExprResult(E);
-  }
-  ExprResult Owned(ExprResult R) {
-    if (R.isInvalid())
-      return ExprError();
-    assert(!R.get() || ((Expr*) R.get())->isRetained());
-    return ExprResult(R.get());
-  }
-  StmtResult Owned(Stmt* S) {
-    assert(!S || S->isRetained());
-    return StmtResult(S);
-  }
+  ExprResult Owned(Expr* E) { return E; }
+  ExprResult Owned(ExprResult R) { return R; }
+  StmtResult Owned(Stmt* S) { return S; }
 
   virtual void ActOnEndOfTranslationUnit();
 
@@ -1042,14 +1039,14 @@ public:
                                  FunctionProtoType* NewType);
   
   bool CheckPointerConversion(Expr *From, QualType ToType,
-                              CastExpr::CastKind &Kind,
+                              CastKind &Kind,
                               CXXCastPath& BasePath,
                               bool IgnoreBaseAccess);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                  bool InOverloadResolution,
                                  QualType &ConvertedType);
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
-                                    CastExpr::CastKind &Kind,
+                                    CastKind &Kind,
                                     CXXCastPath &BasePath,
                                     bool IgnoreBaseAccess);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
@@ -1803,18 +1800,18 @@ public:
 
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   ExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc,
-                                        unsigned OpcIn,
-                                        ExprArg InputArg);
+                                  unsigned OpcIn,
+                                  Expr *InputArg);
   ExprResult BuildUnaryOp(Scope *S, SourceLocation OpLoc,
-                                UnaryOperator::Opcode Opc, ExprArg input);
+                          UnaryOperatorKind Opc, ExprArg input);
   virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
-                                        tok::TokenKind Op, ExprArg Input);
+                                  tok::TokenKind Op, ExprArg Input);
 
   ExprResult CreateSizeOfAlignOfExpr(TypeSourceInfo *T,
-                                           SourceLocation OpLoc,
-                                           bool isSizeOf, SourceRange R);
+                                     SourceLocation OpLoc,
+                                     bool isSizeOf, SourceRange R);
   ExprResult CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
-                                           bool isSizeOf, SourceRange R);
+                                     bool isSizeOf, SourceRange R);
   virtual ExprResult
     ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                            void *TyOrEx, const SourceRange &ArgRange);
@@ -1939,57 +1936,57 @@ public:
                                                       ExprResult Init);
 
   virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
-                                      tok::TokenKind Kind,
-                                      ExprArg LHS, ExprArg RHS);
+                                tok::TokenKind Kind,
+                                ExprArg LHS, ExprArg RHS);
   ExprResult BuildBinOp(Scope *S, SourceLocation OpLoc,
-                              BinaryOperator::Opcode Opc,
-                              Expr *lhs, Expr *rhs);
+                        BinaryOperatorKind Opc,
+                        Expr *lhs, Expr *rhs);
   ExprResult CreateBuiltinBinOp(SourceLocation TokLoc,
-                                      unsigned Opc, Expr *lhs, Expr *rhs);
+                                unsigned Opc, Expr *lhs, Expr *rhs);
 
   /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
   virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
-                                              SourceLocation ColonLoc,
-                                              ExprArg Cond, ExprArg LHS,
-                                              ExprArg RHS);
+                                        SourceLocation ColonLoc,
+                                        ExprArg Cond, ExprArg LHS,
+                                        ExprArg RHS);
 
   /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
   virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc,
-                                          SourceLocation LabLoc,
-                                          IdentifierInfo *LabelII);
+                                    SourceLocation LabLoc,
+                                    IdentifierInfo *LabelII);
 
   virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtArg SubStmt,
-                                         SourceLocation RPLoc); // "({..})"
+                                   SourceLocation RPLoc); // "({..})"
 
   /// __builtin_offsetof(type, a.b[123][456].c)
   ExprResult BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
-                                        TypeSourceInfo *TInfo,
-                                        OffsetOfComponent *CompPtr,
-                                        unsigned NumComponents,
-                                        SourceLocation RParenLoc);
+                                  TypeSourceInfo *TInfo,
+                                  OffsetOfComponent *CompPtr,
+                                  unsigned NumComponents,
+                                  SourceLocation RParenLoc);
   virtual ExprResult ActOnBuiltinOffsetOf(Scope *S,
-                                                SourceLocation BuiltinLoc,
-                                                SourceLocation TypeLoc,
-                                                ParsedType Arg1,
-                                                OffsetOfComponent *CompPtr,
-                                                unsigned NumComponents,
-                                                SourceLocation RParenLoc);
+                                          SourceLocation BuiltinLoc,
+                                          SourceLocation TypeLoc,
+                                          ParsedType Arg1,
+                                          OffsetOfComponent *CompPtr,
+                                          unsigned NumComponents,
+                                          SourceLocation RParenLoc);
 
   // __builtin_types_compatible_p(type1, type2)
   virtual ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                                    ParsedType arg1,
-                                                    ParsedType arg2,
-                                                    SourceLocation RPLoc);
+                                              ParsedType arg1,
+                                              ParsedType arg2,
+                                              SourceLocation RPLoc);
   ExprResult BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                            TypeSourceInfo *argTInfo1,
-                                            TypeSourceInfo *argTInfo2,
-                                            SourceLocation RPLoc);
+                                      TypeSourceInfo *argTInfo1,
+                                      TypeSourceInfo *argTInfo2,
+                                      SourceLocation RPLoc);
 
   // __builtin_choose_expr(constExpr, expr1, expr2)
   virtual ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc,
-                                           ExprArg cond, ExprArg expr1,
-                                           ExprArg expr2, SourceLocation RPLoc);
+                                     Expr *cond, Expr *expr1,
+                                     Expr *expr2, SourceLocation RPLoc);
 
   // __builtin_va_arg(expr, type)
   virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
@@ -3920,14 +3917,13 @@ public:
 
   /// CastCategory - Get the correct forwarded implicit cast result category
   /// from the inner expression.
-  ImplicitCastExpr::ResultCategory CastCategory(Expr *E);
+  ExprValueKind CastCategory(Expr *E);
 
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
-  void ImpCastExprToType(Expr *&Expr, QualType Type, CastExpr::CastKind Kind,
-                         ImplicitCastExpr::ResultCategory Category =
-                          ImplicitCastExpr::RValue,
+  void ImpCastExprToType(Expr *&Expr, QualType Type, CastKind CK,
+                         ExprValueKind VK = VK_RValue,
                          const CXXCastPath *BasePath = 0);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
@@ -4195,7 +4191,7 @@ public:
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
-                      CastExpr::CastKind &Kind, CXXCastPath &BasePath,
+                      CastKind &Kind, CXXCastPath &BasePath,
                       bool FunctionalStyle = false);
 
   // CheckVectorCast - check type constraints for vectors.
@@ -4203,7 +4199,7 @@ public:
   // We allow casting between vectors and integer datatypes of the same size.
   // returns true if the cast is invalid
   bool CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
-                       CastExpr::CastKind &Kind);
+                       CastKind &Kind);
 
   // CheckExtVectorCast - check type constraints for extended vectors.
   // Since vectors are an extension, there are no C standard reference for this.
@@ -4211,12 +4207,12 @@ public:
   // or vectors and the element type of that vector.
   // returns true if the cast is invalid
   bool CheckExtVectorCast(SourceRange R, QualType VectorTy, Expr *&CastExpr,
-                          CastExpr::CastKind &Kind);
+                          CastKind &Kind);
 
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
   bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                          CastExpr::CastKind &Kind, CXXCastPath &BasePath,
+                          CastKind &Kind, CXXCastPath &BasePath,
                           bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.

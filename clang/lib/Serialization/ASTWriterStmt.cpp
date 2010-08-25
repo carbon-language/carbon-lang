@@ -605,7 +605,7 @@ void ASTStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
 
 void ASTStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
-  Record.push_back(E->getCategory());
+  Record.push_back(E->getValueKind());
   Code = serialization::EXPR_IMPLICIT_CAST;
 }
 

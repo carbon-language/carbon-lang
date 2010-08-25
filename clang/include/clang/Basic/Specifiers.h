@@ -78,6 +78,23 @@ namespace clang {
     AS_none
   };
 
+  /// ExprValueKind - The categorization of expression values,
+  /// currently following the C++0x scheme.
+  enum ExprValueKind {
+    /// An r-value expression (a gr-value in the C++0x taxonomy)
+    /// produces a temporary value.
+    VK_RValue,
+
+    /// An l-value expression is a reference to an object with
+    /// independent storage.
+    VK_LValue,
+
+    /// An x-value expression is a reference to an object with
+    /// independent storage but which can be "moved", i.e.
+    /// efficiently cannibalized for its resources.
+    VK_XValue
+  };
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H

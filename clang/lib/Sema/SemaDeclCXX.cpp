@@ -1540,7 +1540,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     BasePath.push_back(BaseSpec);
     SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
                               CastExpr::CK_UncheckedDerivedToBase,
-                              ImplicitCastExpr::LValue, &BasePath);
+                              VK_LValue, &BasePath);
 
     InitializationKind InitKind
       = InitializationKind::CreateDirect(Constructor->getLocation(),
@@ -4979,25 +4979,25 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // appropriately-qualified base type.
     Expr *From = OtherRef->Retain();
     ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
-                      CastExpr::CK_UncheckedDerivedToBase,
-                      ImplicitCastExpr::LValue, &BasePath);
+                      CK_UncheckedDerivedToBase,
+                      VK_LValue, &BasePath);
 
     // Dereference "this".
-    ExprResult To = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref, This);
+    ExprResult To = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
     
     // Implicitly cast "this" to the appropriately-qualified base type.
     Expr *ToE = To.takeAs<Expr>();
     ImpCastExprToType(ToE, 
                       Context.getCVRQualifiedType(BaseType,
                                       CopyAssignOperator->getTypeQualifiers()),
-                      CastExpr::CK_UncheckedDerivedToBase, 
-                      ImplicitCastExpr::LValue, &BasePath);
+                      CK_UncheckedDerivedToBase, 
+                      VK_LValue, &BasePath);
     To = Owned(ToE);
 
     // Build the copy.
     StmtResult Copy = BuildSingleCopyAssign(*this, Loc, BaseType,
-                                                  To.get(), From,
-                                                /*CopyingBaseSubobject=*/true);
+                                            To.get(), From,
+                                            /*CopyingBaseSubobject=*/true);
     if (Copy.isInvalid()) {
       Diag(CurrentLocation, diag::note_member_synthesized_at) 
         << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);

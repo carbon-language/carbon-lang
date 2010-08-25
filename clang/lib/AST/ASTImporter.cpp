@@ -2947,7 +2947,7 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
     return 0;
 
   return ImplicitCastExpr::Create(Importer.getToContext(), T, E->getCastKind(),
-                                  SubExpr, &BasePath, E->getCategory());
+                                  SubExpr, &BasePath, E->getValueKind());
 }
 
 Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
