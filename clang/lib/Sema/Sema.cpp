@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/Sema.h"
-#include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/DelayedDiagnostic.h"
 #include "TargetAttributesSema.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"

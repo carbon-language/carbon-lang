@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/AST/ASTContext.h"
@@ -22,6 +23,7 @@
 #include "clang/AST/ExprCXX.h"
 
 using namespace clang;
+using namespace sema;
 
 /// A copy of Sema's enum without AR_delayed.
 enum AccessResult {
@@ -132,10 +134,10 @@ struct EffectiveContext {
   bool Dependent;
 };
 
-/// Like Sema's AccessedEntity, but kindly lets us scribble all over
+/// Like sema:;AccessedEntity, but kindly lets us scribble all over
 /// it.
-struct AccessTarget : public Sema::AccessedEntity {
-  AccessTarget(const Sema::AccessedEntity &Entity)
+struct AccessTarget : public AccessedEntity {
+  AccessTarget(const AccessedEntity &Entity)
     : AccessedEntity(Entity) {
     initialize();
   }
@@ -1033,7 +1035,7 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   // access control.
   if (S.CurContext->isFileContext() && S.ParsingDeclDepth) {
     S.DelayedDiagnostics.push_back(
-        Sema::DelayedDiagnostic::makeAccess(Loc, Entity));
+        DelayedDiagnostic::makeAccess(Loc, Entity));
     return Sema::AR_delayed;
   }
 
