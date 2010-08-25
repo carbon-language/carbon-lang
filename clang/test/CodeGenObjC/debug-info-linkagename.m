@@ -1,5 +1,8 @@
 // RUN: %clang_cc1  -g -S -o %t %s
+// FIXME: Reenable this test once this check is less picky.
 // RUN: not grep 001 %t
+//
+// REQUIRES: disabled
 
 @interface F 
 -(int) bar;
