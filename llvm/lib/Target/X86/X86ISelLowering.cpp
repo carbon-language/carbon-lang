@@ -8930,7 +8930,8 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
     .addReg(X86::EAX, RegState::Implicit)
     .addReg(X86::ESP, RegState::Implicit)
     .addReg(X86::EAX, RegState::Define | RegState::Implicit)
-    .addReg(X86::ESP, RegState::Define | RegState::Implicit);
+    .addReg(X86::ESP, RegState::Define | RegState::Implicit)
+    .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;

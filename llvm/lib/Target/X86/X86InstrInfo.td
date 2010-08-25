@@ -580,9 +580,10 @@ def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
 // The main point of having separate instruction are extra unmodelled effects
 // (compared to ordinary calls) like stack pointer change.
 
-def MINGW_ALLOCA : I<0, Pseudo, (outs), (ins),
-                     "# dynamic stack allocation",
-                     [(X86MingwAlloca)]>;
+let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
+  def MINGW_ALLOCA : I<0, Pseudo, (outs), (ins),
+                       "# dynamic stack allocation",
+                       [(X86MingwAlloca)]>;
 }
 
 // Nop
