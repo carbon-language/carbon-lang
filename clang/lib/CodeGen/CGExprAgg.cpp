@@ -192,10 +192,18 @@ void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
 void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
   assert(Src.isAggregate() && "value must be aggregate value!");
 
-  // If the result is ignored, don't copy from the value.
+  // If DestPtr is null, then we're evaluating an aggregate expression
+  // in a context (like an expression statement) that doesn't care
+  // about the result.  C says that an lvalue-to-rvalue conversion is
+  // performed in these cases; C++ says that it is not.  In either
+  // case, we don't actually need to do anything unless the value is
+  // volatile.
   if (DestPtr == 0) {
-    if (!Src.isVolatileQualified() || (IgnoreResult && Ignore))
+    if (!Src.isVolatileQualified() ||
+        CGF.CGM.getLangOptions().CPlusPlus ||
+        (IgnoreResult && Ignore))
       return;
+
     // If the source is volatile, we must read from it; to do that, we need
     // some place to put it.
     DestPtr = CGF.CreateMemTemp(E->getType(), "agg.tmp");
