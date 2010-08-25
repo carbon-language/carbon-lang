@@ -285,7 +285,7 @@ class ASTContext {
   PartialDiagnostic::StorageAllocator DiagAllocator;
 
   /// \brief The current C++ ABI.
-  CXXABI *ABI;
+  llvm::OwningPtr<CXXABI> ABI;
   CXXABI *createCXXABI(const TargetInfo &T);
   
 public:
