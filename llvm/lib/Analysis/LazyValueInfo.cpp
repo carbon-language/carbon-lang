@@ -457,10 +457,11 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     // then we know that the pointer can't be NULL.
     if (Val->getType()->isPointerTy()) {
       const PointerType *PTy = cast<PointerType>(Val->getType());
-      for (Value::use_iterator UI = Val->use_begin(), UE = Val->use_end();
-           UI != UE; ++UI) {
-        LoadInst *L = dyn_cast<LoadInst>(*UI);
-        if (L && L->getParent() == BB && L->getPointerAddressSpace() == 0) {
+      for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();BI != BE;++BI){
+        LoadInst *L = dyn_cast<LoadInst>(BI);
+        if (L && L->getPointerAddressSpace() == 0 &&
+            L->getPointerOperand()->getUnderlyingObject() ==
+              Val->getUnderlyingObject()) {
           return LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
         }
       }
