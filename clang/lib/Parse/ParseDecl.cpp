@@ -3423,9 +3423,9 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   ParsedType CastTy;
   SourceRange CastRange;
   ExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
-                                                               isCastExpr,
-                                                               CastTy,
-                                                               CastRange);
+                                                         isCastExpr,
+                                                         CastTy,
+                                                         CastRange);
   if (hasParens)
     DS.setTypeofParensRange(CastRange);
 
