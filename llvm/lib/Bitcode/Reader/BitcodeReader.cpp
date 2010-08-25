@@ -1636,6 +1636,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
   InstructionList.clear();
   unsigned ModuleValueListSize = ValueList.size();
+  unsigned ModuleMDValueListSize = MDValueList.size();
 
   // Add all the function arguments to the value table.
   for(Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
@@ -2353,6 +2354,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
   
   // Trim the value list down to the size it was before we parsed this function.
   ValueList.shrinkTo(ModuleValueListSize);
+  MDValueList.shrinkTo(ModuleMDValueListSize);
   std::vector<BasicBlock*>().swap(FunctionBBs);
 
   return false;
