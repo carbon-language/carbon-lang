@@ -36,6 +36,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
 
@@ -45,6 +46,9 @@ char PEI::ID = 0;
 
 INITIALIZE_PASS(PEI, "prologepilog",
                 "Prologue/Epilogue Insertion", false, false);
+
+STATISTIC(NumVirtualFrameRegs, "Number of virtual frame regs encountered");
+STATISTIC(NumScavengedRegs, "Number of frame index regs scavenged");
 
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
@@ -873,6 +877,8 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             }
             continue;
           }
+          ++NumVirtualFrameRegs;
+
           // If this is a def, remember that this insn defines the value.
           // This lets us properly consider insns which re-use the scratch
           // register, such as r2 = sub r2, #imm, in the middle of the
@@ -945,6 +951,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
             CurrentScratchReg = RS->scavengeRegister(RC, I, SPAdj);
             PrevValue = Value;
+            ++NumScavengedRegs;
           }
           // replace this reference to the virtual register with the
           // scratch register.
