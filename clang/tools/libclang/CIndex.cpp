@@ -2771,9 +2771,8 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   
   const enum CXCursorKind K = clang_getCursorKind(parent);
   const CXCursor updateC =
-    (clang_isInvalid(K) || K == CXCursor_TranslationUnit ||
-     L.isMacroID())
-    ? clang_getNullCursor() : parent;
+    (clang_isInvalid(K) || K == CXCursor_TranslationUnit)
+     ? clang_getNullCursor() : parent;
 
   while (MoreTokens()) {
     const unsigned I = NextToken();

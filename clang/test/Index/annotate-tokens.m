@@ -56,7 +56,30 @@ extern int ibaction_test(void);
 @property IBOutlet int * aPropOutlet;
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:58:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
+// From <rdar://problem/7974151>.  The first 'foo:' wasn't being annotated as 
+// being part of the Objective-C message expression since the argument
+// was expanded from a macro.
+
+#define VAL 0
+
+@interface R7974151
+- (int) foo:(int)arg;
+- (int) method;
+@end
+
+@implementation R7974151
+- (int) foo:(int)arg {
+  return arg;
+}
+- (int) method
+{
+    int local = [self foo:VAL];
+    int second = [self foo:0];
+    return local;
+}
+@end
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:77:4 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
@@ -224,7 +247,7 @@ extern int ibaction_test(void);
 // CHECK: Keyword: "interface" [51:2 - 51:11] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Identifier: "IBOutletTests" [51:12 - 51:25] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "{" [52:1 - 52:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutlet" [53:5 - 53:13] macro instantiation=IBOutlet:{{[0-9]+}}:{{[0-9]+}}
+// CHECK: Identifier: "IBOutlet" [53:5 - 53:13] macro instantiation=IBOutlet
 // CHECK: Keyword: "char" [53:14 - 53:18] ObjCIvarDecl=anOutlet:53:21 (Definition)
 // CHECK: Punctuation: "*" [53:19 - 53:20] ObjCIvarDecl=anOutlet:53:21 (Definition)
 // CHECK: Identifier: "anOutlet" [53:21 - 53:29] ObjCIvarDecl=anOutlet:53:21 (Definition)
@@ -243,11 +266,86 @@ extern int ibaction_test(void);
 // CHECK: Punctuation: ";" [55:34 - 55:35] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "@" [56:1 - 56:2] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Keyword: "property" [56:2 - 56:10] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet:{{[0-9]+}}:{{[0-9]+}}
+// CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet
 // CHECK: Keyword: "int" [56:20 - 56:23] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "*" [56:24 - 56:25] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Identifier: "aPropOutlet" [56:26 - 56:37] ObjCPropertyDecl=aPropOutlet:56:26
 // CHECK: Punctuation: ";" [56:37 - 56:38] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "@" [57:1 - 57:2] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Keyword: "end" [57:2 - 57:5] ObjCInterfaceDecl=IBOutletTests:51:12
-
+// CHECK: Punctuation: "#" [63:1 - 63:2] preprocessing directive=
+// CHECK: Identifier: "define" [63:2 - 63:8] preprocessing directive=
+// CHECK: Identifier: "VAL" [63:9 - 63:12] macro definition=VAL
+// CHECK: Literal: "0" [63:13 - 63:14] preprocessing directive=
+// CHECK: Punctuation: "@" [65:1 - 65:2] ObjCInterfaceDecl=R7974151:65:12
+// CHECK: Keyword: "interface" [65:2 - 65:11] ObjCInterfaceDecl=R7974151:65:12
+// CHECK: Identifier: "R7974151" [65:12 - 65:20] ObjCInterfaceDecl=R7974151:65:12
+// CHECK: Punctuation: "-" [66:1 - 66:2] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Punctuation: "(" [66:3 - 66:4] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Keyword: "int" [66:4 - 66:7] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Punctuation: ")" [66:7 - 66:8] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Identifier: "foo" [66:9 - 66:12] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Punctuation: ":" [66:12 - 66:13] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Punctuation: "(" [66:13 - 66:14] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Keyword: "int" [66:14 - 66:17] ParmDecl=arg:66:18 (Definition)
+// CHECK: Punctuation: ")" [66:17 - 66:18] ParmDecl=arg:66:18 (Definition)
+// CHECK: Identifier: "arg" [66:18 - 66:21] ParmDecl=arg:66:18 (Definition)
+// CHECK: Punctuation: ";" [66:21 - 66:22] ObjCInstanceMethodDecl=foo::66:1
+// CHECK: Punctuation: "-" [67:1 - 67:2] ObjCInstanceMethodDecl=method:67:1
+// CHECK: Punctuation: "(" [67:3 - 67:4] ObjCInstanceMethodDecl=method:67:1
+// CHECK: Keyword: "int" [67:4 - 67:7] ObjCInstanceMethodDecl=method:67:1
+// CHECK: Punctuation: ")" [67:7 - 67:8] ObjCInstanceMethodDecl=method:67:1
+// CHECK: Identifier: "method" [67:9 - 67:15] ObjCInstanceMethodDecl=method:67:1
+// CHECK: Punctuation: ";" [67:15 - 67:16] ObjCInstanceMethodDecl=method:67:1
+// CHECK: Punctuation: "@" [68:1 - 68:2] ObjCInterfaceDecl=R7974151:65:12
+// CHECK: Keyword: "end" [68:2 - 68:5] ObjCInterfaceDecl=R7974151:65:12
+// CHECK: Punctuation: "@" [70:1 - 70:2] ObjCImplementationDecl=R7974151:70:1 (Definition)
+// CHECK: Keyword: "implementation" [70:2 - 70:16] ObjCImplementationDecl=R7974151:70:1 (Definition)
+// CHECK: Identifier: "R7974151" [70:17 - 70:25] ObjCImplementationDecl=R7974151:70:1 (Definition)
+// CHECK: Punctuation: "-" [71:1 - 71:2] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Punctuation: "(" [71:3 - 71:4] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Keyword: "int" [71:4 - 71:7] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Punctuation: ")" [71:7 - 71:8] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Identifier: "foo" [71:9 - 71:12] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Punctuation: ":" [71:12 - 71:13] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Punctuation: "(" [71:13 - 71:14] ObjCInstanceMethodDecl=foo::71:1 (Definition)
+// CHECK: Keyword: "int" [71:14 - 71:17] ParmDecl=arg:71:18 (Definition)
+// CHECK: Punctuation: ")" [71:17 - 71:18] ParmDecl=arg:71:18 (Definition)
+// CHECK: Identifier: "arg" [71:18 - 71:21] ParmDecl=arg:71:18 (Definition)
+// CHECK: Punctuation: "{" [71:22 - 71:23] UnexposedStmt=
+// CHECK: Keyword: "return" [72:3 - 72:9] UnexposedStmt=
+// CHECK: Identifier: "arg" [72:10 - 72:13] DeclRefExpr=arg:71:18
+// CHECK: Punctuation: ";" [72:13 - 72:14] UnexposedStmt=
+// CHECK: Punctuation: "}" [73:1 - 73:2] UnexposedStmt=
+// CHECK: Punctuation: "-" [74:1 - 74:2] ObjCInstanceMethodDecl=method:74:1 (Definition)
+// CHECK: Punctuation: "(" [74:3 - 74:4] ObjCInstanceMethodDecl=method:74:1 (Definition)
+// CHECK: Keyword: "int" [74:4 - 74:7] ObjCInstanceMethodDecl=method:74:1 (Definition)
+// CHECK: Punctuation: ")" [74:7 - 74:8] ObjCInstanceMethodDecl=method:74:1 (Definition)
+// CHECK: Identifier: "method" [74:9 - 74:15] ObjCInstanceMethodDecl=method:74:1 (Definition)
+// CHECK: Punctuation: "{" [75:1 - 75:2] UnexposedStmt=
+// CHECK: Keyword: "int" [76:5 - 76:8] VarDecl=local:76:9 (Definition)
+// CHECK: Identifier: "local" [76:9 - 76:14] VarDecl=local:76:9 (Definition)
+// CHECK: Punctuation: "=" [76:15 - 76:16] VarDecl=local:76:9 (Definition)
+// CHECK: Punctuation: "[" [76:17 - 76:18] ObjCMessageExpr=foo::66:1
+// CHECK: Identifier: "self" [76:18 - 76:22] DeclRefExpr=self:0:0
+// CHECK: Identifier: "foo" [76:23 - 76:26] ObjCMessageExpr=foo::66:1
+// CHECK: Punctuation: ":" [76:26 - 76:27] ObjCMessageExpr=foo::66:1
+// CHECK: Identifier: "VAL" [76:27 - 76:30] macro instantiation=VAL:63:9
+// CHECK: Punctuation: "]" [76:30 - 76:31] ObjCMessageExpr=foo::66:1
+// CHECK: Punctuation: ";" [76:31 - 76:32] UnexposedStmt=
+// CHECK: Keyword: "int" [77:5 - 77:8] VarDecl=second:77:9 (Definition)
+// CHECK: Identifier: "second" [77:9 - 77:15] VarDecl=second:77:9 (Definition)
+// CHECK: Punctuation: "=" [77:16 - 77:17] VarDecl=second:77:9 (Definition)
+// CHECK: Punctuation: "[" [77:18 - 77:19] ObjCMessageExpr=foo::66:1
+// CHECK: Identifier: "self" [77:19 - 77:23] DeclRefExpr=self:0:0
+// CHECK: Identifier: "foo" [77:24 - 77:27] ObjCMessageExpr=foo::66:1
+// CHECK: Punctuation: ":" [77:27 - 77:28] ObjCMessageExpr=foo::66:1
+// CHECK: Literal: "0" [77:28 - 77:29] UnexposedExpr=
+// CHECK: Punctuation: "]" [77:29 - 77:30] ObjCMessageExpr=foo::66:1
+// CHECK: Punctuation: ";" [77:30 - 77:31] UnexposedStmt=
+// CHECK: Keyword: "return" [78:5 - 78:11] UnexposedStmt=
+// CHECK: Identifier: "local" [78:12 - 78:17] DeclRefExpr=local:76:9
+// CHECK: Punctuation: ";" [78:17 - 78:18] UnexposedStmt=
+// CHECK: Punctuation: "}" [79:1 - 79:2] UnexposedStmt=
+// CHECK: Punctuation: "@" [80:1 - 80:2] ObjCImplementationDecl=R7974151:70:1 (Definition)
+// CHECK: Keyword: "end" [80:2 - 80:5]
