@@ -463,6 +463,8 @@ enum _ {
 
 };
 
+template <> struct is_error_code_enum<future_errc> : public true_type {};
+
 //enum class launch
 struct launch
 {
@@ -493,6 +495,32 @@ enum _ {
     future_status(_ __v) : __v_(__v) {}
     operator int() const {return __v_;}
 
+};
+
+const error_category& future_category();
+
+inline _LIBCPP_INLINE_VISIBILITY
+error_code
+make_error_code(future_errc __e)
+{
+    return error_code(static_cast<int>(__e), future_category());
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+error_condition
+make_error_condition(future_errc __e)
+{
+    return error_condition(static_cast<int>(__e), future_category());
+}
+
+class future_error
+    : public logic_error
+{
+    error_code __ec_;
+public:
+    future_error(error_code __ec);
+
+    const error_code& code() const throw() {return __ec_;}
 };
 
 _LIBCPP_END_NAMESPACE_STD
