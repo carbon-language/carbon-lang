@@ -148,9 +148,6 @@
 /* Define to 1 if you have the `getrusage' function. */
 #undef HAVE_GETRUSAGE
 
-/* Have Darwin getsect() support */
-#undef HAVE_GETSECT
-
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
@@ -223,9 +220,6 @@
 
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
 #undef HAVE_MACH_O_DYLD_H
-
-/* Define to 1 if you have the <mach-o/getsect.h> header file. */
-#undef HAVE_MACH_O_GETSECT_H
 
 /* Define if mallinfo() is available on this platform. */
 #undef HAVE_MALLINFO
