@@ -567,18 +567,14 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
 uint64_t
 ELFObjectWriterImpl::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                                  const MCSymbol *S) {
-  for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
-    if (&LocalSymbolData[i].SymbolData->getSymbol() == S)
-      return i + /* empty symbol */ 1;
-  for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
-    if (&ExternalSymbolData[i].SymbolData->getSymbol() == S)
-      return i + LocalSymbolData.size() + Asm.size() + /* empty symbol */ 1;
-  for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
-    if (&UndefinedSymbolData[i].SymbolData->getSymbol() == S)
-      return i + LocalSymbolData.size() + ExternalSymbolData.size() +
-             Asm.size() + /* empty symbol */ 1;
+  MCSymbolData &SD = Asm.getSymbolData(*S);
 
-  llvm_unreachable("Cannot find symbol which should exist!");
+  // Local symbol.
+  if (!SD.isExternal() && !S->isUndefined())
+    return SD.getIndex() + /* empty symbol */ 1;
+
+  // External or undefined symbol.
+  return SD.getIndex() + Asm.size() + /* empty symbol */ 1;
 }
 
 void ELFObjectWriterImpl::ComputeSymbolTable(MCAssembler &Asm) {
