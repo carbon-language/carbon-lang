@@ -28,19 +28,16 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    StackFrameList();
+    StackFrameList (Thread &thread, bool show_inline_frames);
 
     virtual
     ~StackFrameList();
 
     uint32_t
-    GetNumFrames() const;
+    GetNumFrames();
 
     lldb::StackFrameSP
-    GetFrameAtIndex (uint32_t idx) const;
-
-    bool
-    SetFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
+    GetFrameAtIndex (uint32_t idx);
 
     // Mark a stack frame as the current frame
     uint32_t
@@ -56,14 +53,30 @@ public:
     void
     Clear ();
 
-    // After we have determined the number of frames, we can set the count here
-    // and have the frame info be generated on demand.
-    void
-    SetNumFrames(uint32_t count);
-
     void
     InvalidateFrames (uint32_t start_idx);
 protected:
+
+    bool
+    SetActualFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
+
+    bool
+    SetInlineFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
+
+
+    lldb::StackFrameSP
+    GetActualFrameAtIndex (uint32_t idx) const;
+
+    lldb::StackFrameSP
+    GetInlineFrameAtIndex (uint32_t idx) const;
+
+    typedef struct InlinedFrameInfo
+    {
+        uint32_t concrete_frame_index;
+        uint32_t inline_height;
+        Block *block;
+    } InlinedFrameInfo;
+    typedef std::vector<InlinedFrameInfo> InlinedFrameInfoCollection;
 
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
@@ -72,9 +85,13 @@ protected:
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
 
+    Thread &m_thread;
     mutable Mutex m_mutex;
-    collection m_frames;
+    collection m_actual_frames;
+    collection m_inline_frames;
+    InlinedFrameInfoCollection m_inlined_frame_info;
     uint32_t m_current_frame_idx;
+    bool m_show_inlined_frames;
 
 private:
     //------------------------------------------------------------------

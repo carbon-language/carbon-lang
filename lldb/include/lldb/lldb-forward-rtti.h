@@ -49,6 +49,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Section>::Type SectionSP;
     typedef SharedPtr<lldb_private::SearchFilter>::Type SearchFilterSP;
     typedef SharedPtr<lldb_private::StackFrame>::Type StackFrameSP;
+    typedef SharedPtr<lldb_private::StackFrameList>::Type StackFrameListSP;
     typedef SharedPtr<lldb_private::StateVariable>::Type StateVariableSP;
     typedef SharedPtr<lldb_private::StopInfo>::Type StopInfoSP;
     typedef SharedPtr<lldb_private::StoppointLocation>::Type StoppointLocationSP;

@@ -198,12 +198,7 @@ public:
     CreateRegisterContextForFrame (StackFrame *frame) = 0;
     
     virtual void
-    ClearStackFrames ()
-    {
-        m_concrete_frames.Clear();
-        m_inlined_frames.Clear();
-        m_inlined_frame_info.clear();
-    }
+    ClearStackFrames ();
 
     void
     DumpInfo (Stream &strm,
@@ -522,6 +517,7 @@ public:
 protected:
 
     friend class ThreadPlan;
+    friend class StackFrameList;
 
     void
     PushPlan (lldb::ThreadPlanSP &plan_sp);
@@ -542,13 +538,9 @@ protected:
     virtual lldb_private::Unwind *
     GetUnwinder () = 0;
 
-    typedef struct InlinedFrameInfo
-    {
-        uint32_t concrete_frame_index;
-        uint32_t inline_height;
-        Block *block;
-    } InlinedFrameInfo;
-    typedef std::vector<InlinedFrameInfo> InlinedFrameInfoCollection;
+    StackFrameList &
+    GetStackFrameList ();
+
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------
@@ -558,15 +550,12 @@ protected:
     const uint32_t      m_index_id;         ///< A unique 1 based index assigned to each thread for easy UI/command line access.
     lldb::RegisterContextSP   m_reg_context_sp;   ///< The register context for this thread's current register state.
     lldb::StateType     m_state;            ///< The state of our process.
+    mutable Mutex       m_state_mutex;      ///< Multithreaded protection for m_state.
     plan_stack          m_plan_stack;       ///< The stack of plans this thread is executing.
     plan_stack          m_immediate_plan_stack; ///< The plans that need to get executed before any other work gets done.
     plan_stack          m_completed_plan_stack;  ///< Plans that have been completed by this stop.  They get deleted when the thread resumes.
     plan_stack          m_discarded_plan_stack;  ///< Plans that have been discarded by this stop.  They get deleted when the thread resumes.
-    mutable Mutex       m_state_mutex;      ///< Multithreaded protection for m_state.
-    StackFrameList      m_concrete_frames;  ///< The stack frames that get lazily populated after a thread stops.
-    StackFrameList      m_inlined_frames;   ///< The stack frames that get lazily populated after a thread stops.
-    InlinedFrameInfoCollection m_inlined_frame_info;
-    bool                m_show_inlined_frames;
+    lldb::StackFrameListSP m_frames_sp;      ///< The stack frames that get lazily populated after a thread stops.
     int                 m_resume_signal;    ///< The signal that should be used when continuing this thread.
     lldb::StateType     m_resume_state;     ///< The state that indicates what this thread should do when the process is resumed.
     std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
