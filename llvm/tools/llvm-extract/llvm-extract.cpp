@@ -71,9 +71,10 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm extractor\n");
 
+  // Use lazy loading, since we only care about selected global values.
   SMDiagnostic Err;
   std::auto_ptr<Module> M;
-  M.reset(ParseIRFile(InputFilename, Err, Context));
+  M.reset(getLazyIRFileModule(InputFilename, Err, Context));
 
   if (M.get() == 0) {
     Err.Print(argv[0], errs());
@@ -102,6 +103,18 @@ int main(int argc, char **argv) {
       return 1;
     }
     GVs.push_back(GV);
+  }
+
+  // Materialize requisite global values.
+  for (size_t i = 0, e = GVs.size(); i != e; ++i) {
+    GlobalValue *GV = GVs[i];
+    if (GV->isMaterializable()) {
+      std::string ErrInfo;
+      if (GV->Materialize(&ErrInfo)) {
+        errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
+        return 1;
+      }
+    }
   }
 
   // In addition to deleting all other functions, we also want to spiff it
