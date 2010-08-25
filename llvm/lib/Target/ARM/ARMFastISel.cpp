@@ -415,14 +415,19 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
 }
 
 bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
-  // Our register and offset with innocuous defaults.
-  unsigned Reg = 0;
-  int Offset = 0;
-  
   // If we're an alloca we know we have a frame index and can emit the load
   // directly in short order.
   if (ARMLoadAlloca(I))
     return true;
+    
+  // Verify we have a legal type before going any further.
+  EVT VT;
+  if (!isTypeLegal(I->getType(), VT))
+    return false;
+  
+  // Our register and offset with innocuous defaults.
+  unsigned Reg = 0;
+  int Offset = 0;
   
   // See if we can handle this as Reg + Offset
   if (!ARMComputeRegOffset(I->getOperand(0), Reg, Offset))
@@ -445,10 +450,6 @@ bool ARMFastISel::ARMSelectLoad(const Instruction *I) {
                            static_cast<const ARMBaseInstrInfo&>(TII));
   } 
   
-  EVT VT;
-  if (!isTypeLegal(I->getType(), VT))
-    return false;
-
   unsigned ResultReg;
   // TODO: Verify the additions above work, otherwise we'll need to add the
   // offset instead of 0 and do all sorts of operand munging.
