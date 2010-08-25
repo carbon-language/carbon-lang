@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm < %s -o %t
 // RUN: grep volatile %t | count 28
 // RUN: grep memcpy %t | count 7
+// RUN: %clang_cc1 %s -Wall -verify -emit-llvm -o - | FileCheck %s
 
 // The number 28 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
@@ -96,5 +97,9 @@ int main() {
   (void)vF2;
   vF2 = vF2;
   vF2 = vF2 = vF2;
-  vF2 = (vF2, vF2);
+  vF2 = (vF2, vF2); // expected-warning {{expression result unused}}
 }
+
+// Make sure this is emitted. rdar://8315219
+// CHECK: @gvx
+static volatile int gvx = 0;
