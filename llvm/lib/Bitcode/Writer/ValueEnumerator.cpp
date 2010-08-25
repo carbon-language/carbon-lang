@@ -137,7 +137,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
 unsigned ValueEnumerator::getInstructionID(const Instruction *Inst) const {
   InstructionMapType::const_iterator I = InstructionMap.find(Inst);
   assert (I != InstructionMap.end() && "Instruction is not mapped!");
-    return I->second;
+  return I->second;
 }
 
 void ValueEnumerator::setInstructionID(const Instruction *I) {
