@@ -92,7 +92,6 @@ void PseudoConstantAnalysis::RunAnalysis() {
       const BinaryOperator *BO = cast<BinaryOperator>(Head);
       // Look for a Decl on the LHS
       const Decl *LHSDecl = getDecl(BO->getLHS()->IgnoreParenCasts());
-
       if (!LHSDecl)
         break;
 
@@ -139,6 +138,8 @@ void PseudoConstantAnalysis::RunAnalysis() {
 
       // Look for a DeclRef in the subexpression
       const Decl *D = getDecl(UO->getSubExpr()->IgnoreParenCasts());
+      if (!D)
+        break;
 
       // We found a unary operator with a DeclRef as a subexpression. We now
       // check for any of the increment/decrement operators, as well as
@@ -181,6 +182,8 @@ void PseudoConstantAnalysis::RunAnalysis() {
 
         // Try to find a Decl in the initializer
         const Decl *D = getDecl(VD->getInit()->IgnoreParenCasts());
+        if (!D)
+          break;
 
         // If the reference is to another var, add the var to the non-constant
         // list
