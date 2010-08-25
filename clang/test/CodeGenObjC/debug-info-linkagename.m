@@ -1,8 +1,6 @@
 // RUN: %clang_cc1  -g -S -o %t %s
-// FIXME: Reenable this test once this check is less picky.
-// RUN: not grep 001 %t
-//
-// REQUIRES: disabled
+// RUN: not grep "001-[F bar" %t
+// Linkage name should not use 001 prefix in debug info.
 
 @interface F 
 -(int) bar;
