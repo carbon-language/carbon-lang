@@ -350,8 +350,8 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
 
     for (SmallVector<MDNode *, 8>::iterator I = MDs.begin(),
            E = MDs.end(); I != E; ++I) {
-      if (M.getGlobalVariable(DIGlobalVariable(*I).getGlobal()->getName(), 
-                              true)) {
+      GlobalVariable *GV = DIGlobalVariable(*I).getGlobal();
+      if (GV && M.getGlobalVariable(GV->getName(), true)) {
         if (!NMD)
           NMD = M.getOrInsertNamedMetadata("llvm.dbg.gv");
         NMD->addOperand(*I);
