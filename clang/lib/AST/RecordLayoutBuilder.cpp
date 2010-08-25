@@ -588,8 +588,6 @@ protected:
       NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
-  virtual ~RecordLayoutBuilder() { }
-
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
@@ -671,6 +669,8 @@ protected:
   void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
 public:
   static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
+
+  virtual ~RecordLayoutBuilder() { }
 };
 } // end anonymous namespace
 
@@ -1513,13 +1513,13 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
     EmptySubobjectMap EmptySubobjects(*this, RD);
 
     // When compiling for Microsoft, use the special MS builder.
-    RecordLayoutBuilder *Builder;
+    llvm::OwningPtr<RecordLayoutBuilder> Builder;
     switch (Target.getCXXABI()) {
     default:
-      Builder = new RecordLayoutBuilder(*this, &EmptySubobjects);
+      Builder.reset(new RecordLayoutBuilder(*this, &EmptySubobjects));
       break;
     case CXXABI_Microsoft:
-      Builder = new MSRecordLayoutBuilder(*this, &EmptySubobjects);
+      Builder.reset(new MSRecordLayoutBuilder(*this, &EmptySubobjects));
     }
     Builder->Layout(RD);
 
@@ -1544,7 +1544,6 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
                                   Builder->PrimaryBase,
                                   Builder->PrimaryBaseIsVirtual,
                                   Builder->Bases, Builder->VBases);
-    delete Builder;
   } else {
     RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
     Builder.Layout(D);
