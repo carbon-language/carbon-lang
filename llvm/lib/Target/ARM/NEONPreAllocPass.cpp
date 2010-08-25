@@ -260,33 +260,12 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     Stride = 2;
     return true;
 
-  case ARM::VST4d8:
-  case ARM::VST4d16:
-  case ARM::VST4d32:
   case ARM::VST1d64Q:
   case ARM::VST4LNd8:
   case ARM::VST4LNd16:
   case ARM::VST4LNd32:
     FirstOpnd = 2;
     NumRegs = 4;
-    return true;
-
-  case ARM::VST4q8_UPD:
-  case ARM::VST4q16_UPD:
-  case ARM::VST4q32_UPD:
-    FirstOpnd = 4;
-    NumRegs = 4;
-    Offset = 0;
-    Stride = 2;
-    return true;
-
-  case ARM::VST4q8odd_UPD:
-  case ARM::VST4q16odd_UPD:
-  case ARM::VST4q32odd_UPD:
-    FirstOpnd = 4;
-    NumRegs = 4;
-    Offset = 1;
-    Stride = 2;
     return true;
 
   case ARM::VST4LNq16:

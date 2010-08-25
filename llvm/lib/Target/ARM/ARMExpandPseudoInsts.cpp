@@ -24,6 +24,13 @@ using namespace llvm;
 
 namespace {
   class ARMExpandPseudo : public MachineFunctionPass {
+    // Constants for register spacing in NEON load/store instructions.
+    enum NEONRegSpacing {
+      SingleSpc,
+      EvenDblSpc,
+      OddDblSpc
+    };
+
   public:
     static char ID;
     ARMExpandPseudo() : MachineFunctionPass(ID) {}
@@ -41,6 +48,8 @@ namespace {
     void TransferImpOps(MachineInstr &OldMI,
                         MachineInstrBuilder &UseMI, MachineInstrBuilder &DefMI);
     bool ExpandMBB(MachineBasicBlock &MBB);
+    void ExpandVST4(MachineBasicBlock::iterator &MBBI, unsigned Opc,
+                    bool hasWriteBack, NEONRegSpacing RegSpc);
   };
   char ARMExpandPseudo::ID = 0;
 }
@@ -63,6 +72,61 @@ void ARMExpandPseudo::TransferImpOps(MachineInstr &OldMI,
   }
 }
 
+/// ExpandVST4 - Translate VST4 pseudo instructions with QQ or QQQQ register
+/// operands to real VST4 instructions with 4 D register operands.
+void ARMExpandPseudo::ExpandVST4(MachineBasicBlock::iterator &MBBI,
+                                 unsigned Opc, bool hasWriteBack,
+                                 NEONRegSpacing RegSpc) {
+  MachineInstr &MI = *MBBI;
+  MachineBasicBlock &MBB = *MI.getParent();
+
+  MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc));
+  unsigned OpIdx = 0;
+  if (hasWriteBack) {
+    bool DstIsDead = MI.getOperand(OpIdx).isDead();
+    unsigned DstReg = MI.getOperand(OpIdx++).getReg();
+    MIB.addReg(DstReg, getDefRegState(true) | getDeadRegState(DstIsDead));
+  }
+  // Copy the addrmode6 operands.
+  bool AddrIsKill = MI.getOperand(OpIdx).isKill();
+  MIB.addReg(MI.getOperand(OpIdx++).getReg(), getKillRegState(AddrIsKill));
+  MIB.addImm(MI.getOperand(OpIdx++).getImm());
+  if (hasWriteBack) {
+    // Copy the am6offset operand.
+    bool OffsetIsKill = MI.getOperand(OpIdx).isKill();
+    MIB.addReg(MI.getOperand(OpIdx++).getReg(), getKillRegState(OffsetIsKill));
+  }
+
+  bool SrcIsKill = MI.getOperand(OpIdx).isKill();
+  unsigned SrcReg = MI.getOperand(OpIdx).getReg();
+  unsigned D0, D1, D2, D3;
+  if (RegSpc == SingleSpc) {
+    D0 = TRI->getSubReg(SrcReg, ARM::dsub_0);
+    D1 = TRI->getSubReg(SrcReg, ARM::dsub_1);
+    D2 = TRI->getSubReg(SrcReg, ARM::dsub_2);
+    D3 = TRI->getSubReg(SrcReg, ARM::dsub_3);
+  } else if (RegSpc == EvenDblSpc) {
+    D0 = TRI->getSubReg(SrcReg, ARM::dsub_0);
+    D1 = TRI->getSubReg(SrcReg, ARM::dsub_2);
+    D2 = TRI->getSubReg(SrcReg, ARM::dsub_4);
+    D3 = TRI->getSubReg(SrcReg, ARM::dsub_6);
+  } else {
+    assert(RegSpc == OddDblSpc && "unknown register spacing for VST4");
+    D0 = TRI->getSubReg(SrcReg, ARM::dsub_1);
+    D1 = TRI->getSubReg(SrcReg, ARM::dsub_3);
+    D2 = TRI->getSubReg(SrcReg, ARM::dsub_5);
+    D3 = TRI->getSubReg(SrcReg, ARM::dsub_7);
+  } 
+
+  MIB.addReg(D0, getKillRegState(SrcIsKill))
+    .addReg(D1, getKillRegState(SrcIsKill))
+    .addReg(D2, getKillRegState(SrcIsKill))
+    .addReg(D3, getKillRegState(SrcIsKill));
+  MIB = AddDefaultPred(MIB);
+  TransferImpOps(MI, MIB, MIB);
+  MI.eraseFromParent();
+}
+
 bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
@@ -71,9 +135,13 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     MachineInstr &MI = *MBBI;
     MachineBasicBlock::iterator NMBBI = llvm::next(MBBI);
 
+    bool ModifiedOp = true;
     unsigned Opcode = MI.getOpcode();
     switch (Opcode) {
-    default: break;
+    default:
+      ModifiedOp = false;
+      break;
+
     case ARM::tLDRpci_pic: 
     case ARM::t2LDRpci_pic: {
       unsigned NewLdOpc = (Opcode == ARM::tLDRpci_pic)
@@ -92,7 +160,6 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         .addOperand(MI.getOperand(2));
       TransferImpOps(MI, MIB1, MIB2);
       MI.eraseFromParent();
-      Modified = true;
       break;
     }
 
@@ -128,7 +195,6 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       HI16.addImm(Pred).addReg(PredReg);
       TransferImpOps(MI, LO16, HI16);
       MI.eraseFromParent();
-      Modified = true;
       break;
     }
 
@@ -155,9 +221,37 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
                      .addReg(OddSrc, getKillRegState(SrcIsKill)));
       TransferImpOps(MI, Even, Odd);
       MI.eraseFromParent();
+    }
+
+    case ARM::VST4d8Pseudo:
+      ExpandVST4(MBBI, ARM::VST4d8, false, SingleSpc); break;
+    case ARM::VST4d16Pseudo:
+      ExpandVST4(MBBI, ARM::VST4d16, false, SingleSpc); break;
+    case ARM::VST4d32Pseudo:
+      ExpandVST4(MBBI, ARM::VST4d32, false, SingleSpc); break;
+    case ARM::VST4d8Pseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4d8_UPD, true, SingleSpc); break;
+    case ARM::VST4d16Pseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4d16_UPD, true, SingleSpc); break;
+    case ARM::VST4d32Pseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4d32_UPD, true, SingleSpc); break;
+    case ARM::VST4q8Pseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4q8_UPD, true, EvenDblSpc); break;
+    case ARM::VST4q16Pseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4q16_UPD, true, EvenDblSpc); break;
+    case ARM::VST4q32Pseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4q32_UPD, true, EvenDblSpc); break;
+    case ARM::VST4q8oddPseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4q8_UPD, true, OddDblSpc); break;
+    case ARM::VST4q16oddPseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4q16_UPD, true, OddDblSpc); break;
+    case ARM::VST4q32oddPseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST4q32_UPD, true, OddDblSpc); break;
+      break;
+    }
+
+    if (ModifiedOp)
       Modified = true;
-    }
-    }
     MBBI = NMBBI;
   }
 
