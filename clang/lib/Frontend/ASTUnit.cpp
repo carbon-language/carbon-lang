@@ -1552,6 +1552,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_MacroName:
   case CodeCompletionContext::CCC_MacroNameUse:
   case CodeCompletionContext::CCC_PreprocessorExpression:
+  case CodeCompletionContext::CCC_NaturalLanguage:
     // If we're just looking for protocol or macro names, nothing can hide them.
     return;
   }
