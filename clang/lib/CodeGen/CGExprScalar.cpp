@@ -1017,18 +1017,23 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
   case CastExpr::CK_IntegralToPointer: {
     Value *Src = Visit(const_cast<Expr*>(E));
-    
+
     // First, convert to the correct width so that we control the kind of
     // extension.
     const llvm::Type *MiddleTy = CGF.IntPtrTy;
     bool InputSigned = E->getType()->isSignedIntegerType();
     llvm::Value* IntResult =
       Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
-    
+
     return Builder.CreateIntToPtr(IntResult, ConvertType(DestTy));
   }
   case CastExpr::CK_PointerToIntegral: {
     Value *Src = Visit(const_cast<Expr*>(E));
+
+    // Handle conversion to bool correctly.
+    if (DestTy->isBooleanType())
+      return EmitScalarConversion(Visit(E), E->getType(), DestTy);
+
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
   case CastExpr::CK_ToVoid: {
