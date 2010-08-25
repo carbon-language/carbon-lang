@@ -4874,9 +4874,8 @@ void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
 }
 
 void Sema::CodeCompleteNaturalLanguage() {
-  // FIXME: Use a dedicated completion context for this!
   HandleCodeCompleteResults(this, CodeCompleter,
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_NaturalLanguage,
                             0, 0);
 }
 

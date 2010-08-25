@@ -181,7 +181,13 @@ public:
     /// (without any arguments, in the case of a function-like macro).
     CCC_MacroNameUse,
     /// \brief Code completion occurred within a preprocessor expression.
-    CCC_PreprocessorExpression
+    CCC_PreprocessorExpression,
+    /// \brief Code completion occurred in a context where natural language is
+    /// expected, e.g., a comment or string literal.
+    ///
+    /// This context usually implies that no completions should be added,
+    /// unless they come from an appropriate natural-language dictionary.
+    CCC_NaturalLanguage
   };
 
 private:
