@@ -387,7 +387,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
       // blockaddress.
       if (isa<BasicBlock>(Op)) continue;
       
-      EnumerateOperandType(cast<Constant>(Op));
+      EnumerateOperandType(Op);
     }
 
     if (const MDNode *N = dyn_cast<MDNode>(V)) {
