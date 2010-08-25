@@ -157,6 +157,88 @@ namespace clang {
       DeducedFromArrayBound = Deduced;
     }
   };
+
+  /// \brief A stack-allocated class that identifies which local
+  /// variable declaration instantiations are present in this scope.
+  ///
+  /// A new instance of this class type will be created whenever we
+  /// instantiate a new function declaration, which will have its own
+  /// set of parameter declarations.
+  class LocalInstantiationScope {
+    /// \brief Reference to the semantic analysis that is performing
+    /// this template instantiation.
+    Sema &SemaRef;
+
+    /// \brief A mapping from local declarations that occur
+    /// within a template to their instantiations.
+    ///
+    /// This mapping is used during instantiation to keep track of,
+    /// e.g., function parameter and variable declarations. For example,
+    /// given:
+    ///
+    /// \code
+    ///   template<typename T> T add(T x, T y) { return x + y; }
+    /// \endcode
+    ///
+    /// when we instantiate add<int>, we will introduce a mapping from
+    /// the ParmVarDecl for 'x' that occurs in the template to the
+    /// instantiated ParmVarDecl for 'x'.
+    llvm::DenseMap<const Decl *, Decl *> LocalDecls;
+
+    /// \brief The outer scope, which contains local variable
+    /// definitions from some other instantiation (that may not be
+    /// relevant to this particular scope).
+    LocalInstantiationScope *Outer;
+
+    /// \brief Whether we have already exited this scope.
+    bool Exited;
+
+    /// \brief Whether to combine this scope with the outer scope, such that
+    /// lookup will search our outer scope.
+    bool CombineWithOuterScope;
+    
+    // This class is non-copyable
+    LocalInstantiationScope(const LocalInstantiationScope &);
+    LocalInstantiationScope &operator=(const LocalInstantiationScope &);
+
+  public:
+    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
+      : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope),
+        Exited(false), CombineWithOuterScope(CombineWithOuterScope)
+    {
+      SemaRef.CurrentInstantiationScope = this;
+    }
+
+    ~LocalInstantiationScope() {
+      Exit();
+    }
+
+    /// \brief Exit this local instantiation scope early.
+    void Exit() {
+      if (Exited)
+        return;
+      
+      SemaRef.CurrentInstantiationScope = Outer;
+      Exited = true;
+    }
+
+    Decl *getInstantiationOf(const Decl *D);
+
+    VarDecl *getInstantiationOf(const VarDecl *Var) {
+      return cast<VarDecl>(getInstantiationOf(cast<Decl>(Var)));
+    }
+
+    ParmVarDecl *getInstantiationOf(const ParmVarDecl *Var) {
+      return cast<ParmVarDecl>(getInstantiationOf(cast<Decl>(Var)));
+    }
+
+    NonTypeTemplateParmDecl *getInstantiationOf(
+                                          const NonTypeTemplateParmDecl *Var) {
+      return cast<NonTypeTemplateParmDecl>(getInstantiationOf(cast<Decl>(Var)));
+    }
+
+    void InstantiatedLocal(const Decl *D, Decl *Inst);
+  };
 }
 
 #endif // LLVM_CLANG_SEMA_TEMPLATE_H

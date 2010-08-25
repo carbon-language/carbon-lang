@@ -15,6 +15,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
+#include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
@@ -36,6 +37,7 @@
 #include <algorithm>
 
 using namespace clang;
+using namespace sema;
 
 namespace {
   class UnqualUsingEntry {
@@ -287,6 +289,22 @@ void LookupResult::configure() {
     }
   }
 }
+
+#ifndef NDEBUG
+void LookupResult::sanity() const {
+  assert(ResultKind != NotFound || Decls.size() == 0);
+  assert(ResultKind != Found || Decls.size() == 1);
+  assert(ResultKind != FoundOverloaded || Decls.size() > 1 ||
+         (Decls.size() == 1 &&
+          isa<FunctionTemplateDecl>((*begin())->getUnderlyingDecl())));
+  assert(ResultKind != FoundUnresolvedValue || sanityCheckUnresolved());
+  assert(ResultKind != Ambiguous || Decls.size() > 1 ||
+         (Decls.size() == 1 && Ambiguity == AmbiguousBaseSubobjects));
+  assert((Paths != NULL) == (ResultKind == Ambiguous &&
+                             (Ambiguity == AmbiguousBaseSubobjectTypes ||
+                              Ambiguity == AmbiguousBaseSubobjects)));
+}
+#endif
 
 // Necessary because CXXBasePaths is not complete in Sema.h
 void LookupResult::deletePaths(CXXBasePaths *Paths) {
@@ -637,7 +655,7 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
     // result), perform template argument deduction and place the 
     // specialization into the result set. We do this to avoid forcing all
     // callers to perform special deduction for conversion functions.
-    Sema::TemplateDeductionInfo Info(R.getSema().Context, R.getNameLoc());
+    TemplateDeductionInfo Info(R.getSema().Context, R.getNameLoc());
     FunctionDecl *Specialization = 0;
     
     const FunctionProtoType *ConvProto        

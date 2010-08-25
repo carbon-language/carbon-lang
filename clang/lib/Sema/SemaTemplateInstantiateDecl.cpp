@@ -677,7 +677,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   // Create a local instantiation scope for this class template, which
   // will contain the instantiations of the template parameters.
-  Sema::LocalInstantiationScope Scope(SemaRef);
+  LocalInstantiationScope Scope(SemaRef);
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams)
@@ -864,7 +864,7 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   // will contain the instantiations of the template parameters and then get
   // merged with the local instantiation scope for the function template 
   // itself.
-  Sema::LocalInstantiationScope Scope(SemaRef);
+  LocalInstantiationScope Scope(SemaRef);
 
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
@@ -988,7 +988,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     Owner->isFunctionOrMethod() ||
     !(isa<Decl>(Owner) && 
       cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
-  Sema::LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
+  LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   TypeSourceInfo *TInfo = D->getTypeSourceInfo();
@@ -1237,7 +1237,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   bool MergeWithParentScope = (TemplateParams != 0) ||
     !(isa<Decl>(Owner) && 
       cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
-  Sema::LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
+  LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   TypeSourceInfo *TInfo = D->getTypeSourceInfo();
@@ -1508,7 +1508,7 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
   {
     // Perform the actual substitution of template parameters within a new,
     // local instantiation scope.
-    Sema::LocalInstantiationScope Scope(SemaRef);
+    LocalInstantiationScope Scope(SemaRef);
     InstParams = SubstTemplateParams(TempParams);
     if (!InstParams)
       return NULL;
@@ -1735,7 +1735,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   // Create a local instantiation scope for this class template partial
   // specialization, which will contain the instantiations of the template
   // parameters.
-  Sema::LocalInstantiationScope Scope(SemaRef);
+  LocalInstantiationScope Scope(SemaRef);
   
   // Substitute into the template parameters of the class template partial
   // specialization.

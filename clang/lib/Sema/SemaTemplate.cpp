@@ -13,6 +13,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/Template.h"
+#include "clang/Sema/TemplateDeduction.h"
 #include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -25,6 +26,7 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
+using namespace sema;
 
 /// \brief Determine whether the declaration found is acceptable as the name
 /// of a template and, if so, return that template declaration. Otherwise,

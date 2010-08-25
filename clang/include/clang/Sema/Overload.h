@@ -114,7 +114,8 @@ namespace clang {
   /// specified as separate members (rather than in an array) so that
   /// we can keep the size of a standard conversion sequence to a
   /// single word.
-  struct StandardConversionSequence {
+  class StandardConversionSequence {
+  public:
     /// First -- The first conversion can be an lvalue-to-rvalue
     /// conversion, array-to-pointer conversion, or
     /// function-to-pointer conversion.
@@ -324,7 +325,8 @@ namespace clang {
   /// sequence, which may be a standard conversion sequence
   /// (C++ 13.3.3.1.1), user-defined conversion sequence (C++ 13.3.3.1.2),
   /// or an ellipsis conversion sequence (C++ 13.3.3.1.3).
-  struct ImplicitConversionSequence {
+  class ImplicitConversionSequence {
+  public:
     /// Kind - The kind of implicit conversion sequence. BadConversion
     /// specifies that there is no conversion from the source type to
     /// the target type.  AmbiguousConversion represents the unique

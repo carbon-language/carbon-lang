@@ -567,19 +567,11 @@ private:
   void configure();
 
   // Sanity checks.
-  void sanity() const {
-    assert(ResultKind != NotFound || Decls.size() == 0);
-    assert(ResultKind != Found || Decls.size() == 1);
-    assert(ResultKind != FoundOverloaded || Decls.size() > 1 ||
-           (Decls.size() == 1 &&
-            isa<FunctionTemplateDecl>((*begin())->getUnderlyingDecl())));
-    assert(ResultKind != FoundUnresolvedValue || sanityCheckUnresolved());
-    assert(ResultKind != Ambiguous || Decls.size() > 1 ||
-           (Decls.size() == 1 && Ambiguity == AmbiguousBaseSubobjects));
-    assert((Paths != NULL) == (ResultKind == Ambiguous &&
-                               (Ambiguity == AmbiguousBaseSubobjectTypes ||
-                                Ambiguity == AmbiguousBaseSubobjects)));
-  }
+#ifndef NDEBUG
+  void sanity() const;
+#else
+  void sanity() const {}
+#endif
 
   bool sanityCheckUnresolved() const {
     for (iterator I = begin(), E = end(); I != E; ++I)

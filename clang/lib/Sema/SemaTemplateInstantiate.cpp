@@ -15,6 +15,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Template.h"
+#include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -22,6 +23,7 @@
 #include "clang/Basic/LangOptions.h"
 
 using namespace clang;
+using namespace sema;
 
 //===----------------------------------------------------------------------===/
 // Template Instantiation Support
@@ -866,7 +868,7 @@ QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                         FunctionProtoTypeLoc TL,
                                                           QualType ObjectType) {
   // We need a local instantiation scope for this function prototype.
-  Sema::LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
+  LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
   return inherited::TransformFunctionProtoType(TLB, TL, ObjectType);
 }
 
@@ -1205,7 +1207,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // instantiation scope with the enclosing scope. Otherwise, every
   // instantiation of a class has its own local instantiation scope.
   bool MergeWithParentScope = !Instantiation->isDefinedOutsideFunctionOrMethod();
-  Sema::LocalInstantiationScope Scope(*this, MergeWithParentScope);
+  LocalInstantiationScope Scope(*this, MergeWithParentScope);
 
   // Pull attributes from the pattern onto the instantiation.
   InstantiateAttrs(TemplateArgs, Pattern, Instantiation);
@@ -1637,7 +1639,7 @@ bool Sema::Subst(const TemplateArgumentLoc &Input, TemplateArgumentLoc &Output,
   return Instantiator.TransformTemplateArgument(Input, Output);
 }
 
-Decl *Sema::LocalInstantiationScope::getInstantiationOf(const Decl *D) {
+Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
   for (LocalInstantiationScope *Current = this; Current; 
        Current = Current->Outer) {
     // Check if we found something within this scope.
@@ -1656,8 +1658,7 @@ Decl *Sema::LocalInstantiationScope::getInstantiationOf(const Decl *D) {
   return 0;
 }
 
-void Sema::LocalInstantiationScope::InstantiatedLocal(const Decl *D, 
-                                                      Decl *Inst) {
+void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
   Decl *&Stored = LocalDecls[D];
   assert((!Stored || Stored == Inst)&& "Already instantiated this local");
   Stored = Inst;

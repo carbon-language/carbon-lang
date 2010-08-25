@@ -15,6 +15,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Template.h"
+#include "clang/Sema/TemplateDeduction.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ASTContext.h"
@@ -29,6 +30,7 @@
 #include <algorithm>
 
 namespace clang {
+using namespace sema;
 
 static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                  bool InOverloadResolution,
@@ -327,7 +329,7 @@ namespace {
 OverloadCandidate::DeductionFailureInfo
 static MakeDeductionFailureInfo(ASTContext &Context,
                                 Sema::TemplateDeductionResult TDK,
-                                Sema::TemplateDeductionInfo &Info) {
+                                TemplateDeductionInfo &Info) {
   OverloadCandidate::DeductionFailureInfo Result;
   Result.Result = static_cast<unsigned>(TDK);
   Result.Data = 0;

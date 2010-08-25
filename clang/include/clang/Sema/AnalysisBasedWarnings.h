@@ -14,11 +14,13 @@
 #ifndef LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 #define LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 
+#include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 
+class FunctionDecl;
 class Sema;
 
 namespace sema {

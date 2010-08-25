@@ -16,16 +16,19 @@
 #define LLVM_CLANG_SEMA_SEMA_H
 
 #include "clang/Sema/Action.h"
-#include "clang/Sema/IdentifierResolver.h"
-#include "clang/Sema/CodeCompleteConsumer.h"
-#include "clang/Sema/ObjCMethodList.h"
-#include "clang/Sema/Overload.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/Sema/IdentifierResolver.h"
+#include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/SemaDiagnostic.h"
-#include "llvm/ADT/SmallVector.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/DeclarationName.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include <deque>
 #include <string>
 
@@ -40,13 +43,19 @@ namespace clang {
   class ArrayType;
   class CXXBasePath;
   class CXXBasePaths;
+  class CXXConstructorDecl;
+  class CXXConversionDecl;
+  class CXXDestructorDecl;
   class CXXFieldCollector;
+  class CXXMethodDecl;
   class CXXTemporary;
   class CXXTryStmt;
   class CallExpr;
   class ClassTemplateDecl;
   class ClassTemplatePartialSpecializationDecl;
+  class ClassTemplateSpecializationDecl;
   class Decl;
+  class DeclAccessPair;
   class DeclContext;
   class DeclRefExpr;
   class DeclSpec;
@@ -55,8 +64,10 @@ namespace clang {
   class Expr;
   class ExtVectorType;
   class ExternalSemaSource;
+  class FriendDecl;
   class FunctionDecl;
   class FunctionProtoType;
+  class ImplicitConversionSequence;
   class InitListExpr;
   class InitializationKind;
   class InitializationSequence;
@@ -64,6 +75,7 @@ namespace clang {
   class IntegerLiteral;
   class LabelStmt;
   class LangOptions;
+  class LocalInstantiationScope;
   class LookupResult;
   class MultiLevelTemplateArgumentList;
   class NamedDecl;
@@ -79,17 +91,20 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
   class ObjCProtocolDecl;
+  class OverloadCandidateSet;
   class ParenListExpr;
   class ParmVarDecl;
   class Preprocessor;
   class PseudoDestructorTypeStorage;
   class QualType;
+  class StandardConversionSequence;
   class Stmt;
   class StringLiteral;
   class SwitchStmt;
   class TargetAttributesSema;
   class TemplateArgument;
   class TemplateArgumentList;
+  class TemplateArgumentListBuilder;
   class TemplateArgumentLoc;
   class TemplateDecl;
   class TemplateParameterList;
@@ -102,6 +117,11 @@ namespace clang {
   class UnresolvedMemberExpr;
   class VarDecl;
   class VisibleDeclConsumer;
+
+namespace sema {
+  class AccessedEntity;
+  class TemplateDeductionInfo;
+}  
 
 /// \brief Retains information about a function, method, or block that is
 /// currently being parsed.
@@ -942,14 +962,14 @@ public:
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
-                                               DeclSpec &DS);
+                                           DeclSpec &DS);
 
   virtual Decl *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
-                                                AccessSpecifier AS,
-                                                RecordDecl *Record);
+                                            AccessSpecifier AS,
+                                            RecordDecl *Record);
 
   bool isAcceptableTagRedeclaration(const TagDecl *Previous,
-                                    TagDecl::TagKind NewTag,
+                                    TagTypeKind NewTag,
                                     SourceLocation NewTagLoc,
                                     const IdentifierInfo &Name);
 
@@ -3285,93 +3305,10 @@ public:
     TDK_FailedOverloadResolution
   };
 
-  /// \brief Provides information about an attempted template argument
-  /// deduction, whose success or failure was described by a
-  /// TemplateDeductionResult value.
-  class TemplateDeductionInfo {
-    /// \brief The context in which the template arguments are stored.
-    ASTContext &Context;
-
-    /// \brief The deduced template argument list.
-    ///
-    TemplateArgumentList *Deduced;
-
-    /// \brief The source location at which template argument
-    /// deduction is occurring.
-    SourceLocation Loc;
-
-    // do not implement these
-    TemplateDeductionInfo(const TemplateDeductionInfo&);
-    TemplateDeductionInfo &operator=(const TemplateDeductionInfo&);
-
-  public:
-    TemplateDeductionInfo(ASTContext &Context, SourceLocation Loc)
-      : Context(Context), Deduced(0), Loc(Loc) { }
-
-    ~TemplateDeductionInfo() {
-      // FIXME: if (Deduced) Deduced->Destroy(Context);
-    }
-
-    /// \brief Returns the location at which template argument is
-    /// occuring.
-    SourceLocation getLocation() const {
-      return Loc;
-    }
-
-    /// \brief Take ownership of the deduced template argument list.
-    TemplateArgumentList *take() {
-      TemplateArgumentList *Result = Deduced;
-      Deduced = 0;
-      return Result;
-    }
-
-    /// \brief Provide a new template argument list that contains the
-    /// results of template argument deduction.
-    void reset(TemplateArgumentList *NewDeduced) {
-      // FIXME: if (Deduced) Deduced->Destroy(Context);
-      Deduced = NewDeduced;
-    }
-
-    /// \brief The template parameter to which a template argument
-    /// deduction failure refers.
-    ///
-    /// Depending on the result of template argument deduction, this
-    /// template parameter may have different meanings:
-    ///
-    ///   TDK_Incomplete: this is the first template parameter whose
-    ///   corresponding template argument was not deduced.
-    ///
-    ///   TDK_Inconsistent: this is the template parameter for which
-    ///   two different template argument values were deduced.
-    TemplateParameter Param;
-
-    /// \brief The first template argument to which the template
-    /// argument deduction failure refers.
-    ///
-    /// Depending on the result of the template argument deduction,
-    /// this template argument may have different meanings:
-    ///
-    ///   TDK_Inconsistent: this argument is the first value deduced
-    ///   for the corresponding template parameter.
-    ///
-    ///   TDK_SubstitutionFailure: this argument is the template
-    ///   argument we were instantiating when we encountered an error.
-    ///
-    ///   TDK_NonDeducedMismatch: this is the template argument
-    ///   provided in the source code.
-    TemplateArgument FirstArg;
-
-    /// \brief The second template argument to which the template
-    /// argument deduction failure refers.
-    ///
-    /// FIXME: Finish documenting this.
-    TemplateArgument SecondArg;
-  };
-
   TemplateDeductionResult
   DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
                           const TemplateArgumentList &TemplateArgs,
-                          TemplateDeductionInfo &Info);
+                          sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   SubstituteExplicitTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
@@ -3379,40 +3316,40 @@ public:
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                  llvm::SmallVectorImpl<QualType> &ParamTypes,
                                       QualType *FunctionType,
-                                      TemplateDeductionInfo &Info);
+                                      sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                   unsigned NumExplicitlySpecified,
                                   FunctionDecl *&Specialization,
-                                  TemplateDeductionInfo &Info);
+                                  sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           const TemplateArgumentListInfo *ExplicitTemplateArgs,
                           Expr **Args, unsigned NumArgs,
                           FunctionDecl *&Specialization,
-                          TemplateDeductionInfo &Info);
+                          sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           const TemplateArgumentListInfo *ExplicitTemplateArgs,
                           QualType ArgFunctionType,
                           FunctionDecl *&Specialization,
-                          TemplateDeductionInfo &Info);
+                          sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           QualType ToType,
                           CXXConversionDecl *&Specialization,
-                          TemplateDeductionInfo &Info);
+                          sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           const TemplateArgumentListInfo *ExplicitTemplateArgs,
                           FunctionDecl *&Specialization,
-                          TemplateDeductionInfo &Info);
+                          sema::TemplateDeductionInfo &Info);
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
@@ -3726,88 +3663,6 @@ public:
     bool hasErrorOccurred() const {
       return SemaRef.getDiagnostics().getNumErrors() > PrevErrors;
     }
-  };
-
-  /// \brief A stack-allocated class that identifies which local
-  /// variable declaration instantiations are present in this scope.
-  ///
-  /// A new instance of this class type will be created whenever we
-  /// instantiate a new function declaration, which will have its own
-  /// set of parameter declarations.
-  class LocalInstantiationScope {
-    /// \brief Reference to the semantic analysis that is performing
-    /// this template instantiation.
-    Sema &SemaRef;
-
-    /// \brief A mapping from local declarations that occur
-    /// within a template to their instantiations.
-    ///
-    /// This mapping is used during instantiation to keep track of,
-    /// e.g., function parameter and variable declarations. For example,
-    /// given:
-    ///
-    /// \code
-    ///   template<typename T> T add(T x, T y) { return x + y; }
-    /// \endcode
-    ///
-    /// when we instantiate add<int>, we will introduce a mapping from
-    /// the ParmVarDecl for 'x' that occurs in the template to the
-    /// instantiated ParmVarDecl for 'x'.
-    llvm::DenseMap<const Decl *, Decl *> LocalDecls;
-
-    /// \brief The outer scope, which contains local variable
-    /// definitions from some other instantiation (that may not be
-    /// relevant to this particular scope).
-    LocalInstantiationScope *Outer;
-
-    /// \brief Whether we have already exited this scope.
-    bool Exited;
-
-    /// \brief Whether to combine this scope with the outer scope, such that
-    /// lookup will search our outer scope.
-    bool CombineWithOuterScope;
-    
-    // This class is non-copyable
-    LocalInstantiationScope(const LocalInstantiationScope &);
-    LocalInstantiationScope &operator=(const LocalInstantiationScope &);
-
-  public:
-    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
-      : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope),
-        Exited(false), CombineWithOuterScope(CombineWithOuterScope)
-    {
-      SemaRef.CurrentInstantiationScope = this;
-    }
-
-    ~LocalInstantiationScope() {
-      Exit();
-    }
-
-    /// \brief Exit this local instantiation scope early.
-    void Exit() {
-      if (Exited)
-        return;
-      
-      SemaRef.CurrentInstantiationScope = Outer;
-      Exited = true;
-    }
-
-    Decl *getInstantiationOf(const Decl *D);
-
-    VarDecl *getInstantiationOf(const VarDecl *Var) {
-      return cast<VarDecl>(getInstantiationOf(cast<Decl>(Var)));
-    }
-
-    ParmVarDecl *getInstantiationOf(const ParmVarDecl *Var) {
-      return cast<ParmVarDecl>(getInstantiationOf(cast<Decl>(Var)));
-    }
-
-    NonTypeTemplateParmDecl *getInstantiationOf(
-                                          const NonTypeTemplateParmDecl *Var) {
-      return cast<NonTypeTemplateParmDecl>(getInstantiationOf(cast<Decl>(Var)));
-    }
-
-    void InstantiatedLocal(const Decl *D, Decl *Inst);
   };
 
   /// \brief The current instantiation scope used to store local
