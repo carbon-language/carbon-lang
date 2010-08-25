@@ -141,10 +141,11 @@ void WinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
   // fragment. Instead, we should mark the symbol as pointing into the data
   // fragment if it exists, otherwise we should just queue the label and set its
   // fragment pointer when we emit the next fragment.
-  MCDataFragment *F = getOrCreateDataFragment();
+  MCDataFragment *DF = getOrCreateDataFragment();
+
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
-  SD.setFragment(F);
-  SD.setOffset(F->getContents().size());
+  SD.setFragment(DF);
+  SD.setOffset(DF->getContents().size());
 }
 
 void WinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
