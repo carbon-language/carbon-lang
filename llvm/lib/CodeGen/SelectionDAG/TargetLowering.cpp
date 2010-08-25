@@ -869,7 +869,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
   // If there is a wider vector type with the same element type as this one,
   // we should widen to that legal vector type.  This handles things like
   // <2 x float> -> <4 x float>.
-  if (NumElts != 1 && getTypeAction(Context, VT) == Promote) {
+  if (NumElts != 1 && getTypeAction(VT) == Promote) {
     RegisterVT = getTypeToTransformTo(Context, VT);
     if (isTypeLegal(RegisterVT)) {
       IntermediateVT = RegisterVT;

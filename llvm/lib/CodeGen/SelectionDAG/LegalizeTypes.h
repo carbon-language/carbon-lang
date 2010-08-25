@@ -75,7 +75,7 @@ private:
 
   /// getTypeAction - Return how we should legalize values of this type.
   LegalizeAction getTypeAction(EVT VT) const {
-    switch (ValueTypeActions.getTypeAction(*DAG.getContext(), VT)) {
+    switch (ValueTypeActions.getTypeAction(VT)) {
     default:
       assert(false && "Unknown legalize action!");
     case TargetLowering::Legal:
@@ -108,8 +108,7 @@ private:
 
   /// isTypeLegal - Return true if this type is legal on this target.
   bool isTypeLegal(EVT VT) const {
-    return (ValueTypeActions.getTypeAction(*DAG.getContext(), VT) == 
-            TargetLowering::Legal);
+    return ValueTypeActions.getTypeAction(VT) == TargetLowering::Legal;
   }
 
   /// IgnoreNodeResults - Pretend all of this node's results are legal.

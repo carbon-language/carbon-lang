@@ -251,11 +251,6 @@ public:
       std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
     }
     
-    /// FIXME: This Context argument is now dead, zap it.
-    LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
-      return getTypeAction(VT);
-    }
-    
     LegalizeAction getTypeAction(EVT VT) const {
       if (!VT.isExtended())
         return getTypeAction(VT.getSimpleVT());
@@ -281,8 +276,8 @@ public:
   /// it is already legal (return 'Legal') or we need to promote it to a larger
   /// type (return 'Promote'), or we need to expand it into multiple registers
   /// of smaller integer type (return 'Expand').  'Custom' is not an option.
-  LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
-    return ValueTypeActions.getTypeAction(Context, VT);
+  LegalizeAction getTypeAction(EVT VT) const {
+    return ValueTypeActions.getTypeAction(VT);
   }
 
   /// getTypeToTransformTo - For types supported by the target, this is an
@@ -296,7 +291,7 @@ public:
       assert((unsigned)VT.getSimpleVT().SimpleTy <
              array_lengthof(TransformToType));
       EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
-      assert(getTypeAction(Context, NVT) != Promote &&
+      assert(getTypeAction(NVT) != Promote &&
              "Promote may not follow Expand or Promote");
       return NVT;
     }
@@ -311,17 +306,16 @@ public:
           EltVT : EVT::getVectorVT(Context, EltVT, NumElts / 2);
       }
       // Promote to a power of two size, avoiding multi-step promotion.
-      return getTypeAction(Context, NVT) == Promote ?
+      return getTypeAction(NVT) == Promote ?
         getTypeToTransformTo(Context, NVT) : NVT;
     } else if (VT.isInteger()) {
       EVT NVT = VT.getRoundIntegerType(Context);
-      if (NVT == VT)
-        // Size is a power of two - expand to half the size.
+      if (NVT == VT)      // Size is a power of two - expand to half the size.
         return EVT::getIntegerVT(Context, VT.getSizeInBits() / 2);
-      else
-        // Promote to a power of two size, avoiding multi-step promotion.
-        return getTypeAction(Context, NVT) == Promote ?
-          getTypeToTransformTo(Context, NVT) : NVT;
+      
+      // Promote to a power of two size, avoiding multi-step promotion.
+      return getTypeAction(NVT) == Promote ?
+        getTypeToTransformTo(Context, NVT) : NVT;
     }
     assert(0 && "Unsupported extended type!");
     return MVT(MVT::Other); // Not reached
@@ -334,7 +328,7 @@ public:
   EVT getTypeToExpandTo(LLVMContext &Context, EVT VT) const {
     assert(!VT.isVector());
     while (true) {
-      switch (getTypeAction(Context, VT)) {
+      switch (getTypeAction(VT)) {
       case Legal:
         return VT;
       case Expand:
