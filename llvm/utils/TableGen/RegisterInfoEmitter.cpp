@@ -119,16 +119,6 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
   OS << "} // End llvm namespace \n";
 }
 
-bool isSubRegisterClass(const CodeGenRegisterClass &RC,
-                        std::set<Record*> &RegSet) {
-  for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
-    Record *Reg = RC.Elements[i];
-    if (!RegSet.count(Reg))
-      return false;
-  }
-  return true;
-}
-
 static void addSuperReg(Record *R, Record *S,
                   std::map<Record*, std::set<Record*>, LessRecord> &SubRegs,
                   std::map<Record*, std::set<Record*>, LessRecord> &SuperRegs,
@@ -498,12 +488,6 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       // Give the register class a legal C name if it's anonymous.
       std::string Name = RC.TheDef->getName();
 
-      std::set<Record*> RegSet;
-      for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
-        Record *Reg = RC.Elements[i];
-        RegSet.insert(Reg);
-      }
-
       OS << "  // " << Name 
          << " Register Class sub-classes...\n"
          << "  static const TargetRegisterClass* const "
@@ -513,21 +497,9 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       for (unsigned rc2 = 0, e2 = RegisterClasses.size(); rc2 != e2; ++rc2) {
         const CodeGenRegisterClass &RC2 = RegisterClasses[rc2];
 
-        // RC2 is a sub-class of RC if it is a valid replacement for any
-        // instruction operand where an RC register is required. It must satisfy
-        // these conditions:
-        //
-        // 1. All RC2 registers are also in RC.
-        // 2. The RC2 spill size must not be smaller that the RC spill size.
-        // 3. RC2 spill alignment must be compatible with RC.
-        //
         // Sub-classes are used to determine if a virtual register can be used
         // as an instruction operand, or if it must be copied first.
-
-        if (rc == rc2 || RC2.Elements.size() > RC.Elements.size() ||
-            (RC.SpillAlignment && RC2.SpillAlignment % RC.SpillAlignment) ||
-            RC.SpillSize > RC2.SpillSize || !isSubRegisterClass(RC2, RegSet))
-          continue;
+        if (rc == rc2 || !RC.hasSubClass(&RC2)) continue;
       
         if (!Empty) OS << ", ";
         OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
