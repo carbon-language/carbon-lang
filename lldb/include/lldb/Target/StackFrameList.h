@@ -29,7 +29,6 @@ public:
     //------------------------------------------------------------------
     StackFrameList (Thread &thread, bool show_inline_frames);
 
-    virtual
     ~StackFrameList();
 
     uint32_t
