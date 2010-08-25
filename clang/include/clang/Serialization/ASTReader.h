@@ -439,9 +439,6 @@ private:
   /// \brief The set of Sema declaration references stored in the chain.
   llvm::SmallVector<uint64_t, 4> SemaDeclRefs;
 
-  /// \brief The set of Objective-C category definitions stored in the the chain
-  llvm::SmallVector<uint64_t, 4> ObjCCategoryImpls;
-
   /// \brief The original file name that was used to build the primary AST file,
   /// which may have been modified for relocatable-pch support.
   std::string OriginalFileName;
