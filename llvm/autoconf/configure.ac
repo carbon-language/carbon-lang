@@ -1269,9 +1269,6 @@ fi
 dnl Try to find Darwin specific crash reporting library.
 AC_CHECK_HEADERS([CrashReporterClient.h])
 
-dnl Try to find Darwin specific linker-section library.
-AC_CHECK_HEADERS([mach-o/getsect.h])
-
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 7: Check for types and structures
@@ -1350,23 +1347,6 @@ AC_LINK_IFELSE(
   AC_MSG_RESULT(no)
   AC_DEFINE(LLVM_MULTITHREADED, 0, Build multithreading support into LLVM)
   AC_MSG_WARN([LLVM will be built thread-unsafe because atomic builtins are missing]))
-
-dnl Check for Darwin-specific getsect().
-AC_MSG_CHECKING(for getsect())
-AC_COMPILE_IFELSE(
-  AC_LANG_SOURCE(
-    [[#include <mach-o/getsect.h>
-      int main() {
-        unsigned long p;
-        return (int)getsect("__DATA","__pass_info", &p);
-      }
-    ]]),
-  AC_MSG_RESULT(yes)
-    AC_DEFINE(HAVE_GETSECT, 1, Have Darwin getsect() support),
-  AC_MSG_RESULT(no)
-    AC_DEFINE(HAVE_GETSECT, 1, Have Darwin getsect() support)
-)
-
 
 dnl===-----------------------------------------------------------------------===
 dnl===
