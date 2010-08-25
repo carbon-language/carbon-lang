@@ -79,7 +79,7 @@ extern int ibaction_test(void);
 }
 @end
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:77:4 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:80:4 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Identifier: "Foo" [1:12 - 1:15] ObjCInterfaceDecl=Foo:1:12
