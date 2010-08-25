@@ -28,6 +28,12 @@
 }
 
 {
+   We don't care if as leaks
+   Memcheck:Leak
+   obj:/usr/bin/as
+}
+
+{
    We don't care if python leaks
    Memcheck:Leak
    fun:malloc

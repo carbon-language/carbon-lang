@@ -27,6 +27,12 @@
 }
 
 {
+   We don't care if as leaks
+   Memcheck:Leak
+   obj:/usr/bin/as
+}
+
+{
    We don't care if grep leaks
    Memcheck:Leak
    obj:/bin/grep
