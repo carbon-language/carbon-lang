@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"

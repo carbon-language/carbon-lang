@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Expr.h"

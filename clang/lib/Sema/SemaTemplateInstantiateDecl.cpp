@@ -9,7 +9,7 @@
 //  This file implements C++ template instantiation for declarations.
 //
 //===----------------------------------------------------------------------===/
-#include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Template.h"
 #include "clang/AST/ASTConsumer.h"

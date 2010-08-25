@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"

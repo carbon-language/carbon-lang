@@ -19,7 +19,6 @@
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
-#include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/OperationKinds.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
@@ -43,6 +42,7 @@ namespace clang {
   class ArrayType;
   class CXXBasePath;
   class CXXBasePaths;
+  typedef llvm::SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
   class CXXConstructorDecl;
   class CXXConversionDecl;
   class CXXDestructorDecl;

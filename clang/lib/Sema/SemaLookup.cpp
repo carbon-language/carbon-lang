@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/Initialization.h"
