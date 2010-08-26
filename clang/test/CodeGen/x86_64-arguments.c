@@ -233,4 +233,9 @@ void f33(va_list X) {
   va_arg(X, struct f33s);
 }
 
+typedef unsigned long long v1i64 __attribute__((__vector_size__(8)));
+
+// rdar://8359248
+// CHECK: define i64 @f34(i64 %arg.coerce)
+v1i64 f34(v1i64 arg) { return arg; }
 
