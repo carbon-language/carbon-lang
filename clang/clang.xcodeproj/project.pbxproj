@@ -760,6 +760,7 @@
 		BF9FEE341225E8B1003A8B71 /* MicrosoftCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MicrosoftCXXABI.cpp; path = lib/CodeGen/MicrosoftCXXABI.cpp; sourceTree = "<group>"; };
 		BF9FEE361225E8CF003A8B71 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = lib/CodeGen/README.txt; sourceTree = "<group>"; };
 		BF9FEE371225E925003A8B71 /* BoostConAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BoostConAction.cpp; path = lib/Frontend/BoostConAction.cpp; sourceTree = "<group>"; };
+		BF9FEE451225EA24003A8B71 /* DelayedDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DelayedDiagnostic.h; path = clang/Sema/DelayedDiagnostic.h; sourceTree = "<group>"; };
 		BFE2F67A11DA95590007EDC0 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		BFE2F67C11DA95590007EDC0 /* .dir */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .dir; sourceTree = "<group>"; };
 		BFE2F67D11DA95590007EDC0 /* DeltaTree.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = DeltaTree.d; sourceTree = "<group>"; };
@@ -1514,6 +1515,7 @@
 		DE67E7260C02108300F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				BF9FEE451225EA24003A8B71 /* DelayedDiagnostic.h */,
 				BF9FED781225E041003A8B71 /* SemaInternal.h */,
 				BF9FED771225E032003A8B71 /* ObjCMethodList.h */,
 				BF9FED731225E005003A8B71 /* Ownership.h */,
