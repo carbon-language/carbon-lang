@@ -147,21 +147,10 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
 /// current values into those specified by VMap.
 ///
 void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap) {
-  // Remap operands.
   for (User::op_iterator op = I->op_begin(), E = I->op_end(); op != E; ++op) {
     Value *V = MapValue(*op, VMap);
     assert(V && "Referenced value not in value map!");
     *op = V;
   }
-
-  // Remap attached metadata.
-  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
-  I->getAllMetadata(MDs);
-  for (SmallVectorImpl<std::pair<unsigned, MDNode *> >::iterator
-       MI = MDs.begin(), ME = MDs.end(); MI != ME; ++MI) {
-    Value *Old = MI->second;
-    Value *New = MapValue(Old, VMap);
-    if (New != Old)
-      I->setMetadata(MI->first, cast<MDNode>(New));
-  }
 }
+
