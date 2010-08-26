@@ -1,7 +1,5 @@
-; RUN: true
-; llc < %s -march=x86-64 
-; RUN: true
-;llc < %s -march=x86-64 -disable-mmx
+; RUN: llc < %s -march=x86-64 
+; RUN: llc < %s -march=x86-64 -disable-mmx
 
 define <8 x i32> @a(<8 x i16> %a) nounwind {
   %c = sext <8 x i16> %a to <8 x i32>
