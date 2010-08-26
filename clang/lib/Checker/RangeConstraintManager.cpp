@@ -83,7 +83,6 @@ public:
   typedef PrimRangeSet::iterator iterator;
 
   RangeSet(PrimRangeSet RS) : ranges(RS) {}
-  RangeSet(Factory& F) : ranges(F.GetEmptySet()) {}
 
   iterator begin() const { return ranges.begin(); }
   iterator end() const { return ranges.end(); }
