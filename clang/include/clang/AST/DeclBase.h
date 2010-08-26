@@ -642,10 +642,13 @@ public:
   virtual void print(llvm::raw_ostream &OS) const;
 };
 
-class DeclContextLookupResult : public std::pair<NamedDecl**,NamedDecl**> {
+class DeclContextLookupResult
+  : public std::pair<NamedDecl**,NamedDecl**> {
 public:
-  DeclContextLookupResult(NamedDecl **I, NamedDecl **E) : pair(I, E) {}
-  DeclContextLookupResult() : pair() {}
+  DeclContextLookupResult(NamedDecl **I, NamedDecl **E)
+    : std::pair<NamedDecl**,NamedDecl**>(I, E) {}
+  DeclContextLookupResult()
+    : std::pair<NamedDecl**,NamedDecl**>() {}
 
   using pair::operator=;
 };
@@ -654,10 +657,11 @@ class DeclContextLookupConstResult
   : public std::pair<NamedDecl*const*, NamedDecl*const*> {
 public:
   DeclContextLookupConstResult(std::pair<NamedDecl**,NamedDecl**> R)
-    : pair(R) {}
+    : std::pair<NamedDecl*const*, NamedDecl*const*>(R) {}
   DeclContextLookupConstResult(NamedDecl * const *I, NamedDecl * const *E)
-    : pair(I, E) {}
-  DeclContextLookupConstResult() : pair() {}
+    : std::pair<NamedDecl*const*, NamedDecl*const*>(I, E) {}
+  DeclContextLookupConstResult()
+    : std::pair<NamedDecl*const*, NamedDecl*const*>() {}
 
   using pair::operator=;
 };
