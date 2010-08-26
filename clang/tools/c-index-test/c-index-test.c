@@ -195,6 +195,14 @@ static void PrintCursor(CXCursor Cursor) {
         printf(" (unavailable)");
         break;
     }
+    
+    if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
+      CXType T =
+        clang_getCanonicalType(clang_getIBOutletCollectionType(Cursor));
+      CXString S = clang_getTypeKindSpelling(T.kind);
+      printf(" [IBOutletCollection=%s]", clang_getCString(S));
+      clang_disposeString(S);
+    }
   }
 }
 

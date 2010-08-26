@@ -27,7 +27,7 @@ add_clang_library(libclang
   CIndexUSRs.cpp
   CIndexer.cpp
   CXCursor.cpp
-  CXTypes.cpp
+  CXType.cpp
   ../../include/clang-c/Index.h
 )
 

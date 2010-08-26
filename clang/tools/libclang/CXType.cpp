@@ -13,6 +13,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "CXType.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
@@ -85,11 +86,14 @@ static CXTypeKind GetTypeKind(QualType T) {
 #undef TKCASE
 }
 
-static CXType MakeCXType(QualType T, ASTUnit *TU) {
+
+CXType cxtype::MakeCXType(QualType T, ASTUnit *TU) {
   CXTypeKind TK = GetTypeKind(T);
   CXType CT = { TK, { TK == CXType_Invalid ? 0 : T.getAsOpaquePtr(), TU }};
   return CT;
 }
+
+using cxtype::MakeCXType;
 
 static inline QualType GetQualType(CXType CT) {
   return QualType::getFromOpaquePtr(CT.data[0]);

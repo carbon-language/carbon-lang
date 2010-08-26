@@ -98,6 +98,8 @@ MacroInstantiation *getCursorMacroInstantiation(CXCursor C);
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
 Stmt *getCursorStmt(CXCursor Cursor);
+Attr *getCursorAttr(CXCursor Cursor);
+
 ASTContext &getCursorContext(CXCursor Cursor);
 ASTUnit *getCursorASTUnit(CXCursor Cursor);
   

@@ -30,6 +30,7 @@ _clang_equalLocations
 _clang_equalTypes
 _clang_formatDiagnostic
 _clang_getCString
+_clang_getIBOutletCollectionType
 _clang_getCanonicalType
 _clang_getClangVersion
 _clang_getCompletionAvailability

@@ -1304,7 +1304,7 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
 /**
  * @}
  */
-
+    
 /**
  * \defgroup CINDEX_TYPES Type information for CXCursors
  *
@@ -1437,6 +1437,24 @@ CINDEX_LINKAGE CXType clang_getCursorResultType(CXCursor C);
  *  otherwise.
  */
 CINDEX_LINKAGE unsigned clang_isPODType(CXType T);
+
+/**
+ * @}
+ */
+  
+/**
+ * \defgroup CINDEX_TYPES Information for attributes
+ *
+ * @{
+ */
+
+
+/**
+ * \brief For cursors representing an iboutletcollection attribute,
+ *  this function returns the collection element type.
+ *
+ */
+CINDEX_LINKAGE CXType clang_getIBOutletCollectionType(CXCursor);
 
 /**
  * @}

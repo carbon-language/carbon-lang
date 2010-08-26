@@ -14,6 +14,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "CXType.h"
 #include "CXSourceLocation.h"
 #include "CIndexDiagnostic.h"
 
@@ -3053,6 +3054,22 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
   return (D && D->isStatic()) ? 1 : 0;
 }
 
+} // end: extern "C"
+
+//===----------------------------------------------------------------------===//
+// Attribute introspection.
+//===----------------------------------------------------------------------===//
+
+extern "C" {
+CXType clang_getIBOutletCollectionType(CXCursor C) {
+  if (C.kind != CXCursor_IBOutletCollectionAttr)
+    return cxtype::MakeCXType(QualType(), cxcursor::getCursorASTUnit(C));
+  
+  IBOutletCollectionAttr *A =
+    cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(C));
+  
+  return cxtype::MakeCXType(A->getInterface(), cxcursor::getCursorASTUnit(C));  
+}
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//

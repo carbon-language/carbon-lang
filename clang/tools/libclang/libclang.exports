@@ -14,8 +14,8 @@ clang_createIndex
 clang_createTranslationUnit
 clang_createTranslationUnitFromSourceFile
 clang_defaultCodeCompleteOptions
-clang_defaultEditingTranslationUnitOptions
 clang_defaultDiagnosticDisplayOptions
+clang_defaultEditingTranslationUnitOptions
 clang_defaultReparseOptions
 clang_defaultSaveOptions
 clang_disposeCodeCompleteResults
@@ -47,8 +47,8 @@ clang_getCursorLanguage
 clang_getCursorLinkage
 clang_getCursorLocation
 clang_getCursorReferenced
-clang_getCursorSpelling
 clang_getCursorResultType
+clang_getCursorSpelling
 clang_getCursorType
 clang_getCursorUSR
 clang_getDefinitionSpellingAndExtent
@@ -63,6 +63,7 @@ clang_getDiagnosticSpelling
 clang_getFile
 clang_getFileName
 clang_getFileTime
+clang_getIBOutletCollectionType
 clang_getInclusions
 clang_getInstantiationLocation
 clang_getLocation
@@ -88,8 +89,8 @@ clang_isCursorDefinition
 clang_isDeclaration
 clang_isExpression
 clang_isInvalid
-clang_isPreprocessing
 clang_isPODType
+clang_isPreprocessing
 clang_isReference
 clang_isStatement
 clang_isTranslationUnit
