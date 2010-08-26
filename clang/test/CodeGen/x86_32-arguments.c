@@ -218,5 +218,6 @@ void f53(struct s53 x) {}
 typedef unsigned short v2i16 __attribute__((__vector_size__(4)));
 
 // CHECK: define i32 @f54(i32 %arg.coerce)
+// rdar://8359483
 v2i16 f54(v2i16 arg) { return arg+arg; }
 
