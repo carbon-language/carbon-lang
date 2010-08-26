@@ -63,7 +63,6 @@ lldb_private::DisplayThreadInfo
             DisplayFramesForExecutionContext (thread,
                                               interpreter,
                                               strm,
-                                              true,
                                               0,    // Start at first frame
                                               1,    // Number of frames to show
                                               false,// Don't show the frame info since we already displayed most of it above...
@@ -141,7 +140,6 @@ lldb_private::DisplayFramesForExecutionContext
     Thread *thread,
     CommandInterpreter &interpreter,
     Stream& strm,
-    bool ascending,
     uint32_t first_frame,
     uint32_t num_frames,
     bool show_frame_info,
@@ -168,49 +166,33 @@ lldb_private::DisplayFramesForExecutionContext
 
     StackFrameSP frame_sp;
     uint32_t frame_idx = 0;
-
-    if (ascending)
-    {
-        for (frame_idx = first_frame; frame_idx < first_frame + num_frames; ++frame_idx)
-        {
-            frame_sp = thread->GetStackFrameAtIndex (frame_idx);
-            if (frame_sp.get() == NULL)
-                break;
-
-            if (DisplayFrameForExecutionContext (thread,
-                                                 frame_sp.get(),
-                                                 interpreter,
-                                                 strm,
-                                                 show_frame_info,
-                                                 num_frames_with_source > first_frame - frame_idx,
-                                                 source_lines_before,
-                                                 source_lines_after) == false)
-                break;
-
-            ++num_frames_displayed;
-        }
-    }
+    uint32_t last_frame;
+    
+    // Don't let the last frame wrap around...
+    if (num_frames == UINT32_MAX)
+        last_frame = UINT32_MAX;
     else
+        last_frame = first_frame + num_frames;
+    
+    for (frame_idx = first_frame; frame_idx < last_frame; ++frame_idx)
     {
-        for (frame_idx = first_frame + num_frames - 1; frame_idx >= first_frame; --frame_idx)
-        {
-            frame_sp = thread->GetStackFrameAtIndex (frame_idx);
-            if (frame_sp == NULL)
-                break;
+        frame_sp = thread->GetStackFrameAtIndex (frame_idx);
+        if (frame_sp.get() == NULL)
+            break;
 
-            if (DisplayFrameForExecutionContext (thread,
-                                                 frame_sp.get(),
-                                                 interpreter,
-                                                 strm,
-                                                 show_frame_info,
-                                                 num_frames_with_source > first_frame - frame_idx,
-                                                 source_lines_before,
-                                                 source_lines_after) == false)
-                break;
+        if (DisplayFrameForExecutionContext (thread,
+                                             frame_sp.get(),
+                                             interpreter,
+                                             strm,
+                                             show_frame_info,
+                                             num_frames_with_source > first_frame - frame_idx,
+                                             source_lines_before,
+                                             source_lines_after) == false)
+            break;
 
-            ++num_frames_displayed;
-        }
+        ++num_frames_displayed;
     }
+
     strm.IndentLess();
     return num_frames_displayed;
 }
@@ -265,12 +247,87 @@ class CommandObjectThreadBacktrace : public CommandObject
 {
 public:
 
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions () :
+            Options()
+        {
+            // Keep default values of all options in one place: ResetOptionValues ()
+            ResetOptionValues ();
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'c':
+                {
+                    bool success;
+                    int32_t input_count =  Args::StringToSInt32 (option_arg, -1, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid integer value for option '%c'.\n", short_option);
+                    if (input_count < -1)
+                        m_count = UINT32_MAX;
+                    else
+                        m_count = input_count;
+                }
+                break;
+                case 's':
+                {
+                    bool success;
+                    m_start =  Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid integer value for option '%c'.\n", short_option);
+                }
+                break;
+                default:
+                    error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                    break;
+
+            }
+            return error;
+        }
+
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+            m_count = -1;
+            m_start = 0;
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+        uint32_t m_count;
+        uint32_t m_start;
+    };
+
     CommandObjectThreadBacktrace () :
         CommandObject ("thread backtrace",
                        "Shows the stack for one or more threads.",
                        "thread backtrace [<thread-idx>] ...",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
-        m_ascending (true)
+        m_options()
     {
     }
 
@@ -278,6 +335,11 @@ public:
     {
     }
 
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
 
     virtual bool
     Execute
@@ -297,9 +359,8 @@ public:
                 if (DisplayFramesForExecutionContext (exe_ctx.thread,
                                                       interpreter,
                                                       result.GetOutputStream(),
-                                                      m_ascending,
-                                                      0,
-                                                      UINT32_MAX,
+                                                      m_options.m_start,
+                                                      m_options.m_count,
                                                       show_frame_info,
                                                       num_frames_with_source,
                                                       3,
@@ -322,9 +383,16 @@ public:
         return result.Succeeded();
     }
 protected:
-    bool m_ascending;
+    CommandOptions m_options;
 };
 
+lldb::OptionDefinition
+CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL,               0, "<count>", "How many frames to display (-1 for all)"},
+{ LLDB_OPT_SET_1, false, "start",       's', required_argument, NULL, 0, "<start>",       "Where to start the backtrace"},
+{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+};
 
 enum StepScope
 {
@@ -468,7 +536,7 @@ public:
                 thread = process->GetThreadList().GetSelectedThread().get();
                 if (thread == NULL)
                 {
-                    result.AppendError ("no current thread in process");
+                    result.AppendError ("no selected thread in process");
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }

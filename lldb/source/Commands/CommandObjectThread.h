@@ -48,7 +48,6 @@ size_t
 DisplayFramesForExecutionContext (Thread *thread,
                                   CommandInterpreter &interpreter,
                                   Stream& strm,
-                                  bool ascending,
                                   uint32_t first_frame,
                                   uint32_t num_frames,
                                   bool show_frame_info,
