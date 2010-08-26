@@ -28,7 +28,7 @@ class TestUniversal(TestBase):
         self.runCmd("run", RUN_STOPPED)
 
         # Check whether we have a 64-bit process launched.
-        target = self.dbg.GetCurrentTarget()
+        target = self.dbg.GetSelectedTarget()
         process = target.GetProcess()
         self.assertTrue(target.IsValid() and process.IsValid() and
                         self.invoke(process, 'GetAddressByteSize') == 8,
@@ -49,7 +49,7 @@ class TestUniversal(TestBase):
         self.runCmd("run", RUN_STOPPED)
 
         # Check whether we have a 32-bit process launched.
-        target = self.dbg.GetCurrentTarget()
+        target = self.dbg.GetSelectedTarget()
         process = target.GetProcess()
         self.assertTrue(target.IsValid() and process.IsValid() and
                         self.invoke(process, 'GetAddressByteSize') == 4,
