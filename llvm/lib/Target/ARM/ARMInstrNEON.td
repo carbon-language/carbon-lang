@@ -583,6 +583,9 @@ def VST1d16Q_UPD : VST1D4WB<0b0100, "16">;
 def VST1d32Q_UPD : VST1D4WB<0b1000, "32">;
 def VST1d64Q_UPD : VST1D4WB<0b1100, "64">;
 
+def VST1d64QPseudo     : VSTQQPseudo;
+def VST1d64QPseudo_UPD : VSTQQWBPseudo;
+
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs),

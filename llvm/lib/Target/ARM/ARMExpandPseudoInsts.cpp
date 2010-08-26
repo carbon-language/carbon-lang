@@ -229,12 +229,16 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       ExpandVST4(MBBI, ARM::VST4d16, false, SingleSpc); break;
     case ARM::VST4d32Pseudo:
       ExpandVST4(MBBI, ARM::VST4d32, false, SingleSpc); break;
+    case ARM::VST1d64QPseudo:
+      ExpandVST4(MBBI, ARM::VST1d64Q, false, SingleSpc); break;
     case ARM::VST4d8Pseudo_UPD:
       ExpandVST4(MBBI, ARM::VST4d8_UPD, true, SingleSpc); break;
     case ARM::VST4d16Pseudo_UPD:
       ExpandVST4(MBBI, ARM::VST4d16_UPD, true, SingleSpc); break;
     case ARM::VST4d32Pseudo_UPD:
       ExpandVST4(MBBI, ARM::VST4d32_UPD, true, SingleSpc); break;
+    case ARM::VST1d64QPseudo_UPD:
+      ExpandVST4(MBBI, ARM::VST1d64Q_UPD, true, SingleSpc); break;
     case ARM::VST4q8Pseudo_UPD:
       ExpandVST4(MBBI, ARM::VST4q8_UPD, true, EvenDblSpc); break;
     case ARM::VST4q16Pseudo_UPD:
