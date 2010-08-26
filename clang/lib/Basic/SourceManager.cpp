@@ -453,7 +453,7 @@ void SourceManager::ClearPreallocatedSLocEntries() {
 // Methods to create new FileID's and instantiations.
 //===----------------------------------------------------------------------===//
 
-/// createFileID - Create a new fileID for the specified ContentCache and
+/// createFileID - Create a new FileID for the specified ContentCache and
 /// include position.  This works regardless of whether the ContentCache
 /// corresponds to a file or some other input source.
 FileID SourceManager::createFileID(const ContentCache *File,
