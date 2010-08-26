@@ -53,11 +53,7 @@ class TestArrayTypes(TestBase):
             startstr = '(long [6])')
 
     def test_array_types_python(self):
-        """
-        Test 'variable list var_name' on some variables with array types.
-
-        Use the Python APIs from lldb.py.
-        """
+        """Use Python APIs to test variables with array types."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
