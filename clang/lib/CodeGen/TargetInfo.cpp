@@ -590,17 +590,14 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
   }
 
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
-    // On Darwin, some vectors are returned in registers.
+    // On Darwin, some vectors are passed in memory, we handle this by passing
+    // it as an i8/i16/i32/i64.
     if (IsDarwinVectorABI) {
       uint64_t Size = getContext().getTypeSize(Ty);
-      
-       // Always return in register if it fits in a general purpose
-      // register, or if it is 64 bits and has a single element.
       if ((Size == 8 || Size == 16 || Size == 32) ||
           (Size == 64 && VT->getNumElements() == 1))
         return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                             Size));
-      
       return ABIArgInfo::getIndirect(0);
     }
     
