@@ -15,7 +15,6 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Sema/Action.h"
 using namespace clang;
 
 
@@ -85,7 +84,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
     return;
   }
 
-  Action::PragmaPackKind Kind = Action::PPK_Default;
+  Sema::PragmaPackKind Kind = Sema::PPK_Default;
   IdentifierInfo *Name = 0;
   ExprResult Alignment;
   SourceLocation LParenLoc = Tok.getLocation();
@@ -99,13 +98,13 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
   } else if (Tok.is(tok::identifier)) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     if (II->isStr("show")) {
-      Kind = Action::PPK_Show;
+      Kind = Sema::PPK_Show;
       PP.Lex(Tok);
     } else {
       if (II->isStr("push")) {
-        Kind = Action::PPK_Push;
+        Kind = Sema::PPK_Push;
       } else if (II->isStr("pop")) {
-        Kind = Action::PPK_Pop;
+        Kind = Sema::PPK_Pop;
       } else {
         PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_invalid_action);
         return;
@@ -165,7 +164,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
 
 // #pragma 'align' '=' {'native','natural','mac68k','power','reset'}
 // #pragma 'options 'align' '=' {'native','natural','mac68k','power','reset'}
-static void ParseAlignPragma(Action &Actions, Preprocessor &PP, Token &FirstTok,
+static void ParseAlignPragma(Sema &Actions, Preprocessor &PP, Token &FirstTok,
                              bool IsOptions) {
   Token Tok;
 
@@ -192,20 +191,20 @@ static void ParseAlignPragma(Action &Actions, Preprocessor &PP, Token &FirstTok,
     return;
   }
 
-  Action::PragmaOptionsAlignKind Kind = Action::POAK_Natural;
+  Sema::PragmaOptionsAlignKind Kind = Sema::POAK_Natural;
   const IdentifierInfo *II = Tok.getIdentifierInfo();
   if (II->isStr("native"))
-    Kind = Action::POAK_Native;
+    Kind = Sema::POAK_Native;
   else if (II->isStr("natural"))
-    Kind = Action::POAK_Natural;
+    Kind = Sema::POAK_Natural;
   else if (II->isStr("packed"))
-    Kind = Action::POAK_Packed;
+    Kind = Sema::POAK_Packed;
   else if (II->isStr("power"))
-    Kind = Action::POAK_Power;
+    Kind = Sema::POAK_Power;
   else if (II->isStr("mac68k"))
-    Kind = Action::POAK_Mac68k;
+    Kind = Sema::POAK_Mac68k;
   else if (II->isStr("reset"))
-    Kind = Action::POAK_Reset;
+    Kind = Sema::POAK_Reset;
   else {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_align_invalid_option)
       << IsOptions;

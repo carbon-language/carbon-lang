@@ -530,7 +530,7 @@ ExprResult Parser::ParseCXXTypeid() {
     // polymorphic class type until after we've parsed the expression, so
     // we the expression is potentially potentially evaluated.
     EnterExpressionEvaluationContext Unevaluated(Actions,
-                                       Action::PotentiallyPotentiallyEvaluated);
+                                       Sema::PotentiallyPotentiallyEvaluated);
     Result = ParseExpression();
 
     // Match the ')'.
@@ -735,7 +735,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
                                SourceLocation Loc,
                                bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Condition);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Condition);
     ConsumeCodeCompletionToken();
   }
 
@@ -1147,7 +1147,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
                                      TemplateArgs.size());
   
   // Constructor and destructor names.
-  Action::TypeResult Type
+  TypeResult Type
     = Actions.ActOnTemplateIdType(Template, NameLoc,
                                   LAngleLoc, TemplateArgsPtr,
                                   RAngleLoc);
@@ -1339,7 +1339,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   ParseDeclaratorInternal(D, /*DirectDeclParser=*/0);
   
   // Finish up the type.
-  Action::TypeResult Ty = Actions.ActOnTypeName(getCurScope(), D);
+  TypeResult Ty = Actions.ActOnTypeName(getCurScope(), D);
   if (Ty.isInvalid())
     return true;
   

@@ -27,7 +27,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
          "Current token not a '{', ':' or 'try'!");
 
-  Action::MultiTemplateParamsArg TemplateParams(Actions,
+  MultiTemplateParamsArg TemplateParams(Actions,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data() : 0,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 

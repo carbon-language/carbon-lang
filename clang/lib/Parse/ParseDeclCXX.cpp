@@ -17,6 +17,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "RAIIObjectsForParser.h"
 using namespace clang;
 
@@ -102,9 +103,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
     Actions.ActOnStartNamespaceDef(getCurScope(), IdentLoc, Ident, LBrace,
                                    AttrList.get());
 
-  PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
-                                        PP.getSourceManager(),
-                                        "parsing namespace");
+  PrettyDeclStackTraceEntry CrashInfo(Actions, NamespcDecl, NamespaceLoc,
+                                      "parsing namespace");
 
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     CXX0XAttributeList Attr;
@@ -439,7 +439,7 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   // C++0x [dcl.type.simple]p4:
   //   The operand of the decltype specifier is an unevaluated operand.
   EnterExpressionEvaluationContext Unevaluated(Actions,
-                                               Action::Unevaluated);
+                                               Sema::Unevaluated);
   ExprResult Result = ParseExpression();
   if (Result.isInvalid()) {
     SkipUntil(tok::r_paren);
@@ -784,9 +784,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // or
   // &T::operator struct s;
   // For these, SuppressDeclarations is true.
-  Action::TagUseKind TUK;
+  Sema::TagUseKind TUK;
   if (SuppressDeclarations)
-    TUK = Action::TUK_Reference;
+    TUK = Sema::TUK_Reference;
   else if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon))){
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
@@ -797,18 +797,18 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Skip everything up to the semicolon, so that this looks like a proper
       // friend class (or template thereof) declaration.
       SkipUntil(tok::semi, true, true);
-      TUK = Action::TUK_Friend;
+      TUK = Sema::TUK_Friend;
     } else {
       // Okay, this is a class definition.
-      TUK = Action::TUK_Definition;
+      TUK = Sema::TUK_Definition;
     }
   } else if (Tok.is(tok::semi))
-    TUK = DS.isFriendSpecified() ? Action::TUK_Friend : Action::TUK_Declaration;
+    TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
   else
-    TUK = Action::TUK_Reference;
+    TUK = Sema::TUK_Reference;
 
   if (!Name && !TemplateId && (DS.getTypeSpecType() == DeclSpec::TST_error ||
-                               TUK != Action::TUK_Definition)) {
+                               TUK != Sema::TUK_Definition)) {
     if (DS.getTypeSpecType() != DeclSpec::TST_error) {
       // We have a declaration or reference to an anonymous class.
       Diag(StartLoc, diag::err_anon_type_definition)
@@ -834,7 +834,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                        TemplateId->getTemplateArgs(),
                                        TemplateId->NumArgs);
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-        TUK == Action::TUK_Declaration) {
+        TUK == Sema::TUK_Declaration) {
       // This is an explicit instantiation of a class template.
       TagOrTempResult
         = Actions.ActOnExplicitInstantiation(getCurScope(),
@@ -854,8 +854,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // they have template headers, in which case they're ill-formed
     // (FIXME: "template <class T> friend class A<T>::B<int>;").
     // We diagnose this error in ActOnClassTemplateSpecialization.
-    } else if (TUK == Action::TUK_Reference ||
-               (TUK == Action::TUK_Friend &&
+    } else if (TUK == Sema::TUK_Reference ||
+               (TUK == Sema::TUK_Friend &&
                 TemplateInfo.Kind == ParsedTemplateInfo::NonTemplate)) {
       TypeResult
         = Actions.ActOnTemplateIdType(TemplateId->Template,
@@ -880,7 +880,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         // but it actually has a definition. Most likely, this was
         // meant to be an explicit specialization, but the user forgot
         // the '<>' after 'template'.
-        assert(TUK == Action::TUK_Definition && "Expected a definition here");
+        assert(TUK == Sema::TUK_Definition && "Expected a definition here");
 
         SourceLocation LAngleLoc
           = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
@@ -911,13 +911,13 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                        TemplateArgsPtr,
                        TemplateId->RAngleLoc,
                        AttrList,
-                       Action::MultiTemplateParamsArg(Actions,
+                       MultiTemplateParamsArg(Actions,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                  TemplateParams? TemplateParams->size() : 0));
     }
     TemplateId->Destroy();
   } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-             TUK == Action::TUK_Declaration) {
+             TUK == Sema::TUK_Declaration) {
     // Explicit instantiation of a member of a class template
     // specialization, e.g.,
     //
@@ -931,7 +931,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                            NameLoc, AttrList);
   } else {
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-        TUK == Action::TUK_Definition) {
+        TUK == Sema::TUK_Definition) {
       // FIXME: Diagnose this particular error.
     }
 
@@ -940,7 +940,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc, SS,
                                        Name, NameLoc, AttrList, AS,
-                                  Action::MultiTemplateParamsArg(Actions,
+                                       MultiTemplateParamsArg(Actions,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                     TemplateParams? TemplateParams->size() : 0),
                                        Owned, IsDependent);
@@ -953,7 +953,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   }
 
   // If there is a body, parse it and inform the actions module.
-  if (TUK == Action::TUK_Definition) {
+  if (TUK == Sema::TUK_Definition) {
     assert(Tok.is(tok::l_brace) ||
            (getLang().CPlusPlus && Tok.is(tok::colon)));
     if (getLang().CPlusPlus)
@@ -990,7 +990,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // the end of the declaration and recover that way.
   //
   // This switch enumerates the valid "follow" set for definition.
-  if (TUK == Action::TUK_Definition) {
+  if (TUK == Sema::TUK_Definition) {
     bool ExpectedSemi = true;
     switch (Tok.getKind()) {
     default: break;
@@ -1337,7 +1337,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   DS.AddAttributes(AttrList.AttrList);
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class);
 
-  Action::MultiTemplateParamsArg TemplateParams(Actions,
+  MultiTemplateParamsArg TemplateParams(Actions,
       TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
       TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
 
@@ -1538,9 +1538,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
          TagType == DeclSpec::TST_union  ||
          TagType == DeclSpec::TST_class) && "Invalid TagType!");
 
-  PrettyStackTraceActionsDecl CrashInfo(TagDecl, RecordLoc, Actions,
-                                        PP.getSourceManager(),
-                                        "parsing struct/union/class body");
+  PrettyDeclStackTraceEntry CrashInfo(Actions, TagDecl, RecordLoc,
+                                      "parsing struct/union/class body");
 
   // Determine whether this is a non-nested class. Note that local
   // classes are *not* considered to be nested classes.
@@ -2062,8 +2061,7 @@ CXX0XAttributeList Parser::ParseCXX0XAttributes(SourceLocation *EndLoc) {
 /// [C++0x] 'align' '(' assignment-expression ')'
 ExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
   if (isTypeIdInParens()) {
-    EnterExpressionEvaluationContext Unevaluated(Actions,
-                                                  Action::Unevaluated);
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     SourceLocation TypeLoc = Tok.getLocation();
     ParsedType Ty = ParseTypeName().get();
     SourceRange TypeRange(Start, Tok.getLocation());

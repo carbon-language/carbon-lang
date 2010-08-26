@@ -1113,7 +1113,7 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts,
   }
 }
 
-static void AddStorageSpecifiers(Action::ParserCompletionContext CCC,
+static void AddStorageSpecifiers(Sema::ParserCompletionContext CCC,
                                  const LangOptions &LangOpts, 
                                  ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
@@ -1124,13 +1124,13 @@ static void AddStorageSpecifiers(Action::ParserCompletionContext CCC,
   Results.AddResult(Result("static"));
 }
 
-static void AddFunctionSpecifiers(Action::ParserCompletionContext CCC,
+static void AddFunctionSpecifiers(Sema::ParserCompletionContext CCC,
                                   const LangOptions &LangOpts, 
                                   ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
   switch (CCC) {
-  case Action::PCC_Class:
-  case Action::PCC_MemberTemplate:
+  case Sema::PCC_Class:
+  case Sema::PCC_MemberTemplate:
     if (LangOpts.CPlusPlus) {
       Results.AddResult(Result("explicit"));
       Results.AddResult(Result("friend"));
@@ -1139,21 +1139,21 @@ static void AddFunctionSpecifiers(Action::ParserCompletionContext CCC,
     }    
     // Fall through
 
-  case Action::PCC_ObjCInterface:
-  case Action::PCC_ObjCImplementation:
-  case Action::PCC_Namespace:
-  case Action::PCC_Template:
+  case Sema::PCC_ObjCInterface:
+  case Sema::PCC_ObjCImplementation:
+  case Sema::PCC_Namespace:
+  case Sema::PCC_Template:
     if (LangOpts.CPlusPlus || LangOpts.C99)
       Results.AddResult(Result("inline"));
     break;
 
-  case Action::PCC_ObjCInstanceVariableList:
-  case Action::PCC_Expression:
-  case Action::PCC_Statement:
-  case Action::PCC_ForInit:
-  case Action::PCC_Condition:
-  case Action::PCC_RecoveryInFunction:
-  case Action::PCC_Type:
+  case Sema::PCC_ObjCInstanceVariableList:
+  case Sema::PCC_Expression:
+  case Sema::PCC_Statement:
+  case Sema::PCC_ForInit:
+  case Sema::PCC_Condition:
+  case Sema::PCC_RecoveryInFunction:
+  case Sema::PCC_Type:
     break;
   }
 }
@@ -1181,29 +1181,29 @@ static void AddTypedefResult(ResultBuilder &Results) {
   Results.AddResult(CodeCompletionResult(Pattern));        
 }
 
-static bool WantTypesInContext(Action::ParserCompletionContext CCC,
+static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
                                const LangOptions &LangOpts) {
   if (LangOpts.CPlusPlus)
     return true;
   
   switch (CCC) {
-  case Action::PCC_Namespace:
-  case Action::PCC_Class:
-  case Action::PCC_ObjCInstanceVariableList:
-  case Action::PCC_Template:
-  case Action::PCC_MemberTemplate:
-  case Action::PCC_Statement:
-  case Action::PCC_RecoveryInFunction:
-  case Action::PCC_Type:
+  case Sema::PCC_Namespace:
+  case Sema::PCC_Class:
+  case Sema::PCC_ObjCInstanceVariableList:
+  case Sema::PCC_Template:
+  case Sema::PCC_MemberTemplate:
+  case Sema::PCC_Statement:
+  case Sema::PCC_RecoveryInFunction:
+  case Sema::PCC_Type:
     return true;
     
-  case Action::PCC_ObjCInterface:
-  case Action::PCC_ObjCImplementation:
-  case Action::PCC_Expression:
-  case Action::PCC_Condition:
+  case Sema::PCC_ObjCInterface:
+  case Sema::PCC_ObjCImplementation:
+  case Sema::PCC_Expression:
+  case Sema::PCC_Condition:
     return false;
     
-  case Action::PCC_ForInit:
+  case Sema::PCC_ForInit:
     return LangOpts.ObjC1 || LangOpts.C99;
   }
   
@@ -1211,13 +1211,13 @@ static bool WantTypesInContext(Action::ParserCompletionContext CCC,
 }
 
 /// \brief Add language constructs that show up for "ordinary" names.
-static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
+static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
                                    Scope *S,
                                    Sema &SemaRef,
                                    ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
   switch (CCC) {
-  case Action::PCC_Namespace:
+  case Sema::PCC_Namespace:
     if (SemaRef.getLangOptions().CPlusPlus) {
       CodeCompletionString *Pattern = 0;
       
@@ -1276,7 +1276,7 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
     AddTypedefResult(Results);
     // Fall through
 
-  case Action::PCC_Class:
+  case Sema::PCC_Class:
     if (SemaRef.getLangOptions().CPlusPlus) {
       // Using declaration
       CodeCompletionString *Pattern = new CodeCompletionString;
@@ -1300,7 +1300,7 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
         Results.AddResult(Result(Pattern));
       }
 
-      if (CCC == Action::PCC_Class) {
+      if (CCC == Sema::PCC_Class) {
         AddTypedefResult(Results);
 
         // public:
@@ -1324,8 +1324,8 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
     }
     // Fall through
 
-  case Action::PCC_Template:
-  case Action::PCC_MemberTemplate:
+  case Sema::PCC_Template:
+  case Sema::PCC_MemberTemplate:
     if (SemaRef.getLangOptions().CPlusPlus && Results.includeCodePatterns()) {
       // template < parameters >
       CodeCompletionString *Pattern = new CodeCompletionString;
@@ -1340,24 +1340,24 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
     AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     break;
 
-  case Action::PCC_ObjCInterface:
+  case Sema::PCC_ObjCInterface:
     AddObjCInterfaceResults(SemaRef.getLangOptions(), Results, true);
     AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     break;
       
-  case Action::PCC_ObjCImplementation:
+  case Sema::PCC_ObjCImplementation:
     AddObjCImplementationResults(SemaRef.getLangOptions(), Results, true);
     AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     break;
       
-  case Action::PCC_ObjCInstanceVariableList:
+  case Sema::PCC_ObjCInstanceVariableList:
     AddObjCVisibilityResults(SemaRef.getLangOptions(), Results, true);
     break;
       
-  case Action::PCC_RecoveryInFunction:
-  case Action::PCC_Statement: {
+  case Sema::PCC_RecoveryInFunction:
+  case Sema::PCC_Statement: {
     AddTypedefResult(Results);
 
     CodeCompletionString *Pattern = 0;
@@ -1529,12 +1529,12 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
   }
 
   // Fall through (for statement expressions).
-  case Action::PCC_ForInit:
-  case Action::PCC_Condition:
+  case Sema::PCC_ForInit:
+  case Sema::PCC_Condition:
     AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     // Fall through: conditions and statements can have expressions.
 
-  case Action::PCC_Expression: {
+  case Sema::PCC_Expression: {
     CodeCompletionString *Pattern = 0;
     if (SemaRef.getLangOptions().CPlusPlus) {
       // 'this', if we're in a non-static member function.
@@ -1670,14 +1670,14 @@ static void AddOrdinaryNameResults(Action::ParserCompletionContext CCC,
     break;
   }
       
-  case Action::PCC_Type:
+  case Sema::PCC_Type:
     break;
   }
 
   if (WantTypesInContext(CCC, SemaRef.getLangOptions()))
     AddTypeSpecifierResults(SemaRef.getLangOptions(), Results);
 
-  if (SemaRef.getLangOptions().CPlusPlus && CCC != Action::PCC_Type)
+  if (SemaRef.getLangOptions().CPlusPlus && CCC != Sema::PCC_Type)
     Results.AddResult(Result("operator"));
 }
 
@@ -2322,35 +2322,35 @@ static void HandleCodeCompleteResults(Sema *S,
 static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S, 
                                             Sema::ParserCompletionContext PCC) {
   switch (PCC) {
-  case Action::PCC_Namespace:
+  case Sema::PCC_Namespace:
     return CodeCompletionContext::CCC_TopLevel;
       
-  case Action::PCC_Class:
+  case Sema::PCC_Class:
     return CodeCompletionContext::CCC_ClassStructUnion;
 
-  case Action::PCC_ObjCInterface:
+  case Sema::PCC_ObjCInterface:
     return CodeCompletionContext::CCC_ObjCInterface;
       
-  case Action::PCC_ObjCImplementation:
+  case Sema::PCC_ObjCImplementation:
     return CodeCompletionContext::CCC_ObjCImplementation;
 
-  case Action::PCC_ObjCInstanceVariableList:
+  case Sema::PCC_ObjCInstanceVariableList:
     return CodeCompletionContext::CCC_ObjCIvarList;
       
-  case Action::PCC_Template:
-  case Action::PCC_MemberTemplate:
-  case Action::PCC_RecoveryInFunction:
+  case Sema::PCC_Template:
+  case Sema::PCC_MemberTemplate:
+  case Sema::PCC_RecoveryInFunction:
     return CodeCompletionContext::CCC_Other;
       
-  case Action::PCC_Expression:
-  case Action::PCC_ForInit:
-  case Action::PCC_Condition:
+  case Sema::PCC_Expression:
+  case Sema::PCC_ForInit:
+  case Sema::PCC_Condition:
     return CodeCompletionContext::CCC_Expression;
       
-  case Action::PCC_Statement:
+  case Sema::PCC_Statement:
     return CodeCompletionContext::CCC_Statement;
 
-  case Action::PCC_Type:
+  case Sema::PCC_Type:
     return CodeCompletionContext::CCC_Type;
   }
   
@@ -4855,8 +4855,8 @@ void Sema::CodeCompletePreprocessorDirective(bool InConditional) {
 
 void Sema::CodeCompleteInPreprocessorConditionalExclusion(Scope *S) {
   CodeCompleteOrdinaryName(S,
-                           S->getFnParent()? Action::PCC_RecoveryInFunction 
-                                           : Action::PCC_Namespace);
+                           S->getFnParent()? Sema::PCC_RecoveryInFunction 
+                                           : Sema::PCC_Namespace);
 }
 
 void Sema::CodeCompletePreprocessorMacroName(bool IsDefinition) {
@@ -4912,8 +4912,8 @@ void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
   // do for function calls.
   
   CodeCompleteOrdinaryName(S,
-                           S->getFnParent()? Action::PCC_RecoveryInFunction 
-                                           : Action::PCC_Namespace);
+                           S->getFnParent()? Sema::PCC_RecoveryInFunction 
+                                           : Sema::PCC_Namespace);
 }
 
 void Sema::CodeCompleteNaturalLanguage() {

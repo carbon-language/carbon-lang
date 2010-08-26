@@ -15,6 +15,7 @@
 #include "clang/Parse/Parser.h"
 #include "RAIIObjectsForParser.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/PrettyStackTrace.h"
@@ -98,7 +99,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
 
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Statement);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Statement);
     ConsumeCodeCompletionToken();
     return ParseStatementOrDeclaration(OnlyStatement);
       
@@ -994,8 +995,8 @@ StmtResult Parser::ParseForStatement(AttributeList *Attr) {
   
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                     C99orCXXorObjC? Action::PCC_ForInit
-                                                   : Action::PCC_Expression);
+                                     C99orCXXorObjC? Sema::PCC_ForInit
+                                                   : Sema::PCC_Expression);
     ConsumeCodeCompletionToken();
   }
   
@@ -1468,9 +1469,8 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
 
-  PrettyStackTraceActionsDecl CrashInfo(Decl, LBraceLoc, Actions,
-                                        PP.getSourceManager(),
-                                        "parsing function body");
+  PrettyDeclStackTraceEntry CrashInfo(Actions, Decl, LBraceLoc,
+                                      "parsing function body");
 
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement
@@ -1494,9 +1494,8 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl) {
   assert(Tok.is(tok::kw_try) && "Expected 'try'");
   SourceLocation TryLoc = ConsumeToken();
 
-  PrettyStackTraceActionsDecl CrashInfo(Decl, TryLoc, Actions,
-                                        PP.getSourceManager(),
-                                        "parsing function try block");
+  PrettyDeclStackTraceEntry CrashInfo(Actions, Decl, TryLoc,
+                                      "parsing function try block");
 
   // Constructor initializer list?
   if (Tok.is(tok::colon))

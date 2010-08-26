@@ -1,7 +1,6 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangSema
-  Action.cpp
   AnalysisBasedWarnings.cpp
   AttributeList.cpp
   CodeCompleteConsumer.cpp

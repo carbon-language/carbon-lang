@@ -265,8 +265,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
     }
     
     ExprResult MemberInit
-      = InitSeq.Perform(SemaRef, MemberEntity, Kind, 
-                        Sema::MultiExprArg(SemaRef, 0, 0));
+      = InitSeq.Perform(SemaRef, MemberEntity, Kind, MultiExprArg());
     if (MemberInit.isInvalid()) {
       hadError = true;
       return;
@@ -375,8 +374,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       }
 
       ExprResult ElementInit
-        = InitSeq.Perform(SemaRef, ElementEntity, Kind, 
-                          Sema::MultiExprArg(SemaRef, 0, 0));
+        = InitSeq.Perform(SemaRef, ElementEntity, Kind, MultiExprArg());
       if (ElementInit.isInvalid()) {
         hadError = true;
         return;
@@ -680,8 +678,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
       
       if (Seq) {
         ExprResult Result = 
-          Seq.Perform(SemaRef, Entity, Kind,
-                      Sema::MultiExprArg(SemaRef, &expr, 1));
+          Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
         if (Result.isInvalid())
           hadError = true;
         
@@ -3369,7 +3366,7 @@ static ExprResult CopyObject(Sema &S,
       << CurInitExpr->getSourceRange();
     CandidateSet.NoteCandidates(S, OCD_AllCandidates, &CurInitExpr, 1);
     if (!IsExtraneousCopy || S.isSFINAEContext())
-      return S.ExprError();
+      return ExprError();
     return move(CurInit);
       
   case OR_Ambiguous:
@@ -3377,7 +3374,7 @@ static ExprResult CopyObject(Sema &S,
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
     CandidateSet.NoteCandidates(S, OCD_ViableCandidates, &CurInitExpr, 1);
-    return S.ExprError();
+    return ExprError();
     
   case OR_Deleted:
     S.Diag(Loc, diag::err_temp_copy_deleted)
@@ -3385,7 +3382,7 @@ static ExprResult CopyObject(Sema &S,
       << CurInitExpr->getSourceRange();
     S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
       << Best->Function->isDeleted();
-    return S.ExprError();
+    return ExprError();
   }
 
   CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
@@ -3424,10 +3421,9 @@ static ExprResult CopyObject(Sema &S,
   // Determine the arguments required to actually perform the
   // constructor call (we might have derived-to-base conversions, or
   // the copy constructor may have default arguments).
-  if (S.CompleteConstructorCall(Constructor,
-                                Sema::MultiExprArg(S, &CurInitExpr, 1),
+  if (S.CompleteConstructorCall(Constructor, MultiExprArg(&CurInitExpr, 1),
                                 Loc, ConstructorArgs))
-    return S.ExprError();
+    return ExprError();
 
   // Actually perform the constructor call.
   CurInit = S.BuildCXXConstructExpr(Loc, T, Constructor, Elidable,
@@ -3459,12 +3455,12 @@ ExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
                                 const InitializationKind &Kind,
-                                Action::MultiExprArg Args,
+                                MultiExprArg Args,
                                 QualType *ResultType) {
   if (SequenceKind == FailedSequence) {
     unsigned NumArgs = Args.size();
     Diagnose(S, Entity, Kind, (Expr **)Args.release(), NumArgs);
-    return S.ExprError();
+    return ExprError();
   }
   
   if (SequenceKind == DependentSequence) {
@@ -3559,7 +3555,7 @@ InitializationSequence::Perform(Sema &S,
     assert(Args.size() == 1);
     CurInit = ExprResult(((Expr **)(Args.get()))[0]->Retain());
     if (CurInit.isInvalid())
-      return S.ExprError();
+      return ExprError();
     break;
     
   case SK_ConstructorInitialization:
@@ -3573,7 +3569,7 @@ InitializationSequence::Perform(Sema &S,
   for (step_iterator Step = step_begin(), StepEnd = step_end();
        Step != StepEnd; ++Step) {
     if (CurInit.isInvalid())
-      return S.ExprError();
+      return ExprError();
     
     Expr *CurInitExpr = (Expr *)CurInit.get();
     QualType SourceType = CurInitExpr? CurInitExpr->getType() : QualType();
@@ -3603,7 +3599,7 @@ InitializationSequence::Perform(Sema &S,
                                          CurInitExpr->getLocStart(),
                                          CurInitExpr->getSourceRange(), 
                                          &BasePath, IgnoreBaseAccess))
-        return S.ExprError();
+        return ExprError();
         
       if (S.BasePathInvolvesVirtualBase(BasePath)) {
         QualType T = SourceType;
@@ -3636,7 +3632,7 @@ InitializationSequence::Perform(Sema &S,
           << BitField->getDeclName()
           << CurInitExpr->getSourceRange();
         S.Diag(BitField->getLocation(), diag::note_bitfield_decl);
-        return S.ExprError();
+        return ExprError();
       }
 
       if (CurInitExpr->refersToVectorElement()) {
@@ -3645,14 +3641,14 @@ InitializationSequence::Perform(Sema &S,
           << Entity.getType().isVolatileQualified()
           << CurInitExpr->getSourceRange();
         PrintInitLocationNote(S, Entity);
-        return S.ExprError();
+        return ExprError();
       }
         
       // Reference binding does not have any corresponding ASTs.
 
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
-        return S.ExprError();
+        return ExprError();
 
       break;
 
@@ -3661,7 +3657,7 @@ InitializationSequence::Perform(Sema &S,
 
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
-        return S.ExprError();
+        return ExprError();
 
       break;
         
@@ -3688,9 +3684,9 @@ InitializationSequence::Perform(Sema &S,
         // Determine the arguments required to actually perform the constructor
         // call.
         if (S.CompleteConstructorCall(Constructor,
-                                      Sema::MultiExprArg(S, &CurInitExpr, 1),
+                                      MultiExprArg(&CurInitExpr, 1),
                                       Loc, ConstructorArgs))
-          return S.ExprError();
+          return ExprError();
         
         // Build the an expression that constructs a temporary.
         CurInit = S.BuildCXXConstructExpr(Loc, Step->Type, Constructor, 
@@ -3698,7 +3694,7 @@ InitializationSequence::Perform(Sema &S,
                                           /*ZeroInit*/ false,
                                           CXXConstructExpr::CK_Complete);
         if (CurInit.isInvalid())
-          return S.ExprError();
+          return ExprError();
 
         S.CheckConstructorAccess(Kind.getLocation(), Constructor, Entity,
                                  FoundFn.getAccess());
@@ -3724,7 +3720,7 @@ InitializationSequence::Perform(Sema &S,
         // we don't want to turn off access control here for c-style casts.
         if (S.PerformObjectArgumentInitialization(CurInitExpr, /*Qualifier=*/0,
                                                   FoundFn, Conversion))
-          return S.ExprError();
+          return ExprError();
 
         // Do a little dance to make sure that CurInit has the proper
         // pointer.
@@ -3734,7 +3730,7 @@ InitializationSequence::Perform(Sema &S,
         CurInit = S.Owned(S.BuildCXXMemberCallExpr(CurInitExpr, FoundFn,
                                                    Conversion));
         if (CurInit.isInvalid() || !CurInit.get())
-          return S.ExprError();
+          return ExprError();
         
         CastKind = CK_UserDefinedConversion;
         
@@ -3792,7 +3788,7 @@ InitializationSequence::Perform(Sema &S,
 
       if (S.PerformImplicitConversion(CurInitExpr, Step->Type, *Step->ICS,
                                       Sema::AA_Converting, IgnoreBaseAccess))
-        return S.ExprError();
+        return ExprError();
         
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
@@ -3803,7 +3799,7 @@ InitializationSequence::Perform(Sema &S,
       InitListExpr *InitList = cast<InitListExpr>(CurInitExpr);
       QualType Ty = Step->Type;
       if (S.CheckInitList(Entity, InitList, ResultType? *ResultType : Ty))
-        return S.ExprError();
+        return ExprError();
 
       CurInit.release();
       CurInit = S.Owned(InitList);
@@ -3836,7 +3832,7 @@ InitializationSequence::Perform(Sema &S,
       // call.
       if (S.CompleteConstructorCall(Constructor, move(Args), 
                                     Loc, ConstructorArgs))
-        return S.ExprError();
+        return ExprError();
           
       
       if (Entity.getKind() == InitializedEntity::EK_Temporary &&
@@ -3881,7 +3877,7 @@ InitializationSequence::Perform(Sema &S,
                                             ConstructKind);
       }
       if (CurInit.isInvalid())
-        return S.ExprError();
+        return ExprError();
 
       // Only check access if all of that succeeded.
       S.CheckConstructorAccess(Loc, Constructor, Entity,
@@ -3933,7 +3929,7 @@ InitializationSequence::Perform(Sema &S,
                                      getAssignmentAction(Entity),
                                      &Complained)) {
         PrintInitLocationNote(S, Entity);
-        return S.ExprError();
+        return ExprError();
       } else if (Complained)
         PrintInitLocationNote(S, Entity);
 
@@ -4448,5 +4444,5 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
                                                            EqualLoc);
   InitializationSequence Seq(*this, Entity, Kind, &InitE, 1);
   Init.release();
-  return Seq.Perform(*this, Entity, Kind, MultiExprArg(*this, &InitE, 1));
+  return Seq.Perform(*this, Entity, Kind, MultiExprArg(&InitE, 1));
 }

@@ -1587,16 +1587,16 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     ASTOwningVector<Expr*> ConstructorArgs(S);
     
     if (S.CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
-                                  Sema::MultiExprArg(S, &From, 1),
+                                  MultiExprArg(&From, 1),
                                   CastLoc, ConstructorArgs))
-      return S.ExprError();
+      return ExprError();
     
     ExprResult Result = 
     S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
                             move_arg(ConstructorArgs),
                             /*ZeroInit*/ false, CXXConstructExpr::CK_Complete);
     if (Result.isInvalid())
-      return S.ExprError();
+      return ExprError();
     
     return S.MaybeBindToTemporary(Result.takeAs<Expr>());
   }
@@ -2182,8 +2182,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
   InitializationKind Kind = InitializationKind::CreateCopy(E->getLocStart(),
                                                            SourceLocation());
   InitializationSequence InitSeq(Self, Entity, Kind, &E, 1);
-  ExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
-                                    Sema::MultiExprArg(Self, &E, 1));
+  ExprResult Result = InitSeq.Perform(Self, Entity, Kind, MultiExprArg(&E, 1));
   if (Result.isInvalid())
     return true;
   
@@ -2784,7 +2783,7 @@ ExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
   return ActOnCallExpr(/*Scope*/ 0,
                        MemExpr,
                        /*LPLoc*/ ExpectedLParenLoc,
-                       Sema::MultiExprArg(*this, 0, 0),
+                       MultiExprArg(),
                        /*CommaLocs*/ 0,
                        /*RPLoc*/ ExpectedLParenLoc);
 }

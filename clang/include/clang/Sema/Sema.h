@@ -15,13 +15,17 @@
 #ifndef LLVM_CLANG_SEMA_SEMA_H
 #define LLVM_CLANG_SEMA_SEMA_H
 
-#include "clang/Sema/Action.h"
+#include "clang/Sema/Ownership.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
+#include "clang/Sema/DeclSpec.h"
 #include "clang/AST/OperationKinds.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/Basic/Specifiers.h"
+#include "clang/Basic/TemplateKinds.h"
+#include "clang/Basic/TypeTraits.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -39,6 +43,7 @@ namespace clang {
   class ASTConsumer;
   class ASTContext;
   class ArrayType;
+  class AttributeList;
   class BlockDecl;
   class CXXBasePath;
   class CXXBasePaths;
@@ -49,6 +54,7 @@ namespace clang {
   class CXXFieldCollector;
   class CXXMemberCallExpr;
   class CXXMethodDecl;
+  class CXXScopeSpec;
   class CXXTemporary;
   class CXXTryStmt;
   class CallExpr;
@@ -61,11 +67,11 @@ namespace clang {
   class DeclAccessPair;
   class DeclContext;
   class DeclRefExpr;
-  class DeclSpec;
   class DeclaratorDecl;
   class DeducedTemplateArgument;
   class DependentDiagnostic;
   class DesignatedInitExpr;
+  class Designation;
   class EnumConstantDecl;
   class Expr;
   class ExtVectorType;
@@ -86,6 +92,7 @@ namespace clang {
   class LangOptions;
   class LocalInstantiationScope;
   class LookupResult;
+  class MacroInfo;
   class MultiLevelTemplateArgumentList;
   class NamedDecl;
   class NonNullAttr;
@@ -122,6 +129,7 @@ namespace clang {
   class TemplateTemplateParmDecl;
   class Token;
   class TypedefDecl;
+  class UnqualifiedId;
   class UnresolvedLookupExpr;
   class UnresolvedMemberExpr;
   class UnresolvedSetImpl;
@@ -139,7 +147,7 @@ namespace sema {
   class DelayedDiagnostic;
   class FunctionScopeInfo;
   class TemplateDeductionInfo;
-}  
+}
 
 /// \brief Holds a QualType and a TypeSourceInfo* that came out of a declarator
 /// parsing.
@@ -176,11 +184,22 @@ public:
 };
 
 /// Sema - This implements semantic analysis and AST building for C.
-class Sema : public Action {
+class Sema {
   Sema(const Sema&);           // DO NOT IMPLEMENT
   void operator=(const Sema&); // DO NOT IMPLEMENT
   mutable const TargetAttributesSema* TheTargetAttributesSema;
 public:
+  typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
+  typedef OpaquePtr<TemplateName> TemplateTy;
+  typedef OpaquePtr<QualType> TypeTy;
+  typedef Attr AttrTy;
+  typedef CXXBaseSpecifier BaseTy;
+  typedef CXXBaseOrMemberInitializer MemInitTy;
+  typedef Expr ExprTy;
+  typedef Stmt StmtTy;
+  typedef TemplateParameterList TemplateParamsTy;
+  typedef NestedNameSpecifier CXXScopeTy;
+
   const LangOptions &LangOpts;
   Preprocessor &PP;
   ASTContext &Context;
@@ -359,6 +378,29 @@ public:
   typedef llvm::SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
     PotentiallyEmittedDiagnostics;
 
+  /// \brief Describes how the expressions currently being parsed are
+  /// evaluated at run-time, if at all.
+  enum ExpressionEvaluationContext {
+    /// \brief The current expression and its subexpressions occur within an
+    /// unevaluated operand (C++0x [expr]p8), such as a constant expression
+    /// or the subexpression of \c sizeof, where the type or the value of the
+    /// expression may be significant but no code will be generated to evaluate
+    /// the value of the expression at run time.
+    Unevaluated,
+
+    /// \brief The current expression is potentially evaluated at run time,
+    /// which means that code may be generated to evaluate the value of the
+    /// expression at run time.
+    PotentiallyEvaluated,
+
+    /// \brief The current expression may be potentially evaluated or it may
+    /// be unevaluated, but it is impossible to tell from the lexical context.
+    /// This evaluation context is used primary for the operand of the C++
+    /// \c typeid expression, whose argument is potentially evaluated only when
+    /// it is an lvalue of polymorphic class type (C++ [basic.def.odr]p2).
+    PotentiallyPotentiallyEvaluated
+  };
+
   /// \brief Data structure used to record current or nested
   /// expression evaluation contexts.
   struct ExpressionEvaluationContextRecord {
@@ -494,8 +536,8 @@ public:
   /// \brief Build a partial diagnostic.
   PartialDiagnostic PDiag(unsigned DiagID = 0); // in SemaInternal.h
 
-  virtual void DeleteExpr(ExprTy *E);
-  virtual void DeleteStmt(StmtTy *S);
+  virtual void DeleteExpr(Expr *E);
+  virtual void DeleteStmt(Stmt *S);
 
   ExprResult Owned(Expr* E) { return E; }
   ExprResult Owned(ExprResult R) { return R; }
@@ -537,7 +579,7 @@ public:
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                           Expr *ArraySize, unsigned Quals,
                           SourceRange Brackets, DeclarationName Entity);
-  QualType BuildExtVectorType(QualType T, ExprArg ArraySize,
+  QualType BuildExtVectorType(QualType T, Expr *ArraySize,
                               SourceLocation AttrLoc);
   QualType BuildFunctionType(QualType T,
                              QualType *ParamTypes, unsigned NumParamTypes,
@@ -598,10 +640,6 @@ public:
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
 
-  /// getDeclName - Return a pretty name for the specified decl if possible, or
-  /// an empty string if not.  This is used for pretty crash reporting.
-  virtual std::string getDeclName(Decl *D);
-
   DeclGroupPtrTy ConvertDeclToDeclGroup(Decl *Ptr);
 
   void DiagnoseUseOfUnimplementedSelectors();
@@ -610,7 +648,7 @@ public:
                                  Scope *S, CXXScopeSpec *SS = 0,
                                  bool isClassName = false,
                                  ParsedType ObjectType = ParsedType());
-  virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
+  virtual TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
   virtual bool DiagnoseUnknownTypeName(const IdentifierInfo &II,
                                        SourceLocation IILoc,
                                        Scope *S,
@@ -664,12 +702,12 @@ public:
                               StorageClass SCAsWritten);
   virtual void ActOnParamDefaultArgument(Decl *param,
                                          SourceLocation EqualLoc,
-                                         ExprArg defarg);
+                                         Expr *defarg);
   virtual void ActOnParamUnparsedDefaultArgument(Decl *param,
                                                  SourceLocation EqualLoc,
                                                  SourceLocation ArgLoc);
   virtual void ActOnParamDefaultArgumentError(Decl *param);
-  bool SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
+  bool SetParamDefaultArgument(ParmVarDecl *Param, Expr *DefaultArg,
                                SourceLocation EqualLoc);
 
 
@@ -677,8 +715,8 @@ public:
   // argument locations.
   llvm::DenseMap<ParmVarDecl *,SourceLocation> UnparsedDefaultArgLocs;
 
-  virtual void AddInitializerToDecl(Decl *dcl, ExprArg init);
-  void AddInitializerToDecl(Decl *dcl, ExprArg init, bool DirectInit);
+  virtual void AddInitializerToDecl(Decl *dcl, Expr *init);
+  void AddInitializerToDecl(Decl *dcl, Expr *init, bool DirectInit);
   void ActOnUninitializedDecl(Decl *dcl, bool TypeContainsUndeducedAuto);
   virtual void ActOnInitializerError(Decl *Dcl);
   virtual void SetDeclDeleted(Decl *dcl, SourceLocation DelLoc);
@@ -691,8 +729,8 @@ public:
   virtual Decl *ActOnStartOfFunctionDef(Scope *S, Decl *D);
   virtual void ActOnStartOfObjCMethodDef(Scope *S, Decl *D);
 
-  virtual Decl *ActOnFinishFunctionBody(Decl *Decl, StmtArg Body);
-  Decl *ActOnFinishFunctionBody(Decl *Decl, StmtArg Body,
+  virtual Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body);
+  Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body,
                                     bool IsInstantiation);
 
   /// \brief Diagnose any unused parameters in the given sequence of
@@ -701,7 +739,7 @@ public:
                                 ParmVarDecl * const *End);
 
   void DiagnoseInvalidJumps(Stmt *Body);
-  virtual Decl *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
+  virtual Decl *ActOnFileScopeAsmDecl(SourceLocation Loc, Expr *expr);
 
   /// Scope actions.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);
@@ -720,6 +758,13 @@ public:
                                     TagTypeKind NewTag,
                                     SourceLocation NewTagLoc,
                                     const IdentifierInfo &Name);
+
+  enum TagUseKind {
+    TUK_Reference,   // Reference to a tag:  'struct foo *X;'
+    TUK_Declaration, // Fwd decl of a tag:   'struct foo;'
+    TUK_Definition,  // Definition of a tag: 'struct foo { int X; } Y;'
+    TUK_Friend       // Friend declaration:  'friend struct foo;'
+  };
 
   virtual Decl *ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                              SourceLocation KWLoc, CXXScopeSpec &SS,
@@ -741,7 +786,7 @@ public:
                          llvm::SmallVectorImpl<Decl *> &Decls);
   virtual Decl *ActOnField(Scope *S, Decl *TagD,
                                SourceLocation DeclStart,
-                               Declarator &D, ExprTy *BitfieldWidth);
+                               Declarator &D, Expr *BitfieldWidth);
 
   FieldDecl *HandleField(Scope *S, RecordDecl *TagD, SourceLocation DeclStart,
                          Declarator &D, Expr *BitfieldWidth,
@@ -769,7 +814,7 @@ public:
                          llvm::SmallVectorImpl<Decl *> &AllIvarDecls);
   virtual Decl *ActOnIvar(Scope *S, SourceLocation DeclStart,
                               Decl *IntfDecl,
-                              Declarator &D, ExprTy *BitfieldWidth,
+                              Declarator &D, Expr *BitfieldWidth,
                               tok::ObjCKeywordKind visibility);
 
   // This is used for both record definitions and ObjC interface declarations.
@@ -803,12 +848,12 @@ public:
                                       EnumConstantDecl *LastEnumConst,
                                       SourceLocation IdLoc,
                                       IdentifierInfo *Id,
-                                      ExprArg val);
+                                      Expr *val);
 
   virtual Decl *ActOnEnumConstant(Scope *S, Decl *EnumDecl,
                                       Decl *LastEnumConstant,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
-                                      SourceLocation EqualLoc, ExprTy *Val);
+                                      SourceLocation EqualLoc, Expr *Val);
   virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                              SourceLocation RBraceLoc, Decl *EnumDecl,
                              Decl **Elements, unsigned NumElements,
@@ -941,7 +986,7 @@ public:
   bool PerformContextuallyConvertToObjCId(Expr *&From);
 
   ExprResult 
-  ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
+  ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *FromE,
                                      const PartialDiagnostic &NotIntDiag,
                                      const PartialDiagnostic &IncompleteDiag,
                                      const PartialDiagnostic &ExplicitConvDiag,
@@ -1066,7 +1111,7 @@ public:
   ExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
                                            unsigned Opc,
                                            const UnresolvedSetImpl &Fns,
-                                           ExprArg input);
+                                           Expr *input);
 
   ExprResult CreateOverloadedBinOp(SourceLocation OpLoc,
                                          unsigned Opc,
@@ -1075,7 +1120,7 @@ public:
 
   ExprResult CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                                       SourceLocation RLoc,
-                                                      ExprArg Base,ExprArg Idx);
+                                                      Expr *Base,Expr *Idx);
 
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
@@ -1088,7 +1133,7 @@ public:
                                SourceLocation *CommaLocs,
                                SourceLocation RParenLoc);
 
-  ExprResult BuildOverloadedArrowExpr(Scope *S, ExprArg Base,
+  ExprResult BuildOverloadedArrowExpr(Scope *S, Expr *Base,
                                             SourceLocation OpLoc);
 
   /// CheckCallReturnType - Checks that a call expression's return type is
@@ -1440,85 +1485,118 @@ public:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
+  class FullExprArg {
+  public:
+    FullExprArg(Sema &actions) : E(0) { }
+                
+    // FIXME: The const_cast here is ugly. RValue references would make this
+    // much nicer (or we could duplicate a bunch of the move semantics
+    // emulation code from Ownership.h).
+    FullExprArg(const FullExprArg& Other): E(Other.E) {}
+
+    ExprResult release() {
+      return move(E);
+    }
+
+    Expr *get() const { return E; }
+
+    Expr *operator->() {
+      return E;
+    }
+
+  private:
+    // FIXME: No need to make the entire Sema class a friend when it's just
+    // Sema::FullExpr that needs access to the constructor below.
+    friend class Sema;
+
+    explicit FullExprArg(Expr *expr) : E(expr) {}
+
+    Expr *E;
+  };
+
+  FullExprArg MakeFullExpr(Expr *Arg) {
+    return FullExprArg(ActOnFinishFullExpr(Arg).release());
+  }
+
   virtual StmtResult ActOnExprStmt(FullExprArg Expr);
 
   virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc);
   virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
-                                             MultiStmtArg Elts,
-                                             bool isStmtExpr);
+                                       MultiStmtArg Elts,
+                                       bool isStmtExpr);
   virtual StmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
-                                         SourceLocation StartLoc,
-                                         SourceLocation EndLoc);
+                                   SourceLocation StartLoc,
+                                   SourceLocation EndLoc);
   virtual void ActOnForEachDeclStmt(DeclGroupPtrTy Decl);
-  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
-                                    SourceLocation DotDotDotLoc, ExprArg RHSVal,
-                                    SourceLocation ColonLoc);
-  virtual void ActOnCaseStmtBody(StmtTy *CaseStmt, StmtArg SubStmt);
+  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
+                                   SourceLocation DotDotDotLoc, Expr *RHSVal,
+                                   SourceLocation ColonLoc);
+  virtual void ActOnCaseStmtBody(Stmt *CaseStmt, Stmt *SubStmt);
 
   virtual StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
-                                            SourceLocation ColonLoc,
-                                            StmtArg SubStmt, Scope *CurScope);
+                                      SourceLocation ColonLoc,
+                                      Stmt *SubStmt, Scope *CurScope);
   virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc,
-                                          IdentifierInfo *II,
-                                          SourceLocation ColonLoc,
-                                          StmtArg SubStmt);
+                                    IdentifierInfo *II,
+                                    SourceLocation ColonLoc,
+                                    Stmt *SubStmt);
   virtual StmtResult ActOnIfStmt(SourceLocation IfLoc,
-                                       FullExprArg CondVal, Decl *CondVar,
-                                       StmtArg ThenVal,
-                                       SourceLocation ElseLoc, StmtArg ElseVal);
+                                 FullExprArg CondVal, Decl *CondVar,
+                                 Stmt *ThenVal,
+                                 SourceLocation ElseLoc, Stmt *ElseVal);
   virtual StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
-                                                  ExprArg Cond,
-                                                  Decl *CondVar);
+                                            Expr *Cond,
+                                            Decl *CondVar);
   virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
-                                                 StmtArg Switch, StmtArg Body);
+                                           Stmt *Switch, Stmt *Body);
   virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc,
-                                          FullExprArg Cond,
-                                          Decl *CondVar, StmtArg Body);
-  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
-                                       SourceLocation WhileLoc,
-                                       SourceLocation CondLParen, ExprArg Cond,
-                                       SourceLocation CondRParen);
+                                    FullExprArg Cond,
+                                    Decl *CondVar, Stmt *Body);
+  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
+                                 SourceLocation WhileLoc,
+                                 SourceLocation CondLParen, Expr *Cond,
+                                 SourceLocation CondRParen);
 
   virtual StmtResult ActOnForStmt(SourceLocation ForLoc,
-                                        SourceLocation LParenLoc,
-                                        StmtArg First, FullExprArg Second,
-                                        Decl *SecondVar,
-                                        FullExprArg Third,
-                                        SourceLocation RParenLoc,
-                                        StmtArg Body);
+                                  SourceLocation LParenLoc,
+                                  Stmt *First, FullExprArg Second,
+                                  Decl *SecondVar,
+                                  FullExprArg Third,
+                                  SourceLocation RParenLoc,
+                                  Stmt *Body);
   virtual StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
                                        SourceLocation LParenLoc,
-                                       StmtArg First, ExprArg Second,
-                                       SourceLocation RParenLoc, StmtArg Body);
+                                       Stmt *First, Expr *Second,
+                                       SourceLocation RParenLoc, Stmt *Body);
 
   virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
-                                         SourceLocation LabelLoc,
-                                         IdentifierInfo *LabelII);
+                                   SourceLocation LabelLoc,
+                                   IdentifierInfo *LabelII);
   virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
-                                                 SourceLocation StarLoc,
-                                                 ExprArg DestExp);
+                                           SourceLocation StarLoc,
+                                           Expr *DestExp);
   virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
-                                             Scope *CurScope);
+                                       Scope *CurScope);
   virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc,
-                                          Scope *CurScope);
+                                    Scope *CurScope);
 
   virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                           ExprArg RetValExp);
+                                     Expr *RetValExp);
   StmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc,
-                                        Expr *RetValExp);
+                                  Expr *RetValExp);
 
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
-                                        bool IsSimple,
-                                        bool IsVolatile,
-                                        unsigned NumOutputs,
-                                        unsigned NumInputs,
-                                        IdentifierInfo **Names,
-                                        MultiExprArg Constraints,
-                                        MultiExprArg Exprs,
-                                        ExprArg AsmString,
-                                        MultiExprArg Clobbers,
-                                        SourceLocation RParenLoc,
-                                        bool MSAsm = false);
+                                  bool IsSimple,
+                                  bool IsVolatile,
+                                  unsigned NumOutputs,
+                                  unsigned NumInputs,
+                                  IdentifierInfo **Names,
+                                  MultiExprArg Constraints,
+                                  MultiExprArg Exprs,
+                                  Expr *AsmString,
+                                  MultiExprArg Clobbers,
+                                  SourceLocation RParenLoc,
+                                  bool MSAsm = false);
 
 
   VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,
@@ -1528,25 +1606,25 @@ public:
   virtual Decl *ActOnObjCExceptionDecl(Scope *S, Declarator &D);
 
   virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
-                                                SourceLocation RParen,
-                                                Decl *Parm, StmtArg Body);
+                                          SourceLocation RParen,
+                                          Decl *Parm, Stmt *Body);
 
   virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
-                                                  StmtArg Body);
+                                            Stmt *Body);
 
   virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
-                                              StmtArg Try,
-                                              MultiStmtArg Catch,
-                                              StmtArg Finally);
+                                        Stmt *Try,
+                                        MultiStmtArg Catch,
+                                        Stmt *Finally);
 
   virtual StmtResult BuildObjCAtThrowStmt(SourceLocation AtLoc,
-                                                ExprArg Throw);
+                                          Expr *Throw);
   virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
-                                                ExprArg Throw,
-                                                Scope *CurScope);
+                                          Expr *Throw,
+                                          Scope *CurScope);
   virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
-                                                       ExprArg SynchExpr,
-                                                       StmtArg SynchBody);
+                                                 Expr *SynchExpr,
+                                                 Stmt *SynchBody);
 
   VarDecl *BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
                                      TypeSourceInfo *TInfo,
@@ -1556,11 +1634,11 @@ public:
   virtual Decl *ActOnExceptionDeclarator(Scope *S, Declarator &D);
 
   virtual StmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
-                                              Decl *ExDecl,
-                                              StmtArg HandlerBlock);
+                                        Decl *ExDecl,
+                                        Stmt *HandlerBlock);
   virtual StmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
-                                            StmtArg TryBlock,
-                                            MultiStmtArg Handlers);
+                                      Stmt *TryBlock,
+                                      MultiStmtArg Handlers);
   void DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock);
 
   bool ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const;
@@ -1574,6 +1652,8 @@ public:
   void DiagnoseUnusedExprResult(const Stmt *S);
   void DiagnoseUnusedDecl(const NamedDecl *ND);
   
+  typedef uintptr_t ParsingDeclStackState;
+
   ParsingDeclStackState PushParsingDeclaration();
   void PopParsingDeclaration(ParsingDeclStackState S, Decl *D);
   void EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc);
@@ -1600,7 +1680,7 @@ public:
   bool DiagRuntimeBehavior(SourceLocation Loc, const PartialDiagnostic &PD);
 
   // Primary Expressions.
-  virtual SourceRange getExprRange(ExprTy *E) const;
+  virtual SourceRange getExprRange(Expr *E) const;
 
   virtual ExprResult ActOnIdExpression(Scope *S,
                                              CXXScopeSpec &SS,
@@ -1663,7 +1743,7 @@ public:
   virtual ExprResult ActOnNumericConstant(const Token &);
   virtual ExprResult ActOnCharacterConstant(const Token &);
   virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
-                                          ExprArg Val);
+                                          Expr *Val);
   virtual ExprResult ActOnParenOrParenListExpr(SourceLocation L,
                                                      SourceLocation R,
                                                      MultiExprArg Val,
@@ -1680,9 +1760,9 @@ public:
                                   unsigned OpcIn,
                                   Expr *InputArg);
   ExprResult BuildUnaryOp(Scope *S, SourceLocation OpLoc,
-                          UnaryOperatorKind Opc, ExprArg input);
+                          UnaryOperatorKind Opc, Expr *input);
   virtual ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
-                                  tok::TokenKind Op, ExprArg Input);
+                                  tok::TokenKind Op, Expr *Input);
 
   ExprResult CreateSizeOfAlignOfExpr(TypeSourceInfo *T,
                                      SourceLocation OpLoc,
@@ -1699,18 +1779,18 @@ public:
 
   virtual ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                                                tok::TokenKind Kind,
-                                               ExprArg Input);
+                                               Expr *Input);
 
-  virtual ExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
+  virtual ExprResult ActOnArraySubscriptExpr(Scope *S, Expr *Base,
                                                    SourceLocation LLoc,
-                                                   ExprArg Idx,
+                                                   Expr *Idx,
                                                    SourceLocation RLoc);
-  ExprResult CreateBuiltinArraySubscriptExpr(ExprArg Base,
+  ExprResult CreateBuiltinArraySubscriptExpr(Expr *Base,
                                                    SourceLocation LLoc,
-                                                   ExprArg Idx,
+                                                   Expr *Idx,
                                                    SourceLocation RLoc);
 
-  ExprResult BuildMemberReferenceExpr(ExprArg Base,
+  ExprResult BuildMemberReferenceExpr(Expr *Base,
                                             QualType BaseType,
                                             SourceLocation OpLoc,
                                             bool IsArrow,
@@ -1719,7 +1799,7 @@ public:
                                 const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs);
 
-  ExprResult BuildMemberReferenceExpr(ExprArg Base,
+  ExprResult BuildMemberReferenceExpr(Expr *Base,
                                             QualType BaseType,
                                             SourceLocation OpLoc, bool IsArrow,
                                             const CXXScopeSpec &SS,
@@ -1738,7 +1818,7 @@ public:
                                      const CXXScopeSpec &SS,
                                      const LookupResult &R);
 
-  ExprResult ActOnDependentMemberExpr(ExprArg Base,
+  ExprResult ActOnDependentMemberExpr(Expr *Base,
                                             QualType BaseType,
                                             bool IsArrow,
                                             SourceLocation OpLoc,
@@ -1747,7 +1827,7 @@ public:
                                const DeclarationNameInfo &NameInfo,
                                const TemplateArgumentListInfo *TemplateArgs);
 
-  virtual ExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
+  virtual ExprResult ActOnMemberAccessExpr(Scope *S, Expr *Base,
                                                  SourceLocation OpLoc,
                                                  tok::TokenKind OpKind,
                                                  CXXScopeSpec &SS,
@@ -1765,7 +1845,7 @@ public:
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
-  virtual ExprResult ActOnCallExpr(Scope *S, ExprArg Fn,
+  virtual ExprResult ActOnCallExpr(Scope *S, Expr *Fn,
                                          SourceLocation LParenLoc,
                                          MultiExprArg Args,
                                          SourceLocation *CommaLocs,
@@ -1778,11 +1858,11 @@ public:
 
   virtual ExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
                                          ParsedType Ty, SourceLocation RParenLoc,
-                                         ExprArg Op);
+                                         Expr *Op);
   ExprResult BuildCStyleCastExpr(SourceLocation LParenLoc,
                                        TypeSourceInfo *Ty,
                                        SourceLocation RParenLoc,
-                                       ExprArg Op);
+                                       Expr *Op);
 
   virtual bool TypeIsVectorType(ParsedType Ty) {
     return GetTypeFromParser(Ty)->isVectorType();
@@ -1790,31 +1870,31 @@ public:
 
   ExprResult MaybeConvertParenListExprToParenExpr(Scope *S, Expr *ME);
   ExprResult ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
-                                            SourceLocation RParenLoc, ExprArg E,
+                                            SourceLocation RParenLoc, Expr *E,
                                             TypeSourceInfo *TInfo);
 
   virtual ExprResult ActOnCompoundLiteral(SourceLocation LParenLoc,
                                                 ParsedType Ty,
                                                 SourceLocation RParenLoc,
-                                                ExprArg Op);
+                                                Expr *Op);
 
   ExprResult BuildCompoundLiteralExpr(SourceLocation LParenLoc,
                                             TypeSourceInfo *TInfo,
                                             SourceLocation RParenLoc,
-                                            ExprArg InitExpr);
+                                            Expr *InitExpr);
 
   virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
                                          MultiExprArg InitList,
                                          SourceLocation RParenLoc);
 
   virtual ExprResult ActOnDesignatedInitializer(Designation &Desig,
-                                                      SourceLocation Loc,
-                                                      bool GNUSyntax,
-                                                      ExprResult Init);
+                                                SourceLocation Loc,
+                                                bool GNUSyntax,
+                                                ExprResult Init);
 
   virtual ExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                 tok::TokenKind Kind,
-                                ExprArg LHS, ExprArg RHS);
+                                Expr *LHS, Expr *RHS);
   ExprResult BuildBinOp(Scope *S, SourceLocation OpLoc,
                         BinaryOperatorKind Opc,
                         Expr *lhs, Expr *rhs);
@@ -1825,16 +1905,26 @@ public:
   /// in the case of a the GNU conditional expr extension.
   virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc,
                                         SourceLocation ColonLoc,
-                                        ExprArg Cond, ExprArg LHS,
-                                        ExprArg RHS);
+                                        Expr *Cond, Expr *LHS,
+                                        Expr *RHS);
 
   /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
   virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc,
                                     SourceLocation LabLoc,
                                     IdentifierInfo *LabelII);
 
-  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtArg SubStmt,
+  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
                                    SourceLocation RPLoc); // "({..})"
+
+  // __builtin_offsetof(type, identifier(.identifier|[expr])*)
+  struct OffsetOfComponent {
+    SourceLocation LocStart, LocEnd;
+    bool isBrackets;  // true if [expr], false if .ident
+    union {
+      IdentifierInfo *IdentInfo;
+      ExprTy *E;
+    } U;
+  };
 
   /// __builtin_offsetof(type, a.b[123][456].c)
   ExprResult BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
@@ -1867,10 +1957,10 @@ public:
 
   // __builtin_va_arg(expr, type)
   virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
-                                      ExprArg expr, ParsedType type,
+                                      Expr *expr, ParsedType type,
                                       SourceLocation RPLoc);
   ExprResult BuildVAArgExpr(SourceLocation BuiltinLoc,
-                                  ExprArg expr, TypeSourceInfo *TInfo,
+                                  Expr *expr, TypeSourceInfo *TInfo,
                                   SourceLocation RPLoc);
 
   // __null
@@ -1893,7 +1983,7 @@ public:
   /// ActOnBlockStmtExpr - This is called when the body of a block statement
   /// literal was successfully completed.  ^(int x){...}
   virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
-                                              StmtArg Body, Scope *CurScope);
+                                        Stmt *Body, Scope *CurScope);
 
   //===---------------------------- C++ Features --------------------------===//
 
@@ -2089,13 +2179,13 @@ public:
                                              ParsedType Ty,
                                              SourceLocation RAngleBracketLoc,
                                              SourceLocation LParenLoc,
-                                             ExprArg E,
+                                             Expr *E,
                                              SourceLocation RParenLoc);
 
   ExprResult BuildCXXNamedCast(SourceLocation OpLoc,
                                      tok::TokenKind Kind,
                                      TypeSourceInfo *Ty,
-                                     ExprArg E,
+                                     Expr *E,
                                      SourceRange AngleBrackets,
                                      SourceRange Parens);
 
@@ -2105,7 +2195,7 @@ public:
                                   SourceLocation RParenLoc);
   ExprResult BuildCXXTypeId(QualType TypeInfoType,
                                   SourceLocation TypeidLoc,
-                                  ExprArg Operand,
+                                  Expr *Operand,
                                   SourceLocation RParenLoc);
 
   /// ActOnCXXTypeid - Parse typeid( something ).
@@ -2126,7 +2216,7 @@ public:
 
   //// ActOnCXXThrow -  Parse throw expressions.
   virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc,
-                                         ExprArg expr);
+                                         Expr *expr);
   bool CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E);
 
   /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
@@ -2157,7 +2247,7 @@ public:
                                QualType AllocType,
                                SourceLocation TypeLoc,
                                SourceRange TypeRange,
-                               ExprArg ArraySize,
+                               Expr *ArraySize,
                                SourceLocation ConstructorLParen,
                                MultiExprArg ConstructorArgs,
                                SourceLocation ConstructorRParen);
@@ -2184,7 +2274,7 @@ public:
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc,
                                           bool UseGlobal, bool ArrayForm,
-                                          ExprArg Operand);
+                                          Expr *Operand);
 
   virtual DeclResult ActOnCXXConditionDeclaration(Scope *S,
                                                   Declarator &D);
@@ -2201,16 +2291,16 @@ public:
                                                SourceLocation RParen);
 
   virtual ExprResult ActOnStartCXXMemberReference(Scope *S,
-                                                        ExprArg Base,
+                                                        Expr *Base,
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
                                                         ParsedType &ObjectType,
                                                    bool &MayBePseudoDestructor);
 
   ExprResult DiagnoseDtorReference(SourceLocation NameLoc,
-                                         ExprArg MemExpr);
+                                         Expr *MemExpr);
 
-  ExprResult BuildPseudoDestructorExpr(ExprArg Base,
+  ExprResult BuildPseudoDestructorExpr(Expr *Base,
                                              SourceLocation OpLoc,
                                              tok::TokenKind OpKind,
                                              const CXXScopeSpec &SS,
@@ -2220,7 +2310,7 @@ public:
                                      PseudoDestructorTypeStorage DestroyedType,
                                              bool HasTrailingLParen);
 
-  virtual ExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+  virtual ExprResult ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
                                                      SourceLocation OpLoc,
                                                      tok::TokenKind OpKind,
                                                      CXXScopeSpec &SS,
@@ -2237,7 +2327,7 @@ public:
   ExprResult MaybeCreateCXXExprWithTemporaries(ExprResult SubExpr);
   FullExpr CreateFullExpr(Expr *SubExpr);
 
-  virtual ExprResult ActOnFinishFullExpr(ExprArg Expr);
+  virtual ExprResult ActOnFinishFullExpr(Expr *Expr);
 
   // Marks SS invalid if it represents an incomplete type.
   bool RequireCompleteDeclContext(CXXScopeSpec &SS, DeclContext *DC);
@@ -2251,8 +2341,8 @@ public:
 
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
-  virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
-                                                   SourceLocation CCLoc);
+  virtual NestedNameSpecifier *
+  ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc);
 
   bool isAcceptableNestedNameSpecifier(NamedDecl *SD);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
@@ -2262,23 +2352,23 @@ public:
                                             IdentifierInfo &II,
                                             ParsedType ObjectType);
 
-  CXXScopeTy *BuildCXXNestedNameSpecifier(Scope *S,
-                                          CXXScopeSpec &SS,
-                                          SourceLocation IdLoc,
-                                          SourceLocation CCLoc,
-                                          IdentifierInfo &II,
-                                          QualType ObjectType,
-                                          NamedDecl *ScopeLookupResult,
-                                          bool EnteringContext,
-                                          bool ErrorRecoveryLookup);
+  NestedNameSpecifier *BuildCXXNestedNameSpecifier(Scope *S,
+                                                   CXXScopeSpec &SS,
+                                                   SourceLocation IdLoc,
+                                                   SourceLocation CCLoc,
+                                                   IdentifierInfo &II,
+                                                   QualType ObjectType,
+                                                   NamedDecl *ScopeLookupResult,
+                                                   bool EnteringContext,
+                                                   bool ErrorRecoveryLookup);
 
-  virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
-                                                  CXXScopeSpec &SS,
-                                                  SourceLocation IdLoc,
-                                                  SourceLocation CCLoc,
-                                                  IdentifierInfo &II,
-                                                  ParsedType ObjectType,
-                                                  bool EnteringContext);
+  virtual NestedNameSpecifier *ActOnCXXNestedNameSpecifier(Scope *S,
+                                                           CXXScopeSpec &SS,
+                                                           SourceLocation IdLoc,
+                                                           SourceLocation CCLoc,
+                                                           IdentifierInfo &II,
+                                                          ParsedType ObjectType,
+                                                          bool EnteringContext);
 
   virtual bool IsInvalidUnlessNestedName(Scope *S,
                                          CXXScopeSpec &SS,
@@ -2330,7 +2420,7 @@ public:
 
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs,
-                                            ExprTy **Strings,
+                                            Expr **Strings,
                                             unsigned NumStrings);
 
   Expr *BuildObjCEncodeExpression(SourceLocation AtLoc,
@@ -2386,8 +2476,8 @@ public:
   virtual Decl *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,
-                                             ExprTy *BitfieldWidth,
-                                             ExprTy *Init, bool IsDefinition,
+                                             Expr *BitfieldWidth,
+                                             Expr *Init, bool IsDefinition,
                                              bool Deleted = false);
 
   virtual MemInitResult ActOnMemInitializer(Decl *ConstructorD,
@@ -2397,7 +2487,7 @@ public:
                                             ParsedType TemplateTypeTy,
                                             SourceLocation IdLoc,
                                             SourceLocation LParenLoc,
-                                            ExprTy **Args, unsigned NumArgs,
+                                            Expr **Args, unsigned NumArgs,
                                             SourceLocation *CommaLocs,
                                             SourceLocation RParenLoc);
 
@@ -2485,8 +2575,8 @@ public:
                                                     Decl *Record);
 
   virtual Decl *ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
-                                                 ExprArg AssertExpr,
-                                                 ExprArg AssertMessageExpr);
+                                                 Expr *AssertExpr,
+                                                 Expr *AssertMessageExpr);
 
   FriendDecl *CheckFriendTypeDecl(SourceLocation FriendLoc,
                                   TypeSourceInfo *TSInfo);
@@ -2696,7 +2786,7 @@ public:
                                                   unsigned Depth,
                                                   unsigned Position,
                                                   SourceLocation EqualLoc,
-                                                  ExprArg DefaultArg);
+                                                  Expr *DefaultArg);
   virtual Decl *ActOnTemplateTemplateParameter(Scope *S,
                                                    SourceLocation TmpLoc,
                                                    TemplateParamsTy *Params,
@@ -2758,7 +2848,7 @@ public:
 
   virtual TypeResult ActOnTagTemplateIdType(TypeResult Type,
                                             TagUseKind TUK,
-                                            DeclSpec::TST TagSpec,
+                                            TypeSpecifierType TagSpec,
                                             SourceLocation TagLoc);
 
   ExprResult BuildTemplateIdExpr(const CXXScopeSpec &SS,
@@ -3643,6 +3733,18 @@ public:
                                           IdentifierInfo *PropertyId,
                                           IdentifierInfo *PropertyIvar);
 
+  struct ObjCArgInfo {
+    IdentifierInfo *Name;
+    SourceLocation NameLoc;
+    // The Type is null if no type was specified, and the DeclSpec is invalid
+    // in this case.
+    ParsedType Type;
+    ObjCDeclSpec DeclSpec;
+
+    /// ArgAttrs - Attribute list for this argument.
+    AttributeList *ArgAttrs;
+  };
+
   virtual Decl *ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.
     SourceLocation EndLoc,   // location of the ; or {.
@@ -3677,6 +3779,18 @@ public:
                             SourceLocation receiverNameLoc,
                             SourceLocation propertyNameLoc);
 
+  /// \brief Describes the kind of message expression indicated by a message
+  /// send that starts with an identifier.
+  enum ObjCMessageKind {
+    /// \brief The message is sent to 'super'.
+    ObjCSuperMessage,
+    /// \brief The message is an instance message.
+    ObjCInstanceMessage,
+    /// \brief The message is a class message, and the identifier is a type
+    /// name.
+    ObjCClassMessage
+  };
+  
   virtual ObjCMessageKind getObjCMessageKind(Scope *S,
                                              IdentifierInfo *Name,
                                              SourceLocation NameLoc,
@@ -3708,7 +3822,7 @@ public:
                                              SourceLocation RBracLoc,
                                              MultiExprArg Args);
 
-  ExprResult BuildInstanceMessage(ExprArg Receiver,
+  ExprResult BuildInstanceMessage(Expr *Receiver,
                                         QualType ReceiverType,
                                         SourceLocation SuperLoc,
                                         Selector Sel,
@@ -3718,7 +3832,7 @@ public:
                                         MultiExprArg Args);
 
   virtual ExprResult ActOnInstanceMessage(Scope *S,
-                                                ExprArg Receiver,
+                                                Expr *Receiver,
                                                 Selector Sel,
                                                 SourceLocation LBracLoc,
                                                 SourceLocation SelectorLoc,
@@ -3726,15 +3840,31 @@ public:
                                                 MultiExprArg Args);
 
 
+  enum PragmaOptionsAlignKind {
+    POAK_Native,  // #pragma options align=native
+    POAK_Natural, // #pragma options align=natural
+    POAK_Packed,  // #pragma options align=packed
+    POAK_Power,   // #pragma options align=power
+    POAK_Mac68k,  // #pragma options align=mac68k
+    POAK_Reset    // #pragma options align=reset
+  };
+
   /// ActOnPragmaOptionsAlign - Called on well formed #pragma options align.
   virtual void ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
                                        SourceLocation PragmaLoc,
                                        SourceLocation KindLoc);
 
+  enum PragmaPackKind {
+    PPK_Default, // #pragma pack([n])
+    PPK_Show,    // #pragma pack(show), only supported by MSVC.
+    PPK_Push,    // #pragma pack(push, [identifier], [n])
+    PPK_Pop      // #pragma pack(pop, [identifier], [n])
+  };
+
   /// ActOnPragmaPack - Called on well formed #pragma pack(...).
   virtual void ActOnPragmaPack(PragmaPackKind Kind,
                                IdentifierInfo *Name,
-                               ExprTy *Alignment,
+                               Expr *Alignment,
                                SourceLocation PragmaLoc,
                                SourceLocation LParenLoc,
                                SourceLocation RParenLoc);
@@ -4111,7 +4241,7 @@ public:
   bool CheckBooleanCondition(Expr *&CondExpr, SourceLocation Loc);
 
   virtual ExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
-                                                 ExprArg SubExpr);
+                                           Expr *SubExpr);
   
   /// DiagnoseAssignmentAsCondition - Given that an expression is
   /// being used as a boolean condition, warn if it's an assignment.
@@ -4149,6 +4279,46 @@ public:
 
   /// \name Code completion
   //@{
+  /// \brief Describes the context in which code completion occurs.
+  enum ParserCompletionContext {
+    /// \brief Code completion occurs at top-level or namespace context.
+    PCC_Namespace,
+    /// \brief Code completion occurs within a class, struct, or union.
+    PCC_Class,
+    /// \brief Code completion occurs within an Objective-C interface, protocol,
+    /// or category.
+    PCC_ObjCInterface,
+    /// \brief Code completion occurs within an Objective-C implementation or
+    /// category implementation
+    PCC_ObjCImplementation,
+    /// \brief Code completion occurs within the list of instance variables
+    /// in an Objective-C interface, protocol, category, or implementation.
+    PCC_ObjCInstanceVariableList,
+    /// \brief Code completion occurs following one or more template
+    /// headers.
+    PCC_Template,
+    /// \brief Code completion occurs following one or more template
+    /// headers within a class.
+    PCC_MemberTemplate,
+    /// \brief Code completion occurs within an expression.
+    PCC_Expression,
+    /// \brief Code completion occurs within a statement, which may
+    /// also be an expression or a declaration.
+    PCC_Statement,
+    /// \brief Code completion occurs at the beginning of the
+    /// initialization statement (or expression) in a for loop.
+    PCC_ForInit,
+    /// \brief Code completion occurs within the condition of an if,
+    /// while, switch, or for statement.
+    PCC_Condition,
+    /// \brief Code completion occurs within the body of a function on a 
+    /// recovery path, where we do not have a specific handle on our position
+    /// in the grammar.
+    PCC_RecoveryInFunction,
+    /// \brief Code completion occurs where only a type is permitted.
+    PCC_Type
+  };
+
   virtual void CodeCompleteOrdinaryName(Scope *S,
                                      ParserCompletionContext CompletionContext);
   virtual void CodeCompleteDeclarator(Scope *S,
@@ -4158,16 +4328,16 @@ public:
   struct CodeCompleteExpressionData;
   virtual void CodeCompleteExpression(Scope *S, 
                                       const CodeCompleteExpressionData &Data);
-  virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
+  virtual void CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);
   virtual void CodeCompleteTag(Scope *S, unsigned TagSpec);
   virtual void CodeCompleteCase(Scope *S);
-  virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
-                                ExprTy **Args, unsigned NumArgs);
+  virtual void CodeCompleteCall(Scope *S, Expr *Fn,
+                                Expr **Args, unsigned NumArgs);
   virtual void CodeCompleteInitializer(Scope *S, Decl *D);
   virtual void CodeCompleteReturn(Scope *S);
-  virtual void CodeCompleteAssignmentRHS(Scope *S, ExprTy *LHS);
+  virtual void CodeCompleteAssignmentRHS(Scope *S, Expr *LHS);
   
   virtual void CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
                                        bool EnteringContext);
@@ -4197,7 +4367,7 @@ public:
   virtual void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                             IdentifierInfo **SelIdents,
                                             unsigned NumSelIdents);
-  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+  virtual void CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
                                                IdentifierInfo **SelIdents,
                                                unsigned NumSelIdents);
   virtual void CodeCompleteObjCForCollection(Scope *S, 
@@ -4246,6 +4416,8 @@ public:
   void GatherGlobalCodeCompletions(
                   llvm::SmallVectorImpl<CodeCompletionResult> &Results);
   //@}
+
+  void PrintStats() const {}
 
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
@@ -4302,6 +4474,33 @@ private:
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
   void CheckImplicitConversions(Expr *E);
+
+  /// \brief The parser's current scope.
+  ///
+  /// The parser maintains this state here.
+  Scope *CurScope;
+  
+protected:
+  friend class Parser;
+  
+  /// \brief Retrieve the parser's current scope.
+  Scope *getCurScope() const { return CurScope; }  
+};
+
+/// \brief RAII object that enters a new expression evaluation context.
+class EnterExpressionEvaluationContext {
+  Sema &Actions;
+
+public:
+  EnterExpressionEvaluationContext(Sema &Actions,
+                                   Sema::ExpressionEvaluationContext NewContext)
+    : Actions(Actions) {
+    Actions.PushExpressionEvaluationContext(NewContext);
+  }
+
+  ~EnterExpressionEvaluationContext() {
+    Actions.PopExpressionEvaluationContext();
+  }
 };
 
 }  // end namespace clang

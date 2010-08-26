@@ -22,7 +22,6 @@
 //===----------------------------------------------------------------------===//
 
 namespace clang {
-  class Action;
   class Attr;
   class CXXBaseOrMemberInitializer;
   class CXXBaseSpecifier;
@@ -31,6 +30,7 @@ namespace clang {
   class Expr;
   class NestedNameSpecifier;
   class QualType;
+  class Sema;
   class Stmt;
   class TemplateName;
   class TemplateParameterList;
@@ -307,8 +307,9 @@ namespace clang {
 
   public:
     // Normal copying implicitly defined
-    explicit ASTMultiPtr(Action &) : Nodes(0), Count(0) {}
-    ASTMultiPtr(Action &, PtrTy *nodes, unsigned count)
+    ASTMultiPtr() : Nodes(0), Count(0) {}
+    explicit ASTMultiPtr(Sema &) : Nodes(0), Count(0) {}
+    ASTMultiPtr(Sema &, PtrTy *nodes, unsigned count)
       : Nodes(nodes), Count(count) {}
     // Fake mover in Parse/AstGuard.h needs this:
     ASTMultiPtr(PtrTy *nodes, unsigned count) : Nodes(nodes), Count(count) {}
@@ -331,7 +332,7 @@ namespace clang {
     mutable unsigned Count;
 
   public:
-    ASTTemplateArgsPtr(Action &actions, ParsedTemplateArgument *args,
+    ASTTemplateArgsPtr(Sema &actions, ParsedTemplateArgument *args,
                        unsigned count) :
       Args(args), Count(count) { }
 
@@ -369,7 +370,7 @@ namespace clang {
     ASTOwningVector &operator=(ASTOwningVector &); // do not implement
 
   public:
-    explicit ASTOwningVector(Action &Actions)
+    explicit ASTOwningVector(Sema &Actions)
     { }
 
     PtrTy *take() {
@@ -435,7 +436,17 @@ namespace clang {
   inline Stmt *move(Stmt *S) { return S; }
 
   typedef ASTMultiPtr<Expr*> MultiExprArg;
+  typedef ASTMultiPtr<Stmt*> MultiStmtArg;
   typedef ASTMultiPtr<TemplateParameterList*> MultiTemplateParamsArg;
+
+  inline ExprResult ExprError() { return ExprResult(true); }
+  inline StmtResult StmtError() { return StmtResult(true); }
+
+  inline ExprResult ExprError(const DiagnosticBuilder&) { return ExprError(); }
+  inline StmtResult StmtError(const DiagnosticBuilder&) { return StmtError(); }
+
+  inline ExprResult ExprEmpty() { return ExprResult(false); }
+  inline StmtResult StmtEmpty() { return StmtResult(false); }
 
   inline Expr *AssertSuccess(ExprResult R) {
     assert(!R.isInvalid() && "operation was asserted to never fail!");

@@ -42,14 +42,6 @@
 using namespace clang;
 using namespace sema;
 
-/// getDeclName - Return a pretty name for the specified decl if possible, or
-/// an empty string if not.  This is used for pretty crash reporting.
-std::string Sema::getDeclName(Decl *D) {
-  if (NamedDecl *DN = dyn_cast_or_null<NamedDecl>(D))
-    return DN->getQualifiedNameAsString();
-  return "";
-}
-
 Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr) {
   return DeclGroupPtrTy::make(DeclGroupRef(Ptr));
 }
@@ -4921,7 +4913,7 @@ static void ComputeNRVO(Stmt *Body, FunctionScopeInfo *Scope) {
     const_cast<VarDecl*>(NRVOCandidate)->setNRVOVariable(true);
 }
 
-Decl *Sema::ActOnFinishFunctionBody(Decl *D, StmtArg BodyArg) {
+Decl *Sema::ActOnFinishFunctionBody(Decl *D, Stmt *BodyArg) {
   return ActOnFinishFunctionBody(D, move(BodyArg), false);
 }
 

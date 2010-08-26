@@ -584,7 +584,7 @@ void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
 /// example:
 ///    class foo : public bar, virtual private baz {
 /// 'public bar' and 'virtual private baz' are each base-specifiers.
-Sema::BaseResult
+BaseResult
 Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          ParsedType basetype, SourceLocation BaseLoc) {
@@ -1056,7 +1056,7 @@ static bool FindBaseInitializer(Sema &SemaRef,
 }
 
 /// ActOnMemInitializer - Handle a C++ member initializer.
-Sema::MemInitResult
+MemInitResult
 Sema::ActOnMemInitializer(Decl *ConstructorD,
                           Scope *S,
                           CXXScopeSpec &SS,
@@ -1262,7 +1262,7 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
   return false;
 }
 
-Sema::MemInitResult
+MemInitResult
 Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
                              SourceLocation LParenLoc,
@@ -1359,7 +1359,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                                                   RParenLoc);
 }
 
-Sema::MemInitResult
+MemInitResult
 Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                            Expr **Args, unsigned NumArgs, 
                            SourceLocation LParenLoc, SourceLocation RParenLoc, 
@@ -1519,7 +1519,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       = InitializationKind::CreateDefault(Constructor->getLocation());
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
     BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind,
-                               Sema::MultiExprArg(SemaRef, 0, 0));
+                               MultiExprArg(SemaRef, 0, 0));
     break;
   }
 
@@ -1548,8 +1548,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 
                                    &CopyCtorArg, 1);
     BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind,
-                               Sema::MultiExprArg(SemaRef, 
-                                                  &CopyCtorArg, 1));
+                               MultiExprArg(&CopyCtorArg, 1));
     break;
   }
 
@@ -1673,7 +1672,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     ExprResult MemberInit
       = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
-                        Sema::MultiExprArg(SemaRef, &CopyCtorArgE, 1));
+                        MultiExprArg(&CopyCtorArgE, 1));
     MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(MemberInit.get());
     if (MemberInit.isInvalid())
       return true;
@@ -1698,8 +1697,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
     ExprResult MemberInit = 
-      InitSeq.Perform(SemaRef, InitEntity, InitKind, 
-                      Sema::MultiExprArg(SemaRef, 0, 0));
+      InitSeq.Perform(SemaRef, InitEntity, InitKind, MultiExprArg());
     if (MemberInit.isInvalid())
       return true;
 
@@ -4621,7 +4619,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                    /*TemplateArgs=*/0,
                                    /*SuppressQualifierCheck=*/true);
     if (OpEqualRef.isInvalid())
-      return S.StmtError();
+      return StmtError();
     
     // Build the call to the assignment operator.
 
@@ -4629,7 +4627,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                       OpEqualRef.takeAs<Expr>(),
                                                         Loc, &From, 1, 0, Loc);
     if (Call.isInvalid())
-      return S.StmtError();
+      return StmtError();
     
     return S.Owned(Call.takeAs<Stmt>());
   }
@@ -4640,7 +4638,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   if (!ArrayTy) {
     ExprResult Assignment = S.CreateBuiltinBinOp(Loc, BO_Assign, To, From);
     if (Assignment.isInvalid())
-      return S.StmtError();
+      return StmtError();
     
     return S.Owned(Assignment.takeAs<Stmt>());
   }
@@ -4707,7 +4705,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                 To, From, 
                                                 CopyingBaseSubobject, Depth+1);
   if (Copy.isInvalid())
-    return S.StmtError();
+    return StmtError();
   
   // Construct the loop that copies all elements of this array.
   return S.ActOnForStmt(Loc, Loc, InitStmt, 
@@ -6947,8 +6945,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
       
       InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);
       ExprResult MemberInit = 
-        InitSeq.Perform(*this, InitEntity, InitKind, 
-                        Sema::MultiExprArg(*this, 0, 0));
+        InitSeq.Perform(*this, InitEntity, InitKind, MultiExprArg());
       MemberInit = MaybeCreateCXXExprWithTemporaries(MemberInit.get());
       // Note, MemberInit could actually come back empty if no initialization 
       // is required (e.g., because it would call a trivial default constructor)

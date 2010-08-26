@@ -2412,7 +2412,7 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
 ///
 /// The state token we use is the start index of this scope
 /// on the warning stack.
-Action::ParsingDeclStackState Sema::PushParsingDeclaration() {
+Sema::ParsingDeclStackState Sema::PushParsingDeclaration() {
   ParsingDeclDepth++;
   return (ParsingDeclStackState) DelayedDiagnostics.size();
 }

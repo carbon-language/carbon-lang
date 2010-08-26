@@ -20,6 +20,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaConsumer.h"
@@ -555,3 +556,21 @@ BlockScopeInfo *Sema::getCurBlock() {
 
 // Pin this vtable to this file.
 ExternalSemaSource::~ExternalSemaSource() {}
+
+void PrettyDeclStackTraceEntry::print(llvm::raw_ostream &OS) const {
+  SourceLocation Loc = this->Loc;
+  if (!Loc.isValid() && TheDecl) Loc = TheDecl->getLocation();
+  if (Loc.isValid()) {
+    Loc.print(OS, S.getSourceManager());
+    OS << ": ";
+  }
+  OS << Message;
+
+  if (TheDecl && isa<NamedDecl>(TheDecl)) {
+    std::string Name = cast<NamedDecl>(TheDecl)->getNameAsString();
+    if (!Name.empty())
+      OS << " '" << Name << '\'';
+  }
+
+  OS << '\n';
+}

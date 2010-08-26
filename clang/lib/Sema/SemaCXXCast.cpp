@@ -120,7 +120,7 @@ ExprResult
 Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation LAngleBracketLoc, ParsedType Ty,
                         SourceLocation RAngleBracketLoc,
-                        SourceLocation LParenLoc, ExprArg E,
+                        SourceLocation LParenLoc, Expr *E,
                         SourceLocation RParenLoc) {
   
   TypeSourceInfo *DestTInfo;
@@ -135,7 +135,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 
 ExprResult
 Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
-                        TypeSourceInfo *DestTInfo, ExprArg Ex,
+                        TypeSourceInfo *DestTInfo, Expr *Ex,
                         SourceRange AngleBrackets, SourceRange Parens) {
   QualType DestType = DestTInfo->getType();
 
@@ -965,8 +965,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return TC_NotApplicable;
     
   ExprResult Result
-    = InitSeq.Perform(Self, Entity, InitKind,
-                      Action::MultiExprArg(Self, &SrcExpr, 1));
+    = InitSeq.Perform(Self, Entity, InitKind, MultiExprArg(Self, &SrcExpr, 1));
   if (Result.isInvalid()) {
     msg = 0;
     return TC_Failed;

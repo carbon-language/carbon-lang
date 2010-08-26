@@ -184,15 +184,15 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // Three cases. This is a message send to a type: [type foo]
       // This is a message send to super:  [super foo]
       // This is a message sent to an expr:  [super.bar foo]
-      switch (Action::ObjCMessageKind Kind
+      switch (Sema::ObjCMessageKind Kind
                 = Actions.getObjCMessageKind(getCurScope(), II, IILoc, 
                                              II == Ident_super,
                                              NextToken().is(tok::period),
                                              ReceiverType)) {
-      case Action::ObjCSuperMessage:
-      case Action::ObjCClassMessage:
+      case Sema::ObjCSuperMessage:
+      case Sema::ObjCClassMessage:
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
-        if (Kind == Action::ObjCSuperMessage)
+        if (Kind == Sema::ObjCSuperMessage)
           return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                              ConsumeToken(),
                                                              ParsedType(),
@@ -208,7 +208,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
                                                            ReceiverType, 
                                                            0);
 
-      case Action::ObjCInstanceMessage:
+      case Sema::ObjCInstanceMessage:
         // Fall through; we'll just parse the expression and
         // (possibly) treat this like an Objective-C message send
         // later.
@@ -321,7 +321,7 @@ ExprResult Parser::ParseBraceInitializer() {
     if (!getLang().CPlusPlus)
       Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
-    return Actions.ActOnInitList(LBraceLoc, Action::MultiExprArg(Actions),
+    return Actions.ActOnInitList(LBraceLoc, MultiExprArg(Actions),
                                  ConsumeBrace());
   }
 

@@ -17,8 +17,9 @@
 #include "clang/Basic/Specifiers.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/CodeCompletionHandler.h"
-#include "clang/Sema/Action.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Sema/DeclSpec.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <stack>
 #include <list>
@@ -93,7 +94,7 @@ class Parser : public CodeCompletionHandler {
 
   /// Actions - These are the callbacks we invoke as we parse various constructs
   /// in the file. 
-  Action &Actions;
+  Sema &Actions;
 
   Diagnostic &Diags;
 
@@ -134,13 +135,13 @@ class Parser : public CodeCompletionHandler {
   unsigned TemplateParameterDepth;
 
 public:
-  Parser(Preprocessor &PP, Action &Actions);
+  Parser(Preprocessor &PP, Sema &Actions);
   ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
   const TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
   Preprocessor &getPreprocessor() const { return PP; }
-  Action &getActions() const { return Actions; }
+  Sema &getActions() const { return Actions; }
 
   const Token &getCurToken() const { return Tok; }
   Scope *getCurScope() const { return Actions.getCurScope(); }
@@ -166,7 +167,7 @@ public:
 
   typedef Expr *ExprArg;
   typedef ASTMultiPtr<Stmt*> MultiStmtArg;
-  typedef Action::FullExprArg FullExprArg;
+  typedef Sema::FullExprArg FullExprArg;
 
   /// Adorns a ExprResult with Actions to make it an ExprResult
   ExprResult Owned(ExprResult res) {
@@ -658,8 +659,8 @@ private:
   /// variable's initializer, but not when parsing the body of a
   /// class or function definition.
   class ParsingDeclRAIIObject {
-    Action &Actions;
-    Action::ParsingDeclStackState State;
+    Sema &Actions;
+    Sema::ParsingDeclStackState State;
     bool Popped;
 
   public:
@@ -963,10 +964,10 @@ private:
   /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
   bool ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
                            llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
-                           void (Action::*Completer)(Scope *S,
-                                                     Expr *Data,
-                                                     Expr **Args,
-                                                     unsigned NumArgs) = 0,
+                           void (Sema::*Completer)(Scope *S,
+                                                   Expr *Data,
+                                                   Expr **Args,
+                                                   unsigned NumArgs) = 0,
                            Expr *Data = 0);
 
   /// ParenParseOption - Control what ParseParenExpression will parse.

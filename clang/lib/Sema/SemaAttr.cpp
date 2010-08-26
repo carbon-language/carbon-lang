@@ -139,7 +139,7 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
 
   // Reset just pops the top of the stack, or resets the current alignment to
   // default.
-  if (Kind == Action::POAK_Reset) {
+  if (Kind == Sema::POAK_Reset) {
     if (!Context->pop(0, /*IsReset=*/true)) {
       Diag(PragmaLoc, diag::warn_pragma_options_align_reset_failed)
         << "stack empty";
@@ -212,11 +212,11 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
 
   switch (Kind) {
-  case Action::PPK_Default: // pack([n])
+  case Sema::PPK_Default: // pack([n])
     Context->setAlignment(AlignmentVal);
     break;
 
-  case Action::PPK_Show: // pack(show)
+  case Sema::PPK_Show: // pack(show)
     // Show the current alignment, making sure to show the right value
     // for the default.
     AlignmentVal = Context->getAlignment();
@@ -229,14 +229,14 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
       Diag(PragmaLoc, diag::warn_pragma_pack_show) << AlignmentVal;
     break;
 
-  case Action::PPK_Push: // pack(push [, id] [, [n])
+  case Sema::PPK_Push: // pack(push [, id] [, [n])
     Context->push(Name);
     // Set the new alignment if specified.
     if (Alignment)
       Context->setAlignment(AlignmentVal);
     break;
 
-  case Action::PPK_Pop: // pack(pop [, id] [,  n])
+  case Sema::PPK_Pop: // pack(pop [, id] [,  n])
     // MSDN, C/C++ Preprocessor Reference > Pragma Directives > pack:
     // "#pragma pack(pop, identifier, n) is undefined"
     if (Alignment && Name)

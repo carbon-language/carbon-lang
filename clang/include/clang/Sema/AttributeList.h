@@ -21,7 +21,6 @@
 
 namespace clang {
   class IdentifierInfo;
-  class Action;
   class Expr;
 
 /// AttributeList - Represents GCC's __attribute__ declaration. There are

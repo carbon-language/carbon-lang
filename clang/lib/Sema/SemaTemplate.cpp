@@ -712,7 +712,7 @@ static void SetNestedNameSpecifier(TagDecl *T, const CXXScopeSpec &SS) {
                         SS.getRange());
 }
 
-Sema::DeclResult
+DeclResult
 Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          SourceLocation KWLoc, CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
@@ -1518,7 +1518,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
   return Context.getTemplateSpecializationType(Name, TemplateArgs, CanonType);
 }
 
-Action::TypeResult
+TypeResult
 Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
                           SourceLocation LAngleLoc,
                           ASTTemplateArgsPtr TemplateArgsIn,
@@ -1547,12 +1547,12 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   return CreateParsedType(Result, DI);
 }
 
-Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
-                                              TagUseKind TUK,
-                                              DeclSpec::TST TagSpec,
-                                              SourceLocation TagLoc) {
+TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
+                                        TagUseKind TUK,
+                                        TypeSpecifierType TagSpec,
+                                        SourceLocation TagLoc) {
   if (TypeResult.isInvalid())
-    return Sema::TypeResult();
+    return ::TypeResult();
 
   // FIXME: preserve source info, ideally without copying the DI.
   TypeSourceInfo *DI;
@@ -4634,7 +4634,7 @@ static bool ScopeSpecifierHasTemplateId(const CXXScopeSpec &SS) {
 }
 
 // Explicit instantiation of a class template specialization
-Sema::DeclResult
+DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation ExternLoc,
                                  SourceLocation TemplateLoc,
@@ -4839,7 +4839,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   bool Owned = false;
   bool IsDependent = false;
-  Decl *TagD = ActOnTag(S, TagSpec, Action::TUK_Reference,
+  Decl *TagD = ActOnTag(S, TagSpec, Sema::TUK_Reference,
                         KWLoc, SS, Name, NameLoc, Attr, AS_none,
                         MultiTemplateParamsArg(*this, 0, 0),
                         Owned, IsDependent);
@@ -4951,10 +4951,10 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   return TagD;
 }
 
-Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
-                                                  SourceLocation ExternLoc,
-                                                  SourceLocation TemplateLoc,
-                                                  Declarator &D) {
+DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
+                                            SourceLocation ExternLoc,
+                                            SourceLocation TemplateLoc,
+                                            Declarator &D) {
   // Explicit instantiations always require a name.
   // TODO: check if/when DNInfo should replace Name.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
@@ -5204,7 +5204,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   return (Decl*) 0;
 }
 
-Sema::TypeResult
+TypeResult
 Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                         const CXXScopeSpec &SS, IdentifierInfo *Name,
                         SourceLocation TagLoc, SourceLocation NameLoc) {
@@ -5228,7 +5228,7 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   return ParsedType::make(Context.getDependentNameType(Kwd, NNS, Name));
 }
 
-Sema::TypeResult
+TypeResult
 Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
                         const CXXScopeSpec &SS, const IdentifierInfo &II, 
                         SourceLocation IdLoc) {
@@ -5263,7 +5263,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   return CreateParsedType(T, TSI);
 }
 
-Sema::TypeResult
+TypeResult
 Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
                         const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
                         ParsedType Ty) {

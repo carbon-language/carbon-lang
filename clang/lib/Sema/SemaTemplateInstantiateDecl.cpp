@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===/
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Template.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -20,7 +21,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeLoc.h"
-#include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Lex/Preprocessor.h"
 
 using namespace clang;
@@ -147,7 +147,7 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
       if (Aligned->isAlignmentDependent()) {
         // The alignment expression is not potentially evaluated.
         EnterExpressionEvaluationContext Unevaluated(*this,
-                                                     Action::Unevaluated);
+                                                     Sema::Unevaluated);
 
         if (Aligned->isAlignmentExpr()) {
           ExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
@@ -493,7 +493,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     BitWidth = 0;
   else if (BitWidth) {
     // The bit-width expression is not potentially evaluated.
-    EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+    EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
 
     ExprResult InstantiatedBitWidth
       = SemaRef.SubstExpr(BitWidth, TemplateArgs);
@@ -581,7 +581,7 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   Expr *AssertExpr = D->getAssertExpr();
 
   // The expression in a static assertion is not potentially evaluated.
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
 
   ExprResult InstantiatedAssertExpr
     = SemaRef.SubstExpr(AssertExpr, TemplateArgs);
@@ -620,7 +620,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     if (Expr *UninstValue = EC->getInitExpr()) {
       // The enumerator's value expression is not potentially evaluated.
       EnterExpressionEvaluationContext Unevaluated(SemaRef,
-                                                   Action::Unevaluated);
+                                                   Sema::Unevaluated);
 
       Value = SemaRef.SubstExpr(UninstValue, TemplateArgs);
     }
@@ -2070,7 +2070,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     PendingInstantiations.swap(SavedPendingInstantiations);
 
   EnterExpressionEvaluationContext EvalContext(*this, 
-                                               Action::PotentiallyEvaluated);
+                                               Sema::PotentiallyEvaluated);
   ActOnStartOfFunctionDef(0, Function);
 
   // Introduce a new scope where local variable instantiations will be
@@ -2718,10 +2718,8 @@ void Sema::PerformPendingInstantiations(bool LocalOnly) {
 
     // Instantiate function definitions
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first)) {
-      PrettyStackTraceActionsDecl CrashInfo(Function,
-                                            Function->getLocation(), *this,
-                                            Context.getSourceManager(),
-                                           "instantiating function definition");
+      PrettyDeclStackTraceEntry CrashInfo(*this, Function, SourceLocation(),
+                                          "instantiating function definition");
       bool DefinitionRequired = Function->getTemplateSpecializationKind() ==
                                 TSK_ExplicitInstantiationDefinition;
       InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true,
@@ -2754,10 +2752,9 @@ void Sema::PerformPendingInstantiations(bool LocalOnly) {
       break;
     }
 
-    PrettyStackTraceActionsDecl CrashInfo(Var, Var->getLocation(), *this,
-                                          Context.getSourceManager(),
-                                          "instantiating static data member "
-                                          "definition");
+    PrettyDeclStackTraceEntry CrashInfo(*this, Var, Var->getLocation(),
+                                        "instantiating static data member "
+                                        "definition");
 
     bool DefinitionRequired = Var->getTemplateSpecializationKind() ==
                               TSK_ExplicitInstantiationDefinition;
@@ -2779,3 +2776,4 @@ void Sema::PerformDependentDiagnostics(const DeclContext *Pattern,
     }
   }
 }
+

@@ -15,9 +15,14 @@
 #ifndef LLVM_CLANG_SEMA_DESIGNATOR_H
 #define LLVM_CLANG_SEMA_DESIGNATOR_H
 
-#include "clang/Sema/Action.h"
+#include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
+
+class Expr;
+class IdentifierInfo;
+class Sema;
 
 /// Designator - A designator in a C99 designated initializer.
 ///
@@ -163,11 +168,11 @@ public:
 
   /// ClearExprs - Null out any expression references, which prevents
   /// them from being 'delete'd later.
-  void ClearExprs(Action &Actions) {}
+  void ClearExprs(Sema &Actions) {}
 
   /// FreeExprs - Release any unclaimed memory for the expressions in
   /// this designator.
-  void FreeExprs(Action &Actions) {}
+  void FreeExprs(Sema &Actions) {}
 };
 
 
@@ -201,11 +206,11 @@ public:
 
   /// ClearExprs - Null out any expression references, which prevents them from
   /// being 'delete'd later.
-  void ClearExprs(Action &Actions) {}
+  void ClearExprs(Sema &Actions) {}
 
   /// FreeExprs - Release any unclaimed memory for the expressions in this
   /// designation.
-  void FreeExprs(Action &Actions) {}
+  void FreeExprs(Sema &Actions) {}
 };
 
 } // end namespace clang

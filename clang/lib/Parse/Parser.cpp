@@ -21,7 +21,7 @@
 #include "ParsePragma.h"
 using namespace clang;
 
-Parser::Parser(Preprocessor &pp, Action &actions)
+Parser::Parser(Preprocessor &pp, Sema &actions)
   : CrashInfo(*this), PP(pp), Actions(actions), Diags(PP.getDiagnostics()),
     GreaterThanIsOperator(true), ColonIsSacred(false),
     TemplateParameterDepth(0) {
@@ -467,8 +467,8 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
     break;
   case tok::code_completion:
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                   ObjCImpDecl? Action::PCC_ObjCImplementation
-                                              : Action::PCC_Namespace);
+                                   ObjCImpDecl? Sema::PCC_ObjCImplementation
+                                              : Sema::PCC_Namespace);
     ConsumeCodeCompletionToken();
     return ParseExternalDeclaration(Attr);
   case tok::kw_using:
@@ -680,7 +680,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   // specified Declarator for the function.
   Decl *Res = TemplateInfo.TemplateParams?
       Actions.ActOnStartOfFunctionTemplateDef(getCurScope(),
-                              Action::MultiTemplateParamsArg(Actions,
+                              MultiTemplateParamsArg(Actions,
                                           TemplateInfo.TemplateParams->data(),
                                          TemplateInfo.TemplateParams->size()),
                                               D)
@@ -1110,17 +1110,17 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
 void Parser::CodeCompletionRecovery() {
   for (Scope *S = getCurScope(); S; S = S->getParent()) {
     if (S->getFlags() & Scope::FnScope) {
-      Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_RecoveryInFunction);
+      Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_RecoveryInFunction);
       return;
     }
     
     if (S->getFlags() & Scope::ClassScope) {
-      Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Class);
+      Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Class);
       return;
     }
   }
   
-  Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Namespace);
+  Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Namespace);
 }
 
 // Anchor the Parser::FieldCallback vtable to this translation unit.

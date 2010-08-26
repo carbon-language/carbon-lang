@@ -220,7 +220,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 ///
 ExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
     ConsumeCodeCompletionToken();
   }
 
@@ -261,7 +261,7 @@ ExprResult Parser::ParseConstantExpression() {
   //   An expression is potentially evaluated unless it appears where an
   //   integral constant expression is required (see 5.19) [...].
   EnterExpressionEvaluationContext Unevaluated(Actions,
-                                               Action::Unevaluated);
+                                               Sema::Unevaluated);
 
   ExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
@@ -905,7 +905,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::caret:
     return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::PCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
     ConsumeCodeCompletionToken();
     return ParseCastExpression(isUnaryExpression, isAddressOfOperand, 
                                NotCastExpr, TypeOfCast);
@@ -995,7 +995,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       }
       
       if (Tok.isNot(tok::r_paren)) {
-        if (ParseExpressionList(ArgExprs, CommaLocs, &Action::CodeCompleteCall,
+        if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
                                 LHS.get())) {
           SkipUntil(tok::r_paren);
           return ExprError();
@@ -1132,7 +1132,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     // The GNU typeof and alignof extensions also behave as unevaluated
     // operands.
     EnterExpressionEvaluationContext Unevaluated(Actions,
-                                                 Action::Unevaluated);
+                                                 Sema::Unevaluated);
     Operand = ParseCastExpression(true/*isUnaryExpression*/);
   } else {
     // If it starts with a '(', we know that it is either a parenthesized
@@ -1149,7 +1149,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     // The GNU typeof and alignof extensions also behave as unevaluated
     // operands.
     EnterExpressionEvaluationContext Unevaluated(Actions,
-                                                 Action::Unevaluated);
+                                                 Sema::Unevaluated);
     Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, 
                                    ParsedType(), CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);
@@ -1287,9 +1287,9 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
     }
 
     // Keep track of the various subcomponents we see.
-    llvm::SmallVector<Action::OffsetOfComponent, 4> Comps;
+    llvm::SmallVector<Sema::OffsetOfComponent, 4> Comps;
 
-    Comps.push_back(Action::OffsetOfComponent());
+    Comps.push_back(Sema::OffsetOfComponent());
     Comps.back().isBrackets = false;
     Comps.back().U.IdentInfo = Tok.getIdentifierInfo();
     Comps.back().LocStart = Comps.back().LocEnd = ConsumeToken();
@@ -1298,7 +1298,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
     while (1) {
       if (Tok.is(tok::period)) {
         // offsetof-member-designator: offsetof-member-designator '.' identifier
-        Comps.push_back(Action::OffsetOfComponent());
+        Comps.push_back(Sema::OffsetOfComponent());
         Comps.back().isBrackets = false;
         Comps.back().LocStart = ConsumeToken();
 
@@ -1312,7 +1312,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
 
       } else if (Tok.is(tok::l_square)) {
         // offsetof-member-designator: offsetof-member-design '[' expression ']'
-        Comps.push_back(Action::OffsetOfComponent());
+        Comps.push_back(Sema::OffsetOfComponent());
         Comps.back().isBrackets = true;
         Comps.back().LocStart = ConsumeBracket();
         Res = ParseExpression();
@@ -1579,7 +1579,7 @@ ExprResult Parser::ParseStringLiteralExpression() {
 ///
 bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
                             llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
-                                 void (Action::*Completer)(Scope *S, 
+                                 void (Sema::*Completer)(Scope *S, 
                                                            Expr *Data,
                                                            Expr **Args,
                                                            unsigned NumArgs),

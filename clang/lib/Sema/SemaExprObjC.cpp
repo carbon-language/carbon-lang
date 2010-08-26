@@ -24,9 +24,9 @@
 
 using namespace clang;
 
-Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
-                                              ExprTy **strings,
-                                              unsigned NumStrings) {
+ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
+                                        Expr **strings,
+                                        unsigned NumStrings) {
   StringLiteral **Strings = reinterpret_cast<StringLiteral**>(strings);
 
   // Most ObjC strings are formed out of a single piece.  However, we *can*
@@ -133,11 +133,11 @@ Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
   return new (Context) ObjCEncodeExpr(StrTy, EncodedTypeInfo, AtLoc, RParenLoc);
 }
 
-Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
-                                                 SourceLocation EncodeLoc,
-                                                 SourceLocation LParenLoc,
-                                                 ParsedType ty,
-                                                 SourceLocation RParenLoc) {
+ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
+                                           SourceLocation EncodeLoc,
+                                           SourceLocation LParenLoc,
+                                           ParsedType ty,
+                                           SourceLocation RParenLoc) {
   // FIXME: Preserve type source info ?
   TypeSourceInfo *TInfo;
   QualType EncodedType = GetTypeFromParser(ty, &TInfo);
@@ -148,11 +148,11 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   return BuildObjCEncodeExpression(AtLoc, TInfo, RParenLoc);
 }
 
-Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
-                                                   SourceLocation AtLoc,
-                                                   SourceLocation SelLoc,
-                                                   SourceLocation LParenLoc,
-                                                   SourceLocation RParenLoc) {
+ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
+                                             SourceLocation AtLoc,
+                                             SourceLocation SelLoc,
+                                             SourceLocation LParenLoc,
+                                             SourceLocation RParenLoc) {
   ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel,
                              SourceRange(LParenLoc, RParenLoc), false, false);
   if (!Method)
@@ -170,11 +170,11 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   return new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
 }
 
-Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
-                                                   SourceLocation AtLoc,
-                                                   SourceLocation ProtoLoc,
-                                                   SourceLocation LParenLoc,
-                                                   SourceLocation RParenLoc) {
+ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
+                                             SourceLocation AtLoc,
+                                             SourceLocation ProtoLoc,
+                                             SourceLocation LParenLoc,
+                                             SourceLocation RParenLoc) {
   ObjCProtocolDecl* PDecl = LookupProtocol(ProtocolId, ProtoLoc);
   if (!PDecl) {
     Diag(ProtoLoc, diag::err_undeclared_protocol) << ProtocolId;

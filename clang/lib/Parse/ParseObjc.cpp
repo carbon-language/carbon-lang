@@ -14,6 +14,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
@@ -348,8 +349,8 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
     // Code completion within an Objective-C interface.
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                  ObjCImpDecl? Action::PCC_ObjCImplementation
-                                             : Action::PCC_ObjCInterface);
+                                  ObjCImpDecl? Sema::PCC_ObjCImplementation
+                                             : Sema::PCC_ObjCInterface);
       ConsumeCodeCompletionToken();
     }
     
@@ -840,10 +841,10 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
-  llvm::SmallVector<Action::ObjCArgInfo, 12> ArgInfos;
+  llvm::SmallVector<Sema::ObjCArgInfo, 12> ArgInfos;
 
   while (1) {
-    Action::ObjCArgInfo ArgInfo;
+    Sema::ObjCArgInfo ArgInfo;
 
     // Each iteration parses a single keyword argument.
     if (Tok.isNot(tok::colon)) {
@@ -951,7 +952,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   PD.complete(Result);
   
   // Delete referenced AttributeList objects.
-  for (llvm::SmallVectorImpl<Action::ObjCArgInfo>::iterator
+  for (llvm::SmallVectorImpl<Sema::ObjCArgInfo>::iterator
        I = ArgInfos.begin(), E = ArgInfos.end(); I != E; ++I)
     delete I->ArgAttrs;
   
@@ -1076,7 +1077,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                       Action::PCC_ObjCInstanceVariableList);
+                                       Sema::PCC_ObjCInstanceVariableList);
       ConsumeCodeCompletionToken();
     }
     
@@ -1634,9 +1635,8 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 Decl *Parser::ParseObjCMethodDefinition() {
   Decl *MDecl = ParseObjCMethodPrototype(ObjCImpDecl);
 
-  PrettyStackTraceActionsDecl CrashInfo(MDecl, Tok.getLocation(), Actions,
-                                        PP.getSourceManager(),
-                                        "parsing Objective-C method");
+  PrettyDeclStackTraceEntry CrashInfo(Actions, MDecl, Tok.getLocation(),
+                                      "parsing Objective-C method");
 
   // parse optional ';'
   if (Tok.is(tok::semi)) {
@@ -1896,11 +1896,11 @@ ExprResult Parser::ParseObjCMessageExpression() {
                                        Name == Ident_super,
                                        NextToken().is(tok::period),
                                        ReceiverType)) {
-    case Action::ObjCSuperMessage:
+    case Sema::ObjCSuperMessage:
       return ParseObjCMessageExpressionBody(LBracLoc, ConsumeToken(),
                                             ParsedType(), 0);
 
-    case Action::ObjCClassMessage:
+    case Sema::ObjCClassMessage:
       if (!ReceiverType) {
         SkipUntil(tok::r_square);
         return ExprError();
@@ -1911,7 +1911,7 @@ ExprResult Parser::ParseObjCMessageExpression() {
       return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
                                             ReceiverType, 0);
         
-    case Action::ObjCInstanceMessage:
+    case Sema::ObjCInstanceMessage:
       // Fall through to parse an expression.
       break;
     }
@@ -2090,20 +2090,20 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   if (SuperLoc.isValid())
     return Actions.ActOnSuperMessage(getCurScope(), SuperLoc, Sel,
                                      LBracLoc, SelectorLoc, RBracLoc,
-                                     Action::MultiExprArg(Actions, 
-                                                          KeyExprs.take(),
-                                                          KeyExprs.size()));
+                                     MultiExprArg(Actions, 
+                                                  KeyExprs.take(),
+                                                  KeyExprs.size()));
   else if (ReceiverType)
     return Actions.ActOnClassMessage(getCurScope(), ReceiverType, Sel,
                                      LBracLoc, SelectorLoc, RBracLoc,
-                                     Action::MultiExprArg(Actions, 
-                                                          KeyExprs.take(), 
-                                                          KeyExprs.size()));
+                                     MultiExprArg(Actions, 
+                                                  KeyExprs.take(), 
+                                                  KeyExprs.size()));
   return Actions.ActOnInstanceMessage(getCurScope(), ReceiverExpr, Sel,
                                       LBracLoc, SelectorLoc, RBracLoc,
-                                      Action::MultiExprArg(Actions, 
-                                                           KeyExprs.take(), 
-                                                           KeyExprs.size()));
+                                      MultiExprArg(Actions, 
+                                                   KeyExprs.take(), 
+                                                   KeyExprs.size()));
 }
 
 ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {

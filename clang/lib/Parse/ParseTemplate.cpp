@@ -772,7 +772,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
 
   // Build the annotation token.
   if (TNK == TNK_Type_template && AllowTypeAnnotation) {
-    Action::TypeResult Type
+    TypeResult Type
       = Actions.ActOnTemplateIdType(Template, TemplateNameLoc,
                                     LAngleLoc, TemplateArgsPtr,
                                     RAngleLoc);
@@ -850,7 +850,7 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
                                      TemplateId->getTemplateArgs(),
                                      TemplateId->NumArgs);
 
-  Action::TypeResult Type
+  TypeResult Type
     = Actions.ActOnTemplateIdType(TemplateId->Template,
                                   TemplateId->TemplateNameLoc,
                                   TemplateId->LAngleLoc,

@@ -821,7 +821,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
                             getSema().FindInstantiatedDecl(E->getLocation(),
                                                            VD, TemplateArgs));
     if (!VD)
-      return SemaRef.ExprError();
+      return ExprError();
 
     // Derive the type we want the substituted decl to have.  This had
     // better be non-dependent, or these checks will have serious problems.
@@ -1201,7 +1201,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // PushDeclContext because we don't have a scope.
   ContextRAII SavedContext(*this, Instantiation);
   EnterExpressionEvaluationContext EvalContext(*this, 
-                                               Action::PotentiallyEvaluated);
+                                               Sema::PotentiallyEvaluated);
 
   // If this is an instantiation of a local class, merge this local
   // instantiation scope with the enclosing scope. Otherwise, every

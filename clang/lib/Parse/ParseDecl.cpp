@@ -15,6 +15,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/PrettyDeclStackTrace.h"
 #include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
@@ -28,7 +29,7 @@ using namespace clang;
 ///         specifier-qualifier-list abstract-declarator[opt]
 ///
 /// Called type-id in C++.
-Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
+TypeResult Parser::ParseTypeName(SourceRange *Range) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
@@ -541,7 +542,7 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   case ParsedTemplateInfo::Template:
   case ParsedTemplateInfo::ExplicitSpecialization:
     ThisDecl = Actions.ActOnTemplateDeclarator(getCurScope(),
-                             Action::MultiTemplateParamsArg(Actions,
+                             MultiTemplateParamsArg(Actions,
                                           TemplateInfo.TemplateParams->data(),
                                           TemplateInfo.TemplateParams->size()),
                                                D);
@@ -870,7 +871,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       return;
 
     case tok::code_completion: {
-      Action::ParserCompletionContext CCC = Action::PCC_Namespace;
+      Sema::ParserCompletionContext CCC = Sema::PCC_Namespace;
       if (DS.hasTypeSpecifier()) {
         bool AllowNonIdentifiers
           = (getCurScope()->getFlags() & (Scope::ControlScope |
@@ -889,12 +890,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       } 
       
       if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
-        CCC = DSContext == DSC_class? Action::PCC_MemberTemplate 
-                                    : Action::PCC_Template;
+        CCC = DSContext == DSC_class? Sema::PCC_MemberTemplate 
+                                    : Sema::PCC_Template;
       else if (DSContext == DSC_class)
-        CCC = Action::PCC_Class;
+        CCC = Sema::PCC_Class;
       else if (ObjCImpDecl)
-        CCC = Action::PCC_ObjCImplementation;
+        CCC = Sema::PCC_ObjCImplementation;
       
       Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);
       ConsumeCodeCompletionToken();
@@ -1798,9 +1799,8 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
 ///
 void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                                   unsigned TagType, Decl *TagDecl) {
-  PrettyStackTraceActionsDecl CrashInfo(TagDecl, RecordLoc, Actions,
-                                        PP.getSourceManager(),
-                                        "parsing struct/union body");
+  PrettyDeclStackTraceEntry CrashInfo(Actions, TagDecl, RecordLoc,
+                                      "parsing struct/union body");
 
   SourceLocation LBraceLoc = ConsumeBrace();
 
@@ -1972,18 +1972,18 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // enum foo {..};  void bar() { enum foo; }    <- new foo in bar.
   // enum foo {..};  void bar() { enum foo x; }  <- use of old foo.
   //
-  Action::TagUseKind TUK;
+  Sema::TagUseKind TUK;
   if (Tok.is(tok::l_brace))
-    TUK = Action::TUK_Definition;
+    TUK = Sema::TUK_Definition;
   else if (Tok.is(tok::semi))
-    TUK = Action::TUK_Declaration;
+    TUK = Sema::TUK_Declaration;
   else
-    TUK = Action::TUK_Reference;
+    TUK = Sema::TUK_Reference;
   
   // enums cannot be templates, although they can be referenced from a 
   // template.
   if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
-      TUK != Action::TUK_Reference) {
+      TUK != Sema::TUK_Reference) {
     Diag(Tok, diag::err_enum_template);
     
     // Skip the rest of this declarator, up until the comma or semicolon.
@@ -1999,7 +1999,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   Decl *TagDecl = Actions.ActOnTag(getCurScope(), DeclSpec::TST_enum, TUK,
                                    StartLoc, SS, Name, NameLoc, Attr.get(),
                                    AS,
-                                   Action::MultiTemplateParamsArg(Actions),
+                                   MultiTemplateParamsArg(Actions),
                                    Owned, IsDependent);
   if (IsDependent) {
     // This enum has a dependent nested-name-specifier. Handle it as a 

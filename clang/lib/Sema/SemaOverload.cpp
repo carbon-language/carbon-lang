@@ -3423,7 +3423,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     return;
 
   // Overload resolution is always an unevaluated context.
-  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Function)){
     // C++ [class.copy]p3:
@@ -3586,7 +3586,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
     return;
 
   // Overload resolution is always an unevaluated context.
-  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -3784,7 +3784,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     return;
 
   // Overload resolution is always an unevaluated context.
-  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -3945,7 +3945,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
     return;
 
   // Overload resolution is always an unevaluated context.
-  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -4090,7 +4090,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
                                bool IsAssignmentOperator,
                                unsigned NumContextualBoolArguments) {
   // Overload resolution is always an unevaluated context.
-  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+  EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -6618,13 +6618,13 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
   if (SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression))
-    return SemaRef.ExprError();
+    return ExprError();
 
   assert(!R.empty() && "lookup results empty despite recovery");
 
   // Build an implicit member call if appropriate.  Just drop the
   // casts and such from the call, we don't really care.
-  ExprResult NewFn = SemaRef.ExprError();
+  ExprResult NewFn = ExprError();
   if ((*R.begin())->isCXXClassMember())
     NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, R, ExplicitTemplateArgs);
   else if (ExplicitTemplateArgs)
@@ -6633,13 +6633,13 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
     NewFn = SemaRef.BuildDeclarationNameExpr(SS, R, false);
 
   if (NewFn.isInvalid())
-    return SemaRef.ExprError();
+    return ExprError();
 
   // This shouldn't cause an infinite loop because we're giving it
   // an expression with non-empty lookup results, which should never
   // end up here.
   return SemaRef.ActOnCallExpr(/*Scope*/ 0, NewFn.take(), LParenLoc,
-                         Sema::MultiExprArg(SemaRef, Args, NumArgs),
+                               MultiExprArg(Args, NumArgs),
                                CommaLocs, RParenLoc);
 }
 
@@ -7421,7 +7421,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 /// type (C++ [over.call.object]), which can end up invoking an
 /// overloaded function call operator (@c operator()) or performing a
 /// user-defined conversion on the object argument.
-Sema::ExprResult
+ExprResult
 Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                    SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
@@ -7560,8 +7560,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(Object, Best->FoundDecl,
                                                    Conv);
       
-    return ActOnCallExpr(S, CE, LParenLoc,
-                         MultiExprArg(*this, (ExprTy**)Args, NumArgs),
+    return ActOnCallExpr(S, CE, LParenLoc, MultiExprArg(Args, NumArgs),
                          CommaLocs, RParenLoc);
   }
 
