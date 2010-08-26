@@ -912,7 +912,9 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
     unsigned InReg = It->second;
     RegsForValue RFV(*DAG.getContext(), TLI, InReg, V->getType());
     SDValue Chain = DAG.getEntryNode();
-    return N = RFV.getCopyFromRegs(DAG, FuncInfo, getCurDebugLoc(), Chain,NULL);
+    N = RFV.getCopyFromRegs(DAG, FuncInfo, getCurDebugLoc(), Chain,NULL);
+    resolveDanglingDebugInfo(V, N);
+    return N;
   }
 
   // Otherwise create a new SDValue and remember it.
