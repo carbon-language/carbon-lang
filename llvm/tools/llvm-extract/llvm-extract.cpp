@@ -44,10 +44,6 @@ Force("f", cl::desc("Enable binary output on terminals"));
 static cl::opt<bool>
 DeleteFn("delete", cl::desc("Delete specified Globals from Module"));
 
-static cl::opt<bool>
-Relink("relink",
-       cl::desc("Turn external linkage for callees of function to delete"));
-
 // ExtractFuncs - The functions to extract from the module... 
 static cl::list<std::string>
 ExtractFuncs("func", cl::desc("Specify function to extract"),
@@ -122,7 +118,7 @@ int main(int argc, char **argv) {
   PassManager Passes;
   Passes.add(new TargetData(M.get())); // Use correct TargetData
 
-  Passes.add(createGVExtractionPass(GVs, DeleteFn, Relink));
+  Passes.add(createGVExtractionPass(GVs, DeleteFn));
   if (!DeleteFn)
     Passes.add(createGlobalDCEPass());           // Delete unreachable globals
   Passes.add(createStripDeadDebugInfoPass());    // Remove dead debug info

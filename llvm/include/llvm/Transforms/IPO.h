@@ -93,8 +93,7 @@ ModulePass *createGlobalDCEPass();
 /// possible, except for the global values specified.
 ///
 ModulePass *createGVExtractionPass(std::vector<GlobalValue*>& GVs, bool 
-                                   deleteFn = false, 
-                                   bool relinkCallees = false);
+                                   deleteFn = false);
 
 //===----------------------------------------------------------------------===//
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic
