@@ -28,7 +28,7 @@ set(MSVC_LIB_DEPS_LLVMInstCombine LLVMAnalysis LLVMCore LLVMSupport LLVMSystem L
 set(MSVC_LIB_DEPS_LLVMInstrumentation LLVMAnalysis LLVMCore LLVMSupport LLVMSystem LLVMTransformUtils)
 set(MSVC_LIB_DEPS_LLVMInterpreter LLVMCodeGen LLVMCore LLVMExecutionEngine LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMJIT LLVMCodeGen LLVMCore LLVMExecutionEngine LLVMMC LLVMSupport LLVMSystem LLVMTarget)
-set(MSVC_LIB_DEPS_LLVMLinker LLVMArchive LLVMBitReader LLVMCore LLVMSupport LLVMSystem)
+set(MSVC_LIB_DEPS_LLVMLinker LLVMArchive LLVMBitReader LLVMCore LLVMSupport LLVMSystem LLVMTransformUtils)
 set(MSVC_LIB_DEPS_LLVMMBlazeAsmPrinter LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMMBlazeCodeGen LLVMMBlazeInfo LLVMMC LLVMSupport LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMMBlazeCodeGen LLVMCodeGen LLVMCore LLVMMBlazeInfo LLVMMC LLVMSelectionDAG LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMMBlazeInfo LLVMSupport)
