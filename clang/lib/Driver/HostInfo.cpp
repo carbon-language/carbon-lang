@@ -115,7 +115,7 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     // If we recognized the arch, match it to the toolchains we support.
     if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb ||
         Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64) {
-      TC = new toolchains::DarwinGCC(*this, TCTriple);
+      TC = new toolchains::DarwinClang(*this, TCTriple);
     } else
       TC = new toolchains::Darwin_Generic_GCC(*this, TCTriple);
   }
