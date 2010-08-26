@@ -560,6 +560,9 @@ def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
 def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
 def VST1d64T_UPD : VST1D3WB<0b1100, "64">;
 
+def VST1d64TPseudo     : VSTQQPseudo;
+def VST1d64TPseudo_UPD : VSTQQWBPseudo;
+
 // ...with 4 registers (some of these are only for the disassembler):
 class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
@@ -644,6 +647,10 @@ def  VST3d8   : VST3D<0b0100, 0b0000, "8">;
 def  VST3d16  : VST3D<0b0100, 0b0100, "16">;
 def  VST3d32  : VST3D<0b0100, 0b1000, "32">;
 
+def  VST3d8Pseudo  : VSTQQPseudo;
+def  VST3d16Pseudo : VSTQQPseudo;
+def  VST3d32Pseudo : VSTQQPseudo;
+
 // ...with address register writeback:
 class VST3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
@@ -656,6 +663,10 @@ def VST3d8_UPD  : VST3DWB<0b0100, 0b0000, "8">;
 def VST3d16_UPD : VST3DWB<0b0100, 0b0100, "16">;
 def VST3d32_UPD : VST3DWB<0b0100, 0b1000, "32">;
 
+def VST3d8Pseudo_UPD  : VSTQQWBPseudo;
+def VST3d16Pseudo_UPD : VSTQQWBPseudo;
+def VST3d32Pseudo_UPD : VSTQQWBPseudo;
+
 // ...with double-spaced registers (non-updating versions for disassembly only):
 def VST3q8      : VST3D<0b0101, 0b0000, "8">;
 def VST3q16     : VST3D<0b0101, 0b0100, "16">;
@@ -664,10 +675,14 @@ def VST3q8_UPD  : VST3DWB<0b0101, 0b0000, "8">;
 def VST3q16_UPD : VST3DWB<0b0101, 0b0100, "16">;
 def VST3q32_UPD : VST3DWB<0b0101, 0b1000, "32">;
 
+def VST3q8Pseudo_UPD  : VSTQQQQWBPseudo;
+def VST3q16Pseudo_UPD : VSTQQQQWBPseudo;
+def VST3q32Pseudo_UPD : VSTQQQQWBPseudo;
+
 // ...alternate versions to be allocated odd register numbers:
-def VST3q8odd_UPD  : VST3DWB<0b0101, 0b0000, "8">;
-def VST3q16odd_UPD : VST3DWB<0b0101, 0b0100, "16">;
-def VST3q32odd_UPD : VST3DWB<0b0101, 0b1000, "32">;
+def VST3q8oddPseudo_UPD  : VSTQQQQWBPseudo;
+def VST3q16oddPseudo_UPD : VSTQQQQWBPseudo;
+def VST3q32oddPseudo_UPD : VSTQQQQWBPseudo;
 
 //   VST4     : Vector Store (multiple 4-element structures)
 class VST4D<bits<4> op11_8, bits<4> op7_4, string Dt>

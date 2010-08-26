@@ -1262,7 +1262,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
 
   // FIXME: This is a temporary flag to distinguish VSTs that have been
   // converted to pseudo instructions.
-  bool usePseudoInstrs = (NumVecs == 4);
+  bool usePseudoInstrs = (NumVecs >= 3);
 
   if (is64BitVector) {
     if (NumVecs >= 2) {
@@ -2317,14 +2317,14 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
 
     case Intrinsic::arm_neon_vst3: {
-      unsigned DOpcodes[] = { ARM::VST3d8, ARM::VST3d16,
-                              ARM::VST3d32, ARM::VST1d64T };
-      unsigned QOpcodes0[] = { ARM::VST3q8_UPD,
-                               ARM::VST3q16_UPD,
-                               ARM::VST3q32_UPD };
-      unsigned QOpcodes1[] = { ARM::VST3q8odd_UPD,
-                               ARM::VST3q16odd_UPD,
-                               ARM::VST3q32odd_UPD };
+      unsigned DOpcodes[] = { ARM::VST3d8Pseudo, ARM::VST3d16Pseudo,
+                              ARM::VST3d32Pseudo, ARM::VST1d64TPseudo };
+      unsigned QOpcodes0[] = { ARM::VST3q8Pseudo_UPD,
+                               ARM::VST3q16Pseudo_UPD,
+                               ARM::VST3q32Pseudo_UPD };
+      unsigned QOpcodes1[] = { ARM::VST3q8oddPseudo_UPD,
+                               ARM::VST3q16oddPseudo_UPD,
+                               ARM::VST3q32oddPseudo_UPD };
       return SelectVST(N, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
