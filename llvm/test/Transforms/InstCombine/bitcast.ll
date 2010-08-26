@@ -35,3 +35,28 @@ define float @test2(<2 x float> %A, <2 x i32> %B) {
 ; CHECK-NEXT:  %add = fadd float %tmp24, %tmp4
 ; CHECK-NEXT:  ret float %add
 }
+
+; Optimize bitcasts that are extracting other elements of a vector.  This
+; happens because of SRoA.
+; rdar://7892780
+define float @test3(<2 x float> %A, <2 x i64> %B) {
+  %tmp28 = bitcast <2 x float> %A to i64
+  %tmp29 = lshr i64 %tmp28, 32
+  %tmp23 = trunc i64 %tmp29 to i32
+  %tmp24 = bitcast i32 %tmp23 to float
+
+  %tmp = bitcast <2 x i64> %B to i128
+  %tmp1 = lshr i128 %tmp, 64
+  %tmp2 = trunc i128 %tmp1 to i32
+  %tmp4 = bitcast i32 %tmp2 to float
+
+  %add = fadd float %tmp24, %tmp4
+  ret float %add
+  
+; CHECK: @test3
+; CHECK-NEXT:  %tmp24 = extractelement <2 x float> %A, i32 1
+; CHECK-NEXT:  bitcast <2 x i64> %B to <4 x float>
+; CHECK-NEXT:  %tmp4 = extractelement <4 x float> {{.*}}, i32 2
+; CHECK-NEXT:  %add = fadd float %tmp24, %tmp4
+; CHECK-NEXT:  ret float %add
+}

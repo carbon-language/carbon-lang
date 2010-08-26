@@ -1337,31 +1337,53 @@ static Instruction *OptimizeVectorResize(Value *InVal, const VectorType *DestTy,
 
 /// OptimizeIntToFloatBitCast - See if we can optimize an integer->float/double
 /// bitcast.  The various long double bitcasts can't get in here.
-static Instruction *OptimizeIntToFloatBitCast(BitCastInst &CI,InstCombiner &IC) {
+static Instruction *OptimizeIntToFloatBitCast(BitCastInst &CI,InstCombiner &IC){
   Value *Src = CI.getOperand(0);
+  const Type *DestTy = CI.getType();
 
   // If this is a bitcast from int to float, check to see if the int is an
   // extraction from a vector.
   Value *VecInput = 0;
+  // bitcast(trunc(bitcast(somevector)))
   if (match(Src, m_Trunc(m_BitCast(m_Value(VecInput)))) &&
       isa<VectorType>(VecInput->getType())) {
     const VectorType *VecTy = cast<VectorType>(VecInput->getType());
-    const Type *DestTy = CI.getType();
+    unsigned DestWidth = DestTy->getPrimitiveSizeInBits();
+
+    if (VecTy->getPrimitiveSizeInBits() % DestWidth == 0) {
+      // If the element type of the vector doesn't match the result type,
+      // bitcast it to be a vector type we can extract from.
+      if (VecTy->getElementType() != DestTy) {
+        VecTy = VectorType::get(DestTy,
+                                VecTy->getPrimitiveSizeInBits() / DestWidth);
+        VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
+      }
     
-    // If the element type of the vector doesn't match the result type, but the
-    // vector type's size is a multiple of the result type, bitcast it to be a
-    // vector type we can extract from.
-    if (VecTy->getElementType() != DestTy &&
-        VecTy->getPrimitiveSizeInBits() % DestTy->getPrimitiveSizeInBits()==0) {
-      VecTy = VectorType::get(DestTy,
-            VecTy->getPrimitiveSizeInBits() / DestTy->getPrimitiveSizeInBits());
-      VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
-    }
-    
-    if (VecTy->getElementType() == DestTy)
       return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(0));
+    }
   }
   
+  // bitcast(trunc(lshr(bitcast(somevector), cst))
+  ConstantInt *ShAmt = 0;
+  if (match(Src, m_Trunc(m_LShr(m_BitCast(m_Value(VecInput)),
+                                m_ConstantInt(ShAmt)))) &&
+      isa<VectorType>(VecInput->getType())) {
+    const VectorType *VecTy = cast<VectorType>(VecInput->getType());
+    unsigned DestWidth = DestTy->getPrimitiveSizeInBits();
+    if (VecTy->getPrimitiveSizeInBits() % DestWidth == 0 &&
+        ShAmt->getZExtValue() % DestWidth == 0) {
+      // If the element type of the vector doesn't match the result type,
+      // bitcast it to be a vector type we can extract from.
+      if (VecTy->getElementType() != DestTy) {
+        VecTy = VectorType::get(DestTy,
+                                VecTy->getPrimitiveSizeInBits() / DestWidth);
+        VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
+      }
+      
+      unsigned Elt = ShAmt->getZExtValue() / DestWidth;
+      return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(Elt));
+    }
+  }
   return 0;
 }
 
