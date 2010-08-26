@@ -31,14 +31,14 @@ static bool ascii_isdigit(char x) {
 /// compare_lower - Compare strings, ignoring case.
 int StringRef::compare_lower(StringRef RHS) const {
   for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
-    char LHC = ascii_tolower(Data[I]);
-    char RHC = ascii_tolower(RHS.Data[I]);
+    unsigned char LHC = ascii_tolower(Data[I]);
+    unsigned char RHC = ascii_tolower(RHS.Data[I]);
     if (LHC != RHC)
       return LHC < RHC ? -1 : 1;
   }
 
   if (Length == RHS.Length)
-        return 0;
+    return 0;
   return Length < RHS.Length ? -1 : 1;
 }
 
@@ -62,7 +62,7 @@ int StringRef::compare_numeric(StringRef RHS) const {
     return Data[I] < RHS.Data[I] ? -1 : 1;
   }
   if (Length == RHS.Length)
-        return 0;
+    return 0;
   return Length < RHS.Length ? -1 : 1;
 }
 
