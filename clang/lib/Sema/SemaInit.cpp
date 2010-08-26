@@ -2136,6 +2136,7 @@ void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
 void InitializationSequence::AddQualificationConversionStep(QualType Ty,
                                                             ExprValueKind VK) {
   Step S;
+  S.Kind = SK_QualificationConversionRValue; // work around a gcc warning
   switch (VK) {
   case VK_RValue:
     S.Kind = SK_QualificationConversionRValue;
