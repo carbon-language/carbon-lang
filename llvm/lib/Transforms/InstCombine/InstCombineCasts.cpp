@@ -1335,6 +1335,35 @@ static Instruction *OptimizeVectorResize(Value *InVal, const VectorType *DestTy,
   return new ShuffleVectorInst(InVal, V2, Mask);
 }
 
+/// OptimizeIntToFloatBitCast - See if we can optimize an integer->float/double
+/// bitcast.  The various long double bitcasts can't get in here.
+static Instruction *OptimizeIntToFloatBitCast(BitCastInst &CI,InstCombiner &IC) {
+  Value *Src = CI.getOperand(0);
+
+  // If this is a bitcast from int to float, check to see if the int is an
+  // extraction from a vector.
+  Value *VecInput = 0;
+  if (match(Src, m_Trunc(m_BitCast(m_Value(VecInput)))) &&
+      isa<VectorType>(VecInput->getType())) {
+    const VectorType *VecTy = cast<VectorType>(VecInput->getType());
+    const Type *DestTy = CI.getType();
+    
+    // If the element type of the vector doesn't match the result type, but the
+    // vector type's size is a multiple of the result type, bitcast it to be a
+    // vector type we can extract from.
+    if (VecTy->getElementType() != DestTy &&
+        VecTy->getPrimitiveSizeInBits() % DestTy->getPrimitiveSizeInBits()==0) {
+      VecTy = VectorType::get(DestTy,
+            VecTy->getPrimitiveSizeInBits() / DestTy->getPrimitiveSizeInBits());
+      VecInput = IC.Builder->CreateBitCast(VecInput, VecTy);
+    }
+    
+    if (VecTy->getElementType() == DestTy)
+      return ExtractElementInst::Create(VecInput, IC.Builder->getInt32(0));
+  }
+  
+  return 0;
+}
 
 Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   // If the operands are integer typed then apply the integer transforms,
@@ -1386,6 +1415,11 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
                                                ((Instruction*)NULL));
     }
   }
+  
+  // Try to optimize int -> float bitcasts.
+  if ((DestTy->isFloatTy() || DestTy->isDoubleTy()) && isa<IntegerType>(SrcTy))
+    if (Instruction *I = OptimizeIntToFloatBitCast(CI, *this))
+      return I;
 
   if (const VectorType *DestVTy = dyn_cast<VectorType>(DestTy)) {
     if (DestVTy->getNumElements() == 1 && !SrcTy->isVectorTy()) {

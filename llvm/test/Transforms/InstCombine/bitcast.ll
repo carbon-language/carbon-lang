@@ -13,3 +13,25 @@ define i32 @test1(i64 %a) {
 ; CHECK: ret i32 0
 }
 
+; Optimize bitcasts that are extracting low element of vector.  This happens
+; because of SRoA.
+; rdar://7892780
+define float @test2(<2 x float> %A, <2 x i32> %B) {
+  %tmp28 = bitcast <2 x float> %A to i64  ; <i64> [#uses=2]
+  %tmp23 = trunc i64 %tmp28 to i32                ; <i32> [#uses=1]
+  %tmp24 = bitcast i32 %tmp23 to float            ; <float> [#uses=1]
+
+  %tmp = bitcast <2 x i32> %B to i64
+  %tmp2 = trunc i64 %tmp to i32                ; <i32> [#uses=1]
+  %tmp4 = bitcast i32 %tmp2 to float            ; <float> [#uses=1]
+
+  %add = fadd float %tmp24, %tmp4
+  ret float %add
+  
+; CHECK: @test2
+; CHECK-NEXT:  %tmp24 = extractelement <2 x float> %A, i32 0
+; CHECK-NEXT:  bitcast <2 x i32> %B to <2 x float>
+; CHECK-NEXT:  %tmp4 = extractelement <2 x float> {{.*}}, i32 0
+; CHECK-NEXT:  %add = fadd float %tmp24, %tmp4
+; CHECK-NEXT:  ret float %add
+}
