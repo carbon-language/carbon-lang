@@ -55,7 +55,7 @@ enum {
   CCP_Unlikely = 80
 };
 
-/// \brief Priority value deltas that are applied to code-completion results
+/// \brief Priority value deltas that are added to code-completion results
 /// based on the context of the result.
 enum {
   /// \brief The result is in a base class.
@@ -64,7 +64,10 @@ enum {
   ///
   /// Since everything converts to "void", we don't give as drastic an 
   /// adjustment for matching void.
-  CCD_VoidMatch = -5
+  CCD_VoidMatch = -5,
+  /// \brief The result is a C++ non-static member function whose qualifiers
+  /// exactly match the object type on which the member function can be called.
+  CCD_ObjectQualifierMatch = -1
 };
 
 /// \brief Priority value factors by which we will divide or multiply the

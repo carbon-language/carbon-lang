@@ -1073,8 +1073,6 @@ public:
 
   bool UnwrapSimilarPointerTypes(QualType &T1, QualType &T2);
   
-  /// \brief Retrieves the "canonical" declaration of
-
   /// \brief Retrieves the "canonical" nested name specifier for a
   /// given nested name specifier.
   ///

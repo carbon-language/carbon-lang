@@ -136,11 +136,19 @@ namespace {
     /// different levels of, e.g., the inheritance hierarchy.
     std::list<ShadowMap> ShadowMaps;
     
+    /// \brief If we're potentially referring to a C++ member function, the set
+    /// of qualifiers applied to the object type.
+    Qualifiers ObjectTypeQualifiers;
+    
+    /// \brief Whether the \p ObjectTypeQualifiers field is active.
+    bool HasObjectTypeQualifiers;
+    
     void AdjustResultPriorityForPreferredType(Result &R);
 
   public:
     explicit ResultBuilder(Sema &SemaRef, LookupFilter Filter = 0)
-      : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false) { }
+      : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false),
+        HasObjectTypeQualifiers(false) { }
     
     /// \brief Whether we should include code patterns in the completion
     /// results.
@@ -165,6 +173,18 @@ namespace {
     /// \brief Specify the preferred type.
     void setPreferredType(QualType T) { 
       PreferredType = SemaRef.Context.getCanonicalType(T); 
+    }
+    
+    /// \brief Set the cv-qualifiers on the object type, for us in filtering
+    /// calls to member functions.
+    ///
+    /// When there are qualifiers in this set, they will be used to filter
+    /// out member functions that aren't available (because there will be a 
+    /// cv-qualifier mismatch) or prefer functions with an exact qualifier
+    /// match.
+    void setObjectTypeQualifiers(Qualifiers Quals) {
+      ObjectTypeQualifiers = Quals;
+      HasObjectTypeQualifiers = true;
     }
     
     /// \brief Specify whether nested-name-specifiers are allowed.
@@ -769,6 +789,20 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   
   if (!PreferredType.isNull())
     AdjustResultPriorityForPreferredType(R);
+  
+  if (HasObjectTypeQualifiers)
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(R.Declaration))
+      if (Method->isInstance()) {
+        Qualifiers MethodQuals
+                        = Qualifiers::fromCVRMask(Method->getTypeQualifiers());
+        if (ObjectTypeQualifiers == MethodQuals)
+          R.Priority += CCD_ObjectQualifierMatch;
+        else if (ObjectTypeQualifiers - MethodQuals) {
+          // The method cannot be invoked, because doing so would drop 
+          // qualifiers.
+          return;
+        }
+      }
   
   // Insert this result into the set of results.
   Results.push_back(R);
@@ -2364,6 +2398,13 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
     break;
   }
 
+  // If we are in a C++ non-static member function, check the qualifiers on
+  // the member function to filter/prioritize the results list.
+  if (CXXMethodDecl *CurMethod = dyn_cast<CXXMethodDecl>(CurContext))
+    if (CurMethod->isInstance())
+      Results.setObjectTypeQualifiers(
+                      Qualifiers::fromCVRMask(CurMethod->getTypeQualifiers()));
+  
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer,
                      CodeCompleter->includeGlobals());
@@ -2566,7 +2607,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
     if (const PointerType *Ptr = BaseType->getAs<PointerType>())
       BaseType = Ptr->getPointeeType();
     else if (BaseType->isObjCObjectPointerType())
-    /*Do nothing*/ ;
+      /*Do nothing*/ ;
     else
       return;
   }
@@ -2574,6 +2615,10 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   ResultBuilder Results(*this, &ResultBuilder::IsMember);
   Results.EnterNewScope();
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
+    // Indicate that we are performing a member access, and the cv-qualifiers
+    // for the base object type.
+    Results.setObjectTypeQualifiers(BaseType.getQualifiers());
+    
     // Access to a C/C++ class, struct, or union.
     Results.allowNestedNameSpecifiers();
     CodeCompletionDeclConsumer Consumer(Results, CurContext);

@@ -289,7 +289,18 @@ public:
     L += R;
     return L;
   }
+  
+  Qualifiers &operator-=(Qualifiers R) {
+    Mask = Mask & ~(R.Mask);
+    return *this;
+  }
 
+  /// \brief Compute the difference between two qualifier sets.
+  friend Qualifiers operator-(Qualifiers L, Qualifiers R) {
+    L -= R;
+    return L;
+  }
+  
   std::string getAsString() const;
   std::string getAsString(const PrintingPolicy &Policy) const {
     std::string Buffer;
