@@ -20,7 +20,6 @@
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/AST/OperationKinds.h"
-#include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -65,11 +64,13 @@ namespace clang {
   class DeclSpec;
   class DeclaratorDecl;
   class DeducedTemplateArgument;
+  class DependentDiagnostic;
   class DesignatedInitExpr;
   class EnumConstantDecl;
   class Expr;
   class ExtVectorType;
   class ExternalSemaSource;
+  class FormatAttr;
   class FriendDecl;
   class FullExpr;
   class FunctionDecl;
@@ -87,6 +88,7 @@ namespace clang {
   class LookupResult;
   class MultiLevelTemplateArgumentList;
   class NamedDecl;
+  class NonNullAttr;
   class ObjCCategoryDecl;
   class ObjCCategoryImplDecl;
   class ObjCCompatibleAliasDecl;
@@ -128,6 +130,7 @@ namespace clang {
   class UsingShadowDecl;
   class ValueDecl;
   class VarDecl;
+  class VisibilityAttr;
   class VisibleDeclConsumer;
 
 namespace sema {
@@ -1204,7 +1207,8 @@ public:
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,
                                     UnresolvedSetImpl &Functions);
-  DeclContext::lookup_result LookupConstructors(CXXRecordDecl *Class);
+
+  DeclContextLookupResult LookupConstructors(CXXRecordDecl *Class);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
@@ -3768,14 +3772,13 @@ public:
   /// FreePackedContext - Deallocate and null out PackContext.
   void FreePackedContext();
 
+  /// PushVisibilityAttr - Note that we've entered a context with a
+  /// visibility attribute.
+  void PushVisibilityAttr(const VisibilityAttr *Attr);
+
   /// AddPushedVisibilityAttribute - If '#pragma GCC visibility' was used,
   /// add an appropriate visibility attribute.
   void AddPushedVisibilityAttribute(Decl *RD);
-
-  /// PushPragmaVisibility - Push the top element of the visibility stack; used
-  ///  for '#pragma GCC visibility' and visibility attributes on namespaces.
-  void PushPragmaVisibility(VisibilityAttr::VisibilityType type,
-                            SourceLocation loc);
 
   /// PopPragmaVisibility - Pop the top element of the visibility stack; used
   /// for '#pragma GCC visibility' and visibility attributes on namespaces.

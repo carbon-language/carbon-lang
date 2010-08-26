@@ -642,6 +642,25 @@ public:
   virtual void print(llvm::raw_ostream &OS) const;
 };
 
+class DeclContextLookupResult : public std::pair<NamedDecl**,NamedDecl**> {
+public:
+  DeclContextLookupResult(NamedDecl **I, NamedDecl **E) : pair(I, E) {}
+  DeclContextLookupResult() : pair() {}
+
+  using pair::operator=;
+};
+
+class DeclContextLookupConstResult
+  : public std::pair<NamedDecl*const*, NamedDecl*const*> {
+public:
+  DeclContextLookupConstResult(std::pair<NamedDecl**,NamedDecl**> R)
+    : pair(R) {}
+  DeclContextLookupConstResult(NamedDecl * const *I, NamedDecl * const *E)
+    : pair(I, E) {}
+  DeclContextLookupConstResult() : pair() {}
+
+  using pair::operator=;
+};
 
 /// DeclContext - This is used only as base class of specific decl types that
 /// can act as declaration contexts. These decls are (only the top classes
@@ -1063,9 +1082,8 @@ public:
   /// access to the results of lookup up a name within this context.
   typedef NamedDecl * const * lookup_const_iterator;
 
-  typedef std::pair<lookup_iterator, lookup_iterator> lookup_result;
-  typedef std::pair<lookup_const_iterator, lookup_const_iterator>
-    lookup_const_result;
+  typedef DeclContextLookupResult lookup_result;
+  typedef DeclContextLookupConstResult lookup_const_result;
 
   /// lookup - Find the declarations (if any) with the given Name in
   /// this context. Returns a range of iterators that contains all of
@@ -1172,7 +1190,6 @@ inline bool Decl::isTemplateParameter() const {
   return getKind() == TemplateTypeParm || getKind() == NonTypeTemplateParm ||
          getKind() == TemplateTemplateParm;
 }
-
 
 // Specialization selected when ToTy is not a known subclass of DeclContext.
 template <class ToTy,

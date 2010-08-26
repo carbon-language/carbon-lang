@@ -315,6 +315,16 @@ void Sema::FreeVisContext() {
   VisContext = 0;
 }
 
+static void PushPragmaVisibility(Sema &S, VisibilityAttr::VisibilityType type,
+                                 SourceLocation loc) {
+  // Put visibility on stack.
+  if (!S.VisContext)
+    S.VisContext = new VisStack;
+
+  VisStack *Stack = static_cast<VisStack*>(S.VisContext);
+  Stack->push_back(std::make_pair(type, loc));
+}
+
 void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
                                  SourceLocation PragmaLoc) {
   if (IsPush) {
@@ -333,20 +343,14 @@ void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
         VisType->getName();
       return;
     }
-    PushPragmaVisibility(type, PragmaLoc);
+    PushPragmaVisibility(*this, type, PragmaLoc);
   } else {
     PopPragmaVisibility();
   }
 }
 
-void Sema::PushPragmaVisibility(VisibilityAttr::VisibilityType type,
-                                SourceLocation loc) {
-  // Put visibility on stack.
-  if (!VisContext)
-    VisContext = new VisStack;
-
-  VisStack *Stack = static_cast<VisStack*>(VisContext);
-  Stack->push_back(std::make_pair(type, loc));
+void Sema::PushVisibilityAttr(const VisibilityAttr *Attr) {
+  PushPragmaVisibility(*this, Attr->getVisibility(), Attr->getLocation());
 }
 
 void Sema::PopPragmaVisibility() {

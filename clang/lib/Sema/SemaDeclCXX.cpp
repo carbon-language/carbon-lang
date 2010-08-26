@@ -3277,13 +3277,15 @@ Decl *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
 // Namespace Handling
 //===----------------------------------------------------------------------===//
 
+
+
 /// ActOnStartNamespaceDef - This is called at the start of a namespace
 /// definition.
 Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
-                                             SourceLocation IdentLoc,
-                                             IdentifierInfo *II,
-                                             SourceLocation LBrace,
-                                             AttributeList *AttrList) {
+                                   SourceLocation IdentLoc,
+                                   IdentifierInfo *II,
+                                   SourceLocation LBrace,
+                                   AttributeList *AttrList) {
   // anonymous namespace starts at its left brace
   NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext,
     (II ? IdentLoc : LBrace) , II);
@@ -3294,7 +3296,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
 
   if (const VisibilityAttr *attr = Namespc->getAttr<VisibilityAttr>())
-    PushPragmaVisibility(attr->getVisibility(), attr->getLocation());
+    PushVisibilityAttr(attr);
 
   if (II) {
     // C++ [namespace.def]p2:

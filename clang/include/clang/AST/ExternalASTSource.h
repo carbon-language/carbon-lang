@@ -14,16 +14,23 @@
 #ifndef LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 #define LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 
-#include "clang/AST/DeclarationName.h"
-#include "clang/AST/DeclBase.h"
-#include "clang/AST/Type.h"
-#include "llvm/ADT/SmallVector.h"
 #include <cassert>
 #include <vector>
+
+namespace llvm {
+template <class T> class SmallVectorImpl;
+}
+
 namespace clang {
 
 class ASTConsumer;
+class Decl;
+class DeclContext;
+class DeclContextLookupResult;
+class DeclarationName;
 class ExternalSemaSource; // layering violation required for downcasting
+class NamedDecl;
+class Selector;
 class Stmt;
 
 /// \brief Abstract interface for external sources of AST nodes.
@@ -90,7 +97,7 @@ public:
   /// Generally the final step of this method is either to call
   /// SetExternalVisibleDeclsForName or to recursively call lookup on
   /// the DeclContext after calling SetExternalVisibleDecls.
-  virtual DeclContext::lookup_result
+  virtual DeclContextLookupResult
   FindExternalVisibleDeclsByName(const DeclContext *DC,
                                  DeclarationName Name) = 0;
 
@@ -135,17 +142,17 @@ public:
   virtual void PrintStats();
 
 protected:
-  static DeclContext::lookup_result
+  static DeclContextLookupResult
   SetExternalVisibleDeclsForName(const DeclContext *DC,
                                  DeclarationName Name,
                                  llvm::SmallVectorImpl<NamedDecl*> &Decls);
 
-  static DeclContext::lookup_result
+  static DeclContextLookupResult
   SetNoExternalVisibleDeclsForName(const DeclContext *DC,
                                    DeclarationName Name);
 
   void MaterializeVisibleDeclsForName(const DeclContext *DC,
-                                 DeclarationName Name,
+                                      DeclarationName Name,
                                  llvm::SmallVectorImpl<NamedDecl*> &Decls);
 };
 
