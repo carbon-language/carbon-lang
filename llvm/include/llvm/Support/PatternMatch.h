@@ -453,6 +453,13 @@ struct CastClass_match {
   }
 };
 
+/// m_BitCast
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::BitCast>
+m_BitCast(const OpTy &Op) {
+  return CastClass_match<OpTy, Instruction::BitCast>(Op);
+}
+  
 /// m_PtrToInt
 template<typename OpTy>
 inline CastClass_match<OpTy, Instruction::PtrToInt>
