@@ -1,4 +1,4 @@
-//===-- StructRetPromotion.cpp - Promote sret arguments ------------------===//
+//===-- StructRetPromotion.cpp - Promote sret arguments -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -57,7 +57,6 @@ namespace {
     bool isSafeToUpdateAllCallers(Function *F);
     Function *cloneFunctionBody(Function *F, const StructType *STy);
     CallGraphNode *updateCallSites(Function *F, Function *NF);
-    bool nestedStructType(const StructType *STy);
   };
 }
 
@@ -351,14 +350,3 @@ CallGraphNode *SRETPromotion::updateCallSites(Function *F, Function *NF) {
   return NF_CGN;
 }
 
-/// nestedStructType - Return true if STy includes any
-/// other aggregate types
-bool SRETPromotion::nestedStructType(const StructType *STy) {
-  unsigned Num = STy->getNumElements();
-  for (unsigned i = 0; i < Num; i++) {
-    const Type *Ty = STy->getElementType(i);
-    if (!Ty->isSingleValueType() && !Ty->isVoidTy())
-      return true;
-  }
-  return false;
-}
