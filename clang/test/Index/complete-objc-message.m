@@ -224,9 +224,6 @@ void test_ranking(B *b) {
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType void}{TypedText classMethod2}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
-// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
-// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
-// CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MyClassMethod:}{Placeholder (id)obj}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MyPrivateMethod}
 // CHECK-CCH: ObjCClassMethodDecl:{ResultType int}{TypedText MySubClassMethod}
