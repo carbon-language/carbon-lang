@@ -50,7 +50,7 @@ namespace llvm {
       CALL,          // PIC16 Call instruction 
       CALLW,         // PIC16 CALLW instruction 
       SUBCC,         // Compare for equality or inequality.
-      SELECT_ICC,    // Psuedo to be caught in schedular and expanded to brcond.
+      SELECT_ICC,    // Pseudo to be caught in scheduler and expanded to brcond.
       BRCOND,        // Conditional branch.
       RET,           // Return.
       Dummy

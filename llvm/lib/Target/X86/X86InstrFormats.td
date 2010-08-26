@@ -211,7 +211,7 @@ class Ii32PCRel<bits<8> o, Format f, dag outs, dag ins, string asm,
 class FPI<bits<8> o, Format F, dag outs, dag ins, string asm>
   : I<o, F, outs, ins, asm, []> {}
 
-// FpI_ - Floating Point Psuedo Instruction template. Not Predicated.
+// FpI_ - Floating Point Pseudo Instruction template. Not Predicated.
 class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern>
   : X86Inst<0, Pseudo, NoImm, outs, ins, ""> {
   let FPForm = fp;

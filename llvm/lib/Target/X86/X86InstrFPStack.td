@@ -153,7 +153,7 @@ def FpSET_ST1_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP, []>; // ST(1) = FPR
 def FpSET_ST1_80 : FpI_<(outs), (ins RFP80:$src), SpecialFP, []>; // ST(1) = FPR
 }
 
-// FpIf32, FpIf64 - Floating Point Psuedo Instruction template.
+// FpIf32, FpIf64 - Floating Point Pseudo Instruction template.
 // f32 instructions can use SSE1 and are predicated on FPStackf32 == !SSE1.
 // f64 instructions can use SSE2 and are predicated on FPStackf64 == !SSE2.
 // f80 instructions cannot use SSE and use neither of these.
