@@ -220,7 +220,6 @@ void test_ranking(B *b) {
 // CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyPrivateInstMethod}
 // CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MySubInstMethod}
 // CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText MySubInstMethod:}{Placeholder (id)obj}
-// CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
 // CHECK-CCG: ObjCInstanceMethodDecl:{ResultType id}{TypedText protocolInstanceMethod:}{Placeholder (int)value}
 // CHECK-CCG: ObjCInstanceMethodDecl:{ResultType int}{TypedText secondProtocolInstanceMethod}
 // RUN: c-index-test -code-completion-at=%s:121:14 %s | FileCheck -check-prefix=CHECK-CCG %s
