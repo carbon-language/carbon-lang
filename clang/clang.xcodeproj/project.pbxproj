@@ -174,6 +174,11 @@
 		BF9FEE021225E73F003A8B71 /* ExprClassification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE011225E73F003A8B71 /* ExprClassification.cpp */; };
 		BF9FEE041225E759003A8B71 /* ItaniumCXXABI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE031225E759003A8B71 /* ItaniumCXXABI.cpp */; };
 		BF9FEE061225E770003A8B71 /* MicrosoftCXXABI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE051225E770003A8B71 /* MicrosoftCXXABI.cpp */; };
+		BF9FEE2C1225E7EA003A8B71 /* BackendUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE2B1225E7EA003A8B71 /* BackendUtil.cpp */; };
+		BF9FEE311225E86C003A8B71 /* CodeGenAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE301225E86C003A8B71 /* CodeGenAction.cpp */; };
+		BF9FEE331225E898003A8B71 /* ItaniumCXXABI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE321225E898003A8B71 /* ItaniumCXXABI.cpp */; };
+		BF9FEE351225E8B1003A8B71 /* MicrosoftCXXABI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE341225E8B1003A8B71 /* MicrosoftCXXABI.cpp */; };
+		BF9FEE381225E925003A8B71 /* BoostConAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE371225E925003A8B71 /* BoostConAction.cpp */; };
 		BFE2F6AB11DA955A0007EDC0 /* DeltaTree.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F67D11DA95590007EDC0 /* DeltaTree.d */; };
 		BFE2F6AC11DA955A0007EDC0 /* DeltaTree.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F67E11DA955A0007EDC0 /* DeltaTree.o */; };
 		BFE2F6AD11DA955A0007EDC0 /* FixItRewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F67F11DA955A0007EDC0 /* FixItRewriter.d */; };
@@ -746,6 +751,15 @@
 		BF9FEE011225E73F003A8B71 /* ExprClassification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExprClassification.cpp; sourceTree = "<group>"; };
 		BF9FEE031225E759003A8B71 /* ItaniumCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ItaniumCXXABI.cpp; sourceTree = "<group>"; };
 		BF9FEE051225E770003A8B71 /* MicrosoftCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MicrosoftCXXABI.cpp; sourceTree = "<group>"; };
+		BF9FEE2B1225E7EA003A8B71 /* BackendUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BackendUtil.cpp; path = lib/CodeGen/BackendUtil.cpp; sourceTree = "<group>"; };
+		BF9FEE2D1225E80F003A8B71 /* CGCXXABI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGCXXABI.h; path = lib/CodeGen/CGCXXABI.h; sourceTree = "<group>"; };
+		BF9FEE2E1225E82D003A8B71 /* CGException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGException.h; path = lib/CodeGen/CGException.h; sourceTree = "<group>"; };
+		BF9FEE2F1225E854003A8B71 /* CGRecordLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGRecordLayout.h; path = lib/CodeGen/CGRecordLayout.h; sourceTree = "<group>"; };
+		BF9FEE301225E86C003A8B71 /* CodeGenAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenAction.cpp; path = lib/CodeGen/CodeGenAction.cpp; sourceTree = "<group>"; };
+		BF9FEE321225E898003A8B71 /* ItaniumCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ItaniumCXXABI.cpp; path = lib/CodeGen/ItaniumCXXABI.cpp; sourceTree = "<group>"; };
+		BF9FEE341225E8B1003A8B71 /* MicrosoftCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MicrosoftCXXABI.cpp; path = lib/CodeGen/MicrosoftCXXABI.cpp; sourceTree = "<group>"; };
+		BF9FEE361225E8CF003A8B71 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = lib/CodeGen/README.txt; sourceTree = "<group>"; };
+		BF9FEE371225E925003A8B71 /* BoostConAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BoostConAction.cpp; path = lib/Frontend/BoostConAction.cpp; sourceTree = "<group>"; };
 		BFE2F67A11DA95590007EDC0 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		BFE2F67C11DA95590007EDC0 /* .dir */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .dir; sourceTree = "<group>"; };
 		BFE2F67D11DA95590007EDC0 /* DeltaTree.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = DeltaTree.d; sourceTree = "<group>"; };
@@ -1082,6 +1096,7 @@
 		352246E00F5C6BC000D0D279 /* Frontend */ = {
 			isa = PBXGroup;
 			children = (
+				BF9FEE371225E925003A8B71 /* BoostConAction.cpp */,
 				1AFDD8701161085D00AE030A /* ASTMerge.cpp */,
 				9012911C1048068D0083456D /* ASTUnit.cpp */,
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,
@@ -1529,6 +1544,14 @@
 		DE927FCC0C0557CD00231DA4 /* CodeGen */ = {
 			isa = PBXGroup;
 			children = (
+				BF9FEE361225E8CF003A8B71 /* README.txt */,
+				BF9FEE341225E8B1003A8B71 /* MicrosoftCXXABI.cpp */,
+				BF9FEE321225E898003A8B71 /* ItaniumCXXABI.cpp */,
+				BF9FEE301225E86C003A8B71 /* CodeGenAction.cpp */,
+				BF9FEE2F1225E854003A8B71 /* CGRecordLayout.h */,
+				BF9FEE2E1225E82D003A8B71 /* CGException.h */,
+				BF9FEE2D1225E80F003A8B71 /* CGCXXABI.h */,
+				BF9FEE2B1225E7EA003A8B71 /* BackendUtil.cpp */,
 				1A2193CB0F45EEB700C0713D /* ABIInfo.h */,
 				1A471AB40F437BC500753CE8 /* CGBlocks.cpp */,
 				1A649E1D0F9599D9005B965E /* CGBlocks.h */,
@@ -2300,6 +2323,11 @@
 				BF9FEE021225E73F003A8B71 /* ExprClassification.cpp in Sources */,
 				BF9FEE041225E759003A8B71 /* ItaniumCXXABI.cpp in Sources */,
 				BF9FEE061225E770003A8B71 /* MicrosoftCXXABI.cpp in Sources */,
+				BF9FEE2C1225E7EA003A8B71 /* BackendUtil.cpp in Sources */,
+				BF9FEE311225E86C003A8B71 /* CodeGenAction.cpp in Sources */,
+				BF9FEE331225E898003A8B71 /* ItaniumCXXABI.cpp in Sources */,
+				BF9FEE351225E8B1003A8B71 /* MicrosoftCXXABI.cpp in Sources */,
+				BF9FEE381225E925003A8B71 /* BoostConAction.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
