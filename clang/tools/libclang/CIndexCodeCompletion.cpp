@@ -808,7 +808,7 @@ namespace {
         return false;
       
       result = llvm::StringRef(XText).compare(YText);
-      return result < 0;
+      return result;
     }
   };
 }
