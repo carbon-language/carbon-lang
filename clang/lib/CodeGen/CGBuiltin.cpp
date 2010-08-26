@@ -1710,8 +1710,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     for (unsigned vi = 0; vi != 2; ++vi) {
       SmallVector<Constant*, 16> Indices;
       for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
-        Indices.push_back(ConstantInt::get(Int32Ty, (i >> 1)));
-        Indices.push_back(ConstantInt::get(Int32Ty, (i >> 1)+e));
+        Indices.push_back(ConstantInt::get(Int32Ty, (i + vi*e) >> 1));
+        Indices.push_back(ConstantInt::get(Int32Ty, ((i + vi*e) >> 1)+e));
       }
       Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
       SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
