@@ -105,7 +105,7 @@ public:
 
   bool canRealignStack(const MachineFunction &MF) const;
   bool needsStackRealignment(const MachineFunction &MF) const;
-  int64_t getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const;
+  int64_t getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const;
   bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const;
   void materializeFrameBaseRegister(MachineBasicBlock::iterator I,
                                     unsigned BaseReg, int FrameIdx,

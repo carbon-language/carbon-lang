@@ -1378,15 +1378,14 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-
 int64_t ARMBaseRegisterInfo::
-getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const {
+getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
   const TargetInstrDesc &Desc = MI->getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   int64_t InstrOffs = 0;;
   int Scale = 1;
   unsigned ImmIdx = 0;
-  switch(AddrMode) {
+  switch (AddrMode) {
   case ARMII::AddrModeT2_i8:
   case ARMII::AddrModeT2_i12:
     // i8 supports only negative, and i12 supports only positive, so
@@ -1573,15 +1572,12 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
 
   unsigned NumBits = 0;
   unsigned Scale = 1;
-  unsigned ImmIdx = 0;
-  int InstrOffs = 0;;
   bool isSigned = true;
-  switch(AddrMode) {
+  switch (AddrMode) {
   case ARMII::AddrModeT2_i8:
   case ARMII::AddrModeT2_i12:
     // i8 supports only negative, and i12 supports only positive, so
     // based on Offset sign, consider the appropriate instruction
-    InstrOffs = MI->getOperand(i+1).getImm();
     Scale = 1;
     if (Offset < 0) {
       NumBits = 8;
@@ -1590,49 +1586,32 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
       NumBits = 12;
     }
     break;
-  case ARMII::AddrMode5: {
+  case ARMII::AddrMode5:
     // VFP address mode.
-    const MachineOperand &OffOp = MI->getOperand(i+1);
-    InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
-    if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
-      InstrOffs = -InstrOffs;
     NumBits = 8;
     Scale = 4;
     break;
-  }
-  case ARMII::AddrMode2: {
-    ImmIdx = i+2;
-    InstrOffs = ARM_AM::getAM2Offset(MI->getOperand(ImmIdx).getImm());
-    if (ARM_AM::getAM2Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
-      InstrOffs = -InstrOffs;
+  case ARMII::AddrMode2:
     NumBits = 12;
     break;
-  }
-  case ARMII::AddrMode3: {
-    ImmIdx = i+2;
-    InstrOffs = ARM_AM::getAM3Offset(MI->getOperand(ImmIdx).getImm());
-    if (ARM_AM::getAM3Op(MI->getOperand(ImmIdx).getImm()) == ARM_AM::sub)
-      InstrOffs = -InstrOffs;
+  case ARMII::AddrMode3:
     NumBits = 8;
     break;
-  }
-  case ARMII::AddrModeT1_s: {
-    ImmIdx = i+1;
-    InstrOffs = MI->getOperand(ImmIdx).getImm();
+  case ARMII::AddrModeT1_s:
     NumBits = 5;
     Scale = 4;
     isSigned = false;
     break;
-  }
   default:
     llvm_unreachable("Unsupported addressing mode!");
     break;
   }
 
-  Offset += InstrOffs * Scale;
+  Offset += getFrameIndexInstrOffset(MI, i);
   assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
   if (isSigned && Offset < 0)
     Offset = -Offset;
+
 
   unsigned Mask = (1 << NumBits) - 1;
   if ((unsigned)Offset <= Mask * Scale)

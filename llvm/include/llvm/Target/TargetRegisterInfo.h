@@ -645,7 +645,8 @@ public:
 
   /// getFrameIndexInstrOffset - Get the offset from the referenced frame
   /// index in the instruction, if the is one.
-  virtual int64_t getFrameIndexInstrOffset(MachineInstr *MI, int Idx) const {
+  virtual int64_t getFrameIndexInstrOffset(const MachineInstr *MI,
+                                           int Idx) const {
     return 0;
   }
 
