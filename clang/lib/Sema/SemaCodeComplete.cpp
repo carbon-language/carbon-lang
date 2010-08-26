@@ -4064,16 +4064,19 @@ void Sema::CodeCompleteObjCSelector(Scope *S, IdentifierInfo **SelIdents,
       continue;
     }
     
+    std::string Accumulator;
     for (unsigned I = 0, N = Sel.getNumArgs(); I != N; ++I) {
-      std::string Piece = Sel.getIdentifierInfoForSlot(I)->getName().str();
-      Piece += ':';
-      if (I < NumSelIdents)
-        Pattern->AddInformativeChunk(Piece);
-      else if (I == NumSelIdents)
-        Pattern->AddTypedTextChunk(Piece);
-      else
-        Pattern->AddTextChunk(Piece);
+      if (I == NumSelIdents) {
+        if (!Accumulator.empty()) {
+          Pattern->AddInformativeChunk(Accumulator);
+          Accumulator.clear();
+        }
+      }
+      
+      Accumulator += Sel.getIdentifierInfoForSlot(I)->getName().str();
+      Accumulator += ':';
     }
+    Pattern->AddTypedTextChunk(Accumulator);
     Results.AddResult(Pattern);
   }
   Results.ExitScope();

@@ -46,10 +46,10 @@ void f() {
 // CHECK-CC3: TypedefDecl:{TypedText SEL}
 // CHECK-CC3: NotImplemented:{ResultType MyClass *}{TypedText self}
 // RUN: c-index-test -code-completion-at=%s:19:13 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: NotImplemented:{TypedText add:}{Text to:} (30)
-// CHECK-CC4: NotImplemented:{TypedText add:}{Text to:}{Text plus:} (30)
+// CHECK-CC4: NotImplemented:{TypedText add:to:} (30)
+// CHECK-CC4: NotImplemented:{TypedText add:to:plus:} (30)
 // CHECK-CC4: NotImplemented:{TypedText myMethod:} (30)
 // RUN: c-index-test -code-completion-at=%s:19:17 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: NotImplemented:{Informative add:}{TypedText to:} (30)
-// CHECK-CC5: NotImplemented:{Informative add:}{TypedText to:}{Text plus:} (30)
+// CHECK-CC5: NotImplemented:{Informative add:}{TypedText to:plus:} (30)
 
