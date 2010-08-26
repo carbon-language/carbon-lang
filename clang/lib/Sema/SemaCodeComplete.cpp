@@ -2277,8 +2277,6 @@ static void HandleCodeCompleteResults(Sema *S,
                                       CodeCompletionContext Context,
                                       CodeCompletionResult *Results,
                                       unsigned NumResults) {
-  std::stable_sort(Results, Results + NumResults);
-
   if (CodeCompleter)
     CodeCompleter->ProcessCodeCompleteResults(*S, Context, Results, NumResults);
   

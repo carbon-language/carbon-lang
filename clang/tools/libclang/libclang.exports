@@ -99,5 +99,6 @@ clang_parseTranslationUnit
 clang_reparseTranslationUnit
 clang_saveTranslationUnit
 clang_setUseExternalASTGeneration
+clang_sortCodeCompletionResults
 clang_tokenize
 clang_visitChildren

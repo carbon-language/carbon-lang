@@ -1,6 +1,7 @@
 /* c-index-test.c */
 
 #include "clang-c/Index.h"
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -903,6 +904,25 @@ void print_completion_result(CXCompletionResult *completion_result,
   fprintf(file, "\n");
 }
 
+int my_stricmp(const char *s1, const char *s2) {
+  while (*s1 && *s2) {
+    int c1 = tolower(*s1), c2 = tolower(*s2);
+    if (c1 < c2)
+      return -1;
+    else if (c1 > c2)
+      return 1;
+    
+    ++s1;
+    ++s2;
+  }
+  
+  if (*s1)
+    return 1;
+  else if (*s2)
+    return -1;
+  return 0;
+}
+
 int perform_code_completion(int argc, const char **argv, int timing_only) {
   const char *input = argv[1];
   char *filename = 0;
@@ -958,9 +978,13 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
 
   if (results) {
     unsigned i, n = results->NumResults;
-    if (!timing_only)
+    if (!timing_only) {      
+      /* Sort the code-completion results based on the typed text. */
+      clang_sortCodeCompletionResults(results->Results, results->NumResults);
+
       for (i = 0; i != n; ++i)
         print_completion_result(results->Results + i, stdout);
+    }
     n = clang_codeCompleteGetNumDiagnostics(results);
     for (i = 0; i != n; ++i) {
       CXDiagnostic diag = clang_codeCompleteGetDiagnostic(results, i);
