@@ -1320,9 +1320,8 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     // llvm-gcc has never done it right and no one has noticed, so this
     // should be OK for now.
     if (ValVT == MVT::f64 &&
-        (Subtarget->is64Bit() && !Subtarget->hasSSE2())) {
+        (Subtarget->is64Bit() && !Subtarget->hasSSE2()))
       report_fatal_error("SSE2 register return with SSE2 disabled");
-    }
 
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
     // the RET instruction and handled by the FP Stackifier.
