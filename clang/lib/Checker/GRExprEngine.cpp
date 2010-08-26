@@ -1492,7 +1492,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   bool defaultIsFeasible = false;
 
   for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
-    const CaseStmt* Case = cast<CaseStmt>(I.getCase());
+    const CaseStmt* Case = I.getCase();
 
     // Evaluate the LHS of the case value.
     Expr::EvalResult V1;
