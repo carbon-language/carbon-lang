@@ -582,8 +582,6 @@ namespace {
         AllocatedResults.Results[I].CompletionString = StoredCompletion;
       }
     }
-    
-    // FIXME: Add ProcessOverloadCandidates?
   };
 }
 
@@ -786,36 +784,3 @@ clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *ResultsIn,
 
 
 } // end extern "C"
-
-namespace {
-  struct OrderCompletionResults {
-    bool operator()(const CXCompletionResult &XR, 
-                    const CXCompletionResult &YR) const {
-      CXStoredCodeCompletionString *X
-        = (CXStoredCodeCompletionString *)XR.CompletionString;
-      CXStoredCodeCompletionString *Y
-        = (CXStoredCodeCompletionString *)YR.CompletionString;
-      
-      const char *XText = X->getTypedText();
-      const char *YText = Y->getTypedText();
-      if (!XText || !YText)
-        return XText != 0;
-      
-      int result = llvm::StringRef(XText).compare_lower(YText);
-      if (result < 0)
-        return true;
-      if (result > 0)
-        return false;
-      
-      result = llvm::StringRef(XText).compare(YText);
-      return result;
-    }
-  };
-}
-
-extern "C" {
-  void clang_sortCodeCompletionResults(CXCompletionResult *Results,
-                                       unsigned NumResults) {
-    std::stable_sort(Results, Results + NumResults, OrderCompletionResults());
-  }
-}

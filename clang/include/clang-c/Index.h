@@ -2350,17 +2350,6 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
                                             unsigned options);
 
 /**
- * \brief Sort the code-completion results in case-insensitive alphabetical 
- * order.
- *
- * \param Results The set of results to sort.
- * \param NumResults The number of results in \p Results.
- */
-CINDEX_LINKAGE
-void clang_sortCodeCompletionResults(CXCompletionResult *Results,
-                                     unsigned NumResults);
-  
-/**
  * \brief Free the given set of code-completion results.
  */
 CINDEX_LINKAGE

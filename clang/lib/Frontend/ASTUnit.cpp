@@ -1678,7 +1678,9 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
     Next.ProcessCodeCompleteResults(S, Context, Results, NumResults);
     return;
   }
-  
+
+  // Sort the completion results before passing them on to the actual consumer.
+  std::stable_sort(AllResults.begin(), AllResults.end());
   Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
                                   AllResults.size());
   
