@@ -508,7 +508,7 @@ public:
   /// \brief Override the contents of the given source file by providing an
   /// already-allocated buffer.
   ///
-  /// \param SourceFile the source file whose contents will be override.
+  /// \param SourceFile the source file whose contents will be overriden.
   ///
   /// \param Buffer the memory buffer whose contents will be used as the
   /// data in the given source file.
