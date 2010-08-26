@@ -97,11 +97,11 @@ SBProcess::GetNumThreads ()
 }
 
 SBThread
-SBProcess::GetCurrentThread () const
+SBProcess::GetSelectedThread () const
 {
     SBThread sb_thread;
     if (m_opaque_sp)
-        sb_thread.SetThread (m_opaque_sp->GetThreadList().GetCurrentThread());
+        sb_thread.SetThread (m_opaque_sp->GetThreadList().GetSelectedThread());
     return sb_thread;
 }
 
@@ -152,7 +152,7 @@ SBProcess::GetSTDERR (char *dst, size_t dst_len) const
 }
 
 void
-SBProcess::ReportCurrentState (const SBEvent &event, FILE *out) const
+SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
 {
     if (out == NULL)
         return;
@@ -173,7 +173,7 @@ SBProcess::ReportCurrentState (const SBEvent &event, FILE *out) const
 }
 
 void
-SBProcess::AppendCurrentStateReport (const SBEvent &event, SBCommandReturnObject &result)
+SBProcess::AppendEventStateReport (const SBEvent &event, SBCommandReturnObject &result)
 {
     if (m_opaque_sp != NULL)
     {
@@ -190,18 +190,18 @@ SBProcess::AppendCurrentStateReport (const SBEvent &event, SBCommandReturnObject
 }
 
 bool
-SBProcess::SetCurrentThread (const SBThread &thread)
+SBProcess::SetSelectedThread (const SBThread &thread)
 {
     if (m_opaque_sp != NULL)
-        return m_opaque_sp->GetThreadList().SetCurrentThreadByID (thread.GetThreadID());
+        return m_opaque_sp->GetThreadList().SetSelectedThreadByID (thread.GetThreadID());
     return false;
 }
 
 bool
-SBProcess::SetCurrentThreadByID (uint32_t tid)
+SBProcess::SetSelectedThreadByID (uint32_t tid)
 {
     if (m_opaque_sp != NULL)
-        return m_opaque_sp->GetThreadList().SetCurrentThreadByID (tid);
+        return m_opaque_sp->GetThreadList().SetSelectedThreadByID (tid);
     return false;
 }
 
@@ -274,7 +274,7 @@ SBProcess::WaitUntilProcessHasStopped (SBCommandReturnObject &result)
         {
             state = m_opaque_sp->WaitForStateChangedEvents (NULL, event_sp);
             SBEvent event (event_sp);
-            AppendCurrentStateReport (event, result);
+            AppendEventStateReport (event, result);
             state_changed = true;
         }
     }

@@ -219,7 +219,7 @@ SBThread::GetQueueName () const
 
 
 void
-SBThread::DisplayFramesForCurrentContext (FILE *out,
+SBThread::DisplayFramesForSelectedContext (FILE *out,
                                           FILE *err,
                                           uint32_t first_frame,
                                           uint32_t num_frames,
@@ -247,7 +247,7 @@ SBThread::DisplayFramesForCurrentContext (FILE *out,
                 break;
 
             SBFrame sb_frame (frame_sp);
-            if (DisplaySingleFrameForCurrentContext (out,
+            if (DisplaySingleFrameForSelectedContext (out,
                                                      err,
                                                      sb_frame,
                                                      show_frame_info,
@@ -260,13 +260,13 @@ SBThread::DisplayFramesForCurrentContext (FILE *out,
 }
 
 bool
-SBThread::DisplaySingleFrameForCurrentContext (FILE *out,
-                                               FILE *err,
-                                               SBFrame &frame,
-                                               bool show_frame_info,
-                                               bool show_source,
-                                               uint32_t source_lines_after,
-                                               uint32_t source_lines_before)
+SBThread::DisplaySingleFrameForSelectedContext (FILE *out,
+                                                FILE *err,
+                                                SBFrame &frame,
+                                                bool show_frame_info,
+                                                bool show_source,
+                                                uint32_t source_lines_after,
+                                                uint32_t source_lines_before)
 {
     bool success = false;
     
@@ -349,7 +349,7 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 
         Process &process = m_opaque_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
-        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 }
@@ -383,7 +383,7 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 
         Process &process = m_opaque_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
-        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
         process.Resume();
 
     }
@@ -400,7 +400,7 @@ SBThread::StepOut ()
         m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, NULL, false, stop_other_threads, eVoteYes, eVoteNoOpinion);
 
         Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 }
@@ -412,7 +412,7 @@ SBThread::StepInstruction (bool step_over)
     {
         m_opaque_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
         Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 }
@@ -429,7 +429,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
 
         m_opaque_sp->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
         Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 

@@ -109,8 +109,8 @@ public:
                 const uint32_t frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
                 if (frame_idx < num_frames)
                 {
-                    exe_ctx.thread->SetCurrentFrameByIndex (frame_idx);
-                    exe_ctx.frame = exe_ctx.thread->GetCurrentFrame ().get();
+                    exe_ctx.thread->SetSelectedFrameByIndex (frame_idx);
+                    exe_ctx.frame = exe_ctx.thread->GetSelectedFrame ().get();
 
                     if (exe_ctx.frame)
                     {

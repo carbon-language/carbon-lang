@@ -99,10 +99,10 @@ public:
     GetNumTargets ();
 
     lldb::SBTarget
-    GetCurrentTarget ();
+    GetSelectedTarget ();
 
     void
-    UpdateCurrentThread (lldb::SBProcess &process);
+    UpdateSelectedThread (lldb::SBProcess &process);
 
     lldb::SBSourceManager &
     GetSourceManager ();

@@ -124,7 +124,7 @@ public:
              Args& launch_args,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         bool synchronous_execution = interpreter.GetSynchronous ();
     //    bool launched = false;
     //    bool stopped_after_launch = false;
@@ -377,7 +377,7 @@ public:
                 if (process && process->IsAlive())
                     return true;
                     
-                Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+                Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
                 if (target == NULL)
                 {
                     // No target has been set yet, for now do host completion.  Otherwise I don't know how we would
@@ -436,7 +436,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
 
         Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process)
@@ -470,7 +470,7 @@ public:
                 result.AppendError(error.AsCString("Error creating empty target"));
                 return false;
             }
-            interpreter.GetDebugger().GetTargetList().SetCurrentTarget(target);
+            interpreter.GetDebugger().GetTargetList().SetSelectedTarget(target);
         }
         
         // Record the old executable module, we want to issue a warning if the process of attaching changed the

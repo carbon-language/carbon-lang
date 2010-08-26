@@ -267,7 +267,7 @@ public:
         if (!m_options.symbol_name.empty())
         {
             // Displaying the source for a symbol:
-            Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+            Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
             if (target == NULL)
             {
                 result.AppendError ("invalid target, set executable file using 'file' command");
@@ -441,7 +441,7 @@ public:
         else
         {
             const char *filename = m_options.file_name.c_str();
-            Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+            Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
             if (target == NULL)
             {
                 result.AppendError ("invalid target, set executable file using 'file' command");

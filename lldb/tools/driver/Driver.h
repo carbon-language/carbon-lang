@@ -139,7 +139,7 @@ private:
     GetProcessSTDERR ();
 
     void
-    UpdateCurrentThread ();
+    UpdateSelectedThread ();
 
     void
     CloseIOChannelFile ();

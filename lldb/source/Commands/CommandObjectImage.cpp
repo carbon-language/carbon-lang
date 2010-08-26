@@ -579,7 +579,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -687,7 +687,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -794,7 +794,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -901,7 +901,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1070,7 +1070,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1438,7 +1438,7 @@ public:
              Args& command,
              CommandReturnObject &result)
     {
-        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");

@@ -240,18 +240,18 @@ Debugger::GetListener ()
 
 
 TargetSP
-Debugger::GetCurrentTarget ()
+Debugger::GetSelectedTarget ()
 {
-    return m_target_list.GetCurrentTarget ();
+    return m_target_list.GetSelectedTarget ();
 }
 
 ExecutionContext
-Debugger::GetCurrentExecutionContext ()
+Debugger::GetSelectedExecutionContext ()
 {
     ExecutionContext exe_ctx;
     exe_ctx.Clear();
     
-    lldb::TargetSP target_sp = GetCurrentTarget();
+    lldb::TargetSP target_sp = GetSelectedTarget();
     exe_ctx.target = target_sp.get();
     
     if (target_sp)
@@ -259,12 +259,12 @@ Debugger::GetCurrentExecutionContext ()
         exe_ctx.process = target_sp->GetProcessSP().get();
         if (exe_ctx.process && exe_ctx.process->IsRunning() == false)
         {
-            exe_ctx.thread = exe_ctx.process->GetThreadList().GetCurrentThread().get();
+            exe_ctx.thread = exe_ctx.process->GetThreadList().GetSelectedThread().get();
             if (exe_ctx.thread == NULL)
                 exe_ctx.thread = exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
             if (exe_ctx.thread)
             {
-                exe_ctx.frame = exe_ctx.thread->GetCurrentFrame().get();
+                exe_ctx.frame = exe_ctx.thread->GetSelectedFrame().get();
                 if (exe_ctx.frame == NULL)
                     exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex (0).get();
             }
@@ -301,7 +301,7 @@ Debugger::DispatchInput (const char *bytes, size_t bytes_len)
         return;
 
     // TODO: implement the STDIO to the process as an input reader...
-    TargetSP target = GetCurrentTarget();
+    TargetSP target = GetSelectedTarget();
     if (target.get() != NULL)
     {
         ProcessSP process_sp = target->GetProcessSP();
@@ -473,19 +473,19 @@ Debugger::UpdateExecutionContext (ExecutionContext *override_context)
     }
     else
     {
-        TargetSP target_sp (GetCurrentTarget());
+        TargetSP target_sp (GetSelectedTarget());
         if (target_sp)
         {
             m_exe_ctx.target = target_sp.get();
             m_exe_ctx.process = target_sp->GetProcessSP().get();
             if (m_exe_ctx.process && m_exe_ctx.process->IsRunning() == false)
             {
-                m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetCurrentThread().get();
+                m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
                 if (m_exe_ctx.thread == NULL)
                     m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
                 if (m_exe_ctx.thread)
                 {
-                    m_exe_ctx.frame = m_exe_ctx.thread->GetCurrentFrame().get();
+                    m_exe_ctx.frame = m_exe_ctx.thread->GetSelectedFrame().get();
                     if (m_exe_ctx.frame == NULL)
                         m_exe_ctx.frame = m_exe_ctx.thread->GetStackFrameAtIndex (0).get();
                 }

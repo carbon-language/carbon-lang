@@ -302,42 +302,6 @@ SBValue::TypeIsPtrType ()
     return is_ptr_type;
 }
 
-
-//lldb_private::ExecutionContext
-//SBValue::GetCurrentExecutionContext ()
-//{
-//    lldb_private::Process *process = NULL;
-//    lldb_private::Thread *thread = NULL;
-//    lldb_private::StackFrame *frame = NULL;
-//
-//    SBTarget sb_target = SBDebugger::GetCurrentTarget();
-//    if (sb_target.IsValid())
-//    {
-//        SBProcess sb_process = sb_target.GetProcess();
-//        if (sb_process.IsValid())
-//        {
-//            process = sb_process.get();
-//            SBThread sb_thread = sb_process.GetCurrentThread();
-//            if (sb_thread.IsValid())
-//            {
-//                thread = sb_thread.GetLLDBObjectPtr();
-//                frame = thread->GetStackFrameAtIndex(0).get();
-//                lldb_private::ExecutionContext exe_context (process, thread, frame);
-//                return exe_context;
-//            }
-//            else
-//            {
-//                lldb_private::ExecutionContext exe_context (process, NULL, NULL);
-//                return exe_context;
-//            }
-//        }
-//    }
-//
-//    lldb_private::ExecutionContext exe_context (NULL, NULL, NULL);
-//    return exe_context;
-//}
-//
-//
 void *
 SBValue::GetOpaqueType()
 {

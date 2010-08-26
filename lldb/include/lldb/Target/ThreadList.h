@@ -46,13 +46,13 @@ public:
     AddThread (lldb::ThreadSP &thread_sp);
 
     lldb::ThreadSP
-    GetCurrentThread ();
+    GetSelectedThread ();
 
     bool
-    SetCurrentThreadByID (lldb::tid_t tid);
+    SetSelectedThreadByID (lldb::tid_t tid);
 
     bool
-    SetCurrentThreadByIndexID (uint32_t index_id);
+    SetSelectedThreadByIndexID (uint32_t index_id);
 
     void
     Clear();
@@ -109,7 +109,7 @@ protected:
     uint32_t m_stop_id; ///< The process stop ID that this thread list is valid for.
     collection m_threads; ///< The threads for this process.
     mutable Mutex m_threads_mutex;
-    lldb::tid_t m_current_tid;  ///< For targets that need the notion of a current thread.
+    lldb::tid_t m_selected_tid;  ///< For targets that need the notion of a current thread.
 
 private:
     ThreadList ();

@@ -101,10 +101,10 @@ public:
     GetSourceManager ();
 
     lldb::TargetSP
-    GetCurrentTarget ();
+    GetSelectedTarget ();
 
     ExecutionContext
-    GetCurrentExecutionContext();
+    GetSelectedExecutionContext();
     //------------------------------------------------------------------
     /// Get accessor for the target list.
     ///

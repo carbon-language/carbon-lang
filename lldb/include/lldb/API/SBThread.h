@@ -52,7 +52,7 @@ public:
     GetQueueName() const;
 
     void
-    DisplayFramesForCurrentContext (FILE *out,
+    DisplayFramesForSelectedContext (FILE *out,
                                     FILE *err,
                                     uint32_t first_frame,
                                     uint32_t num_frames,
@@ -62,7 +62,7 @@ public:
                                     uint32_t source_lines_after = 3);
 
     bool
-    DisplaySingleFrameForCurrentContext (FILE *out,
+    DisplaySingleFrameForSelectedContext (FILE *out,
                                          FILE *err,
                                          lldb::SBFrame &frame,
                                          bool show_frame_info,

@@ -273,7 +273,7 @@ CommandObjectBreakpointSet::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -706,7 +706,7 @@ CommandObjectBreakpointList::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -797,7 +797,7 @@ CommandObjectBreakpointEnable::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -897,7 +897,7 @@ CommandObjectBreakpointDisable::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -993,7 +993,7 @@ CommandObjectBreakpointDelete::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -1240,7 +1240,7 @@ CommandObjectBreakpointModify::Execute
         return false;
     }
 
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");

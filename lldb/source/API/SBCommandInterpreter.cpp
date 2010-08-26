@@ -166,7 +166,7 @@ SBCommandInterpreter::GetProcess ()
     if (m_opaque_ptr)
     {
         Debugger &debugger = m_opaque_ptr->GetDebugger();
-        Target *target = debugger.GetCurrentTarget().get();
+        Target *target = debugger.GetSelectedTarget().get();
         if (target)
             process.SetProcess(target->GetProcessSP());
     }

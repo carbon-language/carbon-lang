@@ -55,7 +55,7 @@ lldb_private::DisplayThreadInfo
         }
 
         strm.Indent();
-        strm.Printf("%c ", thread->GetProcess().GetThreadList().GetCurrentThread().get() == thread ? '*' : ' ');
+        strm.Printf("%c ", thread->GetProcess().GetThreadList().GetSelectedThread().get() == thread ? '*' : ' ');
 
         // Show one frame with only the first showing source
         if (show_source)
@@ -465,7 +465,7 @@ public:
 
             if (command.GetArgumentCount() == 0)
             {
-                thread = process->GetThreadList().GetCurrentThread().get();
+                thread = process->GetThreadList().GetSelectedThread().get();
                 if (thread == NULL)
                 {
                     result.AppendError ("no current thread in process");
@@ -525,7 +525,7 @@ public:
                 else
                     new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
 
-                process->GetThreadList().SetCurrentThreadByID (thread->GetID());
+                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 process->Resume ();
             }
             else if (m_step_type == eStepTypeOver)
@@ -549,19 +549,19 @@ public:
                 // Maybe there should be a parameter to control this.
                 new_plan->SetOkayToDiscard(false);
 
-                process->GetThreadList().SetCurrentThreadByID (thread->GetID());
+                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 process->Resume ();
             }
             else if (m_step_type == eStepTypeTrace)
             {
                 thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
-                process->GetThreadList().SetCurrentThreadByID (thread->GetID());
+                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 process->Resume ();
             }
             else if (m_step_type == eStepTypeTraceOver)
             {
                 thread->QueueThreadPlanForStepSingleInstruction (true, abort_other_plans, bool_stop_other_threads);
-                process->GetThreadList().SetCurrentThreadByID (thread->GetID());
+                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 process->Resume ();
             }
             else if (m_step_type == eStepTypeOut)
@@ -573,7 +573,7 @@ public:
                 // Maybe there should be a parameter to control this.
                 new_plan->SetOkayToDiscard(false);
 
-                process->GetThreadList().SetCurrentThreadByID (thread->GetID());
+                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 process->Resume ();
             }
             else
@@ -591,7 +591,7 @@ public:
                 //  {
                 //    state = process->WaitForStateChangedEvents (NULL, event_sp);
                 //  }
-                process->GetThreadList().SetCurrentThreadByID (thread->GetID());
+                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
                 result.SetDidChangeProcessState (true);
                 result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
@@ -665,7 +665,7 @@ public:
     {
         bool synchronous_execution = interpreter.GetSynchronous ();
 
-        if (!interpreter.GetDebugger().GetCurrentTarget().get())
+        if (!interpreter.GetDebugger().GetSelectedTarget().get())
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
             result.SetStatus (eReturnStatusFailed);
@@ -725,7 +725,7 @@ public:
             }
             else
             {
-                Thread *current_thread = process->GetThreadList().GetCurrentThread().get();
+                Thread *current_thread = process->GetThreadList().GetSelectedThread().get();
                 if (current_thread == NULL)
                 {
                     result.AppendError ("the process doesn't have a current thread");
@@ -917,7 +917,7 @@ public:
     {
         bool synchronous_execution = interpreter.GetSynchronous ();
 
-        if (!interpreter.GetDebugger().GetCurrentTarget().get())
+        if (!interpreter.GetDebugger().GetSelectedTarget().get())
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
             result.SetStatus (eReturnStatusFailed);
@@ -953,7 +953,7 @@ public:
 
             if (m_options.m_thread_idx == LLDB_INVALID_THREAD_ID)
             {
-                thread = process->GetThreadList().GetCurrentThread().get();
+                thread = process->GetThreadList().GetSelectedThread().get();
             }
             else
             {
@@ -1033,7 +1033,7 @@ public:
 
             }
 
-            process->GetThreadList().SetCurrentThreadByID (m_options.m_thread_idx);
+            process->GetThreadList().SetSelectedThreadByID (m_options.m_thread_idx);
             Error error (process->Resume ());
             if (error.Success())
             {
@@ -1129,7 +1129,7 @@ public:
             return false;
         }
 
-        process->GetThreadList().SetCurrentThreadByID(new_thread->GetID());
+        process->GetThreadList().SetSelectedThreadByID(new_thread->GetID());
         
         DisplayThreadInfo (interpreter,
                            result.GetOutputStream(),

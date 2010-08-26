@@ -112,10 +112,6 @@ protected:
 #endif
 
 private:
-//
-//    lldb_private::ExecutionContext
-//    GetCurrentExecutionContext ();
-//
     lldb::ValueObjectSP m_opaque_sp;
 };
 

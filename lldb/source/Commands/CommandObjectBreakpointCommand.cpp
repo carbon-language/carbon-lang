@@ -213,7 +213,7 @@ CommandObjectBreakpointCommandAdd::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
 
     if (target == NULL)
     {
@@ -417,7 +417,7 @@ CommandObjectBreakpointCommandRemove::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
 
     if (target == NULL)
     {
@@ -503,7 +503,7 @@ CommandObjectBreakpointCommandList::Execute
     CommandReturnObject &result
 )
 {
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+    Target *target = interpreter.GetDebugger().GetSelectedTarget().get();
 
     if (target == NULL)
     {

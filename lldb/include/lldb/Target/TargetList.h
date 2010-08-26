@@ -181,13 +181,13 @@ public:
     SignalIfRunning (lldb::pid_t pid, int signo);
 
     uint32_t
-    SetCurrentTarget (Target *target);
+    SetSelectedTarget (Target *target);
 
     void
-    SetCurrentTargetWithIndex (uint32_t idx);
+    SetSelectedTargetWithIndex (uint32_t idx);
 
     lldb::TargetSP
-    GetCurrentTarget ();
+    GetSelectedTarget ();
 
 
 protected:
@@ -197,7 +197,7 @@ protected:
     //------------------------------------------------------------------
     collection m_target_list;
     mutable Mutex m_target_list_mutex;
-    uint32_t m_current_target_idx;
+    uint32_t m_selected_target_idx;
 private:
     DISALLOW_COPY_AND_ASSIGN (TargetList);
 };

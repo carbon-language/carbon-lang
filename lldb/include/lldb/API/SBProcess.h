@@ -58,10 +58,10 @@ public:
     GetSTDERR (char *dst, size_t dst_len) const;
 
     void
-    ReportCurrentState (const lldb::SBEvent &event, FILE *out) const;
+    ReportEventState (const lldb::SBEvent &event, FILE *out) const;
 
     void
-    AppendCurrentStateReport (const lldb::SBEvent &event, lldb::SBCommandReturnObject &result);
+    AppendEventStateReport (const lldb::SBEvent &event, lldb::SBCommandReturnObject &result);
 
     //------------------------------------------------------------------
     // Thread related functions
@@ -76,13 +76,13 @@ public:
     GetThreadByID (lldb::tid_t sb_thread_id);
 
     lldb::SBThread
-    GetCurrentThread () const;
+    GetSelectedThread () const;
 
     bool
-    SetCurrentThread (const lldb::SBThread &thread);
+    SetSelectedThread (const lldb::SBThread &thread);
 
     bool
-    SetCurrentThreadByID (uint32_t tid);
+    SetSelectedThreadByID (uint32_t tid);
 
     //------------------------------------------------------------------
     // Stepping related functions

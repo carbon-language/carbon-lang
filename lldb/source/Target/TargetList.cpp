@@ -30,7 +30,7 @@ TargetList::TargetList() :
     Broadcaster("TargetList"),
     m_target_list(),
     m_target_list_mutex (Mutex::eMutexTypeRecursive),
-    m_current_target_idx (0)
+    m_selected_target_idx (0)
 {
 }
 
@@ -101,7 +101,7 @@ TargetList::CreateTarget
     if (target_sp.get())
     {
         Mutex::Locker locker(m_target_list_mutex);
-        m_current_target_idx = m_target_list.size();
+        m_selected_target_idx = m_target_list.size();
         m_target_list.push_back(target_sp);
     }
 
@@ -123,7 +123,7 @@ TargetList::CreateTarget
 //            {
 //                error.Clear();
 //                Mutex::Locker locker(m_target_list_mutex);
-//                m_current_target_idx = m_target_list.size();
+//                m_selected_target_idx = m_target_list.size();
 //                m_target_list.push_back(target_sp);
 //            }
 //        }
@@ -334,7 +334,7 @@ TargetList::GetTargetAtIndex (uint32_t idx) const
 }
 
 uint32_t
-TargetList::SetCurrentTarget (Target* target)
+TargetList::SetSelectedTarget (Target* target)
 {
     Mutex::Locker locker (m_target_list_mutex);
     collection::const_iterator pos,
@@ -344,19 +344,19 @@ TargetList::SetCurrentTarget (Target* target)
     {
         if (pos->get() == target)
         {
-            m_current_target_idx = std::distance (begin, pos);
-            return m_current_target_idx;
+            m_selected_target_idx = std::distance (begin, pos);
+            return m_selected_target_idx;
         }
     }
-    m_current_target_idx = 0;
-    return m_current_target_idx;
+    m_selected_target_idx = 0;
+    return m_selected_target_idx;
 }
 
 lldb::TargetSP
-TargetList::GetCurrentTarget ()
+TargetList::GetSelectedTarget ()
 {
     Mutex::Locker locker (m_target_list_mutex);
-    if (m_current_target_idx >= m_target_list.size())
-        m_current_target_idx = 0;
-    return GetTargetAtIndex (m_current_target_idx);
+    if (m_selected_target_idx >= m_target_list.size())
+        m_selected_target_idx = 0;
+    return GetTargetAtIndex (m_selected_target_idx);
 }

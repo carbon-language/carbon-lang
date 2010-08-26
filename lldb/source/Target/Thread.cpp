@@ -823,21 +823,21 @@ Thread::GetStackFrameAtIndex (uint32_t idx)
 }
 
 lldb::StackFrameSP
-Thread::GetCurrentFrame ()
+Thread::GetSelectedFrame ()
 {
-    return GetStackFrameAtIndex (GetStackFrameList().GetCurrentFrameIndex());
+    return GetStackFrameAtIndex (GetStackFrameList().GetSelectedFrameIndex());
 }
 
 uint32_t
-Thread::SetCurrentFrame (lldb_private::StackFrame *frame)
+Thread::SetSelectedFrame (lldb_private::StackFrame *frame)
 {
-    return GetStackFrameList().SetCurrentFrame(frame);
+    return GetStackFrameList().SetSelectedFrame(frame);
 }
 
 void
-Thread::SetCurrentFrameByIndex (uint32_t idx)
+Thread::SetSelectedFrameByIndex (uint32_t idx)
 {
-    GetStackFrameList().SetCurrentFrameByIndex(idx);
+    GetStackFrameList().SetSelectedFrameByIndex(idx);
 }
 
 void

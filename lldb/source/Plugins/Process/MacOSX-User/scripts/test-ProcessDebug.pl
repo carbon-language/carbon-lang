@@ -338,7 +338,7 @@ while ($pid)
 			}
 		    elsif (	$pid_state == $lldb::eStateStopped )
 			{
-				my $tid = lldb::PDProcessGetCurrentThread ( $pid );
+				my $tid = lldb::PDProcessGetSelectedThread ( $pid );
 				my $pc = lldb::PDThreadGetRegisterHexValueByName($pid, $tid, $lldb::PD_REGISTER_SET_ALL, "eip", 0);
 				$pc != 0 and printf("pc = 0x%8.8x ", $pc); 
 				# my $sp = lldb::PDThreadGetRegisterHexValueByName($pid, $tid, $lldb::PD_REGISTER_SET_ALL, "esp", 0);

@@ -41,14 +41,14 @@ public:
 
     // Mark a stack frame as the current frame
     uint32_t
-    SetCurrentFrame (lldb_private::StackFrame *frame);
+    SetSelectedFrame (lldb_private::StackFrame *frame);
 
     uint32_t
-    GetCurrentFrameIndex () const;
+    GetSelectedFrameIndex () const;
 
     // Mark a stack frame as the current frame using the frame index
     void
-    SetCurrentFrameByIndex (uint32_t idx);
+    SetSelectedFrameByIndex (uint32_t idx);
 
     void
     Clear ();
@@ -90,7 +90,7 @@ protected:
     collection m_unwind_frames;
     collection m_inline_frames;
     InlinedFrameInfoCollection m_inlined_info;
-    uint32_t m_current_frame_idx;
+    uint32_t m_selected_frame_idx;
     bool m_show_inlined_frames;
 
 private:

@@ -23,7 +23,7 @@ ThreadList::ThreadList (Process *process) :
     m_stop_id (0),
     m_threads(),
     m_threads_mutex (Mutex::eMutexTypeRecursive),
-    m_current_tid (LLDB_INVALID_THREAD_ID)
+    m_selected_tid (LLDB_INVALID_THREAD_ID)
 {
 }
 
@@ -32,7 +32,7 @@ ThreadList::ThreadList (const ThreadList &rhs) :
     m_stop_id (),
     m_threads (),
     m_threads_mutex (Mutex::eMutexTypeRecursive),
-    m_current_tid ()
+    m_selected_tid ()
 {
     // Use the assignment operator since it uses the mutex
     *this = rhs;
@@ -50,7 +50,7 @@ ThreadList::operator = (const ThreadList& rhs)
         m_process = rhs.m_process;
         m_stop_id = rhs.m_stop_id;
         m_threads = rhs.m_threads;
-        m_current_tid = rhs.m_current_tid;
+        m_selected_tid = rhs.m_selected_tid;
     }
     return *this;
 }
@@ -274,7 +274,7 @@ ThreadList::Clear()
 {
     m_stop_id = 0;
     m_threads.clear();
-    m_current_tid = LLDB_INVALID_THREAD_ID;
+    m_selected_tid = LLDB_INVALID_THREAD_ID;
 }
 
 void
@@ -376,7 +376,7 @@ ThreadList::WillResume ()
             // You can't say "stop others" and also want yourself to be suspended.
             assert (thread_sp->GetCurrentPlan()->RunState() != eStateSuspended);
 
-            if (thread_sp == GetCurrentThread())
+            if (thread_sp == GetSelectedThread())
             {
                 run_only_current_thread = true;
                 run_me_only_list.Clear();
@@ -415,7 +415,7 @@ ThreadList::WillResume ()
 
         if (run_only_current_thread)
         {
-            thread_to_run = GetCurrentThread();
+            thread_to_run = GetSelectedThread();
         }
         else if (run_me_only_list.GetSize (false) == 1)
         {
@@ -456,34 +456,34 @@ ThreadList::DidResume ()
 }
 
 ThreadSP
-ThreadList::GetCurrentThread ()
+ThreadList::GetSelectedThread ()
 {
     Mutex::Locker locker(m_threads_mutex);
-    return FindThreadByID(m_current_tid);
+    return FindThreadByID(m_selected_tid);
 }
 
 bool
-ThreadList::SetCurrentThreadByID (lldb::tid_t tid)
+ThreadList::SetSelectedThreadByID (lldb::tid_t tid)
 {
     Mutex::Locker locker(m_threads_mutex);
     if  (FindThreadByID(tid).get())
-        m_current_tid = tid;
+        m_selected_tid = tid;
     else
-        m_current_tid = LLDB_INVALID_THREAD_ID;
+        m_selected_tid = LLDB_INVALID_THREAD_ID;
 
-    return m_current_tid != LLDB_INVALID_THREAD_ID;
+    return m_selected_tid != LLDB_INVALID_THREAD_ID;
 }
 
 bool
-ThreadList::SetCurrentThreadByIndexID (uint32_t index_id)
+ThreadList::SetSelectedThreadByIndexID (uint32_t index_id)
 {
     Mutex::Locker locker(m_threads_mutex);
     ThreadSP thread_sp (FindThreadByIndexID(index_id));
     if  (thread_sp.get())
-        m_current_tid = thread_sp->GetID();
+        m_selected_tid = thread_sp->GetID();
     else
-        m_current_tid = LLDB_INVALID_THREAD_ID;
+        m_selected_tid = LLDB_INVALID_THREAD_ID;
 
-    return m_current_tid != LLDB_INVALID_THREAD_ID;
+    return m_selected_tid != LLDB_INVALID_THREAD_ID;
 }
 

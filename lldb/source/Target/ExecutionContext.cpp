@@ -41,9 +41,9 @@ ExecutionContext::ExecutionContext (Target* t, bool fill_current_process_thread_
         process = t->GetProcessSP().get();
         if (process)
         {
-            thread = process->GetThreadList().GetCurrentThread().get();
+            thread = process->GetThreadList().GetSelectedThread().get();
             if (thread)
-                frame = thread->GetCurrentFrame().get();
+                frame = thread->GetSelectedFrame().get();
         }
     }
 }

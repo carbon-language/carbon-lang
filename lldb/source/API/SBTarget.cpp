@@ -167,17 +167,6 @@ SBTarget::DeleteTargetFromList (TargetList *list)
 }
 
 bool
-SBTarget::MakeCurrentTarget ()
-{
-    if (m_opaque_sp)
-    {
-        m_opaque_sp->GetDebugger().GetTargetList().SetCurrentTarget (m_opaque_sp.get());
-        return true;
-    }
-    return false;
-}
-
-bool
 SBTarget::operator == (const SBTarget &rhs) const
 {
     return m_opaque_sp.get() == rhs.m_opaque_sp.get();

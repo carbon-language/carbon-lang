@@ -215,16 +215,16 @@ SBDebugger::HandleProcessEvent (const SBProcess &process, const SBEvent &event, 
 
          bool is_stopped = StateIsStoppedState (event_state);
          if (!is_stopped)
-             process.ReportCurrentState (event, out);
+             process.ReportEventState (event, out);
    }
 }
 
 void
-SBDebugger::UpdateCurrentThread (SBProcess &process)
+SBDebugger::UpdateSelectedThread (SBProcess &process)
 {
     if (process.IsValid())
     {
-        SBThread curr_thread = process.GetCurrentThread ();
+        SBThread curr_thread = process.GetSelectedThread ();
         SBThread thread;
         StopReason curr_thread_stop_reason = eStopReasonInvalid;
         if (curr_thread.IsValid())
@@ -270,9 +270,9 @@ SBDebugger::UpdateCurrentThread (SBProcess &process)
                 }
             }
             if (plan_thread.IsValid())
-                process.SetCurrentThreadByID (plan_thread.GetThreadID());
+                process.SetSelectedThreadByID (plan_thread.GetThreadID());
             else if (other_thread.IsValid())
-                process.SetCurrentThreadByID (other_thread.GetThreadID());
+                process.SetSelectedThreadByID (other_thread.GetThreadID());
             else
             {
                 if (curr_thread.IsValid())
@@ -281,7 +281,7 @@ SBDebugger::UpdateCurrentThread (SBProcess &process)
                     thread = process.GetThreadAtIndex(0);
 
                 if (thread.IsValid())
-                    process.SetCurrentThreadByID (thread.GetThreadID());
+                    process.SetSelectedThreadByID (thread.GetThreadID());
             }
         }
     }
@@ -415,7 +415,7 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
 
         if (error.Success())
         {
-            m_opaque_sp->GetTargetList().SetCurrentTarget (target_sp.get());
+            m_opaque_sp->GetTargetList().SetSelectedTarget (target_sp.get());
             target.reset(target_sp);
         }
     }
@@ -450,7 +450,7 @@ SBDebugger::CreateTarget (const char *filename)
 
         if (error.Success())
         {
-            m_opaque_sp->GetTargetList().SetCurrentTarget (target_sp.get());
+            m_opaque_sp->GetTargetList().SetSelectedTarget (target_sp.get());
             target.reset (target_sp);
         }
     }
@@ -509,11 +509,11 @@ SBDebugger::GetNumTargets ()
 }
 
 SBTarget
-SBDebugger::GetCurrentTarget ()
+SBDebugger::GetSelectedTarget ()
 {
     SBTarget sb_target;
     if (m_opaque_sp)
-        sb_target.reset(m_opaque_sp->GetTargetList().GetCurrentTarget ());
+        sb_target.reset(m_opaque_sp->GetTargetList().GetSelectedTarget ());
     return sb_target;
 }
 

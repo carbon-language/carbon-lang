@@ -33,7 +33,7 @@ StackFrameList::StackFrameList(Thread &thread, StackFrameList *prev_frames, bool
     m_mutex (Mutex::eMutexTypeRecursive),
     m_unwind_frames (),
     m_inline_frames (),
-    m_current_frame_idx (0)
+    m_selected_frame_idx (0)
 {
 }
 
@@ -306,15 +306,15 @@ StackFrameList::SetInlineFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)
 }
 
 uint32_t
-StackFrameList::GetCurrentFrameIndex () const
+StackFrameList::GetSelectedFrameIndex () const
 {
     Mutex::Locker locker (m_mutex);
-    return m_current_frame_idx;
+    return m_selected_frame_idx;
 }
 
 
 uint32_t
-StackFrameList::SetCurrentFrame (lldb_private::StackFrame *frame)
+StackFrameList::SetSelectedFrame (lldb_private::StackFrame *frame)
 {
     Mutex::Locker locker (m_mutex);
     const_iterator pos;
@@ -324,20 +324,20 @@ StackFrameList::SetCurrentFrame (lldb_private::StackFrame *frame)
     {
         if (pos->get() == frame)
         {
-            m_current_frame_idx = std::distance (begin, pos);
-            return m_current_frame_idx;
+            m_selected_frame_idx = std::distance (begin, pos);
+            return m_selected_frame_idx;
         }
     }
-    m_current_frame_idx = 0;
-    return m_current_frame_idx;
+    m_selected_frame_idx = 0;
+    return m_selected_frame_idx;
 }
 
 // Mark a stack frame as the current frame using the frame index
 void
-StackFrameList::SetCurrentFrameByIndex (uint32_t idx)
+StackFrameList::SetSelectedFrameByIndex (uint32_t idx)
 {
     Mutex::Locker locker (m_mutex);
-    m_current_frame_idx = idx;
+    m_selected_frame_idx = idx;
 }
 
 // The thread has been run, reset the number stack frames to zero so we can

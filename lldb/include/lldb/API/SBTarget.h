@@ -82,9 +82,6 @@ public:
     bool
     DeleteTargetFromList (lldb_private::TargetList *list);
 
-    bool
-    MakeCurrentTarget ();
-
     lldb::SBBreakpoint
     BreakpointCreateByLocation (const char *file, uint32_t line);
 

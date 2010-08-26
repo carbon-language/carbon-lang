@@ -603,7 +603,7 @@ Driver::GetProcessSTDOUT ()
     //  The process has stuff waiting for stdout; get it and write it out to the appropriate place.
     char stdio_buffer[1024];
     size_t len;
-    while ((len = m_debugger.GetCurrentTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
+    while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
         m_io_channel_ap->OutWrite (stdio_buffer, len);
 }
 
@@ -613,18 +613,18 @@ Driver::GetProcessSTDERR ()
     //  The process has stuff waiting for stderr; get it and write it out to the appropriate place.
     char stdio_buffer[1024];
     size_t len;
-    while ((len = m_debugger.GetCurrentTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
+    while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
         m_io_channel_ap->ErrWrite (stdio_buffer, len);
 }
 
 void
-Driver::UpdateCurrentThread ()
+Driver::UpdateSelectedThread ()
 {
     using namespace lldb;
-    SBProcess process(m_debugger.GetCurrentTarget().GetProcess());
+    SBProcess process(m_debugger.GetSelectedTarget().GetProcess());
     if (process.IsValid())
     {
-        SBThread curr_thread (process.GetCurrentThread());
+        SBThread curr_thread (process.GetSelectedThread());
         SBThread thread;
         StopReason curr_thread_stop_reason = eStopReasonInvalid;
         curr_thread_stop_reason = curr_thread.GetStopReason();
@@ -664,9 +664,9 @@ Driver::UpdateCurrentThread ()
                 }
             }
             if (plan_thread.IsValid())
-                process.SetCurrentThread (plan_thread);
+                process.SetSelectedThread (plan_thread);
             else if (other_thread.IsValid())
-                process.SetCurrentThread (other_thread);
+                process.SetSelectedThread (other_thread);
             else
             {
                 if (curr_thread.IsValid())
@@ -675,7 +675,7 @@ Driver::UpdateCurrentThread ()
                     thread = process.GetThreadAtIndex(0);
 
                 if (thread.IsValid())
-                    process.SetCurrentThread (thread);
+                    process.SetSelectedThread (thread);
             }
         }
     }
@@ -756,7 +756,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             }
             else
             {
-                UpdateCurrentThread ();
+                UpdateSelectedThread ();
                 m_debugger.HandleCommand("process status");
                 m_io_channel_ap->RefreshPrompt();
             }
@@ -1201,7 +1201,7 @@ Driver::MainLoop ()
                             else
                                 done = HandleIOEvent (event);
                         }
-                        else if (event.BroadcasterMatchesRef (m_debugger.GetCurrentTarget().GetProcess().GetBroadcaster()))
+                        else if (event.BroadcasterMatchesRef (m_debugger.GetSelectedTarget().GetProcess().GetBroadcaster()))
                         {
                             HandleProcessEvent (event);
                         }
@@ -1231,7 +1231,7 @@ Driver::MainLoop ()
                 }
             }
 
-            SBProcess process = m_debugger.GetCurrentTarget().GetProcess();
+            SBProcess process = m_debugger.GetSelectedTarget().GetProcess();
             if (process.IsValid())
                 process.Destroy();
         }

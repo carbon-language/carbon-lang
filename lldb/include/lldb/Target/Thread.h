@@ -177,13 +177,13 @@ public:
     GetStackFrameAtIndex (uint32_t idx);
 
     lldb::StackFrameSP
-    GetCurrentFrame ();
+    GetSelectedFrame ();
 
     uint32_t
-    SetCurrentFrame (lldb_private::StackFrame *frame);
+    SetSelectedFrame (lldb_private::StackFrame *frame);
 
     void
-    SetCurrentFrameByIndex (uint32_t frame_idx);
+    SetSelectedFrameByIndex (uint32_t frame_idx);
 
     virtual RegisterContext *
     GetRegisterContext () = 0;

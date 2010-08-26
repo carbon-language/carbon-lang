@@ -140,7 +140,7 @@ CommandObjectArgs::Execute
         return false;
     }
         
-    lldb::StackFrameSP thread_cur_frame = thread->GetCurrentFrame ();
+    lldb::StackFrameSP thread_cur_frame = thread->GetSelectedFrame ();
     if (!thread_cur_frame)
     {
         result.AppendError ("The current thread has no current frame.");

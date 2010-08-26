@@ -102,7 +102,7 @@ CommandCompletions::SourceFiles
 
     if (searcher == NULL)
     {
-        lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
+        lldb::TargetSP target_sp = interpreter.GetDebugger().GetSelectedTarget();
         SearchFilter null_searcher (target_sp);
         completer.DoCompletion (&null_searcher);
     }
@@ -368,7 +368,7 @@ CommandCompletions::Modules
     
     if (searcher == NULL)
     {
-        lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
+        lldb::TargetSP target_sp = interpreter.GetDebugger().GetSelectedTarget();
         SearchFilter null_searcher (target_sp);
         completer.DoCompletion (&null_searcher);
     }
@@ -399,7 +399,7 @@ CommandCompletions::Symbols
 
     if (searcher == NULL)
     {
-        lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
+        lldb::TargetSP target_sp = interpreter.GetDebugger().GetSelectedTarget();
         SearchFilter null_searcher (target_sp);
         completer.DoCompletion (&null_searcher);
     }
