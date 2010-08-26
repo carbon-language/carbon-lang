@@ -41,7 +41,7 @@
 
 namespace llvm {
 cl::opt<bool>
-ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
+ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(false),
           cl::desc("Reuse repeated frame index values"));
 static cl::opt<bool>
 ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(false),
