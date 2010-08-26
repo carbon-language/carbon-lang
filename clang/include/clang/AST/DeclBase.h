@@ -650,7 +650,7 @@ public:
   DeclContextLookupResult()
     : std::pair<NamedDecl**,NamedDecl**>() {}
 
-  using pair::operator=;
+  using std::pair<NamedDecl**,NamedDecl**>::operator=;
 };
 
 class DeclContextLookupConstResult
@@ -663,7 +663,7 @@ public:
   DeclContextLookupConstResult()
     : std::pair<NamedDecl*const*, NamedDecl*const*>() {}
 
-  using pair::operator=;
+  using std::pair<NamedDecl*const*,NamedDecl*const*>::operator=;
 };
 
 /// DeclContext - This is used only as base class of specific decl types that
