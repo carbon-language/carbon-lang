@@ -875,12 +875,23 @@ void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
 void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
                                                    SDValue Val) {
   DanglingDebugInfo &DDI = DanglingDebugInfoMap[V];
-  if (DDI.getDI()) {
-    const DbgValueInst *DI = DDI.getDI();
+  MDNode *Variable = NULL;
+  uint64_t Offset = 0;
+
+  if (const DbgValueInst *DI = dyn_cast_or_null<DbgValueInst>(DDI.getDI())) {
+    Variable = DI->getVariable();
+    Offset = DI->getOffset();
+  } else if (const DbgDeclareInst *DI = 
+             dyn_cast_or_null<DbgDeclareInst>(DDI.getDI()))
+    Variable = DI->getVariable();
+  else {
+    assert (DDI.getDI() == NULL && "Invalid debug info intrinsic!");
+    return;
+  }
+
+  if (Variable) {
     DebugLoc dl = DDI.getdl();
     unsigned DbgSDNodeOrder = DDI.getSDNodeOrder();
-    MDNode *Variable = DI->getVariable();
-    uint64_t Offset = DI->getOffset();
     SDDbgValue *SDV;
     if (Val.getNode()) {
       if (!EmitFuncArgumentDbgValue(V, Variable, Offset, Val)) {

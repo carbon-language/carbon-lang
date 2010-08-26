@@ -36,7 +36,7 @@ class BasicBlock;
 class BitCastInst;
 class BranchInst;
 class CallInst;
-class DbgValueInst;
+class DbgInfoIntrinsic;
 class ExtractElementInst;
 class ExtractValueInst;
 class FCmpInst;
@@ -96,14 +96,14 @@ class SelectionDAGBuilder {
 
   /// DanglingDebugInfo - Helper type for DanglingDebugInfoMap.
   class DanglingDebugInfo {
-    const DbgValueInst* DI;
+    const DbgInfoIntrinsic* DI;
     DebugLoc dl;
     unsigned SDNodeOrder;
   public:
     DanglingDebugInfo() : DI(0), dl(DebugLoc()), SDNodeOrder(0) { }
-    DanglingDebugInfo(const DbgValueInst *di, DebugLoc DL, unsigned SDNO) :
+    DanglingDebugInfo(const DbgInfoIntrinsic *di, DebugLoc DL, unsigned SDNO) :
       DI(di), dl(DL), SDNodeOrder(SDNO) { }
-    const DbgValueInst* getDI() { return DI; }
+    const DbgInfoIntrinsic* getDI() { return DI; }
     DebugLoc getdl() { return dl; }
     unsigned getSDNodeOrder() { return SDNodeOrder; }
   };
