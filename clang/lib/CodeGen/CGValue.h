@@ -138,7 +138,7 @@ class LValue {
   Qualifiers Quals;
 
   /// The alignment to use when accessing this lvalue.
-  unsigned char Alignment;
+  unsigned short Alignment;
 
   // objective-c's ivar
   bool Ivar:1;
