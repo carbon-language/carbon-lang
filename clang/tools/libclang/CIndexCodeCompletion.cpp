@@ -582,8 +582,6 @@ namespace {
         AllocatedResults.Results[I].CompletionString = StoredCompletion;
       }
     }
-    
-    // FIXME: Add ProcessOverloadCandidates?
   };
 }
 

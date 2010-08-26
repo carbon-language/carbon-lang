@@ -60,8 +60,8 @@ Z::operator int() const {
 // RUN: c-index-test -code-completion-at=%s:37:10 %s | FileCheck -check-prefix=CHECK-EXPR %s
 // CHECK-EXPR: NotImplemented:{TypedText int} (65)
 // CHECK-EXPR: NotImplemented:{TypedText long} (65)
-// CHECK-EXPR: FieldDecl:{ResultType int}{Text X::}{TypedText member} (5)
 // CHECK-EXPR: FieldDecl:{ResultType double}{TypedText member} (10)
+// CHECK-EXPR: FieldDecl:{ResultType int}{Text X::}{TypedText member} (5)
 // CHECK-EXPR: FieldDecl:{ResultType float}{Text Y::}{TypedText member} (11)
 // CHECK-EXPR: FunctionDecl:{ResultType void}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )} (22)
 // CHECK-EXPR: NotImplemented:{TypedText N}{Text ::} (75)

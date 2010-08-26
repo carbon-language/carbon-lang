@@ -443,8 +443,6 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
                                                  CodeCompletionContext Context,
                                                  CodeCompletionResult *Results,
                                                          unsigned NumResults) {
-  std::stable_sort(Results, Results + NumResults);
-  
   // Print the results.
   for (unsigned I = 0; I != NumResults; ++I) {
     OS << "COMPLETION: ";
@@ -662,11 +660,6 @@ bool clang::operator<(const CodeCompletionResult &X,
   if (cmp)
     return cmp < 0;
   
-  // If case-insensitive comparison fails, try case-sensitive comparison.
-  cmp = XStr.compare(YStr);
-  if (cmp)
-    return cmp < 0;
-
   // Non-hidden names precede hidden names.
   if (X.Hidden != Y.Hidden)
     return !X.Hidden;
@@ -702,7 +695,7 @@ CIndexCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
                                                        unsigned NumCandidates) {
   for (unsigned I = 0; I != NumCandidates; ++I) {
     WriteUnsigned(OS, CXCursor_NotImplemented);
-    WriteUnsigned(OS, /*Priority=*/I);
+    WriteUnsigned(OS, /*Priority=*/0);
     WriteUnsigned(OS, /*Availability=*/CXAvailability_Available);
     CodeCompletionString *CCS
       = Candidates[I].CreateSignatureString(CurrentArg, SemaRef);
