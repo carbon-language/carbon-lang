@@ -150,7 +150,7 @@ const char* lto_module_get_symbol_name(lto_module_t mod, uint32_t index)
 // returns the attributes of the ith symbol in the object module
 //
 lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod, 
-                                                            uint32_t index)
+                                                      uint32_t index)
 {
     return mod->getSymbolAttributes(index);
 }
