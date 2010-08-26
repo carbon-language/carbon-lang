@@ -20,9 +20,9 @@
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/AST/OperationKinds.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -40,6 +40,7 @@ namespace clang {
   class ASTConsumer;
   class ASTContext;
   class ArrayType;
+  class BlockDecl;
   class CXXBasePath;
   class CXXBasePaths;
   typedef llvm::SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
@@ -62,8 +63,10 @@ namespace clang {
   class DeclContext;
   class DeclRefExpr;
   class DeclSpec;
+  class DeclaratorDecl;
   class DeducedTemplateArgument;
   class DesignatedInitExpr;
+  class EnumConstantDecl;
   class Expr;
   class ExtVectorType;
   class ExternalSemaSource;
@@ -71,6 +74,7 @@ namespace clang {
   class FullExpr;
   class FunctionDecl;
   class FunctionProtoType;
+  class FunctionTemplateDecl;
   class ImplicitConversionSequence;
   class InitListExpr;
   class InitializationKind;
@@ -116,12 +120,13 @@ namespace clang {
   class TemplateTemplateParmDecl;
   class Token;
   class TypedefDecl;
-  class TypedefDecl;
   class UnresolvedLookupExpr;
   class UnresolvedMemberExpr;
+  class UnresolvedSetImpl;
   class UnresolvedSetIterator;
   class UsingDecl;
   class UsingShadowDecl;
+  class ValueDecl;
   class VarDecl;
   class VisibleDeclConsumer;
 
@@ -652,8 +657,8 @@ public:
                               TypeSourceInfo *TSInfo, QualType T,
                               IdentifierInfo *Name,
                               SourceLocation NameLoc,
-                              VarDecl::StorageClass StorageClass,
-                              VarDecl::StorageClass StorageClassAsWritten);
+                              StorageClass SC,
+                              StorageClass SCAsWritten);
   virtual void ActOnParamDefaultArgument(Decl *param,
                                          SourceLocation EqualLoc,
                                          ExprArg defarg);
@@ -2487,13 +2492,13 @@ public:
                                     MultiTemplateParamsArg TemplateParams);
 
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
-                                      FunctionDecl::StorageClass& SC);
+                                      StorageClass& SC);
   void CheckConstructor(CXXConstructorDecl *Constructor);
   QualType CheckDestructorDeclarator(Declarator &D, QualType R,
-                                     FunctionDecl::StorageClass& SC);
+                                     StorageClass& SC);
   bool CheckDestructor(CXXDestructorDecl *Destructor);
   void CheckConversionDeclarator(Declarator &D, QualType &R,
-                                 FunctionDecl::StorageClass& SC);
+                                 StorageClass& SC);
   Decl *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
   //===--------------------------------------------------------------------===//

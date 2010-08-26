@@ -534,9 +534,9 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
 
 static bool isStaticVarOrStaticFunciton(Decl *D) {
   if (VarDecl *VD = dyn_cast<VarDecl>(D))
-    return VD->getStorageClass() == VarDecl::Static;
+    return VD->getStorageClass() == SC_Static;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD->getStorageClass() == FunctionDecl::Static;
+    return FD->getStorageClass() == SC_Static;
   return false;
 }
 

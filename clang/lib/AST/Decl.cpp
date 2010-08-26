@@ -116,7 +116,7 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   // (This bullet corresponds to C99 6.2.2p3.)
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     // Explicitly declared static.
-    if (Var->getStorageClass() == VarDecl::Static)
+    if (Var->getStorageClass() == SC_Static)
       return InternalLinkage;
 
     // - an object or reference that is explicitly declared const
@@ -125,8 +125,8 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
     // (there is no equivalent in C99)
     if (Context.getLangOptions().CPlusPlus &&
         Var->getType().isConstant(Context) && 
-        Var->getStorageClass() != VarDecl::Extern &&
-        Var->getStorageClass() != VarDecl::PrivateExtern) {
+        Var->getStorageClass() != SC_Extern &&
+        Var->getStorageClass() != SC_PrivateExtern) {
       bool FoundExtern = false;
       for (const VarDecl *PrevVar = Var->getPreviousDeclaration();
            PrevVar && !FoundExtern; 
@@ -149,7 +149,7 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       Function = cast<FunctionDecl>(D);
 
     // Explicitly declared static.
-    if (Function->getStorageClass() == FunctionDecl::Static)
+    if (Function->getStorageClass() == SC_Static)
       return InternalLinkage;
   } else if (const FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
     //   - a data member of an anonymous union.
@@ -165,8 +165,8 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   //     - an object or reference, unless it has internal linkage; or
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     if (!Context.getLangOptions().CPlusPlus &&
-        (Var->getStorageClass() == VarDecl::Extern ||
-         Var->getStorageClass() == VarDecl::PrivateExtern)) {
+        (Var->getStorageClass() == SC_Extern ||
+         Var->getStorageClass() == SC_PrivateExtern)) {
       // C99 6.2.2p4:
       //   For an identifier declared with the storage-class specifier
       //   extern in a scope in which a prior declaration of that
@@ -200,9 +200,9 @@ static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
     //   as if it were declared with the storage-class specifier
     //   extern.
     if (!Context.getLangOptions().CPlusPlus &&
-        (Function->getStorageClass() == FunctionDecl::Extern ||
-         Function->getStorageClass() == FunctionDecl::PrivateExtern ||
-         Function->getStorageClass() == FunctionDecl::None)) {
+        (Function->getStorageClass() == SC_Extern ||
+         Function->getStorageClass() == SC_PrivateExtern ||
+         Function->getStorageClass() == SC_None)) {
       // C99 6.2.2p4:
       //   For an identifier declared with the storage-class specifier
       //   extern in a scope in which a prior declaration of that
@@ -383,8 +383,8 @@ Linkage NamedDecl::getLinkage() const {
     }
 
     if (const VarDecl *Var = dyn_cast<VarDecl>(this))
-      if (Var->getStorageClass() == VarDecl::Extern ||
-          Var->getStorageClass() == VarDecl::PrivateExtern) {
+      if (Var->getStorageClass() == SC_Extern ||
+          Var->getStorageClass() == SC_PrivateExtern) {
         if (Var->getPreviousDeclaration())
           if (Linkage L = Var->getPreviousDeclaration()->getLinkage())
             return L;
@@ -637,12 +637,12 @@ QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
 
 const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
   switch (SC) {
-  case VarDecl::None:          break;
-  case VarDecl::Auto:          return "auto"; break;
-  case VarDecl::Extern:        return "extern"; break;
-  case VarDecl::PrivateExtern: return "__private_extern__"; break;
-  case VarDecl::Register:      return "register"; break;
-  case VarDecl::Static:        return "static"; break;
+  case SC_None:          break;
+  case SC_Auto:          return "auto"; break;
+  case SC_Extern:        return "extern"; break;
+  case SC_PrivateExtern: return "__private_extern__"; break;
+  case SC_Register:      return "register"; break;
+  case SC_Static:        return "static"; break;
   }
 
   assert(0 && "Invalid storage class");
@@ -672,14 +672,14 @@ bool VarDecl::isExternC() const {
   ASTContext &Context = getASTContext();
   if (!Context.getLangOptions().CPlusPlus)
     return (getDeclContext()->isTranslationUnit() &&
-            getStorageClass() != Static) ||
+            getStorageClass() != SC_Static) ||
       (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
 
   for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
        DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != Static;
+        return getStorageClass() != SC_Static;
 
       break;
     }
@@ -724,8 +724,8 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
   if (hasExternalStorage())
     return DeclarationOnly;
   
-  if (getStorageClassAsWritten() == Extern ||
-       getStorageClassAsWritten() == PrivateExtern) {
+  if (getStorageClassAsWritten() == SC_Extern ||
+       getStorageClassAsWritten() == SC_PrivateExtern) {
     for (const VarDecl *PrevVar = getPreviousDeclaration();
          PrevVar; PrevVar = PrevVar->getPreviousDeclaration()) {
       if (PrevVar->getLinkage() == InternalLinkage && PrevVar->hasInit())
@@ -978,13 +978,13 @@ bool FunctionDecl::isExternC() const {
   // In C, any non-static, non-overloadable function has external
   // linkage.
   if (!Context.getLangOptions().CPlusPlus)
-    return getStorageClass() != Static && !getAttr<OverloadableAttr>();
+    return getStorageClass() != SC_Static && !getAttr<OverloadableAttr>();
 
   for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
        DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != Static &&
+        return getStorageClass() != SC_Static &&
                !getAttr<OverloadableAttr>();
 
       break;
@@ -1001,7 +1001,7 @@ bool FunctionDecl::isGlobal() const {
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(this))
     return Method->isStatic();
 
-  if (getStorageClass() == Static)
+  if (getStorageClass() == SC_Static)
     return false;
 
   for (const DeclContext *DC = getDeclContext();
@@ -1060,7 +1060,7 @@ unsigned FunctionDecl::getBuiltinID() const {
   // function or whether it just has the same name.
 
   // If this is a static function, it's not a builtin.
-  if (getStorageClass() == Static)
+  if (getStorageClass() == SC_Static)
     return 0;
 
   // If this function is at translation-unit scope and we're not in
@@ -1194,7 +1194,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
          Redecl != RedeclEnd;
          ++Redecl) {
-      if (Redecl->isInlineSpecified() && Redecl->getStorageClass() != Extern)
+      if (Redecl->isInlineSpecified() && Redecl->getStorageClass() != SC_Extern)
         return true;
     }
     
@@ -1213,7 +1213,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     if (!Redecl->getLexicalDeclContext()->isTranslationUnit())
       continue;
     
-    if (!Redecl->isInlineSpecified() || Redecl->getStorageClass() == Extern) 
+    if (!Redecl->isInlineSpecified() || Redecl->getStorageClass() == SC_Extern) 
       return true; // Not an inline definition
   }
   

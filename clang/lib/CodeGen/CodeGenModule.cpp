@@ -145,7 +145,7 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
 LangOptions::VisibilityMode
 CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-    if (VD->getStorageClass() == VarDecl::PrivateExtern)
+    if (VD->getStorageClass() == SC_PrivateExtern)
       return LangOptions::Hidden;
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>()) {
@@ -965,7 +965,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
     GV->setConstant(DeclIsConstantGlobal(Context, D));
 
     // FIXME: Merge with other attribute handling code.
-    if (D->getStorageClass() == VarDecl::PrivateExtern)
+    if (D->getStorageClass() == SC_PrivateExtern)
       GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
     if (D->hasAttr<WeakAttr>() ||

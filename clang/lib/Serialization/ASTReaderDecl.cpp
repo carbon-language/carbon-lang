@@ -312,8 +312,8 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // after everything else is read.
 
   VisitRedeclarable(FD);
-  FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
-  FD->setStorageClassAsWritten((FunctionDecl::StorageClass)Record[Idx++]);
+  FD->setStorageClass((StorageClass)Record[Idx++]);
+  FD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
   FD->setInlineSpecified(Record[Idx++]);
   FD->setVirtualAsWritten(Record[Idx++]);
   FD->setPure(Record[Idx++]);
@@ -554,8 +554,8 @@ void ASTDeclReader::VisitFieldDecl(FieldDecl *FD) {
 
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VisitDeclaratorDecl(VD);
-  VD->setStorageClass((VarDecl::StorageClass)Record[Idx++]);
-  VD->setStorageClassAsWritten((VarDecl::StorageClass)Record[Idx++]);
+  VD->setStorageClass((StorageClass)Record[Idx++]);
+  VD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
   VD->setThreadSpecified(Record[Idx++]);
   VD->setCXXDirectInitializer(Record[Idx++]);
   VD->setExceptionVariable(Record[Idx++]);
@@ -1368,7 +1368,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
   case DECL_VAR:
     D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                        VarDecl::None, VarDecl::None);
+                        SC_None, SC_None);
     break;
 
   case DECL_IMPLICIT_PARAM:
@@ -1377,7 +1377,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
 
   case DECL_PARM_VAR:
     D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                            VarDecl::None, VarDecl::None, 0);
+                            SC_None, SC_None, 0);
     break;
   case DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);

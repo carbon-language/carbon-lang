@@ -225,7 +225,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     OS << "\"";
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-      if (V->getStorageClass() != VarDecl::None)
+      if (V->getStorageClass() != SC_None)
         OS << VarDecl::getStorageClassSpecifierString(V->getStorageClass())
            << " ";
     }

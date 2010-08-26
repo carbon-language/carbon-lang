@@ -56,7 +56,7 @@ public:
                  CXXRecordDecl *DerivedClass,
                  AccessSpecifier Access)
     : Access(Access), IsMember(false),
-      Target(reinterpret_cast<NamedDecl*>(BaseClass)),
+      Target(BaseClass),
       NamingClass(DerivedClass),
       Diag(0, Context.getDiagAllocator()) {
   }
@@ -71,7 +71,7 @@ public:
 
   // ...and these apply to hierarchy conversions.
   CXXRecordDecl *getBaseClass() const {
-    assert(!IsMember); return reinterpret_cast<CXXRecordDecl*>(Target);
+    assert(!IsMember); return cast<CXXRecordDecl>(Target);
   }
   CXXRecordDecl *getDerivedClass() const { return NamingClass; }
 

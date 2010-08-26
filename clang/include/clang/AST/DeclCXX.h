@@ -1069,7 +1069,7 @@ protected:
                 const DeclarationNameInfo &NameInfo,
                 QualType T, TypeSourceInfo *TInfo,
                 bool isStatic, StorageClass SCAsWritten, bool isInline)
-    : FunctionDecl(DK, RD, NameInfo, T, TInfo, (isStatic ? Static : None),
+    : FunctionDecl(DK, RD, NameInfo, T, TInfo, (isStatic ? SC_Static : SC_None),
                    SCAsWritten, isInline) {}
 
 public:
@@ -1077,10 +1077,10 @@ public:
                                const DeclarationNameInfo &NameInfo,
                                QualType T, TypeSourceInfo *TInfo,
                                bool isStatic = false,
-                               StorageClass SCAsWritten = FunctionDecl::None,
+                               StorageClass SCAsWritten = SC_None,
                                bool isInline = false);
 
-  bool isStatic() const { return getStorageClass() == Static; }
+  bool isStatic() const { return getStorageClass() == SC_Static; }
   bool isInstance() const { return !isStatic(); }
 
   bool isVirtual() const {
@@ -1398,7 +1398,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      bool isExplicitSpecified, bool isInline, 
                      bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, NameInfo, T, TInfo, false,
-                    FunctionDecl::None, isInline),
+                    SC_None, isInline),
       IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
       BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) {
     setImplicit(isImplicitlyDeclared);
@@ -1544,7 +1544,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
   CXXDestructorDecl(CXXRecordDecl *RD, const DeclarationNameInfo &NameInfo,
                     QualType T, bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, NameInfo, T, /*TInfo=*/0, false,
-                    FunctionDecl::None, isInline),
+                    SC_None, isInline),
       ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
@@ -1605,7 +1605,7 @@ class CXXConversionDecl : public CXXMethodDecl {
                     QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isExplicitSpecified)
     : CXXMethodDecl(CXXConversion, RD, NameInfo, T, TInfo, false,
-                    FunctionDecl::None, isInline),
+                    SC_None, isInline),
       IsExplicitSpecified(isExplicitSpecified) { }
 
 public:

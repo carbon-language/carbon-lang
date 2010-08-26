@@ -578,7 +578,7 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
         return false;
     } else {
       // 'static inline' functions are used in headers; don't warn.
-      if (FD->getStorageClass() == FunctionDecl::Static &&
+      if (FD->getStorageClass() == SC_Static &&
           FD->isInlineSpecified())
         return false;
     }
@@ -835,8 +835,8 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
                                            Loc, II, R, /*TInfo=*/0,
-                                           FunctionDecl::Extern,
-                                           FunctionDecl::None, false,
+                                           SC_Extern,
+                                           SC_None, false,
                                            /*hasPrototype=*/true);
   New->setImplicit();
 
@@ -847,7 +847,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
                                            FT->getArgType(i), /*TInfo=*/0,
-                                           VarDecl::None, VarDecl::None, 0));
+                                           SC_None, SC_None, 0));
     New->setParams(Params.data(), Params.size());
   }
 
@@ -1080,7 +1080,7 @@ static bool canRedefineFunction(const FunctionDecl *FD,
                                 const LangOptions& LangOpts) {
   return (LangOpts.GNUMode && !LangOpts.C99 && !LangOpts.CPlusPlus &&
           FD->isInlineSpecified() &&
-          FD->getStorageClass() == FunctionDecl::Extern);
+          FD->getStorageClass() == SC_Extern);
 }
 
 /// MergeFunctionDecl - We just parsed a function 'New' from
@@ -1134,8 +1134,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // Don't complain about this if we're in GNU89 mode and the old function
   // is an extern inline function.
   if (!isa<CXXMethodDecl>(New) && !isa<CXXMethodDecl>(Old) &&
-      New->getStorageClass() == FunctionDecl::Static &&
-      Old->getStorageClass() != FunctionDecl::Static &&
+      New->getStorageClass() == SC_Static &&
+      Old->getStorageClass() != SC_Static &&
       !canRedefineFunction(Old, getLangOptions())) {
     Diag(New->getLocation(), diag::err_static_non_static)
       << New;
@@ -1316,7 +1316,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         ParmVarDecl *Param = ParmVarDecl::Create(Context, New,
                                                  SourceLocation(), 0,
                                                  *ParamType, /*TInfo=*/0,
-                                                 VarDecl::None, VarDecl::None,
+                                                 SC_None, SC_None,
                                                  0);
         Param->setImplicit();
         Params.push_back(Param);
@@ -1434,8 +1434,8 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   MergeDeclAttributes(New, Old, Context);
 
   // Merge the storage class.
-  if (Old->getStorageClass() != FunctionDecl::Extern &&
-      Old->getStorageClass() != FunctionDecl::None)
+  if (Old->getStorageClass() != SC_Extern &&
+      Old->getStorageClass() != SC_None)
     New->setStorageClass(Old->getStorageClass());
 
   // Merge "pure" flag.
@@ -1520,8 +1520,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   New->setType(MergedT);
 
   // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
-  if (New->getStorageClass() == VarDecl::Static &&
-      (Old->getStorageClass() == VarDecl::None || Old->hasExternalStorage())) {
+  if (New->getStorageClass() == SC_Static &&
+      (Old->getStorageClass() == SC_None || Old->hasExternalStorage())) {
     Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
@@ -1537,8 +1537,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   //   identifier has external linkage.
   if (New->hasExternalStorage() && Old->hasLinkage())
     /* Okay */;
-  else if (New->getStorageClass() != VarDecl::Static &&
-           Old->getStorageClass() == VarDecl::Static) {
+  else if (New->getStorageClass() != SC_Static &&
+           Old->getStorageClass() == SC_Static) {
     Diag(New->getLocation(), diag::err_non_static_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
@@ -1780,38 +1780,38 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
 
 /// StorageClassSpecToVarDeclStorageClass - Maps a DeclSpec::SCS to
 /// a VarDecl::StorageClass. Any error reporting is up to the caller:
-/// illegal input values are mapped to VarDecl::None.
-static VarDecl::StorageClass
+/// illegal input values are mapped to SC_None.
+static StorageClass
 StorageClassSpecToVarDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
   switch (StorageClassSpec) {
-  case DeclSpec::SCS_unspecified:    return VarDecl::None;
-  case DeclSpec::SCS_extern:         return VarDecl::Extern;
-  case DeclSpec::SCS_static:         return VarDecl::Static;
-  case DeclSpec::SCS_auto:           return VarDecl::Auto;
-  case DeclSpec::SCS_register:       return VarDecl::Register;
-  case DeclSpec::SCS_private_extern: return VarDecl::PrivateExtern;
+  case DeclSpec::SCS_unspecified:    return SC_None;
+  case DeclSpec::SCS_extern:         return SC_Extern;
+  case DeclSpec::SCS_static:         return SC_Static;
+  case DeclSpec::SCS_auto:           return SC_Auto;
+  case DeclSpec::SCS_register:       return SC_Register;
+  case DeclSpec::SCS_private_extern: return SC_PrivateExtern;
     // Illegal SCSs map to None: error reporting is up to the caller.
   case DeclSpec::SCS_mutable:        // Fall through.
-  case DeclSpec::SCS_typedef:        return VarDecl::None;
+  case DeclSpec::SCS_typedef:        return SC_None;
   }
   llvm_unreachable("unknown storage class specifier");
 }
 
 /// StorageClassSpecToFunctionDeclStorageClass - Maps a DeclSpec::SCS to
-/// a FunctionDecl::StorageClass. Any error reporting is up to the caller:
-/// illegal input values are mapped to FunctionDecl::None.
-static FunctionDecl::StorageClass
+/// a StorageClass. Any error reporting is up to the caller:
+/// illegal input values are mapped to SC_None.
+static StorageClass
 StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
   switch (StorageClassSpec) {
-  case DeclSpec::SCS_unspecified:    return FunctionDecl::None;
-  case DeclSpec::SCS_extern:         return FunctionDecl::Extern;
-  case DeclSpec::SCS_static:         return FunctionDecl::Static;
-  case DeclSpec::SCS_private_extern: return FunctionDecl::PrivateExtern;
+  case DeclSpec::SCS_unspecified:    return SC_None;
+  case DeclSpec::SCS_extern:         return SC_Extern;
+  case DeclSpec::SCS_static:         return SC_Static;
+  case DeclSpec::SCS_private_extern: return SC_PrivateExtern;
     // Illegal SCSs map to None: error reporting is up to the caller.
   case DeclSpec::SCS_auto:           // Fall through.
   case DeclSpec::SCS_mutable:        // Fall through.
   case DeclSpec::SCS_register:       // Fall through.
-  case DeclSpec::SCS_typedef:        return FunctionDecl::None;
+  case DeclSpec::SCS_typedef:        return SC_None;
   }
   llvm_unreachable("unknown storage class specifier");
 }
@@ -1954,7 +1954,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       // an error here
       Diag(Record->getLocation(), diag::err_mutable_nonmember);
       Invalid = true;
-      SC = VarDecl::None;
+      SC = SC_None;
     }
     SCSpec = DS.getStorageClassSpecAsWritten();
     VarDecl::StorageClass SCAsWritten
@@ -2688,7 +2688,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // an error here
     Diag(D.getIdentifierLoc(), diag::err_mutable_nonmember);
     D.setInvalidType();
-    SC = VarDecl::None;
+    SC = SC_None;
   }
   SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
   VarDecl::StorageClass SCAsWritten
@@ -2706,11 +2706,11 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (!DC->isRecord() && S->getFnParent() == 0) {
     // C99 6.9p2: The storage-class specifiers auto and register shall not
     // appear in the declaration specifiers in an external declaration.
-    if (SC == VarDecl::Auto || SC == VarDecl::Register) {
+    if (SC == SC_Auto || SC == SC_Register) {
 
       // If this is a register variable with an asm label specified, then this
       // is a GNU extension.
-      if (SC == VarDecl::Register && D.getAsmLabel())
+      if (SC == SC_Register && D.getAsmLabel())
         Diag(D.getIdentifierLoc(), diag::err_unsupported_global_register);
       else
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
@@ -2719,14 +2719,14 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
   if (DC->isRecord() && !CurContext->isRecord()) {
     // This is an out-of-line definition of a static data member.
-    if (SC == VarDecl::Static) {
+    if (SC == SC_Static) {
       Diag(D.getDeclSpec().getStorageClassSpecLoc(),
            diag::err_static_out_of_line)
         << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
-    } else if (SC == VarDecl::None)
-      SC = VarDecl::Static;
+    } else if (SC == SC_None)
+      SC = SC_Static;
   }
-  if (SC == VarDecl::Static) {
+  if (SC == SC_Static) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC)) {
       if (RD->isLocalClass())
         Diag(D.getIdentifierLoc(),
@@ -3004,7 +3004,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
       if (NewVD->isFileVarDecl())
         Diag(NewVD->getLocation(), diag::err_vla_decl_in_file_scope)
         << SizeRange;
-      else if (NewVD->getStorageClass() == VarDecl::Static)
+      else if (NewVD->getStorageClass() == SC_Static)
         Diag(NewVD->getLocation(), diag::err_vla_decl_has_static_storage)
         << SizeRange;
       else
@@ -3147,7 +3147,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
-  FunctionDecl::StorageClass SC = FunctionDecl::None;
+  FunctionDecl::StorageClass SC = SC_None;
   switch (D.getDeclSpec().getStorageClassSpec()) {
   default: assert(0 && "Unknown storage class!");
   case DeclSpec::SCS_auto:
@@ -3157,8 +3157,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
          diag::err_typecheck_sclass_func);
     D.setInvalidType();
     break;
-  case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
-  case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
+  case DeclSpec::SCS_unspecified: SC = SC_None; break;
+  case DeclSpec::SCS_extern:      SC = SC_Extern; break;
   case DeclSpec::SCS_static: {
     if (CurContext->getLookupContext()->isFunctionOrMethod()) {
       // C99 6.7.1p5:
@@ -3168,12 +3168,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // See also (C++ [dcl.stc]p4).
       Diag(D.getDeclSpec().getStorageClassSpecLoc(),
            diag::err_static_block_func);
-      SC = FunctionDecl::None;
+      SC = SC_None;
     } else
-      SC = FunctionDecl::Static;
+      SC = SC_Static;
     break;
   }
-  case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
+  case DeclSpec::SCS_private_extern: SC = SC_PrivateExtern;break;
   }
 
   if (D.getDeclSpec().isThreadSpecified())
@@ -3279,7 +3279,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       return 0;
     }
 
-    bool isStatic = SC == FunctionDecl::Static;
+    bool isStatic = SC == SC_Static;
     
     // [class.free]p1:
     // Any allocation function for a class T is a static member
@@ -3468,7 +3468,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewFD->setAccess(AS_public);
   }
 
-  if (SC == FunctionDecl::Static && isa<CXXMethodDecl>(NewFD) &&
+  if (SC == SC_Static && isa<CXXMethodDecl>(NewFD) &&
       !CurContext->isRecord()) {
     // C++ [class.static]p1:
     //   A data or function member of a class may be declared static
@@ -3963,7 +3963,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
   //   shall not appear in a declaration of main.
   // static main is not an error under C99, but we should warn about it.
   bool isInline = FD->isInlineSpecified();
-  bool isStatic = FD->getStorageClass() == FunctionDecl::Static;
+  bool isStatic = FD->getStorageClass() == SC_Static;
   if (isInline || isStatic) {
     unsigned diagID = diag::warn_unusual_main_decl;
     if (isInline || getLangOptions().CPlusPlus)
@@ -4190,7 +4190,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
       // Don't check invalid declarations to avoid emitting useless diagnostics.
       if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
-        if (VDecl->getStorageClass() == VarDecl::Static) // C99 6.7.8p4.
+        if (VDecl->getStorageClass() == SC_Static) // C99 6.7.8p4.
           CheckForConstantInitializer(Init, DclT);
       }
     }
@@ -4242,7 +4242,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
       }
     }
   } else if (VDecl->isFileVarDecl()) {
-    if (VDecl->getStorageClass() == VarDecl::Extern && 
+    if (VDecl->getStorageClass() == SC_Extern && 
         (!getLangOptions().CPlusPlus || 
          !Context.getBaseElementType(VDecl->getType()).isConstQualified()))
       Diag(VDecl->getLocation(), diag::warn_extern_init);
@@ -4394,7 +4394,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
                                   ArrayT->getElementType(),
                                   diag::err_illegal_decl_array_incomplete_type))
             Var->setInvalidDecl();
-        } else if (Var->getStorageClass() == VarDecl::Static) {
+        } else if (Var->getStorageClass() == SC_Static) {
           // C99 6.9.2p3: If the declaration of an identifier for an object is
           // a tentative definition and has internal linkage (C99 6.2.2p3), the
           // declared type shall not be an incomplete type.
@@ -4529,11 +4529,11 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
 
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-  VarDecl::StorageClass StorageClass = VarDecl::None;
-  VarDecl::StorageClass StorageClassAsWritten = VarDecl::None;
+  VarDecl::StorageClass StorageClass = SC_None;
+  VarDecl::StorageClass StorageClassAsWritten = SC_None;
   if (DS.getStorageClassSpec() == DeclSpec::SCS_register) {
-    StorageClass = VarDecl::Register;
-    StorageClassAsWritten = VarDecl::Register;
+    StorageClass = SC_Register;
+    StorageClassAsWritten = SC_Register;
   } else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified) {
     Diag(DS.getStorageClassSpecLoc(),
          diag::err_invalid_storage_class_in_func_decl);
@@ -4624,7 +4624,7 @@ ParmVarDecl *Sema::BuildParmVarDeclForTypedef(DeclContext *DC,
                                               QualType T) {
   ParmVarDecl *Param = ParmVarDecl::Create(Context, DC, Loc, 0,
                                 T, Context.getTrivialTypeSourceInfo(T, Loc),
-                                           VarDecl::None, VarDecl::None, 0);
+                                           SC_None, SC_None, 0);
   Param->setImplicit();
   return Param;
 }

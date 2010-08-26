@@ -722,7 +722,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
        ++i) {
     const VarDecl *VD = dyn_cast<VarDecl>(i->first);
 
-    if (VD->getStorageClass() == VarDecl::Static || VD->hasExternalStorage())
+    if (VD->getStorageClass() == SC_Static || VD->hasExternalStorage())
       LocalDeclMap[VD] = i->second;
   }
 
@@ -803,8 +803,8 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
                                      getContext().getTranslationUnitDecl(),
                                      SourceLocation(), ID, FnType, 
                                      0,
-                                     FunctionDecl::Static,
-                                     FunctionDecl::None,
+                                     SC_Static,
+                                     SC_None,
                                      false, HasPrototype);
   if (FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FnType)) {
     const FunctionDecl *CFD = dyn_cast<FunctionDecl>(CurCodeDecl);
@@ -814,7 +814,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
       Params.push_back(ParmVarDecl::Create(getContext(), FD, 
                                            SourceLocation(), 0,
                                            FT->getArgType(i), /*TInfo=*/0,
-                                           VarDecl::None, VarDecl::None, 0));
+                                           SC_None, SC_None, 0));
     FD->setParams(Params.data(), Params.size());
   }
   
@@ -916,7 +916,7 @@ CharUnits BlockFunction::getBlockOffset(CharUnits Size, CharUnits Align) {
                                          getContext().getTranslationUnitDecl(),
                                          SourceLocation(),
                                          0, QualType(PadTy), 0,
-                                         VarDecl::None, VarDecl::None);
+                                         SC_None, SC_None);
     Expr *E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
                                              SourceLocation());
     BlockLayout.push_back(E);
@@ -962,8 +962,8 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static,
-                                          FunctionDecl::None,
+                                          SC_Static,
+                                          SC_None,
                                           false,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
@@ -1044,8 +1044,8 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static,
-                                          FunctionDecl::None,
+                                          SC_Static,
+                                          SC_None,
                                           false, true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
@@ -1129,8 +1129,8 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static,
-                                          FunctionDecl::None,
+                                          SC_Static,
+                                          SC_None,
                                           false, true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
@@ -1193,8 +1193,8 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static,
-                                          FunctionDecl::None,
+                                          SC_Static,
+                                          SC_None,
                                           false, true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 

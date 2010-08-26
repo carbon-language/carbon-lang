@@ -1528,7 +1528,7 @@ Decl *Sema::ActOnMethodDeclaration(
     ParmVarDecl* Param
       = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
                             ArgInfo[i].Name, ArgType, DI,
-                            VarDecl::None, VarDecl::None, 0);
+                            SC_None, SC_None, 0);
 
     if (ArgType->isObjCObjectType()) {
       Diag(ArgInfo[i].NameLoc,
@@ -1705,7 +1705,7 @@ VarDecl *Sema::BuildObjCExceptionDecl(TypeSourceInfo *TInfo,
   }
   
   VarDecl *New = VarDecl::Create(Context, CurContext, NameLoc, Name, T, TInfo,
-                                 VarDecl::None, VarDecl::None);
+                                 SC_None, SC_None);
   New->setExceptionVariable(true);
   
   if (Invalid)

@@ -1134,8 +1134,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   property->getIdentifier(),
                                                   property->getType(),
                                                   /*TInfo=*/0,
-                                                  VarDecl::None,
-                                                  VarDecl::None,
+                                                  SC_None,
+                                                  SC_None,
                                                   0);
       SetterMethod->setMethodParams(Context, &Argument, 1, 1);
       CD->addDecl(SetterMethod);

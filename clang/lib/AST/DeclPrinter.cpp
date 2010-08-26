@@ -335,10 +335,11 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
   if (!Policy.SuppressSpecifiers) {
     switch (D->getStorageClass()) {
-    case FunctionDecl::None: break;
-    case FunctionDecl::Extern: Out << "extern "; break;
-    case FunctionDecl::Static: Out << "static "; break;
-    case FunctionDecl::PrivateExtern: Out << "__private_extern__ "; break;
+    case SC_None: break;
+    case SC_Extern: Out << "extern "; break;
+    case SC_Static: Out << "static "; break;
+    case SC_PrivateExtern: Out << "__private_extern__ "; break;
+    case SC_Auto: case SC_Register: llvm_unreachable("invalid for functions");
     }
 
     if (D->isInlineSpecified())           Out << "inline ";
@@ -505,7 +506,7 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
 }
 
 void DeclPrinter::VisitVarDecl(VarDecl *D) {
-  if (!Policy.SuppressSpecifiers && D->getStorageClass() != VarDecl::None)
+  if (!Policy.SuppressSpecifiers && D->getStorageClass() != SC_None)
     Out << VarDecl::getStorageClassSpecifierString(D->getStorageClass()) << " ";
 
   if (!Policy.SuppressSpecifiers && D->isThreadSpecified())

@@ -437,11 +437,11 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
     // will not be called more than once.
 
     // Static global variables should not be visited here.
-    assert(!(VD->getStorageClass() == VarDecl::Static &&
+    assert(!(VD->getStorageClass() == SC_Static &&
              VD->isFileVarDecl()));
 
     // Process static variables.
-    if (VD->getStorageClass() == VarDecl::Static) {
+    if (VD->getStorageClass() == SC_Static) {
       // C99: 6.7.8 Initialization
       //  If an object that has static storage duration is not initialized
       //  explicitly, then:

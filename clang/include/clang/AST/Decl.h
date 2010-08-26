@@ -490,36 +490,11 @@ struct EvaluatedStmt {
   APValue Evaluated;
 };
 
-// \brief Describes the kind of template specialization that a
-// particular template specialization declaration represents.
-enum TemplateSpecializationKind {
-  /// This template specialization was formed from a template-id but
-  /// has not yet been declared, defined, or instantiated.
-  TSK_Undeclared = 0,
-  /// This template specialization was implicitly instantiated from a
-  /// template. (C++ [temp.inst]).
-  TSK_ImplicitInstantiation,
-  /// This template specialization was declared or defined by an
-  /// explicit specialization (C++ [temp.expl.spec]) or partial
-  /// specialization (C++ [temp.class.spec]).
-  TSK_ExplicitSpecialization,
-  /// This template specialization was instantiated from a template
-  /// due to an explicit instantiation declaration request
-  /// (C++0x [temp.explicit]).
-  TSK_ExplicitInstantiationDeclaration,
-  /// This template specialization was instantiated from a template
-  /// due to an explicit instantiation definition request
-  /// (C++ [temp.explicit]).
-  TSK_ExplicitInstantiationDefinition
-};
-  
 /// VarDecl - An instance of this class is created to represent a variable
 /// declaration or definition.
 class VarDecl : public DeclaratorDecl, public Redeclarable<VarDecl> {
 public:
-  enum StorageClass {
-    None, Auto, Register, Extern, Static, PrivateExtern
-  };
+  typedef clang::StorageClass StorageClass;
 
   /// getStorageClassSpecifierString - Return the string used to
   /// specify the storage class \arg SC.
@@ -595,8 +570,14 @@ public:
   StorageClass getStorageClassAsWritten() const {
     return (StorageClass) SClassAsWritten;
   }
-  void setStorageClass(StorageClass SC) { SClass = SC; }
-  void setStorageClassAsWritten(StorageClass SC) { SClassAsWritten = SC; }
+  void setStorageClass(StorageClass SC) {
+    assert(isLegalForVariable(SC));
+    SClass = SC;
+  }
+  void setStorageClassAsWritten(StorageClass SC) {
+    assert(isLegalForVariable(SC));
+    SClassAsWritten = SC;
+  }
 
   void setThreadSpecified(bool T) { ThreadSpecified = T; }
   bool isThreadSpecified() const {
@@ -606,25 +587,26 @@ public:
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
   bool hasLocalStorage() const {
-    if (getStorageClass() == None)
+    if (getStorageClass() == SC_None)
       return !isFileVarDecl();
 
     // Return true for:  Auto, Register.
     // Return false for: Extern, Static, PrivateExtern.
 
-    return getStorageClass() <= Register;
+    return getStorageClass() >= SC_Auto;
   }
 
   /// isStaticLocal - Returns true if a variable with function scope is a 
   /// static local variable.
   bool isStaticLocal() const {
-    return getStorageClass() == Static && !isFileVarDecl();
+    return getStorageClass() == SC_Static && !isFileVarDecl();
   }
   
   /// hasExternStorage - Returns true if a variable has extern or
   /// __private_extern__ storage.
   bool hasExternalStorage() const {
-    return getStorageClass() == Extern || getStorageClass() == PrivateExtern;
+    return getStorageClass() == SC_Extern ||
+           getStorageClass() == SC_PrivateExtern;
   }
 
   /// hasGlobalStorage - Returns true for all variables that do not
@@ -937,7 +919,7 @@ class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
                     IdentifierInfo *Id, QualType Tw)
-    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, VarDecl::None, VarDecl::None) {}
+    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, SC_None, SC_None) {}
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
@@ -1081,9 +1063,7 @@ public:
 class FunctionDecl : public DeclaratorDecl, public DeclContext,
                      public Redeclarable<FunctionDecl> {
 public:
-  enum StorageClass {
-    None, Extern, Static, PrivateExtern
-  };
+  typedef clang::StorageClass StorageClass;
 
   /// \brief The kind of templated function a FunctionDecl can be.
   enum TemplatedKind {
@@ -1178,8 +1158,8 @@ public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T,
                               TypeSourceInfo *TInfo,
-                              StorageClass S = None,
-                              StorageClass SCAsWritten = None,
+                              StorageClass S = SC_None,
+                              StorageClass SCAsWritten = SC_None,
                               bool isInline = false,
                               bool hasWrittenPrototype = true) {
     DeclarationNameInfo NameInfo(N, L);
@@ -1190,8 +1170,8 @@ public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
                               const DeclarationNameInfo &NameInfo,
                               QualType T, TypeSourceInfo *TInfo,
-                              StorageClass S = None,
-                              StorageClass SCAsWritten = None,
+                              StorageClass S = SC_None,
+                              StorageClass SCAsWritten = SC_None,
                               bool isInline = false,
                               bool hasWrittenPrototype = true);
 
@@ -1372,12 +1352,18 @@ public:
   }
                        
   StorageClass getStorageClass() const { return StorageClass(SClass); }
-  void setStorageClass(StorageClass SC) { SClass = SC; }
+  void setStorageClass(StorageClass SC) {
+    assert(isLegalForFunction(SC));
+    SClass = SC;
+  }
 
   StorageClass getStorageClassAsWritten() const {
     return StorageClass(SClassAsWritten);
   }
-  void setStorageClassAsWritten(StorageClass SC) { SClassAsWritten = SC; }
+  void setStorageClassAsWritten(StorageClass SC) {
+    assert(isLegalForFunction(SC));
+    SClassAsWritten = SC;
+  }
 
   /// \brief Determine whether the "inline" keyword was specified for this
   /// function.

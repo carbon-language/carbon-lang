@@ -1632,7 +1632,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
         = VarDecl::Create(SemaRef.Context, SemaRef.CurContext, Loc,
                           IterationVarName, SizeType,
                         SemaRef.Context.getTrivialTypeSourceInfo(SizeType, Loc),
-                          VarDecl::None, VarDecl::None);
+                          SC_None, SC_None);
       IndexVariables.push_back(IterationVar);
       
       // Create a reference to the iteration variable.
@@ -2895,7 +2895,7 @@ void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, Decl *MethodD) {
 /// will be updated to reflect a well-formed type for the constructor and
 /// returned.
 QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
-                                          FunctionDecl::StorageClass &SC) {
+                                          StorageClass &SC) {
   bool isVirtual = D.getDeclSpec().isVirtualSpecified();
 
   // C++ [class.ctor]p3:
@@ -2910,13 +2910,13 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
         << SourceRange(D.getIdentifierLoc());
     D.setInvalidType();
   }
-  if (SC == FunctionDecl::Static) {
+  if (SC == SC_Static) {
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
         << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
         << SourceRange(D.getIdentifierLoc());
     D.setInvalidType();
-    SC = FunctionDecl::None;
+    SC = SC_None;
   }
 
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
@@ -3033,7 +3033,7 @@ FTIHasSingleVoidArgument(DeclaratorChunk::FunctionTypeInfo &FTI) {
 /// will be updated to reflect a well-formed type for the destructor and
 /// returned.
 QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
-                                         FunctionDecl::StorageClass& SC) {
+                                         StorageClass& SC) {
   // C++ [class.dtor]p1:
   //   [...] A typedef-name that names a class is a class-name
   //   (7.1.3); however, a typedef-name that names a class shall not
@@ -3052,14 +3052,14 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   //   destructor can be invoked for a const, volatile or const
   //   volatile object. A destructor shall not be declared const,
   //   volatile or const volatile (9.3.2).
-  if (SC == FunctionDecl::Static) {
+  if (SC == SC_Static) {
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_destructor_cannot_be)
         << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
         << SourceRange(D.getIdentifierLoc())
         << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
     
-    SC = FunctionDecl::None;
+    SC = SC_None;
   }
   if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Destructors don't have return types, but the parser will
@@ -3127,18 +3127,18 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
 /// false. Either way, the type @p R will be updated to reflect a
 /// well-formed type for the conversion operator.
 void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
-                                     FunctionDecl::StorageClass& SC) {
+                                     StorageClass& SC) {
   // C++ [class.conv.fct]p1:
   //   Neither parameter types nor return type can be specified. The
   //   type of a conversion function (8.3.5) is "function taking no
   //   parameter returning conversion-type-id."
-  if (SC == FunctionDecl::Static) {
+  if (SC == SC_Static) {
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_conv_function_not_member)
         << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
         << SourceRange(D.getIdentifierLoc());
     D.setInvalidType();
-    SC = FunctionDecl::None;
+    SC = SC_None;
   }
 
   QualType ConvType = GetTypeFromParser(D.getName().ConversionFunctionId);
@@ -4664,7 +4664,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   VarDecl *IterationVar = VarDecl::Create(S.Context, S.CurContext, Loc,
                                           IterationVarName, SizeType,
                             S.Context.getTrivialTypeSourceInfo(SizeType, Loc),
-                                          VarDecl::None, VarDecl::None);
+                                          SC_None, SC_None);
   
   // Initialize the iteration variable to zero.
   llvm::APInt Zero(S.Context.getTypeSize(SizeType), 0);
@@ -4872,7 +4872,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
                                                     ExceptSpec.data(),
                                                     FunctionType::ExtInfo()),
                             /*TInfo=*/0, /*isStatic=*/false,
-                            /*StorageClassAsWritten=*/FunctionDecl::None,
+                            /*StorageClassAsWritten=*/SC_None,
                             /*isInline=*/true);
   CopyAssignment->setAccess(AS_public);
   CopyAssignment->setImplicit();
@@ -4884,8 +4884,8 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
                                                ClassDecl->getLocation(),
                                                /*Id=*/0,
                                                ArgType, /*TInfo=*/0,
-                                               VarDecl::None,
-                                               VarDecl::None, 0);
+                                               SC_None,
+                                               SC_None, 0);
   CopyAssignment->setParams(&FromParam, 1);
   
   // Note that we have added this copy-assignment operator.
@@ -5362,8 +5362,8 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                                ClassDecl->getLocation(),
                                                /*IdentifierInfo=*/0,
                                                ArgType, /*TInfo=*/0,
-                                               VarDecl::None,
-                                               VarDecl::None, 0);
+                                               SC_None,
+                                               SC_None, 0);
   CopyConstructor->setParams(&FromParam, 1);
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(CopyConstructor, S, false);
@@ -5658,7 +5658,7 @@ CheckOperatorNewDeleteDeclarationScope(Sema &SemaRef,
   }
   
   if (isa<TranslationUnitDecl>(DC) && 
-      FnDecl->getStorageClass() == FunctionDecl::Static) {
+      FnDecl->getStorageClass() == SC_Static) {
     return SemaRef.Diag(FnDecl->getLocation(),
                         diag::err_operator_new_delete_declared_static)
       << FnDecl->getDeclName();
@@ -6135,8 +6135,8 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   }
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc,
-                                    Name, ExDeclType, TInfo, VarDecl::None,
-                                    VarDecl::None);
+                                    Name, ExDeclType, TInfo, SC_None,
+                                    SC_None);
   ExDecl->setExceptionVariable(true);
   
   if (!Invalid) {

@@ -134,7 +134,7 @@ Entity EntityGetter::VisitVarDecl(VarDecl *D) {
     return Entity();
 
   // If it's static it cannot be referred to by another translation unit.
-  if (D->getStorageClass() == VarDecl::Static)
+  if (D->getStorageClass() == SC_Static)
     return Entity(D);
 
   return VisitNamedDecl(D);
@@ -142,7 +142,7 @@ Entity EntityGetter::VisitVarDecl(VarDecl *D) {
 
 Entity EntityGetter::VisitFunctionDecl(FunctionDecl *D) {
   // If it's static it cannot be refered to by another translation unit.
-  if (D->getStorageClass() == FunctionDecl::Static)
+  if (D->getStorageClass() == SC_Static)
     return Entity(D);
 
   return VisitNamedDecl(D);

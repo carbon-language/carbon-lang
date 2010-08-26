@@ -107,11 +107,11 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
     CGM.ErrorUnsupported(&D, "__asm__");
 
   switch (D.getStorageClass()) {
-  case VarDecl::None:
-  case VarDecl::Auto:
-  case VarDecl::Register:
+  case SC_None:
+  case SC_Auto:
+  case SC_Register:
     return EmitLocalBlockVarDecl(D);
-  case VarDecl::Static: {
+  case SC_Static: {
     llvm::GlobalValue::LinkageTypes Linkage = 
       llvm::GlobalValue::InternalLinkage;
 
@@ -126,8 +126,8 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
     
     return EmitStaticBlockVarDecl(D, Linkage);
   }
-  case VarDecl::Extern:
-  case VarDecl::PrivateExtern:
+  case SC_Extern:
+  case SC_PrivateExtern:
     // Don't emit it now, allow it to be emitted lazily on its first use.
     return;
   }
@@ -568,7 +568,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
     } else {
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
-        D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
+        D.getStorageClass() == SC_Register ? ".reg." : ".auto.";
       DeclPtr = CreateStaticBlockVarDecl(D, Class,
                                          llvm::GlobalValue
                                          ::InternalLinkage);
