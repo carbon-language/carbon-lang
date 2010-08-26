@@ -30,10 +30,6 @@
 
 #include <tmmintrin.h>
 
-/* Type defines.  */
-typedef double __v2df __attribute__ ((__vector_size__ (16)));
-typedef long long __v2di __attribute__ ((__vector_size__ (16)));
-
 /* SSE4 Rounding macros. */
 #define _MM_FROUND_TO_NEAREST_INT    0x00
 #define _MM_FROUND_TO_NEG_INF        0x01
