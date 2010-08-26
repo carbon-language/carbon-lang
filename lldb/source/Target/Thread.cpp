@@ -49,7 +49,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_plan_stack (),
     m_immediate_plan_stack(),
     m_completed_plan_stack(),
-    m_frames_sp (),
+    m_curr_frames_ap (),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
     m_resume_state (eStateRunning),
     m_unwinder_ap ()
@@ -796,9 +796,9 @@ Thread::Calculate (ExecutionContext &exe_ctx)
 StackFrameList &
 Thread::GetStackFrameList ()
 {
-    if (m_frames_sp.get() == NULL)
-        m_frames_sp.reset (new StackFrameList (*this, true));
-    return *m_frames_sp;
+    if (m_curr_frames_ap.get() == NULL)
+        m_curr_frames_ap.reset (new StackFrameList (*this, m_prev_frames_ap.release(), true));
+    return *m_curr_frames_ap;
 }
 
 
@@ -813,8 +813,7 @@ Thread::GetStackFrameCount()
 void
 Thread::ClearStackFrames ()
 {
-    if (m_frames_sp)
-        m_frames_sp->Clear();
+    m_prev_frames_ap = m_curr_frames_ap;
 }
 
 lldb::StackFrameSP

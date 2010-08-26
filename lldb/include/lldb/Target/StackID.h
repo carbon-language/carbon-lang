@@ -25,11 +25,38 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    StackID ();
-    explicit StackID (lldb::addr_t cfa, uint32_t inline_id);
-    StackID (const Address& start_address, lldb::addr_t cfa, uint32_t inline_id);
-    StackID (const StackID& rhs);
-    virtual ~StackID();
+    StackID () :
+        m_start_address(),
+        m_cfa (0),
+        m_inline_block_id (0)
+    {
+    }
+
+    explicit 
+    StackID (lldb::addr_t cfa, lldb::user_id_t inline_block_id) :
+        m_start_address (),
+        m_cfa (cfa),
+        m_inline_block_id (inline_block_id)
+    {
+    }
+
+    StackID (const Address& start_address, lldb::addr_t cfa, uint32_t inline_block_id) : 
+        m_start_address (start_address),
+        m_cfa (cfa),
+        m_inline_block_id (inline_block_id)
+    {
+    }
+
+    StackID (const StackID& rhs) :
+        m_start_address (rhs.m_start_address),
+        m_cfa (rhs.m_cfa),
+        m_inline_block_id (rhs.m_inline_block_id)
+    {
+    }
+
+    ~StackID()
+    {
+    }
 
     const Address&
     GetStartAddress() const
@@ -49,28 +76,44 @@ public:
         return m_cfa;
     }
 
-    uint32_t
-    GetInlineHeight () const
+    lldb::user_id_t
+    GetInlineBlockID () const
     {
-        return m_inline_height;
+        return m_inline_block_id;
     }
+    
+    void
+    SetInlineBlockID (lldb::user_id_t inline_block_id)
+    {
+        m_inline_block_id = inline_block_id;
+    }
+
     //------------------------------------------------------------------
     // Operators
     //------------------------------------------------------------------
     const StackID&
-    operator=(const StackID& rhs);
+    operator=(const StackID& rhs)
+    {
+        if (this != &rhs)
+        {
+            m_start_address = rhs.m_start_address;
+            m_cfa = rhs.m_cfa;
+            m_inline_block_id = rhs.m_inline_block_id;
+        }
+        return *this;
+    }
 
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------
-    Address m_start_address;    // The address range for the function for this frame
-    lldb::addr_t m_cfa;         // The call frame address (stack pointer) value
-                                // at the beginning of the function that uniquely
-                                // identifies this frame (along with m_inline_height below)
-    uint32_t m_inline_height;   // The inline height of a stack frame. Zero is the actual
-                                // value for the place where a thread stops, 1 and above
-                                // are for the inlined frames above the concrete base frame.
+    Address m_start_address;            // The address range for the function for this frame
+    lldb::addr_t m_cfa;                 // The call frame address (stack pointer) value
+                                        // at the beginning of the function that uniquely
+                                        // identifies this frame (along with m_inline_block_id below)
+    lldb::user_id_t m_inline_block_id;  // The inline height of a stack frame. Zero is the actual
+                                        // value for the place where a thread stops, 1 and above
+                                        // are for the inlined frames above the concrete base frame.
 };
 
 bool operator== (const StackID& lhs, const StackID& rhs);

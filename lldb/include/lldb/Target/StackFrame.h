@@ -33,9 +33,9 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, lldb::addr_t cfa, uint32_t inline_height, lldb::addr_t pc, const SymbolContext *sc_ptr);
-    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, uint32_t inline_height, lldb::addr_t pc, const SymbolContext *sc_ptr);
-    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, uint32_t inline_height, const Address& pc, const SymbolContext *sc_ptr);
+    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr);
+    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr);
+    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, const Address& pc, const SymbolContext *sc_ptr);
     virtual ~StackFrame ();
 
     Thread &
@@ -97,9 +97,6 @@ public:
         return m_concrete_frame_index;
     }
     
-    bool
-    IsConcrete () const;
-
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -119,10 +116,16 @@ public:
     Calculate (ExecutionContext &exe_ctx);
 
 protected:
+    friend class StackFrameList;
+
     //------------------------------------------------------------------
     // Classes that inherit from StackFrame can see and modify these
     //------------------------------------------------------------------
-    
+    void
+    SetInlineBlockID (lldb::user_id_t inline_block_id)
+    {
+        m_id.SetInlineBlockID(inline_block_id);
+    }
 
 private:
     //------------------------------------------------------------------

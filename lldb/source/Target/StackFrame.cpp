@@ -41,7 +41,6 @@ StackFrame::StackFrame
     lldb::user_id_t concrete_frame_index, 
     Thread &thread, 
     lldb::addr_t cfa, 
-    uint32_t inline_height, 
     lldb::addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
@@ -49,7 +48,7 @@ StackFrame::StackFrame
     m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
     m_reg_context_sp (),
-    m_id (cfa, inline_height),
+    m_id (cfa, 0),
     m_pc (NULL, pc),
     m_sc (),
     m_flags (),
@@ -72,7 +71,6 @@ StackFrame::StackFrame
     Thread &thread, 
     const RegisterContextSP &reg_context_sp, 
     lldb::addr_t cfa, 
-    uint32_t inline_height, 
     lldb::addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
@@ -80,7 +78,7 @@ StackFrame::StackFrame
     m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (cfa, inline_height),
+    m_id (cfa, 0),
     m_pc (NULL, pc),
     m_sc (),
     m_flags (),
@@ -109,7 +107,6 @@ StackFrame::StackFrame
     Thread &thread, 
     const RegisterContextSP &reg_context_sp, 
     lldb::addr_t cfa, 
-    uint32_t inline_height, 
     const Address& pc_addr,
     const SymbolContext *sc_ptr
 ) :
@@ -117,7 +114,7 @@ StackFrame::StackFrame
     m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (cfa, inline_height),
+    m_id (cfa, 0),
     m_pc (pc_addr),
     m_sc (),
     m_flags (),
@@ -471,12 +468,6 @@ ValueObjectList &
 StackFrame::GetValueObjectList()
 {
     return m_value_object_list;
-}
-
-bool
-StackFrame::IsConcrete () const
-{
-    return m_id.GetInlineHeight () == 0;
 }
 
 Target *
