@@ -89,3 +89,17 @@ declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*) nounwind readonly
 declare <4 x i32> @llvm.arm.neon.vld1.v4i32(i8*) nounwind readonly
 declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*) nounwind readonly
 declare <2 x i64> @llvm.arm.neon.vld1.v2i64(i8*) nounwind readonly
+
+; Radar 8355607
+; Do not crash if the vld1 result is not used.
+define void @unused_vld1_result() {
+entry:
+;CHECK: unused_vld1_result
+;CHECK: vld1.32
+  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef) 
+  call void @llvm.trap()
+  unreachable
+}
+
+declare void @llvm.trap() nounwind
+

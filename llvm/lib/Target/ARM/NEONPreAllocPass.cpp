@@ -447,7 +447,34 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
       continue;
     if (FormsRegSequence(MI, FirstOpnd, NumRegs, Offset, Stride))
       continue;
-    llvm_unreachable("expected a REG_SEQUENCE");
+
+    MachineBasicBlock::iterator NextI = llvm::next(MBBI);
+    for (unsigned R = 0; R < NumRegs; ++R) {
+      MachineOperand &MO = MI->getOperand(FirstOpnd + R);
+      assert(MO.isReg() && MO.getSubReg() == 0 && "unexpected operand");
+      unsigned VirtReg = MO.getReg();
+      assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+             "expected a virtual register");
+
+      // For now, just assign a fixed set of adjacent registers.
+      // This leaves plenty of room for future improvements.
+      static const unsigned NEONDRegs[] = {
+        ARM::D0, ARM::D1, ARM::D2, ARM::D3,
+        ARM::D4, ARM::D5, ARM::D6, ARM::D7
+      };
+      MO.setReg(NEONDRegs[Offset + R * Stride]);
+
+      if (MO.isUse()) {
+        // Insert a copy from VirtReg.
+        BuildMI(MBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),MO.getReg())
+          .addReg(VirtReg, getKillRegState(MO.isKill()));
+        MO.setIsKill();
+      } else if (MO.isDef() && !MO.isDead()) {
+        // Add a copy to VirtReg.
+        BuildMI(MBB, NextI, DebugLoc(), TII->get(TargetOpcode::COPY), VirtReg)
+          .addReg(MO.getReg());
+      }
+    }
   }
 
   return Modified;
