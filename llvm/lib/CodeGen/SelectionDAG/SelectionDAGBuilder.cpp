@@ -448,7 +448,8 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
   EVT IntermediateVT, RegisterVT;
   unsigned NumIntermediates;
   unsigned NumRegs = TLI.getVectorTypeBreakdown(*DAG.getContext(), ValueVT,
-                                                IntermediateVT, NumIntermediates, RegisterVT);
+                                                IntermediateVT,
+                                                NumIntermediates, RegisterVT);
   unsigned NumElements = ValueVT.getVectorNumElements();
   
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
