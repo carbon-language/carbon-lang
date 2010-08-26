@@ -94,3 +94,6 @@ void test14()  // expected-error {{expected ';' after top level declarator}}
 
 void test14a();
 void *test14b = (void*)test14a; // Make sure test14a didn't get skipped.
+
+// rdar://problem/8358508
+long struct X {} test15(); // expected-error {{'long struct' is invalid}}

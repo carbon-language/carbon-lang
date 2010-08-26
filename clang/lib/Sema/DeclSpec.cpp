@@ -396,6 +396,7 @@ bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
 
 bool DeclSpec::SetTypeSpecError() {
   TypeSpecType = TST_error;
+  TypeSpecOwned = false;
   TSTLoc = SourceLocation();
   return false;
 }
@@ -544,6 +545,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
       TypeSpecType = TST_int;
       TypeSpecSign = TSS_unsigned;
       TypeSpecWidth = TSW_short;
+      TypeSpecOwned = false;
     }
   }
 
@@ -573,6 +575,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
                                       : diag::err_invalid_longlong_spec)
         <<  getSpecifierName((TST)TypeSpecType);
       TypeSpecType = TST_int;
+      TypeSpecOwned = false;
     }
     break;
   case TSW_long:  // long double, long int
@@ -582,6 +585,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
       Diag(D, TSWLoc, SrcMgr, diag::err_invalid_long_spec)
         << getSpecifierName((TST)TypeSpecType);
       TypeSpecType = TST_int;
+      TypeSpecOwned = false;
     }
     break;
   }
@@ -621,6 +625,8 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
 
     ClearStorageClassSpecs();
   }
+
+  assert(!TypeSpecOwned || isDeclRep((TST) TypeSpecType));
 
   // Okay, now we can infer the real type.
 
