@@ -409,9 +409,17 @@ void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
   default:
     break;
   case llvm::Triple::arm:
-  case llvm::Triple::thumb:
-    // FIXME: Get the right subdirectory for ARM.
+  case llvm::Triple::thumb: {
+    std::string Triple = ComputeLLVMTriple(Args);
+    llvm::StringRef TripleStr = Triple;
+    if (TripleStr.startswith("armv5") || TripleStr.startswith("thumbv5"))
+      ArchSpecificDir = "v5";
+    else if (TripleStr.startswith("armv6") || TripleStr.startswith("thumbv6"))
+      ArchSpecificDir = "v6";
+    else if (TripleStr.startswith("armv7") || TripleStr.startswith("thumbv7"))
+      ArchSpecificDir = "v7";
     break;
+  }
   case llvm::Triple::ppc64:
     ArchSpecificDir = "ppc64";
     break;
@@ -422,7 +430,6 @@ void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
 
   if (ArchSpecificDir) {
     P.appendComponent(ArchSpecificDir);
-    llvm::errs() << P.str() << "\n";
     if (P.exists())
       CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
     P.eraseComponent();
