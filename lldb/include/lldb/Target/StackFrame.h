@@ -84,6 +84,9 @@ public:
 
     void
     Dump (Stream *strm, bool show_frame_index);
+    
+    bool
+    IsInlined ();
 
     uint32_t
     GetFrameIndex () const

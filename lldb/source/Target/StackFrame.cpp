@@ -470,6 +470,16 @@ StackFrame::GetValueObjectList()
     return m_value_object_list;
 }
 
+bool
+StackFrame::IsInlined ()
+{
+    Block *block = GetSymbolContext (eSymbolContextBlock).block;
+    if (block)
+        return block->GetContainingInlinedBlock() != NULL;
+    else
+        return false;
+}
+
 Target *
 StackFrame::CalculateTarget ()
 {
