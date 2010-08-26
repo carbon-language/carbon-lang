@@ -366,12 +366,12 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
            "Cannot scavenge register without an emergency spill slot!");
     TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC,TRI);
     MachineBasicBlock::iterator II = prior(I);
-    TRI->eliminateFrameIndex(II, SPAdj, NULL, this);
+    TRI->eliminateFrameIndex(II, SPAdj, this);
 
     // Restore the scavenged register before its use (or first terminator).
     TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC, TRI);
     II = prior(UseMI);
-    TRI->eliminateFrameIndex(II, SPAdj, NULL, this);
+    TRI->eliminateFrameIndex(II, SPAdj, this);
   }
 
   ScavengeRestore = prior(UseMI);

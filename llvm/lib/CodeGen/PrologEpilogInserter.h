@@ -99,13 +99,6 @@ namespace llvm {
     // TRI->requiresFrameIndexScavenging() for the curren function.
     bool FrameIndexVirtualScavenging;
 
-    // When using the scavenger post-pass to resolve frame reference
-    // materialization registers, maintain a map of the registers to
-    // the constant value and SP adjustment associated with it.
-    typedef std::pair<TargetRegisterInfo::FrameIndexValue, int>
-      FrameConstantEntry;
-    DenseMap<unsigned, FrameConstantEntry> FrameConstantRegMap;
-
 #ifndef NDEBUG
     // Machine function handle.
     MachineFunction* MF;

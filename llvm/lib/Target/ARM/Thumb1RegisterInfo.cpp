@@ -576,10 +576,9 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   return true;
 }
 
-unsigned
+void
 Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                        int SPAdj, FrameIndexValue *Value,
-                                        RegScavenger *RS) const{
+                                        int SPAdj, RegScavenger *RS) const {
   unsigned VReg = 0;
   unsigned i = 0;
   MachineInstr &MI = *II;
@@ -614,14 +613,14 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (MI.isDebugValue()) {
     MI.getOperand(i).  ChangeToRegister(FrameReg, false /*isDef*/);
     MI.getOperand(i+1).ChangeToImmediate(Offset);
-    return 0;
+    return;
   }
 
   // Modify MI as necessary to handle as much of 'Offset' as possible
   assert(AFI->isThumbFunction() &&
          "This eliminateFrameIndex only supports Thumb1!");
   if (rewriteFrameIndex(MI, i, FrameReg, Offset, TII))
-    return 0;
+    return;
 
   // If we get here, the immediate doesn't fit into the instruction.  We folded
   // as much as possible above, handle the rest, providing a register that is
@@ -662,11 +661,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.addOperand(MachineOperand::CreateReg(0, false));
   } else if (Desc.mayStore()) {
       VReg = MF.getRegInfo().createVirtualRegister(ARM::tGPRRegisterClass);
-      assert (Value && "Frame index virtual allocated, but Value arg is NULL!");
       bool UseRR = false;
-      bool TrackVReg = true;
-      Value->first = FrameReg; // use the frame register as a kind indicator
-      Value->second = Offset;
 
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
@@ -675,7 +670,6 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         else {
           emitLoadConstPool(MBB, II, dl, VReg, 0, Offset);
           UseRR = true;
-          TrackVReg = false;
         }
       } else
         emitThumbRegPlusImmediate(MBB, II, VReg, FrameReg, Offset, TII,
@@ -686,8 +680,6 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
       else // tSTR has an extra register operand.
         MI.addOperand(MachineOperand::CreateReg(0, false));
-      if (!ReuseFrameIndexVals || !TrackVReg)
-        VReg = 0;
   } else
     assert(false && "Unexpected opcode!");
 
@@ -696,7 +688,6 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MachineInstrBuilder MIB(&MI);
     AddDefaultPred(MIB);
   }
-  return VReg;
 }
 
 void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {

@@ -63,7 +63,6 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
-  FrameConstantRegMap.clear();
 
   // Calculate the MaxCallFrameSize and AdjustsStack variables for the
   // function's frame information. Also eliminates call frame pseudo
@@ -756,16 +755,8 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           // If this instruction has a FrameIndex operand, we need to
           // use that target machine register info object to eliminate
           // it.
-          TargetRegisterInfo::FrameIndexValue Value;
-          unsigned VReg =
-            TRI.eliminateFrameIndex(MI, SPAdj, &Value,
+            TRI.eliminateFrameIndex(MI, SPAdj,
                                     FrameIndexVirtualScavenging ?  NULL : RS);
-          if (VReg) {
-            assert (FrameIndexVirtualScavenging &&
-                    "Not scavenging, but virtual returned from "
-                    "eliminateFrameIndex()!");
-            FrameConstantRegMap[VReg] = FrameConstantEntry(Value, SPAdj);
-          }
 
           // Reset the iterator if we were at the beginning of the BB.
           if (AtBeginning) {

@@ -580,10 +580,9 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   MBB.erase(II);
 }
 
-unsigned
+void
 PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                     int SPAdj, FrameIndexValue *Value,
-                                     RegScavenger *RS) const {
+                                     int SPAdj, RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
   // Get the instruction.
@@ -622,14 +621,14 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (FPSI && FrameIndex == FPSI &&
       (OpC == PPC::DYNALLOC || OpC == PPC::DYNALLOC8)) {
     lowerDynamicAlloc(II, SPAdj, RS);
-    return 0;
+    return;
   }
 
   // Special case for pseudo-op SPILL_CR.
   if (EnableRegisterScavenging) // FIXME (64-bit): Enable by default.
     if (OpC == PPC::SPILL_CR) {
       lowerCRSpilling(II, FrameIndex, SPAdj, RS);
-      return 0;
+      return;
     }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
@@ -674,7 +673,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     if (isIXAddr)
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
     MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
-    return 0;
+    return;
   }
 
   // The offset doesn't fit into a single register, scavenge one to build the
@@ -710,11 +709,10 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   } else {
     OperandBase = OffsetOperandNo;
   }
-    
+
   unsigned StackReg = MI.getOperand(FIOperandNo).getReg();
   MI.getOperand(OperandBase).ChangeToRegister(StackReg, false);
   MI.getOperand(OperandBase + 1).ChangeToRegister(SReg, false);
-  return 0;
 }
 
 /// VRRegNo - Map from a numbered VR register to its enum value.

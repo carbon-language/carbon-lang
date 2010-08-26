@@ -51,9 +51,8 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
                                      MachineBasicBlock::iterator I) const;
 
   /// Stack Frame Processing Methods
-  unsigned eliminateFrameIndex(MachineBasicBlock::iterator II,
-                               int SPAdj, FrameIndexValue *Value = NULL,
-                               RegScavenger *RS = NULL) const;
+  void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                           int SPAdj, RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
