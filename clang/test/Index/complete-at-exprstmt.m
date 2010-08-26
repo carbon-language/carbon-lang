@@ -9,6 +9,16 @@
   @synchronized (@encode(MyClass)) { }
 }
 @end
+
+@interface A
++ (int)add:(int)x to:(int)y;
++ (int)add:(int)x to:(int)y plus:(int)z;
+@end
+
+void f() {
+  @selector(add:to:);
+}
+
 // RUN: c-index-test -code-completion-at=%s:9:4 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText encode}{LeftParen (}{Placeholder type-name}{RightParen )}
 // CHECK-CC1: {TypedText protocol}{LeftParen (}{Placeholder protocol-name}{RightParen )}
@@ -35,3 +45,11 @@
 // CHECK-CC3: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CC3: TypedefDecl:{TypedText SEL}
 // CHECK-CC3: NotImplemented:{ResultType MyClass *}{TypedText self}
+// RUN: c-index-test -code-completion-at=%s:19:13 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: NotImplemented:{TypedText add:}{Text to:} (30)
+// CHECK-CC4: NotImplemented:{TypedText add:}{Text to:}{Text plus:} (30)
+// CHECK-CC4: NotImplemented:{TypedText myMethod:} (30)
+// RUN: c-index-test -code-completion-at=%s:19:17 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: NotImplemented:{Informative add:}{TypedText to:} (30)
+// CHECK-CC5: NotImplemented:{Informative add:}{TypedText to:}{Text plus:} (30)
+

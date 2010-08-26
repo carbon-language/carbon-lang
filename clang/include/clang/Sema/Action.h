@@ -3078,6 +3078,16 @@ public:
   virtual void CodeCompleteObjCForCollection(Scope *S, 
                                              DeclGroupPtrTy IterationVar) { }
   
+  /// \brief Code completion for an Objective-C @selector expression, in which
+  /// we may have already parsed parts of the selector.
+  ///
+  /// \param S The scope in which the @selector expression occurs.
+  /// \param SelIdents The identifiers that describe the selector (thus far).
+  /// \param NumSelIdents The number of identifiers in \p SelIdents.
+  virtual void CodeCompleteObjCSelector(Scope *S,
+                                        IdentifierInfo **SelIdents,
+                                        unsigned NumSelIdents) { }
+  
   /// \brief Code completion for a list of protocol references in Objective-C,
   /// such as P1 and P2 in \c id<P1,P2>.
   ///

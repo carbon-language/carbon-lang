@@ -4202,6 +4202,9 @@ public:
                                                unsigned NumSelIdents);
   virtual void CodeCompleteObjCForCollection(Scope *S, 
                                              DeclGroupPtrTy IterationVar);
+  virtual void CodeCompleteObjCSelector(Scope *S,
+                                        IdentifierInfo **SelIdents,
+                                        unsigned NumSelIdents);
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols);
   virtual void CodeCompleteObjCProtocolDecl(Scope *S);

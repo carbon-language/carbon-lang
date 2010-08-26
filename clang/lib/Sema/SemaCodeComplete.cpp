@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Twine.h"
 #include <list>
 #include <map>
 #include <vector>
@@ -3401,25 +3402,32 @@ enum ObjCMethodKind {
   MK_OneArgSelector //< One-argument selector.
 };
 
+static bool isAcceptableObjCSelector(Selector Sel,
+                                     ObjCMethodKind WantKind,
+                                     IdentifierInfo **SelIdents,
+                                     unsigned NumSelIdents) {
+  if (NumSelIdents > Sel.getNumArgs())
+    return false;
+  
+  switch (WantKind) {
+    case MK_Any:             break;
+    case MK_ZeroArgSelector: return Sel.isUnarySelector();
+    case MK_OneArgSelector:  return Sel.getNumArgs() == 1;
+  }
+  
+  for (unsigned I = 0; I != NumSelIdents; ++I)
+    if (SelIdents[I] != Sel.getIdentifierInfoForSlot(I))
+      return false;
+  
+  return true;
+}
+
 static bool isAcceptableObjCMethod(ObjCMethodDecl *Method,
                                    ObjCMethodKind WantKind,
                                    IdentifierInfo **SelIdents,
                                    unsigned NumSelIdents) {
-  Selector Sel = Method->getSelector();
-  if (NumSelIdents > Sel.getNumArgs())
-    return false;
-      
-  switch (WantKind) {
-  case MK_Any:             break;
-  case MK_ZeroArgSelector: return Sel.isUnarySelector();
-  case MK_OneArgSelector:  return Sel.getNumArgs() == 1;
-  }
-
-  for (unsigned I = 0; I != NumSelIdents; ++I)
-    if (SelIdents[I] != Sel.getIdentifierInfoForSlot(I))
-      return false;
-
-  return true;
+  return isAcceptableObjCSelector(Method->getSelector(), WantKind, SelIdents,
+                                  NumSelIdents);
 }
                                    
 /// \brief Add all of the Objective-C methods in the given Objective-C 
@@ -3977,6 +3985,57 @@ void Sema::CodeCompleteObjCForCollection(Scope *S,
   }
   
   CodeCompleteExpression(S, Data);
+}
+
+void Sema::CodeCompleteObjCSelector(Scope *S, IdentifierInfo **SelIdents,
+                                    unsigned NumSelIdents) {
+  // If we have an external source, load the entire class method
+  // pool from the AST file.
+  if (ExternalSource) {
+    for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
+         I != N; ++I) {
+      Selector Sel = ExternalSource->GetExternalSelector(I);
+      if (Sel.isNull() || MethodPool.count(Sel))
+        continue;
+      
+      ReadMethodPool(Sel);
+    }
+  }
+  
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  for (GlobalMethodPool::iterator M = MethodPool.begin(),
+                               MEnd = MethodPool.end();
+       M != MEnd; ++M) {
+    
+    Selector Sel = M->first;
+    if (!isAcceptableObjCSelector(Sel, MK_Any, SelIdents, NumSelIdents))
+      continue;
+
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    if (Sel.isUnarySelector()) {
+      Pattern->AddTypedTextChunk(Sel.getIdentifierInfoForSlot(0)->getName());
+      Results.AddResult(Pattern);
+      continue;
+    }
+    
+    for (unsigned I = 0, N = Sel.getNumArgs(); I != N; ++I) {
+      std::string Piece = Sel.getIdentifierInfoForSlot(I)->getName().str();
+      Piece += ':';
+      if (I < NumSelIdents)
+        Pattern->AddInformativeChunk(Piece);
+      else if (I == NumSelIdents)
+        Pattern->AddTypedTextChunk(Piece);
+      else
+        Pattern->AddTextChunk(Piece);
+    }
+    Results.AddResult(Pattern);
+  }
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, 
+                            CodeCompletionContext::CCC_SelectorName,
+                            Results.data(), Results.size());
 }
 
 /// \brief Add all of the protocol declarations that we find in the given

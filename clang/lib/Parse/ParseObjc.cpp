@@ -2194,6 +2194,15 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation sLoc;
+  
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCSelector(getCurScope(), KeyIdents.data(),
+                                     KeyIdents.size());
+    ConsumeCodeCompletionToken();
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    return ExprError();
+  }
+  
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(sLoc);
   if (!SelIdent && Tok.isNot(tok::colon)) // missing selector name.
     return ExprError(Diag(Tok, diag::err_expected_ident));
@@ -2209,6 +2218,15 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
       ConsumeToken(); // Eat the ':'.
       if (Tok.is(tok::r_paren))
         break;
+      
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteObjCSelector(getCurScope(), KeyIdents.data(),
+                                         KeyIdents.size());
+        ConsumeCodeCompletionToken();
+        MatchRHSPunctuation(tok::r_paren, LParenLoc);
+        return ExprError();
+      }
+
       // Check for another keyword selector.
       SourceLocation Loc;
       SelIdent = ParseObjCSelectorPiece(Loc);

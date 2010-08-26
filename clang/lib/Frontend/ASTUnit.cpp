@@ -1554,6 +1554,7 @@ void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_PreprocessorExpression:
   case CodeCompletionContext::CCC_PreprocessorDirective:
   case CodeCompletionContext::CCC_NaturalLanguage:
+  case CodeCompletionContext::CCC_SelectorName:
     // We're looking for nothing, or we're looking for names that cannot
     // be hidden.
     return;

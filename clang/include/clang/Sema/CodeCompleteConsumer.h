@@ -190,7 +190,9 @@ public:
     ///
     /// This context usually implies that no completions should be added,
     /// unless they come from an appropriate natural-language dictionary.
-    CCC_NaturalLanguage
+    CCC_NaturalLanguage,
+    /// \brief Code completion for a selector, as in an @selector expression.
+    CCC_SelectorName
   };
 
 private:
