@@ -526,11 +526,6 @@ namespace {
                  EVT regvt, EVT valuevt)
       : ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
 
-    RegsForValue(const SmallVector<unsigned, 4> &regs,
-                 const SmallVector<EVT, 4> &regvts,
-                 const SmallVector<EVT, 4> &valuevts)
-      : ValueVTs(valuevts), RegVTs(regvts), Regs(regs) {}
-
     RegsForValue(LLVMContext &Context, const TargetLowering &tli,
                  unsigned Reg, const Type *Ty) {
       ComputeValueVTs(tli, Ty, ValueVTs);

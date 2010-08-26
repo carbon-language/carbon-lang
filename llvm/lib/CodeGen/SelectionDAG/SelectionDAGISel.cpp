@@ -364,38 +364,6 @@ SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
   CodeGenAndEmitDAG();
 }
 
-namespace {
-/// WorkListRemover - This class is a DAGUpdateListener that removes any deleted
-/// nodes from the worklist.
-class SDOPsWorkListRemover : public SelectionDAG::DAGUpdateListener {
-  SmallVector<SDNode*, 128> &Worklist;
-  SmallPtrSet<SDNode*, 128> &InWorklist;
-public:
-  SDOPsWorkListRemover(SmallVector<SDNode*, 128> &wl,
-                       SmallPtrSet<SDNode*, 128> &inwl)
-    : Worklist(wl), InWorklist(inwl) {}
-
-  void RemoveFromWorklist(SDNode *N) {
-    if (!InWorklist.erase(N)) return;
-    
-    SmallVector<SDNode*, 128>::iterator I =
-    std::find(Worklist.begin(), Worklist.end(), N);
-    assert(I != Worklist.end() && "Not in worklist");
-    
-    *I = Worklist.back();
-    Worklist.pop_back();
-  }
-  
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
-    RemoveFromWorklist(N);
-  }
-
-  virtual void NodeUpdated(SDNode *N) {
-    // Ignore updates.
-  }
-};
-}
-
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {
   SmallPtrSet<SDNode*, 128> VisitedNodes;
   SmallVector<SDNode*, 128> Worklist;
