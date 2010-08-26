@@ -322,6 +322,12 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       if (isa<ConstantInt>(InVal) || isa<UndefValue>(InVal)) {
         ConstantInt *CI = dyn_cast<ConstantInt>(InVal);
         Result.push_back(std::make_pair(CI, PN->getIncomingBlock(i)));
+      } else if (LVI) {
+        Constant *CI = LVI->getConstantOnEdge(InVal,
+                                              PN->getIncomingBlock(i), BB);
+        ConstantInt *CInt = dyn_cast_or_null<ConstantInt>(CI);
+        if (CInt)
+          Result.push_back(std::make_pair(CInt, PN->getIncomingBlock(i)));
       }
     }
     return !Result.empty();
@@ -367,6 +373,10 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
           }
         }
       return !Result.empty();
+    
+    // Try to process a few other binary operator patterns.
+    } else if (isa<BinaryOperator>(I)) {
+      
     }
     
     // Handle the NOT form of XOR.
@@ -383,6 +393,21 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
           Result[i].first =
             cast<ConstantInt>(ConstantExpr::getNot(Result[i].first));
       return true;
+    }
+  
+  // Try to simplify some other binary operator values.
+  } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
+    // AND or OR of a value with itself is that value.
+    ConstantInt *CI = dyn_cast<ConstantInt>(BO->getOperand(1));
+    if (CI && (BO->getOpcode() == Instruction::And ||
+         BO->getOpcode() == Instruction::Or)) {
+      SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> LHSVals;
+      ComputeValueKnownInPredecessors(BO->getOperand(0), BB, LHSVals);
+      for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) 
+        if (LHSVals[i].first == CI)
+        Result.push_back(std::make_pair(CI, LHSVals[i].second));
+      
+      return !Result.empty();
     }
   }
   
@@ -423,28 +448,63 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     // If comparing a live-in value against a constant, see if we know the
     // live-in value on any predecessors.
     if (LVI && isa<Constant>(Cmp->getOperand(1)) &&
-        Cmp->getType()->isIntegerTy() && // Not vector compare.
-        (!isa<Instruction>(Cmp->getOperand(0)) ||
-         cast<Instruction>(Cmp->getOperand(0))->getParent() != BB)) {
-      Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));
+        Cmp->getType()->isIntegerTy()) {
+      if (!isa<Instruction>(Cmp->getOperand(0)) ||
+           cast<Instruction>(Cmp->getOperand(0))->getParent() != BB) {
+        Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));
 
-      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-        BasicBlock *P = *PI;
-        // If the value is known by LazyValueInfo to be a constant in a
-        // predecessor, use that information to try to thread this block.
-        LazyValueInfo::Tristate
-          Res = LVI->getPredicateOnEdge(Cmp->getPredicate(), Cmp->getOperand(0),
-                                        RHSCst, P, BB);
-        if (Res == LazyValueInfo::Unknown)
-          continue;
+        for (pred_iterator PI = pred_begin(BB), E = pred_end(BB);PI != E; ++PI){
+          BasicBlock *P = *PI;
+          // If the value is known by LazyValueInfo to be a constant in a
+          // predecessor, use that information to try to thread this block.
+          LazyValueInfo::Tristate Res =
+            LVI->getPredicateOnEdge(Cmp->getPredicate(), Cmp->getOperand(0),
+                                    RHSCst, P, BB);
+          if (Res == LazyValueInfo::Unknown)
+            continue;
 
-        Constant *ResC = ConstantInt::get(Cmp->getType(), Res);
-        Result.push_back(std::make_pair(cast<ConstantInt>(ResC), P));
+          Constant *ResC = ConstantInt::get(Cmp->getType(), Res);
+          Result.push_back(std::make_pair(cast<ConstantInt>(ResC), P));
+        }
+
+        return !Result.empty();
       }
-
-      return !Result.empty();
+      
+      // Try to find a constant value for the LHS of an equality comparison,
+      // and evaluate it statically if we can.
+      if (Cmp->getPredicate() == CmpInst::ICMP_EQ || 
+          Cmp->getPredicate() == CmpInst::ICMP_NE) {
+        SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> LHSVals;
+        ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals);
+        
+        ConstantInt *True = ConstantInt::getTrue(I->getContext());
+        ConstantInt *False = ConstantInt::getFalse(I->getContext());
+        if (Cmp->getPredicate() == CmpInst::ICMP_NE) std::swap(True, False);
+        
+        for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
+          if (LHSVals[i].first == Cmp->getOperand(1))
+            Result.push_back(std::make_pair(True, LHSVals[i].second));
+          else 
+            Result.push_back(std::make_pair(False, LHSVals[i].second));
+        }
+        
+        return !Result.empty();
+      }
     }
   }
+  
+  if (LVI) {
+    // If all else fails, see if LVI can figure out a constant value for us.
+    Constant *CI = LVI->getConstant(V, BB);
+    ConstantInt *CInt = dyn_cast_or_null<ConstantInt>(CI);
+    if (CInt) {
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+        Result.push_back(std::make_pair(CInt, *PI));
+    }
+    
+    return !Result.empty();
+  }
+  
   return false;
 }
 
