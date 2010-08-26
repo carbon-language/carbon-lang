@@ -296,6 +296,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
 }
 
 static CharUnits CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
+  ElementType = Ctx.getBaseElementType(ElementType);
   const RecordType *RT = ElementType->getAs<RecordType>();
   if (!RT)
     return CharUnits::Zero();
@@ -376,18 +377,29 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
                                         const CXXNewExpr *E,
                                         llvm::Value *&NumElements,
                                         llvm::Value *&SizeWithoutCookie) {
-  QualType Type = E->getAllocatedType();
-  CharUnits TypeSize = CGF.getContext().getTypeSizeInChars(Type);
-  const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
+  QualType ElemType = E->getAllocatedType();
   
   if (!E->isArray()) {
+    CharUnits TypeSize = CGF.getContext().getTypeSizeInChars(ElemType);
+    const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
     SizeWithoutCookie = llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
     return SizeWithoutCookie;
   }
 
   // Emit the array size expression.
+  // We multiply the size of all dimensions for NumElements.
+  // e.g for 'int[2][3]', ElemType is 'int' and NumElements is 6.
   NumElements = CGF.EmitScalarExpr(E->getArraySize());
-  
+  while (const ConstantArrayType *CAT
+             = CGF.getContext().getAsConstantArrayType(ElemType)) {
+    ElemType = CAT->getElementType();
+    llvm::Value *ArraySize
+        = llvm::ConstantInt::get(CGF.CGM.getLLVMContext(), CAT->getSize());
+    NumElements = CGF.Builder.CreateMul(NumElements, ArraySize);
+  }
+
+  CharUnits TypeSize = CGF.getContext().getTypeSizeInChars(ElemType);
+  const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
   llvm::Value *Size = llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
   
   // If someone is doing 'new int[42]' there is no need to do a dynamic check.

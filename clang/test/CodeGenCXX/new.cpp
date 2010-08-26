@@ -146,12 +146,15 @@ void t13(int n) {
 }
 
 struct Alloc{
+  int x;
   void* operator new[](size_t size);
   void operator delete[](void* p);
+  ~Alloc();
 };
 
 void f() {
-  // CHECK: call i8* @_ZN5AllocnaEm(i64 200)
+  // CHECK: call i8* @_ZN5AllocnaEm(i64 808)
+  // CHECK: store i64 200
   // CHECK: call void @_ZN5AllocdaEPv(i8*
   delete[] new Alloc[10][20];
 }
