@@ -68,7 +68,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   
   // Clone the function, so that we can hack away on it.
   ValueMap<const Value*, Value*> VMap;
-  Function* duplicateFunction = CloneFunction(F, VMap);
+  Function* duplicateFunction = CloneFunction(F, VMap,
+                                              /*ModuleLevelChanges=*/false);
   duplicateFunction->setLinkage(GlobalValue::InternalLinkage);
   F->getParent()->getFunctionList().push_back(duplicateFunction);
   BasicBlock* newEntryBlock = cast<BasicBlock>(VMap[entryBlock]);

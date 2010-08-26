@@ -22,8 +22,10 @@ namespace llvm {
   class Instruction;
   typedef ValueMap<const Value *, Value *> ValueToValueMapTy;
 
-  Value *MapValue(const Value *V, ValueToValueMapTy &VM);
-  void RemapInstruction(Instruction *I, ValueToValueMapTy &VM);
+  Value *MapValue(const Value *V, ValueToValueMapTy &VM,
+                  bool ModuleLevelChanges);
+  void RemapInstruction(Instruction *I, ValueToValueMapTy &VM,
+                        bool ModuleLevelChanges);
 } // End llvm namespace
 
 #endif

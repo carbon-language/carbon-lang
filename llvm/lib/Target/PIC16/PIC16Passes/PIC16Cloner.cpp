@@ -256,7 +256,7 @@ PIC16Cloner::cloneFunction(Function *OrgF) {
    CloneAutos(OrgF);
 
    // Now create the clone.
-   ClonedF = CloneFunction(OrgF, VMap);
+   ClonedF = CloneFunction(OrgF, VMap, /*ModuleLevelChanges=*/false);
 
    // The new function should be for interrupt line. Therefore should have 
    // the name suffixed with IL and section attribute marked with IL. 

@@ -121,8 +121,12 @@ Loop *CloneLoop(Loop *L, LPPassManager *LPM, LoopInfo *LI,
 /// the function from their old to new values.  The final argument captures
 /// information about the cloned code if non-null.
 ///
+/// If ModuleLevelChanges is false, VMap contains no non-identity GlobalValue
+/// mappings.
+///
 Function *CloneFunction(const Function *F,
                         ValueMap<const Value*, Value*> &VMap,
+                        bool ModuleLevelChanges,
                         ClonedCodeInfo *CodeInfo = 0);
 
 /// CloneFunction - Version of the function that doesn't need the VMap.
@@ -133,13 +137,17 @@ inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
 }
 
 /// Clone OldFunc into NewFunc, transforming the old arguments into references
-/// to ArgMap values.  Note that if NewFunc already has basic blocks, the ones
+/// to VMap values.  Note that if NewFunc already has basic blocks, the ones
 /// cloned into it will be added to the end of the function.  This function
 /// fills in a list of return instructions, and can optionally append the
 /// specified suffix to all values cloned.
 ///
+/// If ModuleLevelChanges is false, VMap contains no non-identity GlobalValue
+/// mappings.
+///
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        ValueMap<const Value*, Value*> &VMap,
+                       bool ModuleLevelChanges,
                        SmallVectorImpl<ReturnInst*> &Returns,
                        const char *NameSuffix = "", 
                        ClonedCodeInfo *CodeInfo = 0);
@@ -151,8 +159,13 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// constant arguments cause a significant amount of code in the callee to be
 /// dead.  Since this doesn't produce an exactly copy of the input, it can't be
 /// used for things like CloneFunction or CloneModule.
+///
+/// If ModuleLevelChanges is false, VMap contains no non-identity GlobalValue
+/// mappings.
+///
 void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                ValueMap<const Value*, Value*> &VMap,
+                               bool ModuleLevelChanges,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,

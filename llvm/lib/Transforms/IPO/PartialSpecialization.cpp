@@ -74,7 +74,8 @@ SpecializeFunction(Function* F,
     deleted[arg->getArgNo()] = arg;
   }
 
-  Function* NF = CloneFunction(F, replacements);
+  Function* NF = CloneFunction(F, replacements,
+                               /*ModuleLevelChanges=*/false);
   NF->setLinkage(GlobalValue::InternalLinkage);
   F->getParent()->getFunctionList().push_back(NF);
 

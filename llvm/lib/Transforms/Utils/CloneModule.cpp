@@ -89,7 +89,8 @@ Module *llvm::CloneModule(const Module *M,
     GlobalVariable *GV = cast<GlobalVariable>(VMap[I]);
     if (I->hasInitializer())
       GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
-                                                 VMap)));
+                                                 VMap,
+                                                 true)));
     GV->setLinkage(I->getLinkage());
     GV->setThreadLocal(I->isThreadLocal());
     GV->setConstant(I->isConstant());
@@ -108,7 +109,7 @@ Module *llvm::CloneModule(const Module *M,
       }
 
       SmallVector<ReturnInst*, 8> Returns;  // Ignore returns cloned.
-      CloneFunctionInto(F, I, VMap, Returns);
+      CloneFunctionInto(F, I, VMap, /*ModuleLevelChanges=*/true, Returns);
     }
 
     F->setLinkage(I->getLinkage());
@@ -120,7 +121,7 @@ Module *llvm::CloneModule(const Module *M,
     GlobalAlias *GA = cast<GlobalAlias>(VMap[I]);
     GA->setLinkage(I->getLinkage());
     if (const Constant* C = I->getAliasee())
-      GA->setAliasee(cast<Constant>(MapValue(C, VMap)));
+      GA->setAliasee(cast<Constant>(MapValue(C, VMap, true)));
   }
 
   // And named metadata....
@@ -129,23 +130,8 @@ Module *llvm::CloneModule(const Module *M,
     const NamedMDNode &NMD = *I;
     NamedMDNode *NewNMD = New->getOrInsertNamedMetadata(NMD.getName());
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      NewNMD->addOperand(cast<MDNode>(MapValue(NMD.getOperand(i), VMap)));
+      NewNMD->addOperand(cast<MDNode>(MapValue(NMD.getOperand(i), VMap, true)));
   }
 
-  // Update metadata attach with instructions.
-  for (Module::iterator MI = New->begin(), ME = New->end(); MI != ME; ++MI)   
-    for (Function::iterator FI = MI->begin(), FE = MI->end(); 
-         FI != FE; ++FI)
-      for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
-           BI != BE; ++BI) {
-        SmallVector<std::pair<unsigned, MDNode *>, 4 > MDs;
-        BI->getAllMetadata(MDs);
-        for (SmallVector<std::pair<unsigned, MDNode *>, 4>::iterator 
-               MDI = MDs.begin(), MDE = MDs.end(); MDI != MDE; ++MDI) {
-          Value *MappedValue = MapValue(MDI->second, VMap);
-          if (MDI->second != MappedValue && MappedValue)
-            BI->setMetadata(MDI->first, cast<MDNode>(MappedValue));
-        }
-      }
   return New;
 }
