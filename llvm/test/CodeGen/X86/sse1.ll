@@ -12,3 +12,9 @@ define <8 x i16> @test2(<8 x i32> %a) nounwind {
   %c = trunc <8 x i32> %a to <8 x i16>            ; <<8 x i16>> [#uses=1]
   ret <8 x i16> %c
 }
+
+; PR7993
+;define <4 x i32> @test3(<4 x i16> %a) nounwind {
+;  %c = sext <4 x i16> %a to <4 x i32>             ; <<4 x i32>> [#uses=1]
+;  ret <4 x i32> %c
+;}

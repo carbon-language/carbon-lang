@@ -1314,6 +1314,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           break;
         case TargetLowering::Expand:
           if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT)) {
+            // FIXME: If SrcVT isn't legal, then this introduces an illegal
+            // type.
             SDValue Load = DAG.getLoad(SrcVT, dl, Tmp1, Tmp2, LD->getSrcValue(),
                                        LD->getSrcValueOffset(),
                                        LD->isVolatile(), LD->isNonTemporal(),
