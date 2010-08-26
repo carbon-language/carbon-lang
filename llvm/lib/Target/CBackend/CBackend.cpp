@@ -199,7 +199,6 @@ namespace {
 
     void lowerIntrinsics(Function &F);
 
-    void printModule(Module *M);
     void printModuleTypes(const TypeSymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const Type *> &);
     void printFloatingPointConstants(Function &F);
