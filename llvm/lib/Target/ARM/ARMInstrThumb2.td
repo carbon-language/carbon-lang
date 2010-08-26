@@ -2141,18 +2141,60 @@ defm t2CMP  : T2I_cmp_irs<0b1101, "cmp",
 defm t2CMPz : T2I_cmp_irs<0b1101, "cmp",
                           BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 
-//FIXME: Disable CMN, as CCodes are backwards from compare expectations
-//       Compare-to-zero still works out, just not the relationals
+// FIXME: There seems to be a (potential) hardware bug with the CMN instruction
+// and comparison with 0. These two pieces of code should give identical
+// results:
+//
+//   rsbs r1, r1, 0
+//   cmp  r0, r1
+//   mov  r0, #0
+//   it   ls
+//   mov  r0, #1
+//
+// and:
+// 
+//   cmn  r0, r1
+//   mov  r0, #0
+//   it   ls
+//   mov  r0, #1
+//
+// However, the CMN gives the *opposite* result when r1 is 0. This is because
+// the carry flag is set in the CMP case but not in the CMN case. In short, the
+// CMP instruction doesn't perform a truncate of the (logical) NOT of 0 plus the
+// value of r0 and the carry bit (because the "carry bit" parameter to
+// AddWithCarry is defined as 1 in this case, the carry flag will always be set
+// when r0 >= 0). The CMN instruction doesn't perform a NOT of 0 so there is
+// never a "carry" when this AddWithCarry is performed (because the "carry bit"
+// parameter to AddWithCarry is defined as 0).
+//
+// The AddWithCarry in the CMP case seems to be relying upon the identity:
+// 
+//   ~x + 1 = -x
+//
+// However when x is 0 and unsigned, this doesn't hold:
+//
+//    x = 0
+//   ~x = 0xFFFF FFFF
+//   ~x + 1 = 0x1 0000 0000
+//   (-x = 0) != (0x1 0000 0000 = ~x + 1)
+//
+// Therefore, we should disable *all* versions of CMN, especially when comparing
+// against zero, until we can limit when the CMN instruction is used (when we
+// know that the RHS is not 0) or when we have a hardware fix for this.
+//
+// (See the ARM docs for the "AddWithCarry" pseudo-code.)
+//
+// This is related to <rdar://problem/7569620>.
+//
 //defm t2CMN  : T2I_cmp_irs<0b1000, "cmn",
 //                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
-defm t2CMNz : T2I_cmp_irs<0b1000, "cmn",
-                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
-
+//defm t2CMNz : T2I_cmp_irs<0b1000, "cmn",
+//                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
+//
 //def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
 //            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
-
-def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
-            (t2CMNzri GPR:$src, t2_so_imm_neg:$imm)>;
+//def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
+//            (t2CMNzri GPR:$src, t2_so_imm_neg:$imm)>;
 
 defm t2TST  : T2I_cmp_irs<0b0000, "tst",
                           BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>>;
