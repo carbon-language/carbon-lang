@@ -121,6 +121,7 @@ typedef int32_t break_id_t;
 typedef lldb::SBStringList SBStringList;
 typedef lldb::RegisterKind RegisterKind;
 const RegisterKind kNumRegisterKinds = lldb::kNumRegisterKinds ;
+typedef int StopReason;
 
 
 %include "lldb/API/SBAddress.h"

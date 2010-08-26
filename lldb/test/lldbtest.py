@@ -133,7 +133,14 @@ STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
 
 DATA_TYPES_DISPLAYED_CORRECTLY = "Data type(s) displayed correctly"
 
+VALID_BREAKPOINT = "Got a valid breakpoint"
+
+VALID_PROCESS = "Got a valid process"
+
+VALID_TARGET = "Got a valid target"
+
 VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
+
 
 #
 # And a generic "Command '%s' returns successfully" message generator.
@@ -141,6 +148,28 @@ VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 def CMD_MSG(command):
     return "Command '%s' returns successfully" % (command)
 
+#
+# Returns the enum from the input string stopReason.
+#
+def Enum(stopReason):
+    if stopReason == "Invalid":
+        return 0
+    elif stopReason == "None":
+        return 1
+    elif stopReason == "Trace":
+        return 2
+    elif stopReason == "Breakpoint":
+        return 3
+    elif stopReason == "Watchpoint":
+        return 4
+    elif stopReason == "Signal":
+        return 5
+    elif stopReason == "Exception":
+        return 6
+    elif stopReason == "PlanComplete":
+        return 7
+    else:
+        raise Exception("Unknown stopReason string")
 
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""

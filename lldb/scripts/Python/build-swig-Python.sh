@@ -67,7 +67,7 @@ fi
 NeedToUpdate=0
 
 
-if [ ! -f $swig_output_file ]
+if [ ! -f ${swig_output_file} ]
 then
     NeedToUpdate=1
     if [ $Debug == 1 ]
@@ -80,7 +80,7 @@ if [ $NeedToUpdate == 0 ]
 then
     for hdrfile in ${HEADER_FILES}
     do
-        if [ $hdrfile -nt $swig_output_file ]
+        if [ $hdrfile -nt ${swig_output_file} ]
         then
             NeedToUpdate=1
             if [ $Debug == 1 ]
@@ -88,8 +88,22 @@ then
                 echo "${hdrfile} is newer than ${swig_output_file}"
                 echo "swig file will need to be re-built."
             fi
+            break
         fi
     done
+fi
+
+if [ $NeedToUpdate == 0 ]
+then
+    if [ ${swig_input_file} -nt ${swig_output_file} ]
+    then
+        NeedToUpdate=1
+        if [ $Debug == 1 ]
+        then
+            echo "${swig_input_file} is newer than ${swig_output_file}"
+            echo "swig file will need to be re-built."
+        fi
+    fi
 fi
 
 os_name=`uname -s`
