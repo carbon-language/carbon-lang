@@ -104,21 +104,19 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the breakpoint by address, at the specified address."},
 
     { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<name>",
-        "Set the breakpoint by function name." },
+        "Set the breakpoint by function name - for C++ this means namespaces and arguments will be ignored." },
 
-    { LLDB_OPT_SET_3, false, "basename", 'b', no_argument, NULL, 0, NULL,
-        "Used in conjuction with --name <name> to search function basenames." },
+    { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, 0, "<fullname>",
+        "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguemnts, and "
+        "for Objective C this means a full function prototype with class and selector." },
 
-    { LLDB_OPT_SET_3, false, "fullname", 'F', no_argument, NULL, 0, NULL,
-        "Used in conjuction with --name <name> to search fully qualified function names. For C++ this means namespaces and all arguemnts, and for Objective C this means a full function prototype with class and selector." },
+    { LLDB_OPT_SET_5, true, "selector", 'S', required_argument, NULL, 0, "<selector>",
+        "Set the breakpoint by ObjC selector name." },
 
-    { LLDB_OPT_SET_3, false, "selector", 'S', no_argument, NULL, 0, NULL,
-        "Used in conjuction with --name <name> to search objective C selector names." },
+    { LLDB_OPT_SET_6, true, "method", 'M', required_argument, NULL, 0, "<method>",
+        "Set the breakpoint by C++ method names." },
 
-    { LLDB_OPT_SET_3, false, "method", 'm', no_argument, NULL, 0, NULL,
-        "Used in conjuction with --name <name> to search objective C selector C++ method names." },
-
-    { LLDB_OPT_SET_4, true, "func_regex", 'r', required_argument, NULL, 0, "<regular-expression>",
+    { LLDB_OPT_SET_7, true, "func_regex", 'r', required_argument, NULL, 0, "<regular-expression>",
         "Set the breakpoint by function name, evaluating a regular-expression to find the function name(s)." },
 
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -161,21 +159,21 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
 
         case 'n':
             m_func_name = option_arg;
-            break;
-
-        case 'b':
             m_func_name_type_mask |= eFunctionNameTypeBase;
             break;
 
         case 'F':
+            m_func_name = option_arg;
             m_func_name_type_mask |= eFunctionNameTypeFull;
             break;
 
         case 'S':
+            m_func_name = option_arg;
             m_func_name_type_mask |= eFunctionNameTypeSelector;
             break;
 
-        case 'm':
+        case 'M':
+            m_func_name = option_arg;
             m_func_name_type_mask |= eFunctionNameTypeMethod;
             break;
 
