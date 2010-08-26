@@ -460,24 +460,17 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
                                            const MCFixup &Fixup,
                                            MCValue Target,
                                            uint64_t &FixedValue) {
-  unsigned IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
-
-  uint64_t FixupOffset =
-    Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
-  int64_t Value;
   int64_t Addend = 0;
   unsigned Index = 0;
-  unsigned Type;
-
-  Value = Target.getConstant();
 
   if (!Target.isAbsolute()) {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
+    MCFragment *F = SD.getFragment();
+    int64_t Value = Target.getConstant();
 
     if (Base) {
-      MCFragment *F = SD.getFragment();
       if (F && (!Symbol->isInSection() || SD.isCommon())) {
         Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
         Value += Layout.getSymbolAddress(&SD);
@@ -486,9 +479,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
       if (Base != &SD)
         Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
       Addend = Value;
-      Value = 0;
+      // Compensate for the addend on i386.
+      FixedValue = Is64Bit ? 0 : Value;
     } else {
-      MCFragment *F = SD.getFragment();
       if (F) {
         // Index of the section in .symtab against this symbol
         // is being relocated + 2 (empty section + abs. symbols).
@@ -505,6 +498,8 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
   }
 
   // determine the type of the relocation
+  bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
+  unsigned Type;
   if (Is64Bit) {
     if (IsPCRel) {
       Type = ELF::R_X86_64_PC32;
@@ -540,8 +535,6 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     }
   }
 
-  FixedValue = Value;
-
   ELFRelocationEntry ERE;
 
   if (Is64Bit) {
@@ -554,7 +547,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     ERE.r_info = ERE32.r_info;
   }
 
-  ERE.r_offset = FixupOffset;
+  ERE.r_offset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
   if (HasRelocationAddend)
     ERE.r_addend = Addend;
