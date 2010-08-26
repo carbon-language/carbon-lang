@@ -47,7 +47,7 @@ static cl::opt<bool>
 ForceAllBaseRegAlloc("arm-force-base-reg-alloc", cl::Hidden, cl::init(false),
           cl::desc("Force use of virtual base registers for stack load/store"));
 static cl::opt<bool>
-EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(false), cl::Hidden,
+EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(true), cl::Hidden,
           cl::desc("Enable pre-regalloc stack frame index allocation"));
 }
 
