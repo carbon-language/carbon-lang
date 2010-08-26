@@ -171,6 +171,12 @@ def Enum(stopReason):
     else:
         raise Exception("Unknown stopReason string")
 
+#
+# Returns an env variable array from the os.environ map object.
+#
+def EnvArray():
+    return map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values())
+
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 

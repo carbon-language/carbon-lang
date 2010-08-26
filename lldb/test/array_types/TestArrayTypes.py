@@ -67,6 +67,7 @@ class TestArrayTypes(TestBase):
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         self.runCmd("run", RUN_STOPPED)
+        #process = target.LaunchProcess([''], [''], os.ctermid(), False)
 
         # The stop reason of the thread should be breakpoint.
         thread = target.GetProcess().GetThreadAtIndex(0)
