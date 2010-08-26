@@ -128,6 +128,7 @@ namespace clang {
 namespace sema {
   class AccessedEntity;
   class BlockScopeInfo;
+  class DelayedDiagnostic;
   class FunctionScopeInfo;
   class TemplateDeductionInfo;
 }  
@@ -284,140 +285,9 @@ public:
   /// and must warn if not used. Only contains the first declaration.
   llvm::SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
 
-  class AccessedEntity {
-  public:
-    /// A member declaration found through lookup.  The target is the
-    /// member.
-    enum MemberNonce { Member };
-
-    /// A hierarchy (base-to-derived or derived-to-base) conversion.
-    /// The target is the base class.
-    enum BaseNonce { Base };
-
-    bool isMemberAccess() const { return IsMember; }
-
-    AccessedEntity(ASTContext &Context,
-                   MemberNonce _,
-                   CXXRecordDecl *NamingClass,
-                   DeclAccessPair FoundDecl,
-                   QualType BaseObjectType)
-      : Access(FoundDecl.getAccess()), IsMember(true),
-        Target(FoundDecl.getDecl()), NamingClass(NamingClass),
-        BaseObjectType(BaseObjectType), Diag(0, Context.getDiagAllocator()) {
-    }
-
-    AccessedEntity(ASTContext &Context,
-                   BaseNonce _,
-                   CXXRecordDecl *BaseClass,
-                   CXXRecordDecl *DerivedClass,
-                   AccessSpecifier Access)
-      : Access(Access), IsMember(false),
-        Target(reinterpret_cast<NamedDecl*>(BaseClass)),
-        NamingClass(DerivedClass),
-        Diag(0, Context.getDiagAllocator()) {
-    }
-
-    bool isQuiet() const { return Diag.getDiagID() == 0; }
-
-    AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
-
-    // These apply to member decls...
-    NamedDecl *getTargetDecl() const { return Target; }
-    CXXRecordDecl *getNamingClass() const { return NamingClass; }
-
-    // ...and these apply to hierarchy conversions.
-    CXXRecordDecl *getBaseClass() const {
-      assert(!IsMember); return reinterpret_cast<CXXRecordDecl*>(Target);
-    }
-    CXXRecordDecl *getDerivedClass() const { return NamingClass; }
-
-    /// Retrieves the base object type, important when accessing
-    /// an instance member.
-    QualType getBaseObjectType() const { return BaseObjectType; }
-
-    /// Sets a diagnostic to be performed.  The diagnostic is given
-    /// four (additional) arguments:
-    ///   %0 - 0 if the entity was private, 1 if protected
-    ///   %1 - the DeclarationName of the entity
-    ///   %2 - the TypeDecl type of the naming class
-    ///   %3 - the TypeDecl type of the declaring class
-    void setDiag(const PartialDiagnostic &PDiag) {
-      assert(isQuiet() && "partial diagnostic already defined");
-      Diag = PDiag;
-    }
-    PartialDiagnostic &setDiag(unsigned DiagID) {
-      assert(isQuiet() && "partial diagnostic already defined");
-      assert(DiagID && "creating null diagnostic");
-      Diag.Reset(DiagID);
-      return Diag;
-    }
-    const PartialDiagnostic &getDiag() const {
-      return Diag;
-    }
-
-  private:
-    unsigned Access : 2;
-    bool IsMember;
-    NamedDecl *Target;
-    CXXRecordDecl *NamingClass;
-    QualType BaseObjectType;
-    PartialDiagnostic Diag;
-  };
-
-  struct DelayedDiagnostic {
-    enum DDKind { Deprecation, Access };
-
-    unsigned char Kind; // actually a DDKind
-    bool Triggered;
-
-    SourceLocation Loc;
-
-    union {
-      /// Deprecation.
-      struct { NamedDecl *Decl; } DeprecationData;
-
-      /// Access control.
-      char AccessData[sizeof(AccessedEntity)];
-    };
-
-    void destroy() {
-      switch (Kind) {
-      case Access: getAccessData().~AccessedEntity(); break;
-      case Deprecation: break;
-      }
-    }
-
-    static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
-                                             NamedDecl *D) {
-      DelayedDiagnostic DD;
-      DD.Kind = Deprecation;
-      DD.Triggered = false;
-      DD.Loc = Loc;
-      DD.DeprecationData.Decl = D;
-      return DD;
-    }
-
-    static DelayedDiagnostic makeAccess(SourceLocation Loc,
-                                        const AccessedEntity &Entity) {
-      DelayedDiagnostic DD;
-      DD.Kind = Access;
-      DD.Triggered = false;
-      DD.Loc = Loc;
-      new (&DD.getAccessData()) AccessedEntity(Entity);
-      return DD;
-    }
-
-    AccessedEntity &getAccessData() {
-      return *reinterpret_cast<AccessedEntity*>(AccessData);
-    }
-    const AccessedEntity &getAccessData() const {
-      return *reinterpret_cast<const AccessedEntity*>(AccessData);
-    }
-  };
-
   /// \brief The stack of diagnostics that were delayed due to being
   /// produced during the parsing of a declaration.
-  llvm::SmallVector<DelayedDiagnostic, 8> DelayedDiagnostics;
+  llvm::SmallVector<sema::DelayedDiagnostic, 0> DelayedDiagnostics;
 
   /// \brief The depth of the current ParsingDeclaration stack.
   /// If nonzero, we are currently parsing a declaration (and
@@ -614,9 +484,7 @@ public:
   SemaDiagnosticBuilder Diag(SourceLocation Loc, const PartialDiagnostic& PD);
 
   /// \brief Build a partial diagnostic.
-  PartialDiagnostic PDiag(unsigned DiagID = 0) {
-    return PartialDiagnostic(DiagID, Context.getDiagAllocator());
-  }
+  PartialDiagnostic PDiag(unsigned DiagID = 0); // in SemaInternal.h
 
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
@@ -1701,7 +1569,7 @@ public:
   void PopParsingDeclaration(ParsingDeclStackState S, Decl *D);
   void EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc);
 
-  void HandleDelayedDeprecationCheck(DelayedDiagnostic &DD, Decl *Ctx);
+  void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
@@ -2747,7 +2615,7 @@ public:
   void PerformDependentDiagnostics(const DeclContext *Pattern,
                         const MultiLevelTemplateArgumentList &TemplateArgs);
 
-  void HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx);
+  void HandleDelayedAccessCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
   /// A flag to suppress access checking.
   bool SuppressAccessChecking;
