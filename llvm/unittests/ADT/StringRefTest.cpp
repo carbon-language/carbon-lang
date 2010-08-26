@@ -72,6 +72,7 @@ TEST(StringRefTest, StringOps) {
   EXPECT_EQ( 0, StringRef("10a").compare_numeric("10a"));
   EXPECT_EQ( 1, StringRef("2").compare_numeric("1"));
   EXPECT_EQ( 0, StringRef("llvm_v1i64_ty").compare_numeric("llvm_v1i64_ty"));
+  EXPECT_EQ( 1, StringRef("\xFF").compare_numeric("\1"));
 }
 
 TEST(StringRefTest, Operators) {

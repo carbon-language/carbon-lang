@@ -59,7 +59,7 @@ int StringRef::compare_numeric(StringRef RHS) const {
           break;
       }
     }
-    return Data[I] < RHS.Data[I] ? -1 : 1;
+    return (unsigned char)Data[I] < (unsigned char)RHS.Data[I] ? -1 : 1;
   }
   if (Length == RHS.Length)
     return 0;
