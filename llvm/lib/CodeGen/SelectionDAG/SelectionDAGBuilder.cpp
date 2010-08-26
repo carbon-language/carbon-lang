@@ -3947,7 +3947,7 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   unsigned Reg = 0;
-  if (N.getOpcode() == ISD::CopyFromReg) {
+  if (N.getNode() && N.getOpcode() == ISD::CopyFromReg) {
     Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
     if (Reg && TargetRegisterInfo::isVirtualRegister(Reg)) {
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
@@ -4111,10 +4111,14 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         return 0;
       DAG.AddDbgValue(SDV, N.getNode(), isParameter);
     } else {
-      // This isn't useful, but it shows what we're missing.
-      SDV = DAG.getDbgValue(Variable, UndefValue::get(Address->getType()),
-                            0, dl, SDNodeOrder);
-      DAG.AddDbgValue(SDV, 0, isParameter);
+      // If Address is an arugment then try to emits its dbg value using
+      // virtual register info from the FuncInfo.ValueMap. Otherwise add undef
+      // to help track missing debug info.
+      if (!EmitFuncArgumentDbgValue(Address, Variable, 0, N)) {
+        SDV = DAG.getDbgValue(Variable, UndefValue::get(Address->getType()),
+                              0, dl, SDNodeOrder);
+        DAG.AddDbgValue(SDV, 0, isParameter);
+      }
     }
     return 0;
   }
