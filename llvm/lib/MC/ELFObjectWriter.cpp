@@ -480,7 +480,8 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
       Addend = Value;
       // Compensate for the addend on i386.
-      FixedValue = Is64Bit ? 0 : Value;
+      if (Is64Bit)
+        Value = 0;
     } else {
       if (F) {
         // Index of the section in .symtab against this symbol
@@ -495,6 +496,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         return;
       }
     }
+    FixedValue = Value;
   }
 
   // determine the type of the relocation
