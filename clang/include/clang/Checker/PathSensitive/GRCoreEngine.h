@@ -407,7 +407,8 @@ public:
 
   public:
     iterator& operator++() { ++I; return *this; }
-    bool operator!=(const iterator& X) const { return I != X.I; }
+    bool operator!=(const iterator &X) const { return I != X.I; }
+    bool operator==(const iterator &X) const { return I == X.I; }
 
     const CaseStmt* getCase() const {
       return llvm::cast<CaseStmt>((*I)->getLabel());

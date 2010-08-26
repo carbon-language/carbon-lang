@@ -1489,9 +1489,11 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   DefinedOrUnknownSVal CondV = cast<DefinedOrUnknownSVal>(CondV_untested);
 
   const GRState *DefaultSt = state;
-  bool defaultIsFeasible = false;
+  
+  iterator I = builder.begin(), EI = builder.end();
+  bool defaultIsFeasible = I == EI;
 
-  for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
+  for ( ; I != EI; ++I) {
     const CaseStmt* Case = I.getCase();
 
     // Evaluate the LHS of the case value.

@@ -1045,3 +1045,14 @@ void reduce_to_constant(int x, int y) {
   if (y == -20 && b != 0)
     (void)*(char*)0; // no-warning
 }
+
+// <rdar://problem/8360854> - Test that code after a switch statement with no 
+// 'case:' labels is correctly evaluated.
+void r8360854(int n) {
+  switch (n) {
+   default: ;
+  }
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{null pointer}}
+}
+
