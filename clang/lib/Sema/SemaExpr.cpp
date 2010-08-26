@@ -5005,7 +5005,6 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   // Handle the case of a vector & extvector type of the same size and element
   // type.  It would be nice if we only had one vector type someday.
   if (getLangOptions().LaxVectorConversions) {
-    // FIXME: Should we warn here?
     if (const VectorType *LV = lhsType->getAs<VectorType>()) {
       if (const VectorType *RV = rhsType->getAs<VectorType>())
         if (LV->getElementType() == RV->getElementType() &&
@@ -5017,8 +5016,14 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
 
           ImpCastExprToType(lex, rhsType, CK_BitCast);
           return rhsType;
+        } else if (Context.getTypeSize(lhsType) ==Context.getTypeSize(rhsType)){
+          // If we are allowing lax vector conversions, and LHS and RHS are both
+          // vectors, the total size only needs to be the same. This is a
+          // bitcast; no bits are changed but the result type is different.
+          ImpCastExprToType(rex, lhsType, CK_BitCast);
+          return lhsType;
         }
-    }
+      }
   }
 
   // Handle the case of equivalent AltiVec and GCC vector types

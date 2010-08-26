@@ -51,10 +51,10 @@ void conditional(bool Cond, char16 c16, longlong16 ll16, char16_e c16e,
   __typeof__(Cond? ll16 : ll16e) *ll16ep2 = &ll16e;
   __typeof__(Cond? ll16e : ll16) *ll16ep3 = &ll16e;
 
-  // Conditional operators with incompatible types.
-  (void)(Cond? c16 : ll16); // expected-error{{can't convert between vector values}}
-  (void)(Cond? ll16e : c16e); // expected-error{{can't convert between vector values}}
-  (void)(Cond? ll16e : c16); // expected-error{{can't convert between vector values}}
+  // Conditional operators with compatible types under -flax-vector-conversions (default)
+  (void)(Cond? c16 : ll16);
+  (void)(Cond? ll16e : c16e);
+  (void)(Cond? ll16e : c16);
 }
 
 // Test C++ cast'ing of vector types.
@@ -183,8 +183,10 @@ void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16,
 
   (void)(Cond? to_c16 : to_c16e);
   (void)(Cond? to_ll16e : to_ll16);
-  (void)(Cond? to_c16 : to_ll16); // expected-error{{can't convert between vector values of different size}}
-  (void)(Cond? to_c16e : to_ll16e); // expected-error{{can't convert between vector values of different size}}
+  
+  // These 2 are convertable with -flax-vector-conversions (default)
+  (void)(Cond? to_c16 : to_ll16);
+  (void)(Cond? to_c16e : to_ll16e);
 }
 
 typedef float fltx2 __attribute__((__vector_size__(8)));
