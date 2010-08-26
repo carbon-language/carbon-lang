@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s| FileCheck %s
+#include <stdarg.h>
 
 // CHECK: %0 = type { i64, double }
 
@@ -222,6 +223,14 @@ _Complex float f32(_Complex float A, _Complex float B) {
   // rdar://6379669
   // CHECK: define <2 x float> @f32(<2 x float> %A.coerce, <2 x float> %B.coerce)
   return A+B;
+}
+
+
+// rdar://8357396
+struct f33s { long x; float c,d; };
+
+void f33(va_list X) {
+  va_arg(X, struct f33s);
 }
 
 

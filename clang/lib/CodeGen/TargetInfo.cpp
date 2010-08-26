@@ -1794,7 +1794,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     assert(ST->getNumElements() == 2 && "Unexpected ABI info for mixed regs");
     const llvm::Type *TyLo = ST->getElementType(0);
     const llvm::Type *TyHi = ST->getElementType(1);
-    assert((TyLo->isFloatingPointTy() ^ TyHi->isFloatingPointTy()) &&
+    assert((TyLo->isFPOrFPVectorTy() ^ TyHi->isFPOrFPVectorTy()) &&
            "Unexpected ABI info for mixed regs");
     const llvm::Type *PTyLo = llvm::PointerType::getUnqual(TyLo);
     const llvm::Type *PTyHi = llvm::PointerType::getUnqual(TyHi);
