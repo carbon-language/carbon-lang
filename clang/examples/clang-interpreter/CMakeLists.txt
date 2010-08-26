@@ -1,8 +1,8 @@
 set(LLVM_NO_RTTI 1)
 
 set(LLVM_USED_LIBS
-    clangSerialization
     clangFrontend
+    clangSerialization
     clangDriver
     clangCodeGen
     clangSema
