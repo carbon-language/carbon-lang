@@ -348,17 +348,6 @@ namespace llvm {
       }
       return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
     }
-        
-    static MVT getIntVectorWithNumElements(unsigned NumElts) {
-      switch (NumElts) {
-      default: return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
-      case  1: return MVT::v1i64;
-      case  2: return MVT::v2i32;
-      case  4: return MVT::v4i16;
-      case  8: return MVT::v8i8;
-      case 16: return MVT::v16i8;
-      }
-    }
   };
 
   struct EVT { // EVT = Extended Value Type
@@ -411,10 +400,15 @@ namespace llvm {
     /// getIntVectorWithNumElements - Return any integer vector type that has
     /// the specified number of elements.
     static EVT getIntVectorWithNumElements(LLVMContext &C, unsigned NumElts) {
-      MVT M = MVT::getIntVectorWithNumElements(NumElts);
-      if (M.SimpleTy != MVT::INVALID_SIMPLE_VALUE_TYPE)
-        return M;
-      return getVectorVT(C, MVT::i8, NumElts);
+      switch (NumElts) {
+      default: return getVectorVT(C, MVT::i8, NumElts);
+      case  1: return MVT::v1i64;
+      case  2: return MVT::v2i32;
+      case  4: return MVT::v4i16;
+      case  8: return MVT::v8i8;
+      case 16: return MVT::v16i8;
+      }
+      return MVT::INVALID_SIMPLE_VALUE_TYPE;
     }
 
     /// isSimple - Test if the given EVT is simple (as opposed to being
