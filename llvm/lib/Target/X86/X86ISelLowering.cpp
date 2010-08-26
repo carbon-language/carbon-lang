@@ -1342,12 +1342,18 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     if (Subtarget->is64Bit()) {
       if (ValVT.isVector() && ValVT.getSizeInBits() == 64) {
         ValToCopy = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, ValToCopy);
-        if (VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1)
+        if (VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1) {
           ValToCopy = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64,
                                   ValToCopy);
+          
+          // If we don't have SSE2 available, convert to v4f32 so the generated
+          // register is legal.
+          if (!Subtarget->hasSSE2())
+            ValToCopy = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4f32,ValToCopy);
+        }
       }
     }
-
+    
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
   }
@@ -3931,10 +3937,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  if (NumNonZero == 0) {
-    // All undef vector. Return an UNDEF.  All zero vectors were handled above.
+  // All undef vector. Return an UNDEF.  All zero vectors were handled above.
+  if (NumNonZero == 0)
     return DAG.getUNDEF(VT);
-  }
 
   // Special case for single non-zero, non-undef, element.
   if (NumNonZero == 1) {
@@ -4072,7 +4077,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   if (EVTBits == 16 && NumElems == 8) {
     SDValue V = LowerBuildVectorv8i16(Op, NonZeros,NumNonZero,NumZero, DAG,
-                                        *this);
+                                      *this);
     if (V.getNode()) return V;
   }
 
