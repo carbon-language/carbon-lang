@@ -19,10 +19,8 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/DeclSpec.h"
-#include "clang/Sema/DelayedDiagnostic.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
-using namespace sema;
 
 //===----------------------------------------------------------------------===//
 //  Helper functions
@@ -2470,7 +2468,7 @@ static bool isDeclDeprecated(Decl *D) {
   return false;
 }
 
-void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
+void Sema::HandleDelayedDeprecationCheck(Sema::DelayedDiagnostic &DD,
                                          Decl *Ctx) {
   if (isDeclDeprecated(Ctx))
     return;
