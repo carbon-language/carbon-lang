@@ -48,8 +48,8 @@ StackFrame::StackFrame
     m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
     m_reg_context_sp (),
-    m_id (cfa, 0),
-    m_pc (NULL, pc),
+    m_id (LLDB_INVALID_UID, cfa, LLDB_INVALID_UID),
+    m_frame_code_addr (NULL, pc),
     m_sc (),
     m_flags (),
     m_frame_base (),
@@ -78,8 +78,8 @@ StackFrame::StackFrame
     m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (cfa, 0),
-    m_pc (NULL, pc),
+    m_id (LLDB_INVALID_UID, cfa, LLDB_INVALID_UID),
+    m_frame_code_addr (NULL, pc),
     m_sc (),
     m_flags (),
     m_frame_base (),
@@ -114,8 +114,8 @@ StackFrame::StackFrame
     m_concrete_frame_index (concrete_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (cfa, 0),
-    m_pc (pc_addr),
+    m_id (LLDB_INVALID_UID, cfa, LLDB_INVALID_UID),
+    m_frame_code_addr (pc_addr),
     m_sc (),
     m_flags (),
     m_frame_base (),
@@ -157,9 +157,10 @@ StackFrame::~StackFrame()
 StackID&
 StackFrame::GetStackID()
 {
-    // Make sure we have resolved our stack ID's address range before we give
-    // it out to any external clients
-    if (m_id.GetStartAddress().IsValid() == 0 && m_flags.IsClear(RESOLVED_FRAME_ID))
+    // Make sure we have resolved our stack ID's start PC before we give
+    // it out to any external clients. This allows us to not have to lookup
+    // this information if it is never asked for.
+    if (m_flags.IsClear(RESOLVED_FRAME_ID) && m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
     {
         m_flags.Set (RESOLVED_FRAME_ID);
 
@@ -171,14 +172,19 @@ StackFrame::GetStackID()
 
         if (GetSymbolContext (eSymbolContextFunction).function)
         {
-            m_id.SetStartAddress (m_sc.function->GetAddressRange().GetBaseAddress());
+            m_id.SetStartAddress (m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
         }
         else if (GetSymbolContext (eSymbolContextSymbol).symbol)
         {
             AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRangePtr();
             if (symbol_range_ptr)
-                m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress());
+                m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
         }
+        
+        // We didn't find a function or symbol, just use the frame code address
+        // which will be the same as the PC in the frame.
+        if (m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
+            m_id.SetStartAddress (m_frame_code_addr.GetLoadAddress (&m_thread.GetProcess()));
     }
     return m_id;
 }
@@ -186,17 +192,17 @@ StackFrame::GetStackID()
 Address&
 StackFrame::GetFrameCodeAddress()
 {
-    if (m_flags.IsClear(RESOLVED_FRAME_ADDR) && !m_pc.IsSectionOffset())
+    if (m_flags.IsClear(RESOLVED_FRAME_ADDR) && !m_frame_code_addr.IsSectionOffset())
     {
         m_flags.Set (RESOLVED_FRAME_ADDR);
 
         // Resolve the PC into a temporary address because if ResolveLoadAddress
         // fails to resolve the address, it will clear the address object...
         Address resolved_pc;
-        if (m_thread.GetProcess().ResolveLoadAddress(m_pc.GetOffset(), resolved_pc))
+        if (m_thread.GetProcess().ResolveLoadAddress(m_frame_code_addr.GetOffset(), resolved_pc))
         {
-            m_pc = resolved_pc;
-            const Section *section = m_pc.GetSection();
+            m_frame_code_addr = resolved_pc;
+            const Section *section = m_frame_code_addr.GetSection();
             if (section)
             {
                 Module *module = section->GetModule();
@@ -209,14 +215,14 @@ StackFrame::GetFrameCodeAddress()
             }
         }
     }
-    return m_pc;
+    return m_frame_code_addr;
 }
 
 void
 StackFrame::ChangePC (addr_t pc)
 {
-    m_pc.SetOffset(pc);
-    m_pc.SetSection(NULL);
+    m_frame_code_addr.SetOffset(pc);
+    m_frame_code_addr.SetSection(NULL);
     m_sc.Clear();
     m_flags.SetAllFlagBits(0);
     m_thread.ClearStackFrames ();
@@ -473,11 +479,7 @@ StackFrame::GetValueObjectList()
 bool
 StackFrame::IsInlined ()
 {
-    Block *block = GetSymbolContext (eSymbolContextBlock).block;
-    if (block)
-        return block->GetContainingInlinedBlock() != NULL;
-    else
-        return false;
+    return m_id.GetInlineBlockID() != LLDB_INVALID_UID;
 }
 
 Target *

@@ -230,7 +230,7 @@ public:
     RemoveLogChannel (const char *name);
 #endif
 
-    std::string
+    size_t
     FindLongestCommandWord (CommandObject::CommandMap &dict);
 
     void

@@ -188,11 +188,10 @@ CommandObjectMultiword::GenerateHelpText (CommandInterpreter &interpreter, Comma
     output_stream.PutCString ("The following subcommands are supported:\n\n");
 
     CommandMap::iterator pos;
-    std::string longest_word = interpreter.FindLongestCommandWord (m_subcommand_dict);
-    uint32_t max_len = 0;
+    uint32_t max_len = interpreter.FindLongestCommandWord (m_subcommand_dict);
 
-    if (! longest_word.empty())
-        max_len = strlen (longest_word.c_str()) + 4; // Indent the output by 4 spaces.
+    if (max_len)
+        max_len += 4; // Indent the output by 4 spaces.
 
     for (pos = m_subcommand_dict.begin(); pos != m_subcommand_dict.end(); ++pos)
     {

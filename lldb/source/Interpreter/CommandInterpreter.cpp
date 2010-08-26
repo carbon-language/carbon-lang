@@ -494,25 +494,20 @@ CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_na
     help_string.Printf ("'");
 }
 
-std::string
+size_t
 CommandInterpreter::FindLongestCommandWord (CommandObject::CommandMap &dict)
 {
     CommandObject::CommandMap::const_iterator pos;
-    int max_len = 0;
-    CommandObjectSP cmd_sp;
-    std::string longest_word;
+    CommandObject::CommandMap::const_iterator end = dict.end();
+    size_t max_len = 0;
 
-    for (pos = dict.begin(); pos != dict.end(); ++pos)
-      {
-        if ((max_len == 0)
-            || (strlen (pos->first.c_str()) > max_len))
-          {
-            longest_word = pos->first;
-            max_len = strlen (longest_word.c_str());
-          }
+    for (pos = dict.begin(); pos != end; ++pos)
+    {
+        size_t len = pos->first.size();
+        if (max_len < len)
+            max_len = len;
     }
-
-    return longest_word;
+    return max_len;
 }
 
 void
@@ -521,8 +516,7 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
     CommandObject::CommandMap::const_iterator pos;
     result.AppendMessage("The following is a list of built-in, permanent debugger commands:");
     result.AppendMessage("");
-    std::string longest_word  = FindLongestCommandWord (m_command_dict);
-    uint32_t max_len = strlen (longest_word.c_str());
+    uint32_t max_len = FindLongestCommandWord (m_command_dict);
 
     for (pos = m_command_dict.begin(); pos != m_command_dict.end(); ++pos)
     {
@@ -535,8 +529,8 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
     {
         result.AppendMessage("The following is a list of your current command abbreviations (see 'commands alias' for more info):");
         result.AppendMessage("");
-        longest_word = FindLongestCommandWord (m_alias_dict);
-        max_len = strlen (longest_word.c_str());
+        max_len = FindLongestCommandWord (m_alias_dict);
+
         for (pos = m_alias_dict.begin(); pos != m_alias_dict.end(); ++pos)
         {
             StreamString sstr;

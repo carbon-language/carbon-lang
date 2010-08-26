@@ -139,7 +139,7 @@ private:
     uint32_t m_concrete_frame_index;
     lldb::RegisterContextSP m_reg_context_sp;
     StackID m_id;
-    Address m_pc;   // PC as a section/offset address
+    Address m_frame_code_addr;   // The frame code address (might not be the same as the actual PC for inlined frames) as a section/offset address
     SymbolContext   m_sc;
     Flags m_flags;
     Scalar m_frame_base;

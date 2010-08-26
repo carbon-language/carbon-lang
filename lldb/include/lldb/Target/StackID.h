@@ -26,29 +26,22 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     StackID () :
-        m_start_address(),
-        m_cfa (0),
-        m_inline_block_id (0)
+        m_start_pc (LLDB_INVALID_ADDRESS),
+        m_cfa (LLDB_INVALID_ADDRESS),
+        m_inline_block_id (LLDB_INVALID_UID)
     {
     }
 
     explicit 
-    StackID (lldb::addr_t cfa, lldb::user_id_t inline_block_id) :
-        m_start_address (),
-        m_cfa (cfa),
-        m_inline_block_id (inline_block_id)
-    {
-    }
-
-    StackID (const Address& start_address, lldb::addr_t cfa, uint32_t inline_block_id) : 
-        m_start_address (start_address),
+    StackID (lldb::addr_t start_pc, lldb::addr_t cfa, lldb::user_id_t inline_block_id) :
+        m_start_pc (),
         m_cfa (cfa),
         m_inline_block_id (inline_block_id)
     {
     }
 
     StackID (const StackID& rhs) :
-        m_start_address (rhs.m_start_address),
+        m_start_pc (rhs.m_start_pc),
         m_cfa (rhs.m_cfa),
         m_inline_block_id (rhs.m_inline_block_id)
     {
@@ -58,16 +51,16 @@ public:
     {
     }
 
-    const Address&
+    const lldb::addr_t
     GetStartAddress() const
     {
-        return m_start_address;
+        return m_start_pc;
     }
 
     void
-    SetStartAddress(const Address& start_address)
+    SetStartAddress(lldb::addr_t start_pc)
     {
-        m_start_address = start_address;
+        m_start_pc = start_pc;
     }
 
     lldb::addr_t
@@ -96,7 +89,7 @@ public:
     {
         if (this != &rhs)
         {
-            m_start_address = rhs.m_start_address;
+            m_start_pc = rhs.m_start_pc;
             m_cfa = rhs.m_cfa;
             m_inline_block_id = rhs.m_inline_block_id;
         }
@@ -107,7 +100,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------
-    Address m_start_address;            // The address range for the function for this frame
+    lldb::addr_t m_start_pc;            // The start address for the function/symbol for this frame
     lldb::addr_t m_cfa;                 // The call frame address (stack pointer) value
                                         // at the beginning of the function that uniquely
                                         // identifies this frame (along with m_inline_block_id below)
