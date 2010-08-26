@@ -239,3 +239,9 @@ typedef unsigned long long v1i64 __attribute__((__vector_size__(8)));
 // CHECK: define i64 @f34(i64 %arg.coerce)
 v1i64 f34(v1i64 arg) { return arg; }
 
+
+// rdar://8358475
+// CHECK: define i64 @f35(i64 %arg.coerce)
+typedef unsigned long v1i64_2 __attribute__((__vector_size__(8)));
+v1i64_2 f35(v1i64_2 arg) { return arg+arg; }
+

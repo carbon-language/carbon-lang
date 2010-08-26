@@ -894,7 +894,9 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 
       // gcc passes <1 x long long> as INTEGER.
       if (VT->getElementType()->isSpecificBuiltinType(BuiltinType::LongLong) ||
-          VT->getElementType()->isSpecificBuiltinType(BuiltinType::ULongLong))
+          VT->getElementType()->isSpecificBuiltinType(BuiltinType::ULongLong) ||
+          VT->getElementType()->isSpecificBuiltinType(BuiltinType::Long) ||
+          VT->getElementType()->isSpecificBuiltinType(BuiltinType::ULong))
         Current = Integer;
       else
         Current = SSE;
