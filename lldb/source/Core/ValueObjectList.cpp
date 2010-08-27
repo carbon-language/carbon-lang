@@ -117,3 +117,9 @@ ValueObjectList::FindValueObjectByPointer (ValueObject *valobj)
     }
     return valobj_sp;
 }
+
+void
+ValueObjectList::Swap (ValueObjectList &value_object_list)
+{
+    m_value_objects.swap (value_object_list.m_value_objects);
+}

@@ -131,13 +131,8 @@ protected:
     }
     
     void
-    SetFrameCodeAddress(const Address& frame_code_addr)
-    {
-        m_frame_code_addr = frame_code_addr;
-    }
-
-    void
-    SetSymbolContext (const SymbolContext& sc);
+    UpdateCurrentFrameFromPreviousFrame (StackFrame &frame);
+    
 private:
     //------------------------------------------------------------------
     // For StackFrame only

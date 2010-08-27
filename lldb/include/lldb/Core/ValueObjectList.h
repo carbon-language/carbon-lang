@@ -59,6 +59,9 @@ public:
     lldb::ValueObjectSP
     FindValueObjectByUID (lldb::user_id_t uid);
 
+    void
+    Swap (ValueObjectList &value_object_list);
+    
 protected:
     typedef std::vector<lldb::ValueObjectSP> collection;
     //------------------------------------------------------------------

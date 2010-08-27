@@ -151,9 +151,9 @@ StackFrameList::GetNumFrames()
                 StackFrameList *curr_frames = this;
 
 #if defined (DEBUG_STACK_FRAMES)
-                s.PutCString("prev_frames:\n");
+                s.PutCString("\nprev_frames:\n");
                 prev_frames->Dump (&s);
-                s.PutCString("curr_frames:\n");
+                s.PutCString("\ncurr_frames:\n");
                 curr_frames->Dump (&s);
                 s.EOL();
 #endif
@@ -203,8 +203,6 @@ StackFrameList::GetNumFrames()
                             // Same function different block
                             if (m_show_inlined_frames)
                                 break;
-                            else
-                                prev_frame->SetSymbolContext (curr_frame->m_sc);
                         }
                     }
                     else if (curr_sc.symbol && curr_sc.symbol == prev_sc.symbol)
@@ -217,27 +215,22 @@ StackFrameList::GetNumFrames()
                         break;
                     }
 
-                    if (curr_frame->GetFrameCodeAddress() != prev_frame->GetFrameCodeAddress())
-                    {
-#if defined (DEBUG_STACK_FRAMES)
-                        s.Printf("\nUpdating frame code address and symbol context in previous frame #%u to current frame #%u", prev_frame_idx, curr_frame_idx);
-#endif
-                        // We have a different code frame address, we might need to copy
-                        // some stuff in prev_frame, yet update the code address...
-                        prev_frame->SetFrameCodeAddress (curr_frame->GetFrameCodeAddress());
-                        prev_frame->SetSymbolContext (curr_frame->m_sc);
-                    }
-
-                    curr_frames->m_frames[curr_frame_idx] = prev_frames->m_frames[prev_frame_idx];
+                    curr_frame->UpdateCurrentFrameFromPreviousFrame (*prev_frame);
                     
 #if defined (DEBUG_STACK_FRAMES)
-                    s.Printf("\nCopying previous frame #%u to current frame #%u", prev_frame_idx, curr_frame_idx);
+                    s.Printf("\n    Copying previous frame to current frame");
 #endif
                 }
                 // We are done with the old stack frame list, we can release it now
                 m_prev_frames_ap.release();
                 prev_frames = NULL;
             }
+            
+#if defined (DEBUG_STACK_FRAMES)
+                s.PutCString("\n\nNew frames:\n");
+                Dump (&s);
+                s.EOL();
+#endif
         }
         else
         {

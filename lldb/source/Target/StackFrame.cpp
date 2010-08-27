@@ -531,11 +531,14 @@ StackFrame::Dump (Stream *strm, bool show_frame_index)
     m_sc.DumpStopContext(strm, &m_thread.GetProcess(), GetFrameCodeAddress(), show_module, show_inline);
 }
 
-
 void
-StackFrame::SetSymbolContext (const SymbolContext& sc)
+StackFrame::UpdateCurrentFrameFromPreviousFrame (StackFrame &frame)
 {
-    m_sc = sc;
-    m_flags.Clear(eSymbolContextEverything);
-    m_flags.Set(m_sc.GetResolvedMask ());
+    assert (GetStackID() == frame.GetStackID());    // TODO: remove this after some testing
+    m_variable_list_sp = frame.m_variable_list_sp;
+    m_value_object_list.Swap (frame.m_value_object_list);
+    if (!m_disassembly.GetString().empty())
+        m_disassembly.GetString().swap (m_disassembly.GetString());
 }
+    
+
