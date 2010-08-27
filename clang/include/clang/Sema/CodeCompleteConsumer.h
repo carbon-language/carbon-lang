@@ -69,7 +69,11 @@ enum {
   CCD_VoidMatch = -5,
   /// \brief The result is a C++ non-static member function whose qualifiers
   /// exactly match the object type on which the member function can be called.
-  CCD_ObjectQualifierMatch = -1
+  CCD_ObjectQualifierMatch = -1,
+  /// \brief The selector of the given message exactly matches the selector
+  /// of the current method, which might imply that some kind of delegation
+  /// is occurring.
+  CCD_SelectorMatch = -3
 };
 
 /// \brief Priority value factors by which we will divide or multiply the

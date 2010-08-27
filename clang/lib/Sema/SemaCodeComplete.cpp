@@ -143,6 +143,9 @@ namespace {
     /// \brief Whether the \p ObjectTypeQualifiers field is active.
     bool HasObjectTypeQualifiers;
     
+    /// \brief The selector that we prefer.
+    Selector PreferredSelector;
+    
     void AdjustResultPriorityForPreferredType(Result &R);
 
   public:
@@ -185,6 +188,15 @@ namespace {
     void setObjectTypeQualifiers(Qualifiers Quals) {
       ObjectTypeQualifiers = Quals;
       HasObjectTypeQualifiers = true;
+    }
+    
+    /// \brief Set the preferred selector.
+    ///
+    /// When an Objective-C method declaration result is added, and that
+    /// method's selector matches this preferred selector, we give that method
+    /// a slight priority boost.
+    void setPreferredSelector(Selector Sel) {
+      PreferredSelector = Sel;
     }
     
     /// \brief Specify whether nested-name-specifiers are allowed.
@@ -706,7 +718,14 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   // Make sure that any given declaration only shows up in the result set once.
   if (!AllDeclsFound.insert(CanonDecl))
     return;
-  
+
+  // If this is an Objective-C method declaration whose selector matches our
+  // preferred selector, give it a priority boost.
+  if (!PreferredSelector.isNull())
+    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(R.Declaration))
+      if (PreferredSelector == Method->getSelector())
+        R.Priority += CCD_SelectorMatch;
+
   // If the filter is for nested-name-specifiers, then this result starts a
   // nested-name-specifier.
   if (AsNestedNameSpecifier) {
@@ -714,7 +733,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     R.Priority = CCP_NestedNameSpecifier;
   } else if (!PreferredType.isNull())
       AdjustResultPriorityForPreferredType(R);
-
+      
   // If this result is supposed to have an informative qualifier, add one.
   if (R.QualifierIsInformative && !R.Qualifier &&
       !R.StartsNestedNameSpecifier) {
@@ -787,6 +806,13 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   if (InBaseClass)
     R.Priority += CCD_InBaseClass;
   
+  // If this is an Objective-C method declaration whose selector matches our
+  // preferred selector, give it a priority boost.
+  if (!PreferredSelector.isNull())
+    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(R.Declaration))
+      if (PreferredSelector == Method->getSelector())
+        R.Priority += CCD_SelectorMatch;
+
   if (!PreferredType.isNull())
     AdjustResultPriorityForPreferredType(R);
   
@@ -3996,6 +4022,11 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
       Results.Ignore(SuperMethod);
   }
 
+  // If we're inside an Objective-C method definition, prefer its selector to
+  // others.
+  if (ObjCMethodDecl *CurMethod = getCurMethodDecl())
+    Results.setPreferredSelector(CurMethod->getSelector());
+
   if (CDecl) 
     AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
                    Results);  
@@ -4071,6 +4102,11 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
       Results.Ignore(SuperMethod);
   }
   
+  // If we're inside an Objective-C method definition, prefer its selector to
+  // others.
+  if (ObjCMethodDecl *CurMethod = getCurMethodDecl())
+    Results.setPreferredSelector(CurMethod->getSelector());
+
   // If we're messaging an expression with type "id" or "Class", check
   // whether we know something special about the receiver that allows
   // us to assume a more-specific receiver type.

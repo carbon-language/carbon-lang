@@ -26,6 +26,11 @@ void message_id(B *b) {
   [[b superclass] B_method];
 }
 
+@implementation Unrelated
++ (id)alloc {
+  return [A alloc];
+}
+@end
 // RUN: c-index-test -code-completion-at=%s:24:14 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: ObjCInstanceMethodDecl:{ResultType id}{TypedText autorelease}
 // CHECK-CC1-NOT: B_method
@@ -39,4 +44,11 @@ void message_id(B *b) {
 // CHECK-CC3-NOT: B_method
 // CHECK-CC3: ObjCInstanceMethodDecl:{ResultType id}{TypedText retain}
 
+
+// RUN: c-index-test -code-completion-at=%s:31:13 %s | FileCheck -check-prefix=CHECK-SELECTOR-PREF %s
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText alloc} (17)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText class} (20)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText init} (20)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType id}{TypedText new} (20)
+// CHECK-SELECTOR-PREF: ObjCClassMethodDecl:{ResultType Class}{TypedText superclass} (20)
 
