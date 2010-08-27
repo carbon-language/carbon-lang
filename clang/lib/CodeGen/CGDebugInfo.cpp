@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
@@ -602,9 +603,12 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                0),
                       Unit);
   
-  // Static methods do not need "this" pointer argument.
-  if (Method->isStatic())
-    return FnTy;
+  unsigned BFlags=0;
+  AccessSpecifier Access = Method->getAccess();
+  if (Access == clang::AS_private)
+    BFlags |= llvm::DIType::FlagPrivate;
+  else if (Access == clang::AS_protected)
+    BFlags |= llvm::DIType::FlagProtected;
 
   // Add "this" pointer.
 
@@ -616,15 +620,18 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   // First element is always return type. For 'void' functions it is NULL.
   Elts.push_back(Args.getElement(0));
 
-  // "this" pointer is always first argument.
-  ASTContext &Context = CGM.getContext();
-  QualType ThisPtr = 
-    Context.getPointerType(Context.getTagDeclType(Method->getParent()));
-  llvm::DIType ThisPtrType = 
-    DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
+  if (!Method->isStatic())
+  {
+        // "this" pointer is always first argument.
+        ASTContext &Context = CGM.getContext();
+        QualType ThisPtr =
+          Context.getPointerType(Context.getTagDeclType(Method->getParent()));
+        llvm::DIType ThisPtrType =
+          DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
 
-  TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;  
-  Elts.push_back(ThisPtrType);
+        TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;
+        Elts.push_back(ThisPtrType);
+    }
 
   // Copy rest of the arguments.
   for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
@@ -715,6 +722,34 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
     EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
   }
 }                                 
+
+/// CollectCXXFriends - A helper function to collect debug info for
+/// C++ base classes. This is used while creating debug info entry for
+/// a Record.
+void CGDebugInfo::
+CollectCXXFriends(const CXXRecordDecl *RD, llvm::DIFile Unit,
+                llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                llvm::DIType RecordTy) {
+
+  for (CXXRecordDecl::friend_iterator BI =  RD->friend_begin(),
+         BE = RD->friend_end(); BI != BE; ++BI) {
+
+    TypeSourceInfo *TInfo = (*BI)->getFriendType();
+    if(TInfo)
+    {
+        llvm::DIType Ty = getOrCreateType(TInfo->getType(), Unit);
+
+            llvm::DIType DTy =
+          DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_friend,
+                                         RecordTy, llvm::StringRef(),
+                                         Unit, 0, 0, 0,
+                                         0, 0, Ty);
+
+        EltTys.push_back(DTy);
+    }
+
+  }
+}
 
 /// CollectCXXBases - A helper function to collect debug info for
 /// C++ base classes. This is used while creating debug info entry for 
@@ -910,6 +945,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   llvm::MDNode *ContainingType = NULL;
   if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
+    CollectCXXFriends(CXXDecl, Unit, EltTys, FwdDecl);
 
     // A class's primary base or the class itself contains the vtable.
     const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
@@ -1853,7 +1889,7 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl,
     getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()), Unit);
   llvm::DINameSpace NS =
     DebugFactory.CreateNameSpace(Context, NSDecl->getName(), 
-        llvm::DIFile(Unit), LineNo);
+                                 llvm::DIFile(Unit), LineNo);
   NameSpaceCache[NSDecl] = llvm::WeakVH(NS);
   return NS;
 }

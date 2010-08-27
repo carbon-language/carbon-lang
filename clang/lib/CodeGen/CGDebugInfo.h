@@ -111,6 +111,12 @@ class CGDebugInfo {
                                  llvm::DIFile F,
                                  llvm::SmallVectorImpl<llvm::DIDescriptor> &E,
                                  llvm::DIType T);
+
+  void CollectCXXFriends(const CXXRecordDecl *Decl,
+                       llvm::DIFile F,
+                       llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                       llvm::DIType RecordTy);
+
   void CollectCXXBases(const CXXRecordDecl *Decl,
                        llvm::DIFile F,
                        llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
