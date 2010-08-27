@@ -396,6 +396,11 @@ static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
   case Instruction::Trunc:
     // trunc(trunc(x)) -> trunc(x)
     return true;
+  case Instruction::ZExt:
+  case Instruction::SExt:
+    // trunc(ext(x)) -> ext(x) if the source type is smaller than the new dest
+    // trunc(ext(x)) -> trunc(x) if the source type is larger than the new dest
+    return true;
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
     return CanEvaluateTruncated(SI->getTrueValue(), Ty) &&

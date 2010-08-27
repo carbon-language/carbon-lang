@@ -1,4 +1,5 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
 ; Instcombine should be able to eliminate all of these ext casts.
 
@@ -76,7 +77,23 @@ define i92 @test7(i64 %A) {
   %D = trunc i128 %C to i92
   ret i92 %D
 ; CHECK: @test7
-; CHECK: %C = lshr i64 %A, 32
-; CHECK: %D = zext i64 %C to i92
-; CHECK: ret i92 %D
+; CHECK: %B = zext i64 %A to i92
+; CHECK: %C = lshr i92 %B, 32
+; CHECK: ret i92 %C
 }
+
+define i64 @test8(i32 %A, i32 %B) {
+  %tmp38 = zext i32 %A to i128
+  %tmp32 = zext i32 %B to i128
+  %tmp33 = shl i128 %tmp32, 32
+  %ins35 = or i128 %tmp33, %tmp38
+  %tmp42 = trunc i128 %ins35 to i64
+  ret i64 %tmp42
+; CHECK: @test8
+; CHECK:   %tmp38 = zext i32 %A to i64
+; CHECK:   %tmp32 = zext i32 %B to i64
+; CHECK:   %tmp33 = shl i64 %tmp32, 32
+; CHECK:   %ins35 = or i64 %tmp33, %tmp38
+; CHECK:   ret i64 %ins35
+}
+
