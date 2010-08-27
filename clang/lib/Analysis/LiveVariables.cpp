@@ -77,12 +77,13 @@ public:
 };
 } // end anonymous namespace
 
-LiveVariables::LiveVariables(AnalysisContext &AC) {  
+LiveVariables::LiveVariables(AnalysisContext &AC, bool killAtAssign) {
   // Register all referenced VarDecls.
   CFG &cfg = *AC.getCFG();
   getAnalysisData().setCFG(cfg);
   getAnalysisData().setContext(AC.getASTContext());
   getAnalysisData().AC = &AC;
+  getAnalysisData().killAtAssign = killAtAssign;
 
   RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
@@ -260,12 +261,13 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
     if (DR->getDecl()->getType()->isReferenceType()) {
       VisitDeclRefExpr(DR);
     } else {
-      // Update liveness inforamtion.
-      unsigned bit = AD.getIdx(DR->getDecl());
-      LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
+      if (AD.killAtAssign) {
+        // Update liveness inforamtion.
+        unsigned bit = AD.getIdx(DR->getDecl());
+        LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
 
-      if (AD.Observer) { AD.Observer->ObserverKill(DR); }
-
+        if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+      }
       // Handle things like +=, etc., which also generate "uses"
       // of a variable.  Do this just by visiting the subexpression.
       if (B->getOpcode() != BO_Assign)

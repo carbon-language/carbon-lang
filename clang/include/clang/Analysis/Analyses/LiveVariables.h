@@ -41,8 +41,9 @@ struct LiveVariables_ValueTypes {
     ObserverTy* Observer;
     ValTy AlwaysLive;
     AnalysisContext *AC;
+    bool killAtAssign;
 
-    AnalysisDataTy() : Observer(NULL), AC(NULL) {}
+    AnalysisDataTy() : Observer(NULL), AC(NULL), killAtAssign(true) {}
   };
 
   //===-----------------------------------------------------===//
@@ -68,7 +69,7 @@ class LiveVariables : public DataflowValues<LiveVariables_ValueTypes,
 public:
   typedef LiveVariables_ValueTypes::ObserverTy ObserverTy;
 
-  LiveVariables(AnalysisContext &AC);
+  LiveVariables(AnalysisContext &AC, bool killAtAssign = true);
 
   /// IsLive - Return true if a variable is live at the end of a
   /// specified block.

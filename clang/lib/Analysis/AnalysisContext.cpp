@@ -104,6 +104,20 @@ LiveVariables *AnalysisContext::getLiveVariables() {
   return liveness;
 }
 
+LiveVariables *AnalysisContext::getRelaxedLiveVariables() {
+  if (!relaxedLiveness) {
+    CFG *c = getCFG();
+    if (!c)
+      return 0;
+
+    relaxedLiveness = new LiveVariables(*this, false);
+    relaxedLiveness->runOnCFG(*c);
+    relaxedLiveness->runOnAllBlocks(*c, 0, true);
+  }
+
+  return relaxedLiveness;
+}
+
 AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
                                                     idx::TranslationUnit *TU) {
   AnalysisContext *&AC = Contexts[D];

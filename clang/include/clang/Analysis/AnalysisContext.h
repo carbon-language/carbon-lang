@@ -49,6 +49,7 @@ class AnalysisContext {
   CFG *cfg, *completeCFG;
   bool builtCFG, builtCompleteCFG;
   LiveVariables *liveness;
+  LiveVariables *relaxedLiveness;
   ParentMap *PM;
   PseudoConstantAnalysis *PCA;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
@@ -61,7 +62,7 @@ public:
                   bool addehedges = false)
     : D(d), TU(tu), cfg(0), completeCFG(0),
       builtCFG(false), builtCompleteCFG(false),
-      liveness(0), PM(0), PCA(0),
+      liveness(0), relaxedLiveness(0), PM(0), PCA(0),
       ReferencedBlockVars(0), UseUnoptimizedCFG(useUnoptimizedCFG),
       AddEHEdges(addehedges) {}
 
@@ -89,6 +90,7 @@ public:
   ParentMap &getParentMap();
   PseudoConstantAnalysis *getPseudoConstantAnalysis();
   LiveVariables *getLiveVariables();
+  LiveVariables *getRelaxedLiveVariables();
 
   typedef const VarDecl * const * referenced_decls_iterator;
 
