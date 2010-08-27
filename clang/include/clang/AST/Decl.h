@@ -701,11 +701,10 @@ public:
   bool isFileVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    if (const DeclContext *Ctx = getDeclContext()) {
-      Ctx = Ctx->getLookupContext();
-      if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
-        return true;
-    }
+    
+    if (getDeclContext()->getLookupContext()->isFileContext())
+      return true;
+    
     if (isStaticDataMember())
       return true;
 

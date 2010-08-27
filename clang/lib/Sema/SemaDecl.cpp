@@ -2627,26 +2627,23 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
     if (!OuterContext->isFunctionOrMethod())
       // This rule only applies to block-scope declarations.
       return false;
-    else {
-      DeclContext *PrevOuterContext = PrevDecl->getDeclContext();
-      if (PrevOuterContext->isRecord())
-        // We found a member function: ignore it.
-        return false;
-      else {
-        // Find the innermost enclosing namespace for the new and
-        // previous declarations.
-        while (!OuterContext->isFileContext())
-          OuterContext = OuterContext->getParent();
-        while (!PrevOuterContext->isFileContext())
-          PrevOuterContext = PrevOuterContext->getParent();
+    
+    DeclContext *PrevOuterContext = PrevDecl->getDeclContext();
+    if (PrevOuterContext->isRecord())
+      // We found a member function: ignore it.
+      return false;
+    
+    // Find the innermost enclosing namespace for the new and
+    // previous declarations.
+    while (!OuterContext->isFileContext())
+      OuterContext = OuterContext->getParent();
+    while (!PrevOuterContext->isFileContext())
+      PrevOuterContext = PrevOuterContext->getParent();
 
-        // The previous declaration is in a different namespace, so it
-        // isn't the same function.
-        if (OuterContext->getPrimaryContext() !=
-            PrevOuterContext->getPrimaryContext())
-          return false;
-      }
-    }
+    // The previous declaration is in a different namespace, so it
+    // isn't the same function.
+    if (!OuterContext->Equals(PrevOuterContext))
+      return false;
   }
 
   return true;
@@ -5511,6 +5508,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             PrevDecl = Tag;
             Previous.clear();
             Previous.addDecl(Tag);
+            Previous.resolveKind();
           }
         }
       }
