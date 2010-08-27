@@ -386,6 +386,10 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
 // Updates the current assumption given the new assumption
 inline void IdempotentOperationChecker::UpdateAssumption(Assumption &A,
                                                         const Assumption &New) {
+// If the assumption is the same, there is nothing to do
+  if (A == New)
+    return;
+
   switch (A) {
   // If we don't currently have an assumption, set it
   case Possible:
