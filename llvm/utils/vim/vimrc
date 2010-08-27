@@ -155,6 +155,13 @@ function! ClangComplete(findstart, base)
            let l:value = l:value[:l:spacecolonspace-1]
         endif
 
+        " Chop off " (Hidden)", if present, and move it to the menu.
+        let l:hidden = stridx(l:value, " (Hidden)")
+        if l:hidden != -1
+           let l:menu .= " (Hidden)"
+           let l:value = l:value[:l:hidden-1]
+        endif
+
         " Handle Pattern. TODO: Make clang less weird.
         if l:value == "Pattern"
            let l:value = l:menu
