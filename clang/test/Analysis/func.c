@@ -4,7 +4,7 @@
 void f(void) {
   void (*p)(void);
   p = f;
-  p = &f;
+  p = &f; // expected-warning{{Assigned value is always the same as the existing value}}
   p();
   (*p)();
 }

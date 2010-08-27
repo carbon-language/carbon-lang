@@ -78,6 +78,20 @@ void bailout() {
   }
 }
 
+// Relaxed liveness - check that we don't kill liveness at assignments
+typedef unsigned uintptr_t;
+void kill_at_assign() {
+  short array[2];
+  uintptr_t x = array; // expected-warning{{incompatible pointer to integer conversion}}
+  short *p = x; // expected-warning{{incompatible integer to pointer conversion}}
+
+  // The following branch should be infeasible.
+  if (!(p = &array[0])) { // expected-warning{{Assigned value is always the same as the existing value}}
+    p = 0;
+    *p = 1; // no-warning
+  }
+}
+
 // False positive tests
 
 unsigned false1() {

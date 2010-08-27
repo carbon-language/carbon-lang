@@ -253,7 +253,7 @@ void rdar_7249327(unsigned int A[2*32]) {
   a = A;
   b = B;
   
-  n = *a++;
+  n = *a++; // expected-warning{{Assigned value is always the same as the existing value}}
   if (n)
     x += *b++; // no-warning
 }
@@ -708,7 +708,7 @@ int pr5857(char *src) {
   long long *z = (long long *) (intptr_t) src;
   long long w = 0;
   int n = 0;
-  for (n = 0; n < y; ++n) {
+  for (n = 0; n < y; ++n) { // expected-warning{{Assigned value is always the same as the existing value}}
     // Previously we crashed analyzing this statement.
     w = *z++;
   }

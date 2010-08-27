@@ -60,7 +60,26 @@ int f4(int *p) {
   return *q; // expected-warning{{Dereference of null pointer (loaded from variable 'q')}}
 }
 
-// Placeholder for f4_b, temporarily moved to null-deref-ps-temp.c
+int f4_b() {
+  short array[2];
+  uintptr_t x = array; // expected-warning{{incompatible pointer to integer conversion}}
+  short *p = x; // expected-warning{{incompatible integer to pointer conversion}}
+
+  // The following branch should be infeasible.
+  if (!(p == &array[0])) {
+    p = 0;
+    *p = 1; // no-warning
+  }
+
+  if (p) {
+    *p = 5; // no-warning
+    p = 0;
+  }
+  else return; // expected-warning {{non-void function 'f4_b' should return a value}}
+
+  *p += 10; // expected-warning{{Dereference of null pointer}}
+  return 0;
+}
 
 int f5() {
   
