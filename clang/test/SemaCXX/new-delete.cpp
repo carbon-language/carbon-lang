@@ -344,3 +344,13 @@ namespace TemplateDestructors {
     template<class T> void operator delete(void*, const size_t, const int, T*);
   };
 }
+
+namespace DeleteParam {
+  struct X {
+    void operator delete(X*); // expected-error{{first parameter of 'operator delete' must have type 'void *'}}
+  };
+
+  struct Y {
+    void operator delete(void* const);
+  };
+}
