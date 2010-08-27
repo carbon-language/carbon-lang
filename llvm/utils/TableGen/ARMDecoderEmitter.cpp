@@ -1583,7 +1583,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
         Name == "MOVr_TC")
       return false;
 
-    // VLDMQ/VSTMQ can be hanlded with the more generic VLDMD/VSTMD.
+    // VLDMQ/VSTMQ can be handled with the more generic VLDMD/VSTMD.
     if (Name == "VLDMQ" || Name == "VLDMQ_UPD" ||
         Name == "VSTMQ" || Name == "VSTMQ_UPD")
       return false;
