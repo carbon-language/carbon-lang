@@ -50,12 +50,7 @@ static cl::opt<bool>
 Aggressive("aggressive-ext-opt", cl::Hidden,
            cl::desc("Aggressive extension optimization"));
 
-STATISTIC(NumReuse, "Number of extension results reused");
-
-// Optimize Comparisons
-static cl::opt<bool>
-EnableOptCmps("enable-optimize-cmps", cl::init(true), cl::Hidden);
-
+STATISTIC(NumReuse,      "Number of extension results reused");
 STATISTIC(NumEliminated, "Number of compares eliminated");
 
 namespace {
@@ -238,8 +233,6 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
 /// the flag from the previous instruction.
 bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
                                          MachineBasicBlock *MBB) {
-  if (!EnableOptCmps) return false;
-
   // If this instruction is a comparison against zero and isn't comparing a
   // physical register, we can try to optimize it.
   unsigned SrcReg;
