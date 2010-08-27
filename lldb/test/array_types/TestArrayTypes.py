@@ -53,7 +53,7 @@ class TestArrayTypes(TestBase):
             startstr = '(long [6])')
 
     def test_array_types_python(self):
-        """Use Python APIs to test variables with array types."""
+        """Use Python APIs to inspect variables with array types."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
