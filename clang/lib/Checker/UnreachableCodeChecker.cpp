@@ -188,8 +188,11 @@ const Stmt *UnreachableCodeChecker::getUnreachableStmt(const CFGBlock *CB) {
 // There will never be more than one predecessor.
 bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
                                            const ParentMap &PM) {
-  // Assert this CFGBlock only has one or zero predecessors
-  assert(CB->pred_size() == 0 || CB->pred_size() == 1);
+  // We only expect a predecessor size of 0 or 1. If it is >1, then an external
+  // condition has broken our assumption (for example, a sink being placed by
+  // another check). In these cases, we choose not to report.
+  if (CB->pred_size() > 1)
+    return true;
 
   // If there are no predecessors, then this block is trivially unreachable
   if (CB->pred_size() == 0)
