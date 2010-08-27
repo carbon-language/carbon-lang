@@ -343,3 +343,15 @@ bb2:
 }
 
 
+define i32 @test29(i64 %d18) {
+entry:
+	%tmp916 = lshr i64 %d18, 32
+	%tmp917 = trunc i64 %tmp916 to i32
+	%tmp10 = lshr i32 %tmp917, 31
+	ret i32 %tmp10
+; CHECK: @test29
+; CHECK:  %tmp101 = lshr i64 %d18, 63
+; CHECK:  %tmp10 = trunc i64 %tmp101 to i32
+}
+
+
