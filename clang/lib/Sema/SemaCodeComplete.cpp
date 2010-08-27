@@ -157,7 +157,7 @@ namespace {
     /// results.
     bool includeCodePatterns() const {
       return SemaRef.CodeCompleter && 
-      SemaRef.CodeCompleter->includeCodePatterns();
+             SemaRef.CodeCompleter->includeCodePatterns();
     }
     
     /// \brief Set the filter used for code-completion results.
@@ -2383,10 +2383,84 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
   return CodeCompletionContext::CCC_Other;
 }
 
+/// \brief If we're in a C++ virtual member function, add completion results
+/// that invoke the functions we override, since it's common to invoke the 
+/// overridden function as well as adding new functionality.
+///
+/// \param S The semantic analysis object for which we are generating results.
+///
+/// \param InContext This context in which the nested-name-specifier preceding
+/// the code-completion point 
+static void MaybeAddOverrideCalls(Sema &S, DeclContext *InContext,
+                                  ResultBuilder &Results) {
+  // Look through blocks.
+  DeclContext *CurContext = S.CurContext;
+  while (isa<BlockDecl>(CurContext))
+    CurContext = CurContext->getParent();
+  
+  
+  CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(CurContext);
+  if (!Method || !Method->isVirtual())
+    return;
+  
+  // We need to have names for all of the parameters, if we're going to 
+  // generate a forwarding call.
+  for (CXXMethodDecl::param_iterator P = Method->param_begin(),
+                                  PEnd = Method->param_end();
+       P != PEnd;
+       ++P) {
+    if (!(*P)->getDeclName())
+      return;
+  }
+
+  for (CXXMethodDecl::method_iterator M = Method->begin_overridden_methods(),
+                                   MEnd = Method->end_overridden_methods();
+       M != MEnd; ++M) {
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    CXXMethodDecl *Overridden = const_cast<CXXMethodDecl *>(*M);
+    if (Overridden->getCanonicalDecl() == Method->getCanonicalDecl())
+      continue;
+        
+    // If we need a nested-name-specifier, add one now.
+    if (!InContext) {
+      NestedNameSpecifier *NNS
+        = getRequiredQualification(S.Context, CurContext,
+                                   Overridden->getDeclContext());
+      if (NNS) {
+        std::string Str;
+        llvm::raw_string_ostream OS(Str);
+        NNS->print(OS, S.Context.PrintingPolicy);
+        Pattern->AddTextChunk(OS.str());
+      }
+    } else if (!InContext->Equals(Overridden->getDeclContext()))
+      continue;
+    
+    Pattern->AddTypedTextChunk(Overridden->getNameAsString());
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    bool FirstParam = true;
+    for (CXXMethodDecl::param_iterator P = Method->param_begin(),
+                                    PEnd = Method->param_end();
+         P != PEnd; ++P) {
+      if (FirstParam)
+        FirstParam = false;
+      else
+        Pattern->AddChunk(CodeCompletionString::CK_Comma);
+
+      Pattern->AddPlaceholderChunk((*P)->getIdentifier()->getName());
+    }
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Results.AddResult(CodeCompletionResult(Pattern,
+                                           CCP_SuperCompletion,
+                                           CXCursor_CXXMethod));
+    Results.Ignore(Overridden);
+  }
+}
+
 void Sema::CodeCompleteOrdinaryName(Scope *S, 
                                     ParserCompletionContext CompletionContext) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);  
+  Results.EnterNewScope();
 
   // Determine how to filter results, e.g., so that the names of
   // values (functions, enumerators, function templates, etc.) are
@@ -2417,6 +2491,9 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
       Results.setFilter(&ResultBuilder::IsOrdinaryName);
     else
       Results.setFilter(&ResultBuilder::IsOrdinaryNonTypeName);
+      
+    if (getLangOptions().CPlusPlus)
+      MaybeAddOverrideCalls(*this, /*InContext=*/0, Results);
     break;
       
   case PCC_RecoveryInFunction:
@@ -2435,7 +2512,6 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   LookupVisibleDecls(S, LookupOrdinaryName, Consumer,
                      CodeCompleter->includeGlobals());
 
-  Results.EnterNewScope();
   AddOrdinaryNameResults(CompletionContext, S, *this, Results);
   Results.ExitScope();
 
@@ -3047,17 +3123,28 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
     return;
 
   ResultBuilder Results(*this);
-  CodeCompletionDeclConsumer Consumer(Results, CurContext);
-  LookupVisibleDecls(Ctx, LookupOrdinaryName, Consumer);
   
+  Results.EnterNewScope();
   // The "template" keyword can follow "::" in the grammar, but only
   // put it into the grammar if the nested-name-specifier is dependent.
   NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
   if (!Results.empty() && NNS->isDependent())
     Results.AddResult("template");
+
+  // Add calls to overridden virtual functions, if there are any.
+  //
+  // FIXME: This isn't wonderful, because we don't know whether we're actually
+  // in a context that permits expressions. This is a general issue with
+  // qualified-id completions.
+  if (!EnteringContext)
+    MaybeAddOverrideCalls(*this, Ctx, Results);
+  Results.ExitScope();  
   
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(Ctx, LookupOrdinaryName, Consumer);
+
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_Name,
                             Results.data(),Results.size());
 }
 
