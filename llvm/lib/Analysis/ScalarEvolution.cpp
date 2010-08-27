@@ -1675,30 +1675,28 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     // there are multiple AddRec's with the same loop induction variable being
     // added together.  If so, we can fold them.
     for (unsigned OtherIdx = Idx+1;
-         OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);++OtherIdx)
-      if (OtherIdx != Idx) {
-        const SCEVAddRecExpr *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
-        if (AddRecLoop == OtherAddRec->getLoop()) {
-          // Other + {A,+,B} + {C,+,D}  -->  Other + {A+C,+,B+D}
-          SmallVector<const SCEV *, 4> NewOps(AddRec->op_begin(),
-                                              AddRec->op_end());
-          for (unsigned i = 0, e = OtherAddRec->getNumOperands(); i != e; ++i) {
-            if (i >= NewOps.size()) {
-              NewOps.append(OtherAddRec->op_begin()+i,
-                            OtherAddRec->op_end());
-              break;
+         OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
+         ++OtherIdx)
+      if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
+        // Other + {A,+,B}<L> + {C,+,D}<L>  -->  Other + {A+C,+,B+D}<L>
+        SmallVector<const SCEV *, 4> AddRecOps(AddRec->op_begin(),
+                                               AddRec->op_end());
+        for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
+             ++OtherIdx)
+          if (const SCEVAddRecExpr *AR =
+                dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]))
+            if (AR->getLoop() == AddRecLoop) {
+              for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i) {
+                if (i >= AddRecOps.size()) {
+                  AddRecOps.append(AR->op_begin()+i, AR->op_end());
+                  break;
+                }
+                AddRecOps[i] = getAddExpr(AddRecOps[i], AR->getOperand(i));
+              }
+              Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
             }
-            NewOps[i] = getAddExpr(NewOps[i], OtherAddRec->getOperand(i));
-          }
-          const SCEV *NewAddRec = getAddRecExpr(NewOps, AddRecLoop);
-
-          if (Ops.size() == 2) return NewAddRec;
-
-          Ops.erase(Ops.begin()+Idx);
-          Ops.erase(Ops.begin()+OtherIdx-1);
-          Ops.push_back(NewAddRec);
-          return getAddExpr(Ops);
-        }
+        Ops[Idx] = getAddRecExpr(AddRecOps, AddRecLoop);
+        return getAddExpr(Ops);
       }
 
     // Otherwise couldn't fold anything into this recurrence.  Move onto the
