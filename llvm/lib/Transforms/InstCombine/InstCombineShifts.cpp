@@ -59,7 +59,7 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                BinaryOperator &I) {
   bool isLeftShift = I.getOpcode() == Instruction::Shl;
-
+  
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint32_t TypeBits = Op0->getType()->getScalarSizeInBits();
@@ -288,39 +288,17 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                     ConstantInt::get(Ty, AmtSum));
     }
     
-    if (ShiftOp->getOpcode() == Instruction::LShr &&
-        I.getOpcode() == Instruction::AShr) {
-      if (AmtSum >= TypeBits)
-        return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-      
-      // ((X >>u C1) >>s C2) -> (X >>u (C1+C2))  since C1 != 0.
-      return BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, AmtSum));
-    }
-    
-    if (ShiftOp->getOpcode() == Instruction::AShr &&
-        I.getOpcode() == Instruction::LShr) {
-      // ((X >>s C1) >>u C2) -> ((X >>s (C1+C2)) & mask) since C1 != 0.
-      if (AmtSum >= TypeBits)
-        AmtSum = TypeBits-1;
-      
-      Value *Shift = Builder->CreateAShr(X, ConstantInt::get(Ty, AmtSum));
-
-      APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
-      return BinaryOperator::CreateAnd(Shift,
-                                       ConstantInt::get(I.getContext(), Mask));
-    }
-    
-    // Okay, if we get here, one shift must be left, and the other shift must be
-    // right.  See if the amounts are equal.
     if (ShiftAmt1 == ShiftAmt2) {
       // If we have ((X >>? C) << C), turn this into X & (-1 << C).
-      if (I.getOpcode() == Instruction::Shl) {
+      if (I.getOpcode() == Instruction::Shl &&
+          ShiftOp->getOpcode() != Instruction::Shl) {
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt1));
         return BinaryOperator::CreateAnd(X,
                                          ConstantInt::get(I.getContext(),Mask));
       }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
-      if (I.getOpcode() == Instruction::LShr) {
+      if (I.getOpcode() == Instruction::LShr &&
+          ShiftOp->getOpcode() == Instruction::Shl) {
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt1));
         return BinaryOperator::CreateAnd(X,
                                         ConstantInt::get(I.getContext(), Mask));
@@ -329,7 +307,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       uint32_t ShiftDiff = ShiftAmt2-ShiftAmt1;
       
       // (X >>? C1) << C2 --> X << (C2-C1) & (-1 << C2)
-      if (I.getOpcode() == Instruction::Shl) {
+      if (I.getOpcode() == Instruction::Shl &&
+          ShiftOp->getOpcode() != Instruction::Shl) {
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
         Value *Shift = Builder->CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
@@ -340,7 +319,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       }
       
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
-      if (I.getOpcode() == Instruction::LShr) {
+      if (I.getOpcode() == Instruction::LShr &&
+          ShiftOp->getOpcode() == Instruction::Shl) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
         Value *Shift = Builder->CreateLShr(X, ConstantInt::get(Ty, ShiftDiff));
         
@@ -355,9 +335,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       uint32_t ShiftDiff = ShiftAmt1-ShiftAmt2;
 
       // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C2)
-      if (I.getOpcode() == Instruction::Shl) {
-        assert(ShiftOp->getOpcode() == Instruction::LShr ||
-               ShiftOp->getOpcode() == Instruction::AShr);
+      if (I.getOpcode() == Instruction::Shl &&
+          ShiftOp->getOpcode() != Instruction::Shl) {
         Value *Shift = Builder->CreateBinOp(ShiftOp->getOpcode(), X,
                                             ConstantInt::get(Ty, ShiftDiff));
         
@@ -367,8 +346,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       }
       
       // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C2)
-      if (I.getOpcode() == Instruction::LShr) {
-        assert(ShiftOp->getOpcode() == Instruction::Shl);
+      if (I.getOpcode() == Instruction::LShr &&
+          ShiftOp->getOpcode() == Instruction::Shl) {
         Value *Shift = Builder->CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
         
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
