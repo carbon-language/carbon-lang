@@ -765,9 +765,10 @@ ASTContext::getTypeInfo(const Type *T) {
 
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
-    Align = std::max(Typedef->getMaxAlignment(),
-                     getTypeAlign(Typedef->getUnderlyingType().getTypePtr()));
-    Width = getTypeSize(Typedef->getUnderlyingType().getTypePtr());
+    std::pair<uint64_t, unsigned> Info
+      = getTypeInfo(Typedef->getUnderlyingType().getTypePtr());
+    Align = std::max(Typedef->getMaxAlignment(), Info.second);
+    Width = Info.first;
     break;
   }
 
