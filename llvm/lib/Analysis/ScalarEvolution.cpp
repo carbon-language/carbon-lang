@@ -1412,22 +1412,25 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     if (Ops.size() == 1) return Ops[0];
   }
 
-  // Okay, check to see if the same value occurs in the operand list twice.  If
-  // so, merge them together into an multiply expression.  Since we sorted the
-  // list, these values are required to be adjacent.
+  // Okay, check to see if the same value occurs in the operand list more than
+  // once.  If so, merge them together into an multiply expression.  Since we
+  // sorted the list, these values are required to be adjacent.
   const Type *Ty = Ops[0]->getType();
   bool FoundMatch = false;
-  for (unsigned i = 0, e = Ops.size()-1; i != e; ++i)
+  for (unsigned i = 0, e = Ops.size(); i != e-1; ++i)
     if (Ops[i] == Ops[i+1]) {      //  X + Y + Y  -->  X + Y*2
-      // Found a match, merge the two values into a multiply, and add any
-      // remaining values to the result.
-      const SCEV *Two = getConstant(Ty, 2);
-      const SCEV *Mul = getMulExpr(Two, Ops[i]);
-      if (Ops.size() == 2)
+      // Scan ahead to count how many equal operands there are.
+      unsigned Count = 2;
+      while (i+Count != e && Ops[i+Count] == Ops[i])
+        ++Count;
+      // Merge the values into a multiply.
+      const SCEV *Scale = getConstant(Ty, Count);
+      const SCEV *Mul = getMulExpr(Scale, Ops[i]);
+      if (Ops.size() == Count)
         return Mul;
       Ops[i] = Mul;
-      Ops.erase(Ops.begin()+i+1);
-      --i; --e;
+      Ops.erase(Ops.begin()+i+1, Ops.begin()+i+Count);
+      i -= Count - 1; e -= Count - 1;
       FoundMatch = true;
     }
   if (FoundMatch)
