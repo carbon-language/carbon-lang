@@ -9,6 +9,8 @@
 
 #include "thread"
 #include "exception"
+#include "vector"
+#include "future"
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
@@ -80,5 +82,58 @@ sleep_for(const chrono::nanoseconds& ns)
 }
 
 }  // this_thread
+
+__thread_specific_ptr<__thread_struct> __thread_local_data;
+
+// __thread_struct_imp
+
+class __thread_struct_imp
+{
+    typedef vector<__assoc_sub_state*> _AsyncStates;
+    _AsyncStates async_states_;
+
+    __thread_struct_imp(const __thread_struct_imp&);
+    __thread_struct_imp& operator=(const __thread_struct_imp&);
+public:
+    __thread_struct_imp() {}
+    ~__thread_struct_imp();
+
+    void __make_ready_at_thread_exit(__assoc_sub_state* __s);
+};
+
+__thread_struct_imp::~__thread_struct_imp()
+{
+    for (_AsyncStates::iterator i = async_states_.begin(), e = async_states_.end();
+            i != e; ++i)
+    {
+        (*i)->__make_ready();
+        (*i)->__release_shared();
+    }
+}
+
+void
+__thread_struct_imp::__make_ready_at_thread_exit(__assoc_sub_state* __s)
+{
+    async_states_.push_back(__s);
+    __s->__add_shared();
+}
+
+// __thread_struct
+
+__thread_struct::__thread_struct()
+    : __p_(new __thread_struct_imp)
+{
+}
+
+__thread_struct::~__thread_struct()
+{
+    delete __p_;
+}
+
+void
+__thread_struct::__make_ready_at_thread_exit(__assoc_sub_state* __s)
+{
+    __p_->__make_ready_at_thread_exit(__s);
+}
 
 _LIBCPP_END_NAMESPACE_STD

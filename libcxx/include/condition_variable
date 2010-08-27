@@ -61,6 +61,8 @@ public:
     native_handle_type native_handle();
 };
 
+void notify_all_at_thread_exit(condition_variable& cond, unique_lock<mutex> lk);
+
 class condition_variable_any
 {
 public:

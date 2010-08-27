@@ -102,7 +102,7 @@ public:
     void swap(promise& other);
 
     // retrieving the result
-    future<R> get_future();
+    future<R&> get_future();
 
     // setting the result
     void set_value(R& r);
@@ -130,7 +130,7 @@ public:
     void swap(promise& other);
 
     // retrieving the result
-    future<R> get_future();
+    future<void> get_future();
 
     // setting the result
     void set_value();
@@ -441,6 +441,11 @@ template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
 
 #include <__config>
 #include <system_error>
+#include <memory>
+#include <chrono>
+#include <exception>
+#include <__mutex_base>
+#include <thread>
 
 #pragma GCC system_header
 
@@ -522,6 +527,745 @@ public:
 
     const error_code& code() const throw() {return __ec_;}
 };
+
+class __assoc_sub_state
+    : public __shared_count
+{
+protected:
+    exception_ptr __exception_;
+    mutable mutex __mut_;
+    mutable condition_variable __cv_;
+    unsigned __state_;
+
+    virtual void __on_zero_shared();
+
+public:
+    enum
+    {
+        __constructed = 1,
+        __future_attached = 2,
+        ready = 4,
+        deferred = 8
+    };
+
+    __assoc_sub_state() : __state_(0) {}
+
+    bool __has_value() const
+        {return (__state_ & __constructed) || (__exception_ != nullptr);}
+
+    void __set_future_attached() {__state_ |= __future_attached;}
+    bool __has_future_attached() const {return __state_ & __future_attached;}
+
+    void __make_ready();
+    bool __is_ready() const {return __state_ & ready;}
+
+    void set_value();
+    void set_value_at_thread_exit();
+
+    void set_exception(exception_ptr __p);
+    void set_exception_at_thread_exit(exception_ptr __p);
+
+    void copy();
+
+    void wait() const;
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const;
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const;
+};
+
+template <class _R>
+class __assoc_state
+    : public __assoc_sub_state
+{
+    typedef __assoc_sub_state base;
+    typedef typename aligned_storage<sizeof(_R), alignment_of<_R>::value>::type _U;
+protected:
+    _U __value_;
+
+    virtual void __on_zero_shared();
+public:
+
+    template <class _Arg>
+#ifdef _LIBCPP_MOVE
+        void set_value(_Arg&& __arg);
+#else
+        void set_value(_Arg& __arg);
+#endif
+
+    template <class _Arg>
+#ifdef _LIBCPP_MOVE
+        void set_value_at_thread_exit(_Arg&& __arg);
+#else
+        void set_value_at_thread_exit(_Arg& __arg);
+#endif
+
+    _R move();
+    typename add_lvalue_reference<_R>::type copy();
+};
+
+template <class _R>
+void
+__assoc_state<_R>::__on_zero_shared()
+{
+    if (this->__state_ & base::__constructed)
+        reinterpret_cast<_R*>(&__value_)->~_R();
+    delete this;
+}
+
+template <class _R>
+template <class _Arg>
+void
+#ifdef _LIBCPP_MOVE
+__assoc_state<_R>::set_value(_Arg&& __arg)
+#else
+__assoc_state<_R>::set_value(_Arg& __arg)
+#endif
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    if (this->__has_value())
+        throw future_error(make_error_code(future_errc::promise_already_satisfied));
+    ::new(&__value_) _R(_STD::forward<_Arg>(__arg));
+    this->__state_ |= base::__constructed | base::ready;
+    __lk.unlock();
+    __cv_.notify_all();
+}
+
+template <class _R>
+template <class _Arg>
+void
+#ifdef _LIBCPP_MOVE
+__assoc_state<_R>::set_value_at_thread_exit(_Arg&& __arg)
+#else
+__assoc_state<_R>::set_value_at_thread_exit(_Arg& __arg)
+#endif
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    if (this->__has_value())
+        throw future_error(make_error_code(future_errc::promise_already_satisfied));
+    ::new(&__value_) _R(_STD::forward<_Arg>(__arg));
+    this->__state_ |= base::__constructed;
+    __thread_local_data->__make_ready_at_thread_exit(this);
+    __lk.unlock();
+}
+
+template <class _R>
+_R
+__assoc_state<_R>::move()
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    while (!this->__is_ready())
+        this->__cv_.wait(__lk);
+    if (this->__exception_ != nullptr)
+        rethrow_exception(this->__exception_);
+    return _STD::move(*reinterpret_cast<_R*>(&__value_));
+}
+
+template <class _R>
+typename add_lvalue_reference<_R>::type
+__assoc_state<_R>::copy()
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    while (!this->__is_ready())
+        this->__cv_.wait(__lk);
+    if (this->__exception_ != nullptr)
+        rethrow_exception(this->__exception_);
+    return *reinterpret_cast<_R*>(&__value_);
+}
+
+template <class _R, class _Alloc>
+class __assoc_state_alloc
+    : public __assoc_state<_R>
+{
+    typedef __assoc_state<_R> base;
+    _Alloc __alloc_;
+
+    virtual void __on_zero_shared();
+public:
+    explicit __assoc_state_alloc(const _Alloc& __a)
+        : __alloc_(__a) {}
+};
+
+template <class _R, class _Alloc>
+void
+__assoc_state_alloc<_R, _Alloc>::__on_zero_shared()
+{
+    if (this->__state_ & base::__constructed)
+        reinterpret_cast<_R*>(&this->__value_)->~_R();
+    typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
+    this->~__assoc_state_alloc();
+    __a.deallocate(this, 1);
+}
+
+template <class _Alloc>
+class __assoc_sub_state_alloc
+    : public __assoc_sub_state
+{
+    typedef __assoc_sub_state base;
+    _Alloc __alloc_;
+
+    virtual void __on_zero_shared();
+public:
+    explicit __assoc_sub_state_alloc(const _Alloc& __a)
+        : __alloc_(__a) {}
+};
+
+template <class _Alloc>
+void
+__assoc_sub_state_alloc<_Alloc>::__on_zero_shared()
+{
+    this->~base();
+    typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
+    this->~__assoc_sub_state_alloc();
+    __a.deallocate(this, 1);
+}
+
+template <class> class promise;
+
+// future
+
+template <class _R>
+class future
+{
+    __assoc_state<_R>* __state_;
+
+    explicit future(__assoc_state<_R>* __state);
+
+    template <class> friend class promise;
+public:
+    future() : __state_(nullptr) {}
+#ifdef _LIBCPP_MOVE
+    future(future&& __rhs)
+        : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
+    future(const future&) = delete;
+    future& operator=(const future&) = delete;
+    future& operator=(future&& __rhs)
+        {
+            future(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+#else  // _LIBCPP_MOVE
+private:
+    future(const future&);
+    future& operator=(const future&);
+public:
+#endif  // _LIBCPP_MOVE
+    ~future();
+
+    // retrieving the value
+    _R get();
+
+    void swap(future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // functions to check state
+    bool valid() const {return __state_ != nullptr;}
+
+    void wait() const {__state_->wait();}
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+            {return __state_->wait_for(__rel_time);}
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+            {return __state_->wait_until(__abs_time);}
+};
+
+template <class _R>
+future<_R>::future(__assoc_state<_R>* __state)
+    : __state_(__state)
+{
+    if (__state_->__has_future_attached())
+        throw future_error(make_error_code(future_errc::future_already_retrieved));
+    __state_->__add_shared();
+}
+
+template <class _R>
+future<_R>::~future()
+{
+    if (__state_)
+        __state_->__release_shared();
+}
+
+template <class _R>
+_R
+future<_R>::get()
+{
+    __assoc_state<_R>* __s = __state_;
+    __state_ = nullptr;
+    return __s->move();
+}
+
+template <class _R>
+class future<_R&>
+{
+    __assoc_state<_R&>* __state_;
+
+    explicit future(__assoc_state<_R&>* __state);
+
+    template <class> friend class promise;
+public:
+    future() : __state_(nullptr) {}
+#ifdef _LIBCPP_MOVE
+    future(future&& __rhs)
+        : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
+    future(const future&) = delete;
+    future& operator=(const future&) = delete;
+    future& operator=(future&& __rhs)
+        {
+            future(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+#else  // _LIBCPP_MOVE
+private:
+    future(const future&);
+    future& operator=(const future&);
+public:
+#endif  // _LIBCPP_MOVE
+    ~future();
+
+    // retrieving the value
+    _R& get();
+
+    void swap(future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // functions to check state
+    bool valid() const {return __state_ != nullptr;}
+
+    void wait() const {__state_->wait();}
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+            {return __state_->wait_for(__rel_time);}
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+            {return __state_->wait_until(__abs_time);}
+};
+
+template <class _R>
+future<_R&>::future(__assoc_state<_R&>* __state)
+    : __state_(__state)
+{
+    if (__state_->__has_future_attached())
+        throw future_error(make_error_code(future_errc::future_already_retrieved));
+    __state_->__add_shared();
+}
+
+template <class _R>
+future<_R&>::~future()
+{
+    if (__state_)
+        __state_->__release_shared();
+}
+
+template <class _R>
+_R&
+future<_R&>::get()
+{
+    __assoc_state<_R>* __s = __state_;
+    __state_ = nullptr;
+    return __s->copy();
+}
+
+template <>
+class future<void>
+{
+    __assoc_sub_state* __state_;
+
+    explicit future(__assoc_sub_state* __state);
+
+    template <class> friend class promise;
+public:
+    future() : __state_(nullptr) {}
+#ifdef _LIBCPP_MOVE
+    future(future&& __rhs)
+        : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
+    future(const future&) = delete;
+    future& operator=(const future&) = delete;
+    future& operator=(future&& __rhs)
+        {
+            future(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+#else  // _LIBCPP_MOVE
+private:
+    future(const future&);
+    future& operator=(const future&);
+public:
+#endif  // _LIBCPP_MOVE
+    ~future();
+
+    // retrieving the value
+    void get();
+
+    void swap(future& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // functions to check state
+    bool valid() const {return __state_ != nullptr;}
+
+    void wait() const {__state_->wait();}
+    template <class _Rep, class _Period>
+        future_status
+        wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+            {return __state_->wait_for(__rel_time);}
+    template <class _Clock, class _Duration>
+        future_status
+        wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+            {return __state_->wait_until(__abs_time);}
+};
+
+// promise<R>
+
+template <class _R>
+class promise
+{
+    __assoc_state<_R>* __state_;
+public:
+    promise();
+    template <class _Alloc>
+        promise(allocator_arg_t, const _Alloc& __a);
+#ifdef _LIBCPP_MOVE
+    promise(promise&& __rhs)
+        : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
+    promise(const promise& __rhs) = delete;
+#else  // _LIBCPP_MOVE
+private:
+    promise(const promise& __rhs);
+public:
+#endif  // _LIBCPP_MOVE
+    ~promise();
+
+    // assignment
+#ifdef _LIBCPP_MOVE
+    promise& operator=(promise&& __rhs)
+        {
+            promise(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+    promise& operator=(const promise& __rhs) = delete;
+#else  // _LIBCPP_MOVE
+private:
+    promise& operator=(const promise& __rhs);
+public:
+#endif  // _LIBCPP_MOVE
+    void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // retrieving the result
+    future<_R> get_future();
+
+    // setting the result
+    void set_value(const _R& __r);
+#ifdef _LIBCPP_MOVE
+    void set_value(_R&& __r);
+#endif
+    void set_exception(exception_ptr __p);
+
+    // setting the result with deferred notification
+    void set_value_at_thread_exit(const _R& __r);
+#ifdef _LIBCPP_MOVE
+    void set_value_at_thread_exit(_R&& __r);
+#endif
+    void set_exception_at_thread_exit(exception_ptr __p);
+};
+
+template <class _R>
+promise<_R>::promise()
+    : __state_(new __assoc_state<_R>)
+{
+}
+
+template <class _R>
+template <class _Alloc>
+promise<_R>::promise(allocator_arg_t, const _Alloc& __a0)
+{
+    typedef typename _Alloc::template rebind<__assoc_state_alloc<_R, _Alloc> >::other _A2;
+    typedef __allocator_destructor<_A2> _D2;
+    _A2 __a(__a0);
+    unique_ptr<__assoc_state_alloc<_R, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(__hold.get()) __assoc_state_alloc<_R, _Alloc>(__a0);
+    __state_ = __hold.release();
+}
+
+template <class _R>
+promise<_R>::~promise()
+{
+    if (__state_)
+    {
+        if (!__state_->__has_value() && __state_->use_count() > 1)
+            __state_->set_exception(make_exception_ptr(
+                      future_error(make_error_code(future_errc::broken_promise))
+                                                      ));
+        __state_->__release_shared();
+    }
+}
+
+template <class _R>
+future<_R>
+promise<_R>::get_future()
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    return future<_R>(__state_);
+}
+
+template <class _R>
+void
+promise<_R>::set_value(const _R& __r)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_value(__r);
+}
+
+#ifdef _LIBCPP_MOVE
+
+template <class _R>
+void
+promise<_R>::set_value(_R&& __r)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_value(_STD::move(__r));
+}
+
+#endif  // _LIBCPP_MOVE
+
+template <class _R>
+void
+promise<_R>::set_exception(exception_ptr __p)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_exception(__p);
+}
+
+template <class _R>
+void
+promise<_R>::set_value_at_thread_exit(const _R& __r)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_value_at_thread_exit(__r);
+}
+
+#ifdef _LIBCPP_MOVE
+
+template <class _R>
+void
+promise<_R>::set_value_at_thread_exit(_R&& __r)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_value_at_thread_exit(_STD::move(__r));
+}
+
+#endif  // _LIBCPP_MOVE
+
+template <class _R>
+void
+promise<_R>::set_exception_at_thread_exit(exception_ptr __p)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_exception_at_thread_exit(__p);
+}
+
+// promise<R&>
+
+template <class _R>
+class promise<_R&>
+{
+    __assoc_state<_R&>* __state_;
+public:
+    promise();
+    template <class _Allocator>
+        promise(allocator_arg_t, const _Allocator& __a);
+#ifdef _LIBCPP_MOVE
+    promise(promise&& __rhs)
+        : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
+    promise(const promise& __rhs) = delete;
+#else  // _LIBCPP_MOVE
+private:
+    promise(const promise& __rhs);
+public:
+#endif  // _LIBCPP_MOVE
+    ~promise();
+
+    // assignment
+#ifdef _LIBCPP_MOVE
+    promise& operator=(promise&& __rhs)
+        {
+            promise(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+    promise& operator=(const promise& __rhs) = delete;
+#else  // _LIBCPP_MOVE
+private:
+    promise& operator=(const promise& __rhs);
+public:
+#endif  // _LIBCPP_MOVE
+    void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // retrieving the result
+    future<_R&> get_future();
+
+    // setting the result
+    void set_value(_R& __r);
+    void set_exception(exception_ptr __p);
+
+    // setting the result with deferred notification
+    void set_value_at_thread_exit(_R&);
+    void set_exception_at_thread_exit(exception_ptr __p);
+};
+
+template <class _R>
+promise<_R&>::promise()
+    : __state_(new __assoc_state<_R&>)
+{
+}
+
+template <class _R>
+template <class _Alloc>
+promise<_R&>::promise(allocator_arg_t, const _Alloc& __a0)
+{
+    typedef typename _Alloc::template rebind<__assoc_state_alloc<_R&, _Alloc> >::other _A2;
+    typedef __allocator_destructor<_A2> _D2;
+    _A2 __a(__a0);
+    unique_ptr<__assoc_state_alloc<_R&, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(__hold.get()) __assoc_state_alloc<_R&, _Alloc>(__a0);
+    __state_ = __hold.release();
+}
+
+template <class _R>
+promise<_R&>::~promise()
+{
+    if (__state_)
+    {
+        if (!__state_->__has_value() && __state_->use_count() > 1)
+            __state_->set_exception(make_exception_ptr(
+                      future_error(make_error_code(future_errc::broken_promise))
+                                                      ));
+        __state_->__release_shared();
+    }
+}
+
+template <class _R>
+future<_R&>
+promise<_R&>::get_future()
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    return future<_R&>(__state_);
+}
+
+template <class _R>
+void
+promise<_R&>::set_value(_R& __r)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_value(__r);
+}
+
+template <class _R>
+void
+promise<_R&>::set_exception(exception_ptr __p)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_exception(__p);
+}
+
+template <class _R>
+void
+promise<_R&>::set_value_at_thread_exit(_R& __r)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_value_at_thread_exit(__r);
+}
+
+template <class _R>
+void
+promise<_R&>::set_exception_at_thread_exit(exception_ptr __p)
+{
+    if (__state_ == nullptr)
+        throw future_error(make_error_code(future_errc::no_state));
+    __state_->set_exception_at_thread_exit(__p);
+}
+
+// promise<void>
+
+template <>
+class promise<void>
+{
+    __assoc_sub_state* __state_;
+public:
+    promise();
+    template <class _Allocator>
+        promise(allocator_arg_t, const _Allocator& __a);
+#ifdef _LIBCPP_MOVE
+    promise(promise&& __rhs)
+        : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
+    promise(const promise& __rhs) = delete;
+#else  // _LIBCPP_MOVE
+private:
+    promise(const promise& __rhs);
+public:
+#endif  // _LIBCPP_MOVE
+    ~promise();
+
+    // assignment
+#ifdef _LIBCPP_MOVE
+    promise& operator=(promise&& __rhs)
+        {
+            promise(std::move(__rhs)).swap(*this);
+            return *this;
+        }
+    promise& operator=(const promise& __rhs) = delete;
+#else  // _LIBCPP_MOVE
+private:
+    promise& operator=(const promise& __rhs);
+public:
+#endif  // _LIBCPP_MOVE
+    void swap(promise& __rhs) {_STD::swap(__state_, __rhs.__state_);}
+
+    // retrieving the result
+    future<void> get_future();
+
+    // setting the result
+    void set_value();
+    void set_exception(exception_ptr __p);
+
+    // setting the result with deferred notification
+    void set_value_at_thread_exit();
+    void set_exception_at_thread_exit(exception_ptr __p);
+};
+
+template <class _Alloc>
+promise<void>::promise(allocator_arg_t, const _Alloc& __a0)
+{
+    typedef typename _Alloc::template rebind<__assoc_sub_state_alloc<_Alloc> >::other _A2;
+    typedef __allocator_destructor<_A2> _D2;
+    _A2 __a(__a0);
+    unique_ptr<__assoc_sub_state_alloc<_Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(__hold.get()) __assoc_sub_state_alloc<_Alloc>(__a0);
+    __state_ = __hold.release();
+}
+
+template <class _R>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(promise<_R>& __x, promise<_R>& __y)
+{
+    __x.swap(__y);
+}
+
+template <class _R, class _Alloc>
+    struct uses_allocator<promise<_R>, _Alloc> : public true_type {};
 
 _LIBCPP_END_NAMESPACE_STD
 
