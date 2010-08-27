@@ -68,7 +68,7 @@ class TestArrayTypes(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         thread = target.GetProcess().GetThreadAtIndex(0)
-        self.assertTrue(thread.GetStopReason() == Enum("Breakpoint"),
+        self.assertTrue(thread.GetStopReason() == StopReasonEnum("Breakpoint"),
                         STOPPED_DUE_TO_BREAKPOINT)
 
         # The breakpoint should have a hit count of 1.

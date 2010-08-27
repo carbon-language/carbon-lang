@@ -149,27 +149,50 @@ def CMD_MSG(command):
     return "Command '%s' returns successfully" % (command)
 
 #
-# Returns the enum from the input string stopReason.
+# Returns the enum from the input string.
 #
-def Enum(stopReason):
-    if stopReason == "Invalid":
+def StopReasonEnum(string):
+    if string == "Invalid":
         return 0
-    elif stopReason == "None":
+    elif string == "None":
         return 1
-    elif stopReason == "Trace":
+    elif string == "Trace":
         return 2
-    elif stopReason == "Breakpoint":
+    elif string == "Breakpoint":
         return 3
-    elif stopReason == "Watchpoint":
+    elif string == "Watchpoint":
         return 4
-    elif stopReason == "Signal":
+    elif string == "Signal":
         return 5
-    elif stopReason == "Exception":
+    elif string == "Exception":
         return 6
-    elif stopReason == "PlanComplete":
+    elif string == "PlanComplete":
         return 7
     else:
         raise Exception("Unknown stopReason string")
+
+#
+# Returns the stopReason string given an enum.
+#
+def StopReasonString(enum):
+    if enum == 0:
+        return "Invalid"
+    elif enum == 1:
+        return "None"
+    elif enum == 2:
+        return "Trace"
+    elif enum == 3:
+        return "Breakpoint"
+    elif enum == 4:
+        return "Watchpoint"
+    elif enum == 5:
+        return "Signal"
+    elif enum == 6:
+        return "Exception"
+    elif enum == 7:
+        return "PlanComplete"
+    else:
+        raise Exception("Unknown stopReason enum")
 
 #
 # Returns an env variable array from the os.environ map object.
