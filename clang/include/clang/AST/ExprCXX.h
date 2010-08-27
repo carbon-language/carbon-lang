@@ -1440,19 +1440,38 @@ public:
                                 UnresolvedSetIterator End,
                                 const TemplateArgumentListInfo *Args);
 
+  struct FindResult {
+    OverloadExpr *Expression;
+    bool IsAddressOfOperand;
+    bool HasFormOfMemberPointer;
+  };
+
   /// Finds the overloaded expression in the given expression of
   /// OverloadTy.
   ///
-  /// \return the expression (which must be there) and true if it is
-  /// within an address-of operator.
-  static llvm::PointerIntPair<OverloadExpr*,1> find(Expr *E) {
+  /// \return the expression (which must be there) and true if it has
+  /// the particular form of a member pointer expression
+  static FindResult find(Expr *E) {
     assert(E->getType()->isSpecificBuiltinType(BuiltinType::Overload));
 
-    bool op = false;
+    FindResult Result;
+
     E = E->IgnoreParens();
-    if (isa<UnaryOperator>(E))
-      op = true, E = cast<UnaryOperator>(E)->getSubExpr()->IgnoreParens();
-    return llvm::PointerIntPair<OverloadExpr*,1>(cast<OverloadExpr>(E), op);
+    if (isa<UnaryOperator>(E)) {
+      assert(cast<UnaryOperator>(E)->getOpcode() == UO_AddrOf);
+      E = cast<UnaryOperator>(E)->getSubExpr();
+      OverloadExpr *Ovl = cast<OverloadExpr>(E->IgnoreParens());
+
+      Result.HasFormOfMemberPointer = (E == Ovl && Ovl->getQualifier());
+      Result.IsAddressOfOperand = true;
+      Result.Expression = Ovl;
+    } else {
+      Result.HasFormOfMemberPointer = false;
+      Result.IsAddressOfOperand = false;
+      Result.Expression = cast<OverloadExpr>(E);
+    }
+
+    return Result;
   }
 
   /// Gets the naming class of this lookup, if any.

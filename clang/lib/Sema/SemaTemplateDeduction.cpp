@@ -1494,14 +1494,22 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   return TDK_Success;
 }
 
+/// Gets the type of a function for template-argument-deducton
+/// purposes when it's considered as part of an overload set.
 static QualType GetTypeOfFunction(ASTContext &Context,
-                                  bool isAddressOfOperand,
+                                  const OverloadExpr::FindResult &R,
                                   FunctionDecl *Fn) {
-  if (!isAddressOfOperand) return Fn->getType();
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn))
-    if (Method->isInstance())
+    if (Method->isInstance()) {
+      // An instance method that's referenced in a form that doesn't
+      // look like a member pointer is just invalid.
+      if (!R.HasFormOfMemberPointer) return QualType();
+
       return Context.getMemberPointerType(Fn->getType(),
                Context.getTypeDeclType(Method->getParent()).getTypePtr());
+    }
+
+  if (!R.IsAddressOfOperand) return Fn->getType();
   return Context.getPointerType(Fn->getType());
 }
 
@@ -1512,10 +1520,10 @@ static QualType GetTypeOfFunction(ASTContext &Context,
 static QualType
 ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
                             Expr *Arg, QualType ParamType) {
-  llvm::PointerIntPair<OverloadExpr*,1> R = OverloadExpr::find(Arg);
+  
+  OverloadExpr::FindResult R = OverloadExpr::find(Arg);
 
-  bool isAddressOfOperand = bool(R.getInt());
-  OverloadExpr *Ovl = R.getPointer();
+  OverloadExpr *Ovl = R.Expression;
 
   // If there were explicit template arguments, we can only find
   // something via C++ [temp.arg.explicit]p3, i.e. if the arguments
@@ -1524,7 +1532,7 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
     // But we can still look for an explicit specialization.
     if (FunctionDecl *ExplicitSpec
           = S.ResolveSingleFunctionTemplateSpecialization(Ovl))
-      return GetTypeOfFunction(S.Context, isAddressOfOperand, ExplicitSpec);
+      return GetTypeOfFunction(S.Context, R, ExplicitSpec);
     return QualType();
   }
 
@@ -1549,7 +1557,8 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
       return QualType();
 
     FunctionDecl *Fn = cast<FunctionDecl>(D);
-    QualType ArgType = GetTypeOfFunction(S.Context, isAddressOfOperand, Fn);
+    QualType ArgType = GetTypeOfFunction(S.Context, R, Fn);
+    if (ArgType.isNull()) continue;
 
     //   - If the argument is an overload set (not containing function
     //     templates), trial argument deduction is attempted using each

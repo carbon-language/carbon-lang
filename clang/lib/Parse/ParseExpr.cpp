@@ -660,6 +660,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                               ILoc, PropertyLoc);
       break;
     }
+
+    // Make sure to pass down the right value for isAddressOfOperand.
+    if (isAddressOfOperand && isPostfixExpressionSuffixStart())
+      isAddressOfOperand = false;
    
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
     // need to know whether or not this identifier is a function designator or
@@ -668,7 +672,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     CXXScopeSpec ScopeSpec;
     Name.setIdentifier(&II, ILoc);
     Res = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, Name, 
-                                    Tok.is(tok::l_paren), false);
+                                    Tok.is(tok::l_paren), isAddressOfOperand);
     break;
   }
   case tok::char_constant:     // constant: character-constant

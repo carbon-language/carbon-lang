@@ -1715,7 +1715,7 @@ public:
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
   ExprResult BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
-                                                   LookupResult &R,
+                                             LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs);
   ExprResult BuildImplicitMemberExpr(const CXXScopeSpec &SS,
                                            LookupResult &R,

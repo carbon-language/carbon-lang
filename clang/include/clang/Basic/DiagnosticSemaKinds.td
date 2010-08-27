@@ -2127,7 +2127,11 @@ def err_typecheck_address_of : Error<"address of %0 requested">;
 def ext_typecheck_addrof_void : Extension<
   "ISO C forbids taking the address of an expression of type 'void'">;
 def err_unqualified_pointer_member_function : Error<
-  "must explicitly qualify member function %0 when taking its address">;
+  "must explicitly qualify name of member function when taking its address">;
+def err_invalid_form_pointer_member_function : Error<
+  "cannot create a non-constant pointer to member function">;
+def err_parens_pointer_member_function : Error<
+  "cannot parenthesize the name of a method when forming a member pointer">;
 def err_typecheck_invalid_lvalue_addrof : Error<
   "address expression must be an lvalue or a function designator">;
 def ext_typecheck_addrof_class_temporary : ExtWarn<

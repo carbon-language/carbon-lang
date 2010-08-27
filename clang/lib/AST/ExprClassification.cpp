@@ -229,6 +229,10 @@ static Cl::Kinds ClassifyDecl(ASTContext &Ctx, const Decl *D) {
   // In addition, NonTypeTemplateParmDecl derives from VarDecl but isn't an
   // lvalue unless it's a reference type (C++ [temp.param]p6), so we need to
   // special-case this.
+
+  if (isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance())
+    return Cl::CL_MemberFunction;
+
   bool islvalue;
   if (const NonTypeTemplateParmDecl *NTTParm =
         dyn_cast<NonTypeTemplateParmDecl>(D))

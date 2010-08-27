@@ -949,6 +949,16 @@ private:
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand = false,
                                        ParsedType TypeOfCast = ParsedType());
+
+  /// Returns true if the next token would start a postfix-expression
+  /// suffix.
+  bool isPostfixExpressionSuffixStart() {
+    tok::TokenKind K = Tok.getKind();
+    return (K == tok::l_square || K == tok::l_paren ||
+            K == tok::period || K == tok::arrow ||
+            K == tok::plusplus || K == tok::minusminus);
+  }
+
   ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
   ExprResult ParseSizeofAlignofExpression();
   ExprResult ParseBuiltinPrimaryExpression();

@@ -6222,18 +6222,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   //     A pointer to member is only formed when an explicit & is used
   //     and its operand is a qualified-id not enclosed in
   //     parentheses.
-  bool HasFormOfMemberPointer = false;
-  OverloadExpr *OvlExpr;
-  {
-    Expr *Tmp = From->IgnoreParens();
-    if (isa<UnaryOperator>(Tmp)) {
-      Tmp = cast<UnaryOperator>(Tmp)->getSubExpr();
-      OvlExpr = cast<OverloadExpr>(Tmp->IgnoreParens());
-      HasFormOfMemberPointer = (Tmp == OvlExpr && OvlExpr->getQualifier());
-    } else {
-      OvlExpr = cast<OverloadExpr>(Tmp);
-    }
-  }
+  OverloadExpr::FindResult Ovl = OverloadExpr::find(From);
+  OverloadExpr *OvlExpr = Ovl.Expression;
   
   // We expect a pointer or reference to function, or a function pointer.
   FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
@@ -6247,7 +6237,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
   // If the overload expression doesn't have the form of a pointer to
   // member, don't try to convert it to a pointer-to-member type.
-  if (IsMember && !HasFormOfMemberPointer) {
+  if (IsMember && !Ovl.HasFormOfMemberPointer) {
     if (!Complain) return 0;
 
     // TODO: Should we condition this on whether any functions might
@@ -6453,7 +6443,7 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
   if (From->getType() != Context.OverloadTy)
     return 0;
 
-  OverloadExpr *OvlExpr = OverloadExpr::find(From).getPointer();
+  OverloadExpr *OvlExpr = OverloadExpr::find(From).Expression;
   
   // If we didn't actually find any template-ids, we're done.
   if (!OvlExpr->hasExplicitTemplateArgs())

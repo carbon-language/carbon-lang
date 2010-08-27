@@ -1233,11 +1233,33 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
   //   member of some class C, the id-expression is transformed into a
   //   class member access expression using (*this) as the
   //   postfix-expression to the left of the . operator.
-  // So if we found a class member with an expression of form other
-  // than &A::foo, we have to try to build an implicit member expr.
+  //
+  // But we don't actually need to do this for '&' operands if R
+  // resolved to a function or overloaded function set, because the
+  // expression is ill-formed if it actually works out to be a
+  // non-static member function:
+  //
+  // C++ [expr.ref]p4:
+  //   Otherwise, if E1.E2 refers to a non-static member function. . .
+  //   [t]he expression can be used only as the left-hand operand of a
+  //   member function call.
+  //
+  // There are other safeguards against such uses, but it's important
+  // to get this right here so that we don't end up making a
+  // spuriously dependent expression if we're inside a dependent
+  // instance method.
   if (!R.empty() && (*R.begin())->isCXXClassMember()) {
-    bool isAbstractMemberPointer = (isAddressOfOperand && !SS.isEmpty());
-    if (!isAbstractMemberPointer)
+    bool MightBeImplicitMember;
+    if (!isAddressOfOperand)
+      MightBeImplicitMember = true;
+    else if (!SS.isEmpty())
+      MightBeImplicitMember = false;
+    else if (R.isOverloadedResult())
+      MightBeImplicitMember = false;
+    else
+      MightBeImplicitMember = isa<FieldDecl>(R.getFoundDecl());
+
+    if (MightBeImplicitMember)
       return BuildPossibleImplicitMemberExpr(SS, R, TemplateArgs);
   }
 
@@ -6209,12 +6231,14 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
 /// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
 /// In C++, the operand might be an overloaded function name, in which case
 /// we allow the '&' but retain the overloaded-function type.
-QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
-  // Make sure to ignore parentheses in subsequent checks
-  op = op->IgnoreParens();
-
-  if (op->isTypeDependent())
+QualType Sema::CheckAddressOfOperand(Expr *OrigOp, SourceLocation OpLoc) {
+  if (OrigOp->isTypeDependent())
     return Context.DependentTy;
+  if (OrigOp->getType() == Context.OverloadTy)
+    return Context.OverloadTy;
+
+  // Make sure to ignore parentheses in subsequent checks
+  Expr *op = OrigOp->IgnoreParens();
 
   if (getLangOptions().C99) {
     // Implement C99-only parts of addressof rules.
@@ -6230,32 +6254,41 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   NamedDecl *dcl = getPrimaryDecl(op);
   Expr::isLvalueResult lval = op->isLvalue(Context);
 
-  MemberExpr *ME = dyn_cast<MemberExpr>(op);
-  if (lval == Expr::LV_MemberFunction && ME &&
-      isa<CXXMethodDecl>(ME->getMemberDecl())) {
-    ValueDecl *dcl = cast<MemberExpr>(op)->getMemberDecl();
-    // &f where f is a member of the current object, or &o.f, or &p->f
-    // All these are not allowed, and we need to catch them before the dcl
-    // branch of the if, below.
-    Diag(OpLoc, diag::err_unqualified_pointer_member_function)
-        << dcl;
-    // FIXME: Improve this diagnostic and provide a fixit.
-
-    // Now recover by acting as if the function had been accessed qualified.
-    return Context.getMemberPointerType(op->getType(),
-                Context.getTypeDeclType(cast<RecordDecl>(dcl->getDeclContext()))
-                       .getTypePtr());
-  }
-  
   if (lval == Expr::LV_ClassTemporary) {
     Diag(OpLoc, isSFINAEContext()? diag::err_typecheck_addrof_class_temporary
                                  : diag::ext_typecheck_addrof_class_temporary)
       << op->getType() << op->getSourceRange();
     if (isSFINAEContext())
       return QualType();
-  } else if (isa<ObjCSelectorExpr>(op))
+  } else if (isa<ObjCSelectorExpr>(op)) {
     return Context.getPointerType(op->getType());
-  else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
+  } else if (lval == Expr::LV_MemberFunction) {
+    // If it's an instance method, make a member pointer.
+    // The expression must have exactly the form &A::foo.
+
+    // If the underlying expression isn't a decl ref, give up.
+    if (!isa<DeclRefExpr>(op)) {
+      Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+        << OrigOp->getSourceRange();
+      return QualType();
+    }
+    DeclRefExpr *DRE = cast<DeclRefExpr>(op);
+    CXXMethodDecl *MD = cast<CXXMethodDecl>(DRE->getDecl());
+
+    // The id-expression was parenthesized.
+    if (OrigOp != DRE) {
+      Diag(OpLoc, diag::err_parens_pointer_member_function)
+        << OrigOp->getSourceRange();
+
+    // The method was named without a qualifier.
+    } else if (!DRE->getQualifier()) {
+      Diag(OpLoc, diag::err_unqualified_pointer_member_function)
+        << op->getSourceRange();
+    }
+
+    return Context.getMemberPointerType(op->getType(),
+              Context.getTypeDeclType(MD->getParent()).getTypePtr());
+  } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
     if (!op->getType()->isFunctionType()) {
@@ -6283,8 +6316,6 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // FIXME: Can LHS ever be null here?
     if (!CheckAddressOfOperand(CO->getTrueExpr(), OpLoc).isNull())
       return CheckAddressOfOperand(CO->getFalseExpr(), OpLoc);
-  } else if (isa<OverloadExpr>(op)) {
-    return Context.OverloadTy;
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
@@ -6317,13 +6348,6 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
                 Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
         }
       }
-    } else if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(dcl)) {
-      // Okay: we can take the address of a function.
-      // As above.
-      if (isa<DeclRefExpr>(op) && cast<DeclRefExpr>(op)->getQualifier() &&
-          MD->isInstance())
-        return Context.getMemberPointerType(op->getType(),
-              Context.getTypeDeclType(MD->getParent()).getTypePtr());
     } else if (!isa<FunctionDecl>(dcl))
       assert(0 && "Unknown/unexpected decl type");
   }

@@ -79,7 +79,7 @@ void g() {
 
   void (HasMembers::*pmf)() = &HasMembers::f;
   void (*pnf)() = &Fake::f;
-  &hm.f; // expected-error {{must explicitly qualify}} expected-warning{{result unused}}
+  &hm.f; // expected-error {{cannot create a non-constant pointer to member function}}
 
   void (HasMembers::*pmgv)() = &HasMembers::g;
   void (HasMembers::*pmgi)(int) = &HasMembers::g;
@@ -142,8 +142,8 @@ namespace pr5985 {
     void f() {
       void (c::*p)();
       p = &h; // expected-error {{must explicitly qualify}}
-      p = &this->h; // expected-error {{must explicitly qualify}}
-      p = &(*this).h; // expected-error {{must explicitly qualify}}
+      p = &this->h; // expected-error {{cannot create a non-constant pointer to member function}}
+      p = &(*this).h; // expected-error {{cannot create a non-constant pointer to member function}}
     }
   };
 }
@@ -173,4 +173,65 @@ namespace PR7176 {
 
   void m()
   { (void)(Condition) &base::Continuous::cond; }
+}
+
+namespace rdar8358512 {
+  // We can't call this with an overload set because we're not allowed
+  // to look into overload sets unless the parameter has some kind of
+  // function type.
+  template <class F> void bind(F f); // expected-note 6 {{candidate template ignored}}
+  template <class F, class T> void bindmem(F (T::*f)()); // expected-note 4 {{candidate template ignored}}
+  template <class F> void bindfn(F (*f)()); // expected-note 4 {{candidate template ignored}}
+
+  struct A {
+    void member();
+
+    void nonstat();
+    void nonstat(int);
+
+    void mixed();
+    static void mixed(int);
+
+    static void stat();
+    static void stat(int);
+    
+    template <typename T> struct Test0 {
+      void test() {
+        bind(&nonstat); // expected-error {{no matching function for call}}
+        bind(&A::nonstat); // expected-error {{no matching function for call}}
+
+        bind(&mixed); // expected-error {{no matching function for call}}
+        bind(&A::mixed); // expected-error {{no matching function for call}}
+
+        bind(&stat); // expected-error {{no matching function for call}}
+        bind(&A::stat); // expected-error {{no matching function for call}}
+      }
+    };
+
+    template <typename T> struct Test1 {
+      void test() {
+        bindmem(&nonstat); // expected-error {{no matching function for call}}
+        bindmem(&A::nonstat);
+
+        bindmem(&mixed); // expected-error {{no matching function for call}}
+        bindmem(&A::mixed);
+
+        bindmem(&stat); // expected-error {{no matching function for call}}
+        bindmem(&A::stat); // expected-error {{no matching function for call}}
+      }
+    };
+
+    template <typename T> struct Test2 {
+      void test() {
+        bindfn(&nonstat); // expected-error {{no matching function for call}}
+        bindfn(&A::nonstat); // expected-error {{no matching function for call}}
+
+        bindfn(&mixed); // expected-error {{no matching function for call}}
+        bindfn(&A::mixed); // expected-error {{no matching function for call}}
+
+        bindfn(&stat);
+        bindfn(&A::stat);
+      }
+    };
+  };
 }

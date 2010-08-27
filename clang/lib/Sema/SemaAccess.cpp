@@ -1268,7 +1268,7 @@ Sema::AccessResult Sema::CheckAddressOfMemberAccess(Expr *OvlExpr,
       Found.getAccess() == AS_public)
     return AR_accessible;
 
-  OverloadExpr *Ovl = OverloadExpr::find(OvlExpr).getPointer();
+  OverloadExpr *Ovl = OverloadExpr::find(OvlExpr).Expression;
   CXXRecordDecl *NamingClass = Ovl->getNamingClass();
 
   AccessTarget Entity(Context, AccessTarget::Member, NamingClass, Found,
