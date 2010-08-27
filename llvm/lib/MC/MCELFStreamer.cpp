@@ -34,6 +34,8 @@ using namespace llvm;
 namespace {
 
 class MCELFStreamer : public MCObjectStreamer {
+  void EmitInstToFragment(const MCInst &Inst);
+  void EmitInstToData(const MCInst &Inst);
 public:
   MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
@@ -328,6 +330,40 @@ void MCELFStreamer::EmitFileDirective(StringRef Filename) {
   SD.setFlags(ELF_STT_File | ELF_STB_Local | ELF_STV_Default);
 }
 
+void MCELFStreamer::EmitInstToFragment(const MCInst &Inst) {
+  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
+
+  // Add the fixups and data.
+  //
+  // FIXME: Revisit this design decision when relaxation is done, we may be
+  // able to get away with not storing any extra data in the MCInst.
+  SmallVector<MCFixup, 4> Fixups;
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  VecOS.flush();
+
+  IF->getCode() = Code;
+  IF->getFixups() = Fixups;
+}
+
+void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
+  MCDataFragment *DF = getOrCreateDataFragment();
+
+  SmallVector<MCFixup, 4> Fixups;
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  VecOS.flush();
+
+  // Add the fixups and data.
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
+    DF->addFixup(Fixups[i]);
+  }
+  DF->getContents().append(Code.begin(), Code.end());
+}
+
 void MCELFStreamer::EmitInstruction(const MCInst &Inst) {
   // Scan for values.
   for (unsigned i = 0; i != Inst.getNumOperands(); ++i)
@@ -336,56 +372,25 @@ void MCELFStreamer::EmitInstruction(const MCInst &Inst) {
 
   getCurrentSectionData()->setHasInstructions(true);
 
-  // FIXME-PERF: Common case is that we don't need to relax, encode directly
-  // onto the data fragments buffers.
-
-  SmallVector<MCFixup, 4> Fixups;
-  SmallString<256> Code;
-  raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
-  VecOS.flush();
-
-  // FIXME: Eliminate this copy.
-  SmallVector<MCFixup, 4> AsmFixups;
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-    MCFixup &F = Fixups[i];
-    AsmFixups.push_back(MCFixup::Create(F.getOffset(), F.getValue(),
-                                        F.getKind()));
-  }
-
-  // See if we might need to relax this instruction, if so it needs its own
-  // fragment.
-  //
-  // FIXME-PERF: Support target hook to do a fast path that avoids the encoder,
-  // when we can immediately tell that we will get something which might need
-  // relaxation (and compute its size).
-  //
-  // FIXME-PERF: We should also be smart about immediately relaxing instructions
-  // which we can already show will never possibly fit (we can also do a very
-  // good job of this before we do the first relaxation pass, because we have
-  // total knowledge about undefined symbols at that point). Even now, though,
-  // we can do a decent job, especially on Darwin where scattering means that we
-  // are going to often know that we can never fully resolve a fixup.
-  if (getAssembler().getBackend().MayNeedRelaxation(Inst)) {
-    MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
-
-    // Add the fixups and data.
-    //
-    // FIXME: Revisit this design decision when relaxation is done, we may be
-    // able to get away with not storing any extra data in the MCInst.
-    IF->getCode() = Code;
-    IF->getFixups() = AsmFixups;
-
+  // If this instruction doesn't need relaxation, just emit it as data.
+  if (!getAssembler().getBackend().MayNeedRelaxation(Inst)) {
+    EmitInstToData(Inst);
     return;
   }
 
-  // Add the fixups and data.
-  MCDataFragment *DF = getOrCreateDataFragment();
-  for (unsigned i = 0, e = AsmFixups.size(); i != e; ++i) {
-    AsmFixups[i].setOffset(AsmFixups[i].getOffset() + DF->getContents().size());
-    DF->addFixup(AsmFixups[i]);
+  // Otherwise, if we are relaxing everything, relax the instruction as much as
+  // possible and emit it as data.
+  if (getAssembler().getRelaxAll()) {
+    MCInst Relaxed;
+    getAssembler().getBackend().RelaxInstruction(Inst, Relaxed);
+    while (getAssembler().getBackend().MayNeedRelaxation(Relaxed))
+      getAssembler().getBackend().RelaxInstruction(Relaxed, Relaxed);
+    EmitInstToData(Relaxed);
+    return;
   }
-  DF->getContents().append(Code.begin(), Code.end());
+
+  // Otherwise emit to a separate fragment.
+  EmitInstToFragment(Inst);
 }
 
 void MCELFStreamer::Finish() {
