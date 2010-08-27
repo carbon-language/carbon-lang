@@ -1443,7 +1443,7 @@ CINDEX_LINKAGE unsigned clang_isPODType(CXType T);
  */
   
 /**
- * \defgroup CINDEX_TYPES Information for attributes
+ * \defgroup CINDEX_ATTRIBUTES Information for attributes
  *
  * @{
  */
