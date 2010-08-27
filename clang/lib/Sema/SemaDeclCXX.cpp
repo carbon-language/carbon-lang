@@ -3280,6 +3280,7 @@ Decl *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
 /// ActOnStartNamespaceDef - This is called at the start of a namespace
 /// definition.
 Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
+                                   SourceLocation InlineLoc,
                                    SourceLocation IdentLoc,
                                    IdentifierInfo *II,
                                    SourceLocation LBrace,

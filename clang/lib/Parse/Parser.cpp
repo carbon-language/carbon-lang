@@ -482,6 +482,15 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
       SourceLocation DeclEnd;
       return ParseDeclaration(Declarator::FileContext, DeclEnd, Attr);
     }
+
+  case tok::kw_inline:
+    if (getLang().CPlusPlus0x && NextToken().is(tok::kw_namespace)) {
+      // Inline namespaces
+      SourceLocation DeclEnd;
+      return ParseDeclaration(Declarator::FileContext, DeclEnd, Attr);
+    }
+    goto dont_know;
+
   case tok::kw_extern:
     if (getLang().CPlusPlus && NextToken().is(tok::kw_template)) {
       // Extern templates
@@ -491,12 +500,11 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
       return Actions.ConvertDeclToDeclGroup(
                   ParseExplicitInstantiation(ExternLoc, TemplateLoc, DeclEnd));
     }
-
     // FIXME: Detect C++ linkage specifications here?
-
-    // Fall through to handle other declarations or function definitions.
+    goto dont_know;
 
   default:
+  dont_know:
     // We can't tell whether this is a function-definition or declaration yet.
     if (DS)
       return ParseDeclarationOrFunctionDefinition(*DS, Attr.AttrList);

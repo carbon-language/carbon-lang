@@ -323,6 +323,17 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
         << Attr.Range;
     SingleDecl = ParseDeclarationStartingWithTemplate(Context, DeclEnd);
     break;
+  case tok::kw_inline:
+    // Could be the start of an inline namespace.
+    if (getLang().CPlusPlus0x && NextToken().is(tok::kw_namespace)) {
+      if (Attr.HasAttr)
+        Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
+          << Attr.Range;
+      SourceLocation InlineLoc = ConsumeToken();
+      SingleDecl = ParseNamespace(Context, DeclEnd, InlineLoc);
+      break;
+    }
+    return ParseSimpleDeclaration(Context, DeclEnd, Attr.AttrList, true);
   case tok::kw_namespace:
     if (Attr.HasAttr)
       Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)

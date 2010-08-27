@@ -22,30 +22,34 @@
 using namespace clang;
 
 /// ParseNamespace - We know that the current token is a namespace keyword. This
-/// may either be a top level namespace or a block-level namespace alias.
+/// may either be a top level namespace or a block-level namespace alias. If
+/// there was an inline keyword, it has already been parsed.
 ///
 ///       namespace-definition: [C++ 7.3: basic.namespace]
 ///         named-namespace-definition
 ///         unnamed-namespace-definition
 ///
 ///       unnamed-namespace-definition:
-///         'namespace' attributes[opt] '{' namespace-body '}'
+///         'inline'[opt] 'namespace' attributes[opt] '{' namespace-body '}'
 ///
 ///       named-namespace-definition:
 ///         original-namespace-definition
 ///         extension-namespace-definition
 ///
 ///       original-namespace-definition:
-///         'namespace' identifier attributes[opt] '{' namespace-body '}'
+///         'inline'[opt] 'namespace' identifier attributes[opt]
+///             '{' namespace-body '}'
 ///
 ///       extension-namespace-definition:
-///         'namespace' original-namespace-name '{' namespace-body '}'
+///         'inline'[opt] 'namespace' original-namespace-name
+///             '{' namespace-body '}'
 ///
 ///       namespace-alias-definition:  [C++ 7.3.2: namespace.alias]
 ///         'namespace' identifier '=' qualified-namespace-specifier ';'
 ///
 Decl *Parser::ParseNamespace(unsigned Context,
-                             SourceLocation &DeclEnd) {
+                             SourceLocation &DeclEnd,
+                             SourceLocation InlineLoc) {
   assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
 
@@ -76,6 +80,9 @@ Decl *Parser::ParseNamespace(unsigned Context,
   if (Tok.is(tok::equal)) {
     if (AttrList)
       Diag(attrTok, diag::err_unexpected_namespace_attributes_alias);
+    if (InlineLoc.isValid())
+      Diag(InlineLoc, diag::err_inline_namespace_alias)
+          << FixItHint::CreateRemoval(InlineLoc);
 
     return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident, DeclEnd);
   }
@@ -100,8 +107,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
   ParseScope NamespaceScope(this, Scope::DeclScope);
 
   Decl *NamespcDecl =
-    Actions.ActOnStartNamespaceDef(getCurScope(), IdentLoc, Ident, LBrace,
-                                   AttrList.get());
+    Actions.ActOnStartNamespaceDef(getCurScope(), InlineLoc, IdentLoc, Ident,
+                                   LBrace, AttrList.get());
 
   PrettyDeclStackTraceEntry CrashInfo(Actions, NamespcDecl, NamespaceLoc,
                                       "parsing namespace");

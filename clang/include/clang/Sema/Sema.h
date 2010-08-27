@@ -1988,10 +1988,11 @@ public:
   //===---------------------------- C++ Features --------------------------===//
 
   // Act on C++ namespaces
-  virtual Decl *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
-                                           IdentifierInfo *Ident,
-                                           SourceLocation LBrace,
-                                           AttributeList *AttrList);
+  virtual Decl *ActOnStartNamespaceDef(Scope *S, SourceLocation InlineLoc,
+                                       SourceLocation IdentLoc,
+                                       IdentifierInfo *Ident,
+                                       SourceLocation LBrace,
+                                       AttributeList *AttrList);
   virtual void ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace);
 
   NamespaceDecl *getStdNamespace() const;

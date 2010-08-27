@@ -1428,21 +1428,21 @@ private:
   bool isCXX0XAttributeSpecifier(bool FullLookahead = false, 
                                  tok::TokenKind *After = 0);
   
-  Decl *ParseNamespace(unsigned Context, SourceLocation &DeclEnd);
+  Decl *ParseNamespace(unsigned Context, SourceLocation &DeclEnd,
+                       SourceLocation InlineLoc = SourceLocation());
   Decl *ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
   Decl *ParseUsingDirectiveOrDeclaration(unsigned Context,
-                                             SourceLocation &DeclEnd,
-                                             CXX0XAttributeList Attrs);
+                                         SourceLocation &DeclEnd,
+                                         CXX0XAttributeList Attrs);
   Decl *ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
-                                SourceLocation &DeclEnd,
-                                AttributeList *Attr);
+                            SourceLocation &DeclEnd, AttributeList *Attr);
   Decl *ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
-                                  SourceLocation &DeclEnd,
-                                  AccessSpecifier AS = AS_none);
+                              SourceLocation &DeclEnd,
+                              AccessSpecifier AS = AS_none);
   Decl *ParseStaticAssertDeclaration(SourceLocation &DeclEnd);
   Decl *ParseNamespaceAlias(SourceLocation NamespaceLoc,
-                                SourceLocation AliasLoc, IdentifierInfo *Alias,
-                                SourceLocation &DeclEnd);
+                            SourceLocation AliasLoc, IdentifierInfo *Alias,
+                            SourceLocation &DeclEnd);
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
