@@ -162,7 +162,7 @@ function! ClangComplete(findstart, base)
            let l:value = l:value[:l:hidden-1]
         endif
 
-        " Handle Pattern. TODO: Make clang less weird.
+        " Handle "Pattern". TODO: Make clang less weird.
         if l:value == "Pattern"
            let l:value = l:menu
            let l:pound = stridx(l:value, "#")
