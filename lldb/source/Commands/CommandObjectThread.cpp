@@ -324,8 +324,8 @@ public:
 
     CommandObjectThreadBacktrace () :
         CommandObject ("thread backtrace",
-                       "Shows the stack for one or more threads.",
-                       "thread backtrace [<thread-idx>] ...",
+                       "Shows the stack for one or more threads.  If no threads are specified, shows the currently selected thread.  \nUse the thread-index \"all\" to see all threads.",
+                       "thread backtrace [<thread-index>] ...",
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options()
     {
@@ -349,13 +349,17 @@ public:
         CommandReturnObject &result
     )
     {
+
+        bool show_frame_info = true;
+        uint32_t num_frames_with_source = 0; // Don't show any frames with source when backtracing
+        
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+        
         if (command.GetArgumentCount() == 0)
         {
             ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
             if (exe_ctx.thread)
             {
-                bool show_frame_info = true;
-                uint32_t num_frames_with_source = 0; // Don't show any frasmes with source when backtracing
                 if (DisplayFramesForExecutionContext (exe_ctx.thread,
                                                       interpreter,
                                                       result.GetOutputStream(),
@@ -375,10 +379,80 @@ public:
                 result.SetStatus (eReturnStatusFailed);
             }
         }
+        else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
+        {
+            Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+            uint32_t num_threads = process->GetThreadList().GetSize();
+            for (uint32_t i = 0; i < num_threads; i++)
+            {
+                ThreadSP thread_sp = process->GetThreadList().GetThreadAtIndex(i);
+                if (!DisplayFramesForExecutionContext (thread_sp.get(),
+                                                      interpreter,
+                                                      result.GetOutputStream(),
+                                                      m_options.m_start,
+                                                      m_options.m_count,
+                                                      show_frame_info,
+                                                      num_frames_with_source,
+                                                      3,
+                                                      3))
+                {
+                    result.AppendErrorWithFormat ("error displaying backtrace for thread: \"%d\"\n", i);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                if (i < num_threads - 1)
+                    result.AppendMessage("");
+            }
+        }
         else
         {
-            result.AppendError ("backtrace doesn't take arguments (for now)");
-            result.SetStatus (eReturnStatusFailed);
+            uint32_t num_args = command.GetArgumentCount();
+            Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+            std::vector<ThreadSP> thread_sps;
+
+            for (uint32_t i = 0; i < num_args; i++)
+            {
+                bool success;
+                
+                uint32_t thread_idx = Args::StringToUInt32(command.GetArgumentAtIndex(i), 0, 0, &success);
+                if (!success)
+                {
+                    result.AppendErrorWithFormat ("invalid thread specification: \"%s\"\n", command.GetArgumentAtIndex(i));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+                thread_sps.push_back(process->GetThreadList().FindThreadByIndexID(thread_idx));
+                
+                if (!thread_sps[i])
+                {
+                    result.AppendErrorWithFormat ("no thread with index: \"%s\"\n", command.GetArgumentAtIndex(i));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+            }
+            
+            for (uint32_t i = 0; i < num_args; i++)
+            {
+                if (!DisplayFramesForExecutionContext (thread_sps[i].get(),
+                                                      interpreter,
+                                                      result.GetOutputStream(),
+                                                      m_options.m_start,
+                                                      m_options.m_count,
+                                                      show_frame_info,
+                                                      num_frames_with_source,
+                                                      3,
+                                                      3))
+                {
+                    result.AppendErrorWithFormat ("error displaying backtrace for thread: \"%s\"\n", command.GetArgumentAtIndex(i));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+                if (i < num_args - 1)
+                    result.AppendMessage("");
+            }
         }
         return result.Succeeded();
     }
