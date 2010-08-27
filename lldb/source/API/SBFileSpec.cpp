@@ -24,7 +24,7 @@ SBFileSpec::SBFileSpec (const SBFileSpec &rhs) :
     m_opaque_ap()
 {
     if (rhs.m_opaque_ap.get())
-        m_opaque_ap.reset (new FileSpec (*m_opaque_ap));
+        m_opaque_ap.reset (new FileSpec (rhs.get()));
 }
 
 SBFileSpec::SBFileSpec (const char *path) :
@@ -69,7 +69,7 @@ SBFileSpec::ResolvePath (const char *src_path, char *dst_path, size_t dst_len)
 }
 
 const char *
-SBFileSpec::GetFileName() const
+SBFileSpec::GetFilename() const
 {
     if (m_opaque_ap.get())
         return m_opaque_ap->GetFilename().AsCString();

@@ -163,7 +163,7 @@ IOChannel::IOChannel
     m_err_file (err),
     m_command_queue (),
     m_completion_key ("\t"),
-    m_edit_line (::el_init (SBHostOS::GetProgramFileSpec().GetFileName(), in, out, err)),
+    m_edit_line (::el_init (SBHostOS::GetProgramFileSpec().GetFilename(), in, out, err)),
     m_history (history_init()),
     m_history_event(),
     m_getting_command (false)
@@ -213,7 +213,7 @@ IOChannel::HistorySaveLoad (bool save)
     if (m_history != NULL)
     {
         char history_path[PATH_MAX];
-        ::snprintf (history_path, sizeof(history_path), "~/.%s-history", SBHostOS::GetProgramFileSpec().GetFileName());
+        ::snprintf (history_path, sizeof(history_path), "~/.%s-history", SBHostOS::GetProgramFileSpec().GetFilename());
         if ((size_t)SBFileSpec::ResolvePath (history_path, history_path, sizeof(history_path)) < sizeof(history_path) - 1)
         {
             const char *path_ptr = history_path;

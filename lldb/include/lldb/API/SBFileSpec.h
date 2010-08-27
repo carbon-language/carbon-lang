@@ -37,7 +37,7 @@ public:
     Exists () const;
 
     const char *
-    GetFileName() const;
+    GetFilename() const;
 
     const char *
     GetDirectory() const;

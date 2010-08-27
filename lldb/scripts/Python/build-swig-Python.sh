@@ -42,6 +42,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
 " ${SRC_ROOT}/include/lldb/API/SBDebugger.h"\
 " ${SRC_ROOT}/include/lldb/API/SBError.h"\
 " ${SRC_ROOT}/include/lldb/API/SBEvent.h"\
+" ${SRC_ROOT}/include/lldb/API/SBFileSpec.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFrame.h"\
 " ${SRC_ROOT}/include/lldb/API/SBFunction.h"\
 " ${SRC_ROOT}/include/lldb/API/SBLineEntry.h"\
