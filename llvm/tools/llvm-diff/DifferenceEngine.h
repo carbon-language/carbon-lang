@@ -79,8 +79,14 @@ namespace llvm {
       void addMatch(Instruction *L, Instruction *R) {
         Diff.push_back(DiffRecord(L, R));
       }
-      void addLeft(Instruction *L) { Diff.push_back(DiffRecord(L, 0)); }
-      void addRight(Instruction *R) { Diff.push_back(DiffRecord(0, R)); }
+      void addLeft(Instruction *L) {
+        // HACK: VS 2010 has a bug in the stdlib that requires this.
+        Diff.push_back(DiffRecord(L, DiffRecord::second_type(0)));
+      }
+      void addRight(Instruction *R) {
+        // HACK: VS 2010 has a bug in the stdlib that requires this.
+        Diff.push_back(DiffRecord(DiffRecord::first_type(0), R));
+      }
 
       unsigned getNumLines() const { return Diff.size(); }
       DiffChange getLineKind(unsigned I) const {
