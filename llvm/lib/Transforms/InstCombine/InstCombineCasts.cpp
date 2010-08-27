@@ -454,6 +454,29 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     Value *Zero = Constant::getNullValue(Src->getType());
     return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
   }
+  
+  // Transform trunc(lshr (zext A), Cst) to eliminate one type conversion.
+  Value *A = 0; ConstantInt *Cst = 0;
+  if (match(Src, m_LShr(m_ZExt(m_Value(A)), m_ConstantInt(Cst))) &&
+      Src->hasOneUse()) {
+    // We have three types to worry about here, the type of A, the source of
+    // the truncate (MidSize), and the destination of the truncate. We know that
+    // ASize < MidSize   and MidSize > ResultSize, but don't know the relation
+    // between ASize and ResultSize.
+    unsigned ASize = A->getType()->getPrimitiveSizeInBits();
+    
+    // If the shift amount is larger than the size of A, then the result is
+    // known to be zero because all the input bits got shifted out.
+    if (Cst->getZExtValue() >= ASize)
+      return ReplaceInstUsesWith(CI, Constant::getNullValue(CI.getType()));
+
+    // Since we're doing an lshr and a zero extend, and know that the shift
+    // amount is smaller than ASize, it is always safe to do the shift in A's
+    // type, then zero extend or truncate to the result.
+    Value *Shift = Builder->CreateLShr(A, Cst->getZExtValue());
+    Shift->takeName(Src);
+    return CastInst::CreateIntegerCast(Shift, CI.getType(), false);
+  }
 
   return 0;
 }

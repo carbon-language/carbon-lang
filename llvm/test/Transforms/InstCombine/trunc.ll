@@ -48,3 +48,35 @@ define i64 @test4(i64 %a) {
 ; CHECK: %d = xor i64 {{.*}}, 8
 ; CHECK: ret i64 %d
 }
+
+define i32 @test5(i32 %A) {
+  %B = zext i32 %A to i128
+  %C = lshr i128 %B, 16
+  %D = trunc i128 %C to i32
+  ret i32 %D
+; CHECK: @test5
+; CHECK: %C = lshr i32 %A, 16
+; CHECK: ret i32 %C
+}
+
+define i32 @test6(i64 %A) {
+  %B = zext i64 %A to i128
+  %C = lshr i128 %B, 32
+  %D = trunc i128 %C to i32
+  ret i32 %D
+; CHECK: @test6
+; CHECK: %C = lshr i64 %A, 32
+; CHECK: %D = trunc i64 %C to i32
+; CHECK: ret i32 %D
+}
+
+define i92 @test7(i64 %A) {
+  %B = zext i64 %A to i128
+  %C = lshr i128 %B, 32
+  %D = trunc i128 %C to i92
+  ret i92 %D
+; CHECK: @test7
+; CHECK: %C = lshr i64 %A, 32
+; CHECK: %D = zext i64 %C to i92
+; CHECK: ret i92 %D
+}
