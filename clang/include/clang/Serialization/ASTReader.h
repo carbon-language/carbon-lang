@@ -485,6 +485,11 @@ private:
   /// Sema tracks a few important decls, such as namespace std, directly.
   llvm::SmallVector<uint64_t, 4> SemaDeclRefs;
 
+  /// \brief The IDs of the types ASTContext stores directly.
+  ///
+  /// The AST context tracks a few important types, such as va_list, directly.
+  llvm::SmallVector<uint64_t, 16> SpecialTypes;
+
   //@}
 
   /// \brief The original file name that was used to build the primary AST file,
@@ -507,9 +512,15 @@ private:
   bool DisableValidation;
       
   /// \brief Mapping from switch-case IDs in the chain to switch-case statements
+  ///
+  /// Statements usually don't have IDs, but switch cases need them, so that the
+  /// switch statement can refer to them.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
 
   /// \brief Mapping from label statement IDs in the chain to label statements.
+  ///
+  /// Statements usually don't have IDs, but labeled statements need them, so
+  /// that goto statements and address-of-label expressions can refer to them.
   std::map<unsigned, LabelStmt *> LabelStmts;
 
   /// \brief Mapping from label IDs to the set of "goto" statements
@@ -582,9 +593,6 @@ private:
   /// The declarations on the identifier chain for these identifiers will be
   /// loaded once the recursive loading has completed.
   std::deque<PendingIdentifierInfo> PendingIdentifierInfos;
-
-  /// \brief FIXME: document!
-  llvm::SmallVector<uint64_t, 16> SpecialTypes;
 
   /// \brief Contains declarations and definitions that will be
   /// "interesting" to the ASTConsumer, when we get that AST consumer.
