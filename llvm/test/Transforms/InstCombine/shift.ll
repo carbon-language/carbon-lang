@@ -420,6 +420,7 @@ entry:
   %tmp45 = lshr i128 %ins, 64
   ret i128 %tmp45
   
+; CHECK: @test36
 ; CHECK:  %tmp231 = or i128 %B, %A
 ; CHECK:  %ins = and i128 %tmp231, 18446744073709551615
 ; CHECK:  ret i128 %ins
@@ -435,8 +436,8 @@ entry:
   %tmp46 = trunc i128 %tmp45 to i64
   ret i64 %tmp46
   
+; CHECK: @test37
 ; CHECK:  %tmp23 = shl i128 %tmp22, 32
 ; CHECK:  %ins = or i128 %tmp23, %A
 ; CHECK:  %tmp46 = trunc i128 %ins to i64
 }
-
