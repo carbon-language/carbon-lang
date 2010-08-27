@@ -98,8 +98,8 @@ augroup END
 "          cast_cast<
 " turns up some peculiarities -- "asm("? 
 
-" A path to the a executable.
-let g:clang_path = "Release/bin/clang++"
+" A path to a clang executable.
+let g:clang_path = "clang++"
 
 " A list of options to add to the clang commandline, for example to add
 " include paths, predefined macros, and language options.
