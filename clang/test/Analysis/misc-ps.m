@@ -407,14 +407,14 @@ void test_trivial_symbolic_comparison(int *x) {
   int test_trivial_symbolic_comparison_aux();
   int a = test_trivial_symbolic_comparison_aux();
   int b = a;
-  if (a != b) {
+  if (a != b) { // expected-warning{{Both operands to '!=' always have the same value}}
     int *p = 0;
     *p = 0xDEADBEEF;     // no-warning
   }
   
   a = a == 1;
   b = b == 1;
-  if (a != b) {
+  if (a != b) { // expected-warning{{Both operands to '!=' always have the same value}}
     int *p = 0;
     *p = 0xDEADBEEF;     // no-warning
   }

@@ -210,6 +210,8 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   case BO_Xor:
   case BO_LOr:
   case BO_LAnd:
+  case BO_EQ:
+  case BO_NE:
     if (LHSVal != RHSVal || LHSContainsFalsePositive
         || RHSContainsFalsePositive)
       break;

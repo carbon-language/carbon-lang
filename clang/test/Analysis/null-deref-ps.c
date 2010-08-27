@@ -66,7 +66,7 @@ int f4_b() {
   short *p = x; // expected-warning{{incompatible integer to pointer conversion}}
 
   // The following branch should be infeasible.
-  if (!(p == &array[0])) {
+  if (!(p == &array[0])) { // expected-warning{{Both operands to '==' always have the same value}}
     p = 0;
     *p = 1; // no-warning
   }
