@@ -56,9 +56,235 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
   return 0;
 }
 
+/// CanEvaluateShifted - See if we can compute the specified value, but shifted
+/// logically to the left or right by some number of bits.  This should return
+/// true if the expression can be computed for the same cost as the current
+/// expression tree.  This is used to eliminate extraneous shifting from things
+/// like:
+///      %C = shl i128 %A, 64
+///      %D = shl i128 %B, 96
+///      %E = or i128 %C, %D
+///      %F = lshr i128 %E, 64
+/// where the client will ask if E can be computed shifted right by 64-bits.  If
+/// this succeeds, the GetShiftedValue function will be called to produce the
+/// value.
+static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
+                               InstCombiner &IC) {
+  // We can always evaluate constants shifted.
+  if (isa<Constant>(V))
+    return true;
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return false;
+  
+  // If this is the opposite shift, we can directly reuse the input of the shift
+  // if the needed bits are already zero in the input.  This allows us to reuse
+  // the value which means that we don't care if the shift has multiple uses.
+  //  TODO:  Handle opposite shift by exact value.
+  ConstantInt *CI;
+  if ((isLeftShift && match(I, m_LShr(m_Value(), m_ConstantInt(CI)))) ||
+      (!isLeftShift && match(I, m_Shl(m_Value(), m_ConstantInt(CI))))) {
+    if (CI->getZExtValue() == NumBits) {
+      // TODO: Check that the input bits are already zero with MaskedValueIsZero
+#if 0
+      // If this is a truncate of a logical shr, we can truncate it to a smaller
+      // lshr iff we know that the bits we would otherwise be shifting in are
+      // already zeros.
+      uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
+      uint32_t BitWidth = Ty->getScalarSizeInBits();
+      if (MaskedValueIsZero(I->getOperand(0),
+            APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
+          CI->getLimitedValue(BitWidth) < BitWidth) {
+        return CanEvaluateTruncated(I->getOperand(0), Ty);
+      }
+#endif
+      
+    }
+  }
+  
+  // We can't mutate something that has multiple uses: doing so would
+  // require duplicating the instruction in general, which isn't profitable.
+  if (!I->hasOneUse()) return false;
+  
+  switch (I->getOpcode()) {
+  default: return false;
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    // Bitwise operators can all arbitrarily be arbitrarily evaluated shifted.
+    return CanEvaluateShifted(I->getOperand(0), NumBits, isLeftShift, IC) &&
+           CanEvaluateShifted(I->getOperand(1), NumBits, isLeftShift, IC);
+      
+  case Instruction::Shl:
+    // We can often fold the shift into shifts-by-a-constant.
+    CI = dyn_cast<ConstantInt>(I->getOperand(1));
+    if (CI == 0) return false;
+
+    // We can always fold shl(c1)+shl(c2) -> shl(c1+c2).
+    if (isLeftShift) return true;
+    
+    // We can always turn shl(c)+shr(c) -> and(c2).
+    if (CI->getValue() == NumBits) return true;
+    // We can always turn shl(c1)+shr(c2) -> shl(c3)+and(c4), but it isn't
+    // profitable unless we know the and'd out bits are already zero.
+    return false;
+  case Instruction::LShr:
+    // We can often fold the shift into shifts-by-a-constant.
+    CI = dyn_cast<ConstantInt>(I->getOperand(1));
+    if (CI == 0) return false;
+    
+    // We can always fold lshr(c1)+lshr(c2) -> lshr(c1+c2).
+    if (!isLeftShift) return true;
+    
+    // We can always turn lshr(c)+shl(c) -> and(c2).
+    if (CI->getValue() == NumBits) return true;
+      
+    // We can always turn lshr(c1)+shl(c2) -> lshr(c3)+and(c4), but it isn't
+    // profitable unless we know the and'd out bits are already zero.
+    return false;
+      
+  case Instruction::Select: {
+    SelectInst *SI = cast<SelectInst>(I);
+    return CanEvaluateShifted(SI->getTrueValue(), NumBits, isLeftShift, IC) &&
+           CanEvaluateShifted(SI->getFalseValue(), NumBits, isLeftShift, IC);
+  }
+  case Instruction::PHI: {
+    // We can change a phi if we can change all operands.  Note that we never
+    // get into trouble with cyclic PHIs here because we only consider
+    // instructions with a single use.
+    PHINode *PN = cast<PHINode>(I);
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (!CanEvaluateShifted(PN->getIncomingValue(i), NumBits, isLeftShift,IC))
+        return false;
+    return true;
+  }
+  }      
+}
+
+/// GetShiftedValue - When CanEvaluateShifted returned true for an expression,
+/// this value inserts the new computation that produces the shifted value.
+static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
+                              InstCombiner &IC) {
+  // We can always evaluate constants shifted.
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    if (isLeftShift)
+      V = IC.Builder->CreateShl(C, NumBits);
+    else
+      V = IC.Builder->CreateLShr(C, NumBits);
+    // If we got a constantexpr back, try to simplify it with TD info.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      V = ConstantFoldConstantExpression(CE, IC.getTargetData());
+    return V;
+  }
+  
+  Instruction *I = cast<Instruction>(V);
+  IC.Worklist.Add(I);
+
+  switch (I->getOpcode()) {
+  default: assert(0 && "Inconsistency with CanEvaluateShifted");
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    // Bitwise operators can all arbitrarily be arbitrarily evaluated shifted.
+    I->setOperand(0, GetShiftedValue(I->getOperand(0), NumBits,isLeftShift,IC));
+    I->setOperand(1, GetShiftedValue(I->getOperand(1), NumBits,isLeftShift,IC));
+    return I;
+    
+  case Instruction::Shl: {
+    unsigned TypeWidth = I->getType()->getScalarSizeInBits();
+
+    // We only accept shifts-by-a-constant in CanEvaluateShifted.
+    ConstantInt *CI = cast<ConstantInt>(I->getOperand(1));
+    
+    // We can always fold shl(c1)+shl(c2) -> shl(c1+c2).
+    if (isLeftShift) {
+      // If this is oversized composite shift, then unsigned shifts get 0.
+      unsigned NewShAmt = NumBits+CI->getZExtValue();
+      if (NewShAmt >= TypeWidth)
+        return Constant::getNullValue(I->getType());
+
+      I->setOperand(1, ConstantInt::get(I->getType(), NewShAmt));
+      return I;
+    }
+    
+    // We turn shl(c)+lshr(c) -> and(c2) if the input doesn't already have
+    // zeros.
+    assert(CI->getValue() == NumBits);
+
+    APInt Mask(APInt::getLowBitsSet(TypeWidth, TypeWidth - NumBits));
+    V = IC.Builder->CreateAnd(I->getOperand(0),
+                              ConstantInt::get(I->getContext(), Mask));
+    if (Instruction *VI = dyn_cast<Instruction>(V)) {
+      VI->moveBefore(I);
+      VI->takeName(I);
+    }
+    return V;
+  }
+  case Instruction::LShr: {
+    unsigned TypeWidth = I->getType()->getScalarSizeInBits();
+    // We only accept shifts-by-a-constant in CanEvaluateShifted.
+    ConstantInt *CI = cast<ConstantInt>(I->getOperand(1));
+    
+    // We can always fold lshr(c1)+lshr(c2) -> lshr(c1+c2).
+    if (!isLeftShift) {
+      // If this is oversized composite shift, then unsigned shifts get 0.
+      unsigned NewShAmt = NumBits+CI->getZExtValue();
+      if (NewShAmt >= TypeWidth)
+        return Constant::getNullValue(I->getType());
+      
+      I->setOperand(1, ConstantInt::get(I->getType(), NewShAmt));
+      return I;
+    }
+    
+    // We turn lshr(c)+shl(c) -> and(c2) if the input doesn't already have
+    // zeros.
+    assert(CI->getValue() == NumBits);
+
+    APInt Mask(APInt::getHighBitsSet(TypeWidth, TypeWidth - NumBits));
+    V = IC.Builder->CreateAnd(I->getOperand(0),
+                              ConstantInt::get(I->getContext(), Mask));
+    if (Instruction *VI = dyn_cast<Instruction>(V)) {
+      VI->moveBefore(I);
+      VI->takeName(I);
+    }
+    return V;
+  }
+    
+  case Instruction::Select:
+    I->setOperand(1, GetShiftedValue(I->getOperand(1), NumBits,isLeftShift,IC));
+    I->setOperand(2, GetShiftedValue(I->getOperand(2), NumBits,isLeftShift,IC));
+    return I;
+  case Instruction::PHI: {
+    // We can change a phi if we can change all operands.  Note that we never
+    // get into trouble with cyclic PHIs here because we only consider
+    // instructions with a single use.
+    PHINode *PN = cast<PHINode>(I);
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      PN->setIncomingValue(i, GetShiftedValue(PN->getIncomingValue(i),
+                                              NumBits, isLeftShift, IC));
+    return PN;
+  }
+  }      
+}
+
+
+
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                BinaryOperator &I) {
   bool isLeftShift = I.getOpcode() == Instruction::Shl;
+  
+  
+  // See if we can propagate this shift into the input, this covers the trivial
+  // cast of lshr(shl(x,c1),c2) as well as other more complex cases.
+  if (I.getOpcode() != Instruction::AShr &&
+      CanEvaluateShifted(Op0, Op1->getZExtValue(), isLeftShift, *this)) {
+    DEBUG(dbgs() << "ICE: GetShiftedValue propagatin shift through expression"
+              " to eliminate shift:\n IN: " << *Op0 << "\nSH: " << I << "\n");
+    
+    return ReplaceInstUsesWith(I, 
+                 GetShiftedValue(Op0, Op1->getZExtValue(), isLeftShift, *this));
+  }
+  
   
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.

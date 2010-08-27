@@ -566,8 +566,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
           
         if (CI.getType() == In->getType())
           return ReplaceInstUsesWith(CI, In);
-        else
-          return CastInst::CreateIntegerCast(In, CI.getType(), false/*ZExt*/);
+        return CastInst::CreateIntegerCast(In, CI.getType(), false/*ZExt*/);
       }
     }
   }

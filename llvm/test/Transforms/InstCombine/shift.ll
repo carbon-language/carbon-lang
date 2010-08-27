@@ -130,8 +130,8 @@ define i8 @test13(i8 %A) {
 ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
 define i32 @test14(i32 %A) {
 ; CHECK: @test14
-; CHECK-NEXT: or i32 %A, 19744
-; CHECK-NEXT: and i32
+; CHECK-NEXT: %B = and i32 %A, -19760
+; CHECK-NEXT: or i32 %B, 19744
 ; CHECK-NEXT: ret i32
         %B = lshr i32 %A, 4             ; <i32> [#uses=1]
         %C = or i32 %B, 1234            ; <i32> [#uses=1]
@@ -350,8 +350,8 @@ entry:
 	%tmp10 = lshr i32 %tmp917, 31
 	ret i32 %tmp10
 ; CHECK: @test29
-; CHECK:  %tmp101 = lshr i64 %d18, 63
-; CHECK:  %tmp10 = trunc i64 %tmp101 to i32
+; CHECK:  %tmp916 = lshr i64 %d18, 63
+; CHECK:  %tmp10 = trunc i64 %tmp916 to i32
 }
 
 
@@ -410,5 +410,18 @@ define i1 @test35(i32 %X) {
 ; CHECK: @test35
 ; CHECK: %tmp2 = icmp slt i32 %X, 0
 ; CHECK: ret i1 %tmp2
+}
+
+define i128 @test36(i128 %A, i128 %B) {
+entry:
+  %tmp27 = shl i128 %A, 64
+  %tmp23 = shl i128 %B, 64
+  %ins = or i128 %tmp23, %tmp27
+  %tmp45 = lshr i128 %ins, 64
+  ret i128 %tmp45
+  
+; CHECK:  %tmp231 = or i128 %B, %A
+; CHECK:  %ins = and i128 %tmp231, 18446744073709551615
+; CHECK:  ret i128 %ins
 }
 
