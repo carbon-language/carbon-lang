@@ -656,7 +656,8 @@ LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
           
           // Figure out the possible values of the query BEFORE this branch.  
           LVILatticeVal InBlock = getBlockValue(BBFrom);
-          if (!InBlock.isConstantRange()) return InBlock;
+          if (!InBlock.isConstantRange())
+            return LVILatticeVal::getRange(TrueValues);
             
           // Find all potential values that satisfy both the input and output
           // conditions.

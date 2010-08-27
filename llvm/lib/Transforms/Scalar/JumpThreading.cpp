@@ -669,6 +669,45 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
           }
       }
     }
+    
+    // For a comparison where the LHS is outside this block, it's possible
+    // that we've branch on it before.  Used LVI to see if we can simplify
+    // the branch based on that.
+    BranchInst *CondBr = dyn_cast<BranchInst>(BB->getTerminator());
+    Constant *CondConst = dyn_cast<Constant>(CondCmp->getOperand(1));
+    if (LVI && CondBr && CondConst && CondBr->isConditional() &&
+        (!isa<Instruction>(CondCmp->getOperand(0)) ||
+         cast<Instruction>(CondCmp->getOperand(0))->getParent() != BB)) {
+      // For predecessor edge, determine if the comparison is true or false
+      // on that edge.  If they're all true or all false, we can simplify the
+      // branch.
+      // FIXME: We could handle mixed true/false by duplicating code.
+      unsigned Trues = 0, Falses = 0, predcount = 0;
+      for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);PI != PE; ++PI){
+        ++predcount;
+        LazyValueInfo::Tristate Ret =
+          LVI->getPredicateOnEdge(CondCmp->getPredicate(), 
+                                  CondCmp->getOperand(0), CondConst, *PI, BB);
+        if (Ret == LazyValueInfo::True)
+          ++Trues;
+        else if (Ret == LazyValueInfo::False)
+          ++Falses;
+      }
+      
+      // If we can determine the branch direction statically, converted
+      // the conditional branch to an unconditional one.
+      if (Trues && Trues == predcount) {
+        RemovePredecessorAndSimplify(CondBr->getSuccessor(1), BB, TD);
+        BranchInst::Create(CondBr->getSuccessor(0), CondBr);
+        CondBr->eraseFromParent();
+        return true;
+      } else if (Falses && Falses == predcount) {
+        RemovePredecessorAndSimplify(CondBr->getSuccessor(0), BB, TD);
+        BranchInst::Create(CondBr->getSuccessor(1), CondBr);
+        CondBr->eraseFromParent();
+        return true;
+      }
+    }
   }
 
   // Check for some cases that are worth simplifying.  Right now we want to look
