@@ -115,7 +115,7 @@ template<typename T>
 struct Delete0 {
   void f(T t) {
     delete t; // expected-error{{cannot delete}}
-    ::delete [] t;
+    ::delete [] t; // expected-error{{cannot delete}}
   }
 };
 

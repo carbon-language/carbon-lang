@@ -3440,17 +3440,29 @@ template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
                                               bool IsStmtExpr) {
+  bool SubStmtInvalid = false;
   bool SubStmtChanged = false;
   ASTOwningVector<Stmt*> Statements(getSema());
   for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
        B != BEnd; ++B) {
     StmtResult Result = getDerived().TransformStmt(*B);
-    if (Result.isInvalid())
-      return StmtError();
+    if (Result.isInvalid()) {
+      // Immediately fail if this was a DeclStmt, since it's very
+      // likely that this will cause problems for future statements.
+      if (isa<DeclStmt>(*B))
+        return StmtError();
+
+      // Otherwise, just keep processing substatements and fail later.
+      SubStmtInvalid = true;
+      continue;
+    }
 
     SubStmtChanged = SubStmtChanged || Result.get() != *B;
     Statements.push_back(Result.takeAs<Stmt>());
   }
+
+  if (SubStmtInvalid)
+    return StmtError();
 
   if (!getDerived().AlwaysRebuild() &&
       !SubStmtChanged)

@@ -63,7 +63,11 @@ template struct Conditional0<int, int, int>;
 template<typename T>
 struct StatementExpr0 {
   void f(T t) {
-    (void)({ if (t) t = t + 17; t + 12;}); // expected-error{{contextually convertible}}
+    (void)({
+        if (t) // expected-error{{contextually convertible}}
+          t = t + 17;
+        t + 12; // expected-error{{invalid operands}}
+      });
   }
 };
 
@@ -106,8 +110,8 @@ struct VaArg1 {
     VaList va;
     __builtin_va_start(va, n); // expected-error{{int}}
     for (int i = 0; i != n; ++i)
-      (void)__builtin_va_arg(va, ArgType);
-    __builtin_va_end(va);
+      (void)__builtin_va_arg(va, ArgType); // expected-error{{int}}
+    __builtin_va_end(va); // expected-error{{int}}
   }
 };
 

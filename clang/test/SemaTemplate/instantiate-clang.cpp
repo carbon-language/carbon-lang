@@ -24,7 +24,7 @@ template<typename T, typename U, int N, int M>
 struct ShuffleVector0 {
   void f(T t, U u, double2 a, double2 b) {
     (void)__builtin_shufflevector(t, u, N, M); // expected-error{{index}}
-    (void)__builtin_shufflevector(a, b, N, M);
+    (void)__builtin_shufflevector(a, b, N, M); // expected-error{{index}}
     (void)__builtin_shufflevector(a, b, 2, 1);
   }
 };

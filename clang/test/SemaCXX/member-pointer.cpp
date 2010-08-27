@@ -179,13 +179,11 @@ namespace rdar8358512 {
   // We can't call this with an overload set because we're not allowed
   // to look into overload sets unless the parameter has some kind of
   // function type.
-  template <class F> void bind(F f); // expected-note 6 {{candidate template ignored}}
+  template <class F> void bind(F f); // expected-note 12 {{candidate template ignored}}
   template <class F, class T> void bindmem(F (T::*f)()); // expected-note 4 {{candidate template ignored}}
   template <class F> void bindfn(F (*f)()); // expected-note 4 {{candidate template ignored}}
 
   struct A {
-    void member();
-
     void nonstat();
     void nonstat(int);
 
@@ -234,4 +232,41 @@ namespace rdar8358512 {
       }
     };
   };
+
+  template <class T> class B {
+    void nonstat();
+    void nonstat(int);
+
+    void mixed();
+    static void mixed(int);
+
+    static void stat();
+    static void stat(int);
+
+    // None of these can be diagnosed yet, because the arguments are
+    // still dependent.
+    void test0a() {
+      bind(&nonstat);
+      bind(&B::nonstat);
+
+      bind(&mixed);
+      bind(&B::mixed);
+
+      bind(&stat);
+      bind(&B::stat);
+    }
+
+    void test0b() {
+      bind(&nonstat); // expected-error {{no matching function for call}}
+      bind(&B::nonstat); // expected-error {{no matching function for call}}
+
+      bind(&mixed); // expected-error {{no matching function for call}}
+      bind(&B::mixed); // expected-error {{no matching function for call}}
+
+      bind(&stat); // expected-error {{no matching function for call}}
+      bind(&B::stat); // expected-error {{no matching function for call}}
+    }
+  };
+
+  template void B<int>::test0b(); // expected-note {{in instantiation}}
 }

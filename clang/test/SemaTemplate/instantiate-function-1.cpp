@@ -72,7 +72,7 @@ template<typename T, typename U, typename V> struct X6 {
     if (T x = t) {
       t = x;
     }
-    return v;
+    return v; // expected-error{{cannot initialize return object of type}}
   }
 };
 
@@ -178,10 +178,10 @@ template<typename T> struct IndirectGoto0 {
 
   prior:
     T prior_label;
-    prior_label = &&prior;
+    prior_label = &&prior; // expected-error{{assigning to 'int'}}
 
     T later_label;
-    later_label = &&later;
+    later_label = &&later; // expected-error{{assigning to 'int'}}
 
   later:
     (void)(1+1);
