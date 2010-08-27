@@ -4132,7 +4132,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       SDV = DAG.getDbgValue(Variable, V, Offset, dl, SDNodeOrder);
       DAG.AddDbgValue(SDV, 0, false);
     } else {
-      bool createUndef = false;
       // Do not use getValue() in here; we don't want to generate code at
       // this point if it hasn't been done yet.
       SDValue N = NodeMap[V];
@@ -4150,9 +4149,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         // Remember it for later.
         DanglingDebugInfo DDI(&DI, dl, SDNodeOrder);
         DanglingDebugInfoMap[V] = DDI;
-      } else
-        createUndef = true;
-      if (createUndef) {
+      } else {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
         SDV = DAG.getDbgValue(Variable, UndefValue::get(V->getType()),
