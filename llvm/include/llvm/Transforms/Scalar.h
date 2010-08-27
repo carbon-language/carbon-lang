@@ -343,6 +343,12 @@ FunctionPass *createSinkingPass();
 //
 Pass *createLowerAtomicPass();
 
+//===----------------------------------------------------------------------===//
+//
+// ValuePropagation - Propagate CFG-derived value information
+//
+Pass *createValuePropagationPass();
+
 } // End llvm namespace
 
 #endif
