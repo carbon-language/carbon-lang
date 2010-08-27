@@ -21,6 +21,7 @@ set( LLVM_LINK_COMPONENTS
 
 add_clang_library(libclang
   CIndex.cpp
+  CIndexCXX.cpp
   CIndexCodeCompletion.cpp
   CIndexDiagnostic.cpp
   CIndexInclusionStack.cpp

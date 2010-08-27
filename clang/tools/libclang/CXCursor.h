@@ -23,6 +23,7 @@ namespace clang {
 class ASTContext;
 class ASTUnit;
 class Attr;
+class CXXBaseSpecifier;
 class Decl;
 class Expr;
 class MacroDefinition;
@@ -74,6 +75,12 @@ CXCursor MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc, ASTUnit *TU);
 /// \brief Unpack a TypeRef cursor into the class it references
 /// and optionally the location where the reference occurred.
 std::pair<TypeDecl *, SourceLocation> getCursorTypeRef(CXCursor C);
+
+/// \brief Create a CXX base specifier cursor.
+CXCursor MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU);
+
+/// \brief Unpack a CXXBaseSpecifier cursor into a CXXBaseSpecifier.
+CXXBaseSpecifier *getCursorCXXBaseSpecifier(CXCursor C);
 
 /// \brief Create a preprocessing directive cursor.
 CXCursor MakePreprocessingDirectiveCursor(SourceRange Range, ASTUnit *TU);

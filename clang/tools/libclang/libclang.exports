@@ -30,6 +30,7 @@ clang_equalLocations
 clang_equalTypes
 clang_formatDiagnostic
 clang_getCString
+clang_getCXXAccessSpecifier
 clang_getCanonicalType
 clang_getClangVersion
 clang_getCompletionAvailability
@@ -95,6 +96,7 @@ clang_isReference
 clang_isStatement
 clang_isTranslationUnit
 clang_isUnexposed
+clang_isVirtualBase
 clang_parseTranslationUnit
 clang_reparseTranslationUnit
 clang_saveTranslationUnit

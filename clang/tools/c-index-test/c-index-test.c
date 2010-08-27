@@ -204,6 +204,26 @@ static void PrintCursor(CXCursor Cursor) {
       printf(" [IBOutletCollection=%s]", clang_getCString(S));
       clang_disposeString(S);
     }
+    
+    if (Cursor.kind == CXCursor_CXXBaseSpecifier) {
+      enum CX_CXXAccessSpecifier access = clang_getCXXAccessSpecifier(Cursor);
+      unsigned isVirtual = clang_isVirtualBase(Cursor);
+      const char *accessStr = 0;
+
+      switch (access) {
+        case CX_CXXInvalidAccessSpecifier:
+          accessStr = "invalid"; break;
+        case CX_CXXPublic:
+          accessStr = "public"; break;
+        case CX_CXXProtected:
+          accessStr = "protected"; break;
+        case CX_CXXPrivate:
+          accessStr = "private"; break;
+      }      
+      
+      printf(" [access=%s isVirtual=%s]", accessStr,
+             isVirtual ? "true" : "false");
+    }
   }
 }
 

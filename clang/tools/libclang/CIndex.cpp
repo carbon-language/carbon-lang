@@ -285,6 +285,7 @@ public:
   // Declaration visitors
   bool VisitAttributes(Decl *D);
   bool VisitBlockDecl(BlockDecl *B);
+  bool VisitCXXRecordDecl(CXXRecordDecl *D);
   bool VisitDeclContext(DeclContext *DC);
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
@@ -1080,6 +1081,19 @@ bool CursorVisitor::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   return false;
 }
 
+bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  if (D->isDefinition()) {
+    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
+         E = D->bases_end(); I != E; ++I) {
+      if (Visit(cxcursor::MakeCursorCXXBaseSpecifier(I, TU)))
+        return true;
+    }
+  }
+
+  return VisitTagDecl(D);
+}
+
+
 bool CursorVisitor::VisitBlockExpr(BlockExpr *B) {
   return Visit(B->getBlockDecl());
 }
@@ -1825,6 +1839,10 @@ CXString clang_getCursorSpelling(CXCursor C) {
       assert(OID && "getCursorSpelling(): Missing protocol decl");
       return createCXString(OID->getIdentifier()->getNameStart());
     }
+    case CXCursor_CXXBaseSpecifier: {
+      CXXBaseSpecifier *B = getCursorCXXBaseSpecifier(C);
+      return createCXString(B->getType().getAsString());
+    }
     case CXCursor_TypeRef: {
       TypeDecl *Type = getCursorTypeRef(C).first;
       assert(Type && "Missing type decl");
@@ -1953,6 +1971,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("Namespace");
   case CXCursor_LinkageSpec:
     return createCXString("LinkageSpec");
+  case CXCursor_CXXBaseSpecifier:
+    return createCXString("C++ base class specifier");  
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
@@ -2076,6 +2096,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
+    
+    case CXCursor_CXXBaseSpecifier: {
+      // FIXME: Figure out what location to return for a CXXBaseSpecifier.
+      return clang_getNullLocation();
+    }
 
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
@@ -2129,6 +2154,10 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 
     case CXCursor_TypeRef:
       return getCursorTypeRef(C).second;
+      
+    case CXCursor_CXXBaseSpecifier:
+      // FIXME: Figure out what source range to use for a CXBaseSpecifier.
+      return SourceRange();
 
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
@@ -2202,6 +2231,12 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 
     case CXCursor_TypeRef:
       return MakeCXCursor(getCursorTypeRef(C).first, CXXUnit);
+      
+    case CXCursor_CXXBaseSpecifier: {
+      CXXBaseSpecifier *B = cxcursor::getCursorCXXBaseSpecifier(C);
+      return clang_getTypeDeclaration(cxtype::MakeCXType(B->getType(),
+                                                         CXXUnit));
+    }
 
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.

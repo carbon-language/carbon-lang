@@ -14,8 +14,8 @@ _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
 _clang_defaultCodeCompleteOptions
-_clang_defaultEditingTranslationUnitOptions
 _clang_defaultDiagnosticDisplayOptions
+_clang_defaultEditingTranslationUnitOptions
 _clang_defaultReparseOptions
 _clang_defaultSaveOptions
 _clang_disposeCodeCompleteResults
@@ -30,7 +30,7 @@ _clang_equalLocations
 _clang_equalTypes
 _clang_formatDiagnostic
 _clang_getCString
-_clang_getIBOutletCollectionType
+_clang_getCXXAccessSpecifier
 _clang_getCanonicalType
 _clang_getClangVersion
 _clang_getCompletionAvailability
@@ -48,8 +48,8 @@ _clang_getCursorLanguage
 _clang_getCursorLinkage
 _clang_getCursorLocation
 _clang_getCursorReferenced
-_clang_getCursorSpelling
 _clang_getCursorResultType
+_clang_getCursorSpelling
 _clang_getCursorType
 _clang_getCursorUSR
 _clang_getDefinitionSpellingAndExtent
@@ -64,6 +64,7 @@ _clang_getDiagnosticSpelling
 _clang_getFile
 _clang_getFileName
 _clang_getFileTime
+_clang_getIBOutletCollectionType
 _clang_getInclusions
 _clang_getInstantiationLocation
 _clang_getLocation
@@ -89,12 +90,13 @@ _clang_isCursorDefinition
 _clang_isDeclaration
 _clang_isExpression
 _clang_isInvalid
-_clang_isPreprocessing
 _clang_isPODType
+_clang_isPreprocessing
 _clang_isReference
 _clang_isStatement
 _clang_isTranslationUnit
 _clang_isUnexposed
+_clang_isVirtualBase
 _clang_parseTranslationUnit
 _clang_reparseTranslationUnit
 _clang_saveTranslationUnit

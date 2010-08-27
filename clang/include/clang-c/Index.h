@@ -1001,7 +1001,8 @@ enum CXCursorKind {
    * referenced by the type of size is the typedef for size_type.
    */
   CXCursor_TypeRef                       = 43,
-  CXCursor_LastRef                       = 43,
+  CXCursor_CXXBaseSpecifier              = 44,
+  CXCursor_LastRef                       = CXCursor_CXXBaseSpecifier,
 
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,
@@ -1437,6 +1438,29 @@ CINDEX_LINKAGE CXType clang_getCursorResultType(CXCursor C);
  *  otherwise.
  */
 CINDEX_LINKAGE unsigned clang_isPODType(CXType T);
+
+/**
+ * \brief Returns 1 if the base class specified by the cursor with kind
+ *   CX_CXXBaseSpecifier is virtual.
+ */
+CINDEX_LINKAGE unsigned clang_isVirtualBase(CXCursor);
+    
+/**
+ * \brief Represents the C++ access control level to a base class for a
+ * cursor with kind CX_CXXBaseSpecifier.
+ */
+enum CX_CXXAccessSpecifier {
+  CX_CXXInvalidAccessSpecifier,
+  CX_CXXPublic,
+  CX_CXXProtected,
+  CX_CXXPrivate
+};
+
+/**
+ * \brief Returns the access control level for the C++ base specifier
+ *  represented by a cursor with kind CX_CXXBaseSpecifier.
+ */
+CINDEX_LINKAGE enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor);
 
 /**
  * @}

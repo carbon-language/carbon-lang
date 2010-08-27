@@ -10,6 +10,21 @@ void f(int x) {
   }
 }
 
+// Test handling of C++ base specifiers.
+class A {
+  void doA();
+};
+
+class B {
+  void doB();
+};
+
+class C : public A, private B {
+  void doC();
+};
+
+class D : virtual public C, virtual private A {};
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -56,4 +71,15 @@ void f(int x) {
 // CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:3 - 9:17]
 // CHECK: load-stmts.cpp:9:8: UnexposedExpr= Extent=[9:8 - 9:10]
 // CHECK: <invalid loc>:0:0: UnexposedStmt= Extent=[9:12 - 9:17]
+// CHECK: load-stmts.cpp:14:7: ClassDecl=A:14:7 (Definition) Extent=[14:1 - 16:2]
+// CHECK: load-stmts.cpp:15:8: CXXMethod=doA:15:8 Extent=[15:8 - 15:13]
+// CHECK: load-stmts.cpp:18:7: ClassDecl=B:18:7 (Definition) Extent=[18:1 - 20:2]
+// CHECK: load-stmts.cpp:19:8: CXXMethod=doB:19:8 Extent=[19:8 - 19:13]
+// CHECK: load-stmts.cpp:22:7: ClassDecl=C:22:7 (Definition) Extent=[22:1 - 24:2]
+// CHECK: <invalid loc>:0:0: C++ base class specifier=class A:14:7 [access=public isVirtual=false]
+// CHECK: <invalid loc>:0:0: C++ base class specifier=class B:18:7 [access=private isVirtual=false]
+// CHECK: load-stmts.cpp:23:8: CXXMethod=doC:23:8 Extent=[23:8 - 23:13]
+// CHECK: load-stmts.cpp:26:7: ClassDecl=D:26:7 (Definition) Extent=[26:1 - 26:49]
+// CHECK: <invalid loc>:0:0: C++ base class specifier=class C:22:7 [access=public isVirtual=true]
+// CHECK: <invalid loc>:0:0: C++ base class specifier=class A:14:7 [access=private isVirtual=true]
 

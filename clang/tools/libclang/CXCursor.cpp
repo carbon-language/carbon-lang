@@ -302,6 +302,16 @@ cxcursor::getCursorTypeRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
+CXCursor cxcursor::MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU){
+  CXCursor C = { CXCursor_CXXBaseSpecifier, { B, 0, TU } };
+  return C;  
+}
+
+CXXBaseSpecifier *cxcursor::getCursorCXXBaseSpecifier(CXCursor C) {
+  assert(C.kind == CXCursor_CXXBaseSpecifier);
+  return static_cast<CXXBaseSpecifier*>(C.data[0]);
+}
+
 CXCursor cxcursor::MakePreprocessingDirectiveCursor(SourceRange Range, 
                                                     ASTUnit *TU) {
   CXCursor C = { CXCursor_PreprocessingDirective, 
