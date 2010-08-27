@@ -464,7 +464,7 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
   // Figure out where to get and map in the main file.
   if (InputFile != "-") {
     const FileEntry *File = FileMgr.getFile(InputFile);
-    if (File) SourceMgr.createMainFileID(File, SourceLocation());
+    if (File) SourceMgr.createMainFileID(File);
     if (SourceMgr.getMainFileID().isInvalid()) {
       Diags.Report(diag::err_fe_error_reading) << InputFile;
       return false;
