@@ -409,7 +409,7 @@ static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
     return false;
 
   // Make sure the offset fits in 8 bits.
-  if (Bytes <= 0 || (Limit && Bytes >= Limit))
+  if (Bytes == 0 || (Limit && Bytes >= Limit))
     return false;
 
   unsigned Scale = (MI->getOpcode() == ARM::tSUBspi) ? 4 : 1; // FIXME
@@ -433,7 +433,7 @@ static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
       MI->getOpcode() != ARM::ADDri)
     return false;
 
-  if (Bytes <= 0 || (Limit && Bytes >= Limit))
+  if (Bytes == 0 || (Limit && Bytes >= Limit))
     // Make sure the offset fits in 8 bits.
     return false;
 
