@@ -632,9 +632,9 @@ _mm_storer_ps(float *p, __m128 a)
   _mm_store_ps(p, a);
 }
 
-#define _MM_HINT_T0 1
+#define _MM_HINT_T0 3
 #define _MM_HINT_T1 2
-#define _MM_HINT_T2 3
+#define _MM_HINT_T2 1
 #define _MM_HINT_NTA 0
 
 /* FIXME: We have to #define this because "sel" must be a constant integer, and
