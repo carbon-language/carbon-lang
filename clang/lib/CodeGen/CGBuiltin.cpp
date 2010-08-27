@@ -1050,6 +1050,28 @@ Value *CodeGenFunction::EmitNeonShiftVector(Value *V, const llvm::Type *Ty,
   return llvm::ConstantVector::get(CV.begin(), CV.size());
 }
 
+/// GetPointeeAlignment - Given an expression with a pointer type, find the
+/// alignment of the type referenced by the pointer.  Skip over implicit
+/// casts.
+static Value *GetPointeeAlignment(CodeGenFunction &CGF, const Expr *Addr) {
+  unsigned Align = 1;
+  // Check if the type is a pointer.  The implicit cast operand might not be.
+  while (Addr->getType()->isPointerType()) {
+    QualType PtTy = Addr->getType()->getPointeeType();
+    unsigned NewA = CGF.getContext().getTypeAlignInChars(PtTy).getQuantity();
+    if (NewA > Align)
+      Align = NewA;
+
+    // If the address is an implicit cast, repeat with the cast operand.
+    if (const ImplicitCastExpr *CastAddr = dyn_cast<ImplicitCastExpr>(Addr)) {
+      Addr = CastAddr->getSubExpr();
+      continue;
+    }
+    break;
+  }
+  return llvm::ConstantInt::get(CGF.Int32Ty, Align);
+}
+
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
   if (BuiltinID == ARM::BI__clear_cache) {
@@ -1244,6 +1266,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vhsub");
   case ARM::BI__builtin_neon_vld1_v:
   case ARM::BI__builtin_neon_vld1q_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vld1, &Ty, 1),
                         Ops, "vld1");
   case ARM::BI__builtin_neon_vld1_lane_v:
@@ -1266,7 +1289,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld2_v:
   case ARM::BI__builtin_neon_vld2q_v: {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld2, &Ty, 1);
-    Ops[1] = Builder.CreateCall(F, Ops[1], "vld2");
+    Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+    Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld2");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     return Builder.CreateStore(Ops[1], Ops[0]);
@@ -1274,7 +1298,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld3_v:
   case ARM::BI__builtin_neon_vld3q_v: {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld3, &Ty, 1);
-    Ops[1] = Builder.CreateCall(F, Ops[1], "vld3");
+    Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+    Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld3");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     return Builder.CreateStore(Ops[1], Ops[0]);
@@ -1282,7 +1307,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld4_v:
   case ARM::BI__builtin_neon_vld4q_v: {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld4, &Ty, 1);
-    Ops[1] = Builder.CreateCall(F, Ops[1], "vld4");
+    Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+    Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld4");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     return Builder.CreateStore(Ops[1], Ops[0]);
@@ -1292,6 +1318,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld2lane, &Ty, 1);
     Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
     Ops[1] = Builder.CreateCall(F, Ops.begin() + 1, Ops.end(), "vld2_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1303,6 +1330,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
     Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
     Ops[1] = Builder.CreateCall(F, Ops.begin() + 1, Ops.end(), "vld3_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1315,6 +1343,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
     Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
     Ops[5] = Builder.CreateBitCast(Ops[5], Ty);
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
     Ops[1] = Builder.CreateCall(F, Ops.begin() + 1, Ops.end(), "vld3_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1344,6 +1373,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
 
     llvm::Constant *CI = ConstantInt::get(Int32Ty, 0);
     Args.push_back(CI);
+    Args.push_back(GetPointeeAlignment(*this, E->getArg(1)));
     
     Ops[1] = Builder.CreateCall(F, Args.begin(), Args.end(), "vld_dup");
     // splat lane 0 to all elts in each vector of the result.
@@ -1587,6 +1617,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateAdd(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vst1_v:
   case ARM::BI__builtin_neon_vst1q_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst1, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vst1_lane_v:
@@ -1597,26 +1628,32 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateStore(Ops[1], Builder.CreateBitCast(Ops[0], Ty));
   case ARM::BI__builtin_neon_vst2_v:
   case ARM::BI__builtin_neon_vst2q_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst2, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vst2_lane_v:
   case ARM::BI__builtin_neon_vst2q_lane_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst2lane, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vst3_v:
   case ARM::BI__builtin_neon_vst3q_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst3, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vst3_lane_v:
   case ARM::BI__builtin_neon_vst3q_lane_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst3lane, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vst4_v:
   case ARM::BI__builtin_neon_vst4q_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst4, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vst4_lane_v:
   case ARM::BI__builtin_neon_vst4q_lane_v:
+    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst4lane, &Ty, 1),
                         Ops, "");
   case ARM::BI__builtin_neon_vsubhn_v:
