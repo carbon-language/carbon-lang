@@ -27,3 +27,37 @@
 ; CHECK: vmovlu32
 ; CHECK-NOT: arm.neon.vmovlu.v2i64
 ; CHECK: zext <2 x i32>
+
+; vld* and vst* intrinsic calls need an alignment argument (defaulted to 1)
+
+; CHECK: vld1i8
+; CHECK: i32 1
+; CHECK: vld2Qi16
+; CHECK: i32 1
+; CHECK: vld3i32
+; CHECK: i32 1
+; CHECK: vld4Qf
+; CHECK: i32 1
+
+; CHECK: vst1i8
+; CHECK: i32 1
+; CHECK: vst2Qi16
+; CHECK: i32 1
+; CHECK: vst3i32
+; CHECK: i32 1
+; CHECK: vst4Qf
+; CHECK: i32 1
+
+; CHECK: vld2laneQi16
+; CHECK: i32 1
+; CHECK: vld3lanei32
+; CHECK: i32 1
+; CHECK: vld4laneQf
+; CHECK: i32 1
+
+; CHECK: vst2laneQi16
+; CHECK: i32 1
+; CHECK: vst3lanei32
+; CHECK: i32 1
+; CHECK: vst4laneQf
+; CHECK: i32 1

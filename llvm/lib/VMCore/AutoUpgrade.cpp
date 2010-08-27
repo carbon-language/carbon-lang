@@ -85,6 +85,39 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         NewFn = 0;
         return true;
       }
+      // Old versions of NEON ld/st intrinsics are missing alignment arguments.
+      bool isVLd = (Name.compare(14, 3, "vld", 3) == 0);
+      bool isVSt = (Name.compare(14, 3, "vst", 3) == 0);
+      if (isVLd || isVSt) {
+        unsigned NumVecs = Name.at(17) - '0';
+        if (NumVecs == 0 || NumVecs > 4)
+          return false;
+        bool isLaneOp = (Name.compare(18, 5, "lane.", 5) == 0);
+        if (!isLaneOp && Name.at(18) != '.')
+          return false;
+        unsigned ExpectedArgs = 2; // for the address and alignment
+        if (isVSt || isLaneOp)
+          ExpectedArgs += NumVecs;
+        if (isLaneOp)
+          ExpectedArgs += 1; // for the lane number
+        unsigned NumP = FTy->getNumParams();
+        if (NumP != ExpectedArgs - 1)
+          return false;
+
+        // Change the name of the old (bad) intrinsic, because 
+        // its type is incorrect, but we cannot overload that name.
+        F->setName("");
+
+        // One argument is missing: add the alignment argument.
+        std::vector<const Type*> NewParams;
+        for (unsigned p = 0; p < NumP; ++p)
+          NewParams.push_back(FTy->getParamType(p));
+        NewParams.push_back(Type::getInt32Ty(F->getContext()));
+        FunctionType *NewFTy = FunctionType::get(FTy->getReturnType(),
+                                                 NewParams, false);
+        NewFn = cast<Function>(M->getOrInsertFunction(Name, NewFTy));
+        return true;
+      }
     }
     break;
   case 'b':
@@ -189,7 +222,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         NewFnName = "llvm.memset.p0i8.i64";
     }
     if (NewFnName) {
-      const FunctionType *FTy = F->getFunctionType();
       NewFn = cast<Function>(M->getOrInsertFunction(NewFnName, 
                                             FTy->getReturnType(),
                                             FTy->getParamType(0),
@@ -578,6 +610,39 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
   switch (NewFn->getIntrinsicID()) {
   default:  llvm_unreachable("Unknown function for CallInst upgrade.");
+  case Intrinsic::arm_neon_vld1:
+  case Intrinsic::arm_neon_vld2:
+  case Intrinsic::arm_neon_vld3:
+  case Intrinsic::arm_neon_vld4:
+  case Intrinsic::arm_neon_vst1:
+  case Intrinsic::arm_neon_vst2:
+  case Intrinsic::arm_neon_vst3:
+  case Intrinsic::arm_neon_vst4:
+  case Intrinsic::arm_neon_vld2lane:
+  case Intrinsic::arm_neon_vld3lane:
+  case Intrinsic::arm_neon_vld4lane:
+  case Intrinsic::arm_neon_vst2lane:
+  case Intrinsic::arm_neon_vst3lane:
+  case Intrinsic::arm_neon_vst4lane: {
+    // Add a default alignment argument of 1.
+    SmallVector<Value*, 8> Operands(CS.arg_begin(), CS.arg_end());
+    Operands.push_back(ConstantInt::get(Type::getInt32Ty(C), 1));
+    CallInst *NewCI = CallInst::Create(NewFn, Operands.begin(), Operands.end(),
+                                       CI->getName(), CI);
+    NewCI->setTailCall(CI->isTailCall());
+    NewCI->setCallingConv(CI->getCallingConv());
+
+    //  Handle any uses of the old CallInst.
+    if (!CI->use_empty())
+      //  Replace all uses of the old call with the new cast which has the 
+      //  correct type.
+      CI->replaceAllUsesWith(NewCI);
+    
+    //  Clean up the old call now that it has been completely upgraded.
+    CI->eraseFromParent();
+    break;
+  }        
+
   case Intrinsic::x86_mmx_psll_d:
   case Intrinsic::x86_mmx_psll_q:
   case Intrinsic::x86_mmx_psll_w:

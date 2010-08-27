@@ -14,11 +14,11 @@ entry:
   %6 = bitcast i32* %sp3 to <4 x i32>*            ; <<4 x i32>*> [#uses=1]
   %7 = load <4 x i32>* %6, align 16               ; <<4 x i32>> [#uses=1]
   %8 = bitcast i32* %dp to i8*                    ; <i8*> [#uses=1]
-  tail call void @llvm.arm.neon.vst4.v4i32(i8* %8, <4 x i32> %1, <4 x i32> %3, <4 x i32> %5, <4 x i32> %7)
+  tail call void @llvm.arm.neon.vst4.v4i32(i8* %8, <4 x i32> %1, <4 x i32> %3, <4 x i32> %5, <4 x i32> %7, i32 1)
   ret void
 }
 
-declare void @llvm.arm.neon.vst4.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>) nounwind
+declare void @llvm.arm.neon.vst4.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32) nounwind
 
 @sbuf = common global [16 x i32] zeroinitializer, align 16 ; <[16 x i32]*> [#uses=5]
 @dbuf = common global [16 x i32] zeroinitializer  ; <[16 x i32]*> [#uses=2]
@@ -44,6 +44,6 @@ bb2:                                              ; preds = %bb
   %3 = load <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32]* @sbuf, i32 0, i32 4) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
   %4 = load <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32]* @sbuf, i32 0, i32 8) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
   %5 = load <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32]* @sbuf, i32 0, i32 12) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
-  tail call void @llvm.arm.neon.vst4.v4i32(i8* bitcast ([16 x i32]* @dbuf to i8*), <4 x i32> %2, <4 x i32> %3, <4 x i32> %4, <4 x i32> %5) nounwind
+  tail call void @llvm.arm.neon.vst4.v4i32(i8* bitcast ([16 x i32]* @dbuf to i8*), <4 x i32> %2, <4 x i32> %3, <4 x i32> %4, <4 x i32> %5, i32 1) nounwind
   ret i32 0
 }

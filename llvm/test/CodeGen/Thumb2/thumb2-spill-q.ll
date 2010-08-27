@@ -7,7 +7,7 @@
 %quux = type { i32 (...)**, %baz*, i32 }
 %quuz = type { %quux, i32, %bar, [128 x i8], [16 x %foo], %foo, %foo, %foo }
 
-declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*) nounwind readonly
+declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
 
 define void @aaa(%quuz* %this, i8* %block) {
 ; CHECK: aaa:
@@ -15,11 +15,11 @@ define void @aaa(%quuz* %this, i8* %block) {
 ; CHECK: vst1.64 {{.*}}[{{.*}}, :128]
 ; CHECK: vld1.64 {{.*}}[{{.*}}, :128]
 entry:
-  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef) nounwind ; <<4 x float>> [#uses=1]
+  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
   store float 6.300000e+01, float* undef, align 4
-  %1 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef) nounwind ; <<4 x float>> [#uses=1]
+  %1 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
   store float 0.000000e+00, float* undef, align 4
-  %2 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef) nounwind ; <<4 x float>> [#uses=1]
+  %2 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
   %val173 = load <4 x float>* undef               ; <<4 x float>> [#uses=1]
   br label %bb4
 

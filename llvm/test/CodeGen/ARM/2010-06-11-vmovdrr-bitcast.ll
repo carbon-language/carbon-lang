@@ -12,8 +12,8 @@ entry:
  %tmp9 = trunc i128 %tmp8 to i64                 ; <i64> [#uses=1]
  %tmp16.i = bitcast i64 %tmp6 to <8 x i8>        ; <<8 x i8>> [#uses=1]
  %tmp20.i = bitcast i64 %tmp9 to <8 x i8>        ; <<8 x i8>> [#uses=1]
- tail call void @llvm.arm.neon.vst2.v8i8(i8* %b, <8 x i8> %tmp16.i, <8 x i8> %tmp20.i) nounwind
+ tail call void @llvm.arm.neon.vst2.v8i8(i8* %b, <8 x i8> %tmp16.i, <8 x i8> %tmp20.i, i32 1) nounwind
  ret void
 }
 
-declare void @llvm.arm.neon.vst2.v8i8(i8*, <8 x i8>, <8 x i8>) nounwind
+declare void @llvm.arm.neon.vst2.v8i8(i8*, <8 x i8>, <8 x i8>, i32) nounwind

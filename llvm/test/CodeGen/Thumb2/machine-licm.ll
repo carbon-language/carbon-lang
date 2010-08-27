@@ -64,10 +64,10 @@ bb1:
   %indvar = phi i32 [ %indvar.next, %bb1 ], [ 0, %entry ]
   %tmp1 = shl i32 %indvar, 2
   %gep1 = getelementptr i8* %ptr1, i32 %tmp1
-  %tmp2 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %gep1)
+  %tmp2 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %gep1, i32 1)
   %tmp3 = call <4 x float> @llvm.arm.neon.vmaxs.v4f32(<4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, <4 x float> %tmp2)
   %gep2 = getelementptr i8* %ptr2, i32 %tmp1
-  call void @llvm.arm.neon.vst1.v4f32(i8* %gep2, <4 x float> %tmp3)
+  call void @llvm.arm.neon.vst1.v4f32(i8* %gep2, <4 x float> %tmp3, i32 1)
   %indvar.next = add i32 %indvar, 1
   %cond = icmp eq i32 %indvar.next, 10
   br i1 %cond, label %bb2, label %bb1
@@ -79,8 +79,8 @@ bb2:
 ; CHECK: LCPI1_0:
 ; CHECK: .section
 
-declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*) nounwind readonly
+declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
 
-declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>) nounwind
+declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
 
 declare <4 x float> @llvm.arm.neon.vmaxs.v4f32(<4 x float>, <4 x float>) nounwind readnone
