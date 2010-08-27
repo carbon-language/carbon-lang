@@ -1678,7 +1678,7 @@ def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
 // Optimized codegen when the non-memory output is not used.
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1 in {
 // FIXME: Use normal add / sub instructions and add lock prefix dynamically.
-def LOCK_ADD64mr : RI<0x03, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+def LOCK_ADD64mr : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                       "lock\n\t"
                       "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
 def LOCK_ADD64mi8 : RIi8<0x83, MRM0m, (outs),
