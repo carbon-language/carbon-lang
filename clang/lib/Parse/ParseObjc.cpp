@@ -2204,17 +2204,21 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   }
   
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(sLoc);
-  if (!SelIdent && Tok.isNot(tok::colon)) // missing selector name.
+  if (!SelIdent &&  // missing selector name.
+      Tok.isNot(tok::colon) && Tok.isNot(tok::coloncolon))
     return ExprError(Diag(Tok, diag::err_expected_ident));
 
   KeyIdents.push_back(SelIdent);
   unsigned nColons = 0;
   if (Tok.isNot(tok::r_paren)) {
     while (1) {
-      if (Tok.isNot(tok::colon))
+      if (Tok.is(tok::coloncolon)) { // Handle :: in C++.
+        ++nColons;
+        KeyIdents.push_back(0);
+      } else if (Tok.isNot(tok::colon))
         return ExprError(Diag(Tok, diag::err_expected_colon));
 
-      nColons++;
+      ++nColons;
       ConsumeToken(); // Eat the ':'.
       if (Tok.is(tok::r_paren))
         break;
