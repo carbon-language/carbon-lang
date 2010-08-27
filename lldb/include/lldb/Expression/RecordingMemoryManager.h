@@ -52,7 +52,9 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 class RecordingMemoryManager : public llvm::JITMemoryManager
 {
-friend Error ClangExpressionParser::MakeJIT (uint64_t &, ExecutionContext &);
+friend Error ClangExpressionParser::MakeJIT (uint64_t &, 
+                                             uint64_t&, 
+                                             ExecutionContext &);
 
 public:
     //------------------------------------------------------------------

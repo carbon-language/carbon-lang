@@ -45,6 +45,10 @@ ClangUserExpression::ClangUserExpression (const char *expr) :
     m_transformed_text = m_transformed_stream.GetData();
 }
 
+ClangUserExpression::~ClangUserExpression ()
+{
+}
+
 clang::ASTConsumer *
 ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 {
@@ -123,7 +127,9 @@ ClangUserExpression::Parse (Stream &error_stream, ExecutionContext &exe_ctx)
     
     m_dwarf_opcodes.reset();
     
-    Error jit_error = parser.MakeJIT (m_jit_addr, exe_ctx);
+    lldb::addr_t jit_end;
+    
+    Error jit_error = parser.MakeJIT (m_jit_addr, jit_end, exe_ctx);
     
     if (jit_error.Success())
     {

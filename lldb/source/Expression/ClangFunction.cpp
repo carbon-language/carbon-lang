@@ -227,7 +227,9 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     if (m_JITted)
         return true;
     
-    Error jit_error = m_parser->MakeJIT(m_wrapper_function_addr, exe_ctx);
+    lldb::addr_t wrapper_function_end;
+    
+    Error jit_error = m_parser->MakeJIT(m_wrapper_function_addr, wrapper_function_end, exe_ctx);
     
     if (!jit_error.Success())
         return false;

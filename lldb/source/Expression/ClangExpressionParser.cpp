@@ -369,7 +369,9 @@ ClangExpressionParser::MakeDWARF ()
 }
 
 Error
-ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr, ExecutionContext &exe_ctx)
+ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr, 
+                                lldb::addr_t &func_end, 
+                                ExecutionContext &exe_ctx)
 {
     Error err;
     
@@ -507,7 +509,10 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr, ExecutionContext &exe_c
         (*pos).m_remote_addr = m_jit_mm->GetRemoteAddressForLocal ((*pos).m_local_addr);
     
         if (!(*pos).m_name.compare(m_expr.FunctionName()))
+        {
+            func_end = m_jit_mm->GetRemoteRangeForLocal ((*pos).m_local_addr).second;
             func_addr = (*pos).m_remote_addr;
+        }
     }
     
     err.Clear();

@@ -93,7 +93,12 @@ public:
     /// @param[out] func_addr
     ///     The address to which the function has been written.
     ///
-    /// @para[in] exe_ctx
+    /// @param[out] func_end
+    ///     The end of the function's allocated memory region.  (func_addr
+    ///     and func_end do not delimit an allocated region; the allocated
+    ///     region may begin before func_addr.)
+    ///
+    /// @param[in] exe_ctx
     ///     The execution context to write the function into.
     ///
     /// @return
@@ -101,7 +106,8 @@ public:
     ///     Test with Success().
     //------------------------------------------------------------------
     Error
-    MakeJIT (lldb::addr_t &func_addr, 
+    MakeJIT (lldb::addr_t &func_addr,
+             lldb::addr_t &func_end,
              ExecutionContext &exe_ctx);
     
     //------------------------------------------------------------------

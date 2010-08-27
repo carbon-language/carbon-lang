@@ -1,4 +1,4 @@
-//===-- ClangUserExpression.h -----------------------------------*- C++ -*-===//
+//===-- ClangUtilityFunction.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ClangUserExpression_h_
-#define liblldb_ClangUserExpression_h_
+#ifndef liblldb_ClangUtilityFunction_h_
+#define liblldb_ClangUtilityFunction_h_
 
 // C Includes
 // C++ Includes
@@ -25,71 +25,78 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
 
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
-
 namespace lldb_private 
 {
 
 //----------------------------------------------------------------------
-/// @class ClangUserExpression ClangUserExpression.h "lldb/Expression/ClangUserExpression.h"
+/// @class ClangUtilityFunction ClangUtilityFunction.h "lldb/Expression/ClangUtilityFunction.h"
 /// @brief Encapsulates a single expression for use with Clang
 ///
 /// LLDB uses expressions for various purposes, notably to call functions
-/// and as a backend for the expr command.  ClangUserExpression encapsulates
-/// the objects needed to parse and interpret or JIT an expression.  It
-/// uses the Clang parser to produce LLVM IR from the expression.
+/// and as a backend for the expr command.  ClangUtilityFunction encapsulates
+/// a self-contained function meant to be used from other code.  Utility
+/// functions can perform error-checking for ClangUserExpressions, 
 //----------------------------------------------------------------------
-class ClangUserExpression : public ClangExpression
+class ClangUtilityFunction : public ClangExpression
 {
 public:
     //------------------------------------------------------------------
     /// Constructor
+    ///
+    /// @param[in] text
+    ///     The text of the function.  Must be a full translation unit.
+    ///
+    /// @param[in] name
+    ///     The name of the function, as used in the text.
     //------------------------------------------------------------------
-    ClangUserExpression (const char *expr);
+    ClangUtilityFunction (const char *text, 
+                          const char *name);
     
     //------------------------------------------------------------------
-    /// Destructor
-    //------------------------------------------------------------------
-    virtual ~ClangUserExpression ();
-    
-    //------------------------------------------------------------------
-    /// Parse the expression
+    /// Install the utility function into a process
     ///
     /// @param[in] error_stream
     ///     A stream to print parse errors and warnings to.
     ///
     /// @param[in] exe_ctx
-    ///     The execution context to use when looking up entities that
-    ///     are needed for parsing (locations of functions, types of
-    ///     variables, persistent variables, etc.)
+    ///     The execution context to install the utility function to.
     ///
     /// @return
     ///     True on success (no errors); false otherwise.
     //------------------------------------------------------------------
     bool
-    Parse (Stream &error_stream, ExecutionContext &exe_ctx);
+    Install (Stream &error_stream, ExecutionContext &exe_ctx);
     
     //------------------------------------------------------------------
-    /// Execute the parsed expression
+    /// Check whether the given PC is inside the function
     ///
-    /// @param[in] error_stream
-    ///     A stream to print errors to.
+    /// Especially useful if the function dereferences NULL to indicate a failed
+    /// assert.
     ///
-    /// @param[in] exe_ctx
-    ///     The execution context to use when looking up entities that
-    ///     are needed for parsing (locations of variables, etc.)
-    ///
-    /// @param[in] result
-    ///     A pointer to direct at the persistent variable in which the
-    ///     expression's result is stored.
+    /// @param[in] pc
+    ///     The program counter to check.
     ///
     /// @return
-    ///     True on success; false otherwise.
+    ///     True if the program counter falls within the function's bounds;
+    ///     false if not (or the function is not JIT compiled)
     //------------------------------------------------------------------
     bool
-    Execute (Stream &error_stream,
-             ExecutionContext &exe_ctx,
-             ClangExpressionVariable *& result);
+    ContainsAddress (lldb::addr_t address)
+    {
+        // nothing is both >= LLDB_INVALID_ADDRESS and < LLDB_INVALID_ADDRESS,
+        // so this always returns false if the function is not JIT compiled yet
+        return (address >= m_jit_begin && address < m_jit_end);
+    }
+    
+    //------------------------------------------------------------------
+    /// Return the address of the function's JIT-compiled code, or
+    /// LLDB_INVALID_ADDRESS if the function is not JIT compiled
+    //------------------------------------------------------------------
+    lldb::addr_t
+    StartAddress ()
+    {
+        return m_jit_begin;
+    }
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
@@ -98,7 +105,7 @@ public:
     const char *
     Text ()
     {
-        return m_transformed_text.c_str();
+        return m_function_text.c_str();
     }
     
     //------------------------------------------------------------------
@@ -109,7 +116,7 @@ public:
     const char *
     FunctionName ()
     {
-        return "___clang_expr";
+        return m_function_name.c_str();
     }
     
     //------------------------------------------------------------------
@@ -119,7 +126,7 @@ public:
     ClangExpressionDeclMap *
     DeclMap ()
     {
-        return m_expr_decl_map.get();
+        return NULL;
     }
     
     //------------------------------------------------------------------
@@ -129,7 +136,7 @@ public:
     ClangExpressionVariableStore *
     LocalVariables ()
     {
-        return m_local_variables.get();
+        return NULL;
     }
     
     //------------------------------------------------------------------
@@ -141,25 +148,29 @@ public:
     ///     the ASTs to after transformation.
     //------------------------------------------------------------------
     clang::ASTConsumer *
-    ASTTransformer (clang::ASTConsumer *passthrough);
+    ASTTransformer (clang::ASTConsumer *passthrough)
+    {
+        return NULL;
+    }
     
     //------------------------------------------------------------------
     /// Return the stream that the parser should use to write DWARF
     /// opcodes.
     //------------------------------------------------------------------
     StreamString &
-    DwarfOpcodeStream ();
-
+    DwarfOpcodeStream ()
+    {
+        return *((StreamString*)NULL);
+    }
+    
 private:
-    std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
-    std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
+    std::string     m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
+    std::string     m_function_name;    ///< The name of the function.
     
-    std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
-    std::auto_ptr<ClangExpressionVariableStore> m_local_variables;      ///< The local expression variables, if the expression is DWARF.
-    std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
-    lldb::addr_t                                m_jit_addr;             ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
+    lldb::addr_t    m_jit_begin;        ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
+    lldb::addr_t    m_jit_end;          ///< The end of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
 };
-    
+
 } // namespace lldb_private
 
-#endif  // liblldb_ClangUserExpression_h_
+#endif  // liblldb_ClangUtilityFunction_h_
