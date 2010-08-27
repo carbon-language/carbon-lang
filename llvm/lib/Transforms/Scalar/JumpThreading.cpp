@@ -671,7 +671,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     }
     
     // For a comparison where the LHS is outside this block, it's possible
-    // that we've branch on it before.  Used LVI to see if we can simplify
+    // that we've branched on it before.  Used LVI to see if we can simplify
     // the branch based on that.
     BranchInst *CondBr = dyn_cast<BranchInst>(BB->getTerminator());
     Constant *CondConst = dyn_cast<Constant>(CondCmp->getOperand(1));
@@ -694,7 +694,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
           ++Falses;
       }
       
-      // If we can determine the branch direction statically, converted
+      // If we can determine the branch direction statically, convert
       // the conditional branch to an unconditional one.
       if (Trues && Trues == predcount) {
         RemovePredecessorAndSimplify(CondBr->getSuccessor(1), BB, TD);
