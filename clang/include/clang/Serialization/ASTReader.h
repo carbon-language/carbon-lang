@@ -466,7 +466,7 @@ private:
   /// local external declarations.
   llvm::SmallVector<uint64_t, 16> LocallyScopedExternalDecls;
 
-  /// \brief A snapshot of the implicit instantiations in the chain.
+  /// \brief A snapshot of the pwnsinf instantiations in the chain.
   ///
   /// This record tracks the instantiations that Sema has to perform at the end
   /// of the TU. It consists of a pair of values for every pending instantiation
