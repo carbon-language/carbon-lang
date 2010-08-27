@@ -77,34 +77,42 @@ class TestArrayTypes(TestBase):
         # Lookup the "strings" string array variable.
         frame = thread.GetFrameAtIndex(0)
         variable = frame.LookupVar("strings")
+        self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 4,
                         "Variable 'strings' should have 4 children")
 
         child3 = variable.GetChildAtIndex(3)
+        self.DebugSBValue(frame, child3)
         self.assertTrue(child3.GetSummary(frame) == '"Guten Tag"',
                         'strings[3] == "Guten Tag"')
 
         # Lookup the "char_16" char array variable.
         variable = frame.LookupVar("char_16")
+        self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 16,
                         "Variable 'char_16' should have 16 children")
 
         # Lookup the "ushort_matrix" ushort[] array variable.
         variable = frame.LookupVar("ushort_matrix")
+        self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 2,
                         "Variable 'ushort_matrix' should have 2 children")
         child0 = variable.GetChildAtIndex(0)
+        self.DebugSBValue(frame, child0)
         self.assertTrue(child0.GetNumChildren() == 3,
                         "Variable 'ushort_matrix[0]' should have 3 children")
         child0_2 = child0.GetChildAtIndex(2)
+        self.DebugSBValue(frame, child0_2)
         self.assertTrue(int(child0_2.GetValue(frame), 16) == 3,
                         "ushort_matrix[0][2] == 3")
 
         # Lookup the "long_6" char array variable.
         variable = frame.LookupVar("long_6")
+        self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 6,
                         "Variable 'long_6' should have 6 children")
         child5 = variable.GetChildAtIndex(5)
+        self.DebugSBValue(frame, child5)
         self.assertTrue(long(child5.GetValue(frame)) == 6,
                         "long_6[5] == 6")
 

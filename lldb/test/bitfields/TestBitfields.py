@@ -53,6 +53,61 @@ class TestBitfields(TestBase):
                        '(uint32_t:7) b7 = 0x0000007f,',
                        '(uint32_t:4) four = 0x0000000f'])
 
+    def test_bitfields_variable_python(self):
+        """Use Python APIs to inspect a bitfields variable."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation("main.c", 42)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        self.runCmd("run", RUN_STOPPED)
+        # This does not work, and results in the process stopped at dyld_start?
+        #process = target.LaunchProcess([''], [''], os.ctermid(), False)
+
+        # The stop reason of the thread should be breakpoint.
+        thread = target.GetProcess().GetThreadAtIndex(0)
+        self.assertTrue(thread.GetStopReason() == Enum("Breakpoint"),
+                        STOPPED_DUE_TO_BREAKPOINT)
+
+        # The breakpoint should have a hit count of 1.
+        self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
+
+        # Lookup the "bits" variable which contains 8 bitfields.
+        frame = thread.GetFrameAtIndex(0)
+        bits = frame.LookupVar("bits")
+        self.DebugSBValue(frame, bits)
+        self.assertTrue(bits.GetTypeName() == "Bits" and
+                        bits.GetNumChildren() == 8 and
+                        bits.GetByteSize() == 4,
+                        "(Bits)bits with byte size of 4 and 8 children")
+
+        b1 = bits.GetChildAtIndex(0)
+        self.DebugSBValue(frame, b1)
+        self.assertTrue(b1.GetName() == "b1" and
+                        b1.GetTypeName() == "uint32_t:1" and
+                        b1.IsInScope(frame) and
+                        int(b1.GetValue(frame), 16) == 0x01,
+                        'bits.b1 has type uint32_t:1, is in scope, and == 0x01')
+
+        b7 = bits.GetChildAtIndex(6)
+        self.DebugSBValue(frame, b7)
+        self.assertTrue(b7.GetName() == "b7" and
+                        b7.GetTypeName() == "uint32_t:7" and
+                        b7.IsInScope(frame) and
+                        int(b7.GetValue(frame), 16) == 0x7f,
+                        'bits.b7 has type uint32_t:7, is in scope, and == 0x7f')
+
+        four = bits.GetChildAtIndex(7)
+        self.DebugSBValue(frame, four)
+        self.assertTrue(four.GetName() == "four" and
+                        four.GetTypeName() == "uint32_t:4" and
+                        four.IsInScope(frame) and
+                        int(four.GetValue(frame), 16) == 0x0f,
+                        'bits.four has type uint32_t:4, is in scope, and == 0x0f')
+
 
 if __name__ == '__main__':
     import atexit

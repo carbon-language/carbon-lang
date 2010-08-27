@@ -177,6 +177,7 @@ def Enum(stopReason):
 def EnvArray():
     return map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values())
 
+
 class TestBase(unittest2.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 
@@ -337,3 +338,20 @@ class TestBase(unittest2.TestCase):
         if self.traceAlways:
             print str(method) + ":",  result
         return result
+
+    def DebugSBValue(self, frame, val):
+        """Debug print a SBValue object, if self.traceAlways is True."""
+        if not self.traceAlways:
+            return
+
+        err = sys.stderr
+        err.write(val.GetName() + ":\n")
+        err.write('\t' + "TypeName    -> " + val.GetTypeName()          + '\n')
+        err.write('\t' + "ByteSize    -> " + str(val.GetByteSize())     + '\n')
+        err.write('\t' + "NumChildren -> " + str(val.GetNumChildren())  + '\n')
+        err.write('\t' + "Value       -> " + str(val.GetValue(frame))   + '\n')
+        err.write('\t' + "Summary     -> " + str(val.GetSummary(frame)) + '\n')
+        err.write('\t' + "IsPtrType   -> " + str(val.TypeIsPtrType())   + '\n')
+        err.write('\t' + "Location    -> " + val.GetLocation(frame)     + '\n')
+
+
