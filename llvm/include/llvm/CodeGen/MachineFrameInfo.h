@@ -31,7 +31,7 @@ class TargetFrameInfo;
 class BitVector;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
-/// callee saved register in the current frame.
+/// callee saved register is in the current frame.
 class CalleeSavedInfo {
   unsigned Reg;
   int FrameIdx;
