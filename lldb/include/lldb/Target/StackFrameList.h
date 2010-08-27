@@ -55,27 +55,14 @@ public:
 
     void
     InvalidateFrames (uint32_t start_idx);
+    
+    void
+    Dump (Stream *s);
+
 protected:
 
     bool
-    SetUnwindFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
-
-    bool
-    SetInlineFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
-
-
-    lldb::StackFrameSP
-    GetUnwindFrameAtIndex (uint32_t idx) const;
-
-    lldb::StackFrameSP
-    GetInlineFrameAtIndex (uint32_t idx) const;
-
-    typedef struct InlinedFrameInfo
-    {
-        uint32_t unwind_frame_index;
-        Block *block;
-    } InlinedFrameInfo;
-    typedef std::vector<InlinedFrameInfo> InlinedFrameInfoCollection;
+    SetFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
 
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
@@ -87,9 +74,7 @@ protected:
     Thread &m_thread;
     std::auto_ptr<StackFrameList> m_prev_frames_ap;
     mutable Mutex m_mutex;
-    collection m_unwind_frames;
-    collection m_inline_frames;
-    InlinedFrameInfoCollection m_inlined_info;
+    collection m_frames;
     uint32_t m_selected_frame_idx;
     bool m_show_inlined_frames;
 

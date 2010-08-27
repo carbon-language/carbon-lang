@@ -531,3 +531,11 @@ StackFrame::Dump (Stream *strm, bool show_frame_index)
     m_sc.DumpStopContext(strm, &m_thread.GetProcess(), GetFrameCodeAddress(), show_module, show_inline);
 }
 
+
+void
+StackFrame::SetSymbolContext (const SymbolContext& sc)
+{
+    m_sc = sc;
+    m_flags.Clear(eSymbolContextEverything);
+    m_flags.Set(m_sc.GetResolvedMask ());
+}

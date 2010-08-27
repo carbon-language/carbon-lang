@@ -13,12 +13,15 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Unwind.h"
+
+//#define DEBUG_STACK_FRAMES 1
 
 using namespace lldb;
 using namespace lldb_private;
@@ -31,8 +34,7 @@ StackFrameList::StackFrameList(Thread &thread, StackFrameList *prev_frames, bool
     m_prev_frames_ap (prev_frames),
     m_show_inlined_frames (show_inline_frames),
     m_mutex (Mutex::eMutexTypeRecursive),
-    m_unwind_frames (),
-    m_inline_frames (),
+    m_frames (),
     m_selected_frame_idx (0)
 {
 }
@@ -50,256 +52,298 @@ StackFrameList::GetNumFrames()
 {
     Mutex::Locker locker (m_mutex);
 
-    if (m_show_inlined_frames)
+    if (m_frames.size() <= 1)
     {
-        if (m_inlined_info.empty())
+        if (m_show_inlined_frames)
         {
+#if defined (DEBUG_STACK_FRAMES)
+            StreamFile s(stdout);
+#endif
             Unwind *unwinder = m_thread.GetUnwinder ();
+            addr_t pc, cfa;
+
             // If we are going to show inlined stack frames as actual frames,
             // we need to calculate all concrete frames first, then iterate
             // through all of them and count up how many inlined functions are
-            // in each frame. We can then fill in m_inlined_info with
-            // the concrete frame index and inlined depth
-            const uint32_t concrete_frame_count = unwinder->GetFrameCount();
+            // in each frame. 
+            const uint32_t unwind_frame_count = unwinder->GetFrameCount();
             
-            addr_t pc, cfa;
-            InlinedFrameInfo inlined_frame_info;
-
-            StackFrameSP frame_sp;
-            for (uint32_t idx=0; idx<concrete_frame_count; ++idx)
+            StackFrameSP unwind_frame_sp;
+            for (uint32_t idx=0; idx<unwind_frame_count; ++idx)
             {
                 if (idx == 0)
                 {
-                    m_thread.GetRegisterContext();
-                    frame_sp.reset (new StackFrame (0, 
-                                                    0, 
-                                                    m_thread, 
-                                                    m_thread.m_reg_context_sp, 
-                                                    m_thread.m_reg_context_sp->GetSP(), 
-                                                    m_thread.m_reg_context_sp->GetPC(), 
-                                                    NULL));
+                    // We might have already created frame zero, only create it
+                    // if we need to
+                    if (m_frames.empty())
+                    {
+                        m_thread.GetRegisterContext();
+                        unwind_frame_sp.reset (new StackFrame (m_frames.size(), 
+                                                               idx, 
+                                                               m_thread, 
+                                                               m_thread.m_reg_context_sp, 
+                                                               m_thread.m_reg_context_sp->GetSP(), 
+                                                               m_thread.m_reg_context_sp->GetPC(), 
+                                                               NULL));
+                        m_frames.push_back (unwind_frame_sp);
+                    }
+                    else
+                    {
+                        unwind_frame_sp = m_frames.front();
+                    }
                 }
                 else
                 {
                     const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
                     assert (success);
-                    frame_sp.reset (new StackFrame (m_inlined_info.size(), idx, m_thread, cfa, pc, NULL));
+                    unwind_frame_sp.reset (new StackFrame (m_frames.size(), idx, m_thread, cfa, pc, NULL));
+                    m_frames.push_back (unwind_frame_sp);
                 }
-                SetUnwindFrameAtIndex (idx, frame_sp);
-                Block *block = frame_sp->GetSymbolContext (eSymbolContextBlock).block;
 
-                inlined_frame_info.unwind_frame_index = idx;
-                inlined_frame_info.block = NULL;
-                m_inlined_info.push_back (inlined_frame_info);
-
+                Block *block = unwind_frame_sp->GetSymbolContext (eSymbolContextBlock).block;
+                
                 if (block)
                 {
-                    Block *inlined_block = block->GetContainingInlinedBlock();
-                    
-                    if (inlined_block)
+                    for (block = block->GetContainingInlinedBlock(); block != NULL; block = block->GetInlinedParent ())
                     {
-                        frame_sp->SetInlineBlockID (inlined_block->GetID());
+                        SymbolContext inline_sc;
+                        Block *parent_block = block->GetInlinedParent();
 
-                        while (inlined_block)
-                        {
-                            inlined_frame_info.block = inlined_block;
-                            m_inlined_info.push_back (inlined_frame_info);
-                            inlined_block = inlined_block->GetInlinedParent ();
-                        }
+                        const bool is_inlined_frame = parent_block != NULL;
+                    
+                        if (parent_block == NULL)
+                            parent_block = block->GetParent();
+                        
+                        parent_block->CalculateSymbolContext (&inline_sc);
+                    
+                        Address previous_frame_lookup_addr (m_frames.back()->GetFrameCodeAddress());
+                        if (unwind_frame_sp->GetFrameIndex() > 0 && m_frames.back().get() == unwind_frame_sp.get())
+                            previous_frame_lookup_addr.Slide (-1);
+                    
+                        AddressRange range;
+                        block->GetRangeContainingAddress (previous_frame_lookup_addr, range);
+                    
+                        const InlineFunctionInfo* inline_info = block->InlinedFunctionInfo();
+                        assert (inline_info);
+                        inline_sc.line_entry.range.GetBaseAddress() = m_frames.back()->GetFrameCodeAddress();
+                        inline_sc.line_entry.file = inline_info->GetCallSite().GetFile();
+                        inline_sc.line_entry.line = inline_info->GetCallSite().GetLine();
+                        inline_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
+                                        
+                        StackFrameSP frame_sp(new StackFrame (m_frames.size(),
+                                                              idx,
+                                                              m_thread,
+                                                              unwind_frame_sp->GetRegisterContextSP (),
+                                                              unwind_frame_sp->GetStackID().GetCallFrameAddress(),  // CFA
+                                                              range.GetBaseAddress(),
+                                                              &inline_sc));                                           // The symbol context for this inline frame
+                        
+                        if (is_inlined_frame)
+                            frame_sp->SetInlineBlockID (block->GetID());
+                        
+                        m_frames.push_back (frame_sp);
                     }
                 }
             }
+            StackFrameList *prev_frames = m_prev_frames_ap.get();
+            if (prev_frames)
+            {
+                StackFrameList *curr_frames = this;
+
+#if defined (DEBUG_STACK_FRAMES)
+                s.PutCString("prev_frames:\n");
+                prev_frames->Dump (&s);
+                s.PutCString("curr_frames:\n");
+                curr_frames->Dump (&s);
+                s.EOL();
+#endif
+                size_t curr_frame_num, prev_frame_num;
+                
+                for (curr_frame_num = curr_frames->m_frames.size(), prev_frame_num = prev_frames->m_frames.size();
+                     curr_frame_num > 0 && prev_frame_num > 0;
+                     --curr_frame_num, --prev_frame_num)
+                {
+                    const size_t curr_frame_idx = curr_frame_num-1;
+                    const size_t prev_frame_idx = prev_frame_num-1;
+                    StackFrameSP curr_frame_sp (curr_frames->m_frames[curr_frame_idx]);
+                    StackFrameSP prev_frame_sp (prev_frames->m_frames[prev_frame_idx]);
+
+#if defined (DEBUG_STACK_FRAMES)
+                    s.Printf("\nCurrent frame #%u ", curr_frame_idx);
+                    if (curr_frame_sp)
+                        curr_frame_sp->Dump (&s, true);
+                    else
+                        s.PutCString("NULL");
+                    s.Printf("\nPrevious frame #%u ", prev_frame_idx);
+                    if (prev_frame_sp)
+                        prev_frame_sp->Dump (&s, true);
+                    else
+                        s.PutCString("NULL");
+                    s.EOL();
+#endif
+
+                    StackFrame *curr_frame = curr_frame_sp.get();
+                    StackFrame *prev_frame = prev_frame_sp.get();
+                    
+                    if (curr_frame == NULL || prev_frame == NULL)
+                        break;
+
+                    // Do a quick sanity check to see if the CFA values are the same.
+                    if (curr_frame->m_id.GetCallFrameAddress() != prev_frame->m_id.GetCallFrameAddress())
+                        break;
+
+                    // Now check our function or symbol
+                    SymbolContext curr_sc (curr_frame->GetSymbolContext (eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
+                    SymbolContext prev_sc (prev_frame->GetSymbolContext (eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
+                    if (curr_sc.function && curr_sc.function == prev_sc.function)
+                    {
+                        // Same function
+                        if (curr_sc.block != prev_sc.block)
+                        {
+                            // Same function different block
+                            if (m_show_inlined_frames)
+                                break;
+                            else
+                                prev_frame->SetSymbolContext (curr_frame->m_sc);
+                        }
+                    }
+                    else if (curr_sc.symbol && curr_sc.symbol == prev_sc.symbol)
+                    {
+                        // Same symbol
+                    }
+                    else if (curr_frame->GetFrameCodeAddress() != prev_frame->GetFrameCodeAddress())
+                    {
+                        // No symbols for this frame and the PC was different
+                        break;
+                    }
+
+                    if (curr_frame->GetFrameCodeAddress() != prev_frame->GetFrameCodeAddress())
+                    {
+#if defined (DEBUG_STACK_FRAMES)
+                        s.Printf("\nUpdating frame code address and symbol context in previous frame #%u to current frame #%u", prev_frame_idx, curr_frame_idx);
+#endif
+                        // We have a different code frame address, we might need to copy
+                        // some stuff in prev_frame, yet update the code address...
+                        prev_frame->SetFrameCodeAddress (curr_frame->GetFrameCodeAddress());
+                        prev_frame->SetSymbolContext (curr_frame->m_sc);
+                    }
+
+                    curr_frames->m_frames[curr_frame_idx] = prev_frames->m_frames[prev_frame_idx];
+                    
+#if defined (DEBUG_STACK_FRAMES)
+                    s.Printf("\nCopying previous frame #%u to current frame #%u", prev_frame_idx, curr_frame_idx);
+#endif
+                }
+                // We are done with the old stack frame list, we can release it now
+                m_prev_frames_ap.release();
+                prev_frames = NULL;
+            }
         }
-        return m_inlined_info.size();
+        else
+        {
+            m_frames.resize(m_thread.GetUnwinder()->GetFrameCount());
+        }
     }
-    else
+    return m_frames.size();
+}
+
+void
+StackFrameList::Dump (Stream *s)
+{
+    if (s == NULL)
+        return;
+    Mutex::Locker locker (m_mutex);
+
+    const_iterator pos, begin = m_frames.begin(), end = m_frames.end();
+    for (pos = begin; pos != end; ++pos)
     {
-        if (m_unwind_frames.empty())
-            m_unwind_frames.resize(m_thread.GetUnwinder()->GetFrameCount());
-            
-        return m_unwind_frames.size();
+        StackFrame *frame = (*pos).get();
+        s->Printf("%p: ", frame);
+        if (frame)
+            frame->Dump(s, true);
+        else
+            s->Printf("frame #%u", std::distance (begin, pos));
+        s->EOL();
     }
-    return 0;
+    s->EOL();
 }
-
-lldb::StackFrameSP
-StackFrameList::GetUnwindFrameAtIndex (uint32_t idx) const
-{
-    StackFrameSP frame_sp;
-        if (idx < m_unwind_frames.size())
-            frame_sp = m_unwind_frames[idx];
-    return frame_sp;
-}
-
-lldb::StackFrameSP
-StackFrameList::GetInlineFrameAtIndex (uint32_t idx) const
-{
-    StackFrameSP frame_sp;
-    if (idx < m_inline_frames.size())
-        frame_sp = m_inline_frames[idx];
-    return frame_sp;
-}
-
 
 StackFrameSP
 StackFrameList::GetFrameAtIndex (uint32_t idx)
 {
     StackFrameSP frame_sp;
+    Mutex::Locker locker (m_mutex);
+    if (idx < m_frames.size())
+        frame_sp = m_frames[idx];
+
+    if (frame_sp)
+        return frame_sp;
+
+    // Special case the first frame (idx == 0) so that we don't need to
+    // know how many stack frames there are to get it. If we need any other
+    // frames, then we do need to know if "idx" is a valid index.
+    if (idx == 0)
     {
-        Mutex::Locker locker (m_mutex);
-    
-        if (m_show_inlined_frames)
-        {
-            frame_sp = GetInlineFrameAtIndex (idx);
-        }
-        else
-        {
-            frame_sp = GetUnwindFrameAtIndex (idx);
-        }
-
-        if (frame_sp.get())
-            return frame_sp;
-
-        // Special case the first frame (idx == 0) so that we don't need to
-        // know how many stack frames there are to get it. If we need any other
-        // frames, then we do need to know if "idx" is a valid index.
-        if (idx == 0)
-        {
-            // If this is the first frame, we want to share the thread register
-            // context with the stack frame at index zero.
-            m_thread.GetRegisterContext();
-            assert (m_thread.m_reg_context_sp.get());
-            frame_sp.reset (new StackFrame (0, 
-                                            0, 
-                                            m_thread, 
-                                            m_thread.m_reg_context_sp, 
-                                            m_thread.m_reg_context_sp->GetSP(), 
-                                            m_thread.m_reg_context_sp->GetPC(), 
-                                            NULL));
-            
-            if (m_show_inlined_frames && idx + 1 < m_inlined_info.size())
-            {
-                if (m_inlined_info[idx].unwind_frame_index == m_inlined_info[idx+1].unwind_frame_index)
-                    frame_sp->SetInlineBlockID (frame_sp->GetSymbolContext (eSymbolContextBlock).block->GetID());
-            }
-
-        }
-        else if (idx < GetNumFrames())
-        {
-            if (m_show_inlined_frames)
-            {
-                if (m_inlined_info[idx].block == NULL)
-                {
-                    // Same as the concrete stack frame if block is NULL
-                    assert (m_inlined_info[idx].unwind_frame_index < m_unwind_frames.size());
-                    frame_sp = GetUnwindFrameAtIndex (m_inlined_info[idx].unwind_frame_index);
-                    if (idx + 1 < m_inlined_info.size())
-                    {
-                        if (m_inlined_info[idx].unwind_frame_index == m_inlined_info[idx+1].unwind_frame_index)
-                            frame_sp->SetInlineBlockID (frame_sp->GetSymbolContext (eSymbolContextBlock).block->GetID());
-                    }
-                }
-                else 
-                {
-                    // We have blocks that were above an inlined function. Inlined
-                    // functions are represented as blocks with non-NULL inline
-                    // function info. Here we must reconstruct a frame by looking
-                    // at the block
-                    StackFrameSP previous_frame_sp (m_thread.GetStackFrameAtIndex (idx-1));
-                    
-                    SymbolContext inline_sc;
-                    
-                    Block *inlined_parent_block = m_inlined_info[idx].block->GetInlinedParent();
-                    
-                    if (inlined_parent_block)
-                        inlined_parent_block->CalculateSymbolContext (&inline_sc);
-                    else
-                    {
-                        Block *parent_block = m_inlined_info[idx].block->GetParent();
-                        parent_block->CalculateSymbolContext(&inline_sc);
-                    }
-                    
-                    Address previous_frame_lookup_addr (previous_frame_sp->GetFrameCodeAddress());
-                    if (previous_frame_sp->GetFrameIndex() > 0 && m_inlined_info[idx-1].block == NULL)
-                        previous_frame_lookup_addr.Slide (-1);
-                    
-                    AddressRange range;
-                    m_inlined_info[idx].block->GetRangeContainingAddress (previous_frame_lookup_addr, range);
-                    
-                    const InlineFunctionInfo* inline_info = m_inlined_info[idx].block->InlinedFunctionInfo();
-                    assert (inline_info);
-                    inline_sc.line_entry.range.GetBaseAddress() = previous_frame_sp->GetFrameCodeAddress();
-                    inline_sc.line_entry.file = inline_info->GetCallSite().GetFile();
-                    inline_sc.line_entry.line = inline_info->GetCallSite().GetLine();
-                    inline_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
-                    
-                    StackFrameSP concrete_frame_sp (GetUnwindFrameAtIndex (m_inlined_info[idx].unwind_frame_index));
-                    assert (previous_frame_sp.get());
-                    
-                    frame_sp.reset (new StackFrame (idx,
-                                                    m_inlined_info[idx].unwind_frame_index,
-                                                    m_thread,
-                                                    concrete_frame_sp->GetRegisterContextSP (),
-                                                    concrete_frame_sp->GetStackID().GetCallFrameAddress(),  // CFA
-                                                    range.GetBaseAddress(),
-                                                    &inline_sc));                                           // The symbol context for this inline frame
-                    
-                    if (idx + 1 < m_inlined_info.size())
-                    {
-                        if (m_inlined_info[idx].unwind_frame_index == m_inlined_info[idx+1].unwind_frame_index)
-                            frame_sp->SetInlineBlockID (m_inlined_info[idx].block->GetID());
-                    }
-                }
-            }
-            else
-            {
-                Unwind *unwinder = m_thread.GetUnwinder ();
-                if (unwinder)
-                {
-                    addr_t pc, cfa;
-                    if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
-                        frame_sp.reset (new StackFrame (idx, idx, m_thread, cfa, pc, NULL));
-                }
-            }
-        }
+        // If this is the first frame, we want to share the thread register
+        // context with the stack frame at index zero.
+        m_thread.GetRegisterContext();
+        assert (m_thread.m_reg_context_sp.get());
+        frame_sp.reset (new StackFrame (0, 
+                                        0, 
+                                        m_thread, 
+                                        m_thread.m_reg_context_sp, 
+                                        m_thread.m_reg_context_sp->GetSP(), 
+                                        m_thread.m_reg_context_sp->GetPC(), 
+                                        NULL));
         
         if (m_show_inlined_frames)
         {
-            SetInlineFrameAtIndex(idx, frame_sp);
+            Block *block = frame_sp->GetSymbolContext (eSymbolContextBlock).block;
+            
+            if (block)
+            {
+                Block *inline_block = block->GetContainingInlinedBlock();
+                if (inline_block)
+                    frame_sp->SetInlineBlockID (inline_block->GetID());
+            }
+        }
+        SetFrameAtIndex(idx, frame_sp);
+    }
+    else if (idx < GetNumFrames())
+    {
+        if (m_show_inlined_frames)
+        {
+            // When inline frames are enabled we cache up all frames in GetNumFrames()
+            frame_sp = m_frames[idx];
         }
         else
         {
-            SetUnwindFrameAtIndex(idx, frame_sp);
+            Unwind *unwinder = m_thread.GetUnwinder ();
+            if (unwinder)
+            {
+                addr_t pc, cfa;
+                if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
+                {
+                    frame_sp.reset (new StackFrame (idx, idx, m_thread, cfa, pc, NULL));
+                    SetFrameAtIndex(idx, frame_sp);
+                }
+            }
         }
-        return frame_sp;
         
     }
     return frame_sp;
 }
 
-bool
-StackFrameList::SetUnwindFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)
-{
-    if (idx >= m_unwind_frames.size())
-        m_unwind_frames.resize(idx + 1);
-    // Make sure allocation succeeded by checking bounds again
-    if (idx < m_unwind_frames.size())
-    {
-        m_unwind_frames[idx] = frame_sp;
-        return true;
-    }
-    return false;   // resize failed, out of memory?
-}
 
 bool
-StackFrameList::SetInlineFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)
+StackFrameList::SetFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)
 {
-    if (idx >= m_inline_frames.size())
-        m_inline_frames.resize(idx + 1);
+    if (idx >= m_frames.size())
+        m_frames.resize(idx + 1);
     // Make sure allocation succeeded by checking bounds again
-    if (idx < m_inline_frames.size())
+    if (idx < m_frames.size())
     {
-        m_inline_frames[idx] = frame_sp;
+        m_frames[idx] = frame_sp;
         return true;
     }
     return false;   // resize failed, out of memory?
@@ -318,8 +362,8 @@ StackFrameList::SetSelectedFrame (lldb_private::StackFrame *frame)
 {
     Mutex::Locker locker (m_mutex);
     const_iterator pos;
-    const_iterator begin = m_show_inlined_frames ? m_inline_frames.begin() : m_unwind_frames.begin();
-    const_iterator end   = m_show_inlined_frames ? m_inline_frames.end()   : m_unwind_frames.end();
+    const_iterator begin = m_frames.begin();
+    const_iterator end = m_frames.end();
     for (pos = begin; pos != end; ++pos)
     {
         if (pos->get() == frame)
@@ -346,9 +390,7 @@ void
 StackFrameList::Clear ()
 {
     Mutex::Locker locker (m_mutex);
-    m_unwind_frames.clear();
-    m_inline_frames.clear();
-    m_inlined_info.clear();
+    m_frames.clear();
 }
 
 void
@@ -361,10 +403,10 @@ StackFrameList::InvalidateFrames (uint32_t start_idx)
     }
     else
     {
-        const size_t num_frames = m_unwind_frames.size();
+        const size_t num_frames = m_frames.size();
         while (start_idx < num_frames)
         {
-            m_unwind_frames[start_idx].reset();
+            m_frames[start_idx].reset();
             ++start_idx;
         }
     }

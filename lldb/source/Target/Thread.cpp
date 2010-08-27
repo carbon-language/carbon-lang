@@ -813,7 +813,8 @@ Thread::GetStackFrameCount()
 void
 Thread::ClearStackFrames ()
 {
-    m_prev_frames_ap = m_curr_frames_ap;
+    if (m_curr_frames_ap.get())
+        m_prev_frames_ap = m_curr_frames_ap;
 }
 
 lldb::StackFrameSP

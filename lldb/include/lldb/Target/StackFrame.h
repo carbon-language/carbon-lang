@@ -129,7 +129,15 @@ protected:
     {
         m_id.SetInlineBlockID(inline_block_id);
     }
+    
+    void
+    SetFrameCodeAddress(const Address& frame_code_addr)
+    {
+        m_frame_code_addr = frame_code_addr;
+    }
 
+    void
+    SetSymbolContext (const SymbolContext& sc);
 private:
     //------------------------------------------------------------------
     // For StackFrame only
