@@ -553,6 +553,7 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   }
 #endif
 #endif
+  clang_sortCodeCompletionResults(Results->Results, Results->NumResults);
   return Results;
 }
 
