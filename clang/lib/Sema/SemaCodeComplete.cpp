@@ -3761,6 +3761,110 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
     .Default(0);
 }
 
+// Add a special completion for a message send to "super", which fills in the
+// most likely case of forwarding all of our arguments to the superclass 
+// function.
+///
+/// \param S The semantic analysis object.
+///
+/// \param S NeedSuperKeyword Whether we need to prefix this completion with
+/// the "super" keyword. Otherwise, we just need to provide the arguments.
+///
+/// \param SelIdents The identifiers in the selector that have already been
+/// provided as arguments for a send to "super".
+///
+/// \param NumSelIdents The number of identifiers in \p SelIdents.
+///
+/// \param Results The set of results to augment.
+///
+/// \returns the Objective-C method declaration that would be invoked by 
+/// this "super" completion. If NULL, no completion was added.
+static ObjCMethodDecl *AddSuperSendCompletion(Sema &S, bool NeedSuperKeyword,
+                                              IdentifierInfo **SelIdents,
+                                              unsigned NumSelIdents,
+                                              ResultBuilder &Results) {
+  ObjCMethodDecl *CurMethod = S.getCurMethodDecl();
+  if (!CurMethod)
+    return 0;
+  
+  ObjCInterfaceDecl *Class = CurMethod->getClassInterface();
+  if (!Class)
+    return 0;
+  
+  // Try to find a superclass method with the same selector.
+  ObjCMethodDecl *SuperMethod = 0;
+  while ((Class = Class->getSuperClass()) && !SuperMethod)
+    SuperMethod = Class->getMethod(CurMethod->getSelector(), 
+                                   CurMethod->isInstanceMethod());
+
+  if (!SuperMethod)
+    return 0;
+  
+  // Check whether the superclass method has the same signature.
+  if (CurMethod->param_size() != SuperMethod->param_size() ||
+      CurMethod->isVariadic() != SuperMethod->isVariadic())
+    return 0;
+      
+  for (ObjCMethodDecl::param_iterator CurP = CurMethod->param_begin(),
+                                   CurPEnd = CurMethod->param_end(),
+                                    SuperP = SuperMethod->param_begin();
+       CurP != CurPEnd; ++CurP, ++SuperP) {
+    // Make sure the parameter types are compatible.
+    if (!S.Context.hasSameUnqualifiedType((*CurP)->getType(), 
+                                          (*SuperP)->getType()))
+      return 0;
+    
+    // Make sure we have a parameter name to forward!
+    if (!(*CurP)->getIdentifier())
+      return 0;
+  }
+  
+  // We have a superclass method. Now, form the send-to-super completion.
+  CodeCompletionString *Pattern = new CodeCompletionString;
+  
+  // Give this completion a return type.
+  AddResultTypeChunk(S.Context, SuperMethod, Pattern);
+
+  // If we need the "super" keyword, add it (plus some spacing).
+  if (NeedSuperKeyword) {
+    Pattern->AddTypedTextChunk("super");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  }
+  
+  Selector Sel = CurMethod->getSelector();
+  if (Sel.isUnarySelector()) {
+    if (NeedSuperKeyword)
+      Pattern->AddTextChunk(Sel.getIdentifierInfoForSlot(0)->getName());
+    else
+      Pattern->AddTypedTextChunk(Sel.getIdentifierInfoForSlot(0)->getName());
+  } else {
+    ObjCMethodDecl::param_iterator CurP = CurMethod->param_begin();
+    for (unsigned I = 0, N = Sel.getNumArgs(); I != N; ++I, ++CurP) {
+      if (I > NumSelIdents)
+        Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      
+      if (I < NumSelIdents)
+        Pattern->AddInformativeChunk(
+                       Sel.getIdentifierInfoForSlot(I)->getName().str() + ":");
+      else if (NeedSuperKeyword || I > NumSelIdents) {
+        Pattern->AddTextChunk(
+                        Sel.getIdentifierInfoForSlot(I)->getName().str() + ":");
+        Pattern->AddPlaceholderChunk((*CurP)->getIdentifier()->getName());
+      } else {
+        Pattern->AddTypedTextChunk(
+                              Sel.getIdentifierInfoForSlot(I)->getName().str() + ":");
+        Pattern->AddPlaceholderChunk((*CurP)->getIdentifier()->getName());        
+      }
+    }
+  }
+  
+  Results.AddResult(CodeCompletionResult(Pattern, CCP_SuperCompletion,
+                                         SuperMethod->isInstanceMethod()
+                                           ? CXCursor_ObjCInstanceMethodDecl
+                                           : CXCursor_ObjCClassMethodDecl));
+  return SuperMethod;
+}
+                                   
 void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this);
@@ -3776,8 +3880,11 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
   // add "super" as an option.
   if (ObjCMethodDecl *Method = getCurMethodDecl())
     if (ObjCInterfaceDecl *Iface = Method->getClassInterface())
-      if (Iface->getSuperClass())
+      if (Iface->getSuperClass()) {
         Results.AddResult(Result("super"));
+        
+        AddSuperSendCompletion(*this, /*NeedSuperKeyword=*/true, 0, 0, Results);
+      }
   
   Results.ExitScope();
   
@@ -3814,7 +3921,8 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
       ExprResult Super
         = Owned(new (Context) ObjCSuperExpr(SuperLoc, SuperTy));
       return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
-                                             SelIdents, NumSelIdents);
+                                             SelIdents, NumSelIdents,
+                                             /*IsSuper=*/true);
     }
 
     // Fall through to send to the superclass in CDecl.
@@ -3849,12 +3957,19 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
   if (CDecl)
     Receiver = ParsedType::make(Context.getObjCInterfaceType(CDecl));
   return CodeCompleteObjCClassMessage(S, Receiver, SelIdents, 
-                                      NumSelIdents);
+                                      NumSelIdents, /*IsSuper=*/true);
 }
 
 void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         IdentifierInfo **SelIdents,
                                         unsigned NumSelIdents) {
+  CodeCompleteObjCClassMessage(S, Receiver, SelIdents, NumSelIdents, false);
+}
+
+void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
+                                        IdentifierInfo **SelIdents,
+                                        unsigned NumSelIdents,
+                                        bool IsSuper) {
   typedef CodeCompletionResult Result;
   ObjCInterfaceDecl *CDecl = 0;
 
@@ -3871,6 +3986,15 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
   // superclasses, categories, implementation, etc.
   ResultBuilder Results(*this);
   Results.EnterNewScope();
+
+  // If this is a send-to-super, try to add the special "super" send 
+  // completion.
+  if (IsSuper) {
+    if (ObjCMethodDecl *SuperMethod
+          = AddSuperSendCompletion(*this, false, SelIdents, NumSelIdents, 
+                                   Results))
+      Results.Ignore(SuperMethod);
+  }
 
   if (CDecl) 
     AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
@@ -3912,12 +4036,19 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
-                            Results.data(),Results.size());
+                            Results.data(), Results.size());
 }
 
 void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                            IdentifierInfo **SelIdents,
                                            unsigned NumSelIdents) {
+  CodeCompleteObjCInstanceMessage(S, Receiver, SelIdents, NumSelIdents, false);
+}
+
+void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+                                           IdentifierInfo **SelIdents,
+                                           unsigned NumSelIdents,
+                                           bool IsSuper) {
   typedef CodeCompletionResult Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
@@ -3931,6 +4062,15 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   ResultBuilder Results(*this);
   Results.EnterNewScope();
 
+  // If this is a send-to-super, try to add the special "super" send 
+  // completion.
+  if (IsSuper) {
+    if (ObjCMethodDecl *SuperMethod
+          = AddSuperSendCompletion(*this, false, SelIdents, NumSelIdents, 
+                                   Results))
+      Results.Ignore(SuperMethod);
+  }
+  
   // If we're messaging an expression with type "id" or "Class", check
   // whether we know something special about the receiver that allows
   // us to assume a more-specific receiver type.

@@ -30,6 +30,8 @@ namespace clang {
 /// \brief Default priority values for code-completion results based
 /// on their kind.
 enum {
+  /// \brief Priority for a send-to-super completion.
+  CCP_SuperCompletion = 8,
   /// \brief Priority for a declaration that is in the local scope.
   CCP_LocalDeclaration = 8,
   /// \brief Priority for a member declaration found from the current

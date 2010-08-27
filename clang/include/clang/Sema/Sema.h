@@ -4367,9 +4367,17 @@ public:
   virtual void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                             IdentifierInfo **SelIdents,
                                             unsigned NumSelIdents);
-  virtual void CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
+  void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
+                                    IdentifierInfo **SelIdents,
+                                    unsigned NumSelIdents,
+                                    bool IsSuper);
+  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
                                                IdentifierInfo **SelIdents,
                                                unsigned NumSelIdents);
+  void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+                                     IdentifierInfo **SelIdents,
+                                     unsigned NumSelIdents,
+                                     bool IsSuper);
   virtual void CodeCompleteObjCForCollection(Scope *S, 
                                              DeclGroupPtrTy IterationVar);
   virtual void CodeCompleteObjCSelector(Scope *S,
