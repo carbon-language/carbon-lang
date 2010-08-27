@@ -17,7 +17,7 @@ class TestPersistentVariables(TestBase):
 
         self.runCmd("breakpoint set --name main")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         self.runCmd("expr int $i = 5; $i + 1")
         # $0 = (int)6

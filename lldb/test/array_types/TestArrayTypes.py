@@ -18,7 +18,7 @@ class TestArrayTypes(TestBase):
         self.expect("breakpoint set -f main.c -l 42", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.c', line = 42, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -62,7 +62,7 @@ class TestArrayTypes(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", 42)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
         # This does not work, and results in the process stopped at dyld_start?
         #process = target.LaunchProcess([''], [''], os.ctermid(), False)
 

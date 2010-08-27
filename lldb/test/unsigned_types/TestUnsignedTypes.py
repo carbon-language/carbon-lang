@@ -21,7 +21,7 @@ class TestUnsignedTypes(TestBase):
         self.expect("breakpoint set -f main.cpp -l 19", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.cpp', line = 19, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

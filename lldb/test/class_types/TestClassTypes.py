@@ -18,7 +18,7 @@ class TestClassTypes(TestBase):
         self.expect("breakpoint set -f main.cpp -l 73", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.cpp', line = 73, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -32,6 +32,25 @@ class TestClassTypes(TestBase):
         # We should be stopped on the ctor function of class C.
         self.expect("variable list this", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(class C *const) this = ')
+
+    def test_breakpoint_creation_by_filespec_python(self):
+        """Use Python APIs to create a breakpoint by (filespec, line)."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        filespec = target.GetExecutable()
+        self.assertTrue(filespec.IsValid(), VALID_FILESPEC)
+
+        breakpoint = target.BreakpointCreateByLocation(filespec, 73)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        fsDir = filespec.GetDirectory()
+        fsFile = filespec.GetFilename()
+
+        self.assertTrue(fsDir == os.getcwd() and fsFile == "a.out",
+                        "FileSpec matches the executable")
 
 
 if __name__ == '__main__':

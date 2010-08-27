@@ -26,7 +26,7 @@ class TestSTL(TestBase):
         self.expect("breakpoint set -f main.cpp -l 13", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.cpp', line = 13, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # Stop at 'std::string hello_world ("Hello World!");'.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

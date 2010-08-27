@@ -20,7 +20,7 @@ class TestLoadUnload(TestBase):
         self.expect("breakpoint set -n a_function", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: name = 'a_function', locations = 0 (pending)")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint and at a_function.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

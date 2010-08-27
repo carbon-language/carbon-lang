@@ -117,7 +117,7 @@ import lldb
 
 CURRENT_EXECUTABLE_SET = "Current executable set successfully"
 
-RUN_STOPPED = "Process is launched and then stopped successfully"
+RUN_SUCCEEDED = "Process is launched successfully"
 
 RUN_COMPLETED = "Process exited successfully"
 
@@ -134,6 +134,8 @@ STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
 DATA_TYPES_DISPLAYED_CORRECTLY = "Data type(s) displayed correctly"
 
 VALID_BREAKPOINT = "Got a valid breakpoint"
+
+VALID_FILESPEC = "Got a valid filespec"
 
 VALID_PROCESS = "Got a valid process"
 

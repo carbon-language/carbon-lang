@@ -25,7 +25,7 @@ class TestUniversal(TestBase):
             startstr = "Breakpoint created: 1: file ='main.c', line = 5, locations = 1")
 
         # We should be able to launch the x86_64 executable.
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # Check whether we have a 64-bit process launched.
         target = self.dbg.GetSelectedTarget()
@@ -46,7 +46,7 @@ class TestUniversal(TestBase):
             startstr = "Breakpoint created: 1: file ='main.c', line = 5, locations = 1")
 
         # We should be able to launch the i386 executable as well.
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # Check whether we have a 32-bit process launched.
         target = self.dbg.GetSelectedTarget()

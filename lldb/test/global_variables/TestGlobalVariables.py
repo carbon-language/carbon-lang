@@ -18,7 +18,7 @@ class TestGlobalVariables(TestBase):
         self.expect("breakpoint set -f main.c -l 20", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.c', line = 20, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

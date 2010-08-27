@@ -22,7 +22,7 @@ class TestStructTypes(TestBase):
         self.expect("breakpoint set -f main.c -l 14", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.c', line = 14, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # We should be stopped on the first executable statement within the
         # function where the original breakpoint was attempted.

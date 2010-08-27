@@ -30,7 +30,7 @@ class TestSetValues(TestBase):
         self.expect("breakpoint set -f main.c -l 85", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 5: file ='main.c', line = 85, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

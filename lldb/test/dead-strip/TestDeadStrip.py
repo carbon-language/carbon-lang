@@ -28,7 +28,7 @@ class TestDeadStrip(TestBase):
         self.expect("breakpoint set -s a.out -n f3", BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 3: name = 'f3', module = a.out, locations = 1")
 
-        self.runCmd("run", RUN_STOPPED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint (breakpoint #1).
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
