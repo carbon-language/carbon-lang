@@ -10,7 +10,7 @@ class TestHelloWorld(TestBase):
     mydir = "hello_world"
 
     @unittest2.expectedFailure
-    def test_hellp_world_python(self):
+    def test_hello_world_python(self):
         """Create target, breakpoint, launch a process, and then kill it."""
 
         exe = os.path.join(os.getcwd(), "a.out")
