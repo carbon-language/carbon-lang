@@ -1845,6 +1845,33 @@ static bool isHReg(unsigned Reg) {
   return X86::GR8_ABCD_HRegClass.contains(Reg);
 }
 
+// Try and copy between VR128/VR64 and GR64 registers.
+static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg) {
+  // SrcReg(VR128) -> DestReg(GR64)
+  // SrcReg(VR64)  -> DestReg(GR64)
+  // SrcReg(GR64)  -> DestReg(VR128)
+  // SrcReg(GR64)  -> DestReg(VR64)
+
+  if (X86::GR64RegClass.contains(DestReg)) {
+    if (X86::VR128RegClass.contains(SrcReg)) {
+      // Copy from a VR128 register to a GR64 register.
+      return X86::MOVPQIto64rr;
+    } else if (X86::VR64RegClass.contains(SrcReg)) {
+      // Copy from a VR64 register to a GR64 register.
+      return X86::MOVSDto64rr;
+    }
+  } else if (X86::GR64RegClass.contains(SrcReg)) {
+    // Copy from a GR64 register to a VR128 register.
+    if (X86::VR128RegClass.contains(DestReg))
+      return X86::MOV64toPQIrr;
+    // Copy from a GR64 register to a VR64 register.
+    else if (X86::VR64RegClass.contains(DestReg))
+      return X86::MOV64toSDrr;
+  }
+
+  return 0;
+}
+
 void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator MI, DebugLoc DL,
                                unsigned DestReg, unsigned SrcReg,
@@ -1869,6 +1896,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = X86::MOVAPSrr;
   else if (X86::VR64RegClass.contains(DestReg, SrcReg))
     Opc = X86::MMX_MOVQ64rr;
+  else
+    Opc = CopyToFromAsymmetricReg(DestReg, SrcReg);
 
   if (Opc) {
     BuildMI(MBB, MI, DL, get(Opc), DestReg)
