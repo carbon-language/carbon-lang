@@ -1,4 +1,4 @@
-//===-- ClangResultSynthesizer.cpp ------------------------------*- C++ -*-===//
+//===-- ASTResultSynthesizer.cpp --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,13 +20,13 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Expression/ClangResultSynthesizer.h"
+#include "lldb/Expression/ASTResultSynthesizer.h"
 
 using namespace llvm;
 using namespace clang;
 using namespace lldb_private;
 
-ClangResultSynthesizer::ClangResultSynthesizer(ASTConsumer *passthrough) :
+ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough) :
     m_ast_context (NULL),
     m_passthrough (passthrough),
     m_passthrough_sema (NULL),
@@ -39,12 +39,12 @@ ClangResultSynthesizer::ClangResultSynthesizer(ASTConsumer *passthrough) :
     m_passthrough_sema = dyn_cast<SemaConsumer>(passthrough);
 }
 
-ClangResultSynthesizer::~ClangResultSynthesizer()
+ASTResultSynthesizer::~ASTResultSynthesizer()
 {
 }
 
 void
-ClangResultSynthesizer::Initialize(ASTContext &Context) 
+ASTResultSynthesizer::Initialize(ASTContext &Context) 
 {
     m_ast_context = &Context;
     
@@ -53,7 +53,7 @@ ClangResultSynthesizer::Initialize(ASTContext &Context)
 }
 
 void
-ClangResultSynthesizer::TransformTopLevelDecl(Decl* D)
+ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
 {
     LinkageSpecDecl *linkage_spec_decl = dyn_cast<LinkageSpecDecl>(D);
     
@@ -81,7 +81,7 @@ ClangResultSynthesizer::TransformTopLevelDecl(Decl* D)
 }
 
 void 
-ClangResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
+ASTResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 {
     DeclGroupRef::iterator decl_iterator;
     
@@ -99,7 +99,7 @@ ClangResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 }
 
 bool 
-ClangResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
+ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
 {
     ASTContext &Ctx(*m_ast_context);
     
@@ -210,42 +210,42 @@ ClangResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
 }
 
 void
-ClangResultSynthesizer::HandleTranslationUnit(ASTContext &Ctx)
+ASTResultSynthesizer::HandleTranslationUnit(ASTContext &Ctx)
 {    
     if (m_passthrough)
         m_passthrough->HandleTranslationUnit(Ctx);
 }
 
 void 
-ClangResultSynthesizer::HandleTagDeclDefinition(TagDecl *D)
+ASTResultSynthesizer::HandleTagDeclDefinition(TagDecl *D)
 {
     if (m_passthrough)
         m_passthrough->HandleTagDeclDefinition(D);
 }
 
 void
-ClangResultSynthesizer::CompleteTentativeDefinition(VarDecl *D)
+ASTResultSynthesizer::CompleteTentativeDefinition(VarDecl *D)
 {
     if (m_passthrough)
         m_passthrough->CompleteTentativeDefinition(D);
 }
 
 void 
-ClangResultSynthesizer::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) 
+ASTResultSynthesizer::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) 
 {
     if (m_passthrough)
         m_passthrough->HandleVTable(RD, DefinitionRequired);
 }
 
 void
-ClangResultSynthesizer::PrintStats() 
+ASTResultSynthesizer::PrintStats() 
 {
     if (m_passthrough)
         m_passthrough->PrintStats();
 }
 
 void
-ClangResultSynthesizer::InitializeSema(Sema &S)
+ASTResultSynthesizer::InitializeSema(Sema &S)
 {
     m_sema = &S;
     m_action = reinterpret_cast<Action*>(m_sema);
@@ -255,7 +255,7 @@ ClangResultSynthesizer::InitializeSema(Sema &S)
 }
 
 void 
-ClangResultSynthesizer::ForgetSema() 
+ASTResultSynthesizer::ForgetSema() 
 {
     m_sema = NULL;
     m_action = NULL;

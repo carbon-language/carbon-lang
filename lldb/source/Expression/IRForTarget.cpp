@@ -31,11 +31,13 @@ using namespace llvm;
 static char ID;
 
 IRForTarget::IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
-                         const TargetData *target_data) :
+                         const TargetData *target_data,
+                         const char *func_name) :
     ModulePass(&ID),
     m_decl_map(decl_map),
     m_target_data(target_data),
-    m_sel_registerName(NULL)
+    m_sel_registerName(NULL),
+    m_func_name(func_name)
 {
 }
 
@@ -910,12 +912,12 @@ IRForTarget::runOnModule(Module &M)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
-    Function* function = M.getFunction(StringRef("___clang_expr"));
+    Function* function = M.getFunction(StringRef(m_func_name.c_str()));
     
     if (!function)
     {
         if (log)
-            log->Printf("Couldn't find ___clang_expr() in the module");
+            log->Printf("Couldn't find %s() in the module", m_func_name.c_str());
         
         return false;
     }

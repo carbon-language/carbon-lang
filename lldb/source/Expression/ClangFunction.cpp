@@ -22,6 +22,8 @@
 #include "llvm/Module.h"
 
 // Project includes
+#include "lldb/Expression/ASTStructExtractor.h"
+#include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Core/DataExtractor.h"
@@ -40,11 +42,12 @@
 #include "lldb/Core/Log.h"
 
 using namespace lldb_private;
+
 //----------------------------------------------------------------------
 // ClangFunction constructor
 //----------------------------------------------------------------------
 ClangFunction::ClangFunction(const char *target_triple, ClangASTContext *ast_context, void *return_qualtype, const Address& functionAddress, const ValueList &arg_value_list) :
-    ClangExpression (target_triple, NULL),
+    m_target_triple (target_triple),
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
     m_function_return_qual_type(return_qualtype),
@@ -53,18 +56,14 @@ ClangFunction::ClangFunction(const char *target_triple, ClangASTContext *ast_con
     m_wrapper_struct_name ("__lldb_caller_struct"),
     m_wrapper_function_addr (),
     m_wrapper_args_addrs (),
-    m_struct_layout (NULL),
     m_arg_values (arg_value_list),
-    m_value_struct_size (0),
-    m_return_offset(0),
-    m_return_size (0),
     m_compiled (false),
     m_JITted (false)
 {
 }
 
 ClangFunction::ClangFunction(const char *target_triple, Function &function, ClangASTContext *ast_context, const ValueList &arg_value_list) :
-    ClangExpression (target_triple, NULL),
+    m_target_triple (target_triple),
     m_function_ptr (&function),
     m_function_addr (),
     m_function_return_qual_type (),
@@ -73,11 +72,7 @@ ClangFunction::ClangFunction(const char *target_triple, Function &function, Clan
     m_wrapper_struct_name ("__lldb_caller_struct"),
     m_wrapper_function_addr (),
     m_wrapper_args_addrs (),
-    m_struct_layout (NULL),
     m_arg_values (arg_value_list),
-    m_value_struct_size (0),
-    m_return_offset (0),
-    m_return_size (0),
     m_compiled (false),
     m_JITted (false)
 {
@@ -95,154 +90,125 @@ ClangFunction::~ClangFunction()
 unsigned
 ClangFunction::CompileFunction (Stream &errors)
 {
+    if (m_compiled)
+        return 0;
+    
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     unsigned num_errors = 0;
     
-    if (!m_compiled)
+    std::string return_type_str = ClangASTContext::GetTypeName(m_function_return_qual_type);
+    
+    // Cons up the function we're going to wrap our call in, then compile it...
+    // We declare the function "extern "C"" because the compiler might be in C++
+    // mode which would mangle the name and then we couldn't find it again...
+    m_wrapper_function_text.clear();
+    m_wrapper_function_text.append ("extern \"C\" void ");
+    m_wrapper_function_text.append (m_wrapper_function_name);
+    m_wrapper_function_text.append (" (void *input)\n{\n    struct ");
+    m_wrapper_function_text.append (m_wrapper_struct_name);
+    m_wrapper_function_text.append (" \n  {\n");
+    m_wrapper_function_text.append ("    ");
+    m_wrapper_function_text.append (return_type_str);
+    m_wrapper_function_text.append (" (*fn_ptr) (");
+
+    // Get the number of arguments.  If we have a function type and it is prototyped,
+    // trust that, otherwise use the values we were given.
+
+    // FIXME: This will need to be extended to handle Variadic functions.  We'll need
+    // to pull the defined arguments out of the function, then add the types from the
+    // arguments list for the variable arguments.
+
+    uint32_t num_args = UINT32_MAX;
+    bool trust_function = false;
+    // GetArgumentCount returns -1 for an unprototyped function.
+    if (m_function_ptr)
     {
-        std::string return_type_str = ClangASTContext::GetTypeName(m_function_return_qual_type);
-        
-        // Cons up the function we're going to wrap our call in, then compile it...
-        // We declare the function "extern "C"" because the compiler might be in C++
-        // mode which would mangle the name and then we couldn't find it again...
-        std::string expression;
-        expression.append ("extern \"C\" void ");
-        expression.append (m_wrapper_function_name);
-        expression.append (" (void *input)\n{\n    struct ");
-        expression.append (m_wrapper_struct_name);
-        expression.append (" \n  {\n");
-        expression.append ("    ");
-        expression.append (return_type_str);
-        expression.append (" (*fn_ptr) (");
+        int num_func_args = m_function_ptr->GetArgumentCount();
+        if (num_func_args >= 0)
+            trust_function = true;
+        else
+            num_args = num_func_args;
+    }
 
-        // Get the number of arguments.  If we have a function type and it is prototyped,
-        // trust that, otherwise use the values we were given.
+    if (num_args == UINT32_MAX)
+        num_args = m_arg_values.GetSize();
 
-        // FIXME: This will need to be extended to handle Variadic functions.  We'll need
-        // to pull the defined arguments out of the function, then add the types from the
-        // arguments list for the variable arguments.
+    std::string args_buffer;  // This one stores the definition of all the args in "struct caller".
+    std::string args_list_buffer;  // This one stores the argument list called from the structure.
+    for (size_t i = 0; i < num_args; i++)
+    {
+        const char *type_string;
+        std::string type_stdstr;
 
-        uint32_t num_args = UINT32_MAX;
-        bool trust_function = false;
-        // GetArgumentCount returns -1 for an unprototyped function.
-        if (m_function_ptr)
+        if (trust_function)
         {
-            int num_func_args = m_function_ptr->GetArgumentCount();
-            if (num_func_args >= 0)
-                trust_function = true;
-            else
-                num_args = num_func_args;
+            type_string = m_function_ptr->GetArgumentTypeAtIndex(i).GetName().AsCString();
         }
-
-        if (num_args == UINT32_MAX)
-            num_args = m_arg_values.GetSize();
-
-        std::string args_buffer;  // This one stores the definition of all the args in "struct caller".
-        std::string args_list_buffer;  // This one stores the argument list called from the structure.
-        for (size_t i = 0; i < num_args; i++)
+        else
         {
-            const char *type_string;
-            std::string type_stdstr;
-
-            if (trust_function)
+            Value *arg_value = m_arg_values.GetValueAtIndex(i);
+            void *clang_qual_type = arg_value->GetOpaqueClangQualType ();
+            if (clang_qual_type != NULL)
             {
-                type_string = m_function_ptr->GetArgumentTypeAtIndex(i).GetName().AsCString();
+                type_stdstr = ClangASTContext::GetTypeName(clang_qual_type);
+                type_string = type_stdstr.c_str();
             }
             else
-            {
-                Value *arg_value = m_arg_values.GetValueAtIndex(i);
-                void *clang_qual_type = arg_value->GetOpaqueClangQualType ();
-                if (clang_qual_type != NULL)
-                {
-                    type_stdstr = ClangASTContext::GetTypeName(clang_qual_type);
-                    type_string = type_stdstr.c_str();
-                }
-                else
-                {   
-                    errors.Printf("Could not determine type of input value %d.", i);
-                    return 1;
-                }
-            }
-
-
-            expression.append (type_string);
-            if (i < num_args - 1)
-                expression.append (", ");
-
-            char arg_buf[32];
-            args_buffer.append ("    ");
-            args_buffer.append (type_string);
-            snprintf(arg_buf, 31, "arg_%zd", i);
-            args_buffer.push_back (' ');
-            args_buffer.append (arg_buf);
-            args_buffer.append (";\n");
-
-            args_list_buffer.append ("__lldb_fn_data->");
-            args_list_buffer.append (arg_buf);
-            if (i < num_args - 1)
-                args_list_buffer.append (", ");
-
-        }
-        expression.append (");\n"); // Close off the function calling prototype.
-
-        expression.append (args_buffer);
-
-        expression.append ("    ");
-        expression.append (return_type_str);
-        expression.append (" return_value;");
-        expression.append ("\n  };\n  struct ");
-        expression.append (m_wrapper_struct_name);
-        expression.append ("* __lldb_fn_data = (struct ");
-        expression.append (m_wrapper_struct_name);
-        expression.append (" *) input;\n");
-
-        expression.append ("  __lldb_fn_data->return_value = __lldb_fn_data->fn_ptr (");
-        expression.append (args_list_buffer);
-        expression.append (");\n}\n");
-
-        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
-        if (log)
-            log->Printf ("Expression: \n\n%s\n\n", expression.c_str());
-            
-        // Okay, now compile this expression:
-        num_errors = ParseBareExpression (expression.c_str(), errors);
-        m_compiled = (num_errors == 0);
-        
-        if (m_compiled)
-        {
-            using namespace clang;
-            CompilerInstance *compiler_instance = GetCompilerInstance();
-            ASTContext &ast_context = compiler_instance->getASTContext();
-
-            DeclarationName wrapper_func_name(&ast_context.Idents.get(m_wrapper_function_name.c_str()));
-            FunctionDecl::lookup_result func_lookup = ast_context.getTranslationUnitDecl()->lookup(wrapper_func_name);
-            if (func_lookup.first == func_lookup.second)
-                return false;
-
-            FunctionDecl *wrapper_func = dyn_cast<FunctionDecl> (*(func_lookup.first));
-            if (!wrapper_func)
-                return false;
-
-            DeclarationName wrapper_struct_name(&ast_context.Idents.get(m_wrapper_struct_name.c_str()));
-            RecordDecl::lookup_result struct_lookup = wrapper_func->lookup(wrapper_struct_name);
-            if (struct_lookup.first == struct_lookup.second)
-                return false;
-
-            RecordDecl *wrapper_struct = dyn_cast<RecordDecl>(*(struct_lookup.first));
-
-            if (!wrapper_struct)
-                return false;
-
-            m_struct_layout = &ast_context.getASTRecordLayout (wrapper_struct);
-            if (!m_struct_layout)
-            {
-                m_compiled = false;
+            {   
+                errors.Printf("Could not determine type of input value %d.", i);
                 return 1;
             }
-            m_return_offset = m_struct_layout->getFieldOffset(m_struct_layout->getFieldCount() - 1);
-            m_return_size = (m_struct_layout->getDataSize() - m_return_offset)/8;
         }
+
+        m_wrapper_function_text.append (type_string);
+        if (i < num_args - 1)
+            m_wrapper_function_text.append (", ");
+
+        char arg_buf[32];
+        args_buffer.append ("    ");
+        args_buffer.append (type_string);
+        snprintf(arg_buf, 31, "arg_%zd", i);
+        args_buffer.push_back (' ');
+        args_buffer.append (arg_buf);
+        args_buffer.append (";\n");
+
+        args_list_buffer.append ("__lldb_fn_data->");
+        args_list_buffer.append (arg_buf);
+        if (i < num_args - 1)
+            args_list_buffer.append (", ");
+
     }
+    m_wrapper_function_text.append (");\n"); // Close off the function calling prototype.
+
+    m_wrapper_function_text.append (args_buffer);
+
+    m_wrapper_function_text.append ("    ");
+    m_wrapper_function_text.append (return_type_str);
+    m_wrapper_function_text.append (" return_value;");
+    m_wrapper_function_text.append ("\n  };\n  struct ");
+    m_wrapper_function_text.append (m_wrapper_struct_name);
+    m_wrapper_function_text.append ("* __lldb_fn_data = (struct ");
+    m_wrapper_function_text.append (m_wrapper_struct_name);
+    m_wrapper_function_text.append (" *) input;\n");
+
+    m_wrapper_function_text.append ("  __lldb_fn_data->return_value = __lldb_fn_data->fn_ptr (");
+    m_wrapper_function_text.append (args_list_buffer);
+    m_wrapper_function_text.append (");\n}\n");
+
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
+    if (log)
+        log->Printf ("Expression: \n\n%s\n\n", m_wrapper_function_text.c_str());
+        
+    // Okay, now compile this expression
+    
+    m_parser.reset(new ClangExpressionParser(m_target_triple.c_str(), *this));
+    
+    num_errors = m_parser->Parse (errors);
+    
+    m_compiled = (num_errors == 0);
+    
+    if (!m_compiled)
+        return num_errors;
 
     return num_errors;
 }
@@ -252,24 +218,18 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
 {
     Process *process = exe_ctx.process;
 
-    if (process == NULL)
+    if (!process)
+        return false;
+    
+    if (!m_compiled)
         return false;
 
-    if (!m_JITted)
-    {
-        // Next we should JIT it and insert the result into the target program.
-        if (!JITFunction (m_wrapper_function_name.c_str()))
-            return false;
-
-        if (!WriteJITCode (exe_ctx))
-            return false;
-
-        m_JITted = true;
-    }
-
-    // Next get the call address for the function:
-    m_wrapper_function_addr = GetFunctionAddress (m_wrapper_function_name.c_str());
-    if (m_wrapper_function_addr == LLDB_INVALID_ADDRESS)
+    if (m_JITted)
+        return true;
+    
+    Error jit_error = m_parser->MakeJIT(m_wrapper_function_addr, exe_ctx);
+    
+    if (!jit_error.Success())
         return false;
 
     return true;
@@ -286,12 +246,14 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &
 bool
 ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &args_addr_ref, Address function_address, ValueList &arg_values, Stream &errors)
 {
-    // Otherwise, allocate space for the argument passing struct, and write it.
-    // We use the information in the expression parser AST to
-    // figure out how to do this...
-    // We should probably transcode this in this object so we can ditch the compiler instance
-    // and all its associated data, and just keep the JITTed bytes.
-
+    // All the information to reconstruct the struct is provided by the
+    // StructExtractor.
+    if (!m_struct_valid)
+    {
+        errors.Printf("Argument information was not correctly parsed, so the function cannot be called.");
+        return false;
+    }
+        
     Error error;
     using namespace clang;
     ExecutionResults return_value = eExecutionSetupError;
@@ -300,12 +262,10 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &
 
     if (process == NULL)
         return return_value;
-        
-    uint64_t struct_size = m_struct_layout->getSize()/8; // Clang returns sizes in bytes.
-    
+                
     if (args_addr_ref == LLDB_INVALID_ADDRESS)
     {
-        args_addr_ref = process->AllocateMemory(struct_size, lldb::ePermissionsReadable|lldb::ePermissionsWritable, error);
+        args_addr_ref = process->AllocateMemory(m_struct_size, lldb::ePermissionsReadable|lldb::ePermissionsWritable, error);
         if (args_addr_ref == LLDB_INVALID_ADDRESS)
             return false;
         m_wrapper_args_addrs.push_back (args_addr_ref);
@@ -323,7 +283,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &
     // Make a data extractor and put the address into the right byte order & size.
 
     uint64_t fun_addr = function_address.GetLoadAddress(exe_ctx.process);
-    int first_offset = m_struct_layout->getFieldOffset(0)/8;
+    int first_offset = m_member_offsets[0];
     process->WriteMemory(args_addr_ref + first_offset, &fun_addr, 8, error);
 
     // FIXME: We will need to extend this for Variadic functions.
@@ -341,7 +301,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx, lldb::addr_t &
     {
         // FIXME: We should sanity check sizes.
 
-        int offset = m_struct_layout->getFieldOffset(i+1)/8; // Clang sizes are in bytes.
+        int offset = m_member_offsets[i+1]; // Clang sizes are in bytes.
         Value *arg_value = arg_values.GetValueAtIndex(i);
         
         // FIXME: For now just do scalars:
@@ -419,7 +379,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     data_buffer.resize(m_return_size);
     Process *process = exe_ctx.process;
     Error error;
-    size_t bytes_read = process->ReadMemory(args_addr + m_return_offset/8, &data_buffer.front(), m_return_size, error);
+    size_t bytes_read = process->ReadMemory(args_addr + m_return_offset, &data_buffer.front(), m_return_size, error);
 
     if (bytes_read == 0)
     {
@@ -717,69 +677,8 @@ ClangFunction::ExecuteFunction(
     return eExecutionCompleted;
 }
 
-ClangFunction::ExecutionResults
-ClangFunction::ExecuteFunctionWithABI(ExecutionContext &exe_ctx, Stream &errors, Value &results)
+clang::ASTConsumer *
+ClangFunction::ASTTransformer (clang::ASTConsumer *passthrough)
 {
-    // FIXME: Use the errors Stream for better error reporting. 
-    using namespace clang;
-    ExecutionResults return_value = eExecutionSetupError;
-    
-    Process *process = exe_ctx.process;
-    
-    if (process == NULL)
-    {
-        errors.Printf("Can't call a function without a process.");
-        return return_value;
-    }
-    
-    //unsigned int num_args = m_arg_values.GetSize();
-    //unsigned int arg_index;
-    
-    //for (arg_index = 0; arg_index < num_args; ++arg_index)
-    //    m_arg_values.GetValueAtIndex(arg_index)->ResolveValue(&exe_ctx, GetASTContext());
-    
-    ThreadPlan *call_plan = exe_ctx.thread->QueueThreadPlanForCallFunction (false,
-                                                                                m_function_addr,
-                                                                                m_arg_values,
-                                                                                true);
-    if (call_plan == NULL)
-        return return_value;
-    
-    call_plan->SetPrivate(true);
-    
-    // We need to call the function synchronously, so spin waiting for it to return.
-    // If we get interrupted while executing, we're going to lose our context, and 
-    // won't be able to gather the result at this point.
-    
-    process->Resume ();
-    
-    while (1)
-    {
-        lldb::EventSP event_sp;
-        
-        // Now wait for the process to stop again:
-        // FIXME: Probably want a time out.
-        lldb::StateType stop_state =  process->WaitForStateChangedEvents (NULL, event_sp);
-        if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
-            continue;
-        
-        if (exe_ctx.thread->IsThreadPlanDone (call_plan))
-        {
-            return_value = eExecutionCompleted;
-            break;
-        }
-        else if (exe_ctx.thread->WasThreadPlanDiscarded (call_plan))
-        {
-            return_value = eExecutionDiscarded;
-            break;
-        }
-        else
-        {
-            return_value = eExecutionInterrupted;
-            break;
-        }
-        
-    }
-    
-    return eExecutionCompleted;
+    return new ASTStructExtractor(passthrough, m_wrapper_struct_name.c_str(), *this);
 }

@@ -152,7 +152,7 @@
 		26D5B0BA11B07550009A862E /* ValueObjectList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9C10F1B85900F91463 /* ValueObjectList.cpp */; };
 		26D5B0BB11B07550009A862E /* ValueObjectVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9D10F1B85900F91463 /* ValueObjectVariable.cpp */; };
 		26D5B0BC11B07550009A862E /* VMRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9E10F1B85900F91463 /* VMRange.cpp */; };
-		26D5B0BD11B07550009A862E /* ClangExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED510F1B86700F91463 /* ClangExpression.cpp */; };
+		26D5B0BD11B07550009A862E /* ClangUserExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */; };
 		26D5B0BE11B07550009A862E /* ClangExpressionVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */; };
 		26D5B0C111B07550009A862E /* Condition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE710F1B88F00F91463 /* Condition.cpp */; };
 		26D5B0C211B07550009A862E /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
@@ -287,7 +287,6 @@
 		26D5B14711B07550009A862E /* ThreadPlanCallFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */; };
 		26D5B14811B07550009A862E /* ClangFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C98D3DA118FB96F00E575D0 /* ClangFunction.cpp */; };
 		26D5B14911B07550009A862E /* RecordingMemoryManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C98D3DB118FB96F00E575D0 /* RecordingMemoryManager.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
-		26D5B14A11B07550009A862E /* CommandObjectCall.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C98D3E4118FB9B100E575D0 /* CommandObjectCall.cpp */; };
 		26D5B14B11B07550009A862E /* CommandObjectTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 269416AD119A024800FF2715 /* CommandObjectTarget.cpp */; };
 		26D5B14C11B07550009A862E /* PathMappingList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 495BBACB119A0DBE00418BEA /* PathMappingList.cpp */; };
 		26D5B14D11B07550009A862E /* StringExtractorGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */; };
@@ -330,10 +329,15 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
+		4911934C1226383D00578B7F /* ASTStructExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = 4911934B1226383D00578B7F /* ASTStructExtractor.h */; };
+		491193521226386000578B7F /* ASTStructExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 491193501226386000578B7F /* ASTStructExtractor.cpp */; };
 		49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49307AAD11DEA4D90081F992 /* IRForTarget.cpp */; };
 		49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */ = {isa = PBXBuildFile; fileRef = 49307AB111DEA4F20081F992 /* IRForTarget.h */; };
-		49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */; };
-		49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */; };
+		49445C2612245E3600C11A81 /* ClangExpressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */; };
+		49445C2A12245E5500C11A81 /* ClangExpressionParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 49445C2912245E5500C11A81 /* ClangExpressionParser.h */; };
+		49445E351225AB6A00C11A81 /* ClangUserExpression.h in Headers */ = {isa = PBXBuildFile; fileRef = 49445E341225AB6A00C11A81 /* ClangUserExpression.h */; };
+		49A8A3A011D568A300AD3B68 /* ASTResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */; };
+		49A8A3A411D568BF00AD3B68 /* ASTResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */; };
 		49BB309611F79450001A4197 /* TaggedASTType.h in Headers */ = {isa = PBXBuildFile; fileRef = 49BB309511F79450001A4197 /* TaggedASTType.h */; };
 		49D4FE831210B5FB00CDB854 /* ClangPersistentVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */; };
 		49D4FE891210B61C00CDB854 /* ClangPersistentVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */; };
@@ -792,7 +796,7 @@
 		26BC7E9C10F1B85900F91463 /* ValueObjectList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectList.cpp; path = source/Core/ValueObjectList.cpp; sourceTree = "<group>"; };
 		26BC7E9D10F1B85900F91463 /* ValueObjectVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectVariable.cpp; path = source/Core/ValueObjectVariable.cpp; sourceTree = "<group>"; };
 		26BC7E9E10F1B85900F91463 /* VMRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VMRange.cpp; path = source/Core/VMRange.cpp; sourceTree = "<group>"; };
-		26BC7ED510F1B86700F91463 /* ClangExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpression.cpp; path = source/Expression/ClangExpression.cpp; sourceTree = "<group>"; };
+		26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangUserExpression.cpp; path = source/Expression/ClangUserExpression.cpp; sourceTree = "<group>"; };
 		26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionVariable.cpp; path = source/Expression/ClangExpressionVariable.cpp; sourceTree = "<group>"; };
 		26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DWARFExpression.cpp; path = source/Expression/DWARFExpression.cpp; sourceTree = "<group>"; };
 		26BC7EE710F1B88F00F91463 /* Condition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Condition.cpp; path = source/Host/posix/Condition.cpp; sourceTree = "<group>"; };
@@ -902,10 +906,15 @@
 		26F996A8119B79C300412154 /* ARM_GCC_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM_GCC_Registers.h; path = source/Utility/ARM_GCC_Registers.h; sourceTree = "<group>"; };
 		26FE25221146CADE00F4085A /* GDBRemoteCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteCommunication.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteCommunication.cpp"; sourceTree = "<group>"; };
 		26FE25231146CADE00F4085A /* GDBRemoteCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteCommunication.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteCommunication.h"; sourceTree = "<group>"; };
+		4911934B1226383D00578B7F /* ASTStructExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTStructExtractor.h; path = include/lldb/Expression/ASTStructExtractor.h; sourceTree = "<group>"; };
+		491193501226386000578B7F /* ASTStructExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStructExtractor.cpp; path = source/Expression/ASTStructExtractor.cpp; sourceTree = "<group>"; };
 		49307AAD11DEA4D90081F992 /* IRForTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRForTarget.cpp; path = source/Expression/IRForTarget.cpp; sourceTree = "<group>"; };
 		49307AB111DEA4F20081F992 /* IRForTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRForTarget.h; path = include/lldb/Expression/IRForTarget.h; sourceTree = "<group>"; };
 		493C63F01189203300914D5E /* ABISysV_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_x86_64.h; path = "ABI/SysV-x86_64/ABISysV_x86_64.h"; sourceTree = "<group>"; };
 		493C63F11189203300914D5E /* ABISysV_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_x86_64.cpp; path = "ABI/SysV-x86_64/ABISysV_x86_64.cpp"; sourceTree = "<group>"; };
+		49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionParser.cpp; path = source/Expression/ClangExpressionParser.cpp; sourceTree = "<group>"; };
+		49445C2912245E5500C11A81 /* ClangExpressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionParser.h; path = include/lldb/Expression/ClangExpressionParser.h; sourceTree = "<group>"; };
+		49445E341225AB6A00C11A81 /* ClangUserExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangUserExpression.h; path = include/lldb/Expression/ClangUserExpression.h; sourceTree = "<group>"; };
 		495BBACB119A0DBE00418BEA /* PathMappingList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathMappingList.cpp; path = source/Target/PathMappingList.cpp; sourceTree = "<group>"; };
 		495BBACF119A0DE700418BEA /* PathMappingList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathMappingList.h; path = include/lldb/Target/PathMappingList.h; sourceTree = "<group>"; };
 		497650CE11A21BEE008DDB57 /* ABIMacOSX_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABIMacOSX_i386.cpp; path = "ABI/MacOSX-i386/ABIMacOSX_i386.cpp"; sourceTree = "<group>"; };
@@ -914,8 +923,8 @@
 		497E7B9D1188F6690065CCA1 /* ABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABI.cpp; path = source/Target/ABI.cpp; sourceTree = "<group>"; };
 		499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectArgs.h; path = source/Commands/CommandObjectArgs.h; sourceTree = "<group>"; };
 		499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectArgs.cpp; path = source/Commands/CommandObjectArgs.cpp; sourceTree = "<group>"; };
-		49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangResultSynthesizer.cpp; path = source/Expression/ClangResultSynthesizer.cpp; sourceTree = "<group>"; };
-		49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangResultSynthesizer.h; path = include/lldb/Expression/ClangResultSynthesizer.h; sourceTree = "<group>"; };
+		49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTResultSynthesizer.cpp; path = source/Expression/ASTResultSynthesizer.cpp; sourceTree = "<group>"; };
+		49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTResultSynthesizer.h; path = include/lldb/Expression/ASTResultSynthesizer.h; sourceTree = "<group>"; };
 		49BB309511F79450001A4197 /* TaggedASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaggedASTType.h; path = include/lldb/Symbol/TaggedASTType.h; sourceTree = "<group>"; };
 		49BF48DC11ADF356008863BD /* ObjCObjectPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjCObjectPrinter.cpp; path = source/Target/ObjCObjectPrinter.cpp; sourceTree = "<group>"; };
 		49BF48E011ADF37D008863BD /* ObjCObjectPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjCObjectPrinter.h; path = include/lldb/Target/ObjCObjectPrinter.h; sourceTree = "<group>"; };
@@ -1845,19 +1854,24 @@
 				49D7072611B5AD03001AD875 /* ClangASTSource.h */,
 				49D7072811B5AD11001AD875 /* ClangASTSource.cpp */,
 				26BC7DC010F1B79500F91463 /* ClangExpression.h */,
-				26BC7ED510F1B86700F91463 /* ClangExpression.cpp */,
+				49445E341225AB6A00C11A81 /* ClangUserExpression.h */,
+				26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */,
 				4C98D3E0118FB98F00E575D0 /* ClangFunction.h */,
 				4C98D3DA118FB96F00E575D0 /* ClangFunction.cpp */,
 				49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */,
 				49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */,
+				49445C2912245E5500C11A81 /* ClangExpressionParser.h */,
+				49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */,
 				26BC7DC110F1B79500F91463 /* ClangExpressionVariable.h */,
 				26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */,
 				49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */,
 				49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */,
-				49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */,
-				49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */,
 				26BC7DC310F1B79500F91463 /* DWARFExpression.h */,
 				26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */,
+				49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */,
+				49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */,
+				4911934B1226383D00578B7F /* ASTStructExtractor.h */,
+				491193501226386000578B7F /* ASTStructExtractor.cpp */,
 				49307AB111DEA4F20081F992 /* IRForTarget.h */,
 				49307AAD11DEA4D90081F992 /* IRForTarget.cpp */,
 				49DA743411DE6BB2006AEF7E /* IRToDWARF.h */,
@@ -2215,7 +2229,7 @@
 				49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */,
 				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
 				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
-				49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */,
+				49A8A3A411D568BF00AD3B68 /* ASTResultSynthesizer.h in Headers */,
 				49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */,
 				49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */,
 				4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */,
@@ -2226,6 +2240,9 @@
 				2615DB851208A9C90021781D /* StopInfo.h in Headers */,
 				2615DBCB1208B5FC0021781D /* StopInfoMachException.h in Headers */,
 				49D4FE831210B5FB00CDB854 /* ClangPersistentVariables.h in Headers */,
+				49445C2A12245E5500C11A81 /* ClangExpressionParser.h in Headers */,
+				49445E351225AB6A00C11A81 /* ClangUserExpression.h in Headers */,
+				4911934C1226383D00578B7F /* ASTStructExtractor.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2480,7 +2497,7 @@
 				26D5B0BA11B07550009A862E /* ValueObjectList.cpp in Sources */,
 				26D5B0BB11B07550009A862E /* ValueObjectVariable.cpp in Sources */,
 				26D5B0BC11B07550009A862E /* VMRange.cpp in Sources */,
-				26D5B0BD11B07550009A862E /* ClangExpression.cpp in Sources */,
+				26D5B0BD11B07550009A862E /* ClangUserExpression.cpp in Sources */,
 				26D5B0BE11B07550009A862E /* ClangExpressionVariable.cpp in Sources */,
 				26D5B0C111B07550009A862E /* Condition.cpp in Sources */,
 				26D5B0C211B07550009A862E /* Host.mm in Sources */,
@@ -2615,7 +2632,6 @@
 				26D5B14711B07550009A862E /* ThreadPlanCallFunction.cpp in Sources */,
 				26D5B14811B07550009A862E /* ClangFunction.cpp in Sources */,
 				26D5B14911B07550009A862E /* RecordingMemoryManager.cpp in Sources */,
-				26D5B14A11B07550009A862E /* CommandObjectCall.cpp in Sources */,
 				26D5B14B11B07550009A862E /* CommandObjectTarget.cpp in Sources */,
 				26D5B14C11B07550009A862E /* PathMappingList.cpp in Sources */,
 				26D5B14D11B07550009A862E /* StringExtractorGDBRemote.cpp in Sources */,
@@ -2672,7 +2688,7 @@
 				AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */,
 				261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */,
 				4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */,
-				49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */,
+				49A8A3A011D568A300AD3B68 /* ASTResultSynthesizer.cpp in Sources */,
 				49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */,
 				49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */,
 				4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */,
@@ -2682,6 +2698,8 @@
 				2615DBCA1208B5FC0021781D /* StopInfoMachException.cpp in Sources */,
 				49D4FE891210B61C00CDB854 /* ClangPersistentVariables.cpp in Sources */,
 				49FB515E121481B000DF8983 /* DWARFExpression.cpp in Sources */,
+				49445C2612245E3600C11A81 /* ClangExpressionParser.cpp in Sources */,
+				491193521226386000578B7F /* ASTStructExtractor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

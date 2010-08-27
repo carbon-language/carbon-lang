@@ -41,6 +41,7 @@ class   ClangASTContext;
 class   ClangExpression;
 class   ClangExpressionDeclMap;
 class   ClangExpressionVariableList;
+class   ClangExpressionVariableStore;
 class   Debugger;
 class   CommandInterpreter;
 class   CommandObject;

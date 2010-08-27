@@ -25,6 +25,7 @@ namespace clang
     }
 
     class Action;
+    class ASTConsumer;
     class ASTContext;
     class ASTRecordLayout;
     class AddrLabelExpr;
@@ -52,6 +53,7 @@ namespace clang
     class DiagnosticOptions;
     class EnumDecl;
     class Expr;
+    class ExternalASTSource;
     class ExtVectorElementExpr;
     class FieldDecl;
     class FloatingLiteral;

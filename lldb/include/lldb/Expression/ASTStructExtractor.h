@@ -1,4 +1,4 @@
-//===-- ClangResultSynthesizer.h --------------------------------*- C++ -*-===//
+//===-- ASTStructExtractor.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,28 +7,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ClangResultSynthesizer_h_
-#define liblldb_ClangResultSynthesizer_h_
+#ifndef liblldb_ASTStructExtractor_h_
+#define liblldb_ASTStructExtractor_h_
 
 #include "clang/Sema/SemaConsumer.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/ClangFunction.h"
 
 namespace lldb_private {
-
+    
 //----------------------------------------------------------------------
-/// @class ClangResultSynthesizer ClangResultSynthesizer.h "lldb/Expression/ClangResultSynthesizer.h"
-/// @brief Adds a result variable declaration to the ASTs for an expression.
+/// @class ASTStructExtractor ASTStructExtractor.h "lldb/Expression/ASTStructExtractor.h"
+/// @brief Extracts and describes the argument structure for a wrapped function.
 ///
-/// Users expect the expression "i + 3" to return a result, even if a result
-/// variable wasn't specifically declared.  To fulfil this requirement, LLDB adds
-/// a result variable to the expression, transforming it to 
-/// "int ___clang_expr_result = i + 3."  The IR transformers ensure that the
-/// resulting variable is mapped to the right piece of memory.
-/// ClangResultSynthesizer's job is to add the variable and its initialization to
-/// the ASTs for the expression, and it does so by acting as a SemaConsumer for
-/// Clang.
+/// This pass integrates with ClangFunction, which calls functions with custom
+/// sets of arguments.  To avoid having to implement the full calling convention
+/// for the target's architecture, ClangFunction writes a simple wrapper
+/// function that takes a pointer to an argument structure that contains room
+/// for the address of the function to be called, the values of all its
+/// arguments, and room for the function's return value.
+///
+/// The definition of this struct is itself in the body of the wrapper function,
+/// so Clang does the structure layout itself.  ASTStructExtractor reads through
+/// the AST for the wrapper funtion and finds the struct.
 //----------------------------------------------------------------------
-class ClangResultSynthesizer : public clang::SemaConsumer
+class ASTStructExtractor : public clang::SemaConsumer
 {
 public:
     //----------------------------------------------------------------------
@@ -39,13 +43,23 @@ public:
     ///     in order to produce LLVM IR, this SemaConsumer must allow them to
     ///     pass to the next step in the chain after processing.  Passthrough is
     ///     the next ASTConsumer, or NULL if none is required.
+    ///
+    /// @param[in] struct_name
+    ///     The name of the structure to extract from the wrapper function.
+    ///
+    /// @param[in] function
+    ///     The caller object whose members should be populated with information
+    ///     about the argument struct.  ClangFunction friends ASTStructExtractor
+    ///     for this purpose.
     //----------------------------------------------------------------------
-    ClangResultSynthesizer(clang::ASTConsumer *passthrough);
+    ASTStructExtractor(clang::ASTConsumer *passthrough,
+                       const char *struct_name,
+                       ClangFunction &function);
     
     //----------------------------------------------------------------------
     /// Destructor
     //----------------------------------------------------------------------
-    ~ClangResultSynthesizer();
+    ~ASTStructExtractor();
     
     //----------------------------------------------------------------------
     /// Link this consumer with a particular AST context
@@ -107,30 +121,36 @@ public:
     void ForgetSema();
 private:
     //----------------------------------------------------------------------
-    /// Hunt the given Decl for FunctionDecls named ___clang_expr, recursing
-    /// as necessary through LinkageSpecDecls, and calling SynthesizeResult on
-    /// anything that was found
+    /// Hunt the given FunctionDecl for the argument struct and place
+    /// information about it into m_function
+    ///
+    /// @param[in] F
+    ///     The FunctionDecl to hunt.
+    //----------------------------------------------------------------------
+    void
+    ExtractFromFunctionDecl(clang::FunctionDecl* F);
+    
+    //----------------------------------------------------------------------
+    /// Hunt the given Decl for FunctionDecls named the same as the wrapper
+    /// function name, recursing as necessary through LinkageSpecDecls, and 
+    /// calling ExtractFromFunctionDecl on anything that was found
     ///
     /// @param[in] D
     ///     The Decl to hunt.
     //----------------------------------------------------------------------
-    void TransformTopLevelDecl(clang::Decl *D);
+    void
+    ExtractFromTopLevelDecl(clang::Decl* D);
     
-    //----------------------------------------------------------------------
-    /// Process a function and produce the result variable and initialization
-    ///
-    /// @param[in] FunDecl
-    ///     The function to process.
-    //----------------------------------------------------------------------
-    bool SynthesizeResult(clang::FunctionDecl *FunDecl);
+    clang::ASTContext              *m_ast_context;          ///< The AST context to use for identifiers and types.
+    clang::ASTConsumer             *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.
+    clang::SemaConsumer            *m_passthrough_sema;     ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
+    clang::Sema                    *m_sema;                 ///< The Sema to use.
+    clang::Action                  *m_action;               ///< The Sema to use, cast to an Action so it's usable.
     
-    clang::ASTContext *m_ast_context;           ///< The AST context to use for identifiers and types.
-    clang::ASTConsumer *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.
-    clang::SemaConsumer *m_passthrough_sema;    ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
-    clang::Sema *m_sema;                        ///< The Sema to use.
-    clang::Action *m_action;                    ///< The Sema to use, cast to an Action so it's usable.
+    ClangFunction                  &m_function;             ///< The function to populate with information about the argument structure.
+    std::string                     m_struct_name;          ///< The name of the structure to extract.
 };
-
+    
 }
 
 #endif

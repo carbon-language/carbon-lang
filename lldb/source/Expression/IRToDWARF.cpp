@@ -26,13 +26,15 @@ using namespace llvm;
 
 static char ID;
 
-IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableList &variable_list, 
+IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableStore &local_vars, 
                      lldb_private::ClangExpressionDeclMap *decl_map,
-                     lldb_private::StreamString &strm) :
+                     lldb_private::StreamString &strm,
+                     const char *func_name) :
     ModulePass(&ID),
-    m_variable_list(variable_list),
+    m_local_vars(local_vars),
     m_decl_map(decl_map),
-    m_strm(strm)
+    m_strm(strm),
+    m_func_name(func_name)
 {
 }
 
@@ -171,14 +173,14 @@ IRToDWARF::runOnModule(Module &M)
 {
     lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
-    llvm::Function* function = M.getFunction(StringRef("___clang_expr"));
+    llvm::Function* function = M.getFunction(StringRef(m_func_name.c_str()));
     
     if (!function)
     {
         if (log)
-            log->Printf("Couldn't find ___clang_expr() in the module");
+            log->Printf("Couldn't find %s() in the module", m_func_name.c_str());
         
-        return 1;
+        return false;
     }
     
     Relocator relocator;

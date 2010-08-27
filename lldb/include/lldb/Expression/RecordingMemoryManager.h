@@ -24,6 +24,7 @@
 #include "lldb/Core/Log.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ClangExpressionParser.h"
 
 namespace lldb_private {
 
@@ -51,7 +52,7 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 class RecordingMemoryManager : public llvm::JITMemoryManager
 {
-friend bool ClangExpression::WriteJITCode (const ExecutionContext &exc_context);
+friend Error ClangExpressionParser::MakeJIT (uint64_t &, ExecutionContext &);
 
 public:
     //------------------------------------------------------------------

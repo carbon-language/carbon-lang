@@ -19,7 +19,7 @@ namespace llvm {
 }
 
 namespace lldb_private {
-    class ClangExpressionVariableList;
+    class ClangExpressionVariableStore;
     class ClangExpressionDeclMap;
     class StreamString;
 }
@@ -50,7 +50,7 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     ///
-    /// @param[in] variable_list
+    /// @param[in] local_vars
     ///     A list of variables to populate with the local variables this
     ///     expression uses.
     ///
@@ -60,10 +60,14 @@ public:
     ///
     /// @param[in] stream
     ///     The stream to dump DWARF bytecode onto.
+    ///
+    /// @param[in] func_name
+    ///     The name of the function to translate to DWARF.
     //------------------------------------------------------------------
-    IRToDWARF(lldb_private::ClangExpressionVariableList &variable_list, 
+    IRToDWARF(lldb_private::ClangExpressionVariableStore &local_vars, 
               lldb_private::ClangExpressionDeclMap *decl_map,
-              lldb_private::StreamString &strm);
+              lldb_private::StreamString &strm,
+              const char* func_name = "___clang_expr");
     
     //------------------------------------------------------------------
     /// Destructor
@@ -108,7 +112,8 @@ private:
     //------------------------------------------------------------------
     bool runOnBasicBlock(llvm::BasicBlock &BB, Relocator &Relocator);
     
-    lldb_private::ClangExpressionVariableList &m_variable_list; ///< The list of local variables to populate while transforming
+    std::string m_func_name;                                    ///< The name of the function to translate
+    lldb_private::ClangExpressionVariableStore &m_local_vars;   ///< The list of local variables to populate while transforming
     lldb_private::ClangExpressionDeclMap *m_decl_map;           ///< The list of external variables
     lldb_private::StreamString &m_strm;                         ///< The stream to write bytecode to
 };

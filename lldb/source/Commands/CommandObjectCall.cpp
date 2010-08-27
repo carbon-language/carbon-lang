@@ -263,15 +263,8 @@ CommandObjectCall::Execute
         ClangFunction::ExecutionResults return_status;
         Value return_value;
         
-        if (m_options.use_abi)
-        {
-            return_status = clang_fun.ExecuteFunctionWithABI(exe_ctx, errors, return_value);
-        }
-        else 
-        {
-            bool stop_others = true;
-            return_status = clang_fun.ExecuteFunction(exe_ctx, errors, stop_others, NULL, return_value);
-        }
+        bool stop_others = true;
+        return_status = clang_fun.ExecuteFunction(exe_ctx, errors, stop_others, NULL, return_value);
 
         // Now figure out what to do with the return value.
         if (return_status == ClangFunction::eExecutionSetupError)

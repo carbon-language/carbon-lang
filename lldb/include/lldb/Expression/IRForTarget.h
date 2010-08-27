@@ -60,9 +60,13 @@ public:
     ///     The data layout information for the target.  This information is
     ///     used to determine the sizes of types that have been lowered into
     ///     IR types.
+    ///
+    /// @param[in] func_name
+    ///     The name of the function to prepare for execution in the target.
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
-                const llvm::TargetData *target_data);
+                const llvm::TargetData *target_data,
+                const char* func_name = "___clang_expr");
     
     //------------------------------------------------------------------
     /// Destructor
@@ -96,7 +100,7 @@ private:
     //------------------------------------------------------------------
     /// A function-level pass to take the generated global value
     /// ___clang_expr_result and make it into a persistent variable.
-    /// Also see ClangResultSynthesizer.
+    /// Also see ASTResultSynthesizer.
     //------------------------------------------------------------------
 
     //------------------------------------------------------------------
@@ -294,6 +298,7 @@ private:
     bool replaceVariables(llvm::Module &M,
                           llvm::Function &F);
     
+    std::string m_func_name;                            ///< The name of the function to translate
     lldb_private::ClangExpressionDeclMap *m_decl_map;   ///< The DeclMap containing the Decls 
     const llvm::TargetData *m_target_data;              ///< The TargetData for use in determining type sizes
     llvm::Constant *m_sel_registerName;                 ///< The address of the function sel_registerName, cast to the appropriate function pointer type

@@ -25,12 +25,6 @@
 #include "lldb/Core/ClangForward.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 
-namespace llvm
-{
-    class ExecutionEngine;
-    class StringRef;
-}
-
 namespace lldb_private {
 
 class RecordingMemoryManager;
@@ -48,245 +42,51 @@ class ClangExpression
 {
 public:
     //------------------------------------------------------------------
-    /// Constructor
-    ///
-    /// Initializes class variabes.
-    ///
-    /// @param[in] target_triple
-    ///     The LLVM-friendly target triple for use in initializing the
-    ///     compiler.
-    ///
-    /// @param[in] expr_decl_map
-    ///     The object that looks up externally-defined names in LLDB's
-    ///     debug information.
+    /// Return the string that the parser should parse.  Must be a full
+    /// translation unit.
     //------------------------------------------------------------------
-    ClangExpression(const char *target_triple,
-                    ClangExpressionDeclMap *expr_decl_map);
-
-    //------------------------------------------------------------------
-    /// Destructor
-    //------------------------------------------------------------------
-    ~ClangExpression();
+    virtual const char *
+    Text () = 0;
     
     //------------------------------------------------------------------
-    /// Parse a single expression and convert it to IR using Clang.  Wrap
-    /// the expression in a function with signature void ___clang_expr(void*).
-    ///
-    /// @param[in] expr_text
-    ///     The text of the expression to be parsed.
-    ///
-    /// @param[in] stream
-    ///     The stream to print errors to.
-    ///
-    /// @param[in] add_result_var
-    ///     True if a special result variable should be generated for
-    ///     the expression.
-    ///
-    /// @return
-    ///     The number of errors encountered during parsing.  0 means
-    ///     success.
+    /// Return the function name that should be used for executing the
+    /// expression.  Text() should contain the definition of this
+    /// function.
     //------------------------------------------------------------------
-    unsigned
-    ParseExpression (const char *expr_text, 
-                     Stream &stream, 
-                     bool add_result_var = false);
-
-    //------------------------------------------------------------------
-    /// Parse a single expression and convert it to IR using Clang.  Don't
-    /// wrap the expression in anything at all.
-    ///
-    /// @param[in] expr_text
-    ///     The text of the expression to be parsed.
-    ///
-    /// @param[in] stream
-    ///     The stream to print errors to.
-    ///
-    /// @param[in] add_result_var
-    ///     True if a special result variable should be generated for
-    ///     the expression.
-    ///
-    /// @return
-    ///     The number of errors encountered during parsing.  0 means
-    ///     success.
-    //------------------------------------------------------------------
-    unsigned
-    ParseBareExpression (llvm::StringRef expr_text, 
-                         Stream &stream, 
-                         bool add_result_var = false);
+    virtual const char *
+    FunctionName () = 0;
     
     //------------------------------------------------------------------
-    /// Convert the IR for an already-parsed expression to DWARF if possible.
-    ///
-    /// @param[in] expr_local_variable_list
-    ///     The list of local variables the expression uses, with types, for
-    ///     use by the DWARF parser.
-    ///
-    /// @param[in] dwarf_opcode_strm
-    ///     The stream to place the resulting DWARF code into.
-    ///
-    /// @return
-    ///     True on success; false on failure.  On failure, it may be appropriate
-    ///     to call PrepareIRForTarget().
+    /// Return the object that the parser should use when resolving external
+    /// values.  May be NULL if everything should be self-contained.
     //------------------------------------------------------------------
-    bool
-    ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_variable_list,
-                      StreamString &dwarf_opcode_strm);
+    virtual ClangExpressionDeclMap *
+    DeclMap () = 0;
     
     //------------------------------------------------------------------
-    /// Prepare the IR for an already-parsed expression for execution in the
-    /// target process by (among other things) making all externally-defined
-    /// variables point to offsets from the void* argument.
-    ///
-    /// @return
-    ///     True on success; false on failure.  On failure, this expression
-    ///     cannot be executed by LLDB.
+    /// Return the object that the parser should use when registering
+    /// local variables.  May be NULL if the Expression doesn't care.
     //------------------------------------------------------------------
-    bool
-    PrepareIRForTarget ();
-
-    //------------------------------------------------------------------
-    /// Use the JIT to compile an already-prepared expression from IR into
-    /// machine code, but keep the code in the current process for now.
-    ///
-    /// @param[in] func_name
-    ///     The name of the function to be JITted.  By default, the function
-    ///     wrapped by ParseExpression().
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool
-    JITFunction (const char *func_name = "___clang_expr");
-
-    //------------------------------------------------------------------
-    /// Write the machine code generated by the JIT into the target's memory.
-    ///
-    /// @param[in] exc_context
-    ///     The execution context that the JITted code must be copied into.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool
-    WriteJITCode (const ExecutionContext &exc_context);
-
-    //------------------------------------------------------------------
-    /// Write the machine code generated by the JIT into the target process.
-    ///
-    /// @param[in] func_name
-    ///     The name of the function whose address is being requested.
-    ///     By default, the function wrapped by ParseExpression().
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    lldb::addr_t
-    GetFunctionAddress (const char *func_name = "___clang_expr");
+    virtual ClangExpressionVariableStore *
+    LocalVariables () = 0;
     
     //------------------------------------------------------------------
-    /// Disassemble the machine code for a JITted function from the target 
-    /// process's memory and print the result to a stream.
+    /// Return the object that the parser should allow to access ASTs.
+    /// May be NULL if the ASTs do not need to be transformed.
     ///
-    /// @param[in] stream
-    ///     The stream to print disassembly to.
-    ///
-    /// @param[in] exc_context
-    ///     The execution context to get the machine code from.
-    ///
-    /// @param[in] func_name
-    ///     The name of the function to be disassembled.  By default, the
-    ///     function wrapped by ParseExpression().
-    ///
-    /// @return
-    ///     The error generated.  If .Success() is true, disassembly succeeded.
+    /// @param[in] passthrough
+    ///     The ASTConsumer that the returned transformer should send
+    ///     the ASTs to after transformation.
     //------------------------------------------------------------------
-    Error
-    DisassembleFunction (Stream &stream, ExecutionContext &exc_context, const char *func_name = "___clang_expr");
-
+    virtual clang::ASTConsumer *
+    ASTTransformer (clang::ASTConsumer *passthrough) = 0;
+    
     //------------------------------------------------------------------
-    /// Return the Clang compiler instance being used by this expression.
+    /// Return the stream that the parser should use to write DWARF
+    /// opcodes.
     //------------------------------------------------------------------
-    clang::CompilerInstance *
-    GetCompilerInstance ()
-    {
-        return m_clang_ap.get();
-    }
-
-    //------------------------------------------------------------------
-    /// Return the AST context being used by this expression.
-    //------------------------------------------------------------------
-    clang::ASTContext *
-    GetASTContext ();
-
-    //------------------------------------------------------------------
-    /// Return the mutex being used to serialize access to Clang.
-    //------------------------------------------------------------------
-    static Mutex &
-    GetClangMutex ();
-protected:
-    //------------------------------------------------------------------
-    // Classes that inherit from ClangExpression can see and modify these
-    //------------------------------------------------------------------
-
-    //----------------------------------------------------------------------
-    /// @class JittedFunction ClangExpression.h "lldb/Expression/ClangExpression.h"
-    /// @brief Encapsulates a single function that has been generated by the JIT.
-    ///
-    /// Functions that have been generated by the JIT are first resident in the
-    /// local process, and then placed in the target process.  JittedFunction
-    /// represents a function possibly resident in both.
-    //----------------------------------------------------------------------
-    struct JittedFunction {
-        std::string m_name;             ///< The function's name
-        lldb::addr_t m_local_addr;      ///< The address of the function in LLDB's memory
-        lldb::addr_t m_remote_addr;     ///< The address of the function in the target's memory
-
-        //------------------------------------------------------------------
-        /// Constructor
-        ///
-        /// Initializes class variabes.
-        ///
-        /// @param[in] name
-        ///     The name of the function.
-        ///
-        /// @param[in] local_addr
-        ///     The address of the function in LLDB, or LLDB_INVALID_ADDRESS if
-        ///     it is not present in LLDB's memory.
-        ///
-        /// @param[in] remote_addr
-        ///     The address of the function in the target, or LLDB_INVALID_ADDRESS
-        ///     if it is not present in the target's memory.
-        //------------------------------------------------------------------
-        JittedFunction (const char *name,
-                        lldb::addr_t local_addr = LLDB_INVALID_ADDRESS,
-                        lldb::addr_t remote_addr = LLDB_INVALID_ADDRESS) :
-            m_name (name),
-            m_local_addr (local_addr),
-            m_remote_addr (remote_addr) {}
-    };
-
-    std::string m_target_triple;                                ///< The target triple used to initialize LLVM
-    ClangExpressionDeclMap *m_decl_map;                         ///< The class used to look up entities defined in the debug info
-    std::auto_ptr<clang::CompilerInstance> m_clang_ap;          ///< The Clang compiler used to parse expressions into IR
-    clang::CodeGenerator *m_code_generator_ptr;                 ///< [owned by the Execution Engine] The Clang object that generates IR
-    RecordingMemoryManager *m_jit_mm_ptr;                       ///< [owned by the Execution Engine] The memory manager that allocates code pages on the JIT's behalf
-    std::auto_ptr<llvm::ExecutionEngine> m_execution_engine;    ///< The LLVM JIT
-    std::vector<JittedFunction> m_jitted_functions;             ///< A vector of all functions that have been JITted into machine code (just one, if ParseExpression() was called)
-private:
-    //------------------------------------------------------------------
-    /// Initialize m_clang_ap to a compiler instance with all the options
-    /// required by the expression parser.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool CreateCompilerInstance();
-        
-    //------------------------------------------------------------------
-    // For ClangExpression only
-    //------------------------------------------------------------------
-    ClangExpression(const ClangExpression&);
-    const ClangExpression& operator=(const ClangExpression&);
+    virtual StreamString &
+    DwarfOpcodeStream () = 0;
 };
 
 } // namespace lldb_private

@@ -16,10 +16,8 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/InputReader.h"
-#include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
+#include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
@@ -192,192 +190,22 @@ bool
 CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream &output_stream, Stream &error_stream,
                                              CommandReturnObject *result)
 {
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-
-    ////////////////////////////////////
-    // Set up the target and compiler
-    //
-        
-    Target *target = m_exe_ctx.target;
+    ClangUserExpression user_expression (expr);
     
-    if (!target)
+    if (!user_expression.Parse (error_stream, m_exe_ctx))
     {
-        error_stream.PutCString ("error: invalid target\n");
+        error_stream.Printf ("Couldn't parse the expresssion");
         return false;
     }
     
-    ConstString target_triple;
-
-    target->GetTargetTriple (target_triple);
-
-    if (!target_triple)
-        target_triple = Host::GetTargetTriple ();
+    ClangExpressionVariable *expr_result;
     
-    if (!target_triple)
+    if (!user_expression.Execute (error_stream, m_exe_ctx, expr_result))
     {
-        error_stream.PutCString ("error: invalid target triple\n");
+        error_stream.Printf ("Couldn't execute the expresssion");
         return false;
     }
-    
-    ClangExpressionDeclMap expr_decl_map (&m_exe_ctx);
-    ClangExpression clang_expr (target_triple.AsCString (), &expr_decl_map);
-    
-    //////////////////////////
-    // Parse the expression
-    //
-    
-    unsigned num_errors;
-    
-    if (bare)
-        num_errors = clang_expr.ParseBareExpression (llvm::StringRef (expr), error_stream);
-    else
-        num_errors = clang_expr.ParseExpression (expr, error_stream, true);
-
-    if (num_errors)
-    {
-        error_stream.Printf ("error: %d errors parsing expression\n", num_errors);
-        return false;
-    }
-    
-    ///////////////////////////////////////////////
-    // Convert the output of the parser to DWARF
-    //
-    
-    StreamString dwarf_opcodes;
-    dwarf_opcodes.SetByteOrder (eByteOrderHost);
-    dwarf_opcodes.GetFlags ().Set (Stream::eBinary);
-    
-    ClangExpressionVariableList expr_local_vars;
-
-    bool success;
-    bool canInterpret = false;
-    
-    ClangExpressionVariable *expr_result = 0;
-    Error expr_error;
-    
-    canInterpret = clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes);
-    
-    if (canInterpret)
-    {
-        if (log)
-            log->Printf("Code can be interpreted.");
-        success = true;
-    }
-    else
-    {
-        if (log)
-            log->Printf("Code cannot be interpreted and must be run in the target.");
-        success = clang_expr.PrepareIRForTarget ();
-    }
-    
-    if (!success)
-    {
-        error_stream.PutCString ("error: expression couldn't be converted to IR\n");
-        return false;
-    }
-    
-    if (canInterpret)
-    {
-        // TODO interpret IR
-        return false;
-    }
-    else
-    {
-        if (!clang_expr.JITFunction ())
-        {
-            error_stream.PutCString ("error: IR could not be JIT compiled\n");
-            return false;
-        }
         
-        if (!clang_expr.WriteJITCode (m_exe_ctx))
-        {
-            error_stream.PutCString ("error: JIT code could not be written to the target\n");
-            return false;
-        }
-        
-        lldb::addr_t function_address(clang_expr.GetFunctionAddress ());
-        
-        if (function_address == LLDB_INVALID_ADDRESS)
-        {
-            error_stream.PutCString ("JIT compiled code's address couldn't be found\n");
-            return false;
-        }
-        
-        lldb::addr_t struct_address;
-        
-        if (!expr_decl_map.Materialize(&m_exe_ctx, struct_address, expr_error))
-        {
-            error_stream.Printf ("Couldn't materialize struct: %s\n", expr_error.AsCString("unknown error"));
-            return false;
-        }
-        
-        if (log)
-        {
-            log->Printf("Function address  : 0x%llx", (uint64_t)function_address);
-            log->Printf("Structure address : 0x%llx", (uint64_t)struct_address);
-            
-            StreamString insns;
-
-            Error err = clang_expr.DisassembleFunction(insns, m_exe_ctx);
-            
-            if (!err.Success())
-            {
-                log->Printf("Couldn't disassemble function : %s", err.AsCString("unknown error"));
-            }
-            else
-            {
-                log->Printf("Function disassembly:\n%s", insns.GetData());
-            }
-            
-            StreamString args;
-            
-            if (!expr_decl_map.DumpMaterializedStruct(&m_exe_ctx, args, err))
-            {
-                log->Printf("Couldn't extract variable values : %s", err.AsCString("unknown error"));
-            }
-            else
-            {
-                log->Printf("Structure contents:\n%s", args.GetData());
-            }
-        }
-                    
-        ClangFunction::ExecutionResults execution_result = 
-            ClangFunction::ExecuteFunction (m_exe_ctx, function_address, struct_address, true, true, 10000, error_stream);
-        
-        if (execution_result != ClangFunction::eExecutionCompleted)
-        {
-            const char *result_name;
-            
-            switch (execution_result)
-            {
-            case ClangFunction::eExecutionCompleted:
-                result_name = "eExecutionCompleted";
-                break;
-            case ClangFunction::eExecutionDiscarded:
-                result_name = "eExecutionDiscarded";
-                break;
-            case ClangFunction::eExecutionInterrupted:
-                result_name = "eExecutionInterrupted";
-                break;
-            case ClangFunction::eExecutionSetupError:
-                result_name = "eExecutionSetupError";
-                break;
-            case ClangFunction::eExecutionTimedOut:
-                result_name = "eExecutionTimedOut";
-                break;
-            }
-            
-            error_stream.Printf ("Couldn't execute function; result was %s\n", result_name);
-            return false;
-        }
-                    
-        if (!expr_decl_map.Dematerialize(&m_exe_ctx, expr_result, expr_error))
-        {
-            error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
-            return false;
-        }
-    }
-    
     if (expr_result)
     {
         StreamString ss;
