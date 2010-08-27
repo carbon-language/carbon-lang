@@ -355,3 +355,60 @@ entry:
 }
 
 
+define i32 @test30(i32 %A, i32 %B, i32 %C) {
+	%X = shl i32 %A, %C
+	%Y = shl i32 %B, %C
+	%Z = and i32 %X, %Y
+	ret i32 %Z
+; CHECK: @test30
+; CHECK: %X1 = and i32 %A, %B
+; CHECK: %Z = shl i32 %X1, %C
+}
+
+define i32 @test31(i32 %A, i32 %B, i32 %C) {
+	%X = lshr i32 %A, %C
+	%Y = lshr i32 %B, %C
+	%Z = or i32 %X, %Y
+	ret i32 %Z
+; CHECK: @test31
+; CHECK: %X1 = or i32 %A, %B
+; CHECK: %Z = lshr i32 %X1, %C
+}
+
+define i32 @test32(i32 %A, i32 %B, i32 %C) {
+	%X = ashr i32 %A, %C
+	%Y = ashr i32 %B, %C
+	%Z = xor i32 %X, %Y
+	ret i32 %Z
+; CHECK: @test32
+; CHECK: %X1 = xor i32 %A, %B
+; CHECK: %Z = ashr i32 %X1, %C
+; CHECK: ret i32 %Z
+}
+
+define i1 @test33(i32 %X) {
+        %tmp1 = shl i32 %X, 7
+        %tmp2 = icmp slt i32 %tmp1, 0
+        ret i1 %tmp2
+; CHECK: @test33
+; CHECK: %tmp1.mask = and i32 %X, 16777216
+; CHECK: %tmp2 = icmp ne i32 %tmp1.mask, 0
+}
+
+define i1 @test34(i32 %X) {
+        %tmp1 = lshr i32 %X, 7
+        %tmp2 = icmp slt i32 %tmp1, 0
+        ret i1 %tmp2
+; CHECK: @test34
+; CHECK: ret i1 false
+}
+
+define i1 @test35(i32 %X) {
+        %tmp1 = ashr i32 %X, 7
+        %tmp2 = icmp slt i32 %tmp1, 0
+        ret i1 %tmp2
+; CHECK: @test35
+; CHECK: %tmp2 = icmp slt i32 %X, 0
+; CHECK: ret i1 %tmp2
+}
+
