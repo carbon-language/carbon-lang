@@ -193,20 +193,17 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
     return false;
 
   ARM_AM::AMSubMode Mode = ARM_AM::ia;
+  // VFP and Thumb2 do not support IB or DA modes.
   bool isNotVFP = isi32Load(Opcode) || isi32Store(Opcode);
-  if (isNotVFP && Offset == 4) {
-    if (isThumb2)
-      // Thumb2 does not support ldmib / stmib.
-      return false;
+  bool haveIBAndDA = isNotVFP && !isThumb2;
+  if (Offset == 4 && haveIBAndDA)
     Mode = ARM_AM::ib;
-  } else if (isNotVFP && Offset == -4 * (int)NumRegs + 4) {
-    if (isThumb2)
-      // Thumb2 does not support ldmda / stmda.
-      return false;
+  else if (Offset == -4 * (int)NumRegs + 4 && haveIBAndDA)
     Mode = ARM_AM::da;
-  } else if (isNotVFP && Offset == -4 * (int)NumRegs) {
+  else if (Offset == -4 * (int)NumRegs && isNotVFP)
+    // VLDM/VSTM do not support DB mode without also updating the base reg.
     Mode = ARM_AM::db;
-  } else if (Offset != 0) {
+  else if (Offset != 0) {
     // If starting offset isn't zero, insert a MI to materialize a new base.
     // But only do so if it is cost effective, i.e. merging more than two
     // loads / stores.
