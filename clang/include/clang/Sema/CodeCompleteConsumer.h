@@ -201,7 +201,9 @@ public:
     /// unless they come from an appropriate natural-language dictionary.
     CCC_NaturalLanguage,
     /// \brief Code completion for a selector, as in an @selector expression.
-    CCC_SelectorName
+    CCC_SelectorName,
+    /// \brief Code completion within a type-qualifier list.
+    CCC_TypeQualifiers
   };
 
 private:

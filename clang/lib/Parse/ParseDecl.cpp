@@ -2442,6 +2442,11 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed,
     SourceLocation Loc = Tok.getLocation();
 
     switch (Tok.getKind()) {
+    case tok::code_completion:
+      Actions.CodeCompleteTypeQualifiers(DS);
+      ConsumeCodeCompletionToken();
+      break;
+        
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec, DiagID,
                                  getLang());

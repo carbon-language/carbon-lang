@@ -2761,6 +2761,22 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
                             Results.data(),Results.size());
 }
 
+void Sema::CodeCompleteTypeQualifiers(DeclSpec &DS) {
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  if (!(DS.getTypeQualifiers() & DeclSpec::TQ_const))
+    Results.AddResult("const");
+  if (!(DS.getTypeQualifiers() & DeclSpec::TQ_volatile))
+    Results.AddResult("volatile");
+  if (getLangOptions().C99 &&
+      !(DS.getTypeQualifiers() & DeclSpec::TQ_restrict))
+    Results.AddResult("restrict");
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, 
+                            CodeCompletionContext::CCC_TypeQualifiers,
+                            Results.data(), Results.size());
+}
+
 void Sema::CodeCompleteCase(Scope *S) {
   if (getCurFunction()->SwitchStack.empty() || !CodeCompleter)
     return;

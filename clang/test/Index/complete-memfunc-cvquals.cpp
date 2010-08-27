@@ -76,3 +76,11 @@ void Foo::bingo() volatile {
 // CHECK-IMPLICIT-VOLATILE: FunctionDecl:{ResultType void}{TypedText babble}{LeftParen (}{RightParen )}{Informative  const volatile} (15)
 // CHECK-IMPLICIT-VOLATILE-NOT: baz
 // CHECK-IMPLICIT-VOLATILE: FunctionDecl:{ResultType void}{TypedText bingo}{LeftParen (}{RightParen )}{Informative  volatile} (14)
+
+// RUN: c-index-test -code-completion-at=%s:4:17 %s | FileCheck -check-prefix=CHECK-CVQUAL-AFTER %s
+// CHECK-CVQUAL-AFTER: NotImplemented:{TypedText const} (30)
+// CHECK-CVQUAL-AFTER: NotImplemented:{TypedText volatile} (30)
+
+// RUN: c-index-test -code-completion-at=%s:4:23 %s | FileCheck -check-prefix=CHECK-CVQUAL-AFTER2 %s
+// CHECK-CVQUAL-AFTER2-NOT: NotImplemented:{TypedText const} (30)
+// CHECK-CVQUAL-AFTER2: NotImplemented:{TypedText volatile} (30)

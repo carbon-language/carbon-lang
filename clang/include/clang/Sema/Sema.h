@@ -4332,6 +4332,7 @@ public:
                                                SourceLocation OpLoc,
                                                bool IsArrow);
   virtual void CodeCompleteTag(Scope *S, unsigned TagSpec);
+  virtual void CodeCompleteTypeQualifiers(DeclSpec &DS);
   virtual void CodeCompleteCase(Scope *S);
   virtual void CodeCompleteCall(Scope *S, Expr *Fn,
                                 Expr **Args, unsigned NumArgs);
