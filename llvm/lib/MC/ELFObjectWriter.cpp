@@ -462,13 +462,13 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
                                            uint64_t &FixedValue) {
   int64_t Addend = 0;
   unsigned Index = 0;
+  int64_t Value = Target.getConstant();
 
   if (!Target.isAbsolute()) {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
     MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     const MCSymbolData *Base = Asm.getAtom(Layout, &SD);
     MCFragment *F = SD.getFragment();
-    int64_t Value = Target.getConstant();
 
     if (Base) {
       if (F && (!Symbol->isInSection() || SD.isCommon())) {
@@ -496,8 +496,9 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
         return;
       }
     }
-    FixedValue = Value;
   }
+
+  FixedValue = Value;
 
   // determine the type of the relocation
   bool IsPCRel = isFixupKindX86PCRel(Fixup.getKind());
