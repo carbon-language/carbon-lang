@@ -425,3 +425,18 @@ entry:
 ; CHECK:  ret i128 %ins
 }
 
+define i64 @test37(i128 %A, i32 %B) {
+entry:
+  %tmp27 = shl i128 %A, 64
+  %tmp22 = zext i32 %B to i128
+  %tmp23 = shl i128 %tmp22, 96
+  %ins = or i128 %tmp23, %tmp27
+  %tmp45 = lshr i128 %ins, 64
+  %tmp46 = trunc i128 %tmp45 to i64
+  ret i64 %tmp46
+  
+; CHECK:  %tmp23 = shl i128 %tmp22, 32
+; CHECK:  %ins = or i128 %tmp23, %A
+; CHECK:  %tmp46 = trunc i128 %ins to i64
+}
+
