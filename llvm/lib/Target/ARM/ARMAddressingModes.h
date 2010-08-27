@@ -458,6 +458,7 @@ namespace ARM_AM {
   //    IB - Increment before
   //    DA - Decrement after
   //    DB - Decrement before
+  // For VFP instructions, only the IA and DB modes are valid.
 
   static inline AMSubMode getAM4SubMode(unsigned Mode) {
     return (AMSubMode)(Mode & 0x7);
@@ -477,14 +478,6 @@ namespace ARM_AM {
   //
   // The first operand is always a Reg.  The second operand encodes the
   // operation in bit 8 and the immediate in bits 0-7.
-  //
-  // This is also used for FP load/store multiple ops. The second operand
-  // encodes the number of registers (or 2 times the number of registers
-  // for DPR ops) in bits 0-7. In addition, bits 8-10 encode one of the
-  // following two sub-modes:
-  //
-  //    IA - Increment after
-  //    DB - Decrement before
 
   /// getAM5Opc - This function encodes the addrmode5 opc field.
   static inline unsigned getAM5Opc(AddrOpc Opc, unsigned char Offset) {
@@ -496,17 +489,6 @@ namespace ARM_AM {
   }
   static inline AddrOpc getAM5Op(unsigned AM5Opc) {
     return ((AM5Opc >> 8) & 1) ? sub : add;
-  }
-
-  /// getAM5Opc - This function encodes the addrmode5 opc field for VLDM and
-  /// VSTM instructions.
-  static inline unsigned getAM5Opc(AMSubMode SubMode, unsigned char Offset) {
-    assert((SubMode == ia || SubMode == db) &&
-           "Illegal addressing mode 5 sub-mode!");
-    return ((int)SubMode << 8) | Offset;
-  }
-  static inline AMSubMode getAM5SubMode(unsigned AM5Opc) {
-    return (AMSubMode)((AM5Opc >> 8) & 0x7);
   }
 
   //===--------------------------------------------------------------------===//

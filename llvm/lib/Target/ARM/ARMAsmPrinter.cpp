@@ -607,16 +607,6 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
 
   assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
 
-  if (Modifier && strcmp(Modifier, "submode") == 0) {
-    ARM_AM::AMSubMode Mode = ARM_AM::getAM5SubMode(MO2.getImm());
-    O << ARM_AM::getAMSubModeStr(Mode);
-    return;
-  } else if (Modifier && strcmp(Modifier, "base") == 0) {
-    // Used for FSTM{D|S} and LSTM{D|S} operations.
-    O << getRegisterName(MO1.getReg());
-    return;
-  }
-
   O << "[" << getRegisterName(MO1.getReg());
 
   if (unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm())) {

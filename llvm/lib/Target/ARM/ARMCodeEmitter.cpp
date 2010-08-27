@@ -1549,7 +1549,7 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
 
   // Set addressing mode by modifying bits U(23) and P(24)
   const MachineOperand &MO = MI.getOperand(OpIdx++);
-  Binary |= getAddrModeUPBits(ARM_AM::getAM5SubMode(MO.getImm()));
+  Binary |= getAddrModeUPBits(ARM_AM::getAM4SubMode(MO.getImm()));
 
   // Set bit W(21)
   if (IsUpdating)
@@ -1558,7 +1558,7 @@ ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(const MachineInstr &MI) {
   // First register is encoded in Dd.
   Binary |= encodeVFPRd(MI, OpIdx+2);
 
-  // Number of registers are encoded in offset field.
+  // Count the number of registers.
   unsigned NumRegs = 1;
   for (unsigned i = OpIdx+3, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);

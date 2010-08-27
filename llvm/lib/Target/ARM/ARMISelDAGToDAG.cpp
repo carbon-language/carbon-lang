@@ -2052,15 +2052,15 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     if (ResNode)
       return ResNode;
 
-    // VLDMQ must be custom-selected for "v2f64 load" to set the AM5Opc value.
+    // VLDMQ must be custom-selected for "v2f64 load" to set the AM4 value.
     if (Subtarget->hasVFP2() &&
         N->getValueType(0).getSimpleVT().SimpleTy == MVT::v2f64) {
       SDValue Chain = N->getOperand(0);
-      SDValue AM5Opc =
-        CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::ia, 4), MVT::i32);
+      SDValue AM4Imm =
+        CurDAG->getTargetConstant(ARM_AM::getAM4ModeImm(ARM_AM::ia), MVT::i32);
       SDValue Pred = getAL(CurDAG);
       SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
-      SDValue Ops[] = { N->getOperand(1), AM5Opc, Pred, PredReg, Chain };
+      SDValue Ops[] = { N->getOperand(1), AM4Imm, Pred, PredReg, Chain };
       MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
       MemOp[0] = cast<MemSDNode>(N)->getMemOperand();
       SDNode *Ret = CurDAG->getMachineNode(ARM::VLDMQ, dl,
@@ -2072,16 +2072,16 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     break;
   }
   case ISD::STORE: {
-    // VSTMQ must be custom-selected for "v2f64 store" to set the AM5Opc value.
+    // VSTMQ must be custom-selected for "v2f64 store" to set the AM4 value.
     if (Subtarget->hasVFP2() &&
         N->getOperand(1).getValueType().getSimpleVT().SimpleTy == MVT::v2f64) {
       SDValue Chain = N->getOperand(0);
-      SDValue AM5Opc =
-        CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::ia, 4), MVT::i32);
+      SDValue AM4Imm =
+        CurDAG->getTargetConstant(ARM_AM::getAM4ModeImm(ARM_AM::ia), MVT::i32);
       SDValue Pred = getAL(CurDAG);
       SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
       SDValue Ops[] = { N->getOperand(1), N->getOperand(2),
-                        AM5Opc, Pred, PredReg, Chain };
+                        AM4Imm, Pred, PredReg, Chain };
       MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
       MemOp[0] = cast<MemSDNode>(N)->getMemOperand();
       SDNode *Ret = CurDAG->getMachineNode(ARM::VSTMQ, dl, MVT::Other, Ops, 6);

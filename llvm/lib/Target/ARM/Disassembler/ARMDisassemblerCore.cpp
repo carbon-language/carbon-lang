@@ -1863,7 +1863,7 @@ static bool DisassembleVFPLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   assert(NumOps >= 3 && "VFPLdStFrm expects NumOps >= 3");
 
-  bool isSPVFP = (Opcode == ARM::VLDRS || Opcode == ARM::VSTRS) ? true : false;
+  bool isSPVFP = (Opcode == ARM::VLDRS || Opcode == ARM::VSTRS);
   unsigned RegClassID = isSPVFP ? ARM::SPRRegClassID : ARM::DPRRegClassID;
 
   // Extract Dd/Sd for operand 0.
@@ -1886,7 +1886,7 @@ static bool DisassembleVFPLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
 // VFP Load/Store Multiple Instructions.
 // This is similar to the algorithm for LDM/STM in that operand 0 (the base) and
-// operand 1 (the AM5 mode imm) is followed by two predicate operands.  It is
+// operand 1 (the AM4 mode imm) is followed by two predicate operands.  It is
 // followed by a reglist of either DPR(s) or SPR(s).
 //
 // VLDMD[_UPD], VLDMS[_UPD], VSTMD[_UPD], VSTMS[_UPD]
@@ -1910,16 +1910,14 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   MI.addOperand(MCOperand::CreateReg(Base));
 
-  // Next comes the AM5 Opcode.
+  // Next comes the AM4 Opcode.
   ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
   // Must be either "ia" or "db" submode.
   if (SubMode != ARM_AM::ia && SubMode != ARM_AM::db) {
-    DEBUG(errs() << "Illegal addressing mode 5 sub-mode!\n");
+    DEBUG(errs() << "Illegal addressing mode 4 sub-mode!\n");
     return false;
   }
-
-  unsigned char Imm8 = insn & 0xFF;
-  MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(SubMode, Imm8)));
+  MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(SubMode)));
 
   // Handling the two predicate operands before the reglist.
   int64_t CondVal = insn >> ARMII::CondShift;
@@ -1929,13 +1927,14 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   OpIdx += 4;
 
   bool isSPVFP = (Opcode == ARM::VLDMS || Opcode == ARM::VLDMS_UPD ||
-     Opcode == ARM::VSTMS || Opcode == ARM::VSTMS_UPD) ? true : false;
+                  Opcode == ARM::VSTMS || Opcode == ARM::VSTMS_UPD);
   unsigned RegClassID = isSPVFP ? ARM::SPRRegClassID : ARM::DPRRegClassID;
 
   // Extract Dd/Sd.
   unsigned RegD = decodeVFPRd(insn, isSPVFP);
 
   // Fill the variadic part of reglist.
+  unsigned char Imm8 = insn & 0xFF;
   unsigned Regs = isSPVFP ? Imm8 : Imm8/2;
   for (unsigned i = 0; i < Regs; ++i) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassID,

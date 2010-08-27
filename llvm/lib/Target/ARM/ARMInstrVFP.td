@@ -77,61 +77,61 @@ def VSTRS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 //
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
-def VLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dsts,
+def VLDMD : AXDI5<(outs), (ins addrmode4:$addr, pred:$p, reglist:$dsts,
                            variable_ops), IndexModeNone, IIC_fpLoadm,
-                  "vldm${addr:submode}${p}\t${addr:base}, $dsts", "", []> {
+                  "vldm${addr:submode}${p}\t$addr, $dsts", "", []> {
   let Inst{20} = 1;
 }
 
-def VLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dsts,
+def VLDMS : AXSI5<(outs), (ins addrmode4:$addr, pred:$p, reglist:$dsts,
                            variable_ops), IndexModeNone, IIC_fpLoadm,
-                  "vldm${addr:submode}${p}\t${addr:base}, $dsts", "", []> {
+                  "vldm${addr:submode}${p}\t$addr, $dsts", "", []> {
   let Inst{20} = 1;
 }
 
-def VLDMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+def VLDMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IndexModeUpd, IIC_fpLoadm,
-                      "vldm${addr:submode}${p}\t${addr:base}!, $dsts",
-                      "$addr.base = $wb", []> {
+                      "vldm${addr:submode}${p}\t$addr!, $dsts",
+                      "$addr.addr = $wb", []> {
   let Inst{20} = 1;
 }
 
-def VLDMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+def VLDMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IndexModeUpd, IIC_fpLoadm, 
-                      "vldm${addr:submode}${p}\t${addr:base}!, $dsts",
-                      "$addr.base = $wb", []> {
+                      "vldm${addr:submode}${p}\t$addr!, $dsts",
+                      "$addr.addr = $wb", []> {
   let Inst{20} = 1;
 }
 } // mayLoad, neverHasSideEffects, hasExtraDefRegAllocReq
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
-def VSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$srcs,
+def VSTMD : AXDI5<(outs), (ins addrmode4:$addr, pred:$p, reglist:$srcs,
                            variable_ops), IndexModeNone, IIC_fpStorem,
-                  "vstm${addr:submode}${p}\t${addr:base}, $srcs", "", []> {
+                  "vstm${addr:submode}${p}\t$addr, $srcs", "", []> {
   let Inst{20} = 0;
 }
 
-def VSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$srcs,
+def VSTMS : AXSI5<(outs), (ins addrmode4:$addr, pred:$p, reglist:$srcs,
                            variable_ops), IndexModeNone, IIC_fpStorem,
-                  "vstm${addr:submode}${p}\t${addr:base}, $srcs", "", []> {
+                  "vstm${addr:submode}${p}\t$addr, $srcs", "", []> {
   let Inst{20} = 0;
 }
 
-def VSTMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+def VSTMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IndexModeUpd, IIC_fpStorem,
-                      "vstm${addr:submode}${p}\t${addr:base}!, $srcs",
-                      "$addr.base = $wb", []> {
+                      "vstm${addr:submode}${p}\t$addr!, $srcs",
+                      "$addr.addr = $wb", []> {
   let Inst{20} = 0;
 }
 
-def VSTMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+def VSTMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IndexModeUpd, IIC_fpStorem,
-                      "vstm${addr:submode}${p}\t${addr:base}!, $srcs",
-                      "$addr.base = $wb", []> {
+                      "vstm${addr:submode}${p}\t$addr!, $srcs",
+                      "$addr.addr = $wb", []> {
   let Inst{20} = 0;
 }
 } // mayStore, neverHasSideEffects, hasExtraSrcRegAllocReq

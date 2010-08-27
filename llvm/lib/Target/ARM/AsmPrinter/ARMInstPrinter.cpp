@@ -158,7 +158,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   if ((MI->getOpcode() == ARM::VSTMS_UPD || MI->getOpcode() ==ARM::VSTMD_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
     const MCOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM5SubMode(MO1.getImm()) == ARM_AM::db) {
+    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::db) {
       O << '\t' << "vpush";
       printPredicateOperand(MI, 3, O);
       O << '\t';
@@ -171,7 +171,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   if ((MI->getOpcode() == ARM::VLDMS_UPD || MI->getOpcode() ==ARM::VLDMD_UPD) &&
       MI->getOperand(0).getReg() == ARM::SP) {
     const MCOperand &MO1 = MI->getOperand(2);
-    if (ARM_AM::getAM5SubMode(MO1.getImm()) == ARM_AM::ia) {
+    if (ARM_AM::getAM4SubMode(MO1.getImm()) == ARM_AM::ia) {
       O << '\t' << "vpop";
       printPredicateOperand(MI, 3, O);
       O << '\t';
@@ -409,16 +409,6 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
   
   if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, OpNum, O);
-    return;
-  }
-  
-  if (Modifier && strcmp(Modifier, "submode") == 0) {
-    ARM_AM::AMSubMode Mode = ARM_AM::getAM5SubMode(MO2.getImm());
-    O << ARM_AM::getAMSubModeStr(Mode);
-    return;
-  } else if (Modifier && strcmp(Modifier, "base") == 0) {
-    // Used for FSTM{D|S} and LSTM{D|S} operations.
-    O << getRegisterName(MO1.getReg());
     return;
   }
   

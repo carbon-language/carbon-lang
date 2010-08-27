@@ -129,9 +129,9 @@ let mayLoad = 1, neverHasSideEffects = 1 in {
 // This is equivalent to VLDMD except that it has a Q register operand
 // instead of a pair of D registers.
 def VLDMQ
-  : AXDI5<(outs QPR:$dst), (ins addrmode5:$addr, pred:$p),
+  : AXDI5<(outs QPR:$dst), (ins addrmode4:$addr, pred:$p),
           IndexModeNone, IIC_fpLoadm,
-          "vldm${addr:submode}${p}\t${addr:base}, ${dst:dregpair}", "", []>;
+          "vldm${addr:submode}${p}\t$addr, ${dst:dregpair}", "", []>;
 
 // Use vld1 to load a Q register as a D register pair.
 // This alternative to VLDMQ allows an alignment to be specified.
@@ -146,9 +146,9 @@ let mayStore = 1, neverHasSideEffects = 1 in {
 // This is equivalent to VSTMD except that it has a Q register operand
 // instead of a pair of D registers.
 def VSTMQ
-  : AXDI5<(outs), (ins QPR:$src, addrmode5:$addr, pred:$p),
+  : AXDI5<(outs), (ins QPR:$src, addrmode4:$addr, pred:$p),
           IndexModeNone, IIC_fpStorem,
-          "vstm${addr:submode}${p}\t${addr:base}, ${src:dregpair}", "", []>;
+          "vstm${addr:submode}${p}\t$addr, ${src:dregpair}", "", []>;
 
 // Use vst1 to store a Q register as a D register pair.
 // This alternative to VSTMQ allows an alignment to be specified.

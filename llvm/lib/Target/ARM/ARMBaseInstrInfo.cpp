@@ -757,7 +757,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ))
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
+                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
                      .addMemOperand(MMO));
     }
     break;
@@ -777,7 +777,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       MachineInstrBuilder MIB =
         AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMD))
                        .addFrameIndex(FI)
-                       .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
+                       .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
         .addMemOperand(MMO);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
@@ -789,7 +789,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineInstrBuilder MIB =
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMD))
                      .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
+                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
       .addMemOperand(MMO);
     MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
     MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
@@ -853,7 +853,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     } else {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
                      .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
+                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
                      .addMemOperand(MMO));
     }
     break;
@@ -870,7 +870,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       MachineInstrBuilder MIB =
         AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMD))
                        .addFrameIndex(FI)
-                       .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
+                       .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
         .addMemOperand(MMO);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
@@ -882,7 +882,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineInstrBuilder MIB =
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMD))
                      .addFrameIndex(FI)
-                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4)))
+                     .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia)))
       .addMemOperand(MMO);
     MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
     MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
