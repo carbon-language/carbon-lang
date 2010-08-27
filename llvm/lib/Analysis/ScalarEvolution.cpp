@@ -2499,15 +2499,15 @@ const SCEV *ScalarEvolution::getCouldNotCompute() {
 const SCEV *ScalarEvolution::getSCEV(Value *V) {
   assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
 
-  std::map<SCEVCallbackVH, const SCEV *>::const_iterator I = Scalars.find(V);
-  if (I != Scalars.end()) return I->second;
+  ValueExprMapType::const_iterator I = ValueExprMap.find(V);
+  if (I != ValueExprMap.end()) return I->second;
   const SCEV *S = createSCEV(V);
 
   // The process of creating a SCEV for V may have caused other SCEVs
   // to have been created, so it's necessary to insert the new entry
   // from scratch, rather than trying to remember the insert position
   // above.
-  Scalars.insert(std::make_pair(SCEVCallbackVH(V, this), S));
+  ValueExprMap.insert(std::make_pair(SCEVCallbackVH(V, this), S));
   return S;
 }
 
@@ -2692,7 +2692,7 @@ PushDefUseChildren(Instruction *I,
 
 /// ForgetSymbolicValue - This looks up computed SCEV values for all
 /// instructions that depend on the given instruction and removes them from
-/// the Scalars map if they reference SymName. This is used during PHI
+/// the ValueExprMapType map if they reference SymName. This is used during PHI
 /// resolution.
 void
 ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
@@ -2705,9 +2705,9 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
     Instruction *I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
-      Scalars.find(static_cast<Value *>(I));
-    if (It != Scalars.end()) {
+    ValueExprMapType::iterator It =
+      ValueExprMap.find(static_cast<Value *>(I));
+    if (It != ValueExprMap.end()) {
       // Short-circuit the def-use traversal if the symbolic name
       // ceases to appear in expressions.
       if (It->second != SymName && !It->second->hasOperand(SymName))
@@ -2724,7 +2724,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
           !isa<SCEVUnknown>(It->second) ||
           (I != PN && It->second == SymName)) {
         ValuesAtScopes.erase(It->second);
-        Scalars.erase(It);
+        ValueExprMap.erase(It);
       }
     }
 
@@ -2761,9 +2761,9 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
       if (BEValueV && StartValueV) {
         // While we are analyzing this PHI node, handle its value symbolically.
         const SCEV *SymbolicName = getUnknown(PN);
-        assert(Scalars.find(PN) == Scalars.end() &&
+        assert(ValueExprMap.find(PN) == ValueExprMap.end() &&
                "PHI node already processed?");
-        Scalars.insert(std::make_pair(SCEVCallbackVH(PN, this), SymbolicName));
+        ValueExprMap.insert(std::make_pair(SCEVCallbackVH(PN, this), SymbolicName));
 
         // Using this symbolic name for the PHI, analyze the value coming around
         // the back-edge.
@@ -2824,7 +2824,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
               // to be symbolic.  We now need to go back and purge all of the
               // entries for the scalars that use the symbolic expression.
               ForgetSymbolicName(PN, SymbolicName);
-              Scalars[SCEVCallbackVH(PN, this)] = PHISCEV;
+              ValueExprMap[SCEVCallbackVH(PN, this)] = PHISCEV;
               return PHISCEV;
             }
           }
@@ -2849,7 +2849,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
               // to be symbolic.  We now need to go back and purge all of the
               // entries for the scalars that use the symbolic expression.
               ForgetSymbolicName(PN, SymbolicName);
-              Scalars[SCEVCallbackVH(PN, this)] = PHISCEV;
+              ValueExprMap[SCEVCallbackVH(PN, this)] = PHISCEV;
               return PHISCEV;
             }
           }
@@ -3721,9 +3721,9 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
         Instruction *I = Worklist.pop_back_val();
         if (!Visited.insert(I)) continue;
 
-        std::map<SCEVCallbackVH, const SCEV *>::iterator It =
-          Scalars.find(static_cast<Value *>(I));
-        if (It != Scalars.end()) {
+        ValueExprMapType::iterator It =
+          ValueExprMap.find(static_cast<Value *>(I));
+        if (It != ValueExprMap.end()) {
           // SCEVUnknown for a PHI either means that it has an unrecognized
           // structure, or it's a PHI that's in the progress of being computed
           // by createNodeForPHI.  In the former case, additional loop trip
@@ -3732,7 +3732,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
           // own when it gets to that point.
           if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second)) {
             ValuesAtScopes.erase(It->second);
-            Scalars.erase(It);
+            ValueExprMap.erase(It);
           }
           if (PHINode *PN = dyn_cast<PHINode>(I))
             ConstantEvolutionLoopExitValue.erase(PN);
@@ -3761,11 +3761,10 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
     Instruction *I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
-      Scalars.find(static_cast<Value *>(I));
-    if (It != Scalars.end()) {
+    ValueExprMapType::iterator It = ValueExprMap.find(static_cast<Value *>(I));
+    if (It != ValueExprMap.end()) {
       ValuesAtScopes.erase(It->second);
-      Scalars.erase(It);
+      ValueExprMap.erase(It);
       if (PHINode *PN = dyn_cast<PHINode>(I))
         ConstantEvolutionLoopExitValue.erase(PN);
     }
@@ -3790,11 +3789,10 @@ void ScalarEvolution::forgetValue(Value *V) {
     I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
-      Scalars.find(static_cast<Value *>(I));
-    if (It != Scalars.end()) {
+    ValueExprMapType::iterator It = ValueExprMap.find(static_cast<Value *>(I));
+    if (It != ValueExprMap.end()) {
       ValuesAtScopes.erase(It->second);
-      Scalars.erase(It);
+      ValueExprMap.erase(It);
       if (PHINode *PN = dyn_cast<PHINode>(I))
         ConstantEvolutionLoopExitValue.erase(PN);
     }
@@ -5780,7 +5778,7 @@ void ScalarEvolution::SCEVCallbackVH::deleted() {
   assert(SE && "SCEVCallbackVH called with a null ScalarEvolution!");
   if (PHINode *PN = dyn_cast<PHINode>(getValPtr()))
     SE->ConstantEvolutionLoopExitValue.erase(PN);
-  SE->Scalars.erase(getValPtr());
+  SE->ValueExprMap.erase(getValPtr());
   // this now dangles!
 }
 
@@ -5806,7 +5804,7 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
       continue;
     if (PHINode *PN = dyn_cast<PHINode>(U))
       SE->ConstantEvolutionLoopExitValue.erase(PN);
-    SE->Scalars.erase(U);
+    SE->ValueExprMap.erase(U);
     for (Value::use_iterator UI = U->use_begin(), UE = U->use_end();
          UI != UE; ++UI)
       Worklist.push_back(*UI);
@@ -5814,7 +5812,7 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
   // Delete the Old value.
   if (PHINode *PN = dyn_cast<PHINode>(Old))
     SE->ConstantEvolutionLoopExitValue.erase(PN);
-  SE->Scalars.erase(Old);
+  SE->ValueExprMap.erase(Old);
   // this now dangles!
 }
 
@@ -5844,7 +5842,7 @@ void ScalarEvolution::releaseMemory() {
     U->~SCEVUnknown();
   FirstUnknown = 0;
 
-  Scalars.clear();
+  ValueExprMap.clear();
   BackedgeTakenCounts.clear();
   ConstantEvolutionLoopExitValue.clear();
   ValuesAtScopes.clear();

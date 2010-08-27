@@ -214,9 +214,14 @@ namespace llvm {
     /// counts and things.
     SCEVCouldNotCompute CouldNotCompute;
 
-    /// Scalars - This is a cache of the scalars we have analyzed so far.
+    /// ValueExprMapType - The typedef for ValueExprMap.
     ///
-    std::map<SCEVCallbackVH, const SCEV *> Scalars;
+    typedef DenseMap<SCEVCallbackVH, const SCEV *, DenseMapInfo<Value *> >
+      ValueExprMapType;
+
+    /// ValueExprMap - This is a cache of the values we have analyzed so far.
+    ///
+    ValueExprMapType ValueExprMap;
 
     /// BackedgeTakenInfo - Information about the backedge-taken count
     /// of a loop. This currently includes an exact count and a maximum count.
@@ -281,7 +286,7 @@ namespace llvm {
 
     /// ForgetSymbolicValue - This looks up computed SCEV values for all
     /// instructions that depend on the given instruction and removes them from
-    /// the Scalars map if they reference SymName. This is used during PHI
+    /// the ValueExprMap map if they reference SymName. This is used during PHI
     /// resolution.
     void ForgetSymbolicName(Instruction *I, const SCEV *SymName);
 
