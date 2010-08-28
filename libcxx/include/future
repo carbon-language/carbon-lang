@@ -576,6 +576,28 @@ public:
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const;
 };
 
+template <class _Clock, class _Duration>
+future_status
+__assoc_sub_state::wait_until(const chrono::time_point<_Clock, _Duration>& __abs_time) const
+{
+    unique_lock<mutex> __lk(__mut_);
+    while (!(__state_ & (ready | deferred)) && _Clock::now() < __abs_time)
+        __cv_.wait_until(__lk, __abs_time);
+    if (__state_ & ready)
+        return future_status::ready;
+    if (__state_ & deferred)
+        return future_status::deferred;
+    return future_status::timeout;
+}
+
+template <class _Rep, class _Period>
+inline _LIBCPP_INLINE_VISIBILITY
+future_status
+__assoc_sub_state::wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
+{
+    return wait_until(chrono::monotonic_clock::now() + __rel_time);
+}
+
 template <class _R>
 class __assoc_state
     : public __assoc_sub_state
@@ -675,6 +697,69 @@ __assoc_state<_R>::copy()
     return *reinterpret_cast<_R*>(&__value_);
 }
 
+template <class _R>
+class __assoc_state<_R&>
+    : public __assoc_sub_state
+{
+    typedef __assoc_sub_state base;
+    typedef _R* _U;
+protected:
+    _U __value_;
+
+    virtual void __on_zero_shared();
+public:
+
+    void set_value(_R& __arg);
+    void set_value_at_thread_exit(_R& __arg);
+
+    _R& copy();
+};
+
+template <class _R>
+void
+__assoc_state<_R&>::__on_zero_shared()
+{
+    delete this;
+}
+
+template <class _R>
+void
+__assoc_state<_R&>::set_value(_R& __arg)
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    if (this->__has_value())
+        throw future_error(make_error_code(future_errc::promise_already_satisfied));
+    __value_ = &__arg;
+    this->__state_ |= base::__constructed | base::ready;
+    __lk.unlock();
+    __cv_.notify_all();
+}
+
+template <class _R>
+void
+__assoc_state<_R&>::set_value_at_thread_exit(_R& __arg)
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    if (this->__has_value())
+        throw future_error(make_error_code(future_errc::promise_already_satisfied));
+    __value_ = &__arg;
+    this->__state_ |= base::__constructed;
+    __thread_local_data->__make_ready_at_thread_exit(this);
+    __lk.unlock();
+}
+
+template <class _R>
+_R&
+__assoc_state<_R&>::copy()
+{
+    unique_lock<mutex> __lk(this->__mut_);
+    while (!this->__is_ready())
+        this->__cv_.wait(__lk);
+    if (this->__exception_ != nullptr)
+        rethrow_exception(this->__exception_);
+    return *__value_;
+}
+
 template <class _R, class _Alloc>
 class __assoc_state_alloc
     : public __assoc_state<_R>
@@ -699,6 +784,28 @@ __assoc_state_alloc<_R, _Alloc>::__on_zero_shared()
     __a.deallocate(this, 1);
 }
 
+template <class _R, class _Alloc>
+class __assoc_state_alloc<_R&, _Alloc>
+    : public __assoc_state<_R&>
+{
+    typedef __assoc_state<_R&> base;
+    _Alloc __alloc_;
+
+    virtual void __on_zero_shared();
+public:
+    explicit __assoc_state_alloc(const _Alloc& __a)
+        : __alloc_(__a) {}
+};
+
+template <class _R, class _Alloc>
+void
+__assoc_state_alloc<_R&, _Alloc>::__on_zero_shared()
+{
+    typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
+    this->~__assoc_state_alloc();
+    __a.deallocate(this, 1);
+}
+
 template <class _Alloc>
 class __assoc_sub_state_alloc
     : public __assoc_sub_state
@@ -717,7 +824,7 @@ void
 __assoc_sub_state_alloc<_Alloc>::__on_zero_shared()
 {
     this->~base();
-    typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
+    typename _Alloc::template rebind<__assoc_sub_state_alloc>::other __a(__alloc_);
     this->~__assoc_sub_state_alloc();
     __a.deallocate(this, 1);
 }
@@ -865,7 +972,7 @@ template <class _R>
 _R&
 future<_R&>::get()
 {
-    __assoc_state<_R>* __s = __state_;
+    __assoc_state<_R&>* __s = __state_;
     __state_ = nullptr;
     return __s->copy();
 }
