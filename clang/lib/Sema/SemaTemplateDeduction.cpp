@@ -350,6 +350,29 @@ DeduceTemplateArguments(Sema &S,
   return Sema::TDK_Success;
 }
 
+/// \brief Determines whether the given type is an opaque type that
+/// might be more qualified when instantiated.
+static bool IsPossiblyOpaquelyQualifiedType(QualType T) {
+  switch (T->getTypeClass()) {
+  case Type::TypeOfExpr:
+  case Type::TypeOf:
+  case Type::DependentName:
+  case Type::Decltype:
+  case Type::UnresolvedUsing:
+    return true;
+
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+  case Type::VariableArray:
+  case Type::DependentSizedArray:
+    return IsPossiblyOpaquelyQualifiedType(
+                                      cast<ArrayType>(T)->getElementType());
+
+  default:
+    return false;
+  }
+}
+
 /// \brief Deduce the template arguments by comparing the parameter type and
 /// the argument type (C++ [temp.deduct.type]).
 ///
@@ -474,7 +497,7 @@ DeduceTemplateArguments(Sema &S,
     if (TDF & TDF_ParamWithReferenceType) {
       if (Param.isMoreQualifiedThan(Arg))
         return Sema::TDK_NonDeducedMismatch;
-    } else {
+    } else if (!IsPossiblyOpaquelyQualifiedType(Param)) {
       if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
         return Sema::TDK_NonDeducedMismatch;
     }
