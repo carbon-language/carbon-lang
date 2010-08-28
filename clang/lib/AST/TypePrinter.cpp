@@ -430,9 +430,10 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
     Buffer += ' ';
   }
 
+  // Compute the full nested-name-specifier for this type.
+  // In C, this will always be empty except when the type
+  // being printed is anonymous within other Record.
   if (!Policy.SuppressScope)
-    // Compute the full nested-name-specifier for this type. In C,
-    // this will always be empty.
     AppendScope(D->getDeclContext(), Buffer);
 
   if (const IdentifierInfo *II = D->getIdentifier())
