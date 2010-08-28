@@ -4649,6 +4649,11 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
       !isInTailCallPosition(CS, CS.getAttributes().getRetAttributes(), TLI))
     isTailCall = false;
 
+  // If there's a possibility that fast-isel has already selected some amount
+  // of the current basic block, don't emit a tail call.
+  if (isTailCall && EnableFastISel)
+    isTailCall = false;
+
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), RetTy,
                     CS.paramHasAttr(0, Attribute::SExt),
