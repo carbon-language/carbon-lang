@@ -1185,13 +1185,13 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                 R != REnd; ++R) {
         if (*R == Function)
           continue;
-        if ((*R)->getFriendObjectKind() != Decl::FOK_None) {
+        if (R->getFriendObjectKind() != Decl::FOK_None) {
           if (const FunctionDecl *RPattern
-              = (*R)->getTemplateInstantiationPattern())
+              = R->getTemplateInstantiationPattern())
             if (RPattern->hasBody(RPattern)) {
               SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
                 << Function->getDeclName();
-              SemaRef.Diag((*R)->getLocation(), diag::note_previous_definition);
+              SemaRef.Diag(R->getLocation(), diag::note_previous_definition);
               Function->setInvalidDecl();
               break;
             }
