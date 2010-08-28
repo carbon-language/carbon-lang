@@ -5332,10 +5332,10 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
     } else if (const ConstantArrayType *ConsArrayT
                                      = dyn_cast<ConstantArrayType>(ArrayT)) {
       ArraySize 
-        = SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
-                                                  ConsArrayT->getSize(), 
-                                                  SemaRef.Context.getSizeType(),
-                                                  /*FIXME:*/E->getLocStart()));
+        = SemaRef.Owned(IntegerLiteral::Create(SemaRef.Context,
+                                               ConsArrayT->getSize(), 
+                                               SemaRef.Context.getSizeType(),
+                                               /*FIXME:*/E->getLocStart()));
       AllocType = ConsArrayT->getElementType();
     } else if (const DependentSizedArrayType *DepArrayT
                               = dyn_cast<DependentSizedArrayType>(ArrayT)) {
@@ -6352,7 +6352,8 @@ TreeTransform<Derived>::RebuildArrayType(QualType ElementType,
       break;
     }
 
-  IntegerLiteral ArraySize(*Size, SizeType, /*FIXME*/BracketsRange.getBegin());
+  IntegerLiteral ArraySize(SemaRef.Context, *Size, SizeType,
+                           /*FIXME*/BracketsRange.getBegin());
   return SemaRef.BuildArrayType(ElementType, SizeMod, &ArraySize,
                                 IndexTypeQuals, BracketsRange,
                                 getDerived().getBaseEntity());
@@ -6418,8 +6419,8 @@ QualType TreeTransform<Derived>::RebuildExtVectorType(QualType ElementType,
   llvm::APInt numElements(SemaRef.Context.getIntWidth(SemaRef.Context.IntTy),
                           NumElements, true);
   IntegerLiteral *VectorSize
-    = new (SemaRef.Context) IntegerLiteral(numElements, SemaRef.Context.IntTy,
-                                           AttributeLoc);
+    = IntegerLiteral::Create(SemaRef.Context, numElements, SemaRef.Context.IntTy,
+                             AttributeLoc);
   return SemaRef.BuildExtVectorType(ElementType, VectorSize, AttributeLoc);
 }
 

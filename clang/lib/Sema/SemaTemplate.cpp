@@ -3149,7 +3149,7 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
                                             T,
                                             Loc));
 
-  return Owned(new (Context) IntegerLiteral(*Arg.getAsIntegral(), T, Loc));
+  return Owned(IntegerLiteral::Create(Context, *Arg.getAsIntegral(), T, Loc));
 }
 
 

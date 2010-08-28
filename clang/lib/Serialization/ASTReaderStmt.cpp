@@ -409,12 +409,12 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
 void ASTStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
   VisitExpr(E);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setValue(Reader.ReadAPInt(Record, Idx));
+  E->setValue(*Reader.getContext(), Reader.ReadAPInt(Record, Idx));
 }
 
 void ASTStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
   VisitExpr(E);
-  E->setValue(Reader.ReadAPFloat(Record, Idx));
+  E->setValue(*Reader.getContext(), Reader.ReadAPFloat(Record, Idx));
   E->setExact(Record[Idx++]);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -1401,11 +1401,11 @@ Stmt *ASTReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
 
     case EXPR_INTEGER_LITERAL:
-      S = new (Context) IntegerLiteral(Empty);
+      S = IntegerLiteral::Create(*Context, Empty);
       break;
 
     case EXPR_FLOATING_LITERAL:
-      S = new (Context) FloatingLiteral(Empty);
+      S = FloatingLiteral::Create(*Context, Empty);
       break;
 
     case EXPR_IMAGINARY_LITERAL:

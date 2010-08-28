@@ -1946,7 +1946,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   if (Tok.getLength() == 1) {
     const char Val = PP.getSpellingOfSingleCharacterNumericConstant(Tok);
     unsigned IntSize = Context.Target.getIntWidth();
-    return Owned(new (Context) IntegerLiteral(llvm::APInt(IntSize, Val-'0'),
+    return Owned(IntegerLiteral::Create(Context, llvm::APInt(IntSize, Val-'0'),
                     Context.IntTy, Tok.getLocation()));
   }
 
@@ -2004,7 +2004,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     }
 
     bool isExact = (result == APFloat::opOK);
-    Res = new (Context) FloatingLiteral(Val, isExact, Ty, Tok.getLocation());
+    Res = FloatingLiteral::Create(Context, Val, isExact, Ty, Tok.getLocation());
 
   } else if (!Literal.isIntegerLiteral()) {
     return ExprError();
@@ -2091,7 +2091,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       if (ResultVal.getBitWidth() != Width)
         ResultVal.trunc(Width);
     }
-    Res = new (Context) IntegerLiteral(ResultVal, Ty, Tok.getLocation());
+    Res = IntegerLiteral::Create(Context, ResultVal, Ty, Tok.getLocation());
   }
 
   // If this is an imaginary literal, create the ImaginaryLiteral wrapper.

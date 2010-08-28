@@ -672,9 +672,9 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (!ArraySize) {
     if (const ConstantArrayType *Array
                               = Context.getAsConstantArrayType(AllocType)) {
-      ArraySize = new (Context) IntegerLiteral(Array->getSize(),
-                                               Context.getSizeType(),
-                                               TypeRange.getEnd());
+      ArraySize = IntegerLiteral::Create(Context, Array->getSize(),
+                                         Context.getSizeType(),
+                                         TypeRange.getEnd());
       AllocType = Array->getElementType();
     }
   }
@@ -922,7 +922,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // We don't care about the actual value of this argument.
   // FIXME: Should the Sema create the expression and embed it in the syntax
   // tree? Or should the consumer just recalculate the value?
-  IntegerLiteral Size(llvm::APInt::getNullValue(
+  IntegerLiteral Size(Context, llvm::APInt::getNullValue(
                       Context.Target.getPointerWidth(0)),
                       Context.getSizeType(),
                       SourceLocation());

@@ -4669,7 +4669,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   
   // Initialize the iteration variable to zero.
   llvm::APInt Zero(S.Context.getTypeSize(SizeType), 0);
-  IterationVar->setInit(new (S.Context) IntegerLiteral(Zero, SizeType, Loc));
+  IterationVar->setInit(IntegerLiteral::Create(S.Context, Zero, SizeType, Loc));
 
   // Create a reference to the iteration variable; we'll use this several
   // times throughout.
@@ -4685,8 +4685,9 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   Upper.zextOrTrunc(S.Context.getTypeSize(SizeType));
   Expr *Comparison
     = new (S.Context) BinaryOperator(IterationVarRef->Retain(),
-                           new (S.Context) IntegerLiteral(Upper, SizeType, Loc),
-                                    BO_NE, S.Context.BoolTy, Loc);
+                           IntegerLiteral::Create(S.Context,
+                                                  Upper, SizeType, Loc),
+                                                  BO_NE, S.Context.BoolTy, Loc);
   
   // Create the pre-increment of the iteration variable.
   Expr *Increment
@@ -5135,7 +5136,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       ASTOwningVector<Expr*> CallArgs(*this);
       CallArgs.push_back(To.takeAs<Expr>());
       CallArgs.push_back(From.takeAs<Expr>());
-      CallArgs.push_back(new (Context) IntegerLiteral(Size, SizeType, Loc));
+      CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
       llvm::SmallVector<SourceLocation, 4> Commas; // FIXME: Silly
       Commas.push_back(Loc);
       Commas.push_back(Loc);

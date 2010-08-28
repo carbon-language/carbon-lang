@@ -3029,9 +3029,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // is needed to decide what to do.
     unsigned IntSize =
       static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
-    IntegerLiteral *limit = new (Context) IntegerLiteral(llvm::APInt(IntSize, 8),
-                                               Context->IntTy,
-                                               SourceLocation());
+    IntegerLiteral *limit = IntegerLiteral::Create(*Context,
+                                                   llvm::APInt(IntSize, 8),
+                                                   Context->IntTy,
+                                                   SourceLocation());
     BinaryOperator *lessThanExpr = new (Context) BinaryOperator(sizeofExpr, limit,
                                                       BO_LE,
                                                       Context->IntTy,
@@ -5268,8 +5269,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
     int flag = (BLOCK_HAS_COPY_DISPOSE | BLOCK_HAS_DESCRIPTOR);
     unsigned IntSize = 
       static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
-    Expr *FlagExp = new (Context) IntegerLiteral(llvm::APInt(IntSize, flag), 
-                                             Context->IntTy, SourceLocation());
+    Expr *FlagExp = IntegerLiteral::Create(*Context, llvm::APInt(IntSize, flag), 
+                                           Context->IntTy, SourceLocation());
     InitExprs.push_back(FlagExp);
   }
   NewRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0], InitExprs.size(),

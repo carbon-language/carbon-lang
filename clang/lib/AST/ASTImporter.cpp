@@ -2818,8 +2818,9 @@ Expr *ASTNodeImporter::VisitIntegerLiteral(IntegerLiteral *E) {
   if (T.isNull())
     return 0;
 
-  return new (Importer.getToContext()) 
-    IntegerLiteral(E->getValue(), T, Importer.Import(E->getLocation()));
+  return IntegerLiteral::Create(Importer.getToContext(), 
+                                E->getValue(), T,
+                                Importer.Import(E->getLocation()));
 }
 
 Expr *ASTNodeImporter::VisitCharacterLiteral(CharacterLiteral *E) {

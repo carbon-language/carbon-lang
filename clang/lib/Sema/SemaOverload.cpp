@@ -6754,8 +6754,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   // post-decrement.
   if (Opc == UO_PostInc || Opc == UO_PostDec) {
     llvm::APSInt Zero(Context.getTypeSize(Context.IntTy), false);
-    Args[1] = new (Context) IntegerLiteral(Zero, Context.IntTy,
-                                           SourceLocation());
+    Args[1] = IntegerLiteral::Create(Context, Zero, Context.IntTy,
+                                     SourceLocation());
     NumArgs = 2;
   }
 

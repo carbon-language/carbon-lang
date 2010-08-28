@@ -374,6 +374,44 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
   return "";
 }
 
+void APNumericStorage::setIntValue(ASTContext &C, const llvm::APInt &Val) {
+  if (hasAllocation())
+    C.Deallocate(pVal);
+
+  BitWidth = Val.getBitWidth();
+  unsigned NumWords = Val.getNumWords();
+  const uint64_t* Words = Val.getRawData();
+  if (NumWords > 1) {
+    pVal = new (C) uint64_t[NumWords];
+    std::copy(Words, Words + NumWords, pVal);
+  } else if (NumWords == 1)
+    VAL = Words[0];
+  else
+    VAL = 0;
+}
+
+IntegerLiteral *
+IntegerLiteral::Create(ASTContext &C, const llvm::APInt &V,
+                       QualType type, SourceLocation l) {
+  return new (C) IntegerLiteral(C, V, type, l);
+}
+
+IntegerLiteral *
+IntegerLiteral::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) IntegerLiteral(Empty);
+}
+
+FloatingLiteral *
+FloatingLiteral::Create(ASTContext &C, const llvm::APFloat &V,
+                        bool isexact, QualType Type, SourceLocation L) {
+  return new (C) FloatingLiteral(C, V, isexact, Type, L);
+}
+
+FloatingLiteral *
+FloatingLiteral::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) FloatingLiteral(Empty);
+}
+
 /// getValueAsApproximateDouble - This returns the value as an inaccurate
 /// double.  Note that this may cause loss of precision, but is useful for
 /// debugging dumps, etc.

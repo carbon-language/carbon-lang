@@ -757,28 +757,84 @@ public:
   virtual child_iterator child_end();
 };
 
-class IntegerLiteral : public Expr {
-  llvm::APInt Value;
-  SourceLocation Loc;
-public:
-  // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy,
-  // or UnsignedLongLongTy
-  IntegerLiteral(const llvm::APInt &V, QualType type, SourceLocation l)
-    : Expr(IntegerLiteralClass, type, false, false), Value(V), Loc(l) {
-    assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
+/// \brief Used by IntegerLiteral/FloatingLiteral to store the numeric without
+/// leaking memory.
+///
+/// For large floats/integers, APFloat/APInt will allocate memory from the heap
+/// to represent these numbers.  Unfortunately, when we use a BumpPtrAllocator
+/// to allocate IntegerLiteral/FloatingLiteral nodes the memory associated with
+/// the APFloat/APInt values will never get freed. APNumericStorage uses
+/// ASTContext's allocator for memory allocation.
+class APNumericStorage {
+  unsigned BitWidth;
+  union {
+    uint64_t VAL;    ///< Used to store the <= 64 bits integer value.
+    uint64_t *pVal;  ///< Used to store the >64 bits integer value.
+  };
+
+  bool hasAllocation() const { return llvm::APInt::getNumWords(BitWidth) > 1; }
+
+  APNumericStorage(const APNumericStorage&); // do not implement
+  APNumericStorage& operator=(const APNumericStorage&); // do not implement
+
+protected:
+  APNumericStorage() : BitWidth(0), VAL(0) { }
+
+  llvm::APInt getIntValue() const {
+    unsigned NumWords = llvm::APInt::getNumWords(BitWidth);
+    if (NumWords > 1)
+      return llvm::APInt(BitWidth, NumWords, pVal);
+    else
+      return llvm::APInt(BitWidth, VAL);
   }
+  void setIntValue(ASTContext &C, const llvm::APInt &Val);
+};
+
+class APIntStorage : public APNumericStorage {
+public:  
+  llvm::APInt getValue() const { return getIntValue(); } 
+  void setValue(ASTContext &C, const llvm::APInt &Val) { setIntValue(C, Val); }
+};
+
+class APFloatStorage : public APNumericStorage {
+public:  
+  llvm::APFloat getValue() const { return llvm::APFloat(getIntValue()); } 
+  void setValue(ASTContext &C, const llvm::APFloat &Val) {
+    setIntValue(C, Val.bitcastToAPInt());
+  }
+};
+
+class IntegerLiteral : public Expr {
+  APIntStorage Num;
+  SourceLocation Loc;
 
   /// \brief Construct an empty integer literal.
   explicit IntegerLiteral(EmptyShell Empty)
     : Expr(IntegerLiteralClass, Empty) { }
 
-  const llvm::APInt &getValue() const { return Value; }
+public:
+  // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy,
+  // or UnsignedLongLongTy
+  IntegerLiteral(ASTContext &C, const llvm::APInt &V,
+                 QualType type, SourceLocation l)
+    : Expr(IntegerLiteralClass, type, false, false), Loc(l) {
+    assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
+    setValue(C, V);
+  }
+
+  // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy,
+  // or UnsignedLongLongTy
+  static IntegerLiteral *Create(ASTContext &C, const llvm::APInt &V,
+                                QualType type, SourceLocation l);
+  static IntegerLiteral *Create(ASTContext &C, EmptyShell Empty);
+
+  llvm::APInt getValue() const { return Num.getValue(); }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   /// \brief Retrieve the location of the literal.
   SourceLocation getLocation() const { return Loc; }
 
-  void setValue(const llvm::APInt &Val) { Value = Val; }
+  void setValue(ASTContext &C, const llvm::APInt &Val) { Num.setValue(C, Val); }
   void setLocation(SourceLocation Location) { Loc = Location; }
 
   static bool classof(const Stmt *T) {
@@ -827,21 +883,30 @@ public:
 };
 
 class FloatingLiteral : public Expr {
-  llvm::APFloat Value;
+  APFloatStorage Num;
   bool IsExact : 1;
   SourceLocation Loc;
-public:
-  FloatingLiteral(const llvm::APFloat &V, bool isexact,
+
+  FloatingLiteral(ASTContext &C, const llvm::APFloat &V, bool isexact,
                   QualType Type, SourceLocation L)
-    : Expr(FloatingLiteralClass, Type, false, false), Value(V),
-      IsExact(isexact), Loc(L) {}
+    : Expr(FloatingLiteralClass, Type, false, false),
+      IsExact(isexact), Loc(L) {
+    setValue(C, V);
+  }
 
   /// \brief Construct an empty floating-point literal.
   explicit FloatingLiteral(EmptyShell Empty)
-    : Expr(FloatingLiteralClass, Empty), Value(0.0) { }
+    : Expr(FloatingLiteralClass, Empty), IsExact(false) { }
 
-  const llvm::APFloat &getValue() const { return Value; }
-  void setValue(const llvm::APFloat &Val) { Value = Val; }
+public:
+  static FloatingLiteral *Create(ASTContext &C, const llvm::APFloat &V,
+                                 bool isexact, QualType Type, SourceLocation L);
+  static FloatingLiteral *Create(ASTContext &C, EmptyShell Empty);
+
+  llvm::APFloat getValue() const { return Num.getValue(); }
+  void setValue(ASTContext &C, const llvm::APFloat &Val) {
+    Num.setValue(C, Val);
+  }
 
   bool isExact() const { return IsExact; }
   void setExact(bool E) { IsExact = E; }
