@@ -77,13 +77,43 @@ ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
             const user_id_t stop_id = process->GetStopID();
             if (m_update_id != stop_id)
             {
-                m_value_str.clear();
+                // Save the old value using swap to avoid a string copy which
+                // also will clear our m_value_str
+                std::string old_value_str;
+                old_value_str.swap (m_value_str);
                 m_location_str.clear();
                 m_summary_str.clear();
 
+                const bool value_was_valid = GetValueIsValid();
+                SetValueDidChange (false);
+
+                m_error.Clear();
+
+                // Call the pure virtual function to update the value
                 UpdateValue (exe_scope);
-                if (m_error.Success())
-                    m_update_id = stop_id;
+                
+                // Update the fact that we tried to update the value for this
+                // value object wether or not we succeed
+                m_update_id = stop_id;
+                bool success = m_error.Success();
+                SetValueIsValid (success);
+                // If the variable hasn't already been marked as changed do it
+                // by comparing the old any new value
+                if (!GetValueDidChange())
+                {
+                    if (success)
+                    {
+                        // The value was gotten successfully, so we consider the
+                        // value as changed if the value string differs
+                        SetValueDidChange (old_value_str != m_value_str);
+                    }
+                    else
+                    {
+                        // The value wasn't gotten successfully, so we mark this
+                        // as changed if the value used to be valid and now isn't
+                        SetValueDidChange (value_was_valid);
+                    }
+                }
             }
         }
     }
