@@ -1,5 +1,5 @@
 // RUN: %clang %s -S -emit-llvm -o - | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
-// PR8007: friend function either not instantiated.
+// PR8007: friend function not instantiated.
 
 struct std_ostream
 {
