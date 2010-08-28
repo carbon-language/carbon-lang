@@ -564,6 +564,123 @@ static AccessResult GetFriendKind(Sema &S,
   return OnFailure;
 }
 
+namespace {
+
+/// A helper class for checking for a friend which will grant access
+/// to a protected instance member.
+struct ProtectedFriendContext {
+  Sema &S;
+  const EffectiveContext &EC;
+  const CXXRecordDecl *NamingClass;
+  bool CheckDependent;
+  bool EverDependent;
+
+  /// The path down to the current base class.
+  llvm::SmallVector<const CXXRecordDecl*, 20> CurPath;
+
+  ProtectedFriendContext(Sema &S, const EffectiveContext &EC,
+                         const CXXRecordDecl *InstanceContext,
+                         const CXXRecordDecl *NamingClass)
+    : S(S), EC(EC), NamingClass(NamingClass),
+      CheckDependent(InstanceContext->isDependentContext() ||
+                     NamingClass->isDependentContext()),
+      EverDependent(false) {}
+
+  /// Check everything in the current path for friendship.
+  bool checkFriendshipAlongPath() {
+    for (llvm::SmallVectorImpl<const CXXRecordDecl*>::iterator
+           I = CurPath.begin(), E = CurPath.end(); I != E; ++I) {
+      switch (GetFriendKind(S, EC, *I)) {
+      case AR_accessible:   return true;
+      case AR_inaccessible: continue;
+      case AR_dependent:    EverDependent = true; continue;
+      }
+    }
+    return false;
+  }
+
+  /// Perform a search starting at the given class.
+  bool findFriendship(const CXXRecordDecl *Cur) {
+    CurPath.push_back(Cur);
+
+    // If we ever reach the naming class, check the current path for
+    // friendship.  We can also stop recursing because we obviously
+    // won't find the naming class there again.
+    if (Cur == NamingClass) {
+      bool Result = checkFriendshipAlongPath();
+      CurPath.pop_back();
+      return Result;
+    }
+
+    if (CheckDependent && MightInstantiateTo(Cur, NamingClass))
+      EverDependent = true;
+
+    // Recurse into the base classes.
+    for (CXXRecordDecl::base_class_const_iterator
+           I = Cur->bases_begin(), E = Cur->bases_end(); I != E; ++I) {
+
+      // If this base specifier has private access, and this isn't the
+      // first step in the derivation chain, then the base does not
+      // have natural access along this derivation path and we should
+      // ignore it.
+      if (I->getAccessSpecifier() == AS_private && CurPath.size() != 1)
+          continue;
+
+      const CXXRecordDecl *RD;
+
+      QualType T = I->getType();
+      if (const RecordType *RT = T->getAs<RecordType>()) {
+        RD = cast<CXXRecordDecl>(RT->getDecl());
+      } else if (const InjectedClassNameType *IT
+                   = T->getAs<InjectedClassNameType>()) {
+        RD = IT->getDecl();
+      } else {
+        assert(T->isDependentType() && "non-dependent base wasn't a record?");
+        EverDependent = true;
+        continue;
+      }
+
+      // Recurse.  We don't need to clean up if this returns true.
+      if (findFriendship(RD->getCanonicalDecl())) return true;
+    }
+
+    CurPath.pop_back();
+    return false;
+  }
+};
+}
+
+/// Search for a class P that EC is a friend of, under the constraint
+///   InstanceContext <= P <= NamingClass
+/// and with the additional restriction that a protected member of
+/// NamingClass would have some natural access in P.
+///
+/// That second condition isn't actually quite right: the condition in
+/// the standard is whether the target would have some natural access
+/// in P.  The difference is that the target might be more accessible
+/// along some path not passing through NamingClass.  Allowing that
+/// introduces two problems:
+///   - It breaks encapsulation because you can suddenly access a
+///     forbidden base class's members by subclassing it elsewhere.
+///   - It makes access substantially harder to compute because it
+///     breaks the hill-climbing algorithm: knowing that the target is
+///     accessible in some base class would no longer let you change
+///     the question solely to whether the base class is accessible,
+///     because the original target might have been more accessible
+///     because of crazy subclassing.
+/// So we don't implement that.
+static AccessResult GetProtectedFriendKind(Sema &S, const EffectiveContext &EC,
+                                           const CXXRecordDecl *InstanceContext,
+                                           const CXXRecordDecl *NamingClass) {
+  assert(InstanceContext->getCanonicalDecl() == InstanceContext);
+  assert(NamingClass->getCanonicalDecl() == NamingClass);
+
+  ProtectedFriendContext PRC(S, EC, InstanceContext, NamingClass);
+  if (PRC.findFriendship(InstanceContext)) return AR_accessible;
+  if (PRC.EverDependent) return AR_dependent;
+  return AR_inaccessible;
+}
+
 static AccessResult HasAccess(Sema &S,
                               const EffectiveContext &EC,
                               const CXXRecordDecl *NamingClass,
@@ -631,20 +748,25 @@ static AccessResult HasAccess(Sema &S,
     }
   }
 
-  if (!NamingClass->hasFriends())
-    return OnFailure;
-
-  // Don't consider friends if we're under the [class.protected]
-  // restriction, above.
+  // [M3] and [B3] say that, if the target is protected in N, we grant
+  // access if the access occurs in a friend or member of some class P
+  // that's a subclass of N and where the target has some natural
+  // access in P.  The 'member' aspect is easy to handle because P
+  // would necessarily be one of the effective-context records, and we
+  // address that above.  The 'friend' aspect is completely ridiculous
+  // to implement because there are no restrictions at all on P
+  // *unless* the [class.protected] restriction applies.  If it does,
+  // however, we should ignore whether the naming class is a friend,
+  // and instead rely on whether any potential P is a friend.
   if (Access == AS_protected && Target.hasInstanceContext()) {
     const CXXRecordDecl *InstanceContext = Target.resolveInstanceContext(S);
     if (!InstanceContext) return AR_dependent;
-
-    switch (IsDerivedFromInclusive(InstanceContext, NamingClass)) {
-    case AR_accessible: break;
+    switch (GetProtectedFriendKind(S, EC, InstanceContext, NamingClass)) {
+    case AR_accessible: return AR_accessible;
     case AR_inaccessible: return OnFailure;
     case AR_dependent: return AR_dependent;
     }
+    llvm::unreachable("impossible friendship kind");
   }
 
   switch (GetFriendKind(S, EC, NamingClass)) {
