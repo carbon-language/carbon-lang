@@ -1183,8 +1183,9 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       else for (FunctionDecl::redecl_iterator R = Function->redecls_begin(),
                                            REnd = Function->redecls_end();
                 R != REnd; ++R) {
-        if (*R != Function && 
-            ((*R)->getFriendObjectKind() != Decl::FOK_None)) {
+        if (*R == Function)
+          continue;
+        if ((*R)->getFriendObjectKind() != Decl::FOK_None) {
           if (const FunctionDecl *RPattern
               = (*R)->getTemplateInstantiationPattern())
             if (RPattern->hasBody(RPattern)) {
