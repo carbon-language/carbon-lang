@@ -7712,7 +7712,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     } else // Walk redefinitions, as some of them may be instantiable.
       for (FunctionDecl::redecl_iterator i(Function->redecls_begin()),
            e(Function->redecls_end()); i != e; ++i) {
-        if (i->isImplicitlyInstantiable())
+        if (!i->isUsed(false) && i->isImplicitlyInstantiable())
           MarkDeclarationReferenced(Loc, *i);
       }
 
