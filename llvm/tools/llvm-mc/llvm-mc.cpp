@@ -390,6 +390,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllDisassemblers();
   
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
+  TripleName = Triple::normalize(TripleName);
 
   switch (Action) {
   default:

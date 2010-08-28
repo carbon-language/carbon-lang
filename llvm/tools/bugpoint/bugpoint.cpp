@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
   // If we have an override, set it and then track the triple we want Modules
   // to use.
   if (!OverrideTriple.empty()) {
-    TargetTriple.setTriple(OverrideTriple);
-    outs() << "Override triple set to '" << OverrideTriple << "'\n";
+    TargetTriple.setTriple(Triple::normalize(OverrideTriple));
+    outs() << "Override triple set to '" << TargetTriple.getTriple() << "'\n";
   }
 
   if (MemoryLimit < 0) {

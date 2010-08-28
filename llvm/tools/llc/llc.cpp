@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
 
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
-    mod.setTargetTriple(TargetTriple);
+    mod.setTargetTriple(Triple::normalize(TargetTriple));
 
   Triple TheTriple(mod.getTargetTriple());
   if (TheTriple.getTriple().empty())
