@@ -468,7 +468,6 @@ public:
   // wrong type.
   const OptionDescription& FindSwitch(const std::string& OptName) const;
   const OptionDescription& FindParameter(const std::string& OptName) const;
-  const OptionDescription& FindList(const std::string& OptName) const;
   const OptionDescription& FindParameterList(const std::string& OptName) const;
   const OptionDescription&
   FindListOrParameter(const std::string& OptName) const;
@@ -499,14 +498,6 @@ OptionDescriptions::FindSwitch(const std::string& OptName) const {
   const OptionDescription& OptDesc = this->FindOption(OptName);
   if (!OptDesc.isSwitch())
     throw OptName + ": incorrect option type - should be a switch!";
-  return OptDesc;
-}
-
-const OptionDescription&
-OptionDescriptions::FindList(const std::string& OptName) const {
-  const OptionDescription& OptDesc = this->FindOption(OptName);
-  if (!OptDesc.isList())
-    throw OptName + ": incorrect option type - should be a list!";
   return OptDesc;
 }
 
@@ -855,11 +846,7 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
 
   // Default ctor here is needed because StringMap can only store
   // DefaultConstructible objects
-  ToolDescription ()
-    : CmdLine(0), Actions(0), OutFileOption("-o"),
-      Flags(0), OnEmpty(0)
-  {}
-  ToolDescription (const std::string& n)
+  ToolDescription (const std::string &n = "")
     : Name(n), CmdLine(0), Actions(0), OutFileOption("-o"),
       Flags(0), OnEmpty(0)
   {}
@@ -2916,9 +2903,6 @@ public:
     this->onCmdLine(InitPtrToString(Arg));
   }
 
-  void operator()(const DagInit* Test, unsigned, bool) {
-    this->operator()(Test);
-  }
   void operator()(const Init* Statement, unsigned) {
     this->operator()(Statement);
   }
