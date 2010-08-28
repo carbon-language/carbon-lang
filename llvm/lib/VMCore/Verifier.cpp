@@ -189,16 +189,6 @@ namespace {
       : FunctionPass(ID), 
       Broken(false), RealPass(true), action(ctn), Mod(0), Context(0), DT(0),
       MessagesStr(Messages) {}
-    explicit Verifier(bool AB)
-      : FunctionPass(ID), 
-      Broken(false), RealPass(true),
-      action( AB ? AbortProcessAction : PrintMessageAction), Mod(0),
-      Context(0), DT(0), MessagesStr(Messages) {}
-    explicit Verifier(DominatorTree &dt)
-      : FunctionPass(ID), 
-      Broken(false), RealPass(false), action(PrintMessageAction), Mod(0),
-      Context(0), DT(&dt), MessagesStr(Messages) {}
-
 
     bool doInitialization(Module &M) {
       Mod = &M;
