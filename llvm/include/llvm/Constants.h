@@ -33,7 +33,6 @@ namespace llvm {
 class ArrayType;
 class IntegerType;
 class StructType;
-class UnionType;
 class PointerType;
 class VectorType;
 
@@ -459,49 +458,6 @@ struct OperandTraits<ConstantStruct> : public VariadicOperandTraits<> {
 
 DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantStruct, Constant)
 
-//===----------------------------------------------------------------------===//
-// ConstantUnion - Constant Union Declarations
-//
-class ConstantUnion : public Constant {
-  friend struct ConstantCreator<ConstantUnion, UnionType, Constant*>;
-  ConstantUnion(const ConstantUnion &);      // DO NOT IMPLEMENT
-protected:
-  ConstantUnion(const UnionType *T, Constant* Val);
-public:
-  // ConstantUnion accessors
-  static Constant *get(const UnionType *T, Constant* V);
-
-  /// Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
-  
-  /// getType() specialization - Reduce amount of casting...
-  ///
-  inline const UnionType *getType() const {
-    return reinterpret_cast<const UnionType*>(Value::getType());
-  }
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because zero structs are always
-  /// created as ConstantAggregateZero objects.
-  virtual bool isNullValue() const {
-    return false;
-  }
-
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
-
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantUnion *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueID() == ConstantUnionVal;
-  }
-};
-
-template <>
-struct OperandTraits<ConstantUnion> : public FixedNumOperandTraits<1> {
-};
-
-DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantUnion, Constant)
 
 //===----------------------------------------------------------------------===//
 /// ConstantVector - Constant Vector Declarations

@@ -57,14 +57,11 @@ LLVMContextImpl::~LLVMContextImpl() {
                 DropReferences());
   std::for_each(StructConstants.map_begin(), StructConstants.map_end(),
                 DropReferences());
-  std::for_each(UnionConstants.map_begin(), UnionConstants.map_end(),
-                DropReferences());
   std::for_each(VectorConstants.map_begin(), VectorConstants.map_end(),
                 DropReferences());
   ExprConstants.freeConstants();
   ArrayConstants.freeConstants();
   StructConstants.freeConstants();
-  UnionConstants.freeConstants();
   VectorConstants.freeConstants();
   AggZeroConstants.freeConstants();
   NullPtrConstants.freeConstants();

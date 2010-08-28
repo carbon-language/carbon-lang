@@ -94,8 +94,7 @@ namespace bitc {
     TYPE_CODE_FP128    = 14,   // LONG DOUBLE (112 bit mantissa)
     TYPE_CODE_PPC_FP128= 15,   // PPC LONG DOUBLE (2 doubles)
 
-    TYPE_CODE_METADATA = 16,   // METADATA
-    TYPE_CODE_UNION    = 17    // UNION: [eltty x N]
+    TYPE_CODE_METADATA = 16    // METADATA
   };
 
   // The type symbol table only has one code (TST_ENTRY_CODE).

@@ -180,32 +180,6 @@ public:
   }
 };
 
-// UnionValType - Define a class to hold the key that goes into the TypeMap
-//
-class UnionValType {
-  std::vector<const Type*> ElTypes;
-public:
-  UnionValType(const Type* const* Types, unsigned NumTypes)
-    : ElTypes(&Types[0], &Types[NumTypes]) {}
-
-  static UnionValType get(const UnionType *UT) {
-    std::vector<const Type *> ElTypes;
-    ElTypes.reserve(UT->getNumElements());
-    for (unsigned i = 0, e = UT->getNumElements(); i != e; ++i)
-      ElTypes.push_back(UT->getElementType(i));
-
-    return UnionValType(&ElTypes[0], ElTypes.size());
-  }
-
-  static unsigned hashTypeStructure(const UnionType *UT) {
-    return UT->getNumElements();
-  }
-
-  inline bool operator<(const UnionValType &UTV) const {
-    return (ElTypes < UTV.ElTypes);
-  }
-};
-
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
 class FunctionValType {

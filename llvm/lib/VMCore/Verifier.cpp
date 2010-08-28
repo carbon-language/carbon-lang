@@ -1560,7 +1560,8 @@ void Verifier::VerifyType(const Type *Ty) {
               "Function type with invalid parameter type", ElTy, FTy);
       VerifyType(ElTy);
     }
-  } break;
+    break;
+  }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
@@ -1569,34 +1570,29 @@ void Verifier::VerifyType(const Type *Ty) {
               "Structure type with invalid element type", ElTy, STy);
       VerifyType(ElTy);
     }
-  } break;
-  case Type::UnionTyID: {
-    const UnionType *UTy = cast<UnionType>(Ty);
-    for (unsigned i = 0, e = UTy->getNumElements(); i != e; ++i) {
-      const Type *ElTy = UTy->getElementType(i);
-      Assert2(UnionType::isValidElementType(ElTy),
-              "Union type with invalid element type", ElTy, UTy);
-      VerifyType(ElTy);
-    }
-  } break;
+    break;
+  }
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     Assert1(ArrayType::isValidElementType(ATy->getElementType()),
             "Array type with invalid element type", ATy);
     VerifyType(ATy->getElementType());
-  } break;
+    break;
+  }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
     Assert1(PointerType::isValidElementType(PTy->getElementType()),
             "Pointer type with invalid element type", PTy);
     VerifyType(PTy->getElementType());
-  } break;
+    break;
+  }
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
     Assert1(VectorType::isValidElementType(VTy->getElementType()),
             "Vector type with invalid element type", VTy);
     VerifyType(VTy->getElementType());
-  } break;
+    break;
+  }
   default:
     break;
   }

@@ -82,11 +82,10 @@ public:
     IntegerTyID,     ///<  8: Arbitrary bit width integers
     FunctionTyID,    ///<  9: Functions
     StructTyID,      ///< 10: Structures
-    UnionTyID,       ///< 11: Unions
-    ArrayTyID,       ///< 12: Arrays
-    PointerTyID,     ///< 13: Pointers
-    OpaqueTyID,      ///< 14: Opaque: type with unknown structure
-    VectorTyID,      ///< 15: SIMD 'packed' format, or other vector type
+    ArrayTyID,       ///< 11: Arrays
+    PointerTyID,     ///< 12: Pointers
+    OpaqueTyID,      ///< 13: Opaque: type with unknown structure
+    VectorTyID,      ///< 14: SIMD 'packed' format, or other vector type
 
     NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = MetadataTyID,
@@ -243,10 +242,6 @@ public:
   ///
   bool isStructTy() const { return ID == StructTyID; }
 
-  /// isUnionTy - True if this is an instance of UnionType.
-  ///
-  bool isUnionTy() const { return ID == UnionTyID; }
-
   /// isArrayTy - True if this is an instance of ArrayType.
   ///
   bool isArrayTy() const { return ID == ArrayTyID; }
@@ -306,7 +301,7 @@ public:
   /// does not include vector types.
   ///
   inline bool isAggregateType() const {
-    return ID == StructTyID || ID == ArrayTyID || ID == UnionTyID;
+    return ID == StructTyID || ID == ArrayTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
@@ -319,8 +314,7 @@ public:
       return true;
     // If it is not something that can have a size (e.g. a function or label),
     // it doesn't have a size.
-    if (ID != StructTyID && ID != ArrayTyID && ID != VectorTyID &&
-        ID != UnionTyID)
+    if (ID != StructTyID && ID != ArrayTyID && ID != VectorTyID)
       return false;
     // If it is something that can have a size and it's concrete, it definitely
     // has a size, otherwise we have to try harder to decide.

@@ -511,14 +511,6 @@ struct ConstantKeyData<ConstantStruct> {
   }
 };
 
-template<>
-struct ConstantKeyData<ConstantUnion> {
-  typedef Constant* ValType;
-  static ValType getValType(ConstantUnion *CU) {
-    return cast<Constant>(CU->getOperand(0));
-  }
-};
-
 // ConstantPointerNull does not take extra "value" argument...
 template<class ValType>
 struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {

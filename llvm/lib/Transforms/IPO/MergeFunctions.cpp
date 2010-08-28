@@ -220,20 +220,6 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
     return true;
   }
 
-  case Type::UnionTyID: {
-    const UnionType *UTy1 = cast<UnionType>(Ty1);
-    const UnionType *UTy2 = cast<UnionType>(Ty2);
-
-    if (UTy1->getNumElements() != UTy2->getNumElements())
-      return false;
-
-    for (unsigned i = 0, e = UTy1->getNumElements(); i != e; ++i) {
-      if (!isEquivalentType(UTy1->getElementType(i), UTy2->getElementType(i)))
-        return false;
-    }
-    return true;
-  }
-
   case Type::FunctionTyID: {
     const FunctionType *FTy1 = cast<FunctionType>(Ty1);
     const FunctionType *FTy2 = cast<FunctionType>(Ty2);

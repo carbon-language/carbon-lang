@@ -215,7 +215,6 @@ public:
     ConstantFPVal,            // This is an instance of ConstantFP
     ConstantArrayVal,         // This is an instance of ConstantArray
     ConstantStructVal,        // This is an instance of ConstantStruct
-    ConstantUnionVal,         // This is an instance of ConstantUnion
     ConstantVectorVal,        // This is an instance of ConstantVector
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
     MDNodeVal,                // This is an instance of MDNode

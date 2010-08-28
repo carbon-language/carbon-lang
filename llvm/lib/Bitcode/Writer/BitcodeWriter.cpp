@@ -181,14 +181,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                             Log2_32_Ceil(VE.getTypes().size()+1)));
   unsigned StructAbbrev = Stream.EmitAbbrev(Abbv);
 
-  // Abbrev for TYPE_CODE_UNION.
-  Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_UNION));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
-  unsigned UnionAbbrev = Stream.EmitAbbrev(Abbv);
-
   // Abbrev for TYPE_CODE_ARRAY.
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_ARRAY));
@@ -256,17 +248,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
       AbbrevToUse = StructAbbrev;
-      break;
-    }
-    case Type::UnionTyID: {
-      const UnionType *UT = cast<UnionType>(T);
-      // UNION: [eltty x N]
-      Code = bitc::TYPE_CODE_UNION;
-      // Output all of the element types.
-      for (UnionType::element_iterator I = UT->element_begin(),
-           E = UT->element_end(); I != E; ++I)
-        TypeVals.push_back(VE.getTypeID(*I));
-      AbbrevToUse = UnionAbbrev;
       break;
     }
     case Type::ArrayTyID: {
@@ -810,20 +791,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Code = bitc::CST_CODE_AGGREGATE;
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
-      AbbrevToUse = AggregateAbbrev;
-    } else if (isa<ConstantUnion>(C)) {
-      Code = bitc::CST_CODE_AGGREGATE;
-
-      // Unions only have one entry but we must send type along with it.
-      const Type *EntryKind = C->getOperand(0)->getType();
-
-      const UnionType *UnTy = cast<UnionType>(C->getType());
-      int UnionIndex = UnTy->getElementTypeIndex(EntryKind);
-      assert(UnionIndex != -1 && "Constant union contains invalid entry");
-
-      Record.push_back(UnionIndex);
-      Record.push_back(VE.getValueID(C->getOperand(0)));
-
       AbbrevToUse = AggregateAbbrev;
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       switch (CE->getOpcode()) {

@@ -59,7 +59,6 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
-  case Type::UnionTyID:
   case Type::ArrayTyID:
   case Type::VectorTyID:
     return ConstantAggregateZero::get(Ty);
@@ -587,27 +586,6 @@ Constant* ConstantStruct::get(LLVMContext &Context,
   return get(Context, std::vector<Constant*>(Vals, Vals+NumVals), Packed);
 }
 
-ConstantUnion::ConstantUnion(const UnionType *T, Constant* V)
-  : Constant(T, ConstantUnionVal,
-             OperandTraits<ConstantUnion>::op_end(this) - 1, 1) {
-  Use *OL = OperandList;
-  assert(T->getElementTypeIndex(V->getType()) >= 0 &&
-      "Initializer for union element isn't a member of union type!");
-  *OL = V;
-}
-
-// ConstantUnion accessors.
-Constant* ConstantUnion::get(const UnionType* T, Constant* V) {
-  LLVMContextImpl* pImpl = T->getContext().pImpl;
-  
-  // Create a ConstantAggregateZero value if all elements are zeros...
-  if (!V->isNullValue())
-    return pImpl->UnionConstants.getOrCreate(T, V);
-
-  return ConstantAggregateZero::get(T);
-}
-
-
 ConstantVector::ConstantVector(const VectorType *T,
                                const std::vector<Constant*> &V)
   : Constant(T, ConstantVectorVal,
@@ -946,8 +924,7 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
 //                      Factory Function Implementation
 
 ConstantAggregateZero* ConstantAggregateZero::get(const Type* Ty) {
-  assert((Ty->isStructTy() || Ty->isUnionTy()
-         || Ty->isArrayTy() || Ty->isVectorTy()) &&
+  assert((Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
@@ -1029,13 +1006,6 @@ namespace llvm {
 //
 void ConstantStruct::destroyConstant() {
   getRawType()->getContext().pImpl->StructConstants.remove(this);
-  destroyConstantImpl();
-}
-
-// destroyConstant - Remove the constant from the constant table...
-//
-void ConstantUnion::destroyConstant() {
-  getRawType()->getContext().pImpl->UnionConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -2104,55 +2074,6 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
-      return;
-    }
-  }
-  
-  assert(Replacement != this && "I didn't contain From!");
-  
-  // Everyone using this now uses the replacement.
-  uncheckedReplaceAllUsesWith(Replacement);
-  
-  // Delete the old constant!
-  destroyConstant();
-}
-
-void ConstantUnion::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 Use *U) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-  Constant *ToC = cast<Constant>(To);
-
-  assert(U == OperandList && "Union constants can only have one use!");
-  assert(getNumOperands() == 1 && "Union constants can only have one use!");
-  assert(getOperand(0) == From && "ReplaceAllUsesWith broken!");
-
-  std::pair<LLVMContextImpl::UnionConstantsTy::MapKey, ConstantUnion*> Lookup;
-  Lookup.first.first = cast<UnionType>(getRawType());
-  Lookup.second = this;
-  Lookup.first.second = ToC;
-
-  LLVMContextImpl *pImpl = getRawType()->getContext().pImpl;
-
-  Constant *Replacement = 0;
-  if (ToC->isNullValue()) {
-    Replacement = ConstantAggregateZero::get(getRawType());
-  } else {
-    // Check to see if we have this union type already.
-    bool Exists;
-    LLVMContextImpl::UnionConstantsTy::MapTy::iterator I =
-      pImpl->UnionConstants.InsertOrGetItem(Lookup, Exists);
-    
-    if (Exists) {
-      Replacement = I->second;
-    } else {
-      // Okay, the new shape doesn't exist in the system yet.  Instead of
-      // creating a new constant union, inserting it, replaceallusesof'ing the
-      // old with the new, then deleting the old... just update the current one
-      // in place!
-      pImpl->UnionConstants.MoveConstantToNewSlot(this, I);
-      
-      // Update to the new value.
-      setOperand(0, ToC);
       return;
     }
   }

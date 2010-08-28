@@ -454,15 +454,6 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
   case Type::StructTyID:
     // Get the layout annotation... which is lazily created on demand.
     return getStructLayout(cast<StructType>(Ty))->getSizeInBits();
-  case Type::UnionTyID: {
-    const UnionType *UnTy = cast<UnionType>(Ty);
-    uint64_t Size = 0;
-    for (UnionType::element_iterator i = UnTy->element_begin(),
-             e = UnTy->element_end(); i != e; ++i) {
-      Size = std::max(Size, getTypeSizeInBits(*i));
-    }
-    return Size;
-  }
   case Type::IntegerTyID:
     return cast<IntegerType>(Ty)->getBitWidth();
   case Type::VoidTyID:
@@ -518,17 +509,6 @@ unsigned TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
     unsigned Align = getAlignmentInfo(AGGREGATE_ALIGN, 0, abi_or_pref, Ty);
     return std::max(Align, Layout->getAlignment());
-  }
-  case Type::UnionTyID: {
-    const UnionType *UnTy = cast<UnionType>(Ty);
-    unsigned Align = 1;
-
-    // Unions need the maximum alignment of all their entries
-    for (UnionType::element_iterator i = UnTy->element_begin(), 
-             e = UnTy->element_end(); i != e; ++i) {
-      Align = std::max(Align, getAlignment(*i, abi_or_pref));
-    }
-    return Align;
   }
   case Type::IntegerTyID:
   case Type::VoidTyID:
@@ -614,11 +594,6 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
 
       // Update Ty to refer to current element
       Ty = STy->getElementType(FieldNo);
-    } else if (const UnionType *UnTy = dyn_cast<UnionType>(*TI)) {
-        unsigned FieldNo = cast<ConstantInt>(Indices[CurIDX])->getZExtValue();
-
-        // Offset into union is canonically 0, but type changes
-        Ty = UnTy->getElementType(FieldNo);
     } else {
       // Update Ty to refer to current element
       Ty = cast<SequentialType>(Ty)->getElementType();

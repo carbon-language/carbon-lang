@@ -144,10 +144,6 @@ public:
     ConstantStruct, true /*largekey*/> StructConstantsTy;
   StructConstantsTy StructConstants;
   
-  typedef ConstantUniqueMap<Constant*, UnionType, ConstantUnion>
-      UnionConstantsTy;
-  UnionConstantsTy UnionConstants;
-  
   typedef ConstantUniqueMap<std::vector<Constant*>, VectorType,
                             ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
@@ -192,7 +188,6 @@ public:
   TypeMap<PointerValType, PointerType> PointerTypes;
   TypeMap<FunctionValType, FunctionType> FunctionTypes;
   TypeMap<StructValType, StructType> StructTypes;
-  TypeMap<UnionValType, UnionType> UnionTypes;
   TypeMap<IntegerValType, IntegerType> IntegerTypes;
 
   // Opaque types are not structurally uniqued, so don't use TypeMap.

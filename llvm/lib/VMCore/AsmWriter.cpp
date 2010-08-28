@@ -238,21 +238,6 @@ void TypePrinting::CalcTypeName(const Type *Ty,
       OS << '>';
     break;
   }
-  case Type::UnionTyID: {
-    const UnionType *UTy = cast<UnionType>(Ty);
-    OS << "union {";
-    for (StructType::element_iterator I = UTy->element_begin(),
-         E = UTy->element_end(); I != E; ++I) {
-      OS << ' ';
-      CalcTypeName(*I, TypeStack, OS);
-      if (llvm::next(I) == UTy->element_end())
-        OS << ' ';
-      else
-        OS << ',';
-    }
-    OS << '}';
-    break;
-  }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
     CalcTypeName(PTy->getElementType(), TypeStack, OS);
@@ -1042,16 +1027,6 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
     return;
   }
 
-  if (const ConstantUnion *CU = dyn_cast<ConstantUnion>(CV)) {
-    Out << "{ ";
-    TypePrinter.print(CU->getOperand(0)->getType(), Out);
-    Out << ' ';
-    WriteAsOperandInternal(Out, CU->getOperand(0), &TypePrinter, Machine,
-                           Context);
-    Out << " }";
-    return;
-  }
-  
   if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     const Type *ETy = CP->getType()->getElementType();
     assert(CP->getNumOperands() > 0 &&

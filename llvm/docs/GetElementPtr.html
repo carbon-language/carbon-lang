@@ -26,7 +26,6 @@
     <li><a href="#lead0">Why don't GEP x,0,0,1 and GEP x,1 alias? </a></li>
     <li><a href="#trail0">Why do GEP x,1,0,0 and GEP x,1 alias? </a></li>
     <li><a href="#vectors">Can GEP index into vector elements?</a>
-    <li><a href="#unions">Can GEP index into unions?</a>
     <li><a href="#addrspace">What effect do address spaces have on GEPs?</a>
     <li><a href="#int">How is GEP different from ptrtoint, arithmetic, and inttoptr?</a></li>
     <li><a href="#be">I'm writing a backend for a target which needs custom lowering for GEP. How do I do this?</a>
@@ -364,16 +363,6 @@ idx3 = (char*) &amp;MyVar + 8
      It leads to awkward special cases in the optimizers, and fundamental
      inconsistency in the IR. In the future, it will probably be outright
      disallowed.</p>
-
-</div>
-
-<!-- *********************************************************************** -->
-
-<div class="doc_subsection">
-  <a name="unions"><b>Can GEP index into unions?</b></a>
-</div>
-<div class="doc_text">
-   <p>Unknown.</p>
 
 </div>
 

@@ -27,7 +27,6 @@ template<class ValType, class TypeClass> class TypeMap;
 class FunctionValType;
 class ArrayValType;
 class StructValType;
-class UnionValType;
 class PointerValType;
 class VectorValType;
 class IntegerValType;
@@ -226,8 +225,7 @@ public:
     return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == StructTyID ||
            T->getTypeID() == PointerTyID ||
-           T->getTypeID() == VectorTyID ||
-           T->getTypeID() == UnionTyID;
+           T->getTypeID() == VectorTyID;
   }
 };
 
@@ -297,64 +295,6 @@ public:
 
   bool isPacked() const { return (0 != getSubclassData()) ? true : false; }
 };
-
-
-/// UnionType - Class to represent union types. A union type is similar to
-/// a structure, except that all member fields begin at offset 0.
-///
-class UnionType : public CompositeType {
-  friend class TypeMap<UnionValType, UnionType>;
-  UnionType(const UnionType &);                   // Do not implement
-  const UnionType &operator=(const UnionType &);  // Do not implement
-  UnionType(LLVMContext &C, const Type* const* Types, unsigned NumTypes);
-public:
-  /// UnionType::get - This static method is the primary way to create a
-  /// UnionType.
-  static UnionType *get(const Type* const* Types, unsigned NumTypes);
-
-  /// UnionType::get - This static method is a convenience method for
-  /// creating union types by specifying the elements as arguments.
-  static UnionType *get(const Type *type, ...) END_WITH_NULL;
-
-  /// isValidElementType - Return true if the specified type is valid as a
-  /// element type.
-  static bool isValidElementType(const Type *ElemTy);
-  
-  /// Given an element type, return the member index of that type, or -1
-  /// if there is no such member type.
-  int getElementTypeIndex(const Type *ElemTy) const;
-
-  // Iterator access to the elements
-  typedef Type::subtype_iterator element_iterator;
-  element_iterator element_begin() const { return ContainedTys; }
-  element_iterator element_end() const { return &ContainedTys[NumContainedTys];}
-
-  // Random access to the elements
-  unsigned getNumElements() const { return NumContainedTys; }
-  const Type *getElementType(unsigned N) const {
-    assert(N < NumContainedTys && "Element number out of range!");
-    return ContainedTys[N];
-  }
-
-  /// getTypeAtIndex - Given an index value into the type, return the type of
-  /// the element.  For a union type, this must be a constant value...
-  ///
-  virtual const Type *getTypeAtIndex(const Value *V) const;
-  virtual const Type *getTypeAtIndex(unsigned Idx) const;
-  virtual bool indexValid(const Value *V) const;
-  virtual bool indexValid(unsigned Idx) const;
-
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  virtual void typeBecameConcrete(const DerivedType *AbsTy);
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UnionType *) { return true; }
-  static inline bool classof(const Type *T) {
-    return T->getTypeID() == UnionTyID;
-  }
-};
-
 
 /// SequentialType - This is the superclass of the array, pointer and vector
 /// type classes.  All of these represent "arrays" in memory.  The array type

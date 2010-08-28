@@ -32,7 +32,6 @@ namespace llvm {
   class GlobalValue;
   class MDString;
   class MDNode;
-  class UnionType;
 
   /// ValID - Represents a reference of a definition of some sort with no type.
   /// There are several cases where we have to parse the value but where the
@@ -229,7 +228,6 @@ namespace llvm {
     }
     bool ParseTypeRec(PATypeHolder &H);
     bool ParseStructType(PATypeHolder &H, bool Packed);
-    bool ParseUnionType(PATypeHolder &H);
     bool ParseArrayVectorType(PATypeHolder &H, bool isVector);
     bool ParseFunctionType(PATypeHolder &Result);
     PATypeHolder HandleUpRefs(const Type *Ty);
@@ -298,7 +296,6 @@ namespace llvm {
       return ParseTypeAndBasicBlock(BB, Loc, PFS);
     }
 
-    bool ParseUnionValue(const UnionType* utype, ValID &ID, Value *&V);
 
     struct ParamInfo {
       LocTy Loc;

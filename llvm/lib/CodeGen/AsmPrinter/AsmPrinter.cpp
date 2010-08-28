@@ -1433,21 +1433,6 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
          "Layout of constant struct may be incorrect!");
 }
 
-static void EmitGlobalConstantUnion(const ConstantUnion *CU, 
-                                    unsigned AddrSpace, AsmPrinter &AP) {
-  const TargetData *TD = AP.TM.getTargetData();
-  unsigned Size = TD->getTypeAllocSize(CU->getType());
-
-  const Constant *Contents = CU->getOperand(0);
-  unsigned FilledSize = TD->getTypeAllocSize(Contents->getType());
-    
-  // Print the actually filled part
-  EmitGlobalConstantImpl(Contents, AddrSpace, AP);
-
-  // And pad with enough zeroes
-  AP.OutStreamer.EmitZeros(Size-FilledSize, AddrSpace);
-}
-
 static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
                                  AsmPrinter &AP) {
   // FP Constants are printed as integer constants to avoid losing
@@ -1572,9 +1557,6 @@ static void EmitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
     AP.OutStreamer.EmitIntValue(0, Size, AddrSpace);
     return;
   }
-  
-  if (const ConstantUnion *CVU = dyn_cast<ConstantUnion>(CV))
-    return EmitGlobalConstantUnion(CVU, AddrSpace, AP);
   
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
     return EmitGlobalConstantVector(V, AddrSpace, AP);

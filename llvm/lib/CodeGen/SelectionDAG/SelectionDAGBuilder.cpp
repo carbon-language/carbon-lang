@@ -2804,11 +2804,6 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       }
 
       Ty = StTy->getElementType(Field);
-    } else if (const UnionType *UnTy = dyn_cast<UnionType>(Ty)) {
-      unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
-      
-      // Offset canonically 0 for unions, but type changes
-      Ty = UnTy->getElementType(Field);
     } else {
       Ty = cast<SequentialType>(Ty)->getElementType();
 

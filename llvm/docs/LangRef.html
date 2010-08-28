@@ -74,7 +74,6 @@
               <li><a href="#t_array">Array Type</a></li>
               <li><a href="#t_struct">Structure Type</a></li>
               <li><a href="#t_pstruct">Packed Structure Type</a></li>
-              <li><a href="#t_union">Union Type</a></li>
               <li><a href="#t_vector">Vector Type</a></li>
             </ol>
           </li>
@@ -1475,7 +1474,6 @@ Classifications</a> </div>
           <a href="#t_pointer">pointer</a>,
           <a href="#t_vector">vector</a>,
           <a href="#t_struct">structure</a>,
-          <a href="#t_union">union</a>,
           <a href="#t_array">array</a>,
           <a href="#t_label">label</a>,
           <a href="#t_metadata">metadata</a>.
@@ -1495,7 +1493,6 @@ Classifications</a> </div>
           <a href="#t_pointer">pointer</a>,
           <a href="#t_struct">structure</a>,
           <a href="#t_pstruct">packed structure</a>,
-          <a href="#t_union">union</a>,
           <a href="#t_vector">vector</a>,
           <a href="#t_opaque">opaque</a>.
       </td>
@@ -1643,8 +1640,8 @@ Classifications</a> </div>
 
 <p>Aggregate Types are a subset of derived types that can contain multiple
   member types. <a href="#t_array">Arrays</a>,
-  <a href="#t_struct">structs</a>, <a href="#t_vector">vectors</a> and
-  <a href="#t_union">unions</a> are aggregate types.</p>
+  <a href="#t_struct">structs</a>, and <a href="#t_vector">vectors</a> are
+  aggregate types.</p>
 
 </div>
 
@@ -1714,9 +1711,7 @@ Classifications</a> </div>
 <h5>Overview:</h5>
 <p>The function type can be thought of as a function signature.  It consists of
    a return type and a list of formal parameter types. The return type of a
-   function type is a scalar type, a void type, a struct type, or a union
-   type.  If the return type is a struct type then all struct elements must be
-   of first class types, and the struct must have at least one element.</p>
+   function type is a first class type or a void type.</p>
 
 <h5>Syntax:</h5>
 <pre>
@@ -1829,53 +1824,6 @@ Classifications</a> </div>
   <td class="left">
 <tt>&lt;&nbsp;{&nbsp;float,&nbsp;i32&nbsp;(i32)*&nbsp;}&nbsp;&gt;</tt></td>
     <td class="left">A pair, where the first element is a <tt>float</tt> and the
-      second element is a <a href="#t_pointer">pointer</a> to a
-      <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
-      an <tt>i32</tt>.</td>
-  </tr>
-</table>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_union">Union Type</a> </div>
-
-<div class="doc_text">
-
-<h5>Overview:</h5>
-<p>A union type describes an object with size and alignment suitable for
-   an object of any one of a given set of types (also known as an "untagged"
-   union). It is similar in concept and usage to a
-   <a href="#t_struct">struct</a>, except that all members of the union
-   have an offset of zero. The elements of a union may be any type that has a
-   size. Unions must have at least one member - empty unions are not allowed.
-   </p>
-
-<p>The size of the union as a whole will be the size of its largest member,
-   and the alignment requirements of the union as a whole will be the largest
-   alignment requirement of any member.</p>
-
-<p>Union members are accessed using '<tt><a href="#i_load">load</a></tt> and
-   '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field with
-   the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
-   Since all members are at offset zero, the getelementptr instruction does
-   not affect the address, only the type of the resulting pointer.</p>
-
-<h5>Syntax:</h5>
-<pre>
-  union { &lt;type list&gt; }
-</pre>
-
-<h5>Examples:</h5>
-<table class="layout">
-  <tr class="layout">
-    <td class="left"><tt>union { i32, i32*, float }</tt></td>
-    <td class="left">A union of three types: an <tt>i32</tt>, a pointer to
-      an <tt>i32</tt>, and a <tt>float</tt>.</td>
-  </tr><tr class="layout">
-    <td class="left">
-      <tt>union {&nbsp;float,&nbsp;i32&nbsp;(i32)&nbsp;*&nbsp;}</tt></td>
-    <td class="left">A union, where the first element is a <tt>float</tt> and the
       second element is a <a href="#t_pointer">pointer</a> to a
       <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
       an <tt>i32</tt>.</td>
@@ -2124,14 +2072,6 @@ Classifications</a> </div>
       Structure constants must have <a href="#t_struct">structure type</a>, and
       the number and types of elements must match those specified by the
       type.</dd>
-
-  <dt><b>Union constants</b></dt>
-  <dd>Union constants are represented with notation similar to a structure with
-      a single element - that is, a single typed element surrounded
-      by braces (<tt>{}</tt>)).  For example: "<tt>{ i32 4 }</tt>".  The
-      <a href="#t_union">union type</a> can be initialized with a single-element
-      struct as long as the type of the struct element matches the type of
-      one of the union members.</dd>
 
   <dt><b>Array constants</b></dt>
   <dd>Array constants are represented with notation similar to array type
@@ -4153,7 +4093,7 @@ Instruction</a> </div>
 
 <h5>Arguments:</h5>
 <p>The first operand of an '<tt>extractvalue</tt>' instruction is a value
-   of <a href="#t_struct">struct</a>, <a href="#t_union">union</a>  or
+   of <a href="#t_struct">struct</a> or
    <a href="#t_array">array</a> type.  The operands are constant indices to
    specify which value to extract in a similar manner as indices in a
    '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
@@ -4187,7 +4127,7 @@ Instruction</a> </div>
 
 <h5>Arguments:</h5>
 <p>The first operand of an '<tt>insertvalue</tt>' instruction is a value
-   of <a href="#t_struct">struct</a>, <a href="#t_union">union</a> or
+   of <a href="#t_struct">struct</a> or
    <a href="#t_array">array</a> type.  The second operand is a first-class
    value to insert.  The following operands are constant indices indicating
    the position at which to insert the value in a similar manner as indices in a
@@ -4420,12 +4360,12 @@ Instruction</a> </div>
    indexes a value of the type pointed to (not necessarily the value directly
    pointed to, since the first index can be non-zero), etc. The first type
    indexed into must be a pointer value, subsequent types can be arrays,
-   vectors, structs and unions. Note that subsequent types being indexed into
+   vectors, and structs. Note that subsequent types being indexed into
    can never be pointers, since that would require loading the pointer before
    continuing calculation.</p>
 
 <p>The type of each index argument depends on the type it is indexing into.
-   When indexing into a (optionally packed) structure or union, only <tt>i32</tt>
+   When indexing into a (optionally packed) structure, only <tt>i32</tt>
    integer <b>constants</b> are allowed.  When indexing into an array, pointer
    or vector, integers of any width are allowed, and they are not required to be
    constant.</p>
