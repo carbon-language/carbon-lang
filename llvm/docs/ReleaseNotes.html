@@ -68,7 +68,6 @@ Almost dead code.
   lib/Transforms/IPO/MergeFunctions.cpp => consider for 2.8.
   llvm/Analysis/PointerTracking.h => Edwin wants this, consider for 2.8.
   GEPSplitterPass
-  MSIL backend?
 -->
  
    
@@ -77,6 +76,7 @@ Almost dead code.
   strong phi elim
   llvm.dbg.value: variable debug info for optimized code
   loop dependence analysis
+  TBAA
  -->
 
  <!-- for announcement email:
@@ -489,8 +489,9 @@ on LLVM 2.7, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
-
-<li>.</li>
+<li>MSIL Backend removed.</li>
+<li>ABCD and SSI passes removed.</li>
+<li>'Union' LLVM IR feature removed.</li>
 </ul>
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
@@ -575,7 +576,7 @@ components, please contact us on the <a
 href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
-<li>The MSIL, Alpha, SPU, MIPS, PIC16, Blackfin, MSP430, SystemZ and MicroBlaze
+<li>The Alpha, SPU, MIPS, PIC16, Blackfin, MSP430, SystemZ and MicroBlaze
     backends are experimental.</li>
 <li><tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
     supported value for this option.  XXX Update me</li>
