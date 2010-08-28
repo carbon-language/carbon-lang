@@ -1381,6 +1381,9 @@ static unsigned getTypeSizeIndex(unsigned Value, const Type *Ty) {
 static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
                                      SmallVectorImpl<Value*> &Elements,
                                      const Type *VecEltTy) {
+  // Undef values never contribute useful bits to the result.
+  if (isa<UndefValue>(V)) return true;
+  
   // If we got down to a value of the right type, we win, try inserting into the
   // right element.
   if (V->getType() == VecEltTy) {
