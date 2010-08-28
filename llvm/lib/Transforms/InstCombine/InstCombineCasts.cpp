@@ -1366,7 +1366,7 @@ static bool isMultipleOfTypeSize(unsigned Value, const Type *Ty) {
   return Value % Ty->getPrimitiveSizeInBits() == 0;
 }
 
-static bool getTypeSizeIndex(unsigned Value, const Type *Ty) {
+static unsigned getTypeSizeIndex(unsigned Value, const Type *Ty) {
   return Value / Ty->getPrimitiveSizeInBits();
 }
 
@@ -1384,6 +1384,11 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
   // If we got down to a value of the right type, we win, try inserting into the
   // right element.
   if (V->getType() == VecEltTy) {
+    // Inserting null doesn't actually insert any elements.
+    if (Constant *C = dyn_cast<Constant>(V))
+      if (C->isNullValue())
+        return true;
+    
     // Fail if multiple elements are inserted into this slot.
     if (ElementIndex >= Elements.size() || Elements[ElementIndex] != 0)
       return false;
@@ -1392,10 +1397,34 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     return true;
   }
   
-  //if (Constant *C = dyn_cast<Constant>(V)) {
+  if (Constant *C = dyn_cast<Constant>(V)) {
     // Figure out the # elements this provides, and bitcast it or slice it up
     // as required.
-  //}
+    unsigned NumElts = getTypeSizeIndex(C->getType()->getPrimitiveSizeInBits(),
+                                        VecEltTy);
+    // If the constant is the size of a vector element, we just need to bitcast
+    // it to the right type so it gets properly inserted.
+    if (NumElts == 1)
+      return CollectInsertionElements(ConstantExpr::getBitCast(C, VecEltTy),
+                                      ElementIndex, Elements, VecEltTy);
+    
+    // Okay, this is a constant that covers multiple elements.  Slice it up into
+    // pieces and insert each element-sized piece into the vector.
+    if (!isa<IntegerType>(C->getType()))
+      C = ConstantExpr::getBitCast(C, IntegerType::get(V->getContext(),
+                                       C->getType()->getPrimitiveSizeInBits()));
+    unsigned ElementSize = VecEltTy->getPrimitiveSizeInBits();
+    const Type *ElementIntTy = IntegerType::get(C->getContext(), ElementSize);
+    
+    for (unsigned i = 0; i != NumElts; ++i) {
+      Constant *Piece = ConstantExpr::getLShr(C, ConstantInt::get(C->getType(),
+                                                               i*ElementSize));
+      Piece = ConstantExpr::getTrunc(Piece, ElementIntTy);
+      if (!CollectInsertionElements(Piece, ElementIndex+i, Elements, VecEltTy))
+        return false;
+    }
+    return true;
+  }
   
   if (!V->hasOneUse()) return false;
   

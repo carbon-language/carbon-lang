@@ -91,3 +91,15 @@ define <2 x float> @test5(float %A, float %B) {
   ; CHECK-NEXT: insertelement <2 x float> {{.*}}, float %B, i32 1
   ; CHECK-NEXT: ret <2 x float> 
 }
+
+define <2 x float> @test6(float %A){
+  %tmp23 = bitcast float %A to i32              ; <i32> [#uses=1]
+  %tmp24 = zext i32 %tmp23 to i64                 ; <i64> [#uses=1]
+  %tmp25 = shl i64 %tmp24, 32                     ; <i64> [#uses=1]
+  %mask20 = or i64 %tmp25, 1109917696             ; <i64> [#uses=1]
+  %tmp35 = bitcast i64 %mask20 to <2 x float>     ; <<2 x float>> [#uses=1]
+  ret <2 x float> %tmp35
+; CHECK: @test6
+; CHECK-NEXT: insertelement <2 x float> <float 4.200000e+01, float undef>, float %A, i32 1
+; CHECK: ret
+}
