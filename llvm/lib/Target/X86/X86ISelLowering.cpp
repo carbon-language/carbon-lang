@@ -4304,8 +4304,18 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
     unsigned EltStride = NumElems >> 1;
     while (EltStride != 0) {
-      for (unsigned i = 0; i < EltStride; ++i)
+      for (unsigned i = 0; i < EltStride; ++i) {
+        // If V[i+EltStride] is undef and this is the first round of mixing,
+        // then it is safe to just drop this shuffle: V[i] is already in the
+        // right place, the one element (since it's the first round) being
+        // inserted as undef can be dropped.  This isn't safe for successive
+        // rounds because they will permute elements within both vectors.
+        if (V[i+EltStride].getOpcode() == ISD::UNDEF &&
+            EltStride == NumElems/2)
+          continue;
+        
         V[i] = getUnpackl(DAG, dl, VT, V[i], V[i + EltStride]);
+      }
       EltStride >>= 1;
     }
     return V[0];
