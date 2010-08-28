@@ -60,3 +60,34 @@ define float @test3(<2 x float> %A, <2 x i64> %B) {
 ; CHECK-NEXT:  %add = fadd float %tmp24, %tmp4
 ; CHECK-NEXT:  ret float %add
 }
+
+
+define <2 x i32> @test4(i32 %A, i32 %B){
+  %tmp38 = zext i32 %A to i64
+  %tmp32 = zext i32 %B to i64
+  %tmp33 = shl i64 %tmp32, 32
+  %ins35 = or i64 %tmp33, %tmp38
+  %tmp43 = bitcast i64 %ins35 to <2 x i32>
+  ret <2 x i32> %tmp43
+  ; CHECK: @test4
+  ; CHECK-NEXT: insertelement <2 x i32> undef, i32 %A, i32 0
+  ; CHECK-NEXT: insertelement <2 x i32> {{.*}}, i32 %B, i32 1
+  ; CHECK-NEXT: ret <2 x i32> 
+
+}
+
+; rdar://8360454
+define <2 x float> @test5(float %A, float %B) {
+  %tmp37 = bitcast float %A to i32
+  %tmp38 = zext i32 %tmp37 to i64
+  %tmp31 = bitcast float %B to i32
+  %tmp32 = zext i32 %tmp31 to i64
+  %tmp33 = shl i64 %tmp32, 32
+  %ins35 = or i64 %tmp33, %tmp38
+  %tmp43 = bitcast i64 %ins35 to <2 x float>
+  ret <2 x float> %tmp43
+  ; CHECK: @test5
+  ; CHECK-NEXT: insertelement <2 x float> undef, float %A, i32 0
+  ; CHECK-NEXT: insertelement <2 x float> {{.*}}, float %B, i32 1
+  ; CHECK-NEXT: ret <2 x float> 
+}

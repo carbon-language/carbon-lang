@@ -312,8 +312,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   // cast of lshr(shl(x,c1),c2) as well as other more complex cases.
   if (I.getOpcode() != Instruction::AShr &&
       CanEvaluateShifted(Op0, Op1->getZExtValue(), isLeftShift, *this)) {
-    DEBUG(dbgs() << "ICE: GetShiftedValue propagatin shift through expression"
-              " to eliminate shift:\n IN: " << *Op0 << "\nSH: " << I << "\n");
+    DEBUG(dbgs() << "ICE: GetShiftedValue propagating shift through expression"
+              " to eliminate shift:\n  IN: " << *Op0 << "\n  SH: " << I <<"\n");
     
     return ReplaceInstUsesWith(I, 
                  GetShiftedValue(Op0, Op1->getZExtValue(), isLeftShift, *this));
