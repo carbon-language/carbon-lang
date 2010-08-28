@@ -363,6 +363,7 @@ def fno_pie : Flag<"-fno-pie">, Group<f_Group>;
 def fprofile_arcs : Flag<"-fprofile-arcs">, Group<f_Group>;
 def fprofile_generate : Flag<"-fprofile-generate">, Group<f_Group>;
 def framework : Separate<"-framework">, Flags<[LinkerInput]>;
+def frandom_seed_EQ : Joined<"-frandom-seed=">, Group<clang_ignored_f_Group>;
 def frtti : Flag<"-frtti">, Group<f_Group>;
 def fsched_interblock : Flag<"-fsched-interblock">, Group<clang_ignored_f_Group>;
 def fshort_enums : Flag<"-fshort-enums">, Group<clang_ignored_f_Group>;
