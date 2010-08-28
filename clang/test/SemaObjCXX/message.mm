@@ -38,7 +38,7 @@ I2 *operator+(I2_holder, int);
   return 0;
 }
 + (void)method {
-  [ivar method]; // expected-error{{receiver type 'ivar' (aka 'ivar') is not an Objective-C class}}
+  [ivar method]; // expected-error{{receiver type 'ivar' is not an Objective-C class}}
 }
 @end
 

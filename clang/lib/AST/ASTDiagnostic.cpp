@@ -151,10 +151,13 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
     bool ShouldAKA = false;
     QualType DesugaredTy = Desugar(Context, Ty, ShouldAKA);
     if (ShouldAKA) {
-      S = "'"+S+"' (aka '";
-      S += DesugaredTy.getAsString(Context.PrintingPolicy);
-      S += "')";
-      return S;
+      std::string D = DesugaredTy.getAsString(Context.PrintingPolicy);
+      if (D != S) {
+        S = "'" + S + "' (aka '";
+        S += D;
+        S += "')";
+        return S;
+      }
     }
   }
 
