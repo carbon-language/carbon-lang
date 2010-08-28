@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "X86IntelInstPrinter.h"
+#include "X86InstComments.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
@@ -30,6 +31,10 @@ using namespace llvm;
 
 void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
   printInstruction(MI, OS);
+  
+  // If verbose assembly is enabled, we can print some informative comments.
+  if (CommentStream)
+    EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
 }
 StringRef X86IntelInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);
