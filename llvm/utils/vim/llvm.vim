@@ -59,8 +59,7 @@ syn keyword llvmKeyword target datalayout triple
 syn keyword llvmKeyword blockaddress
 
 " Obsolete keywords.
-syn keyword llvmError  uninitialized implementation
-syn keyword llvmError  getresult big little endian begin end
+syn keyword llvmError  getresult begin end
 
 " Misc syntax.
 syn match   llvmNoName /[%@]\d\+\>/
