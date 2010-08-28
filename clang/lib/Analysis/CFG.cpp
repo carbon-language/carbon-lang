@@ -390,6 +390,12 @@ tryAgain:
     case Stmt::CXXCatchStmtClass:
       return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
 
+    case Stmt::CXXExprWithTemporariesClass: {
+      // FIXME: Handle temporaries.  For now, just visit the subexpression
+      // so we don't artificially create extra blocks.
+      return Visit(cast<CXXExprWithTemporaries>(S)->getSubExpr());    
+    }
+
     case Stmt::CXXMemberCallExprClass:
       return VisitCXXMemberCallExpr(cast<CXXMemberCallExpr>(S), asc);
 

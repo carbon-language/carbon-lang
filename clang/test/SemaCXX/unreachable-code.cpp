@@ -39,3 +39,20 @@ void test3() {
     bar();     // expected-warning {{will never be executed}}
   }
 }
+
+// PR 6130 - Don't warn about bogus unreachable code with throw's and
+// temporary objects.
+class PR6130 {
+public:
+  PR6130();
+  ~PR6130();
+};
+
+int pr6130(unsigned i) {
+  switch(i) {
+    case 0: return 1;
+    case 1: return 2;
+    default:
+      throw PR6130(); // no-warning
+  }
+}
