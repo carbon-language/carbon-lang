@@ -400,8 +400,10 @@ PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
     for (unsigned i = 0; i < path.length(); ++i)
       status.uniqueID += path[i];
 
-    __int64 ft = *reinterpret_cast<__int64*>(&fi.ftLastWriteTime);
-    status.modTime.fromWin32Time(ft);
+    ULARGE_INTEGER ui;
+    ui.LowPart = fi.ftLastWriteTime.dwLowDateTime;
+    ui.HighPart = fi.ftLastWriteTime.dwHighDateTime;
+    status.modTime.fromWin32Time(ui.QuadPart);
 
     status.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
     fsIsValid = true;
@@ -777,8 +779,11 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrMsg) const {
     return MakeErrMsg(ErrMsg, path + ": GetFileInformationByHandle: ");
   }
 
+  ULARGE_INTEGER ui;
+  ui.QuadPart = si.modTime.toWin32Time();
   FILETIME ft;
-  (uint64_t&)ft = si.modTime.toWin32Time();
+  ft.dwLowDateTime = ui.LowPart;
+  ft.dwHighDateTime = ui.HighPart;
   BOOL ret = SetFileTime(h, NULL, &ft, &ft);
   DWORD err = GetLastError();
   CloseHandle(h);
