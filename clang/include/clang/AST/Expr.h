@@ -2429,7 +2429,7 @@ public:
     return cast<Expr>(SubExprs[LHS] ? SubExprs[LHS] : SubExprs[COND]);
   }
 
-  // getTrueExpr - Return the subexpression representing the value of the ?:
+  // getFalseExpr - Return the subexpression representing the value of the ?:
   // expression if the condition evaluates to false. This is the same as getRHS.
   Expr *getFalseExpr() const { return cast<Expr>(SubExprs[RHS]); }
 
