@@ -334,6 +334,7 @@ AnalysisContext::~AnalysisContext() {
   delete cfg;
   delete completeCFG;
   delete liveness;
+  delete relaxedLiveness;
   delete PM;
   delete PCA;
   delete ReferencedBlockVars;
