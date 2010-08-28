@@ -124,15 +124,16 @@ def nModImm : Operand<i32> {
 // NEON load / store instructions
 //===----------------------------------------------------------------------===//
 
-let mayLoad = 1, neverHasSideEffects = 1 in {
 // Use vldmia to load a Q register as a D register pair.
 // This is equivalent to VLDMD except that it has a Q register operand
 // instead of a pair of D registers.
 def VLDMQ
   : AXDI5<(outs QPR:$dst), (ins addrmode4:$addr, pred:$p),
           IndexModeNone, IIC_fpLoadm,
-          "vldm${addr:submode}${p}\t$addr, ${dst:dregpair}", "", []>;
+          "vldm${addr:submode}${p}\t$addr, ${dst:dregpair}", "",
+          [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]>;
 
+let mayLoad = 1, neverHasSideEffects = 1 in {
 // Use vld1 to load a Q register as a D register pair.
 // This alternative to VLDMQ allows an alignment to be specified.
 // This is equivalent to VLD1q64 except that it has a Q register operand.
@@ -141,15 +142,16 @@ def VLD1q
           IIC_VLD1, "vld1", "64", "${dst:dregpair}, $addr", "", []>;
 } // mayLoad = 1, neverHasSideEffects = 1
 
-let mayStore = 1, neverHasSideEffects = 1 in {
 // Use vstmia to store a Q register as a D register pair.
 // This is equivalent to VSTMD except that it has a Q register operand
 // instead of a pair of D registers.
 def VSTMQ
   : AXDI5<(outs), (ins QPR:$src, addrmode4:$addr, pred:$p),
           IndexModeNone, IIC_fpStorem,
-          "vstm${addr:submode}${p}\t$addr, ${src:dregpair}", "", []>;
+          "vstm${addr:submode}${p}\t$addr, ${src:dregpair}", "",
+          [(store (v2f64 QPR:$src), addrmode4:$addr)]>;
 
+let mayStore = 1, neverHasSideEffects = 1 in {
 // Use vst1 to store a Q register as a D register pair.
 // This alternative to VSTMQ allows an alignment to be specified.
 // This is equivalent to VST1q64 except that it has a Q register operand.
