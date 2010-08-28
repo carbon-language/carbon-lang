@@ -766,7 +766,7 @@ static AccessResult HasAccess(Sema &S,
     case AR_inaccessible: return OnFailure;
     case AR_dependent: return AR_dependent;
     }
-    llvm::unreachable("impossible friendship kind");
+    llvm_unreachable("impossible friendship kind");
   }
 
   switch (GetFriendKind(S, EC, NamingClass)) {
