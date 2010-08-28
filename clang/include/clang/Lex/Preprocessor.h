@@ -78,7 +78,8 @@ class Preprocessor {
   IdentifierInfo *Ident__BASE_FILE__;              // __BASE_FILE__
   IdentifierInfo *Ident__TIMESTAMP__;              // __TIMESTAMP__
   IdentifierInfo *Ident__COUNTER__;                // __COUNTER__
-  IdentifierInfo *Ident_Pragma, *Ident__VA_ARGS__; // _Pragma, __VA_ARGS__
+  IdentifierInfo *Ident_Pragma, *Ident__pragma;    // _Pragma, __pragma
+  IdentifierInfo *Ident__VA_ARGS__;                // __VA_ARGS__
   IdentifierInfo *Ident__has_feature;              // __has_feature
   IdentifierInfo *Ident__has_builtin;              // __has_builtin
   IdentifierInfo *Ident__has_include;              // __has_include
@@ -903,6 +904,13 @@ private:
   /// return the first token after the directive.  The _Pragma token has just
   /// been read into 'Tok'.
   void Handle_Pragma(Token &Tok);
+
+  /// HandleMicrosoft__pragma - Like Handle_Pragma except the pragma text
+  /// is not enclosed within a string literal.
+  void HandleMicrosoft__pragma(Token &Tok);
+
+  void Handle_Pragma(const std::string &StrVal, SourceLocation PragmaLoc,
+                     SourceLocation RParenLoc);
 
   /// EnterSourceFileWithLexer - Add a lexer to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.

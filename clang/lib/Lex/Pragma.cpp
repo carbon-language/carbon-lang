@@ -169,6 +169,57 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
       --e;
     }
   }
+  
+  Handle_Pragma(StrVal, PragmaLoc, RParenLoc);
+
+  // Finally, return whatever came after the pragma directive.
+  return Lex(Tok);
+}
+
+/// HandleMicrosoft__pragma - Like Handle_Pragma except the pragma text
+/// is not enclosed within a string literal.
+void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
+  // Remember the pragma token location.
+  SourceLocation PragmaLoc = Tok.getLocation();
+
+  // Read the '('.
+  Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(PragmaLoc, diag::err__Pragma_malformed);
+    return;
+  }
+
+  // Get the tokens enclosed within the __pragma().
+  llvm::SmallVector<Token, 32> PragmaToks;
+  int NumParens = 0;
+  Lex(Tok);
+  while (Tok.isNot(tok::eof)) {
+    if (Tok.is(tok::l_paren))
+      NumParens++;
+    else if (Tok.is(tok::r_paren) && NumParens-- == 0)
+      break;
+    PragmaToks.push_back(Tok);
+    Lex(Tok);
+  }
+
+  // Build the pragma string.
+  std::string StrVal = " ";
+  for (llvm::SmallVector<Token, 32>::iterator I =
+       PragmaToks.begin(), E = PragmaToks.end(); I != E; ++I) {
+    StrVal += getSpelling(*I);
+  }
+  
+  SourceLocation RParenLoc = Tok.getLocation();
+
+  Handle_Pragma(StrVal, PragmaLoc, RParenLoc);
+
+  // Finally, return whatever came after the pragma directive.
+  return Lex(Tok);
+}
+
+void Preprocessor::Handle_Pragma(const std::string &StrVal,
+                                 SourceLocation PragmaLoc,
+                                 SourceLocation RParenLoc) {
 
   // Plop the string (including the newline and trailing null) into a buffer
   // where we can lex it.
@@ -186,9 +237,6 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
 
   // With everything set up, lex this as a #pragma directive.
   HandlePragmaDirective();
-
-  // Finally, return whatever came after the pragma directive.
-  return Lex(Tok);
 }
 
 

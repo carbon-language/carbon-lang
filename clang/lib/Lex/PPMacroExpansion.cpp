@@ -72,6 +72,12 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_builtin      = RegisterBuiltinMacro(*this, "__has_builtin");
   Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
+
+  // Microsoft Extensions.
+  if (Features.Microsoft) 
+    Ident__pragma = RegisterBuiltinMacro(*this, "__pragma");
+  else
+    Ident__pragma = 0;
 }
 
 /// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
@@ -641,10 +647,12 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   IdentifierInfo *II = Tok.getIdentifierInfo();
   assert(II && "Can't be a macro without id info!");
 
-  // If this is an _Pragma directive, expand it, invoke the pragma handler, then
-  // lex the token after it.
+  // If this is an _Pragma or Microsoft __pragma directive, expand it,
+  // invoke the pragma handler, then lex the token after it.
   if (II == Ident_Pragma)
     return Handle_Pragma(Tok);
+  else if (II == Ident__pragma) // in non-MS mode this is null
+    return HandleMicrosoft__pragma(Tok);
 
   ++NumBuiltinMacroExpanded;
 

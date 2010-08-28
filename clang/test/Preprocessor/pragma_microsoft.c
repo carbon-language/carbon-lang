@@ -18,3 +18,23 @@
 
 #pragma comment(user, "foo\abar\nbaz\tsome	thing")
 
+
+// __pragma
+
+__pragma(comment(linker," bar=" BAR))                                            
+
+#define MACRO_WITH__PRAGMA { \
+  __pragma(warning(push)); \
+  __pragma(warning(disable: 10000)); \
+  2+2; \
+  __pragma(warning(pop)); \
+}
+
+void f()
+{
+  __pragma()
+
+  // If we ever actually *support* __pragma(warning(disable: x)),
+  // this warning should go away.
+  MACRO_WITH__PRAGMA // expected-warning {{expression result unused}}
+}
