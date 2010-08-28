@@ -4040,8 +4040,8 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
-  // All zero's are handled with pxor in SSE2 and above, xorps in SSE1 and
-  // all one's are handled with pcmpeqd. In AVX, zero's are handled with
+  // All zero's are handled with pxor in SSE2 and above, xorps in SSE1.
+  // All one's are handled with pcmpeqd. In AVX, zero's are handled with
   // vpxor in 128-bit and xor{pd,ps} in 256-bit, but no 256 version of pcmpeqd
   // is present, so AllOnes is ignored.
   if (ISD::isBuildVectorAllZeros(Op.getNode()) ||
@@ -4288,18 +4288,25 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       return V[0];
     }
     
-    // Otherwise, expand into a number of unpckl*
-    // e.g. for v4f32
+    // Otherwise, expand into a number of unpckl*, start by extending each of
+    // our (non-undef) elements to the full vector width with the element in the
+    // bottom slot of the vector (which generates no code for SSE).
+    for (unsigned i = 0; i < NumElems; ++i) {
+      if (Op.getOperand(i).getOpcode() != ISD::UNDEF)
+        V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
+      else
+        V[i] = DAG.getUNDEF(VT);
+    }
+
+    // Next, we iteratively mix elements, e.g. for v4f32:
     //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
     //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
     //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
-    for (unsigned i = 0; i < NumElems; ++i)
-      V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
-    NumElems >>= 1;
-    while (NumElems != 0) {
-      for (unsigned i = 0; i < NumElems; ++i)
-        V[i] = getUnpackl(DAG, dl, VT, V[i], V[i + NumElems]);
-      NumElems >>= 1;
+    unsigned EltStride = NumElems >> 1;
+    while (EltStride != 0) {
+      for (unsigned i = 0; i < EltStride; ++i)
+        V[i] = getUnpackl(DAG, dl, VT, V[i], V[i + EltStride]);
+      EltStride >>= 1;
     }
     return V[0];
   }
