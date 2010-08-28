@@ -318,21 +318,6 @@ CAMLprim value llvm_is_packed(LLVMTypeRef StructTy) {
   return Val_bool(LLVMIsPackedStruct(StructTy));
 }
 
-/*--... Operations on union types ..........................................--*/
-
-/* llcontext -> lltype array -> lltype */
-CAMLprim LLVMTypeRef llvm_union_type(LLVMContextRef C, value ElementTypes) {
-  return LLVMUnionTypeInContext(C, (LLVMTypeRef *) ElementTypes,
-                                Wosize_val(ElementTypes));
-}
-
-/* lltype -> lltype array */
-CAMLprim value llvm_union_element_types(LLVMTypeRef UnionTy) {
-  value Tys = alloc(LLVMCountUnionElementTypes(UnionTy), 0);
-  LLVMGetUnionElementTypes(UnionTy, (LLVMTypeRef *) Tys);
-  return Tys;
-}
-
 /*--... Operations on array, pointer, and vector types .....................--*/
 
 /* lltype -> int -> lltype */
