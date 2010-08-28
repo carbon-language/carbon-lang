@@ -307,29 +307,9 @@ extern char &InstructionNamerID;
   
 //===----------------------------------------------------------------------===//
 //
-// SSI - This pass converts instructions to Static Single Information form
-// on demand.
-//
-FunctionPass *createSSIPass();
-
-//===----------------------------------------------------------------------===//
-//
-// SSI - This pass converts every non-void instuction to Static Single
-// Information form.
-//
-FunctionPass *createSSIEverythingPass();
-
-//===----------------------------------------------------------------------===//
-//
 // GEPSplitter - Split complex GEPs into simple ones
 //
 FunctionPass *createGEPSplitterPass();
-
-//===----------------------------------------------------------------------===//
-//
-// ABCD - Elimination of Array Bounds Checks on Demand
-//
-FunctionPass *createABCDPass();
 
 //===----------------------------------------------------------------------===//
 //
