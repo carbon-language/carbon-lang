@@ -57,7 +57,6 @@ syn keyword llvmKeyword module asm align tail to
 syn keyword llvmKeyword addrspace section alias sideeffect c gc
 syn keyword llvmKeyword target datalayout triple
 syn keyword llvmKeyword blockaddress
-syn keyword llvmKeyword union
 
 " Obsolete keywords.
 syn keyword llvmError  uninitialized implementation
