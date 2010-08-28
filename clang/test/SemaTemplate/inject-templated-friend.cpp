@@ -1,5 +1,4 @@
 // RUN: %clang %s -S -emit-llvm -o - | grep -e "define linkonce_odr.*_ZN6pr8007lsERNS_11std_ostreamERKNS_8StreamerINS_3FooEEE"
-// XFAIL: *
 
 namespace pr8007 {
 

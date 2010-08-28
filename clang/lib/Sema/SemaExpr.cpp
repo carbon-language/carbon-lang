@@ -7709,7 +7709,12 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
         else
           PendingInstantiations.push_back(std::make_pair(Function, Loc));
       }
-    }
+    } else // Walk redefinitions, as some of them may be instantiable.
+      for (FunctionDecl::redecl_iterator i(Function->redecls_begin()),
+           e(Function->redecls_end()); i != e; ++i) {
+        if (i->isImplicitlyInstantiable())
+          MarkDeclarationReferenced(Loc, *i);
+      }
 
     // FIXME: keep track of references to static functions
 
