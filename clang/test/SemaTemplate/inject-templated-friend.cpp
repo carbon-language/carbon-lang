@@ -1,6 +1,5 @@
-// RUN: %clang %s -S -emit-llvm -o - | grep -e "define linkonce_odr.*_ZN6pr8007lsERNS_11std_ostreamERKNS_8StreamerINS_3FooEEE"
-
-namespace pr8007 {
+// RUN: %clang %s -S -emit-llvm -o - | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
+// PR8007: friend function either not instantiated.
 
 struct std_ostream
 {
@@ -38,11 +37,8 @@ void Streamer<Foo>::operator () (std_ostream& o) const
 {
 }
 
-} // namespace pr8007
-
 int main(void)
 {
-    using namespace pr8007;
     Foo foo;
     cout << foo;
 }
