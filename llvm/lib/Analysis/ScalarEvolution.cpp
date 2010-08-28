@@ -1430,7 +1430,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
         return Mul;
       Ops[i] = Mul;
       Ops.erase(Ops.begin()+i+1, Ops.begin()+i+Count);
-      i -= Count - 1; e -= Count - 1;
+      --i; e -= Count - 1;
       FoundMatch = true;
     }
   if (FoundMatch)
