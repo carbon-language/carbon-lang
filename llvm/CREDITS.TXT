@@ -255,7 +255,7 @@ D: Added STI Cell SPU backend.
 N: Takumi Nakamura
 E: geek4civic@gmail.com
 E: chapuni@hf.rim.or.jp
-D: Cygwin and MinGW support
+D: Cygwin and MinGW support.
 S: Yokohama, Japan
 
 N: Edward O'Callaghan
