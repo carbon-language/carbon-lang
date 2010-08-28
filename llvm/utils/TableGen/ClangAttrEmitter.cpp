@@ -98,8 +98,6 @@ namespace {
       : Argument(Arg, Attr), type(T)
     {}
 
-    std::string getType() const { return type; }
-
     void writeAccessors(raw_ostream &OS) const {
       OS << "  " << type << " get" << getUpperName() << "() const {\n";
       OS << "    return " << getLowerName() << ";\n";
