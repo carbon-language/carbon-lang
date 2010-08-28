@@ -2576,6 +2576,23 @@ X86TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
 
+static bool isTargetShuffle(unsigned Opcode) {
+  switch(Opcode) {
+  default: return false;
+  case X86ISD::PSHUFD:
+  case X86ISD::PSHUFHW:
+  case X86ISD::PSHUFLW:
+  case X86ISD::SHUFPD:
+  case X86ISD::SHUFPS:
+  case X86ISD::MOVLHPS:
+  case X86ISD::MOVSS:
+  case X86ISD::MOVSD:
+  case X86ISD::PUNPCKLDQ:
+    return true;
+  }
+  return false;
+}
+
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
                           SDValue V1, unsigned TargetMask, SelectionDAG &DAG) {
   switch(Opc) {
@@ -2606,6 +2623,8 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::MOVLHPS:
+  case X86ISD::MOVSS:
+  case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
@@ -3614,68 +3633,184 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
   return DAG.getVectorShuffle(VT, V2.getDebugLoc(), V1, V2, &MaskVec[0]);
 }
 
-/// getNumOfConsecutiveZeros - Return the number of elements in a result of
-/// a shuffle that is zero.
-static
-unsigned getNumOfConsecutiveZeros(ShuffleVectorSDNode *SVOp, int NumElems,
-                                  bool Low, SelectionDAG &DAG) {
-  unsigned NumZeros = 0;
-  for (int i = 0; i < NumElems; ++i) {
-    unsigned Index = Low ? i : NumElems-i-1;
-    int Idx = SVOp->getMaskElt(Index);
-    if (Idx < 0) {
-      ++NumZeros;
-      continue;
-    }
-    SDValue Elt = DAG.getShuffleScalarElt(SVOp, Index);
-    if (Elt.getNode() && X86::isZeroNode(Elt))
-      ++NumZeros;
-    else
-      break;
+/// getShuffleScalarElt - Returns the scalar element that will make up the ith
+/// element of the result of the vector shuffle.
+SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG) {
+  SDValue V = SDValue(N, 0);
+  EVT VT = V.getValueType();
+  unsigned Opcode = V.getOpcode();
+  int NumElems = VT.getVectorNumElements();
+
+  // Recurse into ISD::VECTOR_SHUFFLE node to find scalars.
+  if (const ShuffleVectorSDNode *SV = dyn_cast<ShuffleVectorSDNode>(N)) {
+    Index = SV->getMaskElt(Index);
+
+    if (Index < 0)
+      return DAG.getUNDEF(VT.getVectorElementType());
+
+    SDValue NewV = (Index < NumElems) ? SV->getOperand(0) : SV->getOperand(1);
+    return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG);
   }
-  return NumZeros;
+
+  // Recurse into target specific vector shuffles to find scalars.
+  if (isTargetShuffle(Opcode)) {
+    switch(Opcode) {
+    case X86ISD::MOVSS:
+    case X86ISD::MOVSD:
+      // Only care about the second operand, which can contain
+      // a scalar_to_vector which we are looking for.
+      return getShuffleScalarElt(V.getOperand(1).getNode(),
+                                 0 /* Index */, DAG);
+    default:
+      assert("not implemented for target shuffle node");
+      return SDValue();
+    }
+  }
+
+  // Actual nodes that may contain scalar elements
+  if (Opcode == ISD::BIT_CONVERT) {
+    V = V.getOperand(0);
+    EVT SrcVT = V.getValueType();
+
+    if (!SrcVT.isVector() || SrcVT.getVectorNumElements() != (unsigned)NumElems)
+      return SDValue();
+  }
+
+  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
+    return (Index == 0) ? V.getOperand(0)
+                          : DAG.getUNDEF(VT.getVectorElementType());
+
+  if (V.getOpcode() == ISD::BUILD_VECTOR)
+    return V.getOperand(Index);
+
+  return SDValue();
+}
+
+/// getNumOfConsecutiveZeros - Return the number of elements of a vector
+/// shuffle operation which come from a consecutively from a zero. The
+/// search can start in two diferent directions, from left or right.
+static
+unsigned getNumOfConsecutiveZeros(SDNode *N, int NumElems,
+                                  bool ZerosFromLeft, SelectionDAG &DAG) {
+  int i = 0;
+
+  while (i < NumElems) {
+    unsigned Index = ZerosFromLeft ? i : NumElems-i-1;
+    SDValue Elt = getShuffleScalarElt(N, Index, DAG);
+    if (!(Elt.getNode() &&
+         (Elt.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elt))))
+      break;
+    ++i;
+  }
+
+  return i;
+}
+
+/// isShuffleMaskConsecutive - Check if the shuffle mask indicies from MaskI to
+/// MaskE correspond consecutively to elements from one of the vector operands,
+/// starting from its index OpIdx. Also tell OpNum which source vector operand.
+static
+bool isShuffleMaskConsecutive(ShuffleVectorSDNode *SVOp, int MaskI, int MaskE,
+                              int OpIdx, int NumElems, unsigned &OpNum) {
+  bool SeenV1 = false;
+  bool SeenV2 = false;
+
+  for (int i = MaskI; i <= MaskE; ++i, ++OpIdx) {
+    int Idx = SVOp->getMaskElt(i);
+    // Ignore undef indicies
+    if (Idx < 0)
+      continue;
+
+    if (Idx < NumElems)
+      SeenV1 = true;
+    else
+      SeenV2 = true;
+
+    // Only accept consecutive elements from the same vector
+    if ((Idx % NumElems != OpIdx) || (SeenV1 && SeenV2))
+      return false;
+  }
+
+  OpNum = SeenV1 ? 0 : 1;
+  return true;
+}
+
+/// isVectorShiftRight - Returns true if the shuffle can be implemented as a
+/// logical left shift of a vector.
+static bool isVectorShiftRight(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
+                               bool &isLeft, SDValue &ShVal, unsigned &ShAmt) {
+  unsigned NumElems = SVOp->getValueType(0).getVectorNumElements();
+  unsigned NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems,
+              false /* check zeros from right */, DAG);
+  unsigned OpSrc;
+
+  if (!NumZeros)
+    return false;
+
+  // Considering the elements in the mask that are not consecutive zeros,
+  // check if they consecutively come from only one of the source vectors.
+  //
+  //               V1 = {X, A, B, C}     0
+  //                         \  \  \    /
+  //   vector_shuffle V1, V2 <1, 2, 3, X>
+  //
+  if (!isShuffleMaskConsecutive(SVOp,
+            0,                   // Mask Start Index
+            NumElems-NumZeros-1, // Mask End Index
+            NumZeros,            // Where to start looking in the src vector
+            NumElems,            // Number of elements in vector
+            OpSrc))              // Which source operand ?
+    return false;
+
+  isLeft = false;
+  ShAmt = NumZeros;
+  ShVal = SVOp->getOperand(OpSrc);
+  return true;
+}
+
+/// isVectorShiftLeft - Returns true if the shuffle can be implemented as a
+/// logical left shift of a vector.
+static bool isVectorShiftLeft(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
+                              bool &isLeft, SDValue &ShVal, unsigned &ShAmt) {
+  unsigned NumElems = SVOp->getValueType(0).getVectorNumElements();
+  unsigned NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems,
+              true /* check zeros from left */, DAG);
+  unsigned OpSrc;
+
+  if (!NumZeros)
+    return false;
+
+  // Considering the elements in the mask that are not consecutive zeros,
+  // check if they consecutively come from only one of the source vectors.
+  //
+  //                           0    { A, B, X, X } = V2
+  //                          / \    /  /
+  //   vector_shuffle V1, V2 <X, X, 4, 5>
+  //
+  if (!isShuffleMaskConsecutive(SVOp,
+            NumZeros,     // Mask Start Index
+            NumElems-1,   // Mask End Index
+            0,            // Where to start looking in the src vector
+            NumElems,     // Number of elements in vector
+            OpSrc))       // Which source operand ?
+    return false;
+
+  isLeft = true;
+  ShAmt = NumZeros;
+  ShVal = SVOp->getOperand(OpSrc);
+  return true;
 }
 
 /// isVectorShift - Returns true if the shuffle can be implemented as a
 /// logical left or right shift of a vector.
-/// FIXME: split into pslldqi, psrldqi, palignr variants.
 static bool isVectorShift(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
                           bool &isLeft, SDValue &ShVal, unsigned &ShAmt) {
-  unsigned NumElems = SVOp->getValueType(0).getVectorNumElements();
+  if (isVectorShiftLeft(SVOp, DAG, isLeft, ShVal, ShAmt) ||
+      isVectorShiftRight(SVOp, DAG, isLeft, ShVal, ShAmt))
+    return true;
 
-  isLeft = true;
-  unsigned NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems, true, DAG);
-  if (!NumZeros) {
-    isLeft = false;
-    NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems, false, DAG);
-    if (!NumZeros)
-      return false;
-  }
-  bool SeenV1 = false;
-  bool SeenV2 = false;
-  for (unsigned i = NumZeros; i < NumElems; ++i) {
-    unsigned Val = isLeft ? (i - NumZeros) : i;
-    int Idx_ = SVOp->getMaskElt(isLeft ? i : (i - NumZeros));
-    if (Idx_ < 0)
-      continue;
-    unsigned Idx = (unsigned) Idx_;
-    if (Idx < NumElems)
-      SeenV1 = true;
-    else {
-      Idx -= NumElems;
-      SeenV2 = true;
-    }
-    if (Idx != Val)
-      return false;
-  }
-  if (SeenV1 && SeenV2)
-    return false;
-
-  ShVal = SeenV1 ? SVOp->getOperand(0) : SVOp->getOperand(1);
-  ShAmt = NumZeros;
-  return true;
+  return false;
 }
-
 
 /// LowerBuildVectorv16i8 - Custom lower build_vector of v16i8.
 ///
@@ -9357,15 +9492,14 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      const TargetLowering &TLI) {
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
-  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
 
   if (VT.getSizeInBits() != 128)
     return SDValue();
 
   SmallVector<SDValue, 16> Elts;
   for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
-    Elts.push_back(DAG.getShuffleScalarElt(SVN, i));
-  
+    Elts.push_back(getShuffleScalarElt(N, i, DAG));
+
   return EltsFromConsecutiveLoads(VT, Elts, dl, DAG);
 }
 
