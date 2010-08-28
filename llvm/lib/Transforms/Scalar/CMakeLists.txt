@@ -30,6 +30,7 @@ add_llvm_library(LLVMScalarOpts
   Sink.cpp
   TailDuplication.cpp
   TailRecursionElimination.cpp
+  ValuePropagation.cpp
   )
 
 target_link_libraries (LLVMScalarOpts LLVMTransformUtils)
