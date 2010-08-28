@@ -4348,7 +4348,10 @@ public:
   virtual void CodeCompleteNamespaceDecl(Scope *S);
   virtual void CodeCompleteNamespaceAliasDecl(Scope *S);
   virtual void CodeCompleteOperatorName(Scope *S);
-
+  virtual void CodeCompleteConstructorInitializer(Decl *Constructor,
+                                    CXXBaseOrMemberInitializer** Initializers,
+                                                  unsigned NumInitializers);
+  
   virtual void CodeCompleteObjCAtDirective(Scope *S, Decl *ObjCImpDecl,
                                            bool InInterface);
   virtual void CodeCompleteObjCAtVisibility(Scope *S);

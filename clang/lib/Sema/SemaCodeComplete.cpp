@@ -3267,6 +3267,86 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
                             Results.data(),Results.size());
 }
 
+void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
+                                    CXXBaseOrMemberInitializer** Initializers,
+                                              unsigned NumInitializers) {
+  CXXConstructorDecl *Constructor
+    = static_cast<CXXConstructorDecl *>(ConstructorD);
+  if (!Constructor)
+    return;
+  
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // Fill in any already-initialized fields or base classes.
+  llvm::SmallPtrSet<FieldDecl *, 4> InitializedFields;
+  llvm::SmallPtrSet<CanQualType, 4> InitializedBases;
+  for (unsigned I = 0; I != NumInitializers; ++I) {
+    if (Initializers[I]->isBaseInitializer())
+      InitializedBases.insert(
+        Context.getCanonicalType(QualType(Initializers[I]->getBaseClass(), 0)));
+    else
+      InitializedFields.insert(cast<FieldDecl>(Initializers[I]->getMember()));
+  }
+  
+  // Add completions for base classes.
+  unsigned Priority = 1;
+  CXXRecordDecl *ClassDecl = Constructor->getParent();
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+                                       BaseEnd = ClassDecl->bases_end();
+       Base != BaseEnd; ++Base) {
+    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType())))
+      continue;
+    
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk(
+                           Base->getType().getAsString(Context.PrintingPolicy));
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    Pattern->AddPlaceholderChunk("args");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Results.AddResult(CodeCompletionResult(Pattern, Priority++));
+  }
+  
+  // Add completions for virtual base classes.
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
+                                       BaseEnd = ClassDecl->vbases_end();
+       Base != BaseEnd; ++Base) {
+    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType())))
+      continue;
+    
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk(
+                           Base->getType().getAsString(Context.PrintingPolicy));
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    Pattern->AddPlaceholderChunk("args");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Results.AddResult(CodeCompletionResult(Pattern, Priority++));
+  }
+  
+  // Add completions for members.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                  FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd; ++Field) {
+    if (!InitializedFields.insert(cast<FieldDecl>(Field->getCanonicalDecl())))
+      continue;
+    
+    if (!Field->getDeclName())
+      continue;
+    
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk(Field->getIdentifier()->getName());
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    Pattern->AddPlaceholderChunk("args");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Results.AddResult(CodeCompletionResult(Pattern, Priority++));
+  }
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, 
+                            CodeCompletionContext::CCC_Name,
+                            Results.data(), Results.size());
+}
+
 // Macro that expands to @Keyword or Keyword, depending on whether NeedAt is
 // true or false.
 #define OBJC_AT_KEYWORD_NAME(NeedAt,Keyword) NeedAt? "@" #Keyword : #Keyword

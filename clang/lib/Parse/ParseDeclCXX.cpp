@@ -1714,12 +1714,19 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
   bool AnyErrors = false;
 
   do {
-    MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
-    if (!MemInit.isInvalid())
-      MemInitializers.push_back(MemInit.get());
-    else
-      AnyErrors = true;
-
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteConstructorInitializer(ConstructorDecl, 
+                                                 MemInitializers.data(), 
+                                                 MemInitializers.size());
+      ConsumeCodeCompletionToken();
+    } else {
+      MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
+      if (!MemInit.isInvalid())
+        MemInitializers.push_back(MemInit.get());
+      else
+        AnyErrors = true;
+    }
+    
     if (Tok.is(tok::comma))
       ConsumeToken();
     else if (Tok.is(tok::l_brace))
