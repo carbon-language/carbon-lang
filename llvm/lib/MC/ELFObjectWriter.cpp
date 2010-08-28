@@ -49,10 +49,10 @@ namespace {
       }
     }
 
-    static bool isFixupKindX86RIPRel(unsigned Kind) {
+    /*static bool isFixupKindX86RIPRel(unsigned Kind) {
       return Kind == X86::reloc_riprel_4byte ||
         Kind == X86::reloc_riprel_4byte_movq_load;
-    }
+    }*/
 
 
     /// ELFSymbolData - Helper struct for containing some precomputed information
@@ -127,18 +127,17 @@ namespace {
     void Write8(uint8_t Value) { Writer->Write8(Value); }
     void Write16(uint16_t Value) { Writer->Write16(Value); }
     void Write32(uint32_t Value) { Writer->Write32(Value); }
-    void Write64(uint64_t Value) { Writer->Write64(Value); }
+    //void Write64(uint64_t Value) { Writer->Write64(Value); }
     void WriteZeros(unsigned N) { Writer->WriteZeros(N); }
-    void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
-      Writer->WriteBytes(Str, ZeroFillSize);
-    }
+    //void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
+    //  Writer->WriteBytes(Str, ZeroFillSize);
+    //}
 
     void WriteWord(uint64_t W) {
-      if (Is64Bit) {
+      if (Is64Bit)
         Writer->Write64(W);
-      } else {
+      else
         Writer->Write32(W);
-      }
     }
 
     void String8(char *buf, uint8_t Value) {

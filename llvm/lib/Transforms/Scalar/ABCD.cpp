@@ -78,8 +78,6 @@ class ABCD : public FunctionPass {
   class Bound {
    public:
     Bound(APInt v, bool upper) : value(v), upper_bound(upper) {}
-    Bound(const Bound &b, int cnst)
-      : value(b.value - cnst), upper_bound(b.upper_bound) {}
     Bound(const Bound &b, const APInt &cnst)
       : value(b.value - cnst), upper_bound(b.upper_bound) {}
 
@@ -129,13 +127,8 @@ class ABCD : public FunctionPass {
     }
 
     /// Test if Bound b is greater then or equal val
-    static bool geq(const Bound &b, APInt val) {
+    static bool geq(const Bound &b, const APInt &val) {
       return leq(val, b);
-    }
-
-    /// Test if Bound a is greater then or equal Bound b
-    static bool geq(const Bound &a, const Bound &b) {
-      return leq(b, a);
     }
 
    private:
@@ -269,9 +262,6 @@ class ABCD : public FunctionPass {
 
     /// Adds an edge from V_from to V_to with weight value
     void addEdge(Value *V_from, Value *V_to, APInt value, bool upper);
-
-    /// Test if there is a node V
-    bool hasNode(Value *V) const { return graph.count(V); }
 
     /// Test if there is any edge from V in the upper direction
     bool hasEdge(Value *V, bool upper) const;
