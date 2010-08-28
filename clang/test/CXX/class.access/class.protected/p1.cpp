@@ -405,3 +405,31 @@ namespace test11 {
     }
   };
 }
+
+// This friendship is considered because a public member of A would be
+// a private member of C.
+namespace test12 {
+  class A { protected: int foo(); };
+  class B : public virtual A {};
+  class C : private B { friend void test(); };
+  class D : private C, public virtual A {};
+
+  void test() {
+    D d;
+    d.A::foo();
+  }
+}
+
+// This friendship is not considered because a public member of A is
+// inaccessible in C.
+namespace test13 {
+  class A { protected: int foo(); }; // expected-note {{declared protected here}}
+  class B : private virtual A {};
+  class C : private B { friend void test(); };
+  class D : public virtual A {};
+
+  void test() {
+    D d;
+    d.A::foo(); // expected-error {{protected member}}
+  }
+}

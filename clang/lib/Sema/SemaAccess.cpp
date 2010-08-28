@@ -586,11 +586,12 @@ struct ProtectedFriendContext {
                      NamingClass->isDependentContext()),
       EverDependent(false) {}
 
-  /// Check everything in the current path for friendship.
-  bool checkFriendshipAlongPath() {
-    for (llvm::SmallVectorImpl<const CXXRecordDecl*>::iterator
-           I = CurPath.begin(), E = CurPath.end(); I != E; ++I) {
-      switch (GetFriendKind(S, EC, *I)) {
+  /// Check classes in the current path for friendship, starting at
+  /// the given index.
+  bool checkFriendshipAlongPath(unsigned I) {
+    assert(I < CurPath.size());
+    for (unsigned E = CurPath.size(); I != E; ++I) {
+      switch (GetFriendKind(S, EC, CurPath[I])) {
       case AR_accessible:   return true;
       case AR_inaccessible: continue;
       case AR_dependent:    EverDependent = true; continue;
@@ -600,17 +601,16 @@ struct ProtectedFriendContext {
   }
 
   /// Perform a search starting at the given class.
-  bool findFriendship(const CXXRecordDecl *Cur) {
-    CurPath.push_back(Cur);
-
+  ///
+  /// PrivateDepth is the index of the last (least derived) class
+  /// along the current path such that a notional public member of
+  /// the final class in the path would have access in that class.
+  bool findFriendship(const CXXRecordDecl *Cur, unsigned PrivateDepth) {
     // If we ever reach the naming class, check the current path for
     // friendship.  We can also stop recursing because we obviously
     // won't find the naming class there again.
-    if (Cur == NamingClass) {
-      bool Result = checkFriendshipAlongPath();
-      CurPath.pop_back();
-      return Result;
-    }
+    if (Cur == NamingClass)
+      return checkFriendshipAlongPath(PrivateDepth);
 
     if (CheckDependent && MightInstantiateTo(Cur, NamingClass))
       EverDependent = true;
@@ -619,12 +619,11 @@ struct ProtectedFriendContext {
     for (CXXRecordDecl::base_class_const_iterator
            I = Cur->bases_begin(), E = Cur->bases_end(); I != E; ++I) {
 
-      // If this base specifier has private access, and this isn't the
-      // first step in the derivation chain, then the base does not
-      // have natural access along this derivation path and we should
-      // ignore it.
-      if (I->getAccessSpecifier() == AS_private && CurPath.size() != 1)
-          continue;
+      // If this is private inheritance, then a public member of the
+      // base will not have any access in classes derived from Cur.
+      unsigned BasePrivateDepth = PrivateDepth;
+      if (I->getAccessSpecifier() == AS_private)
+        BasePrivateDepth = CurPath.size() - 1;
 
       const CXXRecordDecl *RD;
 
@@ -641,11 +640,19 @@ struct ProtectedFriendContext {
       }
 
       // Recurse.  We don't need to clean up if this returns true.
-      if (findFriendship(RD->getCanonicalDecl())) return true;
+      CurPath.push_back(RD);
+      if (findFriendship(RD->getCanonicalDecl(), BasePrivateDepth))
+        return true;
+      CurPath.pop_back();
     }
 
-    CurPath.pop_back();
     return false;
+  }
+
+  bool findFriendship(const CXXRecordDecl *Cur) {
+    assert(CurPath.empty());
+    CurPath.push_back(Cur);
+    return findFriendship(Cur, 0);
   }
 };
 }
