@@ -141,8 +141,13 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
                  LookupOrdinaryName);
   LookupTemplateName(R, S, SS, ObjectType, EnteringContext,
                      MemberOfUnknownSpecialization);
-  if (R.empty() || R.isAmbiguous()) {
+  if (R.empty()) return TNK_Non_template;
+  if (R.isAmbiguous()) {
+    // Suppress diagnostics;  we'll redo this lookup later.
     R.suppressDiagnostics();
+
+    // FIXME: we might have ambiguous templates, in which case we
+    // should at least parse them properly!
     return TNK_Non_template;
   }
 

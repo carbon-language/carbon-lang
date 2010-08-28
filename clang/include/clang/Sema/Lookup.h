@@ -366,10 +366,15 @@ public:
       if (ResultKind != NotFoundInCurrentInstantiation)
         ResultKind = NotFound;
     } else {
+      AmbiguityKind SavedAK = Ambiguity;
       ResultKind = Found;
       resolveKind();
-      
-      if (Paths && (ResultKind != Ambiguous)) {
+
+      // If we didn't make the lookup unambiguous, restore the old
+      // ambiguity kind.
+      if (ResultKind == Ambiguous) {
+        Ambiguity = SavedAK;
+      } else if (Paths) {
         deletePaths(Paths);
         Paths = 0;
       }
