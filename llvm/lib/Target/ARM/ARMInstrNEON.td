@@ -490,6 +490,12 @@ let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 
 // Classes for VST* pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
+class VSTQPseudo
+  : PseudoNLdSt<(outs), (ins addrmode6:$addr, QPR:$src), IIC_VST, "">;
+class VSTQWBPseudo
+  : PseudoNLdSt<(outs GPR:$wb),
+                (ins addrmode6:$addr, am6offset:$offset, QPR:$src), IIC_VST,
+                "$addr.addr = $wb">;
 class VSTQQPseudo
   : PseudoNLdSt<(outs), (ins addrmode6:$addr, QQPR:$src), IIC_VST, "">;
 class VSTQQWBPseudo
@@ -520,6 +526,11 @@ def  VST1q16  : VST1Q<0b0100, "16">;
 def  VST1q32  : VST1Q<0b1000, "32">;
 def  VST1q64  : VST1Q<0b1100, "64">;
 
+def VST1q8Pseudo  : VSTQPseudo;
+def VST1q16Pseudo : VSTQPseudo;
+def VST1q32Pseudo : VSTQPseudo;
+def VST1q64Pseudo : VSTQPseudo;
+
 // ...with address register writeback:
 class VST1DWB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0111, op7_4, (outs GPR:$wb),
@@ -539,6 +550,11 @@ def VST1q8_UPD  : VST1QWB<0b0000, "8">;
 def VST1q16_UPD : VST1QWB<0b0100, "16">;
 def VST1q32_UPD : VST1QWB<0b1000, "32">;
 def VST1q64_UPD : VST1QWB<0b1100, "64">;
+
+def VST1q8Pseudo_UPD  : VSTQWBPseudo;
+def VST1q16Pseudo_UPD : VSTQWBPseudo;
+def VST1q32Pseudo_UPD : VSTQWBPseudo;
+def VST1q64Pseudo_UPD : VSTQWBPseudo;
 
 // ...with 3 registers (some of these are only for the disassembler):
 class VST1D3<bits<4> op7_4, string Dt>
@@ -610,6 +626,14 @@ def  VST2q8   : VST2Q<0b0000, "8">;
 def  VST2q16  : VST2Q<0b0100, "16">;
 def  VST2q32  : VST2Q<0b1000, "32">;
 
+def  VST2d8Pseudo  : VSTQPseudo;
+def  VST2d16Pseudo : VSTQPseudo;
+def  VST2d32Pseudo : VSTQPseudo;
+
+def  VST2q8Pseudo  : VSTQQPseudo;
+def  VST2q16Pseudo : VSTQQPseudo;
+def  VST2q32Pseudo : VSTQQPseudo;
+
 // ...with address register writeback:
 class VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
@@ -630,6 +654,14 @@ def VST2d32_UPD : VST2DWB<0b1000, 0b1000, "32">;
 def VST2q8_UPD  : VST2QWB<0b0000, "8">;
 def VST2q16_UPD : VST2QWB<0b0100, "16">;
 def VST2q32_UPD : VST2QWB<0b1000, "32">;
+
+def VST2d8Pseudo_UPD  : VSTQWBPseudo;
+def VST2d16Pseudo_UPD : VSTQWBPseudo;
+def VST2d32Pseudo_UPD : VSTQWBPseudo;
+
+def VST2q8Pseudo_UPD  : VSTQQWBPseudo;
+def VST2q16Pseudo_UPD : VSTQQWBPseudo;
+def VST2q32Pseudo_UPD : VSTQQWBPseudo;
 
 // ...with double-spaced registers (for disassembly only):
 def VST2b8      : VST2D<0b1001, 0b0000, "8">;
