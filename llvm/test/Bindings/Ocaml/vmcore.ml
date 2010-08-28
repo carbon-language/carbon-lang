@@ -296,12 +296,6 @@ let test_constants () =
   insist ((struct_type context [| i16_type; i16_type; i32_type; i32_type |])
         = (type_of c));
 
-  group "union";
-  let t = union_type context [| i1_type; i16_type; i64_type; double_type |] in
-  let c = const_union t one in
-  ignore (define_global "const_union" c m);
-  insist (t = (type_of c));
-  
   (* RUN: grep {const_null.*zeroinit} < %t.ll
    *)
   group "null";
