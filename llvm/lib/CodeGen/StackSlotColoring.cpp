@@ -119,7 +119,6 @@ namespace {
 
   private:
     void InitializeSlots();
-    bool CheckForSetJmpCall(const MachineFunction &MF) const;
     void ScanForSpillSlotRefs(MachineFunction &MF);
     bool OverlapWithAssignments(LiveInterval *li, int Color) const;
     int ColorSlot(LiveInterval *li);
