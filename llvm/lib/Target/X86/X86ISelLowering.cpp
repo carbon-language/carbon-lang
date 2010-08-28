@@ -4278,14 +4278,20 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     if (LD.getNode())
       return LD;
     
-    // For SSE 4.1, use inserts into undef.  
+    // For SSE 4.1, use insertps to put the high elements into the low element. 
     if (getSubtarget()->hasSSE41()) {
-      V[0] = DAG.getUNDEF(VT);
-      for (unsigned i = 0; i < NumElems; ++i)
-        if (Op.getOperand(i).getOpcode() != ISD::UNDEF)
-          V[0] = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, V[0],
+      SDValue Result;
+      if (Op.getOperand(0).getOpcode() != ISD::UNDEF)
+        Result = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(0));
+      else
+        Result = DAG.getUNDEF(VT);
+      
+      for (unsigned i = 1; i < NumElems; ++i) {
+        if (Op.getOperand(i).getOpcode() == ISD::UNDEF) continue;
+        Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Result,
                              Op.getOperand(i), DAG.getIntPtrConstant(i));
-      return V[0];
+      }
+      return Result;
     }
     
     // Otherwise, expand into a number of unpckl*, start by extending each of
