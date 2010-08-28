@@ -18,9 +18,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#ifndef NDEBUG
-#include "llvm/ADT/SmallSet.h"
-#endif
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
