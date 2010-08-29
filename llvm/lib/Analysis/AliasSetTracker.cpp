@@ -111,7 +111,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
   *PtrListEnd = &Entry;
   PtrListEnd = Entry.setPrevInList(PtrListEnd);
   assert(*PtrListEnd == 0 && "End of list is not null?");
-  addRef();               // Entry points to alias set...
+  addRef();               // Entry points to alias set.
 }
 
 void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
@@ -140,7 +140,7 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
     assert(CallSites.empty() && "Illegal must alias set!");
 
     // If this is a set of MustAliases, only check to see if the pointer aliases
-    // SOME value in the set...
+    // SOME value in the set.
     PointerRec *SomePtr = getSomePointer();
     assert(SomePtr && "Empty must-alias set??");
     return AA.alias(SomePtr->getValue(), SomePtr->getSize(), Ptr, Size);
@@ -248,7 +248,7 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
                                                  bool *New) {
   AliasSet::PointerRec &Entry = getEntryFor(Pointer);
 
-  // Check to see if the pointer is already known...
+  // Check to see if the pointer is already known.
   if (Entry.hasAliasSet()) {
     Entry.updateSize(Size);
     // Return the set!
@@ -256,13 +256,13 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
   }
   
   if (AliasSet *AS = findAliasSetForPointer(Pointer, Size)) {
-    // Add it to the alias set it aliases...
+    // Add it to the alias set it aliases.
     AS->addPointer(*this, Entry, Size);
     return *AS;
   }
   
   if (New) *New = true;
-  // Otherwise create a new alias set to hold the loaded pointer...
+  // Otherwise create a new alias set to hold the loaded pointer.
   AliasSets.push_back(new AliasSet());
   AliasSets.back().addPointer(*this, Entry, Size);
   return AliasSets.back();
@@ -437,11 +437,11 @@ bool AliasSetTracker::remove(Instruction *I) {
   // Dispatch to one of the other remove methods...
   if (LoadInst *LI = dyn_cast<LoadInst>(I))
     return remove(LI);
-  else if (StoreInst *SI = dyn_cast<StoreInst>(I))
+  if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return remove(SI);
-  else if (CallInst *CI = dyn_cast<CallInst>(I))
+  if (CallInst *CI = dyn_cast<CallInst>(I))
     return remove(CI);
-  else if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
+  if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
     return remove(VAAI);
   return true;
 }
