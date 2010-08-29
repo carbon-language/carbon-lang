@@ -92,7 +92,8 @@ class AliasSet : public ilist_node<AliasSet> {
   AliasSet *Forward;             // Forwarding pointer.
   AliasSet *Next, *Prev;         // Doubly linked list of AliasSets.
 
-  std::vector<CallSite> CallSites; // All calls & invokes in this alias set.
+  // All calls & invokes in this alias set.
+  std::vector<AssertingVH<Instruction> > CallSites;
 
   // RefCount - Number of nodes pointing to this AliasSet plus the number of
   // AliasSets forwarding to it.
@@ -127,6 +128,11 @@ class AliasSet : public ilist_node<AliasSet> {
       removeFromTracker(AST);
   }
 
+  CallSite getCallSite(unsigned i) const {
+    assert(i < CallSites.size());
+    return CallSite(CallSites[i]);
+  }
+  
 public:
   /// Accessors...
   bool isRef() const { return AccessTy & Refs; }
@@ -229,7 +235,7 @@ private:
   void addCallSite(CallSite CS, AliasAnalysis &AA);
   void removeCallSite(CallSite CS) {
     for (size_t i = 0, e = CallSites.size(); i != e; ++i)
-      if (CallSites[i].getInstruction() == CS.getInstruction()) {
+      if (CallSites[i] == CS.getInstruction()) {
         CallSites[i] = CallSites.back();
         CallSites.pop_back();
       }

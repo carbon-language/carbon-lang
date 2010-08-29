@@ -116,7 +116,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
 }
 
 void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
-  CallSites.push_back(CS);
+  CallSites.push_back(CS.getInstruction());
 
   AliasAnalysis::ModRefBehavior Behavior = AA.getModRefBehavior(CS);
   if (Behavior == AliasAnalysis::DoesNotAccessMemory)
@@ -167,10 +167,11 @@ bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
   if (AA.doesNotAccessMemory(CS))
     return false;
 
-  for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
-    if (AA.getModRefInfo(CallSites[i], CS) != AliasAnalysis::NoModRef ||
-        AA.getModRefInfo(CS, CallSites[i]) != AliasAnalysis::NoModRef)
+  for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
+    if (AA.getModRefInfo(getCallSite(i), CS) != AliasAnalysis::NoModRef ||
+        AA.getModRefInfo(CS, getCallSite(i)) != AliasAnalysis::NoModRef)
       return true;
+  }
 
   for (iterator I = begin(), E = end(); I != E; ++I)
     if (AA.getModRefInfo(CS, I.getPointer(), I.getSize()) !=
@@ -231,11 +232,10 @@ AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
     if (I->Forward || !I->aliasesCallSite(CS, AA))
       continue;
     
-    if (FoundSet == 0) {  // If this is the first alias set ptr can go into.
-      FoundSet = I;       // Remember it.
-    } else if (!I->Forward) {     // Otherwise, we must merge the sets.
+    if (FoundSet == 0)        // If this is the first alias set ptr can go into.
+      FoundSet = I;           // Remember it.
+    else if (!I->Forward)     // Otherwise, we must merge the sets.
       FoundSet->mergeSetIn(*I, *this);     // Merge in contents.
-    }
   }
   return FoundSet;
 }
@@ -458,11 +458,17 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
   AA.deleteValue(PtrVal);
 
   // If this is a call instruction, remove the callsite from the appropriate
-  // AliasSet.
-  if (CallSite CS = PtrVal)
-    if (!AA.doesNotAccessMemory(CS))
-      if (AliasSet *AS = findAliasSetForCallSite(CS))
-        AS->removeCallSite(CS);
+  // AliasSet (if present).
+  if (CallSite CS = PtrVal) {
+    if (!AA.doesNotAccessMemory(CS)) {
+      // Scan all the alias sets to see if this call site is contained.
+      for (iterator I = begin(), E = end(); I != E; ++I) {
+        if (I->Forward) continue;
+        
+        I->removeCallSite(CS);
+      }
+    }
+  }
 
   // First, look up the PointerRec for this pointer.
   PointerMapType::iterator I = PointerMap.find(PtrVal);
@@ -538,7 +544,7 @@ void AliasSet::print(raw_ostream &OS) const {
     OS << "\n    " << CallSites.size() << " Call Sites: ";
     for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
       if (i) OS << ", ";
-      WriteAsOperand(OS, CallSites[i].getCalledValue());
+      WriteAsOperand(OS, CallSites[i]);
     }
   }
   OS << "\n";

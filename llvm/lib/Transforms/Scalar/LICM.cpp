@@ -315,6 +315,7 @@ void LICM::SinkRegion(DomTreeNode *N) {
     // If the instruction is dead, we would try to sink it because it isn't used
     // in the loop, instead, just delete it.
     if (isInstructionTriviallyDead(&I)) {
+      DEBUG(dbgs() << "LICM deleting dead inst: " << I << '\n');
       ++II;
       CurAST->deleteValue(&I);
       I.eraseFromParent();
