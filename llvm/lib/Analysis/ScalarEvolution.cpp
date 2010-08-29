@@ -340,8 +340,8 @@ bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
 
   // This recurrence is variant w.r.t. QueryLoop if any of its operands
   // are variant.
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (!getOperand(i)->isLoopInvariant(QueryLoop))
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    if (!(*I)->isLoopInvariant(QueryLoop))
       return false;
 
   // Otherwise it's loop-invariant.
