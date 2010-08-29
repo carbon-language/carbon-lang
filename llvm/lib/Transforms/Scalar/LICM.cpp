@@ -75,7 +75,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<AliasAnalysis>();
@@ -98,8 +97,7 @@ namespace {
     // Various analyses that we use...
     AliasAnalysis *AA;       // Current AliasAnalysis information
     LoopInfo      *LI;       // Current LoopInfo
-    DominatorTree *DT;       // Dominator Tree for the current Loop...
-    DominanceFrontier *DF;   // Current Dominance Frontier
+    DominatorTree *DT;       // Dominator Tree for the current Loop.
 
     // State that is updated as we process loops
     bool Changed;            // Set to true when we change anything.
@@ -222,7 +220,6 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Get our Loop and Alias Analysis information...
   LI = &getAnalysis<LoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
-  DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
 
   CurAST = new AliasSetTracker(*AA);
