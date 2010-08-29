@@ -1631,6 +1631,10 @@ defm t2EOR  : T2I_bin_w_irs<0b0100, "eor",
 defm t2BIC  : T2I_bin_w_irs<0b0001, "bic",
                             BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
+let Defs = [CPSR] in
+defm t2ANDflag : T2I_bin_w_irs<0b0000, "and",
+                               BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
+
 let Constraints = "$src = $dst" in
 def t2BFC : T2I<(outs rGPR:$dst), (ins rGPR:$src, bf_inv_mask_imm:$imm),
                 IIC_iUNAsi, "bfc", "\t$dst, $imm",

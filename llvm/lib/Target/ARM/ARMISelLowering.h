@@ -47,6 +47,8 @@ namespace llvm {
 
       PIC_ADD,      // Add with a PC operand and a PIC label.
 
+      AND,          // ARM "and" instruction that sets the 's' flag in CPSR.
+
       CMP,          // ARM compare instructions.
       CMPZ,         // ARM compare that sets only Z flag.
       CMPFP,        // ARM VFP compare instruction, sets FPSCR.
