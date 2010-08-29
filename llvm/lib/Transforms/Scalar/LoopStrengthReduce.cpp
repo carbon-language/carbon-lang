@@ -113,6 +113,7 @@ class RegUseTracker {
 public:
   void CountRegister(const SCEV *Reg, size_t LUIdx);
   void DropRegister(const SCEV *Reg, size_t LUIdx);
+  void DropUse(size_t LUIdx, size_t NewLUIdx);
   void DropUse(size_t LUIdx);
 
   bool isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const;
@@ -151,6 +152,24 @@ RegUseTracker::DropRegister(const SCEV *Reg, size_t LUIdx) {
   RSD.UsedByIndices.reset(LUIdx);
 }
 
+/// DropUse - Clear out reference by use LUIdx, and prepare for use NewLUIdx
+/// to be swapped into LUIdx's position.
+void
+RegUseTracker::DropUse(size_t LUIdx, size_t NewLUIdx) {
+  // Remove the use index from every register's use list.
+  for (RegUsesTy::iterator I = RegUsesMap.begin(), E = RegUsesMap.end();
+       I != E; ++I) {
+    SmallBitVector &UsedByIndices = I->second.UsedByIndices;
+    UsedByIndices.resize(std::max(UsedByIndices.size(), NewLUIdx + 1));
+    if (LUIdx < UsedByIndices.size()) {
+      UsedByIndices[LUIdx] = UsedByIndices[NewLUIdx];
+      UsedByIndices.reset(NewLUIdx);
+    } else
+      UsedByIndices.reset(LUIdx);
+  }
+}
+
+/// DropUse - Clear out reference by use LUIdx.
 void
 RegUseTracker::DropUse(size_t LUIdx) {
   // Remove the use index from every register's use list.
@@ -1334,7 +1353,9 @@ class LSRInstance {
                    UseMapDenseMapInfo> UseMapTy;
   UseMapTy UseMap;
 
-  bool reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
+  bool reconcileNewOffset(LSRUse &LU,
+                          int64_t NewMinOffset, int64_t NewMaxOffset,
+                          bool HasBaseReg,
                           LSRUse::KindType Kind, const Type *AccessTy);
 
   std::pair<size_t, int64_t> getUse(const SCEV *&Expr,
@@ -1343,7 +1364,8 @@ class LSRInstance {
 
   void DeleteUse(LSRUse &LU);
 
-  LSRUse *FindUseWithSimilarFormula(const Formula &F, const LSRUse &OrigLU);
+  LSRUse *FindUseWithSimilarFormula(const Formula &F, const LSRUse &OrigLU,
+                                    int64_t &NewBaseOffs);
 
 public:
   void InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx);
@@ -1843,11 +1865,13 @@ LSRInstance::OptimizeLoopTermCond() {
 /// at the given offset and other details. If so, update the use and
 /// return true.
 bool
-LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
+LSRInstance::reconcileNewOffset(LSRUse &LU,
+                                int64_t NewMinOffset, int64_t NewMaxOffset,
+                                bool HasBaseReg,
                                 LSRUse::KindType Kind, const Type *AccessTy) {
-  int64_t NewMinOffset = LU.MinOffset;
-  int64_t NewMaxOffset = LU.MaxOffset;
-  const Type *NewAccessTy = AccessTy;
+  int64_t ResultMinOffset = LU.MinOffset;
+  int64_t ResultMaxOffset = LU.MaxOffset;
+  const Type *ResultAccessTy = AccessTy;
 
   // Check for a mismatched kind. It's tempting to collapse mismatched kinds to
   // something conservative, however this can pessimize in the case that one of
@@ -1855,29 +1879,27 @@ LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
   if (LU.Kind != Kind)
     return false;
   // Conservatively assume HasBaseReg is true for now.
-  if (NewOffset < LU.MinOffset) {
-    if (!isAlwaysFoldable(LU.MaxOffset - NewOffset, 0, HasBaseReg,
+  if (NewMinOffset < LU.MinOffset) {
+    if (!isAlwaysFoldable(LU.MaxOffset - NewMinOffset, 0, HasBaseReg,
                           Kind, AccessTy, TLI))
       return false;
-    NewMinOffset = NewOffset;
-  } else if (NewOffset > LU.MaxOffset) {
-    if (!isAlwaysFoldable(NewOffset - LU.MinOffset, 0, HasBaseReg,
+    ResultMinOffset = NewMinOffset;
+  } else if (NewMaxOffset > LU.MaxOffset) {
+    if (!isAlwaysFoldable(NewMaxOffset - LU.MinOffset, 0, HasBaseReg,
                           Kind, AccessTy, TLI))
       return false;
-    NewMaxOffset = NewOffset;
+    ResultMaxOffset = NewMaxOffset;
   }
   // Check for a mismatched access type, and fall back conservatively as needed.
   // TODO: Be less conservative when the type is similar and can use the same
   // addressing modes.
   if (Kind == LSRUse::Address && AccessTy != LU.AccessTy)
-    NewAccessTy = Type::getVoidTy(AccessTy->getContext());
+    ResultAccessTy = Type::getVoidTy(AccessTy->getContext());
 
   // Update the use.
-  LU.MinOffset = NewMinOffset;
-  LU.MaxOffset = NewMaxOffset;
-  LU.AccessTy = NewAccessTy;
-  if (NewOffset != LU.Offsets.back())
-    LU.Offsets.push_back(NewOffset);
+  LU.MinOffset = ResultMinOffset;
+  LU.MaxOffset = ResultMaxOffset;
+  LU.AccessTy = ResultAccessTy;
   return true;
 }
 
@@ -1902,9 +1924,12 @@ LSRInstance::getUse(const SCEV *&Expr,
     // A use already existed with this base.
     size_t LUIdx = P.first->second;
     LSRUse &LU = Uses[LUIdx];
-    if (reconcileNewOffset(LU, Offset, /*HasBaseReg=*/true, Kind, AccessTy))
+    if (reconcileNewOffset(LU, Offset, Offset,
+                           /*HasBaseReg=*/true, Kind, AccessTy)) {
+      LU.Offsets.push_back(Offset);
       // Reuse this use.
       return std::make_pair(LUIdx, Offset);
+    }
   }
 
   // Create a new use.
@@ -1913,11 +1938,7 @@ LSRInstance::getUse(const SCEV *&Expr,
   Uses.push_back(LSRUse(Kind, AccessTy));
   LSRUse &LU = Uses[LUIdx];
 
-  // We don't need to track redundant offsets, but we don't need to go out
-  // of our way here to avoid them.
-  if (LU.Offsets.empty() || Offset != LU.Offsets.back())
-    LU.Offsets.push_back(Offset);
-
+  LU.Offsets.push_back(Offset);
   LU.MinOffset = Offset;
   LU.MaxOffset = Offset;
   return std::make_pair(LUIdx, Offset);
@@ -1925,8 +1946,12 @@ LSRInstance::getUse(const SCEV *&Expr,
 
 /// DeleteUse - Delete the given use from the Uses list.
 void LSRInstance::DeleteUse(LSRUse &LU) {
-  if (&LU != &Uses.back())
+  if (&LU != &Uses.back()) {
     std::swap(LU, Uses.back());
+    RegUses.DropUse(&LU - Uses.begin(), Uses.size() - 1);
+  } else {
+    RegUses.DropUse(&LU - Uses.begin());
+  }
   Uses.pop_back();
 }
 
@@ -1934,8 +1959,9 @@ void LSRInstance::DeleteUse(LSRUse &LU) {
 /// a formula that has the same registers as the given formula.
 LSRUse *
 LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
-                                       const LSRUse &OrigLU) {
-  // Search all uses for the formula. This could be more clever.
+                                       const LSRUse &OrigLU,
+                                       int64_t &NewBaseOffs) {
+  // Search all uses for a formula similar to OrigF. This could be more clever.
   for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
     LSRUse &LU = Uses[LUIdx];
     // Check whether this use is close enough to OrigLU, to see whether it's
@@ -1958,8 +1984,15 @@ LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
             F.ScaledReg == OrigF.ScaledReg &&
             F.AM.BaseGV == OrigF.AM.BaseGV &&
             F.AM.Scale == OrigF.AM.Scale) {
-          if (F.AM.BaseOffs == 0)
+          // Ok, all the registers and symbols matched. Check to see if the
+          // immediate looks nicer than our old one.
+          if (OrigF.AM.BaseOffs == INT64_MIN ||
+              (F.AM.BaseOffs != INT64_MIN &&
+               abs64(F.AM.BaseOffs) < abs64(OrigF.AM.BaseOffs))) {
+            // Looks good. Take it.
+            NewBaseOffs = F.AM.BaseOffs;
             return &LU;
+          }
           // This is the formula where all the registers and symbols matched;
           // there aren't going to be any others. Since we declined it, we
           // can skip the rest of the formulae and procede to the next LSRUse.
@@ -2600,6 +2633,17 @@ struct WorkItem {
   WorkItem(size_t LI, int64_t I, const SCEV *R)
     : LUIdx(LI), Imm(I), OrigReg(R) {}
 
+  bool operator==(const WorkItem &that) const {
+    return LUIdx == that.LUIdx && Imm == that.Imm && OrigReg == that.OrigReg;
+  }
+  bool operator<(const WorkItem &that) const {
+    if (LUIdx != that.LUIdx)
+      return LUIdx < that.LUIdx;
+    if (Imm != that.Imm)
+      return Imm < that.Imm;
+    return OrigReg < that.OrigReg;
+  }
+
   void print(raw_ostream &OS) const;
   void dump() const;
 };
@@ -2639,8 +2683,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
   // Now examine each set of registers with the same base value. Build up
   // a list of work to do and do the work in a separate step so that we're
   // not adding formulae and register counts while we're searching.
-  SmallVector<WorkItem, 32> WorkItems;
-  SmallSet<std::pair<size_t, int64_t>, 32> UniqueItems;
+  SmallSetVector<WorkItem, 32> WorkItems;
   for (SmallVectorImpl<const SCEV *>::const_iterator I = Sequence.begin(),
        E = Sequence.end(); I != E; ++I) {
     const SCEV *Reg = *I;
@@ -2683,10 +2726,10 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
         // Compute the difference between the two.
         int64_t Imm = (uint64_t)JImm - M->first;
         for (int LUIdx = UsedByIndices.find_first(); LUIdx != -1;
-             LUIdx = UsedByIndices.find_next(LUIdx))
+             LUIdx = UsedByIndices.find_next(LUIdx)) {
           // Make a memo of this use, offset, and register tuple.
-          if (UniqueItems.insert(std::make_pair(LUIdx, Imm)))
-            WorkItems.push_back(WorkItem(LUIdx, Imm, OrigReg));
+          WorkItems.insert(WorkItem(LUIdx, Imm, OrigReg));
+        }
       }
     }
   }
@@ -2694,7 +2737,6 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
   Map.clear();
   Sequence.clear();
   UsedByIndicesMap.clear();
-  UniqueItems.clear();
 
   // Now iterate through the worklist and add new formulae.
   for (SmallVectorImpl<WorkItem>::const_iterator I = WorkItems.begin(),
@@ -2991,14 +3033,42 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
            E = LU.Formulae.end(); I != E; ++I) {
         const Formula &F = *I;
         if (F.AM.BaseOffs != 0 && F.AM.Scale == 0) {
-          if (LSRUse *LUThatHas = FindUseWithSimilarFormula(F, LU)) {
-            if (reconcileNewOffset(*LUThatHas, F.AM.BaseOffs,
+          int64_t NewBaseOffs;
+          if (LSRUse *LUThatHas = FindUseWithSimilarFormula(F, LU,
+                                                            NewBaseOffs)) {
+            if (reconcileNewOffset(*LUThatHas,
+                                   F.AM.BaseOffs + LU.MinOffset - NewBaseOffs,
+                                   F.AM.BaseOffs + LU.MaxOffset - NewBaseOffs,
                                    /*HasBaseReg=*/false,
                                    LU.Kind, LU.AccessTy)) {
               DEBUG(dbgs() << "  Deleting use "; LU.print(dbgs());
                     dbgs() << '\n');
 
               LUThatHas->AllFixupsOutsideLoop &= LU.AllFixupsOutsideLoop;
+
+              // Update the relocs to reference the new use.
+              // Do this first so that MinOffset and MaxOffset are updated
+              // before we begin to determine which formulae to delete.
+              for (SmallVectorImpl<LSRFixup>::iterator I = Fixups.begin(),
+                   E = Fixups.end(); I != E; ++I) {
+                LSRFixup &Fixup = *I;
+                if (Fixup.LUIdx == LUIdx) {
+                  Fixup.LUIdx = LUThatHas - &Uses.front();
+                  Fixup.Offset += F.AM.BaseOffs - NewBaseOffs;
+                  DEBUG(dbgs() << "New fixup has offset "
+                               << Fixup.Offset << '\n');
+                  LUThatHas->Offsets.push_back(Fixup.Offset);
+                  if (Fixup.Offset > LUThatHas->MaxOffset)
+                    LUThatHas->MaxOffset = Fixup.Offset;
+                  if (Fixup.Offset < LUThatHas->MinOffset)
+                    LUThatHas->MinOffset = Fixup.Offset;
+                }
+                // DeleteUse will do a swap+pop_back, so if this fixup is
+                // now pointing to the last LSRUse, update it to point to the
+                // position it'll be swapped to.
+                if (Fixup.LUIdx == NumUses-1)
+                  Fixup.LUIdx = LUIdx;
+              }
 
               // Delete formulae from the new use which are no longer legal.
               bool Any = false;
@@ -3017,20 +3087,6 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
               }
               if (Any)
                 LUThatHas->RecomputeRegs(LUThatHas - &Uses.front(), RegUses);
-
-              // Update the relocs to reference the new use.
-              for (SmallVectorImpl<LSRFixup>::iterator I = Fixups.begin(),
-                   E = Fixups.end(); I != E; ++I) {
-                LSRFixup &Fixup = *I;
-                if (Fixup.LUIdx == LUIdx) {
-                  Fixup.LUIdx = LUThatHas - &Uses.front();
-                  Fixup.Offset += F.AM.BaseOffs;
-                  DEBUG(dbgs() << "New fixup has offset "
-                               << Fixup.Offset << '\n');
-                }
-                if (Fixup.LUIdx == NumUses-1)
-                  Fixup.LUIdx = LUIdx;
-              }
 
               // Delete the old use.
               DeleteUse(LU);
