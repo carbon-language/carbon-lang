@@ -1244,11 +1244,12 @@ StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
              Tok.isNot(tok::eof));
   }
   Token t;
+  t.startToken();
   t.setKind(tok::string_literal);
   t.setLiteralData("\"/*FIXME: not done*/\"");
   t.clearFlag(Token::NeedsCleaning);
   t.setLength(21);
-  ExprResult AsmString(Actions.ActOnStringLiteral(&t, 1));
+  ExprResult AsmString(Actions.ActOnStringLiteral(getCurScope(), &t, 1));
   ExprVector Constraints(Actions);
   ExprVector Exprs(Actions);
   ExprVector Clobbers(Actions);

@@ -99,6 +99,9 @@ def ext_string_too_long : Extension<"string literal of length %0 exceeds "
   "maximum length %1 that %select{C90|ISO C99|C++}2 compilers are required to "
   "support">, InGroup<OverlengthStrings>;
   
+def err_ud_suffix_mismatch : Error<"User-defined literal suffixes on adjacent "
+  "string literal tokens do not match">;
+
 //===----------------------------------------------------------------------===//
 // PTH Diagnostics
 //===----------------------------------------------------------------------===//

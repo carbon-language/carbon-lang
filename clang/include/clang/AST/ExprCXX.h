@@ -2422,6 +2422,50 @@ public:
   virtual child_iterator child_end();
 };
 
+/// UDLiteralExpr - An expression for a user-defined
+/// string literal (e.g. "foo"_bar)
+///
+/// Both the DeclRefExpr and the IntegerConstant are fictional expressions
+/// generated from the literal.
+class UDLiteralExpr : public CallExpr {
+  Expr *BaseLiteral;
+
+  static bool isValidLiteral(Expr *E) {
+    return isa<StringLiteral>(E) || isa<FloatingLiteral>(E) ||
+           isa<IntegerLiteral>(E) || isa<CharacterLiteral>(E);
+  }
+public:
+  UDLiteralExpr(ASTContext &C, Expr *E, Expr *fn, Expr **args,
+                unsigned numargs, QualType t)
+    : CallExpr(C, UDLiteralExprClass, fn, args, numargs, t, SourceLocation())
+    , BaseLiteral(E) {
+    assert(isValidLiteral(E) && "Base literal must be an actual literal");
+  }
+
+  FunctionDecl *getLiteralOperator() { return getDirectCallee(); }
+  const FunctionDecl *getLiteralOperator() const { return getDirectCallee(); }
+
+  Expr *getBaseLiteral() { return BaseLiteral; }
+  const Expr *getBaseLiteral() const { return BaseLiteral; }
+  void setBaseLiteral(Expr *E) {
+    assert(isValidLiteral(E) && "Base literal must be an actual literal");
+    BaseLiteral = E;
+  }
+
+  IdentifierInfo *getUDSuffix() const {
+    return getLiteralOperator()->getDeclName().getCXXLiteralIdentifier();
+  }
+
+  virtual SourceRange getSourceRange() const {
+    return getBaseLiteral()->getSourceRange();
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == UDLiteralExprClass;
+  }
+  static bool classof(const UDLiteralExpr *) { return true; }
+};
+
 inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
   if (isa<UnresolvedLookupExpr>(this))
     return cast<UnresolvedLookupExpr>(this)->getExplicitTemplateArgs();

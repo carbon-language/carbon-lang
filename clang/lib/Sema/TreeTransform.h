@@ -6030,6 +6030,12 @@ TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformUDLiteralExpr(UDLiteralExpr *E) {
+  return SemaRef.Owned(E->Retain());
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
   // Transform arguments.
   bool ArgChanged = false;

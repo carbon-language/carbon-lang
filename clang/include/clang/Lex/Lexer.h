@@ -17,6 +17,7 @@
 #include "clang/Lex/PreprocessorLexer.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -66,6 +67,9 @@ class Lexer : public PreprocessorLexer {
   // IsAtStartOfLine - True if the next lexed token should get the "start of
   // line" flag set on it.
   bool IsAtStartOfLine;
+
+  // ExtraDataAllocator - An allocator for extra data on a token.
+  llvm::BumpPtrAllocator ExtraDataAllocator;
 
   Lexer(const Lexer&);          // DO NOT IMPLEMENT
   void operator=(const Lexer&); // DO NOT IMPLEMENT

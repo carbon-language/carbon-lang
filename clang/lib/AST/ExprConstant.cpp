@@ -2423,7 +2423,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::UnaryTypeTraitExprClass:
     return NoDiag();
   case Expr::CallExprClass:
-  case Expr::CXXOperatorCallExprClass: {
+  case Expr::CXXOperatorCallExprClass:
+  case Expr::UDLiteralExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
     if (CE->isBuiltinCall(Ctx))
       return CheckEvalInICE(E, Ctx);

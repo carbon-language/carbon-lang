@@ -1752,8 +1752,8 @@ public:
 
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ActOnStringLiteral(const Token *Toks,
-                                              unsigned NumToks);
+  virtual ExprResult ActOnStringLiteral(Scope *S, const Token *Toks,
+                                        unsigned NumToks);
 
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   ExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc,
@@ -2746,6 +2746,9 @@ public:
   bool CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl);
 
   bool CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl);
+
+  ExprResult BuildUDStringLiteralExpr(Scope *S, StringLiteral *SL, unsigned L,
+                                      IdentifierInfo *II);
 
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]

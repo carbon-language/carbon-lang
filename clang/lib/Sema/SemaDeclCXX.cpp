@@ -5932,6 +5932,9 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     return true;
   }
 
+  if (FnDecl->getDeclName().getCXXLiteralIdentifier()->getName()[0] != '_')
+    Diag(FnDecl->getLocation(), diag::warn_literal_operator_no_underscore);
+
   bool Valid = false;
 
   // template <char...> type operator "" name() is the only valid template

@@ -2946,9 +2946,15 @@ def err_operator_delete_param_type : Error<
 // C++ literal operators
 def err_literal_operator_outside_namespace : Error<
   "literal operator %0 must be in a namespace or global scope">;
-// FIXME: This diagnostic sucks
+def warn_literal_operator_no_underscore : Warning< "literal operator names not "
+  "beginning with underscores are reserved for future standardization">;
+def err_literal_operator_overload : Error<
+  "no matching literal operator function for user-defined suffix '%0'">;
+def err_literal_operator_deleted : Error<
+  "deleted literal operator function for user-defined suffix '%0'">;
+// FIXME: This should really provide information about what is allowed.
 def err_literal_operator_params : Error<
-  "parameter declaration for literal operator %0 is not valid">;
+  "parameter declaration for literal operator '%0' is not valid">;
 
 // C++ conversion functions
 def err_conv_function_not_member : Error<

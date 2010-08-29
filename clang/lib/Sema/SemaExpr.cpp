@@ -375,7 +375,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 /// string.
 ///
 ExprResult
-Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
+Sema::ActOnStringLiteral(Scope *S, const Token *StringToks,
+                         unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
   StringLiteralParser Literal(StringToks, NumStringToks, PP);
@@ -401,12 +402,18 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                                  llvm::APInt(32, Literal.GetNumStringChars()+1),
                                        ArrayType::Normal, 0);
 
+  StringLiteral *SL = StringLiteral::Create(Context, Literal.GetString(),
+                                           Literal.GetStringLength(),
+                                           Literal.AnyWide, StrTy,
+                                           &StringTokLocs[0],
+                                           StringTokLocs.size());
+
+  if (Literal.isUserDefinedLiteral())
+    return BuildUDStringLiteralExpr(S, SL, Literal.GetNumStringChars(),
+                                    Literal.getUDSuffix());
+
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return Owned(StringLiteral::Create(Context, Literal.GetString(),
-                                     Literal.GetStringLength(),
-                                     Literal.AnyWide, StrTy,
-                                     &StringTokLocs[0],
-                                     StringTokLocs.size()));
+  return Owned(SL);
 }
 
 /// ShouldSnapshotBlockValueReference - Return true if a reference inside of

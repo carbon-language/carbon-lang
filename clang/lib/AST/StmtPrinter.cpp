@@ -1199,6 +1199,11 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
   }
 }
 
+void StmtPrinter::VisitUDLiteralExpr(UDLiteralExpr *Node) {
+  VisitStmt(Node->getBaseLiteral());
+  OS << Node->getUDSuffix()->getName();
+}
+
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
   default: assert(false && "Unknown type trait");

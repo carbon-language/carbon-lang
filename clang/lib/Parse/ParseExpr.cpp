@@ -1568,7 +1568,8 @@ ExprResult Parser::ParseStringLiteralExpression() {
   } while (isTokenStringLiteral());
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
-  return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
+  return Actions.ActOnStringLiteral(getCurScope(), &StringToks[0],
+                                    StringToks.size());
 }
 
 /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
