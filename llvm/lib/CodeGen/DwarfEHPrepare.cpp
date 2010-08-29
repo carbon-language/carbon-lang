@@ -112,24 +112,17 @@ namespace {
     bool FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
                              SmallPtrSet<IntrinsicInst*, 8> &SelCalls);
       
-    /// DoMem2RegPromotion - Take an alloca call and promote it from memory to a
-    /// register.
-    bool DoMem2RegPromotion(Value *V) {
-      AllocaInst *AI = dyn_cast<AllocaInst>(V);
+    /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
+    bool PromoteStoreInst(StoreInst *SI) {
+      if (!SI || !DT || !DF) return false;
+      
+      AllocaInst *AI = dyn_cast<AllocaInst>(SI->getOperand(1));
       if (!AI || !isAllocaPromotable(AI)) return false;
-
+      
       // Turn the alloca into a register.
       std::vector<AllocaInst*> Allocas(1, AI);
       PromoteMemToReg(Allocas, *DT, *DF);
       return true;
-    }
-
-    /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
-    bool PromoteStoreInst(StoreInst *SI) {
-      if (!SI || !DT || !DF) return false;
-      if (DoMem2RegPromotion(SI->getOperand(1)))
-        return true;
-      return false;
     }
 
     /// PromoteEHPtrStore - Promote the storing of an EH pointer into a
