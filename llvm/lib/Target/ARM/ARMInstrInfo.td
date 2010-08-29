@@ -113,7 +113,7 @@ def ARMcmp           : SDNode<"ARMISD::CMP", SDT_ARMCmp,
                               [SDNPOutFlag]>;
 
 def ARMcmpZ          : SDNode<"ARMISD::CMPZ", SDT_ARMCmp,
-                              [SDNPOutFlag,SDNPCommutative]>;
+                              [SDNPOutFlag, SDNPCommutative]>;
 
 def ARMpic_add       : SDNode<"ARMISD::PIC_ADD", SDT_ARMPICAdd>;
 
@@ -147,35 +147,34 @@ def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
 //
-def HasV4T    : Predicate<"Subtarget->hasV4TOps()">;
-def NoV4T     : Predicate<"!Subtarget->hasV4TOps()">;
-def HasV5T    : Predicate<"Subtarget->hasV5TOps()">;
-def HasV5TE   : Predicate<"Subtarget->hasV5TEOps()">;
-def HasV6     : Predicate<"Subtarget->hasV6Ops()">;
-def HasV6T2   : Predicate<"Subtarget->hasV6T2Ops()">;
-def NoV6T2    : Predicate<"!Subtarget->hasV6T2Ops()">;
-def HasV7     : Predicate<"Subtarget->hasV7Ops()">;
-def NoVFP     : Predicate<"!Subtarget->hasVFP2()">;
-def HasVFP2   : Predicate<"Subtarget->hasVFP2()">;
-def HasVFP3   : Predicate<"Subtarget->hasVFP3()">;
-def HasNEON   : Predicate<"Subtarget->hasNEON()">;
-def HasDivide : Predicate<"Subtarget->hasDivide()">;
+def HasV4T           : Predicate<"Subtarget->hasV4TOps()">;
+def NoV4T            : Predicate<"!Subtarget->hasV4TOps()">;
+def HasV5T           : Predicate<"Subtarget->hasV5TOps()">;
+def HasV5TE          : Predicate<"Subtarget->hasV5TEOps()">;
+def HasV6            : Predicate<"Subtarget->hasV6Ops()">;
+def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">;
+def NoV6T2           : Predicate<"!Subtarget->hasV6T2Ops()">;
+def HasV7            : Predicate<"Subtarget->hasV7Ops()">;
+def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
+def HasVFP2          : Predicate<"Subtarget->hasVFP2()">;
+def HasVFP3          : Predicate<"Subtarget->hasVFP3()">;
+def HasNEON          : Predicate<"Subtarget->hasNEON()">;
+def HasDivide        : Predicate<"Subtarget->hasDivide()">;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">;
-def HasDB     : Predicate<"Subtarget->hasDataBarrier()">;
-def UseNEONForFP : Predicate<"Subtarget->useNEONForSinglePrecisionFP()">;
+def HasDB            : Predicate<"Subtarget->hasDataBarrier()">;
+def UseNEONForFP     : Predicate<"Subtarget->useNEONForSinglePrecisionFP()">;
 def DontUseNEONForFP : Predicate<"!Subtarget->useNEONForSinglePrecisionFP()">;
-def IsThumb   : Predicate<"Subtarget->isThumb()">;
-def IsThumb1Only : Predicate<"Subtarget->isThumb1Only()">;
-def IsThumb2  : Predicate<"Subtarget->isThumb2()">;
-def IsARM     : Predicate<"!Subtarget->isThumb()">;
-def IsDarwin    : Predicate<"Subtarget->isTargetDarwin()">;
-def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
+def IsThumb          : Predicate<"Subtarget->isThumb()">;
+def IsThumb1Only     : Predicate<"Subtarget->isThumb1Only()">;
+def IsThumb2         : Predicate<"Subtarget->isThumb2()">;
+def IsARM            : Predicate<"!Subtarget->isThumb()">;
+def IsDarwin         : Predicate<"Subtarget->isTargetDarwin()">;
+def IsNotDarwin      : Predicate<"!Subtarget->isTargetDarwin()">;
 
 // FIXME: Eventually this will be just "hasV6T2Ops".
-def UseMovt   : Predicate<"Subtarget->useMovt()">;
-def DontUseMovt : Predicate<"!Subtarget->useMovt()">;
-
-def UseVMLx   : Predicate<"Subtarget->useVMLx()">;
+def UseMovt          : Predicate<"Subtarget->useMovt()">;
+def DontUseMovt      : Predicate<"!Subtarget->useMovt()">;
+def UseVMLx          : Predicate<"Subtarget->useVMLx()">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
