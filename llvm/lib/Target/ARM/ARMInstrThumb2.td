@@ -214,7 +214,7 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// binary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
 multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
-                       bit Commutable = 0, string wide =""> {
+                       bit Commutable = 0, string wide = "", bit SBit = 0> {
    // shifted imm
    def ri : T2sI<(outs rGPR:$dst), (ins rGPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
                  opc, "\t$dst, $lhs, $rhs",
@@ -222,7 +222,7 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
+     let Inst{20} = SBit; // The S bit.
      let Inst{15} = 0;
    }
    // register
@@ -233,7 +233,7 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
+     let Inst{20} = SBit; // The S bit.
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
      let Inst{5-4} = 0b00; // type
@@ -245,7 +245,7 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
+     let Inst{20} = SBit; // The S bit.
    }
 }
 
@@ -253,7 +253,13 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
 //  the ".w" prefix to indicate that they are wide.
 multiclass T2I_bin_w_irs<bits<4> opcod, string opc, PatFrag opnode,
                          bit Commutable = 0> :
-    T2I_bin_irs<opcod, opc, opnode, Commutable, ".w">;
+    T2I_bin_irs<opcod, opc, opnode, Commutable, ".w", ?>;
+
+/// T2I_bin_sw_irs - Same as T2I_bin_w_irs except these operations set
+//  the 'S' bit.
+multiclass T2I_bin_sw_irs<bits<4> opcod, string opc, PatFrag opnode,
+                         bit Commutable = 0> :
+    T2I_bin_irs<opcod, opc, opnode, Commutable, ".w", 1>;
 
 /// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are
 /// reversed.  The 'rr' form is only defined for the disassembler; for codegen
@@ -1632,8 +1638,8 @@ defm t2BIC  : T2I_bin_w_irs<0b0001, "bic",
                             BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 let Defs = [CPSR] in
-defm t2ANDS : T2I_bin_w_irs<0b0000, "and",
-                            BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
+defm t2ANDS : T2I_bin_sw_irs<0b0000, "and",
+                             BinOpFrag<(ARMand node:$LHS, node:$RHS)>, 1>;
 
 let Constraints = "$src = $dst" in
 def t2BFC : T2I<(outs rGPR:$dst), (ins rGPR:$src, bf_inv_mask_imm:$imm),
@@ -1676,7 +1682,7 @@ def t2BFI : T2I<(outs rGPR:$dst),
 }
 
 defm t2ORN  : T2I_bin_irs<0b0011, "orn", BinOpFrag<(or  node:$LHS,
-                          (not node:$RHS))>>;
+                          (not node:$RHS))>, 0, "", ?>;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
