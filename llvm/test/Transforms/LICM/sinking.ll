@@ -233,3 +233,17 @@ Out:		; preds = %Loop
 ; CHECK-NEXT:  ret i32 %tmp.6
 }
 
+; Should delete, not sink, dead instructions.
+define void @test11() {
+	br label %Loop
+Loop:
+	%dead = getelementptr %Ty* @X2, i64 0, i32 0
+	br i1 false, label %Loop, label %Out
+Out:
+	ret void
+; CHECK: @test11
+; CHECK:     Out:
+; CHECK-NEXT:  ret void
+}
+
+

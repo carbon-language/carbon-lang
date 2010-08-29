@@ -43,6 +43,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
@@ -299,7 +300,7 @@ void LICM::SinkRegion(DomTreeNode *N) {
   // If this subregion is not in the top level loop at all, exit.
   if (!CurLoop->contains(BB)) return;
 
-  // We are processing blocks in reverse dfo, so process children first...
+  // We are processing blocks in reverse dfo, so process children first.
   const std::vector<DomTreeNode*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     SinkRegion(Children[i]);
@@ -310,6 +311,16 @@ void LICM::SinkRegion(DomTreeNode *N) {
 
   for (BasicBlock::iterator II = BB->end(); II != BB->begin(); ) {
     Instruction &I = *--II;
+    
+    // If the instruction is dead, we would try to sink it because it isn't used
+    // in the loop, instead, just delete it.
+    if (isInstructionTriviallyDead(&I)) {
+      ++II;
+      CurAST->deleteValue(&I);
+      I.eraseFromParent();
+      Changed = true;
+      continue;
+    }
 
     // Check to see if we can sink this instruction to the exit blocks
     // of the loop.  We can do this if the all users of the instruction are
