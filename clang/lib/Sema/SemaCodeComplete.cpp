@@ -1758,7 +1758,8 @@ static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
 }
 
 static std::string FormatFunctionParameter(ASTContext &Context,
-                                           ParmVarDecl *Param) {
+                                           ParmVarDecl *Param,
+                                           bool SuppressName = false) {
   bool ObjCMethodParam = isa<ObjCMethodDecl>(Param->getDeclContext());
   if (Param->getType()->isDependentType() ||
       !Param->getType()->isBlockPointerType()) {
@@ -1766,7 +1767,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     // containing that parameter's type.
     std::string Result;
     
-    if (Param->getIdentifier() && !ObjCMethodParam)
+    if (Param->getIdentifier() && !ObjCMethodParam && !SuppressName)
       Result = Param->getIdentifier()->getName();
     
     Param->getType().getAsStringInternal(Result, 
@@ -1775,7 +1776,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     if (ObjCMethodParam) {
       Result = "(" + Result;
       Result += ")";
-      if (Param->getIdentifier())
+      if (Param->getIdentifier() && !SuppressName)
         Result += Param->getIdentifier()->getName();
     }
     return Result;
@@ -2188,12 +2189,13 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
       std::string Arg;
       
       if ((*P)->getType()->isBlockPointerType() && !DeclaringEntity)
-        Arg = FormatFunctionParameter(S.Context, *P);
+        Arg = FormatFunctionParameter(S.Context, *P, true);
       else {
         (*P)->getType().getAsStringInternal(Arg, S.Context.PrintingPolicy);
         Arg = "(" + Arg + ")";
         if (IdentifierInfo *II = (*P)->getIdentifier())
-          Arg += II->getName().str();
+          if (DeclaringEntity || AllParametersAreInformative)
+            Arg += II->getName().str();
       }
       
       if (DeclaringEntity)
