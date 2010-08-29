@@ -44,6 +44,10 @@ def SDT_ARMBCC_i64 : SDTypeProfile<0, 6,
                                    SDTCisVT<3, i32>, SDTCisVT<4, i32>,
                                    SDTCisVT<5, OtherVT>]>;
 
+def SDT_ARMAnd     : SDTypeProfile<1, 2,
+                                   [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                    SDTCisVT<2, i32>]>;
+
 def SDT_ARMCmp     : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 
 def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
@@ -101,6 +105,9 @@ def ARMbr2jt         : SDNode<"ARMISD::BR2_JT", SDT_ARMBr2JT,
 
 def ARMBcci64        : SDNode<"ARMISD::BCC_i64", SDT_ARMBCC_i64,
                               [SDNPHasChain]>;
+
+def ARMand           : SDNode<"ARMISD::AND", SDT_ARMAnd,
+                              [SDNPOutFlag]>;
 
 def ARMcmp           : SDNode<"ARMISD::CMP", SDT_ARMCmp,
                               [SDNPOutFlag]>;
