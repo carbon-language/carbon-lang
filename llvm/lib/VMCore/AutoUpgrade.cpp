@@ -79,8 +79,17 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         return true;
       }
     } else if (Name.compare(5, 9, "arm.neon.", 9) == 0) {
-      if (Name.compare(14, 7, "vmovls.", 7) == 0 ||
-          Name.compare(14, 7, "vmovlu.", 7) == 0) {
+      if (((Name.compare(14, 5, "vmovl", 5) == 0 ||
+            Name.compare(14, 5, "vaddl", 5) == 0 ||
+            Name.compare(14, 5, "vsubl", 5) == 0) &&
+           (Name.compare(19, 2, "s.", 2) == 0 ||
+            Name.compare(19, 2, "u.", 2) == 0)) ||
+
+          ((Name.compare(14, 5, "vaddw", 5) == 0 ||
+            Name.compare(14, 5, "vsubw", 5) == 0) &&
+           (Name.compare(19, 2, "s.", 2) == 0 ||
+            Name.compare(19, 2, "u.", 2) == 0))) {
+
         // Calls to these are transformed into IR without intrinsics.
         NewFn = 0;
         return true;
@@ -371,6 +380,27 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       } else if (Name.compare(14, 7, "vmovlu.", 7) == 0) {
         NewI = new ZExtInst(CI->getArgOperand(0), CI->getType(),
                             "upgraded." + CI->getName(), CI);
+
+      } else if (Name.compare(14, 4, "vadd", 4) == 0 ||
+                 Name.compare(14, 4, "vsub", 4) == 0) {
+        // Extend one (vaddw/vsubw) or both (vaddl/vsubl) operands.
+        Value *V0 = CI->getArgOperand(0);
+        Value *V1 = CI->getArgOperand(1);
+        if (Name.at(19) == 's') {
+          if (Name.at(18) == 'l')
+            V0 = new SExtInst(CI->getArgOperand(0), CI->getType(), "", CI);
+          V1 = new SExtInst(CI->getArgOperand(1), CI->getType(), "", CI);
+        } else {
+          assert(Name.at(19) == 'u' && "unexpected vadd/vsub intrinsic");
+          if (Name.at(18) == 'l')
+            V0 = new ZExtInst(CI->getArgOperand(0), CI->getType(), "", CI);
+          V1 = new ZExtInst(CI->getArgOperand(1), CI->getType(), "", CI);
+        }
+        if (Name.compare(14, 4, "vadd", 4) == 0)
+          NewI = BinaryOperator::CreateAdd(V0, V1,"upgraded."+CI->getName(),CI);
+        else
+          NewI = BinaryOperator::CreateSub(V0, V1,"upgraded."+CI->getName(),CI);
+
       } else {
         llvm_unreachable("Unknown arm.neon function for CallInst upgrade.");
       }

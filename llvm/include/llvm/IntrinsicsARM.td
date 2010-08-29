@@ -73,10 +73,6 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
                 [LLVMTruncatedElementVectorType<0>,
                  LLVMTruncatedElementVectorType<0>],
                 [IntrNoMem]>;
-  class Neon_2Arg_Wide_Intrinsic
-    : Intrinsic<[llvm_anyvector_ty],
-                [LLVMMatchType<0>, LLVMTruncatedElementVectorType<0>],
-                [IntrNoMem]>;
   class Neon_3Arg_Intrinsic
     : Intrinsic<[llvm_anyvector_ty],
                 [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
@@ -128,10 +124,6 @@ let Properties = [IntrNoMem, Commutative] in {
   def int_arm_neon_vqaddu : Neon_2Arg_Intrinsic;
   def int_arm_neon_vaddhn : Neon_2Arg_Narrow_Intrinsic;
   def int_arm_neon_vraddhn : Neon_2Arg_Narrow_Intrinsic;
-  def int_arm_neon_vaddls : Neon_2Arg_Long_Intrinsic;
-  def int_arm_neon_vaddlu : Neon_2Arg_Long_Intrinsic;
-  def int_arm_neon_vaddws : Neon_2Arg_Wide_Intrinsic;
-  def int_arm_neon_vaddwu : Neon_2Arg_Wide_Intrinsic;
 
   // Vector Multiply.
   def int_arm_neon_vmulp : Neon_2Arg_Intrinsic;
@@ -172,10 +164,6 @@ def int_arm_neon_vqsubs : Neon_2Arg_Intrinsic;
 def int_arm_neon_vqsubu : Neon_2Arg_Intrinsic;
 def int_arm_neon_vsubhn : Neon_2Arg_Narrow_Intrinsic;
 def int_arm_neon_vrsubhn : Neon_2Arg_Narrow_Intrinsic;
-def int_arm_neon_vsubls : Neon_2Arg_Long_Intrinsic;
-def int_arm_neon_vsublu : Neon_2Arg_Long_Intrinsic;
-def int_arm_neon_vsubws : Neon_2Arg_Wide_Intrinsic;
-def int_arm_neon_vsubwu : Neon_2Arg_Wide_Intrinsic;
 
 // Vector Absolute Compare.
 let TargetPrefix = "arm" in {

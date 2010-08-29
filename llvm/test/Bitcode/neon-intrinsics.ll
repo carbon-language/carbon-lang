@@ -28,6 +28,54 @@
 ; CHECK-NOT: arm.neon.vmovlu.v2i64
 ; CHECK: zext <2 x i32>
 
+; vaddl/vaddw should be auto-upgraded to add with sext/zext
+
+; CHECK: vaddls16
+; CHECK-NOT: arm.neon.vaddls.v4i32
+; CHECK: sext <4 x i16>
+; CHECK-NEXT: sext <4 x i16>
+; CHECK-NEXT: add <4 x i32>
+
+; CHECK: vaddlu32
+; CHECK-NOT: arm.neon.vaddlu.v2i64
+; CHECK: zext <2 x i32>
+; CHECK-NEXT: zext <2 x i32>
+; CHECK-NEXT: add <2 x i64>
+
+; CHECK: vaddws8
+; CHECK-NOT: arm.neon.vaddws.v8i16
+; CHECK: sext <8 x i8>
+; CHECK-NEXT: add <8 x i16>
+
+; CHECK: vaddwu16
+; CHECK-NOT: arm.neon.vaddwu.v4i32
+; CHECK: zext <4 x i16>
+; CHECK-NEXT: add <4 x i32>
+
+; vsubl/vsubw should be auto-upgraded to sub with sext/zext
+
+; CHECK: vsubls16
+; CHECK-NOT: arm.neon.vsubls.v4i32
+; CHECK: sext <4 x i16>
+; CHECK-NEXT: sext <4 x i16>
+; CHECK-NEXT: sub <4 x i32>
+
+; CHECK: vsublu32
+; CHECK-NOT: arm.neon.vsublu.v2i64
+; CHECK: zext <2 x i32>
+; CHECK-NEXT: zext <2 x i32>
+; CHECK-NEXT: sub <2 x i64>
+
+; CHECK: vsubws8
+; CHECK-NOT: arm.neon.vsubws.v8i16
+; CHECK: sext <8 x i8>
+; CHECK-NEXT: sub <8 x i16>
+
+; CHECK: vsubwu16
+; CHECK-NOT: arm.neon.vsubwu.v4i32
+; CHECK: zext <4 x i16>
+; CHECK-NEXT: sub <4 x i32>
+
 ; vld* and vst* intrinsic calls need an alignment argument (defaulted to 1)
 
 ; CHECK: vld1i8
