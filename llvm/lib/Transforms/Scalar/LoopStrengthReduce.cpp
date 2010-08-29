@@ -1391,6 +1391,7 @@ public:
   size_t EstimateSearchSpaceComplexity() const;
   void NarrowSearchSpaceByDetectingSupersets();
   void NarrowSearchSpaceByCollapsingUnrolledCode();
+  void NarrowSearchSpaceByRefilteringUndesirableDedicatedRegisters();
   void NarrowSearchSpaceByPickingWinnerRegs();
   void NarrowSearchSpaceUsingHeuristics();
 
@@ -3104,6 +3105,24 @@ void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
   }
 }
 
+/// NarrowSearchSpaceByRefilteringUndesirableDedicatedRegisters - Call 
+/// FilterOutUndesirableDedicatedRegisters again, if necessary, now that
+/// we've done more filtering, as it may be able to find more formulae to
+/// eliminate.
+void LSRInstance::NarrowSearchSpaceByRefilteringUndesirableDedicatedRegisters(){
+  if (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
+    DEBUG(dbgs() << "The search space is too complex.\n");
+
+    DEBUG(dbgs() << "Narrowing the search space by re-filtering out "
+                    "undesirable dedicated registers.\n");
+
+    FilterOutUndesirableDedicatedRegisters();
+
+    DEBUG(dbgs() << "After pre-selection:\n";
+          print_uses(dbgs()));
+  }
+}
+
 /// NarrowSearchSpaceByPickingWinnerRegs - Pick a register which seems likely
 /// to be profitable, and then in any use which has any reference to that
 /// register, delete all formulae which do not reference that register.
@@ -3176,6 +3195,7 @@ void LSRInstance::NarrowSearchSpaceByPickingWinnerRegs() {
 void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
   NarrowSearchSpaceByDetectingSupersets();
   NarrowSearchSpaceByCollapsingUnrolledCode();
+  NarrowSearchSpaceByRefilteringUndesirableDedicatedRegisters();
   NarrowSearchSpaceByPickingWinnerRegs();
 }
 
