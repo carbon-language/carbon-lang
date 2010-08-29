@@ -1846,8 +1846,9 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     // they are loop invariant w.r.t. the recurrence.
     SmallVector<const SCEV *, 8> LIOps;
     const SCEVAddRecExpr *AddRec = cast<SCEVAddRecExpr>(Ops[Idx]);
+    const Loop *AddRecLoop = AddRec->getLoop();
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      if (Ops[i]->isLoopInvariant(AddRec->getLoop())) {
+      if (Ops[i]->isLoopInvariant(AddRecLoop)) {
         LIOps.push_back(Ops[i]);
         Ops.erase(Ops.begin()+i);
         --i; --e;
@@ -1864,7 +1865,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
 
       // Build the new addrec. Propagate the NUW and NSW flags if both the
       // outer mul and the inner addrec are guaranteed to have no overflow.
-      const SCEV *NewRec = getAddRecExpr(NewOps, AddRec->getLoop(),
+      const SCEV *NewRec = getAddRecExpr(NewOps, AddRecLoop,
                                          HasNUW && AddRec->hasNoUnsignedWrap(),
                                          HasNSW && AddRec->hasNoSignedWrap());
 
@@ -1887,7 +1888,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);++OtherIdx)
       if (OtherIdx != Idx) {
         const SCEVAddRecExpr *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
-        if (AddRec->getLoop() == OtherAddRec->getLoop()) {
+        if (AddRecLoop == OtherAddRec->getLoop()) {
           // F * G  -->  {A,+,B} * {C,+,D}  -->  {A*C,+,F*D + G*B + B*D}
           const SCEVAddRecExpr *F = AddRec, *G = OtherAddRec;
           const SCEV *NewStart = getMulExpr(F->getStart(), G->getStart());
