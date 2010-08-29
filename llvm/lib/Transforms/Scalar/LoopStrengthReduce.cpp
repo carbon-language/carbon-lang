@@ -2795,6 +2795,10 @@ LSRInstance::GenerateAllReuseFormulae() {
   }
 
   GenerateCrossUseConstantOffsets();
+
+  DEBUG(dbgs() << "\n"
+                  "After generating reuse formulae:\n";
+        print_uses(dbgs()));
 }
 
 /// If their are multiple formulae with the same set of registers used
@@ -3630,10 +3634,6 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   // Now use the reuse data to generate a bunch of interesting ways
   // to formulate the values needed for the uses.
   GenerateAllReuseFormulae();
-
-  DEBUG(dbgs() << "\n"
-                  "After generating reuse formulae:\n";
-        print_uses(dbgs()));
 
   FilterOutUndesirableDedicatedRegisters();
   NarrowSearchSpaceUsingHeuristics();
