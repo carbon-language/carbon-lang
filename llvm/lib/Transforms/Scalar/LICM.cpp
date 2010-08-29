@@ -574,11 +574,12 @@ void LICM::hoist(Instruction &I) {
   DEBUG(dbgs() << "LICM hoisting to " << Preheader->getName() << ": "
         << I << "\n");
 
-  // The instruction is no longer in this loop.
-  CurAST->deleteValue(&I);
-  
-  // Move the new node to the Preheader, before its terminator.
-  I.moveBefore(Preheader->getTerminator());
+  // Remove the instruction from its current basic block... but don't delete the
+  // instruction.
+  I.removeFromParent();
+
+  // Insert the new node in Preheader, before the terminator.
+  Preheader->getInstList().insert(Preheader->getTerminator(), &I);
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
   else if (isa<CallInst>(I)) ++NumMovedCalls;
