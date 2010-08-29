@@ -3,7 +3,7 @@
 ; LSR would like to use a single IV for both of these, however it's
 ; not safe due to wraparound.
 
-; CHECK: addb  $-4, %r
+; CHECK: addb  $-4, %
 ; CHECK: decw  %
 
 @g_19 = common global i32 0                       ; <i32*> [#uses=2]
