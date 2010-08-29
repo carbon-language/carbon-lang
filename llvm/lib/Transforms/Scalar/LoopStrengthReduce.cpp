@@ -1367,6 +1367,9 @@ public:
   void FilterOutUndesirableDedicatedRegisters();
 
   size_t EstimateSearchSpaceComplexity() const;
+  void NarrowSearchSpaceByDetectingSupersets();
+  void NarrowSearchSpaceByCollapsingUnrolledCode();
+  void NarrowSearchSpaceByPickingWinnerRegs();
   void NarrowSearchSpaceUsingHeuristics();
 
   void SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
@@ -2905,11 +2908,11 @@ size_t LSRInstance::EstimateSearchSpaceComplexity() const {
   return Power;
 }
 
-/// NarrowSearchSpaceUsingHeuristics - If there are an extraordinary number of
-/// formulae to choose from, use some rough heuristics to prune down the number
-/// of formulae. This keeps the main solver from taking an extraordinary amount
-/// of time in some worst-case scenarios.
-void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
+/// NarrowSearchSpaceByDetectingSupersets - When one formula uses a superset
+/// of the registers of another formula, it won't help reduce register
+/// pressure (though it may not necessarily hurt register pressure); remove
+/// it to simplify the system.
+void LSRInstance::NarrowSearchSpaceByDetectingSupersets() {
   if (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
     DEBUG(dbgs() << "The search space is too complex.\n");
 
@@ -2967,7 +2970,12 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
     DEBUG(dbgs() << "After pre-selection:\n";
           print_uses(dbgs()));
   }
+}
 
+/// NarrowSearchSpaceByCollapsingUnrolledCode - When there are many registers
+/// for expressions like A, A+1, A+2, etc., allocate a single register for
+/// them.
+void LSRInstance::NarrowSearchSpaceByCollapsingUnrolledCode() {
   if (EstimateSearchSpaceComplexity() >= ComplexityLimit) {
     DEBUG(dbgs() << "The search space is too complex.\n");
 
@@ -3038,7 +3046,12 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
     DEBUG(dbgs() << "After pre-selection:\n";
           print_uses(dbgs()));
   }
+}
 
+/// NarrowSearchSpaceByPickingWinnerRegs - Pick a register which seems likely
+/// to be profitable, and then in any use which has any reference to that
+/// register, delete all formulae which do not reference that register.
+void LSRInstance::NarrowSearchSpaceByPickingWinnerRegs() {
   // With all other options exhausted, loop until the system is simple
   // enough to handle.
   SmallPtrSet<const SCEV *, 4> Taken;
@@ -3098,6 +3111,16 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
     DEBUG(dbgs() << "After pre-selection:\n";
           print_uses(dbgs()));
   }
+}
+
+/// NarrowSearchSpaceUsingHeuristics - If there are an extraordinary number of
+/// formulae to choose from, use some rough heuristics to prune down the number
+/// of formulae. This keeps the main solver from taking an extraordinary amount
+/// of time in some worst-case scenarios.
+void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
+  NarrowSearchSpaceByDetectingSupersets();
+  NarrowSearchSpaceByCollapsingUnrolledCode();
+  NarrowSearchSpaceByPickingWinnerRegs();
 }
 
 /// SolveRecurse - This is the recursive solver.
