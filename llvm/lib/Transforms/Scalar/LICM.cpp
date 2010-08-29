@@ -78,8 +78,8 @@ namespace {
       AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<AliasAnalysis>();
+      AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
-      AU.addPreserved<DominanceFrontier>();
       AU.addPreservedID(LoopSimplifyID);
     }
 
