@@ -62,13 +62,12 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
+      AU.addPreserved<ScalarEvolution>();
       // FIXME: Loop unroll requires LCSSA. And LCSSA requires dom info.
       // If loop unroll does not preserve dom info then LCSSA pass on next
       // loop will receive invalid dom info.
       // For now, recreate dom info, if loop is unrolled.
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<DominanceFrontier>();
-      AU.addPreserved<ScalarEvolution>();
     }
   };
 }
@@ -148,12 +147,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   // FIXME: Reconstruct dom info, because it is not preserved properly.
-  DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
-  if (DT) {
+  if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
     DT->runOnFunction(*F);
-    DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>();
-    if (DF)
-      DF->runOnFunction(*F);
-  }
   return true;
 }
