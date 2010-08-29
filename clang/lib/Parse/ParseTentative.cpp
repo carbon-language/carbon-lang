@@ -188,7 +188,7 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
       ConsumeParen();
       if (!SkipUntil(tok::r_paren))
         return TPResult::Error();
-    } else if (Tok.is(tok::equal)) {
+    } else if (Tok.is(tok::equal) || isTokIdentifier_in()) {
       // MSVC and g++ won't examine the rest of declarators if '=' is 
       // encountered; they just conclude that we have a declaration.
       // EDG parses the initializer completely, which is the proper behavior
@@ -197,6 +197,12 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
       // At present, Clang follows MSVC and g++, since the parser does not have
       // the ability to parse an expression fully without recording the
       // results of that parse.
+      // Also allow 'in' after on objective-c declaration as in: 
+      // for (int (^b)(void) in array). Ideally this should be done in the 
+      // context of parsing for-init-statement of a foreach statement only. But,
+      // in any other context 'in' is invalid after a declaration and parser
+      // issues the error regardless of outcome of this decision.
+      // FIXME. Change if above assumption does not hold.
       return TPResult::True();
     }
 
