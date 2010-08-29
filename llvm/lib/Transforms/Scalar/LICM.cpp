@@ -45,6 +45,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -477,7 +478,7 @@ void LICM::sink(Instruction &I) {
       // If I has users in unreachable blocks, eliminate.
       // If I is not void type then replaceAllUsesWith undef.
       // This allows ValueHandlers and custom metadata to adjust itself.
-      if (!I.getType()->isVoidTy())
+      if (!I.use_empty())
         I.replaceAllUsesWith(UndefValue::get(I.getType()));
       I.eraseFromParent();
     } else {
@@ -496,82 +497,41 @@ void LICM::sink(Instruction &I) {
     // If I has users in unreachable blocks, eliminate.
     // If I is not void type then replaceAllUsesWith undef.
     // This allows ValueHandlers and custom metadata to adjust itself.
-    if (!I.getType()->isVoidTy())
+    if (!I.use_empty())
       I.replaceAllUsesWith(UndefValue::get(I.getType()));
     I.eraseFromParent();
     return;
   }
   
-  // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
-  // do all of the hard work of inserting PHI nodes as necessary.  We convert
-  // the value into a stack object to get it to do this.
-
-  // Firstly, we create a stack object to hold the value...
-  AllocaInst *AI = 0;
-
-  if (!I.getType()->isVoidTy()) {
-    AI = new AllocaInst(I.getType(), 0, I.getName(),
-                        I.getParent()->getParent()->getEntryBlock().begin());
-    CurAST->add(AI);
-  }
-
-  // Secondly, insert load instructions for each use of the instruction
-  // outside of the loop.
-  while (!I.use_empty()) {
-    Instruction *U = cast<Instruction>(I.use_back());
-
-    // If the user is a PHI Node, we actually have to insert load instructions
-    // in all predecessor blocks, not in the PHI block itself!
-    if (PHINode *UPN = dyn_cast<PHINode>(U)) {
-      // Only insert into each predecessor once, so that we don't have
-      // different incoming values from the same block!
-      DenseMap<BasicBlock*, Value*> InsertedBlocks;
-      for (unsigned i = 0, e = UPN->getNumIncomingValues(); i != e; ++i) {
-        if (UPN->getIncomingValue(i) != &I) continue;
-        
-        BasicBlock *Pred = UPN->getIncomingBlock(i);
-        Value *&PredVal = InsertedBlocks[Pred];
-        if (!PredVal) {
-          // Insert a new load instruction right before the terminator in
-          // the predecessor block.
-          PredVal = new LoadInst(AI, "", Pred->getTerminator());
-          CurAST->add(cast<LoadInst>(PredVal));
-        }
-
-        UPN->setIncomingValue(i, PredVal);
-      }
-
-    } else {
-      LoadInst *L = new LoadInst(AI, "", U);
-      U->replaceUsesOfWith(&I, L);
-      CurAST->add(L);
-    }
-  }
-
-  // Thirdly, insert a copy of the instruction in each exit block of the loop
-  // that is dominated by the instruction, storing the result into the memory
-  // location.  Each exit block is known to only be in the ExitBlocks list once.
-  SmallPtrSet<BasicBlock*, 16> InsertedBlocks;
-  BasicBlock *InstOrigBB = I.getParent();
+  // Otherwise, if we have multiple exits, use the SSAUpdater to do all of the
+  // hard work of inserting PHI nodes as necessary.
+  SmallVector<PHINode*, 8> NewPHIs;
+  SSAUpdater SSA(&NewPHIs);
   
+  if (!I.use_empty())
+    SSA.Initialize(&I);
+  
+  // Insert a copy of the instruction in each exit block of the loop that is
+  // dominated by the instruction.  Each exit block is known to only be in the
+  // ExitBlocks list once.
+  BasicBlock *InstOrigBB = I.getParent();
   unsigned NumInserted = 0;
-
+  
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
-
+    
     if (!isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB))
       continue;
     
-    // Insert the code after the last PHI node...
+    // Insert the code after the last PHI node.
     BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
-
+    
     // If this is the first exit block processed, just move the original
     // instruction, otherwise clone the original instruction and insert
     // the copy.
     Instruction *New;
-    if (NumInserted == 0) {
-      I.removeFromParent();
-      ExitBlock->getInstList().insert(InsertPt, &I);
+    if (NumInserted++ == 0) {
+      I.moveBefore(InsertPt);
       New = &I;
     } else {
       New = I.clone();
@@ -581,24 +541,33 @@ void LICM::sink(Instruction &I) {
       ExitBlock->getInstList().insert(InsertPt, New);
     }
     
-    ++NumInserted;
-
-    // Now that we have inserted the instruction, store it into the alloca
-    if (AI) new StoreInst(New, AI, InsertPt);
+    // Now that we have inserted the instruction, inform SSAUpdater.
+    if (!I.use_empty())
+      SSA.AddAvailableValue(ExitBlock, New);
   }
-
+  
   // If the instruction doesn't dominate any exit blocks, it must be dead.
   if (NumInserted == 0) {
     CurAST->deleteValue(&I);
+    if (!I.use_empty())
+      I.replaceAllUsesWith(UndefValue::get(I.getType()));
     I.eraseFromParent();
+    return;
   }
-
-  // Finally, promote the fine value to SSA form.
-  if (AI) {
-    std::vector<AllocaInst*> Allocas;
-    Allocas.push_back(AI);
-    PromoteMemToReg(Allocas, *DT, *DF, CurAST);
+  
+  // Next, rewrite uses of the instruction, inserting PHI nodes as needed.
+  for (Value::use_iterator UI = I.use_begin(), UE = I.use_end(); UI != UE; ) {
+    // Grab the use before incrementing the iterator.
+    Use &U = UI.getUse();
+    // Increment the iterator before removing the use from the list.
+    ++UI;
+    SSA.RewriteUseAfterInsertions(U);
   }
+  
+  // Update CurAST for NewPHIs if I had pointer type.
+  if (I.getType()->isPointerTy())
+    for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
+      CurAST->copyValue(NewPHIs[i], &I);
 }
 
 /// hoist - When an instruction is found to only use loop invariant operands
