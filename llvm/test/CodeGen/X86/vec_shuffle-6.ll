@@ -6,7 +6,7 @@
 target triple = "i686-apple-darwin"
 @x = external global [4 x i32]
 
-define <2 x i64> @test1() {
+define <2 x i64> @test1() nounwind {
 	%tmp = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 0)		; <i32> [#uses=1]
 	%tmp3 = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 1)		; <i32> [#uses=1]
 	%tmp5 = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 2)		; <i32> [#uses=1]
@@ -19,7 +19,7 @@ define <2 x i64> @test1() {
 	ret <2 x i64> %tmp16
 }
 
-define <4 x float> @test2(i32 %dummy, float %a, float %b, float %c, float %d) {
+define <4 x float> @test2(i32 %dummy, float %a, float %b, float %c, float %d) nounwind {
 	%tmp = insertelement <4 x float> undef, float %a, i32 0		; <<4 x float>> [#uses=1]
 	%tmp11 = insertelement <4 x float> %tmp, float %b, i32 1		; <<4 x float>> [#uses=1]
 	%tmp12 = insertelement <4 x float> %tmp11, float %c, i32 2		; <<4 x float>> [#uses=1]
@@ -27,7 +27,7 @@ define <4 x float> @test2(i32 %dummy, float %a, float %b, float %c, float %d) {
 	ret <4 x float> %tmp13
 }
 
-define <4 x float> @test3(float %a, float %b, float %c, float %d) {
+define <4 x float> @test3(float %a, float %b, float %c, float %d) nounwind {
 	%tmp = insertelement <4 x float> undef, float %a, i32 0		; <<4 x float>> [#uses=1]
 	%tmp11 = insertelement <4 x float> %tmp, float %b, i32 1		; <<4 x float>> [#uses=1]
 	%tmp12 = insertelement <4 x float> %tmp11, float %c, i32 2		; <<4 x float>> [#uses=1]
@@ -35,7 +35,7 @@ define <4 x float> @test3(float %a, float %b, float %c, float %d) {
 	ret <4 x float> %tmp13
 }
 
-define <2 x double> @test4(double %a, double %b) {
+define <2 x double> @test4(double %a, double %b) nounwind {
 	%tmp = insertelement <2 x double> undef, double %a, i32 0		; <<2 x double>> [#uses=1]
 	%tmp7 = insertelement <2 x double> %tmp, double %b, i32 1		; <<2 x double>> [#uses=1]
 	ret <2 x double> %tmp7

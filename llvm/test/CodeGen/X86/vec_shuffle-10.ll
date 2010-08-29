@@ -3,7 +3,7 @@
 ; RUN: grep pshufd   %t | count 1
 ; RUN: not grep {sub.*esp} %t
 
-define void @test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) {
+define void @test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) nounwind {
 	%tmp = load <4 x float>* %B		; <<4 x float>> [#uses=2]
 	%tmp3 = load <4 x float>* %A		; <<4 x float>> [#uses=2]
 	%tmp.upgrd.1 = extractelement <4 x float> %tmp3, i32 0		; <float> [#uses=1]
@@ -18,7 +18,7 @@ define void @test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) {
 	ret void
 }
 
-define void @test2(<4 x float> %X, <4 x float>* %res) {
+define void @test2(<4 x float> %X, <4 x float>* %res) nounwind {
 	%tmp5 = shufflevector <4 x float> %X, <4 x float> undef, <4 x i32> < i32 2, i32 6, i32 3, i32 7 >		; <<4 x float>> [#uses=1]
 	store <4 x float> %tmp5, <4 x float>* %res
 	ret void

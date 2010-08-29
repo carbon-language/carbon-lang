@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
 
-define <4 x i32> @test(i8** %ptr) {
+define <4 x i32> @test(i8** %ptr) nounwind {
 ; CHECK: pxor
 ; CHECK: punpcklbw
 ; CHECK: punpcklwd

@@ -2,7 +2,7 @@
 ; RUN: grep movlhps %t | count 1
 ; RUN: grep movhlps %t | count 1
 
-define <4 x float> @test1(<4 x float>* %x, <4 x float>* %y) {
+define <4 x float> @test1(<4 x float>* %x, <4 x float>* %y) nounwind {
         %tmp = load <4 x float>* %y             ; <<4 x float>> [#uses=2]
         %tmp5 = load <4 x float>* %x            ; <<4 x float>> [#uses=2]
         %tmp9 = fadd <4 x float> %tmp5, %tmp             ; <<4 x float>> [#uses=1]
@@ -11,7 +11,7 @@ define <4 x float> @test1(<4 x float>* %x, <4 x float>* %y) {
         ret <4 x float> %tmp27
 }
 
-define <4 x float> @movhl(<4 x float>* %x, <4 x float>* %y) {
+define <4 x float> @movhl(<4 x float>* %x, <4 x float>* %y) nounwind {
 entry:
         %tmp = load <4 x float>* %y             ; <<4 x float>> [#uses=1]
         %tmp3 = load <4 x float>* %x            ; <<4 x float>> [#uses=1]
