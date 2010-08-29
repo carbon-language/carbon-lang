@@ -460,7 +460,7 @@ void LICM::sink(Instruction &I) {
   DEBUG(dbgs() << "LICM sinking instruction: " << I << "\n");
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
-  CurLoop->getExitBlocks(ExitBlocks);
+  CurLoop->getUniqueExitBlocks(ExitBlocks);
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
   else if (isa<CallInst>(I)) ++NumMovedCalls;
@@ -487,7 +487,10 @@ void LICM::sink(Instruction &I) {
       BasicBlock::iterator InsertPt = ExitBlocks[0]->getFirstNonPHI();
       ExitBlocks[0]->getInstList().insert(InsertPt, &I);
     }
-  } else if (ExitBlocks.empty()) {
+    return;
+  }
+  
+  if (ExitBlocks.empty()) {
     // The instruction is actually dead if there ARE NO exit blocks.
     CurAST->deleteValue(&I);
     // If I has users in unreachable blocks, eliminate.
@@ -496,105 +499,105 @@ void LICM::sink(Instruction &I) {
     if (!I.getType()->isVoidTy())
       I.replaceAllUsesWith(UndefValue::get(I.getType()));
     I.eraseFromParent();
-  } else {
-    // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
-    // do all of the hard work of inserting PHI nodes as necessary.  We convert
-    // the value into a stack object to get it to do this.
+    return;
+  }
+  
+  // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
+  // do all of the hard work of inserting PHI nodes as necessary.  We convert
+  // the value into a stack object to get it to do this.
 
-    // Firstly, we create a stack object to hold the value...
-    AllocaInst *AI = 0;
+  // Firstly, we create a stack object to hold the value...
+  AllocaInst *AI = 0;
 
-    if (!I.getType()->isVoidTy()) {
-      AI = new AllocaInst(I.getType(), 0, I.getName(),
-                          I.getParent()->getParent()->getEntryBlock().begin());
-      CurAST->add(AI);
-    }
+  if (!I.getType()->isVoidTy()) {
+    AI = new AllocaInst(I.getType(), 0, I.getName(),
+                        I.getParent()->getParent()->getEntryBlock().begin());
+    CurAST->add(AI);
+  }
 
-    // Secondly, insert load instructions for each use of the instruction
-    // outside of the loop.
-    while (!I.use_empty()) {
-      Instruction *U = cast<Instruction>(I.use_back());
+  // Secondly, insert load instructions for each use of the instruction
+  // outside of the loop.
+  while (!I.use_empty()) {
+    Instruction *U = cast<Instruction>(I.use_back());
 
-      // If the user is a PHI Node, we actually have to insert load instructions
-      // in all predecessor blocks, not in the PHI block itself!
-      if (PHINode *UPN = dyn_cast<PHINode>(U)) {
-        // Only insert into each predecessor once, so that we don't have
-        // different incoming values from the same block!
-        DenseMap<BasicBlock*, Value*> InsertedBlocks;
-        for (unsigned i = 0, e = UPN->getNumIncomingValues(); i != e; ++i) {
-          if (UPN->getIncomingValue(i) != &I) continue;
-          
-          BasicBlock *Pred = UPN->getIncomingBlock(i);
-          Value *&PredVal = InsertedBlocks[Pred];
-          if (!PredVal) {
-            // Insert a new load instruction right before the terminator in
-            // the predecessor block.
-            PredVal = new LoadInst(AI, "", Pred->getTerminator());
-            CurAST->add(cast<LoadInst>(PredVal));
-          }
-
-          UPN->setIncomingValue(i, PredVal);
+    // If the user is a PHI Node, we actually have to insert load instructions
+    // in all predecessor blocks, not in the PHI block itself!
+    if (PHINode *UPN = dyn_cast<PHINode>(U)) {
+      // Only insert into each predecessor once, so that we don't have
+      // different incoming values from the same block!
+      DenseMap<BasicBlock*, Value*> InsertedBlocks;
+      for (unsigned i = 0, e = UPN->getNumIncomingValues(); i != e; ++i) {
+        if (UPN->getIncomingValue(i) != &I) continue;
+        
+        BasicBlock *Pred = UPN->getIncomingBlock(i);
+        Value *&PredVal = InsertedBlocks[Pred];
+        if (!PredVal) {
+          // Insert a new load instruction right before the terminator in
+          // the predecessor block.
+          PredVal = new LoadInst(AI, "", Pred->getTerminator());
+          CurAST->add(cast<LoadInst>(PredVal));
         }
 
-      } else {
-        LoadInst *L = new LoadInst(AI, "", U);
-        U->replaceUsesOfWith(&I, L);
-        CurAST->add(L);
-      }
-    }
-
-    // Thirdly, insert a copy of the instruction in each exit block of the loop
-    // that is dominated by the instruction, storing the result into the memory
-    // location.  Be careful not to insert the instruction into any particular
-    // basic block more than once.
-    SmallPtrSet<BasicBlock*, 16> InsertedBlocks;
-    BasicBlock *InstOrigBB = I.getParent();
-
-    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-      BasicBlock *ExitBlock = ExitBlocks[i];
-
-      if (!isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB))
-        continue;
-      
-      // If we haven't already processed this exit block, do so now.
-      if (!InsertedBlocks.insert(ExitBlock))
-        continue;
-      
-      // Insert the code after the last PHI node...
-      BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
-
-      // If this is the first exit block processed, just move the original
-      // instruction, otherwise clone the original instruction and insert
-      // the copy.
-      Instruction *New;
-      if (InsertedBlocks.size() == 1) {
-        I.removeFromParent();
-        ExitBlock->getInstList().insert(InsertPt, &I);
-        New = &I;
-      } else {
-        New = I.clone();
-        CurAST->copyValue(&I, New);
-        if (!I.getName().empty())
-          New->setName(I.getName()+".le");
-        ExitBlock->getInstList().insert(InsertPt, New);
+        UPN->setIncomingValue(i, PredVal);
       }
 
-      // Now that we have inserted the instruction, store it into the alloca
-      if (AI) new StoreInst(New, AI, InsertPt);
+    } else {
+      LoadInst *L = new LoadInst(AI, "", U);
+      U->replaceUsesOfWith(&I, L);
+      CurAST->add(L);
     }
+  }
 
-    // If the instruction doesn't dominate any exit blocks, it must be dead.
-    if (InsertedBlocks.empty()) {
-      CurAST->deleteValue(&I);
-      I.eraseFromParent();
-    }
+  // Thirdly, insert a copy of the instruction in each exit block of the loop
+  // that is dominated by the instruction, storing the result into the memory
+  // location.  Each exit block is known to only be in the ExitBlocks list once.
+  SmallPtrSet<BasicBlock*, 16> InsertedBlocks;
+  BasicBlock *InstOrigBB = I.getParent();
+  
+  unsigned NumInserted = 0;
 
-    // Finally, promote the fine value to SSA form.
-    if (AI) {
-      std::vector<AllocaInst*> Allocas;
-      Allocas.push_back(AI);
-      PromoteMemToReg(Allocas, *DT, *DF, CurAST);
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    BasicBlock *ExitBlock = ExitBlocks[i];
+
+    if (!isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB))
+      continue;
+    
+    // Insert the code after the last PHI node...
+    BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
+
+    // If this is the first exit block processed, just move the original
+    // instruction, otherwise clone the original instruction and insert
+    // the copy.
+    Instruction *New;
+    if (NumInserted == 0) {
+      I.removeFromParent();
+      ExitBlock->getInstList().insert(InsertPt, &I);
+      New = &I;
+    } else {
+      New = I.clone();
+      CurAST->copyValue(&I, New);
+      if (!I.getName().empty())
+        New->setName(I.getName()+".le");
+      ExitBlock->getInstList().insert(InsertPt, New);
     }
+    
+    ++NumInserted;
+
+    // Now that we have inserted the instruction, store it into the alloca
+    if (AI) new StoreInst(New, AI, InsertPt);
+  }
+
+  // If the instruction doesn't dominate any exit blocks, it must be dead.
+  if (NumInserted == 0) {
+    CurAST->deleteValue(&I);
+    I.eraseFromParent();
+  }
+
+  // Finally, promote the fine value to SSA form.
+  if (AI) {
+    std::vector<AllocaInst*> Allocas;
+    Allocas.push_back(AI);
+    PromoteMemToReg(Allocas, *DT, *DF, CurAST);
   }
 }
 
