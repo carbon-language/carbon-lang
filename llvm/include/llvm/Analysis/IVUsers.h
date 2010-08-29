@@ -27,6 +27,7 @@ class Value;
 class IVUsers;
 class ScalarEvolution;
 class SCEV;
+class SCEVAddRecExpr;
 class IVUsers;
 
 /// IVStrideUse - Keep track of one use of a strided induction variable.
@@ -122,7 +123,7 @@ class IVUsers : public LoopPass {
   LoopInfo *LI;
   DominatorTree *DT;
   ScalarEvolution *SE;
-  SmallPtrSet<Instruction*,16> Processed;
+  SmallPtrSet<Instruction *, 16> Processed;
 
   /// IVUses - A list of all tracked IV uses of induction variable expressions
   /// we are interested in.
@@ -134,14 +135,16 @@ class IVUsers : public LoopPass {
 
   virtual void releaseMemory();
 
+  const SCEVAddRecExpr *findInterestingAddRec(const SCEV *S) const;
+  bool isInterestingUser(const Instruction *User) const;
+
 public:
   static char ID; // Pass ID, replacement for typeid
   IVUsers();
 
-  /// AddUsersIfInteresting - Inspect the specified Instruction.  If it is a
-  /// reducible SCEV, recursively add its users to the IVUsesByStride set and
-  /// return true.  Otherwise, return false.
-  bool AddUsersIfInteresting(Instruction *I);
+  /// AddUsersIfInteresting - Inspect the def-use graph starting at the
+  /// specified Instruction and add IVUsers.
+  void AddUsersIfInteresting(Instruction *I);
 
   IVStrideUse &AddUser(Instruction *User, Value *Operand);
 
