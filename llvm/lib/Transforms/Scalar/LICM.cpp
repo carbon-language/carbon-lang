@@ -707,18 +707,10 @@ void LICM::PromoteValuesInLoop() {
 
   // Now that the body of the loop uses the allocas instead of the original
   // memory locations, insert code to copy the alloca value back into the
-  // original memory location on all exits from the loop.  Note that we only
-  // want to insert one copy of the code in each exit block, though the loop may
-  // exit to the same block more than once.
-  //
-  SmallPtrSet<BasicBlock*, 16> ProcessedBlocks;
-
+  // original memory location on all exits from the loop.
   SmallVector<BasicBlock*, 8> ExitBlocks;
-  CurLoop->getExitBlocks(ExitBlocks);
+  CurLoop->getUniqueExitBlocks(ExitBlocks);
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-    if (!ProcessedBlocks.insert(ExitBlocks[i]))
-      continue;
-  
     // Copy all of the allocas into their memory locations.
     BasicBlock::iterator BI = ExitBlocks[i]->getFirstNonPHI();
     Instruction *InsertPos = BI;
