@@ -26,15 +26,12 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
 using namespace llvm;
 
 STATISTIC(NumLandingPadsSplit,     "Number of landing pads split");
 STATISTIC(NumUnwindsLowered,       "Number of unwind instructions lowered");
 STATISTIC(NumExceptionValuesMoved, "Number of eh.exception calls moved");
 STATISTIC(NumStackTempsIntroduced, "Number of stack temporaries introduced");
-
-static void PromoteAlloca(AllocaInst *AI);
 
 namespace {
   class DwarfEHPrepare : public FunctionPass {
@@ -59,6 +56,7 @@ namespace {
 
     // Dominator info is used when turning stack temporaries into registers.
     DominatorTree *DT;
+    DominanceFrontier *DF;
 
     // The function we are running on.
     Function *F;
@@ -116,17 +114,21 @@ namespace {
       
     /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
     bool PromoteStoreInst(StoreInst *SI) {
+      if (!SI || !DT || !DF) return false;
+      
       AllocaInst *AI = dyn_cast<AllocaInst>(SI->getOperand(1));
       if (!AI || !isAllocaPromotable(AI)) return false;
       
-      PromoteAlloca(AI);
+      // Turn the alloca into a register.
+      std::vector<AllocaInst*> Allocas(1, AI);
+      PromoteMemToReg(Allocas, *DT, *DF);
       return true;
     }
 
     /// PromoteEHPtrStore - Promote the storing of an EH pointer into a
     /// register. This should get rid of the store and subsequent loads.
     bool PromoteEHPtrStore(IntrinsicInst *II) {
-      if (!CompileFast) return false;
+      if (!DT || !DF) return false;
 
       bool Changed = false;
       StoreInst *SI;
@@ -139,7 +141,7 @@ namespace {
           if (SI) break;
         }
 
-        if (SI && !PromoteStoreInst(SI))
+        if (!PromoteStoreInst(SI))
           break;
 
         Changed = true;
@@ -158,8 +160,14 @@ namespace {
 
     virtual bool runOnFunction(Function &Fn);
 
+    // getAnalysisUsage - We need dominance frontiers for memory promotion.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      if (!CompileFast)
+        AU.addRequired<DominatorTree>();
       AU.addPreserved<DominatorTree>();
+      if (!CompileFast)
+        AU.addRequired<DominanceFrontier>();
+      AU.addPreserved<DominanceFrontier>();
     }
 
     const char *getPassName() const {
@@ -174,128 +182,6 @@ char DwarfEHPrepare::ID = 0;
 FunctionPass *llvm::createDwarfEHPass(const TargetMachine *tm, bool fast) {
   return new DwarfEHPrepare(tm, fast);
 }
-
-/// PromoteAlloca - This promotes an alloca to registers when we know that it
-/// only has non-volatile loads and stores to it.
-static void PromoteAlloca(AllocaInst *AI) {
-  assert(isAllocaPromotable(AI));
-  
-  // First step: bucket up uses of the pointers by the block they occur in.
-  // This is important because we have to handle multiple defs/uses in a block
-  // ourselves: SSAUpdater is purely for cross-block references.
-  // FIXME: Want a TinyVector<Instruction*> since there is usually 0/1 element.
-  DenseMap<BasicBlock*, std::vector<Instruction*> > UsesByBlock;
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    UsesByBlock[User->getParent()].push_back(User);
-  }
-  
-  SSAUpdater SSA;
-  
-  // It wants to know some value of the same type as what we'll be inserting.
-  Value *SomeValue;
-  if (isa<LoadInst>(*AI->use_begin()))
-    SomeValue = *AI->use_begin();
-  else
-    SomeValue = cast<StoreInst>(*AI->use_begin())->getOperand(0);
-  SSA.Initialize(SomeValue);
-   
-  // Okay, now we can iterate over all the blocks in the loop with uses,
-  // processing them.  Keep track of which loads are loading a live-in value.
-  SmallVector<LoadInst*, 32> LiveInLoads;
-  
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    std::vector<Instruction*> &BlockUses = UsesByBlock[User->getParent()];
-    
-    // If this block has already been processed, ignore this repeat use.
-    if (BlockUses.empty()) continue;
-    
-    // Okay, this is the first use in the block.  If this block just has a
-    // single user in it, we can rewrite it trivially.
-    if (BlockUses.size() == 1) {
-      // If it is a store, it is a trivial def of the value in the block.
-      if (isa<StoreInst>(User)) {
-        SSA.AddAvailableValue(User->getParent(),
-                              cast<StoreInst>(User)->getOperand(0));
-      } else {
-        // Otherwise it is a load, queue it to rewrite as a live-in load.
-        LiveInLoads.push_back(cast<LoadInst>(User));
-      }
-      BlockUses.clear();
-      continue;
-    }
-    
-    // Otherwise, check to see if this block is all loads.  If so, we can queue
-    // them all as live in loads.
-    bool HasStore = false;
-    for (unsigned i = 0, e = BlockUses.size(); i != e; ++i) {
-      if (isa<StoreInst>(BlockUses[i])) {
-        HasStore = true;
-        break;
-      }
-    }
-    
-    if (!HasStore) {
-      for (unsigned i = 0, e = BlockUses.size(); i != e; ++i)
-        LiveInLoads.push_back(cast<LoadInst>(BlockUses[i]));
-      BlockUses.clear();
-      continue;
-    }
-    
-    // Otherwise, we have mixed loads and stores (or just a bunch of stores).
-    // Since SSAUpdater is purely for cross-block values, we need to determine
-    // the order of these instructions in the block.  If the first use in the
-    // block is a load, then it uses the live in value.  The last store defines
-    // the live out value.  We handle this by doing a linear scan of the block.
-    BasicBlock *BB = User->getParent();
-    Value *StoredValue = 0;
-    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ++II) {
-      if (LoadInst *L = dyn_cast<LoadInst>(II)) {
-        // If this is a load to an unrelated pointer, ignore it.
-        if (L->getOperand(0) != AI) continue;
-        
-        // If we haven't seen a store yet, this is a live in use, otherwise
-        // use the stored value.
-        if (StoredValue)
-          L->replaceAllUsesWith(StoredValue);
-        else
-          LiveInLoads.push_back(L);
-        continue;
-      }
-      
-      if (StoreInst *S = dyn_cast<StoreInst>(II)) {
-        // If this is a store to an unrelated pointer, ignore it.
-        if (S->getOperand(1) != AI) continue;
-        
-        // Remember that this is the active value in the block.
-        StoredValue = S->getOperand(0);
-      }
-    }
-    
-    // The last stored value that happened is the live-out for the block.
-    assert(StoredValue && "Already checked that there is a store in block");
-    SSA.AddAvailableValue(BB, StoredValue);
-    BlockUses.clear();
-  }
-  
-  // Okay, now we rewrite all loads that use live-in values in the loop,
-  // inserting PHI nodes as necessary.
-  for (unsigned i = 0, e = LiveInLoads.size(); i != e; ++i) {
-    LoadInst *ALoad = LiveInLoads[i];
-    ALoad->replaceAllUsesWith(SSA.GetValueInMiddleOfBlock(ALoad->getParent()));
-  }
-  
-  // Now that everything is rewritten, delete the old instructions from the body
-  // of the loop.  They should all be dead now.
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-       UI != E; ++UI)
-    cast<Instruction>(*UI)->eraseFromParent();
-}
-
-
 
 /// HasCatchAllInSelector - Return true if the intrinsic instruction has a
 /// catch-all.
@@ -639,9 +525,11 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
     // Add a fallthrough from NewBB to the original landing pad.
     BranchInst::Create(LPad, NewBB);
 
-    // Now update DominatorTree analysis information if it is around.
+    // Now update DominatorTree and DominanceFrontier analysis information.
     if (DT)
       DT->splitBlock(NewBB);
+    if (DF)
+      DF->splitBlock(NewBB);
 
     // Remember the newly constructed landing pad.  The original landing pad
     // LPad is no longer a landing pad now that all unwind edges have been
@@ -767,9 +655,10 @@ bool DwarfEHPrepare::FinishStackTemporaries() {
 /// PromoteStackTemporaries - Turn any stack temporaries we introduced into
 /// registers if possible.
 bool DwarfEHPrepare::PromoteStackTemporaries() {
-  // Turn the exception temporary into registers and phi nodes if possible.
-  if (ExceptionValueVar && isAllocaPromotable(ExceptionValueVar)) {
-    PromoteAlloca(ExceptionValueVar);
+  if (ExceptionValueVar && DT && DF && isAllocaPromotable(ExceptionValueVar)) {
+    // Turn the exception temporary into registers and phi nodes if possible.
+    std::vector<AllocaInst*> Allocas(1, ExceptionValueVar);
+    PromoteMemToReg(Allocas, *DT, *DF);
     return true;
   }
   return false;
@@ -823,6 +712,7 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
 
   // Initialize internal state.
   DT = getAnalysisIfAvailable<DominatorTree>();
+  DF = getAnalysisIfAvailable<DominanceFrontier>();
   ExceptionValueVar = 0;
   F = &Fn;
 
@@ -841,7 +731,7 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   // Initialize any stack temporaries we introduced.
   Changed |= FinishStackTemporaries();
 
-  // Turn any stack temporaries into registers.
+  // Turn any stack temporaries into registers if possible.
   if (!CompileFast)
     Changed |= PromoteStackTemporaries();
 
