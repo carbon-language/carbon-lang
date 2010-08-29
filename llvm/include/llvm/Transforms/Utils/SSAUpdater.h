@@ -94,6 +94,12 @@ public:
   /// for the use's block will be considered to be below it.
   void RewriteUse(Use &U);
 
+  /// RewriteUseAfterInsertions - Rewrite a use, just like RewriteUse.  However,
+  /// this version of the method can rewrite uses in the same block as a
+  /// definition, because it assumes that all uses of a value are below any
+  /// inserted values.
+  void RewriteUseAfterInsertions(Use &U);
+
 private:
   Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
 

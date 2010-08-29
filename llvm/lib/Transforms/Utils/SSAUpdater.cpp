@@ -205,6 +205,22 @@ void SSAUpdater::RewriteUse(Use &U) {
   U.set(V);
 }
 
+/// RewriteUseAfterInsertions - Rewrite a use, just like RewriteUse.  However,
+/// this version of the method can rewrite uses in the same block as a
+/// definition, because it assumes that all uses of a value are below any
+/// inserted values.
+void SSAUpdater::RewriteUseAfterInsertions(Use &U) {
+  Instruction *User = cast<Instruction>(U.getUser());
+  
+  Value *V;
+  if (PHINode *UserPN = dyn_cast<PHINode>(User))
+    V = GetValueAtEndOfBlock(UserPN->getIncomingBlock(U));
+  else
+    V = GetValueAtEndOfBlock(User->getParent());
+  
+  U.set(V);
+}
+
 /// PHIiter - Iterator for PHI operands.  This is used for the PHI_iterator
 /// in the SSAUpdaterImpl template.
 namespace {
