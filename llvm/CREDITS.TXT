@@ -304,7 +304,10 @@ D: MSIL backend
 
 N: Duncan Sands
 E: baldrick@free.fr
-D: Ada front-end, exception handling improvements
+D: Ada support in llvm-gcc
+D: Dragonegg plugin
+D: Exception handling improvements
+D: Type legalizer rewrite
 
 N: Ruchira Sasanka
 E: sasanka@uiuc.edu
