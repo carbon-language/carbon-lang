@@ -217,7 +217,7 @@ namespace {
     ///
     void FindPromotableValuesInLoop(
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
-                                    std::map<Value*, AllocaInst*> &Val2AlMap);
+                                    DenseMap<Value*, AllocaInst*> &Val2AlMap);
   };
 }
 
@@ -520,20 +520,21 @@ void LICM::sink(Instruction &I) {
       if (PHINode *UPN = dyn_cast<PHINode>(U)) {
         // Only insert into each predecessor once, so that we don't have
         // different incoming values from the same block!
-        std::map<BasicBlock*, Value*> InsertedBlocks;
-        for (unsigned i = 0, e = UPN->getNumIncomingValues(); i != e; ++i)
-          if (UPN->getIncomingValue(i) == &I) {
-            BasicBlock *Pred = UPN->getIncomingBlock(i);
-            Value *&PredVal = InsertedBlocks[Pred];
-            if (!PredVal) {
-              // Insert a new load instruction right before the terminator in
-              // the predecessor block.
-              PredVal = new LoadInst(AI, "", Pred->getTerminator());
-              CurAST->add(cast<LoadInst>(PredVal));
-            }
-
-            UPN->setIncomingValue(i, PredVal);
+        DenseMap<BasicBlock*, Value*> InsertedBlocks;
+        for (unsigned i = 0, e = UPN->getNumIncomingValues(); i != e; ++i) {
+          if (UPN->getIncomingValue(i) != &I) continue;
+          
+          BasicBlock *Pred = UPN->getIncomingBlock(i);
+          Value *&PredVal = InsertedBlocks[Pred];
+          if (!PredVal) {
+            // Insert a new load instruction right before the terminator in
+            // the predecessor block.
+            PredVal = new LoadInst(AI, "", Pred->getTerminator());
+            CurAST->add(cast<LoadInst>(PredVal));
           }
+
+          UPN->setIncomingValue(i, PredVal);
+        }
 
       } else {
         LoadInst *L = new LoadInst(AI, "", U);
@@ -546,38 +547,40 @@ void LICM::sink(Instruction &I) {
     // that is dominated by the instruction, storing the result into the memory
     // location.  Be careful not to insert the instruction into any particular
     // basic block more than once.
-    std::set<BasicBlock*> InsertedBlocks;
+    SmallPtrSet<BasicBlock*, 16> InsertedBlocks;
     BasicBlock *InstOrigBB = I.getParent();
 
     for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
       BasicBlock *ExitBlock = ExitBlocks[i];
 
-      if (isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB)) {
-        // If we haven't already processed this exit block, do so now.
-        if (InsertedBlocks.insert(ExitBlock).second) {
-          // Insert the code after the last PHI node...
-          BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
+      if (!isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB))
+        continue;
+      
+      // If we haven't already processed this exit block, do so now.
+      if (!InsertedBlocks.insert(ExitBlock))
+        continue;
+      
+      // Insert the code after the last PHI node...
+      BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
 
-          // If this is the first exit block processed, just move the original
-          // instruction, otherwise clone the original instruction and insert
-          // the copy.
-          Instruction *New;
-          if (InsertedBlocks.size() == 1) {
-            I.removeFromParent();
-            ExitBlock->getInstList().insert(InsertPt, &I);
-            New = &I;
-          } else {
-            New = I.clone();
-            CurAST->copyValue(&I, New);
-            if (!I.getName().empty())
-              New->setName(I.getName()+".le");
-            ExitBlock->getInstList().insert(InsertPt, New);
-          }
-
-          // Now that we have inserted the instruction, store it into the alloca
-          if (AI) new StoreInst(New, AI, InsertPt);
-        }
+      // If this is the first exit block processed, just move the original
+      // instruction, otherwise clone the original instruction and insert
+      // the copy.
+      Instruction *New;
+      if (InsertedBlocks.size() == 1) {
+        I.removeFromParent();
+        ExitBlock->getInstList().insert(InsertPt, &I);
+        New = &I;
+      } else {
+        New = I.clone();
+        CurAST->copyValue(&I, New);
+        if (!I.getName().empty())
+          New->setName(I.getName()+".le");
+        ExitBlock->getInstList().insert(InsertPt, New);
       }
+
+      // Now that we have inserted the instruction, store it into the alloca
+      if (AI) new StoreInst(New, AI, InsertPt);
     }
 
     // If the instruction doesn't dominate any exit blocks, it must be dead.
@@ -660,7 +663,7 @@ void LICM::PromoteValuesInLoop() {
   // value has an alloca instruction for it, and a canonical version of the
   // pointer.
   std::vector<std::pair<AllocaInst*, Value*> > PromotedValues;
-  std::map<Value*, AllocaInst*> ValueToAllocaMap; // Map of ptr to alloca
+  DenseMap<Value*, AllocaInst*> ValueToAllocaMap; // Map of ptr to alloca
 
   FindPromotableValuesInLoop(PromotedValues, ValueToAllocaMap);
   if (ValueToAllocaMap.empty()) return;   // If there are values to promote.
@@ -717,12 +720,12 @@ void LICM::PromoteValuesInLoop() {
     // Rewrite all loads and stores in the block of the pointer...
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ++II) {
       if (LoadInst *L = dyn_cast<LoadInst>(II)) {
-        std::map<Value*, AllocaInst*>::iterator
+        DenseMap<Value*, AllocaInst*>::iterator
           I = ValueToAllocaMap.find(L->getOperand(0));
         if (I != ValueToAllocaMap.end())
           L->setOperand(0, I->second);    // Rewrite load instruction...
       } else if (StoreInst *S = dyn_cast<StoreInst>(II)) {
-        std::map<Value*, AllocaInst*>::iterator
+        DenseMap<Value*, AllocaInst*>::iterator
           I = ValueToAllocaMap.find(S->getOperand(1));
         if (I != ValueToAllocaMap.end())
           S->setOperand(1, I->second);    // Rewrite store instruction...
@@ -778,7 +781,7 @@ void LICM::PromoteValuesInLoop() {
 /// alloca. 
 void LICM::FindPromotableValuesInLoop(
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
-                             std::map<Value*, AllocaInst*> &ValueToAllocaMap) {
+                             DenseMap<Value*, AllocaInst*> &ValueToAllocaMap) {
   Instruction *FnStart = CurLoop->getHeader()->getParent()->begin()->begin();
 
   // Loop over all of the alias sets in the tracker object.
@@ -855,7 +858,7 @@ void LICM::FindPromotableValuesInLoop(
     CurAST->copyValue(V, AI);
 
     for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
-      ValueToAllocaMap.insert(std::make_pair(I->getValue(), AI));
+      ValueToAllocaMap[I->getValue()] = AI;
 
     DEBUG(dbgs() << "LICM: Promoting value: " << *V << "\n");
   }
