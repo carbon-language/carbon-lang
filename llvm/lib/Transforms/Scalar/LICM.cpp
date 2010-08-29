@@ -474,9 +474,7 @@ void LICM::sink(Instruction &I) {
     } else {
       // Move the instruction to the start of the exit block, after any PHI
       // nodes in it.
-      I.removeFromParent();
-      BasicBlock::iterator InsertPt = ExitBlocks[0]->getFirstNonPHI();
-      ExitBlocks[0]->getInstList().insert(InsertPt, &I);
+      I.moveBefore(ExitBlocks[0]->getFirstNonPHI());
 
       // This instruction is no longer in the AST for the current loop, because
       // we just sunk it out of the loop.  If we just sunk it into an outer
@@ -574,12 +572,8 @@ void LICM::hoist(Instruction &I) {
   DEBUG(dbgs() << "LICM hoisting to " << Preheader->getName() << ": "
         << I << "\n");
 
-  // Remove the instruction from its current basic block... but don't delete the
-  // instruction.
-  I.removeFromParent();
-
-  // Insert the new node in Preheader, before the terminator.
-  Preheader->getInstList().insert(Preheader->getTerminator(), &I);
+  // Move the new node to the Preheader, before its terminator.
+  I.moveBefore(Preheader->getTerminator());
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
   else if (isa<CallInst>(I)) ++NumMovedCalls;
