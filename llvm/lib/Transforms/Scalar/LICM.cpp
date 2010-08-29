@@ -793,7 +793,7 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
       }
       
       if (StoreInst *S = dyn_cast<StoreInst>(II)) {
-        // If this is a load to an unrelated pointer, ignore it.
+        // If this is a store to an unrelated pointer, ignore it.
         if (!PointerMustAliases.count(S->getOperand(1))) continue;
 
         // Remember that this is the active value in the block.
