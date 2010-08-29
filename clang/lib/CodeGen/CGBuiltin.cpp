@@ -1149,11 +1149,20 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vaddhn, &Ty, 1),
                         Ops, "vaddhn");
   case ARM::BI__builtin_neon_vaddl_v:
-    Int = usgn ? Intrinsic::arm_neon_vaddlu : Intrinsic::arm_neon_vaddls;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vaddl");
+    if (usgn) {
+      Ops[0] = Builder.CreateZExt(Ops[0], Ty);
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+    } else {
+      Ops[0] = Builder.CreateSExt(Ops[0], Ty);
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+    }
+    return Builder.CreateAdd(Ops[0], Ops[1], "vaddl");
   case ARM::BI__builtin_neon_vaddw_v:
-    Int = usgn ? Intrinsic::arm_neon_vaddws : Intrinsic::arm_neon_vaddwu;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vaddw");
+    if (usgn)
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+    else
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+    return Builder.CreateAdd(Ops[0], Ops[1], "vaddw");
   case ARM::BI__builtin_neon_vcale_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcage_v: {
@@ -1660,11 +1669,20 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vsubhn, &Ty, 1),
                         Ops, "vsubhn");
   case ARM::BI__builtin_neon_vsubl_v:
-    Int = usgn ? Intrinsic::arm_neon_vsublu : Intrinsic::arm_neon_vsubls;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vsubl");
+    if (usgn) {
+      Ops[0] = Builder.CreateZExt(Ops[0], Ty);
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+    } else {
+      Ops[0] = Builder.CreateSExt(Ops[0], Ty);
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+    }
+    return Builder.CreateSub(Ops[0], Ops[1], "vsubl");
   case ARM::BI__builtin_neon_vsubw_v:
-    Int = usgn ? Intrinsic::arm_neon_vsubws : Intrinsic::arm_neon_vsubwu;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vsubw");
+    if (usgn)
+      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
+    else
+      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
+    return Builder.CreateSub(Ops[0], Ops[1], "vsubw");
   case ARM::BI__builtin_neon_vtbl1_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl1),
                         Ops, "vtbl1");
