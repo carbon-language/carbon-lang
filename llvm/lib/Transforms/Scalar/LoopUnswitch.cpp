@@ -77,7 +77,6 @@ namespace {
     bool redoLoop;
 
     Loop *currentLoop;
-    DominanceFrontier *DF;
     DominatorTree *DT;
     BasicBlock *loopHeader;
     BasicBlock *loopPreheader;
@@ -93,14 +92,14 @@ namespace {
     static char ID; // Pass ID, replacement for typeid
     explicit LoopUnswitch(bool Os = false) : 
       LoopPass(ID), OptimizeForSize(Os), redoLoop(false), 
-      currentLoop(NULL), DF(NULL), DT(NULL), loopHeader(NULL),
+      currentLoop(NULL), DT(NULL), loopHeader(NULL),
       loopPreheader(NULL) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
     bool processCurrentLoop();
 
     /// This transformation requires natural loop information & requires that
-    /// loop preheaders be inserted into the CFG...
+    /// loop preheaders be inserted into the CFG.
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(LoopSimplifyID);
@@ -110,7 +109,6 @@ namespace {
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<DominanceFrontier>();
     }
 
   private:
@@ -201,7 +199,6 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   LI = &getAnalysis<LoopInfo>();
   LPM = &LPM_Ref;
-  DF = getAnalysisIfAvailable<DominanceFrontier>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   currentLoop = L;
   Function *F = currentLoop->getHeader()->getParent();
@@ -216,8 +213,6 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
     // FIXME: Reconstruct dom info, because it is not preserved properly.
     if (DT)
       DT->runOnFunction(*F);
-    if (DF)
-      DF->runOnFunction(*F);
   }
   return Changed;
 }
