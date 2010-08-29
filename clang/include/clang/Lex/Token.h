@@ -145,7 +145,7 @@ public:
 
   /// makeUserDefinedLiteral - Set this token to be a user-defined literal
   void makeUserDefinedLiteral(llvm::BumpPtrAllocator &Alloc) {
-    PtrData = Alloc.Allocate(sizeof(UDLData), 4);
+    PtrData = new (Alloc.Allocate(sizeof(UDLData), 4)) UDLData;
     setFlag(UserDefinedLiteral);
   }
 
