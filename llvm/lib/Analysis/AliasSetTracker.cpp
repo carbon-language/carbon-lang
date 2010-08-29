@@ -35,6 +35,7 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
   // Update the alias and access types of this set...
   AccessTy |= AS.AccessTy;
   AliasTy  |= AS.AliasTy;
+  Volatile |= AS.Volatile;
 
   if (AliasTy == MustAlias) {
     // Check that these two merged sets really are must aliases.  Since both
