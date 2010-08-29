@@ -530,7 +530,6 @@ void LICM::sink(Instruction &I) {
       New = &I;
     } else {
       New = I.clone();
-      CurAST->copyValue(&I, New);
       if (!I.getName().empty())
         New->setName(I.getName()+".le");
       ExitBlock->getInstList().insert(InsertPt, New);
@@ -563,6 +562,9 @@ void LICM::sink(Instruction &I) {
   if (I.getType()->isPointerTy())
     for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
       CurAST->copyValue(NewPHIs[i], &I);
+  
+  // Finally, remove the instruction from CurAST.  It is no longer in the loop.
+  CurAST->deleteValue(&I);
 }
 
 /// hoist - When an instruction is found to only use loop invariant operands
