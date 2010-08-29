@@ -18,6 +18,13 @@
 using namespace clang;
 
 namespace {
+/// AggExprVisitor is designed after AggExprEmitter of the CodeGen module.  It
+/// is used for evaluating exprs of C++ object type. Evaluating such exprs
+/// requires a destination pointer pointing to the object being evaluated
+/// into. Passing such a pointer around would pollute the Visit* interface of
+/// GRExprEngine. AggExprVisitor encapsulates code that goes through various
+/// cast and construct exprs (and others), and at the final point, dispatches
+/// back to the GRExprEngine to let the real evaluation logic happen.
 class AggExprVisitor : public StmtVisitor<AggExprVisitor> {
   SVal DestPtr;
   ExplodedNode *Pred;
