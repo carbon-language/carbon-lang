@@ -84,27 +84,21 @@ namespace {
     }
 
     bool doFinalization() {
-      // Free the values stored in the map
-      for (std::map<Loop *, AliasSetTracker *>::iterator
-             I = LoopToAliasMap.begin(), E = LoopToAliasMap.end(); I != E; ++I)
-        delete I->second;
-
-      LoopToAliasMap.clear();
+      assert(LoopToAliasSetMap.empty() && "Didn't free loop alias sets");
       return false;
     }
 
   private:
-    // Various analyses that we use...
     AliasAnalysis *AA;       // Current AliasAnalysis information
     LoopInfo      *LI;       // Current LoopInfo
     DominatorTree *DT;       // Dominator Tree for the current Loop.
 
-    // State that is updated as we process loops
+    // State that is updated as we process loops.
     bool Changed;            // Set to true when we change anything.
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
-    std::map<Loop *, AliasSetTracker *> LoopToAliasMap;
+    DenseMap<Loop*, AliasSetTracker*> LoopToAliasSetMap;
 
     /// cloneBasicBlockAnalysis - Simple Analysis hook. Clone alias set info.
     void cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L);
@@ -223,15 +217,20 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   DT = &getAnalysis<DominatorTree>();
 
   CurAST = new AliasSetTracker(*AA);
-  // Collect Alias info from subloops
+  // Collect Alias info from subloops.
   for (Loop::iterator LoopItr = L->begin(), LoopItrE = L->end();
        LoopItr != LoopItrE; ++LoopItr) {
     Loop *InnerL = *LoopItr;
-    AliasSetTracker *InnerAST = LoopToAliasMap[InnerL];
-    assert (InnerAST && "Where is my AST?");
+    AliasSetTracker *InnerAST = LoopToAliasSetMap[InnerL];
+    assert(InnerAST && "Where is my AST?");
 
     // What if InnerLoop was modified by other passes ?
     CurAST->add(*InnerAST);
+    
+    // Once we've incorporated the inner loop's AST into ours, we don't need the
+    // subloop's anymore.
+    delete InnerAST;
+    LoopToAliasSetMap.erase(InnerL);
   }
   
   CurLoop = L;
@@ -246,7 +245,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
     BasicBlock *BB = *I;
-    if (LI->getLoopFor(BB) == L)        // Ignore blocks in subloops...
+    if (LI->getLoopFor(BB) == L)        // Ignore blocks in subloops.
       CurAST->add(*BB);                 // Incorporate the specified basic block
   }
 
@@ -278,7 +277,12 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   CurLoop = 0;
   Preheader = 0;
 
-  LoopToAliasMap[L] = CurAST;
+  // If this loop is nested inside of another one, save the alias information
+  // for when we process the outer loop.
+  if (L->getParentLoop())
+    LoopToAliasSetMap[L] = CurAST;
+  else
+    delete CurAST;
   return Changed;
 }
 
@@ -473,6 +477,11 @@ void LICM::sink(Instruction &I) {
       I.removeFromParent();
       BasicBlock::iterator InsertPt = ExitBlocks[0]->getFirstNonPHI();
       ExitBlocks[0]->getInstList().insert(InsertPt, &I);
+
+      // This instruction is no longer in the AST for the current loop, because
+      // we just sunk it out of the loop.  If we just sunk it into an outer
+      // loop, we will rediscover the operation when we process it.
+      CurAST->deleteValue(&I);
     }
     return;
   }
@@ -842,7 +851,7 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
 
 /// cloneBasicBlockAnalysis - Simple Analysis hook. Clone alias set info.
 void LICM::cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L) {
-  AliasSetTracker *AST = LoopToAliasMap[L];
+  AliasSetTracker *AST = LoopToAliasSetMap.lookup(L);
   if (!AST)
     return;
 
@@ -852,7 +861,7 @@ void LICM::cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L) {
 /// deleteAnalysisValue - Simple Analysis hook. Delete value V from alias
 /// set.
 void LICM::deleteAnalysisValue(Value *V, Loop *L) {
-  AliasSetTracker *AST = LoopToAliasMap[L];
+  AliasSetTracker *AST = LoopToAliasSetMap.lookup(L);
   if (!AST)
     return;
 
