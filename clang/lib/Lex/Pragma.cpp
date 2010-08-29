@@ -202,6 +202,11 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
     Lex(Tok);
   }
 
+  if (Tok.is(tok::eof)) {
+    Diag(PragmaLoc, diag::err_unterminated___pragma);
+    return;
+  }
+
   // Build the pragma string.
   std::string StrVal = " ";
   for (llvm::SmallVector<Token, 32>::iterator I =
