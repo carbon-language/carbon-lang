@@ -3290,13 +3290,19 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
   }
   
   // Add completions for base classes.
-  unsigned Priority = 1;
+  bool SawLastInitializer = (NumInitializers == 0);
   CXXRecordDecl *ClassDecl = Constructor->getParent();
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
                                        BaseEnd = ClassDecl->bases_end();
        Base != BaseEnd; ++Base) {
-    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType())))
+    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType()))) {
+      SawLastInitializer
+        = NumInitializers > 0 && 
+          Initializers[NumInitializers - 1]->isBaseInitializer() &&
+          Context.hasSameUnqualifiedType(Base->getType(),
+               QualType(Initializers[NumInitializers - 1]->getBaseClass(), 0));
       continue;
+    }
     
     CodeCompletionString *Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk(
@@ -3304,15 +3310,24 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
     Pattern->AddPlaceholderChunk("args");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-    Results.AddResult(CodeCompletionResult(Pattern, Priority++));
+    Results.AddResult(CodeCompletionResult(Pattern, 
+                                   SawLastInitializer? CCP_NextInitializer
+                                                     : CCP_MemberDeclaration));
+    SawLastInitializer = false;
   }
   
   // Add completions for virtual base classes.
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
                                        BaseEnd = ClassDecl->vbases_end();
        Base != BaseEnd; ++Base) {
-    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType())))
+    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType()))) {
+      SawLastInitializer
+        = NumInitializers > 0 && 
+          Initializers[NumInitializers - 1]->isBaseInitializer() &&
+          Context.hasSameUnqualifiedType(Base->getType(),
+               QualType(Initializers[NumInitializers - 1]->getBaseClass(), 0));
       continue;
+    }
     
     CodeCompletionString *Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk(
@@ -3320,15 +3335,23 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
     Pattern->AddPlaceholderChunk("args");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-    Results.AddResult(CodeCompletionResult(Pattern, Priority++));
+    Results.AddResult(CodeCompletionResult(Pattern, 
+                                   SawLastInitializer? CCP_NextInitializer
+                                                     : CCP_MemberDeclaration));
+    SawLastInitializer = false;
   }
   
   // Add completions for members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
-    if (!InitializedFields.insert(cast<FieldDecl>(Field->getCanonicalDecl())))
+    if (!InitializedFields.insert(cast<FieldDecl>(Field->getCanonicalDecl()))) {
+      SawLastInitializer
+        = NumInitializers > 0 && 
+          Initializers[NumInitializers - 1]->isMemberInitializer() &&
+          Initializers[NumInitializers - 1]->getMember() == *Field;
       continue;
+    }
     
     if (!Field->getDeclName())
       continue;
@@ -3338,7 +3361,10 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
     Pattern->AddPlaceholderChunk("args");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-    Results.AddResult(CodeCompletionResult(Pattern, Priority++));
+    Results.AddResult(CodeCompletionResult(Pattern, 
+                                   SawLastInitializer? CCP_NextInitializer
+                                                     : CCP_MemberDeclaration));
+    SawLastInitializer = false;
   }
   Results.ExitScope();
   
