@@ -1954,8 +1954,7 @@ LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
         if (F.BaseRegs == OrigF.BaseRegs &&
             F.ScaledReg == OrigF.ScaledReg &&
             F.AM.BaseGV == OrigF.AM.BaseGV &&
-            F.AM.Scale == OrigF.AM.Scale &&
-            LU.Kind) {
+            F.AM.Scale == OrigF.AM.Scale) {
           if (F.AM.BaseOffs == 0)
             return &LU;
           // This is the formula where all the registers and symbols matched;
