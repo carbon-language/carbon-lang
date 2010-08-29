@@ -614,7 +614,6 @@ public:
 
   template<class Pr3> void sort(Pr3 pred);
   void sort() { sort(op_less); }
-  void reverse();
 };
 
 
