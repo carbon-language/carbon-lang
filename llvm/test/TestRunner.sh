@@ -2,4 +2,4 @@
 # Deprecated, use 'llvm-lit'.
 
 echo "warning: '$0' is deprecated, use 'llvm-lit' instead."
-llvm-lit "$@"
+exec llvm-lit "$@"
