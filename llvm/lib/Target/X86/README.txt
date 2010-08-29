@@ -1863,3 +1863,55 @@ The code produced by gcc is 3 bytes shorter.  This sort of construct often
 shows up with bitfields.
 
 //===---------------------------------------------------------------------===//
+
+Take the following C code:
+int f(int a, int b) { return (unsigned char)a == (unsigned char)b; }
+
+We generate the following IR with clang:
+define i32 @f(i32 %a, i32 %b) nounwind readnone {
+entry:
+  %tmp = xor i32 %b, %a                           ; <i32> [#uses=1]
+  %tmp6 = and i32 %tmp, 255                       ; <i32> [#uses=1]
+  %cmp = icmp eq i32 %tmp6, 0                     ; <i1> [#uses=1]
+  %conv5 = zext i1 %cmp to i32                    ; <i32> [#uses=1]
+  ret i32 %conv5
+}
+
+And the following x86 code:
+	xorl	%esi, %edi
+	testb	$-1, %dil
+	sete	%al
+	movzbl	%al, %eax
+	ret
+
+A cmpb instead of the xorl+testb would be one instruction shorter.
+
+//===---------------------------------------------------------------------===//
+
+Given the following C code:
+int f(int a, int b) { return (signed char)a == (signed char)b; }
+
+We generate the following IR with clang:
+define i32 @f(i32 %a, i32 %b) nounwind readnone {
+entry:
+  %sext = shl i32 %a, 24                          ; <i32> [#uses=1]
+  %conv1 = ashr i32 %sext, 24                     ; <i32> [#uses=1]
+  %sext6 = shl i32 %b, 24                         ; <i32> [#uses=1]
+  %conv4 = ashr i32 %sext6, 24                    ; <i32> [#uses=1]
+  %cmp = icmp eq i32 %conv1, %conv4               ; <i1> [#uses=1]
+  %conv5 = zext i1 %cmp to i32                    ; <i32> [#uses=1]
+  ret i32 %conv5
+}
+
+And the following x86 code:
+	movsbl	%sil, %eax
+	movsbl	%dil, %ecx
+	cmpl	%eax, %ecx
+	sete	%al
+	movzbl	%al, %eax
+	ret
+
+
+It should be possible to eliminate the sign extensions.
+
+//===---------------------------------------------------------------------===//
