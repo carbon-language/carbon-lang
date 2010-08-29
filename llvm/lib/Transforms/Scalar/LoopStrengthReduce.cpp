@@ -161,9 +161,10 @@ RegUseTracker::DropUse(size_t LUIdx) {
 
 bool
 RegUseTracker::isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const {
-  if (!RegUsesMap.count(Reg)) return false;
-  const SmallBitVector &UsedByIndices =
-    RegUsesMap.find(Reg)->second.UsedByIndices;
+  RegUsesTy::const_iterator I = RegUsesMap.find(Reg);
+  if (I == RegUsesMap.end())
+    return false;
+  const SmallBitVector &UsedByIndices = I->second.UsedByIndices;
   int i = UsedByIndices.find_first();
   if (i == -1) return false;
   if ((size_t)i != LUIdx) return true;
