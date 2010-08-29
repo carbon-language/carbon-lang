@@ -1686,15 +1686,18 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
                                                AddRec->op_end());
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
-          if (const SCEVAddRecExpr *AR =
+          if (const SCEVAddRecExpr *OtherAddRec =
                 dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]))
-            if (AR->getLoop() == AddRecLoop) {
-              for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i) {
+            if (OtherAddRec->getLoop() == AddRecLoop) {
+              for (unsigned i = 0, e = OtherAddRec->getNumOperands();
+                   i != e; ++i) {
                 if (i >= AddRecOps.size()) {
-                  AddRecOps.append(AR->op_begin()+i, AR->op_end());
+                  AddRecOps.append(OtherAddRec->op_begin()+i,
+                                   OtherAddRec->op_end());
                   break;
                 }
-                AddRecOps[i] = getAddExpr(AddRecOps[i], AR->getOperand(i));
+                AddRecOps[i] = getAddExpr(AddRecOps[i],
+                                          OtherAddRec->getOperand(i));
               }
               Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
             }
