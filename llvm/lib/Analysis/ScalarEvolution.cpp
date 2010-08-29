@@ -704,8 +704,9 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
   if (Ops.size() == 2) {
     // This is the common case, which also happens to be trivially simple.
     // Special case it.
-    if (SCEVComplexityCompare(LI)(Ops[1], Ops[0]))
-      std::swap(Ops[0], Ops[1]);
+    const SCEV *&LHS = Ops[0], *&RHS = Ops[1];
+    if (SCEVComplexityCompare(LI)(RHS, LHS))
+      std::swap(LHS, RHS);
     return;
   }
 
