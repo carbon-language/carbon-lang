@@ -995,8 +995,6 @@ public:
   void DeleteFormula(Formula &F);
   void RecomputeRegs(size_t LUIdx, RegUseTracker &Reguses);
 
-  void check() const;
-
   void print(raw_ostream &OS) const;
   void dump() const;
 };
