@@ -31,3 +31,11 @@ define void @test_insert( <2 x float>* %ptr, float %val1, float %val2 ) {
   ret void 
 }
 
+define <4 x float>  @test_insert_1(<4 x float> %vparam, float %eltparam) {
+;CHECK: cwd     $5, 4($sp)
+;CHECK: shufb   $3, $4, $3, $5
+;CHECK: bi      $lr
+  %rv = insertelement <4 x float> %vparam, float %eltparam, i32 1
+  ret <4 x float> %rv
+}
+

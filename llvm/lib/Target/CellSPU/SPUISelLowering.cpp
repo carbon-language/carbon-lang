@@ -2053,20 +2053,21 @@ static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   SDValue IdxOp = Op.getOperand(2);
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
+  EVT eltVT = ValOp.getValueType();
 
   // use 0 when the lane to insert to is 'undef'
-  int64_t Idx=0;
+  int64_t Offset=0;
   if (IdxOp.getOpcode() != ISD::UNDEF) {
     ConstantSDNode *CN = cast<ConstantSDNode>(IdxOp);
     assert(CN != 0 && "LowerINSERT_VECTOR_ELT: Index is not constant!");
-    Idx = (CN->getSExtValue());
+    Offset = (CN->getSExtValue()) * eltVT.getSizeInBits()/8;
   }
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   // Use $sp ($1) because it's always 16-byte aligned and it's available:
   SDValue Pointer = DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT,
                                 DAG.getRegister(SPU::R1, PtrVT),
-                                DAG.getConstant(Idx, PtrVT));
+                                DAG.getConstant(Offset, PtrVT));
   // widen the mask when dealing with half vectors
   EVT maskVT = EVT::getVectorVT(*(DAG.getContext()), VT.getVectorElementType(), 
                                 128/ VT.getVectorElementType().getSizeInBits());
