@@ -1886,27 +1886,30 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     // there are multiple AddRec's with the same loop induction variable being
     // multiplied together.  If so, we can fold them.
     for (unsigned OtherIdx = Idx+1;
-         OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);++OtherIdx)
-      if (OtherIdx != Idx) {
-        const SCEVAddRecExpr *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
-        if (AddRecLoop == OtherAddRec->getLoop()) {
-          // F * G  -->  {A,+,B} * {C,+,D}  -->  {A*C,+,F*D + G*B + B*D}
-          const SCEVAddRecExpr *F = AddRec, *G = OtherAddRec;
-          const SCEV *NewStart = getMulExpr(F->getStart(), G->getStart());
-          const SCEV *B = F->getStepRecurrence(*this);
-          const SCEV *D = G->getStepRecurrence(*this);
-          const SCEV *NewStep = getAddExpr(getMulExpr(F, D),
-                                           getMulExpr(G, B),
-                                           getMulExpr(B, D));
-          const SCEV *NewAddRec = getAddRecExpr(NewStart, NewStep,
-                                                F->getLoop());
-          if (Ops.size() == 2) return NewAddRec;
-
-          Ops.erase(Ops.begin()+Idx);
-          Ops.erase(Ops.begin()+OtherIdx-1);
-          Ops.push_back(NewAddRec);
-          return getMulExpr(Ops);
-        }
+         OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
+         ++OtherIdx)
+      if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
+        // F * G, where F = {A,+,B}<L> and G = {C,+,D}<L>  -->
+        // {A*C,+,F*D + G*B + B*D}<L>
+        for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
+             ++OtherIdx)
+          if (const SCEVAddRecExpr *OtherAddRec =
+                dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]))
+            if (OtherAddRec->getLoop() == AddRecLoop) {
+              const SCEVAddRecExpr *F = AddRec, *G = OtherAddRec;
+              const SCEV *NewStart = getMulExpr(F->getStart(), G->getStart());
+              const SCEV *B = F->getStepRecurrence(*this);
+              const SCEV *D = G->getStepRecurrence(*this);
+              const SCEV *NewStep = getAddExpr(getMulExpr(F, D),
+                                               getMulExpr(G, B),
+                                               getMulExpr(B, D));
+              const SCEV *NewAddRec = getAddRecExpr(NewStart, NewStep,
+                                                    F->getLoop());
+              if (Ops.size() == 2) return NewAddRec;
+              Ops[Idx] = AddRec = cast<SCEVAddRecExpr>(NewAddRec);
+              Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
+            }
+        return getMulExpr(Ops);
       }
 
     // Otherwise couldn't fold anything into this recurrence.  Move onto the
