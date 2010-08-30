@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions -fms-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions %s
 
 // Straight from the standard:
 // Plain function with spec
@@ -43,17 +43,11 @@ void r2() throw(int);
 void r2() throw(INT);
 
 // throw-any spec and no spec at all are semantically equivalent
-void r3();
-void r3() throw(...);
-
 void r4() throw(int, float);
 void r4() throw(float, int);
 
 void r5() throw(int); // expected-note {{previous declaration}}
 void r5(); // expected-warning {{missing exception specification}}
-
-void r6() throw(...); // expected-note {{previous declaration}}
-void r6() throw(int); // expected-error {{exception specification in declaration does not match}}
 
 void r7() throw(int); // expected-note {{previous declaration}}
 void r7() throw(float); // expected-error {{exception specification in declaration does not match}}
@@ -89,8 +83,6 @@ struct P : private A
 struct Base
 {
   virtual void f1() throw();
-  virtual void f2();
-  virtual void f3() throw(...);
   virtual void f4() throw(int, float);
 
   virtual void f5() throw(int, float);
@@ -107,8 +99,6 @@ struct Base
 struct Derived : Base
 {
   virtual void f1() throw();
-  virtual void f2() throw(...);
-  virtual void f3();
   virtual void f4() throw(float, int);
 
   virtual void f5() throw(float);
