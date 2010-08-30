@@ -1984,6 +1984,7 @@ static void HandleCallConvAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   case AttributeList::AT_thiscall:
     d->addAttr(::new (S.Context) ThisCallAttr(Attr.getLoc(), S.Context));
+    return;
   case AttributeList::AT_cdecl:
     d->addAttr(::new (S.Context) CDeclAttr(Attr.getLoc(), S.Context));
     return;
