@@ -829,15 +829,47 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     file_and_line_desc.descKey = keyAEPosition;
     
     LSApplicationParameters app_params;
+    static FSRef app_to_use;
+    static std::string app_name;
     bzero (&app_params, sizeof (app_params));
     app_params.flags = kLSLaunchDefaults | 
                        kLSLaunchDontAddToRecents | 
                        kLSLaunchDontSwitch;
+                       
+    char *external_editor = ::getenv ("LLDB_EXTERNAL_EDITOR");
+    
+    if (external_editor != NULL)
+    {
+        bool calculate_fsref = true;
+        if (app_name.empty() || strcmp (app_name.c_str(), external_editor) != 0)
+        {
+            calculate_fsref = true;
+        }
+        else
+            calculate_fsref = false;
+            
+        if (calculate_fsref)
+        {
+            CFCString editor_name (external_editor, kCFStringEncodingUTF8);
+            error = ::LSFindApplicationForInfo(kLSUnknownCreator, NULL, editor_name.get(), &app_to_use, NULL);
+            
+            // If we found the app, then store away the name so we don't have to re-look it up.
+            if (error == noErr)
+                app_name.assign (external_editor);
+            else
+                return false;
+                
+        }
+        
+        app_params.application = &app_to_use;
+    }
+
+
 
     ProcessSerialNumber psn;
     CFCReleaser<CFArrayRef> file_array(CFArrayCreate (NULL, (const void **) file_URL.ptr_address(false), 1, NULL));
     error = ::LSOpenURLsWithRole (file_array.get(), 
-                                  kLSRolesViewer, 
+                                  kLSRolesAll, 
                                   &file_and_line_desc, 
                                   &app_params, 
                                   &psn, 
