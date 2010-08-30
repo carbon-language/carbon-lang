@@ -15,7 +15,7 @@ class TestHelloWorld(TestBase):
 
         Use dsym info and lldb "run" command.
         """
-        self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=YES"])
+        self.buildDsym()
         self.hello_world_python(useLaunchAPI = False)
 
     @unittest2.expectedFailure
@@ -24,7 +24,7 @@ class TestHelloWorld(TestBase):
 
         Use dwarf map (no dsym) and process launch API.
         """
-        self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=NO"])
+        self.buildDwarf()
         self.hello_world_python(useLaunchAPI = True)
 
     def hello_world_python(self, useLaunchAPI):

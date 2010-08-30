@@ -404,6 +404,20 @@ class TestBase(unittest2.TestCase):
             raise CalledProcessError(retcode, cmd, output=output)
         return output
 
+    def buildDsym(self):
+        """Platform specific way to build binaries with dsym info."""
+        if sys.platform.startswith("darwin"):
+            self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=YES"])
+        else:
+            raise Exception("Don't know how to build binary with dsym")
+
+    def buildDwarf(self):
+        """Platform specific way to build binaries with dwarf maps."""
+        if sys.platform.startswith("darwin"):
+            self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=NO"])
+        else:
+            raise Exception("Don't know how to build binary with dwarf")
+
     def DebugSBValue(self, frame, val):
         """Debug print a SBValue object, if self.traceAlways is True."""
         if not self.traceAlways:
