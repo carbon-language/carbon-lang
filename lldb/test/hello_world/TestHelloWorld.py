@@ -1,6 +1,6 @@
 """Test Python APIs for target, breakpoint, and process."""
 
-import os, time
+import os, sys, time
 import unittest2
 import lldb
 from lldbtest import *
@@ -9,8 +9,25 @@ class TestHelloWorld(TestBase):
 
     mydir = "hello_world"
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_run_command(self):
+        """Create target, breakpoint, launch a process, and then kill it.
+
+        Use dsym info and lldb "run" command.
+        """
+        self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=YES"])
+        self.hello_world_python(useLaunchAPI = False)
+
     @unittest2.expectedFailure
-    def test_hello_world_python(self):
+    def test_with_dwarf_and_process_launch_api(self):
+        """Create target, breakpoint, launch a process, and then kill it.
+
+        Use dwarf map (no dsym) and process launch API.
+        """
+        self.system(["/bin/sh", "-c", "make clean; make MAKE_DSYM=NO"])
+        self.hello_world_python(useLaunchAPI = True)
+
+    def hello_world_python(self, useLaunchAPI):
         """Create target, breakpoint, launch a process, and then kill it."""
 
         exe = os.path.join(os.getcwd(), "a.out")
@@ -34,31 +51,30 @@ class TestHelloWorld(TestBase):
         # rdar://problem/8364687
         # SBTarget.LaunchProcess() issue (or is there some race condition)?
 
-        # The following approach of launching a process looks untidy and only
-        # works sometimes.
-        process = target.LaunchProcess([''], [''], os.ctermid(), False)
-
-        SR = process.GetThreadAtIndex(0).GetStopReason()
-        count = 0
-        while SR == StopReasonEnum("Invalid") or SR == StopReasonEnum("Signal"):
-            print >> sys.stderr, "StopReason =", StopReasonString(SR)
-
-            time.sleep(1.0)
-            print >> sys.stderr, "Continuing the process:", process
-            process.Continue()
-
-            count = count + 1
-            if count == 10:
-                print >> sys.stderr, "Reached 10 iterations, giving up..."
-                break
+        if useLaunchAPI:
+            # The following approach of launching a process looks untidy and only
+            # works sometimes.
+            process = target.LaunchProcess([''], [''], os.ctermid(), False)
 
             SR = process.GetThreadAtIndex(0).GetStopReason()
+            count = 0
+            while SR == StopReasonEnum("Invalid") or SR == StopReasonEnum("Signal"):
+                print >> sys.stderr, "StopReason =", StopReasonString(SR)
 
-        # End of section of launching a process.
+                time.sleep(1.0)
+                print >> sys.stderr, "Continuing the process:", process
+                process.Continue()
 
-        # On the other hand, the following two lines of code are more reliable.
-        #self.runCmd("run")
-        #process = target.GetProcess()
+                count = count + 1
+                if count == 10:
+                    print >> sys.stderr, "Reached 10 iterations, giving up..."
+                    break
+
+                SR = process.GetThreadAtIndex(0).GetStopReason()
+        else:
+            # On the other hand, the following two lines of code are more reliable.
+            self.runCmd("run")
+            process = target.GetProcess()
 
         self.runCmd("thread backtrace")
         self.runCmd("breakpoint list")
