@@ -249,9 +249,10 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     SD.setFragment(F);
     Symbol->setSection(*Section);
     SD.setSize(MCConstantExpr::Create(Size, getContext()));
-  } else {
-    SD.setExternal(true);
   }
+
+  SD.setFlags(SD.getFlags() | ELF_STB_Global);
+  SD.setExternal(true);
 
   SD.setCommon(Size, ByteAlignment);
 }
