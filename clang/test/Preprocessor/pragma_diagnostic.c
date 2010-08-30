@@ -20,9 +20,8 @@
 #endif
 
 
-
 #define foo error
-#pragma GCC diagnostic foo "-Wundef"  // expected-warning {{pragma diagnostic expected 'error', 'warning', 'ignored', or 'fatal'}}
+#pragma GCC diagnostic foo "-Wundef"  // expected-warning {{pragma diagnostic expected 'error', 'warning', 'ignored', 'fatal', 'push', or 'pop'}}
 
 #pragma GCC diagnostic error 42  // expected-warning {{unexpected token in pragma diagnostic}}
 

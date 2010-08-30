@@ -747,7 +747,7 @@ struct PragmaDebugHandler : public PragmaHandler {
     Token Tok;
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::identifier)) {
-      PP.Diag(Tok, diag::warn_pragma_diagnostic_clang_invalid);
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
       return;
     }
     IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -778,23 +778,14 @@ struct PragmaDebugHandler : public PragmaHandler {
 };
 
 /// PragmaDiagnosticHandler - e.g. '#pragma GCC diagnostic ignored "-Wformat"'
-/// Since clang's diagnostic supports extended functionality beyond GCC's
-/// the constructor takes a clangMode flag to tell it whether or not to allow
-/// clang's extended functionality, or whether to reject it.
 struct PragmaDiagnosticHandler : public PragmaHandler {
-private:
-  const bool ClangMode;
 public:
-  explicit PragmaDiagnosticHandler(const bool clangMode)
-    : PragmaHandler("diagnostic"), ClangMode(clangMode) {}
-
+  explicit PragmaDiagnosticHandler() : PragmaHandler("diagnostic") {}
   virtual void HandlePragma(Preprocessor &PP, Token &DiagToken) {
     Token Tok;
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::identifier)) {
-      unsigned Diag = ClangMode ? diag::warn_pragma_diagnostic_clang_invalid
-                                 : diag::warn_pragma_diagnostic_gcc_invalid;
-      PP.Diag(Tok, Diag);
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
       return;
     }
     IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -808,22 +799,16 @@ public:
       Map = diag::MAP_IGNORE;
     else if (II->isStr("fatal"))
       Map = diag::MAP_FATAL;
-    else if (ClangMode) {
-      if (II->isStr("pop")) {
-        if (!PP.getDiagnostics().popMappings())
-          PP.Diag(Tok, diag::warn_pragma_diagnostic_clang_cannot_ppp);
-        return;
-      }
+    else if (II->isStr("pop")) {
+      if (!PP.getDiagnostics().popMappings())
+        PP.Diag(Tok, diag::warn_pragma_diagnostic_cannot_pop);
 
-      if (II->isStr("push")) {
-        PP.getDiagnostics().pushMappings();
-        return;
-      }
-
-      PP.Diag(Tok, diag::warn_pragma_diagnostic_clang_invalid);
+      return;
+    } else if (II->isStr("push")) {
+      PP.getDiagnostics().pushMappings();
       return;
     } else {
-      PP.Diag(Tok, diag::warn_pragma_diagnostic_gcc_invalid);
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
       return;
     }
 
@@ -855,9 +840,7 @@ public:
     if (Literal.hadError)
       return;
     if (Literal.Pascal) {
-      unsigned Diag = ClangMode ? diag::warn_pragma_diagnostic_clang_invalid
-                                 : diag::warn_pragma_diagnostic_gcc_invalid;
-      PP.Diag(Tok, Diag);
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
       return;
     }
 
@@ -1001,13 +984,13 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("GCC", new PragmaPoisonHandler());
   AddPragmaHandler("GCC", new PragmaSystemHeaderHandler());
   AddPragmaHandler("GCC", new PragmaDependencyHandler());
-  AddPragmaHandler("GCC", new PragmaDiagnosticHandler(false));
+  AddPragmaHandler("GCC", new PragmaDiagnosticHandler());
   // #pragma clang ...
   AddPragmaHandler("clang", new PragmaPoisonHandler());
   AddPragmaHandler("clang", new PragmaSystemHeaderHandler());
   AddPragmaHandler("clang", new PragmaDebugHandler());
   AddPragmaHandler("clang", new PragmaDependencyHandler());
-  AddPragmaHandler("clang", new PragmaDiagnosticHandler(true));
+  AddPragmaHandler("clang", new PragmaDiagnosticHandler());
 
   AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler());

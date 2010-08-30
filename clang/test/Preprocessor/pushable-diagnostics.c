@@ -2,7 +2,7 @@
 
 #pragma clang diagnostic pop // expected-warning{{pragma diagnostic pop could not pop, no matching push}}
 
-#pragma clang diagnostic puhs // expected-warning{{pragma diagnostic expected 'error', 'warning', 'ignored', 'fatal' 'push', or 'pop'}}
+#pragma clang diagnostic puhs // expected-warning {{pragma diagnostic expected 'error', 'warning', 'ignored', 'fatal', 'push', or 'pop'}}
 
 char a = 'df'; // expected-warning{{multi-character character constant}}
 
