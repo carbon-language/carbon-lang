@@ -118,14 +118,16 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI,
     D3 = TRI->getSubReg(SrcReg, ARM::dsub_7);
   } 
 
-  MIB.addReg(D0, getKillRegState(SrcIsKill))
-    .addReg(D1, getKillRegState(SrcIsKill));
+  MIB.addReg(D0).addReg(D1);
   if (NumRegs > 2)
-    MIB.addReg(D2, getKillRegState(SrcIsKill));
+    MIB.addReg(D2);
   if (NumRegs > 3)
-    MIB.addReg(D3, getKillRegState(SrcIsKill));
+    MIB.addReg(D3);
   MIB = AddDefaultPred(MIB);
   TransferImpOps(MI, MIB, MIB);
+  if (SrcIsKill)
+    // Add an implicit kill for the super-reg.
+    (*MIB).addRegisterKilled(SrcReg, TRI, true);
   MI.eraseFromParent();
 }
 
