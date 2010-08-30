@@ -1,5 +1,7 @@
 // RUN: %clang %s -S -emit-llvm -o - | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
 // RUN: %clang %s -S -emit-llvm -o - -DPROTOTYPE | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
+// RUN: %clang %s -S -emit-llvm -o - -DINSTANTIATE | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
+// RUN: %clang %s -S -emit-llvm -o - -DPROTOTYPE -DINSTANTIATE | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
 // RUN: %clang -cc1 %s -DREDEFINE -verify
 // RUN: %clang -cc1 %s -DPROTOTYPE -DREDEFINE -verify
 // PR8007: friend function not instantiated, reordered version.
@@ -55,10 +57,12 @@ std_ostream& operator << (std_ostream& o, const Streamer<Foo>&) // expected-note
 }
 #endif
 
+#ifndef INSTANTIATE
 template <>
 void Streamer<Foo>::operator () (std_ostream& o) const // expected-note{{requested here}}
 {
 }
+#endif
 
 int main(void)
 {
