@@ -1542,11 +1542,19 @@ static QualType GetTypeOfFunction(ASTContext &Context,
 /// undeduced context
 static QualType
 ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
-                            Expr *Arg, QualType ParamType) {
+                            Expr *Arg, QualType ParamType,
+                            bool ParamWasReference) {
   
   OverloadExpr::FindResult R = OverloadExpr::find(Arg);
 
   OverloadExpr *Ovl = R.Expression;
+
+  // C++0x [temp.deduct.call]p4
+  unsigned TDF = 0;
+  if (ParamWasReference)
+    TDF |= TDF_ParamWithReferenceType;
+  if (R.IsAddressOfOperand)
+    TDF |= TDF_IgnoreQualifiers;
 
   // If there were explicit template arguments, we can only find
   // something via C++ [temp.arg.explicit]p3, i.e. if the arguments
@@ -1583,6 +1591,11 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
     QualType ArgType = GetTypeOfFunction(S.Context, R, Fn);
     if (ArgType.isNull()) continue;
 
+    // Function-to-pointer conversion.
+    if (!ParamWasReference && ParamType->isPointerType() && 
+        ArgType->isFunctionType())
+      ArgType = S.Context.getPointerType(ArgType);
+    
     //   - If the argument is an overload set (not containing function
     //     templates), trial argument deduction is attempted using each
     //     of the members of the set. If deduction succeeds for only one
@@ -1598,8 +1611,6 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
     llvm::SmallVector<DeducedTemplateArgument, 8> 
       Deduced(TemplateParams->size());
     TemplateDeductionInfo Info(S.Context, Ovl->getNameLoc());
-    unsigned TDF = 0;
-
     Sema::TemplateDeductionResult Result
       = DeduceTemplateArguments(S, TemplateParams,
                                 ParamType, ArgType,
@@ -1694,20 +1705,40 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     QualType ParamType = ParamTypes[I];
     QualType ArgType = Args[I]->getType();
 
+    // C++0x [temp.deduct.call]p3:
+    //   If P is a cv-qualified type, the top level cv-qualifiers of P’s type
+    //   are ignored for type deduction.
+    if (ParamType.getCVRQualifiers())
+      ParamType = ParamType.getLocalUnqualifiedType();
+    const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>();
+    if (ParamRefType) {
+      //   [...] If P is a reference type, the type referred to by P is used
+      //   for type deduction.
+      ParamType = ParamRefType->getPointeeType();
+    }
+    
     // Overload sets usually make this parameter an undeduced
     // context, but there are sometimes special circumstances.
     if (ArgType == Context.OverloadTy) {
       ArgType = ResolveOverloadForDeduction(*this, TemplateParams,
-                                            Args[I], ParamType);
+                                            Args[I], ParamType,
+                                            ParamRefType != 0);
       if (ArgType.isNull())
         continue;
     }
 
-    // C++ [temp.deduct.call]p2:
-    //   If P is not a reference type:
-    QualType CanonParamType = Context.getCanonicalType(ParamType);
-    bool ParamWasReference = isa<ReferenceType>(CanonParamType);
-    if (!ParamWasReference) {
+    if (ParamRefType) {
+      // C++0x [temp.deduct.call]p3:
+      //   [...] If P is of the form T&&, where T is a template parameter, and
+      //   the argument is an lvalue, the type A& is used in place of A for
+      //   type deduction.
+      if (ParamRefType->isRValueReferenceType() &&
+          ParamRefType->getAs<TemplateTypeParmType>() &&
+          Args[I]->isLvalue(Context) == Expr::LV_Valid)
+        ArgType = Context.getLValueReferenceType(ArgType);
+    } else {
+      // C++ [temp.deduct.call]p2:
+      //   If P is not a reference type:
       //   - If A is an array type, the pointer type produced by the
       //     array-to-pointer standard conversion (4.2) is used in place of
       //     A for type deduction; otherwise,
@@ -1722,28 +1753,9 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
         // - If A is a cv-qualified type, the top level cv-qualifiers of A’s
         //   type are ignored for type deduction.
         QualType CanonArgType = Context.getCanonicalType(ArgType);
-        if (CanonArgType.getLocalCVRQualifiers())
-          ArgType = CanonArgType.getLocalUnqualifiedType();
+        if (ArgType.getCVRQualifiers())
+          ArgType = ArgType.getUnqualifiedType();
       }
-    }
-
-    // C++0x [temp.deduct.call]p3:
-    //   If P is a cv-qualified type, the top level cv-qualifiers of P’s type
-    //   are ignored for type deduction.
-    if (CanonParamType.getLocalCVRQualifiers())
-      ParamType = CanonParamType.getLocalUnqualifiedType();
-    if (const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>()) {
-      //   [...] If P is a reference type, the type referred to by P is used
-      //   for type deduction.
-      ParamType = ParamRefType->getPointeeType();
-
-      //   [...] If P is of the form T&&, where T is a template parameter, and
-      //   the argument is an lvalue, the type A& is used in place of A for
-      //   type deduction.
-      if (isa<RValueReferenceType>(ParamRefType) &&
-          ParamRefType->getAs<TemplateTypeParmType>() &&
-          Args[I]->isLvalue(Context) == Expr::LV_Valid)
-        ArgType = Context.getLValueReferenceType(ArgType);
     }
 
     // C++0x [temp.deduct.call]p4:
@@ -1755,7 +1767,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //     - If the original P is a reference type, the deduced A (i.e., the
     //       type referred to by the reference) can be more cv-qualified than
     //       the transformed A.
-    if (ParamWasReference)
+    if (ParamRefType)
       TDF |= TDF_ParamWithReferenceType;
     //     - The transformed A can be another pointer or pointer to member
     //       type that can be converted to the deduced A via a qualification

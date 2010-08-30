@@ -93,3 +93,21 @@ namespace test1 {
     invoke(&temp2<int, int>); // expected-error {{no matching function for call to 'invoke'}}
   }
 }
+
+namespace rdar8360106 {
+  template<typename R, typename T> void f0(R (*)(T), T);
+  template<typename R, typename T> void f1(R (&)(T) , T); // expected-note{{candidate template ignored: couldn't infer template argument 'R'}}
+  template<typename R, typename T> void f2(R (* const&)(T), T); // expected-note{{candidate template ignored: couldn't infer template argument 'R'}}
+  
+  int g(int);
+  int g(int, int);
+
+  void h() {
+    f0(g, 1);
+    f0(&g, 1);
+    f1(g, 1);
+    f1(&g, 1); // expected-error{{no matching function for call to 'f1'}}
+    f2(g, 1); // expected-error{{no matching function for call to 'f2'}}
+    f2(&g, 1);
+  }
+}
