@@ -172,3 +172,18 @@ int false6() {
 
   return localInt;
 }
+
+// Check that assignments filter out false positives correctly
+int false7() {
+  int zero = 0; // psuedo-constant
+  int one = 1;
+
+  int a = 55;
+  a = a; // expected-warning{{Assigned value is always the same as the existing value}}
+  a = enum1 * a; // no-warning
+
+  int b = 123;
+  b = b; // no-warning
+
+  return a;
+}

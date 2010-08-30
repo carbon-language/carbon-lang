@@ -74,15 +74,15 @@ class IdempotentOperationChecker
     void UpdateAssumption(Assumption &A, const Assumption &New);
 
     // False positive reduction methods
-    static bool isUnusedSelfAssign(const Expr *LHS,
-                                      const Expr *RHS,
-                                      AnalysisContext *AC);
+    static bool isSelfAssign(const Expr *LHS, const Expr *RHS);
+    static bool isUnused(const Expr *E, AnalysisContext *AC);
     static bool isTruncationExtensionAssignment(const Expr *LHS,
                                                 const Expr *RHS);
     static bool PathWasCompletelyAnalyzed(const CFG *C,
                                           const CFGBlock *CB,
                                           const GRCoreEngine &CE);
-    static bool CanVary(const Expr *Ex, AnalysisContext *AC);
+    static bool CanVary(const Expr *Ex,
+                        AnalysisContext *AC);
     static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
                                            AnalysisContext *AC);
     static bool containsNonLocalVarDecl(const Stmt *S);
@@ -184,19 +184,19 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
 
   // Fall through intentional
   case BO_Assign:
-    // x Assign x can be used to silence unused variable warnings intentionally,
-    // and has a slightly different definition for false positives.
-    if (isUnusedSelfAssign(RHS, LHS, AC)
-        || isTruncationExtensionAssignment(RHS, LHS)
-        || containsNonLocalVarDecl(RHS)
-        || containsNonLocalVarDecl(LHS)) {
-      A = Impossible;
-      return;
+    // x Assign x can be used to silence unused variable warnings intentionally.
+    // If this is a self assignment and the variable is referenced elsewhere,
+    // then it is a false positive.
+    if (isSelfAssign(LHS, RHS)) {
+      if (!isUnused(LHS, AC)) {
+        UpdateAssumption(A, Equal);
+        return;
+      }
+      else {
+        A = Impossible;
+        return;
+      }
     }
-    if (LHSVal != RHSVal)
-      break;
-    UpdateAssumption(A, Equal);
-    return;
 
   case BO_SubAssign:
   case BO_DivAssign:
@@ -412,12 +412,9 @@ inline void IdempotentOperationChecker::UpdateAssumption(Assumption &A,
   }
 }
 
-// Check for a statement where a variable is self assigned to avoid an unused
-// variable warning. We still report if the variable is used after the self
-// assignment.
-bool IdempotentOperationChecker::isUnusedSelfAssign(const Expr *LHS,
-                                                    const Expr *RHS,
-                                                    AnalysisContext *AC) {
+// Check for a statement where a variable is self assigned to possibly avoid an
+// unused variable warning.
+bool IdempotentOperationChecker::isSelfAssign(const Expr *LHS, const Expr *RHS) {
   LHS = LHS->IgnoreParenCasts();
   RHS = RHS->IgnoreParenCasts();
 
@@ -436,7 +433,24 @@ bool IdempotentOperationChecker::isUnusedSelfAssign(const Expr *LHS,
   if (VD != RHS_DR->getDecl())
     return false;
 
-  // If the var was used outside of a selfassign, then we should still report
+  return true;
+}
+
+// Returns true if the Expr points to a VarDecl that is not read anywhere
+// outside of self-assignments.
+bool IdempotentOperationChecker::isUnused(const Expr *E,
+                                          AnalysisContext *AC) {
+  if (!E)
+    return false;
+
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts());
+  if (!DR)
+    return false;
+
+  const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+  if (!VD)
+    return false;
+
   if (AC->getPseudoConstantAnalysis()->wasReferenced(VD))
     return false;
 
@@ -571,6 +585,7 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
     return SE->getTypeOfArgument()->isVariableArrayType();
   }
   case Stmt::DeclRefExprClass:
+    // Check for constants/pseudoconstants
     return !isConstantOrPseudoConstant(cast<DeclRefExpr>(Ex), AC);
 
   // The next cases require recursion for subexpressions
@@ -593,14 +608,14 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
     return CanVary(cast<const ChooseExpr>(Ex)->getChosenSubExpr(
         AC->getASTContext()), AC);
   case Stmt::ConditionalOperatorClass:
-      return CanVary(cast<const ConditionalOperator>(Ex)->getCond(), AC);
+    return CanVary(cast<const ConditionalOperator>(Ex)->getCond(), AC);
   }
 }
 
 // Returns true if a DeclRefExpr is or behaves like a constant.
 bool IdempotentOperationChecker::isConstantOrPseudoConstant(
-                                                         const DeclRefExpr *DR,
-                                                         AnalysisContext *AC) {
+                                                          const DeclRefExpr *DR,
+                                                          AnalysisContext *AC) {
   // Check if the type of the Decl is const-qualified
   if (DR->getType().isConstQualified())
     return true;

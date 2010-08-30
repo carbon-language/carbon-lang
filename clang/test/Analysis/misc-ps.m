@@ -458,7 +458,7 @@ void rdar_7062158_2() {
 // ElementRegion is created.
 unsigned char test_array_index_bitwidth(const unsigned char *p) {
   unsigned short i = 0;
-  for (i = 0; i < 2; i++) p = &p[i]; // expected-warning{{Assigned value is always the same as the existing value}}
+  for (i = 0; i < 2; i++) p = &p[i];
   return p[i+1];
 }
 

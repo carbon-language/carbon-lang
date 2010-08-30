@@ -708,7 +708,7 @@ int pr5857(char *src) {
   long long *z = (long long *) (intptr_t) src;
   long long w = 0;
   int n = 0;
-  for (n = 0; n < y; ++n) { // expected-warning{{Assigned value is always the same as the existing value}}
+  for (n = 0; n < y; ++n) {
     // Previously we crashed analyzing this statement.
     w = *z++;
   }
