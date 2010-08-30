@@ -221,3 +221,10 @@ typedef unsigned short v2i16 __attribute__((__vector_size__(4)));
 // rdar://8359483
 v2i16 f54(v2i16 arg) { return arg+arg; }
 
+
+typedef int v4i32 __attribute__((__vector_size__(16)));
+
+// CHECK: define <2 x i64> @f55(<4 x i32> %arg)
+// PR8029
+v4i32 f55(v4i32 arg) { return arg+arg; }
+

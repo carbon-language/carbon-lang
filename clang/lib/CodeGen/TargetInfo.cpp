@@ -598,7 +598,6 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
           (Size == 64 && VT->getNumElements() == 1))
         return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                             Size));
-      return ABIArgInfo::getIndirect(0);
     }
     
     return ABIArgInfo::getDirect();
