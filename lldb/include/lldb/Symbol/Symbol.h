@@ -14,11 +14,13 @@
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/Mangled.h"
 #include "lldb/Core/UserID.h"
+#include "lldb/Symbol/SymbolContextScope.h"
 
 namespace lldb_private {
 
 class Symbol :
-    public UserID   // Used to uniquely identify this symbol in its symbol table
+    public UserID,   // Used to uniquely identify this symbol in its symbol table
+    public SymbolContextScope
 {
 public:
     // ObjectFile readers can classify their symbol table entries and searches can be made
@@ -161,6 +163,22 @@ public:
     // in bytes, else it will return zero.
     uint32_t
     GetPrologueByteSize ();
+
+    //------------------------------------------------------------------
+    /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
+    ///
+    /// @see SymbolContextScope
+    //------------------------------------------------------------------
+    virtual void
+    CalculateSymbolContext (SymbolContext *sc);
+
+    //------------------------------------------------------------------
+    /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
+    ///
+    /// @see SymbolContextScope
+    //------------------------------------------------------------------
+    virtual void
+    DumpSymbolContext (Stream *s);
 
 protected:
 

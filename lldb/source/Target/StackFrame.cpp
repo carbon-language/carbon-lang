@@ -29,26 +29,26 @@ using namespace lldb_private;
 // The first bits in the flags are reserved for the SymbolContext::Scope bits
 // so we know if we have tried to look up information in our internal symbol
 // context (m_sc) already.
-#define RESOLVED_FRAME_ADDR (uint32_t(eSymbolContextEverything + 1))
-#define RESOLVED_FRAME_ID   (RESOLVED_FRAME_ADDR << 1)
-#define GOT_FRAME_BASE      (RESOLVED_FRAME_ID << 1)
-#define FRAME_IS_OBSOLETE   (GOT_FRAME_BASE << 1)
-#define RESOLVED_VARIABLES  (FRAME_IS_OBSOLETE << 1)
+#define RESOLVED_FRAME_CODE_ADDR        (uint32_t(eSymbolContextEverything + 1))
+#define RESOLVED_FRAME_ID_START_ADDR    (RESOLVED_FRAME_CODE_ADDR << 1)
+#define RESOLVED_FRAME_ID_SYMBOL_SCOPE  (RESOLVED_FRAME_ID_START_ADDR << 1)
+#define GOT_FRAME_BASE                  (RESOLVED_FRAME_ID_SYMBOL_SCOPE << 1)
+#define RESOLVED_VARIABLES              (GOT_FRAME_BASE << 1)
 
 StackFrame::StackFrame 
 (
     lldb::user_id_t frame_idx, 
-    lldb::user_id_t concrete_frame_index, 
+    lldb::user_id_t unwind_frame_index, 
     Thread &thread, 
     lldb::addr_t cfa, 
     lldb::addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
     m_frame_index (frame_idx),
-    m_concrete_frame_index (concrete_frame_index),    
+    m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (),
-    m_id (LLDB_INVALID_UID, cfa, LLDB_INVALID_UID),
+    m_id (LLDB_INVALID_ADDRESS, cfa, NULL),
     m_frame_code_addr (NULL, pc),
     m_sc (),
     m_flags (),
@@ -67,7 +67,7 @@ StackFrame::StackFrame
 StackFrame::StackFrame 
 (
     lldb::user_id_t frame_idx, 
-    lldb::user_id_t concrete_frame_index, 
+    lldb::user_id_t unwind_frame_index, 
     Thread &thread, 
     const RegisterContextSP &reg_context_sp, 
     lldb::addr_t cfa, 
@@ -75,10 +75,10 @@ StackFrame::StackFrame
     const SymbolContext *sc_ptr
 ) :
     m_frame_index (frame_idx),
-    m_concrete_frame_index (concrete_frame_index),    
+    m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (LLDB_INVALID_UID, cfa, LLDB_INVALID_UID),
+    m_id (LLDB_INVALID_ADDRESS, cfa, NULL),
     m_frame_code_addr (NULL, pc),
     m_sc (),
     m_flags (),
@@ -103,7 +103,7 @@ StackFrame::StackFrame
 StackFrame::StackFrame 
 (
     lldb::user_id_t frame_idx, 
-    lldb::user_id_t concrete_frame_index, 
+    lldb::user_id_t unwind_frame_index, 
     Thread &thread, 
     const RegisterContextSP &reg_context_sp, 
     lldb::addr_t cfa, 
@@ -111,10 +111,10 @@ StackFrame::StackFrame
     const SymbolContext *sc_ptr
 ) :
     m_frame_index (frame_idx),
-    m_concrete_frame_index (concrete_frame_index),    
+    m_unwind_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
-    m_id (LLDB_INVALID_UID, cfa, LLDB_INVALID_UID),
+    m_id (LLDB_INVALID_ADDRESS, cfa, NULL),
     m_frame_code_addr (pc_addr),
     m_sc (),
     m_flags (),
@@ -160,41 +160,92 @@ StackFrame::GetStackID()
     // Make sure we have resolved our stack ID's start PC before we give
     // it out to any external clients. This allows us to not have to lookup
     // this information if it is never asked for.
-    if (m_flags.IsClear(RESOLVED_FRAME_ID) && m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
+    if (m_flags.IsClear(RESOLVED_FRAME_ID_START_ADDR))
     {
-        m_flags.Set (RESOLVED_FRAME_ID);
+        m_flags.Set (RESOLVED_FRAME_ID_START_ADDR);
 
-        // Resolve our PC to section offset if we haven't alreday done so
-        // and if we don't have a module. The resolved address section will
-        // contain the module to which it belongs.
-        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_ADDR))
-            GetFrameCodeAddress();
-
-        if (GetSymbolContext (eSymbolContextFunction).function)
-        {
-            m_id.SetStartAddress (m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
-        }
-        else if (GetSymbolContext (eSymbolContextSymbol).symbol)
-        {
-            AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRangePtr();
-            if (symbol_range_ptr)
-                m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
-        }
-        
-        // We didn't find a function or symbol, just use the frame code address
-        // which will be the same as the PC in the frame.
         if (m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
-            m_id.SetStartAddress (m_frame_code_addr.GetLoadAddress (&m_thread.GetProcess()));
+        {
+            // Resolve our PC to section offset if we haven't alreday done so
+            // and if we don't have a module. The resolved address section will
+            // contain the module to which it belongs.
+            if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_CODE_ADDR))
+                GetFrameCodeAddress();
+
+            if (GetSymbolContext (eSymbolContextFunction).function)
+            {
+                m_id.SetStartAddress (m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
+            }
+            else if (GetSymbolContext (eSymbolContextSymbol).symbol)
+            {
+                AddressRange *symbol_range_ptr = m_sc.symbol->GetAddressRangePtr();
+                if (symbol_range_ptr)
+                    m_id.SetStartAddress(symbol_range_ptr->GetBaseAddress().GetLoadAddress (&m_thread.GetProcess()));
+            }
+            
+            // We didn't find a function or symbol, just use the frame code address
+            // which will be the same as the PC in the frame.
+            if (m_id.GetStartAddress() == LLDB_INVALID_ADDRESS)
+                m_id.SetStartAddress (m_frame_code_addr.GetLoadAddress (&m_thread.GetProcess()));
+        }
+    }
+    
+    if (m_flags.IsClear (RESOLVED_FRAME_ID_SYMBOL_SCOPE))
+    {
+        if (m_id.GetSymbolContextScope ())
+        {
+            m_flags.Set (RESOLVED_FRAME_ID_SYMBOL_SCOPE);
+        }
+        else
+        {
+            GetSymbolContext (eSymbolContextFunction | eSymbolContextBlock);
+            
+            if (m_sc.block)
+            {
+                Block *inline_block = m_sc.block->GetContainingInlinedBlock();
+                if (inline_block)
+                {
+                    // Use the block with the inlined function info
+                    // as the symbol context since we want this frame
+                    // to have only the variables for the inlined function
+                    SetSymbolContextScope (inline_block);
+                }
+                else
+                {
+                    // This block is not inlined with means it has no
+                    // inlined parents either, so we want to use the top
+                    // most function block.
+                    SetSymbolContextScope (&m_sc.function->GetBlock(false));
+                }
+            }
+            else
+            {
+                // The current stack frame doesn't have a block. Check to see
+                // if it has a symbol. If it does we will use this as the 
+                // symbol scope. It is ok if "m_sc.symbol" is NULL below as
+                // it will set the symbol context to NULL and set the
+                // RESOLVED_FRAME_ID_SYMBOL_SCOPE flag bit.
+                GetSymbolContext (eSymbolContextSymbol);
+                SetSymbolContextScope (m_sc.symbol);
+            }
+        }
     }
     return m_id;
+}
+
+void
+StackFrame::SetSymbolContextScope (SymbolContextScope *symbol_scope)
+{
+    m_flags.Set (RESOLVED_FRAME_ID_SYMBOL_SCOPE);
+    m_id.SetSymbolContextScope (symbol_scope);
 }
 
 Address&
 StackFrame::GetFrameCodeAddress()
 {
-    if (m_flags.IsClear(RESOLVED_FRAME_ADDR) && !m_frame_code_addr.IsSectionOffset())
+    if (m_flags.IsClear(RESOLVED_FRAME_CODE_ADDR) && !m_frame_code_addr.IsSectionOffset())
     {
-        m_flags.Set (RESOLVED_FRAME_ADDR);
+        m_flags.Set (RESOLVED_FRAME_CODE_ADDR);
 
         // Resolve the PC into a temporary address because if ResolveLoadAddress
         // fails to resolve the address, it will clear the address object...
@@ -263,7 +314,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
         // Resolve our PC to section offset if we haven't alreday done so
         // and if we don't have a module. The resolved address section will
         // contain the module to which it belongs
-        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_ADDR))
+        if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_CODE_ADDR))
             GetFrameCodeAddress();
 
         // If this is not frame zero, then we need to subtract 1 from the PC
@@ -479,7 +530,11 @@ StackFrame::GetValueObjectList()
 bool
 StackFrame::IsInlined ()
 {
-    return m_id.GetInlineBlockID() != LLDB_INVALID_UID;
+    if (m_sc.block == NULL)
+        GetSymbolContext (eSymbolContextBlock);
+    if (m_sc.block)
+        return m_sc.block->GetContainingInlinedBlock() != NULL;
+    return false;
 }
 
 Target *
@@ -532,13 +587,35 @@ StackFrame::Dump (Stream *strm, bool show_frame_index)
 }
 
 void
-StackFrame::UpdateCurrentFrameFromPreviousFrame (StackFrame &frame)
+StackFrame::UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame)
 {
-    assert (GetStackID() == frame.GetStackID());    // TODO: remove this after some testing
-    m_variable_list_sp = frame.m_variable_list_sp;
-    m_value_object_list.Swap (frame.m_value_object_list);
+    assert (GetStackID() == prev_frame.GetStackID());    // TODO: remove this after some testing
+    m_variable_list_sp = prev_frame.m_variable_list_sp;
+    m_value_object_list.Swap (prev_frame.m_value_object_list);
     if (!m_disassembly.GetString().empty())
         m_disassembly.GetString().swap (m_disassembly.GetString());
+}
+    
+
+void
+StackFrame::UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame)
+{
+    assert (GetStackID() == curr_frame.GetStackID());    // TODO: remove this after some testing
+    assert (&m_thread == &curr_frame.m_thread);
+    m_frame_index = curr_frame.m_frame_index;
+    m_unwind_frame_index = curr_frame.m_unwind_frame_index;
+    m_reg_context_sp = curr_frame.m_reg_context_sp;
+    m_frame_code_addr = curr_frame.m_frame_code_addr;
+    assert (m_sc.target_sp.get() == NULL || curr_frame.m_sc.target_sp.get() == NULL || m_sc.target_sp.get() == curr_frame.m_sc.target_sp.get());
+    assert (m_sc.module_sp.get() == NULL || curr_frame.m_sc.module_sp.get() == NULL || m_sc.module_sp.get() == curr_frame.m_sc.module_sp.get());
+    assert (m_sc.comp_unit == NULL || curr_frame.m_sc.comp_unit == NULL || m_sc.comp_unit == curr_frame.m_sc.comp_unit);
+    assert (m_sc.function == NULL || curr_frame.m_sc.function == NULL || m_sc.function == curr_frame.m_sc.function);
+    assert (m_sc.symbol == NULL || curr_frame.m_sc.symbol == NULL || m_sc.symbol == curr_frame.m_sc.symbol);
+    m_sc = curr_frame.m_sc;
+    m_flags.Clear(GOT_FRAME_BASE | eSymbolContextEverything);
+    m_flags.Set (m_sc.GetResolvedMask());
+    m_frame_base.Clear();
+    m_frame_base_error.Clear();
 }
     
 

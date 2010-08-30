@@ -37,7 +37,7 @@ Variable::Variable(lldb::user_id_t uid,
     m_name(name),
     m_type(type),
     m_scope(scope),
-    m_context(context),
+    m_owner_scope(context),
     m_declaration(decl_ptr),
     m_location(location),
     m_external(external),
@@ -82,10 +82,10 @@ Variable::Dump(Stream *s, bool show_context) const
         }
     }
 
-    if (show_context && m_context != NULL)
+    if (show_context && m_owner_scope != NULL)
     {
         s->PutCString(", context = ( ");
-        m_context->DumpSymbolContext(s);
+        m_owner_scope->DumpSymbolContext(s);
         s->PutCString(" )");
     }
 
@@ -117,8 +117,8 @@ Variable::MemorySize() const
 void
 Variable::CalculateSymbolContext (SymbolContext *sc)
 {
-    if (m_context)
-        m_context->CalculateSymbolContext(sc);
+    if (m_owner_scope)
+        m_owner_scope->CalculateSymbolContext(sc);
     else
         sc->Clear();
 }

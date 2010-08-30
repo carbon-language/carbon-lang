@@ -51,8 +51,7 @@ namespace lldb_private {
 /// this happens, breakpoints that are in one of these sections can be
 /// set/cleared.
 //----------------------------------------------------------------------
-class Address :
-    public SymbolContextScope
+class Address
 {
 public:
     //------------------------------------------------------------------
@@ -98,7 +97,6 @@ public:
     /// offset (LLDB_INVALID_ADDRESS).
     //------------------------------------------------------------------
     Address () :
-        SymbolContextScope(),
         m_section (NULL),
         m_offset (LLDB_INVALID_ADDRESS)
     {
@@ -114,7 +112,6 @@ public:
     ///     A const Address object reference to copy.
     //------------------------------------------------------------------
     Address (const Address& rhs) :
-        SymbolContextScope(rhs),
         m_section (rhs.m_section),
         m_offset (rhs.m_offset)
     {
@@ -134,7 +131,6 @@ public:
     ///     The offset in bytes into \a section.
     //------------------------------------------------------------------
     Address (const Section* section, lldb::addr_t offset) :
-        SymbolContextScope(),
         m_section (section),
         m_offset (offset)
     {
@@ -433,27 +429,24 @@ public:
     SetSection (const Section* section) { m_section = section; }
 
     //------------------------------------------------------------------
-    /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
+    /// Reconstruct a symbol context from ad address.
     ///
-    /// @see SymbolContextScope
+    /// This class doesn't inherit from SymbolContextScope because many
+    /// address objects have short lifespans. Address objects that are
+    /// section offset can reconstruct their symbol context by looking
+    /// up the address in the module found in the section.
+    ///
+    /// @see SymbolContextScope::CalculateSymbolContext(SymbolContext*)
     //------------------------------------------------------------------
     void
     CalculateSymbolContext (SymbolContext *sc);
-
-    //------------------------------------------------------------------
-    /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
-    ///
-    /// @see SymbolContextScope
-    //------------------------------------------------------------------
-    void
-    DumpSymbolContext (Stream *s);
 
 protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
-    const Section* m_section;      ///< The section for the address, can be NULL.
-    lldb::addr_t      m_offset;       ///< Offset into section if \a m_section != NULL, else the absolute address value.
+    const Section* m_section;   ///< The section for the address, can be NULL.
+    lldb::addr_t m_offset;      ///< Offset into section if \a m_section != NULL, else the absolute address value.
 };
 
 //bool operator<  (const Address& lhs, const Address& rhs);

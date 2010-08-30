@@ -241,7 +241,6 @@ ReadCStringFromMemory (ExecutionContextScope *exe_scope, const Address &address,
 }
 
 Address::Address (addr_t address, const SectionList * sections) :
-    SymbolContextScope(),
     m_section (NULL),
     m_offset (LLDB_INVALID_ADDRESS)
 {
@@ -704,14 +703,6 @@ Address::CalculateSymbolContext (SymbolContext *sc)
         if (sc->module_sp)
             sc->module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextEverything, *sc);
     }
-}
-
-void
-Address::DumpSymbolContext (Stream *s)
-{
-    SymbolContext sc;
-    CalculateSymbolContext (&sc);
-    sc.Dump (s, NULL);
 }
 
 void

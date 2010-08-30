@@ -28,22 +28,22 @@ public:
     StackID () :
         m_start_pc (LLDB_INVALID_ADDRESS),
         m_cfa (LLDB_INVALID_ADDRESS),
-        m_inline_block_id (LLDB_INVALID_UID)
+        m_symbol_scope (NULL)
     {
     }
 
     explicit 
-    StackID (lldb::addr_t start_pc, lldb::addr_t cfa, lldb::user_id_t inline_block_id) :
-        m_start_pc (),
+    StackID (lldb::addr_t start_pc, lldb::addr_t cfa, SymbolContextScope *symbol_scope) :
+        m_start_pc (start_pc),
         m_cfa (cfa),
-        m_inline_block_id (inline_block_id)
+        m_symbol_scope (symbol_scope)
     {
     }
 
     StackID (const StackID& rhs) :
         m_start_pc (rhs.m_start_pc),
         m_cfa (rhs.m_cfa),
-        m_inline_block_id (rhs.m_inline_block_id)
+        m_symbol_scope (rhs.m_symbol_scope)
     {
     }
 
@@ -69,17 +69,20 @@ public:
         return m_cfa;
     }
 
-    lldb::user_id_t
-    GetInlineBlockID () const
+    SymbolContextScope *
+    GetSymbolContextScope () const
     {
-        return m_inline_block_id;
+        return m_symbol_scope;
     }
     
     void
-    SetInlineBlockID (lldb::user_id_t inline_block_id)
+    SetSymbolContextScope (SymbolContextScope *symbol_scope)
     {
-        m_inline_block_id = inline_block_id;
+        m_symbol_scope = symbol_scope;
     }
+
+    void
+    Dump (Stream *s);
 
     //------------------------------------------------------------------
     // Operators
@@ -91,7 +94,7 @@ public:
         {
             m_start_pc = rhs.m_start_pc;
             m_cfa = rhs.m_cfa;
-            m_inline_block_id = rhs.m_inline_block_id;
+            m_symbol_scope = rhs.m_symbol_scope;
         }
         return *this;
     }
@@ -103,10 +106,15 @@ protected:
     lldb::addr_t m_start_pc;            // The start address for the function/symbol for this frame
     lldb::addr_t m_cfa;                 // The call frame address (stack pointer) value
                                         // at the beginning of the function that uniquely
-                                        // identifies this frame (along with m_inline_block_id below)
-    lldb::user_id_t m_inline_block_id;  // The inline height of a stack frame. Zero is the actual
-                                        // value for the place where a thread stops, 1 and above
-                                        // are for the inlined frames above the concrete base frame.
+                                        // identifies this frame (along with m_symbol_scope below)
+    SymbolContextScope *m_symbol_scope; // If NULL, there is no block or symbol for this frame.
+                                        // If not NULL, this will either be the scope for the 
+                                        // lexical block for the frame, or the scope 
+                                        // for the symbol. Symbol context scopes are 
+                                        // always be unique pointers since the are part
+                                        // of the Block and Symbol objects and can easily
+                                        // be used to tell if a stack ID is the same as 
+                                        // another.
 };
 
 bool operator== (const StackID& lhs, const StackID& rhs);

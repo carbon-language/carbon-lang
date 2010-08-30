@@ -33,9 +33,29 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr);
-    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, lldb::addr_t pc, const SymbolContext *sc_ptr);
-    StackFrame (lldb::user_id_t frame_idx, lldb::user_id_t concrete_frame_idx, Thread &thread, const lldb::RegisterContextSP &reg_context_sp, lldb::addr_t cfa, const Address& pc, const SymbolContext *sc_ptr);
+    StackFrame (lldb::user_id_t frame_idx, 
+                lldb::user_id_t unwind_frame_idx, 
+                Thread &thread, 
+                lldb::addr_t cfa, 
+                lldb::addr_t pc, 
+                const SymbolContext *sc_ptr);
+
+    StackFrame (lldb::user_id_t frame_idx, 
+                lldb::user_id_t unwind_frame_idx, 
+                Thread &thread, 
+                const lldb::RegisterContextSP &reg_context_sp, 
+                lldb::addr_t cfa, 
+                lldb::addr_t pc, 
+                const SymbolContext *sc_ptr);
+    
+    StackFrame (lldb::user_id_t frame_idx, 
+                lldb::user_id_t unwind_frame_idx, 
+                Thread &thread, 
+                const lldb::RegisterContextSP &reg_context_sp, 
+                lldb::addr_t cfa, 
+                const Address& pc, 
+                const SymbolContext *sc_ptr);
+
     virtual ~StackFrame ();
 
     Thread &
@@ -95,9 +115,9 @@ public:
     }
 
     uint32_t
-    GetConcreteFrameIndex () const
+    GetUnwindFrameIndex () const
     {
-        return m_concrete_frame_index;
+        return m_unwind_frame_index;
     }
     
     //------------------------------------------------------------------
@@ -121,29 +141,26 @@ public:
 protected:
     friend class StackFrameList;
 
-    //------------------------------------------------------------------
-    // Classes that inherit from StackFrame can see and modify these
-    //------------------------------------------------------------------
     void
-    SetInlineBlockID (lldb::user_id_t inline_block_id)
-    {
-        m_id.SetInlineBlockID(inline_block_id);
-    }
+    SetSymbolContextScope (SymbolContextScope *symbol_scope);
+
+    void
+    UpdateCurrentFrameFromPreviousFrame (StackFrame &prev_frame);
     
     void
-    UpdateCurrentFrameFromPreviousFrame (StackFrame &frame);
-    
+    UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame);
+
 private:
     //------------------------------------------------------------------
     // For StackFrame only
     //------------------------------------------------------------------
     Thread &m_thread;
     uint32_t m_frame_index;
-    uint32_t m_concrete_frame_index;
+    uint32_t m_unwind_frame_index;
     lldb::RegisterContextSP m_reg_context_sp;
     StackID m_id;
     Address m_frame_code_addr;   // The frame code address (might not be the same as the actual PC for inlined frames) as a section/offset address
-    SymbolContext   m_sc;
+    SymbolContext m_sc;
     Flags m_flags;
     Scalar m_frame_base;
     Error m_frame_base_error;

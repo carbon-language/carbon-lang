@@ -20,23 +20,47 @@ namespace lldb_private {
 
 //----------------------------------------------------------------------
 /// @class SymbolContextScope SymbolContextScope.h "lldb/Symbol/SymbolContextScope.h"
-/// @brief Inherit from this if your object can reconstruct its symbol
-///        context.
+/// @brief Inherit from this if your object is part of a symbol context
+///        and can reconstruct its symbol context.
 ///
-/// Many objects that have pointers back to parent objects that own them
-/// that all inherit from this pure virtual class can reconstruct their
-/// symbol context without having to keep a complete SymbolContextScope
-/// object in the object state. Examples of these objects include:
-/// Module, CompileUnit, Function, and Block.
+/// Many objects that are part of a symbol context that have pointers
+/// back to parent objects that own them. Any members of a symbol 
+/// context that, once they are built, will not go away, can inherit
+/// from this pure virtual class and can then reconstruct their symbol
+/// context without having to keep a complete SymbolContext object in 
+/// the object. 
 ///
-/// Other objects can contain a valid pointer to an instance of this
-/// class so they can reconstruct the symbol context in which they are
-/// scoped. Example objects include: Variable and Type. Such objects
-/// can be scoped at a variety of levels:
-///     @li module level for a built built in types.
-///     @li file level for compile unit types and variables.
-///     @li function or block level for types and variables defined in
-///         a function body.
+/// Examples of these objects include:
+///     @li Module
+///     @li CompileUnit
+///     @li Function
+///     @li Block
+///     @li Symbol
+///
+/// Other objects can store a "SymbolContextScope *" using any pointers
+/// to one of the above objects. This allows clients to hold onto a 
+/// pointer that uniquely will identify a symbol context. Those clients
+/// can then always reconstruct the symbol context using the pointer, or
+/// use it to uniquely identify a symbol context for an object.
+///
+/// Example objects include that currently use "SymbolContextScope *"
+/// objects include:
+///     @li Variable objects that can reconstruct where they are scoped
+///         by making sure the SymbolContextScope * comes from the scope
+///         in which the variable was declared. If a variable is a global,
+///         the appropriate CompileUnit * will be used when creating the
+///         variable. A static function variables, can the Block scope
+///         in which the variable is defined. Function arguments can use
+///         the Function object as their scope. The SymbolFile parsers
+///         will set these correctly as the variables are parsed.
+///     @li Type objects that know exactly in which scope they 
+///         originated much like the variables above.
+///     @li StackID objects that are able to know that if the CFA 
+///         (stack pointer at the beginning of a function) and the 
+///         start PC for the function/symbol and the SymbolContextScope
+///         pointer (a unique pointer that identifies a symbol context 
+///         location) match within the same thread, that the stack
+///         frame is the same as the previous stack frame.
 ///
 /// Objects that adhere to this protocol can reconstruct enough of a
 /// symbol context to allow functions that take a symbol context to be

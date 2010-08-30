@@ -19,6 +19,7 @@ using namespace lldb_private;
 
 
 Symbol::Symbol() :
+    SymbolContextScope (),
     UserID (),
     m_mangled (),
     m_type (eSymbolTypeInvalid),
@@ -51,6 +52,7 @@ Symbol::Symbol
     uint32_t size,
     uint32_t flags
 ) :
+    SymbolContextScope (),
     UserID (symID),
     m_mangled (name, name_is_mangled),
     m_type (type),
@@ -81,6 +83,7 @@ Symbol::Symbol
     const AddressRange &range,
     uint32_t flags
 ) :
+    SymbolContextScope (),
     UserID (symID),
     m_mangled (name, name_is_mangled),
     m_type (type),
@@ -99,6 +102,7 @@ Symbol::Symbol
 }
 
 Symbol::Symbol(const Symbol& rhs):
+    SymbolContextScope (rhs),
     UserID (rhs),
     m_mangled (rhs.m_mangled),
     m_type (rhs.m_type),
@@ -121,6 +125,7 @@ Symbol::operator= (const Symbol& rhs)
 {
     if (this != &rhs)
     {
+        SymbolContextScope::operator= (rhs);
         UserID::operator= (rhs);
         m_mangled = rhs.m_mangled;
         m_type = rhs.m_type;
@@ -334,4 +339,44 @@ Symbol::GetTypeAsString() const
     }
     return "<unknown SymbolType>";
 }
+
+
+void
+Symbol::CalculateSymbolContext (SymbolContext *sc)
+{
+    // Symbols can reconstruct the symbol and the module in the symbol context
+    sc->symbol = this;
+    const AddressRange *range = GetAddressRangePtr();
+    if (range)
+    {   
+        Module *module = range->GetBaseAddress().GetModule ();
+        if (module)
+        {
+            sc->module_sp = module->GetSP();
+            return;
+        }
+    }
+    sc->module_sp.reset();
+}
+
+void
+Symbol::DumpSymbolContext (Stream *s)
+{
+    bool dumped_module = false;
+    const AddressRange *range = GetAddressRangePtr();
+    if (range)
+    {   
+        Module *module = range->GetBaseAddress().GetModule ();
+        if (module)
+        {
+            dumped_module = true;
+            module->DumpSymbolContext(s);
+        }
+    }
+    if (dumped_module)
+        s->PutCString(", ");
+    
+    s->Printf("Symbol{0x%8.8x}", GetID());
+}
+
 

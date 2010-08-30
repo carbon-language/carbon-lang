@@ -29,7 +29,7 @@ public:
     Variable(lldb::user_id_t uid,
              const ConstString& name, Type *type,
              lldb::ValueType scope,
-             SymbolContextScope *context,
+             SymbolContextScope *owner_scope,
              Declaration* decl,
              const DWARFExpression& location,
              bool external,
@@ -105,14 +105,14 @@ public:
     IsInScope (StackFrame *frame);
 
 protected:
-    ConstString m_name;         // Name of the variable
-    Type * m_type;         // The type pointer of the variable (int, struct, class, etc)
-    lldb::ValueType m_scope;        // global, parameter, local
-    SymbolContextScope *m_context;// The symbol file scope that this variable was defined in
-    Declaration m_declaration;  // Declaration location for this item.
-    DWARFExpression m_location;     // The location of this variable that can be fed to DWARFExpression::Evaluate()
-    uint8_t m_external:1,   // Visible outside the containing compile unit?
-            m_artificial:1; // Non-zero if the variable is not explicitly declared in source
+    ConstString m_name;                 // Name of the variable
+    Type *m_type;                       // The type pointer of the variable (int, struct, class, etc)
+    lldb::ValueType m_scope;            // global, parameter, local
+    SymbolContextScope *m_owner_scope;  // The symbol file scope that this variable was defined in
+    Declaration m_declaration;          // Declaration location for this item.
+    DWARFExpression m_location;         // The location of this variable that can be fed to DWARFExpression::Evaluate()
+    uint8_t m_external:1,               // Visible outside the containing compile unit?
+            m_artificial:1;             // Non-zero if the variable is not explicitly declared in source
 private:
     Variable(const Variable& rhs);
     Variable& operator=(const Variable& rhs);

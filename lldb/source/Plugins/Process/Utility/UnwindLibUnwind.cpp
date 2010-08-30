@@ -65,7 +65,7 @@ UnwindLibUnwind::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
 RegisterContext *
 UnwindLibUnwind::CreateRegisterContextForFrame (StackFrame *frame)
 {
-    uint32_t idx = frame->GetConcreteFrameIndex ();
+    uint32_t idx = frame->GetUnwindFrameIndex ();
     const uint32_t frame_count = GetFrameCount();
     if (idx < frame_count)
         return new LibUnwindRegisterContext (m_thread, frame, m_cursors[idx]);
