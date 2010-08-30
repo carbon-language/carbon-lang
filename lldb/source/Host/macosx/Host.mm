@@ -787,30 +787,40 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
 {
     // We attach this to an 'odoc' event to specify a particular selection
     typedef struct {
-      int16_t      reserved0;      // must be zero
-      int16_t      fLineNumber;
-      int32_t      fSelStart;
-      int32_t      fSelEnd;
-      uint32_t      reserved1;      // must be zero
-      uint32_t      reserved2;      // must be zero
+        int16_t   reserved0;  // must be zero
+        int16_t   fLineNumber;
+        int32_t   fSelStart;
+        int32_t   fSelEnd;
+        uint32_t  reserved1;  // must be zero
+        uint32_t  reserved2;  // must be zero
     } BabelAESelInfo;
     
     char file_path[PATH_MAX];
     file_spec.GetPath(file_path, PATH_MAX);
     CFCString file_cfstr (file_path, kCFStringEncodingUTF8);
-    CFCReleaser<CFURLRef> file_URL(::CFURLCreateWithFileSystemPath(NULL, file_cfstr.get(), kCFURLPOSIXPathStyle, false));
-
+    CFCReleaser<CFURLRef> file_URL (::CFURLCreateWithFileSystemPath (NULL, 
+                                                                     file_cfstr.get(), 
+                                                                     kCFURLPOSIXPathStyle, 
+                                                                     false));
+    
     OSStatus error;	
-    BabelAESelInfo file_and_line_info;
+    BabelAESelInfo file_and_line_info = 
+    {
+        0,              // reserved0
+        line_no - 1,    // fLineNumber (zero based line number)
+        1,              // fSelStart
+        1024,           // fSelEnd
+        0,              // reserved1
+        0               // reserved2
+    };
 
     AEKeyDesc file_and_line_desc;
     
-    bzero(&file_and_line_info, sizeof (file_and_line_info));
-    file_and_line_info.fSelStart = 1;
-    file_and_line_info.fSelEnd = 1;
-    file_and_line_info.fLineNumber = line_no - 1;
+    error = ::AECreateDesc (typeUTF8Text, 
+                            &file_and_line_info, 
+                            sizeof (file_and_line_info), 
+                            &(file_and_line_desc.descContent));
     
-    error = AECreateDesc(typeChar, &file_and_line_info, sizeof (file_and_line_info), &(file_and_line_desc.descContent));
     if (error != noErr)
     {
         return false;
@@ -820,12 +830,19 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     
     LSApplicationParameters app_params;
     bzero (&app_params, sizeof (app_params));
-    app_params.flags = kLSLaunchDefaults | kLSLaunchDontSwitch;
+    app_params.flags = kLSLaunchDefaults | 
+                       kLSLaunchDontAddToRecents | 
+                       kLSLaunchDontSwitch;
 
     ProcessSerialNumber psn;
     CFCReleaser<CFArrayRef> file_array(CFArrayCreate (NULL, (const void **) file_URL.ptr_address(false), 1, NULL));
-    error = LSOpenURLsWithRole(file_array.get(), kLSRolesAll, &file_and_line_desc, &app_params, &psn, 1);
-
+    error = ::LSOpenURLsWithRole (file_array.get(), 
+                                  kLSRolesViewer, 
+                                  &file_and_line_desc, 
+                                  &app_params, 
+                                  &psn, 
+                                  1);
+    
     AEDisposeDesc (&(file_and_line_desc.descContent));
 
     if (error != noErr)
@@ -837,7 +854,7 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     bzero(&which_process, sizeof(which_process));
     unsigned char ap_name[PATH_MAX];
     which_process.processName = ap_name;
-    error = GetProcessInformation (&psn, &which_process);
+    error = ::GetProcessInformation (&psn, &which_process);
     
     bool using_xcode = strncmp((char *) ap_name+1, "Xcode", 5) == 0;
     
@@ -861,8 +878,8 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
       
         if (osa_component == NULL)
         {
-            osa_component = OpenDefaultComponent (kOSAComponentType, 
-                        kAppleScriptSubtype);
+            osa_component = ::OpenDefaultComponent (kOSAComponentType,
+                                                    kAppleScriptSubtype);
         }
         
         if (osa_component == NULL)
@@ -872,21 +889,34 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
 
         uint32_t as_str_size = as_template_len + strlen (file_path) + 3 * chars_for_int + 1;     
         as_str = (char *) malloc (as_str_size);
-        snprintf (as_str, as_str_size - 1, as_template, file_path, line_no, line_no, line_no);
-        error = AECreateDesc (typeChar, as_str, strlen (as_str), &as_desc);
+        ::snprintf (as_str, 
+                    as_str_size - 1, 
+                    as_template, 
+                    file_path, 
+                    line_no, 
+                    line_no, 
+                    line_no);
 
-        free (as_str);
+        error = ::AECreateDesc (typeChar, 
+                                as_str, 
+                                strlen (as_str),
+                                &as_desc);
+        
+        ::free (as_str);
 
         if (error != noErr)
             return false;
             
         OSAID ret_OSAID;
-        error = OSACompileExecute (osa_component, &as_desc, kOSANullScript, 
-                   kOSAModeNeverInteract, &ret_OSAID);
+        error = ::OSACompileExecute (osa_component, 
+                                     &as_desc, 
+                                     kOSANullScript, 
+                                     kOSAModeNeverInteract, 
+                                     &ret_OSAID);
+        
+        ::OSADispose (osa_component, ret_OSAID);
 
-        OSADispose (osa_component, ret_OSAID);
-
-        AEDisposeDesc (&as_desc);
+        ::AEDisposeDesc (&as_desc);
 
         if (error != noErr)
             return false;
