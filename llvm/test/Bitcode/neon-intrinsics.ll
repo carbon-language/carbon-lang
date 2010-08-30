@@ -76,6 +76,20 @@
 ; CHECK: zext <4 x i16>
 ; CHECK-NEXT: sub <4 x i32>
 
+; vmovn should be auto-upgraded to trunc
+
+; CHECK: vmovni16
+; CHECK-NOT: arm.neon.vmovn.v8i8
+; CHECK: trunc <8 x i16>
+
+; CHECK: vmovni32
+; CHECK-NOT: arm.neon.vmovn.v4i16
+; CHECK: trunc <4 x i32>
+
+; CHECK: vmovni64
+; CHECK-NOT: arm.neon.vmovn.v2i32
+; CHECK: trunc <2 x i64>
+
 ; vld* and vst* intrinsic calls need an alignment argument (defaulted to 1)
 
 ; CHECK: vld1i8

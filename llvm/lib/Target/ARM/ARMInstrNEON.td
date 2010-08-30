@@ -956,6 +956,15 @@ class N2VQInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$src), itin, OpcodeStr, Dt, "$dst, $src", "",
         [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src))))]>;
 
+// Narrow 2-register operations.
+class N2VN<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
+           bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
+           InstrItinClass itin, string OpcodeStr, string Dt,
+           ValueType TyD, ValueType TyQ, SDNode OpNode>
+  : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, op6, op4, (outs DPR:$dst),
+        (ins QPR:$src), itin, OpcodeStr, Dt, "$dst, $src", "",
+        [(set DPR:$dst, (TyD (OpNode (TyQ QPR:$src))))]>;
+
 // Narrow 2-register intrinsics.
 class N2VNInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
               bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
@@ -1578,6 +1587,23 @@ multiclass N3V_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
                    v2i64, v2i64, OpNode, Commutable>;
 }
 
+
+// Neon Narrowing 2-register vector operations,
+//   source operand element sizes of 16, 32 and 64 bits:
+multiclass N2VN_HSD<bits<2> op24_23, bits<2> op21_20, bits<2> op17_16,
+                    bits<5> op11_7, bit op6, bit op4, 
+                    InstrItinClass itin, string OpcodeStr, string Dt,
+                    SDNode OpNode> {
+  def v8i8  : N2VN<op24_23, op21_20, 0b00, op17_16, op11_7, op6, op4,
+                   itin, OpcodeStr, !strconcat(Dt, "16"),
+                   v8i8, v8i16, OpNode>;
+  def v4i16 : N2VN<op24_23, op21_20, 0b01, op17_16, op11_7, op6, op4,
+                   itin, OpcodeStr, !strconcat(Dt, "32"),
+                   v4i16, v4i32, OpNode>;
+  def v2i32 : N2VN<op24_23, op21_20, 0b10, op17_16, op11_7, op6, op4,
+                   itin, OpcodeStr, !strconcat(Dt, "64"),
+                   v2i32, v2i64, OpNode>;
+}
 
 // Neon Narrowing 2-register vector intrinsics,
 //   source operand element sizes of 16, 32 and 64 bits:
@@ -3221,8 +3247,8 @@ def  VDUPfqf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 1, 0,
                     [(set QPR:$dst, (v4f32 (NEONvdup (f32 SPR:$src))))]>;
 
 //   VMOVN    : Vector Narrowing Move
-defm VMOVN    : N2VNInt_HSD<0b11,0b11,0b10,0b00100,0,0, IIC_VMOVD,
-                            "vmovn", "i", int_arm_neon_vmovn>;
+defm VMOVN    : N2VN_HSD<0b11,0b11,0b10,0b00100,0,0, IIC_VMOVD,
+                         "vmovn", "i", trunc>;
 //   VQMOVN   : Vector Saturating Narrowing Move
 defm VQMOVNs  : N2VNInt_HSD<0b11,0b11,0b10,0b00101,0,0, IIC_VQUNAiD,
                             "vqmovn", "s", int_arm_neon_vqmovns>;

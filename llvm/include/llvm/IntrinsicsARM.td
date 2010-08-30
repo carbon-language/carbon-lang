@@ -303,7 +303,6 @@ def int_arm_neon_vcvtfxs2fp : Neon_CvtFxToFP_Intrinsic;
 def int_arm_neon_vcvtfxu2fp : Neon_CvtFxToFP_Intrinsic;
 
 // Narrowing and Lengthening Vector Moves.
-def int_arm_neon_vmovn : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovns : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnu : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnsu : Neon_1Arg_Narrow_Intrinsic;

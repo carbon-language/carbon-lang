@@ -88,7 +88,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
           ((Name.compare(14, 5, "vaddw", 5) == 0 ||
             Name.compare(14, 5, "vsubw", 5) == 0) &&
            (Name.compare(19, 2, "s.", 2) == 0 ||
-            Name.compare(19, 2, "u.", 2) == 0))) {
+            Name.compare(19, 2, "u.", 2) == 0)) ||
+
+          (Name.compare(14, 6, "vmovn.", 6) == 0)) {
 
         // Calls to these are transformed into IR without intrinsics.
         NewFn = 0;
@@ -401,6 +403,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         else
           NewI = BinaryOperator::CreateSub(V0, V1,"upgraded."+CI->getName(),CI);
 
+      } else if (Name.compare(14, 6, "vmovn.", 6) == 0) {
+        NewI = new TruncInst(CI->getArgOperand(0), CI->getType(),
+                             "upgraded." + CI->getName(), CI);
       } else {
         llvm_unreachable("Unknown arm.neon function for CallInst upgrade.");
       }
