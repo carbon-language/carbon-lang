@@ -108,7 +108,7 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
     if (Name == "exit") return (void*)(intptr_t)&jit_exit;
     if (Name == "atexit") return (void*)(intptr_t)&jit_atexit;
 
-    // We shuold not invoke parent's ctors/dtors from main()! (PR3897)
+    // We should not invoke parent's ctors/dtors from generated main()!
     // On Mingw and Cygwin, the symbol __main is resolved to
     // callee's(eg. tools/lli) one, to invoke wrong duplicated ctors
     // (and register wrong callee's dtors with atexit(3)).
