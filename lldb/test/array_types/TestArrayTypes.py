@@ -11,19 +11,23 @@ class TestArrayTypes(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
+        """Test 'variable list var_name' on some variables with array types."""
         self.buildDsym()
         self.array_types()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_python_api(self):
+        """Use Python APIs to inspect variables with array types."""
         self.buildDsym()
         self.array_types_python()
 
     def test_with_dwarf_and_run_command(self):
+        """Test 'variable list var_name' on some variables with array types."""
         self.buildDwarf()
         self.array_types()
 
     def test_with_dwarf_and_python_api(self):
+        """Use Python APIs to inspect variables with array types."""
         self.buildDwarf()
         self.array_types_python()
 
@@ -133,6 +137,10 @@ class TestArrayTypes(TestBase):
         self.DebugSBValue(frame, child5)
         self.assertTrue(long(child5.GetValue(frame)) == 6,
                         "long_6[5] == 6")
+
+        # Now kill the process, and we are done.
+        rc = target.GetProcess().Kill()
+        self.assertTrue(rc.Success())
 
 
 if __name__ == '__main__':

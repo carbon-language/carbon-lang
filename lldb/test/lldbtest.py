@@ -270,9 +270,9 @@ class TestBase(unittest2.TestCase):
         self.res = lldb.SBCommandReturnObject()
 
     def tearDown(self):
-        # Finish the inferior process, if it was "run" previously.
+        # Terminate the current process being debugged.
         if self.runStarted:
-            self.ci.HandleCommand("continue", self.res)
+            self.ci.HandleCommand("process kill", self.res)
 
         del self.dbg
 
