@@ -6,7 +6,7 @@
 ; RUN: not grep {gp_rel} %t
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "mipsallegrexel-psp-elf"
+target triple = "mipsallegrexel-unknown-psp-elf"
 @.str = internal constant [10 x i8] c"AAAAAAAAA\00"
 @i0 = internal constant [5 x i32] [ i32 0, i32 1, i32 2, i32 3, i32 4 ] 
 

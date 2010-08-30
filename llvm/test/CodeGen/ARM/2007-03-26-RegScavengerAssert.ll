@@ -2,7 +2,7 @@
 ; PR1266
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "arm-linux-gnueabi"
+target triple = "arm-unknown-linux-gnueabi"
 	%struct.CUMULATIVE_ARGS = type { i32, i32, i32, i32, i32, i32 }
 	%struct.FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct.FILE*, i32, i32, i32, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i32, [52 x i8] }
 	%struct.VEC_edge = type { i32, i32, [1 x %struct.edge_def*] }

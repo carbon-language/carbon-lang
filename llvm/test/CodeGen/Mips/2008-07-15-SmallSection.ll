@@ -10,7 +10,7 @@
 ; RUN: grep {\%lo} %t1 | count 2
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "mipsallegrexel-psp-elf"
+target triple = "mipsallegrexel-unknown-psp-elf"
 
   %struct.anon = type { i32, i32 }
 @s0 = global [8 x i8] c"AAAAAAA\00", align 4

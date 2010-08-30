@@ -1,7 +1,7 @@
 ; RUN: opt < %s -loop-reduce | llvm-dis
 ; PR3571
 
-target triple = "i386-mingw32"
+target triple = "i386-pc-mingw32"
 define void @_ZNK18qdesigner_internal10TreeWidget12drawBranchesEP8QPainterRK5QRectRK11QModelIndex() nounwind {
 entry:
 	br label %_ZNK11QModelIndex7isValidEv.exit.i

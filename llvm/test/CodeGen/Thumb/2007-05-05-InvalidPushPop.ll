@@ -1,6 +1,6 @@
 ; RUN: llc < %s | not grep r11
 
-target triple = "thumb-linux-gnueabi"
+target triple = "thumb-unknown-linux-gnueabi"
 	%struct.__sched_param = type { i32 }
 	%struct.pthread_attr_t = type { i32, i32, %struct.__sched_param, i32, i32, i32, i32, i8*, i32 }
 @i.1882 = internal global i32 1		; <i32*> [#uses=2]

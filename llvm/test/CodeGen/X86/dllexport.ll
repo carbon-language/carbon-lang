@@ -1,7 +1,7 @@
 ; RUN: llc < %s | FileCheck %s
 ; PR2936
 
-target triple = "i386-mingw32"
+target triple = "i386-pc-mingw32"
 
 define dllexport x86_fastcallcc i32 @foo() nounwind  {
 entry:
