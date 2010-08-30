@@ -925,6 +925,11 @@ FinishIdentifier:
   }
 }
 
+/// isHexaLiteral - Return true if Start points to a hex constant.
+static inline bool isHexaLiteral(const char* Start, const char* End) {
+  return ((End - Start > 2) && Start[0] == '0' && 
+          (Start[1] == 'x' || Start[1] == 'X'));
+}
 
 /// LexNumericConstant - Lex the remainder of a integer or floating point
 /// constant. From[-1] is the first character lexed.  Return the end of the
@@ -940,7 +945,11 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   }
 
   // If we fell out, check for a sign, due to 1e+12.  If we have one, continue.
-  if ((C == '-' || C == '+') && (PrevCh == 'E' || PrevCh == 'e'))
+  // If we are in Microsoft mode, don't continue if the constant is hex.
+  // For example, MSVC will accept the following as 3 tokens: 0x1234567e+1
+  if ((C == '-' || C == '+') && (PrevCh == 'E' || PrevCh == 'e') &&
+      (!PP || !PP->getLangOptions().Microsoft || 
+       !isHexaLiteral(BufferPtr, CurPtr)))
     return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
 
   // If we have a hex FP constant, continue.

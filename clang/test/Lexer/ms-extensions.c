@@ -23,3 +23,11 @@ void a() {
         unsigned short s = USHORT;
         unsigned char c = UCHAR;
 }
+
+void pr_7968()
+{
+  int var1 = 0x1111111e+1;
+  int var2 = 0X1111111e+1;
+  int var3 = 0xe+1;
+  int var4 = 0XE+1;
+}
