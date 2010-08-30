@@ -470,7 +470,7 @@ void ELFObjectWriterImpl::RecordRelocation(const MCAssembler &Asm,
     MCFragment *F = SD.getFragment();
 
     if (Base) {
-      if (F && (!Symbol->isInSection() || SD.isCommon())) {
+      if (F && (!Symbol->isInSection() || SD.isCommon()) && !SD.isExternal()) {
         Index = F->getParent()->getOrdinal() + LocalSymbolData.size() + 1;
         Value += Layout.getSymbolAddress(&SD);
       } else
