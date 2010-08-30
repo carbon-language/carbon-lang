@@ -167,6 +167,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       break;
     }
 
+    case ARM::MOVi32imm:
     case ARM::t2MOVi32imm: {
       unsigned PredReg = 0;
       ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
@@ -175,9 +176,13 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       const MachineOperand &MO = MI.getOperand(1);
       MachineInstrBuilder LO16, HI16;
 
-      LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::t2MOVi16),
+      LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                     TII->get(Opcode == ARM::MOVi32imm ?
+                              ARM::MOVi16 : ARM::t2MOVi16),
                      DstReg);
-      HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::t2MOVTi16))
+      HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                     TII->get(Opcode == ARM::MOVi32imm ?
+                              ARM::MOVTi16 : ARM::t2MOVTi16))
         .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstIsDead))
         .addReg(DstReg);
 
