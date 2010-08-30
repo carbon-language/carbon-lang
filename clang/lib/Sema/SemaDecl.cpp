@@ -1468,6 +1468,17 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return New->setInvalidDecl();
   }
 
+  // C++ [class.mem]p1:
+  //   A member shall not be declared twice in the member-specification [...]
+  // 
+  // Here, we need only consider static data members.
+  if (Old->isStaticDataMember() && !New->isOutOfLine()) {
+    Diag(New->getLocation(), diag::err_duplicate_member) 
+      << New->getIdentifier();
+    Diag(Old->getLocation(), diag::note_previous_declaration);
+    New->setInvalidDecl();
+  }
+  
   MergeDeclAttributes(New, Old, Context);
 
   // Merge the types
@@ -5972,9 +5983,17 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+  
+  // Check to see if this name was declared as a member previously
+  LookupResult Previous(*this, II, Loc, LookupMemberName, ForRedeclaration);
+  LookupName(Previous, S);
+  assert((Previous.empty() || Previous.isOverloadedResult() || 
+          Previous.isSingleResult()) 
+    && "Lookup of member name should be either overloaded, single or null");
 
-  NamedDecl *PrevDecl = LookupSingleName(S, II, Loc, LookupMemberName,
-                                         ForRedeclaration);
+  // If the name is overloaded then get any declaration else get the single result
+  NamedDecl *PrevDecl = Previous.isOverloadedResult() ?
+    Previous.getRepresentativeDecl() : Previous.getAsSingle<NamedDecl>();
 
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
