@@ -529,6 +529,7 @@ IRForTarget::MaybeHandleVariable(Module &M,
         off_t value_alignment = m_target_data->getPrefTypeAlignment(value_type);
         
         if (named_decl && !m_decl_map->AddValueToStruct(named_decl,
+                                                        name.c_str(),
                                                         V,
                                                         value_size, 
                                                         value_alignment))
@@ -881,13 +882,15 @@ IRForTarget::replaceVariables(Module &M, Function &F)
         const clang::NamedDecl *decl;
         Value *value;
         off_t offset;
+        const char *name;
         
-        if (!m_decl_map->GetStructElement (decl, value, offset, element_index))
+        if (!m_decl_map->GetStructElement (decl, value, offset, name, element_index))
             return false;
         
         if (log)
-            log->Printf("  %s (%s) placed at %d",
+            log->Printf("  %s [%s] (%s) placed at %d",
                         value->getName().str().c_str(),
+                        name,
                         PrintValue(value, true).c_str(),
                         offset);
         

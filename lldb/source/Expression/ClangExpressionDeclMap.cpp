@@ -60,6 +60,16 @@ ClangExpressionDeclMap::~ClangExpressionDeclMap()
         if (entity.m_parser_vars.get() &&
             entity.m_parser_vars->m_lldb_value)
             delete entity.m_parser_vars->m_lldb_value;
+        
+        entity.DisableParserVars();
+    }
+    
+    for (uint64_t pvar_index = 0, num_pvars = m_persistent_vars->Size();
+         pvar_index < num_pvars;
+         ++pvar_index)
+    {
+        ClangExpressionVariable &pvar(m_persistent_vars->VariableAtIndex(pvar_index));
+        pvar.DisableParserVars();
     }
     
     if (m_sym_ctx)
@@ -106,10 +116,13 @@ ClangExpressionDeclMap::AddPersistentVariable (const clang::NamedDecl *decl,
 
 bool 
 ClangExpressionDeclMap::AddValueToStruct (const clang::NamedDecl *decl,
+                                          const char *name,
                                           llvm::Value *value,
                                           size_t size,
                                           off_t alignment)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
     m_struct_laid_out = false;
     
     if (m_struct_members.GetVariable(decl))
@@ -122,6 +135,12 @@ ClangExpressionDeclMap::AddValueToStruct (const clang::NamedDecl *decl,
     
     if (!var)
         return false;
+    
+    if (log)
+        log->Printf("Adding value for decl %p [%s - %s] to the structure",
+                    decl,
+                    name,
+                    var->m_name.c_str());
     
     // We know entity->m_parser_vars is valid because we used a parser variable
     // to find it
@@ -190,6 +209,7 @@ bool
 ClangExpressionDeclMap::GetStructElement (const clang::NamedDecl *&decl,
                                           llvm::Value *&value,
                                           off_t &offset,
+                                          const char *&name,
                                           uint32_t index)
 {
     if (!m_struct_laid_out)
@@ -207,6 +227,7 @@ ClangExpressionDeclMap::GetStructElement (const clang::NamedDecl *&decl,
     decl = member.m_parser_vars->m_named_decl;
     value = member.m_parser_vars->m_llvm_value;
     offset = member.m_jit_vars->m_offset;
+    name = member.m_name.c_str();
         
     return true;
 }
@@ -427,16 +448,19 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
         }
         else if (persistent_variable)
         {
-            if (!member.m_name.compare(m_result_name) && !dematerialize)
-                continue;
+            if (!member.m_name.compare(m_result_name))
+            {
+                if (!dematerialize)
+                    continue;
                 
-            if (dematerialize)
-            {                
                 if (log)
                     log->PutCString("Found result member in the struct");
-                    
+                
                 *result = &member;
             }
+            
+            if (log)
+                log->Printf("Searched for persistent variable %s and found %s", member.m_name.c_str(), persistent_variable->m_name.c_str());
             
             if (!DoMaterializeOnePersistentVariable(dematerialize, *exe_ctx, persistent_variable->m_name.c_str(), m_materialized_location + member.m_jit_vars->m_offset, err))
                 return false;
@@ -457,12 +481,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable(bool dematerialize,
                                                            const char *name,
                                                            lldb::addr_t addr,
                                                            Error &err)
-{
-    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-
-    if (log)
-        log->Printf("Found persistent variable %s", name);
-    
+{    
     ClangExpressionVariable *pvar(m_persistent_vars->GetVariable(name));
     
     if (!pvar)
@@ -883,6 +902,8 @@ void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                        ClangExpressionVariable *pvar)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
     TypeFromUser user_type = pvar->m_user_type;
     
     TypeFromParser parser_type(ClangASTContext::CopyType(context.GetASTContext(), 
@@ -897,6 +918,9 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     pvar->m_parser_vars->m_named_decl  = var_decl;
     pvar->m_parser_vars->m_llvm_value  = NULL;
     pvar->m_parser_vars->m_lldb_value  = NULL;
+    
+    if (log)
+        log->Printf("Added pvar %s, returned (NamedDecl)%p", pvar->m_name.c_str(), var_decl);  
 }
 
 void

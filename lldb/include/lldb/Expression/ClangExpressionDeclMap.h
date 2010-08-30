@@ -117,6 +117,9 @@ public:
     /// @param[in] decl
     ///     The Clang declaration for the variable.
     ///
+    /// @param[in] name
+    ///     The name of the variable.
+    ///
     /// @param[in] value
     ///     The LLVM IR value for this variable.
     ///
@@ -130,6 +133,7 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool AddValueToStruct (const clang::NamedDecl *decl,
+                           const char *name,
                            llvm::Value *value,
                            size_t size,
                            off_t alignment);
@@ -185,6 +189,9 @@ public:
     ///     As long as the struct is aligned according to its required
     ///     alignment, this offset will align the field correctly.
     ///
+    /// @param[out] name
+    ///     The name of the field as used in materialization.
+    ///
     /// @param[in] index
     ///     The index of the field about which information is requested.
     ///
@@ -194,6 +201,7 @@ public:
     bool GetStructElement (const clang::NamedDecl *&decl,
                            llvm::Value *&value,
                            off_t &offset,
+                           const char *&name,
                            uint32_t index);
     
     //------------------------------------------------------------------
