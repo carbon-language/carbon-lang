@@ -1,7 +1,7 @@
 // Check that hooks can be invoked from 'append_cmd'.
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: FileCheck -input-file %t %s
-// RUN: %compile_cxx -x c++ %t
+// RUN: %compile_cxx %t
 // XFAIL: vg_leak
 
 include "llvm/CompilerDriver/Common.td"
