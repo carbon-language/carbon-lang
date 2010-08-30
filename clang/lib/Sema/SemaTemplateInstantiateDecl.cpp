@@ -1461,8 +1461,8 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
 
   TemplateTypeParmDecl *Inst =
     TemplateTypeParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                 TTPT->getDepth() - 1, TTPT->getIndex(),
-                                 TTPT->getName(),
+                                 TTPT->getDepth() - TemplateArgs.getNumLevels(),
+                                 TTPT->getIndex(),TTPT->getName(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
 
@@ -1503,8 +1503,9 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
   
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                      D->getDepth() - 1, D->getPosition(),
-                                      D->getIdentifier(), T, DI);
+                                    D->getDepth() - TemplateArgs.getNumLevels(), 
+                                      D->getPosition(), D->getIdentifier(), T, 
+                                      DI);
   if (Invalid)
     Param->setInvalidDecl();
   
@@ -1534,8 +1535,9 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
   // Build the template template parameter.
   TemplateTemplateParmDecl *Param
     = TemplateTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                       D->getDepth() - 1, D->getPosition(),
-                                       D->getIdentifier(), InstParams);
+                                   D->getDepth() - TemplateArgs.getNumLevels(), 
+                                       D->getPosition(), D->getIdentifier(), 
+                                       InstParams);
   Param->setDefaultArgument(D->getDefaultArgument(), false);
   
   // Introduce this template parameter's instantiation into the instantiation 

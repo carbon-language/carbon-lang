@@ -189,3 +189,17 @@ namespace PR7587 {
   };
 
 }
+
+namespace PR7669 {
+  template<class> struct X {
+    template<class> struct Y {
+      template<int,class> struct Z;
+      template<int Dummy> struct Z<Dummy,int> {};
+    };
+  };
+
+  void a()
+  {
+    X<int>::Y<int>::Z<0,int>();
+  }
+}
