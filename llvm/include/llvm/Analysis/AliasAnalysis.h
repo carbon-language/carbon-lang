@@ -231,11 +231,9 @@ public:
                                      const Value *P, unsigned Size);
 
   /// getModRefInfo - Return information about whether two call sites may refer
-  /// to the same set of memory locations.  This function returns NoModRef if
-  /// the two calls refer to disjoint memory locations, Ref if CS1 reads memory
-  /// written by CS2, Mod if CS1 writes to memory read or written by CS2, or
-  /// ModRef if CS1 might read or write memory accessed by CS2.
-  ///
+  /// to the same set of memory locations.  See 
+  ///   http://llvm.org/docs/AliasAnalysis.html#ModRefInfo
+  /// for details.
   virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                      ImmutableCallSite CS2);
 

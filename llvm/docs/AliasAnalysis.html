@@ -238,10 +238,10 @@ a location, ModRef is returned.</p>
 
 <p>The <tt>AliasAnalysis</tt> class also provides a <tt>getModRefInfo</tt>
 method for testing dependencies between function calls.  This method takes two
-call sites (CS1 &amp; CS2), returns NoModRef if the two calls refer to disjoint
-memory locations, Ref if CS1 reads memory written by CS2, Mod if CS1 writes to
-memory read or written by CS2, or ModRef if CS1 might read or write memory
-accessed by CS2.  Note that this relation is not commutative.</p>
+call sites (CS1 &amp; CS2), returns NoModRef if neither call writes to memory
+read or written by the other, Ref if CS1 reads memory written by CS2, Mod if CS1
+writes to memory read or written by CS2, or ModRef if CS1 might read or write
+memory written to by CS2.  Note that this relation is not commutative.</p>
 
 </div>
 
