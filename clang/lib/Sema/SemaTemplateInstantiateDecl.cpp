@@ -1166,7 +1166,9 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
     PrincipalDecl->setObjectOfFriendDecl(PrevDecl != 0);
     DC->makeDeclVisibleInContext(PrincipalDecl, /*Recoverable=*/ false);
-    
+
+		bool queuedInstantiation = false;
+
     if (!SemaRef.getLangOptions().CPlusPlus0x &&
         D->isThisDeclarationADefinition()) {
       // Check for a function body.
@@ -1185,7 +1187,22 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                 R != REnd; ++R) {
         if (*R == Function)
           continue;
-        if (R->getFriendObjectKind() != Decl::FOK_None) {
+        switch (R->getFriendObjectKind()) {
+        case Decl::FOK_None:
+          if (!queuedInstantiation && R->isUsed(false)) {
+            if (MemberSpecializationInfo *MSInfo
+                = Function->getMemberSpecializationInfo()) {
+              if (MSInfo->getPointOfInstantiation().isInvalid()) {
+                SourceLocation Loc = R->getLocation(); // FIXME
+                MSInfo->setPointOfInstantiation(Loc);
+                SemaRef.PendingLocalImplicitInstantiations.push_back(
+                                                 std::make_pair(Function, Loc));
+                queuedInstantiation = true;
+              }
+            }
+          }
+          break;
+        default:
           if (const FunctionDecl *RPattern
               = R->getTemplateInstantiationPattern())
             if (RPattern->hasBody(RPattern)) {
@@ -1198,7 +1215,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
         }
       }
     }
-      
   }
 
   if (Function->isOverloadedOperator() && !DC->isRecord() &&
