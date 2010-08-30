@@ -145,7 +145,7 @@ site.exp: FORCE
 	@echo 'set objdir "$(LLVM_OBJ_ROOT)/test"' >>site.tmp
 	@echo 'set gccpath "$(CC)"' >>site.tmp
 	@echo 'set gxxpath "$(CXX)"' >>site.tmp
-	@echo 'set compile_c "' $(CC) $(CPP.Flags) $(TargetCommonOpts) $(CompileCommonOpts) -c -x c '"' >>site.tmp
+	@echo 'set compile_c "' $(CC) $(CPP.Flags) $(TargetCommonOpts) $(CompileCommonOpts) -c '"' >>site.tmp
 	@echo 'set compile_cxx "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) $(CompileCommonOpts) -c -x c++ '"' >> site.tmp
 	@echo 'set link "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) '"' >>site.tmp
 	@echo 'set llvmgcc "$(LLVMGCC) $(TargetCommonOpts) $(EXTRA_OPTIONS)"' >> site.tmp
