@@ -367,6 +367,11 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
   if (Data.isCommon() && Data.isExternal())
     Value = Data.getCommonAlignment();
 
+  if (!Data.isCommon())
+    if (MCFragment *FF = Data.getFragment())
+      Value = Layout.getSymbolAddress(&Data) -
+              Layout.getSectionAddress(FF->getParent());
+
   ESize = Data.getSize();
   if (Data.getSize()) {
     MCValue Res;
@@ -380,12 +385,9 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
           Layout.getAssembler().getSymbolData(Res.getSymB()->getSymbol());
 
         Size = Layout.getSymbolAddress(&A) - Layout.getSymbolAddress(&B);
-        Value = Layout.getSymbolAddress(&Data);
       }
     } else if (ESize->getKind() == MCExpr::Constant) {
       Size = static_cast<const MCConstantExpr *>(ESize)->getValue();
-      MCFragment *F = Data.getFragment();
-      Value = Layout.getSymbolAddress(&Data) - Layout.getSectionAddress(F->getParent());
     } else {
       assert(0 && "Unsupported size expression");
     }
