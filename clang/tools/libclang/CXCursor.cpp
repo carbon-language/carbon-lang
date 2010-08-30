@@ -218,7 +218,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::CXXMemberCallExprClass:
   case Stmt::CXXConstructExprClass:  
   case Stmt::CXXTemporaryObjectExprClass:
-  case Stmt::UDLiteralExprClass:
     // FIXME: CXXUnresolvedConstructExpr
     // FIXME: ObjCImplicitSetterGetterRefExpr?
     K = CXCursor_CallExpr;

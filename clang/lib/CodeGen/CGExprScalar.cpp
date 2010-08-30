@@ -210,9 +210,6 @@ public:
 
     return CGF.EmitCallExpr(E).getScalarVal();
   }
-  Value *VisitUDLiteralExpr(const UDLiteralExpr *E) {
-    return VisitCallExpr(E);
-  }
 
   Value *VisitStmtExpr(const StmtExpr *E);
 

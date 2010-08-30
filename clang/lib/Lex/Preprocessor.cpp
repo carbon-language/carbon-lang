@@ -352,25 +352,15 @@ std::string Preprocessor::getSpelling(const Token &Tok, bool *Invalid) const {
 /// to point to a constant buffer with the data already in it (avoiding a
 /// copy).  The caller is not allowed to modify the returned buffer pointer
 /// if an internal buffer is returned.
-///
-/// If LiteralOnly is specified, only the literal portion of the token is
-/// processed.
-unsigned Preprocessor::getSpelling(const Token &Tok, const char *&Buffer,
-                                   bool *Invalid, bool LiteralOnly) const {
+unsigned Preprocessor::getSpelling(const Token &Tok,
+                                   const char *&Buffer, bool *Invalid) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
-  assert((!LiteralOnly || Tok.isLiteral()) &&
-         "LiteralOnly used on a non-literal token");
-
-  unsigned (Token::*getLength) () const =
-    LiteralOnly ? &Token::getLiteralLength : &Token::getLength;
 
   // If this token is an identifier, just return the string from the identifier
   // table, which is very quick.
   if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
-    if (!Tok.isUserDefinedLiteral()) {
-      Buffer = II->getNameStart();
-      return II->getLength();
-    }
+    Buffer = II->getNameStart();
+    return II->getLength();
   }
 
   // Otherwise, compute the start of the token in the input lexer buffer.
@@ -391,20 +381,20 @@ unsigned Preprocessor::getSpelling(const Token &Tok, const char *&Buffer,
   }
 
   // If this token contains nothing interesting, return it directly.
-  if (!(LiteralOnly ? Tok.literalNeedsCleaning() : Tok.needsCleaning())) {
+  if (!Tok.needsCleaning()) {
     Buffer = TokStart;
-    return (Tok.*getLength)();
+    return Tok.getLength();
   }
 
   // Otherwise, hard case, relex the characters into the string.
   char *OutBuf = const_cast<char*>(Buffer);
-  for (const char *Ptr = TokStart, *End = TokStart+(Tok.*getLength)();
+  for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
        Ptr != End; ) {
     unsigned CharSize;
     *OutBuf++ = Lexer::getCharAndSizeNoWarn(Ptr, CharSize, Features);
     Ptr += CharSize;
   }
-  assert(unsigned(OutBuf-Buffer) != (Tok.*getLength)() &&
+  assert(unsigned(OutBuf-Buffer) != Tok.getLength() &&
          "NeedsCleaning flag set on something that didn't need cleaning!");
 
   return OutBuf-Buffer;

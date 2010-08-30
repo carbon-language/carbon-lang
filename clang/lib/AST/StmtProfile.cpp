@@ -828,12 +828,6 @@ void StmtProfiler::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *S) {
     VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
-void StmtProfiler::VisitUDLiteralExpr(UDLiteralExpr *S) {
-  VisitExpr(S);
-  VisitStmt(S->getBaseLiteral());
-  ID.AddString(S->getUDSuffix()->getName());
-}
-
 void StmtProfiler::VisitObjCStringLiteral(ObjCStringLiteral *S) {
   VisitExpr(S);
 }

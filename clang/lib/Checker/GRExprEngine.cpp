@@ -886,7 +886,6 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     }
 
     case Stmt::CallExprClass:
-    case Stmt::UDLiteralExprClass:
     case Stmt::CXXOperatorCallExprClass: {
       const CallExpr* C = cast<CallExpr>(S);
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);

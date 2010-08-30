@@ -27,7 +27,6 @@ class Preprocessor;
 class Token;
 class SourceLocation;
 class TargetInfo;
-class IdentifierInfo;
 
 /// NumericLiteralParser - This performs strict semantic analysis of the content
 /// of a ppnumber, classifying it as either integer, floating, or erroneous,
@@ -146,7 +145,6 @@ class StringLiteralParser {
   unsigned wchar_tByteWidth;
   llvm::SmallString<512> ResultBuf;
   char *ResultPtr; // cursor
-  IdentifierInfo *UDSuffix;
 public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       Preprocessor &PP, bool Complain = true);
@@ -156,9 +154,6 @@ public:
 
   const char *GetString() { return &ResultBuf[0]; }
   unsigned GetStringLength() const { return ResultPtr-&ResultBuf[0]; }
-
-  bool isUserDefinedLiteral() const { return UDSuffix; }
-  IdentifierInfo *getUDSuffix() const { return UDSuffix; }
 
   unsigned GetNumStringChars() const {
     if (AnyWide)

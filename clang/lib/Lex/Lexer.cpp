@@ -548,11 +548,6 @@ static void InitCharacterInfo() {
   isInited = true;
 }
 
-/// isIdentifierStart - Return true if this is the start character of an
-/// identifier, which is [a-zA-Z_].
-static inline bool isIdentifierStart(unsigned char c) {
-  return (CharInfo[c] & (CHAR_LETTER|CHAR_UNDER)) ? true : false;
-}
 
 /// isIdentifierBody - Return true if this is the body character of an
 /// identifier, which is [a-zA-Z0-9_].
@@ -1000,30 +995,8 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
 
   // Update the location of the token as well as the BufferPtr instance var.
   const char *TokStart = BufferPtr;
-  tok::TokenKind Kind = Wide ? tok::wide_string_literal : tok::string_literal;
-
-  // FIXME: Handle UCNs
-  unsigned Size;
-  if (Features.CPlusPlus0x && PP &&
-      isIdentifierStart(getCharAndSize(CurPtr, Size))) {
-    Result.makeUserDefinedLiteral(ExtraDataAllocator);
-    Result.setFlagValue(Token::LiteralPortionClean, !Result.needsCleaning());
-    Result.setKind(Kind);
-    Result.setLiteralLength(CurPtr - BufferPtr);
-
-    // FIXME: We hack around the lexer's routines a lot here.
-    BufferPtr = CurPtr;
-    bool OldRawMode = LexingRawMode;
-    LexingRawMode = true;
-    LexIdentifier(Result, ConsumeChar(CurPtr, Size, Result));
-    LexingRawMode = OldRawMode;
-    PP->LookUpIdentifierInfo(Result, CurPtr);
-
-    CurPtr = BufferPtr;
-    BufferPtr = TokStart;
-  }
-
-  FormTokenWithChars(Result, CurPtr, Kind);
+  FormTokenWithChars(Result, CurPtr,
+                     Wide ? tok::wide_string_literal : tok::string_literal);
   Result.setLiteralData(TokStart);
 }
 

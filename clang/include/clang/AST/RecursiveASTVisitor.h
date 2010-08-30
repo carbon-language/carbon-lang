@@ -1694,7 +1694,6 @@ DEF_TRAVERSE_STMT(CXXTemporaryObjectExpr, {
 DEF_TRAVERSE_STMT(CallExpr, { })
 DEF_TRAVERSE_STMT(CXXMemberCallExpr, { })
 DEF_TRAVERSE_STMT(CXXOperatorCallExpr, { })
-DEF_TRAVERSE_STMT(UDLiteralExpr, { })
 
 // These operators (all of them) do not need any action except
 // iterating over the children.

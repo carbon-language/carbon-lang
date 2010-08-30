@@ -1634,7 +1634,6 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
 
   case Expr::CXXMemberCallExprClass: // fallthrough
-  case Expr::UDLiteralExprClass:
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
     Out << "cl";

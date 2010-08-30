@@ -758,38 +758,30 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 ///
 StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
-                    Preprocessor &pp, bool Complain) : PP(pp), hadError(false) {
+                    Preprocessor &pp, bool Complain) : PP(pp) {
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
   // piece is a wide-string.  If any of the string portions is a wide-string
   // literal, the result is a wide-string literal [C99 6.4.5p4].
-  MaxTokenLength = StringToks[0].getLiteralLength();
-  SizeBound = StringToks[0].getLiteralLength()-2;  // -2 for "".
+  MaxTokenLength = StringToks[0].getLength();
+  SizeBound = StringToks[0].getLength()-2;  // -2 for "".
   AnyWide = StringToks[0].is(tok::wide_string_literal);
-  UDSuffix = StringToks[0].getIdentifierInfo();
+
+  hadError = false;
 
   // Implement Translation Phase #6: concatenation of string literals
   /// (C99 5.1.1.2p1).  The common case is only one string fragment.
   for (unsigned i = 1; i != NumStringToks; ++i) {
     // The string could be shorter than this if it needs cleaning, but this is a
     // reasonable bound, which is all we need.
-    SizeBound += StringToks[i].getLiteralLength()-2;  // -2 for "".
+    SizeBound += StringToks[i].getLength()-2;  // -2 for "".
 
     // Remember maximum string piece length.
-    if (StringToks[i].getLiteralLength() > MaxTokenLength)
-      MaxTokenLength = StringToks[i].getLiteralLength();
+    if (StringToks[i].getLength() > MaxTokenLength)
+      MaxTokenLength = StringToks[i].getLength();
 
     // Remember if we see any wide strings.
     AnyWide |= StringToks[i].is(tok::wide_string_literal);
-
-    if (StringToks[i].isUserDefinedLiteral()) {
-      if (UDSuffix && UDSuffix != StringToks[i].getIdentifierInfo()) {
-        // FIXME: Improve location and note previous
-        PP.Diag(StringToks[0].getLocation(), diag::err_ud_suffix_mismatch);
-        hadError = true;
-      } else if (!UDSuffix)
-        UDSuffix = StringToks[0].getIdentifierInfo();
-    }
   }
 
   // Include space for the null terminator.
@@ -831,7 +823,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     // and 'spelled' tokens can only shrink.
     bool StringInvalid = false;
     unsigned ThisTokLen = PP.getSpelling(StringToks[i], ThisTokBuf, 
-                                         &StringInvalid, true);
+                                         &StringInvalid);
     if (StringInvalid) {
       hadError = 1;
       continue;
@@ -946,7 +938,7 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
                                                     bool Complain) {
   // Get the spelling of the token.
   llvm::SmallString<16> SpellingBuffer;
-  SpellingBuffer.resize(Tok.getLiteralLength());
+  SpellingBuffer.resize(Tok.getLength());
 
   bool StringInvalid = false;
   const char *SpellingPtr = &SpellingBuffer[0];

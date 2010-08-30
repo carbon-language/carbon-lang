@@ -14,15 +14,15 @@
 #ifndef LLVM_CLANG_TOKEN_H
 #define LLVM_CLANG_TOKEN_H
 
-#include "llvm/Support/Allocator.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/OperatorKinds.h"
-#include "clang/Basic/IdentifierTable.h"
 #include <cstdlib>
 
 namespace clang {
+
+class IdentifierInfo;
 
 /// Token - This structure provides full information about a lexed token.
 /// It is not intended to be space efficient, it is intended to return as much
@@ -34,14 +34,6 @@ namespace clang {
 /// can be represented by a single typename annotation token that carries
 /// information about the SourceRange of the tokens and the type object.
 class Token {
-  /// An extra-large structure for storing the data needed for a user-defined
-  /// literal - the raw literal, and the identifier suffix.
-  struct UDLData {
-    IdentifierInfo *II;
-    const char *LiteralData;
-    unsigned LiteralLength;
-  };
-
   /// The location of the token.
   SourceLocation Loc;
 
@@ -55,7 +47,7 @@ class Token {
   /// token.
   unsigned UintData;
 
-  /// PtrData - This is a union of five different pointer types, which depends
+  /// PtrData - This is a union of four different pointer types, which depends
   /// on what type of token this is:
   ///  Identifiers, keywords, etc:
   ///    This is an IdentifierInfo*, which contains the uniqued identifier
@@ -63,8 +55,6 @@ class Token {
   ///  Literals:  isLiteral() returns true.
   ///    This is a pointer to the start of the token in a text buffer, which
   ///    may be dirty (have trigraphs / escaped newlines).
-  ///  User-defined literals: isUserDefinedLiteral() returns true.
-  ///    This is a pointer to a UDLData.
   ///  Annotations (resolved type names, C++ scopes, etc): isAnnotation().
   ///    This is a pointer to sema-specific data for the annotation token.
   ///  Other:
@@ -81,14 +71,12 @@ class Token {
   unsigned char Flags;
 public:
 
-  /// Various flags set per token:
+  // Various flags set per token:
   enum TokenFlags {
-    StartOfLine   =       0x01,  ///< At start of line or only after whitespace
-    LeadingSpace  =       0x02,  ///< Whitespace exists before this token
-    DisableExpand =       0x04,  ///< This identifier may never be macro expanded
-    NeedsCleaning =       0x08,  ///< Contained an escaped newline or trigraph
-    UserDefinedLiteral =  0x10,  ///< This literal has a ud-suffix
-    LiteralPortionClean = 0x20   ///< A UDL's literal portion needs no cleaning
+    StartOfLine   = 0x01,  // At start of line or only after whitespace.
+    LeadingSpace  = 0x02,  // Whitespace exists before this token.
+    DisableExpand = 0x04,  // This identifier may never be macro expanded.
+    NeedsCleaning = 0x08   // Contained an escaped newline or trigraph.
   };
 
   tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }
@@ -120,33 +108,11 @@ public:
     assert(!isAnnotation() && "Annotation tokens have no length field");
     return UintData;
   }
-  /// getLiteralLength - Return the length of the literal portion of the token,
-  /// which may not be the token length if this is a user-defined literal.
-  unsigned getLiteralLength() const {
-    assert(isLiteral() && "Using getLiteralLength on a non-literal token");
-    if (isUserDefinedLiteral())
-      return reinterpret_cast<UDLData*>(PtrData)->LiteralLength;
-    else
-      return UintData;
-  }
 
   void setLocation(SourceLocation L) { Loc = L; }
   void setLength(unsigned Len) {
     assert(!isAnnotation() && "Annotation tokens have no length field");
     UintData = Len;
-  }
-  void setLiteralLength(unsigned Len) {
-    assert(isLiteral() && "Using setLiteralLength on a non-literal token");
-    if (isUserDefinedLiteral())
-      reinterpret_cast<UDLData*>(PtrData)->LiteralLength = Len;
-    else
-      UintData = Len;
-  }
-
-  /// makeUserDefinedLiteral - Set this token to be a user-defined literal
-  void makeUserDefinedLiteral(llvm::BumpPtrAllocator &Alloc) {
-    PtrData = new (Alloc.Allocate(sizeof(UDLData), 4)) UDLData();
-    setFlag(UserDefinedLiteral);
   }
 
   SourceLocation getAnnotationEndLoc() const {
@@ -188,18 +154,11 @@ public:
 
   IdentifierInfo *getIdentifierInfo() const {
     assert(!isAnnotation() && "Used IdentInfo on annotation token!");
-    if (isUserDefinedLiteral())
-      return reinterpret_cast<UDLData*>(PtrData)->II;
-    else if (isLiteral())
-      return 0;
-    else
-      return reinterpret_cast<IdentifierInfo*>(PtrData);
+    if (isLiteral()) return 0;
+    return (IdentifierInfo*) PtrData;
   }
   void setIdentifierInfo(IdentifierInfo *II) {
-    if (isUserDefinedLiteral())
-      reinterpret_cast<UDLData*>(PtrData)->II = II;
-    else
-      PtrData = (void*)II;
+    PtrData = (void*) II;
   }
 
   /// getLiteralData - For a literal token (numeric constant, string, etc), this
@@ -207,17 +166,11 @@ public:
   /// otherwise.
   const char *getLiteralData() const {
     assert(isLiteral() && "Cannot get literal data of non-literal");
-    if (isUserDefinedLiteral())
-      return reinterpret_cast<UDLData*>(PtrData)->LiteralData;
-    else
-      return reinterpret_cast<const char*>(PtrData);
+    return reinterpret_cast<const char*>(PtrData);
   }
   void setLiteralData(const char *Ptr) {
     assert(isLiteral() && "Cannot set literal data of non-literal");
-    if (isUserDefinedLiteral())
-      reinterpret_cast<UDLData*>(PtrData)->LiteralData = Ptr;
-    else
-      PtrData = const_cast<char*>(Ptr);
+    PtrData = const_cast<char*>(Ptr);
   }
 
   void *getAnnotationValue() const {
@@ -268,12 +221,6 @@ public:
     return (Flags & DisableExpand) ? true : false;
   }
 
-  /// isUserDefinedLiteral - Return true if this is a C++0x user-defined literal
-  /// token.
-  bool isUserDefinedLiteral() const {
-    return (Flags & UserDefinedLiteral) ? true : false;
-  }
-
   /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier.
   bool isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const;
 
@@ -282,17 +229,8 @@ public:
 
   /// needsCleaning - Return true if this token has trigraphs or escaped
   /// newlines in it.
-  bool needsCleaning() const {
-    return (Flags & NeedsCleaning) ? true : false;
-  }
-
-  /// literalNeedsCleaning - Return true if the literal portion of this token
-  /// needs cleaning.
-  bool literalNeedsCleaning() const {
-    assert(isLiteral() && "Using literalNeedsCleaning on a non-literal token");
-    return (Flags & NeedsCleaning) ? ((Flags & LiteralPortionClean) ? false : true)
-                                   : false;
-  }
+  ///
+  bool needsCleaning() const { return (Flags & NeedsCleaning) ? true : false; }
 };
 
 /// PPConditionalInfo - Information about the conditional stack (#if directives)
