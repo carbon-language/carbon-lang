@@ -384,6 +384,8 @@ void ELFObjectWriterImpl::WriteSymbol(MCDataFragment *F, ELFSymbolData &MSD,
       }
     } else if (ESize->getKind() == MCExpr::Constant) {
       Size = static_cast<const MCConstantExpr *>(ESize)->getValue();
+      MCFragment *F = Data.getFragment();
+      Value = Layout.getSymbolAddress(&Data) - Layout.getSectionAddress(F->getParent());
     } else {
       assert(0 && "Unsupported size expression");
     }
