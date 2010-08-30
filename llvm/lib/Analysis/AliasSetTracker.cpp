@@ -22,7 +22,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -518,7 +517,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
 //===----------------------------------------------------------------------===//
 
 void AliasSet::print(raw_ostream &OS) const {
-  OS << "  AliasSet[" << format("0x%p", (void*)this) << "," << RefCount << "] ";
+  OS << "  AliasSet[" << (void*)this << ", " << RefCount << "] ";
   OS << (AliasTy == MustAlias ? "must" : "may") << " alias, ";
   switch (AccessTy) {
   case NoModRef: OS << "No access "; break;
