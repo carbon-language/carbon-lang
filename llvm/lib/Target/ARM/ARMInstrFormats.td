@@ -261,9 +261,9 @@ class InoP<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   list<Predicate> Predicates = [IsARM];
 }
 
-// Same as I except it can optionally modify CPSR. Note it's modeled as
-// an input operand since by default it's a zero register. It will
-// become an implicit def once it's "flipped".
+// Same as I except it can optionally modify CPSR. Note it's modeled as an input
+// operand since by default it's a zero register. It will become an implicit def
+// once it's "flipped".
 class sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
          IndexMode im, Format f, InstrItinClass itin,
          string opc, string asm, string cstr,
@@ -1148,6 +1148,22 @@ class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   list<Predicate> Predicates = [IsThumb2];
 }
 
+// Same as Thumb2sI except it does modify CPSR. Note it's modeled as an input
+// operand since by default it's a zero register. It will become an implicit def
+// once it's "flipped".
+// FIXME: This uses unified syntax so {s} comes before {p}. We should make it
+// more consistent.
+class Thumb2sI_cpsr<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+                    InstrItinClass itin,
+                    string opc, string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ins pred:$p, s_cc_out:$s));
+  let AsmString = !strconcat(opc, !strconcat("${s}${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb2];
+}
+
 // Special cases
 class Thumb2XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                InstrItinClass itin,
@@ -1202,6 +1218,11 @@ class T2Ii8s4<bit P, bit W, bit load, dag oops, dag iops, InstrItinClass itin,
 class T2sI<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : Thumb2sI<oops, iops, AddrModeNone, Size4Bytes, itin, opc, asm, "", pattern>;
+
+class T2sI_cpsr<dag oops, dag iops, InstrItinClass itin,
+                string opc, string asm, list<dag> pattern>
+  : Thumb2sI_cpsr<oops, iops, AddrModeNone, Size4Bytes, itin, opc,
+                  asm, "", pattern>;
 
 class T2XI<dag oops, dag iops, InstrItinClass itin,
            string asm, list<dag> pattern>
