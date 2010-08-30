@@ -24,6 +24,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -142,7 +143,7 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   // Construct the invocation.
 
   // Target Options
-  Opts.Triple = Args->getLastArgValue(OPT_triple);
+  Opts.Triple = Triple::normalize(Args->getLastArgValue(OPT_triple));
   if (Opts.Triple.empty()) // Use the host triple if unspecified.
     Opts.Triple = sys::getHostTriple();
 

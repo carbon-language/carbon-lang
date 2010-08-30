@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -1472,7 +1473,7 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   Opts.CPU = Args.getLastArgValue(OPT_target_cpu);
   Opts.Features = Args.getAllArgValues(OPT_target_feature);
   Opts.LinkerVersion = Args.getLastArgValue(OPT_target_linker_version);
-  Opts.Triple = Args.getLastArgValue(OPT_triple);
+  Opts.Triple = llvm::Triple::normalize(Args.getLastArgValue(OPT_triple));
 
   // Use the host triple if unspecified.
   if (Opts.Triple.empty())
