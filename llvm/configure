@@ -1414,8 +1414,8 @@ Optional Features:
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, alpha, arm, mips, spu,
-                          pic16, xcore, msp430, systemz, blackfin, cbe, 
-                          and cpp (default=all)
+                          pic16, xcore, msp430, systemz, blackfin, cbe, and
+                          cpp (default=all)
   --enable-cbe-printf-a   Enable C Backend output with hex floating point via
                           %a (default is YES)
   --enable-bindings       Build specific language bindings:
@@ -5007,15 +5007,27 @@ TARGETS_TO_BUILD=$TARGETS_TO_BUILD
 # If so, define LLVM_NATIVE_ARCH to that LLVM target.
 for a_target in $TARGETS_TO_BUILD; do
   if test "$a_target" = "$LLVM_NATIVE_ARCH"; then
-    LLVM_NATIVE_ARCHTARGET="${LLVM_NATIVE_ARCH}Target"
 
 cat >>confdefs.h <<_ACEOF
-#define LLVM_NATIVE_ARCHNAME $LLVM_NATIVE_ARCH
+#define LLVM_NATIVE_ARCH $LLVM_NATIVE_ARCH
+_ACEOF
+
+    LLVM_NATIVE_TARGET="LLVMInitialize${LLVM_NATIVE_ARCH}Target"
+    LLVM_NATIVE_TARGETINFO="LLVMInitialize${LLVM_NATIVE_ARCH}TargetInfo"
+    LLVM_NATIVE_ASMPRINTER="LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter"
+
+cat >>confdefs.h <<_ACEOF
+#define LLVM_NATIVE_TARGET $LLVM_NATIVE_TARGET
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define LLVM_NATIVE_ARCH $LLVM_NATIVE_ARCHTARGET
+#define LLVM_NATIVE_TARGETINFO $LLVM_NATIVE_TARGETINFO
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define LLVM_NATIVE_ASMPRINTER $LLVM_NATIVE_ASMPRINTER
 _ACEOF
 
   fi
@@ -11377,7 +11389,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11381 "configure"
+#line 11392 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

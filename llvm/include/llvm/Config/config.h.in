@@ -500,8 +500,14 @@
 /* LLVM architecture name for the native architecture, if available */
 #undef LLVM_NATIVE_ARCH
 
-/* Short LLVM architecture name for the native architecture, if available */
-#undef LLVM_NATIVE_ARCHNAME
+/* LLVM name for the native AsmPrinter init function, if available */
+#undef LLVM_NATIVE_ASMPRINTER
+
+/* LLVM name for the native Target init function, if available */
+#undef LLVM_NATIVE_TARGET
+
+/* LLVM name for the native TargetInfo init function, if available */
+#undef LLVM_NATIVE_TARGETINFO
 
 /* Define if this is Unixish platform */
 #undef LLVM_ON_UNIX
