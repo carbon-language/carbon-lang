@@ -206,7 +206,12 @@ ASTContext::~ASTContext() {
     if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
       R->Destroy(*this);
   }
-  }
+  
+  for (llvm::DenseMap<const Decl*, AttrVec*>::iterator A = DeclAttrs.begin(),
+                                                    AEnd = DeclAttrs.end();
+       A != AEnd; ++A)
+    A->second->~AttrVec();
+}
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
   Deallocations.push_back(std::make_pair(Callback, Data));
@@ -363,6 +368,26 @@ void ASTContext::InitBuiltinTypes() {
   // nullptr type (C++0x 2.14.7)
   InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
 }
+
+AttrVec& ASTContext::getDeclAttrs(const Decl *D) {
+  AttrVec *&Result = DeclAttrs[D];
+  if (!Result) {
+    void *Mem = Allocate(sizeof(AttrVec));
+    Result = new (Mem) AttrVec;
+  }
+    
+  return *Result;
+}
+
+/// \brief Erase the attributes corresponding to the given declaration.
+void ASTContext::eraseDeclAttrs(const Decl *D) { 
+  llvm::DenseMap<const Decl*, AttrVec*>::iterator Pos = DeclAttrs.find(D);
+  if (Pos != DeclAttrs.end()) {
+    Pos->second->~AttrVec();
+    DeclAttrs.erase(Pos);
+  }
+}
+
 
 MemberSpecializationInfo *
 ASTContext::getInstantiatedFromStaticDataMember(const VarDecl *Var) {

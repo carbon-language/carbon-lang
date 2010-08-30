@@ -198,7 +198,7 @@ class ASTContext {
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
   /// wasting space in the Decl class.
-  llvm::DenseMap<const Decl*, AttrVec> DeclAttrs;
+  llvm::DenseMap<const Decl*, AttrVec*> DeclAttrs;
 
   /// \brief Keeps track of the static data member templates from which
   /// static data members of class template specializations were instantiated.
@@ -321,10 +321,10 @@ public:
   }
 
   /// \brief Retrieve the attributes for the given declaration.
-  AttrVec& getDeclAttrs(const Decl *D) { return DeclAttrs[D]; }
+  AttrVec& getDeclAttrs(const Decl *D);
 
   /// \brief Erase the attributes corresponding to the given declaration.
-  void eraseDeclAttrs(const Decl *D) { DeclAttrs.erase(D); }
+  void eraseDeclAttrs(const Decl *D);
 
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
