@@ -124,18 +124,39 @@ void
 __assoc_sub_state::copy()
 {
     unique_lock<mutex> __lk(__mut_);
-    while (!__is_ready())
-        __cv_.wait(__lk);
+    __sub_wait(__lk);
     if (__exception_ != nullptr)
         rethrow_exception(__exception_);
 }
 
 void
-__assoc_sub_state::wait() const
+__assoc_sub_state::wait()
 {
     unique_lock<mutex> __lk(__mut_);
-    while (!__is_ready())
-        __cv_.wait(__lk);
+    __sub_wait(__lk);
+}
+
+void
+__assoc_sub_state::__sub_wait(unique_lock<mutex>& __lk)
+{
+    if (!__is_ready())
+    {
+        if (__state_ & deferred)
+        {
+            __state_ &= ~deferred;
+            __lk.unlock();
+            __execute();
+        }
+        else
+            while (!__is_ready())
+                __cv_.wait(__lk);
+    }
+}
+
+void
+__assoc_sub_state::__execute()
+{
+    throw future_error(make_error_code(future_errc::no_state));
 }
 
 future<void>::future(__assoc_sub_state* __state)
@@ -144,6 +165,7 @@ future<void>::future(__assoc_sub_state* __state)
     if (__state_->__has_future_attached())
         throw future_error(make_error_code(future_errc::future_already_retrieved));
     __state_->__add_shared();
+    __state_->__set_future_attached();
 }
 
 future<void>::~future()
@@ -155,9 +177,10 @@ future<void>::~future()
 void
 future<void>::get()
 {
+    unique_ptr<__shared_count, __release_shared_count> __(__state_);
     __assoc_sub_state* __s = __state_;
     __state_ = nullptr;
-    return __s->copy();
+    __s->copy();
 }
 
 promise<void>::promise()

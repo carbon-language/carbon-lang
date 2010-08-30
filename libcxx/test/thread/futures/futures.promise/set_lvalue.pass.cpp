@@ -24,10 +24,10 @@ int main()
         std::promise<T> p;
         std::future<T> f = p.get_future();
         p.set_value(i);
-        assert(f.get() == 3);
+        int& j = f.get();
+        assert(j == 3);
         ++i;
-        f = p.get_future();
-        assert(f.get() == 4);
+        assert(j == 4);
         try
         {
             p.set_value(i);
