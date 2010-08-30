@@ -1167,7 +1167,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     PrincipalDecl->setObjectOfFriendDecl(PrevDecl != 0);
     DC->makeDeclVisibleInContext(PrincipalDecl, /*Recoverable=*/ false);
 
-		bool queuedInstantiation = false;
+    bool queuedInstantiation = false;
 
     if (!SemaRef.getLangOptions().CPlusPlus0x &&
         D->isThisDeclarationADefinition()) {
