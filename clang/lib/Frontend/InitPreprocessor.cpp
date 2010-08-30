@@ -343,6 +343,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       // FIXME:  This should be temporary until we have a __pragma
       // solution, to avoid some errors flagged in VC++ headers.
       Builder.defineMacro("_CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES", "0");
+      Builder.append("class type_info;");
     }
   }
 
