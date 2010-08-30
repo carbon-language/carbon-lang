@@ -47,10 +47,6 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     ///
-    /// @param[in] pid
-    ///     A unique identifier for this pass.  I'm not sure what this does;
-    ///     it just gets passed down to ModulePass's constructor.
-    ///
     /// @param[in] decl_map
     ///     The list of externally-referenced variables for the expression,
     ///     for use in looking up globals and allocating the argument
