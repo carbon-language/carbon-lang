@@ -397,8 +397,11 @@ def handle_enum(entry):
 		selector = read_value (definitions [0])
 		definitions = definitions [1] [selector]
 	
-	description = definitions[value] if value in definitions else "unknown"
-	
+	if value in definitions:
+		description = definitions[value]
+	else:
+		description = "unknown"
+
 	write ("%s (" % description)
 	write_value (oformat, value)
 	write (")")
