@@ -1,9 +1,24 @@
 ; RUN: opt < %s -value-propagation -S | FileCheck %s
-; PR4420
+; PR2581
+
+; CHECK: @test1
+define i32 @test1(i1 %C) nounwind  {
+        br i1 %C, label %exit, label %body
+
+body:           ; preds = %0
+; CHECK-NOT: select
+        %A = select i1 %C, i32 10, i32 11               ; <i32> [#uses=1]
+; CHECK: ret i32 11
+        ret i32 %A
+
+exit:           ; preds = %0
+; CHECK: ret i32 10
+        ret i32 10
+}
 
 declare i1 @ext()
-; CHECK: @foo
-define i1 @foo() {
+; CHECK: @test2
+define i1 @test2() {
 entry:
         %cond = tail call i1 @ext()             ; <i1> [#uses=2]
         br i1 %cond, label %bb1, label %bb2
