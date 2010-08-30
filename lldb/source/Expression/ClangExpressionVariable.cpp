@@ -133,7 +133,9 @@ ClangExpressionVariable::Print (Stream &output_stream,
 
 ClangExpressionVariable::ClangExpressionVariable(const ClangExpressionVariable &cev) :
     m_name(cev.m_name),
-    m_user_type(cev.m_user_type)
+    m_user_type(cev.m_user_type),
+    m_store(cev.m_store),
+    m_index(cev.m_index)
 {
     if (cev.m_parser_vars.get())
     {
