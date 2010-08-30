@@ -396,7 +396,9 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg,
   
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   switch (VT.getSimpleVT().SimpleTy) {
-    default: return false;
+    default: 
+      assert(false && "Trying to emit for an unhandled type!");
+      return false;
     case MVT::i32: {
       ResultReg = createResultReg(ARM::GPRRegisterClass);
       // TODO: Fix the Addressing modes so that these can share some code.
