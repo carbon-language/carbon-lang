@@ -20,7 +20,7 @@
 
 ; TODO: linux drops this into .rodata, we drop it into ".gnu.linkonce.r.G2"
 
-; DARWIN: .section __TEXT,__const_coal,coalesced,pure_instructions
+; DARWIN: .section __TEXT,__const_coal,coalesced
 ; DARWIN: _G2:
 ; DARWIN:    .long 42
 
@@ -85,7 +85,7 @@
 ; LINUX:   .byte	1
 ; LINUX:   .size	G6, 1
 
-; DARWIN:  .section __TEXT,__const_coal,coalesced,pure_instructions
+; DARWIN:  .section __TEXT,__const_coal,coalesced
 ; DARWIN:  .globl _G6
 ; DARWIN:  .weak_definition _G6
 ; DARWIN:_G6:

@@ -518,11 +518,6 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                    SectionKind::getText());
   ConstTextCoalSection
     = getContext().getMachOSection("__TEXT", "__const_coal", 
-                                   MCSectionMachO::S_COALESCED |
-                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                   SectionKind::getText());
-  ConstDataCoalSection
-    = getContext().getMachOSection("__DATA","__const_coal",
                                    MCSectionMachO::S_COALESCED,
                                    SectionKind::getReadOnly());
   ConstDataSection  // .const_data
