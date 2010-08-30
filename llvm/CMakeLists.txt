@@ -63,7 +63,6 @@ set(LLVM_ALL_TARGETS
   CppBackend
   Mips
   MBlaze
-  MSIL
   MSP430
   PIC16
   PowerPC
