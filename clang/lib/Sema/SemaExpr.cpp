@@ -5035,7 +5035,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   // type.  It would be nice if we only had one vector type someday.
   if (getLangOptions().LaxVectorConversions) {
     if (const VectorType *LV = lhsType->getAs<VectorType>()) {
-      if (const VectorType *RV = rhsType->getAs<VectorType>())
+      if (const VectorType *RV = rhsType->getAs<VectorType>()) {
         if (LV->getElementType() == RV->getElementType() &&
             LV->getNumElements() == RV->getNumElements()) {
           if (lhsType->isExtVectorType()) {
@@ -5053,6 +5053,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
           return lhsType;
         }
       }
+    }
   }
 
   // Handle the case of equivalent AltiVec and GCC vector types
