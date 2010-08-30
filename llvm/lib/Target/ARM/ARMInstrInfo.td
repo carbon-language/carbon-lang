@@ -452,10 +452,14 @@ include "ARMInstrFormats.td"
 /// binop that produces a value.
 multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
                         bit Commutable = 0> {
+  // The register-immediate version is re-materializable. This is useful
+  // in particular for taking the address of a local.
+  let isReMaterializable = 1 in {
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                IIC_iALUi, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
     let Inst{25} = 1;
+  }
   }
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                IIC_iALUr, opc, "\t$dst, $a, $b",

@@ -221,9 +221,13 @@ def tADDrPCi : T1I<(outs tGPR:$dst), (ins t_imm_s4:$rhs), IIC_iALUi,
                T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
 
 // ADD rd, sp, #imm8
+// This is rematerializable, which is particularly useful for taking the
+// address of locals.
+let isReMaterializable = 1 in {
 def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
                   "add\t$dst, $sp, $rhs", []>,
                T1Encoding<{1,0,1,0,1,?}>; // A6.2 & A8.6.8
+}
 
 // ADD sp, sp, #imm7
 def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,

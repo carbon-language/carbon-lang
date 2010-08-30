@@ -382,6 +382,9 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
 multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
                           bit Commutable = 0> {
    // shifted imm
+   // The register-immediate version is re-materializable. This is useful
+   // in particular for taking the address of a local.
+   let isReMaterializable = 1 in {
    def ri : T2sI<(outs rGPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
                  opc, ".w\t$dst, $lhs, $rhs",
                  [(set rGPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]> {
@@ -391,6 +394,7 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
      let Inst{23-21} = op23_21;
      let Inst{20} = 0; // The S bit.
      let Inst{15} = 0;
+   }
    }
    // 12-bit imm
    def ri12 : T2I<(outs rGPR:$dst), (ins GPR:$lhs, imm0_4095:$rhs), IIC_iALUi,
