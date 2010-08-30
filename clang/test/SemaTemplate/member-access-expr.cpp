@@ -121,3 +121,14 @@ namespace test4 {
     }
   };
 }
+
+namespace test5 {
+  template<typename T>
+  struct X {
+    using T::value;
+
+    T &getValue() {
+      return &value;
+    }
+  };
+}

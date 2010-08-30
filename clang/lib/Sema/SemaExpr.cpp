@@ -1263,6 +1263,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       MightBeImplicitMember = false;
     else if (R.isOverloadedResult())
       MightBeImplicitMember = false;
+    else if (R.isUnresolvableResult())
+      MightBeImplicitMember = true;
     else
       MightBeImplicitMember = isa<FieldDecl>(R.getFoundDecl());
 
