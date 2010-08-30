@@ -18,7 +18,11 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(NumPhis,    "Number of phis propagated");
+STATISTIC(NumSelects, "Number of selects propagated");
 
 namespace {
   class ValuePropagation : public FunctionPass {
@@ -65,6 +69,8 @@ bool ValuePropagation::processSelect(SelectInst *S) {
     assert(0 && "Select on constant is neither 0 nor 1?");
   }
   
+  ++NumSelects;
+  
   return true;
 }
 
@@ -87,6 +93,8 @@ bool ValuePropagation::processPHI(PHINode *P) {
     P->eraseFromParent();
     changed = true;
   }
+  
+  ++NumPhis;
   
   return changed;
 }
