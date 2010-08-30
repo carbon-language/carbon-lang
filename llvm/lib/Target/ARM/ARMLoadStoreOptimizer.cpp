@@ -324,6 +324,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
       if (KilledRegs.count(Reg)) {
         unsigned j = Killer[Reg];
         memOps[j].MBBI->getOperand(0).setIsKill(false);
+        memOps[j].isKill = false;
       }
     }
     MBB.erase(memOps[i].MBBI);
