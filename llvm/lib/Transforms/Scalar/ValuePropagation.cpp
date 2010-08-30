@@ -53,67 +53,65 @@ Pass *llvm::createValuePropagationPass() {
 }
 
 bool ValuePropagation::processSelect(SelectInst *S) {
+  if (S->getType()->isVectorTy()) return false;
+  
   Constant *C = LVI->getConstant(S->getOperand(0), S->getParent());
   if (!C) return false;
   
   ConstantInt *CI = dyn_cast<ConstantInt>(C);
   if (!CI) return false;
   
-  if (CI->isZero()) {
-    S->replaceAllUsesWith(S->getOperand(2));
-    S->eraseFromParent();
-  } else if (CI->isOne()) {
-    S->replaceAllUsesWith(S->getOperand(1));
-    S->eraseFromParent();
-  } else {
-    assert(0 && "Select on constant is neither 0 nor 1?");
-  }
-  
+  S->replaceAllUsesWith(S->getOperand(CI->isOne() ? 1 : 2));
+  S->eraseFromParent();
+
   ++NumSelects;
   
   return true;
 }
 
 bool ValuePropagation::processPHI(PHINode *P) {
-  bool changed = false;
+  bool Changed = false;
   
   BasicBlock *BB = P->getParent();
-  for (unsigned i = 0; i < P->getNumIncomingValues(); ++i) {
+  for (unsigned i = 0, e = P->getNumIncomingValues(); i < e; ++i) {
+    Value *Incoming = P->getIncomingValue(i);
+    if (isa<Constant>(Incoming)) continue;
+    
     Constant *C = LVI->getConstantOnEdge(P->getIncomingValue(i),
                                          P->getIncomingBlock(i),
                                          BB);
-    if (!C || C == P->getIncomingValue(i)) continue;
+    if (!C) continue;
     
     P->setIncomingValue(i, C);
-    changed = true;
+    Changed = true;
   }
   
   if (Value *ConstVal = P->hasConstantValue()) {
     P->replaceAllUsesWith(ConstVal);
     P->eraseFromParent();
-    changed = true;
+    Changed = true;
   }
   
   ++NumPhis;
   
-  return changed;
+  return Changed;
 }
 
 bool ValuePropagation::runOnFunction(Function &F) {
   LVI = &getAnalysis<LazyValueInfo>();
   
-  bool changed = false;
+  bool Changed = false;
   
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
       Instruction *II = BI++;
       if (SelectInst *SI = dyn_cast<SelectInst>(II))
-        changed |= processSelect(SI);
+        Changed |= processSelect(SI);
       else if (PHINode *P = dyn_cast<PHINode>(II))
-        changed |= processPHI(P);
+        Changed |= processPHI(P);
     }
   
-  if (changed)
+  if (Changed)
     for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
       SimplifyInstructionsInBlock(FI);
   
