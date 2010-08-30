@@ -922,7 +922,7 @@ FinishIdentifier:
 
 /// isHexaLiteral - Return true if Start points to a hex constant.
 /// FIXME: This isn't correct, it will mislex:
-///     0\
+///     0\       <- escaped newline.
 ///     x1234e+1
 /// in microsoft mode (where this is supposed to be several different tokens).
 static inline bool isHexaLiteral(const char *Start, const char *End) {
