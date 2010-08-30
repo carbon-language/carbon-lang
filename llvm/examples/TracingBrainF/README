@@ -1,1 +1,0 @@
-This is an example trace-based JIT for Brainfuck, using LLVM as its code generation engine.  To compile it, simply drop this directory within llvm/examples in an LLVM source tree, and do `make` in that directory.
