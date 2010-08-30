@@ -103,6 +103,7 @@ public:
         bool m_debug_mode;
         bool m_print_version;
         bool m_print_help;
+        bool m_use_external_editor;  // FIXME: When we have set/show variables we can remove this from here.
         typedef std::set<char> OptionSet;
         OptionSet m_seen_options;
     };

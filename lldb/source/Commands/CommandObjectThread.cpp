@@ -60,13 +60,21 @@ lldb_private::DisplayThreadInfo
         // Show one frame with only the first showing source
         if (show_source)
         {
+            bool already_shown = false;
+            StackFrameSP frame_sp = thread->GetStackFrameAtIndex(0);
+            SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
+            if (interpreter.GetDebugger().UseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+            {
+                already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+            }
+            
             DisplayFramesForExecutionContext (thread,
                                               interpreter,
                                               strm,
                                               0,    // Start at first frame
                                               1,    // Number of frames to show
                                               false,// Don't show the frame info since we already displayed most of it above...
-                                              1,    // Show source for the first frame
+                                              !already_shown,    // Show source for the first frame
                                               3,    // lines of source context before
                                               3);   // lines of source context after
         }

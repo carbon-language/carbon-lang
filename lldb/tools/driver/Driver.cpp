@@ -70,6 +70,9 @@ static lldb::OptionDefinition g_options[] =
     { LLDB_OPT_SET_3,  true,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
         "Tells the debugger to use the file <filename> as the program to be debugged." },
 
+    { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  "<external-editor>",
+        "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
+
 //    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",
 //        "Load executable images from a crash log for symbolication." },
 
@@ -324,7 +327,8 @@ Driver::OptionData::OptionData () :
     m_debug_mode (false),
     m_print_version (false),
     m_print_help (false),
-    m_seen_options()
+    m_seen_options(),
+    m_use_external_editor(false)
 {
 }
 
@@ -341,6 +345,7 @@ Driver::OptionData::Clear ()
     m_debug_mode = false;
     m_print_help = false;
     m_print_version = false;
+    m_use_external_editor = false;
 }
 
 void
@@ -508,7 +513,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                     case 'c':
                         m_option_data.m_crash_log = optarg;
                         break;
-
+                    case 'e':
+                        m_option_data.m_use_external_editor = true;
+                        break;
+                        
                     case 'f':
                         {
                             SBFileSpec file(optarg);
@@ -1042,6 +1050,8 @@ Driver::MainLoop ()
     m_debugger.SetErrorFileHandle (stderr, false);
     m_debugger.SetOutputFileHandle (stdout, false);
     m_debugger.SetInputFileHandle (stdin, true);
+    
+    m_debugger.SetUseExternalEditor(m_option_data.m_use_external_editor);
 
     // You have to drain anything that comes to the master side of the PTY.  master_out_comm is
     // for that purpose.  The reason you need to do this is a curious reason...  editline will echo

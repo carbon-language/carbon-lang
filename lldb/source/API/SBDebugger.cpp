@@ -563,3 +563,23 @@ SBDebugger::FindDebuggerWithID (int id)
         sb_debugger.reset (debugger_sp);
     return sb_debugger;
 }
+
+bool
+SBDebugger::SetUseExternalEditor (bool value)
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->SetUseExternalEditor (value);
+    else
+        return false;
+}
+
+bool
+SBDebugger::UseExternalEditor ()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->UseExternalEditor ();
+    else
+        return false;
+}
+
+

@@ -143,6 +143,20 @@ public:
 
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);
+    
+    bool
+    SetUseExternalEditor (bool value)
+    {
+        bool old_value = m_use_external_editor;
+        m_use_external_editor = value;
+        return old_value;
+    }
+    
+    bool
+    UseExternalEditor ()
+    {
+        return m_use_external_editor;
+    }
 
 protected:
 
@@ -170,6 +184,7 @@ protected:
 
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;
+    bool m_use_external_editor;   // FIXME: Convert this to a set/show variable on the debugger.
 
 private:
 

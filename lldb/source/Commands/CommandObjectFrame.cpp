@@ -114,12 +114,19 @@ public:
 
                     if (exe_ctx.frame)
                     {
+                        bool already_shown = false;
+                        SymbolContext frame_sc(exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry));
+                        if (interpreter.GetDebugger().UseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+                        {
+                            already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+                        }
+
                         if (DisplayFrameForExecutionContext (exe_ctx.thread,
                                                              exe_ctx.frame,
                                                              interpreter,
                                                              result.GetOutputStream(),
                                                              true,
-                                                             true,
+                                                             !already_shown,
                                                              3,
                                                              3))
                         {

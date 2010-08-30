@@ -267,6 +267,9 @@ public:
     
     static ArchSpec
     GetArchSpecForExistingProcess (const char *process_name);
+    
+    static bool
+    OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no);
 
 };
 

@@ -96,11 +96,14 @@ public:
     // assertion fires, check the offending code, or call
     // reset() prior to using the "ptr_address()" member to make
     // sure any owned objects has CFRelease called on it.
+    // I had to add the "enforce_null" bool here because some
+    // API's require the pointer address even though they don't change it.
     //----------------------------------------------------------
     T*
-    ptr_address()
+    ptr_address(bool enforce_null = true)
     {
-        assert (_ptr == NULL);
+        if (enforce_null)
+            assert (_ptr == NULL);
         return &_ptr;
     }
 

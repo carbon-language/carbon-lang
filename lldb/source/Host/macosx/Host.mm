@@ -24,6 +24,8 @@
 #include <objc/objc-auto.h>
 
 #include <Foundation/Foundation.h>
+#include <CoreServices/CoreServices.h>
+#include <Carbon/Carbon.h>
 
 #include "cfcpp/CFCBundle.h"
 #include "cfcpp/CFCReleaser.h"
@@ -778,4 +780,117 @@ Host::GetArchSpecForExistingProcess (const char *process_name)
         }
     }
     return returnSpec;
+}
+
+bool
+Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
+{
+    // We attach this to an 'odoc' event to specify a particular selection
+    typedef struct {
+      int16_t      reserved0;      // must be zero
+      int16_t      fLineNumber;
+      int32_t      fSelStart;
+      int32_t      fSelEnd;
+      uint32_t      reserved1;      // must be zero
+      uint32_t      reserved2;      // must be zero
+    } BabelAESelInfo;
+    
+    char file_path[PATH_MAX];
+    file_spec.GetPath(file_path, PATH_MAX);
+    CFCString file_cfstr (file_path, kCFStringEncodingUTF8);
+    CFCReleaser<CFURLRef> file_URL(::CFURLCreateWithFileSystemPath(NULL, file_cfstr.get(), kCFURLPOSIXPathStyle, false));
+
+    OSStatus error;	
+    BabelAESelInfo file_and_line_info;
+
+    AEKeyDesc file_and_line_desc;
+    
+    bzero(&file_and_line_info, sizeof (file_and_line_info));
+    file_and_line_info.fSelStart = 1;
+    file_and_line_info.fSelEnd = 1;
+    file_and_line_info.fLineNumber = line_no - 1;
+    
+    error = AECreateDesc(typeChar, &file_and_line_info, sizeof (file_and_line_info), &(file_and_line_desc.descContent));
+    if (error != noErr)
+    {
+        return false;
+    }
+    
+    file_and_line_desc.descKey = keyAEPosition;
+    
+    LSApplicationParameters app_params;
+    bzero (&app_params, sizeof (app_params));
+    app_params.flags = kLSLaunchDefaults | kLSLaunchDontSwitch;
+
+    ProcessSerialNumber psn;
+    CFCReleaser<CFArrayRef> file_array(CFArrayCreate (NULL, (const void **) file_URL.ptr_address(false), 1, NULL));
+    error = LSOpenURLsWithRole(file_array.get(), kLSRolesAll, &file_and_line_desc, &app_params, &psn, 1);
+
+    AEDisposeDesc (&(file_and_line_desc.descContent));
+
+    if (error != noErr)
+    {
+        return false;
+    }
+    
+    ProcessInfoRec which_process;
+    bzero(&which_process, sizeof(which_process));
+    unsigned char ap_name[PATH_MAX];
+    which_process.processName = ap_name;
+    error = GetProcessInformation (&psn, &which_process);
+    
+    bool using_xcode = strncmp((char *) ap_name+1, "Xcode", 5) == 0;
+    
+    // Xcode doesn't obey the line number in the Open Apple Event.  So I have to send
+    // it an AppleScript to focus on the right line.
+    
+    if (using_xcode)
+    {
+        static ComponentInstance osa_component = NULL;
+        static const char *as_template = "tell application \"Xcode\"\n"
+                                   "set doc to the first document whose path is \"%s\"\n"
+                                   "set the selection to paragraph %d of doc\n"
+                                   "--- set the selected paragraph range to {%d, %d} of doc\n"
+                                   "end tell\n";
+        const int chars_for_int = 32;
+        static int as_template_len = strlen (as_template);
+
+      
+        char *as_str;
+        AEDesc as_desc;
+      
+        if (osa_component == NULL)
+        {
+            osa_component = OpenDefaultComponent (kOSAComponentType, 
+                        kAppleScriptSubtype);
+        }
+        
+        if (osa_component == NULL)
+        {
+            return false;
+        }
+
+        uint32_t as_str_size = as_template_len + strlen (file_path) + 3 * chars_for_int + 1;     
+        as_str = (char *) malloc (as_str_size);
+        snprintf (as_str, as_str_size - 1, as_template, file_path, line_no, line_no, line_no);
+        error = AECreateDesc (typeChar, as_str, strlen (as_str), &as_desc);
+
+        free (as_str);
+
+        if (error != noErr)
+            return false;
+            
+        OSAID ret_OSAID;
+        error = OSACompileExecute (osa_component, &as_desc, kOSANullScript, 
+                   kOSAModeNeverInteract, &ret_OSAID);
+
+        OSADispose (osa_component, ret_OSAID);
+
+        AEDisposeDesc (&as_desc);
+
+        if (error != noErr)
+            return false;
+    }
+      
+    return true;
 }

@@ -106,6 +106,14 @@ public:
 
     lldb::SBSourceManager &
     GetSourceManager ();
+    
+    // FIXME: Once we get the set show stuff in place, the driver won't need
+    // an interface to the Set/Get UseExternalEditor.
+    bool
+    SetUseExternalEditor (bool input);
+    
+    bool 
+    UseExternalEditor ();
 
     bool
     GetDefaultArchitecture (char *arch_name, size_t arch_name_len);
