@@ -945,16 +945,16 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   }
 
   // If we fell out, check for a sign, due to 1e+12.  If we have one, continue.
-  // If we are in Microsoft mode, don't continue if the constant is hex.
-  // For example, MSVC will accept the following as 3 tokens: 0x1234567e+1
-  if ((C == '-' || C == '+') && (PrevCh == 'E' || PrevCh == 'e') &&
-      (!PP || !PP->getLangOptions().Microsoft || 
-       !isHexaLiteral(BufferPtr, CurPtr)))
-    return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
+  if ((C == '-' || C == '+') && (PrevCh == 'E' || PrevCh == 'e')) {
+    // If we are in Microsoft mode, don't continue if the constant is hex.
+    // For example, MSVC will accept the following as 3 tokens: 0x1234567e+1
+    if (!Features.Microsoft || !isHexaLiteral(BufferPtr, CurPtr))
+      return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
+  }
 
   // If we have a hex FP constant, continue.
   if ((C == '-' || C == '+') && (PrevCh == 'P' || PrevCh == 'p') &&
-      (!PP || !PP->getLangOptions().CPlusPlus0x))
+      !Features.CPlusPlus0x)
     return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
 
   // Update the location of token as well as BufferPtr.
@@ -1000,7 +1000,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
 
   // FIXME: Handle UCNs
   unsigned Size;
-  if (PP && PP->getLangOptions().CPlusPlus0x &&
+  if (Features.CPlusPlus0x && PP &&
       isIdentifierStart(getCharAndSize(CurPtr, Size))) {
     Result.makeUserDefinedLiteral(ExtraDataAllocator);
     Result.setFlagValue(Token::LiteralPortionClean, !Result.needsCleaning());
