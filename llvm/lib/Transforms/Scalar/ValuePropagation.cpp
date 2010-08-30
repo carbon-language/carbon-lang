@@ -115,5 +115,5 @@ bool ValuePropagation::runOnFunction(Function &F) {
     for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
       SimplifyInstructionsInBlock(FI);
   
-  return changed;
+  return Changed;
 }
