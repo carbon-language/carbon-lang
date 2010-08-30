@@ -13,3 +13,9 @@ add_clang_library(clangRewrite
   Rewriter.cpp
   TokenRewriter.cpp
   )
+
+add_dependencies(clangBasic
+  ClangAttrClasses
+  ClangAttrList
+  ClangDeclNodes
+  ClangStmtNodes)
