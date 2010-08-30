@@ -89,6 +89,10 @@ static int jit_atexit(void (*Fn)()) {
   return 0;  // Always successful
 }
 
+static int jit_noop() {
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 //
 /// getPointerToNamedFunction - This method returns the address of the specified
@@ -103,6 +107,14 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
     // about casting a function pointer to a normal pointer.
     if (Name == "exit") return (void*)(intptr_t)&jit_exit;
     if (Name == "atexit") return (void*)(intptr_t)&jit_atexit;
+
+    // We shuold not invoke parent's ctors/dtors from main()! (PR3897)
+    // On Mingw and Cygwin, the symbol __main is resolved to
+    // callee's(eg. tools/lli) one, to invoke wrong duplicated ctors
+    // (and register wrong callee's dtors with atexit(3)).
+    // We expect ExecutionEngine::runStaticConstructorsDestructors()
+    // is called before ExecutionEngine::runFunctionAsMain() is called.
+    if (Name == "__main") return (void*)(intptr_t)&jit_noop;
 
     const char *NameStr = Name.c_str();
     // If this is an asm specifier, skip the sentinal.
