@@ -105,7 +105,6 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *UStringSection;
   const MCSection *TextCoalSection;
   const MCSection *ConstTextCoalSection;
-  const MCSection *ConstDataCoalSection;
   const MCSection *ConstDataSection;
   const MCSection *DataCoalSection;
   const MCSection *DataCommonSection;
