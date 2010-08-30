@@ -9,7 +9,25 @@ class TestArrayTypes(TestBase):
 
     mydir = "array_types"
 
-    def test_array_types(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_run_command(self):
+        self.buildDsym()
+        self.array_types()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_python_api(self):
+        self.buildDsym()
+        self.array_types_python()
+
+    def test_with_dwarf_and_run_command(self):
+        self.buildDwarf()
+        self.array_types()
+
+    def test_with_dwarf_and_python_api(self):
+        self.buildDwarf()
+        self.array_types_python()
+
+    def array_types(self):
         """Test 'variable list var_name' on some variables with array types."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -52,7 +70,7 @@ class TestArrayTypes(TestBase):
         self.expect("variable list long_6", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(long [6])')
 
-    def test_array_types_python(self):
+    def array_types_python(self):
         """Use Python APIs to inspect variables with array types."""
         exe = os.path.join(os.getcwd(), "a.out")
 

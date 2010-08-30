@@ -108,6 +108,7 @@ $
 import os, sys
 from subprocess import *
 import time
+import types
 import unittest2
 import lldb
 
@@ -392,7 +393,12 @@ class TestBase(unittest2.TestCase):
         retcode = process.poll()
 
         if self.traceAlways:
+            if isinstance(popenargs, types.StringTypes):
+                args = [popenargs]
+            else:
+                args = list(popenargs)
             print >> sys.stderr
+            print >> sys.stderr, "os command:", args
             print >> sys.stderr, "output:", output
             print >> sys.stderr, "error:", unused_err
             print >> sys.stderr, "retcode:", retcode
