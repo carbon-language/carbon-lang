@@ -1420,8 +1420,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       return Builder.CreateZExt(Ops[0], Ty, "vmovl");
     return Builder.CreateSExt(Ops[0], Ty, "vmovl");
   case ARM::BI__builtin_neon_vmovn_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmovn, &Ty, 1),
-                        Ops, "vmovn");
+    return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
   case ARM::BI__builtin_neon_vmull_lane_v:
     splat = true;
   case ARM::BI__builtin_neon_vmull_v:
