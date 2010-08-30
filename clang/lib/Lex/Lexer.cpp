@@ -926,7 +926,11 @@ FinishIdentifier:
 }
 
 /// isHexaLiteral - Return true if Start points to a hex constant.
-static inline bool isHexaLiteral(const char* Start, const char* End) {
+/// FIXME: This isn't correct, it will mislex:
+///     0\
+///     x1234e+1
+/// in microsoft mode (where this is supposed to be several different tokens).
+static inline bool isHexaLiteral(const char *Start, const char *End) {
   return ((End - Start > 2) && Start[0] == '0' && 
           (Start[1] == 'x' || Start[1] == 'X'));
 }
