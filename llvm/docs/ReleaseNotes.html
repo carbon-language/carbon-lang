@@ -348,6 +348,11 @@ expose new optimization opportunities:</p>
   SMDiagnostic takes different parameters now. //FIXME: how to upgrade?
 </li>
 <li>
+  The constructor for the Triple class no longer tries to understand odd triple
+  specifications.  Frontends should ensure that they only pass valid triples to
+  LLVM.  The Triple::normalize utility method has been added to help front-ends
+  deal with funky triples.
+<li>
   Some APIs got renamed:
   <ul>
       <li>llvm_report_error -&gt; report_fatal_error</li>

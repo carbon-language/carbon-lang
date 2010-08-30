@@ -323,22 +323,6 @@ void Triple::Parse() const {
   Vendor = ParseVendor(getVendorName());
   OS = ParseOS(getOSName());
 
-  // Handle some exceptional cases where the OS / environment components are
-  // stuck into the vendor field.
-  // TODO: Remove this logic and have places that need it use 'normalize'.
-  if (StringRef(getTriple()).count('-') == 1) {
-    StringRef VendorName = getVendorName();
-
-    if (VendorName.startswith("mingw32")) { // 'i386-mingw32', etc.
-      Vendor = PC;
-      OS = MinGW32;
-      return;
-    }
-
-    // arm-elf is another example, but we don't currently parse anything about
-    // the environment.
-  }
-
   assert(isInitialized() && "Failed to initialize!");
 }
 
