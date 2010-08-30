@@ -196,13 +196,14 @@ public:
             isa<ConstantExpr>(RHS.getNotConstant()))
           return markOverdefined();
         return false;
-      }
-      if (isConstant()) {
+      } else if (isConstant()) {
         if (getConstant() == RHS.getNotConstant() ||
             isa<ConstantExpr>(RHS.getNotConstant()) ||
             isa<ConstantExpr>(getConstant()))
           return markOverdefined();
         return markNotConstant(RHS.getNotConstant());
+      } else if (isConstantRange()) {
+        return markOverdefined();
       }
       
       assert(isUndefined() && "Unexpected lattice");
