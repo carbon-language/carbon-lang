@@ -1,6 +1,7 @@
-; RUN: opt < %s -aa-eval -print-all-alias-modref-info \
-; RUN:   |& grep {MayAlias:	double\\* \[%\]p.0.i.0, double\\* \[%\]p3\$}
+; RUN: opt < %s -aa-eval -print-all-alias-modref-info |& FileCheck %s
 ; PR4267
+
+; CHECK: MayAlias: double* %p.0.i.0, double* %p3
 
 ; %p3 is equal to %p.0.i.0 on the second iteration of the loop,
 ; so MayAlias is needed.
