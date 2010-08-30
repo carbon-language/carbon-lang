@@ -18,7 +18,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/IRReader.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
@@ -295,14 +294,6 @@ int main(int argc, char **argv) {
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
 
-  // Request that addPassesToEmitFile run the Verifier after running
-  // passes which modify the IR.
-#ifndef NDEBUG
-  bool DisableVerify = false;
-#else
-  bool DisableVerify = true;
-#endif
-
   // Build up all of the passes that we want to do to the module.
   PassManager PM;
 
@@ -311,9 +302,6 @@ int main(int argc, char **argv) {
     PM.add(new TargetData(*TD));
   else
     PM.add(new TargetData(&mod));
-
-  if (!NoVerify)
-    PM.add(createVerifierPass());
 
   // Override default to generate verbose assembly.
   Target.setAsmVerbosityDefault(true);
@@ -328,7 +316,7 @@ int main(int argc, char **argv) {
 
   // Ask the target to add backend passes as necessary.
   if (Target.addPassesToEmitFile(PM, *Out, FileType, OLvl,
-                                 DisableVerify)) {
+                                 NoVerify)) {
     errs() << argv[0] << ": target does not support generation of this"
            << " file type!\n";
     return 1;
