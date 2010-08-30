@@ -253,7 +253,6 @@ unsigned InstrEmitter::getVR(SDValue Op,
   return I->second;
 }
 
-
 /// AddRegisterOperand - Add the specified register as an operand to the
 /// specified machine instr. Insert register copies if the register is
 /// not in the required register class.
@@ -337,7 +336,10 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
     const ConstantFP *CFP = F->getConstantFPValue();
     MI->addOperand(MachineOperand::CreateFPImm(CFP));
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
+    unsigned Reg = R->getReg();
+    const TargetInstrDesc &TID = MI->getDesc();
+    MI->addOperand(MachineOperand::CreateReg(Reg,
+      (Reg == 0 || !TID.OpInfo) ? false : TID.OpInfo[IIOpNum].isOptionalDef()));
   } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateGA(TGA->getGlobal(), TGA->getOffset(),
                                             TGA->getTargetFlags()));
