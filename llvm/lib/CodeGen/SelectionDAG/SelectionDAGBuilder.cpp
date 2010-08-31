@@ -3917,7 +3917,8 @@ bool
 SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
                                               int64_t Offset, 
                                               const SDValue &N) {
-  if (!isa<Argument>(V))
+  const Argument *Arg = dyn_cast<Argument>(V);
+  if (!Arg)
     return false;
 
   MachineFunction &MF = DAG.getMachineFunction();
@@ -3931,6 +3932,14 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   unsigned Reg = 0;
+  if (Arg->hasByValAttr()) {
+    // Byval arguments' frame index is recorded during argument lowering.
+    // Use this info directly.
+    const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
+    Reg = TRI->getFrameRegister(MF);
+    Offset = FuncInfo.getByValArgumentFrameIndex(Arg);
+  }
+
   if (N.getNode() && N.getOpcode() == ISD::CopyFromReg) {
     Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
     if (Reg && TargetRegisterInfo::isVirtualRegister(Reg)) {
@@ -4075,6 +4084,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     // debug info exists.
     ++SDNodeOrder;
     SDValue &N = NodeMap[Address];
+    if (!N.getNode() && isa<Argument>(Address))
+      // Check unused arguments map.
+      N = UnusedArgNodeMap[Address];
     SDDbgValue *SDV;
     if (N.getNode()) {
       if (isParameter && !AI) {
@@ -6130,6 +6142,12 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
       i += NumParts;
     }
+
+    // Note down frame index for byval arguments.
+    if (I->hasByValAttr() && !ArgValues.empty())
+      if (FrameIndexSDNode *FI = 
+          dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
+        FuncInfo->setByValArgumentFrameIndex(I, FI->getIndex());
 
     if (!I->use_empty()) {
       SDValue Res;
