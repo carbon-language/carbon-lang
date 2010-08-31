@@ -1589,7 +1589,6 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
         }
 
       // Check this multiply against other multiplies being added together.
-      bool AnyFold = false;
       for (unsigned OtherMulIdx = Idx+1;
            OtherMulIdx < Ops.size() && isa<SCEVMulExpr>(Ops[OtherMulIdx]);
            ++OtherMulIdx) {
@@ -1617,14 +1616,12 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
             const SCEV *InnerMulSum = getAddExpr(InnerMul1,InnerMul2);
             const SCEV *OuterMul = getMulExpr(MulOpSCEV, InnerMulSum);
             if (Ops.size() == 2) return OuterMul;
-            Ops[Idx] = OuterMul;
-            Ops.erase(Ops.begin()+OtherMulIdx);
-            OtherMulIdx = Idx;
-            AnyFold = true;
+            Ops.erase(Ops.begin()+Idx);
+            Ops.erase(Ops.begin()+OtherMulIdx-1);
+            Ops.push_back(OuterMul);
+            return getAddExpr(Ops);
           }
       }
-      if (AnyFold)
-        return getAddExpr(Ops);
     }
   }
 
