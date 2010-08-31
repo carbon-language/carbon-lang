@@ -1886,6 +1886,12 @@ public:
     return const_cast<TagDecl*>(this)->getCanonicalDecl();
   }
 
+  /// isThisDeclarationADefinition() - Return true if this declaration
+  /// defines the type.  Provided for consistency.
+  bool isThisDeclarationADefinition() const {
+    return isDefinition();
+  }
+
   /// isDefinition - Return true if this decl has its body specified.
   bool isDefinition() const {
     return IsDefinition;

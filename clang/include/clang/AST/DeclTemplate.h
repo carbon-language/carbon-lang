@@ -815,6 +815,12 @@ public:
     return static_cast<FunctionDecl*>(TemplatedDecl);
   }
 
+  /// Returns whether this template declaration defines the primary
+  /// pattern.
+  bool isThisDeclarationADefinition() const {
+    return getTemplatedDecl()->isThisDeclarationADefinition();
+  }
+
   /// \brief Return the specialization with the provided arguments if it exists,
   /// otherwise return the insertion point.
   FunctionDecl *findSpecialization(const TemplateArgument *Args,
@@ -1662,6 +1668,12 @@ public:
   /// Get the underlying class declarations of the template.
   CXXRecordDecl *getTemplatedDecl() const {
     return static_cast<CXXRecordDecl *>(TemplatedDecl);
+  }
+
+  /// Returns whether this template declaration defines the primary
+  /// class pattern.
+  bool isThisDeclarationADefinition() const {
+    return getTemplatedDecl()->isThisDeclarationADefinition();
   }
 
   /// Create a class template node.
