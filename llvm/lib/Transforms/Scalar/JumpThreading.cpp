@@ -715,37 +715,36 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     // the branch based on that.
     BranchInst *CondBr = dyn_cast<BranchInst>(BB->getTerminator());
     Constant *CondConst = dyn_cast<Constant>(CondCmp->getOperand(1));
-    if (LVI && CondBr && CondConst && CondBr->isConditional() &&
+    pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    if (LVI && CondBr && CondConst && CondBr->isConditional() && PI != PE &&
         (!isa<Instruction>(CondCmp->getOperand(0)) ||
          cast<Instruction>(CondCmp->getOperand(0))->getParent() != BB)) {
       // For predecessor edge, determine if the comparison is true or false
       // on that edge.  If they're all true or all false, we can simplify the
       // branch.
       // FIXME: We could handle mixed true/false by duplicating code.
-      unsigned Trues = 0, Falses = 0, predcount = 0;
-      for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);PI != PE; ++PI){
-        ++predcount;
-        LazyValueInfo::Tristate Ret =
-          LVI->getPredicateOnEdge(CondCmp->getPredicate(), 
-                                  CondCmp->getOperand(0), CondConst, *PI, BB);
-        if (Ret == LazyValueInfo::True)
-          ++Trues;
-        else if (Ret == LazyValueInfo::False)
-          ++Falses;
-      }
-      
-      // If we can determine the branch direction statically, convert
-      // the conditional branch to an unconditional one.
-      if (Trues && Trues == predcount) {
-        RemovePredecessorAndSimplify(CondBr->getSuccessor(1), BB, TD);
-        BranchInst::Create(CondBr->getSuccessor(0), CondBr);
-        CondBr->eraseFromParent();
-        return true;
-      } else if (Falses && Falses == predcount) {
-        RemovePredecessorAndSimplify(CondBr->getSuccessor(0), BB, TD);
-        BranchInst::Create(CondBr->getSuccessor(1), CondBr);
-        CondBr->eraseFromParent();
-        return true;
+      LazyValueInfo::Tristate Baseline =      
+        LVI->getPredicateOnEdge(CondCmp->getPredicate(), CondCmp->getOperand(0),
+                                CondConst, *PI, BB);
+      if (Baseline != LazyValueInfo::Unknown) {
+        // Check that all remaining incoming values match the first one.
+        while (++PI != PE) {
+          LazyValueInfo::Tristate Ret = LVI->getPredicateOnEdge(
+                                          CondCmp->getPredicate(),
+                                          CondCmp->getOperand(0),
+                                          CondConst, *PI, BB);
+          if (Ret != Baseline) break;
+        }
+        
+        // If we terminated early, then one of the values didn't match.
+        if (PI == PE) {
+          unsigned ToRemove = Baseline == LazyValueInfo::True ? 1 : 0;
+          unsigned ToKeep = Baseline == LazyValueInfo::True ? 0 : 1;
+          RemovePredecessorAndSimplify(CondBr->getSuccessor(ToRemove), BB, TD);
+          BranchInst::Create(CondBr->getSuccessor(ToKeep), CondBr);
+          CondBr->eraseFromParent();
+          return true;
+        }
       }
     }
   }
