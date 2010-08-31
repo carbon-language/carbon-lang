@@ -14,13 +14,11 @@
 #include "InstCombine.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/Loads.h"
-#include "llvm/Support/PatternMatch.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
-using namespace PatternMatch;
 
 STATISTIC(NumDeadStore, "Number of dead stores eliminated");
 
@@ -474,51 +472,6 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   
   
   if (SI.isVolatile()) return 0;  // Don't hack volatile stores.
-
-  // Attempt to narrow sequences where we load a wide value, perform bitmasks
-  // that only affect the low bits of it, and then store it back.  This 
-  // typically arises from bitfield initializers in C++.
-  ConstantInt *CI1 =0, *CI2 = 0;
-  Value *Ld = 0;
-  if (getTargetData() &&
-      match(SI.getValueOperand(),
-            m_And(m_Or(m_Value(Ld), m_ConstantInt(CI1)), m_ConstantInt(CI2))) &&
-      isa<LoadInst>(Ld) &&
-      equivalentAddressValues(cast<LoadInst>(Ld)->getPointerOperand(), Ptr)) {
-    APInt OrMask = CI1->getValue();
-    APInt AndMask = CI2->getValue();
-    
-    // Compute the prefix of the value that is unmodified by the bitmasking.
-    unsigned LeadingAndOnes = AndMask.countLeadingOnes();
-    unsigned LeadingOrZeros = OrMask.countLeadingZeros();
-    unsigned Prefix = std::min(LeadingAndOnes, LeadingOrZeros);
-    uint64_t NewWidth = AndMask.getBitWidth() - Prefix;
-    while (NewWidth < AndMask.getBitWidth() &&
-           getTargetData()->isIllegalInteger(NewWidth))
-      NewWidth = NextPowerOf2(NewWidth);
-    
-    // If we can find a power-of-2 prefix (and if the values we're working with
-    // are themselves POT widths), then we can narrow the store.  We rely on
-    // later iterations of instcombine to propagate the demanded bits to narrow
-    // the other computations in the chain.
-    if (NewWidth < AndMask.getBitWidth() &&
-        getTargetData()->isLegalInteger(NewWidth)) {
-      const Type *NewType = IntegerType::get(Ptr->getContext(), NewWidth);
-      const Type *NewPtrType = PointerType::getUnqual(NewType);
-      
-      Value *NewVal = Builder->CreateTrunc(SI.getValueOperand(), NewType);
-      Value *NewPtr = Builder->CreateBitCast(Ptr, NewPtrType);
-      
-      // On big endian targets, we need to offset from the original pointer
-      // in order to store to the low-bit suffix.
-      if (getTargetData()->isBigEndian()) {
-        uint64_t GEPOffset = (AndMask.getBitWidth() - NewWidth) / 8;
-        NewPtr = Builder->CreateConstGEP1_64(NewPtr, GEPOffset);
-      }
-      
-      return new StoreInst(NewVal, NewPtr);
-    }
-  }
 
   // store X, null    -> turns into 'unreachable' in SimplifyCFG
   if (isa<ConstantPointerNull>(Ptr) && SI.getPointerAddressSpace() == 0) {
