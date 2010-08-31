@@ -3289,6 +3289,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext,
     (II ? IdentLoc : LBrace) , II);
   Namespc->setLBracLoc(LBrace);
+  Namespc->setInline(InlineLoc.isValid());
 
   Scope *DeclRegionScope = NamespcScope->getParent();
 
@@ -3311,6 +3312,16 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
+      if (Namespc->isInline() != OrigNS->isInline()) {
+        // inline-ness must match
+        Diag(Namespc->getLocation(), diag::err_inline_namespace_mismatch)
+          << Namespc->isInline();
+        Diag(OrigNS->getLocation(), diag::note_previous_definition);
+        Namespc->setInvalidDecl();
+        // Recover by ignoring the new namespace's inline status.
+        Namespc->setInline(OrigNS->isInline());
+      }
+
       // Attach this namespace decl to the chain of extended namespace
       // definitions.
       OrigNS->setNextNamespace(Namespc);
@@ -3368,6 +3379,16 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       assert(!PrevDecl->getNextNamespace());
       Namespc->setOriginalNamespace(PrevDecl->getOriginalNamespace());
       PrevDecl->setNextNamespace(Namespc);
+
+      if (Namespc->isInline() != PrevDecl->isInline()) {
+        // inline-ness must match
+        Diag(Namespc->getLocation(), diag::err_inline_namespace_mismatch)
+          << Namespc->isInline();
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+        Namespc->setInvalidDecl();
+        // Recover by ignoring the new namespace's inline status.
+        Namespc->setInline(PrevDecl->isInline());
+      }
     }
 
     CurContext->addDecl(Namespc);

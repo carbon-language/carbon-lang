@@ -510,7 +510,7 @@ bool DeclContext::isTransparentContext() const {
   else if (DeclKind >= Decl::firstRecord && DeclKind <= Decl::lastRecord)
     return cast<RecordDecl>(this)->isAnonymousStructOrUnion();
   else if (DeclKind == Decl::Namespace)
-    return false; // FIXME: Check for C++0x inline namespaces
+    return cast<NamespaceDecl>(this)->isInline();
 
   return false;
 }

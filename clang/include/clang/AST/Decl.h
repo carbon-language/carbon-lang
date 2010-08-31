@@ -219,6 +219,8 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 
 /// NamespaceDecl - Represent a C++ namespace.
 class NamespaceDecl : public NamedDecl, public DeclContext {
+  bool IsInline : 1;
+
   SourceLocation LBracLoc, RBracLoc;
 
   // For extended namespace definitions:
@@ -248,28 +250,33 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
 
   NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace),
-      NextNamespace(0), OrigOrAnonNamespace(0, true) { }
+      IsInline(false), NextNamespace(0), OrigOrAnonNamespace(0, true) { }
 
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id);
 
-  // \brief Returns true if this is an anonymous namespace declaration.
-  //
-  // For example:
+  /// \brief Returns true if this is an anonymous namespace declaration.
+  ///
+  /// For example:
   /// \code
-  //   namespace {
-  //     ...
-  //   };
-  // \endcode
-  // q.v. C++ [namespace.unnamed]
+  ///   namespace {
+  ///     ...
+  ///   };
+  /// \endcode
+  /// q.v. C++ [namespace.unnamed]
   bool isAnonymousNamespace() const {
     return !getIdentifier();
   }
 
-  /// \brief Returns true if this is a C++0x inline namespace.
+  /// \brief Returns true if this is an inline namespace declaration.
   bool isInline() const {
-    return false;
+    return IsInline;
+  }
+
+  /// \brief Set whether this is an inline namespace declaration.
+  void setInline(bool Inline) {
+    IsInline = Inline;
   }
 
   /// \brief Return the next extended namespace declaration or null if there
