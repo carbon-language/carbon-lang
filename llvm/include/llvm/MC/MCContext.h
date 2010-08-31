@@ -26,6 +26,7 @@ namespace llvm {
   class MCLabel;
   class MCDwarfFile;
   class MCDwarfLoc;
+  class MCLineSection;
   class StringRef;
   class Twine;
   class MCSectionMachO;
@@ -74,6 +75,10 @@ namespace llvm {
     /// The current dwarf line information from the last dwarf .loc directive.
     MCDwarfLoc CurrentDwarfLoc;
     bool DwarfLocSeen;
+
+    /// The dwarf line information from the .loc directives for the sections
+    /// with assembled machine instructions have after seeing .loc directives.
+    DenseMap<const MCSection *, MCLineSection *> MCLineSections;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -163,6 +168,9 @@ namespace llvm {
     const std::vector<StringRef> &getMCDwarfDirs() {
       return MCDwarfDirs;
     }
+    DenseMap<const MCSection *, MCLineSection *> &getMCLineSections() {
+      return MCLineSections;
+    }
 
     /// setCurrentDwarfLoc - saves the information from the currently parsed
     /// dwarf .loc directive and sets DwarfLocSeen.  When the next instruction      /// is assembled an entry in the line number table with this information and
@@ -176,6 +184,10 @@ namespace llvm {
       CurrentDwarfLoc.setIsa(Isa);
       DwarfLocSeen = true;
     }
+    void clearDwarfLocSeen() { DwarfLocSeen = false; }
+
+    bool getDwarfLocSeen() { return DwarfLocSeen; }
+    const MCDwarfLoc &getCurrentDwarfLoc() { return CurrentDwarfLoc; }
 
     /// @}
 

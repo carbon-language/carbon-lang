@@ -33,6 +33,7 @@ private:
   void EmitInstToFragment(const MCInst &Inst);
   void EmitInstToData(const MCInst &Inst);
   // FIXME: These will likely moved to a better place.
+  void MakeLineEntryForSection(const MCSection *Section);
   const MCExpr * MakeStartMinusEndExpr(MCSymbol *Start, MCSymbol *End,
                                                         int IntVal);
   void EmitDwarfFileTable(void);
@@ -409,6 +410,10 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   getCurrentSectionData()->setHasInstructions(true);
 
+  // Now that a machine instruction has been assembled into this section, make
+  // a line entry for any .loc directive that has been seen.
+  MakeLineEntryForSection(getCurrentSection());
+
   // If this instruction doesn't need relaxation, just emit it as data.
   if (!getAssembler().getBackend().MayNeedRelaxation(Inst)) {
     EmitInstToData(Inst);
@@ -428,6 +433,47 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   // Otherwise emit to a separate fragment.
   EmitInstToFragment(Inst);
+}
+
+//
+// This is called when an instruction is assembled into the specified section
+// and if there is information from the last .loc directive that has yet to have
+// a line entry made for it is made.
+//
+void MCMachOStreamer::MakeLineEntryForSection(const MCSection *Section) {
+  if (!getContext().getDwarfLocSeen())
+    return;
+
+  // Create a symbol at in the current section for use in the line entry.
+  MCSymbol *LineSym = getContext().CreateTempSymbol();
+  // Set the value of the symbol to use for the MCLineEntry.
+  EmitLabel(LineSym);
+
+  // Get the current .loc info saved in the context.
+  const MCDwarfLoc &DwarfLoc = getContext().getCurrentDwarfLoc();
+
+  // Create a (local) line entry with the symbol and the current .loc info.
+  MCLineEntry LineEntry(LineSym, DwarfLoc);
+
+  // clear DwarfLocSeen saying the current .loc info is now used.
+  getContext().clearDwarfLocSeen();
+
+  // Get the MCLineSection for this section, if one does not exist for this
+  // section create it.
+  DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
+    getContext().getMCLineSections();
+  MCLineSection *LineSection = MCLineSections[Section];
+  if (!LineSection) {
+    // Create a new MCLineSection.  This will be deleted after the dwarf line
+    // table is created using it by iterating through the MCLineSections
+    // DenseMap.
+    LineSection = new MCLineSection;
+    // Save a pointer to the new LineSection into the MCLineSections DenseMap.
+    MCLineSections[Section] = LineSection;
+  }
+
+  // Add the line entry to this section's entries.
+  LineSection->addLineEntry(LineEntry);
 }
 
 //
@@ -551,6 +597,16 @@ void MCMachOStreamer::EmitDwarfFileTable(void) {
   EmitLabel(ProEndSym);
 
   // TODO: This is the point where the line tables would be emitted.
+
+  // Delete the MCLineSections that were created in 
+  // MCMachOStreamer::MakeLineEntryForSection() and used to emit the line
+  // tables.
+  DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
+    getContext().getMCLineSections();
+  for (DenseMap<const MCSection *, MCLineSection *>::iterator it =
+	MCLineSections.begin(), ie = MCLineSections.end(); it != ie; ++it) {
+    delete it->second;
+  }
 
   // If there are no line tables emited then we emit:
   // The following DW_LNE_set_address sequence to set the address to zero

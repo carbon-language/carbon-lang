@@ -227,7 +227,7 @@ unsigned MCContext::GetDwarfFile(StringRef FileName, unsigned FileNumber) {
     Name = Slash.second;
     for (DirIndex = 0; DirIndex < MCDwarfDirs.size(); DirIndex++) {
       if (Directory == MCDwarfDirs[DirIndex])
-	break;
+        break;
     }
     if (DirIndex >= MCDwarfDirs.size()) {
       char *Buf = static_cast<char *>(Allocate(Directory.size()));

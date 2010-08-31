@@ -17,9 +17,12 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/StringRef.h"
+#include <vector>
 
 namespace llvm {
   class MCContext;
+  class MCSection;
+  class MCSymbol;
   class raw_ostream;
 
   /// MCDwarfFile - Instances of this class represent the name of the dwarf
@@ -57,6 +60,11 @@ namespace llvm {
     void dump() const;
   };
 
+  inline raw_ostream &operator<<(raw_ostream &OS, const MCDwarfFile &DwarfFile){
+    DwarfFile.print(OS);
+    return OS;
+  }
+
   /// MCDwarfLoc - Instances of this class represent the information from a
   /// dwarf .loc directive.
   class MCDwarfLoc {
@@ -78,12 +86,14 @@ namespace llvm {
 
   private:  // MCContext manages these
     friend class MCContext;
+    friend class MCLineEntry;
     MCDwarfLoc(unsigned fileNum, unsigned line, unsigned column, unsigned flags,
                unsigned isa)
       : FileNum(fileNum), Line(line), Column(column), Flags(flags), Isa(isa) {}
 
-    MCDwarfLoc(const MCDwarfLoc&);       // DO NOT IMPLEMENT
-    void operator=(const MCDwarfLoc&); // DO NOT IMPLEMENT
+    // Allow the default copy constructor and assignment operator to be used
+    // for an MCDwarfLoc object.
+
   public:
     /// setFileNum - Set the FileNum of this MCDwarfLoc.
     void setFileNum(unsigned fileNum) { FileNum = fileNum; }
@@ -101,10 +111,46 @@ namespace llvm {
     void setIsa(unsigned isa) { Isa = isa; }
   };
 
-  inline raw_ostream &operator<<(raw_ostream &OS, const MCDwarfFile &DwarfFile){
-    DwarfFile.print(OS);
-    return OS;
-  }
+  /// MCLineEntry - Instances of this class represent the line information for
+  /// the dwarf line table entries.  Which is created after a machine
+  /// instruction is assembled and uses an address from a temporary label
+  /// created at the current address in the current section and the info from
+  /// the last .loc directive seen as stored in the context.
+  class MCLineEntry : public MCDwarfLoc {
+    MCSymbol *Label;
+
+  private:
+    // Allow the default copy constructor and assignment operator to be used
+    // for an MCLineEntry object.
+
+  public:
+    // Constructor to create an MCLineEntry given a symbol and the dwarf loc.
+    MCLineEntry(MCSymbol *label, const MCDwarfLoc loc) : MCDwarfLoc(loc),
+                Label(label) {}
+  };
+
+  /// MCLineSection - Instances of this class represent the line information
+  /// for a section where machine instructions have been assembled after seeing
+  /// .loc directives.  This is the information used to build the dwarf line
+  /// table for a section.
+  class MCLineSection {
+    std::vector<MCLineEntry> MCLineEntries;
+
+  private:
+    MCLineSection(const MCLineSection&);  // DO NOT IMPLEMENT
+    void operator=(const MCLineSection&); // DO NOT IMPLEMENT
+
+  public:
+    // Constructor to create an MCLineSection with an empty MCLineEntries
+    // vector.
+    MCLineSection(): MCLineEntries() {};
+
+    // addLineEntry - adds an entry to this MCLineSection's line entries
+    void addLineEntry(const MCLineEntry &LineEntry) {
+      MCLineEntries.push_back(LineEntry);
+    }
+  };
+
 } // end namespace llvm
 
 #endif
