@@ -59,6 +59,11 @@ o make directory
   Contains Makefile.rules, which can be utilized by test cases to write Makefile
   based rules to build native binaries.
 
+o plugins directory
+
+  Contains platform specific plugin to build binaries with dsym/dwarf debugging
+  info.  Other platform specific functionalities may be added in the future.
+
 o unittest2 directory
 
   Many new features were added to unittest in Python 2.7, including test
