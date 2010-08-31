@@ -795,6 +795,7 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
         uint32_t  reserved2;  // must be zero
     } BabelAESelInfo;
     
+    Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST);
     char file_path[PATH_MAX];
     file_spec.GetPath(file_path, PATH_MAX);
     CFCString file_cfstr (file_path, kCFStringEncodingUTF8);
@@ -802,6 +803,9 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
                                                                      file_cfstr.get(), 
                                                                      kCFURLPOSIXPathStyle, 
                                                                      false));
+                                                                     
+    if (log)
+        log->Printf("Sending source file: \"%s\" and line: %d to external editor.\n", file_path, line_no);
     
     OSStatus error;	
     BabelAESelInfo file_and_line_info = 
@@ -823,6 +827,8 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     
     if (error != noErr)
     {
+        if (log)
+            log->Printf("Error creating AEDesc: %d.\n", error);
         return false;
     }
     
@@ -841,6 +847,9 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     if (external_editor != NULL)
     {
         bool calculate_fsref = true;
+        if (log)
+            log->Printf("Looking for external editor \"%s\".\n", external_editor);
+
         if (app_name.empty() || strcmp (app_name.c_str(), external_editor) != 0)
         {
             calculate_fsref = true;
@@ -857,7 +866,11 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
             if (error == noErr)
                 app_name.assign (external_editor);
             else
+            {
+                if (log)
+                    log->Printf("Could not find External Editor application, error: %d.\n", error);
                 return false;
+            }
                 
         }
         
@@ -879,6 +892,9 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
 
     if (error != noErr)
     {
+        if (log)
+            log->Printf("LSOpenURLsWithRole failed, error: %d.\n", error);
+
         return false;
     }
     
@@ -888,7 +904,15 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     which_process.processName = ap_name;
     error = ::GetProcessInformation (&psn, &which_process);
     
-    bool using_xcode = strncmp((char *) ap_name+1, "Xcode", 5) == 0;
+    bool using_xcode;
+    if (error != noErr)
+    {
+        if (log)
+            log->Printf("GetProcessInformation failed, error: %d.\n", error);
+        using_xcode = false;
+    }
+    else
+        using_xcode = strncmp((char *) ap_name+1, "Xcode", (int) ap_name[0]) == 0;
     
     // Xcode doesn't obey the line number in the Open Apple Event.  So I have to send
     // it an AppleScript to focus on the right line.
@@ -916,6 +940,8 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
         
         if (osa_component == NULL)
         {
+            if (log)
+                log->Printf("Could not get default AppleScript component.\n");
             return false;
         }
 
@@ -937,7 +963,11 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
         ::free (as_str);
 
         if (error != noErr)
+        {
+            if (log)
+                log->Printf("Failed to create AEDesc for Xcode AppleEvent: %d.\n", error);
             return false;
+        }
             
         OSAID ret_OSAID;
         error = ::OSACompileExecute (osa_component, 
@@ -951,7 +981,11 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
         ::AEDisposeDesc (&as_desc);
 
         if (error != noErr)
+        {
+            if (log)
+                log->Printf("Sending AppleEvent to Xcode failed, error: %d.\n", error);
             return false;
+        }
     }
       
     return true;

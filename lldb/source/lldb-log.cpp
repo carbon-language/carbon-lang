@@ -151,6 +151,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             else if (strcasestr(arg, "temp")   == arg)  flag_bits |= LIBLLDB_LOG_TEMPORARY;
             else if (strcasestr(arg, "comm")   == arg)  flag_bits |= LIBLLDB_LOG_COMMUNICATION;
             else if (strcasestr(arg, "conn")   == arg)  flag_bits |= LIBLLDB_LOG_CONNECTION;
+            else if (strcasestr(arg, "host")   == arg)  flag_bits |= LIBLLDB_LOG_HOST;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
