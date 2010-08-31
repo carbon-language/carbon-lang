@@ -79,6 +79,20 @@ namespace {
     SmallSet<AssertingVH<BasicBlock>, 16> LoopHeaders;
 #endif
     DenseSet<std::pair<Value*, BasicBlock*> > RecursionSet;
+    
+    // RAII helper for updating the recursion stack.
+    struct RecursionSetRemover {
+      DenseSet<std::pair<Value*, BasicBlock*> > &TheSet;
+      std::pair<Value*, BasicBlock*> ThePair;
+      
+      RecursionSetRemover(DenseSet<std::pair<Value*, BasicBlock*> > &S,
+                          std::pair<Value*, BasicBlock*> P)
+        : TheSet(S), ThePair(P) { }
+      
+      ~RecursionSetRemover() {
+        TheSet.erase(ThePair);
+      }
+    };
   public:
     static char ID; // Pass identification
     JumpThreading() : FunctionPass(ID) {}
@@ -271,8 +285,16 @@ void JumpThreading::FindLoopHeaders(Function &F) {
 ///
 bool JumpThreading::
 ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
+  // This method walks up use-def chains recursively.  Because of this, we could
+  // get into an infinite loop going around loops in the use-def chain.  To
+  // prevent this, keep track of what (value, block) pairs we've already visited
+  // and terminate the search if we loop back to them
   if (!RecursionSet.insert(std::make_pair(V, BB)).second)
     return false;
+  
+  // An RAII help to remove this pair from the recursion set once the recursion
+  // stack pops back out again.
+  RecursionSetRemover remover(RecursionSet, std::make_pair(V, BB));
   
   // If V is a constantint, then it is known in all predecessors.
   if (isa<ConstantInt>(V) || isa<UndefValue>(V)) {
@@ -281,7 +303,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
       Result.push_back(std::make_pair(CI, *PI));
     
-    RecursionSet.erase(std::make_pair(V, BB));
     return true;
   }
   
@@ -316,11 +337,9 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         Result.push_back(std::make_pair(dyn_cast<ConstantInt>(PredCst), P));
       }
       
-      RecursionSet.erase(std::make_pair(V, BB));
       return !Result.empty();
     }
     
-    RecursionSet.erase(std::make_pair(V, BB));
     return false;
   }
   
@@ -344,7 +363,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       }
     }
     
-    RecursionSet.erase(std::make_pair(V, BB));
     return !Result.empty();
   }
   
@@ -359,10 +377,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals);
       ComputeValueKnownInPredecessors(I->getOperand(1), BB, RHSVals);
       
-      if (LHSVals.empty() && RHSVals.empty()) {
-        RecursionSet.erase(std::make_pair(V, BB));
+      if (LHSVals.empty() && RHSVals.empty())
         return false;
-      }
       
       ConstantInt *InterestingVal;
       if (I->getOpcode() == Instruction::Or)
@@ -390,7 +406,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
           }
         }
       
-      RecursionSet.erase(std::make_pair(V, BB));
       return !Result.empty();
     }
     
@@ -399,10 +414,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         isa<ConstantInt>(I->getOperand(1)) &&
         cast<ConstantInt>(I->getOperand(1))->isOne()) {
       ComputeValueKnownInPredecessors(I->getOperand(0), BB, Result);
-      if (Result.empty()) {
-        RecursionSet.erase(std::make_pair(V, BB));
+      if (Result.empty())
         return false;
-      }
 
       // Invert the known values.
       for (unsigned i = 0, e = Result.size(); i != e; ++i)
@@ -410,7 +423,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
           Result[i].first =
             cast<ConstantInt>(ConstantExpr::getNot(Result[i].first));
       
-      RecursionSet.erase(std::make_pair(V, BB));
       return true;
     }
   
@@ -439,7 +451,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       }
     }
       
-    RecursionSet.erase(std::make_pair(V, BB));
     return !Result.empty();
   }
   
@@ -473,7 +484,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
           Result.push_back(std::make_pair(CI, PredBB));
       }
       
-      RecursionSet.erase(std::make_pair(V, BB));
       return !Result.empty();
     }
     
@@ -500,7 +510,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
           Result.push_back(std::make_pair(cast<ConstantInt>(ResC), P));
         }
 
-        RecursionSet.erase(std::make_pair(V, BB));
         return !Result.empty();
       }
       
@@ -525,7 +534,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
             Result.push_back(std::make_pair((ConstantInt*)0,LHSVals[i].second));
         }
         
-        RecursionSet.erase(std::make_pair(V, BB));
         return !Result.empty();
       }
     }
@@ -540,11 +548,9 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         Result.push_back(std::make_pair(CInt, *PI));
     }
     
-    RecursionSet.erase(std::make_pair(V, BB));
     return !Result.empty();
   }
   
-  RecursionSet.erase(std::make_pair(V, BB));
   return false;
 }
 
