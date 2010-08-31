@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenModule.h"
+#include "CGCXXABI.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Frontend/CodeGenOptions.h"
@@ -65,7 +66,7 @@ public:
   llvm::Constant *BuildName(QualType Ty, bool Hidden, 
                             llvm::GlobalVariable::LinkageTypes Linkage) {
     llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRTTIName(Ty, OutName);
+    CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *OGV = CGM.getModule().getNamedGlobal(Name);
@@ -164,7 +165,7 @@ public:
 llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   // Mangle the RTTI name.
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, OutName);
   llvm::StringRef Name = OutName.str();
 
   // Look for an existing global.
@@ -518,7 +519,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   // Check if we've already emitted an RTTI descriptor for this type.
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, OutName);
   llvm::StringRef Name = OutName.str();
   
   llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);

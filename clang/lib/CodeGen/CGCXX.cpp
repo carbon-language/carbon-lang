@@ -410,3 +410,29 @@ bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   // Fake answer.
   return true;
 }
+
+void CGCXXABI::BuildThisParam(CodeGenFunction &CGF, FunctionArgList &Params) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
+
+  // FIXME: I'm not entirely sure I like using a fake decl just for code
+  // generation. Maybe we can come up with a better way?
+  ImplicitParamDecl *ThisDecl
+    = ImplicitParamDecl::Create(CGM.getContext(), 0, MD->getLocation(),
+                                &CGM.getContext().Idents.get("this"),
+                                MD->getThisType(CGM.getContext()));
+  Params.push_back(std::make_pair(ThisDecl, ThisDecl->getType()));
+  getThisDecl(CGF) = ThisDecl;
+}
+
+void CGCXXABI::EmitThisParam(CodeGenFunction &CGF) {
+  /// Initialize the 'this' slot.
+  assert(getThisDecl(CGF) && "no 'this' variable for function");
+  getThisValue(CGF)
+    = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(getThisDecl(CGF)),
+                             "this");
+}
+
+void CGCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
+                                   RValue RV, QualType ResultType) {
+  CGF.EmitReturnOfRValue(RV, ResultType);
+}

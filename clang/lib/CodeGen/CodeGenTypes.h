@@ -141,7 +141,7 @@ public:
   /// GetFunctionTypeForVTable - Get the LLVM function type for use in a vtable,
   /// given a CXXMethodDecl. If the method to has an incomplete return type, 
   /// and/or incomplete argument types, this will return the opaque type.
-  const llvm::Type *GetFunctionTypeForVTable(const CXXMethodDecl *MD);
+  const llvm::Type *GetFunctionTypeForVTable(GlobalDecl GD);
                                                      
   const CGRecordLayout &getCGRecordLayout(const RecordDecl*) const;
 
@@ -171,7 +171,9 @@ public:
   const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty,
                                         bool IsRecursive = false);
 
-  // getFunctionInfo - Get the function info for a member function.
+  /// getFunctionInfo - Get the function info for a member function of
+  /// the given type.  This is used for calls through member function
+  /// pointers.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
                                         const FunctionProtoType *FTP);
   

@@ -13,6 +13,7 @@
 
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+#include "CGCXXABI.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CodeGenOptions.h"
@@ -2409,12 +2410,12 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
   // Compute the mangled name.
   llvm::SmallString<256> Name;
   if (const CXXDestructorDecl* DD = dyn_cast<CXXDestructorDecl>(MD))
-    getMangleContext().mangleCXXDtorThunk(DD, GD.getDtorType(), Thunk.This,
-                                          Name);
+    getCXXABI().getMangleContext().mangleCXXDtorThunk(DD, GD.getDtorType(),
+                                                      Thunk.This, Name);
   else
-    getMangleContext().mangleThunk(MD, Thunk, Name);
+    getCXXABI().getMangleContext().mangleThunk(MD, Thunk, Name);
   
-  const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(MD);
+  const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(GD);
   return GetOrCreateLLVMFunction(Name, Ty, GD);
 }
 
@@ -2522,13 +2523,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   // CodeGenFunction::GenerateCode.
 
   // Create the implicit 'this' parameter declaration.
-  CXXThisDecl = ImplicitParamDecl::Create(getContext(), 0,
-                                          MD->getLocation(),
-                                          &getContext().Idents.get("this"),
-                                          ThisType);
-
-  // Add the 'this' parameter.
-  FunctionArgs.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
+  CurGD = GD;
+  CGM.getCXXABI().BuildInstanceFunctionParams(*this, ResultType, FunctionArgs);
 
   // Add the rest of the parameters.
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),
@@ -2539,6 +2535,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   }
   
   StartFunction(GlobalDecl(), ResultType, Fn, FunctionArgs, SourceLocation());
+
+  CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
 
   // Adjust the 'this' pointer if necessary.
   llvm::Value *AdjustedThisPtr = 
@@ -2563,7 +2561,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
 
   // Get our callee.
   const llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(GD),
                                    FPT->isVariadic());
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
 
@@ -2623,7 +2621,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   }
 
   if (!ResultType->isVoidType() && Slot.isNull())
-    EmitReturnOfRValue(RV, ResultType);
+    CGM.getCXXABI().EmitReturnFromThunk(CGF, RV, ResultType);
 
   FinishFunction();
 
@@ -2637,7 +2635,6 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 {
   llvm::Constant *Entry = CGM.GetAddrOfThunk(GD, Thunk);
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
@@ -2648,7 +2645,7 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
   // There's already a declaration with the same name, check if it has the same
   // type or if we need to replace it.
   if (cast<llvm::GlobalValue>(Entry)->getType()->getElementType() != 
-      CGM.getTypes().GetFunctionTypeForVTable(MD)) {
+      CGM.getTypes().GetFunctionTypeForVTable(GD)) {
     llvm::GlobalValue *OldThunkFn = cast<llvm::GlobalValue>(Entry);
     
     // If the types mismatch then we have to rewrite the definition.
@@ -2867,8 +2864,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
         
           NextVTableThunkIndex++;
         } else {
-          const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-          const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(MD);
+          const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(GD);
         
           Init = CGM.GetAddrOfFunction(GD, Ty);
         }
@@ -2935,7 +2931,7 @@ GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
 
 llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXVTable(RD, OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXVTable(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
   ComputeVTableRelatedInformation(RD, true);
@@ -2995,8 +2991,8 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 
   // Get the mangled construction vtable name.
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXCtorVTable(RD, Base.getBaseOffset() / 8, 
-                                             Base.getBase(), OutName);
+  CGM.getCXXABI().getMangleContext().
+    mangleCXXCtorVTable(RD, Base.getBaseOffset() / 8, Base.getBase(), OutName);
   llvm::StringRef Name = OutName.str();
 
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());

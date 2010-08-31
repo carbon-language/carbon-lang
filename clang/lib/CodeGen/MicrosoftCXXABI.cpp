@@ -117,6 +117,34 @@ public:
   MicrosoftMangleContext &getMangleContext() {
     return MangleCtx;
   }
+
+  void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                 CXXCtorType Type,
+                                 CanQualType &ResTy,
+                                 llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+    // 'this' is already in place
+    // TODO: 'for base' flag
+  }  
+
+  void BuildDestructorSignature(const CXXDestructorDecl *Ctor,
+                                CXXDtorType Type,
+                                CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+    // 'this' is already in place
+    // TODO: 'for base' flag
+  }
+
+  void BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                   QualType &ResTy,
+                                   FunctionArgList &Params) {
+    BuildThisParam(CGF, Params);
+    // TODO: 'for base' flag
+  }
+
+  void EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
+    EmitThisParam(CGF);
+    // TODO: 'for base' flag
+  }
 };
 
 }

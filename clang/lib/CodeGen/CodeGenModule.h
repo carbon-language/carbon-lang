@@ -22,7 +22,6 @@
 #include "CGCall.h"
 #include "CGCXX.h"
 #include "CGVTables.h"
-#include "CGCXXABI.h"
 #include "CodeGenTypes.h"
 #include "GlobalDecl.h"
 #include "Mangle.h"
@@ -71,6 +70,7 @@ namespace clang {
 namespace CodeGen {
 
   class CodeGenFunction;
+  class CGCXXABI;
   class CGDebugInfo;
   class CGObjCRuntime;
   class MangleBuffer;
@@ -243,9 +243,6 @@ public:
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
-  MangleContext &getMangleContext() {
-    return ABI.getMangleContext();
-  }
   CodeGenVTables &getVTables() { return VTables; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }

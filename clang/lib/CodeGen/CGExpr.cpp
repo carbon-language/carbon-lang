@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "CGCall.h"
+#include "CGCXXABI.h"
 #include "CGRecordLayout.h"
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
@@ -160,7 +161,7 @@ CreateReferenceTemporary(CodeGenFunction& CGF, QualType Type,
   if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(InitializedDecl)) {
     if (VD->hasGlobalStorage()) {
       llvm::SmallString<256> Name;
-      CGF.CGM.getMangleContext().mangleReferenceTemporary(VD, Name);
+      CGF.CGM.getCXXABI().getMangleContext().mangleReferenceTemporary(VD, Name);
       
       const llvm::Type *RefTempTy = CGF.ConvertTypeForMem(Type);
   

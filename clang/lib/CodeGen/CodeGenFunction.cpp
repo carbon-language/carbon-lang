@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGCXXABI.h"
 #include "CGDebugInfo.h"
 #include "CGException.h"
 #include "clang/Basic/TargetInfo.h"
@@ -48,24 +49,13 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
       
   Exceptions = getContext().getLangOptions().Exceptions;
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
-  CGM.getMangleContext().startNewFunction();
+  CGM.getCXXABI().getMangleContext().startNewFunction();
 }
 
 ASTContext &CodeGenFunction::getContext() const {
   return CGM.getContext();
 }
 
-
-llvm::Value *CodeGenFunction::GetAddrOfLocalVar(const VarDecl *VD) {
-  llvm::Value *Res = LocalDeclMap[VD];
-  assert(Res && "Invalid argument to GetAddrOfLocalVar(), no decl!");
-  return Res;
-}
-
-llvm::Constant *
-CodeGenFunction::GetAddrOfStaticLocalVar(const VarDecl *BVD) {
-  return cast<llvm::Constant>(GetAddrOfLocalVar(BVD));
-}
 
 const llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
   return CGM.getTypes().ConvertTypeForMem(T);
@@ -289,10 +279,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   EmitStartEHSpec(CurCodeDecl);
   EmitFunctionProlog(*CurFnInfo, CurFn, Args);
 
-  if (CXXThisDecl)
-    CXXThisValue = Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
-  if (CXXVTTDecl)
-    CXXVTTValue = Builder.CreateLoad(LocalDeclMap[CXXVTTDecl], "vtt");
+  if (D && isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance())
+    CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
 
   // If any of the arguments have a variably modified type, make sure to
   // emit the type size.
@@ -336,30 +324,11 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
     DebugInfo = CGM.getDebugInfo();
 
   FunctionArgList Args;
+  QualType ResTy = FD->getResultType();
 
   CurGD = GD;
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-    if (MD->isInstance()) {
-      // Create the implicit 'this' decl.
-      // FIXME: I'm not entirely sure I like using a fake decl just for code
-      // generation. Maybe we can come up with a better way?
-      CXXThisDecl = ImplicitParamDecl::Create(getContext(), 0,
-                                              FD->getLocation(),
-                                              &getContext().Idents.get("this"),
-                                              MD->getThisType(getContext()));
-      Args.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
-      
-      // Check if we need a VTT parameter as well.
-      if (CodeGenVTables::needsVTTParameter(GD)) {
-        // FIXME: The comment about using a fake decl above applies here too.
-        QualType T = getContext().getPointerType(getContext().VoidPtrTy);
-        CXXVTTDecl = 
-          ImplicitParamDecl::Create(getContext(), 0, FD->getLocation(),
-                                    &getContext().Idents.get("vtt"), T);
-        Args.push_back(std::make_pair(CXXVTTDecl, CXXVTTDecl->getType()));
-      }
-    }
-  }
+  if (isa<CXXMethodDecl>(FD) && cast<CXXMethodDecl>(FD)->isInstance())
+    CGM.getCXXABI().BuildInstanceFunctionParams(*this, ResTy, Args);
 
   if (FD->getNumParams()) {
     const FunctionProtoType* FProto = FD->getType()->getAs<FunctionProtoType>();
@@ -374,7 +343,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();
 
   // Emit the standard function prologue.
-  StartFunction(GD, FD->getResultType(), Fn, Args, BodyRange.getBegin());
+  StartFunction(GD, ResTy, Fn, Args, BodyRange.getBegin());
 
   // Generate the body of the function.
   if (isa<CXXDestructorDecl>(FD))

@@ -87,11 +87,55 @@ public:
   llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
                                           llvm::Value *Addr,
                                           const MemberPointerType *MPT);
+
+  void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                 CXXCtorType T,
+                                 CanQualType &ResTy,
+                                 llvm::SmallVectorImpl<CanQualType> &ArgTys);
+
+  void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                CXXDtorType T,
+                                CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys);
+
+  void BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                   QualType &ResTy,
+                                   FunctionArgList &Params);
+
+  void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
 public:
   ARMCXXABI(CodeGen::CodeGenModule &CGM) : ItaniumCXXABI(CGM, /*ARM*/ true) {}
+
+  void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                 CXXCtorType T,
+                                 CanQualType &ResTy,
+                                 llvm::SmallVectorImpl<CanQualType> &ArgTys);
+
+  void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                CXXDtorType T,
+                                CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys);
+
+  void BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                   QualType &ResTy,
+                                   FunctionArgList &Params);
+
+  void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
+
+  void EmitReturnFromThunk(CodeGenFunction &CGF, RValue RV, QualType ResTy);
+
+
+private:
+  /// \brief Returns true if the given instance method is one of the
+  /// kinds that the ARM ABI says returns 'this'.
+  static bool HasThisReturn(GlobalDecl GD) {
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+    return ((isa<CXXDestructorDecl>(MD) && GD.getDtorType() != Dtor_Deleting) ||
+            (isa<CXXConstructorDecl>(MD)));
+  }
 };
 }
 
@@ -585,4 +629,121 @@ ItaniumCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
 /// member pointers, for which '0' is a valid offset.
 bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   return MPT->getPointeeType()->isFunctionType();
+}
+
+/// The generic ABI passes 'this', plus a VTT if it's initializing a
+/// base subobject.
+void ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                              CXXCtorType Type,
+                                              CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+  ASTContext &Context = CGM.getContext();
+
+  // 'this' is already there.
+
+  // Check if we need to add a VTT parameter (which has type void **).
+  if (Type == Ctor_Base && Ctor->getParent()->getNumVBases() != 0)
+    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+}
+
+/// The ARM ABI does the same as the Itanium ABI, but returns 'this'.
+void ARMCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                          CXXCtorType Type,
+                                          CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+  ItaniumCXXABI::BuildConstructorSignature(Ctor, Type, ResTy, ArgTys);
+  ResTy = ArgTys[0];
+}
+
+/// The generic ABI passes 'this', plus a VTT if it's destroying a
+/// base subobject.
+void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                             CXXDtorType Type,
+                                             CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+  ASTContext &Context = CGM.getContext();
+
+  // 'this' is already there.
+
+  // Check if we need to add a VTT parameter (which has type void **).
+  if (Type == Dtor_Base && Dtor->getParent()->getNumVBases() != 0)
+    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+}
+
+/// The ARM ABI does the same as the Itanium ABI, but returns 'this'
+/// for non-deleting destructors.
+void ARMCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                         CXXDtorType Type,
+                                         CanQualType &ResTy,
+                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+  ItaniumCXXABI::BuildDestructorSignature(Dtor, Type, ResTy, ArgTys);
+
+  if (Type != Dtor_Deleting)
+    ResTy = ArgTys[0];
+}
+
+void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                                QualType &ResTy,
+                                                FunctionArgList &Params) {
+  /// Create the 'this' variable.
+  BuildThisParam(CGF, Params);
+
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
+  assert(MD->isInstance());
+
+  // Check if we need a VTT parameter as well.
+  if (CodeGenVTables::needsVTTParameter(CGF.CurGD)) {
+    ASTContext &Context = CGF.getContext();
+
+    // FIXME: avoid the fake decl
+    QualType T = Context.getPointerType(Context.VoidPtrTy);
+    ImplicitParamDecl *VTTDecl
+      = ImplicitParamDecl::Create(Context, 0, MD->getLocation(),
+                                  &Context.Idents.get("vtt"), T);
+    Params.push_back(std::make_pair(VTTDecl, VTTDecl->getType()));
+    getVTTDecl(CGF) = VTTDecl;
+  }
+}
+
+void ARMCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                            QualType &ResTy,
+                                            FunctionArgList &Params) {
+  ItaniumCXXABI::BuildInstanceFunctionParams(CGF, ResTy, Params);
+
+  // Return 'this' from certain constructors and destructors.
+  if (HasThisReturn(CGF.CurGD))
+    ResTy = Params[0].second;
+}
+
+void ItaniumCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
+  /// Initialize the 'this' slot.
+  EmitThisParam(CGF);
+
+  /// Initialize the 'vtt' slot if needed.
+  if (getVTTDecl(CGF)) {
+    getVTTValue(CGF)
+      = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(getVTTDecl(CGF)),
+                               "vtt");
+  }
+}
+
+void ARMCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
+  ItaniumCXXABI::EmitInstanceFunctionProlog(CGF);
+
+  /// Initialize the return slot to 'this' at the start of the
+  /// function.
+  if (HasThisReturn(CGF.CurGD))
+    CGF.Builder.CreateStore(CGF.LoadCXXThis(), CGF.ReturnValue);
+}
+
+void ARMCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
+                                    RValue RV, QualType ResultType) {
+  if (!isa<CXXDestructorDecl>(CGF.CurGD.getDecl()))
+    return ItaniumCXXABI::EmitReturnFromThunk(CGF, RV, ResultType);
+
+  // Destructor thunks in the ARM ABI have indeterminate results.
+  const llvm::Type *T =
+    cast<llvm::PointerType>(CGF.ReturnValue->getType())->getElementType();
+  RValue Undef = RValue::get(llvm::UndefValue::get(T));
+  return ItaniumCXXABI::EmitReturnFromThunk(CGF, Undef, ResultType);
 }

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCall.h"
+#include "CGCXXABI.h"
 #include "ABIInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
@@ -126,29 +127,32 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D, 
                                                     CXXCtorType Type) {
   llvm::SmallVector<CanQualType, 16> ArgTys;
-
-  // Add the 'this' pointer.
   ArgTys.push_back(GetThisType(Context, D->getParent()));
+  CanQualType ResTy = Context.VoidTy;
 
-  // Check if we need to add a VTT parameter (which has type void **).
-  if (Type == Ctor_Base && D->getParent()->getNumVBases() != 0)
-    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+  TheCXXABI.BuildConstructorSignature(D, Type, ResTy, ArgTys);
 
-  return ::getFunctionInfo(*this, ArgTys, GetFormalType(D));
+  CanQual<FunctionProtoType> FTP = GetFormalType(D);
+
+  // Add the formal parameters.
+  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+    ArgTys.push_back(FTP->getArgType(i));
+
+  return getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
                                                     CXXDtorType Type) {
-  llvm::SmallVector<CanQualType, 16> ArgTys;
-  
-  // Add the 'this' pointer.
+  llvm::SmallVector<CanQualType, 2> ArgTys;
   ArgTys.push_back(GetThisType(Context, D->getParent()));
-  
-  // Check if we need to add a VTT parameter (which has type void **).
-  if (Type == Dtor_Base && D->getParent()->getNumVBases() != 0)
-    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+  CanQualType ResTy = Context.VoidTy;
 
-  return ::getFunctionInfo(*this, ArgTys, GetFormalType(D));
+  TheCXXABI.BuildDestructorSignature(D, Type, ResTy, ArgTys);
+
+  CanQual<FunctionProtoType> FTP = GetFormalType(D);
+  assert(FTP->getNumArgs() == 0 && "dtor with formal parameters");
+
+  return getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
@@ -659,12 +663,18 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic,
   return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
-const llvm::Type *
-CodeGenTypes::GetFunctionTypeForVTable(const CXXMethodDecl *MD) {
+const llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   
-  if (!VerifyFuncTypeComplete(FPT))
-    return GetFunctionType(getFunctionInfo(MD), FPT->isVariadic(), false);
+  if (!VerifyFuncTypeComplete(FPT)) {
+    const CGFunctionInfo *Info;
+    if (isa<CXXDestructorDecl>(MD))
+      Info = &getFunctionInfo(cast<CXXDestructorDecl>(MD), GD.getDtorType());
+    else
+      Info = &getFunctionInfo(MD);
+    return GetFunctionType(*Info, FPT->isVariadic(), false);
+  }
 
   return llvm::OpaqueType::get(getLLVMContext());
 }

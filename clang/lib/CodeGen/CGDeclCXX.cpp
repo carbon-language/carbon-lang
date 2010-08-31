@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CGCXXABI.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
 
@@ -350,7 +351,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   bool ThreadsafeStatics = getContext().getLangOptions().ThreadsafeStatics;
   
   llvm::SmallString<256> GuardVName;
-  CGM.getMangleContext().mangleGuardVariable(&D, GuardVName);
+  CGM.getCXXABI().getMangleContext().mangleGuardVariable(&D, GuardVName);
 
   // Create the guard variable.
   llvm::GlobalVariable *GuardVariable =

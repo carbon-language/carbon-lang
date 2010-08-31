@@ -70,6 +70,7 @@ namespace CodeGen {
   class CGFunctionInfo;
   class CGRecordLayout;
   class CGBlockInfo;
+  class CGCXXABI;
 
 /// A branch fixup.  These are required when emitting a goto to a
 /// label which hasn't been emitted yet.  The goto is optimistically
@@ -406,6 +407,8 @@ public:
 class CodeGenFunction : public BlockFunction {
   CodeGenFunction(const CodeGenFunction&); // DO NOT IMPLEMENT
   void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
+
+  friend class CGCXXABI;
 public:
   /// A jump destination is an abstract label, branching to which may
   /// require a jump out through normal cleanups.
@@ -1034,10 +1037,16 @@ public:
   void StartBlock(const char *N);
 
   /// GetAddrOfStaticLocalVar - Return the address of a static local variable.
-  llvm::Constant *GetAddrOfStaticLocalVar(const VarDecl *BVD);
+  llvm::Constant *GetAddrOfStaticLocalVar(const VarDecl *BVD) {
+    return cast<llvm::Constant>(GetAddrOfLocalVar(BVD));
+  }
 
   /// GetAddrOfLocalVar - Return the address of a local variable.
-  llvm::Value *GetAddrOfLocalVar(const VarDecl *VD);
+  llvm::Value *GetAddrOfLocalVar(const VarDecl *VD) {
+    llvm::Value *Res = LocalDeclMap[VD];
+    assert(Res && "Invalid argument to GetAddrOfLocalVar(), no decl!");
+    return Res;
+  }
 
   /// getAccessedFieldNo - Given an encoded value and a result number, return
   /// the input field number being accessed.

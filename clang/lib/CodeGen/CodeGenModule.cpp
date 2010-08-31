@@ -15,6 +15,7 @@
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CGCall.h"
+#include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
 #include "Mangle.h"
 #include "TargetInfo.h"
@@ -287,7 +288,7 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   if (!Str.empty())
     return Str;
 
-  if (!getMangleContext().shouldMangleDeclName(ND)) {
+  if (!getCXXABI().getMangleContext().shouldMangleDeclName(ND)) {
     IdentifierInfo *II = ND->getIdentifier();
     assert(II && "Attempt to mangle unnamed decl.");
 
@@ -297,13 +298,13 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   
   llvm::SmallString<256> Buffer;
   if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
-    getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Buffer);
+    getCXXABI().getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Buffer);
   else if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
-    getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Buffer);
+    getCXXABI().getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Buffer);
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(ND))
-    getMangleContext().mangleBlock(GD, BD, Buffer);
+    getCXXABI().getMangleContext().mangleBlock(GD, BD, Buffer);
   else
-    getMangleContext().mangleName(ND, Buffer);
+    getCXXABI().getMangleContext().mangleName(ND, Buffer);
 
   // Allocate space for the mangled name.
   size_t Length = Buffer.size();
@@ -317,7 +318,7 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
 
 void CodeGenModule::getMangledName(GlobalDecl GD, MangleBuffer &Buffer,
                                    const BlockDecl *BD) {
-  getMangleContext().mangleBlock(GD, BD, Buffer.getBuffer());
+  getCXXABI().getMangleContext().mangleBlock(GD, BD, Buffer.getBuffer());
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {
@@ -1294,7 +1295,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
   const llvm::FunctionType *Ty = getTypes().GetFunctionType(GD);
-  getMangleContext().mangleInitDiscriminator();
+  getCXXABI().getMangleContext().mangleInitDiscriminator();
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
 

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenModule.h"
+#include "CGCXXABI.h"
 #include "clang/AST/RecordLayout.h"
 using namespace clang;
 using namespace CodeGen;
@@ -373,7 +374,7 @@ CodeGenVTables::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
     return 0;
 
   llvm::SmallString<256> OutName;
-  CGM.getMangleContext().mangleCXXVTT(RD, OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXVTT(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
   D1(printf("vtt %s\n", RD->getNameAsCString()));
