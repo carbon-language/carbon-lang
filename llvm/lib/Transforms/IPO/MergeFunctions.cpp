@@ -63,6 +63,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
+#include <vector>
 using namespace llvm;
 
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
@@ -82,7 +83,8 @@ namespace {
 
   private:
     /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
-    /// is deleted.
+    /// may be deleted, or may be converted into a thunk. In either case, it
+    /// should never be visited again.
     void MergeTwoFunctions(Function *F, Function *G) const;
 
     /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also
@@ -598,41 +600,53 @@ struct MergeFunctionsEqualityInfo {
 };
 
 bool MergeFunctions::runOnModule(Module &M) {
-  bool Changed = false;
+  typedef DenseSet<ComparableFunction *, MergeFunctionsEqualityInfo> FnSetType;
 
+  bool Changed = false;
   TD = getAnalysisIfAvailable<TargetData>();
 
-  typedef DenseSet<ComparableFunction *, MergeFunctionsEqualityInfo> FnSetType;
-  FnSetType FnSet;
-  for (Module::iterator F = M.begin(), E = M.end(); F != E;) {
-    if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
-      ++F;
-      continue;
-    }
-
-    ComparableFunction *NewF = new ComparableFunction(F, TD);
-    ++F;
-    std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
-    if (!Result.second) {
-      ComparableFunction *&OldF = *Result.first;
-      assert(OldF && "Expected a hash collision");
-
-      // NewF will be deleted in favour of OldF unless NewF is strong and OldF
-      // is weak in which case swap them to keep the strong definition.
-
-      if (OldF->Func->isWeakForLinker() && !NewF->Func->isWeakForLinker())
-        std::swap(OldF, NewF);
-
-      DEBUG(dbgs() << "  " << OldF->Func->getName() << " == "
-                   << NewF->Func->getName() << '\n');
-
-      Changed = true;
-      Function *DeleteF = NewF->Func;
-      delete NewF;
-      MergeTwoFunctions(OldF->Func, DeleteF);
-    }
+  std::vector<Function *> Funcs;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+    if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage())
+      Funcs.push_back(F);
   }
 
-  DeleteContainerPointers(FnSet);
+  bool LocalChanged;
+  do {
+    LocalChanged = false;
+
+    FnSetType FnSet;
+    for (unsigned i = 0, e = Funcs.size(); i != e;) {
+      Function *F = Funcs[i];
+      ComparableFunction *NewF = new ComparableFunction(F, TD);
+      std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
+      if (!Result.second) {
+        ComparableFunction *&OldF = *Result.first;
+        assert(OldF && "Expected a hash collision");
+
+        // NewF will be deleted in favour of OldF unless NewF is strong and
+        // OldF is weak in which case swap them to keep the strong definition.
+
+        if (OldF->Func->isWeakForLinker() && !NewF->Func->isWeakForLinker())
+          std::swap(OldF, NewF);
+
+        DEBUG(dbgs() << "  " << OldF->Func->getName() << " == "
+                     << NewF->Func->getName() << '\n');
+
+	Funcs.erase(Funcs.begin() + i);
+	--e;
+
+        Function *DeleteF = NewF->Func;
+        delete NewF;
+        MergeTwoFunctions(OldF->Func, DeleteF);
+	LocalChanged = true;
+        Changed = true;
+      } else {
+	++i;
+      }
+    }
+    DeleteContainerPointers(FnSet);
+  } while (LocalChanged);
+
   return Changed;
 }
