@@ -9,8 +9,31 @@ class TestBitfields(TestBase):
 
     mydir = "bitfields"
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @unittest2.expectedFailure
-    def test_variable_list_for_bitfields(self):
+    def test_with_dsym_and_run_command(self):
+        """Test 'variable list ...' on a variable with bitfields."""
+        self.buildDsym()
+        self.bitfields_variable()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym_and_python_api(self):
+        """Use Python APIs to inspect a bitfields variable."""
+        self.buildDsym()
+        self.bitfields_variable_python()
+
+    @unittest2.expectedFailure
+    def test_with_dwarf_and_run_command(self):
+        """Test 'variable list ...' on a variable with bitfields."""
+        self.buildDwarf()
+        self.bitfields_variable()
+
+    def test_with_dwarf_and_python_api(self):
+        """Use Python APIs to inspect a bitfields variable."""
+        self.buildDwarf()
+        self.bitfields_variable_python()
+
+    def bitfields_variable(self):
         """Test 'variable list ...' on a variable with bitfields."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -53,7 +76,7 @@ class TestBitfields(TestBase):
                        '(uint32_t:7) b7 = 0x0000007f,',
                        '(uint32_t:4) four = 0x0000000f'])
 
-    def test_bitfields_variable_python(self):
+    def bitfields_variable_python(self):
         """Use Python APIs to inspect a bitfields variable."""
         exe = os.path.join(os.getcwd(), "a.out")
 
