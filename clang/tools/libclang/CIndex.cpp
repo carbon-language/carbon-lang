@@ -290,11 +290,13 @@ public:
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
   bool VisitTagDecl(TagDecl *D);
+  bool VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
   bool VisitEnumConstantDecl(EnumConstantDecl *D);
   bool VisitDeclaratorDecl(DeclaratorDecl *DD);
   bool VisitFunctionDecl(FunctionDecl *ND);
   bool VisitFieldDecl(FieldDecl *D);
   bool VisitVarDecl(VarDecl *);
+  bool VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
   bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
   bool VisitObjCContainerDecl(ObjCContainerDecl *D);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
@@ -311,9 +313,13 @@ public:
   bool VisitObjCClassDecl(ObjCClassDecl *D);
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
   bool VisitNamespaceDecl(NamespaceDecl *D);
-
+ 
   // Name visitor
   bool VisitDeclarationNameInfo(DeclarationNameInfo Name);
+  
+  // Template visitors
+  bool VisitTemplateParameters(const TemplateParameterList *Params);
+  bool VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL);
   
   // Type visitors
   bool VisitQualifiedTypeLoc(QualifiedTypeLoc TL);
@@ -321,7 +327,7 @@ public:
   bool VisitTypedefTypeLoc(TypedefTypeLoc TL);
   bool VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL);
   bool VisitTagTypeLoc(TagTypeLoc TL);
-  // FIXME: TemplateTypeParmTypeLoc doesn't provide any location information
+  bool VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL);
   bool VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
   bool VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL);
   bool VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL);
@@ -332,7 +338,7 @@ public:
   bool VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL);
   bool VisitFunctionTypeLoc(FunctionTypeLoc TL, bool SkipResultType = false);
   bool VisitArrayTypeLoc(ArrayTypeLoc TL);
-  // FIXME: Implement for TemplateSpecializationTypeLoc
+  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL);
   // FIXME: Implement visitors here when the unimplemented TypeLocs get
   // implemented
   bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
@@ -593,6 +599,11 @@ bool CursorVisitor::VisitTagDecl(TagDecl *D) {
   return VisitDeclContext(D);
 }
 
+bool CursorVisitor::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
+  // FIXME: Visit default argument
+  return false;
+}
+
 bool CursorVisitor::VisitEnumConstantDecl(EnumConstantDecl *D) {
   if (Expr *Init = D->getInitExpr())
     return Visit(MakeCXCursor(Init, StmtParent, TU));
@@ -661,6 +672,15 @@ bool CursorVisitor::VisitVarDecl(VarDecl *D) {
     return Visit(MakeCXCursor(Init, StmtParent, TU));
 
   return false;
+}
+
+bool CursorVisitor::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  // FIXME: Visit the "outer" template parameter lists on the FunctionDecl
+  // before visiting these template parameters.
+  if (VisitTemplateParameters(D->getTemplateParameters()))
+    return true;
+  
+  return VisitFunctionDecl(D->getTemplatedDecl());
 }
 
 bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
@@ -839,6 +859,54 @@ bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
   return false;
 }
 
+bool CursorVisitor::VisitTemplateParameters(
+                                          const TemplateParameterList *Params) {
+  if (!Params)
+    return false;
+  
+  for (TemplateParameterList::const_iterator P = Params->begin(),
+                                          PEnd = Params->end();
+       P != PEnd; ++P) {
+    if (Visit(MakeCXCursor(*P, TU)))
+      return true;
+  }
+  
+  return false;
+}
+
+bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
+  switch (TAL.getArgument().getKind()) {
+  case TemplateArgument::Null:
+  case TemplateArgument::Integral:
+    return false;
+      
+  case TemplateArgument::Pack:
+    // FIXME: Implement when variadic templates come along.
+    return false;
+
+  case TemplateArgument::Type:
+    if (TypeSourceInfo *TSInfo = TAL.getTypeSourceInfo())
+      return Visit(TSInfo->getTypeLoc());
+    return false;
+      
+  case TemplateArgument::Declaration:
+    if (Expr *E = TAL.getSourceDeclExpression())
+      return Visit(MakeCXCursor(E, StmtParent, TU));
+    return false;
+      
+  case TemplateArgument::Expression:
+    if (Expr *E = TAL.getSourceExpression())
+      return Visit(MakeCXCursor(E, StmtParent, TU));
+    return false;
+  
+  case TemplateArgument::Template:
+    // FIXME: Visit template name.
+    return false;
+  }
+  
+  return false;
+}
+
 bool CursorVisitor::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   return VisitDeclContext(D);
 }
@@ -918,6 +986,13 @@ bool CursorVisitor::VisitTagTypeLoc(TagTypeLoc TL) {
   return Visit(MakeCursorTypeRef(TL.getDecl(), TL.getNameLoc(), TU));
 }
 
+bool CursorVisitor::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
+  // FIXME: We can't visit the template template parameter, but there's
+  // no context information with which we can match up the depth/index in the
+  // type to the appropriate 
+  return false;
+}
+
 bool CursorVisitor::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   if (Visit(MakeCursorObjCClassRef(TL.getIFaceDecl(), TL.getNameLoc(), TU)))
     return true;
@@ -982,6 +1057,18 @@ bool CursorVisitor::VisitArrayTypeLoc(ArrayTypeLoc TL) {
   if (Expr *Size = TL.getSizeExpr())
     return Visit(MakeCXCursor(Size, StmtParent, TU));
 
+  return false;
+}
+
+bool CursorVisitor::VisitTemplateSpecializationTypeLoc(
+                                             TemplateSpecializationTypeLoc TL) {
+  // FIXME: Visit the template name.
+  
+  // Visit the template arguments.
+  for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
+    if (VisitTemplateArgumentLoc(TL.getArgLoc(I)))
+      return true;
+  
   return false;
 }
 
@@ -2037,6 +2124,14 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("CXXDestructor");
   case CXCursor_ConversionFunction:
     return createCXString("CXXConversion");
+  case CXCursor_TemplateTypeParameter:
+    return createCXString("TemplateTypeParameter");
+  case CXCursor_NonTypeTemplateParameter:
+    return createCXString("NonTypeTemplateParameter");
+  case CXCursor_TemplateTemplateParameter:
+    return createCXString("TemplateTemplateParameter");
+  case CXCursor_FunctionTemplate:
+    return createCXString("FunctionTemplate");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

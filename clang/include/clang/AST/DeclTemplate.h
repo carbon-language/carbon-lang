@@ -1138,6 +1138,13 @@ public:
     DefaultArgumentWasInherited = false;
   }
 
+  SourceRange getSourceRange() const {
+    SourceLocation End = getLocation();
+    if (hasDefaultArgument() && !defaultArgumentWasInherited())
+      End = getDefaultArgument().getSourceRange().getEnd();
+    return SourceRange(getTemplateParameters()->getTemplateLoc(), End);
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }

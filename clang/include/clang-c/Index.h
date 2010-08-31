@@ -982,8 +982,16 @@ enum CXCursorKind {
   CXCursor_Destructor                    = 25,
   /** \brief A C++ conversion function. */
   CXCursor_ConversionFunction            = 26,
+  /** \brief A C++ template type parameter. */
+  CXCursor_TemplateTypeParameter         = 27,
+  /** \brief A C++ non-type template parameter. */
+  CXCursor_NonTypeTemplateParameter      = 28,
+  /** \brief A C++ template template parameter. */
+  CXCursor_TemplateTemplateParameter     = 29,
+  /** \brief A C++ function template. */
+  CXCursor_FunctionTemplate              = 30,
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_ConversionFunction,
+  CXCursor_LastDecl                      = CXCursor_FunctionTemplate,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */

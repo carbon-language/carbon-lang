@@ -13,6 +13,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Lex/PreprocessingRecord.h"
@@ -64,6 +65,7 @@ public:
   void VisitFunctionDecl(FunctionDecl *D);
   void VisitNamedDecl(NamedDecl *D);
   void VisitNamespaceDecl(NamespaceDecl *D);
+  void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
   void VisitObjCClassDecl(ObjCClassDecl *CD);
   void VisitObjCContainerDecl(ObjCContainerDecl *CD);
   void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *P);
@@ -72,7 +74,10 @@ public:
   void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
   void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
+  void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
   void VisitVarDecl(VarDecl *D);
+  void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
+  void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
   void VisitLinkageSpecDecl(LinkageSpecDecl *D) {
     IgnoreResults = true;
     return;
@@ -104,7 +109,10 @@ public:
   void GenObjCProtocol(llvm::StringRef prot);
 
   void VisitType(QualType T);
-
+  void VisitTemplateParameterList(const TemplateParameterList *Params);
+  void VisitTemplateName(TemplateName Name);
+  void VisitTemplateArgument(const TemplateArgument &Arg);
+  
   /// Emit a Decl's name using NamedDecl::printName() and return true if
   ///  the decl had no name.
   bool EmitDeclName(const NamedDecl *D);
@@ -155,7 +163,11 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
     return;
 
   VisitDeclContext(D->getDeclContext());
-  Out << "@F@";
+  if (FunctionTemplateDecl *FunTmpl = D->getDescribedFunctionTemplate()) {
+    Out << "@FT@";
+    VisitTemplateParameterList(FunTmpl->getTemplateParameters());
+  } else
+    Out << "@F@";
   D->printName(Out);
 
   ASTContext &Ctx = AU->getASTContext();
@@ -215,6 +227,16 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
     Out << '@' << s;
 }
 
+void USRGenerator::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
+  GenLoc(D);
+  return;
+}
+
+void USRGenerator::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
+  GenLoc(D);
+  return;
+}
+
 void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
   if (D->isAnonymousNamespace()) {
     Out << "@aN";
@@ -224,6 +246,10 @@ void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitDeclContext(D->getDeclContext());
   if (!IgnoreResults)
     Out << "@N@" << D->getName();
+}
+
+void USRGenerator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  VisitFunctionDecl(D->getTemplatedDecl());
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
@@ -364,6 +390,11 @@ void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
     Visit(DCN);
   Out << "@T@";
   Out << D->getName();
+}
+
+void USRGenerator::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
+  GenLoc(D);
+  return;
 }
 
 bool USRGenerator::GenLoc(const Decl *D) {
@@ -515,11 +546,98 @@ void USRGenerator::VisitType(QualType T) {
       VisitTagDecl(TT->getDecl());
       return;
     }
-
+    if (const TemplateTypeParmType *TTP = T->getAs<TemplateTypeParmType>()) {
+      Out << 't' << TTP->getDepth() << '.' << TTP->getIndex();
+      return;
+    }
+    if (const TemplateSpecializationType *Spec
+                                    = T->getAs<TemplateSpecializationType>()) {
+      Out << '>';
+      VisitTemplateName(Spec->getTemplateName());
+      Out << Spec->getNumArgs();
+      for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
+        VisitTemplateArgument(Spec->getArg(I));
+      return;
+    }
+    
     // Unhandled type.
     Out << ' ';
     break;
   } while (true);
+}
+
+void USRGenerator::VisitTemplateParameterList(
+                                         const TemplateParameterList *Params) {
+  if (!Params)
+    return;
+  Out << '>' << Params->size();
+  for (TemplateParameterList::const_iterator P = Params->begin(),
+                                          PEnd = Params->end();
+       P != PEnd; ++P) {
+    Out << '#';
+    if (isa<TemplateTypeParmDecl>(*P)) {
+      Out << 'T';
+      continue;
+    }
+    
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      Out << 'N';
+      VisitType(NTTP->getType());
+      continue;
+    }
+    
+    TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*P);
+    Out << 't';
+    VisitTemplateParameterList(TTP->getTemplateParameters());
+  }
+}
+
+void USRGenerator::VisitTemplateName(TemplateName Name) {
+  if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
+    if (TemplateTemplateParmDecl *TTP
+                              = dyn_cast<TemplateTemplateParmDecl>(Template)) {
+      Out << 't' << TTP->getDepth() << '.' << TTP->getIndex();
+      return;
+    }
+    
+    Visit(Template);
+    return;
+  }
+  
+  // FIXME: Visit dependent template names.
+}
+
+void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    break;
+
+  case TemplateArgument::Declaration:
+    Visit(Arg.getAsDecl());
+    break;
+      
+  case TemplateArgument::Template:
+    VisitTemplateName(Arg.getAsTemplate());
+    break;
+      
+  case TemplateArgument::Expression:
+    // FIXME: Visit expressions.
+    break;
+      
+  case TemplateArgument::Pack:
+    // FIXME: Variadic templates
+    break;
+      
+  case TemplateArgument::Type:
+    VisitType(Arg.getAsType());
+    break;
+      
+  case TemplateArgument::Integral:
+    Out << 'V';
+    VisitType(Arg.getIntegralType());
+    Out << *Arg.getAsIntegral();
+    break;
+  }
 }
 
 //===----------------------------------------------------------------------===//

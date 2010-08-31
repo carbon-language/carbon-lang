@@ -60,6 +60,10 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::Typedef:            return CXCursor_TypedefDecl;
     case Decl::Var:                return CXCursor_VarDecl;
     case Decl::Namespace:          return CXCursor_Namespace;
+    case Decl::TemplateTypeParm:   return CXCursor_TemplateTypeParameter;
+    case Decl::NonTypeTemplateParm:return CXCursor_NonTypeTemplateParameter;
+    case Decl::TemplateTemplateParm:return CXCursor_TemplateTemplateParameter;
+    case Decl::FunctionTemplate:   return CXCursor_FunctionTemplate;
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {

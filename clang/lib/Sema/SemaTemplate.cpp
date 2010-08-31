@@ -662,7 +662,8 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
   // Construct the parameter object.
   TemplateTemplateParmDecl *Param =
     TemplateTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
-                                     TmpLoc, Depth, Position, Name,
+                                     NameLoc.isInvalid()? TmpLoc : NameLoc, 
+                                     Depth, Position, Name,
                                      (TemplateParameterList*)Params);
 
   // If the template template parameter has a name, then link the identifier 
