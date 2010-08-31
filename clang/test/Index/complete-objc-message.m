@@ -182,8 +182,8 @@ void test_ranking(B *b) {
 // CHECK-CCA: {ResultType Class}{TypedText self}
 // CHECK-CCA: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
-// CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)}{Placeholder , ...}
-// CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText SentinelMethod:}{Placeholder (int)}{Placeholder , ...}{Text , nil}
+// CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int), ...}
+// CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText SentinelMethod:}{Placeholder (int), ...}{Text , nil}
 // RUN: c-index-test -code-completion-at=%s:116:14 %s | FileCheck -check-prefix=CHECK-CCC %s
 // CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method}
 // CHECK-CCC: ObjCClassMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)}

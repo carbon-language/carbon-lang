@@ -1839,13 +1839,13 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     if (I)
       Result += ", ";
     Result += FormatFunctionParameter(Context, Block->getArg(I));
-  }
-  if (Block->getTypePtr()->isVariadic()) {
-    if (Block->getNumArgs() > 0)
+    
+    if (I == N - 1 && Block->getTypePtr()->isVariadic())
       Result += ", ...";
-    else
-      Result += "...";
-  } else if (Block->getNumArgs() == 0 && !Context.getLangOptions().CPlusPlus)
+  }
+  if (Block->getTypePtr()->isVariadic() && Block->getNumArgs() == 0)
+    Result += "...";
+  else if (Block->getNumArgs() == 0 && !Context.getLangOptions().CPlusPlus)
     Result += "void";
              
   Result += ")";
@@ -1879,6 +1879,9 @@ static void AddFunctionParameterChunks(ASTContext &Context,
     // Format the placeholder string.
     std::string PlaceholderStr = FormatFunctionParameter(Context, Param);
         
+    if (Function->isVariadic() && P == N - 1)
+      PlaceholderStr += ", ...";
+
     // Add the placeholder string.
     CCStr->AddPlaceholderChunk(PlaceholderStr);
   }
@@ -1886,7 +1889,8 @@ static void AddFunctionParameterChunks(ASTContext &Context,
   if (const FunctionProtoType *Proto 
         = Function->getType()->getAs<FunctionProtoType>())
     if (Proto->isVariadic()) {
-      CCStr->AddPlaceholderChunk(", ...");
+      if (Proto->getNumArgs() == 0)
+        CCStr->AddPlaceholderChunk("...");
 
       MaybeAddSentinel(Context, Function, CCStr);
     }
@@ -2198,6 +2202,9 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
             Arg += II->getName().str();
       }
       
+      if (Method->isVariadic() && (P + 1) == PEnd)
+        Arg += ", ...";
+      
       if (DeclaringEntity)
         Result->AddTextChunk(Arg);
       else if (AllParametersAreInformative)
@@ -2207,12 +2214,14 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
     }
 
     if (Method->isVariadic()) {
-      if (DeclaringEntity)
-        Result->AddTextChunk(", ...");
-      else if (AllParametersAreInformative)
-        Result->AddInformativeChunk(", ...");
-      else
-        Result->AddPlaceholderChunk(", ...");
+      if (Method->param_size() == 0) {
+        if (DeclaringEntity)
+          Result->AddTextChunk(", ...");
+        else if (AllParametersAreInformative)
+          Result->AddInformativeChunk(", ...");
+        else
+          Result->AddPlaceholderChunk(", ...");
+      }
       
       MaybeAddSentinel(S.Context, Method, Result);
     }
@@ -4955,14 +4964,14 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
       
       if (IdentifierInfo *Id = (*P)->getIdentifier())
-        Pattern->AddTextChunk(Id->getName());
+        Pattern->AddTextChunk(Id->getName());      
     }
 
     if (Method->isVariadic()) {
       if (Method->param_size() > 0)
         Pattern->AddChunk(CodeCompletionString::CK_Comma);
       Pattern->AddTextChunk("...");
-    }
+    }        
 
     if (IsInImplementation && Results.includeCodePatterns()) {
       // We will be defining the method here, so add a compound statement.
