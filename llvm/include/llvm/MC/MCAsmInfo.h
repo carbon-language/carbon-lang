@@ -255,6 +255,10 @@ namespace llvm {
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
     
+    /// DwarfUsesAbsoluteLabelForStmtList - True if DW_AT_stmt_list needs 
+    /// absolute label instead of offset.
+    bool DwarfUsesAbsoluteLabelForStmtList;  // Defaults to true;
+
     //===--- CBE Asm Translation Table -----------------------------------===//
 
     const char *const *AsmTransCBE;          // Defaults to empty
@@ -416,6 +420,9 @@ namespace llvm {
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
+    }
+    bool doesDwarfUsesAbsoluteLabelForStmtList() const {
+      return DwarfUsesAbsoluteLabelForStmtList;
     }
     const char *const *getAsmCBE() const {
       return AsmTransCBE;

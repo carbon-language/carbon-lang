@@ -68,6 +68,7 @@ MCAsmInfo::MCAsmInfo() {
   ExceptionsType = ExceptionHandling::None;
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
+  DwarfUsesAbsoluteLabelForStmtList = true;
   DwarfSectionOffsetDirective = 0;
   HasMicrosoftFastStdCallMangling = false;
 
