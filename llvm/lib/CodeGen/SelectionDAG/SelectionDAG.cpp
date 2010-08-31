@@ -2281,35 +2281,6 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
 }
 
 
-/// getShuffleScalarElt - Returns the scalar element that will make up the ith
-/// element of the result of the vector shuffle.
-SDValue SelectionDAG::getShuffleScalarElt(const ShuffleVectorSDNode *N,
-                                          unsigned i) {
-  EVT VT = N->getValueType(0);
-  if (N->getMaskElt(i) < 0)
-    return getUNDEF(VT.getVectorElementType());
-  unsigned Index = N->getMaskElt(i);
-  unsigned NumElems = VT.getVectorNumElements();
-  SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
-  Index %= NumElems;
-
-  if (V.getOpcode() == ISD::BIT_CONVERT) {
-    V = V.getOperand(0);
-    EVT VVT = V.getValueType();
-    if (!VVT.isVector() || VVT.getVectorNumElements() != (unsigned)NumElems)
-      return SDValue();
-  }
-  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
-    return (Index == 0) ? V.getOperand(0)
-                      : getUNDEF(VT.getVectorElementType());
-  if (V.getOpcode() == ISD::BUILD_VECTOR)
-    return V.getOperand(Index);
-  if (const ShuffleVectorSDNode *SVN = dyn_cast<ShuffleVectorSDNode>(V))
-    return getShuffleScalarElt(SVN, Index);
-  return SDValue();
-}
-
-
 /// getNode - Gets or creates the specified node.
 ///
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT) {

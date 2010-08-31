@@ -977,10 +977,6 @@ public:
   /// been verified as a debug information descriptor.
   bool isVerifiedDebugInfoDesc(SDValue Op) const;
 
-  /// getShuffleScalarElt - Returns the scalar element that will make up the ith
-  /// element of the result of the vector shuffle.
-  SDValue getShuffleScalarElt(const ShuffleVectorSDNode *N, unsigned Idx);
-
   /// UnrollVectorOp - Utility function used by legalize and lowering to
   /// "unroll" a vector operation by splitting out the scalars and operating
   /// on each element individually.  If the ResNE is 0, fully unroll the vector
