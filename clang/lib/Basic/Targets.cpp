@@ -1506,6 +1506,9 @@ public:
     Builder.defineMacro("_M_X64");
     Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
   }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* __builtin_va_list;";
+  }
 };
 } // end anonymous namespace
 

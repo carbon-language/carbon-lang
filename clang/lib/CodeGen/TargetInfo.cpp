@@ -767,6 +767,15 @@ public:
                                  CodeGenFunction &CGF) const;
 };
 
+/// WinX86_64ABIInfo - The Windows X86_64 ABI information.
+class WinX86_64ABIInfo : public X86_64ABIInfo {
+public:
+  WinX86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : X86_64ABIInfo(CGT) {}
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
@@ -784,6 +793,31 @@ public:
     const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
     llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
 
+    // 0-15 are the 16 integer registers.
+    // 16 is %rip.
+    AssignToArrayRange(Builder, Address, Eight8, 0, 16);
+
+    return false;
+  }
+};
+
+class WinX86_64TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  WinX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new WinX86_64ABIInfo(CGT)) {}
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
+    return 7;
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const {
+    CodeGen::CGBuilderTy &Builder = CGF.Builder;
+    llvm::LLVMContext &Context = CGF.getLLVMContext();
+
+    const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
+    llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
+      
     // 0-15 are the 16 integer registers.
     // 16 is %rip.
     AssignToArrayRange(Builder, Address, Eight8, 0, 16);
@@ -1889,7 +1923,28 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
+llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                      CodeGenFunction &CGF) const {
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP,
+                                                       "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  llvm::Type *PTy =
+    llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
+
+  uint64_t Offset =
+    llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 8);
+  llvm::Value *NextAddr =
+    Builder.CreateGEP(Addr, llvm::ConstantInt::get(CGF.Int32Ty, Offset),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  return AddrTyped;
+}
 
 //===----------------------------------------------------------------------===//
 // PIC16 ABI Implementation
@@ -2543,7 +2598,6 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
                new X86_32TargetCodeGenInfo(Types, true, true));
     case llvm::Triple::Cygwin:
     case llvm::Triple::MinGW32:
-    case llvm::Triple::MinGW64:
     case llvm::Triple::AuroraUX:
     case llvm::Triple::DragonFly:
     case llvm::Triple::FreeBSD:
@@ -2557,6 +2611,13 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     }
 
   case llvm::Triple::x86_64:
-    return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types));
+    switch (Triple.getOS()) {
+    case llvm::Triple::Win32:
+    case llvm::Triple::MinGW64:
+    case llvm::Triple::Cygwin:
+      return *(TheTargetCodeGenInfo = new WinX86_64TargetCodeGenInfo(Types));
+    default:
+      return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types));
+    }
   }
 }
