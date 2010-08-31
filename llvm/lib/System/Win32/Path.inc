@@ -722,7 +722,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   assert(len < 1024 && "Request for magic string too long");
-  char* buf = (char*) alloca(1 + len);
+  char* buf = reinterpret_cast<char*>(alloca(len));
 
   HANDLE h = CreateFile(path.c_str(),
                         GENERIC_READ,
@@ -741,8 +741,7 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   if (!ret || nRead != len)
     return false;
 
-  buf[len] = '\0';
-  Magic = buf;
+  Magic = std::string(buf, len);
   return true;
 }
 
