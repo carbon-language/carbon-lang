@@ -421,4 +421,34 @@ F2:
 ; CHECK-NEXT:   br i1 %N, label %T2, label %F2
 }
 
+; CHECK: @test14
+define i32 @test14(i32 %in) {
+entry:
+	%A = icmp eq i32 %in, 0
+; CHECK: br i1 %A, label %right_ret, label %merge
+  br i1 %A, label %left, label %right
+
+; CHECK-NOT: left:
+left:
+	br label %merge
+
+; CHECK-NOT: right:
+right:
+  %B = call i32 @f1()
+	br label %merge
+
+merge:
+; CHECK-NOT: %C = phi i32 [%in, %left], [%B, %right]
+	%C = phi i32 [%in, %left], [%B, %right]
+	%D = add i32 %C, 1
+	%E = icmp eq i32 %D, 2
+	br i1 %E, label %left_ret, label %right_ret
+
+; CHECK: left_ret:
+left_ret:
+	ret i32 0
+
+right_ret:
+	ret i32 1
+}
 
