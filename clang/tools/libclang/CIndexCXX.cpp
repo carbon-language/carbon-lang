@@ -15,6 +15,7 @@
 #include "CXCursor.h"
 #include "CXType.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 
 using namespace clang;
 using namespace clang::cxstring;
@@ -43,6 +44,38 @@ enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor C) {
   
   // FIXME: Clang currently thinks this is reachable.
   return CX_CXXInvalidAccessSpecifier;
+}
+
+enum CXCursorKind clang_getTemplateCursorKind(CXCursor C) {
+  using namespace clang::cxcursor;
+  
+  switch (C.kind) {
+  case CXCursor_ClassTemplate: 
+  case CXCursor_FunctionTemplate:
+    if (TemplateDecl *Template
+                           = dyn_cast_or_null<TemplateDecl>(getCursorDecl(C)))
+      return MakeCXCursor(Template->getTemplatedDecl(), 
+                          getCursorASTUnit(C)).kind;
+    break;
+      
+  case CXCursor_ClassTemplatePartialSpecialization:
+    if (ClassTemplateSpecializationDecl *PartialSpec
+          = dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(
+                                                            getCursorDecl(C))) {
+      switch (PartialSpec->getTagKind()) {
+      case TTK_Class: return CXCursor_ClassDecl;
+      case TTK_Struct: return CXCursor_StructDecl;
+      case TTK_Union: return CXCursor_UnionDecl;
+      case TTK_Enum: return CXCursor_NoDeclFound;
+      }
+    }
+    break;
+      
+  default:
+    break;
+  }
+  
+  return CXCursor_NoDeclFound;
 }
 
 } // end extern "C"
