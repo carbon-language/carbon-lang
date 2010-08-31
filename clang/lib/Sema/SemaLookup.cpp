@@ -1619,7 +1619,11 @@ static void CollectEnclosingNamespace(Sema::AssociatedNamespaceSet &Namespaces,
   // We don't use DeclContext::getEnclosingNamespaceContext() as this may
   // be a locally scoped record.
 
-  while (Ctx->isRecord() || Ctx->isTransparentContext())
+  // We skip out of inline namespaces. The innermost non-inline namespace
+  // contains all names of all its nested inline namespaces anyway, so we can
+  // replace the entire inline namespace tree with its root.
+  while (Ctx->isRecord() || Ctx->isTransparentContext() ||
+         Ctx->isInlineNamespace())
     Ctx = Ctx->getParent();
 
   if (Ctx->isFileContext())
@@ -2423,9 +2427,9 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
           Visited.add(ND);
         }
 
-      // Visit transparent contexts inside this context.
+      // Visit transparent contexts and inline namespaces inside this context.
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
-        if (InnerCtx->isTransparentContext())
+        if (InnerCtx->isTransparentContext() || InnerCtx->isInlineNamespace())
           LookupVisibleDecls(InnerCtx, Result, QualifiedNameLookup, InBaseClass,
                              Consumer, Visited);
       }

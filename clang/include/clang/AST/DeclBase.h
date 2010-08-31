@@ -784,6 +784,8 @@ public:
     return DeclKind == Decl::Namespace;
   }
 
+  bool isInlineNamespace() const;
+
   /// \brief Determines whether this context is dependent on a
   /// template parameter.
   bool isDependentContext() const;
@@ -802,8 +804,7 @@ public:
   /// Here, E is a transparent context, so its enumerator (Val1) will
   /// appear (semantically) that it is in the same context of E.
   /// Examples of transparent contexts include: enumerations (except for
-  /// C++0x scoped enums), C++ linkage specifications, and C++0x
-  /// inline namespaces.
+  /// C++0x scoped enums), and C++ linkage specifications.
   bool isTransparentContext() const;
 
   /// \brief Determine whether this declaration context is equivalent
@@ -829,8 +830,7 @@ public:
 
   /// getRedeclContext - Retrieve the context in which an entity conflicts with
   /// other entities of the same name, or where it is a redeclaration if the
-  /// two entities are compatible. This skips through transparent contexts,
-  /// except inline namespaces.
+  /// two entities are compatible. This skips through transparent contexts.
   DeclContext *getRedeclContext();
   const DeclContext *getRedeclContext() const {
     return const_cast<DeclContext *>(this)->getRedeclContext();

@@ -72,3 +72,26 @@ void foo3() {
   Distinct d;
   ::over(d);
 }
+
+// Don't forget to do correct lookup for redeclarations.
+namespace redecl { inline namespace n1 {
+
+  template <class Tp> class allocator;
+
+  template <>
+  class allocator<void>
+  {
+  public:
+      typedef const void* const_pointer;
+  };
+
+  template <class Tp>
+  class allocator
+  {
+  public:
+      typedef Tp& reference;
+  
+      void allocate(allocator<void>::const_pointer = 0);
+  };
+
+} }

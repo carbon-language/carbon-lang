@@ -478,6 +478,11 @@ DeclContext *DeclContext::getLookupParent() {
   return getParent();
 }
 
+bool DeclContext::isInlineNamespace() const {
+  return isNamespace() &&
+         cast<NamespaceDecl>(this)->isInline();
+}
+
 bool DeclContext::isDependentContext() const {
   if (isFileContext())
     return false;
@@ -509,8 +514,6 @@ bool DeclContext::isTransparentContext() const {
     return true;
   else if (DeclKind >= Decl::firstRecord && DeclKind <= Decl::lastRecord)
     return cast<RecordDecl>(this)->isAnonymousStructOrUnion();
-  else if (DeclKind == Decl::Namespace)
-    return cast<NamespaceDecl>(this)->isInline();
 
   return false;
 }
@@ -799,10 +802,10 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
              I != IEnd; ++I)
           makeDeclVisibleInContextImpl(I->getInterface());
       
-      // If this declaration is itself a transparent declaration context,
-      // add its members (recursively).
+      // If this declaration is itself a transparent declaration context or
+      // inline namespace, add its members (recursively).
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D))
-        if (InnerCtx->isTransparentContext())
+        if (InnerCtx->isTransparentContext() || InnerCtx->isInlineNamespace())
           buildLookup(InnerCtx->getPrimaryContext());
     }
   }
@@ -849,8 +852,8 @@ DeclContext::lookup(DeclarationName Name) const {
 
 DeclContext *DeclContext::getRedeclContext() {
   DeclContext *Ctx = this;
-  // Skip through transparent contexts, except inline namespaces.
-  while (Ctx->isTransparentContext() && !Ctx->isNamespace())
+  // Skip through transparent contexts.
+  while (Ctx->isTransparentContext())
     Ctx = Ctx->getParent();
   return Ctx;
 }
@@ -904,9 +907,9 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
   if (LookupPtr || !Recoverable || hasExternalVisibleStorage())
     makeDeclVisibleInContextImpl(D);
 
-  // If we are a transparent context, insert into our parent context,
-  // too. This operation is recursive.
-  if (isTransparentContext())
+  // If we are a transparent context or inline namespace, insert into our
+  // parent context, too. This operation is recursive.
+  if (isTransparentContext() || isInlineNamespace())
     getParent()->makeDeclVisibleInContext(D, Recoverable);
 }
 
