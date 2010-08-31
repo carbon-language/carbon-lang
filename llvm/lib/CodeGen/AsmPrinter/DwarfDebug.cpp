@@ -583,10 +583,15 @@ void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
-/// addVariableAddress - Add DW_AT_location attribute for a DbgVariable.
-void DwarfDebug::addVariableAddress(DbgVariable *&DV, DIE *Die,
-                                    unsigned Attribute,
-                                    const MachineLocation &Location) {
+/// addVariableAddress - Add DW_AT_location attribute for a DbgVariable based
+/// on provided frame index.
+void DwarfDebug::addVariableAddress(DbgVariable *&DV, DIE *Die, int64_t FI) {
+  MachineLocation Location;
+  unsigned FrameReg;
+  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+  int Offset = RI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+  Location.set(FrameReg, Offset);
+
   if (DV->variableHasComplexAddress())
     addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
   else if (DV->isBlockByrefVariable())
@@ -1653,15 +1658,10 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   }
 
   // .. else use frame index, if available.
-  MachineLocation Location;
-  unsigned FrameReg;
-  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   int FI = 0;
-  if (findVariableFrameIndex(DV, &FI)) {
-    int Offset = RI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-    Location.set(FrameReg, Offset);
-    addVariableAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-  }
+  if (findVariableFrameIndex(DV, &FI))
+    addVariableAddress(DV, VariableDie, FI);
+  
   DV->setDIE(VariableDie);
   return VariableDie;
 
