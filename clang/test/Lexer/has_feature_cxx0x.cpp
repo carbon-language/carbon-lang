@@ -99,3 +99,13 @@ int no_variadic_templates();
 
 // CHECK-0X: no_variadic_templates
 // CHECK-NO-0X: no_variadic_templates
+
+
+#if __has_feature(cxx_inline_namespaces)
+int inline_namespaces();
+#else
+int no_inline_namespaces();
+#endif
+
+// CHECK-0X: inline_namespaces
+// CHECK-NO-0X: inline_namespaces

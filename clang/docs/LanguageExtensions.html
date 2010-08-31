@@ -40,6 +40,7 @@ td {
   <li><a href="#cxx_static_assert">C++0x <tt>static_assert()</tt></a></li>
   <li><a href="#cxx_auto_type">C++0x type inference</a></li>
   <li><a href="#cxx_variadic_templates">C++0x variadic templates</a></li>
+  <li><a href="#cxx_inline_namespaces">C++0x inline namespaces</a></li>
   </ul>
 <li><a href="#blocks">Blocks</a></li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
@@ -301,32 +302,34 @@ not yet implemented will be noted.</p>
 <h3 id="cxx_attributes">C++0x attributes</h3>
 
 <p>Use <tt>__has_feature(cxx_attributes)</tt> to determine if support for
-attribute parsing with C++0x's square bracket notation is enabled.
+attribute parsing with C++0x's square bracket notation is enabled.</p>
 
 <h3 id="cxx_deleted_functions">C++0x deleted functions</tt></h3>
 
 <p>Use <tt>__has_feature(cxx_deleted_functions)</tt> to determine if support for
-deleted function definitions (with <tt>= delete</tt>) is enabled.
+deleted function definitions (with <tt>= delete</tt>) is enabled.</p>
 
 <h3 id="cxx_concepts">C++ TR concepts</h3>
 
 <p>Use <tt>__has_feature(cxx_concepts)</tt> to determine if support for
-concepts is enabled. clang does not currently implement this feature.
+concepts is enabled. clang does not currently implement this feature.</p>
 
 <h3 id="cxx_lambdas">C++0x lambdas</h3>
 
 <p>Use <tt>__has_feature(cxx_lambdas)</tt> to determine if support for
-lambdas is enabled. clang does not currently implement this feature.
+lambdas is enabled. clang does not currently implement this feature.</p>
 
 <h3 id="cxx_nullptr">C++0x <tt>nullptr</tt></h3>
 
 <p>Use <tt>__has_feature(cxx_nullptr)</tt> to determine if support for
-<tt>nullptr</tt> is enabled. clang does not yet fully implement this feature.
+<tt>nullptr</tt> is enabled. clang does not yet fully implement this
+feature.</p>
 
 <h3 id="cxx_rvalue_references">C++0x rvalue references</tt></h3>
 
 <p>Use <tt>__has_feature(cxx_rvalue_references)</tt> to determine if support for
-rvalue references is enabled. clang does not yet fully implement this feature.
+rvalue references is enabled. clang does not yet fully implement this
+feature.</p>
 
 <h3 id="cxx_static_assert">C++0x <tt>static_assert()</tt></h3>
 
@@ -339,11 +342,16 @@ compile-time assertions using <tt>static_assert</tt> is enabled.</p>
 is supported using the <tt>auto</tt> specifier. If this is disabled,
 <tt>auto</tt> will instead be a storage class specifier, as in C or C++98.</p>
 
-<h3 id="cxx_variadic_templates">C++0x variadic templates</tt></h3>
+<h3 id="cxx_variadic_templates">C++0x variadic templates</h3>
 
 <p>Use <tt>__has_feature(cxx_variadic_templates)</tt> to determine if support
 for templates taking any number of arguments with the ellipsis notation is
 enabled. clang does not yet fully implement this feature.</p>
+
+<h3 id="cxx_inline_namespaces">C++0x inline namespaces</h3>
+
+<p>Use <tt>__has_feature(cxx_inline_namespaces)</tt> to determine if support for
+inline namespaces is enabled.</p>
 
 <!-- ======================================================================= -->
 <h2 id="blocks">Blocks</h2>
