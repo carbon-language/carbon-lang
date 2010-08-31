@@ -30,4 +30,12 @@ void pr_7968()
   int var2 = 0X1111111e+1;
   int var3 = 0xe+1;
   int var4 = 0XE+1;
+
+  int var5=    0\
+x1234e+1;
+
+  int var6=
+  /*expected-warning {{backslash and newline separated by space}} */    0\       
+x1234e+1;                      
 }
+

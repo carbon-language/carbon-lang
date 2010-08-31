@@ -921,13 +921,14 @@ FinishIdentifier:
 }
 
 /// isHexaLiteral - Return true if Start points to a hex constant.
-/// FIXME: This isn't correct, it will mislex:
-///     0\       <- escaped newline.
-///     x1234e+1
 /// in microsoft mode (where this is supposed to be several different tokens).
-static inline bool isHexaLiteral(const char *Start, const char *End) {
-  return ((End - Start > 2) && Start[0] == '0' && 
-          (Start[1] == 'x' || Start[1] == 'X'));
+static bool isHexaLiteral(const char *Start, const LangOptions &Features) {
+  unsigned Size;
+  char C1 = Lexer::getCharAndSizeNoWarn(Start, Size, Features);
+  if (C1 != '0')
+    return false;
+  char C2 = Lexer::getCharAndSizeNoWarn(Start + Size, Size, Features);
+  return (C2 == 'x' || C2 == 'X');
 }
 
 /// LexNumericConstant - Lex the remainder of a integer or floating point
@@ -947,7 +948,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   if ((C == '-' || C == '+') && (PrevCh == 'E' || PrevCh == 'e')) {
     // If we are in Microsoft mode, don't continue if the constant is hex.
     // For example, MSVC will accept the following as 3 tokens: 0x1234567e+1
-    if (!Features.Microsoft || !isHexaLiteral(BufferPtr, CurPtr))
+    if (!Features.Microsoft || !isHexaLiteral(BufferPtr, Features))
       return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
   }
 
