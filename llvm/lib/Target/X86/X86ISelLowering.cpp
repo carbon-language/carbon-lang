@@ -2586,12 +2586,24 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::SHUFPS:
   case X86ISD::MOVLHPS:
   case X86ISD::MOVHLPS:
+  case X86ISD::MOVSHDUP:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
     return true;
   }
   return false;
+}
+
+static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
+                                               SDValue V1, SelectionDAG &DAG) {
+  switch(Opc) {
+  default: llvm_unreachable("Unknown x86 shuffle node");
+  case X86ISD::MOVSHDUP:
+    return DAG.getNode(Opc, dl, VT, V1);
+  }
+
+  return SDValue();
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
@@ -5053,6 +5065,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool V1IsSplat = false;
   bool V2IsSplat = false;
   bool HasSSE2 = Subtarget->hasSSE2() || Subtarget->hasAVX();
+  bool HasSSE3 = Subtarget->hasSSE3() || Subtarget->hasAVX();
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
@@ -5152,8 +5165,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     if (X86::isMOVHLPSMask(SVOp))
       return getMOVHighToLow(Op, dl, DAG);
 
-    if (X86::isMOVSHDUPMask(SVOp) ||
-        X86::isMOVSLDUPMask(SVOp) ||
+    if (X86::isMOVSHDUPMask(SVOp) && HasSSE3 && V2IsUndef && NumElems == 4)
+      return getTargetShuffleNode(X86ISD::MOVSHDUP, dl, VT, V1, DAG);
+
+    if (X86::isMOVSLDUPMask(SVOp) ||
         X86::isMOVHLPSMask(SVOp) ||
         X86::isMOVLPMask(SVOp))
       return Op;
