@@ -77,9 +77,6 @@ public:
   /// anywhere in the function.
   DenseMap<const AllocaInst*, int> StaticAllocaMap;
 
-  /// ByValArgFrameIndexMap - Keep track of frame indices for byval arguments.
-  DenseMap<const Argument*, int> ByValArgFrameIndexMap;
-
   /// ArgDbgValues - A list of DBG_VALUE instructions created during isel for
   /// function arguments that are inserted after scheduling is completed.
   SmallVector<MachineInstr*, 8> ArgDbgValues;
@@ -141,13 +138,6 @@ public:
     assert(R == 0 && "Already initialized this value register!");
     return R = CreateRegs(V->getType());
   }
-
-  /// setByValArgumentFrameIndex - Record frame index for the byval
-  /// argument.
-  void setByValArgumentFrameIndex(const Argument *A, int FI);
-  
-  /// getByValArgumentFrameIndex - Get frame index for the byval argument.
-  int getByValArgumentFrameIndex(const Argument *A);
 };
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
