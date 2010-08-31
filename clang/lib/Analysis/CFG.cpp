@@ -370,6 +370,7 @@ tryAgain:
       return VisitBreakStmt(cast<BreakStmt>(S));
 
     case Stmt::CallExprClass:
+    case Stmt::CXXOperatorCallExprClass: // FIXME: handle specially?
       return VisitCallExpr(cast<CallExpr>(S), asc);
 
     case Stmt::CaseStmtClass:
@@ -394,6 +395,12 @@ tryAgain:
       // FIXME: Handle temporaries.  For now, just visit the subexpression
       // so we don't artificially create extra blocks.
       return Visit(cast<CXXExprWithTemporaries>(S)->getSubExpr());    
+    }
+
+    case Stmt::CXXBindTemporaryExprClass: {
+      // FIXME: Handle temporary binding.  For now, just visit the subexpression
+      // so we don't artificially create extra blocks.
+      return Visit(cast<CXXBindTemporaryExpr>(S)->getSubExpr());    
     }
 
     case Stmt::CXXMemberCallExprClass:
