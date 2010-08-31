@@ -290,6 +290,8 @@ public:
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
   bool VisitTagDecl(TagDecl *D);
+  bool VisitClassTemplatePartialSpecializationDecl(
+                                     ClassTemplatePartialSpecializationDecl *D);
   bool VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
   bool VisitEnumConstantDecl(EnumConstantDecl *D);
   bool VisitDeclaratorDecl(DeclaratorDecl *DD);
@@ -598,6 +600,22 @@ bool CursorVisitor::VisitTypedefDecl(TypedefDecl *D) {
 
 bool CursorVisitor::VisitTagDecl(TagDecl *D) {
   return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitClassTemplatePartialSpecializationDecl(
+                                   ClassTemplatePartialSpecializationDecl *D) {
+  // FIXME: Visit the "outer" template parameter lists on the TagDecl
+  // before visiting these template parameters.
+  if (VisitTemplateParameters(D->getTemplateParameters()))
+    return true;
+
+  // Visit the partial specialization arguments.
+  const TemplateArgumentLoc *TemplateArgs = D->getTemplateArgsAsWritten();
+  for (unsigned I = 0, N = D->getNumTemplateArgsAsWritten(); I != N; ++I)
+    if (VisitTemplateArgumentLoc(TemplateArgs[I]))
+      return true;
+  
+  return VisitCXXRecordDecl(D);
 }
 
 bool CursorVisitor::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
@@ -2144,6 +2162,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("FunctionTemplate");
   case CXCursor_ClassTemplate:
     return createCXString("ClassTemplate");
+  case CXCursor_ClassTemplatePartialSpecialization:
+    return createCXString("ClassTemplatePartialSpecialization");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

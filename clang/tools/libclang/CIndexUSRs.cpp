@@ -366,21 +366,33 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   D = D->getCanonicalDecl();
   VisitDeclContext(D->getDeclContext());
 
-  bool IsTemplate = false;
-  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D))
+  bool AlreadyStarted = false;
+  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D)) {
     if (ClassTemplateDecl *ClassTmpl = CXXRecord->getDescribedClassTemplate()) {
-      IsTemplate = true;
+      AlreadyStarted = true;
       
       switch (D->getTagKind()) {
-        case TTK_Struct: Out << "@ST"; break;
-        case TTK_Class:  Out << "@CT"; break;
-        case TTK_Union:  Out << "@UT"; break;
-        case TTK_Enum: llvm_unreachable("enum template");
+      case TTK_Struct: Out << "@ST"; break;
+      case TTK_Class:  Out << "@CT"; break;
+      case TTK_Union:  Out << "@UT"; break;
+      case TTK_Enum: llvm_unreachable("enum template"); break;
       }
       VisitTemplateParameterList(ClassTmpl->getTemplateParameters());
+    } else if (ClassTemplatePartialSpecializationDecl *PartialSpec
+                = dyn_cast<ClassTemplatePartialSpecializationDecl>(CXXRecord)) {
+      AlreadyStarted = true;
+      
+      switch (D->getTagKind()) {
+      case TTK_Struct: Out << "@SP"; break;
+      case TTK_Class:  Out << "@CP"; break;
+      case TTK_Union:  Out << "@UP"; break;
+      case TTK_Enum: llvm_unreachable("enum partial specialization"); break;
+      }      
+      VisitTemplateParameterList(PartialSpec->getTemplateParameters());
     }
+  }
   
-  if (!IsTemplate) {
+  if (!AlreadyStarted) {
     switch (D->getTagKind()) {
       case TTK_Struct: Out << "@S"; break;
       case TTK_Class:  Out << "@C"; break;

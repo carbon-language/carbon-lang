@@ -65,6 +65,8 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::TemplateTemplateParm:return CXCursor_TemplateTemplateParameter;
     case Decl::FunctionTemplate:   return CXCursor_FunctionTemplate;
     case Decl::ClassTemplate:      return CXCursor_ClassTemplate;
+    case Decl::ClassTemplatePartialSpecialization:
+      return CXCursor_ClassTemplatePartialSpecialization;
       
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {

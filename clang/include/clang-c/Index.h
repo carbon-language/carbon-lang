@@ -992,9 +992,11 @@ enum CXCursorKind {
   CXCursor_FunctionTemplate              = 30,
   /** \brief A C++ class template. */
   CXCursor_ClassTemplate                 = 31,
+  /** \brief A C++ class template partial specialization. */
+  CXCursor_ClassTemplatePartialSpecialization = 32,
   
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_ClassTemplate,
+  CXCursor_LastDecl               = CXCursor_ClassTemplatePartialSpecialization,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */
