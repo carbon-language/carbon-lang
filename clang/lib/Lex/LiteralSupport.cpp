@@ -170,6 +170,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              char *&ResultBuf, bool &HadError,
                              SourceLocation Loc, Preprocessor &PP,
+                             bool wide,
                              bool Complain) {
   // FIXME: Add a warning - UCN's are only valid in C++ & C99.
   // FIXME: Handle wide strings.
@@ -190,6 +191,7 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 
   UTF32 UcnVal = 0;
   unsigned short UcnLen = (ThisTokBuf[-1] == 'u' ? 4 : 8);
+  unsigned short UcnLenSave = UcnLen;
   for (; ThisTokBuf != ThisTokEnd && UcnLen; ++ThisTokBuf, UcnLen--) {
     int CharVal = HexDigitValue(ThisTokBuf[0]);
     if (CharVal == -1) break;
@@ -212,6 +214,16 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
     if (Complain)
       PP.Diag(Loc, diag::err_ucn_escape_invalid);
     HadError = 1;
+    return;
+  }
+  if (wide) {
+    assert(UcnLenSave == 4 && 
+           "ProcessUCNEscape - only ucn length of 4 supported");
+    // little endian assumed.
+    *ResultBuf++ = (UcnVal & 0x000000FF);
+    *ResultBuf++ = (UcnVal & 0x0000FF00) >> 8;
+    *ResultBuf++ = (UcnVal & 0x00FF0000) >> 16;
+    *ResultBuf++ = (UcnVal & 0xFF000000) >> 24;
     return;
   }
   // Now that we've parsed/checked the UCN, we convert from UTF32->UTF8.
@@ -830,12 +842,14 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     }
 
     const char *ThisTokEnd = ThisTokBuf+ThisTokLen-1;  // Skip end quote.
-
+    bool wide = false;
     // TODO: Input character set mapping support.
 
     // Skip L marker for wide strings.
-    if (ThisTokBuf[0] == 'L')
+    if (ThisTokBuf[0] == 'L') {
+      wide = true;
       ++ThisTokBuf;
+    }
 
     assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
     ++ThisTokBuf;
@@ -880,7 +894,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       // Is this a Universal Character Name escape?
       if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
         ProcessUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr,
-                         hadError, StringToks[i].getLocation(), PP, Complain);
+                         hadError, StringToks[i].getLocation(), PP, wide, 
+                         Complain);
         continue;
       }
       // Otherwise, this is a non-UCN escape character.  Process it.
