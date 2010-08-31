@@ -61,6 +61,7 @@ void ReturnUndefChecker::PreVisitReturnStmt(CheckerContext &C,
   EnhancedBugReport *report = 
     new EnhancedBugReport(*BT, BT->getDescription(), N);
 
+  report->addRange(RetE->getSourceRange());
   report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, RetE);
 
   C.EmitReport(report);
