@@ -114,7 +114,7 @@ def llvm_v4i8_ty       : LLVMType<v4i8>;     //  4 x i8
 def llvm_v8i8_ty       : LLVMType<v8i8>;     //  8 x i8
 def llvm_v16i8_ty      : LLVMType<v16i8>;    // 16 x i8
 def llvm_v32i8_ty      : LLVMType<v32i8>;    // 32 x i8
-def llvm_v2i16_ty      : LLVMType<v2i16>;    //  4 x i16
+def llvm_v2i16_ty      : LLVMType<v2i16>;    //  2 x i16
 def llvm_v4i16_ty      : LLVMType<v4i16>;    //  4 x i16
 def llvm_v8i16_ty      : LLVMType<v8i16>;    //  8 x i16
 def llvm_v16i16_ty     : LLVMType<v16i16>;   // 16 x i16
