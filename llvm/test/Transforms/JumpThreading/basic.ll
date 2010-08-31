@@ -452,3 +452,27 @@ right_ret:
 	ret i32 1
 }
 
+; PR5652
+; CHECK: @test15
+define i32 @test15(i32 %len) {
+entry:
+; CHECK: icmp ult i32 %len, 13
+  %tmp = icmp ult i32 %len, 13
+  br i1 %tmp, label %check, label %exit0
+
+exit0:
+  ret i32 0
+
+check:
+  %tmp9 = icmp ult i32 %len, 21
+  br i1 %tmp9, label %exit1, label %exit2
+
+exit2:
+; CHECK-NOT: ret i32 2
+  ret i32 2
+
+exit1:
+  ret i32 1
+; CHECK: }
+}
+
