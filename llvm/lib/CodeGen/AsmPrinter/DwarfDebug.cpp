@@ -1629,9 +1629,16 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     bool updated = false;
     // FIXME : Handle getNumOperands != 3
     if (DVInsn->getNumOperands() == 3) {
-      if (DVInsn->getOperand(0).isReg())
-        updated =
-          addRegisterAddress(VariableDie, DVLabel, DVInsn->getOperand(0));
+      if (DVInsn->getOperand(0).isReg()) {
+        const MachineOperand RegOp = DVInsn->getOperand(0);
+        const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
+        if (DVInsn->getOperand(1).isImm() &&
+            TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
+          addVariableAddress(DV, VariableDie, DVInsn->getOperand(1).getImm());
+          updated = true;
+        } else
+          updated = addRegisterAddress(VariableDie, DVLabel, RegOp);
+      }
       else if (DVInsn->getOperand(0).isImm())
         updated = addConstantValue(VariableDie, DVLabel, DVInsn->getOperand(0));
       else if (DVInsn->getOperand(0).isFPImm())

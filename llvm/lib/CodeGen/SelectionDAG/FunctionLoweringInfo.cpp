@@ -254,6 +254,29 @@ unsigned FunctionLoweringInfo::CreateRegs(const Type *Ty) {
   return FirstReg;
 }
 
+/// setByValArgumentFrameIndex - Record frame index for the byval
+/// argument. This overrides previous frame index entry for this argument,
+/// if any.
+void FunctionLoweringInfo::setByValArgumentFrameIndex(const Argument *A, 
+                                                      int FI) {
+  assert (A->hasByValAttr() && "Argument does not have byval attribute!");
+  ByValArgFrameIndexMap[A] = FI;
+}
+  
+/// getByValArgumentFrameIndex - Get frame index for the byval argument.
+/// This routine must be used after the argument's frame index is set.
+/// If the argument does not have any entry in the map then assertion 
+/// will be raised.
+int FunctionLoweringInfo::getByValArgumentFrameIndex(const Argument *A) {
+  assert (A->hasByValAttr() && "Argument does not have byval attribute!");
+  DenseMap<const Argument *, int>::iterator I = 
+    ByValArgFrameIndexMap.find(A);
+  assert (I != ByValArgFrameIndexMap.end() && 
+          "Argument does not have assigned frame index!");
+  return I->second;
+          
+}
+
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
 /// call, and add them to the specified machine basic block.
 void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
