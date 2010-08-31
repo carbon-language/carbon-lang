@@ -84,7 +84,15 @@ CXCursor MakeCursorTemplateRef(TemplateDecl *Template, SourceLocation Loc,
 /// \brief Unpack a TemplateRef cursor into the template it references and
 /// the location where the reference occurred.
 std::pair<TemplateDecl *, SourceLocation> getCursorTemplateRef(CXCursor C);
-  
+
+/// \brief Create a reference to a namespace or namespace alias at the given 
+/// location.
+CXCursor MakeCursorNamespaceRef(NamedDecl *NS, SourceLocation Loc, ASTUnit *TU);
+
+/// \brief Unpack a NamespaceRef cursor into the namespace or namespace alias
+/// it references and the location where the reference occurred.
+std::pair<NamedDecl *, SourceLocation> getCursorNamespaceRef(CXCursor C);
+
 /// \brief Create a CXX base specifier cursor.
 CXCursor MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU);
 

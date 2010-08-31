@@ -994,9 +994,10 @@ enum CXCursorKind {
   CXCursor_ClassTemplate                 = 31,
   /** \brief A C++ class template partial specialization. */
   CXCursor_ClassTemplatePartialSpecialization = 32,
-  
+  /** \brief A C++ namespace alias declaration. */
+  CXCursor_NamespaceAlias                = 33,
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl               = CXCursor_ClassTemplatePartialSpecialization,
+  CXCursor_LastDecl                      = CXCursor_NamespaceAlias,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */
@@ -1025,7 +1026,11 @@ enum CXCursorKind {
    * template parameter. 
    */
   CXCursor_TemplateRef                   = 45,
-  CXCursor_LastRef                       = CXCursor_TemplateRef,
+  /**
+   * \brief A reference to a namespace or namespace alias.
+   */
+  CXCursor_NamespaceRef                  = 46,
+  CXCursor_LastRef                       = CXCursor_NamespaceRef,
 
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,

@@ -65,6 +65,7 @@ public:
   void VisitFunctionDecl(FunctionDecl *D);
   void VisitNamedDecl(NamedDecl *D);
   void VisitNamespaceDecl(NamespaceDecl *D);
+  void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
   void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
   void VisitClassTemplateDecl(ClassTemplateDecl *D);
   void VisitObjCClassDecl(ObjCClassDecl *CD);
@@ -257,6 +258,11 @@ void USRGenerator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitTagDecl(D->getTemplatedDecl());
 }
 
+void USRGenerator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  VisitDeclContext(D->getDeclContext());
+  if (!IgnoreResults)
+    Out << "@NA@" << D->getName();  
+}
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Decl *container = cast<Decl>(D->getDeclContext());

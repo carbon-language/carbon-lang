@@ -10,7 +10,10 @@ namespace std {
   void g();
 }
 
-// FIXME: using directives, namespace aliases
+namespace std98 = std;
+namespace std0x = std98;
+
+// FIXME: using directives
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-namespaces.cpp:3:11: Namespace=std:3:11 (Definition) Extent=[3:11 - 7:2]
@@ -18,5 +21,8 @@ namespace std {
 // CHECK: load-namespaces.cpp:5:10: FunctionDecl=f:5:10 Extent=[5:10 - 5:13]
 // CHECK: load-namespaces.cpp:9:11: Namespace=std:9:11 (Definition) Extent=[9:11 - 11:2]
 // CHECK: load-namespaces.cpp:10:8: FunctionDecl=g:10:8 Extent=[10:8 - 10:11]
-
+// CHECK: load-namespaces.cpp:13:1: NamespaceAlias=std98:13:1 Extent=[13:1 - 13:10]
+// CHECK: load-namespaces.cpp:13:19: NamespaceRef=std:3:11 Extent=[13:19 - 13:22]
+// CHECK: load-namespaces.cpp:14:1: NamespaceAlias=std0x:14:1 Extent=[14:1 - 14:10]
+// CHECK: load-namespaces.cpp:14:19: NamespaceRef=std98:13:1 Extent=[14:19 - 14:24]
 

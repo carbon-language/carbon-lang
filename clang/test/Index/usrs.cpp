@@ -55,6 +55,8 @@ extern "C" {
   void rez(int a, int b);
 }
 
+namespace foo_alias = foo;
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:11 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -107,4 +109,4 @@ extern "C" {
 // CHECK: usrs.cpp c:@F@rez Extent=[55:8 - 55:25]
 // CHECK: usrs.cpp c:usrs.cpp@941@F@rez@a Extent=[55:12 - 55:17]
 // CHECK: usrs.cpp c:usrs.cpp@948@F@rez@b Extent=[55:19 - 55:24]
-
+// CHECK: usrs.cpp c:@NA@foo_alias

@@ -16,6 +16,7 @@
 #include "CXCursor.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -60,6 +61,7 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::Typedef:            return CXCursor_TypedefDecl;
     case Decl::Var:                return CXCursor_VarDecl;
     case Decl::Namespace:          return CXCursor_Namespace;
+    case Decl::NamespaceAlias:     return CXCursor_NamespaceAlias;
     case Decl::TemplateTypeParm:   return CXCursor_TemplateTypeParameter;
     case Decl::NonTypeTemplateParm:return CXCursor_NonTypeTemplateParameter;
     case Decl::TemplateTemplateParm:return CXCursor_TemplateTemplateParameter;
@@ -71,10 +73,10 @@ static CXCursorKind GetCursorKind(Decl *D) {
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {
-          case TTK_Struct: return CXCursor_StructDecl;
-          case TTK_Class:  return CXCursor_ClassDecl;
-          case TTK_Union:  return CXCursor_UnionDecl;
-          case TTK_Enum:   return CXCursor_EnumDecl;
+        case TTK_Struct: return CXCursor_StructDecl;
+        case TTK_Class:  return CXCursor_ClassDecl;
+        case TTK_Union:  return CXCursor_UnionDecl;
+        case TTK_Enum:   return CXCursor_EnumDecl;
         }
       }
 
@@ -325,6 +327,24 @@ std::pair<TemplateDecl *, SourceLocation>
 cxcursor::getCursorTemplateRef(CXCursor C) {
   assert(C.kind == CXCursor_TemplateRef);
   return std::make_pair(static_cast<TemplateDecl *>(C.data[0]),
+                        SourceLocation::getFromRawEncoding(
+                                       reinterpret_cast<uintptr_t>(C.data[1])));  
+}
+
+CXCursor cxcursor::MakeCursorNamespaceRef(NamedDecl *NS, SourceLocation Loc, 
+                                          ASTUnit *TU) {
+  
+  assert(NS && (isa<NamespaceDecl>(NS) || isa<NamespaceAliasDecl>(NS)) && TU &&
+         "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_NamespaceRef, { NS, RawLoc, TU } };
+  return C;    
+}
+
+std::pair<NamedDecl *, SourceLocation> 
+cxcursor::getCursorNamespaceRef(CXCursor C) {
+  assert(C.kind == CXCursor_NamespaceRef);
+  return std::make_pair(static_cast<NamedDecl *>(C.data[0]),
                         SourceLocation::getFromRawEncoding(
                                        reinterpret_cast<uintptr_t>(C.data[1])));  
 }

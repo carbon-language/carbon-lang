@@ -316,6 +316,7 @@ public:
   bool VisitObjCClassDecl(ObjCClassDecl *D);
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
   bool VisitNamespaceDecl(NamespaceDecl *D);
+  bool VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
  
   // Name visitor
   bool VisitDeclarationNameInfo(DeclarationNameInfo Name);
@@ -861,6 +862,13 @@ bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
 
 bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
   return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  // FIXME: Visit nested-name-specifier
+  
+  return Visit(MakeCursorNamespaceRef(D->getAliasedNamespace(), 
+                                      D->getTargetNameLoc(), TU));
 }
 
 bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
@@ -2053,9 +2061,16 @@ CXString clang_getCursorSpelling(CXCursor C) {
     }
     case CXCursor_TemplateRef: {
       TemplateDecl *Template = getCursorTemplateRef(C).first;
-      assert(Template && "Missing type decl");
+      assert(Template && "Missing template decl");
       
       return createCXString(Template->getNameAsString());
+    }
+        
+    case CXCursor_NamespaceRef: {
+      NamedDecl *NS = getCursorNamespaceRef(C).first;
+      assert(NS && "Missing namespace decl");
+      
+      return createCXString(NS->getNameAsString());
     }
 
     default:
@@ -2138,6 +2153,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("TypeRef");
   case CXCursor_TemplateRef:
       return createCXString("TemplateRef");
+  case CXCursor_NamespaceRef:
+    return createCXString("NamespaceRef");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
   case CXCursor_BlockExpr:
@@ -2200,6 +2217,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("ClassTemplate");
   case CXCursor_ClassTemplatePartialSpecialization:
     return createCXString("ClassTemplatePartialSpecialization");
+  case CXCursor_NamespaceAlias:
+    return createCXString("NamespaceAlias");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
@@ -2329,6 +2348,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
+    case CXCursor_NamespaceRef: {
+      std::pair<NamedDecl *, SourceLocation> P = getCursorNamespaceRef(C);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
+    }
+
     case CXCursor_CXXBaseSpecifier: {
       // FIXME: Figure out what location to return for a CXXBaseSpecifier.
       return clang_getNullLocation();
@@ -2390,6 +2414,9 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     case CXCursor_TemplateRef:
       return getCursorTemplateRef(C).second;
 
+    case CXCursor_NamespaceRef:
+      return getCursorNamespaceRef(C).second;
+        
     case CXCursor_CXXBaseSpecifier:
       // FIXME: Figure out what source range to use for a CXBaseSpecifier.
       return SourceRange();
@@ -2469,6 +2496,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 
     case CXCursor_TemplateRef:
       return MakeCXCursor(getCursorTemplateRef(C).first, CXXUnit);
+
+    case CXCursor_NamespaceRef:
+      return MakeCXCursor(getCursorNamespaceRef(C).first, CXXUnit);
 
     case CXCursor_CXXBaseSpecifier: {
       CXXBaseSpecifier *B = cxcursor::getCursorCXXBaseSpecifier(C);
