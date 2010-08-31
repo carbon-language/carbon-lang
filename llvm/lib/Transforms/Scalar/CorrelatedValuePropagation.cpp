@@ -102,7 +102,7 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   
   bool Changed = false;
   
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
       Instruction *II = BI++;
       if (SelectInst *SI = dyn_cast<SelectInst>(II))
@@ -110,10 +110,9 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
       else if (PHINode *P = dyn_cast<PHINode>(II))
         Changed |= processPHI(P);
     }
-  
-  if (Changed)
-    for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-      SimplifyInstructionsInBlock(FI);
+    
+    SimplifyInstructionsInBlock(FI);
+  }
   
   return Changed;
 }
