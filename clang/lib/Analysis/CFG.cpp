@@ -2111,7 +2111,6 @@ public:
 
 static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
                        const CFGElement &E) {
-  Stmt *Terminator = E;
 
   if (E.asStartScope()) {
     OS << "start scope\n";
@@ -2122,9 +2121,11 @@ static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     return;
   }
 
+  Stmt *S = E;
+  
   if (Helper) {
     // special printing for statement-expressions.
-    if (StmtExpr* SE = dyn_cast<StmtExpr>(Terminator)) {
+    if (StmtExpr* SE = dyn_cast<StmtExpr>(S)) {
       CompoundStmt* Sub = SE->getSubStmt();
 
       if (Sub->child_begin() != Sub->child_end()) {
@@ -2136,7 +2137,7 @@ static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     }
 
     // special printing for comma expressions.
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(Terminator)) {
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
       if (B->getOpcode() == BO_Comma) {
         OS << "... , ";
         Helper->handledStmt(B->getRHS(),OS);
@@ -2146,10 +2147,19 @@ static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     }
   }
 
-  Terminator->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
+  S->printPretty(OS, Helper, PrintingPolicy(Helper->getLangOpts()));
+  
+  if (isa<CXXOperatorCallExpr>(S)) {
+    OS << " (OperatorCall)";    
+  }
+  else if (isa<CXXBindTemporaryExpr>(S)) {
+    OS << " (BindTemporary)";    
+  }
+
 
   // Expressions need a newline.
-  if (isa<Expr>(Terminator)) OS << '\n';
+  if (isa<Expr>(S))
+    OS << '\n';
 }
 
 static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
