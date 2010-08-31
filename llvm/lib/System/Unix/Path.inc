@@ -282,7 +282,7 @@ Path::GetCurrentDirectory() {
   return Path(pathname);
 }
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined (__NetBSD__)
 static int
 test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
     const char *dir, const char *bin)
@@ -334,7 +334,7 @@ getprogpath(char ret[PATH_MAX], const char *bin)
   free(pv);
   return (NULL);
 }
-#endif // __FreeBSD__
+#endif // __FreeBSD__ || __NetBSD__
 
 /// GetMainExecutable - Return the path to the main executable, given the
 /// value of argv[0] from program startup.
@@ -350,7 +350,7 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
     if (realpath(exe_path, link_path))
       return Path(std::string(link_path));
   }
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined (__NetBSD__)
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
