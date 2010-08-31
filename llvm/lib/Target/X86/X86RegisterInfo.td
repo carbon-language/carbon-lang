@@ -833,4 +833,15 @@ def VR256 : RegisterClass<"X86", [v32i8, v8i32, v4i64, v8f32, v4f64], 256,
 // Status flags registers.
 def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]> {
   let CopyCost = -1;  // Don't allow copying of status registers.
+
+  // EFLAGS is not allocatable.
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    CCRClass::iterator
+    CCRClass::allocation_order_end(const MachineFunction &MF) const {
+      return allocation_order_begin(MF);
+    }
+  }];
 }
