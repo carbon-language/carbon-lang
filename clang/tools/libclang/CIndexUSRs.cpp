@@ -66,6 +66,7 @@ public:
   void VisitNamedDecl(NamedDecl *D);
   void VisitNamespaceDecl(NamespaceDecl *D);
   void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
+  void VisitClassTemplateDecl(ClassTemplateDecl *D);
   void VisitObjCClassDecl(ObjCClassDecl *CD);
   void VisitObjCContainerDecl(ObjCContainerDecl *CD);
   void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *P);
@@ -252,6 +253,11 @@ void USRGenerator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   VisitFunctionDecl(D->getTemplatedDecl());
 }
 
+void USRGenerator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  VisitTagDecl(D->getTemplatedDecl());
+}
+
+
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Decl *container = cast<Decl>(D->getDeclContext());
   
@@ -360,13 +366,29 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   D = D->getCanonicalDecl();
   VisitDeclContext(D->getDeclContext());
 
-  switch (D->getTagKind()) {
-    case TTK_Struct: Out << "@S"; break;
-    case TTK_Class:  Out << "@C"; break;
-    case TTK_Union:  Out << "@U"; break;
-    case TTK_Enum:   Out << "@E"; break;
+  bool IsTemplate = false;
+  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D))
+    if (ClassTemplateDecl *ClassTmpl = CXXRecord->getDescribedClassTemplate()) {
+      IsTemplate = true;
+      
+      switch (D->getTagKind()) {
+        case TTK_Struct: Out << "@ST"; break;
+        case TTK_Class:  Out << "@CT"; break;
+        case TTK_Union:  Out << "@UT"; break;
+        case TTK_Enum: llvm_unreachable("enum template");
+      }
+      VisitTemplateParameterList(ClassTmpl->getTemplateParameters());
+    }
+  
+  if (!IsTemplate) {
+    switch (D->getTagKind()) {
+      case TTK_Struct: Out << "@S"; break;
+      case TTK_Class:  Out << "@C"; break;
+      case TTK_Union:  Out << "@U"; break;
+      case TTK_Enum:   Out << "@E"; break;
+    }
   }
-
+  
   Out << '@';
   Out.flush();
   assert(Buf.size() > 0);

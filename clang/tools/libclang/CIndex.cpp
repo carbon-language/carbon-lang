@@ -297,6 +297,7 @@ public:
   bool VisitFieldDecl(FieldDecl *D);
   bool VisitVarDecl(VarDecl *);
   bool VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
+  bool VisitClassTemplateDecl(ClassTemplateDecl *D);
   bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
   bool VisitObjCContainerDecl(ObjCContainerDecl *D);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
@@ -681,6 +682,15 @@ bool CursorVisitor::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     return true;
   
   return VisitFunctionDecl(D->getTemplatedDecl());
+}
+
+bool CursorVisitor::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  // FIXME: Visit the "outer" template parameter lists on the TagDecl
+  // before visiting these template parameters.
+  if (VisitTemplateParameters(D->getTemplateParameters()))
+    return true;
+  
+  return VisitCXXRecordDecl(D->getTemplatedDecl());
 }
 
 bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
@@ -2132,6 +2142,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("TemplateTemplateParameter");
   case CXCursor_FunctionTemplate:
     return createCXString("FunctionTemplate");
+  case CXCursor_ClassTemplate:
+    return createCXString("ClassTemplate");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
