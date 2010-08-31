@@ -312,8 +312,11 @@ public:
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
   bool VisitNamespaceDecl(NamespaceDecl *D);
 
+  // Name visitor
+  bool VisitDeclarationNameInfo(DeclarationNameInfo Name);
+  
   // Type visitors
-  // FIXME: QualifiedTypeLoc doesn't provide any location information
+  bool VisitQualifiedTypeLoc(QualifiedTypeLoc TL);
   bool VisitBuiltinTypeLoc(BuiltinTypeLoc TL);
   bool VisitTypedefTypeLoc(TypedefTypeLoc TL);
   bool VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL);
@@ -327,7 +330,7 @@ public:
   bool VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL);
   bool VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL);
   bool VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL);
-  bool VisitFunctionTypeLoc(FunctionTypeLoc TL);
+  bool VisitFunctionTypeLoc(FunctionTypeLoc TL, bool SkipResultType = false);
   bool VisitArrayTypeLoc(ArrayTypeLoc TL);
   // FIXME: Implement for TemplateSpecializationTypeLoc
   // FIXME: Implement visitors here when the unimplemented TypeLocs get
@@ -605,9 +608,34 @@ bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 }
 
 bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
-  if (VisitDeclaratorDecl(ND))
-    return true;
-
+  if (TypeSourceInfo *TSInfo = ND->getTypeSourceInfo()) {
+    // Visit the function declaration's syntactic components in the order
+    // written. This requires a bit of work.
+    TypeLoc TL = TSInfo->getTypeLoc();
+    FunctionTypeLoc *FTL = dyn_cast<FunctionTypeLoc>(&TL);
+    
+    // If we have a function declared directly (without the use of a typedef),
+    // visit just the return type. Otherwise, just visit the function's type
+    // now.
+    if ((FTL && !isa<CXXConversionDecl>(ND) && Visit(FTL->getResultLoc())) ||
+        (!FTL && Visit(TL)))
+      return true;
+    
+    // FIXME: Visit the nested-name-specifier, if present.
+    
+    // Visit the declaration name.
+    if (VisitDeclarationNameInfo(ND->getNameInfo()))
+      return true;
+    
+    // FIXME: Visit explicitly-specified template arguments!
+    
+    // Visit the function parameters, if we have a function type.
+    if (FTL && VisitFunctionTypeLoc(*FTL, true))
+      return true;
+    
+    // FIXME: Attributes?
+  }
+  
   if (ND->isThisDeclarationADefinition() &&
       Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
     return true;
@@ -786,8 +814,37 @@ bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
   return VisitDeclContext(D);
 }
 
+bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
+  switch (Name.getName().getNameKind()) {
+  case clang::DeclarationName::Identifier:
+  case clang::DeclarationName::CXXLiteralOperatorName:
+  case clang::DeclarationName::CXXOperatorName:
+  case clang::DeclarationName::CXXUsingDirective:
+    return false;
+      
+  case clang::DeclarationName::CXXConstructorName:
+  case clang::DeclarationName::CXXDestructorName:
+  case clang::DeclarationName::CXXConversionFunctionName:
+    if (TypeSourceInfo *TSInfo = Name.getNamedTypeInfo())
+      return Visit(TSInfo->getTypeLoc());
+    return false;
+
+  case clang::DeclarationName::ObjCZeroArgSelector:
+  case clang::DeclarationName::ObjCOneArgSelector:
+  case clang::DeclarationName::ObjCMultiArgSelector:
+    // FIXME: Per-identifier location info?
+    return false;
+  }
+  
+  return false;
+}
+
 bool CursorVisitor::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
+  return Visit(TL.getUnqualifiedLoc());
 }
 
 bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
@@ -905,8 +962,9 @@ bool CursorVisitor::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
   return Visit(TL.getPointeeLoc());
 }
 
-bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
-  if (Visit(TL.getResultLoc()))
+bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL, 
+                                         bool SkipResultType) {
+  if (!SkipResultType && Visit(TL.getResultLoc()))
     return true;
 
   for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
@@ -1973,6 +2031,12 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("LinkageSpec");
   case CXCursor_CXXBaseSpecifier:
     return createCXString("C++ base class specifier");  
+  case CXCursor_Constructor:
+    return createCXString("CXXConstructor");
+  case CXCursor_Destructor:
+    return createCXString("CXXDestructor");
+  case CXCursor_ConversionFunction:
+    return createCXString("CXXConversion");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

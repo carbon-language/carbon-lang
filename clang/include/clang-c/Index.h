@@ -976,9 +976,14 @@ enum CXCursorKind {
   CXCursor_Namespace                     = 22,
   /** \brief A linkage specification, e.g. 'extern "C"'. */
   CXCursor_LinkageSpec                   = 23,
-
+  /** \brief A C++ constructor. */
+  CXCursor_Constructor                   = 24,
+  /** \brief A C++ destructor. */
+  CXCursor_Destructor                    = 25,
+  /** \brief A C++ conversion function. */
+  CXCursor_ConversionFunction            = 26,
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_LinkageSpec,
+  CXCursor_LastDecl                      = CXCursor_ConversionFunction,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */
