@@ -100,19 +100,25 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
 bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   LVI = &getAnalysis<LazyValueInfo>();
   
-  bool Changed = false;
+  bool FnChanged = false;
   
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    bool BBChanged = false;
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
       Instruction *II = BI++;
       if (SelectInst *SI = dyn_cast<SelectInst>(II))
-        Changed |= processSelect(SI);
+        BBChanged |= processSelect(SI);
       else if (PHINode *P = dyn_cast<PHINode>(II))
-        Changed |= processPHI(P);
+        BBChanged |= processPHI(P);
     }
     
-    SimplifyInstructionsInBlock(FI);
+    // Propagating correlated values might leave cruft around.
+    // Try to clean it up before we continue.
+    if (BBChanged)
+      SimplifyInstructionsInBlock(FI);
+    
+    FnChanged |= BBChanged;
   }
   
-  return Changed;
+  return FnChanged;
 }
