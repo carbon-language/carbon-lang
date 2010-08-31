@@ -3332,16 +3332,11 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // LLVM IR canonical form means we need only traverse the left operands.
     SmallVector<const SCEV *, 4> AddOps;
     AddOps.push_back(getSCEV(U->getOperand(1)));
-    for (Value *Op = U->getOperand(0); ; Op = U->getOperand(0)) {
-      unsigned Opcode = Op->getValueID() - Value::InstructionVal;
-      if (Opcode != Instruction::Add && Opcode != Instruction::Sub)
-        break;
+    for (Value *Op = U->getOperand(0);
+         Op->getValueID() == Instruction::Add + Value::InstructionVal;
+         Op = U->getOperand(0)) {
       U = cast<Operator>(Op);
-      const SCEV *Op1 = getSCEV(U->getOperand(1));
-      if (Opcode == Instruction::Sub)
-        AddOps.push_back(getNegativeSCEV(Op1));
-      else
-        AddOps.push_back(Op1);
+      AddOps.push_back(getSCEV(U->getOperand(1)));
     }
     AddOps.push_back(getSCEV(U->getOperand(0)));
     return getAddExpr(AddOps);
