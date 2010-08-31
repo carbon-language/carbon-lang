@@ -1480,7 +1480,11 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   if (!AFI->isThumbFunction() || !AFI->isThumb1OnlyFunction())
     FPOffset -= 80;
   // Estimate an offset from the stack pointer.
+  // The incoming offset is relating to the SP at the start of the function,
+  // but when we access the local it'll be relative to the SP after local
+  // allocation, so adjust our SP-relative offset by that allocation size.
   Offset = -Offset;
+  Offset += MFI->getLocalFrameSize();
   // Assume that we'll have at least some spill slots allocated.
   // FIXME: This is a total SWAG number. We should run some statistics
   //        and pick a real one.
