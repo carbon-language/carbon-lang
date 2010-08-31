@@ -2585,6 +2585,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::SHUFPD:
   case X86ISD::SHUFPS:
   case X86ISD::MOVLHPS:
+  case X86ISD::MOVHLPS:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
@@ -2624,6 +2625,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::MOVLHPS:
   case X86ISD::MOVLHPD:
+  case X86ISD::MOVHLPS:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::PUNPCKLDQ:
@@ -5021,6 +5023,22 @@ SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
   return getTargetShuffleNode(X86ISD::MOVLHPS, dl, VT, V1, V2, DAG);
 }
 
+static
+SDValue getMOVHighToLow(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG) {
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  EVT VT = Op.getValueType();
+
+  assert((VT == MVT::v4i32 || VT == MVT::v4f32) &&
+         "unsupported shuffle type");
+
+  if (V2.getOpcode() == ISD::UNDEF)
+    V2 = V1;
+
+  // v4i32 or v4f32
+  return getTargetShuffleNode(X86ISD::MOVHLPS, dl, VT, V1, V2, DAG);
+}
+
 SDValue
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
@@ -5130,6 +5148,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (!isMMX) {
     if (X86::isMOVLHPSMask(SVOp) && !X86::isUNPCKLMask(SVOp))
       return getMOVLowToHigh(Op, dl, DAG, HasSSE2);
+
+    if (X86::isMOVHLPSMask(SVOp))
+      return getMOVHighToLow(Op, dl, DAG);
 
     if (X86::isMOVSHDUPMask(SVOp) ||
         X86::isMOVSLDUPMask(SVOp) ||
