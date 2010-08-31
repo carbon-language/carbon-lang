@@ -179,6 +179,7 @@
 		BF9FEE351225E8B1003A8B71 /* MicrosoftCXXABI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE341225E8B1003A8B71 /* MicrosoftCXXABI.cpp */; };
 		BF9FEE381225E925003A8B71 /* BoostConAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE371225E925003A8B71 /* BoostConAction.cpp */; };
 		BF9FEE521226FE9F003A8B71 /* ParseAST.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEE511226FE9F003A8B71 /* ParseAST.cpp */; };
+		BF9FEEF2122D8068003A8B71 /* PreprocessingRecord.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEEF1122D8068003A8B71 /* PreprocessingRecord.cpp */; };
 		BFE2F6AB11DA955A0007EDC0 /* DeltaTree.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F67D11DA95590007EDC0 /* DeltaTree.d */; };
 		BFE2F6AC11DA955A0007EDC0 /* DeltaTree.o in Frameworks */ = {isa = PBXBuildFile; fileRef = BFE2F67E11DA955A0007EDC0 /* DeltaTree.o */; };
 		BFE2F6AD11DA955A0007EDC0 /* FixItRewriter.d in Sources */ = {isa = PBXBuildFile; fileRef = BFE2F67F11DA955A0007EDC0 /* FixItRewriter.d */; };
@@ -761,6 +762,7 @@
 		BF9FEE451225EA24003A8B71 /* DelayedDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DelayedDiagnostic.h; path = clang/Sema/DelayedDiagnostic.h; sourceTree = "<group>"; };
 		BF9FEE511226FE9F003A8B71 /* ParseAST.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParseAST.cpp; path = lib/Parse/ParseAST.cpp; sourceTree = "<group>"; };
 		BF9FEE531226FEC1003A8B71 /* RAIIObjectsForParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RAIIObjectsForParser.h; path = lib/Parse/RAIIObjectsForParser.h; sourceTree = "<group>"; };
+		BF9FEEF1122D8068003A8B71 /* PreprocessingRecord.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PreprocessingRecord.cpp; sourceTree = "<group>"; };
 		BFE2F67A11DA95590007EDC0 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		BFE2F67C11DA95590007EDC0 /* .dir */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .dir; sourceTree = "<group>"; };
 		BFE2F67D11DA95590007EDC0 /* DeltaTree.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = DeltaTree.d; sourceTree = "<group>"; };
@@ -1842,6 +1844,7 @@
 		DED7D78C0A5242E6003AD0FB /* Lex */ = {
 			isa = PBXGroup;
 			children = (
+				BF9FEEF1122D8068003A8B71 /* PreprocessingRecord.cpp */,
 				DE704DD10D1668A4009C7762 /* HeaderMap.cpp */,
 				DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */,
 				DED7D79E0A5242E6003AD0FB /* Lexer.cpp */,
@@ -2326,6 +2329,7 @@
 				BF9FEE351225E8B1003A8B71 /* MicrosoftCXXABI.cpp in Sources */,
 				BF9FEE381225E925003A8B71 /* BoostConAction.cpp in Sources */,
 				BF9FEE521226FE9F003A8B71 /* ParseAST.cpp in Sources */,
+				BF9FEEF2122D8068003A8B71 /* PreprocessingRecord.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
