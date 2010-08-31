@@ -940,7 +940,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     
     // Friend templates are visible in fairly strange ways.
     if (!CurContext->isDependentContext()) {
-      DeclContext *DC = SemanticContext->getLookupContext();
+      DeclContext *DC = SemanticContext->getRedeclContext();
       DC->makeDeclVisibleInContext(NewTemplate, /* Recoverable = */ false);
       if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
         PushOnScopeChains(NewTemplate, EnclosingScope,
@@ -3415,7 +3415,7 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   //   the explicit specialization was declared, or in a namespace
   //   that encloses the one in which the explicit specialization was
   //   declared.
-  if (S.CurContext->getLookupContext()->isFunctionOrMethod()) {
+  if (S.CurContext->getRedeclContext()->isFunctionOrMethod()) {
     S.Diag(Loc, diag::err_template_spec_decl_function_scope)
       << Specialized;
     return true;
@@ -4234,12 +4234,13 @@ Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
                                                    LookupResult &Previous) {
   // Remove anything from Previous that isn't a function template in
   // the correct context.
-  DeclContext *FDLookupContext = FD->getDeclContext()->getLookupContext();
+  DeclContext *FDLookupContext = FD->getDeclContext()->getRedeclContext();
   LookupResult::Filter F = Previous.makeFilter();
   while (F.hasNext()) {
     NamedDecl *D = F.next()->getUnderlyingDecl();
     if (!isa<FunctionTemplateDecl>(D) ||
-        !FDLookupContext->Equals(D->getDeclContext()->getLookupContext()))
+        !FDLookupContext->InEnclosingNamespaceSetOf(
+                              D->getDeclContext()->getRedeclContext()))
       F.erase();
   }
   F.done();
@@ -4278,14 +4279,15 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   // explicit function template specialization.
   UnresolvedSet<8> Candidates;
   
-  DeclContext *FDLookupContext = FD->getDeclContext()->getLookupContext();
+  DeclContext *FDLookupContext = FD->getDeclContext()->getRedeclContext();
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
          I != E; ++I) {
     NamedDecl *Ovl = (*I)->getUnderlyingDecl();
     if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(Ovl)) {
       // Only consider templates found within the same semantic lookup scope as 
       // FD.
-      if (!FDLookupContext->Equals(Ovl->getDeclContext()->getLookupContext()))
+      if (!FDLookupContext->InEnclosingNamespaceSetOf(
+                                Ovl->getDeclContext()->getRedeclContext()))
         continue;
       
       // C++ [temp.expl.spec]p11:
@@ -4564,9 +4566,8 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
 static bool CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
                                             SourceLocation InstLoc,
                                             bool WasQualifiedName) {
-  DeclContext *ExpectedContext
-    = D->getDeclContext()->getEnclosingNamespaceContext()->getLookupContext();
-  DeclContext *CurContext = S.CurContext->getLookupContext();
+  DeclContext *OrigContext= D->getDeclContext()->getEnclosingNamespaceContext();
+  DeclContext *CurContext = S.CurContext->getRedeclContext();
   
   if (CurContext->isRecord()) {
     S.Diag(InstLoc, diag::err_explicit_instantiation_in_class)
@@ -4580,8 +4581,8 @@ static bool CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
   //
   // This is DR275, which we do not retroactively apply to C++98/03.
   if (S.getLangOptions().CPlusPlus0x && 
-      !CurContext->Encloses(ExpectedContext)) {
-    if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ExpectedContext))
+      !CurContext->Encloses(OrigContext)) {
+    if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(OrigContext))
       S.Diag(InstLoc, 
              S.getLangOptions().CPlusPlus0x? 
                  diag::err_explicit_instantiation_out_of_scope
@@ -4596,7 +4597,7 @@ static bool CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
     S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
     return false;
   }
-  
+
   // C++0x [temp.explicit]p2:
   //   If the name declared in the explicit instantiation is an unqualified 
   //   name, the explicit instantiation shall appear in the namespace where 
@@ -4604,15 +4605,15 @@ static bool CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
   //   namespace from its enclosing namespace set.
   if (WasQualifiedName)
     return false;
-  
-  if (CurContext->Equals(ExpectedContext))
+
+  if (CurContext->InEnclosingNamespaceSetOf(OrigContext))
     return false;
-  
+
   S.Diag(InstLoc, 
          S.getLangOptions().CPlusPlus0x?
              diag::err_explicit_instantiation_unqualified_wrong_namespace
            : diag::warn_explicit_instantiation_unqualified_wrong_namespace_0x)
-    << D << ExpectedContext;
+    << D << OrigContext;
   S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
   return false;
 }

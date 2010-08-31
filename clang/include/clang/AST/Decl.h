@@ -267,6 +267,11 @@ public:
     return !getIdentifier();
   }
 
+  /// \brief Returns true if this is a C++0x inline namespace.
+  bool isInline() const {
+    return false;
+  }
+
   /// \brief Return the next extended namespace declaration or null if there
   /// is none.
   NamespaceDecl *getNextNamespace() { return NextNamespace; }
@@ -628,7 +633,7 @@ public:
     if (getKind() != Decl::Var)
       return false;
     if (const DeclContext *DC = getDeclContext())
-      return DC->getLookupContext()->isFunctionOrMethod();
+      return DC->getRedeclContext()->isFunctionOrMethod();
     return false;
   }
 
@@ -637,10 +642,8 @@ public:
   bool isFunctionOrMethodVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    if (const DeclContext *DC = getDeclContext())
-      return DC->getLookupContext()->isFunctionOrMethod() &&
-             DC->getLookupContext()->getDeclKind() != Decl::Block;
-    return false;
+    const DeclContext *DC = getDeclContext()->getRedeclContext();
+    return DC->isFunctionOrMethod() && DC->getDeclKind() != Decl::Block;
   }
 
   /// \brief Determines whether this is a static data member.
@@ -702,7 +705,7 @@ public:
     if (getKind() != Decl::Var)
       return false;
     
-    if (getDeclContext()->getLookupContext()->isFileContext())
+    if (getDeclContext()->getRedeclContext()->isFileContext())
       return true;
     
     if (isStaticDataMember())

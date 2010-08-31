@@ -501,13 +501,13 @@ bool ResultBuilder::CheckHiddenResult(Result &R, DeclContext *CurContext,
   if (!SemaRef.getLangOptions().CPlusPlus)
     return true;
   
-  DeclContext *HiddenCtx = R.Declaration->getDeclContext()->getLookupContext();
+  DeclContext *HiddenCtx = R.Declaration->getDeclContext()->getRedeclContext();
   
   // There is no way to qualify a name declared in a function or method.
   if (HiddenCtx->isFunctionOrMethod())
     return true;
   
-  if (HiddenCtx == Hiding->getDeclContext()->getLookupContext())
+  if (HiddenCtx == Hiding->getDeclContext()->getRedeclContext())
     return true;
   
   // We can refer to the result with the appropriate qualification. Do it.
@@ -786,7 +786,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   }
   else if (Filter == &ResultBuilder::IsMember && !R.Qualifier && InBaseClass &&
            isa<CXXRecordDecl>(R.Declaration->getDeclContext()
-                                                  ->getLookupContext()))
+                                                  ->getRedeclContext()))
     R.QualifierIsInformative = true;
 
   // If this result is supposed to have an informative qualifier, add one.

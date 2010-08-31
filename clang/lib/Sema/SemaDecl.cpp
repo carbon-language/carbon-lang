@@ -2288,7 +2288,7 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         IsLinkageLookup = true;
     } else if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_extern)
       IsLinkageLookup = true;
-    else if (CurContext->getLookupContext()->isTranslationUnit() &&
+    else if (CurContext->getRedeclContext()->isTranslationUnit() &&
              D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static)
       IsLinkageLookup = true;
 
@@ -2588,7 +2588,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // If this is the C FILE type, notify the AST context.
   if (IdentifierInfo *II = NewTD->getIdentifier())
     if (!NewTD->isInvalidDecl() &&
-        NewTD->getDeclContext()->getLookupContext()->isTranslationUnit()) {
+        NewTD->getDeclContext()->getRedeclContext()->isTranslationUnit()) {
       if (II->isStr("FILE"))
         Context.setFILEDecl(NewTD);
       else if (II->isStr("jmp_buf"))
@@ -2622,7 +2622,7 @@ static bool
 isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
                                 ASTContext &Context) {
   if (!PrevDecl)
-    return 0;
+    return false;
 
   if (!PrevDecl->hasLinkage())
     return false;
@@ -2634,7 +2634,7 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
     //   outside the innermost enclosing namespace scope, the block
     //   scope declaration declares that same entity and receives the
     //   linkage of the previous declaration.
-    DeclContext *OuterContext = DC->getLookupContext();
+    DeclContext *OuterContext = DC->getRedeclContext();
     if (!OuterContext->isFunctionOrMethod())
       // This rule only applies to block-scope declarations.
       return false;
@@ -2646,10 +2646,8 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
     
     // Find the innermost enclosing namespace for the new and
     // previous declarations.
-    while (!OuterContext->isFileContext())
-      OuterContext = OuterContext->getParent();
-    while (!PrevOuterContext->isFileContext())
-      PrevOuterContext = PrevOuterContext->getParent();
+    OuterContext = OuterContext->getEnclosingNamespaceContext();
+    PrevOuterContext = PrevOuterContext->getEnclosingNamespaceContext();
 
     // The previous declaration is in a different namespace, so it
     // isn't the same function.
@@ -3160,7 +3158,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   case DeclSpec::SCS_unspecified: SC = SC_None; break;
   case DeclSpec::SCS_extern:      SC = SC_Extern; break;
   case DeclSpec::SCS_static: {
-    if (CurContext->getLookupContext()->isFunctionOrMethod()) {
+    if (CurContext->getRedeclContext()->isFunctionOrMethod()) {
       // C99 6.7.1p5:
       //   The declaration of an identifier for a function that has
       //   block scope shall have no explicit storage-class specifier
@@ -5514,8 +5512,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         if (const TagType *TT = TD->getUnderlyingType()->getAs<TagType>()) {
           TagDecl *Tag = TT->getDecl();
           if (Tag->getDeclName() == Name &&
-              Tag->getDeclContext()->getLookupContext()
-                          ->Equals(TD->getDeclContext()->getLookupContext())) {
+              Tag->getDeclContext()->getRedeclContext()
+                          ->Equals(TD->getDeclContext()->getRedeclContext())) {
             PrevDecl = Tag;
             Previous.clear();
             Previous.addDecl(Tag);
@@ -5793,7 +5791,7 @@ CreateNewDecl:
     if (PrevDecl)
       New->setAccess(PrevDecl->getAccess());
 
-    DeclContext *DC = New->getDeclContext()->getLookupContext();
+    DeclContext *DC = New->getDeclContext()->getRedeclContext();
     DC->makeDeclVisibleInContext(New, /* Recoverable = */ false);
     if (Name) // can be null along some error paths
       if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
@@ -5808,7 +5806,7 @@ CreateNewDecl:
   // If this is the C FILE type, notify the AST context.
   if (IdentifierInfo *II = New->getIdentifier())
     if (!New->isInvalidDecl() &&
-        New->getDeclContext()->getLookupContext()->isTranslationUnit() &&
+        New->getDeclContext()->getRedeclContext()->isTranslationUnit() &&
         II->isStr("FILE"))
       Context.setFILEDecl(New);
 

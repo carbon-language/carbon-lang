@@ -471,8 +471,8 @@ DeclContext::~DeclContext() { }
 DeclContext *DeclContext::getLookupParent() {
   // FIXME: Find a better way to identify friends
   if (isa<FunctionDecl>(this))
-    if (getParent()->getLookupContext()->isFileContext() &&
-        getLexicalParent()->getLookupContext()->isRecord())
+    if (getParent()->getRedeclContext()->isFileContext() &&
+        getLexicalParent()->getRedeclContext()->isRecord())
       return getLexicalParent();
   
   return getParent();
@@ -515,7 +515,7 @@ bool DeclContext::isTransparentContext() const {
   return false;
 }
 
-bool DeclContext::Encloses(DeclContext *DC) {
+bool DeclContext::Encloses(const DeclContext *DC) const {
   if (getPrimaryContext() != this)
     return getPrimaryContext()->Encloses(DC);
 
@@ -847,10 +847,10 @@ DeclContext::lookup(DeclarationName Name) const {
   return const_cast<DeclContext*>(this)->lookup(Name);
 }
 
-DeclContext *DeclContext::getLookupContext() {
+DeclContext *DeclContext::getRedeclContext() {
   DeclContext *Ctx = this;
-  // Skip through transparent contexts.
-  while (Ctx->isTransparentContext())
+  // Skip through transparent contexts, except inline namespaces.
+  while (Ctx->isTransparentContext() && !Ctx->isNamespace())
     Ctx = Ctx->getParent();
   return Ctx;
 }
@@ -861,6 +861,24 @@ DeclContext *DeclContext::getEnclosingNamespaceContext() {
   while (!Ctx->isFileContext())
     Ctx = Ctx->getParent();
   return Ctx->getPrimaryContext();
+}
+
+bool DeclContext::InEnclosingNamespaceSetOf(const DeclContext *O) const {
+  // For non-file contexts, this is equivalent to Equals.
+  if (!isFileContext())
+    return O->Equals(this);
+
+  do {
+    if (O->Equals(this))
+      return true;
+
+    const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(O);
+    if (!NS || !NS->isInline())
+      break;
+    O = NS->getParent();
+  } while (O);
+
+  return false;
 }
 
 void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {

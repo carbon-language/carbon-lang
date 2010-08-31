@@ -104,7 +104,7 @@ getLinkageForTemplateArgumentList(const TemplateArgumentList &TArgs) {
 }
 
 static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
-  assert(D->getDeclContext()->getLookupContext()->isFileContext() &&
+  assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
          "Not a name having namespace scope");
   ASTContext &Context = D->getASTContext();
 
@@ -345,7 +345,7 @@ Linkage NamedDecl::getLinkage() const {
   }
 
   // Handle linkage for namespace-scope names.
-  if (getDeclContext()->getLookupContext()->isFileContext())
+  if (getDeclContext()->getRedeclContext()->isFileContext())
     if (Linkage L = getLinkageForNamespaceScopeDecl(this))
       return L;
   
@@ -969,7 +969,7 @@ void FunctionDecl::setBody(Stmt *B) {
 bool FunctionDecl::isMain() const {
   ASTContext &Context = getASTContext();
   return !Context.getLangOptions().Freestanding &&
-    getDeclContext()->getLookupContext()->isTranslationUnit() &&
+    getDeclContext()->getRedeclContext()->isTranslationUnit() &&
     getIdentifier() && getIdentifier()->isStr("main");
 }
 

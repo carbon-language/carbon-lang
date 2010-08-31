@@ -557,13 +557,11 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   //   static int a __attribute__((weakref ("v2")));
   // }
   // we reject them
-  if (const DeclContext *Ctx = d->getDeclContext()) {
-    Ctx = Ctx->getLookupContext();
-    if (!isa<TranslationUnitDecl>(Ctx) && !isa<NamespaceDecl>(Ctx) ) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_global_context) <<
-    dyn_cast<NamedDecl>(d)->getNameAsString();
-      return;
-    }
+  const DeclContext *Ctx = d->getDeclContext()->getRedeclContext();
+  if (!Ctx->isFileContext()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_global_context) <<
+        dyn_cast<NamedDecl>(d)->getNameAsString();
+    return;
   }
 
   // The GCC manual says

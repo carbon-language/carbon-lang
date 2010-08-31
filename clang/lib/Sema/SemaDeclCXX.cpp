@@ -1151,7 +1151,7 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
           CorrectTypo(R, S, &SS, ClassDecl, 0, CTC_NoKeywords) && 
           R.isSingleResult()) {
         if (FieldDecl *Member = R.getAsSingle<FieldDecl>()) {
-          if (Member->getDeclContext()->getLookupContext()->Equals(ClassDecl)) {
+          if (Member->getDeclContext()->getRedeclContext()->Equals(ClassDecl)) {
             // We have found a non-static data member with a similar
             // name to what was typed; complain and initialize that
             // member.
@@ -3329,7 +3329,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       Namespc->setInvalidDecl();
       // Continue on to push Namespc as current DeclContext and return it.
     } else if (II->isStr("std") && 
-               CurContext->getLookupContext()->isTranslationUnit()) {
+               CurContext->getRedeclContext()->isTranslationUnit()) {
       // This is the first "real" definition of the namespace "std", so update
       // our cache of the "std" namespace to point at this definition.
       if (NamespaceDecl *StdNS = getStdNamespace()) {
@@ -3352,7 +3352,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
     // Link the anonymous namespace into its parent.
     NamespaceDecl *PrevDecl;
-    DeclContext *Parent = CurContext->getLookupContext();
+    DeclContext *Parent = CurContext->getRedeclContext();
     if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(Parent)) {
       PrevDecl = TU->getAnonymousNamespace();
       TU->setAnonymousNamespace(Namespc);
@@ -4022,7 +4022,7 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
   //   allowed.
   //
   // That's in non-member contexts.
-  if (!CurContext->getLookupContext()->isRecord())
+  if (!CurContext->getRedeclContext()->isRecord())
     return false;
 
   NestedNameSpecifier *Qual
@@ -5652,7 +5652,7 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
 static inline bool
 CheckOperatorNewDeleteDeclarationScope(Sema &SemaRef, 
                                        const FunctionDecl *FnDecl) {
-  const DeclContext *DC = FnDecl->getDeclContext()->getLookupContext();
+  const DeclContext *DC = FnDecl->getDeclContext()->getRedeclContext();
   if (isa<NamespaceDecl>(DC)) {
     return SemaRef.Diag(FnDecl->getLocation(), 
                         diag::err_operator_new_delete_declared_in_namespace)
@@ -6457,7 +6457,8 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
     LookupResult::Filter F = Previous.makeFilter();
     while (F.hasNext()) {
       NamedDecl *D = F.next();
-      if (!D->getDeclContext()->getLookupContext()->Equals(DC))
+      if (!DC->InEnclosingNamespaceSetOf(
+              D->getDeclContext()->getRedeclContext()))
         F.erase();
     }
     F.done();
@@ -6538,7 +6539,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S,
   // Also update the scope-based lookup if the target context's
   // lookup context is in lexical scope.
   if (!CurContext->isDependentContext()) {
-    DC = DC->getLookupContext();
+    DC = DC->getRedeclContext();
     DC->makeDeclVisibleInContext(ND, /* Recoverable=*/ false);
     if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
       PushOnScopeChains(ND, EnclosingScope, /*AddToContext=*/ false);

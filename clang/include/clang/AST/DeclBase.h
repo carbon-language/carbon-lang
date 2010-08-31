@@ -453,10 +453,10 @@ public:
 
   void setLexicalDeclContext(DeclContext *DC);
 
-  // isDefinedOutsideFunctionOrMethod - This predicate returns true if this
-  // scoped decl is defined outside the current function or method.  This is
-  // roughly global variables and functions, but also handles enums (which could
-  // be defined inside or outside a function etc).
+  /// isDefinedOutsideFunctionOrMethod - This predicate returns true if this
+  /// scoped decl is defined outside the current function or method.  This is
+  /// roughly global variables and functions, but also handles enums (which
+  /// could be defined inside or outside a function etc).
   bool isDefinedOutsideFunctionOrMethod() const;
 
   /// \brief Retrieves the "canonical" declaration of the given declaration.
@@ -808,13 +808,13 @@ public:
 
   /// \brief Determine whether this declaration context is equivalent
   /// to the declaration context DC.
-  bool Equals(DeclContext *DC) {
+  bool Equals(const DeclContext *DC) const {
     return DC && this->getPrimaryContext() == DC->getPrimaryContext();
   }
 
   /// \brief Determine whether this declaration context encloses the
   /// declaration context DC.
-  bool Encloses(DeclContext *DC);
+  bool Encloses(const DeclContext *DC) const;
 
   /// getPrimaryContext - There may be many different
   /// declarations of the same entity (including forward declarations
@@ -827,13 +827,13 @@ public:
     return const_cast<DeclContext*>(this)->getPrimaryContext();
   }
 
-  /// getLookupContext - Retrieve the innermost non-transparent
-  /// context of this context, which corresponds to the innermost
-  /// location from which name lookup can find the entities in this
-  /// context.
-  DeclContext *getLookupContext();
-  const DeclContext *getLookupContext() const {
-    return const_cast<DeclContext *>(this)->getLookupContext();
+  /// getRedeclContext - Retrieve the context in which an entity conflicts with
+  /// other entities of the same name, or where it is a redeclaration if the
+  /// two entities are compatible. This skips through transparent contexts,
+  /// except inline namespaces.
+  DeclContext *getRedeclContext();
+  const DeclContext *getRedeclContext() const {
+    return const_cast<DeclContext *>(this)->getRedeclContext();
   }
 
   /// \brief Retrieve the nearest enclosing namespace context.
@@ -841,6 +841,14 @@ public:
   const DeclContext *getEnclosingNamespaceContext() const {
     return const_cast<DeclContext *>(this)->getEnclosingNamespaceContext();
   }
+
+  /// \brief Test if this context is part of the enclosing namespace set of
+  /// the context NS, as defined in C++0x [namespace.def]p9. If either context
+  /// isn't a namespace, this is equivalent to Equals().
+  ///
+  /// The enclosing namespace set of a namespace is the namespace and, if it is
+  /// inline, its enclosing namespace, recursively.
+  bool InEnclosingNamespaceSetOf(const DeclContext *NS) const;
 
   /// getNextContext - If this is a DeclContext that may have other
   /// DeclContexts that are semantically connected but syntactically

@@ -626,7 +626,7 @@ bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   case NestedNameSpecifier::Namespace:
     // These are always namespace scopes.  We never want to enter a
     // namespace scope from anything but a file context.
-    return CurContext->getLookupContext()->isFileContext();
+    return CurContext->getRedeclContext()->isFileContext();
 
   case NestedNameSpecifier::Identifier:
   case NestedNameSpecifier::TypeSpec:

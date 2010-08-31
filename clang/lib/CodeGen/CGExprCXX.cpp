@@ -347,7 +347,7 @@ static bool IsPlacementOperatorNewArray(ASTContext &Ctx,
                                         const FunctionDecl *Fn) {
   // Must be in global scope.  Note that allocation functions can't be
   // declared in namespaces.
-  if (!Fn->getDeclContext()->getLookupContext()->isFileContext())
+  if (!Fn->getDeclContext()->getRedeclContext()->isFileContext())
     return false;
 
   // Signature must be void *operator new[](size_t, void*).

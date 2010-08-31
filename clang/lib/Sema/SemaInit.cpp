@@ -1365,7 +1365,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         if (SemaRef.CorrectTypo(R, /*Scope=*/0, /*SS=*/0, RT->getDecl(), false,
                                 Sema::CTC_NoKeywords) && 
             (ReplacementField = R.getAsSingle<FieldDecl>()) &&
-            ReplacementField->getDeclContext()->getLookupContext()
+            ReplacementField->getDeclContext()->getRedeclContext()
                                                       ->Equals(RT->getDecl())) {
           SemaRef.Diag(D->getFieldLoc(), 
                        diag::err_field_designator_unknown_suggest)

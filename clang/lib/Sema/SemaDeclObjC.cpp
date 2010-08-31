@@ -1626,7 +1626,7 @@ Decl *Sema::ActOnMethodDeclaration(
 }
 
 bool Sema::CheckObjCDeclScope(Decl *D) {
-  if (isa<TranslationUnitDecl>(CurContext->getLookupContext()))
+  if (isa<TranslationUnitDecl>(CurContext->getRedeclContext()))
     return false;
 
   Diag(D->getLocation(), diag::err_objc_decls_may_only_appear_in_global_scope);

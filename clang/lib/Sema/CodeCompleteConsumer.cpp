@@ -388,7 +388,7 @@ unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
     return CCP_Unlikely;
   
   // Context-based decisions.
-  DeclContext *DC = ND->getDeclContext()->getLookupContext();
+  DeclContext *DC = ND->getDeclContext()->getRedeclContext();
   if (DC->isFunctionOrMethod() || isa<BlockDecl>(DC))
     return CCP_LocalDeclaration;
   if (DC->isRecord() || isa<ObjCContainerDecl>(DC))
