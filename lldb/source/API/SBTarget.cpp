@@ -121,6 +121,7 @@ SBTarget::LaunchProcess
     char const **argv,
     char const **envp,
     const char *tty,
+    uint32_t launch_flags,
     bool stop_at_entry
 )
 {
@@ -129,7 +130,7 @@ SBTarget::LaunchProcess
         process = CreateProcess();
     if (process.IsValid())
     {
-        Error error (process->Launch (argv, envp, tty, tty, tty));
+        Error error (process->Launch (argv, envp, launch_flags, tty, tty, tty));
         if (error.Success())
         {
             if (!stop_at_entry)

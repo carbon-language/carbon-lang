@@ -50,6 +50,15 @@ typedef enum StepType
 } StepType;
 
 //----------------------------------------------------------------------
+// Launch Flags
+//----------------------------------------------------------------------
+typedef enum LaunchFlags
+{
+    eLaunchFlagNone         = 0u,
+    eLaunchFlagDisableASLR  = (1u << 0)  ///< Disable Address Space Layout Randomization
+} LaunchFlags;
+    
+//----------------------------------------------------------------------
 // Thread Run Modes
 //----------------------------------------------------------------------
 typedef enum RunMode {

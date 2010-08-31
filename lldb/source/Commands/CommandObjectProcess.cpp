@@ -163,6 +163,9 @@ public:
 
         const Args *environment = interpreter.GetEnvironmentVariables();
         const Args *run_args = interpreter.GetProgramArguments();
+		uint32_t launch_flags = eLaunchFlagNone;
+        if (interpreter.GetDisableASLR())
+			launch_flags |= eLaunchFlagDisableASLR;
 
         // There are two possible sources of args to be passed to the process upon launching:  Those the user
         // typed at the run command (launch_args); or those the user pre-set in the run-args variable (run_args).
@@ -204,6 +207,7 @@ public:
 
             Error error (process->Launch (launch_args.GetConstArgumentVector(),
                                           environment ? environment->GetConstArgumentVector() : NULL,
+                                          launch_flags,
                                           stdin_path,
                                           stdout_path,
                                           stderr_path));

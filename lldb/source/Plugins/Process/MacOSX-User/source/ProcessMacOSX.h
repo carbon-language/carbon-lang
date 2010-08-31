@@ -93,6 +93,7 @@ public:
     DoLaunch (lldb_private::Module* module,
               char const *argv[],           // Can be NULL
               char const *envp[],           // Can be NULL
+              uint32_t launch_flags,
               const char *stdin_path,       // Can be NULL
               const char *stdout_path,  // Can be NULL
               const char *stderr_path); // Can be NULL
@@ -261,6 +262,7 @@ protected:
                     const char *stdout_path,
                     const char *stderr_path,
                     PDLaunchType launch_type,
+                    uint32_t flags,
                     lldb_private::Error &launch_err);
 
     static lldb::pid_t
@@ -283,6 +285,7 @@ protected:
                                        const char *stdout_path,
                                        const char *stderr_path,
                                        ProcessMacOSX* process,
+                                       int disable_aslr,
                                        lldb_private::Error &launch_err);
 
 #if defined (__arm__)

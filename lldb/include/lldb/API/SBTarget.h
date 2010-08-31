@@ -59,6 +59,7 @@ public:
     LaunchProcess (char const **argv,
                    char const **envp,
                    const char *tty,
+                   uint32_t launch_flags,   // See lldb::LaunchFlags
                    bool stop_at_entry);
 
     lldb::SBFileSpec

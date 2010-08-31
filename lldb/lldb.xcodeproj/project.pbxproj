@@ -2308,6 +2308,7 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2811,7 +2812,10 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = (
+					/System/Library/Frameworks/System.framework/PrivateHeaders,
+					/usr/include/python2.6,
+				);
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
@@ -2864,7 +2868,10 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = (
+					/System/Library/Frameworks/System.framework/PrivateHeaders,
+					/usr/include/python2.6,
+				);
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";
@@ -2974,7 +2981,10 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = /usr/include/python2.6;
+				HEADER_SEARCH_PATHS = (
+					/System/Library/Frameworks/System.framework/PrivateHeaders,
+					/usr/include/python2.6,
+				);
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/Versions/A/LLDB";

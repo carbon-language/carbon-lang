@@ -177,10 +177,11 @@ DNBProcessLaunch (const char *path,
                   const char *envp[],
                   const char *stdio_path,
                   nub_launch_flavor_t launch_flavor,
+                  int disable_aslr,
                   char *err_str,
                   size_t err_len)
 {
-    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv = %p, envp = %p, launch_flavor = %u, err = %p, err_len = %zu) called...", __FUNCTION__, path, argv, envp, launch_flavor, err_str, err_len);
+    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv = %p, envp = %p, launch_flavor = %u, disable_aslr = %d, err = %p, err_len = %zu) called...", __FUNCTION__, path, argv, envp, launch_flavor, disable_aslr, err_str, err_len);
 
     if (err_str && err_len > 0)
         err_str[0] = '\0';
@@ -197,7 +198,7 @@ DNBProcessLaunch (const char *path,
     if (processSP.get())
     {
         DNBError launch_err;
-        pid_t pid = processSP->LaunchForDebug(path, argv, envp, stdio_path, launch_flavor, launch_err);
+        pid_t pid = processSP->LaunchForDebug(path, argv, envp, stdio_path, launch_flavor, disable_aslr, launch_err);
         if (err_str)
         {
             *err_str = '\0';

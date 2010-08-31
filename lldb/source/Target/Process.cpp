@@ -946,6 +946,7 @@ Process::Launch
 (
     char const *argv[],
     char const *envp[],
+    uint32_t launch_flags,
     const char *stdin_path,
     const char *stdout_path,
     const char *stderr_path
@@ -994,6 +995,7 @@ Process::Launch
                 error = DoLaunch (exe_module, 
                                   exec_path_plus_argv.empty() ? NULL : &exec_path_plus_argv.front(), 
                                   envp, 
+                                  launch_flags,
                                   stdin_path, 
                                   stdout_path, 
                                   stderr_path);

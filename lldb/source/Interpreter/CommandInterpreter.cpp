@@ -161,6 +161,11 @@ CommandInterpreter::InitializeVariables ()
                                          80,
                                         "The maximum number of columns to use for displaying text."));
     
+    m_variables["disable-aslr"] =
+    StateVariableSP (new StateVariable ("disable-aslr",
+                                        1,
+                                        "Disable Address Space Layout Randomization (ASLR)."));
+    
 }
 
 const char *
@@ -898,6 +903,14 @@ CommandInterpreter::GetEnvironmentVariables ()
     return NULL;
 }
 
+int
+CommandInterpreter::GetDisableASLR ()
+{
+    StateVariable *var = GetStateVariable ("disable-aslr");
+    int disable_aslr = var->GetIntValue();
+
+    return disable_aslr;
+}
 
 CommandInterpreter::~CommandInterpreter ()
 {

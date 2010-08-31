@@ -81,6 +81,7 @@ public:
     DoLaunch (lldb_private::Module* module,
               char const *argv[],           // Can be NULL
               char const *envp[],           // Can be NULL
+              uint32_t flags,
               const char *stdin_path,       // Can be NULL
               const char *stdout_path,  // Can be NULL
               const char *stderr_path); // Can be NULL
@@ -292,6 +293,7 @@ protected:
                              lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, then attach to this pid
                              const char *attach_pid_name,    // Wait for the next process to launch whose basename matches "attach_wait_name"
                              bool wait_for_launch,           // Wait for the process named "attach_wait_name" to launch
+                             bool disable_aslr,               // Disable ASLR
                              lldb_private::ArchSpec& arch_spec);
 
     void

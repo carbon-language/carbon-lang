@@ -85,6 +85,9 @@ IsSBProcess (nub_process_t pid)
 #define MACH_PROCESS_USE_POSIX_SPAWN 1
 #endif
 
+#ifndef _POSIX_SPAWN_DISABLE_ASLR
+#define _POSIX_SPAWN_DISABLE_ASLR       0x0100
+#endif
 
 MachProcess::MachProcess() :
     m_pid               (0),
@@ -1457,13 +1460,14 @@ MachProcess::LaunchForDebug
     char const *envp[],
     const char *stdio_path,
     nub_launch_flavor_t launch_flavor,
+    int disable_aslr,
     DNBError &launch_err
 )
 {
     // Clear out and clean up from any current state
     Clear();
 
-    DNBLogThreadedIf(LOG_PROCESS, "%s( path = '%s', argv = %p, envp = %p, launch_flavor = %u )", __FUNCTION__, path, argv, envp, launch_flavor);
+    DNBLogThreadedIf(LOG_PROCESS, "%s( path = '%s', argv = %p, envp = %p, launch_flavor = %u, disable_aslr = %d )", __FUNCTION__, path, argv, envp, launch_flavor, disable_aslr);
 
     // Fork a child process for debugging
     SetState(eStateLaunching);
@@ -1475,7 +1479,7 @@ MachProcess::LaunchForDebug
         break;
 
     case eLaunchFlavorPosixSpawn:
-        m_pid = MachProcess::PosixSpawnChildForPTraceDebugging (path, argv, envp, stdio_path, this, launch_err);
+        m_pid = MachProcess::PosixSpawnChildForPTraceDebugging (path, argv, envp, stdio_path, this, disable_aslr, launch_err);
         break;
 
 #if defined (__arm__)
@@ -1562,10 +1566,12 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     char const *envp[],
     const char *stdio_path,
     MachProcess* process,
+    int disable_aslr,
     DNBError& err
 )
 {
     posix_spawnattr_t attr;
+    short flags;
     DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv=%p, envp=%p, process )", __FUNCTION__, path, argv, envp);
 
     err.SetError( ::posix_spawnattr_init (&attr), DNBError::POSIX);
@@ -1574,9 +1580,13 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     if (err.Fail())
         return INVALID_NUB_PROCESS;
 
-    err.SetError( ::posix_spawnattr_setflags (&attr, POSIX_SPAWN_START_SUSPENDED), DNBError::POSIX);
+    flags = POSIX_SPAWN_START_SUSPENDED;
+    if (disable_aslr)
+        flags |= _POSIX_SPAWN_DISABLE_ASLR;
+    
+    err.SetError( ::posix_spawnattr_setflags (&attr, flags), DNBError::POSIX);
     if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-        err.LogThreaded("::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED )");
+        err.LogThreaded("::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED%s )", flags & _POSIX_SPAWN_DISABLE_ASLR ? " | _POSIX_SPAWN_DISABLE_ASLR" : "");
     if (err.Fail())
         return INVALID_NUB_PROCESS;
 
@@ -1585,13 +1595,6 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     
     // On SnowLeopard we should set "DYLD_NO_PIE" in the inferior environment....
      
-//#ifndef _POSIX_SPAWN_DISABLE_ASLR
-//#define _POSIX_SPAWN_DISABLE_ASLR 0x0100
-//#endif
-//    err.SetError( ::posix_spawnattr_setflags (&attr, _POSIX_SPAWN_DISABLE_ASLR), DNBError::POSIX);
-//    if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-//        err.LogThreaded("::posix_spawnattr_setflags ( &attr, _POSIX_SPAWN_DISABLE_ASLR )");
-
 #if !defined(__arm__)
 
     // We don't need to do this for ARM, and we really shouldn't now that we

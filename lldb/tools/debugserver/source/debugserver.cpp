@@ -53,6 +53,7 @@ RNBRemoteSP g_remoteSP;
 static int g_lockdown_opt  = 0;
 static int g_applist_opt = 0;
 static nub_launch_flavor_t g_launch_flavor = eLaunchFlavorDefault;
+static int g_disable_aslr = 0;
 
 int g_isatty = 0;
 
@@ -209,6 +210,7 @@ RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path)
                                           &inferior_envp[0],
                                           stdio_path,
                                           launch_flavor,
+                                          g_disable_aslr,
                                           launch_err_str,
                                           sizeof(launch_err_str));
 
@@ -655,6 +657,7 @@ static struct option g_long_options[] =
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.
     { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications
     { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own sessions
+    { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -860,6 +863,9 @@ main (int argc, char *argv[])
                 // yet that application doesn't want debugserver receiving the
                 // signals sent to the session (i.e. dying when anyone hits ^C).
                 setsid();
+                break;
+            case 'D':
+                g_disable_aslr = 1;
                 break;
         }
     }

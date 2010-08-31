@@ -64,6 +64,9 @@
 #define MACH_PROCESS_USE_POSIX_SPAWN 1
 #endif
 
+#ifndef _POSIX_SPAWN_DISABLE_ASLR
+#define _POSIX_SPAWN_DISABLE_ASLR       0x0100
+#endif
 
 #if defined (__arm__)
 
@@ -312,6 +315,7 @@ ProcessMacOSX::DoLaunch
     Module* module,
     char const *argv[],
     char const *envp[],
+    uint32_t flags,
     const char *stdin_path,
     const char *stdout_path,
     const char *stderr_path
@@ -328,7 +332,7 @@ ProcessMacOSX::DoLaunch
         ArchSpec arch_spec(module->GetArchitecture());
 
         // Set our user ID to our process ID.
-        SetID (LaunchForDebug(argv[0], argv, envp, arch_spec, stdin_path, stdout_path, stderr_path, eLaunchDefault, error));
+        SetID (LaunchForDebug(argv[0], argv, envp, arch_spec, stdin_path, stdout_path, stderr_path, eLaunchDefault, flags, error));
     }
     else
     {
@@ -1557,6 +1561,7 @@ ProcessMacOSX::LaunchForDebug
     const char *stdout_path,
     const char *stderr_path,
     PDLaunchType launch_type,
+    uint32_t flags,
     Error &launch_err)
 {
     // Clear out and clean up from any current state
@@ -1569,7 +1574,7 @@ ProcessMacOSX::LaunchForDebug
 
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
     if (log)
-        log->Printf ("%s( path = '%s', argv = %p, envp = %p, launch_type = %u )", __FUNCTION__, path, argv, envp, launch_type);
+        log->Printf ("%s( path = '%s', argv = %p, envp = %p, launch_type = %u, flags = %x )", __FUNCTION__, path, argv, envp, launch_type, flags);
 
     // Fork a child process for debugging
     SetPrivateState (eStateLaunching);
@@ -1580,7 +1585,7 @@ ProcessMacOSX::LaunchForDebug
         break;
 
     case eLaunchPosixSpawn:
-        SetID(ProcessMacOSX::PosixSpawnChildForPTraceDebugging(path, argv, envp, arch_spec, stdin_path, stdout_path, stderr_path, this, launch_err));
+        SetID(ProcessMacOSX::PosixSpawnChildForPTraceDebugging(path, argv, envp, arch_spec, stdin_path, stdout_path, stderr_path, this, flags & eLaunchFlagDisableASLR ? 1 : 0, launch_err));
         break;
 
 #if defined (__arm__)
@@ -1683,11 +1688,12 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     const char *stdout_path,
     const char *stderr_path,
     ProcessMacOSX* process,
+    int disable_aslr,
     Error &err
 )
 {
     posix_spawnattr_t attr;
-
+    short flags;
     Log *log = ProcessMacOSXLog::GetLogIfAllCategoriesSet (PD_LOG_PROCESS);
 
     Error local_err;    // Errors that don't affect the spawning.
@@ -1699,9 +1705,13 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     if (err.Fail())
         return LLDB_INVALID_PROCESS_ID;
 
-    err.SetError( ::posix_spawnattr_setflags (&attr, POSIX_SPAWN_START_SUSPENDED), eErrorTypePOSIX);
+    flags = POSIX_SPAWN_START_SUSPENDED;
+    if (disable_aslr)
+        flags |= _POSIX_SPAWN_DISABLE_ASLR;
+    
+    err.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
     if (err.Fail() || log)
-        err.PutToLog(log, "::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED )");
+        err.PutToLog(log, "::posix_spawnattr_setflags ( &attr, POSIX_SPAWN_START_SUSPENDED%s )", disable_aslr ? " | _POSIX_SPAWN_DISABLE_ASLR" : "");
     if (err.Fail())
         return LLDB_INVALID_PROCESS_ID;
 

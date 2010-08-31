@@ -166,6 +166,9 @@ public:
     const Args *
     GetEnvironmentVariables ();
 
+    int
+    GetDisableASLR ();
+    
     const char *
     ProcessEmbeddedScriptCommands (const char *arg);
 

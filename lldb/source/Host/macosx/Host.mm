@@ -834,17 +834,17 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
     
     file_and_line_desc.descKey = keyAEPosition;
     
+    static FSRef g_app_fsref;
+
     LSApplicationParameters app_params;
-    static FSRef app_to_use;
-    static std::string app_name;
-    bzero (&app_params, sizeof (app_params));
+    ::bzero (&app_params, sizeof (app_params));
     app_params.flags = kLSLaunchDefaults | 
                        kLSLaunchDontAddToRecents | 
                        kLSLaunchDontSwitch;
-                       
+    
     char *external_editor = ::getenv ("LLDB_EXTERNAL_EDITOR");
     
-    if (external_editor != NULL)
+    if (external_editor)
     {
         bool calculate_fsref = true;
         if (log)
@@ -852,20 +852,15 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
 
         if (app_name.empty() || strcmp (app_name.c_str(), external_editor) != 0)
         {
-            calculate_fsref = true;
-        }
-        else
-            calculate_fsref = false;
-            
-        if (calculate_fsref)
-        {
             CFCString editor_name (external_editor, kCFStringEncodingUTF8);
-            error = ::LSFindApplicationForInfo(kLSUnknownCreator, NULL, editor_name.get(), &app_to_use, NULL);
+            error = ::LSFindApplicationForInfo (kLSUnknownCreator, 
+                                                NULL, 
+                                                editor_name.get(), 
+                                                &g_app_fsref, 
+                                                NULL);
             
             // If we found the app, then store away the name so we don't have to re-look it up.
-            if (error == noErr)
-                app_name.assign (external_editor);
-            else
+            if (error != noErr)
             {
                 if (log)
                     log->Printf("Could not find External Editor application, error: %d.\n", error);
@@ -873,11 +868,8 @@ Host::OpenFileInExternalEditor (FileSpec &file_spec, uint32_t line_no)
             }
                 
         }
-        
-        app_params.application = &app_to_use;
+        app_params.application = &g_app_fsref;
     }
-
-
 
     ProcessSerialNumber psn;
     CFCReleaser<CFArrayRef> file_array(CFArrayCreate (NULL, (const void **) file_URL.ptr_address(false), 1, NULL));

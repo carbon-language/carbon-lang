@@ -251,6 +251,9 @@ public:
     /// @param[in] envp
     ///     The environment array.
     ///
+    /// @param[in] launch_flags
+    ///     Flags to modify the launch (@see lldb::LaunchFlags)
+    ///
     /// @param[in] stdin_path
     ///     The path to use when re-directing the STDIN of the new
     ///     process. If all stdXX_path arguments are NULL, a pseudo
@@ -273,6 +276,7 @@ public:
     virtual Error
     Launch (char const *argv[],
             char const *envp[],
+            uint32_t launch_flags,
             const char *stdin_path,
             const char *stdout_path,
             const char *stderr_path);
@@ -620,6 +624,9 @@ public:
     /// @param[in] envp
     ///     The environment array.
     ///
+    /// @param[in] launch_flags
+    ///     Flags to modify the launch (@see lldb::LaunchFlags)
+    ///
     /// @param[in] stdin_path
     ///     The path to use when re-directing the STDIN of the new
     ///     process. If all stdXX_path arguments are NULL, a pseudo
@@ -643,6 +650,7 @@ public:
     DoLaunch (Module* module,
               char const *argv[],
               char const *envp[],
+              uint32_t launch_flags,
               const char *stdin_path,
               const char *stdout_path,
               const char *stderr_path) = 0;
