@@ -1605,10 +1605,13 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
   }
 
   Offset += getFrameIndexInstrOffset(MI, i);
-  assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
+  // Make sure the offset is encodable for instructions that scale the
+  // immediate.
+  if ((Offset & (Scale-1)) != 0)
+    return false;
+
   if (isSigned && Offset < 0)
     Offset = -Offset;
-
 
   unsigned Mask = (1 << NumBits) - 1;
   if ((unsigned)Offset <= Mask * Scale)
