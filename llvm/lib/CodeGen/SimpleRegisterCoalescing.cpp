@@ -59,6 +59,11 @@ DisableCrossClassJoin("disable-cross-class-join",
                cl::desc("Avoid coalescing cross register class copies"),
                cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+DisablePhysicalJoin("disable-physical-join",
+               cl::desc("Avoid coalescing physical register copies"),
+               cl::init(false), cl::Hidden);
+
 INITIALIZE_AG_PASS(SimpleRegisterCoalescing, RegisterCoalescer,
                 "simple-register-coalescing", "Simple Register Coalescing", 
                 false, false, true);
@@ -1034,6 +1039,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (CP.getSrcReg() == CP.getDstReg()) {
     DEBUG(dbgs() << "\tCopy already coalesced.\n");
     return false;  // Not coalescable.
+  }
+
+  if (DisablePhysicalJoin && CP.isPhys()) {
+    DEBUG(dbgs() << "\tPhysical joins disabled.\n");
+    return false;
   }
 
   DEBUG(dbgs() << "\tConsidering merging %reg" << CP.getSrcReg());
