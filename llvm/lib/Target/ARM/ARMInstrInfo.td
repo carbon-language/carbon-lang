@@ -2419,6 +2419,14 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
                 RegConstraint<"$false = $dst">, UnaryDP {
   let Inst{25} = 1;
 }
+
+def MVNCCi : AI1<0b1111, (outs GPR:$dst),
+                        (ins GPR:$false, so_imm:$true), DPFrm, IIC_iCMOVi,
+                "mvn", "\t$dst, $true",
+  [/*(set GPR:$dst, (ARMcmov GPR:$false,so_imm_not:$true,imm:$cc,CCR:$ccr))*/]>,
+                RegConstraint<"$false = $dst">, UnaryDP {
+  let Inst{25} = 0;
+}
 } // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
