@@ -45,10 +45,11 @@
 
 #define DEBUG_TYPE "mergefunc"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
@@ -59,10 +60,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
-#include <map>
-#include <vector>
 using namespace llvm;
 
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
@@ -81,14 +81,9 @@ namespace {
     bool runOnModule(Module &M);
 
   private:
-    /// PairwiseCompareAndMerge - Given a list of functions, compare each pair
-    /// and merge the pairs of equivalent functions.
-    bool PairwiseCompareAndMerge(std::vector<Function *> &FnVec);
-
-    /// MergeTwoFunctions - Merge two equivalent functions. Upon completion,
-    /// FnVec[j] should never be visited again.
-    void MergeTwoFunctions(std::vector<Function *> &FnVec,
-                           unsigned i, unsigned j) const;
+    /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
+    /// is deleted.
+    void MergeTwoFunctions(Function *F, Function *G) const;
 
     /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also
     /// replace direct uses of G with bitcast(F).
@@ -112,7 +107,8 @@ namespace {
 /// side of claiming that two functions are different).
 class FunctionComparator {
 public:
-  FunctionComparator(TargetData *TD, Function *F1, Function *F2)
+  FunctionComparator(const TargetData *TD, const Function *F1,
+                     const Function *F2)
     : F1(F1), F2(F2), TD(TD), IDMap1Count(0), IDMap2Count(0) {}
 
   /// Compare - test whether the two functions have equivalent behaviour.
@@ -144,30 +140,14 @@ private:
   bool isEquivalentType(const Type *Ty1, const Type *Ty2) const;
 
   // The two functions undergoing comparison.
-  Function *F1, *F2;
+  const Function *F1, *F2;
 
-  TargetData *TD;
+  const TargetData *TD;
 
   typedef DenseMap<const Value *, unsigned long> IDMap;
   IDMap Map1, Map2;
   unsigned long IDMap1Count, IDMap2Count;
 };
-}
-
-/// Compute a hash guaranteed to be equal for two equivalent functions, but
-/// very likely to be different for different functions.
-static unsigned long ProfileFunction(const Function *F) {
-  const FunctionType *FTy = F->getFunctionType();
-
-  FoldingSetNodeID ID;
-  ID.AddInteger(F->size());
-  ID.AddInteger(F->getCallingConv());
-  ID.AddBoolean(F->hasGC());
-  ID.AddBoolean(FTy->isVarArg());
-  ID.AddInteger(FTy->getReturnType()->getTypeID());
-  for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-    ID.AddInteger(FTy->getParamType(i)->getTypeID());
-  return ID.ComputeHash();
 }
 
 /// isEquivalentType - any two pointers in the same address space are
@@ -545,17 +525,8 @@ void MergeFunctions::WriteThunk(Function *F, Function *G) const {
 }
 
 /// MergeTwoFunctions - Merge two equivalent functions. Upon completion,
-/// FnVec[j] is deleted but not removed from the vector.
-void MergeFunctions::MergeTwoFunctions(std::vector<Function *> &FnVec,
-                                       unsigned i, unsigned j) const {
-  Function *F = FnVec[i];
-  Function *G = FnVec[j];
-
-  if (F->isWeakForLinker() && !G->isWeakForLinker()) {
-    std::swap(FnVec[i], FnVec[j]);
-    std::swap(F, G);
-  }
-
+/// Function G is deleted.
+void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) const {
   if (F->isWeakForLinker()) {
     assert(G->isWeakForLinker());
 
@@ -580,54 +551,88 @@ void MergeFunctions::MergeTwoFunctions(std::vector<Function *> &FnVec,
   ++NumFunctionsMerged;
 }
 
-/// PairwiseCompareAndMerge - Given a list of functions, compare each pair and
-/// merge the pairs of equivalent functions.
-bool MergeFunctions::PairwiseCompareAndMerge(std::vector<Function *> &FnVec) {
-  bool Changed = false;
-  for (int i = 0, e = FnVec.size(); i != e; ++i) {
-    for (int j = i + 1; j != e; ++j) {
-      bool isEqual = FunctionComparator(TD, FnVec[i], FnVec[j]).Compare();
+static unsigned ProfileFunction(const Function *F) {
+  const FunctionType *FTy = F->getFunctionType();
 
-      DEBUG(dbgs() << "  " << FnVec[i]->getName()
-            << (isEqual ? " == " : " != ") << FnVec[j]->getName() << "\n");
-
-      if (isEqual) {
-        MergeTwoFunctions(FnVec, i, j);
-        Changed = true;
-        FnVec.erase(FnVec.begin() + j);
-        --j, --e;
-      }
-    }
-  }
-  return Changed;
+  FoldingSetNodeID ID;
+  ID.AddInteger(F->size());
+  ID.AddInteger(F->getCallingConv());
+  ID.AddBoolean(F->hasGC());
+  ID.AddBoolean(FTy->isVarArg());
+  ID.AddInteger(FTy->getReturnType()->getTypeID());
+  for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+    ID.AddInteger(FTy->getParamType(i)->getTypeID());
+  return ID.ComputeHash();
 }
+
+class ComparableFunction {
+public:
+  ComparableFunction(Function *Func, TargetData *TD)
+    : Func(Func), Hash(ProfileFunction(Func)), TD(TD) {}
+
+  AssertingVH<Function> const Func;
+  const unsigned Hash;
+  TargetData * const TD;
+};
+
+struct MergeFunctionsEqualityInfo {
+  static ComparableFunction *getEmptyKey() {
+    return reinterpret_cast<ComparableFunction*>(0);
+  }
+  static ComparableFunction *getTombstoneKey() {
+    return reinterpret_cast<ComparableFunction*>(-1);
+  }
+  static unsigned getHashValue(const ComparableFunction *CF) {
+    return CF->Hash;
+  }
+  static bool isEqual(const ComparableFunction *LHS,
+                      const ComparableFunction *RHS) {
+    if (LHS == RHS)
+      return true;
+    if (LHS == getEmptyKey() || LHS == getTombstoneKey() ||
+        RHS == getEmptyKey() || RHS == getTombstoneKey())
+      return false;
+    assert(LHS->TD == RHS->TD && "Comparing functions for different targets");
+    return FunctionComparator(LHS->TD, LHS->Func, RHS->Func).Compare();
+  }
+};
 
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
 
-  std::map<unsigned long, std::vector<Function *> > FnMap;
-
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    if (F->isDeclaration() || F->hasAvailableExternallyLinkage())
-      continue;
-
-    FnMap[ProfileFunction(F)].push_back(F);
-  }
-
   TD = getAnalysisIfAvailable<TargetData>();
 
-  bool LocalChanged;
-  do {
-    LocalChanged = false;
-    DEBUG(dbgs() << "size: " << FnMap.size() << "\n");
-    for (std::map<unsigned long, std::vector<Function *> >::iterator
-           I = FnMap.begin(), E = FnMap.end(); I != E; ++I) {
-      std::vector<Function *> &FnVec = I->second;
-      DEBUG(dbgs() << "hash (" << I->first << "): " << FnVec.size() << "\n");
-      LocalChanged |= PairwiseCompareAndMerge(FnVec);
+  typedef DenseSet<ComparableFunction *, MergeFunctionsEqualityInfo> FnSetType;
+  FnSetType FnSet;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E;) {
+    if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
+      ++F;
+      continue;
     }
-    Changed |= LocalChanged;
-  } while (LocalChanged);
 
+    ComparableFunction *NewF = new ComparableFunction(F, TD);
+    ++F;
+    std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
+    if (!Result.second) {
+      ComparableFunction *&OldF = *Result.first;
+      assert(OldF && "Expected a hash collision");
+
+      // NewF will be deleted in favour of OldF unless NewF is strong and OldF
+      // is weak in which case swap them to keep the strong definition.
+
+      if (OldF->Func->isWeakForLinker() && !NewF->Func->isWeakForLinker())
+        std::swap(OldF, NewF);
+
+      DEBUG(dbgs() << "  " << OldF->Func->getName() << " == "
+                   << NewF->Func->getName() << '\n');
+
+      Changed = true;
+      Function *DeleteF = NewF->Func;
+      delete NewF;
+      MergeTwoFunctions(OldF->Func, DeleteF);
+    }
+  }
+
+  DeleteContainerPointers(FnSet);
   return Changed;
 }
