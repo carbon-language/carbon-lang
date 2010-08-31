@@ -3915,7 +3915,7 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
 /// At the end of instruction selection, they will be inserted to the entry BB.
 bool
 SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
-                                              uint64_t Offset,
+                                              int64_t Offset, 
                                               const SDValue &N) {
   if (!isa<Argument>(V))
     return false;
