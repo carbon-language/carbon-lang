@@ -148,3 +148,14 @@ void pr7675_test() {
   *p = 0xDEADBEEF; // expected-warning{{null pointer}}
 }
 
+// <rdar://problem/8375510> - CFGBuilder should handle temporaries.
+struct R8375510 {
+  R8375510();
+  ~R8375510();
+  R8375510 operator++(int);
+};
+
+int r8375510(R8375510 x, R8375510 y) {
+  for (; ; x++) { }
+}
+
