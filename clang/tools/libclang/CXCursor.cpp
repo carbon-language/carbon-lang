@@ -313,6 +313,22 @@ cxcursor::getCursorTypeRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
+CXCursor cxcursor::MakeCursorTemplateRef(TemplateDecl *Template, 
+                                         SourceLocation Loc, ASTUnit *TU) {
+  assert(Template && TU && "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_TemplateRef, { Template, RawLoc, TU } };
+  return C;    
+}
+
+std::pair<TemplateDecl *, SourceLocation> 
+cxcursor::getCursorTemplateRef(CXCursor C) {
+  assert(C.kind == CXCursor_TemplateRef);
+  return std::make_pair(static_cast<TemplateDecl *>(C.data[0]),
+                        SourceLocation::getFromRawEncoding(
+                                       reinterpret_cast<uintptr_t>(C.data[1])));  
+}
+
 CXCursor cxcursor::MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU){
   CXCursor C = { CXCursor_CXXBaseSpecifier, { B, 0, TU } };
   return C;  

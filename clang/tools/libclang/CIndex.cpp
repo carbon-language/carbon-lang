@@ -322,6 +322,7 @@ public:
   
   // Template visitors
   bool VisitTemplateParameters(const TemplateParameterList *Params);
+  bool VisitTemplateName(TemplateName Name, SourceLocation Loc);
   bool VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL);
   
   // Type visitors
@@ -902,6 +903,30 @@ bool CursorVisitor::VisitTemplateParameters(
   return false;
 }
 
+bool CursorVisitor::VisitTemplateName(TemplateName Name, SourceLocation Loc) {
+  switch (Name.getKind()) {
+  case TemplateName::Template:
+    return Visit(MakeCursorTemplateRef(Name.getAsTemplateDecl(), Loc, TU));
+
+  case TemplateName::OverloadedTemplate:
+    // FIXME: We need a way to return multiple lookup results in a single
+    // cursor.
+    return false;
+
+  case TemplateName::DependentTemplate:
+    // FIXME: Visit nested-name-specifier.
+    return false;
+      
+  case TemplateName::QualifiedTemplate:
+    // FIXME: Visit nested-name-specifier.
+    return Visit(MakeCursorTemplateRef(
+                                  Name.getAsQualifiedTemplateName()->getDecl(), 
+                                       Loc, TU));
+  }
+                 
+  return false;
+}
+
 bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
   switch (TAL.getArgument().getKind()) {
   case TemplateArgument::Null:
@@ -928,8 +953,8 @@ bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
     return false;
   
   case TemplateArgument::Template:
-    // FIXME: Visit template name.
-    return false;
+    return VisitTemplateName(TAL.getArgument().getAsTemplate(), 
+                             TAL.getTemplateNameLoc());
   }
   
   return false;
@@ -1090,7 +1115,10 @@ bool CursorVisitor::VisitArrayTypeLoc(ArrayTypeLoc TL) {
 
 bool CursorVisitor::VisitTemplateSpecializationTypeLoc(
                                              TemplateSpecializationTypeLoc TL) {
-  // FIXME: Visit the template name.
+  // Visit the template name.
+  if (VisitTemplateName(TL.getTypePtr()->getTemplateName(), 
+                        TL.getTemplateNameLoc()))
+    return true;
   
   // Visit the template arguments.
   for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
@@ -2023,6 +2051,12 @@ CXString clang_getCursorSpelling(CXCursor C) {
       return createCXString(getCursorContext(C).getTypeDeclType(Type).
                               getAsString());
     }
+    case CXCursor_TemplateRef: {
+      TemplateDecl *Template = getCursorTemplateRef(C).first;
+      assert(Template && "Missing type decl");
+      
+      return createCXString(Template->getNameAsString());
+    }
 
     default:
       return createCXString("<not implemented>");
@@ -2102,6 +2136,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("ObjCClassRef");
   case CXCursor_TypeRef:
       return createCXString("TypeRef");
+  case CXCursor_TemplateRef:
+      return createCXString("TemplateRef");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
   case CXCursor_BlockExpr:
@@ -2287,7 +2323,12 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
-    
+
+    case CXCursor_TemplateRef: {
+      std::pair<TemplateDecl *, SourceLocation> P = getCursorTemplateRef(C);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
+    }
+
     case CXCursor_CXXBaseSpecifier: {
       // FIXME: Figure out what location to return for a CXXBaseSpecifier.
       return clang_getNullLocation();
@@ -2345,7 +2386,10 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 
     case CXCursor_TypeRef:
       return getCursorTypeRef(C).second;
-      
+
+    case CXCursor_TemplateRef:
+      return getCursorTemplateRef(C).second;
+
     case CXCursor_CXXBaseSpecifier:
       // FIXME: Figure out what source range to use for a CXBaseSpecifier.
       return SourceRange();
@@ -2422,7 +2466,10 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 
     case CXCursor_TypeRef:
       return MakeCXCursor(getCursorTypeRef(C).first, CXXUnit);
-      
+
+    case CXCursor_TemplateRef:
+      return MakeCXCursor(getCursorTemplateRef(C).first, CXXUnit);
+
     case CXCursor_CXXBaseSpecifier: {
       CXXBaseSpecifier *B = cxcursor::getCursorCXXBaseSpecifier(C);
       return clang_getTypeDeclaration(cxtype::MakeCXType(B->getType(),
@@ -2539,8 +2586,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::ClassTemplate: {
     if (RecordDecl *Def = cast<ClassTemplateDecl>(D)->getTemplatedDecl()
                                                             ->getDefinition())
-      return MakeCXCursor(
-                         cast<CXXRecordDecl>(Def)->getDescribedClassTemplate(),
+      return MakeCXCursor(cast<CXXRecordDecl>(Def)->getDescribedClassTemplate(),
                           CXXUnit);
     return clang_getNullCursor();
   }

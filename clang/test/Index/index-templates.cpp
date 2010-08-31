@@ -19,7 +19,7 @@ class vector<T*> { };
 // FIXME: Need the template type parameter here
 // CHECK-LOAD: index-templates.cpp:3:66: TemplateTemplateParameter=X:3:66 (Definition) Extent=[3:31 - 3:67]
 // CHECK-LOAD: index-templates.cpp:4:20: ParmDecl=x:4:20 (Definition) Extent=[4:8 - 4:21]
-// FIXME: Need the template declaration here.
+// CHECK-LOAD: index-templates.cpp:4:8: TemplateRef=X:3:66 Extent=[4:8 - 4:9]
 // FIXME: Need the template type parameter here
 // CHECK-LOAD: index-templates.cpp:4:13: DeclRefExpr=Value:3:24 Extent=[4:13 - 4:18]
 // CHECK-LOAD: index-templates.cpp:6:28: ClassTemplate=allocator:6:28 Extent=[6:1 - 6:37]

@@ -1020,7 +1020,12 @@ enum CXCursorKind {
    */
   CXCursor_TypeRef                       = 43,
   CXCursor_CXXBaseSpecifier              = 44,
-  CXCursor_LastRef                       = CXCursor_CXXBaseSpecifier,
+  /** 
+   * \brief A reference to a class template, function template, or template
+   * template parameter. 
+   */
+  CXCursor_TemplateRef                   = 45,
+  CXCursor_LastRef                       = CXCursor_TemplateRef,
 
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,

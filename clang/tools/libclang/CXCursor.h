@@ -32,6 +32,7 @@ class NamedDecl;
 class ObjCInterfaceDecl;
 class ObjCProtocolDecl;
 class Stmt;
+class TemplateDecl;
 class TypeDecl;
 
 namespace cxcursor {
@@ -71,11 +72,19 @@ std::pair<ObjCInterfaceDecl *, SourceLocation>
 
 /// \brief Create a type reference at the given location.
 CXCursor MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc, ASTUnit *TU);
-
+                               
 /// \brief Unpack a TypeRef cursor into the class it references
 /// and optionally the location where the reference occurred.
 std::pair<TypeDecl *, SourceLocation> getCursorTypeRef(CXCursor C);
 
+/// \brief Create a reference to a template at the given location.
+CXCursor MakeCursorTemplateRef(TemplateDecl *Template, SourceLocation Loc,
+                               ASTUnit *TU);
+
+/// \brief Unpack a TemplateRef cursor into the template it references and
+/// the location where the reference occurred.
+std::pair<TemplateDecl *, SourceLocation> getCursorTemplateRef(CXCursor C);
+  
 /// \brief Create a CXX base specifier cursor.
 CXCursor MakeCursorCXXBaseSpecifier(CXXBaseSpecifier *B, ASTUnit *TU);
 
