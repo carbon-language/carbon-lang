@@ -858,7 +858,7 @@ DeclContext *DeclContext::getLookupContext() {
 DeclContext *DeclContext::getEnclosingNamespaceContext() {
   DeclContext *Ctx = this;
   // Skip through non-namespace, non-translation-unit contexts.
-  while (!Ctx->isFileContext() || Ctx->isTransparentContext())
+  while (!Ctx->isFileContext())
     Ctx = Ctx->getParent();
   return Ctx->getPrimaryContext();
 }
