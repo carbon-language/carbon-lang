@@ -278,22 +278,22 @@ static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
   Function *F = CI->getParent()->getParent();
   Value *ReturnedValue = 0;
 
-  for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator()))
-      if (RI != IgnoreRI) {
-        Value *RetOp = RI->getOperand(0);
+  for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI) {
+    ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator());
+    if (RI == 0 || RI == IgnoreRI) continue;
 
-        // We can only perform this transformation if the value returned is
-        // evaluatable at the start of the initial invocation of the function,
-        // instead of at the end of the evaluation.
-        //
-        if (!isDynamicConstant(RetOp, CI, RI))
-          return 0;
+    // We can only perform this transformation if the value returned is
+    // evaluatable at the start of the initial invocation of the function,
+    // instead of at the end of the evaluation.
+    //
+    Value *RetOp = RI->getOperand(0);
+    if (!isDynamicConstant(RetOp, CI, RI))
+      return 0;
 
-        if (ReturnedValue && RetOp != ReturnedValue)
-          return 0;     // Cannot transform if differing values are returned.
-        ReturnedValue = RetOp;
-      }
+    if (ReturnedValue && RetOp != ReturnedValue)
+      return 0;     // Cannot transform if differing values are returned.
+    ReturnedValue = RetOp;
+  }
   return ReturnedValue;
 }
 
@@ -307,7 +307,7 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
   assert(I->getNumOperands() == 2 &&
          "Associative/commutative operations should have 2 args!");
 
-  // Exactly one operand should be the result of the call instruction...
+  // Exactly one operand should be the result of the call instruction.
   if ((I->getOperand(0) == CI && I->getOperand(1) == CI) ||
       (I->getOperand(0) != CI && I->getOperand(1) != CI))
     return 0;
@@ -387,21 +387,22 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // tail call if all of the instructions between the call and the return are
   // movable to above the call itself, leaving the call next to the return.
   // Check that this is the case now.
-  for (BBI = CI, ++BBI; &*BBI != Ret; ++BBI)
-    if (!CanMoveAboveCall(BBI, CI)) {
-      // If we can't move the instruction above the call, it might be because it
-      // is an associative and commutative operation that could be tranformed
-      // using accumulator recursion elimination.  Check to see if this is the
-      // case, and if so, remember the initial accumulator value for later.
-      if ((AccumulatorRecursionEliminationInitVal =
-                             CanTransformAccumulatorRecursion(BBI, CI))) {
-        // Yes, this is accumulator recursion.  Remember which instruction
-        // accumulates.
-        AccumulatorRecursionInstr = BBI;
-      } else {
-        return false;   // Otherwise, we cannot eliminate the tail recursion!
-      }
+  for (BBI = CI, ++BBI; &*BBI != Ret; ++BBI) {
+    if (CanMoveAboveCall(BBI, CI)) continue;
+    
+    // If we can't move the instruction above the call, it might be because it
+    // is an associative and commutative operation that could be tranformed
+    // using accumulator recursion elimination.  Check to see if this is the
+    // case, and if so, remember the initial accumulator value for later.
+    if ((AccumulatorRecursionEliminationInitVal =
+                           CanTransformAccumulatorRecursion(BBI, CI))) {
+      // Yes, this is accumulator recursion.  Remember which instruction
+      // accumulates.
+      AccumulatorRecursionInstr = BBI;
+    } else {
+      return false;   // Otherwise, we cannot eliminate the tail recursion!
     }
+  }
 
   // We can only transform call/return pairs that either ignore the return value
   // of the call and return void, ignore the value of the call and return a
