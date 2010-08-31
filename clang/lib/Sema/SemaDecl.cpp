@@ -6135,6 +6135,8 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
       CXXRecord->setPOD(false);
     if (!ZeroWidth)
       CXXRecord->setEmpty(false);
+    if (T->isReferenceType())
+      CXXRecord->setHasTrivialConstructor(false);
 
     if (const RecordType *RT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
