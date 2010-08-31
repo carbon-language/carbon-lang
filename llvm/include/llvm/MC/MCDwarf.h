@@ -143,7 +143,7 @@ namespace llvm {
   public:
     // Constructor to create an MCLineSection with an empty MCLineEntries
     // vector.
-    MCLineSection(): MCLineEntries() {};
+    MCLineSection() {}
 
     // addLineEntry - adds an entry to this MCLineSection's line entries
     void addLineEntry(const MCLineEntry &LineEntry) {
