@@ -2090,16 +2090,15 @@ EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E) {
     BaseV = EmitScalarExpr(E->getLHS());
   else
     BaseV = EmitLValue(E->getLHS()).getAddress();
-  const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(getLLVMContext());
-  BaseV = Builder.CreateBitCast(BaseV, i8Ty);
-  llvm::Value *OffsetV = EmitScalarExpr(E->getRHS());
-  llvm::Value *AddV = Builder.CreateInBoundsGEP(BaseV, OffsetV, "add.ptr");
 
-  QualType Ty = E->getRHS()->getType();
-  Ty = Ty->getAs<MemberPointerType>()->getPointeeType();
-  
-  const llvm::Type *PType = ConvertType(getContext().getPointerType(Ty));
-  AddV = Builder.CreateBitCast(AddV, PType);
-  return MakeAddrLValue(AddV, Ty);
+  llvm::Value *OffsetV = EmitScalarExpr(E->getRHS());
+
+  const MemberPointerType *MPT
+    = E->getRHS()->getType()->getAs<MemberPointerType>();
+
+  llvm::Value *AddV =
+    CGM.getCXXABI().EmitMemberDataPointerAddress(*this, BaseV, OffsetV, MPT);
+
+  return MakeAddrLValue(AddV, MPT->getPointeeType());
 }
 

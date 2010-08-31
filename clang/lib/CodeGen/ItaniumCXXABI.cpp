@@ -66,6 +66,11 @@ public:
                                                llvm::Value *MemFnPtr,
                                                const MemberPointerType *MPT);
 
+  llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+                                            llvm::Value *Base,
+                                            llvm::Value *MemPtr,
+                                            const MemberPointerType *MPT);
+
   llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
                                            const CastExpr *E,
                                            llvm::Value *Src);
@@ -259,6 +264,31 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   Callee->addIncoming(VirtualFn, FnVirtual);
   Callee->addIncoming(NonVirtualFn, FnNonVirtual);
   return Callee;
+}
+
+/// Compute an l-value by applying the given pointer-to-member to a
+/// base object.
+llvm::Value *ItaniumCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+                                                         llvm::Value *Base,
+                                                         llvm::Value *MemPtr,
+                                           const MemberPointerType *MPT) {
+  assert(MemPtr->getType() == getPtrDiffTy());
+
+  CGBuilderTy &Builder = CGF.Builder;
+
+  unsigned AS = cast<llvm::PointerType>(Base->getType())->getAddressSpace();
+
+  // Cast to char*.
+  Base = Builder.CreateBitCast(Base, Builder.getInt8Ty()->getPointerTo(AS));
+
+  // Apply the offset, which we assume is non-null.
+  llvm::Value *Addr = Builder.CreateInBoundsGEP(Base, MemPtr, "memptr.offset");
+
+  // Cast the address to the appropriate pointer type, adopting the
+  // address space of the base pointer.
+  const llvm::Type *PType
+    = CGF.ConvertType(MPT->getPointeeType())->getPointerTo(AS);
+  return Builder.CreateBitCast(Addr, PType);
 }
 
 /// Perform a derived-to-base or base-to-derived member pointer conversion.

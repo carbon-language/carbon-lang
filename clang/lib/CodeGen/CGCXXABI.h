@@ -88,6 +88,12 @@ public:
                                   llvm::Value *MemPtr,
                                   const MemberPointerType *MPT);
 
+  /// Calculate an l-value from an object and a data member pointer.
+  virtual llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+                                                    llvm::Value *Base,
+                                                    llvm::Value *MemPtr,
+                                            const MemberPointerType *MPT);
+
   /// Perform a derived-to-base or base-to-derived member pointer
   /// conversion.
   virtual llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,

@@ -359,6 +359,15 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   return llvm::Constant::getNullValue(FTy->getPointerTo());
 }
 
+llvm::Value *CGCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+                                                    llvm::Value *Base,
+                                                    llvm::Value *MemPtr,
+                                              const MemberPointerType *MPT) {
+  ErrorUnsupportedABI(CGF, "loads of member pointers");
+  const llvm::Type *Ty = CGF.ConvertType(MPT->getPointeeType())->getPointerTo();
+  return llvm::Constant::getNullValue(Ty);
+}
+
 llvm::Value *CGCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
                                                    const CastExpr *E,
                                                    llvm::Value *Src) {
