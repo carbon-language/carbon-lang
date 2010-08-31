@@ -336,9 +336,9 @@ namespace sys {
       /// native Dynamic Library (shared library, shared object) by looking at
       /// the file's magic number. The Path object must reference a file, not a
       /// directory.
-      /// @return strue if the file starts with the magid number for a native
+      /// @returns true if the file starts with the magic number for a native
       /// shared library.
-      /// @brief Determine if the path reference a dynamic library.
+      /// @brief Determine if the path references a dynamic library.
       bool isDynamicLibrary() const;
 
       /// This function determines if the path name references an existing file
