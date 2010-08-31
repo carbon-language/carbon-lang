@@ -1457,8 +1457,8 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
    order to get and store values in memory. To assign a physical register to a
    virtual register present in a given operand,
    use <tt>MachineOperand::setReg(p_reg)</tt>. To insert a store instruction,
-   use <tt>TargetRegisterInfo::storeRegToStackSlot(...)</tt>, and to insert a
-   load instruction, use <tt>TargetRegisterInfo::loadRegFromStackSlot</tt>.</p>
+   use <tt>TargetInstrInfo::storeRegToStackSlot(...)</tt>, and to insert a
+   load instruction, use <tt>TargetInstrInfo::loadRegFromStackSlot</tt>.</p>
 
 <p>The indirect mapping shields the application developer from the complexities
    of inserting load and store instructions. In order to map a virtual register
