@@ -289,7 +289,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createSjLjEHPass(getTargetLowering()));
     // FALLTHROUGH
   case ExceptionHandling::Dwarf:
-    PM.add(createDwarfEHPass(this, OptLevel==CodeGenOpt::None));
+    PM.add(createDwarfEHPass(this));
     break;
   case ExceptionHandling::None:
     PM.add(createLowerInvokePass(getTargetLowering()));

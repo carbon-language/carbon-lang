@@ -25,7 +25,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/PromoteMemToReg.h"
 using namespace llvm;
 
 STATISTIC(NumLandingPadsSplit,     "Number of landing pads split");
@@ -37,7 +36,6 @@ namespace {
   class DwarfEHPrepare : public FunctionPass {
     const TargetMachine *TM;
     const TargetLowering *TLI;
-    bool CompileFast;
 
     // The eh.exception intrinsic.
     Function *ExceptionValueIntrinsic;
@@ -54,9 +52,8 @@ namespace {
     // _Unwind_Resume or the target equivalent.
     Constant *RewindFunction;
 
-    // Dominator info is used when turning stack temporaries into registers.
+    // We both use and preserve dominator info.
     DominatorTree *DT;
-    DominanceFrontier *DF;
 
     // The function we are running on.
     Function *F;
@@ -72,7 +69,6 @@ namespace {
     bool LowerUnwinds();
     bool MoveExceptionValueCalls();
     bool FinishStackTemporaries();
-    bool PromoteStackTemporaries();
 
     Instruction *CreateExceptionValueCall(BasicBlock *BB);
     Instruction *CreateValueLoad(BasicBlock *BB);
@@ -112,49 +108,10 @@ namespace {
     bool FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
                              SmallPtrSet<IntrinsicInst*, 8> &SelCalls);
       
-    /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
-    bool PromoteStoreInst(StoreInst *SI) {
-      if (!SI || !DT || !DF) return false;
-      
-      AllocaInst *AI = dyn_cast<AllocaInst>(SI->getOperand(1));
-      if (!AI || !isAllocaPromotable(AI)) return false;
-      
-      // Turn the alloca into a register.
-      std::vector<AllocaInst*> Allocas(1, AI);
-      PromoteMemToReg(Allocas, *DT, *DF);
-      return true;
-    }
-
-    /// PromoteEHPtrStore - Promote the storing of an EH pointer into a
-    /// register. This should get rid of the store and subsequent loads.
-    bool PromoteEHPtrStore(IntrinsicInst *II) {
-      if (!DT || !DF) return false;
-
-      bool Changed = false;
-      StoreInst *SI;
-
-      while (1) {
-        SI = 0;
-        for (Value::use_iterator
-               I = II->use_begin(), E = II->use_end(); I != E; ++I) {
-          SI = dyn_cast<StoreInst>(*I);
-          if (SI) break;
-        }
-
-        if (!PromoteStoreInst(SI))
-          break;
-
-        Changed = true;
-      }
-
-      return Changed;
-    }
-
   public:
     static char ID; // Pass identification, replacement for typeid.
-    DwarfEHPrepare(const TargetMachine *tm, bool fast) :
+    DwarfEHPrepare(const TargetMachine *tm) :
       FunctionPass(ID), TM(tm), TLI(TM->getTargetLowering()),
-      CompileFast(fast),
       ExceptionValueIntrinsic(0), SelectorIntrinsic(0),
       URoR(0), EHCatchAllValue(0), RewindFunction(0) {}
 
@@ -162,12 +119,8 @@ namespace {
 
     // getAnalysisUsage - We need dominance frontiers for memory promotion.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      if (!CompileFast)
-        AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTree>();
       AU.addPreserved<DominatorTree>();
-      if (!CompileFast)
-        AU.addRequired<DominanceFrontier>();
-      AU.addPreserved<DominanceFrontier>();
     }
 
     const char *getPassName() const {
@@ -179,8 +132,8 @@ namespace {
 
 char DwarfEHPrepare::ID = 0;
 
-FunctionPass *llvm::createDwarfEHPass(const TargetMachine *tm, bool fast) {
-  return new DwarfEHPrepare(tm, fast);
+FunctionPass *llvm::createDwarfEHPass(const TargetMachine *tm) {
+  return new DwarfEHPrepare(tm);
 }
 
 /// HasCatchAllInSelector - Return true if the intrinsic instruction has a
@@ -261,7 +214,6 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
   SmallPtrSet<PHINode*, 32> SeenPHIs;
   bool Changed = false;
 
- restart:
   for (Value::use_iterator
          I = Inst->use_begin(), E = Inst->use_end(); I != E; ++I) {
     Instruction *II = dyn_cast<Instruction>(*I);
@@ -275,11 +227,6 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
         URoRInvoke = true;
     } else if (CastInst *CI = dyn_cast<CastInst>(II)) {
       Changed |= FindSelectorAndURoR(CI, URoRInvoke, SelCalls);
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
-      if (!PromoteStoreInst(SI)) continue;
-      Changed = true;
-      SeenPHIs.clear();
-      goto restart;             // Uses may have changed, restart loop.
     } else if (PHINode *PN = dyn_cast<PHINode>(II)) {
       if (SeenPHIs.insert(PN))
         // Don't process a PHI node more than once.
@@ -310,10 +257,6 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
   SmallPtrSet<IntrinsicInst*, 32> Sels;
   SmallPtrSet<IntrinsicInst*, 32> CatchAllSels;
   FindAllCleanupSelectors(Sels, CatchAllSels);
-
-  if (!DT)
-    // We require DominatorTree information.
-    return CleanupSelectors(CatchAllSels);
 
   if (!URoR) {
     URoR = F->getParent()->getFunction("_Unwind_Resume_or_Rethrow");
@@ -355,8 +298,6 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
            E = ExceptionValueIntrinsic->use_end(); I != E; ++I) {
       IntrinsicInst *EHPtr = dyn_cast<IntrinsicInst>(*I);
       if (!EHPtr || EHPtr->getParent()->getParent() != F) continue;
-
-      Changed |= PromoteEHPtrStore(EHPtr);
 
       bool URoRInvoke = false;
       SmallPtrSet<IntrinsicInst*, 8> SelCalls;
@@ -525,11 +466,8 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
     // Add a fallthrough from NewBB to the original landing pad.
     BranchInst::Create(LPad, NewBB);
 
-    // Now update DominatorTree and DominanceFrontier analysis information.
-    if (DT)
-      DT->splitBlock(NewBB);
-    if (DF)
-      DF->splitBlock(NewBB);
+    // Now update DominatorTree analysis information.
+    DT->splitBlock(NewBB);
 
     // Remember the newly constructed landing pad.  The original landing pad
     // LPad is no longer a landing pad now that all unwind edges have been
@@ -652,18 +590,6 @@ bool DwarfEHPrepare::FinishStackTemporaries() {
   return Changed;
 }
 
-/// PromoteStackTemporaries - Turn any stack temporaries we introduced into
-/// registers if possible.
-bool DwarfEHPrepare::PromoteStackTemporaries() {
-  if (ExceptionValueVar && DT && DF && isAllocaPromotable(ExceptionValueVar)) {
-    // Turn the exception temporary into registers and phi nodes if possible.
-    std::vector<AllocaInst*> Allocas(1, ExceptionValueVar);
-    PromoteMemToReg(Allocas, *DT, *DF);
-    return true;
-  }
-  return false;
-}
-
 /// CreateExceptionValueCall - Insert a call to the eh.exception intrinsic at
 /// the start of the basic block (unless there already is one, in which case
 /// the existing call is returned).
@@ -711,8 +637,7 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   bool Changed = false;
 
   // Initialize internal state.
-  DT = getAnalysisIfAvailable<DominatorTree>();
-  DF = getAnalysisIfAvailable<DominanceFrontier>();
+  DT = &getAnalysis<DominatorTree>();
   ExceptionValueVar = 0;
   F = &Fn;
 
@@ -731,9 +656,7 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   // Initialize any stack temporaries we introduced.
   Changed |= FinishStackTemporaries();
 
-  // Turn any stack temporaries into registers if possible.
-  if (!CompileFast)
-    Changed |= PromoteStackTemporaries();
+  // TODO: Turn any stack temporaries into registers if possible.
 
   Changed |= HandleURoRInvokes();
 
