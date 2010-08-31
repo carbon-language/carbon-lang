@@ -526,9 +526,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
 ///
 /// [GNU] unary-type-trait:
-///                   '__has_nothrow_assign'                  [TODO]
-///                   '__has_nothrow_copy'                    [TODO]
-///                   '__has_nothrow_constructor'             [TODO]
+///                   '__has_nothrow_assign'
+///                   '__has_nothrow_copy'
+///                   '__has_nothrow_constructor'
 ///                   '__has_trivial_assign'                  [TODO]
 ///                   '__has_trivial_copy'                    [TODO]
 ///                   '__has_trivial_constructor'
@@ -900,6 +900,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___has_trivial_copy:
   case tok::kw___has_trivial_assign:
   case tok::kw___has_trivial_destructor:
+  case tok::kw___has_nothrow_assign:
+  case tok::kw___has_nothrow_copy:
+  case tok::kw___has_nothrow_constructor:
     return ParseUnaryTypeTrait();
 
   case tok::at: {

@@ -386,6 +386,108 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
           C.getBaseElementType(QueriedType)->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
     return false;
+  // TODO: Propagate nothrowness for implicitly declared special members.
+  case UTT_HasNothrowAssign:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If type is const qualified or is a reference type then the
+    //   trait is false. Otherwise if __has_trivial_assign (type)
+    //   is true then the trait is true, else if type is a cv class
+    //   or union type with copy assignment operators that are known
+    //   not to throw an exception then the trait is true, else it is
+    //   false.
+    if (C.getBaseElementType(QueriedType).isConstQualified())
+      return false;
+    if (QueriedType->isReferenceType())
+      return false;
+    if (QueriedType->isPODType())
+      return true;
+    if (const RecordType *RT = QueriedType->getAs<RecordType>()) {
+      CXXRecordDecl* RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->hasTrivialCopyAssignment())
+        return true;
+
+      bool FoundAssign = false;
+      bool AllNoThrow = true;
+      DeclarationName Name = C.DeclarationNames.getCXXOperatorName(OO_Equal);
+      DeclContext::lookup_const_iterator Op, OpEnd;
+      for (llvm::tie(Op, OpEnd) = RD->lookup(Name);
+           Op != OpEnd; ++Op) {
+        CXXMethodDecl *Operator = cast<CXXMethodDecl>(*Op);
+        if (Operator->isCopyAssignmentOperator()) {
+          FoundAssign = true;
+          const FunctionProtoType *CPT
+              = Operator->getType()->getAs<FunctionProtoType>();
+          if (!CPT->hasEmptyExceptionSpec()) {
+            AllNoThrow = false;
+            break;
+          }
+        }
+      }
+
+      return FoundAssign && AllNoThrow;
+    }
+    return false;
+  case UTT_HasNothrowCopy:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If __has_trivial_copy (type) is true then the trait is true, else
+    //   if type is a cv class or union type with copy constructors that are
+    //   known not to throw an exception then the trait is true, else it is
+    //   false.
+    if (QueriedType->isPODType() || QueriedType->isReferenceType())
+      return true;
+    if (const RecordType *RT = QueriedType->getAs<RecordType>()) {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->hasTrivialCopyConstructor())
+        return true;
+
+      bool FoundConstructor = false;
+      bool AllNoThrow = true;
+      unsigned FoundTQs;
+      DeclarationName ConstructorName
+          = C.DeclarationNames.getCXXConstructorName(
+                                          C.getCanonicalType(QueriedType));
+      DeclContext::lookup_const_iterator Con, ConEnd;
+      for (llvm::tie(Con, ConEnd) = RD->lookup(ConstructorName);
+           Con != ConEnd; ++Con) {
+        CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+        if (Constructor->isCopyConstructor(FoundTQs)) {
+          FoundConstructor = true;
+          const FunctionProtoType *CPT
+              = Constructor->getType()->getAs<FunctionProtoType>();
+          if (!CPT->hasEmptyExceptionSpec()) {
+            AllNoThrow = false;
+            break;
+          }
+        }
+      }
+
+      return FoundConstructor && AllNoThrow;
+    }
+    return false;
+  case UTT_HasNothrowConstructor:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If __has_trivial_constructor (type) is true then the trait is
+    //   true, else if type is a cv class or union type (or array
+    //   thereof) with a default constructor that is known not to
+    //   throw an exception then the trait is true, else it is false.
+    if (QueriedType->isPODType())
+      return true;
+    if (const RecordType *RT =
+          C.getBaseElementType(QueriedType)->getAs<RecordType>()) {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->hasTrivialConstructor())
+        return true;
+
+      if (CXXConstructorDecl *Constructor = RD->getDefaultConstructor()) {
+        const FunctionProtoType *CPT
+            = Constructor->getType()->getAs<FunctionProtoType>();
+        // TODO: check whether evaluating default arguments can throw.
+        // For now, we'll be conservative and assume that they can throw.
+        if (CPT->hasEmptyExceptionSpec() && CPT->getNumArgs() == 0)
+          return true;
+      }
+    }
+    return false;
   }
 }
 

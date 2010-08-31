@@ -34,6 +34,33 @@ typedef Derives NonPODAr[10];
 typedef HasVirt VirtAr[10];
 union NonPODUnion { int i; Derives n; };
 
+struct HasNoThrowCopyAssign {
+  void operator =(const HasNoThrowCopyAssign&) throw();
+};
+struct HasMultipleCopyAssign {
+  void operator =(const HasMultipleCopyAssign&) throw();
+  void operator =(volatile HasMultipleCopyAssign&);
+};
+struct HasMultipleNoThrowCopyAssign {
+  void operator =(const HasMultipleNoThrowCopyAssign&) throw();
+  void operator =(volatile HasMultipleNoThrowCopyAssign&) throw();
+};
+
+struct HasNoThrowConstructor { HasNoThrowConstructor() throw(); };
+struct HasNoThrowConstructorWithArgs {
+  HasNoThrowConstructorWithArgs(HasCons i = HasCons(0)) throw();
+};
+
+struct HasNoThrowCopy { HasNoThrowCopy(const HasNoThrowCopy&) throw(); };
+struct HasMultipleCopy {
+  HasMultipleCopy(const HasMultipleCopy&) throw();
+  HasMultipleCopy(volatile HasMultipleCopy&);
+};
+struct HasMultipleNoThrowCopy {
+  HasMultipleNoThrowCopy(const HasMultipleNoThrowCopy&) throw();
+  HasMultipleNoThrowCopy(volatile HasMultipleNoThrowCopy&) throw();
+};
+
 void is_pod()
 {
   int t01[T(__is_pod(int))];
@@ -257,4 +284,78 @@ template<typename> struct B : A { };
 void f() {
   int t01[T(!__has_trivial_destructor(A))];
   int t02[T(!__has_trivial_destructor(B<int>))];
+}
+
+void has_nothrow_assign() {
+  int t01[T(__has_nothrow_assign(Int))];
+  int t02[T(__has_nothrow_assign(IntAr))];
+  int t03[T(__has_nothrow_assign(Union))];
+  int t04[T(__has_nothrow_assign(UnionAr))];
+  int t05[T(__has_nothrow_assign(POD))];
+  int t06[T(__has_nothrow_assign(Derives))];
+  int t07[F(__has_nothrow_assign(ConstIntAr))];
+  int t08[F(__has_nothrow_assign(ConstIntArAr))];
+  int t09[T(__has_nothrow_assign(HasDest))];
+  int t10[T(__has_nothrow_assign(HasPriv))];
+  int t11[T(__has_nothrow_assign(HasCons))];
+  int t12[T(__has_nothrow_assign(HasRef))];
+  int t13[T(__has_nothrow_assign(HasCopy))];
+  int t14[F(__has_nothrow_assign(IntRef))];
+  int t15[F(__has_nothrow_assign(HasCopyAssign))];
+  int t16[F(__has_nothrow_assign(const Int))];
+  int t17[F(__has_nothrow_assign(NonPODAr))];
+  int t18[F(__has_nothrow_assign(VirtAr))];
+
+  int t19[T(__has_nothrow_assign(HasNoThrowCopyAssign))];
+  int t20[F(__has_nothrow_assign(HasMultipleCopyAssign))];
+  int t21[T(__has_nothrow_assign(HasMultipleNoThrowCopyAssign))];
+}
+
+void has_nothrow_copy() {
+  int t01[T(__has_nothrow_copy(Int))];
+  int t02[T(__has_nothrow_copy(IntAr))];
+  int t03[T(__has_nothrow_copy(Union))];
+  int t04[T(__has_nothrow_copy(UnionAr))];
+  int t05[T(__has_nothrow_copy(POD))];
+  int t06[T(__has_nothrow_copy(Derives))];
+  int t07[T(__has_nothrow_copy(ConstIntAr))];
+  int t08[T(__has_nothrow_copy(ConstIntArAr))];
+  int t09[T(__has_nothrow_copy(HasDest))];
+  int t10[T(__has_nothrow_copy(HasPriv))];
+  int t11[T(__has_nothrow_copy(HasCons))];
+  int t12[T(__has_nothrow_copy(HasRef))];
+  int t13[F(__has_nothrow_copy(HasCopy))];
+  int t14[T(__has_nothrow_copy(IntRef))];
+  int t15[T(__has_nothrow_copy(HasCopyAssign))];
+  int t16[T(__has_nothrow_copy(const Int))];
+  int t17[F(__has_nothrow_copy(NonPODAr))];
+  int t18[F(__has_nothrow_copy(VirtAr))];
+
+  int t19[T(__has_nothrow_copy(HasNoThrowCopy))];
+  int t20[F(__has_nothrow_copy(HasMultipleCopy))];
+  int t21[T(__has_nothrow_copy(HasMultipleNoThrowCopy))];
+}
+
+void has_nothrow_constructor() {
+  int t01[T(__has_nothrow_constructor(Int))];
+  int t02[T(__has_nothrow_constructor(IntAr))];
+  int t03[T(__has_nothrow_constructor(Union))];
+  int t04[T(__has_nothrow_constructor(UnionAr))];
+  int t05[T(__has_nothrow_constructor(POD))];
+  int t06[T(__has_nothrow_constructor(Derives))];
+  int t07[T(__has_nothrow_constructor(ConstIntAr))];
+  int t08[T(__has_nothrow_constructor(ConstIntArAr))];
+  int t09[T(__has_nothrow_constructor(HasDest))];
+  int t10[T(__has_nothrow_constructor(HasPriv))];
+  int t11[F(__has_nothrow_constructor(HasCons))];
+  int t12[F(__has_nothrow_constructor(HasRef))];
+  int t13[F(__has_nothrow_constructor(HasCopy))];
+  int t14[F(__has_nothrow_constructor(IntRef))];
+  int t15[T(__has_nothrow_constructor(HasCopyAssign))];
+  int t16[T(__has_nothrow_constructor(const Int))];
+  int t17[T(__has_nothrow_constructor(NonPODAr))];
+  // int t18[T(__has_nothrow_constructor(VirtAr))]; // not implemented
+
+  int t19[T(__has_nothrow_constructor(HasNoThrowConstructor))];
+  int t20[F(__has_nothrow_constructor(HasNoThrowConstructorWithArgs))];
 }
