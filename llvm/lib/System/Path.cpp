@@ -61,7 +61,7 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
         if (memcmp(magic,"!<arch>\n",8) == 0)
           return Archive_FileType;
       break;
-      
+
     case '\177':
       if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F') {
         if (length >= 18 && magic[17] == 0)
@@ -76,11 +76,11 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
       break;
 
     case 0xCA:
-      if (magic[1] == char(0xFE) && magic[2] == char(0xBA) && 
+      if (magic[1] == char(0xFE) && magic[2] == char(0xBA) &&
           magic[3] == char(0xBE)) {
-        // This is complicated by an overlap with Java class files. 
+        // This is complicated by an overlap with Java class files.
         // See the Mach-O section in /usr/share/file/magic for details.
-        if (length >= 8 && magic[7] < 43) 
+        if (length >= 8 && magic[7] < 43)
           // FIXME: Universal Binary of any type.
           return Mach_O_DynamicallyLinkedSharedLib_FileType;
       }
@@ -89,18 +89,18 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
     case 0xFE:
     case 0xCE: {
       uint16_t type = 0;
-      if (magic[0] == char(0xFE) && magic[1] == char(0xED) && 
+      if (magic[0] == char(0xFE) && magic[1] == char(0xED) &&
           magic[2] == char(0xFA) && magic[3] == char(0xCE)) {
         /* Native endian */
         if (length >= 16) type = magic[14] << 8 | magic[15];
-      } else if (magic[0] == char(0xCE) && magic[1] == char(0xFA) && 
+      } else if (magic[0] == char(0xCE) && magic[1] == char(0xFA) &&
                  magic[2] == char(0xED) && magic[3] == char(0xFE)) {
         /* Reverse endian */
         if (length >= 14) type = magic[13] << 8 | magic[12];
       }
       switch (type) {
-        default: break;      
-        case 1: return Mach_O_Object_FileType; 
+        default: break;
+        case 1: return Mach_O_Object_FileType;
         case 2: return Mach_O_Executable_FileType;
         case 3: return Mach_O_FixedVirtualMemorySharedLib_FileType;
         case 4: return Mach_O_Core_FileType;
@@ -219,38 +219,38 @@ static StringRef getDirnameCharSep(StringRef path, const char *Sep) {
          "Sep must be a 1-character string literal.");
   if (path.empty())
     return ".";
-  
+
   // If the path is all slashes, return a single slash.
   // Otherwise, remove all trailing slashes.
-  
+
   signed pos = static_cast<signed>(path.size()) - 1;
-  
+
   while (pos >= 0 && path[pos] == Sep[0])
     --pos;
-  
+
   if (pos < 0)
     return path[0] == Sep[0] ? Sep : ".";
-  
+
   // Any slashes left?
   signed i = 0;
-  
+
   while (i < pos && path[i] != Sep[0])
     ++i;
-  
+
   if (i == pos) // No slashes?  Return "."
     return ".";
-  
-  // There is at least one slash left.  Remove all trailing non-slashes.  
+
+  // There is at least one slash left.  Remove all trailing non-slashes.
   while (pos >= 0 && path[pos] != Sep[0])
     --pos;
-  
+
   // Remove any trailing slashes.
   while (pos >= 0 && path[pos] == Sep[0])
     --pos;
-  
+
   if (pos < 0)
     return path[0] == Sep[0] ? Sep : ".";
-  
+
   return path.substr(0, pos+1);
 }
 
