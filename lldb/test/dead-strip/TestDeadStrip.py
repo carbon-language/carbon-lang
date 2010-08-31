@@ -11,7 +11,18 @@ class TestDeadStrip(TestBase):
 
     mydir = "dead-strip"
 
-    def test_dead_strip(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_with_dsym(self):
+        """Test breakpoint works correctly with dead-code stripping."""
+        self.buildDsym()
+        self.dead_strip()
+
+    def test_with_dwarf(self):
+        """Test breakpoint works correctly with dead-code stripping."""
+        self.buildDwarf()
+        self.dead_strip()
+
+    def dead_strip(self):
         """Test breakpoint works correctly with dead-code stripping."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
